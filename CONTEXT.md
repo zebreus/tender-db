@@ -135,7 +135,9 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   pragmas (foreign_keys=ON — it defaults OFF — busy_timeout, synchronous)
   are applied per connection.
 - Heavy scraping runs on the provisioned Hetzner VPS (1 Gb/s) — also the
-  production target — never on the dev machine (~100 kB/s uplink).
+  production target — never on the dev machine (~100 kB/s uplink). Access is
+  via `ssh root@zebreus.click`; run any command expected to take more than a
+  few seconds inside tmux on the VPS, so it survives a dropped connection.
 
 ## Example dialogue
 
