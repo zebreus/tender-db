@@ -1,6 +1,6 @@
 # 14 — Production deployment on the VPS
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 05, 06
 
 Goal: tenders.zebreus.click serves the app from the VPS (ADR-0006).
@@ -62,3 +62,49 @@ named `build` collided with another agent's and killed this build once — use
 a task-specific name (`tenderdb-deploy` here). Also, anything writing to
 /data as root leaves files the service can't touch; re-run
 `chown -R tenderdb:tenderdb /data/db /data/archive` afterwards.
+
+2026-07-20 — Redeployed and verified live end-to-end; acceptance met. Setting
+`resolved`.
+
+- Deployed rev **7199300** (issues 06/07/08/17) via `./deploy.sh`: pushed main,
+  built the flake on the box, atomic symlink switch, service restart, `/health`
+  check green. Production DB survived the restart (cursor unchanged across it).
+- **Dashboard live**: `https://tenders.zebreus.click/` → 200 HTTP/2, serving the
+  real dashboard (Coverage / Ingestion / Quarantine panels), not the scaffold.
+  `/_source` (AGPL §13) → 200.
+- **`/v1/tenders` live**: serves real data (7163 Tenders after a verification
+  ingest). `/v1` advertises the full endpoint set incl. `/v1/sql`,
+  `/v1/sql/schema`, `/v1/webhooks`.
+- **Accounts** (dashboard server fns): register → 200 + HttpOnly/Secure session
+  cookie; token mint → 200; `/v1/me` with the bearer token → 200.
+- **SQL endpoint** over live data: `top buyers by tender count` returned real
+  buyers (Południowy Koncern Węglowy, ŘSD, ČEZ, …). Gate holds live: write →
+  400, `SELECT * FROM users` → 400 "not queryable", no token → 401.
+- **Webhooks**: registered a public https receiver (SSRF guard passed it), drove
+  fresh changes via `/admin` (TED daily 2026-00137: +3717 notices, +3702
+  versions, cursor 24553 → 47224), and the sweeper delivered — **50 signed
+  batches, every one independently HMAC-SHA256-verified** against the secret.
+  (Subsequent `consecutive_failures` were the free-tier receiver throttling,
+  which incidentally exercised the backoff path.) Test webhook + account cleaned
+  up afterward.
+- **SSE through nginx**: `Accept: text/event-stream` on `/v1/tenders` streams the
+  snapshot (`event: change` / `op:added`, full tender data) then a `live` marker
+  (`id: 47224`); an empty-filter subscription returns the `live` marker
+  immediately — confirming nginx is not buffering. `content-type:
+  text/event-stream`, `cache-control: no-store`.
+- **In-process importer** verified via `/admin` (secret from the systemd
+  EnvironmentFile): enqueue → run → job log, readers serving throughout.
+- `deploy.sh` redeploys cleanly and health-checks `/health` (already swapped
+  from the old HTML check).
+
+Rough edges (not blockers, noted for follow-up):
+- **DÖE ingestion is broken on the box**: `fetch doe daily/monthly` downloads,
+  but `process` fails with `package: io: invalid gzip header` (the DÖE endpoint
+  is not returning the expected gzip). TED works fine. Belongs to the DÖE-source
+  owner (issue 12) — flagging, not fixing here.
+- `/root/tender-admin-secret` is a systemd **EnvironmentFile**
+  (`TENDER_ADMIN_SECRET=<64-hex>`), not a bare secret — pass the value after the
+  `=`, not the whole line, to `X-Admin-Secret`.
+- `rev` still reports `dev` because `deploy.sh` doesn't set `COMMIT_SHA`;
+  cosmetic. `deployed-rev` on the box is authoritative.
+- Reboot survival still enabled-but-not-exercised (didn't reboot prod).
