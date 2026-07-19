@@ -318,7 +318,7 @@ fn every_inventory_element_has_a_rule_and_vice_versa() {
     let stray: Vec<&str> = rules::decided_names().filter(|n| !names.contains(n)).collect();
     assert!(stray.is_empty(), "rules for elements no mirrored XSD declares: {stray:?}");
 
-    assert!(inventory.len() > 700, "inventory suspiciously small: {}", inventory.len());
+    assert!(inventory.len() > 1300, "inventory suspiciously small: {}", inventory.len());
 }
 
 /// Every attribute the XSDs declare is claimed: consumed by its element's
@@ -341,19 +341,22 @@ fn every_inventory_attribute_is_claimed() {
                 return !matches!(attr, "CATEGORY" | "FORM" | "LG" | "VERSION");
             }
             let consumed = match rule {
-                Rule::Ignore(_) => true,
+                Rule::Ignore(_) | Rule::Text => true,
                 Rule::CodeAttr(attrs) => attrs.contains(&attr),
                 Rule::Cpv | Rule::Nuts => attr == "CODE",
                 Rule::Amount => attr == "FMTVAL",
                 Rule::Number(Unit::FromTypeAttr) => matches!(attr, "TYPE" | "FMTVAL"),
                 Rule::Number(_) => attr == "FMTVAL",
-                Rule::Section(_) => attr == "ITEM",
+                Rule::Section(_) => matches!(attr, "ITEM" | "FMTVAL"),
                 _ => false,
             };
             !(consumed
                 || matches!(attr, "LG" | "CURRENCY")
-                || ["PUBLICATION", "TYPE", "VALUE", "CTYPE", "CHOICE", "CLASS", "LAST", "FORMAT", "ITEM"]
-                    .contains(&attr))
+                || [
+                    "PUBLICATION", "TYPE", "VALUE", "CTYPE", "CHOICE", "CLASS", "LAST", "FORMAT",
+                    "ITEM", "PROCEDURE", "STATUS", "OBJECT", "SERVICES_CATEGORY",
+                ]
+                .contains(&attr))
         })
         .map(|(e, attr)| format!("{}/@{attr}", e.name))
         .collect();

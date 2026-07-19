@@ -119,7 +119,7 @@ pub fn timestamp(date: &str, time: Option<&str>) -> Result<Value, String> {
         // procurement meaning, unlike an amount's minor units.
         let clock = clock.split_once('.').map_or(clock, |(whole, _)| whole);
         let parts = split_ints(clock, ':', "time")?;
-        let [h, min] = parts[..2] else { return Err(format!("not a time: {clock}")) };
+        let [h, min, ..] = parts[..] else { return Err(format!("not a time: {clock}")) };
         seconds = h * 3600 + min * 60 + parts.get(2).copied().unwrap_or(0);
         // The pair is one instant; the time's offset is the authoritative one
         // (it is the one a submission deadline is expressed in).
