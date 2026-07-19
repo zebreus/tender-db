@@ -41,6 +41,28 @@ and takes 20–40 minutes on the box's 4 cores. Subsequent deploys reuse the
 cached dependency artifacts and take a couple of minutes. If a deploy might
 outlive your connection, run it inside tmux on the box.
 
+**Deploys are one at a time and never move production backwards** (f8bed0b —
+two concurrent deploys raced once and the slower one would have regressed the
+live rev). The VPS-side critical section (build → symlink switch → restart)
+takes a `flock` on `/opt/tender-db/deploy.lock`; a second deploy while one holds
+it aborts immediately with
+
+```
+another deploy holds /opt/tender-db/deploy.lock — aborting
+```
+
+Inside the lock it also refuses a regression: if the target rev is an ancestor
+of the currently deployed rev (recorded in `/opt/tender-db/deployed-rev`) it
+exits with `refusing regression: <rev> is an ancestor of deployed <rev>`. So
+redeploying an older commit is a deliberate act — check out or revert to a
+descendant rather than pointing `deploy.sh` at the old one. (For an emergency
+revert to a *known-built* older bundle, use the symlink rollback below, which
+bypasses the build and the guard.)
+
+The health check at the end probes `GET /health` (see [Ingestion](#ingestion));
+it must return `"ok":true` throughout, since ingestion runs in-process and the
+readers keep serving over WAL during a load.
+
 Rollback: point the symlink at a previous store path and restart.
 
 ```sh
@@ -60,13 +82,15 @@ systemctl stop tender-db
 systemctl is-enabled tender-db      # enabled → survives reboot
 ```
 
-Unit: `/etc/systemd/system/tender-db.service`. Runs as the `tenderdb` system
-user (not `DynamicUser`, unlike the NixOS module — the data in `/data` must
-outlive restarts). `ProtectSystem=strict` with `ReadWritePaths=/data/db
-/data/archive`: the process can write nowhere else, so a new state directory
-needs a unit edit, not just a `mkdir`. Env is set in the unit
-(`IP=127.0.0.1`, `PORT=8080`, `TENDER_DB`, `TENDER_ARCHIVE`,
-`TENDER_ADMIN_SECRET` — see [Ingestion](#ingestion)).
+Unit: `/etc/systemd/system/tender-db.service`, plus drop-ins under
+`/etc/systemd/system/tender-db.service.d/` (`systemctl cat tender-db` shows the
+merged result). Runs as the `tenderdb` system user (not `DynamicUser`, unlike
+the NixOS module — the data in `/data` must outlive restarts).
+`ProtectSystem=strict` with `ReadWritePaths=/data/db /data/archive`: the process
+can write nowhere else, so a new state directory needs a unit edit, not just a
+`mkdir`. The base unit sets `IP=127.0.0.1`, `PORT=8080`, `TENDER_DB`,
+`TENDER_ARCHIVE`; the operator secret comes from the `admin.conf` drop-in — see
+[Ingestion](#ingestion).
 
 Anything writing to `/data` outside the service (a manual fetch run, say) must
 leave the files owned by `tenderdb`, or the service loses access:
@@ -85,10 +109,16 @@ service to load data.
 
 Two ways jobs start:
 
-- **Scheduler** — every weekday at 09:35 Europe/Berlin it probes the newest TED
-  daily forward (and re-fetches the current day for the 09:30 finality window),
-  fetches the DÖE completed day (T+1), then processes and projects. No operator
-  action needed for the daily cadence.
+- **Scheduler** — at 09:35 Europe/Berlin it enqueues the daily pipeline: on
+  Mon–Fri a TED probe forward + re-fetch of the current day (the 09:30 CET
+  finality window) and a `process`; every day a DÖE completed-day fetch (T+1,
+  yesterday's date) + `process`; then one `project` that folds whatever landed.
+  No operator action needed. Confirm a run fired by looking for a `probe` job
+  (and the trailing `fetch`/`process`/`project`) with that morning's
+  `started_at` in `GET /admin/jobs` → `recent[]`, or on the dashboard's
+  Ingestion panel. The scheduler is a plain in-process timer (no cron/systemd
+  timer), so it only runs while the service is up — a box that was down at 09:35
+  simply misses that tick; re-drive it by hand via `/admin` if needed.
 - **`/admin` API** — for manual loads, backfills and reprocessing. Gated by a
   preshared operator secret in `TENDER_ADMIN_SECRET`, sent as the
   `X-Admin-Secret` header and compared in constant time. **Unset ⇒ the whole
@@ -103,29 +133,37 @@ Two ways jobs start:
 
 ### The operator secret
 
-Generated once and stored on the box, never committed:
+Live setup on the box (never committed): the secret is an `EnvironmentFile`
+holding one `KEY=VALUE` line, kept out of the main unit so it never appears in
+`git` or `systemctl cat` of the checked-in unit.
+
+```
+/root/tender-admin-secret                          # mode 600, root-owned:
+    TENDER_ADMIN_SECRET=<64 hex chars>
+
+/etc/systemd/system/tender-db.service.d/admin.conf # the drop-in that wires it:
+    [Service]
+    EnvironmentFile=/root/tender-admin-secret
+```
+
+systemd reads the `EnvironmentFile` as root at start, before dropping to the
+`tenderdb` user, so the `0600 root` file stays unreadable to the service user
+and everyone else. First-time setup:
 
 ```sh
-# On the VPS, first-time setup:
-openssl rand -hex 32 > /root/tender-admin-secret
+# On the VPS:
+printf 'TENDER_ADMIN_SECRET=%s\n' "$(openssl rand -hex 32)" > /root/tender-admin-secret
 chmod 600 /root/tender-admin-secret
-```
-
-Wire it into the systemd unit so the service reads it at start
-(`/etc/systemd/system/tender-db.service`, `[Service]` section) — either inline
-or, to keep it out of `systemctl show`, via a credential file:
-
-```ini
-Environment=TENDER_ADMIN_SECRET=<paste the hex here>
-# or: EnvironmentFile=/root/tender-admin-secret   (as KEY=VALUE)
-```
-
-```sh
+mkdir -p /etc/systemd/system/tender-db.service.d
+printf '[Service]\nEnvironmentFile=/root/tender-admin-secret\n' \
+  > /etc/systemd/system/tender-db.service.d/admin.conf
 systemctl daemon-reload && systemctl restart tender-db
 journalctl -u tender-db -n5   # logs "admin: /admin API enabled"
 ```
 
-Rotating it is an edit + `systemctl restart`; the secret lives only on the box.
+Rotating it is an edit of the file + `systemctl restart tender-db`; the secret
+lives only on the box. Unset it (remove the drop-in) and the entire `/admin`
+surface goes back to answering 404.
 
 ### Driving it (examples)
 
@@ -155,11 +193,50 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
 ```
 
-Job payloads: `{kind: fetch|process|project|backfill, source?, package_kind?,
-period?, range?, rebuild?, refetch?}`. `process`/`project` accept no period to
-run the whole source. `refetch:true` re-downloads a known package (finality
-re-check). Jobs run **one at a time** in enqueue order — the writer is single
-anyway — so a fetch → process → project sequence lands in order.
+Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
+fetch|process|project|backfill, source?, package_kind?, period?, range?,
+rebuild?, refetch?}`. Defaults: `source` `ted`, `package_kind` `daily`.
+`process`/`project` accept no period to run the whole source (`process` with no
+`period` re-parses every archived package of that source). `refetch:true`
+re-downloads a known package (finality re-check). `project` with `rebuild:true`
+drops and re-derives the whole canonical layer. `backfill` needs a `source`; for
+`ted` it also needs a monthly `range` (`["2024-01","2024-12"]`), for `doe` the
+range is optional (defaults to the whole 2022-12→now archive). A backfill fans
+into one `fetch` per month, then one whole-source `process`, then one `project`,
+so progress and cancellation stay per-package. Jobs run **one at a time** in
+enqueue order — the writer is single anyway — so a fetch → process → project
+sequence lands in order.
+
+### Quarantine triage
+
+A notice whose file matches no mapping profile (or fails a completeness check)
+is **quarantined** rather than dropped (ADR-0004): the raw payload and a reason
+are kept, and the rest of the package still ingests. Quarantine is the parser's
+backlog, not data loss — the archive is intact, so a fixed parser recovers every
+quarantined notice by reprocessing.
+
+Triage loop:
+
+1. **See it.** The dashboard (`/`, public) Data-quality panel shows the
+   quarantine total, a breakdown by reason, and a recent sample (50). The same
+   numbers ride each `process` job's `counts` line in `GET /admin/jobs` →
+   `recent[]` (e.g. `… 3702 parsed, 15 quarantined …`).
+2. **Diagnose.** Read the reason and the sampled payloads to find the unmapped
+   element / customization ID / era the profile doesn't yet handle.
+3. **Fix the parser** in `crates/ingest` (a new profile mapping, an ignore rule,
+   or an inventory extension), with a fixture test, and **deploy** it
+   (`./deploy.sh`).
+4. **Reprocess.** Enqueue a `process` for the affected source (no `period` =
+   the whole source) then a `project`. Processing re-parses from the archive and
+   never re-downloads, so this is cheap and idempotent; quarantined notices that
+   the new parser understands become canonical, and the quarantine count drops.
+
+```sh
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"process","source":"ted"}' $BASE/admin/jobs
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"project"}' $BASE/admin/jobs
+```
 
 ## Logs
 
@@ -191,17 +268,35 @@ nginx -t && systemctl reload nginx
 
 ## Disk watch
 
-The DB does not fit the 75 GB root disk — DB and archive both live on the
-500 GB volume at `/data`. Watch it, especially during backfill:
+Two filesystems, watched separately:
+
+- **`/data` — the 500 GB Hetzner volume**, the one that grows with ingestion.
+  It carries both the raw archive and the database, because the parsed DB alone
+  will not fit the 75 GB root disk (text satellites dominate — pilot-sizing.md).
+  - `/data/archive/<source>/…` — raw fetched packages, immutable, append-only.
+    TED under `ted/{daily,monthly}/`, DÖE under `doe/{daily,monthly}/`.
+  - `/data/db/tender-db.db` (+ `-wal`) — the Turso database.
+- **`/` — the 75 GB root disk.** Pressure here is almost always the nix store
+  (build artifacts + old bundles), not application data.
 
 ```sh
 df -h /data /
-du -sh /data/db /data/archive
+du -sh /data/archive/* /data/db/*        # where the volume budget is going
 ```
 
-Root disk pressure is usually the nix store; reclaim with
-`nix store gc` (this deletes unreferenced store paths, including old bundles you
-might want for rollback — switch the symlink back first if unsure).
+A full backfill is the thing to plan for: the TED archive is the big one, and a
+complete DÖE backfill is ~3 GB of ZIPs plus the projected rows. At a few percent
+of 500 GB today there is ample headroom, but backfills are where it moves — keep
+an eye on `df /data` while one runs.
+
+Root-disk reclaim: `nix store gc` deletes unreferenced store paths — **including
+old bundles you might want for a rollback**, so switch the symlink to the bundle
+you want to keep before running it, or verify the current one is safe.
+
+Note that nothing outside the service writes to `/data/db`: turso is
+single-process, so the running server holds the database open exclusively (see
+the Ingestion rule above). A scratch `*.db` may appear here from earlier
+dev/verification work — harmless, but never point a CLI at the production file.
 
 ## Backups
 
@@ -212,3 +307,23 @@ tradeoff changes, the checkpoint+copy runbook (pause writer →
 `wal_checkpoint(TRUNCATE)` → file copy, verified with `integrity_check` + row
 counts) is in `docs/research/turso-scale.md`. `VACUUM INTO` is forbidden at
 scale (OOM).
+
+## Open items
+
+Known gaps in the production setup, tracked here so they aren't rediscovered:
+
+- **Reboot survival is unexercised.** The unit is `enabled` (survives reboot by
+  configuration), but no actual reboot has been done to confirm the service, the
+  `/data` mount, and nginx all come back clean. Needs a deliberate quiet window —
+  do it when no ingestion/backfill is in flight, then verify `systemctl status
+  tender-db` and `curl https://tenders.zebreus.click/health`.
+- **`/health` and `/_source` report `rev: dev`.** The binary's revision comes
+  from `COMMIT_SHA` at build time (`crates/app/src/v1/mod.rs`, `REV`); `deploy.sh`
+  knows the rev and writes `/opt/tender-db/deployed-rev`, but it isn't threaded
+  into the `nix build`, so the compiled-in value stays `dev`. Until fixed, read
+  the deployed rev from `/opt/tender-db/deployed-rev`, not from `/health`. Small
+  future fix: pass the rev into the flake build and on to `COMMIT_SHA`.
+- **AGPL source offer is a written offer, not a public repo.** `/_source`
+  currently tells a network user to request the Corresponding Source from the
+  operator (AGPL §13 permits this). Publishing the repo at a stable public URL
+  and pointing `/_source` at it is cleaner — a Lennart decision, pending.
