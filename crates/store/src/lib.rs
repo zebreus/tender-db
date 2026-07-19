@@ -14,7 +14,8 @@ pub mod read;
 pub use turso;
 
 pub use canonical::{
-    Applied, Change, Fact, Identifier, LotState, Mention, NoticeRef, TenderProjection, TenderVersion,
+    Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
+    Mention, NoticeRef, Round, TenderProjection, TenderVersion,
 };
 pub use read::{Filter, Reader, Readers, Status};
 

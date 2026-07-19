@@ -34,7 +34,10 @@
 //! which has both the old and the new version in hand.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use store::{Db, Fact, Identifier, LotState, Mention, NoticeValue, Parsed, TenderProjection, TenderVersion};
+use store::{
+    BidParty, BidState, ContractState, Db, Fact, Identifier, LotResultState, LotState, Mention,
+    NoticeValue, Parsed, Round, TenderProjection, TenderVersion,
+};
 
 /// What a projection run did.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -73,7 +76,13 @@ const DATES: &[(&str, &str)] = &[
 /// Lots with a kind flag (CONTEXT.md).
 const LOT_KINDS: &[&str] = &["Lot", "LotsGroup", "Part"];
 
+/// The results-layer entity sections (docs/research/eforms-data-model.md §2):
+/// LotResult = the award decision, LotTender = a Bid, TenderingParty = the
+/// consortium behind a Bid, SettledContract = a Contract.
+const RESULT_KINDS: &[&str] = &["LotResult", "LotTender", "TenderingParty", "SettledContract"];
+
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
+const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
 const PUBLICATION_DATE_FIELD: &str = "OPP-012-notice";
 const DISPATCH_DATE_FIELD: &str = "BT-05(a)-notice";
 const SUBTYPE_FIELD: &str = "OPP-070-notice";
@@ -125,12 +134,21 @@ struct NoticeState {
     procedure_key: Option<String>,
     published_at: i64,
     subtype: Option<String>,
+    /// BT-701, the source's logical notice id — corrections republish under it.
+    logical_id: Option<String>,
+    /// A change notice (it carries `efac:Changes` sections): what it publishes
+    /// corrects an earlier notice rather than adding to the chain's results.
+    is_correction: bool,
     /// Tender-scoped facts, and one bucket per lot the notice published.
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
     /// Role references awaiting their canonical organization id: (scope,
     /// role, ORG section id).
     roles: Vec<(Scope, String, String)>,
+    /// The notice's results graph, awaiting organization resolution.
+    raw_results: RawResults,
+    /// The bound results — `Some` exactly when the notice published any.
+    round: Option<Round>,
 }
 
 /// Where a value belongs: the Tender itself, or one of its Lots.
@@ -155,7 +173,7 @@ impl NoticeState {
             .collect();
 
         let mut facts = BTreeSet::new();
-        let mut roles = Vec::new();
+        let mut raw_roles = Vec::new();
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let stem = stem(&value.field_id);
@@ -180,7 +198,7 @@ impl NoticeState {
                 }
                 NoticeValue::Id { value: target, is_ref: true, .. } => {
                     if let Some(role) = role_name(&value.field_id) {
-                        roles.push((scope.clone(), role, target.clone()));
+                        raw_roles.push((scope.clone(), value.section_id.clone(), role, target.clone()));
                     }
                     None
                 }
@@ -200,6 +218,24 @@ impl NoticeState {
             }
         }
 
+        let raw_results = read_results(&sections, parsed);
+        // Award-side roles sit under the results graph, which has no Lot
+        // ancestor — resolve their Lot through the graph instead (issue 04's
+        // noted limitation, closed here).
+        let roles = raw_roles
+            .into_iter()
+            .map(|(scope, source, role, target)| {
+                let scope = match scope {
+                    Scope::Tender => match raw_results.lot_of(&sections, &source) {
+                        Some(key) if lots.contains_key(&key) => Scope::Lot(key),
+                        _ => Scope::Tender,
+                    },
+                    lot => lot,
+                };
+                (scope, role, target)
+            })
+            .collect();
+
         NoticeState {
             notice_id: notice.id,
             source: notice.source.clone(),
@@ -209,9 +245,13 @@ impl NoticeState {
                 .or_else(|| first_date(parsed, DISPATCH_DATE_FIELD))
                 .unwrap_or(0),
             subtype: first_code(parsed, SUBTYPE_FIELD),
+            logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
+            is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
             lots: lots.into_values().collect(),
             roles,
+            raw_results,
+            round: None,
         }
     }
 
@@ -276,14 +316,17 @@ impl NoticeState {
             .collect()
     }
 
-    /// Turn the notice-local role references into party facts now that each
-    /// mention has a canonical Organization.
+    /// Turn the notice-local role references into party facts — and the
+    /// results graph into a bound Round — now that each mention has a
+    /// canonical Organization.
     fn bind_organizations(&mut self, mentions: &[Mention], ids: &[i64]) {
         let by_section: HashMap<&str, i64> = mentions
             .iter()
             .map(|m| m.section_id.as_str())
             .zip(ids.iter().copied())
             .collect();
+        self.round = (!self.raw_results.is_empty())
+            .then(|| self.raw_results.bind(self.notice_id, self.logical_id.clone(), &by_section));
         for (scope, role, target) in std::mem::take(&mut self.roles) {
             // A reference to something that is not an Organization section (a
             // touchpoint, a lot, a result) is notice-layer detail, not a party.
@@ -351,7 +394,7 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
 }
 
 /// Resolve the chain: each version is the notice's own values laid over the
-/// previous version's, per field.
+/// previous version's, per field — except results, which are *additive*.
 fn fold(chain: &[NoticeState]) -> Vec<TenderVersion> {
     let mut versions: Vec<TenderVersion> = Vec::with_capacity(chain.len());
     for state in chain {
@@ -371,6 +414,20 @@ fn fold(chain: &[NoticeState]) -> Vec<TenderVersion> {
         }
         lots.sort_by(|a, b| a.key.cmp(&b.key));
 
+        // Results accumulate: a framework/DPS round or a tranche CAN adds its
+        // round and never deletes an earlier one (ted-empirical-checks.md §1:
+        // v(n+1) does NOT contain v(n)'s content — the 24/24 and 37/37 union
+        // pattern). The one exception is a correction — a change notice
+        // republishing the same logical notice (BT-701 + efac:Changes) — which
+        // replaces the round it corrects instead of duplicating it.
+        let mut rounds = previous.map(|p| p.rounds.clone()).unwrap_or_default();
+        if let Some(round) = &state.round {
+            if state.is_correction && round.logical_notice_id.is_some() {
+                rounds.retain(|r| r.logical_notice_id != round.logical_notice_id);
+            }
+            rounds.push(round.clone());
+        }
+
         versions.push(TenderVersion {
             caused_by_notice_id: state.notice_id,
             published_at: state.published_at,
@@ -378,6 +435,7 @@ fn fold(chain: &[NoticeState]) -> Vec<TenderVersion> {
             publication_id: state.publication_id.clone(),
             facts,
             lots,
+            rounds,
         });
     }
     versions
@@ -420,6 +478,329 @@ fn enclosing<'a>(
         current = section.parent.as_deref()?;
     }
     None
+}
+
+// ------------------------------------------------------------------- results
+
+/// The results graph of one notice, read in the notice's own vocabulary
+/// (section keys), before organizations are resolved. eForms links everything
+/// by notice-local id-refs: LotResult → Lot/Bid/Contract, Bid (LotTender) →
+/// Lot/TenderingParty, Contract → Bid, TenderingParty → Organizations.
+#[derive(Default)]
+struct RawResults {
+    lot_results: Vec<RawLotResult>,
+    bids: Vec<RawBid>,
+    contracts: Vec<RawContract>,
+    parties: Vec<RawParty>,
+}
+
+#[derive(Default)]
+struct RawLotResult {
+    key: String,
+    lot_key: Option<String>,     // BT-13713
+    decision: Option<String>,    // BT-142
+    reason: Option<String>,      // BT-144
+    bid_refs: Vec<String>,       // OPT-320
+    contract_refs: Vec<String>,  // OPT-315
+    statistics: Vec<(String, i64)>, // BT-760 code, BT-759 count
+}
+
+#[derive(Default)]
+struct RawBid {
+    key: String,
+    lot_key: Option<String>,   // BT-13714
+    party_ref: Option<String>, // OPT-310
+    cents: Option<i64>,        // BT-720
+    currency: Option<String>,
+}
+
+#[derive(Default)]
+struct RawContract {
+    key: String,
+    buyer_contract_id: Option<String>,  // BT-150
+    concluded: Option<(i64, i64, bool)>, // BT-145
+    bid_refs: Vec<String>,              // BT-3202
+}
+
+#[derive(Default)]
+struct RawParty {
+    key: String,
+    /// (role, ORG section): members via OPT-300-Tenderer, subcontractors via
+    /// OPT-301-Tenderer-SubCont.
+    members: Vec<(String, String)>,
+}
+
+fn read_results(sections: &HashMap<&str, &store::Section>, parsed: &Parsed) -> RawResults {
+    let mut raw = RawResults::default();
+    for s in &parsed.sections {
+        match s.kind.as_str() {
+            "LotResult" => raw.lot_results.push(RawLotResult { key: s.id.clone(), ..RawLotResult::default() }),
+            "LotTender" => raw.bids.push(RawBid { key: s.id.clone(), ..RawBid::default() }),
+            "SettledContract" => raw.contracts.push(RawContract { key: s.id.clone(), ..RawContract::default() }),
+            "TenderingParty" => raw.parties.push(RawParty { key: s.id.clone(), ..RawParty::default() }),
+            _ => {}
+        }
+    }
+
+    // BT-759 (count) and BT-760 (type) pair inside one ReceivedSubmissions
+    // block; pair by that block's section, then attach to the enclosing result.
+    let mut stats: BTreeMap<&str, (Option<&str>, Option<i64>, &str)> = BTreeMap::new();
+    for row in &parsed.values {
+        let Some(owner) = enclosing(sections, &row.section_id, RESULT_KINDS) else { continue };
+        match sections[owner].kind.as_str() {
+            "LotResult" => {
+                let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == owner) else { continue };
+                match (stem(&row.field_id), &row.value) {
+                    ("BT-142", NoticeValue::Code { code, .. }) => r.decision = Some(code.clone()),
+                    ("BT-144", NoticeValue::Code { code, .. }) => r.reason = Some(code.clone()),
+                    ("BT-13713", NoticeValue::Id { value, .. }) => r.lot_key = Some(value.clone()),
+                    ("OPT-320", NoticeValue::Id { value, .. }) => r.bid_refs.push(value.clone()),
+                    ("OPT-315", NoticeValue::Id { value, .. }) => r.contract_refs.push(value.clone()),
+                    ("BT-759", NoticeValue::Number { value, .. }) => {
+                        stats.entry(row.section_id.as_str()).or_insert((None, None, owner)).1 =
+                            Some(*value as i64);
+                    }
+                    ("BT-759", NoticeValue::Integer(value)) => {
+                        stats.entry(row.section_id.as_str()).or_insert((None, None, owner)).1 =
+                            Some(*value);
+                    }
+                    ("BT-760", NoticeValue::Code { code, .. }) => {
+                        stats.entry(row.section_id.as_str()).or_insert((None, None, owner)).0 =
+                            Some(code.as_str());
+                    }
+                    _ => {}
+                }
+            }
+            "LotTender" => {
+                let Some(b) = raw.bids.iter_mut().find(|b| b.key == owner) else { continue };
+                match (stem(&row.field_id), &row.value) {
+                    ("BT-720", NoticeValue::Amount { cents, currency }) => {
+                        b.cents = Some(*cents);
+                        b.currency = Some(currency.clone());
+                    }
+                    ("BT-13714", NoticeValue::Id { value, .. }) => b.lot_key = Some(value.clone()),
+                    ("OPT-310", NoticeValue::Id { value, .. }) => b.party_ref = Some(value.clone()),
+                    _ => {}
+                }
+            }
+            "SettledContract" => {
+                let Some(c) = raw.contracts.iter_mut().find(|c| c.key == owner) else { continue };
+                match (stem(&row.field_id), &row.value) {
+                    ("BT-150", NoticeValue::Id { value, .. }) => {
+                        c.buyer_contract_id = Some(value.clone());
+                    }
+                    ("BT-145", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+                        c.concluded = Some((*utc_seconds, *offset_minutes, *has_time));
+                    }
+                    ("BT-3202", NoticeValue::Id { value, .. }) => c.bid_refs.push(value.clone()),
+                    _ => {}
+                }
+            }
+            "TenderingParty" => {
+                let Some(p) = raw.parties.iter_mut().find(|p| p.key == owner) else { continue };
+                match (row.field_id.as_str(), &row.value) {
+                    ("OPT-300-Tenderer", NoticeValue::Id { value, .. }) => {
+                        p.members.push(("tenderer".to_owned(), value.clone()));
+                    }
+                    ("OPT-301-Tenderer-SubCont", NoticeValue::Id { value, .. }) => {
+                        p.members.push(("subcontractor".to_owned(), value.clone()));
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+    }
+    for (code, count, owner) in stats.into_values() {
+        if let (Some(code), Some(count)) = (code, count)
+            && let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == owner)
+        {
+            r.statistics.push((code.to_owned(), count));
+        }
+    }
+    raw
+}
+
+impl RawResults {
+    fn is_empty(&self) -> bool {
+        self.lot_results.is_empty() && self.bids.is_empty() && self.contracts.is_empty()
+    }
+
+    fn bid(&self, key: &str) -> Option<&RawBid> {
+        self.bids.iter().find(|b| b.key == key)
+    }
+
+    /// The Lot a results entity is about, through the notice's own graph —
+    /// `None` when it does not resolve to exactly one lot.
+    fn entity_lot(&self, key: &str) -> Option<&str> {
+        if let Some(r) = self.lot_results.iter().find(|r| r.key == key) {
+            return r.lot_key.as_deref();
+        }
+        if let Some(b) = self.bid(key) {
+            return b.lot_key.as_deref();
+        }
+        if self.parties.iter().any(|p| p.key == key) {
+            return unique(
+                self.bids
+                    .iter()
+                    .filter(|b| b.party_ref.as_deref() == Some(key))
+                    .filter_map(|b| b.lot_key.as_deref()),
+            );
+        }
+        if let Some(c) = self.contracts.iter().find(|c| c.key == key) {
+            return unique(
+                c.bid_refs.iter().filter_map(|r| self.bid(r)).filter_map(|b| b.lot_key.as_deref()),
+            );
+        }
+        None
+    }
+
+    /// The Lot scope of an award-side role reference: the reference's nearest
+    /// enclosing results entity, resolved to its lot.
+    fn lot_of(&self, sections: &HashMap<&str, &store::Section>, source: &str) -> Option<String> {
+        let entity = enclosing(sections, source, RESULT_KINDS)?;
+        self.entity_lot(entity).map(str::to_owned)
+    }
+
+    /// Bind the graph onto canonical Organizations and resolve each result's
+    /// winners and awarded value.
+    fn bind(
+        &self,
+        notice_id: i64,
+        logical_notice_id: Option<String>,
+        orgs: &HashMap<&str, i64>,
+    ) -> Round {
+        let members_of = |party_ref: Option<&str>| -> Vec<BidParty> {
+            let mut parties: Vec<BidParty> = party_ref
+                .and_then(|k| self.parties.iter().find(|p| p.key == k))
+                .map(|p| {
+                    p.members
+                        .iter()
+                        .filter_map(|(role, section)| {
+                            orgs.get(section.as_str()).map(|&organization_id| BidParty {
+                                role: role.clone(),
+                                organization_id,
+                                section_id: section.clone(),
+                            })
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            parties.sort();
+            parties.dedup();
+            parties
+        };
+
+        let bids = self
+            .bids
+            .iter()
+            .map(|b| BidState {
+                key: b.key.clone(),
+                lot_key: b.lot_key.clone(),
+                cents: b.cents,
+                currency: b.currency.clone(),
+                parties: members_of(b.party_ref.as_deref()),
+            })
+            .collect();
+
+        let contracts = self
+            .contracts
+            .iter()
+            .map(|c| {
+                // A contract's value is the value of the Bid(s) it settled —
+                // eForms contracts carry no value of their own.
+                let (cents, currency) =
+                    single_currency_total(c.bid_refs.iter().filter_map(|r| self.bid(r)));
+                ContractState {
+                    key: c.key.clone(),
+                    buyer_contract_id: c.buyer_contract_id.clone(),
+                    concluded: c.concluded,
+                    cents,
+                    currency,
+                }
+            })
+            .collect();
+
+        let lot_results = self
+            .lot_results
+            .iter()
+            .map(|r| {
+                // The winning Bids: the ones this result's contracts settled —
+                // real eSenders list *all* received tenders under OPT-320, so a
+                // settled contract is the stronger winner signal — falling back
+                // to the result's own tender references when no contract is
+                // linked yet (framework awards publish winners without one).
+                let contract_bids: Vec<&RawBid> = r
+                    .contract_refs
+                    .iter()
+                    .filter_map(|cr| self.contracts.iter().find(|c| &c.key == cr))
+                    .flat_map(|c| c.bid_refs.iter())
+                    .filter_map(|br| self.bid(br))
+                    .collect();
+                let winning: Vec<&RawBid> = if contract_bids.is_empty() {
+                    r.bid_refs.iter().filter_map(|br| self.bid(br)).collect()
+                } else {
+                    contract_bids
+                };
+                let (cents, currency) = single_currency_total(winning.iter().copied());
+                let mut winners: Vec<i64> = if r.decision.as_deref() == Some("selec-w") {
+                    winning
+                        .iter()
+                        .flat_map(|b| members_of(b.party_ref.as_deref()))
+                        .filter(|p| p.role == "tenderer")
+                        .map(|p| p.organization_id)
+                        .collect()
+                } else {
+                    Vec::new()
+                };
+                winners.sort_unstable();
+                winners.dedup();
+                LotResultState {
+                    key: r.key.clone(),
+                    lot_key: r.lot_key.clone(),
+                    decision: r.decision.clone(),
+                    reason: r.reason.clone(),
+                    awarded_cents: cents,
+                    awarded_currency: currency,
+                    winners,
+                    statistics: r.statistics.clone(),
+                }
+            })
+            .collect();
+
+        Round { notice_id, logical_notice_id, lot_results, bids, contracts }
+    }
+}
+
+/// Sum bid values when they agree on one currency — anything mixed yields no
+/// value rather than a wrong one.
+fn single_currency_total<'a>(
+    bids: impl Iterator<Item = &'a RawBid>,
+) -> (Option<i64>, Option<String>) {
+    let mut total = 0;
+    let mut currency: Option<&str> = None;
+    for bid in bids {
+        let (Some(cents), Some(c)) = (bid.cents, bid.currency.as_deref()) else { continue };
+        if currency.is_some_and(|have| have != c) {
+            return (None, None);
+        }
+        currency = Some(c);
+        total += cents;
+    }
+    (currency.map(|_| total), currency.map(str::to_owned))
+}
+
+/// The single distinct item of an iterator, or `None`.
+fn unique<'a>(items: impl Iterator<Item = &'a str>) -> Option<&'a str> {
+    let mut found = None;
+    for item in items {
+        match found {
+            None => found = Some(item),
+            Some(have) if have == item => {}
+            Some(_) => return None,
+        }
+    }
+    found
 }
 
 /// The business-term stem of a source field id: `BT-21-Lot` → `BT-21`,

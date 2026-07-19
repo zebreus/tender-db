@@ -157,6 +157,8 @@ pub struct Params {
     country: Option<String>,
     cpv: Option<String>,
     buyer: Option<i64>,
+    /// Tenders where this Organization won at least one Lot.
+    winner: Option<i64>,
     status: Option<String>,
     min_value: Option<i64>,
     max_value: Option<i64>,
@@ -189,6 +191,7 @@ impl Params {
             country: self.country.clone(),
             cpv: self.cpv.clone(),
             buyer: self.buyer,
+            winner: self.winner,
             status,
             min_value: self.min_value,
             max_value: self.max_value,

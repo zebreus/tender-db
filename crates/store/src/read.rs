@@ -102,6 +102,8 @@ pub struct Filter {
     pub cpv: Option<String>,
     /// Canonical Organization id in a buyer role.
     pub buyer: Option<i64>,
+    /// Canonical Organization id that won at least one Lot of the Tender.
+    pub winner: Option<i64>,
     pub status: Option<Status>,
     pub min_value: Option<i64>,
     pub max_value: Option<i64>,
@@ -254,6 +256,53 @@ pub struct VersionRow {
     pub caused_by_notice_id: i64,
 }
 
+/// An Organization linked from the results layer, with the linking role.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ResultOrgRow {
+    pub role: String, // winner | tenderer | subcontractor
+    pub organization_id: i64,
+    pub organization_name: String,
+}
+
+/// One award decision (lot result) in the Tender's current state. Results are
+/// keyed by their origin notice — framework/DPS rounds accumulate, so several
+/// results can name the same (round-local) lot key without being the same
+/// decision.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LotResultRow {
+    pub notice_id: i64,
+    pub key: String,
+    pub lot_key: Option<String>,
+    pub decision: Option<String>,
+    pub reason: Option<String>,
+    pub awarded_cents: Option<i64>,
+    pub awarded_currency: Option<String>,
+    pub winners: Vec<ResultOrgRow>,
+    pub statistics: Vec<(String, i64)>,
+}
+
+/// One Bid (eForms LotTender) in the Tender's current state.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BidRow {
+    pub notice_id: i64,
+    pub key: String,
+    pub lot_key: Option<String>,
+    pub cents: Option<i64>,
+    pub currency: Option<String>,
+    pub parties: Vec<ResultOrgRow>,
+}
+
+/// One settled Contract in the Tender's current state.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ContractRow {
+    pub notice_id: i64,
+    pub key: String,
+    pub buyer_contract_id: Option<String>,
+    pub concluded: Option<Stamp>,
+    pub cents: Option<i64>,
+    pub currency: Option<String>,
+}
+
 /// Everything `/v1/tenders/{id}` answers: the current state plus the evidence
 /// trail behind it.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -265,6 +314,9 @@ pub struct TenderDetail {
     pub classifications: Vec<FactRow>,
     pub parties: Vec<PartyRow>,
     pub lots: Vec<LotRow>,
+    pub lot_results: Vec<LotResultRow>,
+    pub bids: Vec<BidRow>,
+    pub contracts: Vec<ContractRow>,
     pub versions: Vec<VersionRow>,
 }
 
@@ -309,6 +361,14 @@ fn version_predicates(q: &mut Query, f: &Filter) {
                            WHERE p.tender_id = t.id AND p.seq = v.seq
                              AND p.organization_id = ? AND p.role LIKE '%Buyer%')",
             [Value::Integer(buyer)],
+        );
+    }
+    if let Some(winner) = f.winner {
+        q.push(
+            " AND EXISTS (SELECT 1 FROM tender_version_result_winners w
+                           WHERE w.tender_id = t.id AND w.seq = v.seq
+                             AND w.organization_id = ?)",
+            [Value::Integer(winner)],
         );
     }
     if let Some(status) = f.status {
@@ -551,7 +611,157 @@ pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<T
     }
 
     let lots = lots_of(conn, id).await?;
-    Ok(Some(TenderDetail { tender, texts, amounts, dates, classifications, parties, lots, versions }))
+    let (lot_results, bids, contracts) = results_of(conn, id, tender.seq).await?;
+    Ok(Some(TenderDetail {
+        tender,
+        texts,
+        amounts,
+        dates,
+        classifications,
+        parties,
+        lots,
+        lot_results,
+        bids,
+        contracts,
+        versions,
+    }))
+}
+
+/// The results layer at one version: every accumulated round's lot results
+/// (with winners and statistics), Bids (with their consortium), and Contracts.
+async fn results_of(
+    conn: &Connection,
+    tender_id: i64,
+    seq: i64,
+) -> turso::Result<(Vec<LotResultRow>, Vec<BidRow>, Vec<ContractRow>)> {
+    let key = (Value::Integer(tender_id), Value::Integer(seq));
+    let lot_key = "(SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id)";
+
+    let mut rows = conn
+        .query(
+            &format!(
+                "SELECT s.lot_result_id, r.notice_id, r.result_key, {lot_key},
+                        s.decision, s.reason, s.awarded_cents, s.awarded_currency
+                   FROM tender_version_lot_results s
+                   JOIN lot_results r ON r.id = s.lot_result_id
+                  WHERE s.tender_id = ? AND s.seq = ? ORDER BY s.lot_result_id"
+            ),
+            key.clone(),
+        )
+        .await?;
+    let mut lot_results = Vec::new();
+    let mut result_index = std::collections::HashMap::new();
+    while let Some(row) = rows.next().await? {
+        result_index.insert(int(&row, 0), lot_results.len());
+        lot_results.push(LotResultRow {
+            notice_id: int(&row, 1),
+            key: text(&row, 2),
+            lot_key: opt_text_of(&row, 3),
+            decision: opt_text_of(&row, 4),
+            reason: opt_text_of(&row, 5),
+            awarded_cents: opt_int_of(&row, 6),
+            awarded_currency: opt_text_of(&row, 7),
+            winners: Vec::new(),
+            statistics: Vec::new(),
+        });
+    }
+    let mut rows = conn
+        .query(
+            "SELECT w.lot_result_id, w.organization_id, o.name
+               FROM tender_version_result_winners w
+               JOIN organizations o ON o.id = w.organization_id
+              WHERE w.tender_id = ? AND w.seq = ?",
+            key.clone(),
+        )
+        .await?;
+    while let Some(row) = rows.next().await? {
+        if let Some(&i) = result_index.get(&int(&row, 0)) {
+            lot_results[i].winners.push(ResultOrgRow {
+                role: "winner".to_owned(),
+                organization_id: int(&row, 1),
+                organization_name: text(&row, 2),
+            });
+        }
+    }
+    let mut rows = conn
+        .query(
+            "SELECT lot_result_id, kind, count FROM tender_version_result_stats
+              WHERE tender_id = ? AND seq = ?",
+            key.clone(),
+        )
+        .await?;
+    while let Some(row) = rows.next().await? {
+        if let Some(&i) = result_index.get(&int(&row, 0)) {
+            lot_results[i].statistics.push((text(&row, 1), int(&row, 2)));
+        }
+    }
+
+    let mut rows = conn
+        .query(
+            &format!(
+                "SELECT s.bid_id, b.notice_id, b.bid_key, {lot_key}, s.cents, s.currency
+                   FROM tender_version_bids s
+                   JOIN bids b ON b.id = s.bid_id
+                  WHERE s.tender_id = ? AND s.seq = ? ORDER BY s.bid_id"
+            ),
+            key.clone(),
+        )
+        .await?;
+    let mut bids = Vec::new();
+    let mut bid_index = std::collections::HashMap::new();
+    while let Some(row) = rows.next().await? {
+        bid_index.insert(int(&row, 0), bids.len());
+        bids.push(BidRow {
+            notice_id: int(&row, 1),
+            key: text(&row, 2),
+            lot_key: opt_text_of(&row, 3),
+            cents: opt_int_of(&row, 4),
+            currency: opt_text_of(&row, 5),
+            parties: Vec::new(),
+        });
+    }
+    let mut rows = conn
+        .query(
+            "SELECT p.bid_id, p.role, p.organization_id, o.name
+               FROM tender_version_bid_parties p
+               JOIN organizations o ON o.id = p.organization_id
+              WHERE p.tender_id = ? AND p.seq = ?",
+            key.clone(),
+        )
+        .await?;
+    while let Some(row) = rows.next().await? {
+        if let Some(&i) = bid_index.get(&int(&row, 0)) {
+            bids[i].parties.push(ResultOrgRow {
+                role: text(&row, 1),
+                organization_id: int(&row, 2),
+                organization_name: text(&row, 3),
+            });
+        }
+    }
+
+    let mut rows = conn
+        .query(
+            "SELECT c.notice_id, c.contract_key, s.buyer_contract_id,
+                    s.concluded_utc, s.concluded_offset, s.concluded_has_time,
+                    s.cents, s.currency
+               FROM tender_version_contracts s
+               JOIN contracts c ON c.id = s.contract_id
+              WHERE s.tender_id = ? AND s.seq = ? ORDER BY s.contract_id",
+            key,
+        )
+        .await?;
+    let mut contracts = Vec::new();
+    while let Some(row) = rows.next().await? {
+        contracts.push(ContractRow {
+            notice_id: int(&row, 0),
+            key: text(&row, 1),
+            buyer_contract_id: opt_text_of(&row, 2),
+            concluded: stamp(&row, 3),
+            cents: opt_int_of(&row, 6),
+            currency: opt_text_of(&row, 7),
+        });
+    }
+    Ok((lot_results, bids, contracts))
 }
 
 fn blank() -> FactRow {
