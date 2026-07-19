@@ -4,18 +4,11 @@
 //! the WASM client.
 
 use dioxus::prelude::*;
-use serde::{Deserialize, Serialize};
-
-/// A public tender, as served to clients.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Tender {
-    pub id: i64,
-    pub title: String,
-}
+use model::Tender;
 
 /// All tenders, newest first.
 #[get("/api/tenders")]
 pub async fn list_tenders() -> ServerFnResult<Vec<Tender>> {
-    let db = crate::db::state().await;
+    let db = store::state().await;
     db.list_tenders().await.map_err(ServerFnError::new)
 }

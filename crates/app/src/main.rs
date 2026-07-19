@@ -8,15 +8,13 @@
 //! dx bundle --platform web -r     # production bundle (server binary + public/)
 //! ```
 //!
-//! Module map:
-//!   - [`api`] — public server functions (the client/server boundary).
-//!   - [`db`]  — server-only Turso persistence.
+//! Workspace map (see the root Cargo.toml): `model` holds the shared domain
+//! types, `store` the server-only Turso persistence; this crate adds [`api`]
+//! (the server-function boundary) and the UI.
 
 use dioxus::prelude::*;
 
 mod api;
-#[cfg(feature = "server")]
-mod db;
 
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 

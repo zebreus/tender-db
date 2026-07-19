@@ -26,8 +26,8 @@ let
 
   craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
 
-  # Only the files the build actually reads: the Cargo manifests/lock, the Rust
-  # sources, and assets/ (the asset! macro needs them at compile time). Keeping
+  # Only the files the build actually reads: the workspace manifests/lock and
+  # the crates (sources + each crate's assets for the asset! macro). Keeping
   # the source minimal means editing docs/flake/nix doesn't bust the build cache.
   # (target/ is already excluded by the flake's git fetcher; this also covers the
   # non-flake/path-fetcher case.)
@@ -36,12 +36,12 @@ let
     fileset = lib.fileset.unions [
       (src + "/Cargo.toml")
       (src + "/Cargo.lock")
-      (src + "/src")
-      (src + "/assets")
+      (src + "/crates")
     ];
   };
 
-  version = (craneLib.crateNameFromCargoToml { cargoToml = src + "/Cargo.toml"; }).version;
+  # The root manifest is a virtual workspace; all member versions inherit from it.
+  version = (lib.importTOML (src + "/Cargo.toml")).workspace.package.version;
 
   commonArgs = {
     src = cleanedSrc;
@@ -56,7 +56,7 @@ let
     commonArgs
     // {
       pname = "tender-db-deps";
-      cargoExtraArgs = "--features server";
+      cargoExtraArgs = "-p tender-db --features server";
       doCheck = false;
     }
   );
@@ -83,7 +83,7 @@ let
       buildPhaseCargoCommand = ''
         export DIOXUS_LOG=error
         export HOME=$TMPDIR
-        dx bundle --platform web --release --offline --out-dir "$PWD/dx-bundle"
+        dx bundle --package tender-db --platform web --release --offline --out-dir "$PWD/dx-bundle"
       '';
 
       # Normalise the layout so $out always has the `server` binary and `public/`
@@ -115,7 +115,7 @@ let
     commonArgs
     // {
       inherit cargoArtifacts;
-      cargoClippyExtraArgs = "--features server --all-targets";
+      cargoClippyExtraArgs = "--workspace --all-targets --features tender-db/server";
     }
   );
 in

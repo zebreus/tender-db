@@ -1,0 +1,22 @@
+# tender-db is a Dioxus *fullstack* app: this crate is compiled by DX into two
+# binaries — a `web` client (WASM) and a `server` (Axum) that renders the initial
+# HTML and hosts the `#[get]`/`#[post]` server functions. Platform-specific code is
+# gated behind the `web` / `server` Cargo features, which DX selects per build.
+[package]
+name = "tender-db"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+dioxus = { workspace = true }
+serde = { workspace = true }
+model = { workspace = true }
+wasm-bindgen = { workspace = true }
+store = { workspace = true, optional = true }
+
+[features]
+default = []
+web = ["dioxus/web"]
+server = ["dioxus/server", "dep:store"]

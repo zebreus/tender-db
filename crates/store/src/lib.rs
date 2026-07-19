@@ -1,10 +1,10 @@
-//! Turso (pure-Rust SQLite) persistence — server feature only.
+//! Turso (pure-Rust SQLite) persistence — server-only by construction (the app
+//! crate pulls this in behind its `server` feature; it never reaches wasm).
 //!
 //! One embedded database file (`TENDER_DB`, default `tender-db.db` in the working
 //! directory — the systemd state dir in production). Accessors live on [`Db`];
 //! the process-wide instance owns a single connection behind a mutex and
 //! serialises access.
-#![cfg(feature = "server")]
 
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, OnceCell};
@@ -65,13 +65,13 @@ impl Db {
     }
 
     /// All tenders, newest first.
-    pub async fn list_tenders(&self) -> turso::Result<Vec<crate::api::Tender>> {
+    pub async fn list_tenders(&self) -> turso::Result<Vec<model::Tender>> {
         let conn = self.conn().await;
         let mut rows = conn.query("SELECT id, title FROM tenders ORDER BY id DESC", ()).await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
             if let (Ok(Value::Integer(id)), Ok(Value::Text(title))) = (row.get_value(0), row.get_value(1)) {
-                out.push(crate::api::Tender { id, title });
+                out.push(model::Tender { id, title });
             }
         }
         Ok(out)
