@@ -111,9 +111,13 @@ explicit `reset` event. Poll endpoint and webhooks consume the same log
 - `/v1/tenders`, `/v1/tenders/{id}`, `/v1/lots`, `/v1/organizations`,
   `/v1/notices`, `/v1/changes?since=`, `/v1/sql` (POST, account), SSE via
   `Accept: text/event-stream` on collection endpoints. JSON, cursor-paginated.
-- SQL gate layers: turso_parser single-SELECT allow-list → `query_only`
-  reader → 10s timeout-by-drop → 10k rows/10MB streaming caps → per-token
-  limits (2 concurrent, 300/h). Never enable ATTACH on serving handles.
+- SQL gate layers: turso_parser single-SELECT allow-list → accounts-table
+  deny (users/api_tokens/sessions share the DB file and must never be
+  SELECTable) → `query_only` reader → 10s timeout with cooperative per-row
+  yields (turso resolves cached work without pending, so a bare
+  timeout-by-drop never fires — issue 07 finding) → 10k rows/10MB streaming
+  caps → per-token limits (2 concurrent, 300/h). Never enable ATTACH on
+  serving handles. Residual gap tracked as issue 17 (own runtime).
 - Auth: argon2id passwords; `tdb_` tokens stored as SHA-256; session cookie
   for the dashboard; `AuthUser`/`Option<AuthUser>` extractors.
 - Standard-Webhooks signatures; retries 30s→daily; disable after sustained
