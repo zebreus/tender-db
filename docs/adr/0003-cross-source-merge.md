@@ -20,3 +20,10 @@ Verified (2026-07-19, docs/research/german-portals.md): oeffentlichevergabe.de
 and TED publish the same procedure under identical notice and procedure UUIDs,
 so for our chosen Sources the strong cross-reference is exact UUID equality —
 no heuristics needed.
+
+Precedence (decided 2026-07-19): per field class — publication-identity
+fields from TED (OJS gazette ids); German national content (national
+codelists, DEX extension fields) from DÖE, the richer original
+(docs/research/eforms-de-profile.md); for shared eForms fields the notice
+with the later dispatch date wins, tie-broken by a fixed source order. Every
+resolved value stays traceable to its Notice.

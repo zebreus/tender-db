@@ -19,3 +19,12 @@ publish those) would freeze the live feed for all users.
 Together with the fields.json completeness test (ADR-0002) this forms the
 field-coverage guarantee: schema gaps are caught statically in CI, ingestion
 gaps are caught at runtime and are visible, recoverable, and counted.
+
+Amendment (2026-07-19, decided with Lennart): completeness is era-scoped. The
+promise is "everything the source era publishes, nothing silently dropped" —
+each mapping profile (text / ted-export-r208 / ted-export-r209 / eforms, plus
+per-CustomizationID eForms profiles) carries its own mapped-or-ignored
+checklist drawn from its own schema, quarantine is strict within that
+profile's universe, and the dashboard reports coverage per profile. Declared
+free-text blobs (text-era bodies) count as mapped text, never as unmapped
+content. See docs/research/ted-legacy-mapping.md §8.

@@ -80,6 +80,12 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   connection, timeout-by-drop, result-size caps, per-user rate limits — turso
   has no read-only open flag or authorizer, so the allow-list is the primary
   wall (docs/research/turso-capabilities.md).
+- SSE is anonymous with a per-IP stream cap (~5); the change log is kept
+  indefinitely but cursors may expire (documented reset path). Webhook
+  secrets are stored plaintext (one-box threat model); delivery is https-only
+  to public addresses (dev-mode escape hatch). Opening rate posture is
+  generous (≈10 rps/IP, SQL 2 concurrent + 300/h per token). Lost password =
+  lost account (no email exists by design). (All resolved 2026-07-19.)
 - Metadata only: the PDF/document attachments of tenders are out of scope for
   now.
 - The dashboard owns the account lifecycle: register, login, generate API
@@ -123,6 +129,15 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   queryable with plain SQL (ADR-0001).
 - Canonical Organization profiles (buyers and bidders) are a deliberate
   product feature, not just normalisation.
+- Every Notice yields a Tender even without linkage identifiers: sources
+  publishing island notices (DÖE sdk-0.1 numeric channel, ~40% of German
+  volume) produce single-notice Tenders, upgradeable by re-projection if
+  linkage ever appears (resolved 2026-07-19).
+- Representation (resolved 2026-07-19): money as INTEGER cents + currency
+  code; timestamps as UTC + original offset; codelist labels English-only
+  (schema supports more); Reviews stay notice-layer-only in v1, Parts are
+  Lots with a kind flag, BRIN notices become minimal Tenders of a distinct
+  kind.
 - Ingestion is strict: a notice with any unmapped content is quarantined whole
   (raw payload kept, reason recorded, reprocessable), never partially or
   silently imported (ADR-0004). The quarantine count is the dashboard's
@@ -157,6 +172,13 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   PK-only-then-index. Turso 0.7.0 trap: an abandoned half-done write
   statement poisons the open transaction — the writer must ROLLBACK after
   any dropped write future.
+- Deployment (resolved 2026-07-19): the VPS stays Ubuntu, running the
+  flake-built bundle under a hardened systemd unit (ADR-0006); the NixOS
+  module + VM smoke test remain as CI and as a distributable. Public
+  hostname: tenders.zebreus.click. Storage: a 500 GB Hetzner volume carries
+  DB + raw archive. No off-box backups for now — accepted risk: everything
+  is rebuildable (canonical from archive, archive from sources) at the cost
+  of roughly a day.
 - Heavy scraping runs on the provisioned Hetzner VPS (1 Gb/s) — also the
   production target — never on the dev machine (~100 kB/s uplink). Access is
   via `ssh root@zebreus.click`; run any command expected to take more than a
@@ -174,13 +196,12 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - "Tender" was overloaded (eForms uses it for a submitted offer) — resolved:
   in tender-db a **Tender** is always the opportunity/procedure; the eForms
   TEN- entity is a **Bid**. Importers translate at the boundary.
-- "All business terms, no omissions" is only structurally satisfiable for the
-  eForms era (2023→): legacy TED_EXPORT XML (2011–2024) maps ~half the BTs,
-  the text era (1993–2010) barely maps at all. Recommended rewording (pending
-  user sign-off): "everything the source era publishes, nothing silently
-  dropped" — per-profile mapped-or-ignored completeness checklists, quarantine
-  scoped to each profile's own schema universe (docs/research/
-  ted-legacy-mapping.md §8). Backfill depth is also a pending user decision.
+- Completeness promise (resolved 2026-07-19): "everything the source era
+  publishes, nothing silently dropped" — era-scoped per-profile checklists,
+  strict quarantine within each profile's universe (ADR-0004 amendment).
+  Backfill: full history 1993→, text era header-only and English-only for
+  now (model stays multilingual); parsed DB stores EN + original language,
+  raw archive keeps everything.
 - Cross-source field precedence for merged Tenders (ADR-0003) pending user
   sign-off: per field class — DÖE is the richer original for German content
   (national codes, future DEX fields), TED owns publication identity.

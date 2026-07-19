@@ -445,3 +445,32 @@ account-recovery policy (no email ⇒ lost password = lost account?).
 the bar set in §"verdict" — planning can start. The two design-phase
 must-haves stand: backfill↔cursor↔versioning interplay and filtered-SSE
 diff semantics are first-class planning agenda items.
+
+---
+
+## 5. Decision session results (2026-07-19, grilling session with Lennart)
+
+All §2.C user decisions are now resolved:
+
+- Backfill: full history 1993→; text era header-only, English-only fetched
+  (model stays multilingual); parsed DB stores EN + original language.
+- Storage: 500 GB Hetzner volume; raw archive on the filesystem; **no
+  off-box backups for now** (accepted risk — everything rebuildable).
+- Completeness promise: era-scoped "everything the source era publishes,
+  nothing silently dropped" (ADR-0004 amendment).
+- sdk-0.1 numeric-channel notices: single-notice Tenders.
+- Merge precedence: per field class (ADR-0003 amendment).
+- Representation: INTEGER cents + currency; UTC + original offset;
+  codelist labels EN-only; Reviews notice-layer-only; Parts =
+  Lots-with-kind; BRIN = minimal Tenders of distinct kind.
+- API policy: anonymous SSE with ~5 streams/IP; change log kept forever
+  with reserved pruning (reset path); webhook secrets plaintext,
+  https-only + public-address-only delivery (dev escape); generous
+  rate-limit posture; lost password = lost account.
+- Deployment: Ubuntu + nix-built bundle under hardened systemd unit
+  (ADR-0006); NixOS module + VM test kept as CI/distributable; hostname
+  tenders.zebreus.click.
+- CONTEXT.md stays unified (glossary + decisions in one file), per Lennart.
+
+Open action items for Lennart: order/attach the 500 GB volume (or provide a
+Hetzner API token). Everything else is planning-phase material (§2.B).
