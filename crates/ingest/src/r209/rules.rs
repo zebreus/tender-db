@@ -140,6 +140,9 @@ const CONTEXT: &[(&str, &str, Rule)] = &[
     // percentage range.
     ("PCT_RANGE_SHARE_SUBCONTRACTING", "MIN", Rule::Number(Unit::Fixed("PCT"))),
     ("PCT_RANGE_SHARE_SUBCONTRACTING", "MAX", Rule::Number(Unit::Fixed("PCT"))),
+    // The S01/S02 revisions wrap an award's amounts in `<VALUE PUBLICATION>`
+    // where S03+ writes `<VALUES>` — measured on the 2017/2018 dailies.
+    ("AWARDED_CONTRACT", "VALUE", Rule::Group),
 ];
 
 /// The rule for an element, given its parent's local name.
@@ -237,11 +240,12 @@ static GROUPED: &[(Rule, &[&str])] = &[
         "DATE", "DATE_AWARD_SCHEDULED", "DATE_CONCLUSION_CONTRACT", "DATE_DECISION_JURY",
         "DATE_DISPATCH_INVITATIONS", "DATE_DISPATCH_NOTICE", "DATE_DISPATCH_ORIGINAL", "DATE_END",
         "DATE_EXPECTED_PUBLICATION", "DATE_OPENING_TENDERS", "DATE_PUB", "DATE_PUBLICATION_NOTICE",
-        "DATE_RECEIPT_TENDERS", "DATE_START", "DATE_TENDER_VALID", "DD_DATE_REQUEST_DOCUMENT",
-        "DS_DATE_DISPATCH",
+        "DATE_RECEIPT_TENDERS", "DATE_START", "DATE_TENDER_VALID", "DS_DATE_DISPATCH",
     ]),
     (Rule::Time, &["TIME", "TIME_OPENING_TENDERS", "TIME_RECEIPT_TENDERS"]),
-    (Rule::DateTime, &["DT_DATE_FOR_SUBMISSION"]),
+    // DD_DATE_REQUEST_DOCUMENT is published both bare and with a wall clock
+    // (`20190131 14:00`) — measured on the 2019-01-02 daily.
+    (Rule::DateTime, &["DD_DATE_REQUEST_DOCUMENT", "DT_DATE_FOR_SUBMISSION"]),
     (Rule::DateParts, &[
         "CLEARING_LAST_DATE", "CONTRACT_AWARD_DATE", "DATE_OJ", "DISPATCH_INVITATIONS_DATE",
         "END_DATE", "NOTICE_DISPATCH_DATE", "PROCEDURE_DATE_STARTING", "RECEIPT_LIMIT_DATE",

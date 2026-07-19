@@ -400,7 +400,7 @@ impl Walk {
     /// ORIGINAL copy and a text-only walk of the English translation (if the
     /// original is not English). Remaining copies are translation-copy skips.
     fn form_section(&mut self, el: roxmltree::Node<'_, '_>) -> Result<(), Rejected> {
-        let mut original = None;
+        let mut originals = Vec::new();
         let mut english = None;
         for child in el.children().filter(|c| c.is_element()) {
             let name = child.tag_name().name();
@@ -419,13 +419,7 @@ impl Walk {
                 return Err(unclaimed("element", &format!("/TED_EXPORT/FORM_SECTION/{name}")));
             }
             match child.attribute("CATEGORY") {
-                Some("ORIGINAL") if original.is_some() => {
-                    return Err(Rejected {
-                        reason: "multiple-original-forms",
-                        detail: name.to_owned(),
-                    });
-                }
-                Some("ORIGINAL") => original = Some(child),
+                Some("ORIGINAL") => originals.push(child),
                 Some("TRANSLATION") => {
                     if child.attribute("LG").is_some_and(|lg| lg.eq_ignore_ascii_case("EN")) {
                         english.get_or_insert(child);
@@ -439,21 +433,36 @@ impl Walk {
                 }
             }
         }
-        let Some(original) = original else {
+        if originals.is_empty() {
             return Err(Rejected { reason: "no-original-form", detail: "FORM_SECTION".into() });
-        };
+        }
 
-        // Section counters snapshot: the translation walk re-runs the same
-        // structure and must synthesize the same section ids.
+        // Bilingual buyers (Belgium FR+NL, Bolzano DE+IT — measured, 3 per
+        // 1529 in the 2019 daily) publish several ORIGINAL copies. The one
+        // matching LG_ORIG is walked fully; every further copy — the extra
+        // originals and the English translation — contributes its texts only,
+        // matched positionally against the primary's structure.
+        let primary = originals
+            .iter()
+            .position(|form| {
+                form.attribute("LG").is_some_and(|lg| {
+                    self.keep_langs.get(1).is_some_and(|orig| orig.eq_ignore_ascii_case(lg))
+                })
+            })
+            .unwrap_or(0);
         let snapshot = self.counters.clone();
-        self.form_copy(original)?;
-        let original_lang = original.attribute("LG").unwrap_or_default();
-        if !original_lang.eq_ignore_ascii_case("EN")
-            && let Some(english) = english
-        {
-            self.counters = snapshot;
+        self.form_copy(originals[primary])?;
+        let primary_lang = originals[primary].attribute("LG").unwrap_or_default();
+        let secondaries = originals
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i != primary)
+            .map(|(_, form)| *form)
+            .chain(english.filter(|_| !primary_lang.eq_ignore_ascii_case("EN")));
+        for form in secondaries {
+            self.counters = snapshot.clone();
             self.translating = true;
-            let result = self.form_copy(english);
+            let result = self.form_copy(form);
             self.translating = false;
             result?;
         }
