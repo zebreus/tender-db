@@ -143,6 +143,17 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   process: one writer connection, N parallel reader connections; connection
   pragmas (foreign_keys=ON — it defaults OFF — busy_timeout, synchronous)
   are applied per connection.
+- Disk: the parsed DB does not fit the VPS's 75 GB — multilingual text
+  satellites are ~86% of it (22.3 KB/notice measured on a real month;
+  docs/research/pilot-sizing.md) — so a Hetzner volume is required before any
+  backfill. The raw archive lives on the filesystem as the fetched packages;
+  the DB stores (package, filename, sha256) references, never raw XML blobs.
+- Backups: pause writer → `wal_checkpoint(TRUNCATE)` → file copy (~20 s at
+  10 GB), verified offline with integrity_check + row counts. `VACUUM INTO`
+  is forbidden at scale (OOM, docs/research/turso-scale.md). Bulk loads go
+  PK-only-then-index. Turso 0.7.0 trap: an abandoned half-done write
+  statement poisons the open transaction — the writer must ROLLBACK after
+  any dropped write future.
 - Heavy scraping runs on the provisioned Hetzner VPS (1 Gb/s) — also the
   production target — never on the dev machine (~100 kB/s uplink). Access is
   via `ssh root@zebreus.click`; run any command expected to take more than a
@@ -170,3 +181,9 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - Cross-source field precedence for merged Tenders (ADR-0003) pending user
   sign-off: per field class — DÖE is the richer original for German content
   (national codes, future DEX fields), TED owns publication identity.
+- Personal-data handling pending user sign-off
+  (docs/research/gdpr-personal-data.md): three exposure tiers (org data open;
+  contact-person fields off the SQL endpoint, bulk export, and Organization
+  profiles; UBO data stored but unexposed), and a redaction-tombstone
+  mechanism that rewords the archive promise to "append-only except
+  documented redaction events" (touches ADR-0001).

@@ -417,3 +417,38 @@ change the architecture):
   its own §2 verified an undocumented per-notice endpoint
   (`/api/notices/{uuid}`). Bulk ZIPs remain the ingestion path; the endpoint
   is for targeted re-fetch.
+
+---
+
+## 4. Status update (post-wave-3, 2026-07-19 evening)
+
+Closes out the register above; written by the lead after the final research
+round. The cross-document contradictions of §3 are all FIXED in the docs
+themselves (commit b632540).
+
+**Blocking items — all closed:**
+- A-blocking GDPR/personal data → `gdpr-personal-data.md`: three-tier
+  exposure policy, redaction tombstones (rebuild = archive − redaction log),
+  Art-14 privacy notice as launch requirement, takedown process. Sign-offs
+  pending in §2.C.
+- A-blocking disk budget → `pilot-sizing.md`: measured 22.3 KB/notice
+  (multilingual texts = 86%); NO backfill scenario fits 75 GB; Hetzner
+  volume required (~300 GB eForms-only, 500–750 GB XML era). Raw archive
+  belongs on the filesystem, not in-DB.
+- A2/A10/A19 (parser probe, sizing, AUTOINCREMENT) → `pilot-sizing.md`:
+  roxmltree recommended (namespace-URI matching, all eras UTF-8); backfill
+  wall-clock ~40 min (eForms) / ~2.2 h (XML era), writer-bound;
+  AUTOINCREMENT monotonicity verified.
+- turso-scale.md TODOs → filled: backup = checkpoint+copy (~20 s window at
+  10 GB); crash torture 240/240 clean; pin bumped to `=0.7.0` (commit
+  f233a6b); new 0.7.0 write-poisoning guardrail documented.
+
+**New user decisions added to §2.C by wave 3:** Hetzner volume size,
+multilingual-text language policy (the big cost lever), GDPR tier matrix +
+redaction-promise sign-off, pre-launch legal-advice round, takedown mailbox,
+account-recovery policy (no email ⇒ lost password = lost account?).
+
+**Verdict update:** with GDPR and sizing closed, the research phase meets
+the bar set in §"verdict" — planning can start. The two design-phase
+must-haves stand: backfill↔cursor↔versioning interplay and filtered-SSE
+diff semantics are first-class planning agenda items.
