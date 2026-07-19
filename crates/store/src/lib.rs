@@ -45,6 +45,43 @@ const SCHEMA: &str = "
         path       TEXT NOT NULL
     ) STRICT;
     CREATE INDEX IF NOT EXISTS fetches_period ON fetches(source, kind, period);
+
+    -- One row per Notice: a single publication event at a Source (CONTEXT.md).
+    -- Identity is the source's publication identity plus a content hash;
+    -- `declared_version` (BT-757 / TED_EXPORT VERSION) is advisory only, as real
+    -- TED chains have gaps and cross-type sequences. The payload is NOT stored:
+    -- (fetch_id, member_path) locates it inside the immutable raw archive.
+    CREATE TABLE IF NOT EXISTS notices (
+        id               INTEGER PRIMARY KEY AUTOINCREMENT,
+        source           TEXT NOT NULL,
+        publication_id   TEXT NOT NULL,
+        content_hash     TEXT NOT NULL,
+        profile          TEXT NOT NULL,
+        declared_version TEXT,
+        fetch_id         INTEGER NOT NULL REFERENCES fetches(id),
+        member_path      TEXT NOT NULL,
+        ingested_at      INTEGER NOT NULL, -- unix seconds
+        UNIQUE(source, publication_id, content_hash)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS notices_profile ON notices(profile);
+
+    -- The only failure mode of ingestion (ADR-0004): a notice with unmapped or
+    -- unrecognised content is quarantined whole, never partially imported. The
+    -- raw payload stays reachable via (fetch_id, member_path), so a fixed
+    -- importer reprocesses from the archive without re-downloading.
+    CREATE TABLE IF NOT EXISTS quarantine (
+        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+        notice_id      INTEGER REFERENCES notices(id),
+        fetch_id       INTEGER NOT NULL REFERENCES fetches(id),
+        member_path    TEXT NOT NULL,
+        content_hash   TEXT NOT NULL,
+        profile        TEXT,
+        reason         TEXT NOT NULL,
+        detail         TEXT,
+        first_seen     INTEGER NOT NULL, -- unix seconds
+        reprocessed_at INTEGER,
+        UNIQUE(fetch_id, member_path, content_hash)
+    ) STRICT;
 ";
 
 pub struct Db {
@@ -166,6 +203,145 @@ impl Db {
         .await?;
         Ok(())
     }
+
+    /// The current file version of each archived package, newest row per
+    /// period — what the processor walks. `period` narrows to a single one.
+    pub async fn current_packages(
+        &self,
+        source: &str,
+        kind: &str,
+        period: Option<&str>,
+    ) -> turso::Result<Vec<Package>> {
+        let conn = self.conn().await;
+        // A re-fetched package lands as a new row (fetch.rs), so the highest id
+        // per period is the current version.
+        let mut rows = conn
+            .query(
+                "SELECT id, period, path FROM fetches
+                 WHERE id IN (SELECT MAX(id) FROM fetches
+                              WHERE source = ? AND kind = ? AND (? IS NULL OR period = ?)
+                              GROUP BY period)
+                 ORDER BY period",
+                (t(source), t(kind), opt_text(period), opt_text(period)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(Package { fetch_id: int(&row, 0), period: text(&row, 1), path: text(&row, 2) });
+        }
+        Ok(out)
+    }
+
+    /// Record a Notice. Returns false when this identity is already known —
+    /// which is what makes re-processing a package idempotent.
+    pub async fn insert_notice(&self, n: &Notice) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let changed = conn
+            .execute(
+                "INSERT OR IGNORE INTO notices(source, publication_id, content_hash, profile,
+                     declared_version, fetch_id, member_path, ingested_at)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    t(&n.source),
+                    t(&n.publication_id),
+                    t(&n.content_hash),
+                    t(&n.profile),
+                    opt_text(n.declared_version.as_deref()),
+                    Value::Integer(n.fetch_id),
+                    t(&n.member_path),
+                    Value::Integer(n.ingested_at),
+                ),
+            )
+            .await?;
+        Ok(changed > 0)
+    }
+
+    /// Quarantine a payload we could not turn into a Notice. Returns false if
+    /// this exact payload is already quarantined.
+    pub async fn insert_quarantine(&self, q: &Quarantined) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let changed = conn
+            .execute(
+                "INSERT OR IGNORE INTO quarantine(fetch_id, member_path, content_hash, profile,
+                     reason, detail, first_seen)
+                 VALUES(?, ?, ?, ?, ?, ?, ?)",
+                (
+                    Value::Integer(q.fetch_id),
+                    t(&q.member_path),
+                    t(&q.content_hash),
+                    opt_text(q.profile.as_deref()),
+                    t(&q.reason),
+                    opt_text(q.detail.as_deref()),
+                    Value::Integer(q.first_seen),
+                ),
+            )
+            .await?;
+        Ok(changed > 0)
+    }
+
+    /// Notice counts per mapping profile — the era-split check and the
+    /// dashboard's coverage breakdown.
+    pub async fn notice_counts_by_profile(&self) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query("SELECT profile, COUNT(*) FROM notices GROUP BY profile ORDER BY profile", ())
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok(out)
+    }
+
+    /// Quarantine counts per reason — the headline data-quality metric
+    /// (ADR-0004), broken down.
+    pub async fn quarantine_counts_by_reason(&self) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query("SELECT reason, COUNT(*) FROM quarantine GROUP BY reason ORDER BY reason", ())
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok(out)
+    }
+}
+
+/// A current package version in the archive, as the processor addresses it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Package {
+    pub fetch_id: i64,
+    pub period: String,
+    /// Archive-relative path, e.g. `ted/daily/2026-00137.tar.gz`.
+    pub path: String,
+}
+
+/// A Notice identity row. `member_path` is the file inside the package the
+/// payload came from (`outer.zip!inner` for nested members, plus `#<n>` for one
+/// record of a text-era bundle).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Notice {
+    pub source: String,
+    pub publication_id: String,
+    pub content_hash: String,
+    pub profile: String,
+    pub declared_version: Option<String>,
+    pub fetch_id: i64,
+    pub member_path: String,
+    pub ingested_at: i64,
+}
+
+/// A payload that could not be turned into a Notice (ADR-0004).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Quarantined {
+    pub fetch_id: i64,
+    pub member_path: String,
+    pub content_hash: String,
+    pub profile: Option<String>,
+    pub reason: String,
+    pub detail: Option<String>,
+    pub first_seen: i64,
 }
 
 /// One downloaded file version in the raw archive.
@@ -183,6 +359,10 @@ pub struct Fetch {
 
 fn t(s: impl Into<String>) -> Value {
     Value::Text(s.into())
+}
+
+fn opt_text(s: Option<&str>) -> Value {
+    s.map_or(Value::Null, |s| Value::Text(s.into()))
 }
 
 fn text(row: &turso::Row, idx: usize) -> String {

@@ -14,6 +14,10 @@ turso = { workspace = true }
 tokio = { workspace = true }
 reqwest = { workspace = true }
 sha2 = { workspace = true }
+flate2 = { workspace = true }
+tar = { workspace = true }
+zip = { workspace = true }
+roxmltree = { workspace = true }
 
 [dev-dependencies]
 # Local HTTP fixture server for fetcher tests — no network in tests.

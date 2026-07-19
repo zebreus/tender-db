@@ -42,6 +42,20 @@ tokio = { version = "1", features = ["rt", "macros", "sync"] }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 sha2 = "0.10"
 
+# Package walking. TED dailies are .tar.gz; the text era (1993–2010) nests one
+# per-language ZIP per member inside that tarball. All pure Rust so `nix build`
+# stays free of C toolchain deps: flate2 pinned to the miniz_oxide backend
+# (`rust_backend`, not the default-capable zlib one) and zip cut down to
+# deflate only (its defaults pull in bzip2/zstd C bindings).
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+tar = "0.4"
+zip = { version = "6", default-features = false, features = ["deflate"] }
+
+# Read-only XML tree; profile dispatch matches namespace-URI + local name
+# (docs/architecture.md) because real TED files vary the prefix freely
+# (ContractNotice / urn:ContractNotice / ns8:ContractNotice all occur).
+roxmltree = "0.21"
+
 # The release profile applies to BOTH the wasm client and the native server, so
 # keep it server-friendly (default opt-level = 3 for throughput). dx runs
 # `wasm-opt` on the client artifact afterwards, which handles wasm size on its own.

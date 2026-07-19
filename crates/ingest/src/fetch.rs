@@ -6,7 +6,6 @@
 //!   file (`…-v2.…`) and a new registry row; the newest row is current.
 //! - Idempotency is decided by our own sha256 — sources send no ETags.
 
-use sha2::{Digest, Sha256};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -180,10 +179,7 @@ async fn download_once(
 
     // Hash the complete file (covers the resumed case uniformly).
     let data = std::fs::read(part)?;
-    let mut hasher = Sha256::new();
-    hasher.update(&data);
-    let sha256 = hasher.finalize().iter().map(|b| format!("{b:02x}")).collect::<String>();
-    Ok((data.len() as i64, sha256))
+    Ok((data.len() as i64, crate::sha256_hex(&data)))
 }
 
 fn temp_path(final_path: &Path) -> PathBuf {
