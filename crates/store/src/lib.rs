@@ -6,6 +6,7 @@
 //! the process-wide instance owns a single connection behind a mutex and
 //! serialises access.
 
+pub mod accounts;
 pub mod canonical;
 pub mod read;
 
@@ -13,6 +14,7 @@ pub mod read;
 /// their own pin on the engine — the store owns which Turso this is.
 pub use turso;
 
+pub use accounts::{TokenRecord, User};
 pub use canonical::{
     Applied, Change, Fact, Identifier, LotState, Mention, NoticeRef, TenderProjection, TenderVersion,
 };
@@ -282,6 +284,7 @@ impl Db {
         }
         conn.execute_batch(SCHEMA).await?;
         conn.execute_batch(canonical::SCHEMA).await?;
+        conn.execute_batch(accounts::SCHEMA).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         Ok(Db { database, conn: Mutex::new(conn), cursor })
     }
@@ -675,6 +678,103 @@ impl Db {
         }
         Ok(out)
     }
+
+    /// Notice counts per (mapping profile, publication year) — the dashboard's
+    /// coverage grid. The year comes from the package the notice was found in
+    /// (periods are `YYYY-NNNNN`, zero-padded and sortable by construction),
+    /// not from a parsed date: coverage asks "how much of what TED published
+    /// that year do we hold", which is a question about packages.
+    pub async fn notice_counts_by_profile_year(&self) -> turso::Result<Vec<ProfileYear>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT f.source, n.profile, substr(f.period, 1, 4) AS year, COUNT(*)
+                   FROM notices n JOIN fetches f ON f.id = n.fetch_id
+                  GROUP BY f.source, n.profile, year
+                  ORDER BY year, f.source, n.profile",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(ProfileYear {
+                source: text(&row, 0),
+                profile: text(&row, 1),
+                year: text(&row, 2),
+                notices: int(&row, 3),
+            });
+        }
+        Ok(out)
+    }
+
+    /// The newest quarantined payloads — the drill-down behind the headline
+    /// count, newest first because a fresh reason is the one worth acting on.
+    pub async fn recent_quarantine(&self, limit: i64) -> turso::Result<Vec<QuarantineEntry>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT reason, profile, member_path, detail, first_seen FROM quarantine
+                  WHERE reprocessed_at IS NULL ORDER BY id DESC LIMIT ?",
+                (Value::Integer(limit),),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(QuarantineEntry {
+                reason: text(&row, 0),
+                profile: opt_text_of(&row, 1),
+                member_path: text(&row, 2),
+                detail: opt_text_of(&row, 3),
+                first_seen: int(&row, 4),
+            });
+        }
+        Ok(out)
+    }
+
+    /// How far behind the source we are, as two independent instants: when we
+    /// last downloaded anything, and when we last turned anything into a
+    /// Notice. They differ whenever fetching runs ahead of processing, which is
+    /// exactly the stall the dashboard needs to make visible (the two stages are
+    /// deliberately decoupled — CONTEXT.md).
+    pub async fn import_lag(&self) -> turso::Result<ImportLag> {
+        let conn = self.conn().await;
+        Ok(ImportLag {
+            newest_fetch_at: max_instant(&conn, "SELECT MAX(fetched_at) FROM fetches").await?,
+            newest_notice_at: max_instant(&conn, "SELECT MAX(ingested_at) FROM notices").await?,
+        })
+    }
+}
+
+/// `MAX(<timestamp column>)`, `None` when the table is empty.
+async fn max_instant(conn: &Connection, sql: &str) -> turso::Result<Option<i64>> {
+    let mut rows = conn.query(sql, ()).await?;
+    Ok(rows.next().await?.and_then(|row| opt_int_of(&row, 0)))
+}
+
+/// One cell of the coverage grid.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ProfileYear {
+    pub source: String,
+    pub profile: String,
+    pub year: String,
+    pub notices: i64,
+}
+
+/// One quarantined payload, as the dashboard drill-down shows it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct QuarantineEntry {
+    pub reason: String,
+    pub profile: Option<String>,
+    pub member_path: String,
+    pub detail: Option<String>,
+    pub first_seen: i64,
+}
+
+/// The two ends of the import pipeline, in unix seconds.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ImportLag {
+    pub newest_fetch_at: Option<i64>,
+    pub newest_notice_at: Option<i64>,
 }
 
 /// A current package version in the archive, as the processor addresses it.

@@ -14,6 +14,10 @@ dioxus = { workspace = true }
 serde = { workspace = true }
 model = { workspace = true }
 wasm-bindgen = { workspace = true }
+# The dashboard's refresh poll. One `Delay` future that works both in the wasm
+# client and in a native server render — the alternative is a timer crate per
+# platform behind cfgs.
+futures-timer = { version = "3", features = ["wasm-bindgen"] }
 
 # Server-only. Every one is optional and reached only through the `server`
 # feature, so none of it can leak into the wasm client.

@@ -1,0 +1,49 @@
+# TED notice counts per publication year — the denominator of the dashboard's
+# coverage metric. Vendored from docs/research/ted-access-channels.md §6
+# ("Data volumes (measured)"), which established them as:
+#
+#   1993–2016  highest publication number in the year's last daily package
+#              (samples/yearly-counts.csv)
+#   2017–2026  Search API `totalNoticeCount`
+#
+# The max-publication-number method slightly overcounts where numbers were
+# skipped; an API-vs-filename comparison for 2026 differed by 0.13 %. Coverage
+# percentages on the dashboard are therefore approximate by construction, and
+# 2026 is a partial year (through 2026-07-17) — `partial` marks it so the
+# dashboard does not report a shortfall that is really just the calendar.
+#
+# year,notices,partial
+1993,74433,0
+1994,94954,0
+1995,138824,0
+1996,151945,0
+1997,166394,0
+1998,177012,0
+1999,209009,0
+2000,161228,0
+2001,172194,0
+2002,202684,0
+2003,224144,0
+2004,221786,0
+2005,249437,0
+2006,268060,0
+2007,307255,0
+2008,339534,0
+2009,363230,0
+2010,391397,0
+2011,411850,0
+2012,414837,0
+2013,443079,0
+2014,446419,0
+2015,463821,0
+2016,466898,0
+2017,528975,0
+2018,578501,0
+2019,622786,0
+2020,643552,0
+2021,676734,0
+2022,735067,0
+2023,795680,0
+2024,801444,0
+2025,871149,0
+2026,497791,1

@@ -2,6 +2,11 @@
     --color-bg: #ffffff;
     --color-fg: #1a1a1a;
     --color-muted: #6b6b6b;
+    --color-line: #e2ddd4;
+    --color-panel: #faf8f4;
+    --color-warn: #7a5200;
+    --color-warn-bg: #fdf3dc;
+    --color-error: #a03028;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -9,6 +14,11 @@
         --color-bg: #15120e;
         --color-fg: #e9e1d3;
         --color-muted: #9a8e7c;
+        --color-line: #322b22;
+        --color-panel: #1c1813;
+        --color-warn: #e6c581;
+        --color-warn-bg: #2c2313;
+        --color-error: #e08b82;
     }
 }
 
@@ -20,7 +30,205 @@ body {
 }
 
 main {
-    max-width: 48rem;
+    max-width: 56rem;
     margin: 0 auto;
     padding: 2rem 1rem;
+}
+
+/* ------------------------------------------------------------------ chrome */
+
+header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 0.75rem;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+nav {
+    display: flex;
+    gap: 1rem;
+}
+
+a {
+    color: inherit;
+}
+
+footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-line);
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+/* ------------------------------------------------------------------ panels */
+
+.panel {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    background: var(--color-panel);
+    border: 1px solid var(--color-line);
+    border-radius: 6px;
+}
+
+.panel h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+}
+
+.muted {
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+.headline {
+    margin: 0.25rem 0;
+    font-size: 2.5rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.error {
+    color: var(--color-error);
+}
+
+.warning {
+    color: var(--color-warn);
+    background: var(--color-warn-bg);
+    border-radius: 4px;
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+}
+
+/* Label/value pairs, laid out as a two-column grid. */
+.counts {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.15rem 1rem;
+    margin: 0.5rem 0 0;
+}
+
+.counts dt {
+    color: var(--color-muted);
+}
+
+.counts dd {
+    margin: 0;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+table {
+    width: 100%;
+    margin-top: 0.75rem;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 0.3rem 0.5rem 0.3rem 0;
+    border-bottom: 1px solid var(--color-line);
+}
+
+th {
+    color: var(--color-muted);
+    font-weight: normal;
+}
+
+.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.path {
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+.revoked {
+    color: var(--color-muted);
+    text-decoration: line-through;
+}
+
+details summary {
+    cursor: pointer;
+    margin-top: 0.75rem;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------- forms */
+
+form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+input {
+    padding: 0.35rem 0.5rem;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    border: 1px solid var(--color-line);
+    border-radius: 4px;
+    font: inherit;
+}
+
+button {
+    padding: 0.4rem 0.9rem;
+    background: var(--color-fg);
+    color: var(--color-bg);
+    border: 1px solid var(--color-fg);
+    border-radius: 4px;
+    font: inherit;
+    cursor: pointer;
+}
+
+button.link {
+    background: none;
+    color: var(--color-muted);
+    border-color: transparent;
+    padding: 0.2rem 0;
+    text-decoration: underline;
+}
+
+button.danger {
+    background: none;
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
+
+code.token {
+    display: block;
+    margin-top: 0.4rem;
+    padding: 0.4rem 0.5rem;
+    background: var(--color-bg);
+    border-radius: 4px;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+    user-select: all;
 }

@@ -5,8 +5,11 @@
 //! client touches lives here, where we own the URL space, the error contract
 //! and the middleware.
 
+pub mod auth;
 pub mod json;
 pub mod sse;
+
+pub use auth::AuthUser;
 
 use axum::Router;
 use axum::extract::{Path, Query, State};
@@ -46,6 +49,10 @@ const DEFAULT_LIMIT: i64 = 100;
 
 #[derive(Clone)]
 pub struct AppState {
+    /// The writer handle — reads go through `readers`; this is here for the
+    /// account lookups token authentication does, which also *write* (the
+    /// `last_used_at` touch).
+    pub db: Arc<store::Db>,
     pub readers: Arc<store::Readers>,
     /// The writer's change-cursor doorbell — SSE's only wake-up signal.
     pub cursor: watch::Receiver<i64>,
@@ -53,8 +60,9 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(readers: Arc<store::Readers>, cursor: watch::Receiver<i64>) -> AppState {
-        AppState { readers, cursor, streams: Arc::new(Mutex::new(HashMap::new())) }
+    pub fn new(db: Arc<store::Db>, readers: Arc<store::Readers>) -> AppState {
+        let cursor = db.cursor_watch();
+        AppState { db, readers, cursor, streams: Arc::new(Mutex::new(HashMap::new())) }
     }
 }
 
@@ -77,6 +85,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/organizations", get(organizations))
         .route("/v1/notices", get(notices))
         .route("/v1/changes", get(changes))
+        .route("/v1/me", get(me))
         .layer(GovernorLayer::new(limits))
         .route("/health", get(health))
         .route("/_source", get(source))
@@ -363,6 +372,16 @@ async fn changes(State(state): State<AppState>, Query(params): Query<Params>) ->
     .into_response())
 }
 
+/// Who the presented API token belongs to — the token-gated endpoint every
+/// client can call to check its credentials before relying on them, and the
+/// probe the account round-trip test asserts against.
+async fn me(AuthUser(user): AuthUser) -> ApiResult {
+    Ok(axum::Json(json!({
+        "user": { "id": user.id, "username": user.username, "created_at": user.created_at },
+    }))
+    .into_response())
+}
+
 /// The API root, which is also where AGPL §13's source offer lives.
 async fn root(State(state): State<AppState>) -> ApiResult {
     let reader = state.readers.get().await?;
@@ -375,7 +394,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
         "endpoints": [
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
-            "/v1/notices", "/v1/changes",
+            "/v1/notices", "/v1/changes", "/v1/me",
         ],
         "live": "send Accept: text/event-stream to any collection endpoint",
     }))

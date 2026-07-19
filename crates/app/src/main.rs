@@ -15,6 +15,7 @@
 use dioxus::prelude::*;
 
 mod api;
+mod ui;
 
 const MAIN_CSS: Asset = asset!("/assets/main.css");
 
@@ -40,14 +41,19 @@ const READERS: usize = 8;
 fn main() {
     dioxus::server::serve(|| async {
         let db = store::state().await;
-        let api = tender_db::v1::AppState::new(db.readers(READERS)?, db.cursor_watch());
+        let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS)?);
         Ok(dioxus::server::router(App).merge(tender_db::v1::router(api)))
     });
 }
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 enum Route {
+    /// The dashboard is the product's face, so it owns `/`.
     #[route("/")]
+    DashboardPage {},
+    #[route("/account")]
+    AccountPage {},
+    #[route("/tenders")]
     Tenders {},
 }
 
@@ -59,13 +65,15 @@ fn App() -> Element {
     }
 }
 
+use ui::{AccountPage, DashboardPage};
+
 #[component]
 fn Tenders() -> Element {
     let tenders = use_server_future(api::list_tenders)?;
 
     rsx! {
         main {
-            h1 { "tender-db" }
+            h1 { "Tenders" }
             match &*tenders.read() {
                 Some(Ok(list)) if list.is_empty() => rsx! { p { "No tenders yet." } },
                 Some(Ok(list)) => rsx! {
