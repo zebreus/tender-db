@@ -133,18 +133,13 @@ source doc(s).
 
 **Blocking** (answering these later risks a pivot or rework):
 
-- **A1 [new] GDPR / personal data in notices.** Notices contain natural-person
-  data by design: UBOs are persons (name, nationality, address — and the CJEU
-  has already curtailed public UBO registers), contact points carry personal
-  names/emails/phones, sole-trader winners are persons. tender-db republishes
-  all of it (API, SQL endpoint, webhooks) and builds canonical profiles, while
-  the Notice store is append-only and "mentions are never destroyed". Nothing
-  in any doc covers: lawful basis for republication, erasure/redaction
-  requests vs the append-only archive (a tombstone/redaction mechanism would
-  touch the schema and the "deterministically rebuildable" property — that is
-  why this is pre-planning), how TED/DOE themselves handle takedowns, whether
-  the SQL endpoint needs field-level exclusions. One focused research pass ->
-  then user decision (C26).
+- **A1 [resolved — not applicable].** A GDPR/personal-data concern was raised
+  here and researched; Lennart's lawyer assessed GDPR as not relevant for
+  this dataset (public business data). The research doc was removed and no
+  privacy-driven schema hooks, exposure tiers, or redaction mechanisms are
+  needed. The AGPL §13 source-offer obligation (unrelated to privacy) is
+  kept: the running server must link its source — API root + dashboard
+  footer.
 - **A2 [new] Real-data DB-size estimate and the 75 GB disk arithmetic.** No
   document adds up the whole box: raw archive (36-44 GB compressed) + Notice
   parsed layer + versioned canonical layer + indexes + quarantine + WAL +
@@ -340,8 +335,8 @@ change the architecture):
 - C25. Dashboard data-quality panel: add "unchained awards" (~17 % of legacy
   awards) and "junk organization ids" (16 % measured) next to quarantine.
   Recommended: yes. [ted-legacy-mapping]
-- C26 **[new]** GDPR stance (follows A1): erasure/redaction mechanism, UBO
-  exposure policy, personal-data fields through the SQL endpoint.
+- C26 **[resolved]** GDPR stance: not applicable per Lennart's lawyer —
+  public business data. No exposure restrictions or redaction mechanism.
 
 ### D. Implementation-time / operational tasks
 
@@ -427,10 +422,9 @@ round. The cross-document contradictions of §3 are all FIXED in the docs
 themselves (commit b632540).
 
 **Blocking items — all closed:**
-- A-blocking GDPR/personal data → `gdpr-personal-data.md`: three-tier
-  exposure policy, redaction tombstones (rebuild = archive − redaction log),
-  Art-14 privacy notice as launch requirement, takedown process. Sign-offs
-  pending in §2.C.
+- A-blocking GDPR/personal data → resolved as not applicable (Lennart's
+  lawyer: public business data). The research doc was removed; only the
+  AGPL §13 source-offer note survives (see A1).
 - A-blocking disk budget → `pilot-sizing.md`: measured 22.3 KB/notice
   (multilingual texts = 86%); NO backfill scenario fits 75 GB; Hetzner
   volume required (~300 GB eForms-only, 500–750 GB XML era). Raw archive
@@ -444,11 +438,10 @@ themselves (commit b632540).
   f233a6b); new 0.7.0 write-poisoning guardrail documented.
 
 **New user decisions added to §2.C by wave 3:** Hetzner volume size,
-multilingual-text language policy (the big cost lever), GDPR tier matrix +
-redaction-promise sign-off, pre-launch legal-advice round, takedown mailbox,
+multilingual-text language policy (the big cost lever),
 account-recovery policy (no email ⇒ lost password = lost account?).
 
-**Verdict update:** with GDPR and sizing closed, the research phase meets
+**Verdict update:** with the GDPR question resolved and sizing closed, the research phase meets
 the bar set in §"verdict" — planning can start. The two design-phase
 must-haves stand: backfill↔cursor↔versioning interplay and filtered-SSE
 diff semantics are first-class planning agenda items.

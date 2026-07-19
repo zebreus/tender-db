@@ -85,7 +85,10 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - The dashboard owns the account lifecycle: register, login, generate API
   tokens, delete account. API tokens authenticate the account-gated API
   features (SQL endpoint, webhooks).
-- License: AGPL-3.0-or-later.
+- License: AGPL-3.0-or-later. The running server links its own source (AGPL
+  §13) at the API root and dashboard footer.
+- Notice content is public business data; no privacy-driven exposure
+  restrictions apply (assessed by Lennart's lawyer, 2026-07-19).
 
 ### Data
 - Sources: TED first, plus oeffentlichevergabe.de (Datenservice Öffentlicher
@@ -181,9 +184,3 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - Cross-source field precedence for merged Tenders (ADR-0003) pending user
   sign-off: per field class — DÖE is the richer original for German content
   (national codes, future DEX fields), TED owns publication identity.
-- Personal-data handling pending user sign-off
-  (docs/research/gdpr-personal-data.md): three exposure tiers (org data open;
-  contact-person fields off the SQL endpoint, bulk export, and Organization
-  profiles; UBO data stored but unexposed), and a redaction-tombstone
-  mechanism that rewords the archive promise to "append-only except
-  documented redaction events" (touches ADR-0001).
