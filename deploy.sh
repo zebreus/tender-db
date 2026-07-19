@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Deploy tender-db to the production VPS (ADR-0006: Ubuntu + nix-built bundle).
+#
+# Pushes the current main to the VPS bare repo, builds the flake package there
+# (the box has the 1 Gb/s uplink and the warm nix store), atomically switches the
+# /opt/tender-db/app symlink, restarts the service, and health-checks it.
+#
+# Usage: ./deploy.sh [git-ref]     (default: main)
+set -euo pipefail
+
+VPS="${VPS:-root@zebreus.click}"
+REF="${1:-main}"
+REMOTE_REPO=/opt/tender-db/repo.git
+SRC=/opt/tender-db/src
+APP=/opt/tender-db/app
+PUBLIC_URL="${PUBLIC_URL:-https://tenders.zebreus.click}"
+
+say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+
+say "Pushing $REF to $VPS:$REMOTE_REPO"
+git push vps "$REF:main"
+REV="$(git rev-parse "$REF")"
+
+say "Building $REV on the VPS (this can take a while on a cold store)"
+ssh -o BatchMode=yes "$VPS" bash -euo pipefail -s <<EOF
+export PATH=/nix/var/nix/profiles/default/bin:\$PATH
+
+cd $SRC
+git fetch origin main
+git checkout -f main
+git reset --hard $REV
+echo "source at: \$(git rev-parse HEAD)"
+
+# Build to a generation-specific result link so the running app keeps its store
+# path alive until we switch (and so a failed build never touches the symlink).
+nix build "$SRC#tender-db" -o /opt/tender-db/app-result --print-build-logs
+STORE_PATH="\$(readlink -f /opt/tender-db/app-result)"
+echo "built: \$STORE_PATH"
+
+# Atomic switch: ln -T to a temp name, then rename over the old symlink.
+ln -sfnT "\$STORE_PATH" ${APP}.new
+mv -T ${APP}.new $APP
+echo "$APP -> \$(readlink $APP)"
+
+# Record the deployed revision so the health check can report it.
+echo "$REV" > /opt/tender-db/deployed-rev
+
+systemctl restart tender-db
+systemctl --no-pager --lines=0 status tender-db | head -5
+EOF
+
+say "Health check"
+# NOTE: the app is still the scaffold — it has no /health endpoint yet. A real
+# one (with DB + importer status) lands with issue 05; until then we assert that
+# / returns HTML, which exercises the server, the bundled assets and nginx/TLS.
+for i in $(seq 1 30); do
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$PUBLIC_URL/" || true)"
+  [ "$code" = "200" ] && break
+  sleep 1
+done
+
+if [ "${code:-}" != "200" ]; then
+  echo "health check FAILED: $PUBLIC_URL/ returned ${code:-no response}" >&2
+  ssh -o BatchMode=yes "$VPS" 'journalctl -u tender-db -n 40 --no-pager' >&2 || true
+  exit 1
+fi
+
+body="$(curl -s --max-time 10 "$PUBLIC_URL/")"
+case "$body" in
+  *"<html"*|*"<!DOCTYPE"*|*"<!doctype"*) ;;
+  *) echo "health check FAILED: $PUBLIC_URL/ returned 200 but no HTML" >&2; exit 1 ;;
+esac
+
+echo "OK  $PUBLIC_URL/ -> 200, HTML served"
+echo "OK  deployed rev: $(ssh -o BatchMode=yes "$VPS" 'cat /opt/tender-db/deployed-rev')"
