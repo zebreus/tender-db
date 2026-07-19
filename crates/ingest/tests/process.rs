@@ -169,11 +169,13 @@ async fn dispatches_every_era_and_accounts_for_every_file() {
     assert_eq!(r.quarantined, 1);
     assert_eq!(r.duplicates, 0);
 
-    // Field mapping runs on the eForms notices. These three payloads are
+    // Field mapping runs per profile. The three eForms payloads are
     // deliberately truncated stubs — they carry no UBLExtensions block, so the
     // eForms parser rejects them, which is exactly the ADR-0004 behaviour under
-    // test: identity is recorded, nothing is imported, the reason is kept.
-    assert_eq!(r.parsed, 0);
+    // test: identity is recorded, nothing is imported, the reason is kept. The
+    // R2.0.9 stub is a tiny but fully-claimable TED_EXPORT and parses; the
+    // unversioned 2011 file stays pending until the r208 profile exists.
+    assert_eq!(r.parsed, 1);
     assert_eq!(r.parse_quarantined, 3);
 
     // No silent drops: every member is accounted for by exactly one outcome.
