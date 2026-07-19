@@ -1,0 +1,39 @@
+[package]
+name = "tender-db"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+
+# tender-db is a Dioxus *fullstack* app: a single crate that DX compiles into two
+# binaries — a `web` client (WASM) and a `server` (Axum) that renders the initial
+# HTML and hosts the `#[get]`/`#[post]` server functions. Platform-specific code is
+# gated behind the `web` / `server` Cargo features, which DX selects per build.
+
+[dependencies]
+dioxus = { version = "0.7", features = ["fullstack", "router"] }
+serde = { version = "1", features = ["derive"] }
+
+# wasm-bindgen does NOT follow semver: the `wasm-bindgen` crate version and the
+# `wasm-bindgen-cli` that `dx` runs must match EXACTLY or dx refuses to bundle the
+# wasm. The dioxus-cli (dx) packaged in nixpkgs bundles 0.2.118, so we pin the
+# crate to 0.2.118 to keep the Nix build self-consistent. Bump both together.
+wasm-bindgen = "=0.2.118"
+
+# --- Server-only persistence --------------------------------------------------
+# Turso is the pure-Rust SQLite engine (no C; keeps the `nix build` self-contained
+# and cross-friendly). Server feature only.
+turso = { version = "0.7.0-pre.10", optional = true }
+tokio = { version = "1", features = ["rt", "macros", "sync"], optional = true }
+
+[features]
+default = []
+web = ["dioxus/web"]
+server = ["dioxus/server", "dep:turso", "dep:tokio"]
+
+# The release profile applies to BOTH the wasm client and the native server, so
+# keep it server-friendly (default opt-level = 3 for throughput). dx runs
+# `wasm-opt` on the client artifact afterwards, which handles wasm size on its own.
+[profile.release]
+lto = "thin"
+strip = true
