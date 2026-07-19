@@ -316,8 +316,17 @@ async fn mentions_merge_only_on_a_plausible_official_identifier() {
                 ordinal: 0,
                 value: NoticeValue::Text { lang: Some("ENG".into()), value: (*name).into() },
             });
+            // The official identifier hangs off the Organization's legal-entity
+            // child, not off the Organization itself — the shape every real
+            // eForms notice uses (14 813 of them on the 2026-136 daily).
+            let legal_entity = format!("{section}-legal");
+            parsed.sections.push(Section {
+                id: legal_entity.clone(),
+                kind: "CompanyLegalEntity".into(),
+                parent: Some((*section).into()),
+            });
             parsed.values.push(ValueRow {
-                section_id: (*section).into(),
+                section_id: legal_entity,
                 field_id: "BT-501-Organization-Company".into(),
                 ordinal: 0,
                 value: NoticeValue::Id {

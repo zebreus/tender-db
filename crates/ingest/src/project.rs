@@ -216,27 +216,62 @@ impl NoticeState {
     }
 
     /// Every Organization section of the notice, normalised for merging.
+    ///
+    /// An Organization's own values are spread over its subtree rather than
+    /// sitting on the section itself: the name is on the Organization, but the
+    /// official identifier hangs off its `CompanyLegalEntity` child (14 813 of
+    /// them on the 2026-136 daily). So a mention collects from the whole
+    /// subtree, keyed by the enclosing Organization.
     fn take_mentions(&mut self, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
-        parsed
+        let sections: HashMap<&str, &store::Section> =
+            parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+
+        let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
             .iter()
             .filter(|s| s.kind == ORGANIZATION_KIND)
             .map(|s| {
-                let raw = section_id_value(parsed, &s.id, ORG_IDENTIFIER_FIELD);
-                let country = section_code(parsed, &s.id, ORG_COUNTRY_FIELD);
-                let scheme = raw.as_ref().and_then(|(_, scheme)| scheme.clone());
-                let raw_identifier = raw.map(|(value, _)| value);
-                Mention {
-                    notice_id,
-                    section_id: s.id.clone(),
-                    name: section_text(parsed, &s.id, ORG_NAME_FIELD).unwrap_or_default(),
-                    identifier: raw_identifier
-                        .as_deref()
-                        .and_then(|raw| normalise_identifier(raw, country.as_deref())),
-                    country,
-                    raw_identifier,
-                    scheme,
+                (
+                    s.id.as_str(),
+                    Mention {
+                        notice_id,
+                        section_id: s.id.clone(),
+                        name: String::new(),
+                        country: None,
+                        raw_identifier: None,
+                        scheme: None,
+                        identifier: None,
+                    },
+                )
+            })
+            .collect();
+
+        for value in &parsed.values {
+            let Some(owner) = enclosing(&sections, &value.section_id, &[ORGANIZATION_KIND]) else {
+                continue;
+            };
+            let Some(mention) = mentions.get_mut(owner) else { continue };
+            match (value.field_id.as_str(), &value.value) {
+                (ORG_NAME_FIELD, NoticeValue::Text { value, .. }) => mention.name.clone_from(value),
+                (ORG_COUNTRY_FIELD, NoticeValue::Code { code, .. }) => {
+                    mention.country = Some(code.clone());
                 }
+                (ORG_IDENTIFIER_FIELD, NoticeValue::Id { value, scheme, .. }) => {
+                    mention.raw_identifier = Some(value.clone());
+                    mention.scheme.clone_from(scheme);
+                }
+                _ => {}
+            }
+        }
+
+        mentions
+            .into_values()
+            .map(|mut m| {
+                m.identifier = m
+                    .raw_identifier
+                    .as_deref()
+                    .and_then(|raw| normalise_identifier(raw, m.country.as_deref()));
+                m
             })
             .collect()
     }
@@ -359,20 +394,32 @@ fn supersede(carried: &mut BTreeSet<Fact>, published: &BTreeSet<Fact>) {
 /// Which Lot a value belongs to — the nearest enclosing Lot section, or the
 /// Tender when there is none.
 fn scope_of(sections: &HashMap<&str, &store::Section>, section_id: &str) -> Scope {
-    let mut current = section_id;
-    // Bounded by the section count: a parsed notice's parent chain is a tree,
-    // but guard anyway so malformed data cannot spin.
-    for _ in 0..sections.len().max(1) {
-        let Some(section) = sections.get(current) else { return Scope::Tender };
-        if LOT_KINDS.contains(&section.kind.as_str()) {
-            return Scope::Lot(section.id.clone());
-        }
-        match &section.parent {
-            Some(parent) => current = parent,
-            None => return Scope::Tender,
-        }
+    match enclosing(sections, section_id, LOT_KINDS) {
+        Some(lot) => Scope::Lot(lot.to_owned()),
+        None => Scope::Tender,
     }
-    Scope::Tender
+}
+
+/// The nearest section of one of `kinds`, starting at `section_id` itself and
+/// walking up the parent chain. This is how a value finds the entity it
+/// describes: eForms hangs values off the deepest node that carries them, and
+/// the canonical scope is the nearest enclosing entity above it.
+fn enclosing<'a>(
+    sections: &HashMap<&str, &'a store::Section>,
+    section_id: &str,
+    kinds: &[&str],
+) -> Option<&'a str> {
+    let mut current = section_id;
+    // Bounded by the section count: the parent chain is a tree, but guard
+    // anyway so malformed data cannot spin.
+    for _ in 0..sections.len().max(1) {
+        let section = sections.get(current)?;
+        if kinds.contains(&section.kind.as_str()) {
+            return Some(section.id.as_str());
+        }
+        current = section.parent.as_deref()?;
+    }
+    None
 }
 
 /// The business-term stem of a source field id: `BT-21-Lot` → `BT-21`,
@@ -460,45 +507,6 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
         NoticeValue::Date { utc_seconds, .. } => Some(*utc_seconds),
         _ => None,
     })
-}
-
-fn section_text(parsed: &Parsed, section_id: &str, field_id: &str) -> Option<String> {
-    parsed
-        .values
-        .iter()
-        .find(|v| v.section_id == section_id && v.field_id == field_id)
-        .and_then(|v| match &v.value {
-            NoticeValue::Text { value, .. } => Some(value.clone()),
-            _ => None,
-        })
-}
-
-fn section_code(parsed: &Parsed, section_id: &str, field_id: &str) -> Option<String> {
-    parsed
-        .values
-        .iter()
-        .find(|v| v.section_id == section_id && v.field_id == field_id)
-        .and_then(|v| match &v.value {
-            NoticeValue::Code { code, .. } => Some(code.clone()),
-            NoticeValue::Classification { code, .. } => Some(code.clone()),
-            _ => None,
-        })
-}
-
-/// An identifier value plus the scheme the notice declared for it.
-fn section_id_value(
-    parsed: &Parsed,
-    section_id: &str,
-    field_id: &str,
-) -> Option<(String, Option<String>)> {
-    parsed
-        .values
-        .iter()
-        .find(|v| v.section_id == section_id && v.field_id == field_id)
-        .and_then(|v| match &v.value {
-            NoticeValue::Id { value, scheme, .. } => Some((value.clone(), scheme.clone())),
-            _ => None,
-        })
 }
 
 fn unix_now() -> i64 {
