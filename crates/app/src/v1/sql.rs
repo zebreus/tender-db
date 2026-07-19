@@ -24,11 +24,13 @@
 //!    query is dropped between rows and its connection freed (verified, §2).
 //!    Caveat measured here: a single non-yielding aggregate (`SELECT count(*)
 //!    FROM generate_series(1, huge)`) computes inside one poll and cannot be
-//!    interrupted — turso exposes no `interrupt()`. Those are bounded instead by
-//!    the pool size and the per-token limits below, not by the timeout;
-//!    isolating SQL execution on its own runtime is the eventual fix.
-//!    `query_only` guarantees no write can be left half-done to poison the
-//!    connection either way.
+//!    interrupted — turso exposes no `interrupt()`. Issue 17 contains the blast
+//!    radius: execution runs on an **isolated runtime** (see
+//!    [`spawn_sql_runtime`]),
+//!    so such a query can pin at most that runtime's threads and never the main
+//!    API/SSE runtime; the per-token limits then bound it further. `query_only`
+//!    guarantees no write can be left half-done to poison the connection either
+//!    way.
 //! 5. **Result caps** while reading: 10 000 rows / 10 MB, then `truncated:true`.
 //! 6. **Per-token limits**: 2 concurrent (semaphore) + 300/h (governor).
 //!
@@ -71,6 +73,41 @@ const PER_HOUR: u32 = 300;
 /// Tables that hold credentials, never queryable. Compared lowercased.
 const FORBIDDEN: [&str; 3] = ["users", "api_tokens", "sessions"];
 
+/// Worker threads on the isolated SQL runtime (issue 17). Query execution runs
+/// here, never on the main API/SSE/dashboard runtime, so a non-yielding
+/// aggregate (which no timeout can interrupt — turso has no `interrupt()`) can
+/// pin at most this many threads and never starves the rest of the server. The
+/// per-token concurrency cap and this thread count together bound SQL CPU.
+const SQL_RUNTIME_THREADS: usize = 2;
+
+/// A tokio runtime dedicated to SQL query execution, owned by a parked thread so
+/// it lives for the whole process and is never dropped in an async context
+/// (which would panic).
+///
+/// One is created per [`SqlState`] — that is once per server, so production runs
+/// exactly one. It is deliberately *not* a process-global singleton: a server
+/// owns its own isolation, which is what lets each server in the test suite run
+/// on independent threads instead of contending for one shared pool.
+fn spawn_sql_runtime() -> tokio::runtime::Handle {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::Builder::new()
+        .name("sql-runtime".into())
+        .spawn(move || {
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(SQL_RUNTIME_THREADS)
+                .thread_name("sql-exec")
+                .enable_all()
+                .build()
+                .expect("build the isolated SQL runtime");
+            tx.send(runtime.handle().clone()).expect("hand back the runtime handle");
+            // Park the owner thread on a future that never completes, so the
+            // runtime stays alive without this thread busy-waiting.
+            runtime.block_on(std::future::pending::<()>());
+        })
+        .expect("spawn the SQL runtime thread");
+    rx.recv().expect("receive the SQL runtime handle")
+}
+
 /// The endpoint's own state: a dedicated connection pool and the two per-user
 /// limiters. Lives inside [`AppState`].
 pub struct SqlState {
@@ -79,12 +116,19 @@ pub struct SqlState {
     rate: DefaultKeyedRateLimiter<i64>,
     /// 2 concurrent per user id — one semaphore per user, created on first use.
     concurrency: Mutex<HashMap<i64, Arc<Semaphore>>>,
+    /// The isolated runtime queries execute on (issue 17).
+    runtime: tokio::runtime::Handle,
 }
 
 impl SqlState {
     pub fn new(readers: Arc<store::Readers>) -> SqlState {
         let quota = Quota::per_hour(NonZeroU32::new(PER_HOUR).expect("PER_HOUR is non-zero"));
-        SqlState { readers, rate: RateLimiter::keyed(quota), concurrency: Mutex::new(HashMap::new()) }
+        SqlState {
+            readers,
+            rate: RateLimiter::keyed(quota),
+            concurrency: Mutex::new(HashMap::new()),
+            runtime: spawn_sql_runtime(),
+        }
     }
 
     /// The per-user concurrency gate, shared across a user's in-flight queries.
@@ -130,9 +174,23 @@ async fn run(
 
     classify(&sql)?;
 
-    let reader = sql_state.readers.get().await?;
-    let outcome = tokio::time::timeout(TIMEOUT, execute(&reader, &sql)).await;
-    // Hold the permit until the query is fully done (or dropped on timeout).
+    // Run the query on the isolated SQL runtime (issue 17), not this one. The
+    // reader is borrowed and the timeout applied *there*, so even a query that
+    // pins its worker thread cannot touch the main API/SSE runtime. This handler
+    // only awaits the result over a cheap channel — it never blocks a main
+    // worker. The permit is held (on this side) until the result comes back.
+    let readers = sql_state.readers.clone();
+    let outcome = sql_state
+        .runtime
+        .spawn(async move {
+            let reader = readers.get().await.map_err(Executed::Db)?;
+            match tokio::time::timeout(TIMEOUT, execute(&reader, &sql)).await {
+                Ok(Ok(result)) => Ok(result),
+                Ok(Err(e)) => Err(Executed::Db(e)),
+                Err(_) => Err(Executed::Timeout),
+            }
+        })
+        .await;
     drop(permit);
 
     match outcome {
@@ -145,14 +203,23 @@ async fn run(
         .into_response()),
         // A turso execution error is the user's SQL being wrong (unknown column,
         // type error, dialect gap) — a 400 with the engine's message.
-        Ok(Err(e)) => Err(ApiError(StatusCode::BAD_REQUEST, e.to_string())),
-        // Dropping the future on timeout is the interrupt; the connection is
-        // reusable afterwards (query_only, file-backed — §2).
-        Err(_) => Err(ApiError(
+        Ok(Err(Executed::Db(e))) => Err(ApiError(StatusCode::BAD_REQUEST, e.to_string())),
+        // A streaming query past the limit was dropped between rows (§4).
+        Ok(Err(Executed::Timeout)) => Err(ApiError(
             StatusCode::REQUEST_TIMEOUT,
             format!("query exceeded the {}s time limit", TIMEOUT.as_secs()),
         )),
+        // The isolated task panicked or was cancelled — our fault, not the
+        // caller's.
+        Err(e) => Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, format!("sql runtime: {e}"))),
     }
+}
+
+/// How a query finished on the isolated runtime — a DB error is the caller's,
+/// a timeout is the watchdog's.
+enum Executed {
+    Db(store::turso::Error),
+    Timeout,
 }
 
 /// The queryable schema: every table and view except the credential tables,

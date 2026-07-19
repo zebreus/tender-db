@@ -378,3 +378,58 @@ async fn the_schema_endpoint_documents_the_public_surface() {
         .expect("v_tenders present");
     assert!(!tenders["columns"].as_array().unwrap().is_empty());
 }
+
+// -------------------------------------------------------- runtime isolation
+
+/// Issue 17: SQL execution runs on its own runtime, so a pathological
+/// non-yielding aggregate — which no timeout can interrupt — cannot starve the
+/// main API/SSE runtime.
+///
+/// The whole server runs on a two-thread runtime here. Two heavy aggregates
+/// (each computes in a single non-yielding poll) would, without isolation, pin
+/// both of those threads and freeze the API. With execution on the isolated
+/// runtime, the two main threads stay free and `/health` keeps answering
+/// promptly — which is what this asserts.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn sql_execution_does_not_starve_the_api() {
+    let server = Arc::new(Server::start("isolation").await);
+
+    // A finite but heavy cross-join count: ~tens of millions of rows aggregated
+    // in one poll, no row boundary to yield on — it pins a worker thread for a
+    // few seconds. Two of them take both of this user's concurrency permits.
+    let bomb = "SELECT COUNT(*) FROM generate_series(1, 7000) a, generate_series(1, 7000) b";
+    let mut running = Vec::new();
+    for _ in 0..2 {
+        let server = server.clone();
+        running.push(tokio::spawn(async move { server.sql(bomb).await.status().as_u16() }));
+    }
+    // Let them reach the isolated runtime and start pinning its threads.
+    tokio::time::sleep(Duration::from_millis(300)).await;
+
+    // The main runtime must still answer a cheap, non-SQL request quickly. Were
+    // execution on this runtime, both worker threads would be pinned and these
+    // would block for the whole several-second query.
+    let started = std::time::Instant::now();
+    for _ in 0..5 {
+        let health = server
+            .http
+            .get(format!("{}/health", server.base))
+            .send()
+            .await
+            .expect("health request");
+        assert_eq!(health.status(), 200);
+    }
+    let elapsed = started.elapsed();
+    assert!(
+        elapsed < Duration::from_secs(2),
+        "the API stayed responsive while SQL was pinned: {elapsed:?}"
+    );
+
+    // Drain the aggregates. Their own status is not the point — under parallel
+    // test load a cross join can exceed the 10 s wall-clock limit and come back
+    // 408, which is fine; what mattered is that they never blocked `/health`.
+    for handle in running {
+        let status = handle.await.expect("join");
+        assert!(status == 200 || status == 408, "the query ran to a normal result: {status}");
+    }
+}
