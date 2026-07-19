@@ -17,3 +17,9 @@ Consequences: canonical tables carry temporal columns and writes update
 validity ranges; the canonical layer must still be deterministically
 rebuildable from the Notice archive (the archive remains the source of truth,
 versioning does not replace it).
+
+Amendment (2026-07-19, from docs/research/ted-empirical-checks.md): change
+scoping is diff-based — what changed between canonical versions is computed by
+diffing, never taken from the notices' own change declarations (BT-13716 names
+changed sections in only ~58% of real change notices; when present it is
+merely a cross-check).

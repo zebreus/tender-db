@@ -20,7 +20,7 @@ An offer submitted by an Organization for a Lot (the eForms "tender" / TEN- enti
 _Avoid_: offer, and especially eForms' own use of "tender"
 
 **Notice**:
-A single publication event at a Source about a Tender (contract notice, corrigendum, award notice, …) — the raw imported record.
+A single publication event at a Source about a Tender (contract notice, corrigendum, award notice, …) — the raw imported record. Its identity is the Source's publication identity plus a content hash; declared version numbers (BT-757) are advisory only, as real TED chains have gaps, missing v01s, and cross-type version sequences (docs/research/ted-empirical-checks.md).
 
 **Source**:
 An external publication platform tenders are imported from (TED, national portals).
@@ -44,7 +44,11 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 
 ## Relationships
 
-- A **Tender** has one or more **Lots**.
+- A **Tender** has one or more **Lots**. Lot identifiers are stable across a
+  procedure's notices except inside framework/DPS call-off rounds, where some
+  buyers redefine them per round — lot references are resolved defensively,
+  per notice version. Award rounds are repeated award notices under one
+  procedure; there is no separate "round" entity (verified empirically).
 - A **Tender** is documented by one or more **Notices**; each Notice comes
   from exactly one **Source**. A Tender usually has one Source, but when a
   strong explicit cross-reference proves two Sources publish the same
@@ -91,9 +95,14 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   source-agnostic. service.bund.de is a possible later stress-test Source.
 - TED history spans three format eras (tagged text 1993–2010, TED_EXPORT XML
   2011–2024, eForms 2023→, mixed per-file during the transition); importers
-  dispatch format per file, and must handle multiple concurrent eForms SDK
-  versions and national profiles (eForms-EU 1.x, eForms-DE, DÖE legacy
-  sdk-0.1). See docs/research/ted-access-channels.md.
+  dispatch a mapping profile per file (text / r208 / r209 / eforms, plus
+  per-CustomizationID eForms profiles incl. eForms-DE and DÖE sdk-0.1, which
+  is a permanent ~40%-of-volume dialect, not a transition artifact). Legacy
+  chains link via OJ notice numbers (transitive edges — a missed link splits
+  a Tender, never wrongly merges); chains break at the eForms boundary. See
+  docs/research/ted-access-channels.md and ted-legacy-mapping.md.
+- Near-real-time comes from TED alone (daily package by 09:30 CET Mon–Fri);
+  oeffentlichevergabe.de is strictly T+1 and serves as a daily reconcile.
 - No geographic focus, and not even locked to public procurement long-term;
   TED-primary is a bootstrapping choice because its data structures are well
   documented.
@@ -152,7 +161,12 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   in tender-db a **Tender** is always the opportunity/procedure; the eForms
   TEN- entity is a **Bid**. Importers translate at the boundary.
 - "All business terms, no omissions" is only structurally satisfiable for the
-  eForms era (2023→): legacy TED_EXPORT XML (2011–2024) maps a subset, the
-  text era (1993–2010) barely maps at all. Pending user decision: backfill
-  depth and how the completeness promise + ADR-0004 quarantine policy are
-  worded per era.
+  eForms era (2023→): legacy TED_EXPORT XML (2011–2024) maps ~half the BTs,
+  the text era (1993–2010) barely maps at all. Recommended rewording (pending
+  user sign-off): "everything the source era publishes, nothing silently
+  dropped" — per-profile mapped-or-ignored completeness checklists, quarantine
+  scoped to each profile's own schema universe (docs/research/
+  ted-legacy-mapping.md §8). Backfill depth is also a pending user decision.
+- Cross-source field precedence for merged Tenders (ADR-0003) pending user
+  sign-off: per field class — DÖE is the richer original for German content
+  (national codes, future DEX fields), TED owns publication identity.
