@@ -5,10 +5,22 @@
 //! stages) and is idempotent — re-running a package inserts nothing new,
 //! because Notice identity is (source, publication_id, content_hash).
 
-use crate::eforms;
 use crate::package::{self, Member};
 use crate::profile::{self, Disposition, Record};
+use crate::{eforms, r209};
 use std::path::Path;
+
+/// Field mapping for one notice payload, dispatched per profile. Profiles
+/// without a parser yet stay `Pending` — identity only, never quarantined.
+pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
+    if profile.starts_with("eforms:") {
+        eforms::parse_payload(profile, bytes)
+    } else if profile.starts_with("ted-export-") {
+        r209::parse_payload(profile, bytes)
+    } else {
+        store::Parse::Pending
+    }
+}
 
 /// Per-package outcome. The no-silent-drops invariant is
 /// `members == ingested + skipped`, with every ingested member accounted for by
@@ -108,7 +120,7 @@ pub async fn process_package(
                 // are that notice's payload.
                 pending.extend(records.into_iter().map(|record| {
                     let parse = match &record {
-                        Record::Notice(n) => eforms::parse_payload(&n.profile, bytes),
+                        Record::Notice(n) => parse_payload(&n.profile, bytes),
                         Record::Quarantine(_) => store::Parse::Pending,
                     };
                     (record, parse)
