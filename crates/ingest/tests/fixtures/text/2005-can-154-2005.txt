@@ -1,0 +1,101 @@
+1.0/003065
+TI: UK-Didcot: iron or steel drums
+PD: 20050101
+ND: 154-2005
+OJ: 1/2005
+DR: 20041224
+DS: 20041224
+RN: 108785-2003
+HD: 2180
+TD: 7 - Contract award
+NC: 2 - Supply contract
+PR: 7 - Contract awards
+RP: 5 - European Communities, with participation by GATT countries
+AA: 1 - Central government
+TY: 8 - Not defined
+AC: 2 - The most economic tender
+PC: 28216100
+    28811200
+    40530000
+PN: Iron or steel drums
+    Cement
+    Radioactive materials
+CY: GB
+OL: EN
+AU: UNITED KINGDOM ATOMIC ENERGY AUTHORITY, HARWELL COMMERCIAL DEPT
+TW: DIDCOT
+CO: Name and address of successful supplier, contractor or service provider: 
+    Grahams Engineering Ltd.
+    NSG Environmental Ltd.
+AB: CPV: 28216100, 40530000, 28811200.
+    Supply of 500-litre drums for Remote-handled Intermediate Level Waste.
+    Supply of 500-litre drums on a call off basis for remote-handled 
+    intermediate level waste. The nature of the wastes is such that it is 
+    necessary to have a lining of cementitious grout, on the inside of the 
+    drum, to act as a barrier between the wastes and the outer skin of the 
+    drum. UKAEA have opted to have separate contracts for supply of drums and 
+    supply of the grouted lining.
+    Iron or steel drums.
+    Radioactive materials.
+    Cement.
+TX: CONTRACT AWARD NOTICE
+    Supplies
+    This contract is covered by the Government Procurement Agreement (GPA): 
+    Yes.
+    SECTION I: CONTRACTING AUTHORITY
+    I.1)  Official name and address of the contracting authority: United 
+    Kingdom Atomic Energy Authority, Harwell Commercial Dept, Att: Sam Dancy, 
+    B152, Harwell International Business Centre, UK-Didcot OX11 0RA. Tel.: 
+    01235 436833. Fax: 01235 4324413. E-mail: teresa.lee@ukaea.org.uk.
+    I.2)  Type of contracting authority: Central level.
+    SECTION II: OBJECT OF THE CONTRACT
+    II.1)  Type of contract: Supplies.
+    II.2)  Framework agreement: No.
+    II.3)  Nomenclature
+    II.3.1)  Common Procurement Vocabulary (CPV): 28216100, 40530000, 
+    28811200.
+    II.4)  Title attributed to the contract by the contracting authority: 
+    Supply of 500-litre drums for Remote-handled Intermediate Level Waste.
+    II.5)  Short description: Supply of 500-litre drums on a call off basis 
+    for remote-handled intermediate level waste. The nature of the wastes is 
+    such that it is necessary to have a lining of cementitious grout, on the 
+    inside of the drum, to act as a barrier between the wastes and the outer 
+    skin of the drum. UKAEA have opted to have separate contracts for supply 
+    of drums and supply of the grouted lining.
+    Iron or steel drums.
+    Radioactive materials.
+    Cement.
+    SECTION IV: PROCEDURE
+    IV.1)  Type of procedure: Restricted.
+    IV.2)  Award criteria: The most economically advantageous tender in terms 
+    of:
+    technical expertise particularly with welding and grout infilling as 
+    appropriate;
+    experience of high volume manufacturing in the same product field;
+    manufacturing time;
+    value for money.
+    SECTION V: AWARD OF CONTRACT
+    Contract No:
+    V.1)  Award and contract value
+    V.1.1)  Name and address of successful supplier, contractor or service 
+    provider: Grahams Engineering Ltd.
+    V.2)  Subcontracting
+    V.2.1)  The contract is likely to be subcontracted: No.
+    Contract No: 30000306860 for supply of grouting
+    V.1)  Award and contract value
+    V.1.1)  Name and address of successful supplier, contractor or service 
+    provider: NSG Environmental Ltd.
+    V.2)  Subcontracting
+    V.2.1)  The contract is likely to be subcontracted: No.
+    SECTION VI: OTHER INFORMATION
+    VI.1)  Non-mandatory notice: No.
+    VI.3)  Date of contract award: 25.11.2004.
+    VI.4)  Number of tenders received: 5.
+    VI.5)  This contract was subject to a notice in the OJ: Yes.
+    Notice number in OJ contents list: 2003/S 121-108785.
+    Of: 27.6.2003.
+    VI.6)  This contract relates to a project/programme financed by EU funds: 
+    No.
+    VI.8)  Date of dispatch of this notice: 24.12.2004.
+ 
+ 

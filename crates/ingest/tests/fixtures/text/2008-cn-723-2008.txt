@@ -1,0 +1,129 @@
+1.0/016612
+TI: F-Marne-la-Vallée: office supplies
+PD: 20080103
+ND: 723-2008
+OJ: 1/2008
+DR: 20071228
+DS: 20071227
+DT: 20080207  12 00
+HD: 2110
+TD: 3 - Contract notice
+NC: 2 - Supply contract
+PR: 1 - Open procedure
+RP: 5 - European Communities, with participation by GPA countries
+AA: 6 - Body governed by public law
+TY: 1 - Global tender
+AC: 2 - The most economic tender
+PC: 28522200
+    30192000
+PN: Small office equipment
+    Office supplies
+CY: FR
+OL: FR
+AU: ECOLE NATIONALE DES PONTS ET CHAUSSEES
+TW: MARNE-LA-VALLEE
+IA: http://www.enpc.fr
+AB: Common procurement vocabulary (CPV): 30192000, 28522200.
+    Office supplies.
+    Small office equipment.
+TX: CONTRACT NOTICE
+    Supplies
+    SECTION I: CONTRACTING AUTHORITY
+    I.1)  NAME, ADDRESSES AND CONTACT POINT(S): Ecole Nationale des Ponts et 
+    Chaussées, 6-8, avenue Blaise Pascal Cité Descartes Champs-Sur-Marne, 
+    Attn: M. le directeur de l'Ecole Nationale des Ponts et Chaussées, F-77455 
+    Marne-la-Vallée Cedex 2. Tel. 01 64 15 30 00. Fax 01 64 15 34 29.
+    Internet address(es):
+    General address of the contracting authority: http://www.enpc.fr.
+    Further information can be obtained at: As in above-mentioned contact 
+    point(s).
+    Specifications and additional documents (including documents for 
+    competitive dialogue and a dynamic purchasing system) can be obtained at: 
+    As in above-mentioned contact point(s).
+    Tenders or requests to participate must be sent to: As in above-mentioned 
+    contact point(s).
+    II.1)  DESCRIPTION
+    II.1.6)  Common procurement vocabulary (CPV): 30192000, 28522200.
+       Description: Office supplies.
+    Small office equipment.
+    SECTION IV: PROCEDURE
+    IV.3)  ADMINISTRATIVE INFORMATION
+    IV.3.3)  Conditions for obtaining specifications and additional documents 
+    or descriptive document
+    IV.3.4)  Time-limit for receipt of tenders or requests to participate: 
+    7.2.2008 - 12:00.
+    IV.3.6)  Language(s) in which tenders or requests to participate may be 
+    drawn up: French.
+OT: AVIS DE MARCHÉ
+    Fournitures
+    SECTION I: POUVOIR ADJUDICATEUR
+    I.1)  NOM, ADRESSES ET POINT(S) DE CONTACT: Ecole Nationale des Ponts et 
+    Chaussées, 6-8, avenue Blaise Pascal Cité Descartes Champs-Sur-Marne, à 
+    l'attention de M. le directeur de l'Ecole Nationale des Ponts et 
+    Chaussées, F-77455 Marne-la-Vallée Cedex 2. Tél. 01 64 15 30 00. Fax 01 64 
+    15 34 29.
+    Adresse(s) internet:
+    Adresse générale du pouvoir adjudicateur: http://www.enpc.fr.
+    Adresse auprès de laquelle des informations complémentaires peuvent être 
+    obtenues: Point(s) de contact susmentionné(s).
+    Adresse auprès de laquelle le cahier des charges et les documents 
+    complémentaires (y compris des documents relatifs à un dialogue compétitif 
+    et un système d'acquisition dynamique) peuvent être obtenus: Point(s) de 
+    contact susmentionné(s).
+    Adresse à laquelle les offres ou demandes de participation doivent être 
+    envoyées: Point(s) de contact susmentionné(s).
+    I.2)  TYPE DE POUVOIR ADJUDICATEUR ET ACTIVITÉ(S) PRINCIPALE(S): Organisme 
+    de droit public.
+    Le pouvoir adjudicateur agit pour le compte d'autres pouvoirs 
+    adjudicateurs: non.
+    SECTION II: OBJET DU MARCHÉ
+    II.1)  DESCRIPTION
+    II.1.1)  Intitulé attribué au marché par le pouvoir adjudicateur: 
+    Fourniture d'articles de bureau.
+    II.1.2)  Type de marché et lieu d’exécution des travaux, de livraison de 
+    fournitures ou de prestation de services: Fournitures.
+    Achat.
+    II.1.3)  L’avis implique: Un marché public.
+    II.1.5)  Description succincte du marché ou de l’achat/des achats: 
+    Fourniture d'articles de bureau entrant dans les4 familles de produits 
+    suivantes : petites fournitures, accessoires et petit équipement de bureau 
+    - articles de classement - écriture et correction - papeterie.
+    II.1.6)  Classification CPV (vocabulaire commun pour les marchés publics): 
+    30192000, 28522200.
+    II.1.7)  Marché couvert par l’accord sur les marchés publics (AMP): Oui.
+    II.1.8)  Division en lots: Non.
+    II.1.9)  Des variantes seront prises en considération: Oui.
+    II.3)  DURÉE DU MARCHÉ OU DÉLAI D’EXÉCUTION: Durée en mois: 48 (à compter 
+    de la date d’attribution du contrat).
+    SECTION III: RENSEIGNEMENTS D'ORDRE JURIDIQUE, ÉCONOMIQUE, FINANCIER ET 
+    TECHNIQUE
+    III.1)  CONDITIONS RELATIVES AU CONTRAT
+    III.1.2)  Modalités essentielles de financement et de paiement et/ou 
+    références aux textes qui les réglementent: Financement sur le budget de 
+    l'établissement public.
+    SECTION IV: PROCÉDURE
+    IV.1)  TYPE DE PROCÉDURE
+    IV.1.1)  Type de procédure: Ouverte.
+    IV.2)  CRITÈRES D’ATTRIBUTION
+    IV.2.1)  Critères d’attribution: Offre économiquement la plus avantageuse 
+    appréciée en fonction des critères énoncés dans le cahier des charges, 
+    dans l’invitation à soumissionner ou à négocier ou encore dans le document 
+    descriptif.
+    IV.3)  RENSEIGNEMENTS D'ORDRE ADMINISTRATIF
+    IV.3.1)  Numéro de référence attribué au dossier par le pouvoir 
+    adjudicateur: ENPC-2008-05.
+    IV.3.2)  Publication(s) antérieure(s) concernant le même marché: Non.
+    IV.3.4)  Date limite de réception des offres ou des demandes de 
+    participation: 7.2.2008 - 12:00.
+    IV.3.6)  Langue(s) pouvant être utilisée(s) dans l’offre ou la demande de 
+    participation: Français.
+    IV.3.7)  Délai minimum pendant lequel le soumissionnaire est tenu de 
+    maintenir son offre: Durée en jours: 120 (à compter de la date limite de 
+    réception des offres).
+    SECTION VI: RENSEIGNEMENTS COMPLÉMENTAIRES
+    VI.3)  AUTRES INFORMATIONS: Dce à retirer sur place (Service SG bureau 
+    B402 9-12h et 14-17h) également téléchargeable sur le site internet 
+    www.achatpublic.com.
+    VI.5)  DATE D'ENVOI DU PRÉSENT AVIS: 27.12.2007.
+ 
+ 

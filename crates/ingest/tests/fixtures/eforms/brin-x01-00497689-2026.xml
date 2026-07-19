@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><BusinessRegistrationInformationNotice xmlns="http://data.europa.eu/p27/eforms-business-registration-information-notice/1" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:ns="http://data.europa.eu/p27/eforms-business-registration-information-notice/1">
+   <ext:UBLExtensions>
+      <ext:UBLExtension>
+         <ext:ExtensionContent>
+            <efext:EformsExtension>
+               <efac:NoticeSubType>
+                  <cbc:SubTypeCode listName="notice-subtype">X01</cbc:SubTypeCode>
+               </efac:NoticeSubType>
+            <efac:Publication><efbc:NoticePublicationID schemeName="ojs-notice-id">00497689-2026</efbc:NoticePublicationID><efbc:GazetteID schemeName="ojs-id">136/2026</efbc:GazetteID><efbc:PublicationDate>2026-07-17+02:00</efbc:PublicationDate></efac:Publication></efext:EformsExtension>
+         </ext:ExtensionContent>
+      </ext:UBLExtension>
+   </ext:UBLExtensions>
+   <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+   <cbc:CustomizationID>eforms-sdk-1.14</cbc:CustomizationID>
+   <cbc:ID schemeName="notice-id">a1a96130-bb7d-494f-b35a-be0e862bb7cc</cbc:ID>
+   <cbc:IssueDate>2026-07-16Z</cbc:IssueDate>
+   <cbc:IssueTime>10:59:44Z</cbc:IssueTime>
+   <cbc:VersionID>01</cbc:VersionID>
+   <cbc:RegulatoryDomain>31985R2137</cbc:RegulatoryDomain>
+   <cbc:NoticeTypeCode listName="bri">brin-eeig</cbc:NoticeTypeCode>
+   <cbc:NoticeLanguageCode listName="language">DEU</cbc:NoticeLanguageCode>
+   <cac:SenderParty>
+      <cac:Contact>
+         <cbc:ElectronicMail>maxniklaas.thimm@ag.justiz.hamburg.de</cbc:ElectronicMail>
+      </cac:Contact>
+   </cac:SenderParty>
+   <cac:BusinessParty>
+      <cac:PartyLegalEntity>
+         <cbc:RegistrationName>Euracon Consulting EWIV</cbc:RegistrationName>
+         <cbc:CompanyID schemeName="EU">HRA 133853</cbc:CompanyID>
+         <cbc:RegistrationDate>2026-07-15+02:00</cbc:RegistrationDate>
+         <cac:CorporateRegistrationScheme>
+            <cac:JurisdictionRegionAddress>
+               <cbc:CityName>Hamburg</cbc:CityName>
+               <cbc:PostalZone>20355</cbc:PostalZone>
+               <cac:Country>
+                  <cbc:IdentificationCode listName="country">DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:JurisdictionRegionAddress>
+         </cac:CorporateRegistrationScheme>
+      </cac:PartyLegalEntity>
+   </cac:BusinessParty>
+   <cac:AdditionalDocumentReference>
+      <cbc:ID>https://www.handelsregister.de/rp_web/normalesuche/welcome.xhtml</cbc:ID>
+      <cbc:IssueDate>2026-07-15+02:00</cbc:IssueDate>
+      <cbc:ReferencedDocumentInternalAddress>Amtsgericht Hamburg HRA 133853</cbc:ReferencedDocumentInternalAddress>
+      <cbc:DocumentDescription>Land Nordrhein-Westfalen</cbc:DocumentDescription>
+      <cac:Attachment>
+         <cac:ExternalReference>
+            <cbc:URI>https://www.handelsregister.de/rp_web/normalesuche/welcome.xhtml</cbc:URI>
+         </cac:ExternalReference>
+      </cac:Attachment>
+   </cac:AdditionalDocumentReference>
+   <efac:NoticePurpose>
+      <cbc:PurposeCode listName="notice-purpose">reg</cbc:PurposeCode>
+   </efac:NoticePurpose>
+</BusinessRegistrationInformationNotice>

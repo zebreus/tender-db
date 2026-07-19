@@ -1,0 +1,116 @@
+<can:ContractAwardNotice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:can="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
+   <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+   <cbc:CustomizationID>eforms-sdk-0.1</cbc:CustomizationID>
+   <cbc:ID>427d4645-163c-419d-93a9-5f5ce05ff9b7</cbc:ID>
+   <cbc:ContractFolderID>3d2aac86-4286-4ae2-9bc1-08eb1cc61f80</cbc:ContractFolderID>
+   <cbc:IssueDate>2023-01-30+01:00</cbc:IssueDate>
+   <cbc:IssueTime>11:53:32+01:00</cbc:IssueTime>
+   <cbc:VersionID>1</cbc:VersionID>
+   <cbc:RequestedPublicationDate>2022-11-29</cbc:RequestedPublicationDate>
+   <cbc:RegulatoryDomain>de-hhr</cbc:RegulatoryDomain>
+   <cbc:NoticeTypeCode listName="result">can-standard</cbc:NoticeTypeCode>
+   <cbc:NoticeLanguageCode>DEU</cbc:NoticeLanguageCode>
+   <cac:ContractingParty>
+      <cac:Party>
+         <cac:PartyName>
+            <cbc:Name languageID="DEU">Planungsamt der Bundeswehr, Referat I (8)</cbc:Name>
+         </cac:PartyName>
+         <cac:PostalAddress>
+            <cbc:StreetName>Oberspreestraße 61L</cbc:StreetName>
+            <cbc:CityName>Berlin</cbc:CityName>
+            <cbc:PostalZone>12439</cbc:PostalZone>
+            <cac:Country>
+               <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+            </cac:Country>
+         </cac:PostalAddress>
+         <cac:Contact>
+            <cbc:Telephone>+49 306794-2830</cbc:Telephone>
+            <cbc:Telefax>+49 306794-2830</cbc:Telefax>
+            <cbc:ElectronicMail>studienmanagementbw@bundeswehr.org</cbc:ElectronicMail>
+         </cac:Contact>
+         <cac:ServiceProviderParty>
+            <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+            <cac:Party>
+               <cac:PartyName>
+                  <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                  <cbc:CityName>Bonn</cbc:CityName>
+                  <cbc:PostalZone>53119</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                  <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:Party>
+         </cac:ServiceProviderParty>
+      </cac:Party>
+   </cac:ContractingParty>
+   <cac:TenderingProcess>
+      <cbc:ProcedureCode listName="procurement-procedure-type">de-comp-wo-call</cbc:ProcedureCode>
+   </cac:TenderingProcess>
+   <cac:ProcurementProject>
+      <cbc:ID schemeName="InternalID">Rahmenszenar See 2040 (6002397632-PlgABw)</cbc:ID>
+      <cbc:Name languageID="DEU">Rahmenszenar See 2040 (6002397632-PlgABw)</cbc:Name>
+      <cbc:Description languageID="DEU">Methodenbedarf: Rahmenszenar See 2040, Verhandlungsvergabe ohne Teilnahmewettbewerb</cbc:Description>
+      <cbc:Note languageID="DEU">Bestimmungen über die Ausführungsfrist: von: 01.02.2023 bis: 31.01.2024
+Zusätzliche Informationen: </cbc:Note>
+   </cac:ProcurementProject>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0000</cbc:ID>
+      <cac:TenderingTerms/>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">Rahmenszenar See 2040 (6002397632-PlgABw)</cbc:ID>
+         <cbc:Name languageID="DEU">Rahmenszenar See 2040 (6002397632-PlgABw)</cbc:Name>
+         <cbc:Description languageID="DEU">Methodenbedarf: Rahmenszenar See 2040, Verhandlungsvergabe ohne Teilnahmewettbewerb</cbc:Description>
+         <cbc:Note languageID="DEU">Bestimmungen über die Ausführungsfrist: von: 01.02.2023 bis: 31.01.2024
+Zusätzliche Informationen: </cbc:Note>
+         <cac:PlannedPeriod>
+            <cbc:DescriptionCode listName="timeperiod">UNKNOWN</cbc:DescriptionCode>
+         </cac:PlannedPeriod>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2000-01-01</cbc:AwardDate>
+      <cac:WinningParty>
+         <cac:Party>
+            <cac:PartyName>
+               <cbc:Name>1. Firma: IABG mbH</cbc:Name>
+            </cac:PartyName>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+</can:ContractAwardNotice>
