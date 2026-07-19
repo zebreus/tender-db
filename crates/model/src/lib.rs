@@ -6,10 +6,12 @@
 pub mod account;
 pub mod dashboard;
 pub mod ingestion;
+pub mod webhook;
 
 pub use account::{Account, NewToken, Token};
 pub use dashboard::Dashboard;
 pub use ingestion::Ingestion;
+pub use webhook::{NewWebhook, Webhook, WebhookDelivery};
 
 use serde::{Deserialize, Serialize};
 

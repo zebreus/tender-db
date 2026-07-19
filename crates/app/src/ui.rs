@@ -10,7 +10,7 @@ use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
 use model::dashboard::{Coverage, Quarantined};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
-use model::{Account, NewToken, Token};
+use model::{Account, NewToken, NewWebhook, Token, Webhook};
 
 /// How often the dashboard re-measures. Deliberately a plain poll: the change
 /// feed's SSE plumbing serves API clients, and a dashboard that refreshes twice
@@ -454,6 +454,8 @@ fn SignedIn(account: Account, on_change: EventHandler<()>) -> Element {
             }
         }
 
+        Webhooks {}
+
         section { class: "panel",
             h2 { "Delete account" }
             p { class: "muted", "Deletes the account, every token on it, and every session. No undo." }
@@ -507,6 +509,134 @@ fn TokenTable(tokens: Vec<Token>, on_revoke: EventHandler<()>) -> Element {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+// ------------------------------------------------------------------ webhooks
+
+#[component]
+fn Webhooks() -> Element {
+    let mut hooks = use_resource(api::list_webhooks);
+    let mut fresh = use_signal(|| Option::<NewWebhook>::None);
+    let mut url = use_signal(String::new);
+    let mut error = use_signal(|| Option::<String>::None);
+
+    let create = move |_| async move {
+        match api::create_webhook(url()).await {
+            Ok(created) => {
+                url.set(String::new());
+                error.set(None);
+                fresh.set(Some(created));
+                hooks.restart();
+            }
+            Err(e) => error.set(Some(e.to_string())),
+        }
+    };
+
+    rsx! {
+        section { class: "panel",
+            h2 { "Webhooks" }
+            p { class: "muted",
+                "Register an https URL to receive change events as signed POST batches "
+                "(Standard Webhooks: verify the "
+                code { "webhook-signature" } " header). Delivery is at-least-once and resumes "
+                "from where it left off after a failure."
+            }
+            form {
+                onsubmit: create,
+                label {
+                    "Endpoint URL"
+                    input {
+                        r#type: "url",
+                        value: "{url}",
+                        placeholder: "https://example.com/hooks/tenders",
+                        oninput: move |e| url.set(e.value()),
+                    }
+                }
+                button { r#type: "submit", "Add webhook" }
+            }
+            if let Some(created) = fresh() {
+                div { class: "warning",
+                    p { "Signing secret — copy it now, it is shown once:" }
+                    code { class: "token", "{created.secret}" }
+                }
+            }
+            if let Some(message) = error() {
+                p { class: "error", "{message}" }
+            }
+            match &*hooks.read() {
+                Some(Ok(list)) if list.is_empty() => rsx! { p { class: "muted", "No webhooks yet." } },
+                Some(Ok(list)) => rsx! {
+                    table {
+                        thead {
+                            tr {
+                                th { "URL" }
+                                th { "State" }
+                                th { "Delivered" }
+                                th { "" }
+                            }
+                        }
+                        tbody {
+                            for hook in list.clone() {
+                                WebhookRow { hook, on_change: move |()| hooks.restart() }
+                            }
+                        }
+                    }
+                },
+                Some(Err(e)) => rsx! { p { class: "error", "Could not list webhooks: {e}" } },
+                None => rsx! { p { class: "muted", "Loading…" } },
+            }
+        }
+    }
+}
+
+#[component]
+fn WebhookRow(hook: Webhook, on_change: EventHandler<()>) -> Element {
+    let disabled = hook.disabled_at.is_some();
+    let state = if disabled {
+        "disabled".to_string()
+    } else if hook.consecutive_failures > 0 {
+        format!("failing ×{}", hook.consecutive_failures)
+    } else {
+        "active".to_string()
+    };
+    let id = hook.id;
+    rsx! {
+        tr { key: "{hook.id}", class: if disabled { "revoked" } else { "" },
+            td { class: "path", "{hook.url}" }
+            td { "{state}" }
+            td { "cursor {group(hook.last_delivered_cursor)}" }
+            td {
+                if disabled {
+                    button {
+                        class: "link",
+                        onclick: move |_| async move {
+                            let _ = api::enable_webhook(id).await;
+                            on_change.call(());
+                        },
+                        "Enable"
+                    }
+                } else {
+                    button {
+                        class: "link",
+                        onclick: move |_| async move {
+                            let _ = api::disable_webhook(id).await;
+                            on_change.call(());
+                        },
+                        "Disable"
+                    }
+                }
+                " "
+                button {
+                    class: "link",
+                    onclick: move |_| async move {
+                        let _ = api::delete_webhook(id).await;
+                        on_change.call(());
+                    },
+                    "Delete"
                 }
             }
         }

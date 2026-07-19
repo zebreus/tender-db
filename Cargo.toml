@@ -73,6 +73,15 @@ sha2 = "0.10"
 # already in tree via the RustCrypto stack.
 subtle = "2"
 
+# Webhooks (issue 08). Standard-Webhooks signatures are HMAC-SHA256 over
+# `{id}.{timestamp}.{payload}`, base64-encoded — `hmac` + the in-tree `sha2`,
+# `base64` for the wire encoding of secret and signature. `url` parses the
+# user-supplied endpoint for the SSRF guard (scheme + host). All pure Rust /
+# already resolved in the lock.
+hmac = "0.12"
+base64 = "0.22"
+url = "2.5"
+
 # Accounts (docs/research/api-layer.md §5). argon2 0.5 is RustCrypto's pure-Rust
 # argon2id; its defaults already are OWASP's recommended parameters. It
 # re-exports `password_hash`, which brings the PHC string codec and the OS RNG

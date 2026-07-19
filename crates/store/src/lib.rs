@@ -10,6 +10,7 @@ pub mod accounts;
 pub mod canonical;
 pub mod jobs;
 pub mod read;
+pub mod webhooks;
 
 /// Re-exported so callers can name `Error`/`Connection`/`Value` without taking
 /// their own pin on the engine — the store owns which Turso this is.
@@ -20,6 +21,7 @@ pub use canonical::{
     Applied, Change, Fact, Identifier, LotState, Mention, NoticeRef, TenderProjection, TenderVersion,
 };
 pub use read::{Filter, Reader, Readers, Status};
+pub use webhooks::{Delivery, Endpoint};
 
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, OnceCell, watch};
@@ -287,6 +289,7 @@ impl Db {
         conn.execute_batch(canonical::SCHEMA).await?;
         conn.execute_batch(accounts::SCHEMA).await?;
         conn.execute_batch(jobs::SCHEMA).await?;
+        conn.execute_batch(webhooks::SCHEMA).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         Ok(Db { database, conn: Mutex::new(conn), cursor })
     }

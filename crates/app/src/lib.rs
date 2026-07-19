@@ -16,3 +16,5 @@ pub mod coverage;
 pub mod supervisor;
 #[cfg(feature = "server")]
 pub mod v1;
+#[cfg(feature = "server")]
+pub mod webhooks;

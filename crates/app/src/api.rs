@@ -9,7 +9,7 @@
 
 use dioxus::fullstack::{Json, SetCookie, SetHeader};
 use dioxus::prelude::*;
-use model::{Account, Dashboard, Ingestion, NewToken, Tender, Token};
+use model::{Account, Dashboard, Ingestion, NewToken, NewWebhook, Tender, Token, Webhook};
 
 /// All tenders, newest first.
 #[get("/api/tenders")]
@@ -104,6 +104,51 @@ pub async fn revoke_token(token_id: i64) -> ServerFnResult<Vec<Token>> {
         .await
         .map_err(ServerFnError::new)?;
     tender_db::accounts::list_tokens(&db, account.id).await.map_err(ServerFnError::new)
+}
+
+// ------------------------------------------------------------------ webhooks
+
+/// The account's registered webhook endpoints (no secrets).
+#[get("/api/webhooks", headers: dioxus::fullstack::HeaderMap)]
+pub async fn list_webhooks() -> ServerFnResult<Vec<Webhook>> {
+    let db = store::state().await;
+    let account = require_account(&db, &headers).await?;
+    tender_db::webhooks::list(&db, account.id).await.map_err(ServerFnError::new)
+}
+
+/// Register an endpoint. The signing secret is in the response once and never
+/// again, exactly like an API token.
+#[post("/api/webhooks/create", headers: dioxus::fullstack::HeaderMap)]
+pub async fn create_webhook(url: String) -> ServerFnResult<NewWebhook> {
+    let db = store::state().await;
+    let account = require_account(&db, &headers).await?;
+    tender_db::webhooks::register(&db, account.id, &url).await.map_err(ServerFnError::new)
+}
+
+#[post("/api/webhooks/delete", headers: dioxus::fullstack::HeaderMap)]
+pub async fn delete_webhook(id: i64) -> ServerFnResult<Vec<Webhook>> {
+    let db = store::state().await;
+    let account = require_account(&db, &headers).await?;
+    tender_db::webhooks::delete(&db, account.id, id).await.map_err(ServerFnError::new)?;
+    tender_db::webhooks::list(&db, account.id).await.map_err(ServerFnError::new)
+}
+
+#[post("/api/webhooks/disable", headers: dioxus::fullstack::HeaderMap)]
+pub async fn disable_webhook(id: i64) -> ServerFnResult<Vec<Webhook>> {
+    let db = store::state().await;
+    let account = require_account(&db, &headers).await?;
+    tender_db::webhooks::disable(&db, account.id, id).await.map_err(ServerFnError::new)?;
+    tender_db::webhooks::list(&db, account.id).await.map_err(ServerFnError::new)
+}
+
+/// Re-enable a disabled endpoint, keeping its slot (delivers the backlog it
+/// missed).
+#[post("/api/webhooks/enable", headers: dioxus::fullstack::HeaderMap)]
+pub async fn enable_webhook(id: i64) -> ServerFnResult<Vec<Webhook>> {
+    let db = store::state().await;
+    let account = require_account(&db, &headers).await?;
+    tender_db::webhooks::enable(&db, account.id, id, false).await.map_err(ServerFnError::new)?;
+    tender_db::webhooks::list(&db, account.id).await.map_err(ServerFnError::new)
 }
 
 /// Delete the account and everything that authenticates as it, then clear the

@@ -49,6 +49,12 @@ fn main() {
         // touches the production DB — the fetch/process/project CLIs are dev
         // tools for scratch databases. `init` spawns the worker + scheduler once.
         let supervisor = tender_db::supervisor::init(db.clone());
+
+        // The webhook delivery sweeper (issue 08): a background task that pushes
+        // signed change batches to registered endpoints, woken by the same
+        // change-cursor doorbell the SSE uses.
+        tender_db::webhooks::init(db.clone());
+
         if tender_db::admin::enabled() {
             println!("admin: /admin API enabled (TENDER_ADMIN_SECRET is set)");
         } else {

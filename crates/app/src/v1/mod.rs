@@ -9,6 +9,7 @@ pub mod auth;
 pub mod json;
 pub mod sql;
 pub mod sse;
+pub mod webhooks;
 
 pub use auth::AuthUser;
 
@@ -93,6 +94,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/changes", get(changes))
         .route("/v1/me", get(me))
         .merge(sql::routes())
+        .merge(webhooks::routes())
         .layer(GovernorLayer::new(limits))
         .route("/health", get(health))
         .route("/_source", get(source))
@@ -402,6 +404,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "endpoints": [
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
             "/v1/notices", "/v1/changes", "/v1/me", "/v1/sql", "/v1/sql/schema",
+            "/v1/webhooks",
         ],
         "live": "send Accept: text/event-stream to any collection endpoint",
     }))

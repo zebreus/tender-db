@@ -97,9 +97,16 @@ pub fn digest(secret: &str) -> String {
 }
 
 fn random_hex(bytes: usize) -> String {
-    let mut buf = vec![0u8; bytes];
+    random_bytes(bytes).iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// `n` bytes from the OS CSPRNG — the raw material for every secret in the
+/// project. Exposed so the webhook layer can draw its signing key from the same
+/// source without its own RNG dependency.
+pub fn random_bytes(n: usize) -> Vec<u8> {
+    let mut buf = vec![0u8; n];
     OsRng.fill_bytes(&mut buf);
-    buf.iter().map(|b| format!("{b:02x}")).collect()
+    buf
 }
 
 /// A fresh API token: `tdb_` + 256 bits of OS randomness. Shown to its owner
