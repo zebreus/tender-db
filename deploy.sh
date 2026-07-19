@@ -25,6 +25,22 @@ say "Building $REV on the VPS (this can take a while on a cold store)"
 ssh -o BatchMode=yes "$VPS" bash -euo pipefail -s <<EOF
 export PATH=/nix/var/nix/profiles/default/bin:\$PATH
 
+# One deploy at a time: two concurrent deploys can build different revs and
+# the slower (older) one would win the symlink switch — a silent regression.
+# The lock covers build → switch → restart on the VPS side.
+exec 9>/opt/tender-db/deploy.lock
+flock -n 9 || { echo "another deploy holds /opt/tender-db/deploy.lock — aborting" >&2; exit 1; }
+
+# Refuse to move production backwards: if the target rev is an ancestor of the
+# currently deployed rev, this deploy would regress.
+if [ -f /opt/tender-db/deployed-rev ]; then
+  DEPLOYED=\$(cat /opt/tender-db/deployed-rev)
+  if git -C $SRC merge-base --is-ancestor $REV "\$DEPLOYED" 2>/dev/null && [ "$REV" != "\$DEPLOYED" ]; then
+    echo "refusing regression: $REV is an ancestor of deployed \$DEPLOYED" >&2
+    exit 1
+  fi
+fi
+
 cd $SRC
 git fetch origin main
 git checkout -f main
