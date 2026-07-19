@@ -2,7 +2,7 @@
 name = "tender-db"
 version = "0.1.0"
 edition = "2024"
-license = "MIT"
+license = "AGPL-3.0-or-later"
 publish = false
 
 # tender-db is a Dioxus *fullstack* app: a single crate that DX compiles into two
