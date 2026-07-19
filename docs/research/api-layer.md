@@ -507,13 +507,15 @@ Architecture decisions this research supports:
 ### Open questions
 
 Needs more research:
-1. **turso statement interruption** — can a running query be cancelled from
-   another task (for the SQL timeout), or is drop-the-future sufficient with
-   turso's async model? (DB-agent scope; the HTTP-layer timeout design
-   depends on the answer.)
-2. **sqlparser vs SQLite SELECT dialect coverage** — run the intended demo
-   queries (window functions, `->`/`->>` JSON operators, FTS `MATCH`)
-   through `SQLiteDialect` to size the false-rejection rate.
+1. ~~**turso statement interruption**~~ **Resolved** by
+   docs/research/turso-capabilities.md: timeout-by-drop
+   (`tokio::time::timeout` + dropping the future) is verified effective on
+   file-backed databases; no `interrupt()` needed.
+2. ~~**sqlparser vs SQLite SELECT dialect coverage**~~ **Superseded**: the
+   allow-list should use `turso_parser` (turso's own parser — exactly the
+   engine's dialect, no false rejections by construction), per
+   docs/research/turso-capabilities.md. sqlparser remains a fallback option
+   only.
 3. **Snapshot semantics for filtered SSE feeds** — full-collection snapshots
    on `/v1/tenders/live` could be large; probably snapshot only the
    query-matching set (Firestore-style) — needs the query-parameter design

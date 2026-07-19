@@ -112,6 +112,10 @@ matter for our change cursor someday but is explicitly unstable.
   from the app, or (b) `wal_checkpoint(TRUNCATE)` + file copy, or (c) `sqlite3
   file.db ".backup"` from outside (works because the format is compatible — see
   §5 — as long as no native-FTS index is in the file).
+  **Correction (docs/research/turso-scale.md)**: at 10 GB database size
+  `VACUUM INTO` OOM-kills an 8 GB box on both 0.7.0-pre.10 and 0.7.0 — do NOT
+  use it for production backups at our scale; use (b)/(c). This supersedes the
+  nightly-`VACUUM INTO` suggestion in "Implications" §6 below.
 
 ### WAL, multi-connection, concurrency [verified]
 

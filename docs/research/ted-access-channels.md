@@ -159,7 +159,7 @@ PDF. Page explicitly labels itself an archive. Recommend mirroring these
 zips to the VPS soon — archived pages have finite lifetimes. [docs, page
 fetched 2026-07-19]
 
-### Era 3: eForms (UBL), 2023-10-25 → today [verified]
+### Era 3: eForms (UBL), in packages from Nov 2022 (mandatory 2023-10-25) → today [verified]
 
 Roots `ContractNotice` / `ContractAwardNotice` / `PriorInformationNotice` /
 `BusinessRegistrationInformationNotice` in OASIS UBL 2.x namespaces plus the

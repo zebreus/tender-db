@@ -458,6 +458,11 @@ kind** *(inferred from the reference mechanisms, medium-high confidence)*:
   2-digit counter starting `01`. A published *logical* notice is identified by
   `UUID-vv`. Corrections republish the same BT-701 with higher BT-757
   *(and/or a change notice with its own identity — see open question)*.
+  **Empirical correction (docs/research/ted-empirical-checks.md)**: on real
+  TED data BT-701+BT-757 is NOT a reliable notice identity — change notices
+  usually carry a new BT-701, version sequences have gaps/missing v01 and can
+  span notice types. The reliable key is the OJ publication number (+ content
+  hash); treat declared versions as advisory.
 - **BT-758 Change Notice Version Identifier** (in change notices) and
   **BT-1501(n)** (in modification notices) reference the changed/modified
   previous notice as `UUID-vv` (scheme `notice-id-ref`) or by publication

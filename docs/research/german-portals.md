@@ -388,9 +388,11 @@ A DÖE importer must handle things the TED importer never sees:
    for profile-specific fields.
 4. **National notice subtypes** (E1–E4) and national codelists → open,
    per-profile code domains.
-5. **Bulk-ZIP fetching, no per-notice endpoint**: the fetcher stores whole
-   day/month ZIPs as the raw payload versions; change detection is "fetch each
-   completed day once" — no cursor, no diff API. Corrigenda arrive as new
+5. **Bulk-ZIP fetching**: the fetcher stores whole day/month ZIPs as the raw
+   payload versions; change detection is "fetch each completed day once" — no
+   cursor, no diff API. (An undocumented anonymous per-notice endpoint
+   `GET /api/notices/{uuid}?format=ocds` does exist — see §2 — useful for
+   targeted re-fetches, but not the ingestion path.) Corrigenda arrive as new
    `<uuid>-<n>` versions, mapping directly onto our append-only Notice layer.
 6. **Cross-source merge becomes real**: German above-threshold procedures
    arrive from both TED (eForms-EU) and DÖE (eForms-DE) with identical
