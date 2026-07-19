@@ -190,11 +190,132 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS organization_mentions_org ON organization_mentions(organization_id);
 
+    -- ------------------------------------------------------------- results
+    -- The tendering-results half (issue 13): what happened after submission.
+    -- eForms publishes results as notice-local sections (RES-/TEN-/CON-), and
+    -- framework/DPS award rounds are repeated result notices under one Tender
+    -- whose lot ids can be round-local labels (ted-empirical-checks.md §1/§3).
+    -- A results entity is therefore identified by its origin notice plus its
+    -- section id there: rounds accumulate, and two rounds can never collide.
+
+    CREATE TABLE IF NOT EXISTS lot_results (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        tender_id  INTEGER NOT NULL REFERENCES tenders(id),
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        result_key TEXT NOT NULL, -- RES-XXXX in the origin notice
+        UNIQUE(tender_id, notice_id, result_key)
+    ) STRICT;
+
+    CREATE TABLE IF NOT EXISTS bids (
+        id        INTEGER PRIMARY KEY AUTOINCREMENT,
+        tender_id INTEGER NOT NULL REFERENCES tenders(id),
+        notice_id INTEGER NOT NULL REFERENCES notices(id),
+        bid_key   TEXT NOT NULL, -- TEN-XXXX (the eForms LotTender)
+        UNIQUE(tender_id, notice_id, bid_key)
+    ) STRICT;
+
+    CREATE TABLE IF NOT EXISTS contracts (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        tender_id    INTEGER NOT NULL REFERENCES tenders(id),
+        notice_id    INTEGER NOT NULL REFERENCES notices(id),
+        contract_key TEXT NOT NULL, -- CON-XXXX (the eForms SettledContract)
+        UNIQUE(tender_id, notice_id, contract_key)
+    ) STRICT;
+
+    -- The award decision for one Lot as of this version (BT-142/BT-144). The
+    -- awarded value and the winners are resolved through the origin notice's
+    -- own result graph (LotResult → SettledContract → LotTender →
+    -- TenderingParty → Organization).
+    CREATE TABLE IF NOT EXISTS tender_version_lot_results (
+        tender_id        INTEGER NOT NULL,
+        seq              INTEGER NOT NULL,
+        lot_result_id    INTEGER NOT NULL REFERENCES lot_results(id),
+        lot_id           INTEGER REFERENCES lots(id),
+        decision         TEXT, -- BT-142 winner-selection-status
+        reason           TEXT, -- BT-144 non-award justification
+        awarded_cents    INTEGER,
+        awarded_currency TEXT,
+        PRIMARY KEY (tender_id, seq, lot_result_id),
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+
+    CREATE TABLE IF NOT EXISTS tender_version_result_winners (
+        tender_id       INTEGER NOT NULL,
+        seq             INTEGER NOT NULL,
+        lot_result_id   INTEGER NOT NULL REFERENCES lot_results(id),
+        organization_id INTEGER NOT NULL REFERENCES organizations(id),
+        PRIMARY KEY (tender_id, seq, lot_result_id, organization_id),
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS tender_version_result_winners_org
+        ON tender_version_result_winners(organization_id);
+
+    -- Received-submission statistics (BT-759/BT-760): `kind` is the published
+    -- received-submission-type code (tenders, t-sme, t-eea, …).
+    CREATE TABLE IF NOT EXISTS tender_version_result_stats (
+        tender_id     INTEGER NOT NULL,
+        seq           INTEGER NOT NULL,
+        lot_result_id INTEGER NOT NULL REFERENCES lot_results(id),
+        kind          TEXT NOT NULL,
+        count         INTEGER NOT NULL,
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS tender_version_result_stats_version
+        ON tender_version_result_stats(tender_id, seq);
+
+    -- A Bid: one offer on one Lot, with its value (BT-720). CONTEXT.md: the
+    -- eForms TEN- entity is a Bid — the word tender never means an offer here.
+    CREATE TABLE IF NOT EXISTS tender_version_bids (
+        tender_id INTEGER NOT NULL,
+        seq       INTEGER NOT NULL,
+        bid_id    INTEGER NOT NULL REFERENCES bids(id),
+        lot_id    INTEGER REFERENCES lots(id),
+        cents     INTEGER,
+        currency  TEXT,
+        PRIMARY KEY (tender_id, seq, bid_id),
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+
+    -- The eForms TenderingParty flattened onto the Bid: who stands behind the
+    -- offer (role 'tenderer') and who they subcontract to ('subcontractor'),
+    -- each link anchored to its mention evidence.
+    CREATE TABLE IF NOT EXISTS tender_version_bid_parties (
+        tender_id          INTEGER NOT NULL,
+        seq                INTEGER NOT NULL,
+        bid_id             INTEGER NOT NULL REFERENCES bids(id),
+        role               TEXT NOT NULL, -- tenderer | subcontractor
+        organization_id    INTEGER NOT NULL REFERENCES organizations(id),
+        mention_notice_id  INTEGER NOT NULL,
+        mention_section_id TEXT NOT NULL,
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq),
+        FOREIGN KEY (mention_notice_id, mention_section_id)
+            REFERENCES organization_mentions(notice_id, section_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS tender_version_bid_parties_org
+        ON tender_version_bid_parties(organization_id);
+
+    -- A settled Contract: the buyer's contract id (BT-150), the conclusion
+    -- date (BT-145), and the value of the winning Bid(s) it settled
+    -- (BT-3202 → BT-720 — eForms contracts carry no value of their own).
+    CREATE TABLE IF NOT EXISTS tender_version_contracts (
+        tender_id          INTEGER NOT NULL,
+        seq                INTEGER NOT NULL,
+        contract_id        INTEGER NOT NULL REFERENCES contracts(id),
+        buyer_contract_id  TEXT,
+        concluded_utc      INTEGER,
+        concluded_offset   INTEGER,
+        concluded_has_time INTEGER,
+        cents              INTEGER,
+        currency           TEXT,
+        PRIMARY KEY (tender_id, seq, contract_id),
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+
     -- The change cursor (docs/architecture.md). Ingestion order, never
     -- renumbered: re-projections append. `op` is diff-derived.
     CREATE TABLE IF NOT EXISTS changes (
         cursor      INTEGER PRIMARY KEY AUTOINCREMENT,
-        entity_kind TEXT NOT NULL, -- tender | lot | organization
+        entity_kind TEXT NOT NULL, -- tender | lot | organization | lot_result | bid | contract
         entity_id   INTEGER NOT NULL,
         version_seq INTEGER,
         op          TEXT NOT NULL, -- added | changed | removed
@@ -236,6 +357,24 @@ pub(crate) const SCHEMA: &str = "
     SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
            (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) AS mentions
       FROM organizations o;
+
+    -- Current lot results with their winner — one row per (result, winning
+    -- organization); a consortium yields one row per member, an unresolved or
+    -- withheld winner yields NULL columns. The spec's competitor question
+    -- (org → won lots → values) is a GROUP BY over this view.
+    CREATE VIEW IF NOT EXISTS v_lot_results AS
+    SELECT r.id, r.tender_id, r.notice_id, r.result_key,
+           s.lot_id, (SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id) AS lot_key,
+           s.decision, s.reason, s.awarded_cents, s.awarded_currency,
+           w.organization_id AS winner_organization_id,
+           o.name AS winner_name, o.provisional AS winner_provisional
+      FROM lot_results r
+      JOIN v_tender_current c ON c.tender_id = r.tender_id
+      JOIN tender_version_lot_results s
+        ON s.tender_id = r.tender_id AND s.seq = c.seq AND s.lot_result_id = r.id
+      LEFT JOIN tender_version_result_winners w
+        ON w.tender_id = r.tender_id AND w.seq = c.seq AND w.lot_result_id = r.id
+      LEFT JOIN organizations o ON o.id = w.organization_id;
 ";
 
 /// One canonical value of a Tender version, in its scope. The satellites of
@@ -273,8 +412,72 @@ pub struct LotState {
     pub facts: BTreeSet<Fact>,
 }
 
+/// One result notice's contribution to the results layer — a "round" in the
+/// framework/DPS sense (ted-empirical-checks.md §3). Rounds are *additive*:
+/// a later version never supersedes an earlier round's results (the verified
+/// tranche pattern), except that a correction — a change notice republishing
+/// the same logical notice — replaces the round it corrects.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Round {
+    /// The result notice this round came from; results keys are local to it.
+    pub notice_id: i64,
+    /// BT-701 of the origin notice — the correction-replacement key.
+    pub logical_notice_id: Option<String>,
+    pub lot_results: Vec<LotResultState>,
+    pub bids: Vec<BidState>,
+    pub contracts: Vec<ContractState>,
+}
+
+/// The award decision for one Lot (eForms LotResult, RES-).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LotResultState {
+    pub key: String,
+    /// The referenced lot id as published (BT-13713) — resolved defensively,
+    /// because FA/DPS rounds relabel lots per round.
+    pub lot_key: Option<String>,
+    pub decision: Option<String>,
+    pub reason: Option<String>,
+    pub awarded_cents: Option<i64>,
+    pub awarded_currency: Option<String>,
+    /// Winning Organization ids, resolved through the notice's own graph.
+    pub winners: Vec<i64>,
+    /// (received-submission-type code, count), from BT-759/BT-760.
+    pub statistics: Vec<(String, i64)>,
+}
+
+/// A Bid (eForms LotTender, TEN-): one offer on one Lot.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BidState {
+    pub key: String,
+    pub lot_key: Option<String>,
+    pub cents: Option<i64>,
+    pub currency: Option<String>,
+    pub parties: Vec<BidParty>,
+}
+
+/// One Organization behind a Bid — the eForms TenderingParty flattened.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BidParty {
+    pub role: String, // tenderer | subcontractor
+    pub organization_id: i64,
+    /// The ORG- section in the origin notice — the mention evidence.
+    pub section_id: String,
+}
+
+/// A settled Contract (eForms SettledContract, CON-).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ContractState {
+    pub key: String,
+    pub buyer_contract_id: Option<String>,
+    /// BT-145 conclusion date: (utc seconds, offset minutes, has_time).
+    pub concluded: Option<(i64, i64, bool)>,
+    pub cents: Option<i64>,
+    pub currency: Option<String>,
+}
+
 /// One Tender version: the Notice that caused it plus the resolved state at
-/// that point (this notice's values over the previous version's).
+/// that point (this notice's values over the previous version's, and every
+/// results round published so far).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TenderVersion {
     pub caused_by_notice_id: i64,
@@ -283,6 +486,7 @@ pub struct TenderVersion {
     pub publication_id: String,
     pub facts: BTreeSet<Fact>,
     pub lots: Vec<LotState>,
+    pub rounds: Vec<Round>,
 }
 
 /// A whole Tender as the projection computed it, ready to reconcile against
@@ -404,6 +608,12 @@ impl Db {
     pub async fn clear_canonical(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for table in [
+            "tender_version_result_winners",
+            "tender_version_result_stats",
+            "tender_version_lot_results",
+            "tender_version_bid_parties",
+            "tender_version_bids",
+            "tender_version_contracts",
             "tender_version_parties",
             "tender_version_texts",
             "tender_version_dates",
@@ -411,6 +621,9 @@ impl Db {
             "tender_version_classifications",
             "tender_version_lots",
             "tender_versions",
+            "lot_results",
+            "bids",
+            "contracts",
             "lots",
             "tenders",
             "organization_mentions",
@@ -648,6 +861,12 @@ impl Db {
 
     async fn delete_version(&self, conn: &Connection, tender_id: i64, seq: i64) -> turso::Result<()> {
         for table in [
+            "tender_version_result_winners",
+            "tender_version_result_stats",
+            "tender_version_lot_results",
+            "tender_version_bid_parties",
+            "tender_version_bids",
+            "tender_version_contracts",
             "tender_version_parties",
             "tender_version_texts",
             "tender_version_dates",
@@ -701,7 +920,172 @@ impl Db {
             .await?;
             self.write_facts(conn, tender_id, seq, Some(lot_id), &lot.facts).await?;
         }
+        for round in &v.rounds {
+            self.write_round(conn, tender_id, seq, round).await?;
+        }
         Ok(())
+    }
+
+    async fn write_round(
+        &self,
+        conn: &Connection,
+        tender_id: i64,
+        seq: i64,
+        round: &Round,
+    ) -> turso::Result<()> {
+        let scope = || (Value::Integer(tender_id), Value::Integer(seq));
+        for result in &round.lot_results {
+            let id = self
+                .result_identity(conn, "lot_results", "result_key", tender_id, round.notice_id, &result.key)
+                .await?;
+            let lot_id = self.result_lot(conn, tender_id, result.lot_key.as_deref()).await?;
+            let (a, b) = scope();
+            conn.execute(
+                "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id,
+                     decision, reason, awarded_cents, awarded_currency)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    a,
+                    b,
+                    Value::Integer(id),
+                    opt_int(lot_id),
+                    opt_text(result.decision.as_deref()),
+                    opt_text(result.reason.as_deref()),
+                    opt_int(result.awarded_cents),
+                    opt_text(result.awarded_currency.as_deref()),
+                ),
+            )
+            .await?;
+            for organization_id in &result.winners {
+                let (a, b) = scope();
+                conn.execute(
+                    "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id,
+                         organization_id)
+                     VALUES(?, ?, ?, ?)",
+                    (a, b, Value::Integer(id), Value::Integer(*organization_id)),
+                )
+                .await?;
+            }
+            for (kind, count) in &result.statistics {
+                let (a, b) = scope();
+                conn.execute(
+                    "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count)
+                     VALUES(?, ?, ?, ?, ?)",
+                    (a, b, Value::Integer(id), t(kind), Value::Integer(*count)),
+                )
+                .await?;
+            }
+        }
+        for bid in &round.bids {
+            let id = self
+                .result_identity(conn, "bids", "bid_key", tender_id, round.notice_id, &bid.key)
+                .await?;
+            let lot_id = self.result_lot(conn, tender_id, bid.lot_key.as_deref()).await?;
+            let (a, b) = scope();
+            conn.execute(
+                "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency)
+                 VALUES(?, ?, ?, ?, ?, ?)",
+                (
+                    a,
+                    b,
+                    Value::Integer(id),
+                    opt_int(lot_id),
+                    opt_int(bid.cents),
+                    opt_text(bid.currency.as_deref()),
+                ),
+            )
+            .await?;
+            for party in &bid.parties {
+                let (a, b) = scope();
+                conn.execute(
+                    "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role,
+                         organization_id, mention_notice_id, mention_section_id)
+                     VALUES(?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        a,
+                        b,
+                        Value::Integer(id),
+                        t(&party.role),
+                        Value::Integer(party.organization_id),
+                        Value::Integer(round.notice_id),
+                        t(&party.section_id),
+                    ),
+                )
+                .await?;
+            }
+        }
+        for contract in &round.contracts {
+            let id = self
+                .result_identity(conn, "contracts", "contract_key", tender_id, round.notice_id, &contract.key)
+                .await?;
+            let (a, b) = scope();
+            let (utc, offset, has_time) = match contract.concluded {
+                Some((utc, offset, has_time)) => {
+                    (Some(utc), Some(offset), Some(i64::from(has_time)))
+                }
+                None => (None, None, None),
+            };
+            conn.execute(
+                "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id,
+                     concluded_utc, concluded_offset, concluded_has_time, cents, currency)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    a,
+                    b,
+                    Value::Integer(id),
+                    opt_text(contract.buyer_contract_id.as_deref()),
+                    opt_int(utc),
+                    opt_int(offset),
+                    opt_int(has_time),
+                    opt_int(contract.cents),
+                    opt_text(contract.currency.as_deref()),
+                ),
+            )
+            .await?;
+        }
+        Ok(())
+    }
+
+    /// A results entity's identity row: (tender, origin notice, section key).
+    async fn result_identity(
+        &self,
+        conn: &Connection,
+        table: &str,
+        key_column: &str,
+        tender_id: i64,
+        notice_id: i64,
+        key: &str,
+    ) -> turso::Result<i64> {
+        let mut rows = conn
+            .query(
+                &format!("SELECT id FROM {table} WHERE tender_id = ? AND notice_id = ? AND {key_column} = ?"),
+                (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            return Ok(int(&row, 0));
+        }
+        conn.execute(
+            &format!("INSERT INTO {table}(tender_id, notice_id, {key_column}) VALUES(?, ?, ?)"),
+            (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
+        )
+        .await?;
+        last_insert_rowid(conn).await
+    }
+
+    /// Resolve a result's published lot reference to a Lot row — creating the
+    /// identity if the result notice referenced a lot no notice sectioned,
+    /// because the published id is a fact and there is nowhere to record a guess.
+    async fn result_lot(
+        &self,
+        conn: &Connection,
+        tender_id: i64,
+        lot_key: Option<&str>,
+    ) -> turso::Result<Option<i64>> {
+        Ok(match lot_key {
+            Some(key) => Some(self.lot_identity(conn, tender_id, key).await?),
+            None => None,
+        })
     }
 
     async fn write_facts(
@@ -815,7 +1199,7 @@ impl Db {
                 append_change(conn, "tender", tender_id, Some(seq), "added", now).await?;
                 count += 1;
             }
-            Some(prev) if prev.facts != v.facts => {
+            Some(prev) if prev.facts != v.facts || prev.rounds != v.rounds => {
                 append_change(conn, "tender", tender_id, Some(seq), "changed", now).await?;
                 count += 1;
             }
@@ -837,6 +1221,52 @@ impl Db {
             let lot_id = self.lot_identity(conn, tender_id, &gone.key).await?;
             append_change(conn, "lot", lot_id, Some(seq), "removed", now).await?;
             count += 1;
+        }
+
+        let previous_rounds = previous.map(|p| p.rounds.as_slice()).unwrap_or_default();
+        count += self.append_round_changes(conn, tender_id, seq, previous_rounds, &v.rounds, now).await?;
+        Ok(count)
+    }
+
+    /// Diff the results layer of two consecutive versions. Rounds accumulate,
+    /// so almost every diff is a new round's `added` rows; a correction that
+    /// replaced a round reads as `removed` + `added`, because the corrected
+    /// entities have a different origin notice and are different entities.
+    async fn append_round_changes(
+        &self,
+        conn: &Connection,
+        tender_id: i64,
+        seq: i64,
+        previous: &[Round],
+        current: &[Round],
+        now: i64,
+    ) -> turso::Result<u64> {
+        let mut count = 0;
+        for (kind, table, column) in [
+            ("lot_result", "lot_results", "result_key"),
+            ("bid", "bids", "bid_key"),
+            ("contract", "contracts", "contract_key"),
+        ] {
+            let curr = flatten(current, kind);
+            let prev = flatten(previous, kind);
+            for (notice_id, key, state) in &curr {
+                let op = match prev.iter().find(|(n, k, _)| n == notice_id && k == key) {
+                    None => "added",
+                    Some((_, _, before)) if before != state => "changed",
+                    Some(_) => continue,
+                };
+                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key).await?;
+                append_change(conn, kind, id, Some(seq), op, now).await?;
+                count += 1;
+            }
+            for (notice_id, key, _) in &prev {
+                if curr.iter().any(|(n, k, _)| n == notice_id && k == key) {
+                    continue;
+                }
+                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key).await?;
+                append_change(conn, kind, id, Some(seq), "removed", now).await?;
+                count += 1;
+            }
         }
         Ok(count)
     }
@@ -864,6 +1294,9 @@ impl Db {
             ("tenders (island)", "SELECT COUNT(*) FROM tenders WHERE procedure_key IS NULL"),
             ("tender_versions", "SELECT COUNT(*) FROM tender_versions"),
             ("lots", "SELECT COUNT(*) FROM lots"),
+            ("lot_results", "SELECT COUNT(*) FROM lot_results"),
+            ("bids", "SELECT COUNT(*) FROM bids"),
+            ("contracts", "SELECT COUNT(*) FROM contracts"),
             ("organizations", "SELECT COUNT(*) FROM organizations"),
             ("organizations (canonical)", "SELECT COUNT(*) FROM organizations WHERE provisional = 0"),
             ("organizations (provisional)", "SELECT COUNT(*) FROM organizations WHERE provisional = 1"),
@@ -927,6 +1360,34 @@ pub struct Change {
     pub version_seq: Option<i64>,
     pub op: String,
     pub changed_at: i64,
+}
+
+/// One results entity flattened out of a round set, for diffing across
+/// versions. Entities are keyed by (origin notice, section key), which is why
+/// accumulating rounds can never alias each other.
+#[derive(PartialEq)]
+enum RoundEntity<'a> {
+    LotResult(&'a LotResultState),
+    Bid(&'a BidState),
+    Contract(&'a ContractState),
+}
+
+fn flatten<'a>(rounds: &'a [Round], kind: &str) -> Vec<(i64, &'a str, RoundEntity<'a>)> {
+    let mut out = Vec::new();
+    for r in rounds {
+        match kind {
+            "lot_result" => out.extend(
+                r.lot_results.iter().map(|e| (r.notice_id, e.key.as_str(), RoundEntity::LotResult(e))),
+            ),
+            "bid" => {
+                out.extend(r.bids.iter().map(|e| (r.notice_id, e.key.as_str(), RoundEntity::Bid(e))));
+            }
+            _ => out.extend(
+                r.contracts.iter().map(|e| (r.notice_id, e.key.as_str(), RoundEntity::Contract(e))),
+            ),
+        }
+    }
+    out
 }
 
 async fn append_change(

@@ -10,8 +10,8 @@
 use chrono::{DateTime, FixedOffset, SecondsFormat, TimeZone};
 use serde_json::{Value, json};
 use store::read::{
-    FactRow, LotRow, NoticeRow, OrganizationRow, PartyRow, Stamp, TenderDetail, TenderRow,
-    VersionRow,
+    BidRow, ContractRow, FactRow, LotResultRow, LotRow, NoticeRow, OrganizationRow, PartyRow,
+    ResultOrgRow, Stamp, TenderDetail, TenderRow, VersionRow,
 };
 
 /// A UTC instant as ISO 8601, e.g. `2026-07-19T09:30:00Z`.
@@ -142,6 +142,51 @@ fn party(p: &PartyRow) -> Value {
     })
 }
 
+fn result_org(o: &ResultOrgRow) -> Value {
+    json!({
+        "role": o.role,
+        "organization_id": o.organization_id,
+        "organization_name": o.organization_name,
+    })
+}
+
+/// An award decision. `notice_id` + `key` name the origin evidence: results
+/// accumulate across framework/DPS rounds, each round keyed by its notice.
+fn lot_result(r: &LotResultRow) -> Value {
+    json!({
+        "notice_id": r.notice_id,
+        "key": r.key,
+        "lot": r.lot_key,
+        "decision": r.decision,
+        "reason": r.reason,
+        "awarded": money(r.awarded_cents, r.awarded_currency.as_deref()),
+        "winners": r.winners.iter().map(result_org).collect::<Vec<_>>(),
+        "statistics": r.statistics.iter()
+            .map(|(kind, count)| (kind.clone(), json!(count)))
+            .collect::<serde_json::Map<_, _>>(),
+    })
+}
+
+fn bid(b: &BidRow) -> Value {
+    json!({
+        "notice_id": b.notice_id,
+        "key": b.key,
+        "lot": b.lot_key,
+        "value": money(b.cents, b.currency.as_deref()),
+        "parties": b.parties.iter().map(result_org).collect::<Vec<_>>(),
+    })
+}
+
+fn contract(c: &ContractRow) -> Value {
+    json!({
+        "notice_id": c.notice_id,
+        "key": c.key,
+        "buyer_contract_id": c.buyer_contract_id,
+        "concluded": stamp(c.concluded),
+        "value": money(c.cents, c.currency.as_deref()),
+    })
+}
+
 fn version(v: &VersionRow) -> Value {
     json!({
         "seq": v.seq,
@@ -166,6 +211,9 @@ pub fn detail(d: &TenderDetail) -> Value {
     );
     map.insert("parties".into(), json!(d.parties.iter().map(party).collect::<Vec<_>>()));
     map.insert("lot_details".into(), json!(d.lots.iter().map(lot).collect::<Vec<_>>()));
+    map.insert("lot_results".into(), json!(d.lot_results.iter().map(lot_result).collect::<Vec<_>>()));
+    map.insert("bids".into(), json!(d.bids.iter().map(bid).collect::<Vec<_>>()));
+    map.insert("contracts".into(), json!(d.contracts.iter().map(contract).collect::<Vec<_>>()));
     map.insert("versions".into(), json!(d.versions.iter().map(version).collect::<Vec<_>>()));
     object
 }
