@@ -791,10 +791,10 @@ own importer and BT mapping — this research covers eForms only.
    API on the VPS. Also: how corrections are actually published (new version of
    same BT-701 vs change-notice subtypes with own BT-701?) and whether TED bulk
    XML carries both versions.
-- 2. **Framework/DPS round semantics on real data**: how CANs within a framework
-  reference the original procedure (same BT-04?) and how often one LotResult →
-  many contracts occurs; decides whether tender-db needs a "competition round"
-  derived entity (the OCDS profile splits here).
+2. **Framework/DPS round semantics on real data**: how CANs within a framework
+   reference the original procedure (same BT-04?) and how often one LotResult →
+   many contracts occurs; decides whether tender-db needs a "competition round"
+   derived entity (the OCDS profile splits here).
 3. **Legacy TED-XML (pre-eForms) format**: structure, mapping to the same
    canonical entities, and the BT coverage gap — required for backfill beyond
    late 2022; entirely unresearched.
