@@ -1,6 +1,6 @@
 # 16 — In-app ingestion supervisor, admin API, progress panel
 
-Status: ready-for-agent
+Status: resolved
 Blocked by: 06
 
 Goal: ingestion runs inside the server process (ADR-0005 made real): no
@@ -41,3 +41,15 @@ Acceptance: on production, POST /admin/jobs with the secret ingests a
 pending package with the service serving throughout (no 502s); the dashboard
 shows the run live; the scheduler picks up the next TED daily without any
 operator action.
+
+## Answer
+
+Implemented in 8636abb (supervisor + /admin + dashboard panel + scheduler),
+live in production via rev 7199300. First supervisor-driven load executed by
+the lead through /admin with the service serving throughout (zero downtime):
+3594 Tenders / 3715 versions / 12478 Lots / 8221 Organizations / cursor
+24553 from the real TED daily 2026-00136. Quarantine honest at 28 (21
+nested-monthly tarballs pending walker recursion — assigned to the DOE/walker
+slice — and 7 unrepresentable values). Admin gating verified live (403 paths).
+The concurrent-deploy race observed during rollout is fixed in deploy.sh
+(flock + regression refusal, f8bed0b).
