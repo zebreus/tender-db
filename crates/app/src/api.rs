@@ -10,5 +10,5 @@ use model::Tender;
 #[get("/api/tenders")]
 pub async fn list_tenders() -> ServerFnResult<Vec<Tender>> {
     let db = store::state().await;
-    db.list_tenders().await.map_err(ServerFnError::new)
+    db.list_tenders(200).await.map_err(ServerFnError::new)
 }

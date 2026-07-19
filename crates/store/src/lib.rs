@@ -6,6 +6,12 @@
 //! the process-wide instance owns a single connection behind a mutex and
 //! serialises access.
 
+pub mod canonical;
+
+pub use canonical::{
+    Applied, Change, Fact, Identifier, LotState, Mention, NoticeRef, TenderProjection, TenderVersion,
+};
+
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, OnceCell};
 use turso::{Connection, Value};
@@ -24,11 +30,6 @@ const PRAGMAS: [&str; 4] = [
 /// Schema, applied idempotently at startup. STRICT so columns actually enforce
 /// their declared types.
 const SCHEMA: &str = "
-    CREATE TABLE IF NOT EXISTS tenders (
-        id    INTEGER PRIMARY KEY,
-        title TEXT NOT NULL
-    ) STRICT;
-
     -- Raw-fetch registry (docs/architecture.md 'Storage layout'). One row per
     -- downloaded file version; the newest row per (source, kind, period) is
     -- current. Files themselves are immutable under the archive root — a
@@ -268,6 +269,7 @@ impl Db {
             while rows.next().await?.is_some() {}
         }
         conn.execute_batch(SCHEMA).await?;
+        conn.execute_batch(canonical::SCHEMA).await?;
         Ok(Db { conn: Mutex::new(conn) })
     }
 
@@ -275,23 +277,22 @@ impl Db {
         self.conn.lock().await
     }
 
-    /// All tenders, newest first.
-    pub async fn list_tenders(&self) -> turso::Result<Vec<model::Tender>> {
+    /// Current-state Tenders, newest first — the `v_tenders` view, which is
+    /// `MAX(seq)` per Tender (ADR-0001).
+    pub async fn list_tenders(&self, limit: i64) -> turso::Result<Vec<model::Tender>> {
         let conn = self.conn().await;
-        let mut rows = conn.query("SELECT id, title FROM tenders ORDER BY id DESC", ()).await?;
+        let mut rows = conn
+            .query(
+                "SELECT id, COALESCE(title, '(untitled)') FROM v_tenders
+                 ORDER BY published_at DESC, id DESC LIMIT ?",
+                (Value::Integer(limit),),
+            )
+            .await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
-            if let (Ok(Value::Integer(id)), Ok(Value::Text(title))) = (row.get_value(0), row.get_value(1)) {
-                out.push(model::Tender { id, title });
-            }
+            out.push(model::Tender { id: int(&row, 0), title: text(&row, 1) });
         }
         Ok(out)
-    }
-
-    pub async fn insert_tender(&self, title: &str) -> turso::Result<()> {
-        let conn = self.conn().await;
-        conn.execute("INSERT INTO tenders(title) VALUES(?)", (Value::Text(title.into()),)).await?;
-        Ok(())
     }
 
     /// The current (newest) fetch of a package, if any.
@@ -737,22 +738,26 @@ pub struct Fetch {
     pub path: String,
 }
 
-fn t(s: impl Into<String>) -> Value {
+pub(crate) fn t(s: impl Into<String>) -> Value {
     Value::Text(s.into())
 }
 
-fn opt_text(s: Option<&str>) -> Value {
+pub(crate) fn opt_text(s: Option<&str>) -> Value {
     s.map_or(Value::Null, |s| Value::Text(s.into()))
 }
 
-fn text(row: &turso::Row, idx: usize) -> String {
+pub(crate) fn opt_int(i: Option<i64>) -> Value {
+    i.map_or(Value::Null, Value::Integer)
+}
+
+pub(crate) fn text(row: &turso::Row, idx: usize) -> String {
     match row.get_value(idx) {
         Ok(Value::Text(s)) => s,
         _ => String::new(),
     }
 }
 
-fn int(row: &turso::Row, idx: usize) -> i64 {
+pub(crate) fn int(row: &turso::Row, idx: usize) -> i64 {
     match row.get_value(idx) {
         Ok(Value::Integer(i)) => i,
         _ => 0,
@@ -763,23 +768,19 @@ fn int(row: &turso::Row, idx: usize) -> i64 {
 mod tests {
     use super::*;
 
-    // Exercises the pragmas, the STRICT schema, and a tender round-trip against a
+    // Exercises the pragmas and the full STRICT schema — both layers — against a
     // real Turso db file.
     #[tokio::test]
-    async fn round_trips() {
+    async fn opens_and_applies_the_schema() {
         let path = format!("/tmp/tender-db-test-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
 
         let db = Db::open(&path).await.unwrap();
-        assert!(db.list_tenders().await.unwrap().is_empty());
-
-        db.insert_tender("Road resurfacing, district 4").await.unwrap();
-        db.insert_tender("School canteen catering 2027").await.unwrap();
-
-        let tenders = db.list_tenders().await.unwrap();
-        assert_eq!(tenders.len(), 2);
-        // Newest first.
-        assert_eq!(tenders[0].title, "School canteen catering 2027");
+        assert!(db.list_tenders(10).await.unwrap().is_empty());
+        // Re-opening applies the schema again; every statement is IF NOT EXISTS.
+        drop(db);
+        let db = Db::open(&path).await.unwrap();
+        assert!(db.canonical_counts().await.unwrap().iter().all(|(_, n)| *n == 0));
 
         let _ = std::fs::remove_file(&path);
     }
