@@ -27,7 +27,7 @@
 //! declaration of what it changed (BT-13716 covers only ~58% of real change
 //! notices).
 
-use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_text, t, text};
+use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_text, opt_text_of, t, text};
 use std::collections::BTreeSet;
 use turso::{Connection, Value};
 
@@ -444,6 +444,7 @@ impl Db {
         match result {
             Ok(ids) => {
                 conn.execute("COMMIT", ()).await?;
+                self.publish_cursor(&conn).await?;
                 Ok(ids)
             }
             Err(e) => {
@@ -543,6 +544,9 @@ impl Db {
         match result {
             Ok(applied) => {
                 conn.execute("COMMIT", ()).await?;
+                if applied.changes > 0 {
+                    self.publish_cursor(&conn).await?;
+                }
                 Ok(applied)
             }
             Err(e) => {
@@ -951,13 +955,6 @@ async fn append_change(
 async fn last_insert_rowid(conn: &Connection) -> turso::Result<i64> {
     let mut rows = conn.query("SELECT last_insert_rowid()", ()).await?;
     Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
-}
-
-fn opt_text_of(row: &turso::Row, idx: usize) -> Option<String> {
-    match row.get_value(idx) {
-        Ok(Value::Text(s)) => Some(s),
-        _ => None,
-    }
 }
 
 type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;

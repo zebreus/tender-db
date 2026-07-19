@@ -24,10 +24,25 @@ fn main() {
     dioxus::launch(App);
 }
 
-/// Server entry: the standard Dioxus router.
+/// How many reader connections serve the public API. Turso readers parallelise
+/// under WAL, so this is the API's real concurrency; the single writer is
+/// untouched by it.
+#[cfg(feature = "server")]
+const READERS: usize = 8;
+
+/// Server entry: the Dioxus router with the public `/v1` API merged beside it.
+///
+/// The two routers are independent — layers on ours (rate limiting) do not
+/// reach dioxus's routes, and the namespaces cannot collide because server
+/// functions live under `/api` and the public API under `/v1`
+/// (docs/research/api-layer.md §1).
 #[cfg(feature = "server")]
 fn main() {
-    dioxus::server::serve(|| async { Ok(dioxus::server::router(App)) });
+    dioxus::server::serve(|| async {
+        let db = store::state().await;
+        let api = tender_db::v1::AppState::new(db.readers(READERS)?, db.cursor_watch());
+        Ok(dioxus::server::router(App).merge(tender_db::v1::router(api)))
+    });
 }
 
 #[derive(Clone, Routable, Debug, PartialEq, serde::Serialize, serde::Deserialize)]

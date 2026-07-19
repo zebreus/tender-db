@@ -7,20 +7,26 @@
 //! serialises access.
 
 pub mod canonical;
+pub mod read;
+
+/// Re-exported so callers can name `Error`/`Connection`/`Value` without taking
+/// their own pin on the engine — the store owns which Turso this is.
+pub use turso;
 
 pub use canonical::{
     Applied, Change, Fact, Identifier, LotState, Mention, NoticeRef, TenderProjection, TenderVersion,
 };
+pub use read::{Filter, Reader, Readers, Status};
 
 use std::sync::Arc;
-use tokio::sync::{Mutex, MutexGuard, OnceCell};
+use tokio::sync::{Mutex, MutexGuard, OnceCell, watch};
 use turso::{Connection, Value};
 
 /// Sane connection defaults, per <https://mort.coffee/home/sqlite-editions/>:
 /// enforce foreign keys, retry on lock contention instead of failing with
 /// SQLITE_BUSY, WAL for concurrent reads during writes, and NORMAL sync (safe
 /// under WAL, much faster than FULL).
-const PRAGMAS: [&str; 4] = [
+pub(crate) const PRAGMAS: [&str; 4] = [
     "PRAGMA foreign_keys = ON",
     "PRAGMA busy_timeout = 5000",
     "PRAGMA journal_mode = WAL",
@@ -243,7 +249,13 @@ const SCHEMA: &str = "
 ";
 
 pub struct Db {
+    database: turso::Database,
     conn: Mutex<Connection>,
+    /// The change-cursor doorbell (docs/research/api-layer.md §2): the writer
+    /// publishes the newest cursor after every committed change-append, and SSE
+    /// streams wake on it and read the log themselves. It carries only the
+    /// cursor — never a payload — so a slow subscriber cannot lose an event.
+    cursor: watch::Sender<i64>,
 }
 
 static DB: OnceCell<Arc<Db>> = OnceCell::const_new();
@@ -270,11 +282,38 @@ impl Db {
         }
         conn.execute_batch(SCHEMA).await?;
         conn.execute_batch(canonical::SCHEMA).await?;
-        Ok(Db { conn: Mutex::new(conn) })
+        let cursor = watch::Sender::new(max_cursor(&conn).await?);
+        Ok(Db { database, conn: Mutex::new(conn), cursor })
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {
         self.conn.lock().await
+    }
+
+    /// `n` reader connections over the same database file. Readers run in
+    /// parallel with each other and with the writer (WAL), so the API's fan-out
+    /// never queues behind ingestion.
+    pub fn readers(&self, n: usize) -> turso::Result<Arc<Readers>> {
+        Readers::open(self.database.clone(), n)
+    }
+
+    /// Subscribe to the change-cursor doorbell. The current value is the newest
+    /// cursor known to have been committed.
+    pub fn cursor_watch(&self) -> watch::Receiver<i64> {
+        self.cursor.subscribe()
+    }
+
+    /// The newest committed cursor, read from the log.
+    pub async fn latest_cursor(&self) -> turso::Result<i64> {
+        max_cursor(&*self.conn().await).await
+    }
+
+    /// Ring the doorbell for whatever the just-committed transaction appended.
+    /// Called after COMMIT, so a subscriber that reads immediately can only see
+    /// durable rows.
+    async fn publish_cursor(&self, conn: &Connection) -> turso::Result<()> {
+        self.cursor.send_replace(max_cursor(conn).await?);
+        Ok(())
     }
 
     /// Current-state Tenders, newest first — the `v_tenders` view, which is
@@ -762,6 +801,27 @@ pub(crate) fn int(row: &turso::Row, idx: usize) -> i64 {
         Ok(Value::Integer(i)) => i,
         _ => 0,
     }
+}
+
+pub(crate) fn opt_text_of(row: &turso::Row, idx: usize) -> Option<String> {
+    match row.get_value(idx) {
+        Ok(Value::Text(s)) => Some(s),
+        _ => None,
+    }
+}
+
+pub(crate) fn opt_int_of(row: &turso::Row, idx: usize) -> Option<i64> {
+    match row.get_value(idx) {
+        Ok(Value::Integer(i)) => Some(i),
+        _ => None,
+    }
+}
+
+/// The newest cursor in the change log, 0 when it is empty. The log is
+/// append-only and never renumbered, so this is a high-water mark.
+pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
+    let mut rows = conn.query("SELECT COALESCE(MAX(cursor), 0) FROM changes", ()).await?;
+    Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
 }
 
 #[cfg(test)]

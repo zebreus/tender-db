@@ -14,9 +14,43 @@ dioxus = { workspace = true }
 serde = { workspace = true }
 model = { workspace = true }
 wasm-bindgen = { workspace = true }
+
+# Server-only. Every one is optional and reached only through the `server`
+# feature, so none of it can leak into the wasm client.
 store = { workspace = true, optional = true }
+axum = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+tower_governor = { workspace = true, optional = true }
+async-stream = { workspace = true, optional = true }
+futures-core = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+chrono = { workspace = true, optional = true }
+
+[dev-dependencies]
+# The API integration test boots the real router over a fixture-ingested
+# database and talks to it over a real socket.
+ingest = { workspace = true }
+store = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "net", "time"] }
+axum = { workspace = true }
+reqwest = { workspace = true, features = ["stream"] }
+serde_json = { workspace = true }
+futures = "0.3"
+bytes = "1"
 
 [features]
 default = []
 web = ["dioxus/web"]
-server = ["dioxus/server", "dep:store"]
+server = [
+    "dioxus/server",
+    "dep:store",
+    "dep:axum",
+    "dep:tokio",
+    "tokio/time",
+    "tokio/rt-multi-thread",
+    "dep:tower_governor",
+    "dep:async-stream",
+    "dep:futures-core",
+    "dep:serde_json",
+    "dep:chrono",
+]

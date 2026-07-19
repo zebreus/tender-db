@@ -23,5 +23,5 @@ serde_json = { workspace = true }
 
 [dev-dependencies]
 # Local HTTP fixture server for fetcher tests — no network in tests.
-axum = "0.8"
+axum = { workspace = true }
 tokio = { workspace = true, features = ["net"] }

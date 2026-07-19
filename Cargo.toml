@@ -42,6 +42,19 @@ wasm-bindgen = "=0.2.118"
 turso = "=0.7.0"
 tokio = { version = "1", features = ["rt", "macros", "sync"] }
 
+# The public API (`/v1`). axum is already in the tree via dioxus-server, so the
+# API sub-router merges into the dioxus router with no version skew
+# (docs/research/api-layer.md §1). tower_governor is the per-IP rate limiter,
+# async-stream builds the SSE bodies, chrono formats the ISO timestamps the API
+# contract promises.
+axum = "0.8"
+# `default-features = false` drops the tonic integration — we serve HTTP only,
+# and tonic would drag a whole gRPC stack into the bundle.
+tower_governor = { version = "0.8", default-features = false, features = ["axum"] }
+async-stream = "0.3"
+futures-core = "0.3"
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+
 # Fetcher: rustls so the nix build stays free of system TLS deps.
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 sha2 = "0.10"
