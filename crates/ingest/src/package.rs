@@ -1,7 +1,7 @@
 //! Package walker: yields every payload file inside an archived package.
 //!
-//! Two container formats exist, told apart by file magic rather than by
-//! source, so a renamed archive still walks correctly:
+//! Container formats are told apart by file magic rather than by source or
+//! name, so a renamed archive still walks correctly:
 //!
 //! - TED daily packages are `.tar.gz`, and their shape changed with the eras
 //!   (verified against the sample ladder on the VPS): 1993–2010 (text era)
@@ -11,19 +11,27 @@
 //!   whole day's notices; from 2011 one XML file per notice under a
 //!   `<date>_<issue>/` directory. The walker unwraps one level of ZIP
 //!   nesting and reports the nested path as `outer.zip!inner`.
+//! - TED monthly packages are **plain tars whose members are the month's
+//!   daily `.tar.gz` files**. A gzip-magic member is unpacked in-stream and
+//!   its payloads carry the nested path `<daily>.tar.gz/<file>`, so a
+//!   monthly-first backfill ingests the same notices under the monthly's
+//!   fetch row and identity dedup makes re-processing the standalone daily a
+//!   no-op (and vice versa).
 //! - DÖE packages (`doe/monthly/YYYY-MM.zip`, `doe/daily/YYYY-MM-DD.zip`)
 //!   are plain ZIPs holding one `<uuid|numeric>-<version>.xml` per notice
 //!   version, no nesting.
 //!
-//! Members are visited one at a time — a 2007 daily expands to roughly a
-//! gigabyte, which must never be held in memory at once.
+//! Members are visited one at a time, and nested tars are decompressed as
+//! streams — a 2007 daily expands to roughly a gigabyte, which must never be
+//! held in memory at once.
 
 use std::io::Read;
 use std::path::Path;
 
 /// One payload file inside a package.
 pub struct Member<'a> {
-    /// Package-relative path; `outer.zip!inner` for a nested member.
+    /// Package-relative path; `outer.zip!inner` for a member of a nested ZIP,
+    /// `daily.tar.gz/inner` for a member of a nested tar.
     pub path: String,
     pub bytes: &'a [u8],
 }
@@ -49,58 +57,117 @@ impl From<std::io::Error> for Error {
     }
 }
 
-/// The tar-level entry names of the `.tar.gz` at `archive`, without unwrapping
+const GZIP_MAGIC: [u8; 2] = [0x1f, 0x8b];
+
+/// The payload-level entry names of the package at `archive`, without opening
 /// nested ZIPs — the cheap pre-scan behind package-level dispatch policy (the
-/// text era's ISO-vs-UTF8 variant selection needs to know what else the day
-/// ships before the first member is judged).
+/// text era's ISO-vs-UTF8 variant selection needs to know what else the
+/// package ships before the first member is judged). Nested tars *are*
+/// descended, names only, so the policy sees a monthly's dailies too.
 pub fn entry_names(archive: &Path) -> Result<Vec<String>, Error> {
-    if is_zip_package(archive)? {
-        let file = std::fs::File::open(archive)?;
-        let zip = zip::ZipArchive::new(file)
-            .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
-        return Ok(zip.file_names().map(str::to_owned).collect());
-    }
-    let file = std::fs::File::open(archive)?;
-    let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file)));
     let mut names = Vec::new();
-    for entry in tar.entries()? {
-        let entry = entry?;
-        if entry.header().entry_type().is_file() {
-            names.push(entry.path()?.to_string_lossy().into_owned());
+    match open(archive)? {
+        Container::Zip(file) => {
+            let zip = zip::ZipArchive::new(file)
+                .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
+            names.extend(zip.file_names().map(str::to_owned));
+        }
+        Container::TarGz(file) => {
+            let mut reader = flate2::read::GzDecoder::new(std::io::BufReader::new(file));
+            tar_names(&mut reader, "", &mut names)?;
+        }
+        Container::Tar(file) => {
+            let mut reader = std::io::BufReader::new(file);
+            tar_names(&mut reader, "", &mut names)?;
         }
     }
     Ok(names)
 }
 
-/// A package is either a plain ZIP (DÖE) or a gzipped tar (TED) — decided by
-/// the file's own magic bytes, never by its name.
-fn is_zip_package(archive: &Path) -> Result<bool, Error> {
-    use std::io::Read;
-    let mut magic = [0u8; 2];
-    let n = std::fs::File::open(archive)?.read(&mut magic)?;
-    Ok(n == 2 && magic == *b"PK")
-}
-
 /// Visit every payload file in the package at `archive`, in archive order.
 pub fn walk(archive: &Path, mut visit: impl FnMut(Member<'_>)) -> Result<(), Error> {
-    if is_zip_package(archive)? {
-        return walk_zip_package(archive, &mut visit);
+    match open(archive)? {
+        Container::Zip(file) => {
+            let mut zip = zip::ZipArchive::new(file)
+                .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
+            let mut bytes = Vec::new();
+            for i in 0..zip.len() {
+                let mut entry = zip
+                    .by_index(i)
+                    .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
+                if !entry.is_file() {
+                    continue;
+                }
+                let path = entry.name().to_owned();
+                bytes.clear();
+                entry.read_to_end(&mut bytes)?;
+                visit(Member { path, bytes: &bytes });
+            }
+            Ok(())
+        }
+        Container::TarGz(file) => {
+            let mut reader = flate2::read::GzDecoder::new(std::io::BufReader::new(file));
+            walk_tar(&mut reader, "", &mut visit)
+        }
+        Container::Tar(file) => {
+            let mut reader = std::io::BufReader::new(file);
+            walk_tar(&mut reader, "", &mut visit)
+        }
     }
-    let file = std::fs::File::open(archive)?;
-    let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file)));
+}
 
+/// What the file's own magic says the package is: ZIP (DÖE), gzipped tar
+/// (TED dailies), or plain tar (TED monthlies).
+enum Container {
+    Zip(std::fs::File),
+    TarGz(std::fs::File),
+    Tar(std::fs::File),
+}
+
+fn open(archive: &Path) -> Result<Container, Error> {
+    use std::io::Seek;
+    let mut file = std::fs::File::open(archive)?;
+    let mut magic = [0u8; 2];
+    let n = read_up_to(&mut file, &mut magic)?;
+    file.rewind()?;
+    Ok(match &magic[..n] {
+        m if m == b"PK" => Container::Zip(file),
+        m if m == GZIP_MAGIC => Container::TarGz(file),
+        _ => Container::Tar(file),
+    })
+}
+
+/// Walk one tar stream. A gzip-magic member is itself a tar.gz (a monthly's
+/// nested daily) and is descended in-stream; a ZIP member (text-era language
+/// bundle) is unwrapped one level; everything else is a payload.
+///
+/// `dyn Read` is deliberate: recursing generically would instantiate an ever
+/// deeper reader type per nesting level and never finish compiling.
+fn walk_tar(
+    reader: &mut dyn Read,
+    prefix: &str,
+    visit: &mut impl FnMut(Member<'_>),
+) -> Result<(), Error> {
+    let mut tar = tar::Archive::new(reader);
     let mut bytes = Vec::new();
     for entry in tar.entries()? {
         let mut entry = entry?;
         if !entry.header().entry_type().is_file() {
             continue;
         }
-        let path = entry.path()?.to_string_lossy().into_owned();
+        let path = nested(prefix, &entry.path()?.to_string_lossy());
+        let mut head = [0u8; 2];
+        let n = read_up_to(&mut entry, &mut head)?;
+        if head[..n] == GZIP_MAGIC {
+            let mut chained = flate2::read::GzDecoder::new((&head[..]).chain(entry));
+            walk_tar(&mut chained, &path, visit)?;
+            continue;
+        }
         bytes.clear();
+        bytes.extend_from_slice(&head[..n]);
         entry.read_to_end(&mut bytes)?;
-
         if is_zip(&path, &bytes) {
-            walk_zip(&path, &bytes, &mut visit)?;
+            walk_zip(&path, &bytes, visit)?;
         } else {
             visit(Member { path, bytes: &bytes });
         }
@@ -108,24 +175,42 @@ pub fn walk(archive: &Path, mut visit: impl FnMut(Member<'_>)) -> Result<(), Err
     Ok(())
 }
 
-/// A ZIP package (DÖE): one payload file per entry, streamed from disk.
-fn walk_zip_package(archive: &Path, visit: &mut impl FnMut(Member<'_>)) -> Result<(), Error> {
-    let file = std::fs::File::open(archive)?;
-    let mut zip = zip::ZipArchive::new(file)
-        .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
-    let mut bytes = Vec::new();
-    for i in 0..zip.len() {
-        let mut entry =
-            zip.by_index(i).map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
-        if !entry.is_file() {
+/// Names pass of [`walk_tar`]: same descent, no payload reads.
+fn tar_names(reader: &mut dyn Read, prefix: &str, names: &mut Vec<String>) -> Result<(), Error> {
+    let mut tar = tar::Archive::new(reader);
+    for entry in tar.entries()? {
+        let mut entry = entry?;
+        if !entry.header().entry_type().is_file() {
             continue;
         }
-        let path = entry.name().to_owned();
-        bytes.clear();
-        entry.read_to_end(&mut bytes)?;
-        visit(Member { path, bytes: &bytes });
+        let path = nested(prefix, &entry.path()?.to_string_lossy());
+        let mut head = [0u8; 2];
+        let n = read_up_to(&mut entry, &mut head)?;
+        if head[..n] == GZIP_MAGIC {
+            let mut chained = flate2::read::GzDecoder::new((&head[..]).chain(entry));
+            tar_names(&mut chained, &path, names)?;
+        } else {
+            names.push(path);
+        }
     }
     Ok(())
+}
+
+fn nested(prefix: &str, name: &str) -> String {
+    if prefix.is_empty() { name.to_owned() } else { format!("{prefix}/{name}") }
+}
+
+/// Read up to `buf.len()` bytes, tolerating shorter files.
+fn read_up_to(reader: &mut impl Read, buf: &mut [u8]) -> Result<usize, Error> {
+    let mut filled = 0;
+    while filled < buf.len() {
+        let n = reader.read(&mut buf[filled..])?;
+        if n == 0 {
+            break;
+        }
+        filled += n;
+    }
+    Ok(filled)
 }
 
 /// Nested ZIP: match on the local file header magic rather than the extension,

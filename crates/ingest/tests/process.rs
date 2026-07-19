@@ -209,6 +209,53 @@ async fn dispatches_every_era_and_accounts_for_every_file() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// TED monthly packages are plain tars whose members are the month's daily
+/// `.tar.gz` files. The walker descends them in-stream; a monthly processed
+/// after its standalone daily yields nothing but duplicates (identity dedup),
+/// which is what makes the monthly-first backfill safe to mix with dailies.
+#[tokio::test]
+async fn monthly_of_nested_dailies_dedupes_against_the_daily() {
+    let (archive, db) = fixture("process-monthly").await;
+    let daily = run(&db, &archive).await;
+
+    // A monthly: plain (uncompressed) tar carrying the very same daily.
+    std::fs::create_dir_all(archive.join("ted/monthly")).unwrap();
+    let monthly_path = archive.join("ted/monthly/2026-06.tar");
+    let daily_bytes = std::fs::read(archive.join("ted/daily/2026-00137.tar.gz")).unwrap();
+    let mut tar = tar::Builder::new(std::fs::File::create(&monthly_path).unwrap());
+    let mut header = tar::Header::new_gnu();
+    header.set_size(daily_bytes.len() as u64);
+    header.set_mode(0o644);
+    header.set_cksum();
+    tar.append_data(&mut header, "20260601_2026137.tar.gz", &daily_bytes[..]).unwrap();
+    tar.into_inner().unwrap();
+
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "monthly".into(),
+        period: "2026-06".into(),
+        url: "https://ted.europa.eu/packages/monthly/2026-06".into(),
+        sha256: "bb".into(),
+        bytes: 1,
+        fetched_at: 2,
+        path: "ted/monthly/2026-06.tar".into(),
+    })
+    .await
+    .unwrap();
+
+    let monthly = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}).await.unwrap();
+
+    // The nested daily's members surface as the monthly's own, under
+    // `<daily>.tar.gz/<file>` paths — same counts as the standalone daily.
+    assert_eq!(monthly.members, daily.members);
+    assert_eq!(monthly.skipped, daily.skipped);
+    // Every notice identity is already known: nothing new, all duplicates.
+    assert_eq!(monthly.notices, 0);
+    assert_eq!(monthly.duplicates, daily.notices);
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 #[tokio::test]
 async fn reprocessing_is_idempotent() {
     let (archive, db) = fixture("process-idem").await;

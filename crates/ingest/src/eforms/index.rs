@@ -106,6 +106,27 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/efac:StrategicProcurement",
     ),
+    // Withheld discriminators (seen on DÖE eforms-de notices, 96+20 in
+    // 2026-06 alone): the SDK anchors a FieldsPrivacy block under the very
+    // element variant whose discriminator the privacy block suppresses — a
+    // legislation reference whose `cbc:ID` ('CrossBorderLaw') is withheld
+    // matches the not(...) sibling variant instead, and a justification whose
+    // `cbc:ProcessReasonCode` is withheld matches only the predicate-free
+    // branch. The privacy subtree is grafted onto those landing branches;
+    // inside it, the FieldsPrivacy step's own `efbc:FieldIdentifierCode`
+    // predicate (which *is* published) keeps the BT-195 ids exact.
+    (
+        "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference[cbc:ID/text()='CrossBorderLaw']/ext:UBLExtensions",
+        "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference[not(cbc:ID/text()=('CrossBorderLaw','LocalLegalBasis'))]/ext:UBLExtensions",
+    ),
+    (
+        "/*/cac:TenderingProcess/cac:ProcessJustification[cbc:ProcessReasonCode/@listName='accelerated-procedure']/ext:UBLExtensions",
+        "/*/cac:TenderingProcess/cac:ProcessJustification/ext:UBLExtensions",
+    ),
+    (
+        "/*/cac:TenderingProcess/cac:ProcessJustification[cbc:ProcessReasonCode/@listName='direct-award-justification']/ext:UBLExtensions",
+        "/*/cac:TenderingProcess/cac:ProcessJustification/ext:UBLExtensions",
+    ),
 ];
 
 pub const EXTRA: &[(&str, &str, &str)] = &[
@@ -197,6 +218,14 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
     (
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CalculationExpressionCode",
         "UBL-SelectionCriterionUsage",
+        "code",
+    ),
+    // DÖE eforms-de publishers restate the selection-criterion type in a
+    // `cbc:CriterionTypeCode` the SDK's inventory does not model (it models
+    // only `cbc:TendererRequirementTypeCode` there).
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CriterionTypeCode",
+        "UBL-SelectionCriterionType",
         "code",
     ),
     (
