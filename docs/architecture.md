@@ -23,8 +23,13 @@ fetch ──► /data/archive (raw packages, immutable, hash-idempotent)
 ```
 
 One process owns all of it (ADR-0005): the importer is a background task of
-the server. Fetching and processing are separate stages — a parse bug never
-forces a re-download; a re-projection never re-parses raw XML unless asked.
+the server — the ingestion Supervisor (job queue + scheduler + progress
+state), triggered by schedule or by the `/admin` API (preshared operator
+secret, TENDER_ADMIN_SECRET). The fetch/process/project CLIs are dev tools
+for scratch databases only; no external process ever opens the production DB
+(turso is single-process). Fetching and processing are separate stages — a
+parse bug never forces a re-download; a re-projection never re-parses raw
+XML unless asked.
 
 ## Crates
 
@@ -37,7 +42,7 @@ forces a re-download; a re-projection never re-parses raw XML unless asked.
   the completeness checklists.
 - `app` (`tender-db`) — Dioxus fullstack binary: public axum API under
   `/v1`, SSE, SQL endpoint, webhooks delivery, dashboard (server functions
-  under `/_dash`), and the importer scheduler.
+  under `/api`), and the importer scheduler.
 
 ## Notice identity and profiles
 
