@@ -1,6 +1,6 @@
 # 01 — TED package fetcher + raw archive
 
-Status: ready-for-agent
+Status: claimed
 
 Goal: the `ingest` crate exists and can download TED daily/monthly packages
 into `/data/archive/ted/` (or a configurable root) with hash-based

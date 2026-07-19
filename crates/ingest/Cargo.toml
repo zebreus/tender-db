@@ -1,0 +1,21 @@
+# Fetchers (TED, DÖE) + era/profile parsers + canonical projection.
+# Server-side only; never compiled into the wasm client.
+[package]
+name = "ingest"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+model = { workspace = true }
+store = { workspace = true }
+turso = { workspace = true }
+tokio = { workspace = true }
+reqwest = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+# Local HTTP fixture server for fetcher tests — no network in tests.
+axum = "0.8"
+tokio = { workspace = true, features = ["net"] }
