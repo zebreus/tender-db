@@ -170,6 +170,26 @@ tedschemas page]). The eForms SDK (already mirrored at
 `/opt/tender-db/eforms-sdk`) is the authoritative, versioned schema +
 `fields.json` source.
 
+**Processor dispatch keys** (per notice, all in the header): the SDK version
+`<cbc:CustomizationID>eforms-sdk-1.14</cbc:CustomizationID>`, the notice
+subtype `<cbc:SubTypeCode listName="notice-subtype">29</cbc:SubTypeCode>`
+(1–40), the result/family code `<cbc:NoticeTypeCode listName="result">`, and
+`<cbc:UBLVersionID>2.3` / `<cbc:VersionID>`. The subtype + `CustomizationID`
+together select the field set.
+
+**A single package mixes SDK versions** [verified]: `daily-202600136`
+(2026-07-17) carried `eforms-sdk-1.12`, `1.13` and `1.14` notices side by side
+(19 / 114 / 59 in the first 200 files). The sender's SDK version at submission
+time is frozen into the notice, so the processor must accept a *range* of SDK
+versions concurrently and the fields.json completeness test (ADR-0002) must
+run against the *set* of versions actually ingested, not one pinned version.
+
+**National eForms extensions appear** [verified]: German eForms notices in the
+2026 sample declare an extra namespace `xmlns:defext="german-eforms-extension"`
+(eForms-DE). Country-specific extension content must be explicitly mapped or
+ignore-ruled, or ADR-0004 quarantines those notices whole. Cross-reference the
+German-portals research for the eForms-DE field set.
+
 ### Measured era mix in real packages [verified]
 
 Root-element counts per daily package:

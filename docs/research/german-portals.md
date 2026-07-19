@@ -109,7 +109,13 @@ GET https://oeffentlichevergabe.de/api/notice-exports?pubDay=YYYY-MM-DD&format=o
 - `pubMonth` and `pubDay` are mutually exclusive; times are Europe/Berlin;
   "all published notices processed before midnight on the previous day are
   available" — i.e. a completed day becomes fetchable the next day
-  (**verified**: `pubDay=<yesterday>` works, `pubDay=<today>` is rejected 400).
+  (**verified**: `pubDay=<yesterday>` works, `pubDay=<today>`/future rejected
+  400 "must lie in the past"). So the API is strictly **T+1 daily batch —
+  there is no intraday/live channel here.** The `pubMonth` endpoint *does*
+  serve the current, in-progress month and accumulates as days close
+  (**verified**: `pubMonth=2026-07` → 200, 28 MB on 2026-07-19), but the newest
+  notice still only appears at T+1. Near-real-time therefore comes from TED's
+  cadence (TED-channels research); BKMS is a daily reconcile.
 - Formats (`format` param or `Accept` header): `eforms.zip` (original
   eForms-DE XML, one file per notice version, named `<uuid>-<version>.xml`),
   `ocds.zip` (OCDS 1.1 JSON releases, prefix `ocds-mnwr74`), `csv.zip`
@@ -117,8 +123,13 @@ GET https://oeffentlichevergabe.de/api/notice-exports?pubDay=YYYY-MM-DD&format=o
   by `noticeIdentifier`+`noticeVersion`; mapping doc:
   `…/documentation/api/opendata/Documentation Bekanntmachungsservice CSV Format.ods`).
   All formats are conversions of the eForms original. (**verified** all three.)
-- An undocumented search API backs the SPA UI (`/api/notices…`), not needed
-  for ingestion.
+- An undocumented per-notice endpoint also works without auth (found via the
+  OCDS `uri` field): `GET /api/notices/{noticeUUID}?format=ocds&noticeVersion=01`
+  returns a single notice's release package (**verified** 200 + JSON). Useful
+  for targeted re-fetch of one notice without pulling a whole day; confidence it
+  accepts `format=eforms`: medium (untested, but the export proves all three
+  formats exist server-side). An undocumented search API also backs the SPA UI,
+  not needed for ingestion.
 - `robots.txt`: none — request returns the 404 page (**verified**).
 
 ### History depth — **verified**
@@ -154,23 +165,59 @@ open machine-readable German record there is, and it grows monotonically.
   platforms connect.
 - Content mix (2026-06 sample, ~400 notices read in full): ~50%
   `eforms-de-2.1`, ~8% `eforms-de-2.0`, ~42% `eforms-sdk-0.1`-encoded
-  **below-threshold** notices (`RegulatoryDomain de-uvgo`) (**verified** by
-  inspection; the below-threshold sample was a UVgO contract notice of
-  Stadtverwaltung Genthin). Above-threshold notices carry standard EU subtype
-  codes (16, 29, 17, 30, …); national subtypes E2/E3/E4 also occur.
+  **below-threshold** notices (**verified** by inspection; one below-threshold
+  sample was a UVgO contract notice of Stadtverwaltung Genthin). A second
+  full-day sample (2026-07-18, 567 notices) split **221 above-threshold
+  (`eforms-de-2.1`) / 346 below-threshold (`eforms-sdk-0.1`)** — i.e. the
+  below-threshold majority is stable across days. Below-threshold notices span
+  several national regulatory bases: `RegulatoryDomain` ∈ {`de-uvgo`, `de-vob`
+  (VOB/construction), `de-vol` (VOL/supplies-services)} — the parser must treat
+  this as an open, per-profile code domain, not a single value. Above-threshold
+  notices carry standard EU subtype codes (16, 29, 17, 30, …) and EU directive
+  `RegulatoryDomain`s (`32014L0024/25/23`, `32009L0081`, `32007R1370`); national
+  subtypes E2/E3/E4 also occur.
 - Corrections/changes appear as **new versions of the same notice UUID**
   (`<uuid>-02.xml`, `efac:Change` blocks) inside the day/month they were
   published — change detection = fetch each completed day once.
 
 ### Cross-referencing TED — **verified**
 
-The identifiers survive the eForms-DE→eForms-EU conversion. Hands-on test: a
-2026-06 above-threshold notice `ebb72363-832d-4cea-8db6-04999414ea8c-01` with
-`ContractFolderID 1af86e3c-411f-4c2e-aacc-ecac61717472` is on TED as
-publication `373130-2026` with the **identical** `notice-identifier` and
-`procedure-identifier` (queried via the TED v3 search API). This is exactly
-the "strong explicit cross-reference" ADR-0003 requires: cross-source merge on
-exact UUID equality, no heuristics.
+The identifiers survive the eForms-DE→eForms-EU conversion, giving ADR-0003 its
+"strong explicit cross-reference" for German data — at **two exact-equality
+levels**, no heuristics:
+
+1. **Notice level — `notice-identifier` (the notice UUID).** TED preserves the
+   sender's notice UUID verbatim. Hands-on: BKMS notice
+   `ebb72363-832d-4cea-8db6-04999414ea8c-01` is on TED as publication
+   `373130-2026` with the *identical* `notice-identifier`
+   (`ebb72363-…`). Verified via a **fielded** TED v3 query
+   `notice-identifier="ebb72363-…"` → 1 hit. (Note: TED full-text `FT=`
+   does **not** index this UUID — you must query the `notice-identifier` field.)
+2. **Procedure level — `BT-04 ContractFolderID` (the procedure UUID).** Also
+   identical on both sides; OCDS re-encodes it as the `ocid` suffix
+   (`ocds-mnwr74-<ContractFolderID>`). One procedure = one `ContractFolderID` =
+   many notices over its lifecycle. TED indexes it as the returnable field
+   `BT-04-notice`.
+
+**Systematic check (not just one example):** 15 above-threshold procedures
+sampled from the June 2026 export, looked up on TED by `BT-04-notice` →
+**15/15 found** (each returning 1–11 TED notices across the PIN→CN→corrigenda→CAN
+lifecycle). The linkage is reliable for settled data.
+
+**Freshness caveat:** brand-new (2–3-day-old) above-threshold notices can
+briefly return 0 on TED — TED publication/indexing **lags** BKMS by a few days
+(a fresh BKMS award of 2026-07-15 was absent from TED on 2026-07-19, though its
+procedure was present via an older notice). The merge resolves once TED
+publishes. **Below-threshold notices never match** — they carry an *empty*
+`<ContractFolderID/>` and no `notice-identifier` on TED because they are never
+sent to TED at all. This is correct: below-threshold BKMS notices are
+single-source Tenders with no TED twin, and are the ~40–45% of BKMS volume that
+is genuine net-new coverage over TED.
+
+**Merge rule for tender-db:** merge TED and BKMS notices that share a
+`notice-identifier` (same publication) and group them into one Tender by shared
+`ContractFolderID` (same procedure). Never attempt name/heuristic matching
+across sources; never merge a below-threshold notice (no BT-04).
 
 ### Terms of use — **verified**
 
