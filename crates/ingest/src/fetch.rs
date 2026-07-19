@@ -31,6 +31,9 @@ pub enum Outcome {
     NewVersion,
     /// Not on the server (404) — e.g. probing past the newest issue.
     NotFound,
+    /// The server refused the period as out of range (400) — e.g. DÖE
+    /// rejecting today/future days or months before its 2022-12 archive start.
+    Rejected,
 }
 
 #[derive(Debug)]
@@ -93,6 +96,7 @@ pub async fn fetch(
     let (bytes, sha256) = match download(client, &target.url, &final_path).await {
         Ok(v) => v,
         Err(Error::Status(reqwest::StatusCode::NOT_FOUND)) => return Ok(Outcome::NotFound),
+        Err(Error::Status(reqwest::StatusCode::BAD_REQUEST)) => return Ok(Outcome::Rejected),
         Err(e) => return Err(e),
     };
 
@@ -141,7 +145,8 @@ async fn download(
         attempt += 1;
         match download_once(client, url, &part).await {
             Ok(v) => return Ok(v),
-            Err(e @ Error::Status(reqwest::StatusCode::NOT_FOUND)) => return Err(e),
+            // Client errors are permanent — retrying a 400/404 just wastes time.
+            Err(e @ Error::Status(s)) if s.is_client_error() => return Err(e),
             Err(e) if attempt >= 3 => return Err(e),
             Err(_) => tokio::time::sleep(std::time::Duration::from_secs(2 * attempt as u64)).await,
         }

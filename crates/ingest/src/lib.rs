@@ -4,6 +4,7 @@
 //! downloads and registers raw packages; [`process`] walks what is already in
 //! the archive and never downloads.
 
+pub mod doe;
 pub mod eforms;
 pub mod fetch;
 pub mod package;
