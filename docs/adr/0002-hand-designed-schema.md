@@ -13,3 +13,9 @@ mechanically: a test walks fields.json and asserts every field ID has an
 explicit mapping (to a column, a satellite table, or a documented deliberate
 exclusion such as the SDK's "pointless BTs"). Hand-designed does not mean
 hand-audited.
+
+Amendment (2026-07-19, from docs/research/eforms-data-model.md): the checklist
+is per SDK version and per profile — field sets differ between SDK releases
+(fields get removed, xpaths move) and national profiles (eForms-DE) add their
+own fields, so completeness is asserted against each (version, profile) pair
+the archive actually contains, not one fields.json.

@@ -15,3 +15,8 @@ from several Sources, and field-level conflicts need explicit precedence rules
 (to be defined with the schema; likely a per-source authority order). Because
 Notices are append-only per Source, an incorrect merge can be undone by
 re-projecting.
+
+Verified (2026-07-19, docs/research/german-portals.md): oeffentlichevergabe.de
+and TED publish the same procedure under identical notice and procedure UUIDs,
+so for our chosen Sources the strong cross-reference is exact UUID equality —
+no heuristics needed.

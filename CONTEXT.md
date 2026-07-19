@@ -30,10 +30,10 @@ _Avoid_: feed, provider
 Tenders Electronic Daily, the EU's official journal for above-threshold procurement — the primary Source.
 
 **eForms**:
-The EU standard (Regulation 2019/1780 + SDK) defining the structure of TED notices: ~500 Business Terms across ~1000 context-specific fields.
+The EU standard (Regulation 2019/1780 + SDK) defining the structure of TED notices; SDK 1.15 defines 1256 context-specific fields from 357 distinct business-term ids (counts vary per SDK version — see docs/research/eforms-data-model.md).
 
 **Business Term (BT)**:
-One atomic eForms field definition (e.g. BT-05 "Notice Dispatch Date"); v1 must represent all of them, no omissions.
+One atomic eForms field definition (e.g. BT-05 "Notice Dispatch Date"); v1 must represent all of them, no omissions, accounted per SDK version.
 
 **Organization**:
 A canonical profile of a company or authority appearing across Tenders (as buyer, bidder, winner, subcontractor); one profile per real-world entity, not per notice mention.
@@ -71,8 +71,11 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - Basic query endpoints are unauthenticated. Accounts (username + password
   only, no email verification, created on the dashboard) gate webhook
   registration and the SQL endpoint.
-- The SQL endpoint requires an account and is enforced read-only (read-only
-  connection, statement timeout, result-size caps, per-user rate limits).
+- The SQL endpoint requires an account and is enforced read-only via a layered
+  gate: single-SELECT statement allow-list (parser-based), a `query_only`
+  connection, timeout-by-drop, result-size caps, per-user rate limits — turso
+  has no read-only open flag or authorizer, so the allow-list is the primary
+  wall (docs/research/turso-capabilities.md).
 - Metadata only: the PDF/document attachments of tenders are out of scope for
   now.
 - The dashboard owns the account lifecycle: register, login, generate API
@@ -81,9 +84,16 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - License: AGPL-3.0-or-later.
 
 ### Data
-- Sources: TED first, plus 1–2 German portals chosen for open access (no
-  sign-in) and long history — included specifically to keep the model
-  source-agnostic, not for geographic focus.
+- Sources: TED first, plus oeffentlichevergabe.de (Datenservice Öffentlicher
+  Einkauf) as the German Source — anonymous CC0 bulk exports (eForms-DE XML,
+  OCDS, CSV) back to 2022-12; chosen after a full portal survey
+  (docs/research/german-portals.md) specifically to keep the model
+  source-agnostic. service.bund.de is a possible later stress-test Source.
+- TED history spans three format eras (tagged text 1993–2010, TED_EXPORT XML
+  2011–2024, eForms 2023→, mixed per-file during the transition); importers
+  dispatch format per file, and must handle multiple concurrent eForms SDK
+  versions and national profiles (eForms-EU 1.x, eForms-DE, DÖE legacy
+  sdk-0.1). See docs/research/ted-access-channels.md.
 - No geographic focus, and not even locked to public procurement long-term;
   TED-primary is a bootstrapping choice because its data structures are well
   documented.
@@ -109,6 +119,9 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   stores raw, versioned, unprocessed payloads; the processor parses them into
   Notices and the canonical layer. An unmappable field never forces a
   re-download.
+- Fetch idempotency is hash-based on our side: TED serves no ETags, checksums,
+  or Last-Modified, and daily packages may be rewritten until 09:30 CET on
+  publication day.
 
 ### Infrastructure
 - Persistence: a single SQLite file via Turso (pure-Rust, no system
@@ -117,7 +130,10 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   deployed via the Nix flake; organised as a Rust workspace so model, ingest,
   and app layers are encapsulated as separate crates.
 - True monolith: API, dashboard, importer, SSE, and webhooks are one process
-  on one server owning the SQLite file exclusively (ADR-0005).
+  on one server owning the SQLite file exclusively (ADR-0005). Within the
+  process: one writer connection, N parallel reader connections; connection
+  pragmas (foreign_keys=ON — it defaults OFF — busy_timeout, synchronous)
+  are applied per connection.
 - Heavy scraping runs on the provisioned Hetzner VPS (1 Gb/s) — also the
   production target — never on the dev machine (~100 kB/s uplink).
 
@@ -133,3 +149,8 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
 - "Tender" was overloaded (eForms uses it for a submitted offer) — resolved:
   in tender-db a **Tender** is always the opportunity/procedure; the eForms
   TEN- entity is a **Bid**. Importers translate at the boundary.
+- "All business terms, no omissions" is only structurally satisfiable for the
+  eForms era (2023→): legacy TED_EXPORT XML (2011–2024) maps a subset, the
+  text era (1993–2010) barely maps at all. Pending user decision: backfill
+  depth and how the completeness promise + ADR-0004 quarantine policy are
+  worded per era.
