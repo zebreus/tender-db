@@ -22,6 +22,10 @@ futures-timer = { version = "3", features = ["wasm-bindgen"] }
 # Server-only. Every one is optional and reached only through the `server`
 # feature, so none of it can leak into the wasm client.
 store = { workspace = true, optional = true }
+# The ingestion Supervisor (issue 16) drives ingest's fetch/process/project
+# library functions in-process; reqwest is its download client.
+ingest = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true }
 axum = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 tower_governor = { workspace = true, optional = true }
@@ -29,6 +33,11 @@ async-stream = { workspace = true, optional = true }
 futures-core = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
 chrono = { workspace = true, optional = true }
+subtle = { workspace = true, optional = true }
+# Read-only SQL endpoint (issue 07): turso's own parser for the statement
+# allow-list, governor for the per-token hourly quota.
+turso_parser = { workspace = true, optional = true }
+governor = { workspace = true, optional = true }
 
 [dev-dependencies]
 # The API integration test boots the real router over a fixture-ingested
@@ -41,6 +50,9 @@ reqwest = { workspace = true, features = ["stream"] }
 serde_json = { workspace = true }
 futures = "0.3"
 bytes = "1"
+# The /admin integration test builds a tiny TED-shaped package to process.
+flate2 = { workspace = true }
+tar = { workspace = true }
 
 [features]
 default = []
@@ -48,6 +60,8 @@ web = ["dioxus/web"]
 server = [
     "dioxus/server",
     "dep:store",
+    "dep:ingest",
+    "dep:reqwest",
     "dep:axum",
     "dep:tokio",
     "tokio/time",
@@ -57,4 +71,7 @@ server = [
     "dep:futures-core",
     "dep:serde_json",
     "dep:chrono",
+    "dep:subtle",
+    "dep:turso_parser",
+    "dep:governor",
 ]

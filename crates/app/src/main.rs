@@ -42,7 +42,22 @@ fn main() {
     dioxus::server::serve(|| async {
         let db = store::state().await;
         let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS)?);
-        Ok(dioxus::server::router(App).merge(tender_db::v1::router(api)))
+
+        // The ingestion Supervisor (issue 16): a background task owning the
+        // writer for its jobs, so a production load runs in-process with zero
+        // downtime (readers keep serving over WAL). It is the ONLY path that
+        // touches the production DB — the fetch/process/project CLIs are dev
+        // tools for scratch databases. `init` spawns the worker + scheduler once.
+        let supervisor = tender_db::supervisor::init(db.clone());
+        if tender_db::admin::enabled() {
+            println!("admin: /admin API enabled (TENDER_ADMIN_SECRET is set)");
+        } else {
+            println!("admin: /admin API disabled (TENDER_ADMIN_SECRET unset → 404)");
+        }
+
+        Ok(dioxus::server::router(App)
+            .merge(tender_db::v1::router(api))
+            .merge(tender_db::admin::router(supervisor)))
     });
 }
 

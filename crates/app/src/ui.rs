@@ -9,6 +9,7 @@ use crate::api;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
 use model::dashboard::{Coverage, Quarantined};
+use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, Token};
 
 /// How often the dashboard re-measures. Deliberately a plain poll: the change
@@ -35,6 +36,7 @@ pub fn DashboardPage() -> Element {
     rsx! {
         main {
             Nav {}
+            IngestionPanel {}
             match &*value {
                 Some(Ok(d)) => rsx! {
                     section { class: "panel",
@@ -74,6 +76,125 @@ pub fn DashboardPage() -> Element {
                 None => rsx! { p { class: "muted", "Measuring…" } },
             }
             Footer {}
+        }
+    }
+}
+
+/// How often the Ingestion panel re-reads the supervisor — faster than the
+/// coverage poll, because a running job's progress bar should feel live.
+const INGESTION_REFRESH_SECONDS: u64 = 3;
+
+/// The live view of the ingestion Supervisor (issue 16): the running job with a
+/// progress bar, the queue, and the recent-run log. Read-only — admin actions
+/// are API-only (the dashboard is public and carries no operator secret).
+#[component]
+fn IngestionPanel() -> Element {
+    let mut state = use_server_future(api::ingestion)?;
+    use_future(move || async move {
+        loop {
+            futures_timer::Delay::new(std::time::Duration::from_secs(INGESTION_REFRESH_SECONDS))
+                .await;
+            state.restart();
+        }
+    });
+
+    let value = state.read();
+    let Some(Ok(ingestion)) = &*value else {
+        return rsx! {
+            section { class: "panel",
+                h2 { "Ingestion" }
+                match &*value {
+                    Some(Err(e)) => rsx! { p { class: "error", "Could not read the importer: {e}" } },
+                    _ => rsx! { p { class: "muted", "Reading…" } },
+                }
+            }
+        };
+    };
+    let Ingestion { current, queued, recent } = ingestion.clone();
+
+    rsx! {
+        section { class: "panel",
+            h2 { "Ingestion" }
+            p { class: "muted",
+                "The importer runs inside the server (ADR-0005): one job at a time, the "
+                "readers serving throughout. Operators drive it through the "
+                code { "/admin" } " API."
+            }
+
+            match current {
+                Some(job) => rsx! { RunningJob { job } },
+                None => rsx! { p { class: "muted", "Idle — no job running." } },
+            }
+
+            if !queued.is_empty() {
+                h3 { "Queued" }
+                ol { class: "queue",
+                    for job in queued {
+                        li { key: "{job.id}", class: "path",
+                            "#{job.id} {job.kind} — {job.params}"
+                        }
+                    }
+                }
+            }
+
+            if !recent.is_empty() {
+                details {
+                    summary { "Recent runs ({recent.len()})" }
+                    table {
+                        thead {
+                            tr {
+                                th { "Job" }
+                                th { "Params" }
+                                th { "Outcome" }
+                                th { "Result" }
+                            }
+                        }
+                        tbody {
+                            for run in recent {
+                                RunRow { run }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[component]
+fn RunningJob(job: JobProgress) -> Element {
+    rsx! {
+        div { class: "running",
+            p { class: "headline", "{job.kind} — {job.params}" }
+            if job.packages_total > 0 {
+                label { class: "muted",
+                    "Package {group(job.packages_done as i64)} / {group(job.packages_total as i64)}"
+                    if let Some(pkg) = job.package.clone() {
+                        " — {pkg}"
+                    }
+                }
+                progress { max: "{job.packages_total}", value: "{job.packages_done}" }
+            }
+            if job.members_total > 0 {
+                label { class: "muted",
+                    "Members {group(job.members_done as i64)} / {group(job.members_total as i64)}"
+                }
+                progress { max: "{job.members_total}", value: "{job.members_done}" }
+            }
+            p { class: "muted", "{group(job.notices as i64)} notices written" }
+        }
+    }
+}
+
+#[component]
+fn RunRow(run: JobRun) -> Element {
+    let class = if run.outcome == "ok" { "" } else { "error" };
+    rsx! {
+        tr { key: "{run.id}", class,
+            td { "{run.kind}" }
+            td { class: "path", "{run.params}" }
+            td { "{run.outcome}" }
+            td { "{run.counts}" }
         }
     }
 }

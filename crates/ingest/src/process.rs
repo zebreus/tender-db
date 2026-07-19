@@ -84,7 +84,9 @@ pub async fn process(
 ) -> Result<Report, Error> {
     let mut total = Report::default();
     for pkg in db.current_packages(source, kind, period).await? {
-        let report = process_package(db, &archive_root.join(&pkg.path), source, pkg.fetch_id).await?;
+        let report =
+            process_package(db, &archive_root.join(&pkg.path), source, pkg.fetch_id, |_, _, _| {})
+                .await?;
         on_package(&pkg, &report);
         total.members += report.members;
         total.ingested += report.ingested;
@@ -99,11 +101,18 @@ pub async fn process(
 }
 
 /// Process one archived package file.
+///
+/// `on_progress(done, total, report)` fires after each of the package's members
+/// is written, where `total` is the number of records the package yielded,
+/// `done` counts up to it, and `report` is the running tally — the Supervisor
+/// turns this into the live progress bar (issue 16). It is a pure UI hook;
+/// passing `|_, _, _| {}` is the plain processing path.
 pub async fn process_package(
     db: &store::Db,
     archive: &Path,
     source: &str,
     fetch_id: i64,
+    mut on_progress: impl FnMut(u64, u64, &Report),
 ) -> Result<Report, Error> {
     // The walker is synchronous and streams one member at a time; dispatch is
     // pure CPU. Collect the records per member, then write them — the store's
@@ -131,6 +140,8 @@ pub async fn process_package(
     })?;
 
     let now = unix_now();
+    let total = pending.len() as u64;
+    let mut done = 0u64;
     for (record, parse) in pending {
         match record {
             Record::Notice(n) => {
@@ -174,6 +185,8 @@ pub async fn process_package(
                 report.quarantined += 1;
             }
         }
+        done += 1;
+        on_progress(done, total, &report);
     }
     Ok(report)
 }

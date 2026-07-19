@@ -65,7 +65,8 @@ user (not `DynamicUser`, unlike the NixOS module — the data in `/data` must
 outlive restarts). `ProtectSystem=strict` with `ReadWritePaths=/data/db
 /data/archive`: the process can write nowhere else, so a new state directory
 needs a unit edit, not just a `mkdir`. Env is set in the unit
-(`IP=127.0.0.1`, `PORT=8080`, `TENDER_DB`, `TENDER_ARCHIVE`).
+(`IP=127.0.0.1`, `PORT=8080`, `TENDER_DB`, `TENDER_ARCHIVE`,
+`TENDER_ADMIN_SECRET` — see [Ingestion](#ingestion)).
 
 Anything writing to `/data` outside the service (a manual fetch run, say) must
 leave the files owned by `tenderdb`, or the service loses access:
@@ -73,6 +74,92 @@ leave the files owned by `tenderdb`, or the service loses access:
 ```sh
 chown -R tenderdb:tenderdb /data/db /data/archive
 ```
+
+## Ingestion
+
+Ingestion runs **inside the server process** (ADR-0005, issue 16): the
+Supervisor is a background task that owns the writer for its jobs while the
+readers keep serving over WAL, so a production load has **zero downtime** and no
+external process ever opens the DB (turso is single-process). You never stop the
+service to load data.
+
+Two ways jobs start:
+
+- **Scheduler** — every weekday at 09:35 Europe/Berlin it probes the newest TED
+  daily forward (and re-fetches the current day for the 09:30 finality window),
+  fetches the DÖE completed day (T+1), then processes and projects. No operator
+  action needed for the daily cadence.
+- **`/admin` API** — for manual loads, backfills and reprocessing. Gated by a
+  preshared operator secret in `TENDER_ADMIN_SECRET`, sent as the
+  `X-Admin-Secret` header and compared in constant time. **Unset ⇒ the whole
+  `/admin` surface answers 404** (the feature is simply absent); a wrong secret
+  is 403.
+
+> ⚠️ **The `fetch` / `process` / `project` CLIs are dev tools for scratch
+> databases only.** Never run them against the production DB: turso is
+> single-process, so a CLI cannot open the file while the service is running, and
+> stopping the service to run one is exactly the downtime this design removes.
+> Everything below goes through `/admin` instead.
+
+### The operator secret
+
+Generated once and stored on the box, never committed:
+
+```sh
+# On the VPS, first-time setup:
+openssl rand -hex 32 > /root/tender-admin-secret
+chmod 600 /root/tender-admin-secret
+```
+
+Wire it into the systemd unit so the service reads it at start
+(`/etc/systemd/system/tender-db.service`, `[Service]` section) — either inline
+or, to keep it out of `systemctl show`, via a credential file:
+
+```ini
+Environment=TENDER_ADMIN_SECRET=<paste the hex here>
+# or: EnvironmentFile=/root/tender-admin-secret   (as KEY=VALUE)
+```
+
+```sh
+systemctl daemon-reload && systemctl restart tender-db
+journalctl -u tender-db -n5   # logs "admin: /admin API enabled"
+```
+
+Rotating it is an edit + `systemctl restart`; the secret lives only on the box.
+
+### Driving it (examples)
+
+`GET /admin/jobs` returns the running job's live progress, the queue, and the
+recent-run log — the same shape the dashboard's Ingestion panel renders.
+
+```sh
+SECRET=$(cat /root/tender-admin-secret)
+BASE=https://tenders.zebreus.click
+
+# What is the importer doing right now?
+curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs | jq
+
+# Fetch one TED daily, then process + project it (three sequential jobs).
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"fetch","source":"ted","package_kind":"daily","period":"2026-00136"}' $BASE/admin/jobs
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"process","source":"ted","package_kind":"daily","period":"2026-00136"}' $BASE/admin/jobs
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"project"}' $BASE/admin/jobs
+
+# Backfill a DÖE monthly range (fans into one fetch per month + process + project).
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs
+
+# Cancel a still-queued job (the running one cannot be cancelled).
+curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
+```
+
+Job payloads: `{kind: fetch|process|project|backfill, source?, package_kind?,
+period?, range?, rebuild?, refetch?}`. `process`/`project` accept no period to
+run the whole source. `refetch:true` re-downloads a known package (finality
+re-check). Jobs run **one at a time** in enqueue order — the writer is single
+anyway — so a fetch → process → project sequence lands in order.
 
 ## Logs
 

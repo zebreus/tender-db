@@ -5,9 +5,11 @@
 
 pub mod account;
 pub mod dashboard;
+pub mod ingestion;
 
 pub use account::{Account, NewToken, Token};
 pub use dashboard::Dashboard;
+pub use ingestion::Ingestion;
 
 use serde::{Deserialize, Serialize};
 

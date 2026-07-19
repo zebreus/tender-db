@@ -55,9 +55,23 @@ async-stream = "0.3"
 futures-core = "0.3"
 chrono = { version = "0.4", default-features = false, features = ["std"] }
 
+# Read-only SQL endpoint (issue 07). `turso_parser` is turso's OWN SQL parser,
+# already in the tree as a transitive dep of the engine — pinned to the exact
+# engine version so its AST always matches what the engine will execute; it is
+# the primary allow-list wall (query_only is PRAGMA-escapable,
+# docs/research/turso-capabilities.md §2). `governor` is the pure-Rust GCRA
+# limiter behind tower_governor, used directly here for the per-token 300/h
+# keyed quota (api-layer.md §6).
+turso_parser = "=0.7.0"
+governor = "0.10"
+
 # Fetcher: rustls so the nix build stays free of system TLS deps.
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
 sha2 = "0.10"
+
+# Constant-time secret comparison for the `/admin` operator secret (issue 16),
+# already in tree via the RustCrypto stack.
+subtle = "2"
 
 # Accounts (docs/research/api-layer.md §5). argon2 0.5 is RustCrypto's pure-Rust
 # argon2id; its defaults already are OWASP's recommended parameters. It

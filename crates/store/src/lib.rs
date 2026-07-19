@@ -8,6 +8,7 @@
 
 pub mod accounts;
 pub mod canonical;
+pub mod jobs;
 pub mod read;
 
 /// Re-exported so callers can name `Error`/`Connection`/`Value` without taking
@@ -285,6 +286,7 @@ impl Db {
         conn.execute_batch(SCHEMA).await?;
         conn.execute_batch(canonical::SCHEMA).await?;
         conn.execute_batch(accounts::SCHEMA).await?;
+        conn.execute_batch(jobs::SCHEMA).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         Ok(Db { database, conn: Mutex::new(conn), cursor })
     }

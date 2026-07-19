@@ -131,6 +131,70 @@ pub async fn fetch(
     Ok(outcome)
 }
 
+/// Walk TED daily issues forward from the newest one already registered for the
+/// current UTC year, fetching each until the server 404s past the newest
+/// published issue. Returns every `(period, outcome)` it touched.
+///
+/// This is the realtime probe (docs/research/ted-access-channels.md §5), lifted
+/// out of the fetch CLI so the in-app Supervisor and the CLI share one
+/// implementation. Starting at the newest *known* issue (not the next one) means
+/// `refetch = true` re-downloads it first — the finality re-check, since a daily
+/// package may be rewritten until 09:30 CET on its publication day. With
+/// `refetch = false` that first issue is a cheap registry hit (`Unchanged`, no
+/// download) and the walk still advances to the genuinely new issues.
+pub async fn probe_ted_daily(
+    db: &store::Db,
+    client: &reqwest::Client,
+    archive_root: &Path,
+    base: &str,
+    refetch: bool,
+    mut on_issue: impl FnMut(&str, &Outcome),
+) -> Result<Vec<(String, Outcome)>, Error> {
+    let year = current_date_utc().0;
+    let mut issue = latest_ted_issue(db, year).await?.unwrap_or(1);
+    let mut out = Vec::new();
+    loop {
+        let target = crate::ted::daily(base, year, issue);
+        let outcome = fetch(db, client, archive_root, &target, refetch).await?;
+        on_issue(&target.period, &outcome);
+        let stop = matches!(outcome, Outcome::NotFound);
+        out.push((target.period.clone(), outcome));
+        if stop {
+            break;
+        }
+        issue += 1;
+    }
+    Ok(out)
+}
+
+/// Newest daily issue number already registered for `year`. Periods sort
+/// lexicographically (`YYYY-NNNNN`), so `MAX(period)` is the newest.
+pub async fn latest_ted_issue(db: &store::Db, year: u16) -> turso::Result<Option<u32>> {
+    let latest = db.latest_fetch_period_max("ted", "daily", &format!("{year}-")).await?;
+    Ok(latest.and_then(|p| p.split_once('-').and_then(|(_, n)| n.parse().ok())))
+}
+
+/// Today as (year, month, day) UTC.
+pub fn current_date_utc() -> (u16, u8, u8) {
+    civil_date(unix_now())
+}
+
+/// The (year, month, day) UTC of a unix instant — Howard Hinnant's days→civil
+/// algorithm (no date-library dependency).
+pub fn civil_date(unix_seconds: i64) -> (u16, u8, u8) {
+    let days = unix_seconds.div_euclid(86_400);
+    let z = days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    ((y + i64::from(m <= 2)) as u16, m as u8, d as u8)
+}
+
 /// Stream the URL to `<final_path>.part`, resuming a previous partial
 /// download via a Range request. Returns (bytes, sha256-hex).
 async fn download(

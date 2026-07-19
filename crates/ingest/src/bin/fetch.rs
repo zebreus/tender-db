@@ -161,24 +161,22 @@ async fn main() -> ExitCode {
         }
     }
     if args.probe_latest {
-        // Walk forward from the newest registered issue of the current year
-        // (or issue 1) until the server says 404.
-        let year = current_date().0;
-        let mut issue = match latest_issue(&db, year).await {
-            Ok(i) => i.unwrap_or(0) + 1,
+        // Walk forward from the newest registered issue until the server 404s.
+        // The library owns the probe so the in-app Supervisor runs the same one.
+        match fetch::probe_ted_daily(
+            &db,
+            &client,
+            &args.archive,
+            &args.base_url,
+            args.refetch,
+            |period, outcome| println!("ted daily {period}: {outcome:?}"),
+        )
+        .await
+        {
+            Ok(_) => {}
             Err(e) => {
-                eprintln!("probe: read registry: {e}");
-                return ExitCode::FAILURE;
-            }
-        };
-        loop {
-            match run(ted::daily(&args.base_url, year, issue), args.refetch).await {
-                Ok(fetch::Outcome::NotFound) => break,
-                Ok(_) => issue += 1,
-                Err(()) => {
-                    failures += 1;
-                    break;
-                }
+                eprintln!("probe: {e}");
+                failures += 1;
             }
         }
     }
@@ -186,7 +184,7 @@ async fn main() -> ExitCode {
         // Every month since the archive starts. Closed months are immutable, so
         // the registry skips them without a download; the current month is
         // still accumulating (T+1 per day) and is always re-fetched.
-        let (year, month, _) = current_date();
+        let (year, month, _) = fetch::current_date_utc();
         for (y, m) in doe::months_through((year, month)) {
             let current = (y, m) == (year, month);
             if run(doe::monthly(&args.base_url, y, m), args.refetch || current).await.is_err() {
@@ -196,31 +194,4 @@ async fn main() -> ExitCode {
     }
 
     if failures > 0 { ExitCode::FAILURE } else { ExitCode::SUCCESS }
-}
-
-/// Newest daily issue number already in the registry for `year`.
-async fn latest_issue(db: &store::Db, year: u16) -> turso::Result<Option<u32>> {
-    // Periods sort lexicographically (`YYYY-NNNNN`), so max(period) works.
-    let latest = db.latest_fetch_period_max("ted", "daily", &format!("{year}-")).await?;
-    Ok(latest.and_then(|p| p.split_once('-').and_then(|(_, n)| n.parse().ok())))
-}
-
-/// Today as (year, month, day) UTC.
-fn current_date() -> (u16, u8, u8) {
-    // Days since epoch → civil date (Howard Hinnant's algorithm, no deps).
-    let days = (std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
-        / 86_400) as i64;
-    let z = days + 719_468;
-    let era = z / 146_097;
-    let doe = z - era * 146_097;
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    ((y + if m <= 2 { 1 } else { 0 }) as u16, m as u8, d as u8)
 }

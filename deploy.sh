@@ -50,26 +50,30 @@ systemctl --no-pager --lines=0 status tender-db | head -5
 EOF
 
 say "Health check"
-# NOTE: the app is still the scaffold — it has no /health endpoint yet. A real
-# one (with DB + importer status) lands with issue 05; until then we assert that
-# / returns HTML, which exercises the server, the bundled assets and nginx/TLS.
+# /health (issue 05) reports the process is up and the database answers. It is
+# outside the rate limiter and stays responsive under load — ingestion runs
+# in-process (issue 16) with readers serving over WAL, so this must return 200
+# throughout a load, not just at idle.
 for i in $(seq 1 30); do
-  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$PUBLIC_URL/" || true)"
+  code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$PUBLIC_URL/health" || true)"
   [ "$code" = "200" ] && break
   sleep 1
 done
 
 if [ "${code:-}" != "200" ]; then
-  echo "health check FAILED: $PUBLIC_URL/ returned ${code:-no response}" >&2
+  echo "health check FAILED: $PUBLIC_URL/health returned ${code:-no response}" >&2
   ssh -o BatchMode=yes "$VPS" 'journalctl -u tender-db -n 40 --no-pager' >&2 || true
   exit 1
 fi
 
-body="$(curl -s --max-time 10 "$PUBLIC_URL/")"
+body="$(curl -s --max-time 10 "$PUBLIC_URL/health")"
 case "$body" in
-  *"<html"*|*"<!DOCTYPE"*|*"<!doctype"*) ;;
-  *) echo "health check FAILED: $PUBLIC_URL/ returned 200 but no HTML" >&2; exit 1 ;;
+  *'"ok":true'*) ;;
+  *) echo "health check FAILED: $PUBLIC_URL/health returned 200 but not ok: $body" >&2; exit 1 ;;
 esac
 
-echo "OK  $PUBLIC_URL/ -> 200, HTML served"
+echo "OK  $PUBLIC_URL/health -> 200, database ok"
 echo "OK  deployed rev: $(ssh -o BatchMode=yes "$VPS" 'cat /opt/tender-db/deployed-rev')"
+echo
+echo "Ingestion is in-process via the /admin API (operator secret in"
+echo "/root/tender-admin-secret on the VPS). See docs/operations.md → Ingestion."

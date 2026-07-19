@@ -9,7 +9,7 @@
 
 use dioxus::fullstack::{Json, SetCookie, SetHeader};
 use dioxus::prelude::*;
-use model::{Account, Dashboard, NewToken, Tender, Token};
+use model::{Account, Dashboard, Ingestion, NewToken, Tender, Token};
 
 /// All tenders, newest first.
 #[get("/api/tenders")]
@@ -26,6 +26,18 @@ pub async fn dashboard() -> ServerFnResult<Dashboard> {
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_secs() as i64);
     tender_db::coverage::measure(&db, now).await.map_err(ServerFnError::new)
+}
+
+/// The ingestion Supervisor's live state — current job + queue + recent runs.
+/// A read-only view: admin *actions* are API-only (the dashboard is public and
+/// must never carry the operator secret). When the supervisor has not started
+/// (a server render before startup completed), this is the empty default.
+#[get("/api/ingestion")]
+pub async fn ingestion() -> ServerFnResult<Ingestion> {
+    match tender_db::supervisor::get() {
+        Some(sup) => sup.ingestion().await.map_err(ServerFnError::new),
+        None => Ok(Ingestion::default()),
+    }
 }
 
 // ------------------------------------------------------------------ accounts
