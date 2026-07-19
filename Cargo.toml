@@ -25,6 +25,10 @@ ingest = { path = "crates/ingest" }
 dioxus = { version = "0.7", features = ["fullstack", "router"] }
 serde = { version = "1", features = ["derive"] }
 
+# The vendored eForms SDK field metadata is JSON; ingest reads it as the
+# ADR-0002 completeness checklist and as the parser's match index.
+serde_json = "1"
+
 # wasm-bindgen does NOT follow semver: the `wasm-bindgen` crate version and the
 # `wasm-bindgen-cli` that `dx` runs must match EXACTLY or dx refuses to bundle the
 # wasm. The dioxus-cli (dx) packaged in nixpkgs bundles 0.2.118, so we pin the

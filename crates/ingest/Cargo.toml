@@ -18,6 +18,8 @@ flate2 = { workspace = true }
 tar = { workspace = true }
 zip = { workspace = true }
 roxmltree = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 # Local HTTP fixture server for fetcher tests — no network in tests.

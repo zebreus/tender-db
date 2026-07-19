@@ -5,6 +5,7 @@
 //! stages) and is idempotent — re-running a package inserts nothing new,
 //! because Notice identity is (source, publication_id, content_hash).
 
+use crate::eforms;
 use crate::package::{self, Member};
 use crate::profile::{self, Disposition, Record};
 use std::path::Path;
@@ -24,8 +25,14 @@ pub struct Report {
     pub notices: u64,
     /// Records whose identity was already known — the idempotency signal.
     pub duplicates: u64,
-    /// Records quarantined (ADR-0004).
+    /// Records quarantined before a Notice identity existed — unrecognised
+    /// payloads (ADR-0004).
     pub quarantined: u64,
+    /// Notices whose profile parser consumed the payload exhaustively.
+    pub parsed: u64,
+    /// Notices quarantined by their profile parser: unmapped content, or a
+    /// value the schema cannot hold without loss.
+    pub parse_quarantined: u64,
 }
 
 #[derive(Debug)]
@@ -73,6 +80,8 @@ pub async fn process(
         total.notices += report.notices;
         total.duplicates += report.duplicates;
         total.quarantined += report.quarantined;
+        total.parsed += report.parsed;
+        total.parse_quarantined += report.parse_quarantined;
     }
     Ok(total)
 }
@@ -94,30 +103,47 @@ pub async fn process_package(
         match profile::dispatch(&path, bytes) {
             Disposition::Records(records) => {
                 report.ingested += 1;
-                pending.extend(records);
+                // Field mapping happens here, while the payload is in hand: an
+                // eForms member is exactly one notice, so the member's bytes
+                // are that notice's payload.
+                pending.extend(records.into_iter().map(|record| {
+                    let parse = match &record {
+                        Record::Notice(n) => eforms::parse_payload(&n.profile, bytes),
+                        Record::Quarantine(_) => store::Parse::Pending,
+                    };
+                    (record, parse)
+                }));
             }
             Disposition::Skipped(_) => report.skipped += 1,
         }
     })?;
 
     let now = unix_now();
-    for record in pending {
+    for (record, parse) in pending {
         match record {
             Record::Notice(n) => {
                 let inserted = db
-                    .insert_notice(&store::Notice {
-                        source: source.into(),
-                        publication_id: n.publication_id,
-                        content_hash: n.content_hash,
-                        profile: n.profile,
-                        declared_version: n.declared_version,
-                        fetch_id,
-                        member_path: n.member_path,
-                        ingested_at: now,
-                    })
+                    .record_notice(
+                        &store::Notice {
+                            source: source.into(),
+                            publication_id: n.publication_id,
+                            content_hash: n.content_hash,
+                            profile: n.profile,
+                            declared_version: n.declared_version,
+                            fetch_id,
+                            member_path: n.member_path,
+                            ingested_at: now,
+                        },
+                        &parse,
+                    )
                     .await?;
                 if inserted {
                     report.notices += 1;
+                    match parse {
+                        store::Parse::Parsed(_) => report.parsed += 1,
+                        store::Parse::Quarantined { .. } => report.parse_quarantined += 1,
+                        store::Parse::Pending => {}
+                    }
                 } else {
                     report.duplicates += 1;
                 }

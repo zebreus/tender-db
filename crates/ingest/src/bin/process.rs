@@ -78,8 +78,17 @@ async fn main() -> ExitCode {
         args.package.as_deref(),
         |pkg, r| {
             println!(
-                "ted {} {}: {} members → {} notices, {} duplicates, {} quarantined, {} skipped",
-                args.kind, pkg.period, r.members, r.notices, r.duplicates, r.quarantined, r.skipped
+                "ted {} {}: {} members → {} notices ({} parsed, {} unmappable), \
+                 {} duplicates, {} quarantined, {} skipped",
+                args.kind,
+                pkg.period,
+                r.members,
+                r.notices,
+                r.parsed,
+                r.parse_quarantined,
+                r.duplicates,
+                r.quarantined,
+                r.skipped
             );
         },
     )
@@ -98,9 +107,16 @@ async fn main() -> ExitCode {
     let accounted = total.ingested + total.skipped;
     println!(
         "\ntotal: {} members = {} ingested + {} skipped\n       \
-         {} notices, {} duplicates, {} quarantined",
-        total.members, total.ingested, total.skipped, total.notices, total.duplicates,
-        total.quarantined
+         {} notices, {} duplicates, {} quarantined\n       \
+         {} parsed, {} quarantined by their profile parser",
+        total.members,
+        total.ingested,
+        total.skipped,
+        total.notices,
+        total.duplicates,
+        total.quarantined,
+        total.parsed,
+        total.parse_quarantined
     );
     if accounted != total.members {
         eprintln!("SILENT DROP: {} members unaccounted for", total.members - accounted);

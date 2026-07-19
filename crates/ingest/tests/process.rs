@@ -169,6 +169,13 @@ async fn dispatches_every_era_and_accounts_for_every_file() {
     assert_eq!(r.quarantined, 1);
     assert_eq!(r.duplicates, 0);
 
+    // Field mapping runs on the eForms notices. These three payloads are
+    // deliberately truncated stubs — they carry no UBLExtensions block, so the
+    // eForms parser rejects them, which is exactly the ADR-0004 behaviour under
+    // test: identity is recorded, nothing is imported, the reason is kept.
+    assert_eq!(r.parsed, 0);
+    assert_eq!(r.parse_quarantined, 3);
+
     // No silent drops: every member is accounted for by exactly one outcome.
     assert_eq!(r.members, r.ingested + r.skipped);
 
@@ -185,7 +192,17 @@ async fn dispatches_every_era_and_accounts_for_every_file() {
     );
 
     let reasons = db.quarantine_counts_by_reason().await.unwrap();
-    assert_eq!(reasons, vec![("unknown-root".to_string(), 1)]);
+    assert_eq!(
+        reasons,
+        vec![
+            // The two truncated 1.13 stubs.
+            ("unclaimed-content".to_string(), 2),
+            // The 1.7 stub: outside the vendored SDK range.
+            ("unknown-customization".to_string(), 1),
+            // Not a notice at all — rejected before a profile was chosen.
+            ("unknown-root".to_string(), 1),
+        ]
+    );
 
     let _ = std::fs::remove_dir_all(&archive);
 }
@@ -203,7 +220,7 @@ async fn reprocessing_is_idempotent() {
 
     // The quarantine table does not grow either.
     let total: i64 = db.quarantine_counts_by_reason().await.unwrap().iter().map(|(_, n)| n).sum();
-    assert_eq!(total, 1);
+    assert_eq!(total, 4);
 
     let profiles = db.notice_counts_by_profile().await.unwrap();
     assert_eq!(profiles.iter().map(|(_, n)| n).sum::<i64>(), first.notices as i64);

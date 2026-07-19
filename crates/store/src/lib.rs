@@ -61,9 +61,14 @@ const SCHEMA: &str = "
         fetch_id         INTEGER NOT NULL REFERENCES fetches(id),
         member_path      TEXT NOT NULL,
         ingested_at      INTEGER NOT NULL, -- unix seconds
+        -- Field mapping state (ADR-0004): 'parsed' once the profile's parser
+        -- consumed the payload exhaustively, 'quarantined' when it could not,
+        -- 'pending' for profiles whose parser does not exist yet.
+        parse_state      TEXT NOT NULL DEFAULT 'pending',
         UNIQUE(source, publication_id, content_hash)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS notices_profile ON notices(profile);
+    CREATE INDEX IF NOT EXISTS notices_parse_state ON notices(parse_state);
 
     -- The only failure mode of ingestion (ADR-0004): a notice with unmapped or
     -- unrecognised content is quarantined whole, never partially imported. The
@@ -82,6 +87,158 @@ const SCHEMA: &str = "
         reprocessed_at INTEGER,
         UNIQUE(fetch_id, member_path, content_hash)
     ) STRICT;
+
+    -- ------------------------------------------------------------------
+    -- Notice-parsed layer. The relational reading of one notice's payload,
+    -- still in the source's own terms (raw section ids as published, source
+    -- field ids); the canonical Tender/Lot/Organization layer is projected
+    -- from here, never the other way round (ADR-0001).
+    --
+    -- Shape: eForms' *node tree* — not its field list — defines the relational
+    -- structure (docs/research/eforms-data-model.md §2.1): every repeatable
+    -- node instance is a section, every field value hangs off the nearest
+    -- enclosing section. That is why a handful of typed value tables covers
+    -- all 1256 fields without a column per business term, and why deep
+    -- results-layer nodes (LotResult, LotTender, SettledContract, UBO) are
+    -- already stored losslessly here before issue 13 models them
+    -- first-class.
+    -- ------------------------------------------------------------------
+
+    -- One row per repeatable-node instance, plus 'PROCEDURE' for the notice
+    -- root. `section_id` is the identifier the notice published (LOT-0001,
+    -- ORG-0002, RES-0001 — the very strings change notices reference in
+    -- BT-13716), or `<node-id>#<n>` where the node has no identifier field.
+    CREATE TABLE IF NOT EXISTS notice_sections (
+        notice_id         INTEGER NOT NULL REFERENCES notices(id),
+        section_id        TEXT NOT NULL,
+        kind              TEXT NOT NULL, -- Lot, LotsGroup, Part, Organisation, LotResult, …
+        parent_section_id TEXT,
+        PRIMARY KEY (notice_id, section_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS notice_sections_kind ON notice_sections(kind);
+
+    -- Free text, including url/phone/email. `lang` is the published
+    -- @languageID (eForms notices carry their official language(s) only, so
+    -- these rows are exactly the EN + original set CONTEXT.md asks for).
+    CREATE TABLE IF NOT EXISTS notice_texts (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        lang       TEXT,
+        value      TEXT NOT NULL,
+        -- `ordinal` already separates a text-multilingual field's language
+        -- variants: it counts every repeat of the field within the section.
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- Controlled-vocabulary values; `list_name` is the published @listName.
+    CREATE TABLE IF NOT EXISTS notice_codes (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        list_name  TEXT,
+        code       TEXT NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- CPV and NUTS: the two vocabularies queried as classifications rather
+    -- than as one field's value.
+    CREATE TABLE IF NOT EXISTS notice_classifications (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        scheme     TEXT NOT NULL, -- 'cpv' | 'nuts'
+        code       TEXT NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS notice_classifications_code ON notice_classifications(scheme, code);
+
+    -- Money as INTEGER cents + currency (CONTEXT.md). A notice whose amount
+    -- carries more than two fraction digits is quarantined, never rounded.
+    CREATE TABLE IF NOT EXISTS notice_amounts (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        cents      INTEGER NOT NULL,
+        currency   TEXT NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- UTC instant + the published offset, because the offset is the buyer's
+    -- local wall-clock deadline and normalising it away loses meaning.
+    -- `has_time` distinguishes a date-only field (UTC midnight of the local
+    -- day) from a date the SDK pairs with a time field.
+    CREATE TABLE IF NOT EXISTS notice_dates (
+        notice_id      INTEGER NOT NULL REFERENCES notices(id),
+        section_id     TEXT NOT NULL,
+        field_id       TEXT NOT NULL,
+        ordinal        INTEGER NOT NULL,
+        utc_seconds    INTEGER NOT NULL,
+        offset_minutes INTEGER NOT NULL,
+        has_time       INTEGER NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- Counts and indicators (SQLite STRICT has no BOOLEAN; indicators are 0/1).
+    CREATE TABLE IF NOT EXISTS notice_integers (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        value      INTEGER NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- Weights, percentages and measures; `unit` is the published @unitCode
+    -- (durations in eForms are value+unit, not ISO 8601 strings).
+    CREATE TABLE IF NOT EXISTS notice_numbers (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        value      REAL NOT NULL,
+        unit       TEXT,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+
+    -- Identifiers and the notice-local references between sections. `is_ref`
+    -- marks an id-ref: with `scheme` it names the role a section plays for
+    -- another (OPT-300-Procedure-Buyer → ORG-0001 is a buyer mention).
+    CREATE TABLE IF NOT EXISTS notice_ids (
+        notice_id  INTEGER NOT NULL REFERENCES notices(id),
+        section_id TEXT NOT NULL,
+        field_id   TEXT NOT NULL,
+        ordinal    INTEGER NOT NULL,
+        scheme     TEXT,
+        value      TEXT NOT NULL,
+        is_ref     INTEGER NOT NULL,
+        PRIMARY KEY (notice_id, section_id, field_id, ordinal)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS notice_ids_target ON notice_ids(value) WHERE is_ref = 1;
+
+    -- The withheld-field mechanism (BT-195/196/197/198): a publishable value
+    -- may be suppressed, the notice then carrying only which field, why, and
+    -- until when. Those live in their own FieldsPrivacy sections, so the
+    -- satellite is a view over them, not a fourth copy of the data.
+    CREATE VIEW IF NOT EXISTS notice_withheld_fields AS
+    SELECT s.notice_id,
+           s.parent_section_id AS section_id,
+           MAX(CASE WHEN c.field_id LIKE 'BT-195%' THEN c.code END) AS withheld_field,
+           MAX(CASE WHEN c.field_id LIKE 'BT-197%' THEN c.code END) AS reason_code,
+           (SELECT t.value FROM notice_texts t
+             WHERE t.notice_id = s.notice_id AND t.section_id = s.section_id
+               AND t.field_id LIKE 'BT-196%' LIMIT 1) AS reason_text,
+           (SELECT d.utc_seconds FROM notice_dates d
+             WHERE d.notice_id = s.notice_id AND d.section_id = s.section_id
+               AND d.field_id LIKE 'BT-198%' LIMIT 1) AS publish_after
+      FROM notice_sections s
+      LEFT JOIN notice_codes c ON c.notice_id = s.notice_id AND c.section_id = s.section_id
+     WHERE s.kind = 'FieldsPrivacy'
+     GROUP BY s.notice_id, s.section_id;
 ";
 
 pub struct Db {
@@ -232,10 +389,182 @@ impl Db {
         Ok(out)
     }
 
-    /// Record a Notice. Returns false when this identity is already known —
-    /// which is what makes re-processing a package idempotent.
-    pub async fn insert_notice(&self, n: &Notice) -> turso::Result<bool> {
+    /// Record a Notice together with whatever its profile parser made of the
+    /// payload, atomically: a notice is either absent, or present with its
+    /// complete parsed form — never half-imported (ADR-0004).
+    ///
+    /// Returns false when this identity is already known, which is what makes
+    /// re-processing a package idempotent.
+    pub async fn record_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<bool> {
         let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result = self.record_notice_tx(&conn, n, parse).await;
+        // turso 0.7.0 poisons the open transaction if a write future is
+        // abandoned, so the rollback is unconditional on the error path.
+        match result {
+            Ok(inserted) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(inserted)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    async fn record_notice_tx(&self, conn: &Connection, n: &Notice, parse: &Parse) -> turso::Result<bool> {
+        if !self.insert_notice_row(conn, n).await? {
+            return Ok(false);
+        }
+        let Some(id) = self.notice_id(conn, n).await? else {
+            return Ok(false);
+        };
+        match parse {
+            Parse::Pending => {}
+            Parse::Parsed(parsed) => {
+                self.insert_parsed(conn, id, parsed).await?;
+                self.set_parse_state(conn, id, "parsed").await?;
+            }
+            Parse::Quarantined { reason, detail } => {
+                self.set_parse_state(conn, id, "quarantined").await?;
+                conn.execute(
+                    "INSERT OR IGNORE INTO quarantine(notice_id, fetch_id, member_path, content_hash,
+                         profile, reason, detail, first_seen)
+                     VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        Value::Integer(id),
+                        Value::Integer(n.fetch_id),
+                        t(&n.member_path),
+                        t(&n.content_hash),
+                        t(&n.profile),
+                        t(reason),
+                        opt_text(detail.as_deref()),
+                        Value::Integer(n.ingested_at),
+                    ),
+                )
+                .await?;
+            }
+        }
+        Ok(true)
+    }
+
+    async fn notice_id(&self, conn: &Connection, n: &Notice) -> turso::Result<Option<i64>> {
+        let mut rows = conn
+            .query(
+                "SELECT id FROM notices WHERE source = ? AND publication_id = ? AND content_hash = ?",
+                (t(&n.source), t(&n.publication_id), t(&n.content_hash)),
+            )
+            .await?;
+        Ok(rows.next().await?.map(|row| int(&row, 0)))
+    }
+
+    async fn set_parse_state(&self, conn: &Connection, id: i64, state: &str) -> turso::Result<()> {
+        conn.execute("UPDATE notices SET parse_state = ? WHERE id = ?", (t(state), Value::Integer(id)))
+            .await?;
+        Ok(())
+    }
+
+    /// Fan one notice's parsed form out into the value tables.
+    async fn insert_parsed(&self, conn: &Connection, id: i64, parsed: &Parsed) -> turso::Result<()> {
+        for s in &parsed.sections {
+            conn.execute(
+                "INSERT INTO notice_sections(notice_id, section_id, kind, parent_section_id)
+                 VALUES(?, ?, ?, ?)",
+                (Value::Integer(id), t(&s.id), t(&s.kind), opt_text(s.parent.as_deref())),
+            )
+            .await?;
+        }
+        for v in &parsed.values {
+            let key = (Value::Integer(id), t(&v.section_id), t(&v.field_id), Value::Integer(v.ordinal));
+            match &v.value {
+                NoticeValue::Text { lang, value } => {
+                    conn.execute(
+                        "INSERT INTO notice_texts(notice_id, section_id, field_id, ordinal, lang, value)
+                         VALUES(?, ?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, opt_text(lang.as_deref()), t(value)),
+                    )
+                    .await?;
+                }
+                NoticeValue::Code { list, code } => {
+                    conn.execute(
+                        "INSERT INTO notice_codes(notice_id, section_id, field_id, ordinal, list_name, code)
+                         VALUES(?, ?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, opt_text(list.as_deref()), t(code)),
+                    )
+                    .await?;
+                }
+                NoticeValue::Classification { scheme, code } => {
+                    conn.execute(
+                        "INSERT INTO notice_classifications(notice_id, section_id, field_id, ordinal, scheme, code)
+                         VALUES(?, ?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, t(scheme), t(code)),
+                    )
+                    .await?;
+                }
+                NoticeValue::Amount { cents, currency } => {
+                    conn.execute(
+                        "INSERT INTO notice_amounts(notice_id, section_id, field_id, ordinal, cents, currency)
+                         VALUES(?, ?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, Value::Integer(*cents), t(currency)),
+                    )
+                    .await?;
+                }
+                NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
+                    conn.execute(
+                        "INSERT INTO notice_dates(notice_id, section_id, field_id, ordinal,
+                             utc_seconds, offset_minutes, has_time)
+                         VALUES(?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            key.0,
+                            key.1,
+                            key.2,
+                            key.3,
+                            Value::Integer(*utc_seconds),
+                            Value::Integer(*offset_minutes),
+                            Value::Integer(i64::from(*has_time)),
+                        ),
+                    )
+                    .await?;
+                }
+                NoticeValue::Integer(value) => {
+                    conn.execute(
+                        "INSERT INTO notice_integers(notice_id, section_id, field_id, ordinal, value)
+                         VALUES(?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, Value::Integer(*value)),
+                    )
+                    .await?;
+                }
+                NoticeValue::Number { value, unit } => {
+                    conn.execute(
+                        "INSERT INTO notice_numbers(notice_id, section_id, field_id, ordinal, value, unit)
+                         VALUES(?, ?, ?, ?, ?, ?)",
+                        (key.0, key.1, key.2, key.3, Value::Real(*value), opt_text(unit.as_deref())),
+                    )
+                    .await?;
+                }
+                NoticeValue::Id { scheme, value, is_ref } => {
+                    conn.execute(
+                        "INSERT INTO notice_ids(notice_id, section_id, field_id, ordinal, scheme, value, is_ref)
+                         VALUES(?, ?, ?, ?, ?, ?, ?)",
+                        (
+                            key.0,
+                            key.1,
+                            key.2,
+                            key.3,
+                            opt_text(scheme.as_deref()),
+                            t(value),
+                            Value::Integer(i64::from(*is_ref)),
+                        ),
+                    )
+                    .await?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    async fn insert_notice_row(&self, conn: &Connection, n: &Notice) -> turso::Result<bool> {
         let changed = conn
             .execute(
                 "INSERT OR IGNORE INTO notices(source, publication_id, content_hash, profile,
@@ -330,6 +659,57 @@ pub struct Notice {
     pub fetch_id: i64,
     pub member_path: String,
     pub ingested_at: i64,
+}
+
+/// One repeatable-node instance of a notice — see `notice_sections`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Section {
+    pub id: String,
+    pub kind: String,
+    pub parent: Option<String>,
+}
+
+/// A typed value extracted from a notice. The variants are exactly the value
+/// tables of the notice-parsed layer.
+#[derive(Clone, Debug, PartialEq)]
+pub enum NoticeValue {
+    Text { lang: Option<String>, value: String },
+    Code { list: Option<String>, code: String },
+    Classification { scheme: String, code: String },
+    Amount { cents: i64, currency: String },
+    Date { utc_seconds: i64, offset_minutes: i64, has_time: bool },
+    Integer(i64),
+    Number { value: f64, unit: Option<String> },
+    Id { scheme: Option<String>, value: String, is_ref: bool },
+}
+
+/// One value in its place: which section of the notice, which source field.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ValueRow {
+    pub section_id: String,
+    pub field_id: String,
+    /// Distinguishes repeats of one field within one section (document order).
+    pub ordinal: i64,
+    pub value: NoticeValue,
+}
+
+/// The relational reading of one notice — written atomically with the notice's
+/// identity row, so a notice is never half-parsed (ADR-0004).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Parsed {
+    pub sections: Vec<Section>,
+    pub values: Vec<ValueRow>,
+}
+
+/// What the profile parser made of a notice's payload.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Parse {
+    /// No parser for this profile yet — identity only.
+    Pending,
+    Parsed(Parsed),
+    /// Unmapped content or an unrepresentable value: the notice is recorded,
+    /// its payload stays in the archive, and nothing of it is imported.
+    Quarantined { reason: String, detail: Option<String> },
 }
 
 /// A payload that could not be turned into a Notice (ADR-0004).

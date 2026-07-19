@@ -2472,6 +2472,8 @@ dependencies = [
  "model",
  "reqwest",
  "roxmltree",
+ "serde",
+ "serde_json",
  "sha2",
  "store",
  "tar",
