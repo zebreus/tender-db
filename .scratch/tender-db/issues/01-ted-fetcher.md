@@ -1,6 +1,6 @@
 # 01 — TED package fetcher + raw archive
 
-Status: claimed
+Status: resolved
 
 Goal: the `ingest` crate exists and can download TED daily/monthly packages
 into `/data/archive/ted/` (or a configurable root) with hash-based
@@ -20,3 +20,13 @@ Scope:
 
 Acceptance: on the VPS, fetching one recent day + one month lands correct
 files under /data/archive/ted/, registry rows exist, re-running is a no-op.
+
+## Answer
+
+Implemented in commit bde1731 (ingest crate: fetch.rs/ted.rs + fetch CLI,
+store fetches registry). Verified on the VPS against real TED:
+daily 2026-00136 (19.8 MB) and monthly 2026-06 (395 MB) fetched into
+/data/archive/ted/, re-runs report Unchanged (no download), probe-latest
+resumes from the registry (137 -> NotFound -> stop). Registry rows in
+/data/db/tender-db.db. Note: TED monthly tars are much smaller than the
+extracted sizes in the research docs (compressed members).
