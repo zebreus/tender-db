@@ -75,6 +75,11 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 tar = "0.4"
 zip = { version = "6", default-features = false, features = ["deflate"] }
 
+# Text-era (1993–2010) tagged-text members declare their encoding in the member
+# name (`_ISO_` = ISO-8859-1, `_UTF8_`); encoding_rs decodes the declared-ISO
+# variants (WHATWG mapping: the iso-8859-1 label decodes as windows-1252).
+encoding_rs = "0.8"
+
 # Read-only XML tree; profile dispatch matches namespace-URI + local name
 # (docs/architecture.md) because real TED files vary the prefix freely
 # (ContractNotice / urn:ContractNotice / ns8:ContractNotice all occur).

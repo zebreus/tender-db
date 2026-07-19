@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 29 notice files, 828 KB.
+Total: 30 notice files, 832 KB.
 
 ## Selection policy
 
@@ -124,7 +124,7 @@ difference between the eras.
 
 ---
 
-## `text/` — text era (1993–2010), 3 files, 406 KB
+## `text/` — text era (1993–2010), 4 files, 410 KB
 
 Text-era dailies are **not** one-file-per-notice. Each language ships as a
 single concatenated stream of plain-text records, each record starting at a
@@ -135,6 +135,7 @@ header-only shape issue 11 describes.
 | File | Bytes | Source | Why |
 |---|---|---|---|
 | `1993-daily-en-19930102.txt` | 404 767 | `daily-199300001` → `EN_19930102_1993001_ISO_ORG` | **A complete, unmodified daily package member** — the whole English delivery for 1993-01-02, all records, including the `T E D   D A I L Y - D E L I V E R Y` banner. This is the fixture for the record **splitter**: everything else in this corpus is a single notice, so nothing else proves the splitter works at real scale. It is the only text-era daily small enough to commit whole (2005 EN is 6.2 MB, 2008 EN is 11 MB). Declared ISO-8859-1 (`_ISO_ORG`); the content of this particular day happens to be pure ASCII, so it does **not** by itself exercise the Latin-1 path in `encoding_rs` — see TODO below. |
+| `2000-pin-130-2000.txt` | 3 408 | `daily-200000001` → `EN_20000104_001_ISO_ORG.ZIP`, record `ND: 130-2000` | Single record, extracted byte-exactly. Prior-information notice, ES. **The Latin-1 fixture**: declared ISO-8859-1 with 30 real high bytes (á/é/í/ó in the Spanish `OT:` body — "Bilbao Ría 2000", "José María Olábarri"), exercising the `encoding_rs` decode path the 1993 file cannot (see the closed TODO below). Also the 2000 vintage: `OT`/`CO`/`RC`/`RG` exist, `IA`/`MA` do not yet. |
 | `2005-can-154-2005.txt` | 4 039 | `daily-200500001` → `EN_20050101_2005001_UTF8_ORG`, record `ND: 154-2005` | Single record, **extracted byte-exactly** (see note). Contract award, UK. **Has an `RN: 108785-2003` back-reference** — the text-era chain edge issue 11 needs ("RN back-references feed chains", and "XML-era chains … terminate at real text-era records"). Also shows the multi-value `PC:`/`PN:` continuation-line format (3 CPV codes across indented lines), which is a real parsing hazard. |
 | `2008-cn-723-2008.txt` | 5 976 | `daily-200800001` → `EN_20080103_2008001_UTF8_ORG`, record `ND: 723-2008` | Single record, extracted byte-exactly. Contract notice, FR. Later text-era vintage — shows `TD: 3 - Contract notice` where 1993 spells the same concept `TD: 3 - Invitation to tender`, i.e. the coded vocabularies drift within the text era and the checklist must be vintage-aware. |
 
@@ -204,18 +205,18 @@ Things a fixture is wanted for but which do not exist in the sampled data:
 - **2008 `META` format.** The 2008 package also ships a `_META_ORG` variant
   (`en_20080103_001_meta_org.zip`) which is *not* the plain-text era format at
   all — it is a markup format with `<part>`/`<doc>`/`<codifdata>` elements and
-  structured coded fields. It is a genuinely different shape from the
-  `_UTF8_ORG` text stream committed here, and issue 11 should decide whether
-  the text-era profile must handle it or whether it dispatches elsewhere. No
-  fixture committed pending that decision.
+  structured coded fields. Issue 11 decided: it stays a walker-level skip
+  (`text-era-meta-variant`) — it renders the very same notices as the tagged
+  text and would double every ingested record; the raw archive keeps it for a
+  possible later profile. No fixture committed.
 - **R2.0.7 award side.** The R2.0.7 contract *notice* is covered
   (`r208/f02-r207-001441-2011.xml`); the award form (`FORM="3"`, 853 instances
   in `daily-201100001`) is not. Add one if the R2.0.7 delta turns out to differ
   on the award side.
-- **Latin-1 high bytes in the text era.** The committed 1993 daily is declared
-  ISO-8859-1 but is pure ASCII, so it does not exercise the `encoding_rs`
-  decode path. A non-EN text-era daily (e.g. the FR or DE member of
-  `daily-199300001`) would; add one if the encoding path needs direct coverage.
+- ~~**Latin-1 high bytes in the text era.**~~ Closed by
+  `text/2000-pin-130-2000.txt` (issue 11): a real EN record whose declared-ISO
+  bytes carry Spanish accents, extracted from `daily-200000001` — no non-EN
+  member needed.
 
 ## Reproducing / extending
 

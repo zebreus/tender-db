@@ -14,6 +14,7 @@ pub mod profile;
 pub mod project;
 pub mod r209;
 pub mod ted;
+pub mod text;
 
 use sha2::{Digest, Sha256};
 

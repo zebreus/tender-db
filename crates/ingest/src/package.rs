@@ -45,6 +45,23 @@ impl From<std::io::Error> for Error {
     }
 }
 
+/// The tar-level entry names of the `.tar.gz` at `archive`, without unwrapping
+/// nested ZIPs — the cheap pre-scan behind package-level dispatch policy (the
+/// text era's ISO-vs-UTF8 variant selection needs to know what else the day
+/// ships before the first member is judged).
+pub fn entry_names(archive: &Path) -> Result<Vec<String>, Error> {
+    let file = std::fs::File::open(archive)?;
+    let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(std::io::BufReader::new(file)));
+    let mut names = Vec::new();
+    for entry in tar.entries()? {
+        let entry = entry?;
+        if entry.header().entry_type().is_file() {
+            names.push(entry.path()?.to_string_lossy().into_owned());
+        }
+    }
+    Ok(names)
+}
+
 /// Visit every payload file in the `.tar.gz` at `archive`, in archive order.
 pub fn walk(archive: &Path, mut visit: impl FnMut(Member<'_>)) -> Result<(), Error> {
     let file = std::fs::File::open(archive)?;
