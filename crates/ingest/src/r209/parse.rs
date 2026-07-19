@@ -38,15 +38,6 @@ use super::value;
 /// The notice root's section id — same convention as the eForms profile.
 const ROOT_SECTION: &str = "PROCEDURE";
 
-/// Form-root local names of the defence forms (R2.0.8 grammar, published
-/// through 2024 inside R2.0.9-era packages).
-pub const DEFENCE_FORMS: [&str; 4] = [
-    "PRIOR_INFORMATION_DEFENCE",
-    "CONTRACT_DEFENCE",
-    "CONTRACT_AWARD_DEFENCE",
-    "CONTRACT_CONCESSIONAIRE_DEFENCE",
-];
-
 /// Sibling pairs publishing one instant as two elements.
 const DATE_TIME_PAIRS: [(&str, &str); 3] = [
     ("DATE_RECEIPT_TENDERS", "TIME_RECEIPT_TENDERS"),
@@ -61,23 +52,30 @@ const DATE_TIME_PAIRS: [(&str, &str); 3] = [
 /// (`INFO_MODIFICATIONS`); `REF_NOTICE` wraps the chain-edge `NO_DOC_OJS`
 /// beside the notice's own; a defence award pairs an initial-estimate
 /// `VALUE_COST` with the final one. Fields inside them are prefixed with the
-/// wrapper name: `TED-OLD_VALUE.DATE`, `TED-REF_NOTICE.NO_DOC_OJS`.
-const FIELD_PREFIX_WRAPPERS: [&str; 6] = [
+/// wrapper name: `TED-OLD_VALUE.DATE`, `TED-REF_NOTICE.NO_DOC_OJS`. The
+/// R2.0.8 F02 restates the estimated total inside `F02_FRAMEWORK/
+/// TOTAL_ESTIMATED` beside the QUANTITY_SCOPE one — same disambiguation.
+const FIELD_PREFIX_WRAPPERS: [&str; 7] = [
     "OLD_VALUE",
     "NEW_VALUE",
     "DESCRIPTION_PROCUREMENT",
     "INFO_MODIFICATIONS",
     "REF_NOTICE",
     "INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT",
+    "TOTAL_ESTIMATED",
 ];
 
 /// Attributes that qualify the element they sit on and are stored as
 /// `TED-<ELEMENT>.<ATTR>` code rows when not consumed by the rule itself:
 /// `@PUBLICATION` (content withheld from the OJ), `@TYPE`/`@FORMAT` (coded
 /// VALUES kinds), `@VALUE`/`@CTYPE` on markers, `@CHOICE`, REF_OJS's
-/// `@CLASS`/`@LAST`, and the S01-era per-lot `OBJECT_CONTRACT/@ITEM`.
-const CAPTURED_ATTRIBUTES: [&str; 9] =
-    ["PUBLICATION", "TYPE", "VALUE", "CTYPE", "CHOICE", "CLASS", "LAST", "FORMAT", "ITEM"];
+/// `@CLASS`/`@LAST`, the S01-era per-lot `OBJECT_CONTRACT/@ITEM`, and the
+/// R2.0.8-era qualifiers `@PROCEDURE` (annex-D variants), `@STATUS`/`@OBJECT`
+/// (ICAR corrigendum ops) and `@SERVICES_CATEGORY` (F04 works block).
+const CAPTURED_ATTRIBUTES: [&str; 13] = [
+    "PUBLICATION", "TYPE", "VALUE", "CTYPE", "CHOICE", "CLASS", "LAST", "FORMAT", "ITEM",
+    "PROCEDURE", "STATUS", "OBJECT", "SERVICES_CATEGORY",
+];
 
 #[derive(Debug, PartialEq)]
 pub struct Rejected {
@@ -233,6 +231,20 @@ impl Walk {
                         is_ref: false,
                     });
                 }
+                // Early R2.0.8 revisions may put the award amount directly on
+                // the block (`AWARD_AND_CONTRACT_VALUE FMTVAL= CURRENCY=`);
+                // same degrade-to-raw-text policy as the Amount rule.
+                if let Some(lexical) = el.attribute("FMTVAL") {
+                    match (currency, value::cents(lexical)) {
+                        (Some(currency), Ok(cents)) => {
+                            self.emit(&id, &field, NoticeValue::Amount {
+                                cents,
+                                currency: currency.to_owned(),
+                            });
+                        }
+                        _ => self.emit_text(&id, &field, lang, lexical.to_owned()),
+                    }
+                }
                 self.no_stray_text(el, &path)?;
                 self.children(el, &Ctx { section: &id, parent: name, prefix: child_prefix, lang, currency }, &path)?;
             }
@@ -254,6 +266,15 @@ impl Walk {
                 for row in text_rows(el) {
                     self.emit_text(ctx.section, &field, lang, row);
                 }
+            }
+            Rule::TextGroup => {
+                // R2.0.7 publishes the value as direct text; R2.0.8+ nests it
+                // in structured children. Both are claimed.
+                let text = direct_text(el);
+                if !text.is_empty() {
+                    self.emit_text(ctx.section, &field, lang, text);
+                }
+                self.children(el, &Ctx { section: ctx.section, parent: name, prefix: child_prefix, lang, currency }, &path)?;
             }
             Rule::CodeAttr(attrs) => {
                 // Element text is the redundant display label; children (e.g.
@@ -289,16 +310,21 @@ impl Walk {
                 let lexical = el.attribute("FMTVAL").map(str::to_owned)
                     .or_else(|| (!text.is_empty()).then(|| text.clone()));
                 if let Some(lexical) = lexical {
-                    let currency = currency.ok_or_else(|| Rejected {
-                        reason: "unrepresentable-value",
-                        detail: format!("amount without a currency in scope at {path}"),
-                    })?;
-                    let cents = value::cents(&lexical)
-                        .map_err(|e| unrepresentable(&e, &path))?;
-                    self.emit(ctx.section, &field, NoticeValue::Amount {
-                        cents,
-                        currency: currency.to_owned(),
-                    });
+                    match (currency, value::cents(&lexical)) {
+                        (Some(currency), Ok(cents)) => {
+                            self.emit(ctx.section, &field, NoticeValue::Amount {
+                                cents,
+                                currency: currency.to_owned(),
+                            });
+                        }
+                        // Prose in a money slot ("10 000 per laureaat" —
+                        // measured on the 2011–2016 dailies) or a value with
+                        // no currency in scope: the raw text is kept, the
+                        // typed value stays absent. Quarantine is for
+                        // unconsumed structure, not low-quality values
+                        // (ted-legacy-mapping.md §8.2).
+                        _ => self.emit_text(ctx.section, &field, lang, lexical),
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
@@ -310,44 +336,69 @@ impl Walk {
                         Unit::Fixed(u) => Some(u.to_owned()),
                         Unit::FromTypeAttr => el.attribute("TYPE").map(str::to_owned),
                     };
-                    let number: f64 = lexical.trim().parse()
-                        .map_err(|_| unrepresentable(&format!("not a number: {lexical}"), &path))?;
-                    self.emit(ctx.section, &field, NoticeValue::Number { value: number, unit });
+                    match lexical.trim().parse::<f64>() {
+                        Ok(number) => {
+                            self.emit(ctx.section, &field, NoticeValue::Number { value: number, unit });
+                        }
+                        // "2 meses a contar…" in a duration slot: raw kept.
+                        Err(_) => self.emit_text(ctx.section, &field, lang, lexical),
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
             Rule::Integer => {
                 if !text.is_empty() {
-                    let n: i64 = text.parse()
-                        .map_err(|_| unrepresentable(&format!("not an integer: {text}"), &path))?;
-                    self.emit(ctx.section, &field, NoticeValue::Integer(n));
+                    match text.parse::<i64>() {
+                        Ok(n) => self.emit(ctx.section, &field, NoticeValue::Integer(n)),
+                        // "3-5" in a count slot: raw kept.
+                        Err(_) => self.emit_text(ctx.section, &field, lang, text),
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
             Rule::Date => {
                 if !text.is_empty() {
                     let paired = paired_time(el, name);
+                    // A junk paired time ("12:15 Uhr" — measured) must not
+                    // sink the date it rides with: fall back to the bare
+                    // date, then to raw text (§8.2 value policy).
                     let date = match &paired {
                         Some(time) => value::date_with_time(&text, time),
-                        None => value::date(&text),
+                        None => Err(String::new()),
                     }
-                    .map_err(|e| unrepresentable(&e, &path))?;
-                    self.emit(ctx.section, &field, date);
+                    .or_else(|_| value::date(&text));
+                    match date {
+                        Ok(date) => self.emit(ctx.section, &field, date),
+                        Err(_) => self.emit_text(ctx.section, &field, lang, text),
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
             Rule::Time => {
-                // Emit nothing when a paired date sibling stored the instant.
-                if !text.is_empty() && paired_date(el, name).is_none() {
-                    let time = value::time_only(&text).map_err(|e| unrepresentable(&e, &path))?;
-                    self.emit(ctx.section, &field, time);
+                if !text.is_empty() {
+                    match paired_date(el, name) {
+                        // The paired date stored the instant — unless this
+                        // clock is junk the pair could not absorb; then the
+                        // raw wall-clock text is kept here.
+                        Some(date) => {
+                            if value::date_with_time(&date, &text).is_err() {
+                                self.emit_text(ctx.section, &field, lang, text);
+                            }
+                        }
+                        None => match value::time_only(&text) {
+                            Ok(time) => self.emit(ctx.section, &field, time),
+                            Err(_) => self.emit_text(ctx.section, &field, lang, text),
+                        },
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
             Rule::DateTime => {
                 if !text.is_empty() {
-                    let dt = value::datetime(&text).map_err(|e| unrepresentable(&e, &path))?;
-                    self.emit(ctx.section, &field, dt);
+                    match value::datetime(&text) {
+                        Ok(dt) => self.emit(ctx.section, &field, dt),
+                        Err(_) => self.emit_text(ctx.section, &field, lang, text),
+                    }
                 }
                 self.no_element_children(el, &path)?;
             }
@@ -364,9 +415,17 @@ impl Walk {
                     }
                 }
                 if let (Some(d), Some(m), Some(y)) = (parts.get("DAY"), parts.get("MONTH"), parts.get("YEAR")) {
-                    let date = value::date_from_parts(d, m, y, parts.get("TIME").map(String::as_str))
-                        .map_err(|e| unrepresentable(&e, &path))?;
-                    self.emit(ctx.section, &field, date);
+                    match value::date_from_parts(d, m, y, parts.get("TIME").map(String::as_str)) {
+                        Ok(date) => self.emit(ctx.section, &field, date),
+                        // Junk split-date digits: raw parts kept as text.
+                        Err(_) => {
+                            let raw = match parts.get("TIME") {
+                                Some(t) => format!("{y}-{m}-{d} {t}"),
+                                None => format!("{y}-{m}-{d}"),
+                            };
+                            self.emit_text(ctx.section, &field, lang, raw);
+                        }
+                    }
                 }
             }
             Rule::DatePart => {
@@ -511,7 +570,10 @@ impl Walk {
                 Rule::Amount => attr_name == "FMTVAL",
                 Rule::Number(Unit::FromTypeAttr) => matches!(attr_name, "TYPE" | "FMTVAL"),
                 Rule::Number(_) => attr_name == "FMTVAL",
-                Rule::Section(_) => attr_name == "ITEM",
+                Rule::Section(_) => matches!(attr_name, "ITEM" | "FMTVAL"),
+                // A declared text blob claims its whole subtree, layout and
+                // formatting attributes (`@QUOTE`, `@SEP`, `@KEY`…) included.
+                Rule::Text => true,
                 _ => false,
             };
             if consumed
@@ -645,19 +707,31 @@ fn direct_text(el: roxmltree::Node<'_, '_>) -> String {
         .to_owned()
 }
 
-/// A Text-rule element's rows: one per `<P>` paragraph, plus one for any
-/// direct text and inline markup (`FT` sub/superscripts, btx tables/lists) —
-/// the whole subtree is consumed as text, nothing needs rules of its own.
+/// Block-level names inside a declared text subtree: each starts a text row
+/// of its own (recursively), instead of being glued into the parent's text.
+/// `P` is the R2.0.9 paragraph; the rest is the R2.0.8 btx_oth prose
+/// vocabulary of OTH_NOT/EEIG bodies (numbered marks, for/read corrigenda,
+/// tables). Inline markup (`FT` sub/superscripts, `EM`, …) stays glued.
+const TEXT_BLOCKS: [&str; 44] = [
+    "P", "ADDED", "ADDRESS_NOT_MANDATORY", "ADDRESS_NOT_STRUCT", "ANNOTATION", "BLK",
+    "BLK_BTX", "BLK_BTX_SEQ", "CELL", "CORPUS", "CORREC", "DEL", "FOR", "FOR_READ",
+    "GR_ANNOTATION", "GR_SEQ", "GR_TBL", "HEADER_COL", "HEADER_ROW", "INT_FOR", "INT_GRTBL",
+    "INT_LI", "INT_MLI", "INT_OBJ_NOT", "INT_READ", "INT_TBL", "ITEM", "MARK_LIST", "MIXED",
+    "MLI_OCCUR", "NEW", "NOTES", "NO_MARK", "OLD", "READ", "REPL", "ROW", "ROW_TXT",
+    "STI_DOC", "TBL", "TI_DOC", "TI_MARK", "TOC", "TXT_MARK",
+];
+
+/// A Text-rule element's rows: one per block-level child (recursively), plus
+/// one for any direct text and inline markup (`FT` sub/superscripts, btx
+/// lists) — the whole subtree is consumed as text, nothing needs rules of
+/// its own.
 fn text_rows(el: roxmltree::Node<'_, '_>) -> Vec<String> {
     let mut rows = Vec::new();
     let mut own = String::new();
     for child in el.children() {
-        if child.is_element() && child.tag_name().name() == "P" {
+        if child.is_element() && TEXT_BLOCKS.contains(&child.tag_name().name()) {
             flush(&mut own, &mut rows);
-            let text = subtree_text(child);
-            if !text.is_empty() {
-                rows.push(text);
-            }
+            rows.extend(text_rows(child));
         } else if child.is_element() {
             own.push_str(&subtree_text(child));
         } else if child.is_text() {
@@ -694,6 +768,3 @@ fn unclaimed(what: &str, path: &str) -> Rejected {
     Rejected { reason: "unclaimed-content", detail: format!("unclaimed {what} at {path}") }
 }
 
-fn unrepresentable(err: &str, path: &str) -> Rejected {
-    Rejected { reason: "unrepresentable-value", detail: format!("{err} at {path}") }
-}
