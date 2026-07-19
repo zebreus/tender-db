@@ -12,6 +12,9 @@ use std::path::Path;
 
 /// Field mapping for one notice payload, dispatched per profile. Profiles
 /// without a parser yet stay `Pending` — identity only, never quarantined.
+/// Text-era records never arrive here: their payload is a span of the member
+/// and their parser needs the member name for the declared encoding, so the
+/// processor routes them through [`crate::text::parse_payload`] directly.
 pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
     if profile.starts_with("eforms:") {
         eforms::parse_payload(profile, bytes)
@@ -119,17 +122,26 @@ pub async fn process_package(
     // single writer connection serialises the inserts anyway.
     let mut report = Report::default();
     let mut pending = Vec::new();
+    // Cheap name-only pre-scan: dispatch policy that spans members (the text
+    // era's ISO-vs-UTF8 variant selection) needs the package's shape up front.
+    let ctx = profile::PackageContext::from_entry_names(&package::entry_names(archive)?);
     package::walk(archive, |Member { path, bytes }| {
         report.members += 1;
-        match profile::dispatch(&path, bytes) {
+        match profile::dispatch_with(&path, bytes, &ctx) {
             Disposition::Records(records) => {
                 report.ingested += 1;
                 // Field mapping happens here, while the payload is in hand: an
-                // eForms member is exactly one notice, so the member's bytes
-                // are that notice's payload.
+                // XML member is exactly one notice, so the member's bytes are
+                // that notice's payload; a text-era record's payload is its
+                // span of the member.
                 pending.extend(records.into_iter().map(|record| {
                     let parse = match &record {
-                        Record::Notice(n) => parse_payload(&n.profile, bytes),
+                        Record::Notice(n) => match n.span {
+                            Some((start, end)) => {
+                                crate::text::parse_payload(&n.member_path, &bytes[start..end])
+                            }
+                            None => parse_payload(&n.profile, bytes),
+                        },
                         Record::Quarantine(_) => store::Parse::Pending,
                     };
                     (record, parse)

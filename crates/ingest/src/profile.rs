@@ -43,6 +43,9 @@ pub struct NoticeRecord {
     pub declared_version: Option<String>,
     /// Member path, suffixed with `#<n>` for one record of a text bundle.
     pub member_path: String,
+    /// Byte range of this record within the member, for members that carry
+    /// several records (text era). `None` = the whole member is the payload.
+    pub span: Option<(usize, usize)>,
 }
 
 pub struct QuarantineRecord {
@@ -60,13 +63,47 @@ pub struct QuarantineRecord {
 const EFORMS_ROOT_NS: [&str; 2] =
     ["urn:oasis:names:specification:ubl:schema:xsd:", "http://data.europa.eu/p27/"];
 
-/// Classify one package member.
+/// Package-level facts a single member cannot know but dispatch policy needs.
+/// Built from the tar-level entry names before the walk
+/// (`package::entry_names`).
+#[derive(Default)]
+pub struct PackageContext {
+    /// The package also ships the English UTF8 text-era variant. Mid-era
+    /// dailies (~2004–2007) carry the same English delivery twice, as
+    /// `_ISO_` and `_UTF8_`; the ISO rendering is lossy (non-Latin-1 scripts
+    /// mangled — measured on the 2005 daily), so UTF8 supersedes it.
+    pub en_utf8_text: bool,
+}
+
+impl PackageContext {
+    pub fn from_entry_names<S: AsRef<str>>(names: &[S]) -> Self {
+        let en_utf8_text = names.iter().any(|n| {
+            let stem = n.as_ref().rsplit('/').next().unwrap_or(n.as_ref());
+            let stem = stem
+                .strip_suffix(".zip")
+                .or_else(|| stem.strip_suffix(".ZIP"))
+                .unwrap_or(stem);
+            text_era_member(stem).is_some_and(|m| {
+                m.language.eq_ignore_ascii_case("en") && m.variant.eq_ignore_ascii_case("utf8")
+            })
+        });
+        Self { en_utf8_text }
+    }
+}
+
+/// Classify one package member, without package-level context (single-file
+/// callers; equivalent to a package that ships nothing else).
 pub fn dispatch(member_path: &str, bytes: &[u8]) -> Disposition {
+    dispatch_with(member_path, bytes, &PackageContext::default())
+}
+
+/// Classify one package member.
+pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> Disposition {
     // The text era is recognised by member naming, before any XML attempt: its
     // payloads are not XML, and its `_meta_` sibling variant *is* XML but is a
     // duplicate representation we do not ingest.
     if let Some(name) = text_era_member(member_path) {
-        return dispatch_text(member_path, &name, bytes);
+        return dispatch_text(member_path, &name, bytes, ctx);
     }
 
     let Ok(xml) = std::str::from_utf8(bytes) else {
@@ -127,6 +164,7 @@ fn dispatch_ted_export(
             profile: profile.into(),
             declared_version,
             member_path: member_path.into(),
+            span: None,
         }),
         None => quarantine(member_path, bytes, Some(profile.into()), "missing-publication-id", None),
     }
@@ -154,6 +192,7 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
             profile,
             declared_version: Some(customization),
             member_path: member_path.into(),
+            span: None,
         }),
         None => quarantine(member_path, bytes, Some(profile), "missing-publication-id", None),
     }
@@ -163,7 +202,12 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
 /// notices separated by a `1.00/067192`-style record marker, each carrying its
 /// OJS notice number on an `ND:` line. Records are split out so a Notice stays
 /// one publication event; the file is not otherwise parsed.
-fn dispatch_text(member_path: &str, name: &TextEraName, bytes: &[u8]) -> Disposition {
+fn dispatch_text(
+    member_path: &str,
+    name: &TextEraName,
+    bytes: &[u8],
+    ctx: &PackageContext,
+) -> Disposition {
     // CONTEXT.md: the text era is English-only for now (the model stays
     // multilingual; the raw archive keeps every language).
     if !name.language.eq_ignore_ascii_case("en") {
@@ -173,6 +217,12 @@ fn dispatch_text(member_path: &str, name: &TextEraName, bytes: &[u8]) -> Disposi
     // `_utf8_`/`_iso_` tagged text — ingesting both would double every notice.
     if name.variant.eq_ignore_ascii_case("meta") {
         return Disposition::Skipped("text-era-meta-variant");
+    }
+    // Mid-era dailies ship the English delivery in both encodings; ingesting
+    // both would also double every notice, and the ISO rendering is the lossy
+    // one (see [`PackageContext::en_utf8_text`]).
+    if name.variant.eq_ignore_ascii_case("iso") && ctx.en_utf8_text {
+        return Disposition::Skipped("text-era-iso-superseded-by-utf8");
     }
 
     let starts = record_starts(bytes);
@@ -192,6 +242,7 @@ fn dispatch_text(member_path: &str, name: &TextEraName, bytes: &[u8]) -> Disposi
                 profile: "text".into(),
                 declared_version: None,
                 member_path: path,
+                span: Some((start, end)),
             }),
             None => quarantine(&path, record, Some("text".into()), "missing-publication-id", None),
         });

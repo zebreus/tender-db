@@ -1,0 +1,86 @@
+1.0/001422
+TI: E-Bilbao: various works
+PD: 20000104
+ND: 130-2000
+OJ: 1/2000
+DR: 19991217
+DS: 19991217
+DT: 20001216
+HD: 1100
+TD: 0 - Prior information procedure
+NC: 1 - Public works contract
+PR: 0 - Prior information or periodic information notice
+RP: 4 - European Communities
+AA: 3 - Local authorities
+TY: 8 - Not defined
+AC: 9 - Not applicable
+PC: 45233140
+    45222100
+    45343000
+    45233120
+    45212225
+PN: Roadworks.
+    Waste-treatment plant.
+    Fire-prevention installation works.
+    Road construction works.
+    Sports hall.
+CY: ES
+OL: ES
+AU: BILBAO RIA 2000
+TW: BILBAO
+AB: Works: CPV: 45212225, 45222100, 45233120, 45233140, 45343000.
+    Roadworks. Waste-treatment plant. Fire-prevention installation works.
+TX: 1.  Awarding authority: Bilbao Ría 2000, c/ José María Olábarri, 4, 
+    planta C, E-48001  Bilbao. Tel. 94 424 08 02. Facsimile 94 424 49 82. 
+    2.(b)  Works: CPV: 45212225, 45222100, 45233120, 45233140, 45343000.
+    Roadworks. Waste-treatment plant. Fire-prevention installation works.
+    3.(a)  Estimated date for initiating the award procedures: Abandoirarra: 
+    1), 2) octubre 2000; Ametzola: 1) agosto 2000, 2) noviembre 2000; 
+    Variante Sur: 1) enero 2000; Urban-Galindo: 1), 2)  enero 2000, 3) mayo 
+    2000, 4) enero 2000.
+OT: 1.  Entidad adjudicadora: Bilbao Ría 2000, c/ José María Olábarri, 4, 
+    planta C, E-48001  Bilbao. Tel. 94 424 08 02. Fax 94 424 49 82. 
+    2.a)
+    2.b)  Naturaleza y alcance de las obras: CPV: 45212225, 45222100, 
+    45233120, 45233140, 45343000.
+    Abandoibarra:
+    1) ejecución de las obras de la Avenida y del Bulevar de Abandoibarra 
+    (Bilbao).
+    Presupuesto estimado: 900 000 000 ESP, IVA excluido; 
+    2)  ejecución de las obras de la central de recogida neumática de 
+    residuos sólidos urbanos de Abandoibarra (Bilbao). 
+    Presupuesto estimado: 200 000 000 ESP, IVA excluido.
+    Ametzola:
+    1) ejecución de las obras de conexión entre la Calle Santiago Bruard y 
+    Gordóniz (Bilbao).
+    2) ejecución de las obras complementarias del Parque de Ametzola (Bilbao).
+    Presupuesto estimado: 40 000 000 ESP, IVA excluido. 
+    Variante sur:
+    1) ejecución de la adaptación del cubrimiento a las medidas de seguridad 
+    contra incendios (Bilbao).
+    Presupuesto estimado: 180 000 000 ESP, IVA excluido.
+    Urban-Galindo:
+    1) ejecución de las obras de la estructura del Cierre Norte de 
+    circunvalación en Galindo (Barakaldo).
+    Presupuesto estimado: 800 000 000 ESP, IVA excluido. 
+    2) ejecución de las obras de urbanización Básica Galindo Norte en 
+    Barakaldo (Bizkaia).
+    Presupuesto estimado: 300 000 000 ESP, IVA excluido.
+    3) ejecución de la obras de construcción del edificio del Nuevo 
+    Polideportivo de Lasesarre en Barakaldo (Bizkaia).
+    Presupuesto estimado: 1 300 000 000 ESP, IVA excluido.
+    4) ejecución de las obras de urbanización del entorno de la Plaza Auzolan 
+    en Barakaldo (Bizkaia). 
+    Presupuesto estimado: 250 000 000 ESP, IVA excluido.
+    2.c)
+    3.a)  Fecha estimada de inicio de los procedimientos de adjudicación: 
+    Abandoirarra: 1), 2) octubre 2000; Ametzola: 1) agosto 2000, 2) noviembre 
+    2000; Variante Sur: 1) enero 2000; Urban-Galindo: 1), 2)  enero 2000, 3) 
+    mayo 2000, 4) enero 2000.
+    3.b)
+    3.c)
+    4.
+    5.
+    6.  Fecha de envío del anuncio: 17.12.1999.
+    7.  Fecha de recepción del anuncio: 17.12.1999.
+    8.
