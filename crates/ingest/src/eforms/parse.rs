@@ -38,8 +38,19 @@ const IGNORED_ATTRIBUTES: [(&str, &str); 2] = [
 /// over an SDK metadata gap; ignoring them silently would drop real data. They
 /// are therefore claimed here *and* stored: `@listName` as a code's list,
 /// `@schemeName`/`@schemeID` as an identifier's scheme.
-const VALUE_ATTRIBUTES: [&str; 7] =
-    ["listName", "listID", "schemeName", "schemeID", "languageID", "currencyID", "unitCode"];
+/// `languageLocaleID` is the DÖE sdk-0.1 serializer's companion to
+/// `languageID` (both carry the same language code in the wild); it qualifies
+/// the text like the others and is consumed with it.
+const VALUE_ATTRIBUTES: [&str; 8] = [
+    "listName",
+    "listID",
+    "schemeName",
+    "schemeID",
+    "languageID",
+    "languageLocaleID",
+    "currencyID",
+    "unitCode",
+];
 
 #[derive(Debug, PartialEq)]
 pub struct Rejected {
@@ -47,17 +58,28 @@ pub struct Rejected {
     pub detail: String,
 }
 
-/// Parse one eForms notice against the SDK version its `CustomizationID`
-/// declares.
+/// Parse one eForms notice against the field inventory its `CustomizationID`
+/// declares — refined by `cbc:ProfileID` where one customization tracks two
+/// EU SDK bases (eForms-DE 2.1; [`super::sdk::resolve`]).
 pub fn parse(xml: &str, customization: &str) -> Result<Parsed, Rejected> {
-    let Some(index) = index::for_customization(customization) else {
-        return Err(Rejected {
-            reason: "unknown-customization",
-            detail: format!("no vendored SDK metadata for {customization}"),
-        });
-    };
     let doc = roxmltree::Document::parse(xml)
         .map_err(|e| Rejected { reason: "unparsable-xml", detail: e.to_string() })?;
+    let profile_id = doc
+        .root_element()
+        .children()
+        .find(|n| {
+            n.is_element()
+                && n.tag_name().name() == "ProfileID"
+                && n.tag_name().namespace() == super::xpath::namespace("cbc")
+        })
+        .and_then(|n| n.text())
+        .map(str::trim);
+    let index = super::sdk::resolve(customization, profile_id)
+        .and_then(index::for_customization)
+        .ok_or_else(|| Rejected {
+            reason: "unknown-customization",
+            detail: format!("no vendored SDK metadata for {customization}"),
+        })?;
 
     let mut walk = Walk {
         parsed: Parsed {
@@ -212,7 +234,7 @@ impl Walk {
 
         let text = element.text().unwrap_or_default();
         let value = match (&paired, field.kind.as_str()) {
-            (Some(time), "date") => value::timestamp(text.trim(), Some(time))
+            (Some(time), "date") => value::timestamp_for(field, text.trim(), Some(time))
                 .map(Some)
                 .map_err(|e| value::Error(format!("{}: {e}", field.id))),
             _ => value::convert(field, text, |name| element.attribute(name).map(str::to_owned)),

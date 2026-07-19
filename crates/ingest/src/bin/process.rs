@@ -3,6 +3,7 @@
 //! ```sh
 //! process ted --package 2026-00137     # one registered daily package
 //! process ted --all                    # every registered daily package
+//! process doe --package 2026-06 --kind monthly
 //! ```
 //!
 //! `--archive` / `--db` override the TENDER_ARCHIVE / TENDER_DB env vars
@@ -15,6 +16,7 @@ use std::path::PathBuf;
 use std::process::ExitCode;
 
 struct Args {
+    source: String,
     package: Option<String>,
     all: bool,
     kind: String,
@@ -24,7 +26,7 @@ struct Args {
 
 fn usage() -> ! {
     eprintln!(
-        "usage: process ted (--package PERIOD | --all) \
+        "usage: process (ted|doe) (--package PERIOD | --all) \
          [--kind daily|monthly] [--archive DIR] [--db PATH]"
     );
     std::process::exit(2);
@@ -32,10 +34,12 @@ fn usage() -> ! {
 
 fn parse_args() -> Args {
     let mut args = std::env::args().skip(1);
-    if args.next().as_deref() != Some("ted") {
-        usage();
-    }
+    let source = match args.next().as_deref() {
+        Some(s @ ("ted" | "doe")) => s.to_owned(),
+        _ => usage(),
+    };
     let mut out = Args {
+        source,
         package: None,
         all: false,
         kind: "daily".into(),
@@ -73,13 +77,14 @@ async fn main() -> ExitCode {
     let total = process::process(
         &db,
         &args.archive,
-        "ted",
+        &args.source,
         &args.kind,
         args.package.as_deref(),
         |pkg, r| {
             println!(
-                "ted {} {}: {} members → {} notices ({} parsed, {} unmappable), \
+                "{} {} {}: {} members → {} notices ({} parsed, {} unmappable), \
                  {} duplicates, {} quarantined, {} skipped",
+                args.source,
                 args.kind,
                 pkg.period,
                 r.members,

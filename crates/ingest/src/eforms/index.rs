@@ -436,26 +436,40 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
     for field in &sdk.fields {
         insert_field(&mut root, field, &field.xpath, false)?;
     }
-    for &(xpath, field_id, kind) in EXTRA {
-        insert_extra(&mut root, xpath, field_id, kind, false)?;
-    }
 
-    // Gap-filling aliases, after every declared path is in place.
-    for &(source, target) in ALIASES {
-        for field in &sdk.fields {
-            if let Some(rest) = field.xpath.strip_prefix(source) {
-                insert_field(&mut root, field, &format!("{target}{rest}"), true)?;
-            }
-        }
+    // The TED-quirk patch tables ([`EXTRA`], [`ALIASES`]) correct *SDK-shaped*
+    // inventories against what publishers really send. The sdk-0.1 inventory
+    // is itself empirical — every observed path is already in it, and grafting
+    // predicate branches over its predicate-free paths would shadow its field
+    // ids — so the patches stay off there.
+    if sdk.sdk_version != "eforms-sdk-0.1" {
         for &(xpath, field_id, kind) in EXTRA {
-            if let Some(rest) = xpath.strip_prefix(source) {
-                insert_extra(&mut root, &format!("{target}{rest}"), field_id, kind, true)?;
+            insert_extra(&mut root, xpath, field_id, kind, false)?;
+        }
+
+        // Gap-filling aliases, after every declared path is in place.
+        for &(source, target) in ALIASES {
+            for field in &sdk.fields {
+                if let Some(rest) = field.xpath.strip_prefix(source) {
+                    insert_field(&mut root, field, &format!("{target}{rest}"), true)?;
+                }
+            }
+            for &(xpath, field_id, kind) in EXTRA {
+                if let Some(rest) = xpath.strip_prefix(source) {
+                    insert_extra(&mut root, &format!("{target}{rest}"), field_id, kind, true)?;
+                }
             }
         }
     }
 
     for &(xpath, reason) in IGNORED {
-        root.descend(&locate(xpath)?.steps).ignored = Some(reason);
+        let branch = root.descend(&locate(xpath)?.steps);
+        // An inventory that *does* declare a field here wins over the ignore
+        // rule: SDK-DE defines `cbc:ProfileID` as OPT-002-notice-DET — for the
+        // eforms-de profiles the declared EU base is content, not plumbing.
+        if branch.field.is_none() {
+            branch.ignored = Some(reason);
+        }
     }
 
     Ok(root)

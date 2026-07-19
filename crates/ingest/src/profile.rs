@@ -181,10 +181,16 @@ fn dispatch_eforms(member_path: &str, bytes: &[u8], doc: &roxmltree::Document<'_
     };
     let profile = format!("eforms:{customization}");
 
-    // efbc:NoticePublicationID (`00001505-2024`); present on every eForms file
-    // in the samples. The file name carries the same number, so it is the
-    // fallback rather than a second source of truth.
-    let publication_id = first_text(doc, "NoticePublicationID").or_else(|| publication_id_from_name(member_path));
+    // efbc:NoticePublicationID (`00001505-2024`); present on every TED eForms
+    // file in the samples. The file name carries the same number, so it is the
+    // fallback rather than a second source of truth. DÖE exports carry neither
+    // (`efac:Publication` is TED-side metadata), so their identity is the
+    // notice id plus its declared version — reliable on DÖE, per
+    // docs/research/eforms-de-profile.md — which is also the member file
+    // name's stem (`<uuid|numeric>-<version>.xml`).
+    let publication_id = first_text(doc, "NoticePublicationID")
+        .or_else(|| publication_id_from_name(member_path))
+        .or_else(|| notice_id_and_version(doc));
     match publication_id {
         Some(id) => Record::Notice(NoticeRecord {
             publication_id: id,
@@ -303,6 +309,21 @@ fn tagged_field(record: &[u8], tag: &[u8]) -> Option<String> {
         }
     }
     None
+}
+
+/// `<root cbc:ID>-<root cbc:VersionID>`, from the document itself — the DÖE
+/// notice-version identity. Root-level children only: nested elements carry
+/// their own `ID`s.
+fn notice_id_and_version(doc: &roxmltree::Document<'_>) -> Option<String> {
+    let child = |name: &str| {
+        doc.root_element()
+            .children()
+            .find(|n| n.is_element() && n.tag_name().name() == name)
+            .and_then(|n| n.text())
+            .map(str::trim)
+            .filter(|t| !t.is_empty())
+    };
+    Some(format!("{}-{}", child("ID")?, child("VersionID")?))
 }
 
 /// `…/00001505_2024.xml` → `00001505-2024`.
