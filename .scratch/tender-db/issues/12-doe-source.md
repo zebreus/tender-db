@@ -111,12 +111,26 @@ real archived packages):
   (FieldsPrivacy under legislation-reference/ProcessJustification whose
   discriminator is itself withheld) → ALIASES grafts; one out-of-inventory
   `cbc:CriterionTypeCode` → EXTRA (`UBL-SelectionCriterionType`).
-- ted monthly 2026-06 (plain tar of nested daily .tar.gz — the walker now
-  splits containers by magic and descends nested tars in-stream): first run
-  exposed that process_package buffered a whole package's parsed records
-  (6 GB, OOM on ~66k notices); it now streams through a bounded channel
-  (~100 MB RSS at any package size). Verified with daily 2026-00136 seeded
-  first; the monthly's copy dedups as already-ingested.
+- ted monthly 2026-06 (plain tar of the month's daily .tar.gz files — the
+  walker now splits containers by file magic and descends nested tars
+  in-stream, members surfacing as `06/<daily>.tar.gz/<dir>/<file>.xml`):
+  first run exposed that process_package buffered a whole package's parsed
+  records (6 GB RSS, OOM-killed at ~66k notices); it now streams through a
+  bounded channel — ~150 MB RSS at any package size. Final fresh-db run:
+  **78,480 members → 78,480 notices, 78,257 parsed, 22m43s** (1.12: 13,060 /
+  1.13: 48,006 / 1.14: 17,410 / 1.11+1.7: 4). Dedup verified: re-walking
+  2,196 already-ingested records wrote nothing (all duplicates). Note the
+  issue-number gotcha: daily 2026-00136 is a *July* issue, so it is not
+  inside the June monthly — TED monthlies contain issues 103–124.
+  Monthly-scale surfaced 3 more publisher quirks now mapped (award-criterion
+  fields restated on the parent AwardingCriterion; raw `cbc:WeightNumeric`;
+  a real `cbc:TenderResultCode` beside the SDK's dummy OPT-999 block in
+  UBL's mandatory `cac:TenderResult`). Remaining TED-side: 52
+  unclaimed-content (0.066%, a long tail of ~11 distinct one-off UBL
+  elements — InvitationSubmissionPeriod/EndDate ×18 the largest; follow-up
+  for the TED eforms checklist, same EXTRA/ALIASES mechanism), 167
+  unrepresentable-value (sub-cent amounts, offsetless dates — ADR-0004 by
+  design), 4 unknown-customization (eforms-sdk-1.11/1.7, not vendored).
 
 Blocker found for whoever takes the parsing half (see also issue 05/14):
 the production DB `/data/db/tender-db.db` can no longer be opened by current
