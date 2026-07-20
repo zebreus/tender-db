@@ -332,10 +332,12 @@ pub(crate) const SCHEMA: &str = "
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
-    CREATE VIEW IF NOT EXISTS v_tender_current AS
+    DROP VIEW IF EXISTS v_tender_current;
+    CREATE VIEW v_tender_current AS
     SELECT tender_id, MAX(seq) AS seq FROM tender_versions GROUP BY tender_id;
 
-    CREATE VIEW IF NOT EXISTS v_tenders AS
+    DROP VIEW IF EXISTS v_tenders;
+    CREATE VIEW v_tenders AS
     SELECT t.id, t.source, t.procedure_key, t.kind,
            v.seq, v.published_at, v.caused_by_notice_id, v.notice_subtype, v.publication_id,
            (SELECT x.value FROM tender_version_texts x
@@ -348,7 +350,8 @@ pub(crate) const SCHEMA: &str = "
       JOIN v_tender_current c ON c.tender_id = t.id
       JOIN tender_versions v ON v.tender_id = t.id AND v.seq = c.seq;
 
-    CREATE VIEW IF NOT EXISTS v_lots AS
+    DROP VIEW IF EXISTS v_lots;
+    CREATE VIEW v_lots AS
     SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq,
            (SELECT x.value FROM tender_version_texts x
              WHERE x.tender_id = l.tender_id AND x.seq = vl.seq
@@ -359,7 +362,8 @@ pub(crate) const SCHEMA: &str = "
       JOIN tender_version_lots vl
         ON vl.tender_id = l.tender_id AND vl.seq = c.seq AND vl.lot_id = l.id;
 
-    CREATE VIEW IF NOT EXISTS v_organizations AS
+    DROP VIEW IF EXISTS v_organizations;
+    CREATE VIEW v_organizations AS
     SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
            (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) AS mentions
       FROM organizations o;
@@ -368,7 +372,8 @@ pub(crate) const SCHEMA: &str = "
     -- organization); a consortium yields one row per member, an unresolved or
     -- withheld winner yields NULL columns. The spec's competitor question
     -- (org → won lots → values) is a GROUP BY over this view.
-    CREATE VIEW IF NOT EXISTS v_lot_results AS
+    DROP VIEW IF EXISTS v_lot_results;
+    CREATE VIEW v_lot_results AS
     SELECT r.id, r.tender_id, r.notice_id, r.result_key,
            s.lot_id, (SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id) AS lot_key,
            s.decision, s.reason, s.awarded_cents, s.awarded_currency,

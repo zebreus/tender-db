@@ -242,7 +242,8 @@ const SCHEMA: &str = "
     -- may be suppressed, the notice then carrying only which field, why, and
     -- until when. Those live in their own FieldsPrivacy sections, so the
     -- satellite is a view over them, not a fourth copy of the data.
-    CREATE VIEW IF NOT EXISTS notice_withheld_fields AS
+    DROP VIEW IF EXISTS notice_withheld_fields;
+    CREATE VIEW notice_withheld_fields AS
     SELECT s.notice_id,
            s.parent_section_id AS section_id,
            MAX(CASE WHEN c.field_id LIKE 'BT-195%' THEN c.code END) AS withheld_field,
