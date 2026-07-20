@@ -281,6 +281,29 @@ pub async fn state() -> Arc<Db> {
     .clone()
 }
 
+/// Additive migrations for databases created before a column existed.
+/// `CREATE TABLE IF NOT EXISTS` never evolves an existing table, so every
+/// later-added column needs its ALTER here; an already-migrated database
+/// answers "duplicate column name" and the statement is skipped. Anything
+/// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
+/// rebuildable, and destructive changes recreate from the archive instead.
+const MIGRATIONS: [&str; 3] = [
+    "ALTER TABLE notices ADD COLUMN published_at INTEGER",
+    "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
+    "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
+];
+
+async fn migrate(conn: &Connection) -> turso::Result<()> {
+    for statement in MIGRATIONS {
+        match conn.execute(statement, ()).await {
+            Ok(_) => {}
+            Err(e) if e.to_string().contains("duplicate column") => {}
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(())
+}
+
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
         let database = turso::Builder::new_local(path).build().await?;
@@ -296,6 +319,7 @@ impl Db {
         conn.execute_batch(accounts::SCHEMA).await?;
         conn.execute_batch(jobs::SCHEMA).await?;
         conn.execute_batch(webhooks::SCHEMA).await?;
+        migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         Ok(Db { database, conn: Mutex::new(conn), cursor })
     }
@@ -973,6 +997,52 @@ mod tests {
         drop(db);
         let db = Db::open(&path).await.unwrap();
         assert!(db.canonical_counts().await.unwrap().iter().all(|(_, n)| *n == 0));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A database created before issue 18 lacks the published_at/dispatched_at
+    /// columns; opening it must migrate rather than fail on the first write —
+    /// the production incident of 2026-07-21.
+    #[tokio::test]
+    async fn opening_a_pre_issue18_database_adds_the_missing_columns() {
+        let path = format!("/tmp/tender-db-migrate-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        // Simulate the old schema: same table names, without the new columns.
+        let database = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = database.connect().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE notices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL, publication_id TEXT NOT NULL,
+                content_hash TEXT NOT NULL, profile TEXT NOT NULL,
+                declared_version TEXT, fetch_id INTEGER NOT NULL,
+                member_path TEXT NOT NULL, ingested_at INTEGER NOT NULL,
+                parse_state TEXT NOT NULL DEFAULT 'pending',
+                UNIQUE(source, publication_id, content_hash)
+            ) STRICT;
+             CREATE TABLE tender_versions (
+                tender_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                caused_by_notice_id INTEGER NOT NULL, published_at INTEGER,
+                PRIMARY KEY (tender_id, seq)
+            ) STRICT;",
+        )
+        .await
+        .unwrap();
+        drop(conn);
+        drop(database);
+
+        let db = Db::open(&path).await.expect("open must migrate the old schema");
+        let conn = db.conn().await;
+        conn.execute(
+            "INSERT INTO notices(source, publication_id, content_hash, profile,
+                                 fetch_id, member_path, ingested_at, published_at, dispatched_at)
+             VALUES('ted', 'p', 'h', 'eforms', 1, 'm', 0, 1, 2)",
+            (),
+        )
+        .await
+        .expect("the migrated columns must be writable");
 
         let _ = std::fs::remove_file(&path);
     }
