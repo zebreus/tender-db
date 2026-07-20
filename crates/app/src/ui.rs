@@ -284,9 +284,17 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
         section { class: "panel",
             h2 { "Coverage" }
             p { class: "muted",
-                "Notices held per source, mapping profile and publication year, against what that "
-                "year is known to have published (docs/research/ted-access-channels.md §6). One "
-                "collapsible row per source and profile era — expand for the per-year breakdown."
+                "Coverage is notices held ÷ notices that year is known to have published "
+                "(docs/research/ted-access-channels.md §6): 100 % means we hold the whole year. "
+                "One collapsible row per source and profile era — expand for the per-year breakdown. "
+                "A dash means no ground-truth denominator exists (any source but TED, or a year "
+                "outside the reference counts)."
+            }
+            p { class: "muted",
+                "During the historical backfill these ratios climb: the importer works through the "
+                "eras in the background and in learn-order, not calendar-order, so an old year can "
+                "sit well below 100 % simply because its packages have not been processed yet. A low "
+                "ratio here is work still in progress, not a permanent gap."
             }
             if eras.is_empty() {
                 p { class: "muted", "Nothing ingested yet — every year is at 0 %." }
@@ -405,10 +413,22 @@ fn QuarantinePanel(total: i64, reasons: Vec<(String, i64)>, recent: Vec<Quaranti
             }
             p { class: "headline", "{group(total)}" }
             if !reasons.is_empty() {
-                dl { class: "counts",
-                    for (reason, count) in reasons {
-                        dt { key: "{reason}", "{reason}" }
-                        dd { "{group(count)}" }
+                table {
+                    thead {
+                        tr {
+                            th { "Reason" }
+                            th { "What it means" }
+                            th { class: "num", "Count" }
+                        }
+                    }
+                    tbody {
+                        for (reason, count) in reasons {
+                            tr { key: "{reason}",
+                                td { class: "path", "{reason}" }
+                                td { class: "muted", "{quarantine_reason_explained(&reason)}" }
+                                td { class: "num", "{group(count)}" }
+                            }
+                        }
                     }
                 }
             }
@@ -426,7 +446,10 @@ fn QuarantinePanel(total: i64, reasons: Vec<(String, i64)>, recent: Vec<Quaranti
                         tbody {
                             for entry in recent {
                                 tr { key: "{entry.member_path}",
-                                    td { title: entry.detail.clone().unwrap_or_default(), "{entry.reason}" }
+                                    td {
+                                        title: entry.detail.clone().unwrap_or_else(|| quarantine_reason_explained(&entry.reason).to_owned()),
+                                        "{entry.reason}"
+                                    }
                                     td { "{entry.profile.clone().unwrap_or_else(|| \"—\".into())}" }
                                     td { class: "path", "{entry.member_path}" }
                                 }
@@ -798,6 +821,7 @@ fn Nav() -> Element {
                 a { href: "/tenders", "Tenders" }
                 a { href: "/account", "Account" }
                 a { href: "/v1", "API" }
+                a { href: "/docs", "Docs" }
             }
         }
     }
@@ -809,14 +833,42 @@ fn Nav() -> Element {
 fn Footer() -> Element {
     rsx! {
         footer {
-            "tender-db is free software under the "
-            a { href: "/_source", "AGPL-3.0-or-later — get the source of this running version" }
-            "."
+            a { href: "/docs", "API docs" }
+            " · "
+            a { href: "/_source", "Source (AGPL-3.0-or-later)" }
+            " · "
+            span { class: "muted",
+                "Free software; the running version offers its own source, as the licence requires."
+            }
         }
     }
 }
 
 // ------------------------------------------------------------------ display
+
+/// A plain-English gloss for each quarantine reason code the importers emit
+/// (the `reason` strings in `crates/ingest`). Quarantine is
+/// content-no-profile-maps held whole (ADR-0004), so most reasons mean "we saw
+/// something this notice's profile has no rule for yet", differing by where.
+fn quarantine_reason_explained(reason: &str) -> &'static str {
+    match reason {
+        "unclaimed-content" => "Content no mapping profile claims — held whole rather than partly imported.",
+        "unknown-customization" => "An eForms CustomizationID (SDK / national profile) with no mapping profile yet.",
+        "unknown-field-code" => "A legacy text-era field code we have no mapping for.",
+        "unparsable-xml" => "The notice XML was malformed and could not be parsed.",
+        "not-utf8" => "The notice file was not valid UTF-8 text and could not be read.",
+        "unrepresentable-value" => "A value did not fit its expected type (a malformed amount, date, or code).",
+        "ambiguous-field" => "A field matched more than one mapping, so its meaning was unclear.",
+        "duplicate-section-id" => "Two sections shared an identifier that must be unique.",
+        "unexpected-root" => "The XML root element was not the one this profile expects.",
+        "empty-record" => "The record carried no header fields to parse.",
+        "form-outside-form-section" => "A form element appeared outside its expected FORM_SECTION.",
+        "form-without-category" => "A form gave no category to classify it by.",
+        "no-original-form" => "The notice had no original-language form to key on.",
+        "translation-structure-mismatch" => "A translation's structure did not line up with the original.",
+        _ => "Content this notice's profile has no mapping for — held whole (ADR-0004).",
+    }
+}
 
 /// Thin-space digit grouping, so six-figure notice counts stay readable.
 fn group(n: i64) -> String {

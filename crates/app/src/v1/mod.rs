@@ -6,6 +6,7 @@
 //! and the middleware.
 
 pub mod auth;
+pub mod docs;
 pub mod json;
 pub mod sql;
 pub mod sse;
@@ -108,6 +109,10 @@ pub fn router(state: AppState) -> Router {
         .layer(GovernorLayer::new(limits))
         .route("/health", get(health))
         .route("/_source", get(source))
+        // The human-readable API reference. Outside the rate limiter (like
+        // `/_source`): reading the docs is not a service call and must not spend
+        // a caller's API budget.
+        .route("/docs", get(docs::page))
         .with_state(state)
 }
 
@@ -413,6 +418,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "source": rev(),
         "source_offer": SOURCE_OFFER,
         "license": "AGPL-3.0-or-later",
+        "docs": "/docs",
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
         "endpoints": [
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
