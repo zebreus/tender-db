@@ -200,26 +200,69 @@ const REGISTRATION_SUBTYPE: &str = "X01";
 /// layer's content is dropped first and re-derived from scratch — the change
 /// log is kept and appended to, never renumbered.
 pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
+    // The projection writes a self-consistent graph by construction, so it runs
+    // with FK enforcement off (issue 19) — the per-row FK check on millions of
+    // satellite inserts is the projection's super-linear cost at scale — and
+    // restores it unconditionally, so no other write path loses the guard.
+    db.set_foreign_keys(false).await?;
+    let result = project_inner(db, rebuild).await;
+    let restored = db.set_foreign_keys(true).await;
+    let report = result?;
+    restored?;
+    Ok(report)
+}
+
+async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
     if rebuild {
         db.clear_canonical().await?;
     }
     let now = unix_now();
     let mut report = Report::default();
 
-    // Derive each notice's canonical reading, resolving its organizations as we
-    // go: mentions are keyed by (notice, section), so this is idempotent.
+    // Phase 1 — read the notice-parsed layer in id-ordered chunks, each a
+    // handful of scans rather than a per-notice query storm (issue 19). Chunking
+    // bounds memory: only the compact per-notice states (needed whole for
+    // grouping) stay in RAM, never the whole raw layer at once. Each notice's
+    // mentions go into one flat list; its slice is remembered so the resolved
+    // organization ids bind back.
+    const READ_CHUNK: i64 = 10_000;
+    let t0 = std::time::Instant::now();
     let mut states = Vec::new();
-    for notice in db.parsed_notices().await? {
-        let parsed = db.parsed_notice(notice.id).await?;
-        let mut state = NoticeState::read(&notice, &parsed);
-        let mentions = state.take_mentions(notice.id, &parsed);
-        report.mentions += mentions.len() as u64;
-        let ids = db.resolve_mentions(&mentions, now).await?;
-        state.bind_organizations(&mentions, &ids);
-        report.notices += 1;
-        states.push(state);
+    let mut all_mentions: Vec<Mention> = Vec::new();
+    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+    let mut after_id = 0i64;
+    loop {
+        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        let Some((last, _)) = chunk.last() else { break };
+        after_id = last.id;
+        for (notice, parsed) in chunk {
+            let mut state = NoticeState::read(&notice, &parsed);
+            let mentions = state.take_mentions(notice.id, &parsed);
+            let start = all_mentions.len();
+            all_mentions.extend(mentions);
+            ranges.push(start..all_mentions.len());
+            states.push(state);
+        }
     }
+    report.notices = states.len() as u64;
+    report.mentions = all_mentions.len() as u64;
+    eprintln!(
+        "[project] read: {} notices, {} mentions in {:.1}s",
+        report.notices,
+        report.mentions,
+        t0.elapsed().as_secs_f64()
+    );
 
+    // Phase 2 — resolve every mention in bounded batches, then bind per notice.
+    let t1 = std::time::Instant::now();
+    let ids = db.resolve_mentions(&all_mentions, now).await?;
+    for (state, range) in states.iter_mut().zip(&ranges) {
+        state.bind_organizations(&all_mentions[range.clone()], &ids[range.clone()]);
+    }
+    eprintln!("[project] mentions: {} resolved in {:.1}s", ids.len(), t1.elapsed().as_secs_f64());
+
+    // Phase 3 — group notices into Tenders (in memory).
+    let t2 = std::time::Instant::now();
     let projections = group(states);
     let legacy_keys: BTreeSet<String> = projections
         .iter()
@@ -229,11 +272,16 @@ pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
     for projection in &projections {
         report.tenders += 1;
         report.islands += u64::from(projection.island_notice_id.is_some());
-        report.applied.add(db.apply_tender(projection, now).await?);
     }
-    // A component merge leaves the absorbed key with no producing group; retire
-    // it, emitting `removed` change events for its (now migrated) rows.
+    eprintln!("[project] group: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
+
+    // Phase 4 — reconcile all Tenders in batched write transactions, then retire
+    // any legacy Tender a late component-merge absorbed (its rows migrated to the
+    // surviving key; here it gets `removed` change events).
+    let t3 = std::time::Instant::now();
+    report.applied = db.apply_tenders(&projections, now).await?;
     report.absorbed = db.retire_absorbed_legacy_tenders(&legacy_keys, now).await?;
+    eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t3.elapsed().as_secs_f64());
     Ok(report)
 }
 

@@ -304,6 +304,20 @@ impl Db {
         self.conn.lock().await
     }
 
+    /// Toggle foreign-key enforcement on the writer connection. The projection
+    /// turns it off for the duration of a run (issue 19): it writes a
+    /// self-consistent graph by construction — every referenced id is resolved
+    /// before it is referenced — so the per-row FK-check lookup on millions of
+    /// satellite inserts is pure overhead there, and it grows with the
+    /// referenced tables (the projection's super-linear slowdown at scale). It
+    /// is restored to on afterwards, so every other write path keeps the guard.
+    pub async fn set_foreign_keys(&self, on: bool) -> turso::Result<()> {
+        let conn = self.conn().await;
+        let mut rows = conn.query(if on { "PRAGMA foreign_keys=ON" } else { "PRAGMA foreign_keys=OFF" }, ()).await?;
+        while rows.next().await?.is_some() {}
+        Ok(())
+    }
+
     /// `n` reader connections over the same database file. Readers run in
     /// parallel with each other and with the writer (WAL), so the API's fan-out
     /// never queues behind ingestion.

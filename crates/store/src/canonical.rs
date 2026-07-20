@@ -383,6 +383,13 @@ pub(crate) const SCHEMA: &str = "
       LEFT JOIN organizations o ON o.id = w.organization_id;
 ";
 
+/// How many Tenders (or Organization mentions) a single projection write
+/// transaction covers (issue 19). Batching amortises per-transaction overhead —
+/// the projection bottleneck — while keeping each batch small enough that its
+/// change rows stay atomic with their canonical writes and a failure rolls back
+/// only a bounded slice. A batch is one BEGIN IMMEDIATE … COMMIT.
+const WRITE_BATCH: usize = 512;
+
 /// One canonical value of a Tender version, in its scope. The satellites of
 /// docs/architecture.md, as one comparable type — diffing versions is set
 /// comparison over these.
@@ -618,6 +625,87 @@ impl Db {
         Ok(parsed)
     }
 
+    /// The next chunk of parsed notices with `id > after_id` (up to `limit`),
+    /// each with its full [`Parsed`] form, read in a fixed handful of scans over
+    /// the chunk's id window rather than the ~9 queries **per notice** that
+    /// [`parsed_notice`](Self::parsed_notice) costs — the projection's batched
+    /// input (issue 19). Empty when no more parsed notices follow `after_id`.
+    ///
+    /// Chunking (rather than one all-notices read) is what bounds memory: the
+    /// projection keeps only the compact per-notice *states* for the whole
+    /// period in RAM, never the whole raw notice layer at once. The query count
+    /// is O(tables) per chunk, which is what removes the read storm.
+    pub async fn parsed_chunk(&self, after_id: i64, limit: i64) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        let conn = self.conn().await;
+        let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
+        let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+
+        let mut rows = conn
+            .query(
+                "SELECT id, source, publication_id, profile FROM notices
+                 WHERE parse_state = 'parsed' AND id > ? ORDER BY id LIMIT ?",
+                (Value::Integer(after_id), Value::Integer(limit)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let id = int(&row, 0);
+            slot.insert(id, out.len());
+            out.push((
+                NoticeRef {
+                    id,
+                    source: text(&row, 1),
+                    publication_id: text(&row, 2),
+                    profile: text(&row, 3),
+                },
+                Parsed::default(),
+            ));
+        }
+        drop(rows);
+        if out.is_empty() {
+            return Ok(out);
+        }
+        // The chunk's contiguous id window: parsed ids in (after_id, hi] are
+        // exactly this chunk (ORDER BY id LIMIT), so a ranged scan of each value
+        // table over [lo, hi] yields precisely their rows.
+        let lo = out.first().expect("non-empty").0.id;
+        let hi = out.last().expect("non-empty").0.id;
+        let window = (Value::Integer(lo), Value::Integer(hi));
+
+        let mut rows = conn
+            .query(
+                "SELECT notice_id, section_id, kind, parent_section_id FROM notice_sections
+                 WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+                window.clone(),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            if let Some(&i) = slot.get(&int(&row, 0)) {
+                out[i].1.sections.push(Section {
+                    id: text(&row, 1),
+                    kind: text(&row, 2),
+                    parent: opt_text_of(&row, 3),
+                });
+            }
+        }
+        drop(rows);
+
+        for (sql, build) in all_value_queries() {
+            let mut rows = conn.query(sql, window.clone()).await?;
+            while let Some(row) = rows.next().await? {
+                if let Some(&i) = slot.get(&int(&row, 0)) {
+                    out[i].1.values.push(ValueRow {
+                        section_id: text(&row, 1),
+                        field_id: text(&row, 2),
+                        ordinal: int(&row, 3),
+                        value: build(&row),
+                    });
+                }
+            }
+            drop(rows);
+        }
+        Ok(out)
+    }
+
     /// Wipe the canonical layer's *content*, leaving the change log intact —
     /// what `project --rebuild` runs before re-deriving everything. The cursor
     /// is never renumbered (docs/architecture.md), so the rebuild appends.
@@ -650,84 +738,125 @@ impl Db {
         Ok(())
     }
 
-    /// Resolve a mention onto a canonical Organization, creating one when
-    /// needed, and record the mention itself. Merging happens only on an exact
+    /// Resolve every mention onto a canonical Organization, creating ones as
+    /// needed, and record the mentions. Merging happens only on an exact
     /// normalised identifier; everything else gets its own provisional profile,
     /// so no mention is ever destroyed by a merge.
+    ///
+    /// The dedup runs in memory, not with a per-mention `SELECT` (issue 19): the
+    /// old org lookup `WHERE country IS ? AND identifier_kind = ? AND identifier
+    /// = ?` scanned the growing organizations table for *every* mention — O(n²),
+    /// the projection's real bottleneck (44 min of a 54 min month at ~350k
+    /// mentions). We preload the two lookup tables once, then each mention is an
+    /// O(1) map hit and only genuinely new rows are written. Writes still commit
+    /// in [`WRITE_BATCH`]-sized transactions with one doorbell at the end, so a
+    /// change-feed consumer sees every new Organization exactly once; and the
+    /// (notice, section) key keeps it idempotent (an already-recorded mention
+    /// keeps its Organization — immutable evidence).
     pub async fn resolve_mentions(&self, mentions: &[Mention], now: i64) -> turso::Result<Vec<i64>> {
+        use std::collections::HashMap;
         if mentions.is_empty() {
             return Ok(Vec::new());
         }
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let mut result = Ok(Vec::with_capacity(mentions.len()));
-        for m in mentions {
-            match self.resolve_mention_tx(&conn, m, now).await {
-                Ok((id, _)) => result.as_mut().expect("still ok").push(id),
-                Err(e) => {
-                    result = Err(e);
-                    break;
+
+        // Preload: the org dedup key (country, identifier_kind, identifier) → id,
+        // and (notice_id, section_id) → org id for already-recorded mentions.
+        // On `--rebuild` both tables were just cleared, so these scans are empty.
+        let mut org_of: HashMap<(Option<String>, String, String), i64> = HashMap::new();
+        let mut rows = conn
+            .query(
+                "SELECT id, country, identifier_kind, identifier FROM organizations
+                  WHERE identifier IS NOT NULL",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            org_of.insert((opt_text_of(&row, 1), text(&row, 2), text(&row, 3)), int(&row, 0));
+        }
+        drop(rows);
+        let mut mention_of: HashMap<(i64, String), i64> = HashMap::new();
+        let mut rows = conn
+            .query("SELECT notice_id, section_id, organization_id FROM organization_mentions", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            mention_of.insert((int(&row, 0), text(&row, 1)), int(&row, 2));
+        }
+        drop(rows);
+
+        let mut ids = Vec::with_capacity(mentions.len());
+        let mut created_any = false;
+        for chunk in mentions.chunks(WRITE_BATCH) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut chunk_ids = Vec::with_capacity(chunk.len());
+            let mut error = None;
+            for m in chunk {
+                // The maps are updated as we go, so a later mention in the same
+                // chunk reuses an Organization an earlier one just created.
+                match self.resolve_one_mention(&conn, m, now, &mut org_of, &mut mention_of).await {
+                    Ok((id, created)) => {
+                        chunk_ids.push(id);
+                        created_any |= created;
+                    }
+                    Err(e) => {
+                        error = Some(e);
+                        break;
+                    }
+                }
+            }
+            match error {
+                None => {
+                    conn.execute("COMMIT", ()).await?;
+                    ids.extend(chunk_ids);
+                }
+                Some(e) => {
+                    // The in-memory maps may now hold rolled-back entries, but
+                    // the run aborts on error, so they are never read again.
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
                 }
             }
         }
-        match result {
-            Ok(ids) => {
-                conn.execute("COMMIT", ()).await?;
-                self.publish_cursor(&conn).await?;
-                Ok(ids)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
+        if created_any {
+            self.publish_cursor(&conn).await?;
         }
+        Ok(ids)
     }
 
-    async fn resolve_mention_tx(
+    async fn resolve_one_mention(
         &self,
         conn: &Connection,
         m: &Mention,
         now: i64,
+        org_of: &mut std::collections::HashMap<(Option<String>, String, String), i64>,
+        mention_of: &mut std::collections::HashMap<(i64, String), i64>,
     ) -> turso::Result<(i64, bool)> {
-        // An already-recorded mention keeps its organization: mentions are
-        // immutable evidence, and re-projecting must not renumber them.
-        let mut rows = conn
-            .query(
-                "SELECT organization_id FROM organization_mentions WHERE notice_id = ? AND section_id = ?",
-                (Value::Integer(m.notice_id), t(&m.section_id)),
-            )
-            .await?;
-        if let Some(row) = rows.next().await? {
-            return Ok((int(&row, 0), false));
+        if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
+            return Ok((org_id, false));
         }
 
         let (org_id, created) = match &m.identifier {
             Some(id) => {
-                let mut rows = conn
-                    .query(
-                        "SELECT id FROM organizations
-                          WHERE country IS ? AND identifier_kind = ? AND identifier = ?",
-                        (opt_text(id.country.as_deref()), t(&id.kind), t(&id.value)),
+                let key = (id.country.clone(), id.kind.clone(), id.value.clone());
+                if let Some(&org_id) = org_of.get(&key) {
+                    (org_id, false)
+                } else {
+                    conn.execute(
+                        "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                             provisional, created_at)
+                         VALUES(?, ?, ?, ?, 0, ?)",
+                        (
+                            opt_text(id.country.as_deref()),
+                            t(&id.kind),
+                            t(&id.value),
+                            t(&m.name),
+                            Value::Integer(now),
+                        ),
                     )
                     .await?;
-                match rows.next().await? {
-                    Some(row) => (int(&row, 0), false),
-                    None => {
-                        conn.execute(
-                            "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                                 provisional, created_at)
-                             VALUES(?, ?, ?, ?, 0, ?)",
-                            (
-                                opt_text(id.country.as_deref()),
-                                t(&id.kind),
-                                t(&id.value),
-                                t(&m.name),
-                                Value::Integer(now),
-                            ),
-                        )
-                        .await?;
-                        (last_insert_rowid(conn).await?, true)
-                    }
+                    let org_id = last_insert_rowid(conn).await?;
+                    org_of.insert(key, org_id);
+                    (org_id, true)
                 }
             }
             None => {
@@ -757,6 +886,7 @@ impl Db {
             ),
         )
         .await?;
+        mention_of.insert((m.notice_id, m.section_id.clone()), org_id);
         if created {
             append_change(conn, "organization", org_id, None, "added", now).await?;
         }
@@ -767,22 +897,51 @@ impl Db {
     /// change rows for whatever actually differs. Re-running an unchanged
     /// projection writes nothing at all — that is the idempotency guarantee.
     pub async fn apply_tender(&self, p: &TenderProjection, now: i64) -> turso::Result<Applied> {
+        self.apply_tenders(std::slice::from_ref(p), now).await
+    }
+
+    /// Reconcile many Tenders, batching [`WRITE_BATCH`] of them per write
+    /// transaction (issue 19) instead of one transaction each — a month's ~90k
+    /// per-Tender BEGIN/COMMIT round-trips were the projection bottleneck. The
+    /// invariants are preserved exactly: each Tender's canonical writes and its
+    /// change rows commit together in the batch transaction (a batch is
+    /// all-or-nothing); the per-Tender reconcile in [`apply_tender_tx`] is
+    /// unchanged, so an unchanged projection still writes nothing; and the
+    /// cursor doorbell rings once at the end, so a change-feed consumer sees
+    /// every version exactly once — only the batching, not the set, changes.
+    pub async fn apply_tenders(&self, projections: &[TenderProjection], now: i64) -> turso::Result<Applied> {
         let conn = self.conn().await;
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let result = self.apply_tender_tx(&conn, p, now).await;
-        match result {
-            Ok(applied) => {
-                conn.execute("COMMIT", ()).await?;
-                if applied.changes > 0 {
-                    self.publish_cursor(&conn).await?;
+        let mut total = Applied::default();
+        let mut changed_any = false;
+        for chunk in projections.chunks(WRITE_BATCH) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut applied = Applied::default();
+            let mut error = None;
+            for p in chunk {
+                match self.apply_tender_tx(&conn, p, now).await {
+                    Ok(a) => applied.add(a),
+                    Err(e) => {
+                        error = Some(e);
+                        break;
+                    }
                 }
-                Ok(applied)
             }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
+            match error {
+                None => {
+                    conn.execute("COMMIT", ()).await?;
+                    changed_any |= applied.changes > 0;
+                    total.add(applied);
+                }
+                Some(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
             }
         }
+        if changed_any {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(total)
     }
 
     async fn apply_tender_tx(
@@ -1421,19 +1580,6 @@ impl Db {
         Ok(out)
     }
 
-    /// Apply many Tenders, summing what each one did.
-    pub async fn apply_tenders(
-        &self,
-        projections: &[TenderProjection],
-        now: i64,
-    ) -> turso::Result<Applied> {
-        let mut total = Applied::default();
-        for p in projections {
-            total.add(self.apply_tender(p, now).await?);
-        }
-        Ok(total)
-    }
-
     /// `(rows, )` counts for the canonical layer — what the CLI and the
     /// dashboard report.
     pub async fn canonical_counts(&self) -> turso::Result<Vec<(String, i64)>> {
@@ -1564,8 +1710,10 @@ async fn append_change(
 }
 
 async fn last_insert_rowid(conn: &Connection) -> turso::Result<i64> {
-    let mut rows = conn.query("SELECT last_insert_rowid()", ()).await?;
-    Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    // turso exposes the last rowid in-memory; a `SELECT last_insert_rowid()`
+    // round-trip after every insert was a large slice of the projection's query
+    // volume (issue 19). Kept async so the call sites are unchanged.
+    Ok(conn.last_insert_rowid())
 }
 
 type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;
@@ -1618,6 +1766,57 @@ fn value_queries() -> Vec<(&'static str, ValueBuilder)> {
         (
             "SELECT section_id, field_id, ordinal, scheme, value, is_ref FROM notice_ids WHERE notice_id = ?",
             |r| V::Id { scheme: opt_text_of(r, 3), value: text(r, 4), is_ref: int(r, 5) != 0 },
+        ),
+    ]
+}
+
+/// The batched form of [`value_queries`]: every value table read over a
+/// `notice_id` window (`>= ?1 AND <= ?2`), in `notice_id` order, with
+/// `notice_id` as column 0 and the payload shifted one column right. Used by
+/// [`Db::parsed_chunk`] so the projection reads the notice layer in a handful of
+/// scans per chunk rather than a per-notice query storm (issue 19).
+fn all_value_queries() -> Vec<(&'static str, ValueBuilder)> {
+    use crate::NoticeValue as V;
+    vec![
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, lang, value FROM notice_texts WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            (|r| V::Text { lang: opt_text_of(r, 4), value: text(r, 5) }) as ValueBuilder,
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, list_name, code FROM notice_codes WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Code { list: opt_text_of(r, 4), code: text(r, 5) },
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, scheme, code FROM notice_classifications WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Classification { scheme: text(r, 4), code: text(r, 5) },
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, cents, currency FROM notice_amounts WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Amount { cents: int(r, 4), currency: text(r, 5) },
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, utc_seconds, offset_minutes, has_time
+               FROM notice_dates WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Date { utc_seconds: int(r, 4), offset_minutes: int(r, 5), has_time: int(r, 6) != 0 },
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, value FROM notice_integers WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Integer(int(r, 4)),
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, value, unit FROM notice_numbers WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Number {
+                value: match r.get_value(4) {
+                    Ok(Value::Real(f)) => f,
+                    Ok(Value::Integer(i)) => i as f64,
+                    _ => 0.0,
+                },
+                unit: opt_text_of(r, 5),
+            },
+        ),
+        (
+            "SELECT notice_id, section_id, field_id, ordinal, scheme, value, is_ref FROM notice_ids WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+            |r| V::Id { scheme: opt_text_of(r, 4), value: text(r, 5), is_ref: int(r, 6) != 0 },
         ),
     ]
 }
