@@ -94,3 +94,39 @@ ground-truth parse, number/age formatting), and 4 integration tests over a real
 socket (register→login→mint→`/v1/me` 200→revoke→401; delete-account closes the
 gate; cross-account isolation; the dashboard measures an empty database
 honestly).
+
+## Comments
+
+2026-07-20 — Production UX defect: the dashboard flashed/reloaded every few
+seconds, unusable. Root cause: both `DashboardPage` (15 s) and `IngestionPanel`
+(3 s) polled by calling `.restart()` on a `use_server_future(..)?` resource.
+`use_server_future`'s `?` re-suspends the whole subtree the instant the
+resource turns `Pending` (it checks `state == Pending`, ignoring the retained
+old value), and `.restart()` sets it `Pending` on every tick — so each poll
+swapped the rendered panels for the suspense fallback for a frame. Because
+`IngestionPanel` renders inside `DashboardPage`, its 3 s poll blanked a large
+chunk of the page.
+
+Fix (commit 11f46f5): a `use_polled(period, fetch)` hook that keeps the last
+value. The first load still flows through `use_server_future` — the server
+render carries the data, the client hydrates without a refetch, and that first
+load is the only moment a loading state may show — and every refresh after that
+runs in a background `use_future` that writes a `use_signal`; the component
+renders the freshest signal value, falling back to the transported seed. The
+resource is never restarted, so nothing ever re-suspends. (The account / token /
+webhook panels already used the non-suspending `use_resource` + `.read()`
+pattern, so they never flashed; left as-is.)
+
+Polish shipped alongside: ingestion running-job elapsed + notices/s throughput
+(server-clocked via new `Ingestion.measured_at`), queue-depth count, full-width
+progress bars; coverage folded into one collapsible row per (source, profile)
+era with held/published/ratio in each summary (scales to 34 years); a System
+panel with service revision (new `Dashboard.service_rev`, measured server-side),
+change cursor, and import lag.
+
+Verification: client/wasm build + `cargo clippy --features web` clean; new unit
+tests for `duration` and `coverage_by_era`. Full server gate
+(`cargo test --workspace --features server`, `nix build .#tender-db`) and the
+production deploy are pending — the shared worktree's `ingest` crate is
+mid-refactor by another agent (issue 15 results layer) and does not currently
+compile; will run gates + deploy once it does and the supervisor queue is idle.
