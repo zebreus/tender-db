@@ -21,6 +21,10 @@ pub struct Dashboard {
     pub counts: Vec<Count>,
     /// The change cursor — the spine everything live hangs off.
     pub cursor: i64,
+    /// The git revision the running server was built from (`dev` for a plain
+    /// `cargo build`). Measured server-side so the page always shows the rev that
+    /// actually served it.
+    pub service_rev: String,
 }
 
 /// A labelled number; the shape of every count panel row.

@@ -170,6 +170,45 @@ details summary {
     font-size: 0.85rem;
 }
 
+/* ------------------------------------------------------------- ingestion */
+
+/* The running job's title is a heading, not a hero number — keep it legible
+   without the 2.5rem of a headline count. */
+.running .job-title {
+    margin: 0.25rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Progress bars span the panel so a glance reads how far along a job is. */
+progress {
+    width: 100%;
+    height: 0.5rem;
+    margin: 0.1rem 0 0.5rem;
+}
+
+.queue {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+/* ------------------------------------------------------------- coverage */
+
+/* Each era is one collapsible row; its summary carries the totals so a closed
+   row still tells the whole story. */
+.era > summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-fg);
+}
+
+.era-cover {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-muted);
+    white-space: nowrap;
+}
+
 /* ------------------------------------------------------------------- forms */
 
 form {

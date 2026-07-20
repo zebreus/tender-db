@@ -19,6 +19,10 @@ pub struct Ingestion {
     pub queued: Vec<QueuedJob>,
     /// The most recent finished runs, newest first (persisted in `job_log`).
     pub recent: Vec<JobRun>,
+    /// The server's clock when this snapshot was taken, unix seconds. The client
+    /// derives the running job's elapsed time and throughput from it rather than
+    /// reading its own clock (see [`crate::dashboard`] for the same discipline).
+    pub measured_at: i64,
 }
 
 /// The live progress of the running job. Counters advance as the job walks its

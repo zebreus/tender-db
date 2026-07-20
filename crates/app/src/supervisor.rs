@@ -287,7 +287,7 @@ impl Supervisor {
         let current = self.current.read().expect("progress lock").clone();
         let queued = self.queued();
         let recent = self.db.recent_job_runs(RECENT_RUNS).await?;
-        Ok(Ingestion { current, queued, recent })
+        Ok(Ingestion { current, queued, recent, measured_at: now_unix() })
     }
 
     // ------------------------------------------------------------------ worker

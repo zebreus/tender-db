@@ -6,39 +6,65 @@
 //! measured.
 
 use crate::api;
+use dioxus::fullstack::Transportable;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
-use model::dashboard::{Coverage, Quarantined};
+use model::dashboard::{Coverage, Lag, Quarantined};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
+use std::time::Duration;
 
 /// How often the dashboard re-measures. Deliberately a plain poll: the change
 /// feed's SSE plumbing serves API clients, and a dashboard that refreshes twice
 /// a minute needs none of it.
 const REFRESH_SECONDS: u64 = 15;
 
+/// Poll a server function forever without ever unmounting what is on screen.
+///
+/// The trap with `use_server_future(f)?` is that `?` re-suspends the whole
+/// subtree the instant the resource turns `Pending` — and `.restart()` makes it
+/// `Pending` on every tick. That is what made the dashboard flash: each poll
+/// replaced the rendered panels with the suspense fallback for a frame (issue
+/// 06). This keeps the value instead. The first load still comes through the
+/// server render — so the page hydrates with data already in place, and that
+/// first load is the only moment a loading state may show — and every refresh
+/// after it runs in the background and swaps a signal in place. The last good
+/// value stays mounted throughout, so a poll never blanks.
+#[track_caller]
+fn use_polled<T, F, Fut, M>(period: Duration, fetch: F) -> Result<T, RenderError>
+where
+    T: Clone + Transportable<M> + 'static,
+    F: FnMut() -> Fut + Copy + 'static,
+    Fut: std::future::Future<Output = T> + 'static,
+    M: 'static,
+{
+    // First load only: transported through the server render, suspends once.
+    let seed = use_server_future(fetch)?;
+    // Every refresh after that lands here, disturbing nothing that is rendered.
+    let mut latest = use_signal(|| None::<T>);
+    use_future(move || async move {
+        let mut fetch = fetch;
+        loop {
+            futures_timer::Delay::new(period).await;
+            latest.set(Some(fetch().await));
+        }
+    });
+    // Freshest wins: the newest completed poll, else the seed — which `?`
+    // guarantees has resolved by the time control reaches this line.
+    Ok(latest().unwrap_or_else(|| seed().unwrap()))
+}
+
 // ---------------------------------------------------------------- dashboard
 
 #[component]
 pub fn DashboardPage() -> Element {
-    let mut data = use_server_future(api::dashboard)?;
-
-    // Poll rather than subscribe. `futures_timer::Delay` is the one timer that
-    // works both in the wasm client and during a native server render.
-    use_future(move || async move {
-        loop {
-            futures_timer::Delay::new(std::time::Duration::from_secs(REFRESH_SECONDS)).await;
-            data.restart();
-        }
-    });
-
-    let value = data.read();
+    let data = use_polled(Duration::from_secs(REFRESH_SECONDS), api::dashboard)?;
     rsx! {
         main {
             Nav {}
             IngestionPanel {}
-            match &*value {
-                Some(Ok(d)) => rsx! {
+            match &data {
+                Ok(d) => rsx! {
                     section { class: "panel",
                         h2 { "Contents" }
                         dl { class: "counts",
@@ -46,23 +72,10 @@ pub fn DashboardPage() -> Element {
                                 dt { key: "{c.label}", "{c.label}" }
                                 dd { "{group(c.value)}" }
                             }
-                            dt { "change cursor" }
-                            dd { "{group(d.cursor)}" }
                         }
                     }
 
-                    section { class: "panel",
-                        h2 { "Import lag" }
-                        p { class: "muted",
-                            "Fetching and processing are separate stages, so they go stale separately."
-                        }
-                        dl { class: "counts",
-                            dt { "newest fetched package" }
-                            dd { "{age(d.lag.fetch_age)}" }
-                            dt { "newest ingested notice" }
-                            dd { "{age(d.lag.notice_age)}" }
-                        }
-                    }
+                    SystemPanel { rev: d.service_rev.clone(), cursor: d.cursor, lag: d.lag }
 
                     QuarantinePanel {
                         total: d.quarantine_total,
@@ -72,10 +85,33 @@ pub fn DashboardPage() -> Element {
 
                     CoveragePanel { rows: d.coverage.clone() }
                 },
-                Some(Err(e)) => rsx! { p { class: "error", "Could not measure: {e}" } },
-                None => rsx! { p { class: "muted", "Measuring…" } },
+                Err(e) => rsx! { p { class: "error", "Could not measure: {e}" } },
             }
             Footer {}
+        }
+    }
+}
+
+/// System status in one compact panel: the running server's revision, the change
+/// cursor, and how stale each end of the import pipeline is.
+#[component]
+fn SystemPanel(rev: String, cursor: i64, lag: Lag) -> Element {
+    rsx! {
+        section { class: "panel",
+            h2 { "System" }
+            p { class: "muted",
+                "Fetching and processing are separate stages, so they go stale separately."
+            }
+            dl { class: "counts",
+                dt { "service revision" }
+                dd { class: "path", "{rev}" }
+                dt { "change cursor" }
+                dd { "{group(cursor)}" }
+                dt { "newest fetched package" }
+                dd { "{age(lag.fetch_age)}" }
+                dt { "newest ingested notice" }
+                dd { "{age(lag.notice_age)}" }
+            }
         }
     }
 }
@@ -89,28 +125,18 @@ const INGESTION_REFRESH_SECONDS: u64 = 3;
 /// are API-only (the dashboard is public and carries no operator secret).
 #[component]
 fn IngestionPanel() -> Element {
-    let mut state = use_server_future(api::ingestion)?;
-    use_future(move || async move {
-        loop {
-            futures_timer::Delay::new(std::time::Duration::from_secs(INGESTION_REFRESH_SECONDS))
-                .await;
-            state.restart();
-        }
-    });
-
-    let value = state.read();
-    let Some(Ok(ingestion)) = &*value else {
-        return rsx! {
-            section { class: "panel",
-                h2 { "Ingestion" }
-                match &*value {
-                    Some(Err(e)) => rsx! { p { class: "error", "Could not read the importer: {e}" } },
-                    _ => rsx! { p { class: "muted", "Reading…" } },
+    let ingestion = use_polled(Duration::from_secs(INGESTION_REFRESH_SECONDS), api::ingestion)?;
+    let Ingestion { current, queued, recent, measured_at } = match &ingestion {
+        Ok(i) => i.clone(),
+        Err(e) => {
+            return rsx! {
+                section { class: "panel",
+                    h2 { "Ingestion" }
+                    p { class: "error", "Could not read the importer: {e}" }
                 }
-            }
-        };
+            };
+        }
     };
-    let Ingestion { current, queued, recent } = ingestion.clone();
 
     rsx! {
         section { class: "panel",
@@ -122,12 +148,12 @@ fn IngestionPanel() -> Element {
             }
 
             match current {
-                Some(job) => rsx! { RunningJob { job } },
+                Some(job) => rsx! { RunningJob { job, measured_at } },
                 None => rsx! { p { class: "muted", "Idle — no job running." } },
             }
 
             if !queued.is_empty() {
-                h3 { "Queued" }
+                h3 { "Queued ({queued.len()})" }
                 ol { class: "queue",
                     for job in queued {
                         li { key: "{job.id}", class: "path",
@@ -162,10 +188,14 @@ fn IngestionPanel() -> Element {
 }
 
 #[component]
-fn RunningJob(job: JobProgress) -> Element {
+fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
+    // Elapsed and throughput are the server's clock minus the job's start — the
+    // client never times the job itself.
+    let elapsed = (measured_at - job.started_at).max(0);
+    let rate = (elapsed > 0).then(|| job.notices as f64 / elapsed as f64);
     rsx! {
         div { class: "running",
-            p { class: "headline", "{job.kind} — {job.params}" }
+            p { class: "job-title", "{job.kind} — {job.params}" }
             if job.packages_total > 0 {
                 label { class: "muted",
                     "Package {group(job.packages_done as i64)} / {group(job.packages_total as i64)}"
@@ -181,7 +211,12 @@ fn RunningJob(job: JobProgress) -> Element {
                 }
                 progress { max: "{job.members_total}", value: "{job.members_done}" }
             }
-            p { class: "muted", "{group(job.notices as i64)} notices written" }
+            p { class: "muted",
+                "{group(job.notices as i64)} notices written · {duration(elapsed)} elapsed"
+                if let Some(r) = rate {
+                    " · {r:.1} notices/s"
+                }
+            }
         }
     }
 }
@@ -201,44 +236,42 @@ fn RunRow(run: JobRun) -> Element {
 
 #[component]
 fn CoveragePanel(rows: Vec<Coverage>) -> Element {
+    let eras = coverage_by_era(rows);
     rsx! {
         section { class: "panel",
             h2 { "Coverage" }
             p { class: "muted",
                 "Notices held per source, mapping profile and publication year, against what that "
-                "year is known to have published (docs/research/ted-access-channels.md §6)."
+                "year is known to have published (docs/research/ted-access-channels.md §6). One "
+                "collapsible row per source and profile era — expand for the per-year breakdown."
             }
-            if rows.is_empty() {
+            if eras.is_empty() {
                 p { class: "muted", "Nothing ingested yet — every year is at 0 %." }
             } else {
-                table {
-                    thead {
-                        tr {
-                            th { "Year" }
-                            th { "Source" }
-                            th { "Profile" }
-                            th { class: "num", "Held" }
-                            th { class: "num", "Published" }
-                            th { class: "num", "Coverage" }
+                for era in eras {
+                    details { key: "{era.source}-{era.profile}", class: "era",
+                        summary {
+                            span { "{era.source} · {era.profile}" }
+                            span { class: "era-cover",
+                                "{group(era.held)} / {published_cell(era.published)} · {coverage_pct(era.ratio, era.partial)}"
+                            }
                         }
-                    }
-                    tbody {
-                        for row in rows {
-                            tr { key: "{row.year}-{row.source}-{row.profile}",
-                                td { "{row.year}" }
-                                td { "{row.source}" }
-                                td { "{row.profile}" }
-                                td { class: "num", "{group(row.held)}" }
-                                td { class: "num",
-                                    match row.published {
-                                        Some(n) => group(n),
-                                        None => "—".to_owned(),
-                                    }
+                        table {
+                            thead {
+                                tr {
+                                    th { "Year" }
+                                    th { class: "num", "Held" }
+                                    th { class: "num", "Published" }
+                                    th { class: "num", "Coverage" }
                                 }
-                                td { class: "num",
-                                    match row.ratio {
-                                        Some(r) => format!("{:.2} %{}", r * 100.0, if row.partial { " *" } else { "" }),
-                                        None => "—".to_owned(),
+                            }
+                            tbody {
+                                for row in era.years {
+                                    tr { key: "{row.year}",
+                                        td { "{row.year}" }
+                                        td { class: "num", "{group(row.held)}" }
+                                        td { class: "num", "{published_cell(row.published)}" }
+                                        td { class: "num", "{coverage_pct(row.ratio, row.partial)}" }
                                     }
                                 }
                             }
@@ -248,6 +281,73 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                 p { class: "muted", "* the year is not over; a shortfall there is the calendar, not a gap." }
             }
         }
+    }
+}
+
+/// One (source, profile) era: the per-year rows plus the totals that let a
+/// collapsed row still tell the whole story.
+struct CoverageEra {
+    source: String,
+    profile: String,
+    held: i64,
+    /// Sum of the years with a known denominator; `None` if none has one.
+    published: Option<i64>,
+    ratio: Option<f64>,
+    /// Any year in the era is still open, so the aggregate ratio is a floor.
+    partial: bool,
+    years: Vec<Coverage>,
+}
+
+/// Fold the flat coverage cells into one era per (source, profile), newest year
+/// first within each — so 34 years collapse behind a single scannable summary.
+fn coverage_by_era(rows: Vec<Coverage>) -> Vec<CoverageEra> {
+    let mut eras: Vec<CoverageEra> = Vec::new();
+    for row in rows {
+        let era = match eras.iter_mut().find(|e| e.source == row.source && e.profile == row.profile)
+        {
+            Some(e) => e,
+            None => {
+                eras.push(CoverageEra {
+                    source: row.source.clone(),
+                    profile: row.profile.clone(),
+                    held: 0,
+                    published: None,
+                    ratio: None,
+                    partial: false,
+                    years: Vec::new(),
+                });
+                eras.last_mut().expect("just pushed")
+            }
+        };
+        era.held += row.held;
+        if let Some(p) = row.published {
+            era.published = Some(era.published.unwrap_or(0) + p);
+        }
+        era.partial |= row.partial;
+        era.years.push(row);
+    }
+    for era in &mut eras {
+        era.ratio = era.published.map(|p| era.held as f64 / p as f64);
+        era.years.sort_by(|a, b| b.year.cmp(&a.year));
+    }
+    eras
+}
+
+/// A published count as a cell — a known denominator, or an em dash where none
+/// exists (any source but TED, or a year outside the ground truth).
+fn published_cell(published: Option<i64>) -> String {
+    match published {
+        Some(n) => group(n),
+        None => "—".to_owned(),
+    }
+}
+
+/// A coverage ratio as a percent, dashed where there is no denominator and
+/// starred where the year is not over.
+fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
+    match ratio {
+        Some(r) => format!("{:.2} %{}", r * 100.0, if partial { " *" } else { "" }),
+        None => "—".to_owned(),
     }
 }
 
@@ -688,6 +788,17 @@ fn group(n: i64) -> String {
     if n < 0 { format!("-{out}") } else { out }
 }
 
+/// A running duration in seconds, compact — for a job that is happening now, not
+/// an age relative to the present.
+fn duration(seconds: i64) -> String {
+    let s = seconds.max(0);
+    match s {
+        0..60 => format!("{s} s"),
+        60..3600 => format!("{} min {} s", s / 60, s % 60),
+        _ => format!("{} h {} min", s / 3600, (s % 3600) / 60),
+    }
+}
+
 /// An age in seconds, as the coarsest unit that still says something.
 fn age(seconds: Option<i64>) -> String {
     let Some(s) = seconds else { return "never".to_owned() };
@@ -717,9 +828,40 @@ mod tests {
         assert_eq!(age(Some(600)), "10 min ago");
         assert_eq!(age(Some(10_800)), "3 h ago");
         assert_eq!(age(Some(root_days(3))), "3 days ago");
+
+        assert_eq!(duration(-5), "0 s");
+        assert_eq!(duration(5), "5 s");
+        assert_eq!(duration(90), "1 min 30 s");
+        assert_eq!(duration(3_725), "1 h 2 min");
     }
 
     fn root_days(n: i64) -> i64 {
         n * 86_400
+    }
+
+    #[test]
+    fn coverage_folds_into_eras_newest_year_first() {
+        let cell = |profile: &str, year: &str, held, published: Option<i64>| Coverage {
+            source: "ted".into(),
+            profile: profile.into(),
+            year: year.into(),
+            held,
+            published,
+            ratio: published.map(|p| held as f64 / p as f64),
+            partial: false,
+        };
+        let eras = coverage_by_era(vec![
+            cell("eforms", "2024", 50, Some(200)),
+            cell("eforms", "2025", 30, Some(100)),
+            cell("standard", "2019", 10, Some(40)),
+        ]);
+        assert_eq!(eras.len(), 2, "one era per (source, profile)");
+
+        let eforms = &eras[0];
+        assert_eq!(eforms.profile, "eforms");
+        assert_eq!(eforms.held, 80);
+        assert_eq!(eforms.published, Some(300));
+        assert_eq!(eforms.years.first().map(|y| y.year.as_str()), Some("2025"));
+        assert!((eforms.ratio.unwrap() - 80.0 / 300.0).abs() < 1e-9);
     }
 }
