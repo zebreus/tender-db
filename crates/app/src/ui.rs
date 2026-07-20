@@ -9,7 +9,7 @@ use crate::api;
 use dioxus::fullstack::Transportable;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
-use model::dashboard::{Coverage, Lag, Quarantined};
+use model::dashboard::{AwardLinkage, Coverage, Lag, Quarantined};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
 use std::time::Duration;
@@ -82,6 +82,8 @@ pub fn DashboardPage() -> Element {
                         reasons: d.quarantine_by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
                         recent: d.quarantine_recent.clone(),
                     }
+
+                    AwardLinkagePanel { rows: d.award_linkage.clone() }
 
                     CoveragePanel { rows: d.coverage.clone() }
                 },
@@ -230,6 +232,47 @@ fn RunRow(run: JobRun) -> Element {
             td { class: "path", "{run.params}" }
             td { "{run.outcome}" }
             td { "{run.counts}" }
+        }
+    }
+}
+
+/// Award-chaining health per era: how many award Tenders never linked to a
+/// contract notice and so stand alone (docs/research/ted-legacy-mapping.md §3 —
+/// ~17% predicted for R2.0.9). A data-quality signal beside quarantine, not an
+/// error: some awards are legitimately reference-free (direct awards).
+#[component]
+fn AwardLinkagePanel(rows: Vec<AwardLinkage>) -> Element {
+    rsx! {
+        section { class: "panel",
+            h2 { "Award linkage" }
+            p { class: "muted",
+                "Legacy Tenders chain by transitive OJS references; a missed link strands an award "
+                "as a single-notice Tender. Research predicts ≈17% unchained for the R2.0.9 era."
+            }
+            if rows.is_empty() {
+                p { class: "muted", "No award Tenders yet." }
+            } else {
+                table {
+                    thead {
+                        tr {
+                            th { "era" }
+                            th { class: "num", "award tenders" }
+                            th { class: "num", "unchained" }
+                            th { class: "num", "rate" }
+                        }
+                    }
+                    tbody {
+                        for r in rows {
+                            tr { key: "{r.era}",
+                                td { "{r.era}" }
+                                td { class: "num", "{group(r.awards)}" }
+                                td { class: "num", "{group(r.unchained)}" }
+                                td { class: "num", "{r.ratio * 100.0:.1} %" }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

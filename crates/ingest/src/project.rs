@@ -46,6 +46,9 @@ pub struct Report {
     pub tenders: u64,
     pub islands: u64,
     pub mentions: u64,
+    /// Legacy Tenders retired because a late edge merged their members into
+    /// another component (ADR-0003-style merge — their rows got removed events).
+    pub absorbed: u64,
     pub applied: store::Applied,
 }
 
@@ -53,14 +56,61 @@ pub struct Report {
 /// matched by their business-term stem (`BT-21-Lot`, `BT-21-Procedure` and
 /// `BT-21-Part` are all the same canonical `title`), so a term keeps one
 /// canonical name wherever the SDK mounts it.
-const TEXTS: &[(&str, &str)] = &[("BT-21", "title"), ("BT-24", "description")];
+///
+/// The legacy profiles emit the source's own terms with a `TED-`/`TXT-` prefix
+/// (docs/research/ted-legacy-mapping.md, r209/mod.rs), and those stems have no
+/// context suffix, so the whole field id is the stem. The projection maps them
+/// onto the same canonical fields as the eForms `BT-*` ids — one canonical
+/// shape, earlier eras simply populating fewer columns (research §8.3). Only
+/// the high-fill core is wired (title, values, CPV/NUTS, key dates, winners);
+/// the ~23 no-eForms-equivalent legacy elements stay in the notice layer under
+/// their prefixed ids, retrievable but not surfaced as canonical facts.
+const TEXTS: &[(&str, &str)] = &[
+    ("BT-21", "title"),
+    ("BT-24", "description"),
+    // legacy R2.0.7–R2.0.9 (title 100% fill, research §5.1)
+    ("TED-TITLE", "title"),
+    ("TED-TITLE_CONTRACT", "title"),
+    ("TED-CONTRACT_TITLE", "title"),
+    ("TED-SHORT_DESCR", "description"),
+    ("TED-SHORT_CONTRACT_DESCRIPTION", "description"),
+    ("TED-SHORT_DESCRIPTION_CONTRACT", "description"),
+    // an F14 corrigendum's new text is a prose version event on the Tender
+    // (research §2.3: TEXT changes at minimum version the affected section).
+    ("TED-NEW_VALUE.TEXT", "description"),
+    // text era (1993–2010): TI title, TX/AB prose bodies
+    ("TXT-TI", "title"),
+    ("TXT-TX", "description"),
+    ("TXT-AB", "description"),
+];
 const AMOUNTS: &[(&str, &str)] = &[
     ("BT-27", "estimated_value"),
     ("BT-271", "framework_maximum"),
     ("BT-161", "result_value"),
+    // legacy
+    ("TED-VAL_ESTIMATED_TOTAL", "estimated_value"),
+    ("TED-VAL_TOTAL", "result_value"),
 ];
-const CLASSIFICATIONS: &[(&str, &str)] =
-    &[("BT-262", "main"), ("BT-263", "additional"), ("BT-5071", "place")];
+const CLASSIFICATIONS: &[(&str, &str)] = &[
+    ("BT-262", "main"),
+    ("BT-263", "additional"),
+    ("BT-5071", "place"),
+    // legacy CPV (`@CODE` on CPV_MAIN/CPV_CODE/ORIGINAL_CPV) and NUTS
+    ("TED-CPV_CODE", "main"),
+    ("TED-ORIGINAL_CPV", "main"),
+    ("TED-CURRENT_CPV", "main"),
+    ("TED-CPV_ADDITIONAL", "additional"),
+    ("TED-NUTS", "place"),
+    ("TED-PERFORMANCE_NUTS", "place"),
+    ("TED-ORIGINAL_NUTS", "place"),
+    ("TED-CA_CE_NUTS", "place"),
+    ("TED-CURRENT_NUTS", "place"),
+    ("TED-TENDERER_NUTS", "place"),
+    // text era
+    ("TXT-PC", "main"),
+    ("TXT-RC", "place"),
+    ("TXT-CC", "main"),
+];
 /// The date/time pairs issue 03 stores as one instant, so `(d)` is the whole
 /// deadline and there is no `(t)` row to reunite here.
 const DATES: &[(&str, &str)] = &[
@@ -70,6 +120,19 @@ const DATES: &[(&str, &str)] = &[
     ("BT-13(d)", "additional_information_deadline"),
     ("BT-536", "duration_start"),
     ("BT-537", "duration_end"),
+    // legacy: the submission deadline (100% fill on F02) and its openings
+    ("TED-DATE_RECEIPT_TENDERS", "submission_deadline"),
+    ("TED-DATE_OPENING_TENDERS", "opening_date"),
+    ("TED-DATE_START", "duration_start"),
+    ("TED-DATE_END", "duration_end"),
+    // an F14 corrigendum's new deadline is the canonical delta ADR-0001's
+    // motivating question reads ("how did the deadline move?"). Section-aware
+    // mapping of every F14 WHERE target is deferred; the deadline is the
+    // dominant, highest-value case (research §2.3: 210 DATE changes / package).
+    ("TED-NEW_VALUE.DATE", "submission_deadline"),
+    // text era deadline codes (DT/DD)
+    ("TXT-DT", "submission_deadline"),
+    ("TXT-DD", "submission_deadline"),
 ];
 
 /// Sections that are Lots in the canonical sense — Parts and LotsGroups are
@@ -80,6 +143,29 @@ const LOT_KINDS: &[&str] = &["Lot", "LotsGroup", "Part"];
 /// LotResult = the award decision, LotTender = a Bid, TenderingParty = the
 /// consortium behind a Bid, SettledContract = a Contract.
 const RESULT_KINDS: &[&str] = &["LotResult", "LotTender", "TenderingParty", "SettledContract"];
+
+/// Legacy Organization mention fields (inline address blocks — research §6):
+/// the party's name, its country, and its raw national id (normalised and
+/// plausibility-gated exactly like eForms BT-501).
+const ORG_NAME_FIELDS: &[&str] = &["TED-OFFICIALNAME", "TXT-AU"];
+const ORG_COUNTRY_FIELDS: &[&str] = &["TED-COUNTRY", "TED-ISO_COUNTRY", "TXT-CY"];
+const ORG_NATIONALID_FIELD: &str = "TED-NATIONALID";
+
+/// Legacy dispatch/publication date fields, best-first — the version's
+/// `published_at` when no eForms publication date exists. Ordering is by
+/// publication date then publication number (research §8, "DS/PD then number").
+const LEGACY_DATE_FIELDS: &[&str] =
+    &["TED-DATE_PUB", "TED-DS_DATE_DISPATCH", "TED-DATE_DISPATCH_NOTICE", "TXT-PD", "TXT-DS"];
+
+/// The notice's own OJS publication number, in-form (r209 emits it as a plain
+/// `NO_DOC_OJS`; the text era's own id is `ND:`). Only used as a corroborating
+/// node source — the publication id is the authoritative one.
+const LEGACY_OWN_NUMBER_FIELDS: &[&str] = &["TED-NO_DOC_OJS", "TXT-ND"];
+
+/// Received-bid count fields (research §5.1) — one legacy statistic, mapped to
+/// the eForms `tenders` received-submission kind.
+const LEGACY_BID_COUNT_FIELDS: &[&str] =
+    &["TED-NB_TENDERS_RECEIVED", "TED-OFFERS_RECEIVED_NUMBER"];
 
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
@@ -118,11 +204,20 @@ pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
         states.push(state);
     }
 
-    for projection in group(states) {
+    let projections = group(states);
+    let legacy_keys: BTreeSet<String> = projections
+        .iter()
+        .filter_map(|p| p.procedure_key.clone())
+        .filter(|k| k.starts_with("ojs:"))
+        .collect();
+    for projection in &projections {
         report.tenders += 1;
-        report.islands += u64::from(projection.procedure_key.is_none());
-        report.applied.add(db.apply_tender(&projection, now).await?);
+        report.islands += u64::from(projection.island_notice_id.is_some());
+        report.applied.add(db.apply_tender(projection, now).await?);
     }
+    // A component merge leaves the absorbed key with no producing group; retire
+    // it, emitting `removed` change events for its (now migrated) rows.
+    report.absorbed = db.retire_absorbed_legacy_tenders(&legacy_keys, now).await?;
     Ok(report)
 }
 
@@ -131,7 +226,18 @@ struct NoticeState {
     notice_id: i64,
     source: String,
     publication_id: String,
+    /// True for the legacy TED profiles (text / ted-export-r208 / r209): these
+    /// chain by transitive OJS-number closure, not by BT-04 (research §3).
+    legacy: bool,
     procedure_key: Option<String>,
+    /// The notice's own OJS publication number `(year, number)` — the node in
+    /// the legacy chain graph. `None` when the id does not parse (falls back to
+    /// an island). eForms notices have none.
+    ojs_self: Option<OjsKey>,
+    /// Transitive chain edges: every `is_ref` OJS-scheme id the notice carries
+    /// (`REF_NOTICE/NO_DOC_OJS`, `NOTICE_NUMBER_OJ`, text-era `RN`). A missed
+    /// edge splits a Tender, never wrongly merges (research §3).
+    ojs_edges: Vec<OjsKey>,
     published_at: i64,
     subtype: Option<String>,
     /// BT-701, the source's logical notice id — corrections republish under it.
@@ -158,6 +264,12 @@ enum Scope {
     Lot(String),
 }
 
+/// A normalised OJS publication key `(year, number)`. The display form is not
+/// stable across eras (`2011/S 1-000181` vs `2019/S 001-000001` vs the
+/// `000001-2019` DOC form vs the text era's `154-2005`), so the join key is
+/// always the parsed pair, never the raw string (research §1).
+type OjsKey = (i64, i64);
+
 impl NoticeState {
     fn read(notice: &store::NoticeRef, parsed: &Parsed) -> NoticeState {
         let sections: HashMap<&str, &store::Section> =
@@ -172,8 +284,10 @@ impl NoticeState {
             })
             .collect();
 
+        let legacy = is_legacy_profile(&notice.profile);
         let mut facts = BTreeSet::new();
         let mut raw_roles = Vec::new();
+        let mut ojs_edges = Vec::new();
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let stem = stem(&value.field_id);
@@ -196,8 +310,15 @@ impl NoticeState {
                         has_time: *has_time,
                     })
                 }
-                NoticeValue::Id { value: target, is_ref: true, .. } => {
-                    if let Some(role) = role_name(&value.field_id) {
+                NoticeValue::Id { value: target, is_ref: true, scheme } => {
+                    // An OJS-scheme reference is a chain edge; anything else is
+                    // an inline organization role reference (legacy synthesises
+                    // `ORG-n` refs, mirroring eForms' OPT-300 pattern).
+                    if scheme.as_deref() == Some("ojs") {
+                        if let Some(key) = ojs_key(target) {
+                            ojs_edges.push(key);
+                        }
+                    } else if let Some(role) = role_name(&value.field_id) {
                         raw_roles.push((scope.clone(), value.section_id.clone(), role, target.clone()));
                     }
                     None
@@ -218,7 +339,7 @@ impl NoticeState {
             }
         }
 
-        let raw_results = read_results(&sections, parsed);
+        let raw_results = read_results(&sections, parsed, legacy);
         // Award-side roles sit under the results graph, which has no Lot
         // ancestor — resolve their Lot through the graph instead (issue 04's
         // noted limitation, closed here).
@@ -236,14 +357,33 @@ impl NoticeState {
             })
             .collect();
 
+        // The node key: the notice's own publication number. The publication id
+        // is authoritative (`000001-2019` DOC form / text-era `ND:`); the
+        // in-form `NO_DOC_OJS` is the OJS-display corroboration.
+        let ojs_self = legacy
+            .then(|| {
+                ojs_key(&notice.publication_id).or_else(|| {
+                    LEGACY_OWN_NUMBER_FIELDS.iter().find_map(|f| first_id(parsed, f).and_then(|v| ojs_key(&v)))
+                })
+            })
+            .flatten();
+        ojs_edges.sort_unstable();
+        ojs_edges.dedup();
+
+        let published_at = first_date(parsed, PUBLICATION_DATE_FIELD)
+            .or_else(|| first_date(parsed, DISPATCH_DATE_FIELD))
+            .or_else(|| LEGACY_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f)))
+            .unwrap_or(0);
+
         NoticeState {
             notice_id: notice.id,
             source: notice.source.clone(),
             publication_id: notice.publication_id.clone(),
+            legacy,
             procedure_key: first_id(parsed, PROCEDURE_KEY_FIELD).filter(|k| !k.trim().is_empty()),
-            published_at: first_date(parsed, PUBLICATION_DATE_FIELD)
-                .or_else(|| first_date(parsed, DISPATCH_DATE_FIELD))
-                .unwrap_or(0),
+            ojs_self,
+            ojs_edges,
+            published_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
             logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
@@ -291,12 +431,21 @@ impl NoticeState {
                 continue;
             };
             let Some(mention) = mentions.get_mut(owner) else { continue };
-            match (value.field_id.as_str(), &value.value) {
-                (ORG_NAME_FIELD, NoticeValue::Text { value, .. }) => mention.name.clone_from(value),
-                (ORG_COUNTRY_FIELD, NoticeValue::Code { code, .. }) => {
-                    mention.country = Some(code.clone());
+            let field = value.field_id.as_str();
+            // Both vocabularies read here: eForms hangs BT-501 off a
+            // `CompanyLegalEntity` child while legacy uses inline `OFFICIALNAME`
+            // / `COUNTRY` / `NATIONALID` address blocks (research §6).
+            let is_name = field == ORG_NAME_FIELD || ORG_NAME_FIELDS.contains(&field);
+            let is_country = field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field);
+            let is_id = field == ORG_IDENTIFIER_FIELD || field == ORG_NATIONALID_FIELD;
+            match &value.value {
+                NoticeValue::Text { value, .. } if is_name && mention.name.is_empty() => {
+                    mention.name.clone_from(value);
                 }
-                (ORG_IDENTIFIER_FIELD, NoticeValue::Id { value, scheme, .. }) => {
+                NoticeValue::Code { code, .. } if is_country => {
+                    mention.country.get_or_insert_with(|| code.clone());
+                }
+                NoticeValue::Id { value, scheme, .. } if is_id && mention.raw_identifier.is_none() => {
                     mention.raw_identifier = Some(value.clone());
                     mention.scheme.clone_from(scheme);
                 }
@@ -358,21 +507,70 @@ impl NoticeState {
     }
 }
 
-/// Group notices into Tenders and fold each group's chain.
+/// Group notices into Tenders and fold each group's chain. Three identity
+/// regimes coexist (docs/research/ted-legacy-mapping.md §3, §8.3):
+///
+/// - **Keyed** — a notice publishing a procedure key (eForms BT-04) shares a
+///   Tender with every notice under the same `(source, key)`.
+/// - **Legacy OJS chain** — a legacy TED notice publishes no key; instead its
+///   own OJS number is a graph node and each `is_ref` OJS id is an edge. The
+///   transitive closure (union-find) is one Tender, identified by the *earliest*
+///   OJS number in the component (including not-yet-ingested edge targets, so
+///   the identity is stable as backfill deepens). eForms notices are excluded
+///   by construction: they carry a BT-04 key and reference by UUID, so a legacy
+///   → eForms procedure stays two Tenders (the accepted era-boundary split).
+/// - **Island** — anything else (an eForms notice without BT-04, a DÖE numeric
+///   island) is a single-notice Tender keyed by that notice.
+///
+/// A late edge that joins two existing components is an ADR-0003-style merge:
+/// the component's earliest-OJS identity is deterministic, so the run simply
+/// re-projects every member under the surviving key; the absorbed key's rows
+/// are retired with `removed` change events in [`Db::retire_absorbed_legacy_tenders`].
 fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
-    let mut groups: BTreeMap<(String, Option<String>, i64), Vec<NoticeState>> = BTreeMap::new();
+    let mut keyed: BTreeMap<(String, String), Vec<NoticeState>> = BTreeMap::new();
+    let mut islands: Vec<NoticeState> = Vec::new();
+    let mut legacy: Vec<NoticeState> = Vec::new();
     for state in states {
-        // Islands are keyed by their own notice so they can never collide;
-        // keyed procedures share a bucket per (source, key).
-        let island = if state.procedure_key.is_none() { state.notice_id } else { 0 };
-        groups
-            .entry((state.source.clone(), state.procedure_key.clone(), island))
-            .or_default()
-            .push(state);
+        match (&state.procedure_key, state.legacy, state.ojs_self) {
+            (Some(key), _, _) => keyed.entry((state.source.clone(), key.clone())).or_default().push(state),
+            (None, true, Some(_)) => legacy.push(state),
+            (None, ..) => islands.push(state),
+        }
     }
 
-    groups
-        .into_values()
+    let mut chains: Vec<Vec<NoticeState>> = keyed.into_values().collect();
+    // Legacy: transitive closure over OJS edges, one bucket per component,
+    // keyed by the component's earliest OJS number.
+    let mut uf = UnionFind::default();
+    for s in &legacy {
+        let own = uf.node(s.ojs_self.expect("legacy states carry an own key"));
+        for edge in &s.ojs_edges {
+            let target = uf.node(*edge);
+            uf.union(own, target);
+        }
+    }
+    // One O(nodes) pass to fix each component's earliest-OJS representative,
+    // then bucket every legacy notice under it — never a per-notice scan, so
+    // this stays linear at 9M scale.
+    let root_min = uf.root_minimums();
+    let mut components: BTreeMap<OjsKey, Vec<NoticeState>> = BTreeMap::new();
+    for s in legacy {
+        let rep = root_min[&uf.find(uf.index[&s.ojs_self.unwrap()])];
+        components.entry(rep).or_default().push(s);
+    }
+    for (rep, chain) in components {
+        chains.push(chain.into_iter().map(|mut s| {
+            s.procedure_key = Some(ojs_procedure_key(rep));
+            s
+        }).collect());
+    }
+    // Islands stay one Tender each.
+    for island in islands {
+        chains.push(vec![island]);
+    }
+
+    chains
+        .into_iter()
         .map(|mut chain| {
             chain.sort_by(|a, b| {
                 (a.published_at, &a.publication_id, a.notice_id)
@@ -391,6 +589,62 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
             }
         })
         .collect()
+}
+
+/// The synthetic procedure key of a legacy Tender: its component's earliest OJS
+/// number. Namespaced so it can never collide with an eForms BT-04 folder id.
+fn ojs_procedure_key((year, number): OjsKey) -> String {
+    format!("ojs:{year}-{number:06}")
+}
+
+/// Union-find over OJS `(year, number)` nodes — the transitive-closure grouping
+/// of legacy notices into Tenders. The representative of a component is its
+/// *minimum* key (the earliest publication, the procedure's natural root), so
+/// grouping is deterministic regardless of the order edges arrive.
+#[derive(Default)]
+struct UnionFind {
+    index: HashMap<OjsKey, usize>,
+    parent: Vec<usize>,
+    key: Vec<OjsKey>,
+}
+
+impl UnionFind {
+    fn node(&mut self, key: OjsKey) -> usize {
+        if let Some(&i) = self.index.get(&key) {
+            return i;
+        }
+        let i = self.parent.len();
+        self.index.insert(key, i);
+        self.parent.push(i);
+        self.key.push(key);
+        i
+    }
+
+    fn find(&mut self, mut i: usize) -> usize {
+        while self.parent[i] != i {
+            self.parent[i] = self.parent[self.parent[i]];
+            i = self.parent[i];
+        }
+        i
+    }
+
+    fn union(&mut self, a: usize, b: usize) {
+        let (ra, rb) = (self.find(a), self.find(b));
+        if ra != rb {
+            self.parent[ra] = rb;
+        }
+    }
+
+    /// Each component's root → its minimum OJS key, in one linear pass.
+    fn root_minimums(&mut self) -> HashMap<usize, OjsKey> {
+        let mut min: HashMap<usize, OjsKey> = HashMap::with_capacity(self.parent.len());
+        for i in 0..self.parent.len() {
+            let root = self.find(i);
+            let key = self.key[i];
+            min.entry(root).and_modify(|m| *m = (*m).min(key)).or_insert(key);
+        }
+        min
+    }
 }
 
 /// Resolve the chain: each version is the notice's own values laid over the
@@ -503,6 +757,13 @@ struct RawLotResult {
     bid_refs: Vec<String>,       // OPT-320
     contract_refs: Vec<String>,  // OPT-315
     statistics: Vec<(String, i64)>, // BT-760 code, BT-759 count
+    /// Legacy award blocks name their winner(s) directly (inline
+    /// `ADDRESS_CONTRACTOR`/`WINNER` → `ORG-n`) and carry the awarded value on
+    /// the block itself — there is no bid/contract graph to resolve through
+    /// (research §2.2: legacy notices have no notice-internal entity ids).
+    direct_winners: Vec<String>, // ORG-n section ids
+    direct_cents: Option<i64>,
+    direct_currency: Option<String>,
 }
 
 #[derive(Default)]
@@ -530,7 +791,14 @@ struct RawParty {
     members: Vec<(String, String)>,
 }
 
-fn read_results(sections: &HashMap<&str, &store::Section>, parsed: &Parsed) -> RawResults {
+fn read_results(
+    sections: &HashMap<&str, &store::Section>,
+    parsed: &Parsed,
+    legacy: bool,
+) -> RawResults {
+    if legacy {
+        return read_legacy_results(sections, parsed);
+    }
     let mut raw = RawResults::default();
     for s in &parsed.sections {
         match s.kind.as_str() {
@@ -616,6 +884,87 @@ fn read_results(sections: &HashMap<&str, &store::Section>, parsed: &Parsed) -> R
             && let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == owner)
         {
             r.statistics.push((code.to_owned(), count));
+        }
+    }
+    raw
+}
+
+/// Legacy award blocks (`AWARD_CONTRACT`/`RESULTS` → `RES-n`) read as
+/// LotResults. The winner is the inline contractor address block, the awarded
+/// value sits on the block, and the received-bid count is the one statistic —
+/// there is no bid/contract graph in the legacy schema (research §2.2), so
+/// those stay empty and the winner/value resolve directly.
+fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parsed) -> RawResults {
+    let mut raw = RawResults::default();
+    for s in &parsed.sections {
+        if s.kind == "LotResult" {
+            raw.lot_results.push(RawLotResult { key: s.id.clone(), ..RawLotResult::default() });
+        }
+    }
+    if raw.lot_results.is_empty() {
+        return raw;
+    }
+
+    // Published lot number → the Lot section it labels: legacy links a result to
+    // its lot positionally by LOT_NO (research §2.2), not by a section id-ref.
+    let mut lot_by_no: HashMap<String, String> = HashMap::new();
+    for value in &parsed.values {
+        let is_lot = sections
+            .get(value.section_id.as_str())
+            .is_some_and(|s| LOT_KINDS.contains(&s.kind.as_str()));
+        if is_lot
+            && matches!(value.field_id.as_str(), "TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM")
+            && let NoticeValue::Id { value: no, .. } = &value.value
+        {
+            lot_by_no.entry(no.trim().to_owned()).or_insert_with(|| value.section_id.clone());
+        }
+    }
+
+    for value in &parsed.values {
+        let Some(owner) = enclosing(sections, &value.section_id, RESULT_KINDS) else { continue };
+        let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == owner) else { continue };
+        match (value.field_id.as_str(), &value.value) {
+            // Any inline organization reference in an award block is a winner
+            // (contractors, joint AWARDED_TO_GROUP members); the OJS chain edges
+            // are scheme "ojs" and never appear here.
+            (_, NoticeValue::Id { value: org, is_ref: true, scheme })
+                if scheme.as_deref() != Some("ojs") =>
+            {
+                r.direct_winners.push(org.clone());
+            }
+            ("TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM", NoticeValue::Id { value: no, .. }) => {
+                r.lot_key = lot_by_no.get(no.trim()).cloned();
+            }
+            // The awarded value. R2.0.9 writes `VAL_TOTAL`; R2.0.8/defence forms
+            // write the locale-formatted `VALUE_COST` (research §2.5) — take it
+            // only when VAL_TOTAL is absent, and never the prefixed
+            // initial-estimate variant.
+            ("TED-VAL_TOTAL", NoticeValue::Amount { cents, currency }) => {
+                r.direct_cents = Some(*cents);
+                r.direct_currency = Some(currency.clone());
+            }
+            ("TED-VALUE_COST", NoticeValue::Amount { cents, currency }) if r.direct_cents.is_none() => {
+                r.direct_cents = Some(*cents);
+                r.direct_currency = Some(currency.clone());
+            }
+            ("TED-NO_AWARDED_CONTRACT", _) => r.decision = Some("clos-nw".to_owned()),
+            (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
+                r.statistics.push(("tenders".to_owned(), *n));
+            }
+            (f, NoticeValue::Number { value: n, .. }) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
+                r.statistics.push(("tenders".to_owned(), *n as i64));
+            }
+            _ => {}
+        }
+    }
+
+    // Decide from the evidence: a named winner or an awarded value is a win.
+    for r in &mut raw.lot_results {
+        r.direct_winners.sort();
+        r.direct_winners.dedup();
+        if r.decision.is_none() {
+            let awarded = !r.direct_winners.is_empty() || r.direct_cents.is_some();
+            r.decision = Some(if awarded { "selec-w" } else { "clos-nw" }.to_owned());
         }
     }
     raw
@@ -742,8 +1091,16 @@ impl RawResults {
                 } else {
                     contract_bids
                 };
-                let (cents, currency) = single_currency_total(winning.iter().copied());
-                let mut winners: Vec<i64> = if r.decision.as_deref() == Some("selec-w") {
+                // Legacy blocks carry the awarded value and the winner(s)
+                // directly; eForms resolves them through the bid/contract graph.
+                let (cents, currency) = if r.direct_cents.is_some() {
+                    (r.direct_cents, r.direct_currency.clone())
+                } else {
+                    single_currency_total(winning.iter().copied())
+                };
+                let mut winners: Vec<i64> = if !r.direct_winners.is_empty() {
+                    r.direct_winners.iter().filter_map(|s| orgs.get(s.as_str()).copied()).collect()
+                } else if r.decision.as_deref() == Some("selec-w") {
                     winning
                         .iter()
                         .flat_map(|b| members_of(b.party_ref.as_deref()))
@@ -818,16 +1175,67 @@ fn canonical_name(table: &[(&str, &str)], stem: &str) -> Option<String> {
     table.iter().find(|(source, _)| *source == stem).map(|(_, name)| (*name).to_owned())
 }
 
-/// The role an id-ref names: `OPT-300-Procedure-Buyer` → `Procedure-Buyer`.
-/// The OPT-300/301 families are exactly eForms' organization references.
+/// The role an id-ref names. The OPT-300/301 families are eForms' organization
+/// references (`OPT-300-Procedure-Buyer` → `Procedure-Buyer`); the legacy
+/// profiles name the role by the address-block element itself
+/// (`TED-ADDRESS_CONTRACTOR`), which is folded onto the canonical role names.
+/// OJS chain edges are handled before this is reached, so a `TED-` reference
+/// here is always an organization role.
 fn role_name(field_id: &str) -> Option<String> {
     for prefix in ["OPT-300-", "OPT-301-"] {
         if let Some(rest) = field_id.strip_prefix(prefix) {
             return Some(rest.to_owned());
         }
     }
-    None
+    field_id.strip_prefix("TED-").map(legacy_role)
 }
+
+/// Fold a legacy address-block element name onto a canonical party role.
+fn legacy_role(element: &str) -> String {
+    match element {
+        "ADDRESS_CONTRACTING_BODY"
+        | "ADDRESS_CONTRACTING_BODY_ADDITIONAL"
+        | "CA_CE_CONCESSIONAIRE_PROFILE" => "buyer".to_owned(),
+        "ADDRESS_CONTRACTOR" | "ADDRESS_WINNER" | "WINNER" => "winner".to_owned(),
+        "ADDRESS_REVIEW_BODY" | "ADDRESS_REVIEW_INFO" => "review-body".to_owned(),
+        other => other.to_owned(),
+    }
+}
+
+/// The legacy TED profiles (text / ted-export-r208 / ted-export-r209) chain by
+/// transitive OJS-number closure; eForms and DÖE key on their own identifiers.
+fn is_legacy_profile(profile: &str) -> bool {
+    profile == "text" || profile.starts_with("ted-export")
+}
+
+/// Parse an OJS publication reference into `(year, number)`. Handles the OJS
+/// display form (`2019/S 001-000001`, `2011/S 1-000181`), the DOC/eForms form
+/// (`000001-2019`), and the text-era form (`154-2005`). The raw string is never
+/// the key — its shape is not stable across eras (research §1).
+fn ojs_key(raw: &str) -> Option<OjsKey> {
+    let s = raw.trim();
+    let (year, number) = if let Some((head, tail)) = split_ci(s, "/S") {
+        // Display form: `<year>/S <issue>-<number>`; the number is the tail
+        // after the last '-'.
+        (head.trim(), tail.rsplit('-').next()?.trim())
+    } else {
+        // DOC / text-era form: `<number>-<year>`.
+        let (number, year) = s.rsplit_once('-')?;
+        (year.trim(), number.trim())
+    };
+    let year: i64 = year.parse().ok()?;
+    let number: i64 = number.parse().ok()?;
+    ((1900..=2100).contains(&year) && number > 0).then_some((year, number))
+}
+
+/// `split_once`, case-insensitive on the delimiter — the OJS separator is
+/// written `/S` but a stray lowercase `s` should not defeat the parse.
+fn split_ci<'a>(s: &'a str, delim: &str) -> Option<(&'a str, &'a str)> {
+    let lower = s.to_ascii_uppercase();
+    let at = lower.find(&delim.to_ascii_uppercase())?;
+    Some((&s[..at], &s[at + delim.len()..]))
+}
+
 
 /// Normalise an official identifier and gate it on plausibility before letting
 /// it merge two mentions into one Organization

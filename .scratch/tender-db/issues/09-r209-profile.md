@@ -1,6 +1,6 @@
 # 09 — TED_EXPORT R2.0.9 mapping profile
 
-Status: claimed
+Status: resolved
 Blocked by: 04
 
 Goal: the 2016–2024 era parses and projects — legacy chains become Tenders.
@@ -37,3 +37,24 @@ parser done in worktree, projection integration pending merge
   `TED-NOTICE_NUMBER_OJ`); union-find grouping + F14 version events are the
   projection half, blocked on issue 04's merge.
 - NATIONALID normalization/plausibility gate lives in `ingest::orgid`.
+
+## Answer (projection half)
+
+The deferred projection integration is done in `crates/ingest/src/project.rs`
+(+ `crates/store/src/canonical.rs`). Legacy Tenders group by transitive OJS
+closure (union-find over the notice's own publication number and its `is_ref`
+"ojs" edges), keyed by the component's earliest OJS number
+(`ojs:{year}-{number}`) so identity is stable as backfill deepens; a late edge
+that joins two components is an ADR-0003-style merge (`retire_absorbed_legacy_
+tenders` emits `removed` events for the absorbed key). The legacy `TED-*` fields
+map onto the canonical shape (title, values, CPV/NUTS, deadlines, inline org
+mentions + roles); `AWARD_CONTRACT`/`RESULTS` (RES-) blocks become LotResults
+with the winner resolved from the inline contractor address block and the
+awarded value from `VAL_TOTAL`/`VALUE_COST`. F14 corrigenda join as version
+events (typed NEW_VALUE date → submission-deadline delta, NEW_VALUE text →
+prose satellite). Unchained-award coverage is a per-era dashboard metric.
+
+Verified on the VPS against five real dailies (1993/2005/2011/2014/2019) in one
+scratch db, 5612 notices → 5516 Tenders, 7479 legacy lot_results, winner
+resolution 95%, award-linkage edge presence r209 74.0% / r208 68.1% (research
+71–74%), re-run idempotent (0 writes). See issue 10 for the full report.

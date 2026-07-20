@@ -19,12 +19,31 @@ pub struct Dashboard {
     pub quarantine_recent: Vec<Quarantined>,
     pub lag: Lag,
     pub counts: Vec<Count>,
+    /// Award-chaining health per era: how many award Tenders are a lone notice
+    /// that never linked to its contract notice (docs/research/ted-legacy-mapping.md §3).
+    pub award_linkage: Vec<AwardLinkage>,
     /// The change cursor — the spine everything live hangs off.
     pub cursor: i64,
     /// The git revision the running server was built from (`dev` for a plain
     /// `cargo build`). Measured server-side so the page always shows the rev that
     /// actually served it.
     pub service_rev: String,
+}
+
+/// One era's award-chaining coverage. Legacy Tenders chain by transitive OJS
+/// references, so a missed link leaves an award stranded as a single-notice
+/// Tender — a measurable data-quality gap the research predicts at ~17% for the
+/// R2.0.9 era.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct AwardLinkage {
+    /// The era, i.e. the mapping profile (ted-export-r209, text, eforms:…).
+    pub era: String,
+    /// Tenders that carry an award decision.
+    pub awards: i64,
+    /// Of those, the ones with a single notice — an unchained award.
+    pub unchained: i64,
+    /// `unchained / awards`, 0.0–1.0.
+    pub ratio: f64,
 }
 
 /// A labelled number; the shape of every count panel row.

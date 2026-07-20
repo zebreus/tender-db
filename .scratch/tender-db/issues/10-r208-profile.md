@@ -1,6 +1,6 @@
 # 10 — TED_EXPORT R2.0.8 profile (incl. R2.0.7, defence)
 
-Status: claimed
+Status: resolved
 Blocked by: 09
 
 Goal: 2011–2016 (and defence forms wherever they appear) parse and project.
@@ -49,4 +49,43 @@ parser done in worktree (parse half; projection is issue 04's machinery)
 - Root-cause fix that surfaced on real 2014 data: `eforms::value::timestamp`
   panicked (slice out of range) on one-component clock strings ("12.00" era
   times); now an Err like every other malformed lexical.
+
+## Answer (projection half — the legacy-chain projection, issues 09/10/11)
+
+Projection integration landed with issue 09 (shared machinery — one legacy
+projection path serves r208/r209/text). R2.0.8-specifics wired: the defence /
+R2.0.8 award value is the locale-formatted `VALUE_COST`, not `VAL_TOTAL`
+(measured: 3523 vs 1859 on the sample), so the results reader takes VAL_TOTAL
+first and falls back to VALUE_COST — that alone lifted awarded-value fill from
+26% to 73%. OTH_NOT/text corrigenda are prose version events (no typed diffs).
+
+**VPS verification** (`/opt/tender-db/legacy-proj/`, RELEASE, one scratch db,
+five real dailies 1993-01-02 / 2005-01-01 / 2011-01-04 / 2014-01-02 /
+2019-01-02):
+
+- Ingest: 5612 notices, 0 quarantine (3130 r208, 1372 r209, 1110 text).
+- Projection: **5612 notices → 5516 Tenders (0 islands), 5612 versions**,
+  11 145 lots, **7479 lot_results**, 18 100 organizations (1277 canonical /
+  16 823 provisional — the pre-2016 name-only floor of research §6), 42 369
+  change rows; 56 s. Re-run wrote nothing; `--rebuild` reproduced identically.
+- **Chains**: 50 multi-notice Tenders (33×2, 8×3, 5×4, 6/5/10/15 versions);
+  longest 15 (`ojs:1992-019496`, a 1993 text-era procedure rooted at a dangling
+  1992 ancestor — union-find + earliest-OJS identity working).
+- **Cross-era**: realized 2011→200x chains = 0 because the samples are single
+  days years apart (a 2011 award's contract notice is on an un-ingested day),
+  but 2002 OJS reference edges point into the text era (≤2010), so the backward
+  cross-era mechanism is present and would terminate on a contiguous backfill.
+- **Award-linkage** (award notices carrying an OJS back-ref): **r209 74.0%,
+  r208 68.1%** — matches research's measured 71–74% (F03).
+- **Unchained awards** (single-notice award Tenders): r208 98.8%, r209 98.2% —
+  high *by construction of single-day sampling* (the chained CN is on another
+  day); on a contiguous backfill this converges toward the ~17% edge-absence
+  research predicts. The dashboard metric shows it per era.
+- **Legacy results**: winners resolved on 7122/7479 results (95%, via the
+  inline contractor block), awarded value on 73%, decisions selec-w 7493 /
+  clos-nw 365. Top winners are real (Italian rail FA €3.68B shared 3 ways;
+  EDF/Enedis €1.62B).
+
+Gates: `cargo test --workspace --features tender-db/server` green (17 project
+tests incl. 6 new legacy ones), clippy zero warnings.
 

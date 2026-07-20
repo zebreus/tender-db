@@ -541,12 +541,15 @@ impl Applied {
     }
 }
 
-/// A parsed Notice, as the projection addresses it.
+/// A parsed Notice, as the projection addresses it. `profile` selects the era
+/// vocabulary — eForms notices key on BT-04; legacy TED profiles chain by
+/// transitive OJS-number closure instead (docs/research/ted-legacy-mapping.md).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct NoticeRef {
     pub id: i64,
     pub source: String,
     pub publication_id: String,
+    pub profile: String,
 }
 
 impl Db {
@@ -555,14 +558,19 @@ impl Db {
         let conn = self.conn().await;
         let mut rows = conn
             .query(
-                "SELECT id, source, publication_id FROM notices
+                "SELECT id, source, publication_id, profile FROM notices
                  WHERE parse_state = 'parsed' ORDER BY id",
                 (),
             )
             .await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
-            out.push(NoticeRef { id: int(&row, 0), source: text(&row, 1), publication_id: text(&row, 2) });
+            out.push(NoticeRef {
+                id: int(&row, 0),
+                source: text(&row, 1),
+                publication_id: text(&row, 2),
+                profile: text(&row, 3),
+            });
         }
         Ok(out)
     }
@@ -1269,6 +1277,128 @@ impl Db {
             }
         }
         Ok(count)
+    }
+
+    /// Retire legacy Tenders that no producing group claims any more — the
+    /// absorbed side of an ADR-0003-style merge. When a late edge joins two OJS
+    /// components, every member re-projects under the component's surviving
+    /// earliest-OJS key; the old key's identity is then orphaned. Its notices'
+    /// versions were re-added under the survivor by [`Self::apply_tender`], so
+    /// here we only emit the `removed` change events and delete the orphan's
+    /// rows. Organization mentions are left untouched — they are immutable
+    /// evidence and now feed the survivor's parties.
+    pub async fn retire_absorbed_legacy_tenders(
+        &self,
+        produced: &BTreeSet<String>,
+        now: i64,
+    ) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query("SELECT id, procedure_key FROM tenders WHERE procedure_key LIKE 'ojs:%'", ())
+            .await?;
+        let mut absorbed = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let key = text(&row, 1);
+            if !produced.contains(&key) {
+                absorbed.push(int(&row, 0));
+            }
+        }
+        drop(rows);
+        if absorbed.is_empty() {
+            return Ok(0);
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let mut result = Ok(());
+        for id in &absorbed {
+            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
+                result = Err(e);
+                break;
+            }
+        }
+        match result {
+            Ok(()) => {
+                conn.execute("COMMIT", ()).await?;
+                self.publish_cursor(&conn).await?;
+                Ok(absorbed.len() as u64)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    async fn retire_tender_tx(&self, conn: &Connection, tender_id: i64, now: i64) -> turso::Result<()> {
+        let id = Value::Integer(tender_id);
+        append_change(conn, "tender", tender_id, None, "removed", now).await?;
+        for (kind, table) in
+            [("lot", "lots"), ("lot_result", "lot_results"), ("bid", "bids"), ("contract", "contracts")]
+        {
+            let mut rows =
+                conn.query(&format!("SELECT id FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
+            let mut ids = Vec::new();
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+            drop(rows);
+            for entity in ids {
+                append_change(conn, kind, entity, None, "removed", now).await?;
+            }
+        }
+        for table in [
+            "tender_version_result_winners",
+            "tender_version_result_stats",
+            "tender_version_lot_results",
+            "tender_version_bid_parties",
+            "tender_version_bids",
+            "tender_version_contracts",
+            "tender_version_parties",
+            "tender_version_texts",
+            "tender_version_dates",
+            "tender_version_amounts",
+            "tender_version_classifications",
+            "tender_version_lots",
+            "tender_versions",
+            "lot_results",
+            "bids",
+            "contracts",
+            "lots",
+        ] {
+            conn.execute(&format!("DELETE FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
+        }
+        conn.execute("DELETE FROM tenders WHERE id = ?", (id,)).await?;
+        Ok(())
+    }
+
+    /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the
+    /// Tenders that carry an award (any `lot_results`), how many are a single
+    /// notice — an award that never chained to its contract notice. The era is
+    /// the profile of the Tender's first version's notice. Returns
+    /// `(profile, award_tenders, unchained)` rows.
+    pub async fn award_linkage(&self) -> turso::Result<Vec<(String, i64, i64)>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT n.profile,
+                        COUNT(DISTINCT t.id) AS awards,
+                        COUNT(DISTINCT CASE WHEN vc.versions = 1 THEN t.id END) AS unchained
+                   FROM tenders t
+                   JOIN (SELECT DISTINCT tender_id FROM lot_results) ar ON ar.tender_id = t.id
+                   JOIN tender_versions v1 ON v1.tender_id = t.id AND v1.seq = 1
+                   JOIN notices n ON n.id = v1.caused_by_notice_id
+                   JOIN (SELECT tender_id, COUNT(*) AS versions FROM tender_versions GROUP BY tender_id) vc
+                     ON vc.tender_id = t.id
+                  GROUP BY n.profile
+                  ORDER BY n.profile",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1), int(&row, 2)));
+        }
+        Ok(out)
     }
 
     /// Apply many Tenders, summing what each one did.

@@ -691,6 +691,365 @@ async fn framework_rounds_accumulate_without_deleting_earlier_results() {
     let _ = std::fs::remove_file(&path);
 }
 
+// ---------------------------------------------------- legacy OJS chains (09/10/11)
+
+const R209: &str = "ted-export-r209";
+const TEXT: &str = "text";
+
+fn sec(id: &str, kind: &str, parent: Option<&str>) -> Section {
+    Section { id: id.into(), kind: kind.into(), parent: parent.map(str::to_owned) }
+}
+
+/// An OJS chain edge: an `is_ref` id with scheme "ojs", exactly as the legacy
+/// parsers emit `REF_NOTICE/NO_DOC_OJS`, `NOTICE_NUMBER_OJ` and text-era `RN`.
+fn ojs_edge(section: &str, field: &str, target: &str) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: Some("ojs".into()), value: target.into(), is_ref: true },
+    }
+}
+
+fn ted_text(section: &str, field: &str, value: &str) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Text { lang: Some("ENG".into()), value: value.into() },
+    }
+}
+
+fn ted_date(section: &str, field: &str, utc: i64) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Date { utc_seconds: utc, offset_minutes: 0, has_time: false },
+    }
+}
+
+fn ted_amount(section: &str, field: &str, cents: i64) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Amount { cents, currency: "EUR".into() },
+    }
+}
+
+fn ted_ref(section: &str, field: &str, target: &str) -> ValueRow {
+    ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: None, value: target.into(), is_ref: true },
+    }
+}
+
+fn legacy_record(fetch_id: i64, publication_id: &str, profile: &str, parsed: Parsed) -> (Notice, Parse) {
+    (
+        Notice {
+            source: SOURCE.into(),
+            publication_id: publication_id.into(),
+            content_hash: format!("hash-{publication_id}"),
+            profile: profile.into(),
+            declared_version: None,
+            fetch_id,
+            member_path: format!("{publication_id}.xml"),
+            ingested_at: 0,
+        },
+        Parse::Parsed(parsed),
+    )
+}
+
+/// A legacy contract notice: a title, a dispatch date (for ordering), a
+/// submission deadline, and any OJS back-references.
+fn legacy_cn(fetch_id: i64, pub_id: &str, day: i64, deadline: i64, refs: &[&str]) -> (Notice, Parse) {
+    let mut parsed = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None)],
+        values: vec![
+            ted_text("PROCEDURE", "TED-TITLE", "Roof works"),
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
+            ted_date("PROCEDURE", "TED-DATE_RECEIPT_TENDERS", deadline),
+        ],
+    };
+    for r in refs {
+        parsed.values.push(ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", r));
+    }
+    legacy_record(fetch_id, pub_id, R209, parsed)
+}
+
+/// A legacy award notice: an `AWARD_CONTRACT` (RES-) block naming its winner
+/// inline and carrying the awarded value, referencing a previous publication.
+fn legacy_award(
+    fetch_id: i64,
+    pub_id: &str,
+    day: i64,
+    winner: &str,
+    cents: i64,
+    refs: &[&str],
+) -> (Notice, Parse) {
+    let mut parsed = Parsed {
+        sections: vec![
+            sec("PROCEDURE", "Notice", None),
+            sec("RES-1", "LotResult", Some("PROCEDURE")),
+            sec("ORG-1", "Organization", Some("RES-1")),
+        ],
+        values: vec![
+            ted_text("PROCEDURE", "TED-TITLE", "Roof works — award"),
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", day * 86_400),
+            // the inline winner address block and its role reference
+            ted_text("ORG-1", "TED-OFFICIALNAME", winner),
+            ted_ref("RES-1", "TED-ADDRESS_CONTRACTOR", "ORG-1"),
+            ted_amount("RES-1", "TED-VAL_TOTAL", cents),
+            ValueRow {
+                section_id: "RES-1".into(),
+                field_id: "TED-NB_TENDERS_RECEIVED".into(),
+                ordinal: 0,
+                value: NoticeValue::Integer(4),
+            },
+        ],
+    };
+    for r in refs {
+        parsed.values.push(ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", r));
+    }
+    legacy_record(fetch_id, pub_id, R209, parsed)
+}
+
+/// Legacy notices chain into one Tender by transitive OJS reference, keyed by
+/// the earliest publication, ordered by dispatch date, and the award section
+/// resolves its winner and value directly.
+#[tokio::test]
+async fn legacy_notices_chain_into_one_tender_by_ojs_reference() {
+    let (db, fetch_id, path) = scratch("legacy-chain").await;
+    // Ingested out of publication order; the award references the CN by its OJS
+    // display form, the CN is the root.
+    let (award, pa) = legacy_award(fetch_id, "000200-2019", 30, "Builders Ltd", 1_500_000, &["2019/S 001-000001"]);
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    db.record_notice(&award, &pa).await.expect("award");
+    db.record_notice(&cn, &pc).await.expect("cn");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 2);
+    assert_eq!(report.tenders, 1, "the award chains onto its contract notice");
+    assert_eq!(report.islands, 0);
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 2);
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("ojs:2019-000001"),
+        "the Tender is keyed by the earliest OJS number in the component"
+    );
+    // Publication order is dispatch order: the CN (day 5) before the award (30).
+    assert_eq!(
+        query_text(&db, "SELECT publication_id FROM tender_versions WHERE seq = 1").await.as_deref(),
+        Some("000001-2019")
+    );
+    // The award resolves winner and value directly from the inline block.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lot_results").await, 1);
+    assert_eq!(scalar(&db, "SELECT awarded_cents FROM v_lot_results").await, 1_500_000);
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM v_lot_results v JOIN organizations o ON o.id = v.winner_organization_id"
+        )
+        .await
+        .as_deref(),
+        Some("Builders Ltd")
+    );
+    // The Tender carries the title as a canonical fact (legacy TED-TITLE mapping).
+    assert!(query_text(&db, "SELECT title FROM v_tenders").await.is_some());
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// A late edge that joins two existing Tenders is an ADR-0003-style merge: the
+/// members re-project under the surviving earliest-OJS key and the absorbed
+/// key's rows are retired with `removed` change events.
+#[tokio::test]
+async fn a_late_edge_merges_two_legacy_tenders() {
+    let (db, fetch_id, path) = scratch("legacy-merge").await;
+    // Two independent contract notices, each its own Tender.
+    let (cn1, p1) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let (cn2, p2) = legacy_cn(fetch_id, "000002-2019", 6, 728_100_000, &[]);
+    db.record_notice(&cn1, &p1).await.expect("cn1");
+    db.record_notice(&cn2, &p2).await.expect("cn2");
+    let first = project::project(&db, false).await.expect("project 1");
+    assert_eq!(first.tenders, 2, "two unconnected components");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2);
+
+    // A bridging notice referencing BOTH: REF_NOTICE to 2019/1 and
+    // NOTICE_NUMBER_OJ to 2019/2. It arrives later and joins the components.
+    let mut bridge = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None)],
+        values: vec![
+            ted_text("PROCEDURE", "TED-TITLE", "Corrigendum bridging both"),
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 40 * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            ojs_edge("PROCEDURE", "TED-NOTICE_NUMBER_OJ", "000002-2019"),
+        ],
+    };
+    bridge.sections.push(sec("CHG-1", "Change", Some("PROCEDURE")));
+    let (bn, pb) = legacy_record(fetch_id, "000300-2019", R209, bridge);
+    db.record_notice(&bn, &pb).await.expect("bridge");
+
+    let merged = project::project(&db, false).await.expect("project 2");
+    assert_eq!(merged.absorbed, 1, "one component was absorbed into the other");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1, "one surviving Tender");
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("ojs:2019-000001"),
+        "the survivor is the earliest OJS number"
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 3);
+    // The absorbed identity emitted a `removed` tender change event.
+    assert!(
+        db.changes_since(0, 1000)
+            .await
+            .expect("changes")
+            .iter()
+            .any(|c| c.entity_kind == "tender" && c.op == "removed"),
+        "the absorbed Tender was retired with a removed event"
+    );
+    // Re-projection is now a no-op — the merge is stable.
+    let again = project::project(&db, false).await.expect("project 3");
+    assert_eq!(again.absorbed, 0);
+    assert_eq!(again.applied.versions_written, 0);
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// An F14 corrigendum joins its referenced Tender as a version event and its
+/// typed NEW_VALUE date supersedes the submission deadline — the legacy answer
+/// to ADR-0001's "how did the deadline move?".
+#[tokio::test]
+async fn an_f14_corrigendum_moves_the_deadline_as_a_version_event() {
+    let (db, fetch_id, path) = scratch("legacy-f14").await;
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    // The F14 references the CN and publishes a new deadline as a typed change.
+    let corrigendum = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None), sec("CHG-1", "Change", Some("PROCEDURE"))],
+        values: vec![
+            ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 20 * 86_400),
+            ojs_edge("PROCEDURE", "TED-REF_NOTICE.NO_DOC_OJS", "000001-2019"),
+            ted_date("CHG-1", "TED-NEW_VALUE.DATE", 728_600_000),
+            ted_text("CHG-1", "TED-NEW_VALUE.TEXT", "Deadline extended"),
+        ],
+    };
+    let (f14, pf) = legacy_record(fetch_id, "000119-2019", R209, corrigendum);
+    db.record_notice(&cn, &pc).await.expect("cn");
+    db.record_notice(&f14, &pf).await.expect("f14");
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 2);
+    assert_eq!(deadline(&db, 1).await, 728_000_000, "the CN's original deadline");
+    assert_eq!(deadline(&db, 2).await, 728_600_000, "the corrigendum moved it");
+    // The change log records the corrigendum as a `changed` version event.
+    assert!(
+        db.changes_since(0, 100)
+            .await
+            .expect("changes")
+            .iter()
+            .any(|c| c.entity_kind == "tender" && c.op == "changed" && c.version_seq == Some(2))
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// XML-era chains cross into the text era backwards: a 2011 award referencing a
+/// text-era `RN` number terminates at the real text-era record rather than
+/// dangling, forming one cross-era Tender.
+#[tokio::test]
+async fn xml_era_chains_terminate_at_a_text_era_record() {
+    let (db, fetch_id, path) = scratch("cross-era").await;
+    // A text-era record, publication id in the text-era `number-year` form.
+    let text_record = Parsed {
+        sections: vec![sec("PROCEDURE", "Notice", None)],
+        values: vec![
+            ted_text("PROCEDURE", "TXT-TI", "Historic contract notice"),
+            ted_date("PROCEDURE", "TXT-DS", 1_100_000_000),
+        ],
+    };
+    let (text, pt) = legacy_record(fetch_id, "295856-2007", TEXT, text_record);
+    // A 2011 award referencing that 2007 text-era number.
+    let (award, pa) =
+        legacy_award(fetch_id, "000181-2011", 400, "Old Winner SA", 900_000, &["2007/S 243-295856"]);
+    db.record_notice(&text, &pt).await.expect("text");
+    db.record_notice(&award, &pa).await.expect("award");
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.tenders, 1, "the 2011 award chains onto the 2007 text-era record");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 2);
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("ojs:2007-295856"),
+        "keyed by the earliest (text-era) publication"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The unchained-award metric per era: an award that never chained to a
+/// contract notice is a single-notice award Tender; a chained one is not.
+#[tokio::test]
+async fn unchained_awards_are_counted_per_era() {
+    let (db, fetch_id, path) = scratch("unchained").await;
+    // A CN + its award = one chained (multi-notice) award Tender.
+    let (cn, pc) = legacy_cn(fetch_id, "000001-2019", 5, 728_000_000, &[]);
+    let (chained, pch) =
+        legacy_award(fetch_id, "000200-2019", 30, "Chained Winner", 100, &["000001-2019"]);
+    // An award referencing nothing = one unchained single-notice award Tender.
+    let (lone, pl) = legacy_award(fetch_id, "000500-2019", 40, "Lone Winner", 200, &[]);
+    for (n, p) in [(&cn, &pc), (&chained, &pch), (&lone, &pl)] {
+        db.record_notice(n, p).await.expect("notice");
+    }
+    project::project(&db, false).await.expect("project");
+
+    let linkage = db.award_linkage().await.expect("linkage");
+    let r209 = linkage.iter().find(|(era, ..)| era == R209).expect("an r209 row");
+    assert_eq!(r209.1, 2, "two award Tenders (the chained one and the lone one)");
+    assert_eq!(r209.2, 1, "exactly one is a single-notice, unchained award");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The era boundary holds: an eForms notice never joins a legacy OJS chain even
+/// when a legacy reference collides with its publication number — straddling
+/// procedures are two Tenders (the accepted decision).
+#[tokio::test]
+async fn eforms_notices_do_not_join_legacy_chains() {
+    let (db, fetch_id, path) = scratch("era-boundary").await;
+    // An eForms notice whose publication number is 000900-2024.
+    let eforms = Parsed {
+        sections: vec![sec("PROCEDURE", "Procedure", None)],
+        values: vec![ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: "BT-04-notice".into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: "efp-1".into(), is_ref: false },
+        }],
+    };
+    let (ef, pe) = legacy_record(fetch_id, "000900-2024", "eforms:eforms-sdk-1.13", eforms);
+    // A legacy notice referencing 2024/S ...-000900 — the same OJS number.
+    let (award, pa) =
+        legacy_award(fetch_id, "000901-2024", 50, "Legacy Winner", 300, &["2024/S 010-000900"]);
+    db.record_notice(&ef, &pe).await.expect("eforms");
+    db.record_notice(&award, &pa).await.expect("legacy");
+    let report = project::project(&db, false).await.expect("project");
+
+    assert_eq!(report.tenders, 2, "the eForms notice stays its own Tender");
+    // The eForms notice is keyed by BT-04, the legacy award by its own OJS number.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key = 'efp-1'").await, 1);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key LIKE 'ojs:%'").await,
+        1
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// A correction — a change notice republishing the same logical notice
 /// (BT-701) — replaces the round it corrects instead of double-counting it
 /// (ted-empirical-checks.md: same BT-701 + efac:Changes ⇒ correction;

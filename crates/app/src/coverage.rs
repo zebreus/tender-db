@@ -8,7 +8,7 @@
 //! compared against what we hold. Before any backfill the ratios are near zero,
 //! which is the correct answer, not a bug to hide.
 
-use model::dashboard::{Count, Coverage, Dashboard, Lag, Quarantined};
+use model::dashboard::{AwardLinkage, Count, Coverage, Dashboard, Lag, Quarantined};
 use store::Db;
 
 /// Notice counts per TED publication year — the coverage denominator. Vendored
@@ -84,6 +84,18 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         .map(|(label, value)| Count { label, value })
         .collect();
 
+    let award_linkage: Vec<AwardLinkage> = db
+        .award_linkage()
+        .await?
+        .into_iter()
+        .map(|(era, awards, unchained)| AwardLinkage {
+            era,
+            awards,
+            unchained,
+            ratio: if awards > 0 { unchained as f64 / awards as f64 } else { 0.0 },
+        })
+        .collect();
+
     Ok(Dashboard {
         measured_at: now,
         coverage,
@@ -108,6 +120,7 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
             notice_age: lag.newest_notice_at.map(|at| now - at),
         },
         counts,
+        award_linkage,
         cursor: db.latest_cursor().await?,
         service_rev: crate::v1::rev().to_owned(),
     })
