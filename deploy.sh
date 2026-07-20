@@ -58,8 +58,16 @@ ln -sfnT "\$STORE_PATH" ${APP}.new
 mv -T ${APP}.new $APP
 echo "$APP -> \$(readlink $APP)"
 
-# Record the deployed revision so the health check can report it.
+# Record the deployed revision (regression guard + the deploy summary below).
 echo "$REV" > /opt/tender-db/deployed-rev
+
+# Feed the rev to the RUNNING service via a systemd drop-in, read at runtime as
+# COMMIT_SHA (the app's v1::rev()). The rev lives in the environment, not the
+# built artifact, so the nix build stays reproducible while /health, /v1 and the
+# dashboard's System panel still report the exact deployed revision.
+install -d /etc/systemd/system/tender-db.service.d
+printf '[Service]\nEnvironment=COMMIT_SHA=%s\n' "$REV" > /etc/systemd/system/tender-db.service.d/rev.conf
+systemctl daemon-reload
 
 systemctl restart tender-db
 systemctl --no-pager --lines=0 status tender-db | head -5

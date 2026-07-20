@@ -109,7 +109,7 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         },
         counts,
         cursor: db.latest_cursor().await?,
-        service_rev: crate::v1::REV.to_owned(),
+        service_rev: crate::v1::rev().to_owned(),
     })
 }
 

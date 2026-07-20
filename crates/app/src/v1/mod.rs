@@ -27,12 +27,22 @@ use tokio::sync::watch;
 use tower_governor::key_extractor::KeyExtractor;
 use tower_governor::{GovernorError, GovernorLayer, governor::GovernorConfigBuilder};
 
-/// The git revision this binary was built from. `deploy.sh` sets `COMMIT_SHA`;
-/// a plain `cargo build` reports `dev`.
-pub const REV: &str = match option_env!("COMMIT_SHA") {
-    Some(rev) => rev,
-    None => "dev",
-};
+/// The git revision the running server is deployed as. Read at RUNTIME from the
+/// `COMMIT_SHA` environment variable — `deploy.sh` sets it per deploy from the
+/// rev it already records in `/opt/tender-db/deployed-rev`, so the nix build
+/// stays reproducible (it never bakes a rev into the artifact). Falls back to a
+/// compile-time `COMMIT_SHA` if one was set, then to `dev` for a plain build.
+pub fn rev() -> &'static str {
+    static REV: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    REV.get_or_init(|| {
+        std::env::var("COMMIT_SHA")
+            .ok()
+            .filter(|s| !s.is_empty())
+            .or_else(|| option_env!("COMMIT_SHA").map(str::to_owned))
+            .unwrap_or_else(|| "dev".to_owned())
+    })
+    .as_str()
+}
 
 /// AGPL §13: a network user must be offered the running version's source. The
 /// `/_source` route answers with this revision and how to obtain it.
@@ -400,7 +410,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
     Ok(axum::Json(json!({
         "service": "tender-db",
         "version": env!("CARGO_PKG_VERSION"),
-        "source": REV,
+        "source": rev(),
         "source_offer": SOURCE_OFFER,
         "license": "AGPL-3.0-or-later",
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
@@ -419,12 +429,13 @@ async fn source() -> Response {
     (
         [(header::CONTENT_TYPE, "text/plain; charset=utf-8")],
         format!(
-            "tender-db {version}, revision {REV}\n\
+            "tender-db {version}, revision {rev}\n\
              Licensed AGPL-3.0-or-later; the full licence text ships with the source.\n\n\
              This service offers the Corresponding Source of the exact version it is\n\
              running, as AGPL section 13 requires. Request it, naming the revision\n\
              above, from the operator at {SOURCE_OFFER}.\n",
             version = env!("CARGO_PKG_VERSION"),
+            rev = rev(),
         ),
     )
         .into_response()
@@ -439,7 +450,7 @@ async fn health(State(state): State<AppState>) -> Response {
     };
     let body = json!({
         "ok": cursor.is_some(),
-        "rev": REV,
+        "rev": rev(),
         "database": if cursor.is_some() { "ok" } else { "unavailable" },
         "cursor": cursor.map(|c| c.to_string()),
     });

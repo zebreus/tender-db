@@ -63,6 +63,14 @@ The health check at the end probes `GET /health` (see [Ingestion](#ingestion));
 it must return `"ok":true` throughout, since ingestion runs in-process and the
 readers keep serving over WAL during a load.
 
+The deploy also writes the rev into a systemd drop-in
+(`/etc/systemd/system/tender-db.service.d/rev.conf`,
+`Environment=COMMIT_SHA=<rev>`) and reloads before the restart. The app reads
+`COMMIT_SHA` at runtime (`crates/app/src/v1/mod.rs`, `rev()`), so `/health`,
+`/v1`, `/_source`, and the dashboard's System panel report the actual deployed
+revision — while the `nix build` never sees the rev and stays reproducible. A
+plain local build (no `COMMIT_SHA` in the environment) reports `dev`.
+
 Rollback: point the symlink at a previous store path and restart.
 
 ```sh
@@ -317,12 +325,6 @@ Known gaps in the production setup, tracked here so they aren't rediscovered:
   `/data` mount, and nginx all come back clean. Needs a deliberate quiet window —
   do it when no ingestion/backfill is in flight, then verify `systemctl status
   tender-db` and `curl https://tenders.zebreus.click/health`.
-- **`/health` and `/_source` report `rev: dev`.** The binary's revision comes
-  from `COMMIT_SHA` at build time (`crates/app/src/v1/mod.rs`, `REV`); `deploy.sh`
-  knows the rev and writes `/opt/tender-db/deployed-rev`, but it isn't threaded
-  into the `nix build`, so the compiled-in value stays `dev`. Until fixed, read
-  the deployed rev from `/opt/tender-db/deployed-rev`, not from `/health`. Small
-  future fix: pass the rev into the flake build and on to `COMMIT_SHA`.
 - **AGPL source offer is a written offer, not a public repo.** `/_source`
   currently tells a network user to request the Corresponding Source from the
   operator (AGPL §13 permits this). Publishing the repo at a stable public URL
