@@ -1,7 +1,7 @@
 # 12 — DÖE source: fetcher, eForms-DE + sdk-0.1 profiles, cross-source merge
 
-Status: ready-for-agent
-Blocked by: 04
+Status: resolved
+Blocked by: —
 
 Goal: oeffentlichevergabe.de is a live second Source and German procedures
 merge across Sources.
@@ -142,3 +142,45 @@ a real column-migration path or a documented recreate step. My verification
 therefore registered into `/data/db/doe-verify.db`; the archive files under
 /data/archive/doe/ are real and will re-register (hash-idempotent) once the
 production DB opens again.
+
+2026-07-20 — **Cross-source merge (the last slice) done** and issue closed
+(commit "Issue 12: merge a procedure's TED and DÖE readings into one
+Tender"). ADR-0003 realised in the projection + store:
+
+- Keyed (BT-04) Tenders now group by the procedure key **alone**, across
+  Sources — a TED eForms procedure and its DÖE twin publish the same BT-04
+  UUID, so the shared key merges them. The `tenders` table is now
+  `UNIQUE(procedure_key)` (legacy `ojs:` keys are TED-only, islands stay
+  per-notice), and `tender_identity` finds a keyed Tender by key alone,
+  keeping the primary Source label current as backfill adds the TED twin.
+- Per-field-class precedence: the merged chain folds by publication instant
+  with a fixed Source tiebreak (`source_rank` ted > doe), so on an equal
+  instant the TED reading folds last and wins the shared eForms fields and the
+  publication identity; the Tender is labelled TED. German national content
+  (national-codelist codes, DEX satellites) is not a canonical fact — it is
+  retained in full in the notice layer — so no fact-level DÖE override is
+  needed, only retention.
+
+Verified by the `doe-ted-pair` fixtures (shared BT-04
+`1af86e3c-411f-4c2e-aacc-ecac61717472`): one Tender, TED publication
+identity, both readings as versions, DÖE national codes retained. At scale
+(pre-backfill dress rehearsal), the TED + DÖE monthly 2026-06 notice layers
+share **12,336 BT-04 procedure keys across both Sources** — each collapses to
+one Tender under this rule.
+
+The 52-element TED long-tail follow-up noted in the parse-half comment is
+also closed (commits "Issue 12/18: map the TED eForms long-tail UBL elements"
++ "Fix: complete the TED long-tail mappings"): the one-off UBL leaves are
+mapped via EXTRA/ALIASES. Dress rehearsal on the fixed binary: a fresh
+reprocess of TED monthly 2026-06 yields **0 unclaimed-content** (78,480
+notices → 78,309 parsed; residual quarantines are 4 unknown-customization for
+unvendored SDK 1.11/1.7 and 167 unrepresentable-value, both ADR-0004 by
+design), and ted daily / doe daily / doe monthly / ted monthly 2014-01 /
+ted monthly 2005-01 are all 0 unclaimed too. The 2005-01 text monthly
+exercised the tar → daily tar.gz → zip → concatenated-records double-nesting
+(965 members → 20,720 notices, 0 unclaimed, ~91 MB RSS).
+
+Open follow-up (not a blocker for these fixes): projecting ~100k notices ran
+CPU-bound past 80 min in the rehearsal (per-tender transactions in
+`apply_tender`); the full backfill will want this profiled/batched before the
+multi-million-notice run.
