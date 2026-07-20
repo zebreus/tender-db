@@ -95,3 +95,22 @@ The tool is the final acceptance gate: run `verify --token …` against
 production once the backfill + results projection complete; green = spec §5 met.
 (A production `acceptance-verify` account exists for this; mint a fresh token
 from the dashboard — the one used today was revoked.)
+
+### 2026-07-20 — FULL PROCESS+PROJECT RUN enqueued (rev 2945e9e), run-driver
+
+Deploy of the store-migration fix (rev 2945e9e — additive `published_at`/
+`dispatched_at` column migrations) landed 22:10 UTC; /health ok on public+local,
+`deployed-rev`=2945e9e. The prior enqueue (jobs 469–472) had died on
+`table notices has no column named published_at`; that column now exists.
+
+Enqueued via /admin (all 202), running one-at-a-time in order:
+1. process ted monthly (all) — 401 packages, 1993→2026
+2. process ted daily (all)
+3. process doe monthly (all)
+4. process doe daily (all)
+5. project rebuild=false
+
+Job 1 confirmed progressing: 1993-02→1993-07, notices 3.7k→30k, no column
+error. Monitor: VPS tmux `bf15-monitor` → `/opt/tender-db/backfill-status.log`,
+one line / 120s (job progress, notices/s, RSS, df /data, health).
+/data at 38% (189G/500G) at start.
