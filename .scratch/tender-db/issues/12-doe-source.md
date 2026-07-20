@@ -58,6 +58,66 @@ It is ~44 requests / ~3 GB, and german-portals.md §9 lists "undocumented
 rate limits" as an open question to clear with
 support@datenservice-oeffentlicher-einkauf.de first.
 
+2026-07-20 — The **parse half** is done (branch
+`worktree-agent-afd2efacf0e1784c9`): DÖE zip packages walk, and both DÖE
+profile families parse into the notice-parsed layer with full claim
+coverage. The cross-source merge + per-field-class precedence remain a later
+projection slice, as scoped.
+
+**eforms-de-2.0/2.1** rides the existing eForms claim system with vendored
+SDK-DE `fields.json` (gitlab.opencode.de SDK-eforms-de tags 1.12.6 / 1.13.3
+/ 1.14.4 → `sdk/fields-de-2.0.0.json`, `fields-de-2.1.0-eu-1.13.json`,
+`fields-de-2.1.0-eu-1.14.json`). `eforms::sdk::resolve()` is the DE→EU
+version map: 2.1 tracks two EU bases keyed by `cbc:ProfileID`
+(`eforms-de-2.1@eforms-sdk-1.13`/`@eforms-sdk-1.14`; absent ProfileID →
+1.13, the empirically dominant base), 2.0 → 1.12. SDK-DE models ProfileID
+as a real field (OPT-002-notice-DET), so an inventory-declared field now
+wins over an IGNORED rule; the `defext` → `german-eforms-extension`
+namespace is registered for the DEX fields (still zero wild instances);
+the 14 national codelists need no special handling — codes are stored
+as published with their `@listName`.
+
+**eforms-sdk-0.1** is parsed against an *empirical* era checklist,
+`sdk/fields-sdk-0.1.json`: 293 leaf fields + 11 section nodes generated
+from a full scan of every sdk-0.1 notice in the sample history (244,790
+notice versions, 2022-12→2026-07; 464 distinct element paths — the
+research's 800-file sample saw 362). Field ids are the source's own element
+paths under an `SDK01-` prefix (`SDK01-ContractingParty-Party-PartyName-Name`),
+extension plumbing elided; sections: Lot (identified), ContractingParty,
+TenderResult, WinningParty, Change, Location, criteria/requirements.
+A path outside the inventory quarantines (`unclaimed-content`); extension
+workflow documented in the file's `$comment` (re-scan, diff, review,
+reprocess). Notice identity = `<cbc:ID>-<cbc:VersionID>` (uuid or numeric
+channel), derived from the document; empty numeric-channel
+`ContractFolderID` stays valueless by design. RegulatoryDomain is an open
+code domain, stored as published (11 values seen incl. de-vob/de-vol/
+de-uvgo/de-hhr). Full-corpus surprises vs the research: award amounts DO
+occur (PayableAmount etc., with currencyID), multi-lot/Part lots exist in
+some months, and dates may lack zone offsets — read as UTC for SDK01-
+fields only (eforms::value, documented).
+
+**Verification** (VPS, release build, scratch db `/opt/tender-db/doe12/verify2.db`,
+real archived packages):
+- doe daily 2026-07-18: 567/567 parsed, **zero quarantines** (2.9 s).
+- doe monthly 2026-06: 23,398 notices → 23,290 parsed, **zero
+  unclaimed-content** (3m12s). Split: eforms-de-2.1 12,138 / de-2.0 1,651 /
+  sdk-0.1 10,094 (9,178 numeric + 916 uuid) / eforms-sdk-1.0 82. Remaining
+  quarantines: 82 unknown-customization (`eforms-sdk-1.0` E2/E3 stream —
+  EU SDK 1.0's fields.json uses descendant-axis + boolean-or predicates our
+  xpath grammar doesn't model; deliberately not vendored, documented in
+  sdk.rs) and 26 unrepresentable-value (3-fraction-digit amounts, ADR-0004
+  by design).
+- Fixes found on real data: three withheld-discriminator publisher patterns
+  (FieldsPrivacy under legislation-reference/ProcessJustification whose
+  discriminator is itself withheld) → ALIASES grafts; one out-of-inventory
+  `cbc:CriterionTypeCode` → EXTRA (`UBL-SelectionCriterionType`).
+- ted monthly 2026-06 (plain tar of nested daily .tar.gz — the walker now
+  splits containers by magic and descends nested tars in-stream): first run
+  exposed that process_package buffered a whole package's parsed records
+  (6 GB, OOM on ~66k notices); it now streams through a bounded channel
+  (~100 MB RSS at any package size). Verified with daily 2026-00136 seeded
+  first; the monthly's copy dedups as already-ingested.
+
 Blocker found for whoever takes the parsing half (see also issue 05/14):
 the production DB `/data/db/tender-db.db` can no longer be opened by current
 code — `Parse error: invalid expression in CREATE INDEX: parse_state`. The

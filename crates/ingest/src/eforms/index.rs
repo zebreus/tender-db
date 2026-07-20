@@ -106,6 +106,14 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/efac:StrategicProcurement",
     ),
+    // Publishers restate award-criterion fields (type code, weight) on the
+    // parent `cac:AwardingCriterion`, which the SDK models only under
+    // `cac:SubordinateAwardingCriterion` (107 notices in the TED monthly
+    // 2026-06). Gap-filling keeps the parent's own BT-543/BT-541 exact.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion",
+    ),
     // Withheld discriminators (seen on DÖE eforms-de notices, 96+20 in
     // 2026-06 alone): the SDK anchors a FieldsPrivacy block under the very
     // element variant whose discriminator the privacy block suppresses — a
@@ -220,6 +228,18 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "UBL-SelectionCriterionUsage",
         "code",
     ),
+    // A raw UBL weight on an awarding criterion; the SDK models weights only
+    // as extension parameters (BT-5421..5423). Declared at the subordinate
+    // criterion, the alias above mirrors it onto the parent.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:WeightNumeric",
+        "UBL-AwardCriterionWeightNumeric",
+        "number",
+    ),
+    // UBL 2.3 forces a `cac:TenderResult` on every CAN; the SDK models only
+    // its dummy AwardDate (OPT-999). Some eSenders fill the block in for
+    // real — the result code beside the dummy date.
+    ("/*/cac:TenderResult/cbc:TenderResultCode", "UBL-TenderResultCode", "code"),
     // DÖE eforms-de publishers restate the selection-criterion type in a
     // `cbc:CriterionTypeCode` the SDK's inventory does not model (it models
     // only `cbc:TendererRequirementTypeCode` there).
@@ -548,6 +568,7 @@ fn insert_extra(
         "date" | "time" => Decision::Dates,
         "indicator" => Decision::Integers,
         "amount" => Decision::Amounts,
+        "number" => Decision::Numbers,
         other => return Err(Error(format!("EXTRA field {field_id} has unknown type {other}"))),
     };
     let branch = root.descend(&locate(xpath)?.steps);
