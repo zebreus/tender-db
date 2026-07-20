@@ -48,7 +48,12 @@ pub(crate) const SCHEMA: &str = "
         -- distinct kind, CONTEXT.md).
         kind             TEXT NOT NULL,
         created_at       INTEGER NOT NULL,
-        UNIQUE(source, procedure_key),
+        -- A procedure key is globally unique across Sources: a TED eForms
+        -- procedure and its DÖE twin share one BT-04 UUID and must collapse into
+        -- one Tender (ADR-0003), and legacy `ojs:` keys are TED-only, so the key
+        -- alone identifies the Tender. `source` is the primary Source label
+        -- (TED where the procedure appears on both).
+        UNIQUE(procedure_key),
         UNIQUE(island_notice_id)
     ) STRICT;
 
@@ -826,20 +831,31 @@ impl Db {
         p: &TenderProjection,
         now: i64,
     ) -> turso::Result<(i64, bool)> {
-        let (sql, params): (&str, (Value, Value)) = match (&p.procedure_key, p.island_notice_id) {
-            (Some(key), _) => (
-                "SELECT id FROM tenders WHERE source = ? AND procedure_key = ?",
-                (t(&p.source), t(key)),
-            ),
-            (None, Some(notice_id)) => (
-                "SELECT id FROM tenders WHERE source = ? AND island_notice_id = ?",
-                (t(&p.source), Value::Integer(notice_id)),
-            ),
+        // A keyed Tender is found by its procedure key alone — that is what
+        // merges a procedure's TED and DÖE readings into one Tender (ADR-0003).
+        // Islands stay per-notice.
+        let mut rows = match (&p.procedure_key, p.island_notice_id) {
+            (Some(key), _) => {
+                conn.query("SELECT id, source FROM tenders WHERE procedure_key = ?", (t(key),)).await?
+            }
+            (None, Some(notice_id)) => {
+                conn.query(
+                    "SELECT id, source FROM tenders WHERE source = ? AND island_notice_id = ?",
+                    (t(&p.source), Value::Integer(notice_id)),
+                )
+                .await?
+            }
             (None, None) => unreachable!("a Tender is keyed by its procedure or by its island notice"),
         };
-        let mut rows = conn.query(sql, params).await?;
         if let Some(row) = rows.next().await? {
-            return Ok((int(&row, 0), false));
+            let id = int(&row, 0);
+            // As backfill deepens, a DÖE-first procedure gains its TED twin and
+            // the primary Source flips to TED (ADR-0003); keep the label current.
+            if text(&row, 1) != p.source {
+                conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
+                    .await?;
+            }
+            return Ok((id, false));
         }
         conn.execute(
             "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)

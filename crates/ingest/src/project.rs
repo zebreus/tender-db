@@ -542,12 +542,17 @@ impl NoticeState {
 /// re-projects every member under the surviving key; the absorbed key's rows
 /// are retired with `removed` change events in [`Db::retire_absorbed_legacy_tenders`].
 fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
-    let mut keyed: BTreeMap<(String, String), Vec<NoticeState>> = BTreeMap::new();
+    // Keyed Tenders group by procedure key *alone*, across Sources: a TED
+    // eForms procedure and its DÖE twin publish one and the same BT-04 UUID
+    // (ADR-0003, verified exact), so keying on the shared key is what merges
+    // the two Sources into one Tender. Legacy OJS chains and islands stay
+    // per-Source (ojs: keys are TED-only, an island is one notice).
+    let mut keyed: BTreeMap<String, Vec<NoticeState>> = BTreeMap::new();
     let mut islands: Vec<NoticeState> = Vec::new();
     let mut legacy: Vec<NoticeState> = Vec::new();
     for state in states {
         match (&state.procedure_key, state.legacy, state.ojs_self) {
-            (Some(key), _, _) => keyed.entry((state.source.clone(), key.clone())).or_default().push(state),
+            (Some(key), _, _) => keyed.entry(key.clone()).or_default().push(state),
             (None, true, Some(_)) => legacy.push(state),
             (None, ..) => islands.push(state),
         }
@@ -587,16 +592,20 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
     chains
         .into_iter()
         .map(|mut chain| {
+            // Order by publication instant, then a fixed Source precedence, so a
+            // cross-source procedure folds deterministically: on an equal
+            // instant the TED reading folds *last* and thus supersedes the DÖE
+            // one for shared eForms fields and publication identity (ADR-0003).
             chain.sort_by(|a, b| {
-                (a.published_at, &a.publication_id, a.notice_id)
-                    .cmp(&(b.published_at, &b.publication_id, b.notice_id))
+                (a.published_at, source_rank(&a.source), &a.publication_id, a.notice_id)
+                    .cmp(&(b.published_at, source_rank(&b.source), &b.publication_id, b.notice_id))
             });
             let first = &chain[0];
             let projection_kind = first.kind().to_owned();
             let procedure_key = first.procedure_key.clone();
             let island_notice_id = procedure_key.is_none().then_some(first.notice_id);
             TenderProjection {
-                source: first.source.clone(),
+                source: primary_source(&chain),
                 procedure_key,
                 island_notice_id,
                 kind: projection_kind,
@@ -604,6 +613,31 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
             }
         })
         .collect()
+}
+
+/// Fixed cross-source precedence for the supersession tiebreak (ADR-0003). On
+/// an equal publication instant the higher rank folds last and so wins the
+/// shared eForms fields and the publication identity — TED > DÖE, because the
+/// OJEU gazette is the authoritative publication record. (German national
+/// content — national-codelist codes and DEX satellites — is not projected as
+/// canonical facts; it is retained in full in the notice layer, so the DÖE
+/// side of the ADR precedence needs no fact-level override here.)
+fn source_rank(source: &str) -> u8 {
+    match source {
+        "ted" => 1,
+        _ => 0,
+    }
+}
+
+/// The Source a merged Tender is labelled by. ADR-0003 puts publication
+/// identity on the TED side, so a procedure present on both Sources is a TED
+/// Tender; a Source-only procedure keeps its own.
+fn primary_source(chain: &[NoticeState]) -> String {
+    if chain.iter().any(|s| s.source == "ted") {
+        "ted".to_owned()
+    } else {
+        chain[0].source.clone()
+    }
 }
 
 /// The synthetic procedure key of a legacy Tender: its component's earliest OJS

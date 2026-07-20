@@ -35,9 +35,15 @@ async fn scratch(name: &str) -> (Db, i64, String) {
 /// Run a fixture through the real dispatch + parse chain and store it, exactly
 /// as `process` would from an archived package.
 async fn ingest(db: &Db, fetch_id: i64, relative: &str) {
+    ingest_from(db, fetch_id, SOURCE, relative).await;
+}
+
+/// Ingest a fixture as a named Source — DÖE and TED share one procedure across
+/// Sources (ADR-0003), so the pair test needs to place notices under both.
+async fn ingest_from(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     let path = format!("tests/fixtures/{relative}");
     let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-    ingest_bytes(db, fetch_id, SOURCE, relative, &bytes).await;
+    ingest_bytes(db, fetch_id, source, relative, &bytes).await;
 }
 
 async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, bytes: &[u8]) {
@@ -1293,3 +1299,64 @@ async fn a_ted_eforms_notice_stores_publication_and_dispatch_separately() {
     let _ = std::fs::remove_file(&path);
 }
 
+
+// ----------------------------------------------- issue 12: cross-source merge
+
+/// One procedure published on both TED and DÖE (a shared BT-04 UUID) collapses
+/// into a single Tender: TED publication identity, DÖE content retained
+/// (ADR-0003).
+#[tokio::test]
+async fn a_procedure_on_both_sources_merges_into_one_tender() {
+    let (db, fetch_id, path) = scratch("pair").await;
+    ingest_from(&db, fetch_id, "ted", "doe-ted-pair/ted-cn-00373130-2026.xml").await;
+    ingest_from(
+        &db,
+        fetch_id,
+        "doe",
+        "doe-ted-pair/doe-cn-ebb72363-832d-4cea-8db6-04999414ea8c-01.xml",
+    )
+    .await;
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 2);
+    assert_eq!(report.tenders, 1, "one procedure, one Tender across both Sources");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_versions").await,
+        2,
+        "one version per Source notice, interleaved in one chain"
+    );
+    // ADR-0003: the shared BT-04 UUID identifies the Tender, and its primary
+    // Source label is TED (publication identity from the OJEU gazette).
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("1af86e3c-411f-4c2e-aacc-ecac61717472"),
+        "both notices share one BT-04 procedure UUID"
+    );
+    assert_eq!(query_text(&db, "SELECT source FROM tenders").await.as_deref(), Some("ted"));
+    // The TED reading is a version of the one Tender (its publication id is the
+    // identity)...
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id
+              WHERE n.source = 'ted'"
+        )
+        .await,
+        1,
+    );
+    // ...and DÖE's richer national content is retained in the notice layer.
+    assert!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM notice_codes c JOIN notices n ON n.id = c.notice_id
+              WHERE n.source = 'doe'"
+        )
+        .await
+            > 0,
+        "the DÖE notice's national codes are present"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
