@@ -51,3 +51,47 @@ that aborts before 245 GB used and defers the oldest years if disk tightens.
 Fetch driver: `/opt/tender-db/backfill-fetch.sh` (tmux session
 `core16-backfill`), log at `/opt/tender-db/backfill-fetch.log`. Final measured
 sizes / registry counts / disk state recorded on completion.
+
+### 2026-07-20 — VERIFICATION harness landed (spec §5), verify-agent
+
+`crates/ingest/src/bin/verify.rs` — the standing acceptance tool. Black-box
+against a deployed instance (`--base-url`, default `https://tenders.zebreus.click`),
+report + non-zero exit on failure, `--json` for machines. Three checks, each
+vs an *external* ground truth (never the dashboard):
+
+1. **Coverage** — per-year TED `COUNT(DISTINCT publication_id)` vs the vendored
+   `crates/app/data/ted-notice-counts.csv`, ±2 % tolerance (upstream counts are
+   approximate; partial years are a floor, not a ceiling).
+2. **Search-API cross-check** — for eForms-era sample days, a *set-membership*
+   check: does the instance hold the publication ids TED lists for that day.
+   Deliberately **not** a raw day-count: the projection stores TED's
+   **dispatch-date** as `published_at` (issue 136 = dispatch 07-16 / publication
+   07-17), so a same-date count is unsound while id-membership is exact.
+3. **Era ladder** — one real notice per format era (from the fixtures README)
+   resolves through `/v1`: Notice exists → Tender exists → eForms CAN carries a
+   winner.
+
+Coverage + era-ladder need an API token (`--token` / `TENDER_API_TOKEN`) for
+the read-only `/v1/sql` endpoint (per-year/per-notice counting isn't in the REST
+filters); without one they report *skipped*, not passed. Unit tests cover the
+CSV parse, the tolerance/verdict logic, id validation, `has_winner`, and the
+overall pass/fail gate. Integration test intentionally skipped (would need a
+circular ingest→app dep; the tool's real target is production).
+
+**Real run against production today (rev 7199300, partial data):** RESULT FAIL,
+correctly — the instance holds only 2026-07-16 (3715) + 2026-07-19 (3702) ≈
+**7 439 TED notices**, so 1993–2025 are all `MISSING` and 2026 is `SHORT`
+(partial). Set-membership: **2026-07-17 → 250/250 PASS**, other sample days
+0/250 (not yet backfilled). Two findings worth flagging for the backfill/results
+work, not tool bugs:
+- **`published_at` = dispatch-date, not publication-date.** Semantic mismatch
+  vs TED's OJS publication date (drove the set-membership design). Worth a
+  deliberate decision — the field name implies publication date.
+- **Results layer not materialised in prod:** 2 529 subtype-29 CANs present but
+  **zero `lot_results` rows** — so the eForms-CAN era-ladder check fails ("no
+  winner"). Issue 13's projection is not populating results on the live deploy.
+
+The tool is the final acceptance gate: run `verify --token …` against
+production once the backfill + results projection complete; green = spec §5 met.
+(A production `acceptance-verify` account exists for this; mint a fresh token
+from the dashboard — the one used today was revoked.)
