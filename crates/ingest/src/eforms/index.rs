@@ -135,6 +135,27 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:TenderingProcess/cac:ProcessJustification[cbc:ProcessReasonCode/@listName='direct-award-justification']/ext:UBLExtensions",
         "/*/cac:TenderingProcess/cac:ProcessJustification/ext:UBLExtensions",
     ),
+    // --- TED eForms long tail (issue 18 mop-up): SDK subtrees publishers mount
+    // one level deeper than the inventory models them.
+    //
+    // A doubly-nested subordinate award criterion (a criterion under a
+    // criterion): graft the subordinate subtree one level deeper onto itself.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cac:SubordinateAwardingCriterion",
+    ),
+    // A UBLExtensions block published directly under the lot rather than under
+    // its TenderingTerms — graft the TenderingTerms/UBLExtensions subtree onto it.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/ext:UBLExtensions",
+    ),
+    // A TenderingParty inlined under a SettledContract's LotTender, rather than
+    // referenced from NoticeResult — graft the TenderingParty subtree there.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:SettledContract/efac:LotTender/efac:TenderingParty",
+    ),
 ];
 
 pub const EXTRA: &[(&str, &str, &str)] = &[
@@ -347,6 +368,58 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReason",
         "UBL-ProcessReason",
         "text",
+    ),
+    // --- TED eForms long tail (issue 18 mop-up): one-off UBL elements the SDK
+    // inventory omits at the position publishers actually mount them. All are
+    // fields=0 at these exact leaves across SDK 1.12–1.15 (verified), so each
+    // fills a genuine gap rather than shadowing a business term.
+    //
+    // Free-text place-of-performance description (procedure level; the
+    // procedure→lot alias mirrors it onto the lot's ProcurementProject too).
+    (
+        "/*/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:Description",
+        "UBL-AddressDescription",
+        "text",
+    ),
+    // Framework estimated maximum value published on a Lot — the SDK enumerates
+    // this amount only under LotsGroup.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cbc:EstimatedMaximumValueAmount",
+        "UBL-FrameworkEstimatedMaximumValue",
+        "amount",
+    ),
+    // Invitation-to-submit deadline — the SDK enumerates only its StartDate; the
+    // EndDate/EndTime pair reunites by UBL's Date/Time naming like any deadline.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:InvitationSubmissionPeriod/cbc:EndDate",
+        "UBL-InvitationSubmissionDeadline",
+        "date",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:InvitationSubmissionPeriod/cbc:EndTime",
+        "UBL-InvitationSubmissionDeadline",
+        "time",
+    ),
+    // A raw award-criterion weight (non-numeric form) beside the numeric one;
+    // the Subordinate→AwardingCriterion alias mirrors it onto the parent.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:Weight",
+        "UBL-AwardCriterionWeight",
+        "text",
+    ),
+    // A free-text contract-execution requirement whose ExecutionRequirementCode
+    // variant the SDK does not enumerate a Description for.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:Description",
+        "UBL-ContractExecutionDescription",
+        "text",
+    ),
+    // eInvoicing acceptance indicator — the SDK models only the usage indicators
+    // (ElectronicInvoiceUsageIndicator etc.), not the accepted one.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicInvoiceAcceptedIndicator",
+        "UBL-ElectronicInvoiceAccepted",
+        "indicator",
     ),
 ];
 

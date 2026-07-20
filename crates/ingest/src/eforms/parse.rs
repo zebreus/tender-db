@@ -41,7 +41,7 @@ const IGNORED_ATTRIBUTES: [(&str, &str); 2] = [
 /// `languageLocaleID` is the DÖE sdk-0.1 serializer's companion to
 /// `languageID` (both carry the same language code in the wild); it qualifies
 /// the text like the others and is consumed with it.
-const VALUE_ATTRIBUTES: [&str; 8] = [
+const VALUE_ATTRIBUTES: [&str; 9] = [
     "listName",
     "listID",
     "schemeName",
@@ -50,6 +50,10 @@ const VALUE_ATTRIBUTES: [&str; 8] = [
     "languageLocaleID",
     "currencyID",
     "unitCode",
+    // `@name` is a code's human-readable genericode display label — a redundant
+    // echo of the code itself (publishers attach it to e.g. DocumentTypeCode).
+    // Claimed as a value qualifier like the others (issue 18 mop-up).
+    "name",
 ];
 
 #[derive(Debug, PartialEq)]
