@@ -43,8 +43,9 @@ pub fn convert(
             Value::Amount { cents: cents(text).map_err(|e| Error(format!("{}: {e}", field.id)))?, currency }
         }
         Decision::Dates => match field.kind.as_str() {
-            "date" => timestamp(text, None).map_err(|e| Error(format!("{}: {e}", field.id)))?,
-            _ => timestamp_from_time(text).map_err(|e| Error(format!("{}: {e}", field.id)))?,
+            "date" => timestamp_for(field, text, None).map_err(|e| Error(format!("{}: {e}", field.id)))?,
+            _ => timestamp_from_time(&offset_or_utc(field, text))
+                .map_err(|e| Error(format!("{}: {e}", field.id)))?,
         },
         Decision::Integers => Value::Integer(match text {
             "true" => 1,
@@ -99,6 +100,27 @@ pub fn cents(text: &str) -> Result<i64, String> {
         .and_then(|c| c.checked_add(fraction))
         .map(|c| sign * c)
         .ok_or_else(|| format!("amount out of range: {text}"))
+}
+
+/// [`timestamp`], with the one profile-scoped relaxation: the DÖE `sdk-0.1`
+/// dialect (fields prefixed `SDK01-`) systematically publishes dates and
+/// times *without* eForms' mandatory zone offset (`2022-11-29`,
+/// `2000-01-01`). Quarantining would reject a large share of the profile's
+/// whole history over a dialect trait, not a data error, so a missing offset
+/// is read as UTC there — day precision is all such values carry. Every other
+/// profile stays strict: an offsetless date is malformed and quarantines.
+pub fn timestamp_for(field: &FieldInfo, date: &str, time: Option<&str>) -> Result<Value, String> {
+    let date = offset_or_utc(field, date);
+    let time = time.map(|t| offset_or_utc(field, t));
+    timestamp(&date, time.as_deref())
+}
+
+/// Append `Z` for `SDK01-` fields whose lexical value carries no offset.
+fn offset_or_utc<'a>(field: &FieldInfo, text: &'a str) -> std::borrow::Cow<'a, str> {
+    if field.id.starts_with("SDK01-") && split_offset(text).is_err() {
+        return format!("{text}Z").into();
+    }
+    text.into()
 }
 
 /// eForms dates always carry a zone offset (`2019-11-26+01:00`, or `Z`).

@@ -251,40 +251,23 @@ fn framework_award_and_business_registration_notices_parse() {
 }
 
 /// A `CustomizationID` outside the vendored range quarantines rather than
-/// being parsed against a neighbouring version's metadata. The German national
-/// profile and the DÖE `sdk-0.1` dialect get their own profiles later
-/// (issue 12); until then this is the correct, visible outcome.
+/// being parsed against a neighbouring version's metadata. (The DÖE profiles
+/// — eforms-de-2.x and sdk-0.1 — are vendored since issue 12 and covered by
+/// `tests/doe.rs`; eforms-de-1.x has no SDK-DE artifact and stays out.)
 #[test]
 fn customizations_outside_the_vendored_range_quarantine() {
-    let seen: Vec<String> = fixtures("doe")
-        .iter()
-        .map(|relative| {
-            let bytes = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
-            let xml = String::from_utf8(bytes.clone()).expect("utf-8 fixture");
-            let doc = roxmltree::Document::parse(&xml).expect("well-formed");
-            let customization = doc
-                .descendants()
-                .find(|n| n.is_element() && n.tag_name().name() == "CustomizationID")
-                .and_then(|n| n.text())
-                .expect("eForms notices declare a CustomizationID")
-                .trim()
-                .to_owned();
-
-            match eforms::parse_payload(&format!("eforms:{customization}"), &bytes) {
-                Parse::Quarantined { reason, detail } => {
-                    assert_eq!(reason, "unknown-customization", "{relative}");
-                    assert!(detail.unwrap_or_default().contains("no vendored SDK metadata"));
-                }
-                other => panic!("{relative} should have quarantined, got {other:?}"),
-            }
-            customization
-        })
-        .collect();
-
-    // The German national profile and the DÖE numeric channel are both here,
-    // and both wait on their own profile (issue 12).
-    assert!(seen.contains(&"eforms-de-2.1".to_owned()), "{seen:?}");
-    assert!(seen.contains(&"eforms-sdk-0.1".to_owned()), "{seen:?}");
+    let xml = r#"<?xml version="1.0"?>
+<ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
+  <cbc:CustomizationID>eforms-de-1.1</cbc:CustomizationID>
+</ContractNotice>"#;
+    match eforms::parse_payload("eforms:eforms-de-1.1", xml.as_bytes()) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "unknown-customization");
+            assert!(detail.unwrap_or_default().contains("no vendored SDK metadata"));
+        }
+        other => panic!("should have quarantined, got {other:?}"),
+    }
 }
 
 // -------------------------------------------------------------- completeness
@@ -306,7 +289,10 @@ fn every_sdk_field_has_a_mapping_decision() {
             sdk.sdk_version,
             unaccounted.len()
         );
-        assert!(decisions.len() > 700, "{customization}: only {} fields loaded", decisions.len());
+        // The empirical sdk-0.1 inventory is smaller by nature (293 observed
+        // leaf paths); every SDK-derived inventory carries 1200+ fields.
+        let min = if customization == "eforms-sdk-0.1" { 250 } else { 700 };
+        assert!(decisions.len() > min, "{customization}: only {} fields loaded", decisions.len());
     }
 }
 
@@ -321,10 +307,28 @@ fn every_sdk_xpath_folds_into_the_match_index() {
     }
 }
 
-/// The pinned version this issue vendored, recorded so a bump is deliberate.
+/// The pinned versions this issue vendored, recorded so a bump is deliberate.
 #[test]
 fn the_pinned_sdk_versions_are_the_vendored_ones() {
     let versions: Vec<&str> = sdk::ACCEPTED.iter().map(|&(id, _)| id).collect();
-    assert_eq!(versions, ["eforms-sdk-1.12", "eforms-sdk-1.13", "eforms-sdk-1.14", "eforms-sdk-1.15"]);
+    assert_eq!(
+        versions,
+        [
+            "eforms-sdk-1.12",
+            "eforms-sdk-1.13",
+            "eforms-sdk-1.14",
+            "eforms-sdk-1.15",
+            "eforms-de-2.0",
+            "eforms-de-2.1@eforms-sdk-1.13",
+            "eforms-de-2.1@eforms-sdk-1.14",
+            "eforms-sdk-0.1",
+        ]
+    );
     assert_eq!(sdk::load("eforms-sdk-1.15").unwrap().sdk_version, "eforms-sdk-1.15.0");
+    // SDK-DE self-identifies via its national version; the vendored files are
+    // tags 1.12.6 / 1.13.3 / 1.14.4 of gitlab.opencode.de SDK-eforms-de.
+    assert_eq!(sdk::load("eforms-de-2.0").unwrap().sdk_version, "eforms-de-2.0.0");
+    assert_eq!(sdk::load("eforms-de-2.1@eforms-sdk-1.13").unwrap().sdk_version, "eforms-de-2.1.0");
+    assert_eq!(sdk::load("eforms-de-2.1@eforms-sdk-1.14").unwrap().sdk_version, "eforms-de-2.1.0");
+    assert_eq!(sdk::load("eforms-sdk-0.1").unwrap().sdk_version, "eforms-sdk-0.1");
 }

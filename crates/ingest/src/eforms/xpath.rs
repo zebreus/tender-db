@@ -11,8 +11,9 @@
 
 use std::fmt;
 
-/// Prefix → namespace URI. eForms fixes these six; documents rename the
-/// prefixes freely (`ns8:ContractNotice`), so matching is always by URI.
+/// Prefix → namespace URI. eForms fixes six, SDK-DE adds `defext`; documents
+/// rename the prefixes freely (`ns8:ContractNotice`, the DÖE JAXB serializer's
+/// `ns2`…`ns9`), so matching is always by URI.
 pub fn namespace(prefix: &str) -> Option<&'static str> {
     Some(match prefix {
         "cbc" => "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
@@ -21,6 +22,10 @@ pub fn namespace(prefix: &str) -> Option<&'static str> {
         "efext" => "http://data.europa.eu/p27/eforms-ubl-extensions/1",
         "efac" => "http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1",
         "efbc" => "http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1",
+        // SDK-DE's national extension XSD declares this non-URL namespace
+        // string verbatim (`german-eforms-extension.xsd`, eForms-DE ≥ 2.1 on
+        // EU base 1.14) — the DEX statistics fields live under it.
+        "defext" => "german-eforms-extension",
         _ => return None,
     })
 }

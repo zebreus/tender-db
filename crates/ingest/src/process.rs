@@ -105,11 +105,13 @@ pub async fn process(
 
 /// Process one archived package file.
 ///
-/// `on_progress(done, total, report)` fires after each of the package's members
-/// is written, where `total` is the number of records the package yielded,
-/// `done` counts up to it, and `report` is the running tally — the Supervisor
-/// turns this into the live progress bar (issue 16). It is a pure UI hook;
-/// passing `|_, _, _| {}` is the plain processing path.
+/// `on_progress(done, total, report)` fires after each of the package's
+/// records is written, where `total` is the best current estimate of the
+/// package's record count (the payload-entry count, corrected upward if
+/// records outnumber it — text-era members yield several), `done` counts up
+/// to it, and `report` is the running tally — the Supervisor turns this into
+/// the live progress bar (issue 16). It is a pure UI hook; passing
+/// `|_, _, _| {}` is the plain processing path.
 pub async fn process_package(
     db: &store::Db,
     archive: &Path,
@@ -117,44 +119,72 @@ pub async fn process_package(
     fetch_id: i64,
     mut on_progress: impl FnMut(u64, u64, &Report),
 ) -> Result<Report, Error> {
-    // The walker is synchronous and streams one member at a time; dispatch is
-    // pure CPU. Collect the records per member, then write them — the store's
-    // single writer connection serialises the inserts anyway.
-    let mut report = Report::default();
-    let mut pending = Vec::new();
     // Cheap name-only pre-scan: dispatch policy that spans members (the text
-    // era's ISO-vs-UTF8 variant selection) needs the package's shape up front.
-    let ctx = profile::PackageContext::from_entry_names(&package::entry_names(archive)?);
-    package::walk(archive, |Member { path, bytes }| {
-        report.members += 1;
-        match profile::dispatch_with(&path, bytes, &ctx) {
-            Disposition::Records(records) => {
-                report.ingested += 1;
-                // Field mapping happens here, while the payload is in hand: an
-                // XML member is exactly one notice, so the member's bytes are
-                // that notice's payload; a text-era record's payload is its
-                // span of the member.
-                pending.extend(records.into_iter().map(|record| {
-                    let parse = match &record {
-                        Record::Notice(n) => match n.span {
-                            Some((start, end)) => {
-                                crate::text::parse_payload(&n.member_path, &bytes[start..end])
-                            }
-                            None => parse_payload(&n.profile, bytes),
-                        },
-                        Record::Quarantine(_) => store::Parse::Pending,
-                    };
-                    (record, parse)
-                }));
-            }
-            Disposition::Skipped(_) => report.skipped += 1,
-        }
-    })?;
+    // era's ISO-vs-UTF8 variant selection) needs the package's shape up front;
+    // the entry count doubles as the progress total.
+    let names = package::entry_names(archive)?;
+    let estimated = names.len() as u64;
+    let ctx = profile::PackageContext::from_entry_names(&names);
 
+    // The walker is synchronous and dispatch + field mapping are pure CPU, so
+    // they run on their own thread and stream each parsed record through a
+    // bounded channel to the async writer. The bound is what keeps memory flat:
+    // a monthly-scale package (66k notices) held whole as parsed values is
+    // gigabytes, which is how the first TED monthly run died.
+    let (tx, rx) = std::sync::mpsc::sync_channel::<(Record, store::Parse)>(64);
+    let archive = archive.to_owned();
+    let walker = std::thread::spawn(move || -> Result<(u64, u64, u64), package::Error> {
+        let (mut members, mut ingested, mut skipped) = (0u64, 0u64, 0u64);
+        // Set once the receiver is gone (writer failed): keep walking cheaply
+        // to finish the archive read, but stop parsing.
+        let mut dead = false;
+        package::walk(&archive, |Member { path, bytes }| {
+            members += 1;
+            match profile::dispatch_with(&path, bytes, &ctx) {
+                Disposition::Records(records) => {
+                    ingested += 1;
+                    for record in records {
+                        if dead {
+                            continue;
+                        }
+                        // Field mapping happens here, while the payload is in
+                        // hand: an XML member is exactly one notice, so the
+                        // member's bytes are that notice's payload; a text-era
+                        // record's payload is its span of the member.
+                        let parse = match &record {
+                            Record::Notice(n) => match n.span {
+                                Some((start, end)) => {
+                                    crate::text::parse_payload(&n.member_path, &bytes[start..end])
+                                }
+                                None => parse_payload(&n.profile, bytes),
+                            },
+                            Record::Quarantine(_) => store::Parse::Pending,
+                        };
+                        dead = tx.send((record, parse)).is_err();
+                    }
+                }
+                Disposition::Skipped(_) => skipped += 1,
+            }
+        })?;
+        Ok((members, ingested, skipped))
+    });
+
+    let mut report = Report::default();
     let now = unix_now();
-    let total = pending.len() as u64;
     let mut done = 0u64;
-    for (record, parse) in pending {
+    let mut slot = Some(rx);
+    loop {
+        // `recv` blocks, so it hops to the blocking pool; the receiver rides
+        // along because `spawn_blocking` needs `'static`.
+        let rx = slot.take().expect("receiver in flight");
+        let (msg, rx) = tokio::task::spawn_blocking(move || {
+            let msg = rx.recv();
+            (msg, rx)
+        })
+        .await
+        .expect("record receiver panicked");
+        slot = Some(rx);
+        let Ok((record, parse)) = msg else { break };
         match record {
             Record::Notice(n) => {
                 let inserted = db
@@ -198,8 +228,15 @@ pub async fn process_package(
             }
         }
         done += 1;
-        on_progress(done, total, &report);
+        on_progress(done, estimated.max(done), &report);
     }
+    drop(slot);
+
+    let (members, ingested, skipped) =
+        walker.join().expect("package walker panicked")?;
+    report.members = members;
+    report.ingested = ingested;
+    report.skipped = skipped;
     Ok(report)
 }
 

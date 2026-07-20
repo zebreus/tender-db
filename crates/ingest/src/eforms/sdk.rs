@@ -17,15 +17,63 @@ use std::sync::OnceLock;
 
 use serde::Deserialize;
 
-/// The SDK minors tender-db parses, newest last. Each entry is
-/// (`CustomizationID`, vendored `fields.json`). Adding a version is: vendor the
-/// file, add the line, run the completeness test.
+/// The profiles tender-db parses, each with its vendored field inventory.
+/// Adding one is: vendor the file, add the line, run the completeness test.
+///
+/// Three families share the mechanism:
+///
+/// - `eforms-sdk-1.x` — the EU SDK's `fields.json` at that minor.
+/// - `eforms-de-2.x` — **SDK-DE**'s `fields.json` (gitlab.opencode.de
+///   `OC000008125155/SDK-eforms-de`), a patched fork of the EU SDK: same
+///   layout, zero fields removed, plus the national delta (the `OPT-002`
+///   ProfileID field everywhere; from SDK-DE 1.14 also the 4 DEX fields in
+///   the `german-eforms-extension` namespace, and 14 national codelists whose
+///   values ride the ordinary code channel). eForms-DE 2.1 tracks *two* EU
+///   bases (1.13 and 1.14), so it vendors both SDK-DE lines — see [`resolve`].
+/// - `eforms-sdk-0.1` — the DÖE below-threshold dialect. No SDK artifact
+///   defines it anywhere, so its inventory is **empirical**: every element
+///   path observed across the full DÖE sample history (2022-12 → 2026-07,
+///   ~250k notices), committed as the era checklist in `fields.json` shape
+///   (`SDK01-` field ids). A path outside it quarantines the notice
+///   (ADR-0004); extending the inventory is a reviewed commit + reprocess,
+///   exactly like the text-era profile.
 pub const ACCEPTED: &[(&str, &str)] = &[
+    // Not vendored, deliberately: `eforms-sdk-1.0` — a small permanent DÖE
+    // stream of E2/E3 below-threshold notices (~82/month, e.g.
+    // vergabe.bremen.de) declares the EU SDK 1.0, whose fields.json predicates
+    // use descendant axes and boolean `or` that the [`super::xpath`] grammar
+    // does not model. Those notices quarantine as unknown-customization until
+    // a slice extends the grammar and vendors 1.0.
     ("eforms-sdk-1.12", include_str!("../../sdk/fields-1.12.0.json")),
     ("eforms-sdk-1.13", include_str!("../../sdk/fields-1.13.0.json")),
     ("eforms-sdk-1.14", include_str!("../../sdk/fields-1.14.0.json")),
     ("eforms-sdk-1.15", include_str!("../../sdk/fields-1.15.0.json")),
+    ("eforms-de-2.0", include_str!("../../sdk/fields-de-2.0.0.json")),
+    ("eforms-de-2.1@eforms-sdk-1.13", include_str!("../../sdk/fields-de-2.1.0-eu-1.13.json")),
+    ("eforms-de-2.1@eforms-sdk-1.14", include_str!("../../sdk/fields-de-2.1.0-eu-1.14.json")),
+    ("eforms-sdk-0.1", include_str!("../../sdk/fields-sdk-0.1.json")),
 ];
+
+/// Resolve a notice's `CustomizationID` (plus its `cbc:ProfileID`, when
+/// declared) to the [`ACCEPTED`] key it parses under, or `None` = quarantine.
+///
+/// This is the DE→EU version map the research pinned from the
+/// Bekanntmachungsservice OpenAPI: eForms-DE 2.1 → EU 1.14 *and* 1.13, told
+/// apart by ProfileID; 2.0 → 1.12. ProfileID is sometimes absent even on 2.1
+/// (1,858 of 11,917 in 2026-06), so absence falls back to the empirically
+/// dominant base, 1.13 (9,260 declared 1.13 vs 799 × 1.14 that month).
+pub fn resolve(customization: &str, profile_id: Option<&str>) -> Option<&'static str> {
+    if let Some(&(key, _)) = ACCEPTED.iter().find(|&&(key, _)| key == customization) {
+        return Some(key);
+    }
+    if customization == "eforms-de-2.1" {
+        return Some(match profile_id {
+            Some("eforms-sdk-1.14") => "eforms-de-2.1@eforms-sdk-1.14",
+            _ => "eforms-de-2.1@eforms-sdk-1.13",
+        });
+    }
+    None
+}
 
 #[derive(Debug, Deserialize)]
 pub struct Sdk {

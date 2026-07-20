@@ -106,6 +106,35 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/efac:StrategicProcurement",
     ),
+    // Publishers restate award-criterion fields (type code, weight) on the
+    // parent `cac:AwardingCriterion`, which the SDK models only under
+    // `cac:SubordinateAwardingCriterion` (107 notices in the TED monthly
+    // 2026-06). Gap-filling keeps the parent's own BT-543/BT-541 exact.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion",
+    ),
+    // Withheld discriminators (seen on DÖE eforms-de notices, 96+20 in
+    // 2026-06 alone): the SDK anchors a FieldsPrivacy block under the very
+    // element variant whose discriminator the privacy block suppresses — a
+    // legislation reference whose `cbc:ID` ('CrossBorderLaw') is withheld
+    // matches the not(...) sibling variant instead, and a justification whose
+    // `cbc:ProcessReasonCode` is withheld matches only the predicate-free
+    // branch. The privacy subtree is grafted onto those landing branches;
+    // inside it, the FieldsPrivacy step's own `efbc:FieldIdentifierCode`
+    // predicate (which *is* published) keeps the BT-195 ids exact.
+    (
+        "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference[cbc:ID/text()='CrossBorderLaw']/ext:UBLExtensions",
+        "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference[not(cbc:ID/text()=('CrossBorderLaw','LocalLegalBasis'))]/ext:UBLExtensions",
+    ),
+    (
+        "/*/cac:TenderingProcess/cac:ProcessJustification[cbc:ProcessReasonCode/@listName='accelerated-procedure']/ext:UBLExtensions",
+        "/*/cac:TenderingProcess/cac:ProcessJustification/ext:UBLExtensions",
+    ),
+    (
+        "/*/cac:TenderingProcess/cac:ProcessJustification[cbc:ProcessReasonCode/@listName='direct-award-justification']/ext:UBLExtensions",
+        "/*/cac:TenderingProcess/cac:ProcessJustification/ext:UBLExtensions",
+    ),
 ];
 
 pub const EXTRA: &[(&str, &str, &str)] = &[
@@ -197,6 +226,26 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
     (
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CalculationExpressionCode",
         "UBL-SelectionCriterionUsage",
+        "code",
+    ),
+    // A raw UBL weight on an awarding criterion; the SDK models weights only
+    // as extension parameters (BT-5421..5423). Declared at the subordinate
+    // criterion, the alias above mirrors it onto the parent.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:WeightNumeric",
+        "UBL-AwardCriterionWeightNumeric",
+        "number",
+    ),
+    // UBL 2.3 forces a `cac:TenderResult` on every CAN; the SDK models only
+    // its dummy AwardDate (OPT-999). Some eSenders fill the block in for
+    // real — the result code beside the dummy date.
+    ("/*/cac:TenderResult/cbc:TenderResultCode", "UBL-TenderResultCode", "code"),
+    // DÖE eforms-de publishers restate the selection-criterion type in a
+    // `cbc:CriterionTypeCode` the SDK's inventory does not model (it models
+    // only `cbc:TendererRequirementTypeCode` there).
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CriterionTypeCode",
+        "UBL-SelectionCriterionType",
         "code",
     ),
     (
@@ -436,26 +485,40 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
     for field in &sdk.fields {
         insert_field(&mut root, field, &field.xpath, false)?;
     }
-    for &(xpath, field_id, kind) in EXTRA {
-        insert_extra(&mut root, xpath, field_id, kind, false)?;
-    }
 
-    // Gap-filling aliases, after every declared path is in place.
-    for &(source, target) in ALIASES {
-        for field in &sdk.fields {
-            if let Some(rest) = field.xpath.strip_prefix(source) {
-                insert_field(&mut root, field, &format!("{target}{rest}"), true)?;
-            }
-        }
+    // The TED-quirk patch tables ([`EXTRA`], [`ALIASES`]) correct *SDK-shaped*
+    // inventories against what publishers really send. The sdk-0.1 inventory
+    // is itself empirical — every observed path is already in it, and grafting
+    // predicate branches over its predicate-free paths would shadow its field
+    // ids — so the patches stay off there.
+    if sdk.sdk_version != "eforms-sdk-0.1" {
         for &(xpath, field_id, kind) in EXTRA {
-            if let Some(rest) = xpath.strip_prefix(source) {
-                insert_extra(&mut root, &format!("{target}{rest}"), field_id, kind, true)?;
+            insert_extra(&mut root, xpath, field_id, kind, false)?;
+        }
+
+        // Gap-filling aliases, after every declared path is in place.
+        for &(source, target) in ALIASES {
+            for field in &sdk.fields {
+                if let Some(rest) = field.xpath.strip_prefix(source) {
+                    insert_field(&mut root, field, &format!("{target}{rest}"), true)?;
+                }
+            }
+            for &(xpath, field_id, kind) in EXTRA {
+                if let Some(rest) = xpath.strip_prefix(source) {
+                    insert_extra(&mut root, &format!("{target}{rest}"), field_id, kind, true)?;
+                }
             }
         }
     }
 
     for &(xpath, reason) in IGNORED {
-        root.descend(&locate(xpath)?.steps).ignored = Some(reason);
+        let branch = root.descend(&locate(xpath)?.steps);
+        // An inventory that *does* declare a field here wins over the ignore
+        // rule: SDK-DE defines `cbc:ProfileID` as OPT-002-notice-DET — for the
+        // eforms-de profiles the declared EU base is content, not plumbing.
+        if branch.field.is_none() {
+            branch.ignored = Some(reason);
+        }
     }
 
     Ok(root)
@@ -505,6 +568,7 @@ fn insert_extra(
         "date" | "time" => Decision::Dates,
         "indicator" => Decision::Integers,
         "amount" => Decision::Amounts,
+        "number" => Decision::Numbers,
         other => return Err(Error(format!("EXTRA field {field_id} has unknown type {other}"))),
     };
     let branch = root.descend(&locate(xpath)?.steps);

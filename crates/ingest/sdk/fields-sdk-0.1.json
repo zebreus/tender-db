@@ -1,0 +1,1764 @@
+{
+ "$comment": "The empirical era checklist for the DOE `eforms-sdk-0.1` dialect (ADR-0002 amendment, ADR-0004). No SDK or public spec defines this format (docs/research/eforms-de-profile.md par.3), so the universe of mappable content is the full observed inventory: every element path in every sdk-0.1 notice of the sample history 2022-12..2026-07 (244,790 notice versions, scanned 2026-07-19 on the VPS; scan at /opt/tender-db/doe12/sdk01-scan.json, script sdk01_scan.py + sdk01_gen.py). Field ids are the source's own element names (SDK01- prefix, extension plumbing elided); types are derived from the source's naming conventions and observed listName attributes. A path outside this inventory quarantines the notice (unclaimed-content) - that is how the next dialect surprise surfaces. Extending the inventory is a reviewed edit of this file (re-run the scan over the new corpus, diff, decide each new path), then reprocess the quarantined notices from the archive. Full-corpus findings that correct the 800-file research sample (docs/research/eforms-de-profile.md par.3): 464 element paths, not 362; award amounts DO occur (PayableAmount/TotalAmount/Higher-LowerTenderAmount, with currencyID); multi-lot and Part-scheme lots occur in some months; dates/times may lack the zone offset (read as UTC, sdk-0.1 only - see eforms::value).",
+ "sdkVersion": "eforms-sdk-0.1",
+ "fields": [
+  {
+   "id": "SDK01-ContractingParty-ContractingActivity-ActivityType",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:ContractingActivity/cbc:ActivityType"
+  },
+  {
+   "id": "SDK01-ContractingParty-ContractingActivity-ActivityTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:ContractingActivity/cbc:ActivityTypeCode"
+  },
+  {
+   "id": "SDK01-ContractingParty-ContractingPartyType-PartyTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:ContractingPartyType/cbc:PartyTypeCode",
+   "codeList": {
+    "value": {
+     "id": "buyer-legal-type"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ContractingParty-ContractingRepresentationType-RepresentationTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:ContractingRepresentationType/cbc:RepresentationTypeCode",
+   "codeList": {
+    "value": {
+     "id": "organisation-role"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-Party-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-ServiceProviderParty-ServiceTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cbc:ServiceTypeCode",
+   "codeList": {
+    "value": {
+     "id": "organisation-role"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ContractingParty-Party-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ContractingParty-BuyerProfileURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ContractingParty/cbc:BuyerProfileURI"
+  },
+  {
+   "id": "SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:AdditionalCommodityClassification/cbc:ItemClassificationCode",
+   "codeList": {
+    "value": {
+     "id": "cpv"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:MainCommodityClassification/cbc:ItemClassificationCode",
+   "codeList": {
+    "value": {
+     "id": "cpv"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProject-PlannedPeriod-DurationMeasure",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:PlannedPeriod/cbc:DurationMeasure"
+  },
+  {
+   "id": "SDK01-ProcurementProject-PlannedPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:PlannedPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProject-PlannedPeriod-StartDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:PlannedPeriod/cbc:StartDate"
+  },
+  {
+   "id": "SDK01-ProcurementProject-ProcurementAdditionalType-ProcurementTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:ProcurementAdditionalType/cbc:ProcurementTypeCode",
+   "codeList": {
+    "value": {
+     "id": "contract-nature"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cac:Country/cbc:IdentificationCode",
+   "codeList": {
+    "value": {
+     "id": "country"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProject-RealizedLocation-Address-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProject-RealizedLocation-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RealizedLocation/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RequestedTenderTotal/cbc:EstimatedOverallContractAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallFrameworkContractsAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RequestedTenderTotal/cbc:EstimatedOverallFrameworkContractsAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cac:RequestedTenderTotal/cbc:TotalAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProject-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProject-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProject-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProject-Note",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cbc:Note"
+  },
+  {
+   "id": "SDK01-ProcurementProject-ProcurementTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProject/cbc:ProcurementTypeCode",
+   "codeList": {
+    "value": {
+     "id": "contract-nature"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:AdditionalCommodityClassification/cbc:ItemClassificationCode",
+   "codeList": {
+    "value": {
+     "id": "cpv"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-ContractExtension-Renewal-Period-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:ContractExtension/cac:Renewal/cac:Period/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-ContractExtension-MaximumNumberNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:ContractExtension/cbc:MaximumNumberNumeric"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-ContractExtension-OptionsDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:ContractExtension/cbc:OptionsDescription"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:MainCommodityClassification/cbc:ItemClassificationCode",
+   "codeList": {
+    "value": {
+     "id": "cpv"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-PlannedPeriod-DescriptionCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:PlannedPeriod/cbc:DescriptionCode",
+   "codeList": {
+    "value": {
+     "id": "timeperiod"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-PlannedPeriod-DurationMeasure",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:PlannedPeriod/cbc:DurationMeasure"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:PlannedPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:PlannedPeriod/cbc:StartDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cac:Country/cbc:IdentificationCode",
+   "codeList": {
+    "value": {
+     "id": "country"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RealizedLocation/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RequestedTenderTotal/cbc:EstimatedOverallContractAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ProcurementProject-Note",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cbc:Note"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-AdditionalInformationRequestPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:AdditionalInformationRequestPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-AdditionalInformationRequestPeriod-EndTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:AdditionalInformationRequestPeriod/cbc:EndTime"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-AuctionTerms-AuctionConstraintIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:AuctionTerms/cbc:AuctionConstraintIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ContractingSystem/cbc:ContractingSystemTypeCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-EconomicOperatorShortList-LimitationDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:EconomicOperatorShortList/cbc:LimitationDescription"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-EconomicOperatorShortList-MaximumQuantity",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:EconomicOperatorShortList/cbc:MaximumQuantity"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-EconomicOperatorShortList-MinimumQuantity",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:EconomicOperatorShortList/cbc:MinimumQuantity"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-FrameworkAgreement-DurationPeriod-DurationMeasure",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:DurationMeasure"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-FrameworkAgreement-Justification",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:FrameworkAgreement/cbc:Justification"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-FrameworkAgreement-MaximumOperatorQuantity",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:FrameworkAgreement/cbc:MaximumOperatorQuantity"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-InvitationSubmissionPeriod-StartDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:InvitationSubmissionPeriod/cbc:StartDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-NoticeDocumentReference-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:NoticeDocumentReference/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurenceLocation-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:OpenTenderEvent/cac:OccurenceLocation/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:OpenTenderEvent/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:OpenTenderEvent/cbc:OccurrenceDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:OpenTenderEvent/cbc:OccurrenceTime"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ParticipationInvitationPeriod-StartDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ParticipationInvitationPeriod/cbc:StartDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ParticipationRequestReceptionPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ParticipationRequestReceptionPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ParticipationRequestReceptionPeriod-EndTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ParticipationRequestReceptionPeriod/cbc:EndTime"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ProcessJustification-ProcessReason",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReason"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ProcessJustification-ProcessReasonCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReasonCode",
+   "codeList": {
+    "value": {
+     "id": "accelerated-procedure-justification"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:TenderSubmissionDeadlinePeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cac:TenderSubmissionDeadlinePeriod/cbc:EndTime"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-AccessToolsURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cbc:AccessToolsURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-CandidateReductionConstraintIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cbc:CandidateReductionConstraintIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-GovernmentAgreementConstraintIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cbc:GovernmentAgreementConstraintIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-SubmissionMethodCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/cbc:SubmissionMethodCode",
+   "codeList": {
+    "value": {
+     "id": "esubmission"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-HigherTenderAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/cbc:HigherTenderAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-LowerTenderAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/cbc:LowerTenderAmount"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-InterestExpressionReceptionPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:InterestExpressionReceptionPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-InterestExpressionReceptionPeriod-EndTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:InterestExpressionReceptionPeriod/cbc:EndTime"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ReceivedSubmissionsStatistics-StatisticalNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ReceivedSubmissionsStatistics/efbc:StatisticalNumeric"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingProcess-ReceivedSubmissionsStatistics-StatisticsCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ReceivedSubmissionsStatistics/efbc:StatisticsCode",
+   "codeList": {
+    "value": {
+     "id": "received-submission-type"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-OtherCommunication-Channel",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cac:OtherCommunication/cbc:Channel"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-OtherCommunication-Value",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cac:OtherCommunication/cbc:Value"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AllowedSubcontractTerms-SubcontractingConditionsCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AllowedSubcontractTerms/cbc:SubcontractingConditionsCode",
+   "codeList": {
+    "value": {
+     "id": "subcontracting-obligation"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-PresentationPeriod-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:PresentationPeriod/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-AwardingCriterion-SubordinateAwardingCriterion-AwardingCriterionTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:AwardingCriterionTypeCode",
+   "codeList": {
+    "value": {
+     "id": "award-criterion-type"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-AwardingCriterion-SubordinateAwardingCriterion-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-AwardingCriterion-SubordinateAwardingCriterion-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-AwardingCriterion-SubordinateAwardingCriterion-AwardCriterionStatistics-StatisticalNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:AwardCriterionStatistics/efbc:StatisticalNumeric"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-AwardingCriterion-SubordinateAwardingCriterion-AwardCriterionStatistics-StatisticsCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:AwardCriterionStatistics/efbc:StatisticsCode",
+   "codeList": {
+    "value": {
+     "id": "number-weight"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AwardingTerms-NoFurtherNegotiationIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cbc:NoFurtherNegotiationIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-Attachment-ExternalReference-URI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cac:Attachment/cac:ExternalReference/cbc:URI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-DocumentType",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:DocumentType"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-DocumentTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:DocumentTypeCode",
+   "codeList": {
+    "value": {
+     "id": "communication-justification"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-ExecutionRequirementCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:ExecutionRequirementCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-Language-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:Language/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-LotDistribution-MaximumLotsAwardedNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:LotDistribution/cbc:MaximumLotsAwardedNumeric"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-LotDistribution-MaximumLotsSubmittedNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:LotDistribution/cbc:MaximumLotsSubmittedNumeric"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-PaymentTerms-Note",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:PaymentTerms/cbc:Note"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-PostAwardProcess-ElectronicOrderUsageIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicOrderUsageIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-PostAwardProcess-ElectronicPaymentUsageIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicPaymentUsageIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-ProcurementLegislationDocumentReference-DocumentDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference/cbc:DocumentDescription"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-ProcurementLegislationDocumentReference-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference/cbc:ID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-RequiredFinancialGuarantee-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:RequiredFinancialGuarantee/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-RequiredFinancialGuarantee-GuaranteeTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:RequiredFinancialGuarantee/cbc:GuaranteeTypeCode",
+   "codeList": {
+    "value": {
+     "id": "required-guarantee"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SecurityClearanceTerm-Code",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:SecurityClearanceTerm/cbc:Code",
+   "codeList": {
+    "value": {
+     "id": "required"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SecurityClearanceTerm-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:SecurityClearanceTerm/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderPreparation-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderPreparation/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderPreparation-TenderEnvelopeID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderPreparation/cbc:TenderEnvelopeID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-Contact-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:Contact/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-WebsiteURI",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cbc:WebsiteURI"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TenderValidityPeriod-DurationMeasure",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderValidityPeriod/cbc:DurationMeasure"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cac:SpecificTendererRequirement/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-TendererRequirementTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cac:SpecificTendererRequirement/cbc:TendererRequirementTypeCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-CompanyLegalForm",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cbc:CompanyLegalForm"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-CompanyLegalFormCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cbc:CompanyLegalFormCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-FundingProgramCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:FundingProgramCode",
+   "codeList": {
+    "value": {
+     "id": "eu-funded"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-LatestSecurityClearanceDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:LatestSecurityClearanceDate"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-MultipleTendersCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:MultipleTendersCode"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-RecurringProcurementDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:RecurringProcurementDescription"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-RecurringProcurementIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:RecurringProcurementIndicator"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-RequiredCurriculaCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:RequiredCurriculaCode",
+   "codeList": {
+    "value": {
+     "id": "requirement-stage"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-VariantConstraintCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:VariantConstraintCode",
+   "codeList": {
+    "value": {
+     "id": "permission"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SelectionCriteria-CalculationExpressionCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CalculationExpressionCode",
+   "codeList": {
+    "value": {
+     "id": "usage"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SelectionCriteria-CriterionTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CriterionTypeCode",
+   "codeList": {
+    "value": {
+     "id": "selection-criterion"
+    }
+   }
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:Description"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:Name"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cbc:ID"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-AdditionalFee-FeeTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:AdditionalFee/cbc:FeeTypeCode"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-LegalMonetaryTotal-PayableAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:LegalMonetaryTotal/cbc:PayableAmount"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RequestedTenderTotal/cbc:EstimatedOverallContractAmount"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-TenderingProcess-ProcessJustification-ProcessReason",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReason"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-TenderingProcess-ProcessJustification-ProcessReasonCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReasonCode",
+   "codeList": {
+    "value": {
+     "id": "direct-award-justification"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-TenderingProcess-TerminatedIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cac:TenderingProcess/cbc:TerminatedIndicator"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-TenderingTerms-FundingProgramCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cac:TenderingTerms/cbc:FundingProgramCode",
+   "codeList": {
+    "value": {
+     "id": "eu-funded"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-AwardedTenderedProject-ProcurementProjectLot-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:AwardedTenderedProject/cac:ProcurementProjectLot/cbc:ID"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/cbc:Description"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/cbc:ID"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-IssueDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/cbc:IssueDate"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-ContractModification-ChangeReason-ReasonCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efac:ChangeReason/efbc:ReasonCode",
+   "codeList": {
+    "value": {
+     "id": "modification-justification"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-ContractModification-ChangeReason-ReasonDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efac:ChangeReason/efbc:ReasonDescription"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-ContractModification-ChangedElement-ChangeDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efac:ChangedElement/efbc:ChangeDescription"
+  },
+  {
+   "id": "SDK01-TenderResult-Contract-ContractModification-ChangedNoticeIdentifier",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efbc:ChangedNoticeIdentifier"
+  },
+  {
+   "id": "SDK01-TenderResult-SubcontractTerms-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:SubcontractTerms/cbc:Description"
+  },
+  {
+   "id": "SDK01-TenderResult-SubcontractTerms-SubcontractingConditionsCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:SubcontractTerms/cbc:SubcontractingConditionsCode",
+   "codeList": {
+    "value": {
+     "id": "applicability"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-Contact-Telefax",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:Contact/cbc:Telefax"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-Contact-ElectronicMail",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:Contact/cbc:ElectronicMail"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-Contact-Telephone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PartyName-Name",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PartyName/cbc:Name"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PostalAddress-Country-IdentificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PostalAddress-CityName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:CityName"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PostalAddress-CountrySubentityCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:CountrySubentityCode",
+   "codeList": {
+    "value": {
+     "id": "nuts"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PostalAddress-PostalZone",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:PostalZone"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-PostalAddress-StreetName",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PostalAddress/cbc:StreetName"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-Party-EndpointID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cac:Party/cbc:EndpointID"
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-ServiceProviderParty-ServiceTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:ServiceProviderParty/cbc:ServiceTypeCode",
+   "codeList": {
+    "value": {
+     "id": "organisation-role"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-WinningParty-Party-IndustryClassificationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty/cac:Party/cbc:IndustryClassificationCode",
+   "codeList": {
+    "value": {
+     "id": "economic-operator-size"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderResult-AwardDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:TenderResult/cbc:AwardDate"
+  },
+  {
+   "id": "SDK01-TenderResult-AwardTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:TenderResult/cbc:AwardTime"
+  },
+  {
+   "id": "SDK01-TenderResult-HigherTenderAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:TenderResult/cbc:HigherTenderAmount"
+  },
+  {
+   "id": "SDK01-TenderResult-LowerTenderAmount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:TenderResult/cbc:LowerTenderAmount"
+  },
+  {
+   "id": "SDK01-TenderResult-TenderResultCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderResult/cbc:TenderResultCode"
+  },
+  {
+   "id": "SDK01-TenderingProcess-InvitationSubmissionPeriod-StartDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:InvitationSubmissionPeriod/cbc:StartDate"
+  },
+  {
+   "id": "SDK01-TenderingProcess-ParticipationRequestReceptionPeriod-EndDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:ParticipationRequestReceptionPeriod/cbc:EndDate"
+  },
+  {
+   "id": "SDK01-TenderingProcess-ParticipationRequestReceptionPeriod-EndTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:ParticipationRequestReceptionPeriod/cbc:EndTime"
+  },
+  {
+   "id": "SDK01-TenderingProcess-ProcessJustification-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:ProcessJustification/cbc:Description"
+  },
+  {
+   "id": "SDK01-TenderingProcess-ProcessJustification-ProcessReason",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReason"
+  },
+  {
+   "id": "SDK01-TenderingProcess-ProcessJustification-ProcessReasonCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReasonCode"
+  },
+  {
+   "id": "SDK01-TenderingProcess-CandidateReductionConstraintIndicator",
+   "type": "indicator",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cbc:CandidateReductionConstraintIndicator"
+  },
+  {
+   "id": "SDK01-TenderingProcess-Description",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cbc:Description"
+  },
+  {
+   "id": "SDK01-TenderingProcess-PartPresentationCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cbc:PartPresentationCode",
+   "codeList": {
+    "value": {
+     "id": "tenderlot-presentation"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderingProcess-ProcedureCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cbc:ProcedureCode",
+   "codeList": {
+    "value": {
+     "id": "procurement-procedure-type"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderingProcess-SubmissionMethodCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cac:TenderingProcess/cbc:SubmissionMethodCode",
+   "codeList": {
+    "value": {
+     "id": "esubmission"
+    }
+   }
+  },
+  {
+   "id": "SDK01-TenderingTerms-LotDistribution-GroupingLots",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:LotDistribution/cbc:GroupingLots"
+  },
+  {
+   "id": "SDK01-TenderingTerms-LotDistribution-MaximumLotsAwardedNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:LotDistribution/cbc:MaximumLotsAwardedNumeric"
+  },
+  {
+   "id": "SDK01-TenderingTerms-LotDistribution-MaximumLotsSubmittedNumeric",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:LotDistribution/cbc:MaximumLotsSubmittedNumeric"
+  },
+  {
+   "id": "SDK01-TenderingTerms-ProcurementLegislationDocumentReference-DocumentDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference/cbc:DocumentDescription"
+  },
+  {
+   "id": "SDK01-TenderingTerms-ProcurementLegislationDocumentReference-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:ProcurementLegislationDocumentReference/cbc:ID"
+  },
+  {
+   "id": "SDK01-TenderingTerms-TenderValidityPeriod-DurationMeasure",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:TenderingTerms/cac:TenderValidityPeriod/cbc:DurationMeasure"
+  },
+  {
+   "id": "SDK01-ContractFolderID",
+   "type": "id",
+   "xpathAbsolute": "/*/cbc:ContractFolderID"
+  },
+  {
+   "id": "SDK01-CustomizationID",
+   "type": "id",
+   "xpathAbsolute": "/*/cbc:CustomizationID"
+  },
+  {
+   "id": "SDK01-ID",
+   "type": "id",
+   "xpathAbsolute": "/*/cbc:ID"
+  },
+  {
+   "id": "SDK01-IssueDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cbc:IssueDate"
+  },
+  {
+   "id": "SDK01-IssueTime",
+   "type": "time",
+   "xpathAbsolute": "/*/cbc:IssueTime"
+  },
+  {
+   "id": "SDK01-NoticeLanguageCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cbc:NoticeLanguageCode"
+  },
+  {
+   "id": "SDK01-NoticeTypeCode",
+   "type": "code",
+   "xpathAbsolute": "/*/cbc:NoticeTypeCode"
+  },
+  {
+   "id": "SDK01-PlannedDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cbc:PlannedDate"
+  },
+  {
+   "id": "SDK01-RegulatoryDomain",
+   "type": "code",
+   "xpathAbsolute": "/*/cbc:RegulatoryDomain"
+  },
+  {
+   "id": "SDK01-RequestedPublicationDate",
+   "type": "date",
+   "xpathAbsolute": "/*/cbc:RequestedPublicationDate"
+  },
+  {
+   "id": "SDK01-UBLVersionID",
+   "type": "id",
+   "xpathAbsolute": "/*/cbc:UBLVersionID"
+  },
+  {
+   "id": "SDK01-VersionID",
+   "type": "id",
+   "xpathAbsolute": "/*/cbc:VersionID"
+  },
+  {
+   "id": "SDK01-Change-ChangeReason-ReasonCode",
+   "type": "code",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangeReason/efbc:ReasonCode",
+   "codeList": {
+    "value": {
+     "id": "change-corrig-justification"
+    }
+   }
+  },
+  {
+   "id": "SDK01-Change-ChangeReason-ReasonDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangeReason/efbc:ReasonDescription"
+  },
+  {
+   "id": "SDK01-Change-ChangedElement-ChangeDescription",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangedElement/efbc:ChangeDescription"
+  },
+  {
+   "id": "SDK01-Change-ChangedElement-ChangedSectionIdentifier",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangedElement/efbc:ChangedSectionIdentifier"
+  },
+  {
+   "id": "SDK01-Change-ChangedElement-ElementNewValue",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangedElement/efbc:ElementNewValue"
+  },
+  {
+   "id": "SDK01-Change-ChangedElement-ElementOldValue",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efac:ChangedElement/efbc:ElementOldValue"
+  },
+  {
+   "id": "SDK01-Change-ChangedNoticeIdentifier",
+   "type": "text",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change/efbc:ChangedNoticeIdentifier"
+  }
+ ],
+ "xmlStructure": [
+  {
+   "id": "ND-Root",
+   "xpathAbsolute": "/*",
+   "repeatable": false
+  },
+  {
+   "id": "ND-Lot",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot",
+   "repeatable": true,
+   "identifierFieldId": "SDK01-ProcurementProjectLot-ID"
+  },
+  {
+   "id": "ND-ContractingParty",
+   "xpathAbsolute": "/*/cac:ContractingParty",
+   "repeatable": true
+  },
+  {
+   "id": "ND-TenderResult",
+   "xpathAbsolute": "/*/cac:TenderResult",
+   "repeatable": true
+  },
+  {
+   "id": "ND-WinningParty",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:WinningParty",
+   "repeatable": true
+  },
+  {
+   "id": "ND-Change",
+   "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Change",
+   "repeatable": true
+  },
+  {
+   "id": "ND-Location",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:ProcurementProject/cac:RealizedLocation",
+   "repeatable": true
+  },
+  {
+   "id": "ND-AwardCriterion",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion",
+   "repeatable": true
+  },
+  {
+   "id": "ND-AwardCriterionStatistics",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:AwardCriterionStatistics",
+   "repeatable": true
+  },
+  {
+   "id": "ND-SelectionCriteria",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
+   "repeatable": true
+  },
+  {
+   "id": "ND-ExecutionRequirement",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement",
+   "repeatable": true
+  },
+  {
+   "id": "ND-QualificationRequest",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest",
+   "repeatable": true
+  }
+ ]
+}
