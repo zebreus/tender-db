@@ -150,11 +150,19 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions",
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/ext:UBLExtensions",
     ),
-    // A TenderingParty inlined under a SettledContract's LotTender, rather than
-    // referenced from NoticeResult — graft the TenderingParty subtree there.
+    // A LotTender inlined under a SettledContract rather than beside it under
+    // NoticeResult — graft the *whole* LotTender subtree (its TenderLot, its
+    // TenderingParty ref, its amounts …) onto the nested position.
     (
-        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty",
-        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:SettledContract/efac:LotTender/efac:TenderingParty",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotTender",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:SettledContract/efac:LotTender",
+    ),
+    // A lot's TenderingProcess-extension content (AccessToolName BT-632,
+    // ProcedureRelaunchIndicator BT-634 …) published under the lot's *direct*
+    // UBLExtensions rather than under its TenderingProcess.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/ext:UBLExtensions",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/ext:UBLExtensions",
     ),
 ];
 
@@ -408,9 +416,31 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "text",
     ),
     // A free-text contract-execution requirement whose ExecutionRequirementCode
-    // variant the SDK does not enumerate a Description for.
+    // listName the SDK does not enumerate a Description for (fsr / einvoicing /
+    // esignature-submission / ecatalog-submission). Scoped by the exact
+    // listName — NOT a bare `cac:ContractExecutionRequirement` step — because
+    // that element is the one SDK block defined *only* with predicates, so a
+    // predicate-free branch here would always match and suppress the walker's
+    // relaxed by-name fallback for every unlisted-listName requirement (it did:
+    // ~1.4k TED notices regressed in the dress rehearsal). A predicated branch
+    // only joins its own listName and leaves the fallback intact.
     (
-        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:Description",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='fsr']/cbc:Description",
+        "UBL-ContractExecutionDescription",
+        "text",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='einvoicing']/cbc:Description",
+        "UBL-ContractExecutionDescription",
+        "text",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='esignature-submission']/cbc:Description",
+        "UBL-ContractExecutionDescription",
+        "text",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='ecatalog-submission']/cbc:Description",
         "UBL-ContractExecutionDescription",
         "text",
     ),
@@ -420,6 +450,40 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicInvoiceAcceptedIndicator",
         "UBL-ElectronicInvoiceAccepted",
         "indicator",
+    ),
+    // A technical-committee member's given name — the SDK enumerates only the
+    // FamilyName (BT-46) of the same person.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:TechnicalCommitteePerson/cbc:FirstName",
+        "UBL-CommitteePersonFirstName",
+        "text",
+    ),
+    // A framework agreement's own duration period — the SDK models framework
+    // fields but not this UBL DurationPeriod block; claim its period children.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:StartDate",
+        "UBL-FrameworkDurationStart",
+        "date",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:EndDate",
+        "UBL-FrameworkDurationEnd",
+        "date",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:DurationMeasure",
+        "UBL-FrameworkDurationMeasure",
+        "number",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:DescriptionCode",
+        "UBL-FrameworkDurationDescriptionCode",
+        "code",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cac:DurationPeriod/cbc:Description",
+        "UBL-FrameworkDurationDescription",
+        "text",
     ),
 ];
 
