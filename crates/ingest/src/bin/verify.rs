@@ -10,11 +10,15 @@
 //!    older eras — see the CSV header and docs/research/ted-access-channels.md).
 //! 2. **Search-API cross-check** — for a few eForms-era sample days, take the
 //!    notices the TED Search API v3 lists for that publication date and assert
-//!    the instance actually holds them. This is deliberately a *set-membership*
-//!    check, not a raw day-count: the instance stores TED's dispatch date as
-//!    `published_at` (a notice published on OJS issue date D was dispatched a
-//!    day or more earlier), so a same-date count comparison is unsound, while
-//!    "does our raw notice layer contain these exact publication ids" is not.
+//!    the instance actually holds them. This is a *set-membership* check, not a
+//!    raw day-count: even now that `published_at` is the true OJEU publication
+//!    date (issue 18: sourced from the notice's `efac:Publication` block, so a
+//!    same-day comparison against the Search API's `publication-date` is in
+//!    principle sound), membership stays the stronger assertion — it is immune
+//!    to a handful of notices whose OJEU stamp differs from the Search API's
+//!    view, and to the dispatch-vs-publication skew that `dispatched_at` now
+//!    records separately. "Does our raw notice layer contain these exact
+//!    publication ids" is the invariant we actually care about.
 //! 3. **Era ladder** — one known real notice per format era must resolve
 //!    through the API: the Notice exists, its Tender exists, and the eForms
 //!    contract-award notice carries its results and a winner.

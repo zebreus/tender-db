@@ -74,6 +74,11 @@ const SCHEMA: &str = "
         fetch_id         INTEGER NOT NULL REFERENCES fetches(id),
         member_path      TEXT NOT NULL,
         ingested_at      INTEGER NOT NULL, -- unix seconds
+        -- The publication event's own dates, resolved per era at process time
+        -- (issue 18): `published_at` the OJ/portal publication date, `dispatched_at`
+        -- the send date. Null until the payload is parsed (identity-only rows).
+        published_at     INTEGER,
+        dispatched_at    INTEGER,
         -- Field mapping state (ADR-0004): 'parsed' once the profile's parser
         -- consumed the payload exhaustively, 'quarantined' when it could not,
         -- 'pending' for profiles whose parser does not exist yet.
@@ -617,8 +622,8 @@ impl Db {
         let changed = conn
             .execute(
                 "INSERT OR IGNORE INTO notices(source, publication_id, content_hash, profile,
-                     declared_version, fetch_id, member_path, ingested_at)
-                 VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+                     declared_version, fetch_id, member_path, ingested_at, published_at, dispatched_at)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     t(&n.source),
                     t(&n.publication_id),
@@ -628,6 +633,8 @@ impl Db {
                     Value::Integer(n.fetch_id),
                     t(&n.member_path),
                     Value::Integer(n.ingested_at),
+                    opt_int(n.published_at),
+                    opt_int(n.dispatched_at),
                 ),
             )
             .await?;
@@ -805,6 +812,11 @@ pub struct Notice {
     pub fetch_id: i64,
     pub member_path: String,
     pub ingested_at: i64,
+    /// The publication date resolved from the payload at process time (issue
+    /// 18), or `None` for an identity-only (unparsed) notice.
+    pub published_at: Option<i64>,
+    /// The dispatch date resolved from the payload, where the era records one.
+    pub dispatched_at: Option<i64>,
 }
 
 /// One repeatable-node instance of a notice — see `notice_sections`.

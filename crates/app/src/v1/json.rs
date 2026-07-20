@@ -64,6 +64,7 @@ pub fn tender(t: &TenderRow) -> Value {
         "title": t.title,
         "version": t.seq,
         "published_at": instant(t.published_at),
+        "dispatched_at": t.dispatched_at.map(instant).unwrap_or(Value::Null),
         "publication_id": t.publication_id,
         "notice_subtype": t.notice_subtype,
         "value": money(t.value_cents, t.currency.as_deref()),
@@ -109,6 +110,8 @@ pub fn notice(n: &NoticeRow) -> Value {
         "declared_version": n.declared_version,
         "member_path": n.member_path,
         "ingested_at": instant(n.ingested_at),
+        "published_at": n.published_at.map(instant).unwrap_or(Value::Null),
+        "dispatched_at": n.dispatched_at.map(instant).unwrap_or(Value::Null),
         "parse_state": n.parse_state,
     })
 }
@@ -191,6 +194,7 @@ fn version(v: &VersionRow) -> Value {
     json!({
         "seq": v.seq,
         "published_at": instant(v.published_at),
+        "dispatched_at": v.dispatched_at.map(instant).unwrap_or(Value::Null),
         "publication_id": v.publication_id,
         "notice_subtype": v.notice_subtype,
         // Every version names the Notice that caused it: the ADR-0001

@@ -59,7 +59,8 @@ pub(crate) const SCHEMA: &str = "
         tender_id           INTEGER NOT NULL REFERENCES tenders(id),
         seq                 INTEGER NOT NULL,
         caused_by_notice_id INTEGER NOT NULL REFERENCES notices(id),
-        published_at        INTEGER NOT NULL, -- unix seconds
+        published_at        INTEGER NOT NULL, -- unix seconds: the OJ/portal publication date
+        dispatched_at       INTEGER,          -- unix seconds: when the notice was sent (issue 18)
         notice_subtype      TEXT,
         publication_id      TEXT NOT NULL,
         PRIMARY KEY (tender_id, seq),
@@ -482,6 +483,8 @@ pub struct ContractState {
 pub struct TenderVersion {
     pub caused_by_notice_id: i64,
     pub published_at: i64,
+    /// When the notice was dispatched, where the era records it (issue 18).
+    pub dispatched_at: Option<i64>,
     pub notice_subtype: Option<String>,
     pub publication_id: String,
     pub facts: BTreeSet<Fact>,
@@ -901,13 +904,14 @@ impl Db {
     ) -> turso::Result<()> {
         conn.execute(
             "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at,
-                 notice_subtype, publication_id)
-             VALUES(?, ?, ?, ?, ?, ?)",
+                 dispatched_at, notice_subtype, publication_id)
+             VALUES(?, ?, ?, ?, ?, ?, ?)",
             (
                 Value::Integer(tender_id),
                 Value::Integer(seq),
                 Value::Integer(v.caused_by_notice_id),
                 Value::Integer(v.published_at),
+                opt_int(v.dispatched_at),
                 opt_text(v.notice_subtype.as_deref()),
                 t(&v.publication_id),
             ),

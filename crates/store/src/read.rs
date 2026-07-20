@@ -172,6 +172,7 @@ pub struct TenderRow {
     pub kind: String,
     pub seq: i64,
     pub published_at: i64,
+    pub dispatched_at: Option<i64>,
     pub publication_id: String,
     pub notice_subtype: Option<String>,
     pub title: Option<String>,
@@ -219,6 +220,8 @@ pub struct NoticeRow {
     pub declared_version: Option<String>,
     pub member_path: String,
     pub ingested_at: i64,
+    pub published_at: Option<i64>,
+    pub dispatched_at: Option<i64>,
     pub parse_state: String,
 }
 
@@ -251,6 +254,7 @@ pub struct PartyRow {
 pub struct VersionRow {
     pub seq: i64,
     pub published_at: i64,
+    pub dispatched_at: Option<i64>,
     pub publication_id: String,
     pub notice_subtype: Option<String>,
     pub caused_by_notice_id: i64,
@@ -447,7 +451,8 @@ pub async fn tenders(
                     {currency},
                     {utc}, {offset}, {has_time},
                     (SELECT COUNT(*) FROM tender_version_lots l
-                      WHERE l.tender_id = t.id AND l.seq = v.seq)
+                      WHERE l.tender_id = t.id AND l.seq = v.seq),
+                    v.dispatched_at
                FROM tenders t
                JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
             currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
@@ -482,6 +487,7 @@ pub async fn tenders(
         kind: text(row, 3),
         seq: int(row, 4),
         published_at: int(row, 5),
+        dispatched_at: opt_int_of(row, 15),
         publication_id: text(row, 6),
         notice_subtype: opt_text_of(row, 7),
         title: opt_text_of(row, 8),
@@ -594,7 +600,7 @@ pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<T
 
     let mut rows = conn
         .query(
-            "SELECT seq, published_at, publication_id, notice_subtype, caused_by_notice_id
+            "SELECT seq, published_at, dispatched_at, publication_id, notice_subtype, caused_by_notice_id
                FROM tender_versions WHERE tender_id = ? ORDER BY seq",
             (Value::Integer(id),),
         )
@@ -604,9 +610,10 @@ pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<T
         versions.push(VersionRow {
             seq: int(&row, 0),
             published_at: int(&row, 1),
-            publication_id: text(&row, 2),
-            notice_subtype: opt_text_of(&row, 3),
-            caused_by_notice_id: int(&row, 4),
+            dispatched_at: opt_int_of(&row, 2),
+            publication_id: text(&row, 3),
+            notice_subtype: opt_text_of(&row, 4),
+            caused_by_notice_id: int(&row, 5),
         });
     }
 
@@ -935,7 +942,7 @@ pub async fn notices(
     let mut q = Query::default();
     q.push(
         "SELECT id, source, publication_id, content_hash, profile, declared_version,
-                member_path, ingested_at, parse_state
+                member_path, ingested_at, parse_state, published_at, dispatched_at
            FROM notices WHERE 1 = 1",
         [],
     );
@@ -962,6 +969,8 @@ pub async fn notices(
         member_path: text(row, 6),
         ingested_at: int(row, 7),
         parse_state: text(row, 8),
+        published_at: opt_int_of(row, 9),
+        dispatched_at: opt_int_of(row, 10),
     })
     .await
 }

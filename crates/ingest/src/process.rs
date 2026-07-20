@@ -187,6 +187,16 @@ pub async fn process_package(
         let Ok((record, parse)) = msg else { break };
         match record {
             Record::Notice(n) => {
+                // Resolve the notice's own publication/dispatch dates now, while
+                // the parsed payload is in hand (issue 18) — the same resolution
+                // the projection uses, so the notice row and its versions agree.
+                let (published_at, dispatched_at) = match &parse {
+                    store::Parse::Parsed(parsed) => {
+                        let (published, dispatched) = crate::project::notice_instants(parsed);
+                        (Some(published), dispatched)
+                    }
+                    _ => (None, None),
+                };
                 let inserted = db
                     .record_notice(
                         &store::Notice {
@@ -198,6 +208,8 @@ pub async fn process_package(
                             fetch_id,
                             member_path: n.member_path,
                             ingested_at: now,
+                            published_at,
+                            dispatched_at,
                         },
                         &parse,
                     )

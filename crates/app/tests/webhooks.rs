@@ -143,6 +143,8 @@ impl Fixture {
                         fetch_id: self.fetch_id,
                         member_path: n.member_path.clone(),
                         ingested_at: 0,
+                        published_at: None,
+                        dispatched_at: None,
                     },
                     &parse,
                 )

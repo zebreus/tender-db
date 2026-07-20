@@ -151,11 +151,29 @@ const ORG_NAME_FIELDS: &[&str] = &["TED-OFFICIALNAME", "TXT-AU"];
 const ORG_COUNTRY_FIELDS: &[&str] = &["TED-COUNTRY", "TED-ISO_COUNTRY", "TXT-CY"];
 const ORG_NATIONALID_FIELD: &str = "TED-NATIONALID";
 
-/// Legacy dispatch/publication date fields, best-first — the version's
-/// `published_at` when no eForms publication date exists. Ordering is by
-/// publication date then publication number (research §8, "DS/PD then number").
-const LEGACY_DATE_FIELDS: &[&str] =
-    &["TED-DATE_PUB", "TED-DS_DATE_DISPATCH", "TED-DATE_DISPATCH_NOTICE", "TXT-PD", "TXT-DS"];
+/// Publication-date fields, best-first (issue 18): the true OJEU / OJ S
+/// publication date where the era stamps one, then the requested/portal
+/// publication date DÖE carries in place of an OJEU stamp — DÖE notices are
+/// published on the national portal and have no `efac:Publication` block, so
+/// their requested date is the only publication signal they carry.
+const PUBLICATION_DATE_FIELDS: &[&str] = &[
+    "OPP-012-notice",                 // eForms efbc:PublicationDate (TED; DÖE when stamped)
+    "TED-DATE_PUB",                   // legacy r208/r209 REF_OJS publication date
+    "TXT-PD",                         // text-era PD: publication date
+    "BT-738-notice",                  // eForms RequestedPublicationDate — the DÖE portal date
+    "SDK01-RequestedPublicationDate", // DÖE sdk-0.1 requested publication date
+];
+
+/// Dispatch-date fields, best-first (issue 18): when the notice left the
+/// sender. Kept as its own axis because ordering within a publication day, and
+/// the dispatch-vs-publication skew itself, are real questions consumers ask.
+const DISPATCH_DATE_FIELDS: &[&str] = &[
+    "BT-05(a)-notice",          // eForms cbc:IssueDate (TED + DÖE eforms-de)
+    "SDK01-IssueDate",          // DÖE sdk-0.1 issue date
+    "TED-DS_DATE_DISPATCH",     // legacy dispatch (CODIF_DATA)
+    "TED-DATE_DISPATCH_NOTICE", // legacy dispatch (form body)
+    "TXT-DS",                   // text-era DS: dispatch
+];
 
 /// The notice's own OJS publication number, in-form (r209 emits it as a plain
 /// `NO_DOC_OJS`; the text era's own id is `ND:`). Only used as a corroborating
@@ -169,8 +187,6 @@ const LEGACY_BID_COUNT_FIELDS: &[&str] =
 
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
-const PUBLICATION_DATE_FIELD: &str = "OPP-012-notice";
-const DISPATCH_DATE_FIELD: &str = "BT-05(a)-notice";
 const SUBTYPE_FIELD: &str = "OPP-070-notice";
 const ORGANIZATION_KIND: &str = "Organization";
 const ORG_NAME_FIELD: &str = "BT-500-Organization-Company";
@@ -239,6 +255,7 @@ struct NoticeState {
     /// edge splits a Tender, never wrongly merges (research §3).
     ojs_edges: Vec<OjsKey>,
     published_at: i64,
+    dispatched_at: Option<i64>,
     subtype: Option<String>,
     /// BT-701, the source's logical notice id — corrections republish under it.
     logical_id: Option<String>,
@@ -370,10 +387,7 @@ impl NoticeState {
         ojs_edges.sort_unstable();
         ojs_edges.dedup();
 
-        let published_at = first_date(parsed, PUBLICATION_DATE_FIELD)
-            .or_else(|| first_date(parsed, DISPATCH_DATE_FIELD))
-            .or_else(|| LEGACY_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f)))
-            .unwrap_or(0);
+        let (published_at, dispatched_at) = notice_instants(parsed);
 
         NoticeState {
             notice_id: notice.id,
@@ -384,6 +398,7 @@ impl NoticeState {
             ojs_self,
             ojs_edges,
             published_at,
+            dispatched_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
             logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
@@ -685,6 +700,7 @@ fn fold(chain: &[NoticeState]) -> Vec<TenderVersion> {
         versions.push(TenderVersion {
             caused_by_notice_id: state.notice_id,
             published_at: state.published_at,
+            dispatched_at: state.dispatched_at,
             notice_subtype: state.subtype.clone(),
             publication_id: state.publication_id.clone(),
             facts,
@@ -1289,6 +1305,23 @@ fn first_code(parsed: &Parsed, field_id: &str) -> Option<String> {
         NoticeValue::Code { code, .. } => Some(code.clone()),
         _ => None,
     })
+}
+
+/// The publication and dispatch instants of a parsed notice, resolved per era
+/// (issue 18). `published_at` is the real publication date where the notice
+/// records one (the OJEU stamp, the legacy OJ date, or DÖE's requested/portal
+/// date), falling back to dispatch; `dispatched_at` is the send date, or `None`
+/// when the notice carries none (e.g. a DÖE numeric island with only a
+/// requested-publication date). Shared by the processor (which stamps the
+/// notice row) and the projection (which stamps the version), so both agree.
+pub fn notice_instants(parsed: &Parsed) -> (i64, Option<i64>) {
+    let dispatched_at = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_date(parsed, f));
+    let published_at = PUBLICATION_DATE_FIELDS
+        .iter()
+        .find_map(|f| first_date(parsed, f))
+        .or(dispatched_at)
+        .unwrap_or(0);
+    (published_at, dispatched_at)
 }
 
 fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {

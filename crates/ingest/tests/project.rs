@@ -37,10 +37,10 @@ async fn scratch(name: &str) -> (Db, i64, String) {
 async fn ingest(db: &Db, fetch_id: i64, relative: &str) {
     let path = format!("tests/fixtures/{relative}");
     let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-    ingest_bytes(db, fetch_id, relative, &bytes).await;
+    ingest_bytes(db, fetch_id, SOURCE, relative, &bytes).await;
 }
 
-async fn ingest_bytes(db: &Db, fetch_id: i64, relative: &str, bytes: &[u8]) {
+async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, bytes: &[u8]) {
     let profile::Disposition::Records(records) = profile::dispatch(relative, bytes) else {
         panic!("{relative}: dispatch skipped a fixture");
     };
@@ -49,9 +49,16 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, relative: &str, bytes: &[u8]) {
     };
     let parse = eforms::parse_payload(&n.profile, bytes);
     assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
+    let (published_at, dispatched_at) = match &parse {
+        Parse::Parsed(parsed) => {
+            let (p, d) = project::notice_instants(parsed);
+            (Some(p), d)
+        }
+        _ => (None, None),
+    };
     db.record_notice(
         &Notice {
-            source: SOURCE.into(),
+            source: source.into(),
             publication_id: n.publication_id.clone(),
             content_hash: n.content_hash.clone(),
             profile: n.profile.clone(),
@@ -59,6 +66,8 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, relative: &str, bytes: &[u8]) {
             fetch_id,
             member_path: n.member_path.clone(),
             ingested_at: 0,
+            published_at,
+            dispatched_at,
         },
         &parse,
     )
@@ -361,6 +370,8 @@ async fn mentions_merge_only_on_a_plausible_official_identifier() {
                 fetch_id,
                 member_path: format!("{publication_id}.xml"),
                 ingested_at: 0,
+                published_at: None,
+                dispatched_at: None,
             },
             Parse::Parsed(parsed),
         )
@@ -627,7 +638,7 @@ async fn framework_rounds_accumulate_without_deleting_earlier_results() {
             "<efbc:StatisticsNumeric>0</efbc:StatisticsNumeric>",
             "<efbc:StatisticsNumeric>3</efbc:StatisticsNumeric>",
         );
-    ingest_bytes(&db, fetch_id, "eforms/can-fa-29-00495186-2026.xml", round2.as_bytes()).await;
+    ingest_bytes(&db, fetch_id, SOURCE, "eforms/can-fa-29-00495186-2026.xml", round2.as_bytes()).await;
 
     let report = project::project(&db, false).await.expect("project");
     assert_eq!(report.tenders, 1, "two rounds, one framework Tender");
@@ -758,6 +769,8 @@ fn legacy_record(fetch_id: i64, publication_id: &str, profile: &str, parsed: Par
             fetch_id,
             member_path: format!("{publication_id}.xml"),
             ingested_at: 0,
+            published_at: None,
+            dispatched_at: None,
         },
         Parse::Parsed(parsed),
     )
@@ -1134,6 +1147,8 @@ async fn a_correction_replaces_its_round_instead_of_duplicating_it() {
                 fetch_id,
                 member_path: format!("{publication_id}.xml"),
                 ingested_at: 0,
+                published_at: None,
+                dispatched_at: None,
             },
             Parse::Parsed(parsed),
         )
@@ -1201,3 +1216,80 @@ async fn a_correction_replaces_its_round_instead_of_duplicating_it() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// -------------------------------------------------- issue 18: publication dates
+
+/// `notice_instants` sources publication and dispatch per era: OJEU stamp,
+/// legacy OJ date, DÖE requested/portal date, with dispatch its own axis.
+#[test]
+fn published_and_dispatched_resolve_per_era() {
+    use store::{NoticeValue, ValueRow};
+    let date = |field: &str, utc: i64| ValueRow {
+        section_id: "PROCEDURE".into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Date { utc_seconds: utc, offset_minutes: 0, has_time: false },
+    };
+    let instants =
+        |rows: Vec<ValueRow>| project::notice_instants(&Parsed { sections: vec![], values: rows });
+
+    // TED eForms: the OJEU PublicationDate (OPP-012) over the dispatch (BT-05).
+    assert_eq!(
+        instants(vec![date("BT-05(a)-notice", 100), date("OPP-012-notice", 200)]),
+        (200, Some(100))
+    );
+    // DÖE eforms-de: no OJEU stamp → the requested/portal date; dispatch kept.
+    assert_eq!(
+        instants(vec![date("BT-05(a)-notice", 100), date("BT-738-notice", 250)]),
+        (250, Some(100))
+    );
+    // DÖE sdk-0.1 numeric island: only a requested publication date, no dispatch.
+    assert_eq!(instants(vec![date("SDK01-RequestedPublicationDate", 300)]), (300, None));
+    // DÖE sdk-0.1 with an issue date as its dispatch.
+    assert_eq!(
+        instants(vec![date("SDK01-IssueDate", 90), date("SDK01-RequestedPublicationDate", 300)]),
+        (300, Some(90))
+    );
+    // Legacy TED: the OJ DATE_PUB over the dispatch fields.
+    assert_eq!(
+        instants(vec![date("TED-DS_DATE_DISPATCH", 10), date("TED-DATE_PUB", 20)]),
+        (20, Some(10))
+    );
+    // Text era: PD over DS.
+    assert_eq!(instants(vec![date("TXT-DS", 5), date("TXT-PD", 8)]), (8, Some(5)));
+    // Dispatch-only notice: published_at falls back to it.
+    assert_eq!(instants(vec![date("BT-05(a)-notice", 100)]), (100, Some(100)));
+}
+
+/// A real TED eForms CAN stores the OJEU publication date as `published_at` and
+/// the (earlier) dispatch date as `dispatched_at`, on both the version and the
+/// notice row (issue 18).
+#[tokio::test]
+async fn a_ted_eforms_notice_stores_publication_and_dispatch_separately() {
+    let (db, fetch_id, path) = scratch("dates").await;
+    ingest(&db, fetch_id, "eforms/can-29-00495054-2026.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    let opp012 =
+        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'OPP-012-notice'").await;
+    let bt05 =
+        scalar(&db, "SELECT utc_seconds FROM notice_dates WHERE field_id = 'BT-05(a)-notice'").await;
+    assert!(opp012 > bt05, "the OJEU publication is after dispatch");
+
+    assert_eq!(
+        scalar(&db, "SELECT published_at FROM tender_versions").await,
+        opp012,
+        "published_at is the OJEU publication date"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT dispatched_at FROM tender_versions").await,
+        bt05,
+        "dispatched_at is the notice dispatch date"
+    );
+    // The notice row carries the same pair for the /v1/notices surface.
+    assert_eq!(scalar(&db, "SELECT published_at FROM notices").await, opp012);
+    assert_eq!(scalar(&db, "SELECT dispatched_at FROM notices").await, bt05);
+
+    let _ = std::fs::remove_file(&path);
+}
+
