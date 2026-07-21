@@ -11,15 +11,14 @@ Two escalations beyond the original polish framing:
    empty default "renders as no data yet"; the UI does not deliver
    that. Pre-first-fill, every data panel must show an explicit
    "measuring since boot…" state — never zeros.
-2. **Fill time grows with every metric added.** Second boot took >25
-   min to fill (vs ~9 first boot): issue 40's ledger added two more
-   1.2M-row quarantine scans (with LIKE) to the single monolithic
-   measure() pass, competing with a CPU-saturated parser. The
-   incremental-sections design is now necessary, not optional: cheap
-   sections (funnel/counts/lag/system) land in seconds, each section
-   updates independently, slow scans can't hold the rest hostage.
-   Also audit quarantine_resolution's LIKE scans for an indexed
-   formulation.
+2. ~~Fill time grows~~ CORRECTED (lead, 16:50): the second boot filled
+   in ~7.5-10 min (run-driver watch, visible 16:44:46) — same as the
+   first boot; the ">25 min" read was the lead's arithmetic error
+   (measured from deploy START not service restart). Not wedged, not
+   slower. The incremental-sections design is still the right fix —
+   7-10 blind minutes per boot stands — but as the original polish
+   scope, not an escalation. The quarantine_resolution LIKE-scan audit
+   stays as a nice-to-have.
 
 Observed after the b0a5cdb deploy (2026-07-21): the background refresher
 (issue 20 part 3) computes the whole dashboard snapshot as one
