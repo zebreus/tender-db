@@ -80,6 +80,10 @@ struct Job {
     kind: String,
     params: String,
     spec: Spec,
+    /// The resume cursor for a process job (issue 32): the last package a prior
+    /// run fully completed, restored from the durable row on recovery. `None` for
+    /// a freshly enqueued job, so a fresh enqueue always re-walks from the start.
+    resume_after: Option<String>,
 }
 
 /// What a job does. Fetch/process/project map onto ingest's library entry
@@ -145,7 +149,13 @@ impl Supervisor {
         if let Err(e) = self.db.enqueue_job(id as i64, kind, &params, &spec_json).await {
             eprintln!("supervisor: persist queued job {id}: {e}");
         }
-        self.queue.lock().expect("queue lock").push_back(Job { id, kind: kind.to_owned(), params, spec });
+        self.queue.lock().expect("queue lock").push_back(Job {
+            id,
+            kind: kind.to_owned(),
+            params,
+            spec,
+            resume_after: None,
+        });
         self.wake.notify_one();
         id
     }
@@ -303,7 +313,13 @@ impl Supervisor {
             let id = row.id as u64;
             max_id = max_id.max(id);
             match serde_json::from_str::<Spec>(&row.spec) {
-                Ok(spec) => jobs.push(Job { id, kind: row.kind, params: row.params, spec }),
+                Ok(spec) => jobs.push(Job {
+                    id,
+                    kind: row.kind,
+                    params: row.params,
+                    spec,
+                    resume_after: row.progress,
+                }),
                 Err(e) => {
                     // A row this build cannot parse is dropped, not fatal — it can
                     // never wedge the queue. `Spec` serializes as serde's
@@ -395,7 +411,7 @@ impl Supervisor {
             notices: 0,
         }));
 
-        let result = self.run_spec(&job.spec).await;
+        let result = self.run_spec(&job).await;
         self.set_current(None);
 
         let (outcome, counts) = match result {
@@ -419,8 +435,8 @@ impl Supervisor {
         }
     }
 
-    async fn run_spec(&self, spec: &Spec) -> Result<String, String> {
-        match spec {
+    async fn run_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
             Spec::Fetch { source, package_kind, period, refetch } => {
                 let target = build_target(&self.ted_base, &self.doe_base, source, package_kind, period)?;
                 self.update(|p| {
@@ -453,7 +469,8 @@ impl Supervisor {
                 Ok(format!("probed {} issue(s), {fetched} new", results.len()))
             }
             Spec::Process { source, package_kind, period } => {
-                self.run_process(source, package_kind, period.as_deref()).await
+                self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
+                    .await
             }
             Spec::Project { rebuild } => {
                 let report =
@@ -476,12 +493,24 @@ impl Supervisor {
     /// the inserts; readers keep serving over WAL throughout (zero downtime).
     async fn run_process(
         &self,
+        job_id: u64,
         source: &str,
         kind: &str,
         period: Option<&str>,
+        resume_after: Option<&str>,
     ) -> Result<String, String> {
-        let packages = self.db.current_packages(source, kind, period).await.map_err(|e| e.to_string())?;
+        let all = self.db.current_packages(source, kind, period).await.map_err(|e| e.to_string())?;
+        // Resume (issue 32): `current_packages` is ordered by period, so on a
+        // restart skip every package at or before the last one a prior run fully
+        // completed. Correct because a package is recorded done only after its
+        // last member committed; the partial one that was interrupted has a period
+        // > the cursor, so it re-runs and dedups.
+        let skipped = resume_skip(&all, resume_after);
+        let packages = &all[skipped..];
         self.update(|p| p.packages_total = packages.len() as u64);
+        if let Some(cursor) = resume_after {
+            eprintln!("supervisor: job {job_id} resumes after {cursor} ({skipped} package(s) already done)");
+        }
         if packages.is_empty() {
             return Ok("no packages to process".into());
         }
@@ -526,6 +555,12 @@ impl Supervisor {
                 p.packages_done = (i + 1) as u64;
                 p.notices = total.notices;
             });
+            // Advance the durable resume cursor now the package is fully committed
+            // (issue 32). Best-effort: a failed cursor write only costs a re-walk
+            // of this package on the next restart, never correctness.
+            if let Err(e) = self.db.record_job_progress(job_id as i64, &pkg.period).await {
+                eprintln!("supervisor: job {job_id} record progress {}: {e}", pkg.period);
+            }
         }
 
         Ok(format!(
@@ -592,6 +627,14 @@ impl Supervisor {
         // freshly folded canonical layer.
         self.push("snapshot", "snapshot".into(), Spec::Snapshot).await;
     }
+}
+
+/// How many leading packages a resumed process job skips: the period-ordered
+/// prefix at or before the cursor (issue 32). `None` (a fresh job) skips nothing.
+fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize {
+    resume_after.map_or(0, |cursor| {
+        packages.iter().take_while(|pkg| pkg.period.as_str() <= cursor).count()
+    })
 }
 
 // --------------------------------------------------------------- period → URL
@@ -938,6 +981,64 @@ mod tests {
         let q = restarted.queued();
         assert_eq!(q.len(), 1, "the snapshot job is restored");
         assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
+    }
+
+    /// Issue 32: the resume skip is the period-ordered prefix at or before the
+    /// cursor — nothing for a fresh job, everything through the cursor otherwise.
+    #[test]
+    fn resume_skip_skips_the_completed_prefix() {
+        let pkgs: Vec<store::Package> = ["1993-01", "2004-07", "2010-12"]
+            .iter()
+            .map(|p| store::Package { fetch_id: 1, period: (*p).to_owned(), path: "x".into() })
+            .collect();
+        assert_eq!(resume_skip(&pkgs, None), 0, "a fresh job walks all");
+        assert_eq!(resume_skip(&pkgs, Some("2004-07")), 2, "skip through the cursor (inclusive)");
+        assert_eq!(resume_skip(&pkgs, Some("1992-99")), 0, "cursor before the first: skip none");
+        assert_eq!(resume_skip(&pkgs, Some("2099-01")), 3, "cursor past the last: skip all");
+    }
+
+    /// Issue 32: a process job restored from the durable queue carries its resume
+    /// cursor, so a restart continues where it left off; a fresh enqueue never
+    /// inherits one, keeping `rebuild`-style full re-walks available.
+    #[tokio::test]
+    async fn a_process_job_recovers_its_resume_cursor() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "process".into(),
+                source: Some("ted".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        // A prior run fully completed packages through 2004-07.
+        db.record_job_progress(ids[0] as i64, "2004-07").await.unwrap();
+
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        {
+            let queue = restarted.queue.lock().expect("queue lock");
+            assert_eq!(queue.len(), 1);
+            assert_eq!(
+                queue[0].resume_after.as_deref(),
+                Some("2004-07"),
+                "the recovered job resumes after the last completed package"
+            );
+        }
+
+        // A freshly enqueued job has no cursor — it walks from the start.
+        let fresh = restarted
+            .enqueue_request(&JobRequest {
+                kind: "process".into(),
+                source: Some("ted".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        let queue = restarted.queue.lock().expect("queue lock");
+        let fresh_job = queue.iter().find(|j| j.id == fresh[0]).expect("the fresh job");
+        assert!(fresh_job.resume_after.is_none(), "a fresh enqueue never inherits a cursor");
     }
 
     #[test]

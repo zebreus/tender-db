@@ -6,7 +6,7 @@
 //! restart re-enqueues what was outstanding instead of losing it. Live progress
 //! of the running job is in-memory in the app; only these two land here.
 
-use crate::{Db, Value, int, t, text};
+use crate::{Db, Value, int, opt_text_of, t, text};
 use model::ingestion::JobRun;
 
 pub const SCHEMA: &str = "
@@ -28,20 +28,27 @@ pub const SCHEMA: &str = "
     -- the process died is simply the lowest surviving id, so ordering by id brings
     -- it back at the front to be re-run (re-walks are idempotent).
     CREATE TABLE IF NOT EXISTS job_queue (
-        id     INTEGER PRIMARY KEY, -- the Supervisor's job id (app-assigned)
-        kind   TEXT NOT NULL,
-        params TEXT NOT NULL,
-        spec   TEXT NOT NULL        -- opaque app payload (serialized job Spec)
+        id       INTEGER PRIMARY KEY, -- the Supervisor's job id (app-assigned)
+        kind     TEXT NOT NULL,
+        params   TEXT NOT NULL,
+        spec     TEXT NOT NULL,       -- opaque app payload (serialized job Spec)
+        -- The resume cursor (issue 32): the last package a process job fully
+        -- completed, updated as each finishes. On restart the job resumes just
+        -- after it instead of re-walking from the start. NULL for a fresh job and
+        -- for kinds that have no per-package progress.
+        progress TEXT
     ) STRICT;
 ";
 
 /// One outstanding job as persisted in `job_queue`. `spec` is the app's opaque
-/// payload; the store round-trips it verbatim.
+/// payload; the store round-trips it verbatim. `progress` is the resume cursor
+/// (issue 32).
 pub struct QueuedJobRow {
     pub id: i64,
     pub kind: String,
     pub params: String,
     pub spec: String,
+    pub progress: Option<String>,
 }
 
 impl Db {
@@ -130,7 +137,7 @@ impl Db {
     pub async fn pending_jobs(&self) -> turso::Result<Vec<QueuedJobRow>> {
         let conn = self.reader().await?;
         let mut rows = conn
-            .query("SELECT id, kind, params, spec FROM job_queue ORDER BY id", ())
+            .query("SELECT id, kind, params, spec, progress FROM job_queue ORDER BY id", ())
             .await?;
         let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
@@ -139,9 +146,23 @@ impl Db {
                 kind: text(&row, 1),
                 params: text(&row, 2),
                 spec: text(&row, 3),
+                progress: opt_text_of(&row, 4),
             });
         }
         Ok(out)
+    }
+
+    /// Advance a job's resume cursor to the package it just finished (issue 32).
+    /// Written after the package's members have all committed, so a restart
+    /// resumes at the next package and never skips one left half-done.
+    pub async fn record_job_progress(&self, id: i64, package: &str) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE job_queue SET progress = ? WHERE id = ?",
+            (t(package), Value::Integer(id)),
+        )
+        .await?;
+        Ok(())
     }
 }
 
@@ -195,7 +216,13 @@ mod tests {
         assert_eq!(pending.len(), 2);
         assert_eq!((pending[0].id, pending[0].kind.as_str()), (5, "process"), "oldest id first");
         assert_eq!(pending[0].spec, r#"{"Process":{"source":"ted"}}"#, "spec round-trips verbatim");
+        assert_eq!(pending[0].progress, None, "a fresh job has no resume cursor");
         assert_eq!(pending[1].id, 6);
+
+        // The resume cursor (issue 32) persists and comes back on the next read.
+        db.record_job_progress(5, "2004-07").await.unwrap();
+        let pending = db.pending_jobs().await.unwrap();
+        assert_eq!(pending[0].progress.as_deref(), Some("2004-07"), "cursor round-trips");
 
         db.remove_job(5).await.unwrap();
         let pending = db.pending_jobs().await.unwrap();
