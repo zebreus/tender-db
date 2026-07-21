@@ -240,3 +240,25 @@ each hit starts the pathological coverage query and burns a core for hours.
 Monitoring is now `/health` + authed `/admin/jobs` only (both fast: /admin/jobs
 measured 0.7–4ms under ingestion load, see issue 20). Re-armed the robust watcher
 on the new run (job 1 of 5, started ~10:57 UTC).
+
+### 2026-07-21 — FINAL restart: durable-queue deploy bad8dda; last manual re-enqueue, run-driver
+
+Rev **bad8dda** deployed **12:18:57 UTC** — the combined fix (durable job_queue
++ coverage-query index + `/health/deep` + on-demand snapshots). This was the
+**last queue-wiping restart**: from bad8dda the queue persists in `job_queue`,
+so future restarts self-recover — no more manual re-enqueue. My keepalive-hardened
+watcher caught the rev change cleanly (da2ab87→bad8dda) and re-woke me; the
+`[ -n "$REV" ]` guard rode out the index-build window (tens of seconds building
+`notices(fetch_id)` over 3.5M rows, /health silent) without a false fire.
+
+Post-deploy state verified: /health ok, /health/deep 200 (all checks pass), queue
+empty (restart wiped it as expected). Did the **final manual re-enqueue** of the
+five jobs (all 202, ids 1–5) — job 1 running, fast-forwarding dedup from 1993
+again (the bad8dda binary re-walks; idempotent, prior data through ~2011-04 stays
+put). Re-armed the watcher with EXPECT_REV=bad8dda.
+
+Coverage-query fix confirmed under load (see issue 20): `curl /` now 200 in 2ms
+(was an hours-long core-pinning DoS on da2ab87). Snapshot serialisation test
+(issue 23 / point-c) deferred until job 1 resumes **real** parsing (queue is
+FIFO, so a snapshot can't preempt — will enqueue then, confirm non-interruption,
+and verify it lands in job_log + /data/snapshots).
