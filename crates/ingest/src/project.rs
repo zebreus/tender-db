@@ -82,6 +82,13 @@ const TEXTS: &[(&str, &str)] = &[
     ("TXT-TI", "title"),
     ("TXT-TX", "description"),
     ("TXT-AB", "description"),
+    // DÖE sdk-0.1: ProcurementProject Name/Description, at Tender and Lot scope.
+    // Keyed by full id — the stem (`SDK01-ProcurementProject`) cannot tell Name
+    // from Description apart.
+    ("SDK01-ProcurementProject-Name", "title"),
+    ("SDK01-ProcurementProjectLot-ProcurementProject-Name", "title"),
+    ("SDK01-ProcurementProject-Description", "description"),
+    ("SDK01-ProcurementProjectLot-ProcurementProject-Description", "description"),
 ];
 const AMOUNTS: &[(&str, &str)] = &[
     ("BT-27", "estimated_value"),
@@ -110,6 +117,10 @@ const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("TXT-PC", "main"),
     ("TXT-RC", "place"),
     ("TXT-CC", "main"),
+    // DÖE sdk-0.1: the realized-location NUTS subentity, at Tender and Lot scope
+    // (already carried as a `nuts`-scheme classification by the parser).
+    ("SDK01-ProcurementProject-RealizedLocation-Address-CountrySubentityCode", "place"),
+    ("SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode", "place"),
 ];
 /// The date/time pairs issue 03 stores as one instant, so `(d)` is the whole
 /// deadline and there is no `(t)` row to reunite here.
@@ -133,6 +144,8 @@ const DATES: &[(&str, &str)] = &[
     // text era deadline codes (DT/DD)
     ("TXT-DT", "submission_deadline"),
     ("TXT-DD", "submission_deadline"),
+    // DÖE sdk-0.1: the lot's tender-submission deadline (an EndDate period).
+    ("SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "submission_deadline"),
 ];
 
 /// Sections that are Lots in the canonical sense — Parts and LotsGroups are
@@ -184,6 +197,25 @@ const LEGACY_OWN_NUMBER_FIELDS: &[&str] = &["TED-NO_DOC_OJS", "TXT-ND"];
 /// the eForms `tenders` received-submission kind.
 const LEGACY_BID_COUNT_FIELDS: &[&str] =
     &["TED-NB_TENDERS_RECEIVED", "TED-OFFERS_RECEIVED_NUMBER"];
+
+/// DÖE sdk-0.1 party sections (issue 29): the buyer is an inline
+/// `ContractingParty`, the winner an inline `WinningParty` under a
+/// `TenderResult` — neither is an eForms `Organization` section, so they seed
+/// mentions of their own. Each carries its name/country on its *direct* Party
+/// subtree; the nested `ServiceProviderParty` (the eSender) is deliberately not
+/// read as the buyer/winner.
+const SDK01_BUYER_KIND: &str = "ContractingParty";
+const SDK01_WINNER_KIND: &str = "WinningParty";
+const SDK01_RESULT_KIND: &str = "TenderResult";
+const SDK01_PARTY_KINDS: &[&str] = &[SDK01_BUYER_KIND, SDK01_WINNER_KIND];
+const SDK01_PARTY_NAME_FIELDS: &[&str] =
+    &["SDK01-ContractingParty-Party-PartyName-Name", "SDK01-TenderResult-WinningParty-Party-PartyName-Name"];
+const SDK01_PARTY_COUNTRY_FIELDS: &[&str] = &[
+    "SDK01-ContractingParty-Party-PostalAddress-Country-IdentificationCode",
+    "SDK01-TenderResult-WinningParty-Party-PostalAddress-Country-IdentificationCode",
+];
+/// sdk-0.1's award-decision code, on the `TenderResult` section.
+const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
 
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
@@ -293,6 +325,11 @@ struct NoticeState {
     /// True for the legacy TED profiles (text / ted-export-r208 / r209): these
     /// chain by transitive OJS-number closure, not by BT-04 (research §3).
     legacy: bool,
+    /// True for the DÖE sdk-0.1 dialect: a distinct node vocabulary
+    /// (`ContractingParty`/`TenderResult`/`WinningParty` in place of eForms'
+    /// `Organization`/`LotResult`), read by its own party- and results-binding
+    /// paths (issue 29).
+    sdk01: bool,
     procedure_key: Option<String>,
     /// The notice's own OJS publication number `(year, number)` — the node in
     /// the legacy chain graph. `None` when the id does not parse (falls back to
@@ -350,25 +387,35 @@ impl NoticeState {
             .collect();
 
         let legacy = is_legacy_profile(&notice.profile);
+        let sdk01 = is_sdk01_profile(&notice.profile);
         let mut facts = BTreeSet::new();
         let mut raw_roles = Vec::new();
         let mut ojs_edges = Vec::new();
+        // sdk-0.1 names its buyer by the `ContractingParty` section itself, with
+        // no OPT-300 role reference — synthesise the buyer role directly at it.
+        if sdk01 {
+            for s in &parsed.sections {
+                if s.kind == SDK01_BUYER_KIND {
+                    raw_roles.push((Scope::Tender, s.id.clone(), "buyer".to_owned(), s.id.clone()));
+                }
+            }
+        }
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
-            let stem = stem(&value.field_id);
+            let field_id = value.field_id.as_str();
             let fact = match &value.value {
-                NoticeValue::Text { lang, value: v } => canonical_name(TEXTS, stem)
+                NoticeValue::Text { lang, value: v } => canonical_name(TEXTS, field_id)
                     .map(|field| Fact::Text { field, lang: lang.clone(), value: v.clone() }),
-                NoticeValue::Amount { cents, currency } => canonical_name(AMOUNTS, stem)
+                NoticeValue::Amount { cents, currency } => canonical_name(AMOUNTS, field_id)
                     .map(|field| Fact::Amount { field, cents: *cents, currency: currency.clone() }),
-                NoticeValue::Classification { scheme, code } => canonical_name(CLASSIFICATIONS, stem)
+                NoticeValue::Classification { scheme, code } => canonical_name(CLASSIFICATIONS, field_id)
                     .map(|field| Fact::Classification {
                         field,
                         scheme: scheme.clone(),
                         code: code.clone(),
                     }),
                 NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
-                    canonical_name(DATES, stem).map(|field| Fact::Date {
+                    canonical_name(DATES, field_id).map(|field| Fact::Date {
                         field,
                         utc_seconds: *utc_seconds,
                         offset_minutes: *offset_minutes,
@@ -404,7 +451,7 @@ impl NoticeState {
             }
         }
 
-        let raw_results = read_results(&sections, parsed, legacy);
+        let raw_results = read_results(&sections, parsed, legacy, sdk01);
         // Award-side roles sit under the results graph, which has no Lot
         // ancestor — resolve their Lot through the graph instead (issue 04's
         // noted limitation, closed here).
@@ -442,6 +489,7 @@ impl NoticeState {
             source: notice.source.clone(),
             publication_id: notice.publication_id.clone(),
             legacy,
+            sdk01,
             procedure_key: first_id(parsed, PROCEDURE_KEY_FIELD).filter(|k| !k.trim().is_empty()),
             ojs_self,
             ojs_edges,
@@ -469,10 +517,15 @@ impl NoticeState {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
+        // sdk-0.1 has no eForms `Organization` sections: its buyer and winners
+        // are the inline `ContractingParty`/`WinningParty` sections themselves,
+        // each carrying its name on its direct Party subtree (issue 29).
+        let mention_kinds: &[&str] = if self.sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+
         let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
             .iter()
-            .filter(|s| s.kind == ORGANIZATION_KIND)
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()))
             .map(|s| {
                 (
                     s.id.as_str(),
@@ -490,17 +543,25 @@ impl NoticeState {
             .collect();
 
         for value in &parsed.values {
-            let Some(owner) = enclosing(&sections, &value.section_id, &[ORGANIZATION_KIND]) else {
+            let Some(owner) = enclosing(&sections, &value.section_id, mention_kinds) else {
                 continue;
             };
             let Some(mention) = mentions.get_mut(owner) else { continue };
             let field = value.field_id.as_str();
-            // Both vocabularies read here: eForms hangs BT-501 off a
-            // `CompanyLegalEntity` child while legacy uses inline `OFFICIALNAME`
-            // / `COUNTRY` / `NATIONALID` address blocks (research §6).
-            let is_name = field == ORG_NAME_FIELD || ORG_NAME_FIELDS.contains(&field);
-            let is_country = field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field);
-            let is_id = field == ORG_IDENTIFIER_FIELD || field == ORG_NATIONALID_FIELD;
+            // Three vocabularies read here: eForms hangs BT-501 off a
+            // `CompanyLegalEntity` child; legacy uses inline `OFFICIALNAME` /
+            // `COUNTRY` / `NATIONALID` address blocks (research §6); sdk-0.1 reads
+            // the party section's *direct* name/country (never the nested
+            // `ServiceProviderParty` eSender), and carries no official id there.
+            let (is_name, is_country, is_id) = if self.sdk01 {
+                (SDK01_PARTY_NAME_FIELDS.contains(&field), SDK01_PARTY_COUNTRY_FIELDS.contains(&field), false)
+            } else {
+                (
+                    field == ORG_NAME_FIELD || ORG_NAME_FIELDS.contains(&field),
+                    field == ORG_COUNTRY_FIELD || ORG_COUNTRY_FIELDS.contains(&field),
+                    field == ORG_IDENTIFIER_FIELD || field == ORG_NATIONALID_FIELD,
+                )
+            };
             match &value.value {
                 NoticeValue::Text { value, .. } if is_name && mention.name.is_empty() => {
                     mention.name.clone_from(value);
@@ -893,9 +954,13 @@ fn read_results(
     sections: &HashMap<&str, &store::Section>,
     parsed: &Parsed,
     legacy: bool,
+    sdk01: bool,
 ) -> RawResults {
     if legacy {
         return read_legacy_results(sections, parsed);
+    }
+    if sdk01 {
+        return read_sdk01_results(parsed);
     }
     let mut raw = RawResults::default();
     for s in &parsed.sections {
@@ -1063,6 +1128,50 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
         if r.decision.is_none() {
             let awarded = !r.direct_winners.is_empty() || r.direct_cents.is_some();
             r.decision = Some(if awarded { "selec-w" } else { "clos-nw" }.to_owned());
+        }
+    }
+    raw
+}
+
+/// DÖE sdk-0.1 results (issue 29): each `TenderResult` section is a LotResult
+/// whose winner(s) are the inline `WinningParty` sections beneath it (resolved as
+/// direct winners, exactly like the legacy inline award blocks), and whose
+/// decision is the `TenderResultCode`. sdk-0.1 carries no notice-internal
+/// bid/contract graph and no lot reference on the result, so those stay empty and
+/// the result is Tender-scoped.
+fn read_sdk01_results(parsed: &Parsed) -> RawResults {
+    let mut raw = RawResults::default();
+    for s in &parsed.sections {
+        if s.kind == SDK01_RESULT_KIND {
+            raw.lot_results.push(RawLotResult { key: s.id.clone(), ..RawLotResult::default() });
+        }
+    }
+    if raw.lot_results.is_empty() {
+        return raw;
+    }
+    // The decision code hangs on the TenderResult section itself.
+    for value in &parsed.values {
+        if value.field_id == SDK01_RESULT_CODE_FIELD
+            && let NoticeValue::Code { code, .. } = &value.value
+            && let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == value.section_id)
+        {
+            r.decision = Some(code.clone());
+        }
+    }
+    // Each WinningParty section is a direct winner of its parent TenderResult.
+    for s in &parsed.sections {
+        if s.kind == SDK01_WINNER_KIND
+            && let Some(parent) = &s.parent
+            && let Some(r) = raw.lot_results.iter_mut().find(|r| &r.key == parent)
+        {
+            r.direct_winners.push(s.id.clone());
+        }
+    }
+    for r in &mut raw.lot_results {
+        r.direct_winners.sort();
+        r.direct_winners.dedup();
+        if r.decision.is_none() {
+            r.decision = Some(if r.direct_winners.is_empty() { "clos-nw" } else { "selec-w" }.to_owned());
         }
     }
     raw
@@ -1269,8 +1378,17 @@ fn stem(field_id: &str) -> &str {
     }
 }
 
-fn canonical_name(table: &[(&str, &str)], stem: &str) -> Option<String> {
-    table.iter().find(|(source, _)| *source == stem).map(|(_, name)| (*name).to_owned())
+/// Map a source field to its canonical name, matching the **full field id**
+/// first, then its [`stem`]. BT-/TED-/TXT- codes are keyed by stem (`BT-21` for
+/// `BT-21-Lot`); the DÖE sdk-0.1 dialect's path-shaped ids
+/// (`SDK01-ProcurementProject-Name` vs `-Description`) collide under the coarse
+/// stem, so they are keyed by their full id instead — the full-id check wins for
+/// them and is a harmless miss for everything else.
+fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
+    table
+        .iter()
+        .find(|(source, _)| *source == field_id || *source == stem(field_id))
+        .map(|(_, name)| (*name).to_owned())
 }
 
 /// The role an id-ref names. The OPT-300/301 families are eForms' organization
@@ -1304,6 +1422,13 @@ fn legacy_role(element: &str) -> String {
 /// transitive OJS-number closure; eForms and DÖE key on their own identifiers.
 fn is_legacy_profile(profile: &str) -> bool {
     profile == "text" || profile.starts_with("ted-export")
+}
+
+/// The DÖE sdk-0.1 dialect (issue 29): a permanent ~40%-of-German-volume channel
+/// with its own `SDK01-*` node vocabulary, projected by the sdk-0.1 party and
+/// results paths rather than the eForms `Organization`/`LotResult` ones.
+fn is_sdk01_profile(profile: &str) -> bool {
+    profile == "eforms:eforms-sdk-0.1"
 }
 
 /// Parse an OJS publication reference into `(year, number)`. Handles the OJS

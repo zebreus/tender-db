@@ -191,3 +191,26 @@ async fn legacy_award_notice_counts_toward_results_density() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 29 regression, measured through the report itself: the DÖE sdk-0.1 era
+/// went from 0 % on every field to real completeness once its `SDK01-*` stems
+/// were mapped. This is the tool observing its own motivating anomaly get fixed.
+#[tokio::test]
+async fn sdk01_era_completeness_is_no_longer_zero() {
+    let (db, fetch_id, path) = scratch("sdk01dq").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    let report = measure(&db, "scratch://sdk01").await;
+    let _ = std::fs::remove_file(&path);
+    let sdk01 = report
+        .completeness
+        .iter()
+        .find(|r| data_quality::era_of(&r.profile) == "DÖE sdk-0.1 island")
+        .expect("a DÖE sdk-0.1 era row");
+    // title, buyer and winner all now present (were 0 before issue 29).
+    assert!(sdk01.present[0] > 0, "title");
+    assert!(sdk01.present[1] > 0, "buyer");
+    assert!(sdk01.present[5] > 0, "winner");
+}

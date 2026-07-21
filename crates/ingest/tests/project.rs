@@ -1360,3 +1360,57 @@ async fn a_procedure_on_both_sources_merges_into_one_tender() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------------------------------- issue 29: DÖE sdk-0.1 mapping
+
+/// The DÖE sdk-0.1 dialect (~40 % of German volume) must project its `SDK01-*`
+/// content into the canonical layer like any other era — before issue 29 these
+/// notices parsed cleanly but projected to empty island Tenders (0 % on every
+/// field). Its buyer is an inline `ContractingParty` and its winner an inline
+/// `WinningParty`, neither an eForms `Organization` section.
+#[tokio::test]
+async fn sdk01_projects_title_buyer_and_winner() {
+    let (db, fetch_id, path) = scratch("sdk01").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // Title and description, at Tender scope, resolved from SDK01-ProcurementProject-*.
+    assert_eq!(
+        query_text(&db, "SELECT value FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL LIMIT 1").await,
+        Some("Lose Möblierung".to_owned()),
+    );
+    assert!(scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'description'").await > 0);
+    // The realized-location NUTS and the lot's submission deadline.
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'nuts' AND field = 'place'").await > 0
+    );
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'").await, 1);
+
+    // The buyer: the inline ContractingParty becomes a party with role 'buyer'.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'buyer'").await, 2);
+    assert!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE p.role = 'buyer' AND o.name LIKE 'VGem Volkach%' LIMIT 1"
+        )
+        .await
+        .is_some(),
+        "the ContractingParty is the buyer"
+    );
+
+    // The winner: the CAN's TenderResult materialises a lot_result naming the WinningParty.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lot_results").await, 1);
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_result_winners w JOIN organizations o ON o.id = w.organization_id LIMIT 1"
+        )
+        .await,
+        Some("1. Firma: IABG mbH".to_owned()),
+        "the WinningParty is the resolved winner"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
