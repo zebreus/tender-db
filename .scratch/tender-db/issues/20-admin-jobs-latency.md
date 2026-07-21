@@ -260,3 +260,25 @@ refresher architecture decouples `/` from writes too, so it should stay fast —
 but I will re-confirm one burst during **real parsing** (writes) when job 1
 passes ~2011 (~100 min out) and record it here as the definitive datum before
 this is called done. On current evidence the p99<1s target is met.
+
+## 2026-07-21 16:24 — DEFINITIVE write-load test on b0a5cdb: PASS (run-driver)
+
+Ran the burst during job 1's REAL parsing (pkg 229/2012-02, notices actively
+climbing 3028→5844+) — the exact active-write-commit condition that produced the
+12–30s stalls + per-request core-pin on bad8dda. Result is a clean pass:
+
+- 8× `curl /` under write commits: **1.8ms–29ms, all HTTP 200** (max 29ms). No
+  hangs, no multi-second stalls.
+- Immediate pin check: **0 threads >50% CPU**. Box was CPU-saturated by the
+  parser (idle 0%, load 5.09) yet `/` still returned in ms — the background
+  coverage refresher fully decouples `/` from ingestion. bad8dda pinned a core
+  per in-flight `/`; that is gone.
+- `/admin/jobs`: 0.7–10.7ms.
+- Refresher liveness: `measured_at` advanced 15:10:25Z → 16:11:25Z, so the
+  refresher re-runs on later passes (not one-shot). (Underlying coverage values
+  stable at this instant because committed data hadn't grown past the re-walk
+  point yet — a data-freshness detail, not a latency one.)
+
+**Issue 20's p99<1s-under-ingestion is met.** Per plan I'll re-confirm the same
+burst on b978c96 (which carries the issue-38 refresher-timeout hardening) after
+its restart, but the core acceptance is demonstrated here.
