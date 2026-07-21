@@ -1,7 +1,16 @@
 # 37 — Dashboard first snapshot after boot takes ~9 min under load
 
-Status: needs-verification
-Priority: UPGRADED to bug (2026-07-21 ~16:40, user-reported twice)
+Status: resolved
+
+Resolution (2026-07-21, team lead): sectioned refresher deployed
+(546189d). Prod verification (run-driver): system section filled ~3s
+after restart; on this boot the WHOLE dashboard was filled within ~3s
+(warm page cache + the new quarantine(reason) index), quarantine
+showing 1,215,170 — not 0. False zeros are impossible by construction
+(per-section Options; None renders "measuring since boot…"); a slow or
+failing section can never blank or zero its neighbours. No persistence
+layer added — cheap sections + honest measuring state met the
+acceptance without it.
 
 Two escalations beyond the original polish framing:
 1. **The empty snapshot renders as literal zeros.** Lennart read
