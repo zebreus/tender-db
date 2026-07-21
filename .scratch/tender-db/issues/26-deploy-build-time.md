@@ -76,3 +76,14 @@ that actually drive deploys).
 
 Acceptance: a one-line server-code deploy builds in < 8 min on the VPS;
 build remains reproducible from a clean store.
+
+## 2026-07-21 15:11 — b0a5cdb: build duration not derivable from box (run-driver)
+
+Tried to capture the first-deploy build number. Could not derive it cleanly:
+`/opt/tender-db/deploy-build.log` has a stale mtime (Jul 19 17:07) — the b0a5cdb
+build did not route through it, so no start/end pair to diff. Only firm datum:
+service `ExecMainStartTimestamp=15:09:37 UTC`, and the watcher first saw rev
+b0a5cdb at 15:11:01 UTC → **startup/migration pause ≈ 84s** (index build +
+tenders current_seq backfill + job_queue.progress ALTER), within the 120s grace.
+That's the migration cost, not the build cost. Per the plan, the NEXT deploy is
+the steady-state build measurement — will capture start/end then.
