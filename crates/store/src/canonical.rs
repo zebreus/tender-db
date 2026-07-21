@@ -575,7 +575,7 @@ pub struct NoticeRef {
 impl Db {
     /// Every notice whose profile parser consumed it — the projection's input.
     pub async fn parsed_notices(&self) -> turso::Result<Vec<NoticeRef>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT id, source, publication_id, profile FROM notices
@@ -598,7 +598,7 @@ impl Db {
     /// Read one notice's parsed form back out of the notice layer — the exact
     /// [`Parsed`] the profile produced.
     pub async fn parsed_notice(&self, notice_id: i64) -> turso::Result<Parsed> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let id = Value::Integer(notice_id);
         let mut parsed = Parsed::default();
 
@@ -641,7 +641,7 @@ impl Db {
     /// period in RAM, never the whole raw notice layer at once. The query count
     /// is O(tables) per chunk, which is what removes the read storm.
     pub async fn parsed_chunk(&self, after_id: i64, limit: i64) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
         let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
 
@@ -1561,7 +1561,7 @@ impl Db {
     /// the profile of the Tender's first version's notice. Returns
     /// `(profile, award_tenders, unchained)` rows.
     pub async fn award_linkage(&self) -> turso::Result<Vec<(String, i64, i64)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT n.profile,
@@ -1588,7 +1588,7 @@ impl Db {
     /// `(rows, )` counts for the canonical layer — what the CLI and the
     /// dashboard report.
     pub async fn canonical_counts(&self) -> turso::Result<Vec<(String, i64)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut out = Vec::new();
         for (label, sql) in [
             ("tenders", "SELECT COUNT(*) FROM tenders"),
@@ -1616,7 +1616,7 @@ impl Db {
     /// and operational spot-checks hold it to that; the guarded public SQL
     /// endpoint is issue 07.
     pub async fn scalar(&self, sql: &str) -> turso::Result<Option<Value>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn.query(sql, ()).await?;
         Ok(match rows.next().await? {
             Some(row) => row.get_value(0).ok(),
@@ -1626,7 +1626,7 @@ impl Db {
 
     /// The change log from a cursor position — the poll/SSE/webhook feed.
     pub async fn changes_since(&self, cursor: i64, limit: i64) -> turso::Result<Vec<Change>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes

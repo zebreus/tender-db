@@ -6,7 +6,6 @@
 
 use crate::{Db, Value, int, t, text};
 use model::ingestion::JobRun;
-use turso::Connection;
 
 pub const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS job_log (
@@ -48,39 +47,38 @@ impl Db {
         .await?;
         Ok(())
     }
-}
 
-/// The most recent finished runs, newest first. A free function over a borrowed
-/// connection (like [`crate::read`]'s queries) rather than a `Db` method, so the
-/// dashboard reads it through the reader pool — never queuing behind ingestion
-/// on the writer mutex, which a heavy process/project batch holds for the length
-/// of its transaction (issue 20).
-pub async fn recent_job_runs(conn: &Connection, limit: i64) -> turso::Result<Vec<JobRun>> {
-    let mut rows = conn
-        .query(
-            "SELECT id, kind, params, started_at, finished_at, outcome, counts_json
-             FROM job_log ORDER BY id DESC LIMIT ?",
-            (Value::Integer(limit),),
-        )
-        .await?;
-    let mut out = Vec::new();
-    while let Some(row) = rows.next().await? {
-        out.push(JobRun {
-            id: int(&row, 0),
-            kind: text(&row, 1),
-            params: text(&row, 2),
-            started_at: int(&row, 3),
-            finished_at: int(&row, 4),
-            outcome: text(&row, 5),
-            counts: text(&row, 6),
-        });
+    /// The most recent finished runs, newest first. Read through the reader pool
+    /// (`self.reader()`), never the writer, so the dashboard/admin log never
+    /// queues behind an ingestion job holding the writer for the length of its
+    /// transaction (issue 20).
+    pub async fn recent_job_runs(&self, limit: i64) -> turso::Result<Vec<JobRun>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT id, kind, params, started_at, finished_at, outcome, counts_json
+                 FROM job_log ORDER BY id DESC LIMIT ?",
+                (Value::Integer(limit),),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(JobRun {
+                id: int(&row, 0),
+                kind: text(&row, 1),
+                params: text(&row, 2),
+                started_at: int(&row, 3),
+                finished_at: int(&row, 4),
+                outcome: text(&row, 5),
+                counts: text(&row, 6),
+            });
+        }
+        Ok(out)
     }
-    Ok(out)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::recent_job_runs;
     use crate::Db;
     use std::time::Instant;
 
@@ -89,10 +87,8 @@ mod tests {
         let path = format!("/tmp/tender-db-joblog-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
-        let readers = db.readers(1).unwrap();
-        let read = || async { recent_job_runs(&readers.get().await.unwrap(), 10).await.unwrap() };
 
-        assert!(read().await.is_empty());
+        assert!(db.recent_job_runs(10).await.unwrap().is_empty());
 
         db.record_job_run("process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
             .await
@@ -101,7 +97,7 @@ mod tests {
             .await
             .unwrap();
 
-        let runs = read().await;
+        let runs = db.recent_job_runs(10).await.unwrap();
         assert_eq!(runs.len(), 2);
         assert_eq!(runs[0].kind, "project", "newest first");
         assert_eq!(runs[0].outcome, "error");
@@ -109,23 +105,23 @@ mod tests {
         assert_eq!(runs[1].counts, "42 notices");
 
         // The limit is honoured.
-        assert_eq!(recent_job_runs(&readers.get().await.unwrap(), 1).await.unwrap().len(), 1);
+        assert_eq!(db.recent_job_runs(1).await.unwrap().len(), 1);
 
         let _ = std::fs::remove_file(&path);
     }
 
     /// The regression for issue 20: while the writer connection is held in an
     /// open transaction — exactly what a heavy process/project batch does
-    /// (`BEGIN IMMEDIATE … COMMIT`) — the dashboard's recent-runs read still
-    /// returns promptly, because it goes through a reader connection over WAL
-    /// rather than queuing on the writer mutex. Routed through the writer (the
-    /// old code) this would block for the whole batch, which is the ~23s stall.
+    /// (`BEGIN IMMEDIATE … COMMIT`) — a read-only accessor still returns
+    /// promptly, because `Db::reader()` hands it a pooled reader connection over
+    /// WAL rather than the writer mutex. Routed through the writer (the old code)
+    /// this deadlocks against the guard held below — the acute form of the ~23s
+    /// production stall that hit every dashboard/admin read.
     #[tokio::test]
-    async fn recent_runs_read_while_the_writer_is_busy() {
+    async fn reads_do_not_block_on_a_held_writer() {
         let path = format!("/tmp/tender-db-joblog-busy-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
-        let readers = db.readers(1).unwrap();
 
         db.record_job_run("process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
             .await
@@ -136,13 +132,8 @@ mod tests {
         let writer = db.conn().await;
         writer.execute("BEGIN IMMEDIATE", ()).await.unwrap();
 
-        // Reading through a separate reader connection cannot touch the writer
-        // mutex, so this returns while the transaction is still open. Routed
-        // through the writer (the old code) it would deadlock against the guard
-        // held above — the acute form of the ~23s production stall.
-        let reader = readers.get().await.unwrap();
         let started = Instant::now();
-        let runs = recent_job_runs(&reader, 10).await.unwrap();
+        let runs = db.recent_job_runs(10).await.unwrap();
         assert!(started.elapsed().as_secs() < 1, "the read must not queue behind the writer");
         assert_eq!(runs.len(), 1);
         assert_eq!(runs[0].counts, "42 notices");

@@ -24,7 +24,7 @@ use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use ingest::{doe, fetch, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, QueuedJob};
 use serde::Deserialize;
-use store::{jobs, turso};
+use store::turso;
 use tokio::sync::Notify;
 
 /// How many recent runs the dashboard/admin log shows.
@@ -57,11 +57,6 @@ pub fn get() -> Option<Arc<Supervisor>> {
 
 pub struct Supervisor {
     db: Arc<store::Db>,
-    /// A small reader pool for the dashboard's recent-runs read. Reading it over
-    /// WAL keeps `/admin/jobs` off the writer mutex an ingestion job holds while
-    /// it writes (issue 20) — the same reason the API and webhook workers each
-    /// own a pool.
-    readers: Arc<store::Readers>,
     archive: PathBuf,
     http: reqwest::Client,
     ted_base: String,
@@ -114,10 +109,8 @@ pub struct JobRequest {
 
 impl Supervisor {
     pub fn new(db: Arc<store::Db>, archive: PathBuf, http: reqwest::Client) -> Supervisor {
-        let readers = db.readers(2).expect("supervisor reader pool");
         Supervisor {
             db,
-            readers,
             archive,
             http,
             ted_base: ted::BASE.to_owned(),
@@ -293,11 +286,9 @@ impl Supervisor {
         // being `Send` and axum rejects the handler.
         let current = self.current.read().expect("progress lock").clone();
         let queued = self.queued();
-        // Through the reader pool, not the writer: an ingestion job holds the
-        // writer for the length of its transaction, and the dashboard read must
-        // not queue behind it (issue 20).
-        let reader = self.readers.get().await?;
-        let recent = jobs::recent_job_runs(&reader, RECENT_RUNS).await?;
+        // `recent_job_runs` reads through the store's reader pool, not the writer
+        // an ingestion job holds — so this never queues behind it (issue 20).
+        let recent = self.db.recent_job_runs(RECENT_RUNS).await?;
         Ok(Ingestion { current, queued, recent, measured_at: now_unix() })
     }
 

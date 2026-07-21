@@ -39,6 +39,11 @@ pub(crate) const PRAGMAS: [&str; 4] = [
     "PRAGMA synchronous = NORMAL",
 ];
 
+/// Reader connections backing `Db`'s own read-only accessors — the dashboard,
+/// admin, auth, webhook and projection reads. Kept apart from the public API's
+/// pool (`Db::readers`) and from the single writer.
+const READ_POOL: usize = 8;
+
 /// Schema, applied idempotently at startup. STRICT so columns actually enforce
 /// their declared types.
 const SCHEMA: &str = "
@@ -263,6 +268,12 @@ const SCHEMA: &str = "
 pub struct Db {
     database: turso::Database,
     conn: Mutex<Connection>,
+    /// The pool backing `Db`'s own read-only accessors. Reads run over WAL in
+    /// parallel with the writer, so a dashboard/admin query never queues behind
+    /// an ingestion job that is holding the writer for the length of its
+    /// transaction (issue 20). The writer (`conn`) is reserved for writes and
+    /// schema; this is separate from the public API's own pool (`readers`).
+    read_pool: Arc<Readers>,
     /// The change-cursor doorbell (docs/research/api-layer.md §2): the writer
     /// publishes the newest cursor after every committed change-append, and SSE
     /// streams wake on it and read the log themselves. It carries only the
@@ -322,11 +333,18 @@ impl Db {
         conn.execute_batch(webhooks::SCHEMA).await?;
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
-        Ok(Db { database, conn: Mutex::new(conn), cursor })
+        let read_pool = Readers::open(database.clone(), READ_POOL)?;
+        Ok(Db { database, conn: Mutex::new(conn), read_pool, cursor })
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {
         self.conn.lock().await
+    }
+
+    /// Borrow a pooled reader for a read-only accessor — never the writer, which
+    /// an ingestion job holds for the length of its transaction (issue 20).
+    async fn reader(&self) -> turso::Result<Reader> {
+        self.read_pool.get().await
     }
 
     /// Toggle foreign-key enforcement on the writer connection. The projection
@@ -358,7 +376,8 @@ impl Db {
 
     /// The newest committed cursor, read from the log.
     pub async fn latest_cursor(&self) -> turso::Result<i64> {
-        max_cursor(&*self.conn().await).await
+        let conn = self.reader().await?;
+        max_cursor(&conn).await
     }
 
     /// Ring the doorbell for whatever the just-committed transaction appended.
@@ -372,7 +391,7 @@ impl Db {
     /// Current-state Tenders, newest first — the `v_tenders` view, which is
     /// `MAX(seq)` per Tender (ADR-0001).
     pub async fn list_tenders(&self, limit: i64) -> turso::Result<Vec<model::Tender>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT id, COALESCE(title, '(untitled)') FROM v_tenders
@@ -389,7 +408,7 @@ impl Db {
 
     /// The current (newest) fetch of a package, if any.
     pub async fn latest_fetch(&self, source: &str, kind: &str, period: &str) -> turso::Result<Option<Fetch>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT source, kind, period, url, sha256, bytes, fetched_at, path
@@ -420,7 +439,7 @@ impl Db {
         kind: &str,
         period_prefix: &str,
     ) -> turso::Result<Option<String>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT MAX(period) FROM fetches WHERE source = ? AND kind = ? AND period LIKE ?",
@@ -462,7 +481,7 @@ impl Db {
         kind: &str,
         period: Option<&str>,
     ) -> turso::Result<Vec<Package>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         // A re-fetched package lands as a new row (fetch.rs), so the highest id
         // per period is the current version.
         let mut rows = conn
@@ -706,7 +725,7 @@ impl Db {
     /// Notice counts per mapping profile — the era-split check and the
     /// dashboard's coverage breakdown.
     pub async fn notice_counts_by_profile(&self) -> turso::Result<Vec<(String, i64)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query("SELECT profile, COUNT(*) FROM notices GROUP BY profile ORDER BY profile", ())
             .await?;
@@ -720,7 +739,7 @@ impl Db {
     /// Quarantine counts per reason — the headline data-quality metric
     /// (ADR-0004), broken down.
     pub async fn quarantine_counts_by_reason(&self) -> turso::Result<Vec<(String, i64)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query("SELECT reason, COUNT(*) FROM quarantine GROUP BY reason ORDER BY reason", ())
             .await?;
@@ -737,7 +756,7 @@ impl Db {
     /// not from a parsed date: coverage asks "how much of what TED published
     /// that year do we hold", which is a question about packages.
     pub async fn notice_counts_by_profile_year(&self) -> turso::Result<Vec<ProfileYear>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT f.source, n.profile, substr(f.period, 1, 4) AS year, COUNT(*)
@@ -762,7 +781,7 @@ impl Db {
     /// The newest quarantined payloads — the drill-down behind the headline
     /// count, newest first because a fresh reason is the one worth acting on.
     pub async fn recent_quarantine(&self, limit: i64) -> turso::Result<Vec<QuarantineEntry>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT reason, profile, member_path, detail, first_seen FROM quarantine
@@ -789,7 +808,7 @@ impl Db {
     /// exactly the stall the dashboard needs to make visible (the two stages are
     /// deliberately decoupled — CONTEXT.md).
     pub async fn import_lag(&self) -> turso::Result<ImportLag> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         Ok(ImportLag {
             newest_fetch_at: max_instant(&conn, "SELECT MAX(fetched_at) FROM fetches").await?,
             newest_notice_at: max_instant(&conn, "SELECT MAX(ingested_at) FROM notices").await?,

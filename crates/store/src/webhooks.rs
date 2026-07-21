@@ -141,7 +141,7 @@ impl Db {
     }
 
     pub async fn list_webhooks(&self, user_id: i64) -> turso::Result<Vec<Endpoint>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 &format!("SELECT {COLUMNS} FROM webhook_endpoints WHERE user_id = ? ORDER BY id DESC"),
@@ -154,7 +154,7 @@ impl Db {
     /// One of a user's own endpoints — scoping by `user_id` is what makes "a
     /// user only sees their own" a property of the query.
     pub async fn webhook(&self, user_id: i64, id: i64) -> turso::Result<Option<Endpoint>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 &format!("SELECT {COLUMNS} FROM webhook_endpoints WHERE id = ? AND user_id = ?"),
@@ -230,7 +230,7 @@ impl Db {
 
     /// Active endpoints whose backoff has elapsed — the sweeper's work list.
     pub async fn due_webhooks(&self, now: i64) -> turso::Result<Vec<Endpoint>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 &format!(
@@ -322,7 +322,7 @@ impl Db {
         id: i64,
         limit: i64,
     ) -> turso::Result<Vec<Delivery>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT attempted_at, cursor_from, cursor_to, events, status, duration_ms, ok, error

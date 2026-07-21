@@ -169,13 +169,13 @@ impl Db {
     }
 
     pub async fn user(&self, id: i64) -> turso::Result<Option<User>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         user_row(&conn, "SELECT id, username, created_at FROM users WHERE id = ?", Value::Integer(id)).await
     }
 
     /// The account and its stored password hash, for a login attempt.
     pub async fn user_credentials(&self, username: &str) -> turso::Result<Option<(User, String)>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT id, username, created_at, password_hash FROM users WHERE username = ?",
@@ -239,7 +239,7 @@ impl Db {
     /// Whose session this is, or `None` if it is unknown or expired. Expiry is
     /// evaluated in SQL so a clock-skewed cookie cannot outlive its row.
     pub async fn session_user(&self, id_hash: &str, now: i64) -> turso::Result<Option<User>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT u.id, u.username, u.created_at FROM sessions s
@@ -303,7 +303,7 @@ impl Db {
     /// An account's tokens, revoked ones included — the revoke list is also the
     /// audit trail of what was ever issued.
     pub async fn list_tokens(&self, user_id: i64) -> turso::Result<Vec<TokenRecord>> {
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT id, name, prefix_hint, created_at, last_used_at, revoked_at
