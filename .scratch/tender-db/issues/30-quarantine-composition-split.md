@@ -75,10 +75,15 @@ remainder, and every reason labelled by class. Store adds
 `quarantine_field_code_gaps` (group unknown-field-code by code, not by
 `line N:` detail) — proves it is one code.
 
-Open question carried into issues 35/36 (not hand-waved): the ~1.2M suspected vs
-the quoted 96.7% ted·text coverage (~129k lost) does not reconcile mid-backfill
-— counts are an issue-15 re-walk snapshot and the projection is far behind
-(v_tenders ~7k). Re-measure after the backfill settles.
+Resolution of the ~1.2M-vs-96.7% tension (team lead, per-year coverage,
+2026-07-21): the big buckets are **mostly duplicate representations**, not lost
+notices. The OC years (1995–98) hold ~92% vs TED ground truth and the DTD year
+(2008) holds 92.1% (312,567 / 339,534) — if the members were lost these would
+sit near ~10%. So real loss is **bounded ≈47k (OC) + ≈27k (DTD) ≈ 74k**, tens of
+thousands not millions, and the 96.7% aggregate is corroborated, not a re-walk
+artifact. Still goal-critical: 92% fails the verify ±2% tolerance, so the bounded
+subset is a genuine gap — the class stays `SuspectedGap` and issues 35/36 carry
+the bounded numbers so triage starts from evidence.
 
 Tests: `model::quarantine_reasons_class_by_evidence`;
 `store::field_code_gaps_group_by_code_across_line_numbers`. Full app suite +

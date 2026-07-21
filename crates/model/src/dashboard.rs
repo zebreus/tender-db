@@ -113,11 +113,14 @@ pub enum QuarantineClass {
 
 /// Classify a quarantine `reason`. Evidence-based (issue 30): nothing is called
 /// benign without the reason itself proving non-notice. The two big buckets are
-/// `SuspectedGap`, not benign — sampling (2026-07-21) showed `unknown-field-code`
-/// (577k) is ~entirely the legacy `OC` field on real EN notices (the primary
-/// parsed language, not non-EN siblings), and `unparsable-xml` (628k) is
-/// ~entirely "XML with DTD detected"; both are real-notice-shaped, filed as
-/// issues 35 (text OC/ON) and 36 (DTD XML). The small uncertain reasons
+/// `SuspectedGap`, not benign — `unknown-field-code` (577k) is ~entirely the
+/// legacy `OC` field (1995–98), `unparsable-xml` (628k) ~entirely "XML with DTD
+/// detected" (2008). Per-year coverage (2026-07-21) shows those years hold ~92%
+/// vs TED ground truth, so both buckets are *mostly duplicate representations* of
+/// notices already held via another member — real loss is bounded ~47k + ~27k,
+/// not the raw ~1.2M. But 92% still fails the verify ±2% tolerance, so they are a
+/// genuine (bounded) gap under investigate-then-fix, filed as issues 35/36 — hence
+/// `SuspectedGap`, neither confirmed-loss nor benign. The small uncertain reasons
 /// (`not-utf8`, `unknown-customization`) are flagged too rather than assumed
 /// benign.
 pub fn quarantine_class(reason: &str) -> QuarantineClass {
