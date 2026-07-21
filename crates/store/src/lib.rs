@@ -837,6 +837,46 @@ impl Db {
         Ok(out)
     }
 
+    /// Live reclaimed/outstanding split for one resolution-ledger key (issue 40):
+    /// of the quarantined payloads matching `(reason, profile?, detail LIKE?)`,
+    /// how many have been reprocessed back in (`reprocessed_at` set) versus are
+    /// still held. `profile`/`detail_like` are optional narrowers — `detail_like`
+    /// is a SQL `LIKE` pattern (e.g. `%@REASON`) that pins a sub-bucket within a
+    /// reason. The ledger's narrative is source-controlled in the app; this is its
+    /// live half, and like the rest of the quarantine metrics it scans the table,
+    /// so it belongs on the background refresher, never the request path.
+    pub async fn quarantine_resolution(
+        &self,
+        reason: &str,
+        profile: Option<&str>,
+        detail_like: Option<&str>,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NULL     THEN 1 ELSE 0 END)
+                   FROM quarantine
+                  WHERE reason = ?
+                    AND (? IS NULL OR profile = ?)
+                    AND (? IS NULL OR detail LIKE ?)",
+                (
+                    reason.to_owned(),
+                    opt_text(profile),
+                    opt_text(profile),
+                    opt_text(detail_like),
+                    opt_text(detail_like),
+                ),
+            )
+            .await?;
+        // SUM over no matching rows is NULL — an unreprocessed, un-held category
+        // is simply (0, 0).
+        let row = rows.next().await?;
+        Ok(row
+            .map(|row| (opt_int_of(&row, 0).unwrap_or(0), opt_int_of(&row, 1).unwrap_or(0)))
+            .unwrap_or((0, 0)))
+    }
+
     /// The fetch stage per source (issue 33): how many distinct package periods
     /// are on disk and the range they span. Small — one row per source over the
     /// tiny fetch registry.
@@ -1499,6 +1539,50 @@ mod tests {
             gaps,
             vec![("OC".to_owned(), 2), ("XY".to_owned(), 1)],
             "OC sums across its two line numbers; unclaimed-content is excluded",
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 40: a resolution-ledger key splits its matching quarantine rows into
+    /// reclaimed (reprocessed) and outstanding, and the profile + detail narrowers
+    /// keep one ledger entry from counting a sibling bucket's rows.
+    #[tokio::test]
+    async fn quarantine_resolution_splits_reclaimed_from_outstanding() {
+        let path = format!("/tmp/tender-db-qres-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO quarantine(fetch_id, member_path, content_hash, profile, reason, detail, first_seen, reprocessed_at) VALUES
+                   (1,'m1','h1','ted-export-r208','unclaimed-content','unclaimed attribute at /TED_EXPORT/.../PROCEDURE/@REASON',0,100),
+                   (1,'m2','h2','ted-export-r208','unclaimed-content','unclaimed attribute at /TED_EXPORT/.../PROCEDURE/@REASON',0,NULL),
+                   (1,'m3','h3','ted-export-r208','unclaimed-content','unclaimed attribute at /TED_EXPORT/.../OBJECT/@CATEGORY',0,NULL),
+                   (1,'m4','h4','text','unclaimed-content','line 5: continuation under scalar field RP',0,100),
+                   (1,'m5','h5','text','unclaimed-content','line 8: continuation under scalar field XY',0,NULL);",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        // r208 @REASON: one reprocessed, one still held; the sibling @CATEGORY row
+        // is excluded by the detail pattern.
+        assert_eq!(
+            db.quarantine_resolution("unclaimed-content", Some("ted-export-r208"), Some("%@REASON")).await.unwrap(),
+            (1, 1),
+        );
+        // text RP: reclaimed, with the sibling XY continuation excluded.
+        assert_eq!(
+            db.quarantine_resolution("unclaimed-content", Some("text"), Some("%scalar field RP")).await.unwrap(),
+            (1, 0),
+        );
+        // A key that matches nothing yet is simply (0, 0), never an error.
+        assert_eq!(
+            db.quarantine_resolution("unknown-field-code", None, None).await.unwrap(),
+            (0, 0),
         );
 
         let _ = std::fs::remove_file(&path);

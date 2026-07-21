@@ -8,9 +8,10 @@
 //! compared against what we hold. Before any backfill the ratios are near zero,
 //! which is the correct answer, not a bug to hide.
 
+use crate::ledger::resolution_ledger;
 use model::dashboard::{
     AwardLinkage, Count, Coverage, Dashboard, Lag, PipelineStage, QuarantineClass, Quarantined,
-    quarantine_class,
+    ResolvedCategory, quarantine_class,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
@@ -153,6 +154,25 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         .map(|(label, value)| Count { label, value })
         .collect();
 
+    // The resolution ledger (issue 40): each curated entry joined with its live
+    // reclaimed/outstanding counts, so a fixed-and-reprocessed category keeps
+    // telling its story after its count reaches zero. Off the request path with
+    // the rest of measure; the ledger is a handful of entries.
+    let mut resolved_categories = Vec::new();
+    for entry in resolution_ledger() {
+        let (reclaimed, outstanding) = db
+            .quarantine_resolution(&entry.reason, entry.profile.as_deref(), entry.detail_like.as_deref())
+            .await?;
+        resolved_categories.push(ResolvedCategory {
+            category: entry.category,
+            diagnosis: entry.diagnosis,
+            fix: entry.fix,
+            resolved: entry.resolved,
+            reclaimed,
+            outstanding,
+        });
+    }
+
     // The import pipeline per source (issue 33): fetch registry + the notice
     // counts already gathered + projected tenders, so the operator sees which
     // stage the backfill is in without ssh. All cheap, all off the request path.
@@ -222,6 +242,7 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
                 first_seen: q.first_seen,
             })
             .collect(),
+        resolved_categories,
         // Ages, not instants: the client has its own clock, and a browser whose
         // clock is wrong should not be able to report the import as healthy.
         lag: Lag {

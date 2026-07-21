@@ -10,7 +10,8 @@ use dioxus::fullstack::Transportable;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
 use model::dashboard::{
-    AwardLinkage, Coverage, Lag, PipelineStage, QuarantineClass, Quarantined, quarantine_class,
+    AwardLinkage, Coverage, Lag, PipelineStage, QuarantineClass, Quarantined, ResolvedCategory,
+    quarantine_class,
 };
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
@@ -86,6 +87,7 @@ pub fn DashboardPage() -> Element {
                         reasons: d.quarantine_by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
                         field_code_gaps: d.quarantine_field_code_gaps.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
                         recent: d.quarantine_recent.clone(),
+                        resolved: d.resolved_categories.clone(),
                     }
 
                     AwardLinkagePanel { rows: d.award_linkage.clone() }
@@ -481,6 +483,7 @@ fn QuarantinePanel(
     reasons: Vec<(String, i64)>,
     field_code_gaps: Vec<(String, i64)>,
     recent: Vec<Quarantined>,
+    resolved: Vec<ResolvedCategory>,
 ) -> Element {
     let benign = total - actionable - suspected;
     rsx! {
@@ -548,6 +551,41 @@ fn QuarantinePanel(
                                     td { "{entry.profile.clone().unwrap_or_else(|| \"—\".into())}" }
                                     td { class: "path", "{entry.member_path}" }
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+            if !resolved.is_empty() {
+                h3 { "Resolved categories" }
+                p { class: "muted",
+                    "Gaps we diagnosed and fixed. As the archive reprocesses, the held "
+                    "count falls to zero — the record stays here: what the gap was, the "
+                    "change that closed it, and how many notices have come back."
+                }
+                table {
+                    thead {
+                        tr {
+                            th { "Category" }
+                            th { "Diagnosis" }
+                            th { "Fix" }
+                            th { class: "num", "Reclaimed" }
+                            th { "Resolved" }
+                        }
+                    }
+                    tbody {
+                        for entry in resolved {
+                            tr { key: "{entry.category}",
+                                td { "{entry.category}" }
+                                td { class: "muted", "{entry.diagnosis}" }
+                                td { class: "path", "{entry.fix}" }
+                                td { class: "num",
+                                    "{group(entry.reclaimed)}"
+                                    if entry.outstanding > 0 {
+                                        span { class: "muted", " · {group(entry.outstanding)} still held" }
+                                    }
+                                }
+                                td { "{entry.resolved}" }
                             }
                         }
                     }

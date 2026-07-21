@@ -32,6 +32,11 @@ pub struct Dashboard {
     /// first — sampling shows it is ~entirely the one legacy `OC` code.
     pub quarantine_field_code_gaps: Vec<Count>,
     pub quarantine_recent: Vec<Quarantined>,
+    /// Quarantine categories we have diagnosed and fixed — a persistent audit
+    /// trail (issue 40). Curated narrative joined at measure time with live
+    /// reclaimed/outstanding counts, so a category driven to zero still tells its
+    /// story instead of silently vanishing from the panel.
+    pub resolved_categories: Vec<ResolvedCategory>,
     pub lag: Lag,
     pub counts: Vec<Count>,
     /// Award-chaining health per era: how many award Tenders are a lone notice
@@ -62,6 +67,27 @@ pub struct AwardLinkage {
     pub unchained: i64,
     /// `unchained / awards`, 0.0–1.0.
     pub ratio: f64,
+}
+
+/// One resolved quarantine category (issue 40): a curated ledger entry — the
+/// narrative half, source-controlled in the app — joined with the live counts of
+/// how much of the bucket has come back. Persists on the panel at zero
+/// outstanding so the decision stays visible and traceable.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ResolvedCategory {
+    /// The category in human terms, e.g. "r208 award @REASON".
+    pub category: String,
+    /// One sentence: what the gap was and what the fix did.
+    pub diagnosis: String,
+    /// The issue and revision that fixed it, e.g. "issue 31 · 5858159".
+    pub fix: String,
+    /// When it was resolved, `YYYY-MM-DD` — a fixed historical date, not an age.
+    pub resolved: String,
+    /// Matching payloads reprocessed back into the notice layer (live).
+    pub reclaimed: i64,
+    /// Matching payloads still held, awaiting the archive re-walk (live). Falls
+    /// to zero as reprocessing catches up; the row stays either way.
+    pub outstanding: i64,
 }
 
 /// A labelled number; the shape of every count panel row.

@@ -1,6 +1,6 @@
 # 40 — Quarantine resolution ledger on the dashboard
 
-Status: ready-for-agent
+Status: needs-verification
 
 User request (Lennart, 2026-07-21): as quarantine categories get fixed
 and reprocessed, their counts go to zero and the story disappears. The

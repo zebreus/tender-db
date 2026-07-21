@@ -215,3 +215,19 @@ verdicts.
     across 2011 dailies; (ii) text-era — `continuation under scalar field RP` on
     2010 `UTF8_ORG` bundles. Captured on issue 30 for triage against the
     profile owners (issues 09/10/11).
+
+## Resolution ledger (issue 40)
+
+A fixed category's count falls to zero once its payloads reprocess, and the
+story would vanish with it. The dashboard's quarantine panel keeps a **Resolved
+categories** section: a source-controlled ledger of what each category was, how
+it was diagnosed and fixed, and when — joined at render with the live
+reclaimed/outstanding split from the `reprocessed_at` rows.
+
+**Landing a quarantine fix includes adding a ledger entry.** The ledger is
+`crates/app/data/quarantine-ledger.json` (loaded by `crates/app/src/ledger.rs`);
+each entry keys its quarantine rows by `reason` plus an optional `profile` and a
+`detail_like` `LIKE` pattern that pins a sub-bucket (e.g. `%@REASON`), and adds
+the narrative: `category`, `diagnosis` (one sentence), `fix` (issue · rev),
+`resolved` date. The counts are measured off the request path by the background
+refresher, never on a page load.
