@@ -161,3 +161,47 @@ a bad ZIP entry is corruption-tagged; a whole-source run continues past an
 unreadable package. Deployed via ./deploy.sh, then re-enqueued the five jobs.
 EXPECT a bump in quarantine (reason `unreadable zip bundle …` / profile
 `corrupt-package`) across old eras — recorded per plan, not fatal.
+
+### 2026-07-21 — RESTART-RECOVERY recon (local machine reboot; VPS untouched), run-driver
+
+Local dev machine rebooted; production (root@zebreus.click, rev fa873ec) kept
+running throughout — the reboot only cost the local driver session, not the run.
+Resumed babysitting. State verified ~09:17 UTC:
+
+- **Job 1 healthy and past the danger zone.** `process ted monthly (all)` at pkg
+  **217/401 (2011-02)**, ~3.54M notices, ~120 n/s, RSS ~766MB, /data 221G/500G
+  (45%). Packages walk **oldest→newest**, so it has already sailed past
+  **1996-02** (pkg ~37) — the exact truncated SV_19960208 inner zip that killed
+  job#474 — without erroring. **The walker-resilience fix (fa873ec) is proven in
+  production.** The heavy 2004–2010 text era (70% of the dataset) is also behind
+  us: notices climbed 3.7k (1993) → 2.23M (2007-06) → 3.54M (2011-02). Remaining
+  184 packages are the compact TED_EXPORT (2011–2022) + eForms (2023–2026) eras —
+  smaller and faster than what's done.
+
+- **`q=9` explained — NOT pre-restart duplicates.** Queue is jobs 2–10. Jobs 2–5
+  are the original backfill remainder (ted daily, doe monthly, doe daily,
+  project). Jobs **6–10 are the in-app daily scheduler's automatic tick**
+  (`enqueue_daily`, supervisor.rs:478): probe → ted daily → fetch doe daily
+  2026-07-20 → process doe daily → project. Proof: `q` jumped 4→9 at **07:36 UTC
+  = 09:36 Berlin**, exactly the scheduler's 09:35 Europe/Berlin cron. Jobs 7/9/10
+  are functionally idempotent duplicates of 2/4/5 (re-walk dedups; project
+  rebuild=false is idempotent); 6 (probe) and 8 (doe daily fetch) are legit new
+  scheduled work. **All harmless — left in place.** This is actually the
+  continuous-mode scheduler demonstrating itself (an acceptance item), not a bug.
+
+- **Raw-archive FETCH complete.** backfill-fetch.log: `DONE; df used=200GB`.
+  Final on disk: **397 TED monthlies + 44 DÖE monthlies**, 200GB used — under the
+  ~245GB fetch guard. Fetch driver's job is finished; DB growth is now the disk
+  driver (221G/45% and climbing gently, well clear of the ~70% flag).
+
+- **Quarantine so far:** not visible mid-run (`current.counts` is null until a
+  job completes; dashboard is WASM-rendered so no server-side scrape). Per the
+  "no dev shortcuts in prod" rule I did not query the prod DB directly. The only
+  completed process job since the fix — #475 `ted daily (all)` — reported
+  `0 quarantined`. Expect the 1996 SV member + old-era rot to surface as
+  `corrupt-package` / `unreadable zip bundle …` in **job 1's final counts** on
+  completion; will record then.
+
+Monitor tmux (`bf15-monitor` → backfill-status.log, `bf-fetch-watch`) untouched
+and still ticking. Standing by on a background wait for job-1 completion / disk
+threshold; will verify each queued job starts and log milestones.
