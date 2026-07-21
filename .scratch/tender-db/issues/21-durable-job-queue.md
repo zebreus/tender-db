@@ -80,3 +80,18 @@ modules (snapshot.rs, backup.rs) were untouched. Verified this commit is
 snapshot/backup-free and builds green in isolation (a throwaway worktree at
 HEAD + this change only), since 23's other work is still uncommitted in the
 shared tree.
+
+## 2026-07-21 15:11 — PRODUCTION ACCEPTANCE: queue self-recovered on b0a5cdb (run-driver)
+
+First real prod restart with the durable queue. Deploy b0a5cdb restarted the
+service at 15:09:37 UTC; **no manual re-enqueue was done**. On startup the
+persisted jobs recovered by themselves, intact and in order:
+
+- current: job 1 `process ted monthly (all)`, at front, running
+- queued: 2 `ted daily`, 3 `doe monthly`, 4 `doe daily`, 5 `project`,
+  6 `snapshot`
+
+All six survived the restart (incl. the on-demand snapshot at position 6).
+Job 1's row predates the resume-cursor column so it re-walks from 1993 once more
+(expected, one-time). **Durable-queue production acceptance MET** — restarts now
+self-recover; the manual re-enqueue dance (three times today) is retired.
