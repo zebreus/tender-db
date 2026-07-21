@@ -327,7 +327,41 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
             Err(e) => return Err(e),
         }
     }
+
+    // The current-version head pointer (issue 25). On a database created before
+    // it, the columns are added here and backfilled once from tender_versions;
+    // thereafter the projection maintains them, so this is a no-op. `MAX(seq)` and
+    // the head's `published_at` come straight off the PK index (tender_id, seq).
+    let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_seq INTEGER").await?;
+    let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_published_at INTEGER").await? || added;
+    if added {
+        conn.execute(
+            "UPDATE tenders SET
+                 current_seq = (SELECT MAX(v.seq) FROM tender_versions v WHERE v.tender_id = tenders.id),
+                 current_published_at = (SELECT v.published_at FROM tender_versions v
+                                          WHERE v.tender_id = tenders.id ORDER BY v.seq DESC LIMIT 1)",
+            (),
+        )
+        .await?;
+    }
+    // Depends on the column above, so it lives here rather than in the schema
+    // batch (which runs before this ALTER on a pre-issue-25 database).
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS tenders_current_published ON tenders(current_published_at, id)",
+        (),
+    )
+    .await?;
     Ok(())
+}
+
+/// Run an `ADD COLUMN`, reporting whether it actually added the column — a
+/// `duplicate column` answer means an already-migrated database, not an error.
+async fn add_column(conn: &Connection, statement: &str) -> turso::Result<bool> {
+    match conn.execute(statement, ()).await {
+        Ok(_) => Ok(true),
+        Err(e) if e.to_string().contains("duplicate column") => Ok(false),
+        Err(e) => Err(e),
+    }
 }
 
 impl Db {
@@ -406,10 +440,23 @@ impl Db {
     /// `MAX(seq)` per Tender (ADR-0001).
     pub async fn list_tenders(&self, limit: i64) -> turso::Result<Vec<model::Tender>> {
         let conn = self.reader().await?;
+        // Drive straight off `tenders`, ordered by the maintained head-version
+        // date (issue 25): the `tenders_current_published` index turns this into a
+        // range scan + LIMIT, and the title is one indexed lookup per returned
+        // row — O(page), not the old `v_tenders` MAX(seq) aggregation over every
+        // version followed by a full sort. `title` is the head version's, resolved
+        // exactly as the `v_tenders` view does.
         let mut rows = conn
             .query(
-                "SELECT id, COALESCE(title, '(untitled)') FROM v_tenders
-                 ORDER BY published_at DESC, id DESC LIMIT ?",
+                "SELECT t.id,
+                        COALESCE((SELECT x.value FROM tender_version_texts x
+                                   WHERE x.tender_id = t.id AND x.seq = t.current_seq AND x.field = 'title'
+                                   ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
+                                   LIMIT 1), '(untitled)')
+                   FROM tenders t
+                  WHERE t.current_published_at IS NOT NULL
+                  ORDER BY t.current_published_at DESC, t.id DESC
+                  LIMIT ?",
                 (Value::Integer(limit),),
             )
             .await?;
@@ -1225,6 +1272,133 @@ mod tests {
         // (600 × 15k = 9e6 visits in a debug build) is seconds. Generous bound so
         // slow CI stays green while a gross quadratic regression still trips it.
         assert!(elapsed.as_secs() < 3, "coverage query looks superlinear (took {elapsed:?})");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 25: opening a pre-issue-25 canonical layer adds the head-pointer
+    /// columns and backfills them once from `tender_versions` — the deploy path,
+    /// since the prod DB predates the pointer.
+    #[tokio::test]
+    async fn migration_backfills_the_current_version_pointer() {
+        let path = format!("/tmp/tender-db-curptr-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        // A pre-issue-25 schema: tenders + a two-version chain, no pointer columns.
+        let database = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = database.connect().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE tenders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
+                procedure_key TEXT, island_notice_id INTEGER, kind TEXT NOT NULL,
+                created_at INTEGER NOT NULL, UNIQUE(procedure_key), UNIQUE(island_notice_id)
+            ) STRICT;
+             CREATE TABLE tender_versions (
+                tender_id INTEGER NOT NULL, seq INTEGER NOT NULL,
+                caused_by_notice_id INTEGER NOT NULL, published_at INTEGER NOT NULL,
+                publication_id TEXT NOT NULL, PRIMARY KEY (tender_id, seq)
+            ) STRICT;
+             INSERT INTO tenders(id, source, kind, created_at) VALUES(1, 'ted', 'procedure', 0);
+             INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                VALUES(1, 1, 10, 100, 'a'), (1, 2, 11, 200, 'b');",
+        )
+        .await
+        .unwrap();
+        drop(conn);
+        drop(database);
+
+        let db = Db::open(&path).await.expect("open migrates and backfills the pointer");
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query("SELECT current_seq, current_published_at FROM tenders WHERE id = 1", ())
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().expect("the tender row");
+        assert_eq!(int(&row, 0), 2, "current_seq backfilled to MAX(seq)");
+        assert_eq!(int(&row, 1), 200, "current_published_at backfilled to the head version's date");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 25: `list_tenders` is ordered by the maintained head date (newest
+    /// first), honours the limit, and falls back to '(untitled)'. Rows are
+    /// inserted with the pointer set, as the projection would leave them.
+    #[tokio::test]
+    async fn list_tenders_orders_by_the_current_head() {
+        let path = format!("/tmp/tender-db-listorder-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        // Insert canonical rows directly without the full notice/fetch graph, as
+        // the projection does behind its own FK-off window (issue 19).
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            // Three tenders whose head publication dates are 300 / 100 / 200.
+            conn.execute_batch(
+                "INSERT INTO tenders(id, source, kind, created_at, current_seq, current_published_at)
+                   VALUES (1,'ted','procedure',0,1,300),
+                          (2,'ted','procedure',0,1,100),
+                          (3,'ted','procedure',0,1,200);
+                 INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                   VALUES (1,1,10,300,'a'),(2,1,11,100,'b'),(3,1,12,200,'c');
+                 INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value)
+                   VALUES (1,1,NULL,'title','ENG','Newest'),(3,1,NULL,'title','ENG','Middle');",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        let all = db.list_tenders(10).await.unwrap();
+        assert_eq!(
+            all.iter().map(|t| t.id).collect::<Vec<_>>(),
+            vec![1, 3, 2],
+            "ordered by current head date, newest first"
+        );
+        assert_eq!(all[0].title, "Newest");
+        assert_eq!(all[2].title, "(untitled)", "a tender with no title row falls back");
+
+        // The limit is a top-N over the ordering, not a slice of insertion order.
+        let top = db.list_tenders(2).await.unwrap();
+        assert_eq!(top.iter().map(|t| t.id).collect::<Vec<_>>(), vec![1, 3]);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 25, the O(page) guarantee: the newest-Tenders list must read the
+    /// `tenders_current_published` index in order and stop at the limit, never
+    /// materialise-and-sort every tender. Asserting the query plan proves this at
+    /// any scale without needing a giant dataset — turso plans it as
+    /// `SCAN tenders USING COVERING INDEX tenders_current_published`, no temp
+    /// b-tree. (The old `v_tenders` form sorted all current rows on every call.)
+    #[tokio::test]
+    async fn list_tenders_orders_from_the_index_not_a_sort() {
+        let path = format!("/tmp/tender-db-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT t.id FROM tenders t WHERE t.current_published_at IS NOT NULL
+                  ORDER BY t.current_published_at DESC, t.id DESC LIMIT 200",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(
+            plan.contains("tenders_current_published"),
+            "the list must read the head-date index — plan was:\n{plan}"
+        );
+        assert!(
+            !plan.to_uppercase().contains("TEMP B-TREE"),
+            "ordering must come from the index, not a full sort — plan was:\n{plan}"
+        );
 
         let _ = std::fs::remove_file(&path);
     }

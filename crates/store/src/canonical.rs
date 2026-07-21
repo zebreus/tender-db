@@ -48,6 +48,16 @@ pub(crate) const SCHEMA: &str = "
         -- distinct kind, CONTEXT.md).
         kind             TEXT NOT NULL,
         created_at       INTEGER NOT NULL,
+        -- Denormalised pointer to the current (highest-seq) version, maintained by
+        -- the projection (issue 25). MAX(seq) GROUP BY tender_id over the whole
+        -- tender_versions table was O(all versions) on every cold list; the
+        -- projection already knows the head when it writes a version, so it records
+        -- it here. current_published_at is that version's publication date, so a
+        -- newest-current-Tenders list is an index range scan, not a full sort.
+        -- tender_versions stays fully append-only -- this is a derived head pointer
+        -- (ADR-0001 allows validity-range writes on the canonical layer).
+        current_seq          INTEGER,
+        current_published_at INTEGER,
         -- A procedure key is globally unique across Sources: a TED eForms
         -- procedure and its DÖE twin share one BT-04 UUID and must collapse into
         -- one Tender (ADR-0003), and legacy `ojs:` keys are TED-only, so the key
@@ -56,6 +66,10 @@ pub(crate) const SCHEMA: &str = "
         UNIQUE(procedure_key),
         UNIQUE(island_notice_id)
     ) STRICT;
+    -- The index that serves the newest-current-Tenders list (issue 25) is
+    -- created in migrate(), not here: on a pre-issue-25 database the
+    -- current_published_at column it covers is added by an ALTER that runs
+    -- after this schema batch, so the CREATE INDEX must follow it.
 
     -- One version per Notice, ordered by publication. `seq` is dense from 1 and
     -- is recomputed when a late-arriving Notice belongs mid-chain — the change
@@ -332,9 +346,13 @@ pub(crate) const SCHEMA: &str = "
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
+    -- The current-version pointer, read from the maintained head column instead
+    -- of `MAX(seq) GROUP BY tender_id` over every version (issue 25). Same
+    -- `(tender_id, seq)` shape, so v_lots/v_lot_results and the public `/v1/sql`
+    -- queries that join it are unchanged — just O(tenders), not O(all versions).
     DROP VIEW IF EXISTS v_tender_current;
     CREATE VIEW v_tender_current AS
-    SELECT tender_id, MAX(seq) AS seq FROM tender_versions GROUP BY tender_id;
+    SELECT id AS tender_id, current_seq AS seq FROM tenders WHERE current_seq IS NOT NULL;
 
     DROP VIEW IF EXISTS v_tenders;
     CREATE VIEW v_tenders AS
@@ -347,8 +365,7 @@ pub(crate) const SCHEMA: &str = "
              ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
              LIMIT 1) AS title
       FROM tenders t
-      JOIN v_tender_current c ON c.tender_id = t.id
-      JOIN tender_versions v ON v.tender_id = t.id AND v.seq = c.seq;
+      JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq;
 
     DROP VIEW IF EXISTS v_lots;
     CREATE VIEW v_lots AS
@@ -985,6 +1002,23 @@ impl Db {
             applied.versions_written += 1;
             applied.changes +=
                 self.append_version_changes(conn, tender_id, seq, version, previous, now).await?;
+        }
+
+        // Record the new head (issue 25): the current version is the last of the
+        // chain, its `published_at` the date the "newest Tenders" list orders by.
+        // Reached only when the chain changed — the unchanged early-return above
+        // leaves an already-correct pointer (set when those versions were written,
+        // or by the one-time backfill at open for pre-issue-25 rows).
+        if let Some(head) = p.versions.last() {
+            conn.execute(
+                "UPDATE tenders SET current_seq = ?, current_published_at = ? WHERE id = ?",
+                (
+                    Value::Integer(p.versions.len() as i64),
+                    Value::Integer(head.published_at),
+                    Value::Integer(tender_id),
+                ),
+            )
+            .await?;
         }
         Ok(applied)
     }
