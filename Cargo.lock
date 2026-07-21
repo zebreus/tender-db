@@ -4622,6 +4622,7 @@ dependencies = [
  "chrono",
  "dioxus",
  "flate2",
+ "fs4",
  "futures",
  "futures-core",
  "futures-timer",

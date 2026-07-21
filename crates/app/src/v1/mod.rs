@@ -7,6 +7,7 @@
 
 pub mod auth;
 pub mod docs;
+pub mod health;
 pub mod json;
 pub mod sql;
 pub mod sse;
@@ -108,6 +109,10 @@ pub fn router(state: AppState) -> Router {
         .merge(webhooks::routes())
         .layer(GovernorLayer::new(limits))
         .route("/health", get(health))
+        // The deep operational probe an external pinger watches — liveness plus
+        // ingest freshness, job failures and disk. Outside the rate limiter, like
+        // `/health`: a pinger must never be throttled (issue 24).
+        .route("/health/deep", get(health::deep))
         .route("/_source", get(source))
         // The human-readable API reference. Outside the rate limiter (like
         // `/_source`): reading the docs is not a service call and must not spend

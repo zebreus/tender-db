@@ -43,6 +43,8 @@ sha2 = { workspace = true, optional = true }
 hmac = { workspace = true, optional = true }
 base64 = { workspace = true, optional = true }
 url = { workspace = true, optional = true }
+# Deep health probe (issue 24): filesystem stats for the disk-usage signal.
+fs4 = { version = "0.13", default-features = false, optional = true }
 
 [dev-dependencies]
 # The API integration test boots the real router over a fixture-ingested
@@ -88,4 +90,5 @@ server = [
     "dep:hmac",
     "dep:base64",
     "dep:url",
+    "dep:fs4",
 ]

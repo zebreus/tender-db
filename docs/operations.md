@@ -257,6 +257,121 @@ journalctl -u tender-db -p err          # errors only
 
 nginx: `/var/log/nginx/access.log`, `/var/log/nginx/error.log`.
 
+## Monitoring and alerting
+
+The goal (issue 24) is that the operator learns within minutes when production
+breaks, without watching dashboards. Two health endpoints, and one external
+pinger that must live **off the box** (so it still fires when the app — or the
+whole VPS — is down).
+
+### The two health endpoints
+
+| Endpoint | Cost | Answers | Used by |
+| --- | --- | --- | --- |
+| `GET /health` | DB-cheap, always fast | process is up + the database answers (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
+| `GET /health/deep` | one cursor read + one job-log scan + one `statvfs` | the above **plus** ingest freshness, last-job outcome and disk usage | the external pinger |
+
+`/health` is deliberately narrow: its `ok` reflects only liveness, so a deploy
+is never failed by a stale-ingest or full-disk condition unrelated to the new
+build. **Do not widen it** — `deploy.sh` greps its `ok:true`.
+
+`/health/deep` (`crates/app/src/v1/health.rs`) folds four signals into one
+verdict, so a single external check covers uptime, freshness, job failures and
+disk:
+
+- **database** — the same cursor read `/health` does.
+- **ingest_freshness** — unhealthy when no job has succeeded in **26 h**
+  (`INGEST_STALE_SECS`). The scheduler lands a successful run at least daily
+  (TED Mon–Fri, DÖE + projection every day), and 26 h carries a Friday success
+  across the weekend. A box that has *never* run a job (fresh deploy, scheduler
+  not yet fired) is reported healthy-but-unmeasured, not alarmed.
+- **last_job** — unhealthy when the newest finished run in `job_log` has
+  `outcome = "error"` (a Supervisor job ERRORED). Clears itself on the next
+  success.
+- **disk** — unhealthy once **90 %** (`DISK_FULL_FRACTION`) of the volume
+  holding `TENDER_DB` (`/data`, the 500 GB Hetzner volume — same filesystem as
+  the archive) is in use.
+
+It answers **200** when every check passes and **503** when any fails, and the
+JSON body names which check tripped:
+
+```sh
+curl -s https://tenders.zebreus.click/health/deep | jq
+```
+
+```json
+{
+  "ok": true,
+  "rev": "…",
+  "checks": {
+    "database":         { "ok": true, "cursor": "12345" },
+    "ingest_freshness": { "ok": true, "last_success_at": 1753000000, "age_secs": 3600, "threshold_secs": 93600 },
+    "last_job":         { "ok": true, "kind": "project", "params": "rebuild=false", "outcome": "ok", "finished_at": 1753000000 },
+    "disk":             { "ok": true, "used_fraction": 0.041, "free_bytes": 479000000000, "total_bytes": 500000000000, "threshold_fraction": 0.9 }
+  }
+}
+```
+
+### The external pinger (user action — no repo change ships this)
+
+This repo's only git remote is the VPS bare repo (`git remote -v` → `vps
+root@…:/opt/tender-db/repo.git`), **not GitHub**, so there is no place in the
+codebase to run a scheduled check from — the pinger has to be an account the
+operator creates on a third-party service. Pick one:
+
+**Option A — a hosted uptime monitor (recommended, works today).** Free tiers
+poll every 3–5 min and email/push on failure. Because `/health/deep` returns a
+non-2xx (503) when anything is wrong, a plain HTTP monitor covers uptime,
+freshness, disk and job failures with no extra configuration.
+
+- **UptimeRobot** (<https://uptimerobot.com>, free: 50 monitors, 5-min interval):
+  Add New Monitor → type **HTTP(s)** → URL `https://tenders.zebreus.click/health/deep`
+  → interval 5 min → alert contact = `lennarteichhorn@gmail.com`. Its default
+  rule (2xx/3xx = up, 4xx/5xx = down) makes the 503 an alert. Optionally add a
+  **Keyword** monitor on the same URL, alert when `"ok": true` is *not present*,
+  as a second signal.
+- **Better Stack / Better Uptime** (<https://betterstack.com>, free: 10 monitors,
+  3-min checks, mobile push app): Create Monitor → URL as above → "expect status
+  code 200" → email + push. Push to a phone is the fastest path to "within
+  minutes".
+
+**Option B — a scheduled GitHub Actions check (credential-free, but needs the
+repo on GitHub first).** This ties into the AGPL open item below (publishing the
+repo). Once the repo has a GitHub remote, a scheduled workflow that curls the
+endpoint is free and needs *no* secrets — a failed workflow run emails the repo
+owner automatically:
+
+```yaml
+# .github/workflows/health-ping.yml
+name: health-ping
+on:
+  schedule: [{ cron: "*/10 * * * *" }]   # every 10 min (GitHub's floor for cron)
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail --max-time 15 https://tenders.zebreus.click/health/deep
+```
+
+GitHub's cron floor is ~10 min and schedules can lag under load, so Option A
+reacts faster; use B only if a GitHub-native, account-free check is preferred.
+Either way this is **a decision + setup step for Lennart** — nothing in the
+deploy ships it.
+
+### Test procedure
+
+- **Freshness / job / disk logic** is unit-tested against crafted signals
+  (`crates/app/src/v1/health.rs` `#[cfg(test)]`) and end-to-end
+  (`crates/app/tests/api.rs::the_deep_health_probe_reports_operational_health`:
+  a fresh box is 200, a recorded `error` run flips it to 503).
+- **The live alert path** (the acceptance drill, run *after* a deploy, in a
+  quiet window with no backfill in flight): `systemctl stop tender-db` on the
+  box, confirm the pinger's notification arrives within its interval, then
+  `systemctl start tender-db`. To exercise the freshness signal without waiting
+  26 h, temporarily lower `INGEST_STALE_SECS`, deploy, and confirm
+  `/health/deep` reports `ingest_freshness.ok = false` — then revert.
+
 ## TLS and nginx
 
 - vhost: `/etc/nginx/sites-available/tenders.zebreus.click` (symlinked into
@@ -308,13 +423,136 @@ dev/verification work — harmless, but never point a CLI at the production file
 
 ## Backups
 
-There are none, by design. Per `CONTEXT.md`, off-box backups are an accepted
-risk for now: everything is rebuildable — canonical data from the raw archive,
-the archive from the upstream sources — at a cost of roughly a day. If that
-tradeoff changes, the checkpoint+copy runbook (pause writer →
-`wal_checkpoint(TRUNCATE)` → file copy, verified with `integrity_check` + row
-counts) is in `docs/research/turso-scale.md`. `VACUUM INTO` is forbidden at
-scale (OOM).
+The DB is worth backing up (weeks of processing to rebuild); the raw archive is
+**not** (re-fetchable from TED/DÖE, ~200 GB — never back it up). Issue 23 wires
+a consistent online snapshot of the DB, staged on the volume and shipped off-box.
+
+### How a snapshot is taken (the mechanism)
+
+Turso has no online-backup API, and `VACUUM INTO` OOM-kills the box at this
+scale (`docs/research/turso-scale.md` §1). The only workable mechanism is
+`wal_checkpoint(TRUNCATE)` + a file copy — and it is made **consistent under
+concurrent writes** by taking the store's single writer for the length of the
+copy (`crates/store/src/backup.rs`, `Db::snapshot`):
+
+1. Acquire the single writer connection (all writes funnel through it; turso is
+   single-process, so this is every writer there is).
+2. `PRAGMA wal_checkpoint(TRUNCATE)` — fold the WAL into the main file and
+   truncate the `-wal` to zero. The main `.db` is now self-contained.
+3. Copy the `.db` to the staging dir on a blocking thread, **with the writer
+   still held**, so no write and no auto-checkpoint can touch the bytes
+   mid-copy. This is why it is *not* "a file copy of a live DB": the DB is
+   momentarily frozen and checkpointed. Readers keep serving over WAL
+   throughout — a snapshot has zero read downtime.
+4. Release the writer, then **verify the copy offline**: open it independently,
+   `PRAGMA integrity_check`, and compare `COUNT(*)` of `notices` against the
+   source. A copy that does not match is deleted and the run fails (a killed
+   copy can pass integrity_check alone — turso-scale.md §1 — so the row-count
+   comparison is load-bearing).
+
+The snapshot is a **Supervisor job** (`kind: snapshot`), so it serialises with
+ingestion — it never runs concurrently with a fetch/process/project — and lands
+in `job_log`, visible in `GET /admin/jobs` → `recent[]` and on the dashboard.
+The dashboard's **System** panel shows *last DB snapshot* age.
+
+Triggers:
+
+- **Scheduled** — the daily pipeline (09:35 Europe/Berlin) ends with a snapshot,
+  right after the projection folds the day's data.
+- **On demand** — `POST /admin/jobs {"kind":"snapshot"}` (for the restore drill
+  or an ad-hoc backup):
+
+  ```sh
+  curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+    -d '{"kind":"snapshot"}' $BASE/admin/jobs
+  ```
+
+Config (env, set in the systemd unit): `TENDER_SNAPSHOT_DIR` (default
+`/data/snapshots` in prod), `TENDER_SNAPSHOT_KEEP` (local ring size, default 2).
+Snapshots are named `tender-db-<unix>.db`.
+
+> ⚠️ **Unit change required before deploy.** `ProtectSystem=strict` with
+> `ReadWritePaths=/data/db /data/archive` means the service cannot write
+> `/data/snapshots` until it is added. On the box:
+>
+> ```sh
+> mkdir -p /data/snapshots && chown tenderdb:tenderdb /data/snapshots
+> # add /data/snapshots to ReadWritePaths= in the unit (or a drop-in), then:
+> systemctl daemon-reload && systemctl restart tender-db
+> ```
+
+### Disk headroom
+
+`/data` (500 GB) must hold **archive + DB + one snapshot in flight**. At DB
+size *D*, staging one snapshot needs another *D* free; the local ring keeps
+`TENDER_SNAPSHOT_KEEP` of them, so budget `archive + (KEEP+1)·D`. With the
+archive at ~200 GB and *D* heading toward ~100 GB, keep `KEEP` small locally
+(2) and rely on off-box for the long retention ring. `df -h /data` before
+enabling the daily snapshot; a snapshot job that runs out of space fails
+cleanly (the copy errors, no partial file is kept) without touching the live DB.
+
+### Shipping off-box (retention ring)
+
+The local staging dir is a short ring; the durable **7 daily + 4 weekly** ring
+lives off-box. Shipping is a systemd timer on the box that pushes the newest
+staged snapshot to the destination and prunes the remote ring — a template is
+in `nix/backup-ship.sh` (rsync-based). **This step is blocked on a destination
+decision** (see below); until it is wired, snapshots accumulate only in the
+small local ring, so off-box durability is not yet in place.
+
+Destination options (report to Lennart):
+
+| Option | Rough monthly cost | Notes |
+| --- | --- | --- |
+| Hetzner **Storage Box** BX11 (1 TB) | ~€3.8 | Same DC, rsync/BorgBackup/SFTP; simplest; must be **ordered** (new credentials). |
+| Hetzner Storage Box BX21 (5 TB) | ~€12 | Headroom for many weeklies + the archive if ever wanted. |
+| Hetzner **Object Storage** (S3) | ~€6/TB | S3 API; needs an `rclone`/`aws` client + access keys. |
+| A second Hetzner **Volume** | ~€0.044/GB (100 GB ≈ €4.4) | Same failure domain as prod (both are Hetzner block storage) — weaker than a Storage Box for disaster recovery. |
+
+Recommendation: a **Storage Box BX11** (cheapest, off the prod host, rsync-native).
+Blocked because it must be ordered and its SSH credentials provisioned — I
+cannot invent those. Once ordered, drop the key on the box, point
+`nix/backup-ship.sh` at it, and enable the timer.
+
+### Restore procedure (TESTED)
+
+Restoring is a plain file copy — **no turso tooling, no app** — because a
+snapshot is an ordinary SQLite file. Drill it into a scratch dir and open it;
+never overwrite the live DB in place.
+
+```sh
+# 1. Pick a snapshot (local ring, or pull one back from off-box first).
+ls -lh /data/snapshots/                      # newest is the freshest
+SNAP=/data/snapshots/tender-db-<unix>.db
+
+# 2. Restore into a scratch dir (NOT /data/db).
+mkdir -p /data/restore && cp "$SNAP" /data/restore/tender-db.db
+
+# 3. Verify it offline — integrity + a row count sanity check.
+sqlite3 /data/restore/tender-db.db 'PRAGMA integrity_check;'      # expect: ok
+sqlite3 /data/restore/tender-db.db 'SELECT COUNT(*) FROM notices;'
+
+# 4. (Full recovery) stop the service, swap the file in, restart.
+systemctl stop tender-db
+mv /data/db/tender-db.db /data/db/tender-db.db.bak    # keep the old one aside
+cp /data/restore/tender-db.db /data/db/tender-db.db
+rm -f /data/db/tender-db.db-wal /data/db/tender-db.db-shm   # snapshot is self-contained
+chown tenderdb:tenderdb /data/db/tender-db.db
+systemctl start tender-db
+curl -s https://tenders.zebreus.click/health   # expect {"ok":true,…}
+```
+
+Steps 1–3 are the **read-only drill** (the issue's acceptance test) and are safe
+to run anytime against production snapshots; step 4 is the real recovery.
+
+**Measured durations** (from `docs/research/turso-scale.md`, 10 GB DB on this
+VPS; scale ~linearly): checkpoint+copy **~18 s / 10 GB**; offline
+`integrity_check` **~7 min / 10 GB** (cold, IO-bound); `COUNT(*)` ~2 s. The
+restore copy is the same order as the snapshot copy. *A production drill with
+real end-to-end timings is pending the first post-deploy snapshot (issue 23
+verification step) — record the measured numbers here once run.*
+
+`VACUUM INTO` is forbidden at scale (OOM — turso-scale.md §1).
 
 ## Open items
 
@@ -325,6 +563,11 @@ Known gaps in the production setup, tracked here so they aren't rediscovered:
   `/data` mount, and nginx all come back clean. Needs a deliberate quiet window —
   do it when no ingestion/backfill is in flight, then verify `systemctl status
   tender-db` and `curl https://tenders.zebreus.click/health`.
+- **The external pinger is not set up yet.** `/health/deep` ships and covers
+  uptime, freshness, disk and job failures, but nothing off-box watches it until
+  Lennart creates a hosted-monitor account (or publishes the repo and enables
+  the GitHub Actions check) — see [Monitoring and alerting](#monitoring-and-alerting).
+  Until then a production outage is still silent.
 - **AGPL source offer is a written offer, not a public repo.** `/_source`
   currently tells a network user to request the Corresponding Source from the
   operator (AGPL §13 permits this). Publishing the repo at a stable public URL

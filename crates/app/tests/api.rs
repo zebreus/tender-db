@@ -92,6 +92,13 @@ impl Server {
         response.json().await.expect("json body")
     }
 
+    /// Like [`Self::get`] but does not assert success — for endpoints whose
+    /// unhealthy answer is a non-2xx with a JSON body (e.g. `/health/deep`).
+    async fn get_allow_error(&self, path: &str) -> Value {
+        let response = self.http.get(format!("{}{path}", self.base)).send().await.expect("request");
+        response.json().await.expect("json body")
+    }
+
     async fn status(&self, path: &str) -> u16 {
         self.http
             .get(format!("{}{path}", self.base))
@@ -278,6 +285,39 @@ async fn the_service_root_and_health_answer() {
     // AGPL §13: a network user must be offered the running version's source.
     assert!(root["source_offer"].as_str().is_some_and(|s| s.starts_with("https://")));
     assert_eq!(server.status("/_source").await, 200);
+}
+
+/// The deep health probe (issue 24): a fresh, live box — database answering, no
+/// ingest run yet — reports healthy, and the body carries every operational
+/// check the external pinger judges production by.
+#[tokio::test]
+async fn the_deep_health_probe_reports_operational_health() {
+    let server = Server::start("deep-health").await;
+
+    assert_eq!(server.status("/health/deep").await, 200, "a live box is healthy");
+    let deep = server.get("/health/deep").await;
+    assert_eq!(deep["ok"], Value::Bool(true));
+    assert_eq!(deep["checks"]["database"]["ok"], Value::Bool(true));
+    // No scheduled run has fired yet — absence is not an alarm.
+    assert_eq!(deep["checks"]["ingest_freshness"]["ok"], Value::Bool(true));
+    assert_eq!(deep["checks"]["ingest_freshness"]["last_success_at"], Value::Null);
+    assert_eq!(deep["checks"]["last_job"]["outcome"], Value::Null);
+
+    // A successful run refreshes the freshness clock; a later failure trips the
+    // last-job check and flips the whole probe to 503 for the pinger.
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    server.db.record_job_run("process", "ted daily (all)", now - 20, now - 10, "ok", "42 notices").await.unwrap();
+    let ok_run = server.get("/health/deep").await;
+    assert_eq!(ok_run["checks"]["ingest_freshness"]["last_success_at"], Value::from(now - 10));
+
+    server.db.record_job_run("project", "rebuild=false", now - 5, now, "error", "db: locked").await.unwrap();
+    assert_eq!(server.status("/health/deep").await, 503, "the last job errored");
+    let errored = server.get_allow_error("/health/deep").await;
+    assert_eq!(errored["ok"], Value::Bool(false));
+    assert_eq!(errored["checks"]["last_job"]["ok"], Value::Bool(false));
 }
 
 #[tokio::test]
