@@ -313,10 +313,15 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 3] = [
+const MIGRATIONS: [&str; 4] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
+    // The resume cursor (issue 32). job_queue shipped in bad8dda (issue 21), so
+    // the prod table predates this column — CREATE TABLE IF NOT EXISTS never adds
+    // it, and recover()'s `SELECT … progress` would fail on the first boot of the
+    // new binary. NULL for every existing row, which is correct (a fresh cursor).
+    "ALTER TABLE job_queue ADD COLUMN progress TEXT",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
@@ -1523,6 +1528,41 @@ mod tests {
             ],
         );
         assert_eq!(db.tenders_by_source().await.unwrap(), vec![("doe".to_owned(), 1), ("ted".to_owned(), 2)]);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 32 deploy fix: `job_queue` shipped in bad8dda without `progress`, so
+    /// opening a pre-32 database must ALTER the column in — otherwise recover()'s
+    /// `SELECT … progress` crashes the new binary on boot. Opens a database with
+    /// the old job_queue and a live job, then asserts the read path works and the
+    /// column is writable.
+    #[tokio::test]
+    async fn migration_adds_the_job_queue_progress_column() {
+        let path = format!("/tmp/tender-db-jqmigrate-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        // The pre-issue-32 schema: job_queue without `progress`, holding a job.
+        let database = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = database.connect().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE job_queue (
+                id INTEGER PRIMARY KEY, kind TEXT NOT NULL, params TEXT NOT NULL, spec TEXT NOT NULL
+            ) STRICT;
+             INSERT INTO job_queue(id, kind, params, spec) VALUES(3, 'process', 'ted (all)', 'x');",
+        )
+        .await
+        .unwrap();
+        drop(conn);
+        drop(database);
+
+        let db = Db::open(&path).await.expect("open must migrate the pre-32 job_queue");
+        let pending = db.pending_jobs().await.expect("the migrated column is readable");
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].progress, None, "an existing job gets a NULL cursor");
+        // And it is writable — the resume cursor works on the migrated table.
+        db.record_job_progress(3, "2008-06").await.unwrap();
+        assert_eq!(db.pending_jobs().await.unwrap()[0].progress.as_deref(), Some("2008-06"));
 
         let _ = std::fs::remove_file(&path);
     }

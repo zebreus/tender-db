@@ -55,3 +55,16 @@ prefix, inclusive of the cursor) and `a_process_job_recovers_its_resume_cursor`
 
 Deploy value: every remaining backfill deploy resumes cheaply instead of
 re-walking the 2004–2010 bundles.
+
+## Deploy fix (2026-07-21) — additive migration for the shipped table
+
+Pre-deploy review caught it: `job_queue` shipped in bad8dda (issue 21 deployed
+12:14, prod holds jobs 1-6), so the `progress` column existing only inside
+`CREATE TABLE IF NOT EXISTS` never reaches the existing prod table — recover()'s
+`SELECT … progress FROM job_queue` would crash the new binary on boot. Added
+`ALTER TABLE job_queue ADD COLUMN progress TEXT` to the MIGRATIONS list (2945e9e
+pattern; NULL for existing rows = a fresh cursor, correct). Test
+`migration_adds_the_job_queue_progress_column` opens a pre-32 job_queue with a
+live job and asserts the read path works and the column is writable. Swept the
+batch: 30/33 add only SELECT queries + in-memory model fields (no DB schema); 25
+uses migrate() add_column already.
