@@ -50,8 +50,8 @@ let
     pname = "tender-db";
   };
 
-  # Native (server-side) dependency artifacts, cached across rebuilds. The wasm
-  # client deps are compiled by `dx` during the bundle step below.
+  # Native (server-side) dependency artifacts under the default `release` profile,
+  # for the clippy lint gate below (plain `cargo clippy`, host target).
   cargoArtifacts = craneLib.buildDepsOnly (
     commonArgs
     // {
@@ -61,11 +61,58 @@ let
     }
   );
 
+  # Dependency cache for the fullstack bundle. `dx` compiles the graph under two
+  # ad-hoc profiles/targets a vanilla crane never populates — the server at
+  # `target/<host>/server-release/` and the wasm client at
+  # `target/wasm32-unknown-unknown/wasm-release/`. The plain `cargoArtifacts`
+  # above lands in `target/release/`, which dx never reads, so before this every
+  # deploy cold-built the whole ~1300-crate native + wasm graph (~20 min), even
+  # for a one-line server change.
+  #
+  # We prime the cache with `dx` itself (against crane's DUMMY workspace sources)
+  # so the fingerprints match by construction — matching dx's ad-hoc profiles with
+  # plain cargo does not reproduce them. Two separate `dx build`s rather than one
+  # `dx bundle`: the wasm-bindgen step fails on the contentless dummy app, and a
+  # single bundle would abort the server build with it; run apart, each compiles
+  # its whole dependency graph (all we snapshot) before that cosmetic failure.
+  # The real bundle then recompiles only the four workspace crates (~seconds).
+  #
+  # Coupled to dx's profile names/flags: a dx upgrade that changes them just makes
+  # the cache miss and rebuild — slower, never wrong.
+  bundleDeps = craneLib.buildDepsOnly (
+    commonArgs
+    // {
+      pname = "tender-db-bundle-deps";
+      doCheck = false;
+      nativeBuildInputs = [
+        pkgs.dioxus-cli
+        pkgs.binaryen
+      ];
+      buildPhaseCargoCommand = ''
+        export DIOXUS_LOG=error
+        export HOME=$TMPDIR
+        dx build --package tender-db --platform server --release --offline
+        dx build --package tender-db --platform web --release --offline || true
+
+        # Drop the four DUMMY workspace crates from the cache so the real bundle
+        # recompiles them from scratch. dx compiles the app crate as BOTH a lib and
+        # a bin and passes the lib to the bin as `--extern`; leaving the stub lib in
+        # the cache links the real bin against an empty client (a silent wrong-output
+        # bug, or an E0599 on the mismatched component props). Only the ~1300
+        # third-party dep artifacts stay cached. No registry crate shares these names.
+        for c in tender_db model store ingest; do
+          find target -type f \( -name "lib$c-*" -o -name "$c-*" \) -delete
+          find target -type d -path '*/.fingerprint/*' -name "$c-*" -exec rm -rf {} +
+        done
+      '';
+    }
+  );
+
   # ---- Fullstack bundle (server binary + web `public/`) -------------------
   server = craneLib.mkCargoDerivation (
     commonArgs
     // {
-      inherit cargoArtifacts;
+      cargoArtifacts = bundleDeps;
 
       # We install the dx bundle ourselves; don't let crane also pack the Cargo
       # target dir into $out as target.tar.zst.
