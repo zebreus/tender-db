@@ -239,3 +239,24 @@ comes from the supervisor, which never scans.
 
 Needs verification: `/` p99 < 1s under sustained ingestion in prod (served from
 the snapshot; the 60s background scan stays off the request path).
+
+## 2026-07-21 15:12 — b0a5cdb coverage-refresher: `/` fast, no core-pin (run-driver)
+
+The 20-pt3 background coverage refresher landed in b0a5cdb. Re-tested `/` — the
+stall + core-pin I found on bad8dda is gone:
+
+- 10× `curl /` during job 1's activity: **1.0–2.0ms, all HTTP 200.**
+- 3× authed `/admin/jobs`: 0.6–1.0ms.
+- Immediate per-thread CPU after the burst: **0 threads >50%**, idle ~47%,
+  load 2.55 — no core pinned (bad8dda pinned one core per in-flight `/`).
+- `/health/deep`: 200 in 43ms.
+
+The refresher decouples `/` from the query: requests read a maintained coverage
+snapshot and can never trigger the scan inline, so `/` is flat regardless of
+ingestion state. **HONEST CAVEAT:** this burst ran while job 1 was in the dedup
+**re-walk** (notices=0 → read-heavy, minimal write commits). My bad8dda stall
+correlated specifically with active write **commits** (notices growing). The
+refresher architecture decouples `/` from writes too, so it should stay fast —
+but I will re-confirm one burst during **real parsing** (writes) when job 1
+passes ~2011 (~100 min out) and record it here as the definitive datum before
+this is called done. On current evidence the p99<1s target is met.
