@@ -27,6 +27,7 @@ pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
 pub use webhooks::{Delivery, Endpoint};
 
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use tokio::sync::{Mutex, MutexGuard, OnceCell, watch};
 use turso::{Connection, Value};
@@ -95,6 +96,13 @@ const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS notices_profile ON notices(profile);
     CREATE INDEX IF NOT EXISTS notices_parse_state ON notices(parse_state);
+    -- notices.fetch_id is a foreign key that was unindexed (issue 20 reopened):
+    -- any query seeking notices by their fetch — and the old join-based coverage
+    -- query's inner side — had to full-scan. Idempotent CREATE INDEX (not the
+    -- ALTER-only MIGRATIONS list); on an existing 3.5M-row prod table the first
+    -- open after this change builds it once (tens of seconds; the process/query
+    -- rewrite is the actual DoS fix, this is FK-hygiene insurance).
+    CREATE INDEX IF NOT EXISTS notices_fetch_id ON notices(fetch_id);
 
     -- The only failure mode of ingestion (ADR-0004): a notice with unmapped or
     -- unrecognised content is quarantined whole, never partially imported. The
@@ -763,25 +771,42 @@ impl Db {
     /// that year do we hold", which is a question about packages.
     pub async fn notice_counts_by_profile_year(&self) -> turso::Result<Vec<ProfileYear>> {
         let conn = self.reader().await?;
+        // Single-pass, join-free (issue 20 reopened). The previous form —
+        // `notices n JOIN fetches f ON f.id = n.fetch_id GROUP BY f.source, …` —
+        // let the planner drive the join from `fetches` and full-scan the 3.5M-row
+        // `notices` table once per fetch (no index on notices.fetch_id):
+        // O(notices × fetches) ≈ billions of visits, hours per query, one core
+        // pinned per unauthenticated `/` hit. Instead, aggregate `notices` by its
+        // OWN columns in one scan, then fold the result up against the tiny
+        // `fetches` table in process — the planner has no join to get wrong.
+        let mut per_fetch = Vec::new();
         let mut rows = conn
-            .query(
-                "SELECT f.source, n.profile, substr(f.period, 1, 4) AS year, COUNT(*)
-                   FROM notices n JOIN fetches f ON f.id = n.fetch_id
-                  GROUP BY f.source, n.profile, year
-                  ORDER BY year, f.source, n.profile",
-                (),
-            )
+            .query("SELECT fetch_id, profile, COUNT(*) FROM notices GROUP BY fetch_id, profile", ())
             .await?;
-        let mut out = Vec::new();
         while let Some(row) = rows.next().await? {
-            out.push(ProfileYear {
-                source: text(&row, 0),
-                profile: text(&row, 1),
-                year: text(&row, 2),
-                notices: int(&row, 3),
-            });
+            per_fetch.push((int(&row, 0), text(&row, 1), int(&row, 2)));
         }
-        Ok(out)
+
+        // One row per downloaded package — thousands, not millions: id → (source, year).
+        let mut meta: HashMap<i64, (String, String)> = HashMap::new();
+        let mut frows = conn.query("SELECT id, source, substr(period, 1, 4) FROM fetches", ()).await?;
+        while let Some(row) = frows.next().await? {
+            meta.insert(int(&row, 0), (text(&row, 1), text(&row, 2)));
+        }
+
+        // Fold per-(fetch, profile) counts up to (source, profile, year). The
+        // BTreeMap key is (year, source, profile), so iteration reproduces the
+        // old `ORDER BY year, f.source, n.profile` exactly.
+        let mut agg: BTreeMap<(String, String, String), i64> = BTreeMap::new();
+        for (fetch_id, profile, count) in per_fetch {
+            if let Some((source, year)) = meta.get(&fetch_id) {
+                *agg.entry((year.clone(), source.clone(), profile)).or_insert(0) += count;
+            }
+        }
+        Ok(agg
+            .into_iter()
+            .map(|((year, source, profile), notices)| ProfileYear { source, profile, year, notices })
+            .collect())
     }
 
     /// The newest quarantined payloads — the drill-down behind the headline
@@ -1128,6 +1153,79 @@ mod tests {
         assert!(started.elapsed().as_secs() < 1, "dashboard reads must not queue behind the writer");
 
         writer.execute("COMMIT", ()).await.unwrap();
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 20 (reopened): the coverage query must aggregate `notices` in a
+    /// single scan, not a `notices × fetches` nested loop. Builds a dataset with
+    /// MANY fetches (which is what made the old join superlinear) and asserts the
+    /// counts are correct and the call stays well under a wall-clock bound a
+    /// quadratic plan over this size would blow past.
+    #[tokio::test]
+    async fn coverage_query_is_single_pass_over_notices() {
+        let path = format!("/tmp/tender-db-coverage-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        // Many fetches amplify a nested loop's fetches×notices term; the row total
+        // is kept modest because turso's debug-build insert path is what bounds
+        // this test's runtime, not the query. 600 fetches × 25 notices = 15k. The
+        // definitive perf check is in prod (the issue's acceptance), on 3.5M rows.
+        const FETCHES: i64 = 600;
+        const PER_FETCH: i64 = 25;
+        {
+            let conn = db.conn().await;
+            conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+            for f in 0..FETCHES {
+                // ted↔eforms, doe↔text; years cycle 2024/2025/2026 via f % 3.
+                let source = if f % 2 == 0 { "ted" } else { "doe" };
+                let profile = if f % 2 == 0 { "eforms" } else { "text" };
+                let year = 2024 + (f % 3);
+                let id = f + 1;
+                conn.execute(
+                    &format!(
+                        "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                         VALUES({id}, '{source}', 'daily', '{year}-{f:05}', 'u', 'h', 1, 0, 'p')"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+                let mut sql = String::from(
+                    "INSERT INTO notices(source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at) VALUES ",
+                );
+                for n in 0..PER_FETCH {
+                    if n > 0 {
+                        sql.push(',');
+                    }
+                    sql.push_str(&format!("('{source}','p{f}_{n}','h{f}_{n}','{profile}',{id},'m',0)"));
+                }
+                conn.execute(&sql, ()).await.unwrap();
+            }
+            conn.execute("COMMIT", ()).await.unwrap();
+        }
+
+        let started = std::time::Instant::now();
+        let rows = db.notice_counts_by_profile_year().await.unwrap();
+        let elapsed = started.elapsed();
+
+        // Every notice is counted exactly once.
+        assert_eq!(rows.iter().map(|r| r.notices).sum::<i64>(), FETCHES * PER_FETCH);
+        // ted holds only eforms, doe only text — the join folded profile correctly.
+        assert!(rows.iter().all(|r| (r.source == "ted") == (r.profile == "eforms")));
+        // Exactly the (year, source) × its one profile cells: 3 years × 2 sources.
+        assert_eq!(rows.len(), 6);
+        // Ordered by (year, source, profile), reproducing the old ORDER BY.
+        let keys: Vec<_> = rows.iter().map(|r| (r.year.clone(), r.source.clone(), r.profile.clone())).collect();
+        let mut sorted = keys.clone();
+        sorted.sort();
+        assert_eq!(keys, sorted);
+
+        // The single scan is milliseconds; a reverted fetches×notices nested loop
+        // (600 × 15k = 9e6 visits in a debug build) is seconds. Generous bound so
+        // slow CI stays green while a gross quadratic regression still trips it.
+        assert!(elapsed.as_secs() < 3, "coverage query looks superlinear (took {elapsed:?})");
+
         let _ = std::fs::remove_file(&path);
     }
 }

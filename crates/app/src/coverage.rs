@@ -9,6 +9,8 @@
 //! which is the correct answer, not a bug to hide.
 
 use model::dashboard::{AwardLinkage, Count, Coverage, Dashboard, Lag, Quarantined};
+use std::sync::{Mutex, OnceLock};
+use std::time::{Duration, Instant};
 use store::Db;
 
 /// Notice counts per TED publication year — the coverage denominator. Vendored
@@ -45,9 +47,37 @@ fn ground_truth() -> Vec<Published> {
         .collect()
 }
 
+/// How long a measured dashboard is served before it is recomputed. `/` polls
+/// the coverage panel every few seconds; recomputing per poll rescans millions
+/// of rows (issue 20 reopened), so a burst of pollers is collapsed into one
+/// scan per window. A handful of seconds stale on a public dashboard is
+/// invisible — the numbers move on the scale of an ingestion job, not a poll.
+const COVERAGE_TTL: Duration = Duration::from_secs(30);
+
+/// The last measured dashboard and when it was taken — process-wide, because the
+/// coverage numbers are global, not per-viewer.
+static CACHE: OnceLock<Mutex<Option<(Instant, Dashboard)>>> = OnceLock::new();
+
+/// Everything the dashboard shows, served from a short-lived cache so polling
+/// cannot turn the public page into a repeated full-table scan.
+pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
+    let cache = CACHE.get_or_init(|| Mutex::new(None));
+    if let Some((at, dash)) = &*cache.lock().expect("coverage cache")
+        && at.elapsed() < COVERAGE_TTL
+    {
+        return Ok(dash.clone());
+    }
+    // Recompute outside the lock — a std mutex must not be held across an await,
+    // and a rare double-compute under a burst is far cheaper than serialising
+    // every dashboard request behind one lock.
+    let dashboard = compute(db, now).await?;
+    *cache.lock().expect("coverage cache") = Some((Instant::now(), dashboard.clone()));
+    Ok(dashboard)
+}
+
 /// Measure everything the dashboard shows, in one pass, so the panels are one
 /// consistent snapshot rather than four independently-timed ones.
-pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
+async fn compute(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
     let truth = ground_truth();
     let coverage = db
         .notice_counts_by_profile_year()

@@ -1,6 +1,6 @@
 # 20 — read-only queries queue behind the writer under heavy ingestion
 
-Status: in-progress (REOPENED — prod verification failed, second root cause)
+Status: needs-verification (second fix landed on main; awaiting prod perf check)
 
 ## 2026-07-21 ~11:00 — verification FAILED in prod; second root cause (team lead)
 
@@ -126,3 +126,38 @@ So the reader-pool fix holds for the authed/JSON paths under real load. The
 outstanding failure is confined to the coverage query behind `/` (the missing
 `notices(fetch_id)` index) — final acceptance + status flip left to the team
 lead once that fix deploys.
+
+## Second fix (2026-07-21) — coverage query + TTL cache
+
+Landed on main atop issue 23 (b499d5a); cherry-picked from an isolated
+worktree while 23 re-integrated its snapshot hooks.
+
+- **notice_counts_by_profile_year rewritten join-free**: aggregate `notices`
+  by its own columns in one scan (`GROUP BY fetch_id, profile` → thousands of
+  rows), then fold up against the small `fetches` table in process. No join
+  for the planner to drive from `fetches`, so it is O(notices) irrespective of
+  index/table sizes — the O(notices × fetches) nested loop is gone.
+- **Index `notices(fetch_id)`** via idempotent SCHEMA `CREATE INDEX IF NOT
+  EXISTS` (indexes aren't in the ALTER-only MIGRATIONS list). Honest scope: the
+  rewrite is the fix; this index does *not* materially speed the rewritten
+  single scan — it is FK-hygiene insurance for any fetch_id lookup. A covering
+  `(fetch_id, profile)` index could make the GROUP BY index-ordered but isn't
+  warranted given the TTL cache + sub-second single scan. **Deploy note**: the
+  first open on the 3.5M-row prod table builds it once (~tens of seconds at
+  open) — the 120s health-check grace (230a952) covers it.
+- **30s TTL cache** around `coverage::measure`: dashboard polling collapses to
+  one measurement per window instead of rescanning every few seconds. App-side,
+  no new dep; recompute runs outside the lock (std Mutex never held across await).
+- **Audit** of the other coverage reads: only this query had the O(n×m)
+  nested-loop shape. import_lag / canonical_counts / quarantine_counts are
+  single-table linear scans; award_linkage is join-heavy but PK/subquery-scan
+  driven. All now additionally bounded by the TTL cache.
+
+Test `store::coverage_query_is_single_pass_over_notices`: many-fetch dataset,
+correct + ordered counts + a coarse wall-clock bound (turso debug-build insert
+speed caps the size, so prod is the definitive perf check). Full store +
+`tender-db --features server` suites green on the integrated tree (with issue
+23); clippy clean.
+
+Needs verification: `/` and /admin/jobs p99 < 1s under heavy ingestion,
+measured in prod, and no unbounded-CPU query reachable unauthenticated.
