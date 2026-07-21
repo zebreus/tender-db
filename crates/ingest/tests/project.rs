@@ -1377,8 +1377,14 @@ async fn sdk01_projects_title_buyer_and_winner() {
 
     // Title and description, at Tender scope, resolved from SDK01-ProcurementProject-*.
     assert_eq!(
-        query_text(&db, "SELECT value FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL LIMIT 1").await,
+        query_text(
+            &db,
+            "SELECT value FROM tender_version_texts \
+              WHERE field = 'title' AND lot_id IS NULL AND value = 'Lose Möblierung' LIMIT 1"
+        )
+        .await,
         Some("Lose Möblierung".to_owned()),
+        "the CN's title projects from SDK01-ProcurementProject-Name",
     );
     assert!(scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'description'").await > 0);
     // The realized-location NUTS and the lot's submission deadline.
@@ -1410,6 +1416,83 @@ async fn sdk01_projects_title_buyer_and_winner() {
         .await,
         Some("1. Firma: IABG mbH".to_owned()),
         "the WinningParty is the resolved winner"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+// ---------------------------------- issue 34: sdk-0.1 ContractFolderID as a key
+
+/// A minimal synthetic notice carrying a single id field on its PROCEDURE root —
+/// enough to exercise Tender identity/merging without a full fixture.
+async fn record_key_only(db: &Db, fetch_id: i64, source: &str, pub_id: &str, profile: &str, field: &str, value: &str) {
+    let parsed = Parsed {
+        sections: vec![Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+        values: vec![ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+        }],
+    };
+    let notice = Notice {
+        source: source.into(),
+        publication_id: pub_id.into(),
+        content_hash: pub_id.into(),
+        profile: profile.into(),
+        declared_version: None,
+        fetch_id,
+        member_path: pub_id.into(),
+        ingested_at: 0,
+        published_at: Some(0),
+        dispatched_at: None,
+    };
+    db.record_notice(&notice, &Parse::Parsed(parsed)).await.expect("record synthetic");
+}
+
+/// A uuid-bearing sdk-0.1 notice merges with its TED twin on the shared BT-04
+/// uuid (ADR-0003), while a non-uuid folder id stays an island — the numeric
+/// channel's local ids must never merge.
+#[tokio::test]
+async fn sdk01_uuid_folder_merges_with_ted_twin_but_non_uuid_stays_island() {
+    let (db, fetch_id, path) = scratch("sdk01-merge").await;
+    // The real sdk-0.1 CAN publishes ContractFolderID 3d2aac86-…; its TED twin
+    // publishes the same uuid as BT-04.
+    let shared = "3d2aac86-4286-4ae2-9bc1-08eb1cc61f80";
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml").await;
+    record_key_only(&db, fetch_id, "ted", "00499999-2026", "eforms:eforms-sdk-1.13", "BT-04-notice", shared).await;
+    // A second sdk-0.1 notice whose folder id is a non-uuid local number.
+    record_key_only(&db, fetch_id, "doe", "88887777-1", "eforms:eforms-sdk-0.1", "SDK01-ContractFolderID", "LOCAL-12345").await;
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 3);
+
+    // Two Tenders: the merged uuid one (DÖE + TED), and the non-uuid island.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2);
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM tenders WHERE procedure_key = '{shared}'")).await,
+        1,
+        "the shared uuid keys exactly one Tender",
+    );
+    // That Tender carries both Sources' notices — the merge.
+    assert_eq!(
+        scalar(
+            &db,
+            &format!(
+                "SELECT COUNT(DISTINCT n.source) FROM tender_versions v \
+                 JOIN notices n ON n.id = v.caused_by_notice_id \
+                 JOIN tenders t ON t.id = v.tender_id WHERE t.procedure_key = '{shared}'"
+            ),
+        )
+        .await,
+        2,
+        "DÖE and TED readings merged into one Tender",
+    );
+    // The non-uuid sdk-0.1 notice is an island (no procedure key).
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key IS NULL AND island_notice_id IS NOT NULL").await,
+        1,
+        "the non-uuid folder id stays an island",
     );
 
     let _ = std::fs::remove_file(&path);

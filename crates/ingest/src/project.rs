@@ -216,6 +216,10 @@ const SDK01_PARTY_COUNTRY_FIELDS: &[&str] = &[
 ];
 /// sdk-0.1's award-decision code, on the `TenderResult` section.
 const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
+/// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
+/// strong-enough cross-reference to key a Tender on (issue 34); the numeric
+/// channel's non-uuid folder ids are notice-local and stay islands.
+const SDK01_FOLDER_FIELD: &str = "SDK01-ContractFolderID";
 
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
@@ -490,7 +494,7 @@ impl NoticeState {
             publication_id: notice.publication_id.clone(),
             legacy,
             sdk01,
-            procedure_key: first_id(parsed, PROCEDURE_KEY_FIELD).filter(|k| !k.trim().is_empty()),
+            procedure_key: procedure_key(parsed, sdk01),
             ojs_self,
             ojs_edges,
             published_at,
@@ -1431,6 +1435,31 @@ fn is_sdk01_profile(profile: &str) -> bool {
     profile == "eforms:eforms-sdk-0.1"
 }
 
+/// The Tender's procedure key: BT-04 for eForms/eForms-DE, or — for the sdk-0.1
+/// dialect — its `ContractFolderID` when that is a genuine uuid. A shared uuid is
+/// the strong explicit cross-reference ADR-0003 merges on (a TED eForms
+/// procedure and its DÖE twin publish the same BT-04 uuid), so keying sdk-0.1 on
+/// it upgrades a uuid-bearing island into the merged Tender. Non-uuid folder ids
+/// (the sdk-0.1 numeric channel) are notice-local and never key a Tender — a
+/// missed link splits, it must never wrongly merge (issue 34).
+fn procedure_key(parsed: &Parsed, sdk01: bool) -> Option<String> {
+    if let Some(key) = first_id(parsed, PROCEDURE_KEY_FIELD).filter(|k| !k.trim().is_empty()) {
+        return Some(key);
+    }
+    sdk01.then(|| first_id(parsed, SDK01_FOLDER_FIELD).filter(|k| is_uuid(k))).flatten()
+}
+
+/// A genuine uuid (`8-4-4-4-12` hex). Only these sdk-0.1 folder ids are strong
+/// enough to merge Tenders across Sources.
+fn is_uuid(s: &str) -> bool {
+    let s = s.trim();
+    s.len() == 36
+        && s.bytes().enumerate().all(|(i, b)| match i {
+            8 | 13 | 18 | 23 => b == b'-',
+            _ => b.is_ascii_hexdigit(),
+        })
+}
+
 /// Parse an OJS publication reference into `(year, number)`. Handles the OJS
 /// display form (`2019/S 001-000001`, `2011/S 1-000181`), the DOC/eForms form
 /// (`000001-2019`), and the text-era form (`154-2005`). The raw string is never
@@ -1556,6 +1585,20 @@ mod tests {
         assert_eq!(stem("BT-131(d)-Lot"), "BT-131(d)");
         assert_eq!(stem("OPP-070-notice"), "OPP-070");
         assert_eq!(stem("BT-04"), "BT-04");
+    }
+
+    #[test]
+    fn only_genuine_uuids_key_an_sdk01_tender() {
+        // The real sdk-0.1 CAN's ContractFolderID — a genuine uuid.
+        assert!(is_uuid("3d2aac86-4286-4ae2-9bc1-08eb1cc61f80"));
+        assert!(is_uuid("  427D4645-163C-419D-93A9-5F5CE05FF9B7  ")); // trimmed, upper hex
+        // The numeric channel's local ids are not uuids and stay islands.
+        assert!(!is_uuid("25599482"));
+        assert!(!is_uuid("LOCAL-12345"));
+        assert!(!is_uuid("3d2aac86-4286-4ae2-9bc1-08eb1cc61f8")); // 35 chars
+        assert!(!is_uuid("3d2aac8664286-4ae2-9bc1-08eb1cc61f80")); // hyphen misplaced
+        assert!(!is_uuid("g3d2aac8-4286-4ae2-9bc1-08eb1cc61f80")); // non-hex
+        assert!(!is_uuid(""));
     }
 
     #[test]
