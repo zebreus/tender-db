@@ -131,15 +131,57 @@ pub fn router(state: AppState) -> Router {
 /// The forwarded headers are therefore the key, with one shared bucket for
 /// direct (unproxied) callers.
 pub fn client_key(headers: &HeaderMap) -> String {
-    for name in ["x-forwarded-for", "x-real-ip"] {
-        if let Some(value) = headers.get(name).and_then(|v| v.to_str().ok())
-            && let Some(first) = value.split(',').next()
-            && !first.trim().is_empty()
-        {
-            return first.trim().to_owned();
-        }
+    // nginx sets `X-Real-IP $remote_addr` — the true peer, a single trusted
+    // value — so prefer it. `X-Forwarded-For` is `$proxy_add_x_forwarded_for`:
+    // any client-supplied value is preserved and the real peer APPENDED, so the
+    // only trustworthy entry is the LAST one. Keying on the leftmost (issue 44)
+    // let a caller spoof `X-Forwarded-For: <random>` per request and evade the
+    // rate limiter and SSE per-IP cap — the sole DoS controls on the
+    // unauthenticated surface.
+    if let Some(ip) = headers.get("x-real-ip").and_then(|v| v.to_str().ok())
+        && !ip.trim().is_empty()
+    {
+        return ip.trim().to_owned();
+    }
+    if let Some(last) = headers
+        .get("x-forwarded-for")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|value| value.split(',').next_back())
+        && !last.trim().is_empty()
+    {
+        return last.trim().to_owned();
     }
     "direct".to_owned()
+}
+
+#[cfg(test)]
+mod client_key_tests {
+    use super::client_key;
+    use axum::http::HeaderMap;
+
+    #[test]
+    fn prefers_trusted_real_ip_over_spoofable_forwarded_for() {
+        // X-Real-IP is set by our proxy to the true peer; XFF's leftmost is
+        // client-controlled. The key must be the trusted peer, never the spoof.
+        let mut h = HeaderMap::new();
+        h.insert("x-real-ip", "203.0.113.7".parse().unwrap());
+        h.insert("x-forwarded-for", "1.2.3.4, 203.0.113.7".parse().unwrap());
+        assert_eq!(client_key(&h), "203.0.113.7");
+    }
+
+    #[test]
+    fn without_real_ip_uses_rightmost_forwarded_for_not_the_client_value() {
+        // Only XFF present: the appended (rightmost) entry is our proxy's view
+        // of the peer; the leftmost is attacker-supplied and must be ignored.
+        let mut h = HeaderMap::new();
+        h.insert("x-forwarded-for", "1.2.3.4, 203.0.113.7".parse().unwrap());
+        assert_eq!(client_key(&h), "203.0.113.7");
+    }
+
+    #[test]
+    fn falls_back_to_a_shared_bucket_when_unproxied() {
+        assert_eq!(client_key(&HeaderMap::new()), "direct");
+    }
 }
 
 #[derive(Clone, Copy)]

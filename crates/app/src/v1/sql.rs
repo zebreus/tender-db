@@ -70,8 +70,22 @@ const MAX_BODY: usize = 64 * 1024;
 const MAX_CONCURRENT: usize = 2;
 const PER_HOUR: u32 = 300;
 
-/// Tables that hold credentials, never queryable. Compared lowercased.
-const FORBIDDEN: [&str; 3] = ["users", "api_tokens", "sessions"];
+/// Tables that hold credentials or account-private data, never queryable via
+/// the public SQL endpoint. Compared lowercased. `webhook_endpoints` stores
+/// per-user signing secrets + private URLs and `webhook_delivery_log` their
+/// cross-account history; `job_queue`/`job_log` carry operator job params —
+/// none is "public business data". The durable fix is a positive allow-list
+/// (issue 45): a deny-list silently re-opens the moment a new private table is
+/// added, which is exactly how the secrets were exposed (issue 43).
+const FORBIDDEN: [&str; 7] = [
+    "users",
+    "api_tokens",
+    "sessions",
+    "webhook_endpoints",
+    "webhook_delivery_log",
+    "job_queue",
+    "job_log",
+];
 
 /// Worker threads on the isolated SQL runtime (issue 17). Query execution runs
 /// here, never on the main API/SSE/dashboard runtime, so a non-yielding
@@ -518,6 +532,26 @@ mod tests {
     fn identifies_which_table_was_denied() {
         assert_eq!(forbidden_identifier("SELECT * FROM api_tokens"), Some("api_tokens"));
         assert_eq!(forbidden_identifier("SELECT * FROM v_tenders"), None);
+    }
+
+    #[test]
+    fn account_private_tables_are_denied() {
+        // Regression (issue 43): the deny-list must cover every private table,
+        // not just the auth trio. `webhook_endpoints.secret` is a per-user
+        // signing key — reachable here would let any account forge signed
+        // webhooks for every other account.
+        for sql in [
+            "SELECT user_id, url, secret FROM webhook_endpoints",
+            "SELECT * FROM webhook_delivery_log",
+            "SELECT * FROM job_queue",
+            "SELECT * FROM job_log",
+        ] {
+            assert!(classify(sql).is_err(), "must deny private table: {sql:?}");
+        }
+        assert_eq!(
+            forbidden_identifier("SELECT secret FROM webhook_endpoints"),
+            Some("webhook_endpoints"),
+        );
     }
 
     #[test]
