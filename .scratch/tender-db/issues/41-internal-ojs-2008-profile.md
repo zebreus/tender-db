@@ -128,3 +128,101 @@ the verify ±2% tolerance — the last completeness-blocking year cleared.
 
 Lane: `crates/ingest` (new `internal-ojs` profile + fixtures) + `crates/app/data`
 ledger. No overlap with other active work.
+
+---
+
+## Handoff for a fresh agent (self-contained — no re-mining needed)
+
+Everything below is from the 2026-07-21 mining of package `20080502_2008085`
+(1693 EN notices) + the r209-diff. Recheck against the full May sweep before
+trusting the bijection tests, but this is enough to start.
+
+### The complete delta over the r209 vocabulary
+
+**20 non-`_SUM` new elements** (the envelope + coded backbone):
+`AGREEMENT_PUBLICATION AWARD_CRIT BIB_DOC_S BIB_INFO DATE_DISP DATE_REC
+DEADLINE_REC DEADLINE_REQ INTERNAL_OJS LG_OJ LOTS MAIN_ACTIVITIES MARKET
+MARKET_ORG NAT_NOTICE PROC SECTOR SERVICES TECHNICAL_INFO TYPE_BID`
+
+**65 `_SUM` aliases** — every base name (strip `_SUM`) is already an r209
+element, so a generated `X_SUM → X` normalisation makes the r209 rules match:
+`ADMINISTRATIVE_INFORMATION_CONCESSION_SUM ADMINISTRATIVE_INFORMATION_CONTRACT_NOTICE_SUM
+ADMINISTRATIVE_INFORMATION_CONTRACT_UTILITIES_SUM ADMINISTRATIVE_INFORMATION_DEF_SUM
+ADMINISTRATIVE_INFORMATION_DESIGN_CONTEST_NOTICE_SUM AI_PROCEDURE_PERIODIC_INDICATIVE_SUM
+ANNEX_I_SUM AUTHORITY_CONCESSION_SUM AUTHORITY_ENTITY_DESIGN_CONTEST_SUM
+AUTHORITY_ENTITY_NOTICE_BUYER_PROFILE_SUM AUTHORITY_PERIODIC_INDICATIVE_SUM
+AUTHORITY_PRIOR_INFORMATION_SUM AWARD_AND_CONTRACT_VALUE_SUM
+AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES_SUM AWARD_OF_CONTRACT_SUM AWARD_PRIZES_SUM
+BUYER_PROFILE_SUM CONCESSION_SUM CONDITIONS_FOR_MORE_INFORMATION_SUM
+CONTACTING_AUTHORITY_INFORMATION_SUM CONTACTING_AUTHORITY_INFO_SUM
+CONTRACTING_AUTHORITY_INFORMATION_SUM CONTRACTING_ENTITY_CONTRACT_AWARD_UTILITIES_SUM
+CONTRACTING_ENTITY_RESULT_DESIGN_CONTEST_SUM CONTRACT_AWARD_SUM
+CONTRACT_AWARD_UTILITIES_SUM CONTRACT_OBJECT_DESCRIPTION_SUM CONTRACT_SUM
+CONTRACT_UTILITIES_SUM DESCRIPTION_AWARD_NOTICE_INFORMATION_SUM DESCRIPTION_CONCESSION_SUM
+DESCRIPTION_CONTRACT_AWARD_UTILITIES_SUM DESCRIPTION_CONTRACT_INFORMATION_SUM
+DESIGN_CONTEST_SUM FD_BUYER_PROFILE_SUM FD_CONCESSION_SUM FD_CONTRACT_AWARD_SUM
+FD_CONTRACT_AWARD_UTILITIES_SUM FD_CONTRACT_SUM FD_CONTRACT_UTILITIES_SUM
+FD_DESIGN_CONTEST_SUM FD_PERIODIC_INDICATIVE_UTILITIES_SUM FD_PRIOR_INFORMATION_SUM
+FD_RESULT_DESIGN_CONTEST_SUM INTRODUCTION_PERIODIC_INDICATIVE_SUM OBJECT_CONCESSION_SUM
+OBJECT_CONTRACT_AWARD_UTILITIES_SUM OBJECT_CONTRACT_INFORMATION_CONTRACT_AWARD_NOTICE_SUM
+OBJECT_CONTRACT_INFORMATION_CONTRACT_UTILITIES_SUM OBJECT_CONTRACT_INFORMATION_SUM
+OBJECT_CONTRACT_PERIODIC_INDICATIVE_SUM OBJECT_DESIGN_CONTEST_SUM
+OBJECT_NOTICE_BUYER_PROFILE_SUM OBJECT_RESULT_DESIGN_CONTEST_SUM
+OBJECT_SUPPLY_SERVICE_PRIOR_INFORMATION_SUM OBJECT_WORKS_PRIOR_INFORMATION_SUM
+PERIODIC_INDICATIVE_UTILITIES_SUM PRIOR_INFORMATION_SUM PROCEDURES_CONCESSION_SUM
+PROCEDURES_DESIGN_CONTEST_SUM PROCEDURE_DEFINITION_CONTRACT_NOTICE_SUM
+PROCEDURE_DEFINITION_CONTRACT_NOTICE_UTILITIES_SUM RESULTS_CONTEST_RESULT_DESIGN_CONTEST_SUM
+RESULT_CONTEST_SUM RESULT_DESIGN_CONTEST_SUM`
+
+### Envelope divergence (where INTERNAL_OJS is NOT TED_EXPORT)
+
+- `TED_EXPORT` → `INTERNAL_OJS` (root, `@HEADING`).
+- `CODED_DATA_SECTION` → `BIB_INFO` (`REF_OJS/COLL_OJ/NO_OJ/DATE_PUB/LG_OJ`) +
+  `BIB_DOC_S`. The coded backbone here is **bare-text single-char codes**
+  (`<SECTOR>9</SECTOR>`, `<MARKET>9</MARKET>`, `<PROC>9</PROC>`, `<NAT_NOTICE>G</NAT_NOTICE>`,
+  `TYPE_BID/AWARD_CRIT/MARKET_ORG/SECTOR`) — NOT r209's `@CODE`-attribute CODIF
+  elements. Map these in the envelope; they are the ~15 new backbone names above.
+- Identity: `NO_DOC_OJS` = `2008/S 85-114238` (S-issue + doc-year); the member
+  path's `<num>_2008` is the `<doc>-<year>` id (`114238-2008`), matching how the
+  text channel keys 2008 notices.
+- `TRANSLATION_SECTION`/`ML_*` — not present; INTERNAL_OJS is one language per
+  file (per-language siblings, handle like the text era's UTF8/ISO twins:
+  ingest EN, skip the rest as documented duplicates).
+- `FORM_SECTION` → the `FD_*_SUM` form body (hand to the r209 walker via the
+  `_SUM` shim).
+
+### TRAPS (same name, different meaning — verified against the fixtures)
+
+1. **`ORIGINAL_CPV` / `ORIGINAL_NUTS`**: INTERNAL_OJS carries the code as **text
+   content** (`<ORIGINAL_CPV>74111000</ORIGINAL_CPV>`); r208/r209 carry it in
+   **`@CODE`** with a label (`<ORIGINAL_CPV CODE="34928530">Street lamps</…>`).
+   Reusing the r209 rule would read an empty code. Handle these in the envelope
+   (read text), do NOT delegate to the r209 rule.
+2. **`SERVICE_CATEGORY` / `SERVICE_CATEGORY_PUB`**: carry an extra `@VALUE` in
+   INTERNAL_OJS that the r209 inventory does not list (the only two shared
+   elements with an attribute delta) — extend their rule or they trip the
+   completeness test.
+3. **The committed fixture (`114238_2008.en`) is an EEIG notice (HEADING 02A0)**
+   with a minimal `FD_EEIG` body — it does NOT exercise the `_SUM` contract form
+   reuse. The "hand `FD_*_SUM` to the r209 walker" claim is inferred from the
+   aggregate vocabulary, not proven. **Get a contract-heading fixture (21xx/22xx
+   notice, which have `FD_CONTRACT_SUM`) and an award (33xx) before trusting the
+   reuse** — those are where the 492 shared form elements actually appear.
+4. `LOTS`, `SERVICES`, `AGREEMENT_PUBLICATION` are non-`_SUM` new elements whose
+   role is unconfirmed from the EEIG fixture — check them in a contract fixture.
+
+### Regeneration recipe (to re-sweep or verify)
+
+- `/v1/sql` token: `…/aaef215c-…/scratchpad/token.json` (account owner-verify).
+  Extract with `grep -oE 'tdb_[a-f0-9]{64}'`. Base `https://tenders.zebreus.click`.
+  Bucket filter: `reason='unparsable-xml' AND detail='XML with DTD detected'`.
+- Packages: `20080502_2008085.tar.gz` … `20080531_2008105.tar.gz` (~22 May-2008
+  dailies + a small 2010 tail), in `/data/archive/ted/monthly/2008-05.tar` etc.
+  on `root@zebreus.click`. Paths: `<pkg>/<num>/opoce-input/<num>_2008.<lg>`.
+- Mine: extract a daily, `for f in <pkg>/*/opoce-input/*_2008.en`, slice each
+  from `raw.find('<INTERNAL_OJS')` (drops the xml decl + DOCTYPE), parse with
+  ElementTree, aggregate element+attr counts and `@HEADING`. Diff element names
+  against `sdk/ted-export-inventory.json` (`{e['name']}`).
+- The DTD strip is already done (`profile::strip_doctype`); dispatch already
+  routes `INTERNAL_OJS` roots — this issue replaces that `unmapped-era` branch
+  with a call into the new profile.
