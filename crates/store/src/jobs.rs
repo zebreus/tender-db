@@ -1,8 +1,10 @@
-//! The Supervisor's recent-run log (issue 16).
+//! The Supervisor's recent-run log (issue 16) and durable job queue (issue 21).
 //!
-//! A bounded history of finished ingestion jobs, persisted so the dashboard
-//! shows what the importer has been doing across restarts. Live progress of the
-//! *running* job is in-memory in the app; only finished runs land here.
+//! `job_log` is a bounded history of *finished* ingestion jobs, persisted so the
+//! dashboard shows what the importer has been doing across restarts. `job_queue`
+//! is the *pending* work — one row per queued or currently-running job — so a
+//! restart re-enqueues what was outstanding instead of losing it. Live progress
+//! of the running job is in-memory in the app; only these two land here.
 
 use crate::{Db, Value, int, t, text};
 use model::ingestion::JobRun;
@@ -17,7 +19,30 @@ pub const SCHEMA: &str = "
         outcome     TEXT NOT NULL,    -- 'ok' | 'error'
         counts_json TEXT NOT NULL     -- human one-liner / counts summary
     ) STRICT;
+
+    -- The durable job queue (issue 21). One row per outstanding job, keyed by the
+    -- Supervisor's own monotonic id. `spec` is an opaque serialization the app
+    -- owns — the store never interprets it — while `kind`/`params` mirror the
+    -- display identity so the queue is legible in a plain SELECT. A row lives from
+    -- enqueue until the job concludes (ok or error); the job that was running when
+    -- the process died is simply the lowest surviving id, so ordering by id brings
+    -- it back at the front to be re-run (re-walks are idempotent).
+    CREATE TABLE IF NOT EXISTS job_queue (
+        id     INTEGER PRIMARY KEY, -- the Supervisor's job id (app-assigned)
+        kind   TEXT NOT NULL,
+        params TEXT NOT NULL,
+        spec   TEXT NOT NULL        -- opaque app payload (serialized job Spec)
+    ) STRICT;
 ";
+
+/// One outstanding job as persisted in `job_queue`. `spec` is the app's opaque
+/// payload; the store round-trips it verbatim.
+pub struct QueuedJobRow {
+    pub id: i64,
+    pub kind: String,
+    pub params: String,
+    pub spec: String,
+}
 
 impl Db {
     /// Append one finished run. `counts` is a human summary (or the error text)
@@ -75,6 +100,49 @@ impl Db {
         }
         Ok(out)
     }
+
+    // ------------------------------------------------------------ durable queue
+
+    /// Persist one outstanding job (issue 21). A write — the queue is authored
+    /// on the writer like every other mutation. `spec` is the app's opaque
+    /// payload, stored verbatim.
+    pub async fn enqueue_job(&self, id: i64, kind: &str, params: &str, spec: &str) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "INSERT INTO job_queue(id, kind, params, spec) VALUES(?, ?, ?, ?)",
+            (Value::Integer(id), t(kind), t(params), t(spec)),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// Drop a job from the durable queue — on completion or cancellation. A job
+    /// killed mid-run never gets here, so its row survives for recovery.
+    pub async fn remove_job(&self, id: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("DELETE FROM job_queue WHERE id = ?", (Value::Integer(id),)).await?;
+        Ok(())
+    }
+
+    /// Every outstanding job, oldest id first — the order the Supervisor rebuilds
+    /// its in-memory queue in at startup. The interrupted running job is the
+    /// lowest id, so it lands back at the front.
+    pub async fn pending_jobs(&self) -> turso::Result<Vec<QueuedJobRow>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT id, kind, params, spec FROM job_queue ORDER BY id", ())
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(QueuedJobRow {
+                id: int(&row, 0),
+                kind: text(&row, 1),
+                params: text(&row, 2),
+                spec: text(&row, 3),
+            });
+        }
+        Ok(out)
+    }
 }
 
 #[cfg(test)]
@@ -106,6 +174,33 @@ mod tests {
 
         // The limit is honoured.
         assert_eq!(db.recent_job_runs(1).await.unwrap().len(), 1);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The durable queue (issue 21): rows persist in id order, the opaque spec
+    /// round-trips verbatim, and removal takes exactly one job.
+    #[tokio::test]
+    async fn job_queue_persists_and_removes() {
+        let path = format!("/tmp/tender-db-jobqueue-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        assert!(db.pending_jobs().await.unwrap().is_empty());
+
+        db.enqueue_job(5, "process", "ted daily (all)", r#"{"Process":{"source":"ted"}}"#).await.unwrap();
+        db.enqueue_job(6, "project", "rebuild=false", r#"{"Project":{"rebuild":false}}"#).await.unwrap();
+
+        let pending = db.pending_jobs().await.unwrap();
+        assert_eq!(pending.len(), 2);
+        assert_eq!((pending[0].id, pending[0].kind.as_str()), (5, "process"), "oldest id first");
+        assert_eq!(pending[0].spec, r#"{"Process":{"source":"ted"}}"#, "spec round-trips verbatim");
+        assert_eq!(pending[1].id, 6);
+
+        db.remove_job(5).await.unwrap();
+        let pending = db.pending_jobs().await.unwrap();
+        assert_eq!(pending.len(), 1);
+        assert_eq!(pending[0].id, 6, "only the removed job is gone");
 
         let _ = std::fs::remove_file(&path);
     }

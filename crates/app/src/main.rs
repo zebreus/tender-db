@@ -48,7 +48,7 @@ fn main() {
         // downtime (readers keep serving over WAL). It is the ONLY path that
         // touches the production DB — the fetch/process/project CLIs are dev
         // tools for scratch databases. `init` spawns the worker + scheduler once.
-        let supervisor = tender_db::supervisor::init(db.clone());
+        let supervisor = tender_db::supervisor::init(db.clone()).await;
 
         // The webhook delivery sweeper (issue 08): a background task that pushes
         // signed change batches to registered endpoints, woken by the same

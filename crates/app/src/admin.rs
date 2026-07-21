@@ -65,7 +65,7 @@ async fn enqueue(
         Ok(axum::Json(req)) => req,
         Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
     };
-    match sup.enqueue_request(&req) {
+    match sup.enqueue_request(&req).await {
         Ok(ids) => (StatusCode::ACCEPTED, axum::Json(json!({ "enqueued": ids }))).into_response(),
         Err(message) => error(StatusCode::BAD_REQUEST, &message),
     }
@@ -91,7 +91,7 @@ async fn cancel(
     if let Some(response) = deny(&headers) {
         return response;
     }
-    if sup.cancel(id) {
+    if sup.cancel(id).await {
         (StatusCode::OK, axum::Json(json!({ "cancelled": id }))).into_response()
     } else {
         error(StatusCode::NOT_FOUND, "no such queued job (already running or finished)")

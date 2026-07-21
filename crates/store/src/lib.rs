@@ -21,6 +21,7 @@ pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
     Mention, NoticeRef, Round, TenderProjection, TenderVersion,
 };
+pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
 pub use webhooks::{Delivery, Endpoint};
 

@@ -19,33 +19,38 @@
 use std::collections::VecDeque;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use ingest::{doe, fetch, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, QueuedJob};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use store::turso;
-use tokio::sync::Notify;
+use tokio::sync::{Notify, OnceCell};
 
 /// How many recent runs the dashboard/admin log shows.
 const RECENT_RUNS: i64 = 20;
 
 /// The process-wide Supervisor. Set once at server startup.
-static SUPERVISOR: OnceLock<Arc<Supervisor>> = OnceLock::new();
+static SUPERVISOR: OnceCell<Arc<Supervisor>> = OnceCell::const_new();
 
 /// Start the Supervisor over the process database and spawn its worker +
 /// scheduler. Idempotent: a second call (dev hot-reload re-runs the server
 /// initializer) returns the already-running instance without spawning again.
-pub fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
+///
+/// Recovery runs *before* the worker or scheduler start, so the durable queue is
+/// rebuilt before any job is popped or any tick fires (issue 21).
+pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
     SUPERVISOR
-        .get_or_init(|| {
+        .get_or_init(|| async {
             let archive: PathBuf =
                 std::env::var("TENDER_ARCHIVE").unwrap_or_else(|_| "archive".into()).into();
             let sup = Arc::new(Supervisor::new(db, archive, reqwest::Client::new()));
+            sup.recover().await;
             sup.clone().spawn_worker();
             sup.clone().spawn_scheduler();
             sup
         })
+        .await
         .clone()
 }
 
@@ -71,16 +76,17 @@ pub struct Supervisor {
 #[derive(Clone)]
 struct Job {
     id: u64,
-    kind: &'static str,
+    kind: String,
     params: String,
     spec: Spec,
 }
 
 /// What a job does. Fetch/process/project map onto ingest's library entry
-/// points; `ProbeTed` is the realtime daily walk-forward.
-#[derive(Clone)]
+/// points; `ProbeTed` is the realtime daily walk-forward. `Serialize`/
+/// `Deserialize` so a job survives a restart in the durable queue (issue 21).
+#[derive(Clone, Serialize, Deserialize)]
 enum Spec {
-    Fetch { source: &'static str, package_kind: &'static str, period: String, refetch: bool },
+    Fetch { source: String, package_kind: String, period: String, refetch: bool },
     ProbeTed { refetch: bool },
     Process { source: String, package_kind: String, period: Option<String> },
     Project { rebuild: bool },
@@ -124,9 +130,17 @@ impl Supervisor {
 
     // ---------------------------------------------------------------- queueing
 
-    fn push(&self, kind: &'static str, params: String, spec: Spec) -> u64 {
+    async fn push(&self, kind: &'static str, params: String, spec: Spec) -> u64 {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
-        self.queue.lock().expect("queue lock").push_back(Job { id, kind, params, spec });
+        // Persist before enqueuing in memory: the durable row is what a restart
+        // rebuilds the queue from, so it must exist first (issue 21). Best-effort
+        // like the run log — a failed persist still runs this session, it just
+        // won't survive a restart.
+        let spec_json = serde_json::to_string(&spec).expect("job spec serializes");
+        if let Err(e) = self.db.enqueue_job(id as i64, kind, &params, &spec_json).await {
+            eprintln!("supervisor: persist queued job {id}: {e}");
+        }
+        self.queue.lock().expect("queue lock").push_back(Job { id, kind: kind.to_owned(), params, spec });
         self.wake.notify_one();
         id
     }
@@ -134,16 +148,19 @@ impl Supervisor {
     /// Turn one admin request into one or more queued jobs, returning their ids.
     /// A backfill fans a period range out into individual fetch jobs plus a
     /// trailing process+project, so progress and cancellation stay per-package.
-    pub fn enqueue_request(&self, req: &JobRequest) -> Result<Vec<u64>, String> {
+    pub async fn enqueue_request(&self, req: &JobRequest) -> Result<Vec<u64>, String> {
         match req.kind.as_str() {
             "fetch" => {
                 let (source, package_kind, period) = self.fetch_parts(req)?;
                 let refetch = req.refetch.unwrap_or(false);
-                Ok(vec![self.push(
-                    "fetch",
-                    format!("{source} {package_kind} {period}"),
-                    Spec::Fetch { source, package_kind, period, refetch },
-                )])
+                Ok(vec![
+                    self.push(
+                        "fetch",
+                        format!("{source} {package_kind} {period}"),
+                        Spec::Fetch { source: source.into(), package_kind: package_kind.into(), period, refetch },
+                    )
+                    .await,
+                ])
             }
             "process" => {
                 let source = req.source.clone().unwrap_or_else(|| "ted".into());
@@ -153,28 +170,20 @@ impl Supervisor {
                     Some(p) => format!("{source} {package_kind} {p}"),
                     None => format!("{source} {package_kind} (all)"),
                 };
-                Ok(vec![self.push(
-                    "process",
-                    params,
-                    Spec::Process { source, package_kind, period },
-                )])
+                Ok(vec![self.push("process", params, Spec::Process { source, package_kind, period }).await])
             }
             "project" => {
                 let rebuild = req.rebuild.unwrap_or(false);
-                Ok(vec![self.push(
-                    "project",
-                    format!("rebuild={rebuild}"),
-                    Spec::Project { rebuild },
-                )])
+                Ok(vec![self.push("project", format!("rebuild={rebuild}"), Spec::Project { rebuild }).await])
             }
-            "backfill" => self.enqueue_backfill(req),
+            "backfill" => self.enqueue_backfill(req).await,
             other => Err(format!("unknown job kind {other:?}")),
         }
     }
 
     /// A source + period range fanned into per-package fetch jobs, then one
     /// process pass over the whole source and one projection.
-    fn enqueue_backfill(&self, req: &JobRequest) -> Result<Vec<u64>, String> {
+    async fn enqueue_backfill(&self, req: &JobRequest) -> Result<Vec<u64>, String> {
         let source = req.source.as_deref().ok_or("backfill needs a source")?;
         let months = match source {
             // DÖE: the whole monthly archive by default, or the given range.
@@ -202,27 +211,29 @@ impl Supervisor {
         let src: &'static str = if source == "doe" { "doe" } else { "ted" };
         let mut ids = Vec::new();
         for period in &months {
-            ids.push(self.push(
-                "fetch",
-                format!("{src} monthly {period}"),
-                Spec::Fetch {
-                    source: src,
-                    package_kind: "monthly",
-                    period: period.clone(),
-                    refetch: false,
-                },
-            ));
+            ids.push(
+                self.push(
+                    "fetch",
+                    format!("{src} monthly {period}"),
+                    Spec::Fetch {
+                        source: src.into(),
+                        package_kind: "monthly".into(),
+                        period: period.clone(),
+                        refetch: false,
+                    },
+                )
+                .await,
+            );
         }
-        ids.push(self.push(
-            "process",
-            format!("{src} monthly (all)"),
-            Spec::Process {
-                source: src.to_owned(),
-                package_kind: "monthly".into(),
-                period: None,
-            },
-        ));
-        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }));
+        ids.push(
+            self.push(
+                "process",
+                format!("{src} monthly (all)"),
+                Spec::Process { source: src.to_owned(), package_kind: "monthly".into(), period: None },
+            )
+            .await,
+        );
+        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
         Ok(ids)
     }
 
@@ -246,15 +257,64 @@ impl Supervisor {
 
     /// Remove a still-queued job. Returns false if it is not in the queue
     /// (already running or finished — the running job cannot be cancelled).
-    pub fn cancel(&self, id: u64) -> bool {
-        let mut queue = self.queue.lock().expect("queue lock");
-        let before = queue.len();
-        queue.retain(|job| job.id != id);
-        queue.len() != before
+    /// Also drops the durable row so the cancellation survives a restart.
+    pub async fn cancel(&self, id: u64) -> bool {
+        let removed = {
+            let mut queue = self.queue.lock().expect("queue lock");
+            let before = queue.len();
+            queue.retain(|job| job.id != id);
+            queue.len() != before
+        };
+        if removed
+            && let Err(e) = self.db.remove_job(id as i64).await
+        {
+            eprintln!("supervisor: remove cancelled job {id}: {e}");
+        }
+        removed
     }
 
     fn pop(&self) -> Option<Job> {
         self.queue.lock().expect("queue lock").pop_front()
+    }
+
+    /// Rebuild the in-memory queue from the durable one at startup, before the
+    /// worker or scheduler run (issue 21). Rows come back oldest-id first, so the
+    /// job that was running when the process died — its row never removed — lands
+    /// at the front and re-runs from the top (re-walks are idempotent via
+    /// identity dedup). `next_id` is advanced past every recovered id so a new
+    /// enqueue cannot collide with a recovered one.
+    async fn recover(&self) {
+        let pending = match self.db.pending_jobs().await {
+            Ok(rows) => rows,
+            Err(e) => {
+                eprintln!("supervisor: recover queue: {e}");
+                return;
+            }
+        };
+        let mut jobs = Vec::with_capacity(pending.len());
+        let mut max_id = 0u64;
+        for row in pending {
+            let id = row.id as u64;
+            max_id = max_id.max(id);
+            match serde_json::from_str::<Spec>(&row.spec) {
+                Ok(spec) => jobs.push(Job { id, kind: row.kind, params: row.params, spec }),
+                Err(e) => {
+                    // An unrunnable row (a spec this build cannot parse) is dropped
+                    // so it can never wedge the queue.
+                    eprintln!("supervisor: dropping unreadable queued job {id}: {e}");
+                    let _ = self.db.remove_job(row.id).await;
+                }
+            }
+        }
+        let recovered = jobs.len();
+        self.queue.lock().expect("queue lock").extend(jobs);
+        if max_id + 1 > self.next_id.load(Ordering::Relaxed) {
+            self.next_id.store(max_id + 1, Ordering::Relaxed);
+        }
+        if recovered > 0 {
+            eprintln!("supervisor: recovered {recovered} pending job(s) from the durable queue");
+            self.wake.notify_one();
+        }
     }
 
     // ---------------------------------------------------------------- progress
@@ -330,12 +390,18 @@ impl Supervisor {
         };
         if let Err(e) = self
             .db
-            .record_job_run(job.kind, &job.params, started_at, now_unix(), outcome, &counts)
+            .record_job_run(&job.kind, &job.params, started_at, now_unix(), outcome, &counts)
             .await
         {
             // The log is best-effort telemetry; a failure to persist it must not
             // take the worker down.
             eprintln!("supervisor: record job {} log: {e}", job.id);
+        }
+        // The job has concluded (ok or error) — drop its durable row. A job that
+        // was killed mid-run never reaches here, so its row survives for recovery
+        // and re-runs from the top on the next start (issue 21).
+        if let Err(e) = self.db.remove_job(job.id as i64).await {
+            eprintln!("supervisor: remove finished job {} from queue: {e}", job.id);
         }
     }
 
@@ -469,7 +535,7 @@ impl Supervisor {
                 let (tick, weekday) = next_berlin_tick(now, 9, 35);
                 let wait = (tick - now).max(0) as u64;
                 tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
-                self.enqueue_daily(weekday);
+                self.enqueue_daily(weekday).await;
                 // Step past this tick so the next computation lands on tomorrow.
                 tokio::time::sleep(std::time::Duration::from_secs(61)).await;
             }
@@ -477,16 +543,17 @@ impl Supervisor {
     }
 
     /// The daily pipeline, in execution order (jobs run sequentially).
-    fn enqueue_daily(&self, weekday: bool) {
+    async fn enqueue_daily(&self, weekday: bool) {
         // TED publishes Mon–Fri; probe forward and re-fetch the current day for
         // the finality window (a daily may be rewritten until 09:30 CET).
         if weekday {
-            self.push("probe", "ted daily (probe)".into(), Spec::ProbeTed { refetch: true });
+            self.push("probe", "ted daily (probe)".into(), Spec::ProbeTed { refetch: true }).await;
             self.push(
                 "process",
                 "ted daily (all)".into(),
                 Spec::Process { source: "ted".into(), package_kind: "daily".into(), period: None },
-            );
+            )
+            .await;
         }
         // DÖE is strictly T+1: yesterday's day is the freshest completed one.
         let (y, m, d) = fetch::civil_date(now_unix() - 86_400);
@@ -494,15 +561,17 @@ impl Supervisor {
         self.push(
             "fetch",
             format!("doe daily {period}"),
-            Spec::Fetch { source: "doe", package_kind: "daily", period, refetch: false },
-        );
+            Spec::Fetch { source: "doe".into(), package_kind: "daily".into(), period, refetch: false },
+        )
+        .await;
         self.push(
             "process",
             "doe daily (all)".into(),
             Spec::Process { source: "doe".into(), package_kind: "daily".into(), period: None },
-        );
+        )
+        .await;
         // One projection folds whatever the fetch+process just landed.
-        self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false });
+        self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await;
     }
 }
 
@@ -693,7 +762,16 @@ mod tests {
     }
 
     async fn scratch() -> Arc<store::Db> {
-        let path = format!("/tmp/tender-db-sup-{}-{}.db", std::process::id(), now_unix());
+        // A per-call counter, not just the wall clock: tests run in parallel and
+        // now write to the durable queue, so two sharing a second must not share
+        // a database file.
+        static N: AtomicU64 = AtomicU64::new(0);
+        let path = format!(
+            "/tmp/tender-db-sup-{}-{}-{}.db",
+            std::process::id(),
+            now_unix(),
+            N.fetch_add(1, Ordering::Relaxed)
+        );
         let _ = std::fs::remove_file(&path);
         Arc::new(store::Db::open(&path).await.unwrap())
     }
@@ -708,21 +786,22 @@ mod tests {
     async fn queue_enqueues_and_cancels() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
 
-        let a = sup.enqueue_request(&req("project")).unwrap();
+        let a = sup.enqueue_request(&req("project")).await.unwrap();
         let b = sup
             .enqueue_request(&JobRequest {
                 kind: "process".into(),
                 source: Some("ted".into()),
                 ..Default::default()
             })
+            .await
             .unwrap();
         assert_eq!(sup.queued().len(), 2);
         assert_eq!(sup.queued()[0].id, a[0], "FIFO order");
 
-        assert!(sup.cancel(b[0]), "a queued job cancels");
+        assert!(sup.cancel(b[0]).await, "a queued job cancels");
         assert_eq!(sup.queued().len(), 1);
-        assert!(!sup.cancel(b[0]), "cancelling twice is a no-op");
-        assert!(!sup.cancel(9_999), "an unknown id cancels nothing");
+        assert!(!sup.cancel(b[0]).await, "cancelling twice is a no-op");
+        assert!(!sup.cancel(9_999).await, "an unknown id cancels nothing");
     }
 
     /// Backfill fans a period range into one fetch job per package, then a
@@ -737,6 +816,7 @@ mod tests {
                 range: Some(["2024-01".into(), "2024-03".into()]),
                 ..Default::default()
             })
+            .await
             .unwrap();
         // 3 monthly fetches + 1 process + 1 project.
         assert_eq!(ids.len(), 5);
@@ -745,8 +825,81 @@ mod tests {
         assert_eq!(queued.last().unwrap().kind, "project");
 
         // A bad request is rejected, not enqueued.
-        assert!(sup.enqueue_request(&req("nonsense")).is_err());
-        assert!(sup.enqueue_request(&req("fetch")).is_err(), "fetch needs a period");
+        assert!(sup.enqueue_request(&req("nonsense")).await.is_err());
+        assert!(sup.enqueue_request(&req("fetch")).await.is_err(), "fetch needs a period");
+    }
+
+    /// Issue 21: the queue is durable. A fresh Supervisor over the same DB, once
+    /// recovered, rebuilds the same pending jobs in the same order — the restart
+    /// path, without a real kill.
+    #[tokio::test]
+    async fn recovers_the_queue_across_a_restart() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&JobRequest {
+            kind: "backfill".into(),
+            source: Some("doe".into()),
+            range: Some(["2024-01".into(), "2024-02".into()]),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
+        let before = sup.queued();
+        assert_eq!(before.len(), 4, "2 fetches + process + project");
+
+        // "Restart": a new Supervisor over the same database, recovered.
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        assert!(restarted.queued().is_empty(), "a fresh in-memory queue starts empty");
+        restarted.recover().await;
+
+        let after = restarted.queued();
+        assert_eq!(after.len(), before.len(), "every pending job is restored");
+        for (a, b) in after.iter().zip(&before) {
+            assert_eq!((a.id, &a.kind, &a.params), (b.id, &b.kind, &b.params), "id, kind, order preserved");
+        }
+        // A newly enqueued job gets an id above every recovered one — no collision.
+        let fresh = restarted.enqueue_request(&req("project")).await.unwrap();
+        assert!(fresh[0] > after.last().unwrap().id, "next_id advanced past recovered ids");
+    }
+
+    /// Issue 21 acceptance in miniature: a job that was *running* when the process
+    /// died (popped from memory, never completed → its durable row is still there)
+    /// comes back at the front on restart, ahead of the jobs that were still
+    /// queued behind it.
+    #[tokio::test]
+    async fn an_interrupted_running_job_is_recovered_at_the_front() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let running = sup.enqueue_request(&req("project")).await.unwrap()[0]; // job 1 — "runs"
+        sup.enqueue_request(&JobRequest { kind: "process".into(), source: Some("ted".into()), ..Default::default() })
+            .await
+            .unwrap();
+
+        // The worker takes job 1 and is then killed mid-run: pop it from memory
+        // but never call execute()/remove_job, so its durable row survives.
+        let taken = sup.pop().expect("a job to run");
+        assert_eq!(taken.id, running);
+
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        let q = restarted.queued();
+        assert_eq!(q.len(), 2, "the interrupted job and the one queued behind it both return");
+        assert_eq!(q[0].id, running, "the interrupted job is back at the front");
+        assert_eq!(q[0].kind, "project");
+        assert_eq!(q[1].kind, "process");
+    }
+
+    /// A cancelled job stays gone across a restart — cancel drops the durable row.
+    #[tokio::test]
+    async fn a_cancelled_job_does_not_come_back() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let ids = sup.enqueue_request(&req("project")).await.unwrap();
+        assert!(sup.cancel(ids[0]).await);
+
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        assert!(restarted.queued().is_empty(), "a cancelled job is gone from the durable queue too");
     }
 
     #[test]
