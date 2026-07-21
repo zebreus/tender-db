@@ -1095,4 +1095,33 @@ mod tests {
 
         let _ = std::fs::remove_file(&path);
     }
+
+    /// Issue 20 regression on the user-visible path: the dashboard root `/`
+    /// (`coverage::measure` plus `list_tenders`) must not queue behind an
+    /// ingestion job holding the writer. These read-only accessors go through
+    /// `reader()` (the WAL pool), so they return while an open write transaction
+    /// is in flight; routed through the writer mutex (the old code) they would
+    /// deadlock against the guard held below — the `/` timeout in production.
+    #[tokio::test]
+    async fn dashboard_reads_do_not_block_on_a_held_writer() {
+        let path = format!("/tmp/tender-db-dash-busy-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        // Hold the writer in a live transaction — what a heavy process/project
+        // batch does for the length of its commit.
+        let writer = db.conn().await;
+        writer.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+
+        let started = std::time::Instant::now();
+        // The heaviest of the seven reads `/` issues, plus the tender list.
+        db.notice_counts_by_profile_year().await.unwrap();
+        db.quarantine_counts_by_reason().await.unwrap();
+        db.recent_quarantine(20).await.unwrap();
+        db.list_tenders(200).await.unwrap();
+        assert!(started.elapsed().as_secs() < 1, "dashboard reads must not queue behind the writer");
+
+        writer.execute("COMMIT", ()).await.unwrap();
+        let _ = std::fs::remove_file(&path);
+    }
 }
