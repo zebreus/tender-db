@@ -8,9 +8,14 @@ Each check names HOW it was/will be verified. Date-stamped on completion.
 - [~] REST API around Tenders/Lots — /v1/tenders 200 with items incl.
   dispatched_at (2026-07-21, curl). Full-surface pass (filters, lots,
   notices, organizations endpoints) pending post-backfill.
-- [ ] SSE on every endpoint: snapshot event then added/changed/removed
-  diffs, resumable via Last-Event-ID. Verify: curl a stream during live
-  ingestion, kill, resume with Last-Event-ID, assert no gap.
+- [x] SSE — verified 2026-07-21 (two independent live probes): snapshot
+  (hydrated `event: change` frames) → `event: live` marker → diffs;
+  Last-Event-ID resume is exact (contiguous, no gap/dup, snapshot
+  suppressed); per-IP stream cap = exactly 5 (6th → 429). GAP FOUND:
+  `removed` events aren't emitted on a full rebuild → change log orphans
+  across `rebuild=true` (issue 46; incremental ops coherent, not
+  imminent). Rate-limit observed stricter than documented → issue 47
+  (likely the SQL limiter, config is 10 rps as documented).
 - [x] Change-cursor poll endpoint — /v1/changes?since=193000 returns
   cursored added/changed events (2026-07-21, curl). SSE cross-check pending.
 - [~] SQL endpoint layered gate — verified 2026-07-21 (owner, live):
