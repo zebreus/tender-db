@@ -9,6 +9,7 @@
 pub mod accounts;
 pub mod backup;
 pub mod canonical;
+pub mod checkpoint;
 pub mod jobs;
 pub mod read;
 pub mod webhooks;
@@ -19,6 +20,7 @@ pub use turso;
 
 pub use accounts::{TokenRecord, User};
 pub use backup::{BackupError, SnapshotReport};
+pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
     Mention, NoticeRef, Round, TenderProjection, TenderVersion,

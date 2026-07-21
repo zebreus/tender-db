@@ -87,6 +87,10 @@ struct Disk {
     used_fraction: f64,
     free_bytes: u64,
     total_bytes: u64,
+    /// Size of the `-wal` sidecar, surfaced so the alerting routine sees a
+    /// runaway WAL during bulk loads (issue 42). Informational — a large WAL is
+    /// expected mid-backfill, so it does not by itself flip the disk verdict.
+    wal_bytes: Option<u64>,
 }
 
 /// Turn the raw signals into an overall verdict plus the per-check JSON. A
@@ -130,6 +134,7 @@ fn assess(s: &Signals) -> (bool, Value) {
                 "used_fraction": (d.used_fraction * 1000.0).round() / 1000.0,
                 "free_bytes": d.free_bytes,
                 "total_bytes": d.total_bytes,
+                "wal_bytes": d.wal_bytes,
                 "threshold_fraction": DISK_FULL_FRACTION,
             }),
             None => json!({ "ok": true, "measured": false }),
@@ -153,7 +158,10 @@ fn disk_usage() -> Option<Disk> {
     // df's Use% counts reserved blocks as used; matching it errs toward alarming
     // slightly early, which is the right bias for a "grow the disk" cue.
     let used_fraction = if total > 0 { (total - available) as f64 / total as f64 } else { 0.0 };
-    Some(Disk { used_fraction, free_bytes: available, total_bytes: total })
+    // The WAL sidecar sits beside the DB file; its size is the issue-42 runaway
+    // signal. Absent (freshly checkpointed) reads as no WAL, which is healthy.
+    let wal_bytes = std::fs::metadata(format!("{db}-wal")).ok().map(|m| m.len());
+    Some(Disk { used_fraction, free_bytes: available, total_bytes: total, wal_bytes })
 }
 
 #[cfg(test)]
@@ -178,7 +186,12 @@ mod tests {
             cursor: Some(7),
             last_success: Some(1_000_000 - 3_600),
             last_job: Some(run("ok", 1_000_000 - 3_600)),
-            disk: Some(Disk { used_fraction: 0.42, free_bytes: 100, total_bytes: 200 }),
+            disk: Some(Disk {
+                used_fraction: 0.42,
+                free_bytes: 100,
+                total_bytes: 200,
+                wal_bytes: Some(3_500_000_000),
+            }),
         }
     }
 
@@ -190,6 +203,9 @@ mod tests {
         assert_eq!(checks["ingest_freshness"]["ok"], true);
         assert_eq!(checks["last_job"]["ok"], true);
         assert_eq!(checks["disk"]["ok"], true);
+        // WAL size is surfaced for the alerting routine, but a large WAL alone
+        // does not flip the verdict (issue 42) — it is expected mid-backfill.
+        assert_eq!(checks["disk"]["wal_bytes"], 3_500_000_000_i64);
     }
 
     #[test]
@@ -233,7 +249,12 @@ mod tests {
     #[test]
     fn a_full_disk_is_unhealthy_but_an_unmeasured_one_is_not() {
         let full = Signals {
-            disk: Some(Disk { used_fraction: 0.95, free_bytes: 10, total_bytes: 200 }),
+            disk: Some(Disk {
+                used_fraction: 0.95,
+                free_bytes: 10,
+                total_bytes: 200,
+                wal_bytes: Some(10),
+            }),
             ..healthy()
         };
         assert!(!assess(&full).0);

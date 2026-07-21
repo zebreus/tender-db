@@ -27,6 +27,7 @@
 //! declaration of what it changed (BT-13716 covers only ~58% of real change
 //! notices).
 
+use crate::checkpoint::{CheckpointMode, checkpoint_on};
 use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_text, opt_text_of, t, text};
 use std::collections::BTreeSet;
 use turso::{Connection, Value};
@@ -411,6 +412,12 @@ pub(crate) const SCHEMA: &str = "
 /// change rows stay atomic with their canonical writes and a failure rolls back
 /// only a bounded slice. A batch is one BEGIN IMMEDIATE … COMMIT.
 const WRITE_BATCH: usize = 512;
+
+/// Checkpoint the WAL every this many committed batches during a projection
+/// (issue 42). 32 batches ≈ 16k tenders between folds — frequent enough to keep
+/// the WAL bounded through a full-backfill projection, rare enough that the
+/// checkpoint cost is noise against the writes it follows.
+const CHECKPOINT_EVERY_BATCHES: usize = 32;
 
 /// One canonical value of a Tender version, in its scope. The satellites of
 /// docs/architecture.md, as one comparable type — diffing versions is set
@@ -871,7 +878,7 @@ impl Db {
         let conn = self.conn().await;
         let mut total = Applied::default();
         let mut changed_any = false;
-        for chunk in projections.chunks(WRITE_BATCH) {
+        for (batch, chunk) in projections.chunks(WRITE_BATCH).enumerate() {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             let mut applied = Applied::default();
             let mut error = None;
@@ -894,6 +901,17 @@ impl Db {
                     let _ = conn.execute("ROLLBACK", ()).await;
                     return Err(e);
                 }
+            }
+            // Bound the WAL during the projection burst (issue 42): this loop
+            // holds the writer for the whole projection and turso never
+            // auto-checkpoints, so without a periodic fold the WAL grows for the
+            // entire run. Checkpoint every `CHECKPOINT_EVERY_BATCHES` at the
+            // clean point between committed batches. Best-effort: a checkpoint
+            // failure only delays reclaim, never the projection's correctness.
+            if (batch + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+                && let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await
+            {
+                eprintln!("[project] checkpoint after batch {batch}: {e}");
             }
         }
         if changed_any {

@@ -565,6 +565,23 @@ impl Supervisor {
             if let Err(e) = self.db.record_job_progress(job_id as i64, &pkg.period).await {
                 eprintln!("supervisor: job {job_id} record progress {}: {e}", pkg.period);
             }
+            // Bound the WAL (issue 42): turso never auto-checkpoints, so without
+            // this a 166-package run accumulates the whole run's frames (13 GB and
+            // climbing in the field). TRUNCATE here — a writer-idle moment, right
+            // after the package committed — folds the frames back and returns the
+            // -wal space; idle pooled readers do not pin it, and a busy result (a
+            // reader mid-scan) simply reclaims on the next package (verified in
+            // store::checkpoint tests). Best-effort: a failed checkpoint only
+            // delays reclaim, never correctness.
+            match self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                Ok(c) if c.busy => eprintln!(
+                    "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB",
+                    pkg.period,
+                    self.db.wal_bytes().unwrap_or(0) / 1_048_576
+                ),
+                Ok(_) => {}
+                Err(e) => eprintln!("supervisor: job {job_id} checkpoint after {}: {e}", pkg.period),
+            }
         }
 
         Ok(format!(

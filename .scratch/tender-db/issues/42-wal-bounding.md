@@ -1,6 +1,6 @@
 # 42 — Bound the WAL during bulk loads (13G+ and growing)
 
-Status: ready-for-agent
+Status: needs-verification
 Priority: high — disk-risk during the running backfill
 
 Observed (run-driver, 2026-07-21 ~17:50): tender-db.db-wal at 13G and
@@ -30,3 +30,41 @@ Acceptance: WAL stays bounded (single-digit GB) across a multi-package
 process run under load; project run bounded likewise; wal size visible
 to monitoring; no read/write regressions (reads never queue behind the
 writer stays true — the checkpoint runs on the writer at idle points).
+
+## Design & findings
+
+New store module `crates/store/src/checkpoint.rs`: `CheckpointMode`
+(Passive/Restart/Truncate), `Db::checkpoint(mode)` (acquires the writer),
+`checkpoint_on(conn, mode)` (for callers already holding it), `Db::wal_bytes()`.
+
+**Critical sub-question — answered empirically (5 store tests):**
+- **Idle pooled readers do NOT pin the WAL.** A reader that ran a query and was
+  returned to the pool holds no snapshot, so a checkpoint reclaims straight past
+  it (`an_idle_pooled_reader_does_not_pin_the_wal`). So the root cause is simply
+  the *absence of any checkpoint* — turso never auto-checkpoints — **not** reader
+  snapshots. No reader-side recycling is needed.
+- Only a reader with a *live open transaction* pins the WAL, and then a TRUNCATE
+  returns `busy=1` **promptly** (<1s, no `busy_timeout` stall — asserted) and
+  reclaims on the next boundary once the snapshot ends
+  (`a_live_reader_snapshot_blocks_reclaim_until_it_ends`).
+- **PASSIVE folds frames but does NOT shrink the `-wal` file on disk; only
+  TRUNCATE returns the space** (`passive_folds_but_only_truncate_shrinks_the_file`).
+  Since the live incident is an already-large (13 GB) file, PASSIVE alone would
+  not reclaim it.
+
+**Mode choice:**
+- **Process loop → TRUNCATE per package** (`run_process`, right after the issue-32
+  resume cursor is recorded — a writer-idle moment). TRUNCATE because it is the
+  only mode that reclaims the file; safe per-package because idle readers don't
+  pin it and a busy result returns promptly and self-heals next package.
+- **Projection → TRUNCATE every 32 batches** (`apply_tenders`, between committed
+  512-tender batches; the loop holds the writer throughout so `checkpoint_on` is
+  used directly). Bounds and reclaims the projection burst.
+- Both best-effort: a checkpoint failure only delays reclaim, never correctness.
+
+**Monitoring:** `/health/deep` disk check now carries `wal_bytes` (the `-wal`
+sidecar size). Informational — a large WAL is expected mid-backfill, so it does
+not flip the verdict; the alerting routine watches the number for runaway.
+
+Verification = confirm on the running box after deploy that the WAL holds
+single-digit GB across a multi-package process run and the projection burst.
