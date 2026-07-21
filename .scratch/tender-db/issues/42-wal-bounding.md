@@ -37,20 +37,34 @@ New store module `crates/store/src/checkpoint.rs`: `CheckpointMode`
 (Passive/Restart/Truncate), `Db::checkpoint(mode)` (acquires the writer),
 `checkpoint_on(conn, mode)` (for callers already holding it), `Db::wal_bytes()`.
 
-**Critical sub-question — answered empirically (5 store tests):**
-- **Idle pooled readers do NOT pin the WAL.** A reader that ran a query and was
-  returned to the pool holds no snapshot, so a checkpoint reclaims straight past
-  it (`an_idle_pooled_reader_does_not_pin_the_wal`). So the root cause is simply
-  the *absence of any checkpoint* — turso never auto-checkpoints — **not** reader
-  snapshots. No reader-side recycling is needed.
-- Only a reader with a *live open transaction* pins the WAL, and then a TRUNCATE
-  returns `busy=1` **promptly** (<1s, no `busy_timeout` stall — asserted) and
-  reclaims on the next boundary once the snapshot ends
-  (`a_live_reader_snapshot_blocks_reclaim_until_it_ends`).
+**Corrected root-cause model (live prod evidence, deploy #5 546189d — which has
+NONE of this code):** turso *does* autocheckpoint PASSIVE at a WAL size
+threshold; it is not "never". The 13 GB balloon then reclaim-to-near-zero then
+regrow seen in prod is a **spike-and-reclaim**: a long-lived reader **snapshot**
+pins the WAL so turso's PASSIVE autocheckpoint cannot fold past it, the WAL
+grows for the life of that snapshot, and it reclaims once the snapshot ends. The
+prime suspect is the dashboard background refresher's coverage scan — a
+multi-minute read over ~3.5M rows every 60s (`crates/app/src/coverage.rs`
+`measure`). (My earlier "turso never auto-checkpoints" was an over-generalization
+of `backup.rs`'s narrower comment, and an artifact of the scratch tests: their
+small WAL stayed *under* turso's autocheckpoint threshold, so they observed
+manual-checkpoint behaviour, not the autocheckpoint prod shows.)
+
+**What the 6 store tests still prove (and they confirm, not contradict, the
+model above):**
+- A **live open reader transaction pins the WAL** and blocks reclaim until it
+  ends — TRUNCATE then returns `busy=1` **promptly** (<1s, no `busy_timeout`
+  stall — asserted) and reclaims on the next boundary
+  (`a_live_reader_snapshot_blocks_reclaim_until_it_ends`). This *is* the prod
+  spike mechanism, reproduced.
+- **Idle pooled readers do NOT pin the WAL** (`an_idle_pooled_reader_...`): a
+  connection returned to the pool holds no snapshot, so no reader-side recycling
+  is needed — only a legitimately-running scan pins it, and that can't be
+  recycled away (it must hold its snapshot while it runs).
 - **PASSIVE folds frames but does NOT shrink the `-wal` file on disk; only
   TRUNCATE returns the space** (`passive_folds_but_only_truncate_shrinks_the_file`).
-  Since the live incident is an already-large (13 GB) file, PASSIVE alone would
-  not reclaim it.
+  This is why the fix uses TRUNCATE: turso's own PASSIVE autocheckpoint reuses
+  the file in place, so the 13 GB high-water mark persists; TRUNCATE returns it.
 
 **Mode choice:**
 - **Process loop → TRUNCATE per package** (`run_process`, right after the issue-32

@@ -1,18 +1,24 @@
 //! WAL maintenance — bounding the write-ahead log during bulk loads (issue 42).
 //!
-//! Turso does not auto-checkpoint fresh frames (see `backup.rs`), so a long
-//! process/project run accumulates WAL without bound — 13 GB and climbing during
-//! the first backfill. The fix is to checkpoint at the natural writer-idle points
-//! (package boundaries in the process loop, batch boundaries in the projection),
-//! which folds committed frames back into the main file and lets the WAL be
-//! reused instead of grown.
+//! Turso *does* autocheckpoint PASSIVE at a WAL size threshold, but two things
+//! defeat it during a heavy load (live prod evidence, deploy 546189d): (1) a
+//! long-lived reader **snapshot** pins the WAL so the autocheckpoint cannot fold
+//! past it, and the WAL balloons for the life of that snapshot — the ~13 GB
+//! spikes, prime suspect the dashboard coverage refresher's multi-minute scan
+//! over millions of rows every 60 s; and (2) PASSIVE reuses the WAL file in
+//! place — it never shrinks it on disk, so a high-water mark persists. The fix
+//! is to TRUNCATE at the natural writer-idle points (package boundaries in the
+//! process loop, batch boundaries in the projection): TRUNCATE returns the file
+//! space PASSIVE leaves, and forces the reclaim the autocheckpoint may be blocked
+//! from doing.
 //!
 //! A checkpoint can only reclaim frames older than the oldest **live reader
 //! snapshot**: in WAL mode a reader mid-transaction pins every frame its snapshot
 //! needs, and the checkpoint stops there (`busy = 1`). An *idle* pooled reader
 //! (between queries, not in a transaction) holds no snapshot, so it does not pin
 //! the WAL — this is verified in the tests below, and is why no reader-side
-//! recycling is needed.
+//! recycling is needed (only a legitimately-running scan pins it, and that cannot
+//! be recycled away).
 
 use crate::{Db, int};
 
@@ -106,8 +112,10 @@ mod tests {
         (path, db)
     }
 
-    /// Grow the WAL with `n` autocommit inserts (turso never auto-checkpoints, so
-    /// every committed frame stays in the WAL until we checkpoint).
+    /// Grow the WAL with `n` autocommit inserts. At this small scale the WAL
+    /// stays under turso's autocheckpoint size threshold, so frames accumulate
+    /// until we checkpoint — which lets these tests observe checkpoint behaviour
+    /// (reader pinning, PASSIVE-vs-TRUNCATE reclaim) directly.
     async fn grow_wal(db: &Db, n: i64) {
         for i in 0..n {
             db.record_fetch(&Fetch {
@@ -126,9 +134,9 @@ mod tests {
     }
 
     /// The core issue-42 question: after bulk writes the WAL is large, and a
-    /// TRUNCATE checkpoint reclaims it to zero — proving turso does NOT
-    /// auto-checkpoint (so the WAL really does grow unbounded without us) and that
-    /// an explicit checkpoint shrinks the file on disk.
+    /// TRUNCATE checkpoint reclaims it to zero. At this small scale turso's
+    /// size-triggered autocheckpoint has not fired, so the explicit checkpoint is
+    /// what folds the frames back and shrinks the file on disk.
     #[tokio::test]
     async fn truncate_reclaims_the_wal_file() {
         let (path, db) = scratch("truncate").await;

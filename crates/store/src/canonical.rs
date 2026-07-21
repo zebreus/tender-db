@@ -902,11 +902,12 @@ impl Db {
                     return Err(e);
                 }
             }
-            // Bound the WAL during the projection burst (issue 42): this loop
-            // holds the writer for the whole projection and turso never
-            // auto-checkpoints, so without a periodic fold the WAL grows for the
-            // entire run. Checkpoint every `CHECKPOINT_EVERY_BATCHES` at the
-            // clean point between committed batches. Best-effort: a checkpoint
+            // Bound the WAL during the projection burst (issue 42): turso
+            // autocheckpoints PASSIVE but reuses the -wal file in place (never
+            // shrinks it) and stalls behind any long reader snapshot, so a
+            // multi-thousand-batch projection lets the file balloon. TRUNCATE
+            // every `CHECKPOINT_EVERY_BATCHES` at the clean point between
+            // committed batches returns the space. Best-effort: a checkpoint
             // failure only delays reclaim, never the projection's correctness.
             if (batch + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
                 && let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await
