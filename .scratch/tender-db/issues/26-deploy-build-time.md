@@ -87,3 +87,17 @@ b0a5cdb at 15:11:01 UTC → **startup/migration pause ≈ 84s** (index build +
 tenders current_seq backfill + job_queue.progress ALTER), within the 120s grace.
 That's the migration cost, not the build cost. Per the plan, the NEXT deploy is
 the steady-state build measurement — will capture start/end then.
+
+## 2026-07-21 16:40 — build duration from operator's deploy.sh (team lead + run-driver)
+
+Correcting my "not derivable from box" note: the build output streams to the
+OPERATOR's `deploy.sh`, not to `/opt/tender-db/deploy-build.log` (that file's
+Jul-19 mtime is stale — it is NOT the measurement source). From the lead's
+deploy.sh timestamps for b978c96: start 16:23:42 → deploy complete ~16:34:19
+(service restart 16:34:01) → **total ≈ 10.5 min**.
+
+Caveat: b978c96 was a **dep-change** deploy (issue 38 dropped a dependency,
+which by design invalidates the dep cache → one-time bundleDeps rebuild). So
+this is the dep-change case: **~10.5 min (dep-change) vs ~20 min pre-fix cold**.
+The server-code-only **steady-state** number (no dep change → warm dep cache)
+is still unmeasured; it will come from the next no-dep-change deploy.
