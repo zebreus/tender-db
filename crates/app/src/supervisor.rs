@@ -299,8 +299,16 @@ impl Supervisor {
             match serde_json::from_str::<Spec>(&row.spec) {
                 Ok(spec) => jobs.push(Job { id, kind: row.kind, params: row.params, spec }),
                 Err(e) => {
-                    // An unrunnable row (a spec this build cannot parse) is dropped
-                    // so it can never wedge the queue.
+                    // A row this build cannot parse is dropped, not fatal — it can
+                    // never wedge the queue. `Spec` serializes as serde's
+                    // externally-tagged enum (`{"Fetch":{…}}`, `"Snapshot"`), so a
+                    // variant a *newer* rev enqueued is, on a rollback to this rev,
+                    // an unknown-tag error here — a clean miss we drop, never a
+                    // silent misparse into the wrong variant. Adding a `Spec`
+                    // variant is therefore forward/backward safe: old revs shed
+                    // what they don't understand (a dropped Snapshot just isn't
+                    // taken; it is regenerable), and this is the only place the
+                    // queue's on-disk format is decoded.
                     eprintln!("supervisor: dropping unreadable queued job {id}: {e}");
                     let _ = self.db.remove_job(row.id).await;
                 }
