@@ -98,3 +98,12 @@ rides that queue. The supervisor hooks were re-applied against the new async
 `job_queue` and recovers across a restart — covered by
 `supervisor::tests::a_snapshot_job_survives_a_restart` (the daily-pipeline
 projection→snapshot case). Full store + app suites and clippy green.
+
+### 2026-07-21 — Off-box destination deferred (team lead)
+
+Lennart: no new external resources for now (no Storage Box). Decision:
+run the LOCAL snapshot ring only (daily via the scheduler pipeline +
+on-demand, KEEP=2 on /data/snapshots) — covers corruption and
+fat-finger deletes; volume loss consciously accepted until a destination
+exists. backup-ship.sh stays dormant (BACKUP_DEST unset by design).
+Revisit when a destination is provided.

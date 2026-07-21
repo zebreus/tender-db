@@ -72,3 +72,11 @@ concurrent agent's supervisor.rs WIP).
 **Remaining (post-deploy).** The kill-the-service acceptance drill and the
 stale-threshold check happen after this deploys and the pinger account exists —
 procedure in the runbook's "Test procedure".
+
+### 2026-07-21 — External pinger: Claude scheduled routine (team lead)
+
+Lennart: no third-party pinger accounts / no GitHub publish for now.
+Decision: the off-box check runs as a Claude scheduled cloud routine
+(curls https://tenders.zebreus.click/health/deep, notifies Lennart on
+non-200) — off the VPS as required, no new accounts. Set up by the lead;
+the in-app /health/deep half is deployed (bad8dda).
