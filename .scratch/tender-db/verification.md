@@ -45,17 +45,16 @@ Each check names HOW it was/will be verified. Date-stamped on completion.
   2026-07-21: tender_versions.caused_by_notice_id → notices.publication_id
   → fetches(source, period) resolves for sampled rows. Cross-era samples
   post-backfill.
-- [ ] Organization merge rules: auto-merge ONLY on exact official ids;
-  name-only stays provisional. Verify: SQL — no canonical merge without a
-  registration/VAT id; provisional count plausible (dashboard shows
-  2 292 provisional / 13 224 canonical, 2026-07-21).
+- [x] Organization merge rules — SQL-verified 2026-07-21: 0 canonical
+  (provisional=0) orgs without an official identifier; 13 224 canonical
+  vs 2 292 provisional (name-only). Auto-merge-on-exact-id rule holds.
 - [x] Island notices → single-notice Tenders — SQL-verified 2026-07-21:
   180 tenders with island_notice_id set, matching the dashboard count.
   (DÖE volume grows post-backfill; mechanism confirmed.)
-- [~] Money = INTEGER cents + currency — verified 2026-07-21 via SQL:
-  tender_version_amounts(cents INTEGER, currency) e.g. 750000000 cents
-  PLN estimated_value. Timestamp original-offset check pending (needs a
-  notice-layer sample vs source XML).
+- [x] Money = INTEGER cents + currency — verified 2026-07-21 via SQL
+  (tender_version_amounts.cents INTEGER + currency). Timestamps =
+  utc_seconds + offset_minutes + has_time (notice_dates sampled live):
+  UTC + original offset per CONTEXT.md.
 - [ ] BRIN notices become minimal Tenders of distinct kind. Verify: SQL.
 - [ ] Legacy chains via OJ references; break at eForms boundary; missed
   link splits, never wrongly merges. Verify: issue-27 report + spot-check
