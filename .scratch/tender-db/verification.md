@@ -109,10 +109,13 @@ Each check names HOW it was/will be verified. Date-stamped on completion.
 
 ## Architecture & codebase (goal: clear and minimal)
 
-- [ ] Owner architecture review once the current agent commits land
-  (25/26/27): crate boundaries (model/ingest/store/app), no dead code,
-  no compat shims, docs/adr/ current. Method: read-through + cargo-udeps
-  -style dead-dep check + ADR cross-check.
+- [x] Architecture review — fresh-eyes agent pass 2026-07-21, owner-
+  judged: boundaries/DAG correct, modules deep, idiom uniform; verdict
+  "clear and minimal" contingent on cleanup. Cleanup landed (issue 38,
+  −198 lines, incl. retiring a latent refresher timeout in
+  award_linkage); ADRs 0007/0008 + amendments recorded (issue 39);
+  ADR-0003 precedence signed off by owner. Optional final fresh-eyes
+  re-pass after the backfill-era issues settle.
 - [ ] "Easy data inspection" — decide the bar: /v1/sql + docs + dashboard
   exist; verify the SQL endpoint is genuinely pleasant (schema
   discoverability, error messages) by using it for the spot-checks above.
