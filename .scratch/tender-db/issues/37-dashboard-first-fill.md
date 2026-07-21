@@ -1,6 +1,25 @@
 # 37 — Dashboard first snapshot after boot takes ~9 min under load
 
 Status: ready-for-agent
+Priority: UPGRADED to bug (2026-07-21 ~16:40, user-reported twice)
+
+Two escalations beyond the original polish framing:
+1. **The empty snapshot renders as literal zeros.** Lennart read
+   "quarantine 0" on the live dashboard — for that metric, 0 is a
+   strong TRUE claim ("the strictness guarantee holds perfectly"),
+   which the boot transient asserts falsely. ADR-0008 promised the
+   empty default "renders as no data yet"; the UI does not deliver
+   that. Pre-first-fill, every data panel must show an explicit
+   "measuring since boot…" state — never zeros.
+2. **Fill time grows with every metric added.** Second boot took >25
+   min to fill (vs ~9 first boot): issue 40's ledger added two more
+   1.2M-row quarantine scans (with LIKE) to the single monolithic
+   measure() pass, competing with a CPU-saturated parser. The
+   incremental-sections design is now necessary, not optional: cheap
+   sections (funnel/counts/lag/system) land in seconds, each section
+   updates independently, slow scans can't hold the rest hostage.
+   Also audit quarantine_resolution's LIKE scans for an indexed
+   formulation.
 
 Observed after the b0a5cdb deploy (2026-07-21): the background refresher
 (issue 20 part 3) computes the whole dashboard snapshot as one
