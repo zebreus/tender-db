@@ -87,9 +87,14 @@ pub async fn process(
 ) -> Result<Report, Error> {
     let mut total = Report::default();
     for pkg in db.current_packages(source, kind, period).await? {
-        let report =
-            process_package(db, &archive_root.join(&pkg.path), source, pkg.fetch_id, |_, _, _| {})
-                .await?;
+        let report = process_package_resilient(
+            db,
+            &archive_root.join(&pkg.path),
+            source,
+            pkg.fetch_id,
+            |_, _, _| {},
+        )
+        .await?;
         on_package(&pkg, &report);
         total.members += report.members;
         total.ingested += report.ingested;
@@ -101,6 +106,39 @@ pub async fn process(
         total.parse_quarantined += report.parse_quarantined;
     }
     Ok(total)
+}
+
+/// Process one package, treating **archive corruption as non-fatal** and only
+/// letting **systemic** failures stop the run. A package the walker cannot read
+/// at all (a truncated outer container, a corrupt nested tar) is recorded as a
+/// package-level quarantine and reported as `quarantined: 1`, so the caller
+/// moves on to the next package — the job must never die on one bad file
+/// (ADR-0004). A database error is systemic and propagates: it means stop.
+pub async fn process_package_resilient(
+    db: &store::Db,
+    archive: &Path,
+    source: &str,
+    fetch_id: i64,
+    on_progress: impl FnMut(u64, u64, &Report),
+) -> Result<Report, turso::Error> {
+    match process_package(db, archive, source, fetch_id, on_progress).await {
+        Ok(report) => Ok(report),
+        Err(Error::Db(e)) => Err(e),
+        Err(Error::Package(e)) => {
+            let member_path = archive.to_string_lossy().into_owned();
+            db.insert_quarantine(&store::Quarantined {
+                fetch_id,
+                content_hash: crate::sha256_hex(member_path.as_bytes()),
+                member_path,
+                profile: Some("corrupt-package".into()),
+                reason: format!("unreadable package: {e}"),
+                detail: None,
+                first_seen: unix_now(),
+            })
+            .await?;
+            Ok(Report { quarantined: 1, ..Default::default() })
+        }
+    }
 }
 
 /// Process one archived package file.
@@ -138,8 +176,26 @@ pub async fn process_package(
         // Set once the receiver is gone (writer failed): keep walking cheaply
         // to finish the archive read, but stop parsing.
         let mut dead = false;
-        package::walk(&archive, |Member { path, bytes }| {
+        package::walk(&archive, |Member { path, bytes, corruption }| {
             members += 1;
+            // A member the walker recovered from archive corruption (a
+            // truncated/unreadable inner bundle or entry) is quarantined with
+            // its reason (ADR-0004) — a visible data-quality metric, never a
+            // policy-skip.
+            if let Some(reason) = corruption {
+                ingested += 1;
+                if !dead {
+                    let record = Record::Quarantine(profile::QuarantineRecord {
+                        content_hash: crate::sha256_hex(bytes),
+                        profile: None,
+                        reason,
+                        detail: None,
+                        member_path: path,
+                    });
+                    dead = tx.send((record, store::Parse::Pending)).is_err();
+                }
+                return;
+            }
             match profile::dispatch_with(&path, bytes, &ctx) {
                 Disposition::Records(records) => {
                     ingested += 1;

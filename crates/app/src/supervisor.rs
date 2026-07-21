@@ -412,7 +412,10 @@ impl Supervisor {
                 p.members_total = 0;
             });
             let base_notices = total.notices;
-            let report = process::process_package(
+            // Resilient: a corrupt package is quarantined and skipped, so one
+            // bad archived file never aborts a multi-year job; only a systemic
+            // (database) failure is fatal (ADR-0004).
+            let report = process::process_package_resilient(
                 &self.db,
                 &self.archive.join(&pkg.path),
                 source,
@@ -429,7 +432,7 @@ impl Supervisor {
                 },
             )
             .await
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| format!("db: {e}"))?;
             total.members += report.members;
             total.notices += report.notices;
             total.parsed += report.parsed;

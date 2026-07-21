@@ -276,3 +276,44 @@ async fn reprocessing_is_idempotent() {
 
     let _ = std::fs::remove_dir_all(&archive);
 }
+
+/// A package the walker cannot read *at all* (here the real upstream-truncated
+/// 1996 bundle, standing in as a whole unreadable package) must not abort a
+/// whole-source run: it is recorded as a `corrupt-package` quarantine and the
+/// other packages still process. The job never dies on one bad file (ADR-0004).
+#[tokio::test]
+async fn a_corrupt_package_is_quarantined_and_the_run_continues() {
+    let (archive, db) = fixture("corrupt-package").await;
+
+    // A second daily whose bytes are not a readable archive.
+    let corrupt = include_bytes!("fixtures/corrupt/SV_19960208_1996027_ISO_ORG.zip");
+    std::fs::write(archive.join("ted/daily/2026-00138.tar.gz"), corrupt).unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "daily".into(),
+        period: "2026-00138".into(),
+        url: "https://ted.europa.eu/packages/daily/202600138".into(),
+        sha256: "bb".into(),
+        bytes: corrupt.len() as i64,
+        fetched_at: 2,
+        path: "ted/daily/2026-00138.tar.gz".into(),
+    })
+    .await
+    .unwrap();
+
+    // The whole-source run completes despite the unreadable package.
+    let report = process::process(&db, &archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+
+    // The good package's notices still landed.
+    assert!(report.notices > 0, "the readable package still processed: {report:?}");
+
+    // The unreadable package is recorded as a corrupt-package quarantine.
+    let q = db.recent_quarantine(50).await.unwrap();
+    assert!(
+        q.iter().any(|e| e.profile.as_deref() == Some("corrupt-package")
+            && e.member_path.contains("2026-00138")),
+        "the unreadable package is quarantined for triage: {q:?}"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}

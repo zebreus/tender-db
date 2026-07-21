@@ -34,6 +34,11 @@ pub struct Member<'a> {
     /// `daily.tar.gz/inner` for a member of a nested tar.
     pub path: String,
     pub bytes: &'a [u8],
+    /// Set when the walker recovered from corruption at this path (a truncated
+    /// or unreadable inner ZIP bundle/entry): the bytes are whatever could be
+    /// read, and the processor must quarantine the member with this reason
+    /// rather than dispatch it (ADR-0004). `None` for an intact member.
+    pub corruption: Option<String>,
 }
 
 #[derive(Debug)]
@@ -101,7 +106,7 @@ pub fn walk(archive: &Path, mut visit: impl FnMut(Member<'_>)) -> Result<(), Err
                 let path = entry.name().to_owned();
                 bytes.clear();
                 entry.read_to_end(&mut bytes)?;
-                visit(Member { path, bytes: &bytes });
+                visit(Member { path, bytes: &bytes, corruption: None });
             }
             Ok(())
         }
@@ -169,7 +174,7 @@ fn walk_tar(
         if is_zip(&path, &bytes) {
             walk_zip(&path, &bytes, visit);
         } else {
-            visit(Member { path, bytes: &bytes });
+            visit(Member { path, bytes: &bytes, corruption: None });
         }
     }
     Ok(())
@@ -224,16 +229,20 @@ fn is_zip(path: &str, bytes: &[u8]) -> bool {
 /// 1996 archive ships a `SV_..._ISO_ORG.zip` truncated on a 384 KB block
 /// boundary, no End-Of-Central-Directory) must not abort the package or the
 /// whole multi-year job. Per ADR-0004 we keep going and surface the bad member
-/// for triage rather than dropping the run: an unopenable bundle is handed on
-/// as a single payload so the parser quarantines it, and an unreadable entry
-/// inside an otherwise-good bundle is skipped. The raw archive stays intact, so
-/// a future fix can always reprocess.
+/// for triage rather than dropping the run: an unopenable bundle, and any
+/// unreadable entry inside an otherwise-good bundle, is emitted as a
+/// `corruption`-tagged member so the processor **quarantines** it (a visible
+/// data-quality metric, reprocessable) rather than policy-skipping it. The raw
+/// archive stays intact, so a future fix can always reprocess.
 fn walk_zip(outer: &str, bytes: &[u8], visit: &mut impl FnMut(Member<'_>)) {
     let mut zip = match zip::ZipArchive::new(std::io::Cursor::new(bytes)) {
         Ok(zip) => zip,
         Err(e) => {
-            eprintln!("walk_zip {outer}: {e}; quarantining unreadable bundle");
-            visit(Member { path: outer.to_owned(), bytes });
+            visit(Member {
+                path: outer.to_owned(),
+                bytes,
+                corruption: Some(format!("unreadable zip bundle: {e}")),
+            });
             return;
         }
     };
@@ -242,7 +251,11 @@ fn walk_zip(outer: &str, bytes: &[u8], visit: &mut impl FnMut(Member<'_>)) {
         let mut inner = match zip.by_index(i) {
             Ok(inner) => inner,
             Err(e) => {
-                eprintln!("walk_zip {outer}[{i}]: {e}; skipping entry");
+                visit(Member {
+                    path: format!("{outer}!#{i}"),
+                    bytes: &[],
+                    corruption: Some(format!("unreadable zip entry #{i}: {e}")),
+                });
                 continue;
             }
         };
@@ -250,12 +263,17 @@ fn walk_zip(outer: &str, bytes: &[u8], visit: &mut impl FnMut(Member<'_>)) {
             continue;
         }
         let name = inner.name().to_owned();
+        let path = format!("{outer}!{name}");
         inner_bytes.clear();
         if let Err(e) = inner.read_to_end(&mut inner_bytes) {
-            eprintln!("walk_zip {outer}!{name}: {e}; skipping entry");
+            visit(Member {
+                path,
+                bytes: &inner_bytes,
+                corruption: Some(format!("unreadable zip entry: {e}")),
+            });
             continue;
         }
-        visit(Member { path: format!("{outer}!{name}"), bytes: &inner_bytes });
+        visit(Member { path, bytes: &inner_bytes, corruption: None });
     }
 }
 
@@ -283,10 +301,19 @@ mod tests {
         path
     }
 
+    type Seen = Vec<(String, Option<String>)>;
+
+    /// Collect every visited member's `(path, corruption)` for assertions.
+    fn walk_members(path: &Path) -> (Result<(), Error>, Seen) {
+        let mut seen: Seen = Vec::new();
+        let result = walk(path, |m| seen.push((m.path.clone(), m.corruption.clone())));
+        (result, seen)
+    }
+
     /// A truncated inner ZIP (a valid local-file-header magic but no
-    /// End-Of-Central-Directory) must be quarantined as a single bundle rather
-    /// than aborting the walk — the exact shape that killed the 1996 TED
-    /// monthly (`SV_..._ISO_ORG.zip`, truncated on a 384 KB boundary).
+    /// End-Of-Central-Directory) must be surfaced as a corruption-tagged member
+    /// (→ quarantine bucket) rather than aborting the walk — the exact shape
+    /// that killed the 1996 TED monthly (`SV_..._ISO_ORG.zip`).
     #[test]
     fn corrupt_inner_zip_is_surfaced_not_fatal() {
         let good = b"<TED_EXPORT>ok</TED_EXPORT>".as_slice();
@@ -299,19 +326,46 @@ mod tests {
         ]);
         let path = scratch_tar("corrupt-zip", &tar);
 
-        let mut seen = Vec::new();
-        let result = walk(&path, |m| seen.push(m.path.clone()));
+        let (result, seen) = walk_members(&path);
         std::fs::remove_file(&path).ok();
 
         assert!(result.is_ok(), "a corrupt inner zip must not abort the walk: {result:?}");
-        assert!(seen.iter().any(|p| p == "day/good.xml"), "member before the bad zip: {seen:?}");
+        let paths: Vec<&str> = seen.iter().map(|(p, _)| p.as_str()).collect();
+        assert!(paths.contains(&"day/good.xml"), "member before the bad zip: {paths:?}");
+        assert!(paths.contains(&"day/after.xml"), "walking continues past the bad zip: {paths:?}");
+        let bad = seen.iter().find(|(p, _)| p == "day/bad.zip").expect("bad zip surfaced");
         assert!(
-            seen.iter().any(|p| p == "day/bad.zip"),
-            "the unreadable bundle is surfaced for quarantine: {seen:?}"
+            bad.1.as_deref().is_some_and(|r| r.contains("unreadable zip bundle")),
+            "the unreadable bundle is corruption-tagged for quarantine: {bad:?}"
         );
+        // A clean member is never tagged.
+        let good = seen.iter().find(|(p, _)| p == "day/good.xml").unwrap();
+        assert!(good.1.is_none(), "an intact member is not tagged: {good:?}");
+    }
+
+    /// The **real** upstream-truncated bundle (committed fixture, 384 KB, no
+    /// EOCD) is quarantine-tagged, not fatal — a byte-exact regression guard.
+    #[test]
+    fn real_truncated_1996_bundle_is_quarantined() {
+        let sv = include_bytes!("../tests/fixtures/corrupt/SV_19960208_1996027_ISO_ORG.zip");
+        let tar = tar_with(&[
+            ("19960208/EN.xml", b"<TED_EXPORT>ok</TED_EXPORT>"),
+            ("19960208/SV_19960208_1996027_ISO_ORG.zip", sv.as_slice()),
+        ]);
+        let path = scratch_tar("real-1996", &tar);
+
+        let (result, seen) = walk_members(&path);
+        std::fs::remove_file(&path).ok();
+
+        assert!(result.is_ok(), "the real 1996 bundle must not abort the walk: {result:?}");
+        let bad = seen
+            .iter()
+            .find(|(p, _)| p.ends_with("SV_19960208_1996027_ISO_ORG.zip"))
+            .expect("bundle surfaced");
+        assert!(bad.1.is_some(), "real truncated bundle is corruption-tagged: {bad:?}");
         assert!(
-            seen.iter().any(|p| p == "day/after.xml"),
-            "walking continues past the bad zip: {seen:?}"
+            seen.iter().any(|(p, c)| p.ends_with("EN.xml") && c.is_none()),
+            "the good sibling still ingests"
         );
     }
 
