@@ -205,3 +205,38 @@ Resumed babysitting. State verified ~09:17 UTC:
 Monitor tmux (`bf15-monitor` → backfill-status.log, `bf-fetch-watch`) untouched
 and still ticking. Standing by on a background wait for job-1 completion / disk
 threshold; will verify each queued job starts and log milestones.
+
+### 2026-07-21 — INTERRUPTED by da2ab87 deploy (issue 20 fix); lead re-enqueued, run-driver
+
+The team lead deployed rev **da2ab87** (issue 20 — read-only Db accessors moved
+to a WAL reader pool, to fix the dashboard/`/admin/jobs` stalls under ingestion)
+at **09:56 UTC**, deliberately mid-backfill. The restart killed job 1 (was at
+~pkg 218/401, 2011-03) and wiped the in-memory supervisor queue as expected.
+
+**Watcher miss (my fault, fixed):** the deploy-green watcher I had armed never
+fired, so the queue sat empty ~09:56→10:57 (1h) until the lead noticed and
+recovered. Root cause: it was a single long-lived `ssh 'while true'` with **no
+SSH keepalive** — when the service restart/network blip dropped the connection,
+the ssh client hung half-open on a dead socket, producing no output and never
+exiting, so the background task never completed and I was never re-woken. A
+lone persistent tunnel is a silent single point of failure. Fix: watchers now
+use `ServerAliveInterval=15 ServerAliveCountMax=4 ConnectTimeout=10` (dead peer
+detected → ssh exits → I re-wake) **and** a bounded ~24-min heartbeat cap so the
+watch always returns and re-arms — the max blind window is now minutes, not open-
+ended. It also early-exits on a rev change, so a future redeploy re-wakes me fast.
+
+**Recovery (done by the team lead at ~10:57 UTC, recorded honestly):** the lead
+restarted the service again at 10:56 (to clear a separate da2ab87 CPU-spin — the
+coverage query behind `/` pins a core for hours; issue 20 reopened) and
+re-enqueued the standard five jobs (all 202, ids 1–5: process ted monthly → ted
+daily → doe monthly → doe daily → project rebuild=false). Confirmed on the box:
+health ok / rev da2ab87; job 1 running, fast-forwarding the ~217 already-ingested
+packages (pkg 26/401 = 1995-03, notices counter 0 = dedup re-walk) before real
+parsing resumes ~2011-02. The daily scheduler lost its queued tick (jobs 6–10)
+in the restart too; it re-adds at the next 09:35 Berlin tick — no action needed.
+
+**New monitoring constraint:** do NOT curl `/` or `/api/dashboard` on da2ab87 —
+each hit starts the pathological coverage query and burns a core for hours.
+Monitoring is now `/health` + authed `/admin/jobs` only (both fast: /admin/jobs
+measured 0.7–4ms under ingestion load, see issue 20). Re-armed the robust watcher
+on the new run (job 1 of 5, started ~10:57 UTC).
