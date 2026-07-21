@@ -19,6 +19,7 @@
 //! dropped.
 
 use crate::sha256_hex;
+use std::borrow::Cow;
 
 /// What one package member turned into. A member is always exactly one of
 /// these — that is the "no silent drops" invariant the processor asserts.
@@ -109,7 +110,12 @@ pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> D
     let Ok(xml) = std::str::from_utf8(bytes) else {
         return one(quarantine(member_path, bytes, None, "not-utf8", None));
     };
-    let doc = match roxmltree::Document::parse(xml) {
+    // Strip any `<!DOCTYPE …>` before parsing: roxmltree refuses every DTD, and
+    // the 2008 OPOCE `INTERNAL_OJS` export is real notices behind a DTD (issue
+    // 36). The strip is XXE-safe — see `strip_doctype`; it never processes a DTD,
+    // it only lets the plain body be parsed-or-refused normally.
+    let stripped = strip_doctype(xml);
+    let doc = match roxmltree::Document::parse(&stripped) {
         Ok(doc) => doc,
         Err(e) => return one(quarantine(member_path, bytes, None, "unparsable-xml", Some(e.to_string()))),
     };
@@ -119,11 +125,53 @@ pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> D
 
     if local == "TED_EXPORT" {
         one(dispatch_ted_export(member_path, bytes, &root, ns))
+    } else if local == "INTERNAL_OJS" {
+        // The 2008 OPOCE internal export (DTD R2.0.5): real S-series notices in a
+        // vocabulary no profile maps yet (~28k, the whole 2008 verify gap). Held
+        // as an honest, tracked "unmapped era" — not a misleading "DTD detected"
+        // parse error, and not "unknown-root" (which reads as benign non-notice).
+        // The parser is issue 41; this reclassification is issue 36's closure.
+        one(quarantine(
+            member_path,
+            bytes,
+            Some("internal-ojs".into()),
+            "unmapped-era",
+            Some("INTERNAL_OJS R2.0.5 (2008 OPOCE era) — parser tracked in issue 41".into()),
+        ))
     } else if EFORMS_ROOT_NS.iter().any(|family| ns.starts_with(family)) {
         one(dispatch_eforms(member_path, bytes, &doc))
     } else {
         one(quarantine(member_path, bytes, None, "unknown-root", Some(format!("{{{ns}}}{local}"))))
     }
+}
+
+/// Remove an XML `<!DOCTYPE …>` declaration, internal subset and all, so a
+/// DTD-bearing document can reach [`roxmltree`], which refuses any DTD outright.
+///
+/// This is deliberately a *strip*, never DTD processing: no entity — parameter,
+/// internal general, or external — is ever defined or expanded. A legitimate
+/// payload (the OPOCE `INTERNAL_OJS` notices, whose only DTD content is an unused
+/// parameter entity) parses from its plain body; a hostile payload that defines
+/// an internal general entity and references it in the body is left with an
+/// *undefined* entity reference, which roxmltree then refuses. So stripping can
+/// never enable an XXE fetch or a billion-laughs expansion — it only turns a
+/// blanket "DTD present" refusal into a normal parse-or-refuse of the body.
+fn strip_doctype(xml: &str) -> Cow<'_, str> {
+    let Some(start) = xml.find("<!DOCTYPE") else { return Cow::Borrowed(xml) };
+    let rest = &xml[start..];
+    let first_gt = rest.find('>');
+    // An internal subset `[ … ]` may itself contain `>` (inside entity values or
+    // declarations), so when a `[` opens before the first `>`, the declaration
+    // really ends at the `>` after the subset's closing `]`.
+    let end = match (first_gt, rest.find('[')) {
+        (Some(gt), Some(br)) if br < gt => {
+            rest[br..].find(']').and_then(|c| rest[br + c..].find('>').map(|g| br + c + g))
+        }
+        (gt, _) => gt,
+    };
+    // No closing `>` at all: leave it for roxmltree to reject as malformed.
+    let Some(end) = end else { return Cow::Borrowed(xml) };
+    Cow::Owned(format!("{}{}", &xml[..start], &xml[start + end + 1..]))
 }
 
 /// Legacy TED_EXPORT XML (2011–2025). The declared version lives in one of
@@ -423,5 +471,57 @@ mod tests {
             Some("00001505-2024".into())
         );
         assert_eq!(publication_id_from_name("junk.txt"), None);
+    }
+
+    #[test]
+    fn strip_doctype_removes_the_declaration_and_only_it() {
+        // No DTD: borrowed, untouched.
+        assert_eq!(strip_doctype("<a>x [y] z</a>"), "<a>x [y] z</a>");
+        // External-id DTD: gone, body kept (incl. a later '[' in the body).
+        assert_eq!(
+            strip_doctype("<!DOCTYPE r SYSTEM \"r.dtd\"><r>a [b] c</r>"),
+            "<r>a [b] c</r>"
+        );
+        // Internal subset whose entity value contains '>': the whole subset goes.
+        assert_eq!(
+            strip_doctype("<?xml version=\"1.0\"?><!DOCTYPE r [<!ENTITY % t 'a>b'>]><r/>"),
+            "<?xml version=\"1.0\"?><r/>"
+        );
+    }
+
+    #[test]
+    fn internal_ojs_is_held_as_a_tracked_unmapped_era() {
+        // A real 2008 OPOCE DTD notice (issue 36): the DTD is stripped, the body
+        // parses, and its INTERNAL_OJS root routes to the honest tracked bucket —
+        // not "unparsable-xml" (a false parse error) nor "unknown-root" (benign).
+        let bytes = include_bytes!("../tests/fixtures/internal_ojs/114238_2008.en");
+        let Disposition::Records(records) =
+            dispatch("20080502_2008085.tar.gz/114238/opoce-input/114238_2008.en", bytes)
+        else {
+            panic!("INTERNAL_OJS member was not dispatched to a record");
+        };
+        let [Record::Quarantine(q)] = &records[..] else { panic!("expected one quarantine") };
+        assert_eq!(q.reason, "unmapped-era");
+        assert_eq!(q.profile.as_deref(), Some("internal-ojs"));
+        assert!(q.detail.as_deref().unwrap().contains("issue 41"));
+    }
+
+    #[test]
+    fn a_hostile_dtd_is_refused_not_expanded() {
+        // Stripping the DOCTYPE must never enable XXE or entity expansion. Both of
+        // these define an internal general entity and reference it in the body;
+        // once the DTD is stripped the reference is undefined, so roxmltree
+        // refuses the document — it is quarantined, never resolved.
+        let external = br#"<?xml version="1.0"?><!DOCTYPE INTERNAL_OJS [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><INTERNAL_OJS>&xxe;</INTERNAL_OJS>"#;
+        let billion = br#"<?xml version="1.0"?><!DOCTYPE lolz [<!ENTITY a "aa"><!ENTITY b "&a;&a;&a;">]><INTERNAL_OJS>&b;</INTERNAL_OJS>"#;
+        for payload in [external.as_slice(), billion.as_slice()] {
+            let Disposition::Records(records) =
+                dispatch("20080502_2008085.tar.gz/999999/opoce-input/999999_2008.en", payload)
+            else {
+                panic!("hostile payload was not dispatched to a record");
+            };
+            let [Record::Quarantine(q)] = &records[..] else { panic!("expected one quarantine") };
+            assert_eq!(q.reason, "unparsable-xml", "a hostile entity ref must be refused");
+        }
     }
 }

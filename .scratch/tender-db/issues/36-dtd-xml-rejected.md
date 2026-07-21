@@ -1,5 +1,44 @@
 # 36 — DTD-bearing TED XML is rejected wholesale (~620k members, ~27k real loss)
 
+Status: resolved-as-diagnosed (interim landed; the parser is issue 41)
+
+## Resolution (2026-07-21)
+
+Investigated with byte-exact prod payloads + `/v1/sql`. The original framing
+below (a duplicate era to skip) was **overturned**; the finding:
+
+- The 621,863 `XML with DTD detected` members are an `opoce-input/` per-language
+  subtree the first sampling missed — member paths
+  `20080502_2008085.tar.gz/<num>/opoce-input/<num>_2008.<lg>`, ~22 languages, so
+  ≈**28k distinct notices**, all outstanding, first_seen during today's backfill
+  (NOT historical).
+- Each is `<!DOCTYPE INTERNAL_OJS PUBLIC "…INTERNAL_OJS XML R2.0.5//EN"
+  "Internal_Ojs.dtd" [<!ENTITY % TYPE '…'>]>` + `<INTERNAL_OJS>` — a **distinct
+  vocabulary** (not TED_EXPORT, text, or eForms), mainstream S-series headings
+  (3310/3340/3540/45xx…), real `NO_DOC_OJS 2008/S 85-114238` refs.
+- **Completeness check (mandatory, both directions): they are NOT duplicates.**
+  0 of 350 opoce notices sampled across two package regions have a `ted` text
+  twin in `notices` (format validated: the text notice `723-2008` does exist).
+  ≈28k opoce-only notices ≈ the entire ~27k 2008 shortfall — **these notices
+  ARE the 2008 gap**. (Lead's "duplicate delivery ÷22 languages" hypothesis is
+  overturned by this check.)
+
+Therefore neither proposed fix applies: a policy-skip would **drop 28k real
+notices**; "route to r208" is wrong (different vocabulary). Closing the gap needs
+a full **INTERNAL_OJS R2.0.5 parser** — filed as **issue 41**.
+
+**Interim landed here (issue 36's closure):** an XXE-safe DOCTYPE strip
+(`profile::strip_doctype` — never processes a DTD; a hostile internal general
+entity referenced in the body is left undefined and refused, tested both ways),
+and `INTERNAL_OJS` roots now route to an honest `unmapped-era` quarantine
+(profile `internal-ojs`, detail points at issue 41, classes as SuspectedGap) —
+instead of the misleading `unparsable-xml: XML with DTD detected`. Ledger entry
+added. The ~28k notices are reclaimed by issue 41, not this.
+
+---
+
+## Original framing (overturned — kept for the record)
+
 Status: ready-for-agent
 
 Split out of issue 30's quarantine triage (2026-07-21). The `unparsable-xml`
