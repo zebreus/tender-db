@@ -28,3 +28,22 @@ checklist drawn from its own schema, quarantine is strict within that
 profile's universe, and the dashboard reports coverage per profile. Declared
 free-text blobs (text-era bodies) count as mapped text, never as unmapped
 content. See docs/research/ted-legacy-mapping.md §8.
+
+Amendment (2026-07-21, from the architecture review): the headline is no longer
+the raw quarantine total. That total conflates three kinds of held member, and
+at backfill scale it is dominated by two large suspected-parser-gap buckets
+(`unknown-field-code` ~577k, ~entirely the legacy `OC` field 1995–98;
+`unparsable-xml` ~628k, ~entirely DTD-bearing 2008 XML) whose years measure ~92%
+held against TED ground truth — i.e. mostly duplicate representations of notices
+already held via another member, not real loss. So `model::quarantine_class`
+splits every reason three ways: **actionable** — a member identified as a notice
+whose content we could not represent, confirmed coverage loss held whole;
+**suspected-gap** — a large notice-shaped bucket pending investigate-then-fix
+(filed as issues 35/36), neither counted as loss yet nor dismissed; and
+**benign** — the reason itself proves the member was never a distinct notice (a
+wrong XML root, no publication id, a corrupt archive entry). The dashboard
+headline is now `quarantine_actionable`; the raw total and the per-reason
+breakdown stay visible beneath it. The original guarantee is unchanged, it now
+reads on the actionable class — zero actionable means the no-silent-omissions
+promise holds. Nothing is called benign without the reason proving it; uncertain
+reasons default to suspected-gap, never benign.

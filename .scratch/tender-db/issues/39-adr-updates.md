@@ -1,6 +1,13 @@
 # 39 — Record today's standing decisions as ADRs
 
-Status: ready-for-agent
+Status: resolved
+
+Resolution (2026-07-21): ADR-0004 amended (three-class quarantine headline);
+ADR-0005 amended (reader-pool topology + connection-budget note); new ADR-0007
+(durable supervisor job queue, incl. the Spec serde compat contract); new
+ADR-0008 (background dashboard refresher, with the rejected TTL-cache
+alternative); ADR-0003 precedence wording reconciled to the code and owner
+sign-off recorded; CONTEXT.md ambiguity cleared. No code changes.
 
 The 2026-07-21 architecture review found four load-bearing decisions
 that outran the ADRs, plus one wording reconciliation:

@@ -202,6 +202,9 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   Backfill: full history 1993→, text era header-only and English-only for
   now (model stays multilingual); parsed DB stores EN + original language,
   raw archive keeps everything.
-- Cross-source field precedence for merged Tenders (ADR-0003) pending user
-  sign-off: per field class — DÖE is the richer original for German content
-  (national codes, future DEX fields), TED owns publication identity.
+- Cross-source field precedence for merged Tenders (ADR-0003) resolved
+  (2026-07-21, owner sign-off under transferred product authority): per field
+  class — DÖE is the richer original for German content (national codes, future
+  DEX fields), TED owns publication identity; shared eForms fields resolve
+  through the supersession fold (publication-date order, dispatch fallback,
+  TED-last source tiebreak), as implemented in the projection.
