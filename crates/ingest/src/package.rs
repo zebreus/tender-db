@@ -167,7 +167,7 @@ fn walk_tar(
         bytes.extend_from_slice(&head[..n]);
         entry.read_to_end(&mut bytes)?;
         if is_zip(&path, &bytes) {
-            walk_zip(&path, &bytes, visit)?;
+            walk_zip(&path, &bytes, visit);
         } else {
             visit(Member { path, bytes: &bytes });
         }
@@ -219,19 +219,119 @@ fn is_zip(path: &str, bytes: &[u8]) -> bool {
     bytes.starts_with(b"PK\x03\x04") || path.to_ascii_lowercase().ends_with(".zip")
 }
 
-fn walk_zip(outer: &str, bytes: &[u8], visit: &mut impl FnMut(Member<'_>)) -> Result<(), Error> {
-    let mut zip = zip::ZipArchive::new(std::io::Cursor::new(bytes))
-        .map_err(|e| Error::Zip(format!("{outer}: {e}")))?;
+/// Unwrap one nested ZIP, visiting each inner file. Corruption is **never
+/// fatal**: a truncated or otherwise unreadable bundle (e.g. TED's upstream
+/// 1996 archive ships a `SV_..._ISO_ORG.zip` truncated on a 384 KB block
+/// boundary, no End-Of-Central-Directory) must not abort the package or the
+/// whole multi-year job. Per ADR-0004 we keep going and surface the bad member
+/// for triage rather than dropping the run: an unopenable bundle is handed on
+/// as a single payload so the parser quarantines it, and an unreadable entry
+/// inside an otherwise-good bundle is skipped. The raw archive stays intact, so
+/// a future fix can always reprocess.
+fn walk_zip(outer: &str, bytes: &[u8], visit: &mut impl FnMut(Member<'_>)) {
+    let mut zip = match zip::ZipArchive::new(std::io::Cursor::new(bytes)) {
+        Ok(zip) => zip,
+        Err(e) => {
+            eprintln!("walk_zip {outer}: {e}; quarantining unreadable bundle");
+            visit(Member { path: outer.to_owned(), bytes });
+            return;
+        }
+    };
     let mut inner_bytes = Vec::new();
     for i in 0..zip.len() {
-        let mut inner = zip.by_index(i).map_err(|e| Error::Zip(format!("{outer}: {e}")))?;
+        let mut inner = match zip.by_index(i) {
+            Ok(inner) => inner,
+            Err(e) => {
+                eprintln!("walk_zip {outer}[{i}]: {e}; skipping entry");
+                continue;
+            }
+        };
         if !inner.is_file() {
             continue;
         }
         let name = inner.name().to_owned();
         inner_bytes.clear();
-        inner.read_to_end(&mut inner_bytes)?;
+        if let Err(e) = inner.read_to_end(&mut inner_bytes) {
+            eprintln!("walk_zip {outer}!{name}: {e}; skipping entry");
+            continue;
+        }
         visit(Member { path: format!("{outer}!{name}"), bytes: &inner_bytes });
     }
-    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Build a plain tar (a TED-monthly-shaped container) from named members.
+    fn tar_with(members: &[(&str, &[u8])]) -> Vec<u8> {
+        let mut builder = tar::Builder::new(Vec::new());
+        for (name, data) in members {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(data.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            builder.append_data(&mut header, name, *data).expect("append");
+        }
+        builder.into_inner().expect("tar")
+    }
+
+    fn scratch_tar(name: &str, bytes: &[u8]) -> std::path::PathBuf {
+        let path =
+            std::env::temp_dir().join(format!("pkgtest-{}-{name}.tar", std::process::id()));
+        std::fs::write(&path, bytes).expect("write scratch tar");
+        path
+    }
+
+    /// A truncated inner ZIP (a valid local-file-header magic but no
+    /// End-Of-Central-Directory) must be quarantined as a single bundle rather
+    /// than aborting the walk — the exact shape that killed the 1996 TED
+    /// monthly (`SV_..._ISO_ORG.zip`, truncated on a 384 KB boundary).
+    #[test]
+    fn corrupt_inner_zip_is_surfaced_not_fatal() {
+        let good = b"<TED_EXPORT>ok</TED_EXPORT>".as_slice();
+        let truncated_zip = b"PK\x03\x04\x14\x00\x00\x00\x08\x00truncated-no-eocd".as_slice();
+        let after = b"<TED_EXPORT>after</TED_EXPORT>".as_slice();
+        let tar = tar_with(&[
+            ("day/good.xml", good),
+            ("day/bad.zip", truncated_zip),
+            ("day/after.xml", after),
+        ]);
+        let path = scratch_tar("corrupt-zip", &tar);
+
+        let mut seen = Vec::new();
+        let result = walk(&path, |m| seen.push(m.path.clone()));
+        std::fs::remove_file(&path).ok();
+
+        assert!(result.is_ok(), "a corrupt inner zip must not abort the walk: {result:?}");
+        assert!(seen.iter().any(|p| p == "day/good.xml"), "member before the bad zip: {seen:?}");
+        assert!(
+            seen.iter().any(|p| p == "day/bad.zip"),
+            "the unreadable bundle is surfaced for quarantine: {seen:?}"
+        );
+        assert!(
+            seen.iter().any(|p| p == "day/after.xml"),
+            "walking continues past the bad zip: {seen:?}"
+        );
+    }
+
+    /// A well-formed nested ZIP still unwraps one level, reported as `outer!inner`.
+    #[test]
+    fn good_inner_zip_unwraps_one_level() {
+        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let opts: zip::write::FileOptions<()> = zip::write::FileOptions::default();
+        zip.start_file("EN.xml", opts).expect("start");
+        std::io::Write::write_all(&mut zip, b"<TED_EXPORT>hi</TED_EXPORT>").expect("write");
+        let zip_bytes = zip.finish().expect("finish").into_inner();
+
+        let tar = tar_with(&[("day/bundle.zip", zip_bytes.as_slice())]);
+        let path = scratch_tar("good-zip", &tar);
+
+        let mut seen = Vec::new();
+        let result = walk(&path, |m| seen.push(m.path.clone()));
+        std::fs::remove_file(&path).ok();
+
+        assert!(result.is_ok(), "{result:?}");
+        assert_eq!(seen, ["day/bundle.zip!EN.xml"], "one level unwrapped: {seen:?}");
+    }
 }
