@@ -1,6 +1,6 @@
 # 37 — Dashboard first snapshot after boot takes ~9 min under load
 
-Status: ready-for-agent
+Status: needs-verification
 Priority: UPGRADED to bug (2026-07-21 ~16:40, user-reported twice)
 
 Two escalations beyond the original polish framing:

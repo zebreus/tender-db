@@ -68,37 +68,80 @@ pub fn DashboardPage() -> Element {
             IngestionPanel {}
             match &data {
                 Ok(d) => rsx! {
-                    section { class: "panel",
-                        h2 { "Contents" }
-                        dl { class: "counts",
-                            for c in d.counts.clone() {
-                                dt { key: "{c.label}", "{c.label}" }
-                                dd { "{group(c.value)}" }
+                    // Each section renders on its own presence: `Some` shows the
+                    // panel, `None` shows "measuring since boot…" — never zeros,
+                    // which for e.g. quarantine actionable would be a false strong
+                    // claim during the first-fill transient (issue 37).
+                    match &d.counts {
+                        Some(counts) => rsx! {
+                            section { class: "panel",
+                                h2 { "Contents" }
+                                dl { class: "counts",
+                                    for c in counts.clone() {
+                                        dt { key: "{c.label}", "{c.label}" }
+                                        dd { "{group(c.value)}" }
+                                    }
+                                }
                             }
-                        }
+                        },
+                        None => rsx! { Measuring { title: "Contents" } },
                     }
 
-                    SystemPanel { rev: d.service_rev.clone(), cursor: d.cursor, lag: d.lag, snapshot_age: d.snapshot_age }
-
-                    QuarantinePanel {
-                        total: d.quarantine_total,
-                        actionable: d.quarantine_actionable,
-                        suspected: d.quarantine_suspected,
-                        reasons: d.quarantine_by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
-                        field_code_gaps: d.quarantine_field_code_gaps.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
-                        recent: d.quarantine_recent.clone(),
-                        resolved: d.resolved_categories.clone(),
+                    match &d.system {
+                        Some(s) => rsx! {
+                            SystemPanel { rev: s.service_rev.clone(), cursor: s.cursor, lag: s.lag, snapshot_age: s.snapshot_age }
+                        },
+                        None => rsx! { Measuring { title: "System" } },
                     }
 
-                    AwardLinkagePanel { rows: d.award_linkage.clone() }
+                    match &d.quarantine {
+                        Some(q) => rsx! {
+                            QuarantinePanel {
+                                total: q.total,
+                                actionable: q.actionable,
+                                suspected: q.suspected,
+                                reasons: q.by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
+                                field_code_gaps: q.field_code_gaps.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
+                                recent: q.recent.clone(),
+                                resolved: q.resolved_categories.clone(),
+                            }
+                        },
+                        None => rsx! { Measuring { title: "Quarantine" } },
+                    }
 
-                    PipelinePanel { rows: d.pipeline.clone() }
+                    match &d.award_linkage {
+                        Some(rows) => rsx! { AwardLinkagePanel { rows: rows.clone() } },
+                        None => rsx! { Measuring { title: "Award linkage" } },
+                    }
 
-                    CoveragePanel { rows: d.coverage.clone() }
+                    match &d.pipeline {
+                        Some(rows) => rsx! { PipelinePanel { rows: rows.clone() } },
+                        None => rsx! { Measuring { title: "Pipeline" } },
+                    }
+
+                    match &d.coverage {
+                        Some(rows) => rsx! { CoveragePanel { rows: rows.clone() } },
+                        None => rsx! { Measuring { title: "Coverage" } },
+                    }
                 },
                 Err(e) => rsx! { p { class: "error", "Could not measure: {e}" } },
             }
             Footer {}
+        }
+    }
+}
+
+/// A section the background refresher has not filled since boot (issue 37).
+/// Rendered instead of zeros: for several panels a literal 0 during the first
+/// fill is a false strong claim — quarantine `actionable = 0` reads as "the
+/// strictness guarantee holds perfectly", which the boot transient must never
+/// assert. Each section clears this the moment its first scan lands.
+#[component]
+fn Measuring(title: &'static str) -> Element {
+    rsx! {
+        section { class: "panel",
+            h2 { "{title}" }
+            p { class: "muted", "Measuring since boot… this panel fills once its first background scan completes." }
         }
     }
 }

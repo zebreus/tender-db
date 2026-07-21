@@ -121,6 +121,13 @@ const SCHEMA: &str = "
         reprocessed_at INTEGER,
         UNIQUE(fetch_id, member_path, content_hash)
     ) STRICT;
+    -- Every quarantine metric filters or groups by `reason` first — the reason
+    -- breakdown, the field-code gaps, and issue 40's resolution split (which then
+    -- narrows by profile + a `detail LIKE`). Without this index each is a full
+    -- scan of the ~1.2M-row table; with it they seek to the (usually small) rows
+    -- of one reason. Idempotent CREATE INDEX, built once on first open after
+    -- deploy like `notices_fetch_id` (issues 37/40).
+    CREATE INDEX IF NOT EXISTS quarantine_reason ON quarantine(reason);
 
     -- ------------------------------------------------------------------
     -- Notice-parsed layer. The relational reading of one notice's payload,
@@ -1506,6 +1513,48 @@ mod tests {
         assert!(
             !plan.to_uppercase().contains("TEMP B-TREE"),
             "ordering must come from the index, not a full sort — plan was:\n{plan}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 37: the resolution-ledger counts must seek the `quarantine_reason`
+    /// index — `WHERE reason = ?` narrows to one (usually small) bucket before the
+    /// `detail LIKE` filter runs, instead of scanning the whole ~1.2M-row table on
+    /// the background refresher. Asserting the plan proves the audit at any scale.
+    #[tokio::test]
+    async fn quarantine_resolution_seeks_the_reason_index() {
+        let path = format!("/tmp/tender-db-qres-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NULL     THEN 1 ELSE 0 END)
+                   FROM quarantine
+                  WHERE reason = ?
+                    AND (? IS NULL OR profile = ?)
+                    AND (? IS NULL OR detail LIKE ?)",
+                (
+                    "unclaimed-content".to_owned(),
+                    opt_text(Some("text")),
+                    opt_text(Some("text")),
+                    opt_text(Some("%scalar field RP")),
+                    opt_text(Some("%scalar field RP")),
+                ),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(
+            plan.contains("quarantine_reason"),
+            "resolution must seek the reason index, not scan the whole table — plan was:\n{plan}"
         );
 
         let _ = std::fs::remove_file(&path);

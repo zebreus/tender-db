@@ -147,17 +147,21 @@ async fn one_account_cannot_touch_another() {
 #[tokio::test(flavor = "multi_thread")]
 async fn the_dashboard_measures_an_empty_database_honestly() {
     let server = Server::start("dashboard").await;
-    let now = 1_800_000_000;
 
-    let dashboard = tender_db::coverage::measure(&server.db, now).await.expect("measure");
-    assert_eq!(dashboard.measured_at, now);
-    // Nothing ingested: no coverage rows, no quarantine, no lag to report.
-    assert!(dashboard.coverage.is_empty());
-    assert_eq!(dashboard.quarantine_total, 0);
-    assert_eq!(dashboard.lag.fetch_age, None);
-    assert_eq!(dashboard.lag.notice_age, None);
-    assert_eq!(dashboard.cursor, 0);
+    let dashboard = tender_db::coverage::measure(&server.db).await;
+    // Every section fills — an empty DB is measured honestly, not left at the
+    // pre-boot "measuring…" state (issue 37).
+    let system = dashboard.system.expect("system section");
+    assert!(system.measured_at > 0);
+    assert_eq!(system.cursor, 0);
+    // Nothing ingested: no lag to report.
+    assert_eq!(system.lag.fetch_age, None);
+    assert_eq!(system.lag.notice_age, None);
+    // No coverage rows, no quarantine held.
+    assert!(dashboard.coverage.expect("coverage section").is_empty());
+    assert_eq!(dashboard.quarantine.expect("quarantine section").total, 0);
     // The canonical counts panel is always populated, at zero.
-    assert!(!dashboard.counts.is_empty());
-    assert!(dashboard.counts.iter().all(|c| c.value == 0));
+    let counts = dashboard.counts.expect("counts section");
+    assert!(!counts.is_empty());
+    assert!(counts.iter().all(|c| c.value == 0));
 }

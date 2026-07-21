@@ -7,50 +7,73 @@
 
 use serde::{Deserialize, Serialize};
 
-/// One `/` page load's worth of numbers, fetched as a unit so the panels are
-/// always a consistent snapshot of one instant rather than four races.
+/// The dashboard, as independently-fillable sections (issue 37). Each section is
+/// `None` until the background refresher has measured it at least once, and every
+/// section fills on its own — a slow full-table scan (coverage, quarantine) can no
+/// longer hold the cheap sections hostage, and the boot transient can no longer
+/// render as literal zeros. `None` is "measuring since boot…", never "0".
+///
+/// The default (all `None`) is exactly the pre-first-fill state, so a fresh boot
+/// starts honest with no special-casing.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Dashboard {
-    /// When the server measured this, unix seconds.
-    pub measured_at: i64,
-    pub coverage: Vec<Coverage>,
+    /// Cheap status — cursor, revision, staleness. Lands within a second of boot.
+    pub system: Option<System>,
+    /// The `Contents` counts of the canonical layer.
+    pub counts: Option<Vec<Count>>,
     /// The import pipeline per source — fetched → processed → projected (issue 33).
-    pub pipeline: Vec<PipelineStage>,
+    pub pipeline: Option<Vec<PipelineStage>>,
+    pub coverage: Option<Vec<Coverage>>,
+    pub quarantine: Option<Quarantine>,
+    /// Award-chaining health per era: how many award Tenders are a lone notice
+    /// that never linked to its contract notice (docs/research/ted-legacy-mapping.md §3).
+    pub award_linkage: Option<Vec<AwardLinkage>>,
+}
+
+/// The cheap system-status section: the numbers that need no full-table scan, so
+/// they are the first to land after a restart.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct System {
+    /// When this section was measured, unix seconds.
+    pub measured_at: i64,
+    /// The change cursor — the spine everything live hangs off.
+    pub cursor: i64,
+    /// The git revision the running server was built from (`dev` for a plain
+    /// `cargo build`). Measured server-side so the page always shows the rev that
+    /// actually served it.
+    pub service_rev: String,
+    /// Age in seconds of the most recent successful DB snapshot (issue 23),
+    /// resolved server-side like the import lag; `None` when none has run.
+    pub snapshot_age: Option<i64>,
+    pub lag: Lag,
+}
+
+/// The quarantine section (ADR-0004, issues 30/40): the honest three-way split of
+/// the held count, the reason breakdown, a recent sample, and the resolution
+/// ledger. One section so the panel is always internally consistent.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Quarantine {
     /// Every held member — benign, suspected and actionable together, the raw
     /// ADR-0004 count. No longer the headline (issue 30): it is dominated by two
     /// suspected parser gaps, so on its own it overstates real coverage loss.
-    pub quarantine_total: i64,
+    pub total: i64,
     /// The honest headline: members identified as notices whose content we could
     /// not represent — confirmed real coverage loss. See [`quarantine_class`].
-    pub quarantine_actionable: i64,
+    pub actionable: i64,
     /// Large buckets that look like real notices lost to a single parser gap,
     /// pending investigate-then-fix — flagged distinctly, neither counted as
     /// confirmed loss nor dismissed as benign (issues 35/36).
-    pub quarantine_suspected: i64,
-    pub quarantine_by_reason: Vec<Count>,
+    pub suspected: i64,
+    pub by_reason: Vec<Count>,
     /// The field codes driving the `unknown-field-code` suspected bucket, biggest
     /// first — sampling shows it is ~entirely the one legacy `OC` code.
-    pub quarantine_field_code_gaps: Vec<Count>,
-    pub quarantine_recent: Vec<Quarantined>,
+    pub field_code_gaps: Vec<Count>,
+    pub recent: Vec<Quarantined>,
     /// Quarantine categories we have diagnosed and fixed — a persistent audit
     /// trail (issue 40). Curated narrative joined at measure time with live
     /// reclaimed/outstanding counts, so a category driven to zero still tells its
     /// story instead of silently vanishing from the panel.
     pub resolved_categories: Vec<ResolvedCategory>,
-    pub lag: Lag,
-    pub counts: Vec<Count>,
-    /// Award-chaining health per era: how many award Tenders are a lone notice
-    /// that never linked to its contract notice (docs/research/ted-legacy-mapping.md §3).
-    pub award_linkage: Vec<AwardLinkage>,
-    /// The change cursor — the spine everything live hangs off.
-    pub cursor: i64,
-    /// Age in seconds of the most recent successful DB snapshot (issue 23),
-    /// resolved server-side like the import lag; `None` when none has run.
-    pub snapshot_age: Option<i64>,
-    /// The git revision the running server was built from (`dev` for a plain
-    /// `cargo build`). Measured server-side so the page always shows the rev that
-    /// actually served it.
-    pub service_rev: String,
 }
 
 /// One era's award-chaining coverage. Legacy Tenders chain by transitive OJS
