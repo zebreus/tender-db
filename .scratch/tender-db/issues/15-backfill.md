@@ -135,3 +135,29 @@ to the pre-run 473/project). Re-enqueued the same five jobs (all HTTP 202); job
 1 fast-forwarded pkg 10→19/401 in ~12s (all dups, notices counter 0) then
 resumed real parsing past 1994-05. Monitor re-armed (tmux logger untouched
 throughout). /data steady 38%.
+
+### 2026-07-21 — CORRUPT-PACKAGE incident + walker-resilience fix, run-driver
+
+`process ted monthly (all)` (job#474) ERRORED after 996s on a truncated inner
+ZIP: `19960208_1996027.tar.gz/SV_19960208_1996027_ISO_ORG.zip: invalid Zip
+archive: Could not find EOCD`. Because the walker propagated the ZIP-open
+failure and `run_process` aborts the job on the first bad package, ALL TED from
+1996-02→2026 was left unprocessed (the 2004–2010 text era, ~70% of the dataset,
+is downstream of it). Diagnosed on the box: the inner zip is exactly 393216 B
+(384 KB block boundary), no End-Of-Central-Directory — TED's upstream 1996
+archive is baked-in corrupt (the outer .tar.gz decompresses cleanly and holds
+this truncated member), so re-fetch cannot help and a 33-year archive will have
+more such rot.
+
+Fix (rev fa873ec, ADR-0004 generalized): corruption is never fatal —
+- **member** (truncated/unreadable inner ZIP bundle or entry) → quarantine
+  bucket with reason (visible metric, reprocessable), never a policy-skip;
+- **package** (unreadable outer container/nested tar) → `corrupt-package`
+  quarantine + continue to the next package (`process_package_resilient`, used
+  by the supervisor and the process() loop) — the job never dies on one file;
+- **systemic** (db errors) stay fatal.
+Regression tests: the byte-exact SV_19960208 fixture is quarantined-not-fatal;
+a bad ZIP entry is corruption-tagged; a whole-source run continues past an
+unreadable package. Deployed via ./deploy.sh, then re-enqueued the five jobs.
+EXPECT a bump in quarantine (reason `unreadable zip bundle …` / profile
+`corrupt-package`) across old eras — recorded per plan, not fatal.
