@@ -1,6 +1,15 @@
 # 32 — Restarted process jobs resume at the last incomplete package
 
-Status: needs-verification
+Status: resolved
+
+Resolution (2026-07-21, team lead): production-demonstrated on the
+b978c96 deploy restart — job 1 recovered and resumed DIRECTLY at
+2012-03 (packages_total 401→171; ~230 completed packages skipped via
+the cursor), notices growing within a minute of boot, versus the
+~100-min re-walk the identical restart cost that morning. The cursor is
+written per completed package during the run (not at shutdown), so
+kill -9 equivalence holds structurally; recovery tests cover it.
+Restarts during long jobs are now operationally free.
 
 A restarted `process (all)` job re-walks every package from 1993 to find
 where it left off. Identity-dedup makes that correct but expensive: the
