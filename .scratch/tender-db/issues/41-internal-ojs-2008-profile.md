@@ -34,6 +34,31 @@ whole 2008 coverage gap.
   (profile `internal-ojs`). **This issue replaces that branch with real parsing.**
 - One byte-exact fixture: `crates/ingest/tests/fixtures/internal_ojs/114238_2008.en`.
 
+## Vocabulary scope (mined 2026-07-21, one package 20080502_2008085, 1693 EN notices)
+
+- **577 distinct elements**, 20 attributes
+  (`@CODE @VALUE @CTYPE @CURRENCY @LG @CATEGORY @FORM @VERSION @ITEM @KEY @QUOTE
+  @SEP @CHOICE @CLASS @NO_SEQ @PRICE @SERVICES_CATEGORY @CONTRACT_TYPE @HEADING
+  @TYPE`). ~55 heading families in this one package (21xx/22xx notices,
+  33xx/45xx awards, etc.). Full catalog saved to the session scratchpad
+  (`internal_ojs_vocab.txt`); a complete inventory should sweep several packages
+  across months for heading coverage, like the text sweep did.
+- **Two layers**, mirroring TED_EXPORT: an envelope
+  `INTERNAL_OJS/TECHNICAL_INFO + BIB_INFO/REF_OJS/BIB_DOC_S` carrying the coded
+  backbone (`NO_DOC_OJS`, single-char CODIF codes SECTOR/NAT_NOTICE/MARKET/PROC/
+  MARKET_ORG/TYPE_BID/AWARD_CRIT, `ORIGINAL_CPV`, `ORIGINAL_NUTS`, `DATE_DISP`/
+  `DATE_REC`, `ISO_COUNTRY`, `DEADLINE_REC`), and a per-heading **form body**.
+- **KEY DESIGN LEAD:** the form body vocabulary looks like a `_SUM`-suffixed
+  variant of the r208/r209 TED_EXPORT forms — same element names and attribute
+  conventions (`CONTRACT_SUM/FD_CONTRACT_SUM`, `CA_CE_CONCESSIONAIRE_PROFILE`,
+  `NAME_ADDRESSES_CONTACT_CONTRACT`, `CPV_MAIN/CPV_CODE @CODE`,
+  `VALUE_COST @CURRENCY`, `@LG/@CATEGORY/@FORM/@VERSION` on the form root). So the
+  r209 form walker (`crates/ingest/src/r209/`) may be largely reusable with a
+  different envelope + the `_SUM` element aliases — potentially turning a
+  from-scratch 577-element profile into "new envelope + a rules delta over r209".
+  **First design step: diff the INTERNAL_OJS form vocabulary against r209's
+  consumed set** — decide reuse-vs-new before writing the inventory.
+
 ## Plan (scope it like the `text` / `r208` profiles)
 
 1. **Inventory** the INTERNAL_OJS R2.0.5 vocabulary from real payloads — every
