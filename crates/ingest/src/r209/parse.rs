@@ -69,12 +69,15 @@ const FIELD_PREFIX_WRAPPERS: [&str; 7] = [
 /// `TED-<ELEMENT>.<ATTR>` code rows when not consumed by the rule itself:
 /// `@PUBLICATION` (content withheld from the OJ), `@TYPE`/`@FORMAT` (coded
 /// VALUES kinds), `@VALUE`/`@CTYPE` on markers, `@CHOICE`, REF_OJS's
-/// `@CLASS`/`@LAST`, the S01-era per-lot `OBJECT_CONTRACT/@ITEM`, and the
+/// `@CLASS`/`@LAST`, the S01-era per-lot `OBJECT_CONTRACT/@ITEM`, the
 /// R2.0.8-era qualifiers `@PROCEDURE` (annex-D variants), `@STATUS`/`@OBJECT`
-/// (ICAR corrigendum ops) and `@SERVICES_CATEGORY` (F04 works block).
-const CAPTURED_ATTRIBUTES: [&str; 13] = [
+/// (ICAR corrigendum ops) and `@SERVICES_CATEGORY` (F04 works block), and
+/// `@REASON` — the justification code on each annex-D negotiated-procedure
+/// choice (`PURCHASE_SUPPLIES_ADVANTAGEOUS_TERMS/@REASON="SUPPLIER_WINDING_UP_BUSINESS"`),
+/// recurring across 2011 CONTRACT_AWARD/VEAT/utilities awards (issue 31).
+const CAPTURED_ATTRIBUTES: [&str; 14] = [
     "PUBLICATION", "TYPE", "VALUE", "CTYPE", "CHOICE", "CLASS", "LAST", "FORMAT", "ITEM",
-    "PROCEDURE", "STATUS", "OBJECT", "SERVICES_CATEGORY",
+    "PROCEDURE", "STATUS", "OBJECT", "SERVICES_CATEGORY", "REASON",
 ];
 
 #[derive(Debug, PartialEq)]

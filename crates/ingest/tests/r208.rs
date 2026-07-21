@@ -68,7 +68,7 @@ fn every_r208_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 3, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 4, "corpus changed; update the expectation");
 
     for relative in names {
         let parsed = parse_fixture(&relative);
@@ -176,6 +176,23 @@ fn r207_delta_is_absorbed_empirically() {
     assert_eq!(
         *value(&cn, "PROCEDURE", "TED-RECEIPT_LIMIT_DATE"),
         NoticeValue::Date { utc_seconds: 1_296_777_600, offset_minutes: 0, has_time: false }
+    );
+}
+
+/// Issue 31: a 2011 F03 award whose ANNEX_D justifies a negotiated procedure
+/// without competition. The choice element carries the reason on `@REASON`
+/// (`PURCHASE_SUPPLIES_ADVANTAGEOUS_TERMS REASON="SUPPLIER_WINDING_UP_BUSINESS"`),
+/// which used to be an unclaimed attribute and quarantined the whole award; it
+/// is now claimed as the annex-D justification code.
+#[test]
+fn f03_annex_d_negotiated_reason_is_claimed() {
+    let award = parse_fixture("r208/f03-annexd-neg-022211-2011.xml");
+    assert!(
+        matches!(
+            value(&award, "PROCEDURE", "TED-PURCHASE_SUPPLIES_ADVANTAGEOUS_TERMS.REASON"),
+            NoticeValue::Code { code, .. } if code == "SUPPLIER_WINDING_UP_BUSINESS"
+        ),
+        "the negotiated-procedure justification reason must be claimed as a code",
     );
 }
 

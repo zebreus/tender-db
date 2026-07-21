@@ -86,7 +86,12 @@ const FIELDS: &[(&str, Rule)] = &[
     ("RC", PerLine(Type::Nuts)),
     ("RG", PerLine(Type::Line(None))),
     ("RN", PerLine(Type::Ref)),
-    ("RP", Scalar(Type::Code)),
+    // The authority/regulation code, one per line: code `2` (international
+    // financing) is published as the lead institution plus a continuation line
+    // per co-financier (`European Bank for Reconstruction and Development`, …),
+    // measured in 1993 ISO_ORG bundles. Single-code records (`4 - EEC`) are the
+    // one-line case of the same rule (issue 31).
+    ("RP", PerLine(Type::Code)),
     ("TD", Scalar(Type::Code)),
     ("TI", Prose(Some("EN"))),
     ("TW", Prose(None)),

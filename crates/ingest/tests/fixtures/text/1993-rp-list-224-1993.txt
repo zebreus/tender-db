@@ -1,0 +1,81 @@
+1.00/066412
+TI: EG-Cairo: highvoltage substation
+PD: 19930109
+ND: 224-1993
+OJ: 6/1993
+PG: 0009
+DR: 19930105
+DS: 19930105
+DT: 19930414 
+HD: 0808
+TD: 3 - Invitation to tender
+NC: 3 - Combined contract
+PR: 1 - Open procedure
+RP: 2 - European Investment Bank
+            European Bank for Reconstruction and Development
+            European Central Bank
+AA: 1 - Central government
+TY: 8 - Not specified
+AC: 8 - Not specified
+CC: 3410
+    3420
+    5011
+    5021
+    5035
+CT: INSULATED WIRES AND CABLES
+    ELECTRIC MOTORS, ELECTRICITY GENERATORS, TRANSFORMERS, SWITCHES, AND
+    OTHER BASIC ELECTRICAL EQUIPMENT
+    GENERAL BUILDING CONTACTORS
+    GENERAL CIVIL ENGINEERING WORK
+    ELECTRICAL FITTINGS
+CY: EG
+AU: BEI
+TX: Egyptian Electricity Authority, Abbassia, Nasr City, EG-Cairo. Telex 92097
+    POWER UN. Facsimile 261 65 15
+    Upper Egypt Transmission project, Maghagha Substation 220/66/33/11 kV 2 * 75
+    MVA
+    The Egyptian Electricity Authority (EEA) has obtained a loan from the
+    European Investment Bank (EIB) to co-finance Upper Egypt Transmission
+    project.
+    It is intended to apply part of the proceeds of this loan to eligible
+    payments under the contract for which this invitation to tender is issued.
+    EEA invites tenderers from eligible international firms for execution of
+    Maghagha 220/66/33/11 kV, 2 * 75 MVA substation.
+    The tender consists of 2 packages (A and B).
+    Package A:
+    Includes, but not limited to, the design, manufacture, supply, transport,
+    civil works, project management, erection, testing, setting to work and
+    commissioning in accordance with tender documents and on turnkey job basis,
+    of the 220, 66, 33 and 11 kV switchgear, protection, control, metering and
+    all other ancillary equipment including erection of the transformer supplied
+    under Package B.
+    Package B:
+    Comprises the supply CIF site and supervision of erection of the main
+    transformers (220/66/11 kV, 75 MVA) and (66/33/11 kV, 25 MVA).
+    Tendering for package A and B is open to tenderers from at least the member
+    countries of the European Economic Community (EEC) and Arab Republic of
+    Egypt (ARE).
+    General:
+    1. Tenderers are entitled to bid for either package A or B or both packages.
+    2. The tender documents are available at EEA cashier against presentation of
+    payment receipt of USD 1 000, from National Bank of Egypt (NBE) main branch
+    EEA's account No 1880/90/14 together with an application (original plus 2
+    copies) showing the name, address, telex and telephone number of both
+    supplier and local agent and addressed to General Director of Central
+    Purchases Department during official working hours.
+    3. Tenders to be submitted according to tender conditions in 2 envelopes.
+    _ Envelope No 1 contains the technical proposal and reference list together
+    with a letter from first class bank confirming submission of the bid bond (2
+    %) with envelope No 2;
+    _ envelope No 2 contains the price proposal and bid bond amounting to 2 % of
+    the total tender value in freely convertible currency.
+    4. Interested tenderers should submit envelope No 1 to EEA, Central
+    Purchases Department, by 14. 4. 1993(12.00) hours.
+    Tenders will be opened on the same date at 12.00.
+    5. Envelope No 2 will be submitted later. The date will be defined and
+    announced by EEA in due time.
+    6. Interested tenderers may obtain further information regarding tender
+    documents from Egyptian Electricity Authority, Central Purchases Department,
+     Abbassia, Nasr city, EG-Cairo.
+ 
+ 

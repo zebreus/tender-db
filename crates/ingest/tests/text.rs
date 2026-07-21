@@ -141,6 +141,28 @@ fn a_1993_record_maps_its_coded_header() {
     assert!(body.ends_with("Notice received on: 24. 12. 1992."));
 }
 
+/// Issue 31: `RP` code `2` (international financing) is published as the lead
+/// institution plus one continuation line per co-financier. That continuation
+/// under a then-scalar field quarantined the whole record; `RP` is now a
+/// per-line list, so the lead is the typed code and each co-financier is
+/// claimed (a code-less line degrades to raw text — never dropped, never fatal).
+#[test]
+fn rp_lists_every_co_financing_institution() {
+    let rec = parse_one(
+        "1993-rp-list-224-1993.txt",
+        "EN_19930109_1993006_ISO_ORG.zip!EN_19930109_1993006_ISO_ORG",
+    );
+    let rp = values(&rec, "TXT-RP");
+    assert_eq!(rp.len(), 3, "the lead institution plus its two co-financiers");
+    assert!(matches!(rp[0], NoticeValue::Code { code, .. } if code == "2"), "lead is the typed code");
+    assert!(
+        matches!(rp[2], NoticeValue::Text { value, .. } if value == "European Central Bank"),
+        "co-financiers are claimed as text",
+    );
+    // The record's other multi-line fields still parse (regression guard).
+    assert!(matches!(value(&rec, "TXT-ND"), NoticeValue::Id { value, .. } if value == "224-1993"));
+}
+
 /// The 2005 award record: the RN chain edge XML-era notices terminate on,
 /// and the multi-value continuation format of PC/PN.
 #[test]
