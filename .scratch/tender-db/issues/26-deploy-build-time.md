@@ -1,6 +1,16 @@
 # 26 — Deploy builds take 20+ min; wasm deps rebuilt every time
 
-Status: needs-verification
+Status: resolved
+
+## VPS verification (2026-07-21, team lead)
+
+Steady-state (pure server-code change, deploy #5 / rev 546189d,
+measured from deploy.sh timestamps): local pre-flight 69s; full deploy
+— push, VPS build, atomic switch, restart, health-green — 3m29s; total
+change-to-live ≈4.6 min. Dep-change case (deploy #4): ~10.5 min incl.
+the one-time bundleDeps rebuild, by design. Baseline before the fix:
+~20+ min every deploy. Acceptance (<8 min server-code deploy) met with
+margin.
 
 ## Resolution (measured, 2026-07-21) — diagnosis corrected
 
