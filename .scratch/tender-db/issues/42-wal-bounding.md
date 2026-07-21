@@ -1,7 +1,22 @@
 # 42 — Bound the WAL during bulk loads (13G+ and growing)
 
-Status: needs-verification
+Status: resolved
 Priority: high — disk-risk during the running backfill
+
+## Resolution (2026-07-21, team lead)
+
+Production-verified (rev 62f7255, run-driver). The per-package
+wal_checkpoint(TRUNCATE) holds the WAL at MEGABYTES across boundaries
+(2.9M at 2013-04→05; <1G mid-package) versus the pre-fix ~13G peak;
+disk steady 48-50% with steady forward progress (pkg 1→3 in ~15 min).
+/health/deep.wal_bytes exposes the live signal. Premise corrected
+(c8c659a): turso DOES autocheckpoint PASSIVE but never shrinks the -wal
+file and stalls behind a long reader snapshot (the coverage refresher's
+GROUP BY scan); TRUNCATE at package/projection boundaries forces reclaim
+AND returns the space. Remaining watch: the project (job 5) write burst
+— run-driver keeps the 30G alarm armed across it; if the refresher
+snapshot still spikes the WAL there, the interval lever is the source-
+side follow-up (noted in the issue body).
 
 Observed (run-driver, 2026-07-21 ~17:50): tender-db.db-wal at 13G and
 growing ~10G/47min during job 1's bulk parsing (47G main db, /data at
