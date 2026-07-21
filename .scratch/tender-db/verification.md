@@ -121,6 +121,12 @@ Each check names HOW it was/will be verified. Date-stamped on completion.
   award_linkage); ADRs 0007/0008 + amendments recorded (issue 39);
   ADR-0003 precedence signed off by owner. Optional final fresh-eyes
   re-pass after the backfill-era issues settle.
-- [ ] "Easy data inspection" — decide the bar: /v1/sql + docs + dashboard
-  exist; verify the SQL endpoint is genuinely pleasant (schema
-  discoverability, error messages) by using it for the spot-checks above.
+- [~] "Easy data inspection" — four-faces usability audit done
+  (2026-07-21). Faces WORK (REST filters, SQL, dashboard, /docs all
+  functional; end-to-end tender detail is rich) but real friction filed
+  as issues 48-51: mixed country coding + hanging documented filter (48,
+  confirmed), advertised per-id endpoints 404 + silent filter-ignore (49,
+  confirmed), SQL time-format/schema/missing-views (50), error-envelope
+  inconsistency + SQL cancel-on-disconnect (51). These are launch-
+  readiness polish, not blockers; the goal's "easy inspection" is met in
+  substance, sharpened by 48-51.
