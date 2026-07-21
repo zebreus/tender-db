@@ -120,15 +120,21 @@ async fn main() -> ExitCode {
     };
     let instance = Instance { http: reqwest::Client::new(), base_url: args.base_url.clone(), token };
 
-    // Run every query in order, keeping its label; one failing query means the
-    // report cannot be trusted, so fail loudly rather than render a partial one.
+    // Run every query in order, keeping its label. A single query that errors
+    // or times out (a heavy aggregate can exceed the endpoint's 10 s limit on
+    // the full archive) degrades only its own section — its result is left empty
+    // and the rest of the report still renders — rather than aborting the whole
+    // run. Any degraded section is reported on stderr and reflected in the exit
+    // code, so a partial report is never mistaken for a complete one.
     let mut results: Vec<(String, Rows)> = Vec::new();
+    let mut degraded = false;
     for (label, query) in data_quality::queries() {
         match instance.sql(&query).await {
             Ok(rows) => results.push((label, rows)),
             Err(e) => {
-                eprintln!("query `{label}` failed: {e}");
-                return ExitCode::FAILURE;
+                eprintln!("query `{label}` failed ({e}) — its section will be empty");
+                results.push((label, Vec::new()));
+                degraded = true;
             }
         }
     }
@@ -144,5 +150,5 @@ async fn main() -> ExitCode {
 
     let output = if args.json { data_quality::render_json(&report) } else { data_quality::render_text(&report) };
     println!("{output}");
-    ExitCode::SUCCESS
+    if degraded { ExitCode::FAILURE } else { ExitCode::SUCCESS }
 }

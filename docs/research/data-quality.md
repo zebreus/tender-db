@@ -37,27 +37,19 @@ would muddy that contract. Both are validated end-to-end
 (`crates/ingest/tests/data_quality.rs` drives the identical SQL against a scratch
 DB projected from real fixtures).
 
-## Status of this run — fixture validation, not the prod baseline
+## Status — validated on prod (mid-backfill); definitive baseline still pending
 
-**The definitive baseline has not been taken yet.** Two blockers, both expected:
+The tool has now run **against production** (token minted for the `owner-verify`
+account). But this is a **validation run, not the definitive baseline**: prod
+data is partial (1993→~2011 + a few 2026 days), the backfill is in flight, and
+the `project` job is still queued — so the canonical layer is **eForms-only**
+(the legacy notice layer is ingested but not yet projected). The full-archive
+baseline is taken after the issue-15 backfill + the results re-projection.
 
-- **No prod API token.** `/v1/sql` is account-gated. An `acceptance-verify`
-  account exists in prod, but its credentials are documented nowhere reachable
-  (repo, `docs/operations.md`, the VPS `/opt/tender-db/`, shell history), the
-  admin API mints only ingestion jobs (not account tokens), and minting a token
-  needs the account password (login → `create_token`), which must not be
-  guessed. The prior token (issue 15) was revoked. **Token gap reported to the
-  team lead; the definitive run is `data-quality --token …` once a token is
-  minted from the dashboard.**
-- **Backfill in flight.** Prod data is partial (1993→~2011 + a few 2026 days),
-  and the 33 GB DB is under active write (it refused even a read-only `sqlite3`
-  open during the backfill). Full-archive numbers are only meaningful after the
-  issue-15 backfill and the issue-22 results re-projection complete.
-
-So the numbers below come from the **real fixture corpus** projected into a
-scratch DB — they validate that the tool reads the schema correctly and computes
-sane rates, and they already surface one real, scale-independent anomaly. They
-are *not* the production baseline.
+Read the two snapshots below accordingly: the fixture run proves the tool reads
+the schema correctly across every era and surfaces the sdk-0.1 anomaly; the prod
+run proves it holds up against the live schema at real (partial) volume and that
+its queries stay inside the endpoint's 10 s limit.
 
 ## Fixture-validation snapshot
 
@@ -91,6 +83,56 @@ unit: tender-version (≈ one per notice); era = mapping profile of the version'
 
 (Merge shows 1 of 2 because one DÖE procedure has a TED twin — the merge case —
 and one is a DÖE-only island; both are correct.)
+
+## Prod validation run (mid-backfill, pre-reprojection — NOT the baseline)
+
+`data-quality` against `https://tenders.zebreus.click`, canonical layer eForms-only:
+
+```
+== 1. Field completeness (share of versions carrying each field) ==
+  era                               versions   title  buyer  value    cpv deadline winner
+  eforms-sdk-1.12                        896  100.0% 100.0%  72.4% 100.0%    52.2%  38.3%
+  eforms-sdk-1.13                      4,535  100.0% 100.0%  67.7% 100.0%    49.5%  39.4%
+  eforms-sdk-1.14                      1,986   99.9%  99.9%  65.0%  99.9%    47.1%  35.0%
+
+== 2. Award→notice linkage (award Tenders chained to a contract notice) ==
+  era                                awards  unchained   linked
+  eforms-sdk-1.12                       407        402     1.2%
+  eforms-sdk-1.13                     2,070      1,989     3.9%
+  eforms-sdk-1.14                       861        831     3.5%
+
+== 3. Results materialisation (award notices → lot_results) ==
+  era                            award-notices with lot_results  density
+  eforms-sdk-1.12                       422            422   100.0%
+  eforms-sdk-1.13                     2,244          2,244   100.0%
+  eforms-sdk-1.14                       906            906   100.0%
+
+== 4. TED↔DÖE merge (of DÖE procedures, share also seen on TED) ==
+  DÖE procedure Tenders: 0; merged with TED: 0 (—)
+```
+
+Reading it:
+
+- **Internally coherent, which is the real validation.** title/buyer/CPV ≈ 100 %;
+  `value` 65–72 %, `deadline` ≈ 50 %, `winner` 35–39 %. The deadline and winner
+  shares are near-complementary because ~35–40 % of these versions are award
+  notices (a winner, no submission deadline) and the rest are contract notices (a
+  deadline, no winner) — exactly the shape a correct projection produces. Nothing
+  here is a defect; it is the era doing what it should.
+- **Results materialise at 100 %** on the projected (eForms) layer — issue 22's
+  zero-results fear is firmly closed; the metric is the standing check for the
+  legacy re-projection.
+- **Award linkage 96–99 % unchained** is the *expected missing-referent artifact*
+  (see the watch-item below), not a defect: the referenced CNs are among the many
+  2026 dailies not yet ingested.
+- **Merge 0/0** — no DÖE ingested at this backfill position yet.
+
+Query performance (the tool must stay inside the endpoint's 10 s cap at archive
+scale): all queries drive from small indexed sets. The one exception is the
+results-density denominator (`EXISTS(notice_sections … LotResult)` over the
+projected versions), the heaviest query, which can brush the 10 s limit under
+concurrent backfill load; the tool degrades that one section on its own rather
+than aborting the report (and `with_results` confirms materialisation regardless).
 
 ## Anomalies called out
 

@@ -26,10 +26,14 @@
 //!   "per notice".
 //! - **Era = the mapping profile of the version's causing notice** — the same
 //!   split the dashboard and `award_linkage` already use, so the rows line up.
-//! - **Queries are satellite-driven** (`FROM <satellite> … JOIN tender_versions`)
-//!   rather than correlated per-tender `EXISTS`, so each is one sequential scan
-//!   that probes only primary keys — it stays bounded on the full archive even
-//!   where a satellite lacks a `(tender_id, seq)` secondary index.
+//! - **Every query is bounded to stay under the endpoint's 10 s limit at archive
+//!   scale.** Completeness is satellite-driven (`FROM <satellite> … JOIN
+//!   tender_versions`) — one sequential scan probing only primary keys, safe even
+//!   where a satellite lacks a `(tender_id, seq)` index. Linkage/density/merge
+//!   drive from their small sets (award Tenders, projected award notices, DÖE
+//!   Tenders) and filter with indexed `EXISTS`, never an inline
+//!   `(SELECT DISTINCT …) AS x JOIN` — turso re-evaluates such a derived table
+//!   per outer row, timing the endpoint out even at a few thousand rows.
 //!
 //! The module is transport-agnostic: it defines *what* to measure (the SQL) and
 //! *how* to present it (assembly + rendering) over a plain [`Rows`] matrix. The
@@ -92,59 +96,81 @@ pub const DENOMINATOR_SQL: &str = "SELECT n.profile, COUNT(*) AS versions \
 
 /// Award→notice linkage per era (docs/research/ted-legacy-mapping.md §3): of the
 /// Tenders that carry an award, how many are a single-notice island — an award
-/// that never chained to its contract notice. Mirrors `Db::award_linkage`, so
-/// the report and the dashboard agree.
+/// that never chained to its contract notice. Mirrors `Db::award_linkage`.
+///
+/// Driven from the first version of each Tender (`seq = 1` — one row per Tender,
+/// a small set) and filtered to award-bearing Tenders with an indexed `EXISTS`
+/// on `lot_results`; "unchained" is an indexed `seq > 1` existence check.
+/// Critically it does *not* wrap `lot_results` in an inline
+/// `(SELECT DISTINCT …) AS a JOIN` — turso re-evaluates such a derived table per
+/// outer row, which times the endpoint out even at a few thousand rows (verified
+/// against prod). Bounded by the Tender count, every lookup a primary-key probe.
 pub const LINKAGE_SQL: &str = "SELECT n.profile, \
-            COUNT(DISTINCT t.id) AS awards, \
-            COUNT(DISTINCT CASE WHEN vc.versions = 1 THEN t.id END) AS unchained \
-       FROM tenders t \
-       JOIN (SELECT DISTINCT tender_id FROM lot_results) ar ON ar.tender_id = t.id \
-       JOIN tender_versions v1 ON v1.tender_id = t.id AND v1.seq = 1 \
+            COUNT(*) AS awards, \
+            SUM(CASE WHEN NOT EXISTS( \
+                  SELECT 1 FROM tender_versions tv WHERE tv.tender_id = v1.tender_id AND tv.seq > 1 \
+                ) THEN 1 ELSE 0 END) AS unchained \
+       FROM tender_versions v1 \
        JOIN notices n ON n.id = v1.caused_by_notice_id \
-       JOIN (SELECT tender_id, COUNT(*) AS versions FROM tender_versions GROUP BY tender_id) vc \
-         ON vc.tender_id = t.id \
+      WHERE v1.seq = 1 \
+        AND EXISTS(SELECT 1 FROM lot_results lr WHERE lr.tender_id = v1.tender_id) \
       GROUP BY n.profile";
 
-/// Results materialisation per era: of the notices whose raw parsed layer holds
-/// a `LotResult` section (a contract-award notice, era-agnostic — legacy award
-/// blocks synthesise the same section kind, `r209/rules.rs`), how many actually
-/// produced a canonical `lot_results` row. A shortfall is the issue-15 gap
-/// ("CANs present, zero results") quantified.
-pub const DENSITY_SQL: &str = "SELECT n.profile, \
-            COUNT(DISTINCT n.id) AS can_notices, \
-            COUNT(DISTINCT lr.notice_id) AS with_results \
-       FROM notices n \
-       JOIN notice_sections s ON s.notice_id = n.id AND s.kind = 'LotResult' \
-       LEFT JOIN lot_results lr ON lr.notice_id = n.id \
-      WHERE n.parse_state = 'parsed' \
+/// Results materialisation per era, denominator: contract-award notices that
+/// have been **projected** (have a `tender_version`) and whose raw layer holds a
+/// `LotResult` section (era-agnostic — legacy award blocks synthesise the same
+/// section kind, `r209/rules.rs`). Scoping to *projected* notices is deliberate:
+/// a notice not yet projected (a mid-backfill state) is not a results-projection
+/// bug, and including the whole notice-layer backlog both muddies the metric and
+/// does not scale.
+///
+/// Kept as its own query (not a `lot_results` join) because `lot_results` has no
+/// index on `notice_id`: joining it by that column is a per-row table scan that
+/// times the endpoint out. The numerator is measured separately, driven *from*
+/// `lot_results`, and the two are combined by profile.
+pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
+       FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+      WHERE EXISTS(SELECT 1 FROM notice_sections s \
+                    WHERE s.notice_id = tv.caused_by_notice_id AND s.kind = 'LotResult') \
+      GROUP BY n.profile";
+
+/// Results materialisation per era, numerator: notices that actually produced a
+/// canonical `lot_results` row. Driven *from* `lot_results` (bounded by award
+/// volume) and joined to `notices` by primary key, so it stays fast at scale.
+pub const DENSITY_WITH_SQL: &str = "SELECT n.profile, COUNT(DISTINCT lr.notice_id) AS with_results \
+       FROM lot_results lr JOIN notices n ON n.id = lr.notice_id \
       GROUP BY n.profile";
 
 /// TED↔DÖE merge (ADR-0003), single row. A keyed Tender whose versions include
 /// notices from *both* sources is a merge: one procedure, two sources, one
 /// Tender. Measured as "of the Tenders DÖE contributes to, how many also carry a
 /// TED notice". DÖE only exists 2022-12→, so the overlap window is implicit.
-pub const MERGE_SQL: &str = "SELECT \
-            SUM(has_doe) AS doe_tenders, \
-            SUM(CASE WHEN has_doe = 1 AND has_ted = 1 THEN 1 ELSE 0 END) AS merged \
-       FROM (SELECT t.id, \
-                    MAX(CASE WHEN n.source = 'doe' THEN 1 ELSE 0 END) AS has_doe, \
-                    MAX(CASE WHEN n.source = 'ted' THEN 1 ELSE 0 END) AS has_ted \
-               FROM tenders t \
-               JOIN tender_versions v ON v.tender_id = t.id \
-               JOIN notices n ON n.id = v.caused_by_notice_id \
-              WHERE t.procedure_key IS NOT NULL \
-              GROUP BY t.id)";
+///
+/// Driven by the DÖE-touching Tenders alone (a merged Tender's own `source`
+/// flips to `ted`, so we must find them through `notices.source = 'doe'`, not
+/// `tenders.source`), each then tested for a TED notice with an indexed
+/// existence check — bounded by DÖE volume, not the whole canonical layer.
+pub const MERGE_SQL: &str = "SELECT COUNT(*) AS doe_tenders, \
+            SUM(CASE WHEN EXISTS( \
+                  SELECT 1 FROM tender_versions v2 JOIN notices n2 ON n2.id = v2.caused_by_notice_id \
+                   WHERE v2.tender_id = d.tender_id AND n2.source = 'ted' \
+                ) THEN 1 ELSE 0 END) AS merged \
+       FROM (SELECT DISTINCT v.tender_id \
+               FROM notices n JOIN tender_versions v ON v.caused_by_notice_id = n.id \
+              WHERE n.source = 'doe') d";
 
 /// Every query the report runs, as `(label, sql)` — the order the bin executes
 /// them and the order the JSON records them. The six field labels match
-/// [`FIELDS`]; `versions`, `linkage`, `density` and `merge` are the fixed rest.
+/// [`FIELDS`]; `versions`, `linkage`, `density_can`/`density_with` and `merge`
+/// are the fixed rest.
 pub fn queries() -> Vec<(String, String)> {
     let mut out = vec![("versions".to_owned(), DENOMINATOR_SQL.to_owned())];
     for spec in &FIELDS {
         out.push((spec.key.to_owned(), field_sql(spec)));
     }
     out.push(("linkage".to_owned(), LINKAGE_SQL.to_owned()));
-    out.push(("density".to_owned(), DENSITY_SQL.to_owned()));
+    out.push(("density_can".to_owned(), DENSITY_CAN_SQL.to_owned()));
+    out.push(("density_with".to_owned(), DENSITY_WITH_SQL.to_owned()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
     out
 }
@@ -163,6 +189,20 @@ pub fn era_of(profile: &str) -> &'static str {
         p if p.starts_with("eforms:eforms-de") => "eForms-DE",
         p if p.starts_with("eforms:") => "eForms EU",
         _ => "other",
+    }
+}
+
+/// The text table's row label — the coarse era, but distinguishing the profiles
+/// that share one (the several eForms SDK versions, DE dialects) by their own
+/// suffix, so three "eForms EU" rows do not render identically. The JSON keeps
+/// the coarse `era` and the raw `profile` separately.
+fn display_era(profile: &str) -> String {
+    match profile {
+        "text" => "text 1993–2010".to_owned(),
+        "ted-export-r208" => "TED_EXPORT r2.0.8".to_owned(),
+        "ted-export-r209" => "TED_EXPORT r2.0.9".to_owned(),
+        "eforms:eforms-sdk-0.1" => "DÖE sdk-0.1 island".to_owned(),
+        p => p.strip_prefix("eforms:").map_or_else(|| era_of(p).to_owned(), str::to_owned),
     }
 }
 
@@ -238,20 +278,22 @@ fn count_by_profile(rows: &Rows) -> std::collections::BTreeMap<String, u64> {
         .collect()
 }
 
-/// The eight named result sets the report needs, in [`queries`] order.
+/// The named result sets the report needs, in [`queries`] order.
 #[derive(Debug)]
 pub struct Raw {
     pub versions: Rows,
     pub fields: [Rows; 6],
     pub linkage: Rows,
-    pub density: Rows,
+    pub density_can: Rows,
+    pub density_with: Rows,
     pub merge: Rows,
 }
 
 impl Raw {
     /// Collect the ordered `(label, rows)` results the bin gathered into the
     /// named slots the assembler expects, so the transport never has to know the
-    /// query shapes.
+    /// query shapes. A label the bin could not run is expected to arrive with
+    /// empty rows (a degraded section), never missing.
     pub fn from_labelled(mut results: Vec<(String, Rows)>) -> Result<Raw, String> {
         let mut take = |label: &str| {
             let pos = results
@@ -271,7 +313,8 @@ impl Raw {
                 take("winner")?,
             ],
             linkage: take("linkage")?,
-            density: take("density")?,
+            density_can: take("density_can")?,
+            density_with: take("density_with")?,
             merge: take("merge")?,
         })
     }
@@ -304,16 +347,22 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         .collect();
     linkage.sort_by(|a, b| a.profile.cmp(&b.profile));
 
-    let mut density: Vec<DensityRow> = raw
-        .density
-        .iter()
-        .map(|r| DensityRow {
-            profile: as_str(r.first()),
-            can_notices: as_u64(r.get(1)),
-            with_results: as_u64(r.get(2)),
+    // Density is two separately-measured halves (denominator from the projected
+    // award notices, numerator from `lot_results`) combined by profile — every
+    // profile in either half becomes one row, a missing numerator being 0 (the
+    // gap the metric exists to show).
+    let can = count_by_profile(&raw.density_can);
+    let with = count_by_profile(&raw.density_with);
+    let mut profiles: std::collections::BTreeSet<String> = can.keys().cloned().collect();
+    profiles.extend(with.keys().cloned());
+    let density: Vec<DensityRow> = profiles
+        .into_iter()
+        .map(|profile| DensityRow {
+            can_notices: can.get(&profile).copied().unwrap_or(0),
+            with_results: with.get(&profile).copied().unwrap_or(0),
+            profile,
         })
         .collect();
-    density.sort_by(|a, b| a.profile.cmp(&b.profile));
 
     let merge = raw.merge.first().map_or(Merge::default(), |r| Merge {
         doe_tenders: as_u64(r.first()),
@@ -344,15 +393,15 @@ pub fn render_text(report: &Report) -> String {
     let _ = writeln!(out, "== 1. Field completeness (share of versions carrying each field) ==");
     let _ = writeln!(
         out,
-        "  {:<20} {:>11}  {:>6} {:>6} {:>6} {:>6} {:>8} {:>6}",
+        "  {:<30} {:>11}  {:>6} {:>6} {:>6} {:>6} {:>8} {:>6}",
         "era", "versions", "title", "buyer", "value", "cpv", "deadline", "winner"
     );
     for row in &report.completeness {
         let v = row.versions;
         let _ = writeln!(
             out,
-            "  {:<20} {:>11}  {:>6} {:>6} {:>6} {:>6} {:>8} {:>6}",
-            era_of(&row.profile),
+            "  {:<30} {:>11}  {:>6} {:>6} {:>6} {:>6} {:>8} {:>6}",
+            display_era(&row.profile),
             group(v),
             pct(row.present[0], v),
             pct(row.present[1], v),
@@ -364,23 +413,23 @@ pub fn render_text(report: &Report) -> String {
     }
 
     let _ = writeln!(out, "\n== 2. Award→notice linkage (award Tenders chained to a contract notice) ==");
-    let _ = writeln!(out, "  {:<20} {:>10} {:>10} {:>8}", "era", "awards", "unchained", "linked");
+    let _ = writeln!(out, "  {:<30} {:>10} {:>10} {:>8}", "era", "awards", "unchained", "linked");
     for row in &report.linkage {
         let linked = row.awards.saturating_sub(row.unchained);
         let _ = writeln!(
             out,
-            "  {:<20} {:>10} {:>10} {:>8}",
-            era_of(&row.profile), group(row.awards), group(row.unchained), pct(linked, row.awards)
+            "  {:<30} {:>10} {:>10} {:>8}",
+            display_era(&row.profile), group(row.awards), group(row.unchained), pct(linked, row.awards)
         );
     }
 
     let _ = writeln!(out, "\n== 3. Results materialisation (award notices → lot_results) ==");
-    let _ = writeln!(out, "  {:<20} {:>10} {:>14} {:>8}", "era", "award-notices", "with lot_results", "density");
+    let _ = writeln!(out, "  {:<30} {:>10} {:>14} {:>8}", "era", "award-notices", "with lot_results", "density");
     for row in &report.density {
         let _ = writeln!(
             out,
-            "  {:<20} {:>10} {:>14} {:>8}",
-            era_of(&row.profile), group(row.can_notices), group(row.with_results),
+            "  {:<30} {:>10} {:>14} {:>8}",
+            display_era(&row.profile), group(row.can_notices), group(row.with_results),
             pct(row.with_results, row.can_notices)
         );
     }
@@ -510,7 +559,7 @@ mod tests {
         let labels: Vec<&str> = q.iter().map(|(l, _)| l.as_str()).collect();
         assert_eq!(
             labels,
-            ["versions", "title", "buyer", "value", "cpv", "deadline", "winner", "linkage", "density", "merge"]
+            ["versions", "title", "buyer", "value", "cpv", "deadline", "winner", "linkage", "density_can", "density_with", "merge"]
         );
     }
 
@@ -555,7 +604,9 @@ mod tests {
             ("deadline".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(6)]]),
             ("winner".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]]),
             ("linkage".to_owned(), vec![vec![json!("ted-export-r209"), json!(2), json!(1)]]),
-            ("density".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2), json!(0)]]),
+            // Density: 2 projected award notices for the eForms era, 0 materialised.
+            ("density_can".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]]),
+            ("density_with".to_owned(), vec![]),
             ("merge".to_owned(), vec![vec![json!(3), json!(1)]]),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
@@ -580,7 +631,9 @@ mod tests {
         // Rendered text carries the headline rates.
         let text = render_text(&report);
         assert!(text.contains("Field completeness"));
-        assert!(text.contains("eForms EU"));
+        // The text label distinguishes the eForms SDK version (JSON keeps the
+        // coarse era separately).
+        assert!(text.contains("eforms-sdk-1.13"));
         assert!(text.contains("merged with TED: 1 (33.3%)"));
 
         // JSON round-trips to the documented shape.
