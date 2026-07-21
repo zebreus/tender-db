@@ -161,3 +161,19 @@ speed caps the size, so prod is the definitive perf check). Full store +
 
 Needs verification: `/` and /admin/jobs p99 < 1s under heavy ingestion,
 measured in prod, and no unbounded-CPU query reachable unauthenticated.
+
+## 2026-07-21 ~12:20 — coverage-query fix verified on bad8dda (run-driver)
+
+Combined deploy bad8dda landed 12:18:57 UTC (durable queue + coverage-query
+fix + /health/deep + snapshots). The pathological `/` query is gone:
+
+- **`curl /` under ingestion load: HTTP 200 in 0.002s** (94KB) — the exact
+  request that pinned a core for hours on da2ab87 now returns in 2ms. The
+  missing `notices(fetch_id)` index closed the nested-loop join. curl-`/` ban
+  lifted.
+- **`/health/deep`: HTTP 200 in 0.043s**, all four checks passing (database,
+  disk used_fraction 0.442, ingest_freshness, last_job ok).
+
+Reader-pool half (from da2ab87) already recorded above (/admin/jobs sub-5ms).
+Both halves now green under real ingestion load. Final acceptance / status flip
+left to the team lead.
