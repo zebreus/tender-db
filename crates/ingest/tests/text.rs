@@ -163,6 +163,38 @@ fn rp_lists_every_co_financing_institution() {
     assert!(matches!(value(&rec, "TXT-ND"), NoticeValue::Id { value, .. } if value == "224-1993"));
 }
 
+/// Issue 35: the 1995-98 vintages carry the main object classification as `OC`
+/// (one CPV code per line, like `PC`) paired with `ON`, the English description
+/// per code (like `CT` labels `CC`). Both were unmapped, so the whole record —
+/// a real EN notice — quarantined (~577k members, ~all the single code `OC`).
+/// Now `OC` is claimed as CPV classifications and `ON` as English text.
+#[test]
+fn oc_and_on_are_claimed_as_cpv_and_description() {
+    let rec = parse_one(
+        "1995-oc-cpv-4149-1995.txt",
+        "EN_19950201_1995021_ISO_ORG.zip!EN_19950201_1995021_ISO_ORG",
+    );
+
+    // OC is the primary CPV code, claimed as a cpv classification (not raw text).
+    let oc = value(&rec, "TXT-OC");
+    assert!(
+        matches!(oc, NoticeValue::Classification { scheme, code } if scheme == "cpv" && code == "71101000"),
+        "OC is a cpv classification, got {oc:?}",
+    );
+    // ON is the English object description, claimed as text.
+    let on = values(&rec, "TXT-ON");
+    assert!(
+        matches!(on[0], NoticeValue::Text { lang: Some(l), value } if l == "EN" && value.starts_with("Leasing or rental of private cars")),
+        "ON is EN text, got {:?}", on[0],
+    );
+    // The record's own identity and its separate PC/CC classifications still parse
+    // (regression guard: OC/ON sit alongside them, not in place of them).
+    assert!(matches!(value(&rec, "TXT-ND"), NoticeValue::Id { value, .. } if value == "4149-1995"));
+    assert_eq!(values(&rec, "TXT-PC").len(), 3, "the additional CPV list is unaffected");
+    assert!(matches!(value(&rec, "TXT-CC"),
+        NoticeValue::Classification { scheme, code } if scheme == "cc" && code == "8400"));
+}
+
 /// The 2005 award record: the RN chain edge XML-era notices terminate on,
 /// and the multi-value continuation format of PC/PN.
 #[test]
@@ -291,7 +323,7 @@ fn every_inventory_code_has_a_rule_and_vice_versa() {
         rules::decided_codes().filter(|c| !inventory.iter().any(|i| i == c)).collect();
     assert!(stray.is_empty(), "rules for codes the inventory does not declare: {stray:?}");
 
-    assert_eq!(inventory.len(), 34, "the sampled-vintage sweep found 34 codes");
+    assert_eq!(inventory.len(), 36, "the sampled-vintage sweep found 34 codes, + OC/ON (issue 35)");
 }
 
 fn inventory_codes() -> Vec<String> {

@@ -51,7 +51,10 @@ mod tests {
             assert!(!entry.fix.is_empty(), "a ledger entry cites its fix");
             assert!(!entry.resolved.is_empty(), "a ledger entry dates its resolution");
         }
-        // Both seeds were actionable real-notice loss, the class they resolved.
-        assert!(ledger.iter().all(|e| quarantine_class(&e.reason) == QuarantineClass::Actionable));
+        // The issue-31 seeds resolved actionable real-notice loss (later entries
+        // resolve other classes — e.g. issue 35's OC/ON is a suspected-gap bucket).
+        let seeds: Vec<_> = ledger.iter().filter(|e| e.fix.contains("5858159")).collect();
+        assert_eq!(seeds.len(), 2, "issue 31's two fixes are seeded");
+        assert!(seeds.iter().all(|e| quarantine_class(&e.reason) == QuarantineClass::Actionable));
     }
 }

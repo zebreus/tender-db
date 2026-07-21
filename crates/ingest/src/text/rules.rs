@@ -75,8 +75,16 @@ const FIELDS: &[(&str, Rule)] = &[
     ("MA", PerLine(Type::Code)),
     ("NC", Scalar(Type::Code)),
     ("ND", Scalar(Type::Id)),
+    // The main object classification and its English description (issue 35): the
+    // 1995-98 vintages publish the primary CPV as `OC` — one 8-digit code per
+    // line, like `PC` — paired with `ON`, the English label per code, exactly as
+    // `CT` labels the pre-CPV `CC`. `OC` (present 1995-98) and `ON` (1995, dropped
+    // by 1998) were in no rule, so the whole record quarantined: ~577k real EN
+    // notices, ~all the single code `OC`.
+    ("OC", PerLine(Type::Cpv)),
     ("OJ", Scalar(Type::Id)),
     ("OL", Scalar(Type::Code)),
+    ("ON", PerLine(Type::Line(Some("EN")))),
     ("OT", Prose(None)),
     ("PC", PerLine(Type::Cpv)),
     ("PD", Scalar(Type::Date)),

@@ -1,6 +1,6 @@
 # 35 — Text profile: the `OC`/`ON` fields are unmapped (~577k members, ~47k real loss)
 
-Status: ready-for-agent
+Status: needs-verification
 
 Split out of issue 30's quarantine triage (2026-07-21). The
 `unknown-field-code` bucket is 576,753 members and — sampled via `/v1/sql` on

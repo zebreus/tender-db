@@ -16,5 +16,14 @@
     "diagnosis": "The RP authority code was scalar, but international-financing records list each co-financier on a continuation line; RP is now per-line, so every institution is kept.",
     "fix": "issue 31 · 5858159",
     "resolved": "2026-07-21"
+  },
+  {
+    "category": "text OC/ON object CPV",
+    "reason": "unknown-field-code",
+    "profile": "text",
+    "detail_like": "%: OC",
+    "diagnosis": "The 1995-98 text vintages carry the main object CPV as OC (paired with the English description ON), which no rule claimed, quarantining the whole notice; OC is now claimed as CPV codes and ON as its description.",
+    "fix": "issue 35",
+    "resolved": "2026-07-21"
   }
 ]
