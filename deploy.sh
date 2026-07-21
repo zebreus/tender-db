@@ -81,7 +81,9 @@ say "Health check"
 # outside the rate limiter and stays responsive under load — ingestion runs
 # in-process (issue 16) with readers serving over WAL, so this must return 200
 # throughout a load, not just at idle.
-for i in $(seq 1 30); do
+# Patience: schema work at open (e.g. a first-boot index build over millions
+# of rows) can hold /health past a minute; that is startup, not failure.
+for i in $(seq 1 120); do
   code="$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$PUBLIC_URL/health" || true)"
   [ "$code" = "200" ] && break
   sleep 1
