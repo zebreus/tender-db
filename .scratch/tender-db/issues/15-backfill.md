@@ -114,3 +114,24 @@ Job 1 confirmed progressing: 1993-02→1993-07, notices 3.7k→30k, no column
 error. Monitor: VPS tmux `bf15-monitor` → `/opt/tender-db/backfill-status.log`,
 one line / 120s (job progress, notices/s, RSS, df /data, health).
 /data at 38% (189G/500G) at start.
+
+Progress before interruption: reached 1994-05 (pkg 18/401), ~115k notices,
+peaks ~390n/s through the mid-90s text era, RSS ~150MB, /data steady 38%.
+
+### 2026-07-20 — INTERRUPTED by a9b0883 view-fix deploy; re-enqueued, run-driver
+
+The team lead deployed a9b0883 (store: drop-and-recreate VIEWs at open — the
+public /v1/tenders + /v1/notices were 500ing on stale pre-issue-18 view
+definitions) mid-backfill, deliberately: a 500ing main endpoint outweighs the
+interruption. The service restart wiped the in-memory supervisor queue (job 1
+mid-run at ~pkg 18/401 + queued jobs 2–5). Re-walk of already-processed
+packages is idempotent (identity dedup) so the re-enqueued run fast-forwards
+past the already-ingested notices.
+
+Confirmed on the box: deployed-rev=a9b0883, service active, /v1/tenders 200
+with items (incl. dispatched_at), the supervisor queue empty and IDLE (original
+job 1 was killed mid-run before it could record to job_log — recent[0] reverted
+to the pre-run 473/project). Re-enqueued the same five jobs (all HTTP 202); job
+1 fast-forwarded pkg 10→19/401 in ~12s (all dups, notices counter 0) then
+resumed real parsing past 1994-05. Monitor re-armed (tmux logger untouched
+throughout). /data steady 38%.
