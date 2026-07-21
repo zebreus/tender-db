@@ -1,6 +1,22 @@
 # 20 — read-only queries queue behind the writer under heavy ingestion
 
-Status: needs-verification (second fix landed on main; awaiting prod perf check)
+Status: resolved
+
+## Resolution (2026-07-21, team lead)
+
+Acceptance demonstrated in prod (run-driver burst, rev b0a5cdb, during
+CPU-saturated real parsing — load 5.09, idle 0%, notices actively
+committing): 8× `/` in 1.8–29ms all-200, /admin/jobs 0.7–10.7ms, zero
+threads pinned afterwards, refresher measured_at advancing across passes
+(live, not one-shot). The journey: 23s /admin/jobs stall → writer-mutex
+fix (reader pool, da2ab87) → uncovered the O(notices×fetches) coverage
+scan (hours/request, one core pinned each — an unauthenticated DoS) →
+single-pass rewrite + notices(fetch_id) index (bad8dda) → still 15-25s
+under write churn on the request path → background refresher, request
+path structurally scan-free (b0a5cdb). Three root causes, each found by
+refusing to accept a favourable measurement taken under the wrong load.
+Scale-hardening rider (issue 38's indexed-EXISTS award_linkage in the
+refresher) rides b978c96; run-driver re-confirms the burst there.
 
 ## 2026-07-21 ~11:00 — verification FAILED in prod; second root cause (team lead)
 
