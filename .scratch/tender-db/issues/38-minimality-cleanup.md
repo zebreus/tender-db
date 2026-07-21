@@ -1,6 +1,6 @@
 # 38 — Minimality cleanup from the architecture review
 
-Status: ready-for-agent
+Status: needs-verification (32c99ea)
 
 Fresh-eyes review (2026-07-21) found the boundaries clean but today's
 rapid supersessions left un-swept leftovers. All verified zero-caller by
