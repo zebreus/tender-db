@@ -9,8 +9,10 @@
 //! which is the correct answer, not a bug to hide.
 
 use model::dashboard::{
-    AwardLinkage, Count, Coverage, Dashboard, Lag, QuarantineClass, Quarantined, quarantine_class,
+    AwardLinkage, Count, Coverage, Dashboard, Lag, PipelineStage, QuarantineClass, Quarantined,
+    quarantine_class,
 };
+use std::collections::HashMap;
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 use store::Db;
@@ -108,7 +110,7 @@ pub fn init(db: Arc<Db>) {
 /// requests read [`latest`] instead.
 pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
     let truth = ground_truth();
-    let coverage = db
+    let coverage: Vec<Coverage> = db
         .notice_counts_by_profile_year()
         .await?
         .into_iter()
@@ -153,6 +155,34 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         .map(|(label, value)| Count { label, value })
         .collect();
 
+    // The import pipeline per source (issue 33): fetch registry + the notice
+    // counts already gathered + projected tenders, so the operator sees which
+    // stage the backfill is in without ssh. All cheap, all off the request path.
+    let mut processed: HashMap<String, i64> = HashMap::new();
+    for c in &coverage {
+        *processed.entry(c.source.clone()).or_default() += c.held;
+    }
+    let published_ted: i64 = truth.iter().map(|p| p.notices).sum();
+    let projected: HashMap<String, i64> = db.tenders_by_source().await?.into_iter().collect();
+    // "Fetch complete" = the latest fetched period is in the current year, i.e.
+    // downloading has caught up to the present (periods are YYYY-prefixed).
+    let current_year = (1970 + now / 31_557_600).to_string();
+    let pipeline: Vec<PipelineStage> = db
+        .fetch_registry_summary()
+        .await?
+        .into_iter()
+        .map(|(source, fetched_packages, from, to)| PipelineStage {
+            published: (source == GROUND_TRUTH_SOURCE).then_some(published_ted),
+            fetched_packages,
+            fetch_complete: to.starts_with(&current_year),
+            fetched_from: Some(from),
+            fetched_to: Some(to),
+            processed_notices: processed.get(&source).copied().unwrap_or(0),
+            projected_tenders: projected.get(&source).copied().unwrap_or(0),
+            source,
+        })
+        .collect();
+
     let lag = db.import_lag().await?;
     let counts: Vec<Count> = db
         .canonical_counts()
@@ -176,6 +206,7 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
     Ok(Dashboard {
         measured_at: now,
         coverage,
+        pipeline,
         quarantine_total: quarantine_by_reason.iter().map(|c| c.value).sum(),
         quarantine_actionable,
         quarantine_suspected,

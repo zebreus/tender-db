@@ -9,7 +9,9 @@ use crate::api;
 use dioxus::fullstack::Transportable;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
-use model::dashboard::{AwardLinkage, Coverage, Lag, QuarantineClass, Quarantined, quarantine_class};
+use model::dashboard::{
+    AwardLinkage, Coverage, Lag, PipelineStage, QuarantineClass, Quarantined, quarantine_class,
+};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
 use std::time::Duration;
@@ -87,6 +89,8 @@ pub fn DashboardPage() -> Element {
                     }
 
                     AwardLinkagePanel { rows: d.award_linkage.clone() }
+
+                    PipelinePanel { rows: d.pipeline.clone() }
 
                     CoveragePanel { rows: d.coverage.clone() }
                 },
@@ -200,6 +204,10 @@ fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
     // client never times the job itself.
     let elapsed = (measured_at - job.started_at).max(0);
     let rate = (elapsed > 0).then(|| job.notices as f64 / elapsed as f64);
+    // A backfill re-walk writes mostly dedups, not new notices: members climb
+    // while notices stay flat. Name it, so "0.0 notices/s" is never mistaken for
+    // a hang (issue 33) — the member bar above shows it is very much alive.
+    let rewalking = job.duplicates > job.notices;
     rsx! {
         div { class: "running",
             p { class: "job-title", "{job.kind} — {job.params}" }
@@ -218,10 +226,17 @@ fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
                 }
                 progress { max: "{job.members_total}", value: "{job.members_done}" }
             }
-            p { class: "muted",
-                "{group(job.notices as i64)} notices written · {duration(elapsed)} elapsed"
-                if let Some(r) = rate {
-                    " · {r:.1} notices/s"
+            if rewalking {
+                p { class: "muted",
+                    "Re-walking already-ingested packages — {group(job.duplicates as i64)} dup, "
+                    "{group(job.notices as i64)} new · {duration(elapsed)} elapsed"
+                }
+            } else {
+                p { class: "muted",
+                    "{group(job.notices as i64)} notices written · {duration(elapsed)} elapsed"
+                    if let Some(r) = rate {
+                        " · {r:.1} notices/s"
+                    }
                 }
             }
         }
@@ -274,6 +289,57 @@ fn AwardLinkagePanel(rows: Vec<AwardLinkage>) -> Element {
                                 td { class: "num", "{group(r.unchained)}" }
                                 td { class: "num", "{r.ratio * 100.0:.1} %" }
                             }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// The import pipeline per source (issue 33): fetched → processed → projected,
+/// so "is downloading done? are we just processing?" is answered at a glance,
+/// without ssh. The per-year detail stays in the Coverage panel below.
+#[component]
+fn PipelinePanel(rows: Vec<PipelineStage>) -> Element {
+    if rows.is_empty() {
+        return rsx! {};
+    }
+    rsx! {
+        section { class: "panel",
+            h2 { "Pipeline" }
+            p { class: "muted",
+                "Where each source is in the import — fetched packages, then notices "
+                "processed out of them, then Tenders projected."
+            }
+            table {
+                thead {
+                    tr {
+                        th { "Source" }
+                        th { class: "num", "Published" }
+                        th { "Fetched" }
+                        th { class: "num", "Processed" }
+                        th { class: "num", "Projected" }
+                    }
+                }
+                tbody {
+                    for s in rows {
+                        tr { key: "{s.source}",
+                            td { class: "path", "{s.source}" }
+                            td { class: "num",
+                                if let Some(p) = s.published { "{group(p)}" } else { "—" }
+                            }
+                            td {
+                                "{group(s.fetched_packages)} pkgs"
+                                if let (Some(from), Some(to)) = (s.fetched_from.clone(), s.fetched_to.clone()) {
+                                    span { class: "muted", " ({from} … {to})" }
+                                }
+                                if s.fetch_complete {
+                                    span { " · fetch complete ✓" }
+                                }
+                            }
+                            td { class: "num", "{group(s.processed_notices)}" }
+                            td { class: "num", "{group(s.projected_tenders)}" }
                         }
                     }
                 }

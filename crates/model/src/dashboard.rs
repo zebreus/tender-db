@@ -14,6 +14,8 @@ pub struct Dashboard {
     /// When the server measured this, unix seconds.
     pub measured_at: i64,
     pub coverage: Vec<Coverage>,
+    /// The import pipeline per source — fetched → processed → projected (issue 33).
+    pub pipeline: Vec<PipelineStage>,
     /// Every held member — benign, suspected and actionable together, the raw
     /// ADR-0004 count. No longer the headline (issue 30): it is dominated by two
     /// suspected parser gaps, so on its own it overstates real coverage loss.
@@ -67,6 +69,30 @@ pub struct AwardLinkage {
 pub struct Count {
     pub label: String,
     pub value: i64,
+}
+
+/// One source's position in the import pipeline (issue 33): the at-a-glance
+/// "which stage are we in" the per-year coverage grid can't show. Each stage is
+/// its own natural unit — fetch is packages, the rest are notices/tenders — so
+/// this is a status strip, not a same-unit funnel.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct PipelineStage {
+    pub source: String,
+    /// Notices the source is known to have published (ground truth) — `None`
+    /// where no ground truth exists (any source but TED).
+    pub published: Option<i64>,
+    /// Packages (periods) in the fetch registry, and the period range they span.
+    pub fetched_packages: i64,
+    pub fetched_from: Option<String>,
+    pub fetched_to: Option<String>,
+    /// Whether fetching has caught up to the present — the latest fetched period
+    /// is in the current year, so downloading is effectively done and what
+    /// remains is processing (resolved server-side against the measure clock).
+    pub fetch_complete: bool,
+    /// Notices processed out of those packages.
+    pub processed_notices: i64,
+    /// Tenders projected from those notices.
+    pub projected_tenders: i64,
 }
 
 /// How a quarantine reason relates to notice coverage (issue 30) — the dashboard

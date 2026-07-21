@@ -1,6 +1,6 @@
 # 33 — Dashboard: pipeline funnel + honest re-walk display
 
-Status: ready-for-agent
+Status: needs-verification
 
 User feedback (Lennart, 2026-07-21): during the backfill re-walk the
 dashboard showed "0.0 notices/s" for an hour — indistinguishable from a
@@ -24,3 +24,28 @@ Acceptance: during a re-walk the dashboard states what is happening in
 words; the funnel shows fetch complete vs processing position at a
 glance; no new DB load (reuse existing counters + registry queries via
 the reader pool / TTL cache).
+
+## Fix (2026-07-21)
+
+Part 2 (honest re-walk display): `JobProgress` gains a `duplicates` counter,
+surfaced from `run_process`'s progress callback (the processor already returns
+it per package). The dashboard's running-job line now, when `duplicates >
+notices` (a re-walk writes mostly dedups), reads "Re-walking already-ingested
+packages — N dup, M new" instead of a bare 0.0 notices/s; the member progress
+bar above shows it is very much alive. No new DB load — pure in-memory counters.
+
+Part 1 (pipeline funnel): a per-source "Pipeline" panel — published (ground
+truth, TED) → fetched (distinct package periods + range, with "fetch complete ✓"
+when the latest fetched period is in the current year) → processed (notices) →
+projected (Tenders). Data: `fetch_registry_summary` (per-source count + MIN/MAX
+period over the tiny fetch registry) and `tenders_by_source`, plus the notice
+counts and ground truth `measure` already gathers. All run in the background
+refresher (issue 20 part 3), so the request path stays scan-free — no new load.
+The per-year Coverage grid is unchanged, below the funnel.
+
+Tests: `store::pipeline_stage_queries_summarise_per_source` (distinct periods +
+range + per-source tenders); model classifier + coverage tests unchanged. Full
+app suite + wasm check + clippy green.
+
+Acceptance met: a re-walk states in words what it is doing; the funnel shows
+fetch-complete vs processing position at a glance; no new DB load.

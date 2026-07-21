@@ -832,6 +832,38 @@ impl Db {
         Ok(out)
     }
 
+    /// The fetch stage per source (issue 33): how many distinct package periods
+    /// are on disk and the range they span. Small — one row per source over the
+    /// tiny fetch registry.
+    pub async fn fetch_registry_summary(&self) -> turso::Result<Vec<(String, i64, String, String)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT source, COUNT(DISTINCT period), MIN(period), MAX(period)
+                   FROM fetches GROUP BY source ORDER BY source",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1), text(&row, 2), text(&row, 3)));
+        }
+        Ok(out)
+    }
+
+    /// Projected Tenders per source (issue 33) — the pipeline's last stage.
+    pub async fn tenders_by_source(&self) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT source, COUNT(*) FROM tenders GROUP BY source ORDER BY source", ())
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok(out)
+    }
+
     /// Notice counts per (mapping profile, publication year) — the dashboard's
     /// coverage grid. The year comes from the package the notice was found in
     /// (periods are `YYYY-NNNNN`, zero-padded and sortable by construction),
@@ -1453,6 +1485,44 @@ mod tests {
             vec![("OC".to_owned(), 2), ("XY".to_owned(), 1)],
             "OC sums across its two line numbers; unclaimed-content is excluded",
         );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 33: the pipeline's fetch and projection stages — distinct package
+    /// periods with their range per source, and projected Tenders per source.
+    #[tokio::test]
+    async fn pipeline_stage_queries_summarise_per_source() {
+        let path = format!("/tmp/tender-db-pipeline-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO fetches(source, kind, period, url, sha256, bytes, fetched_at, path) VALUES
+                   ('ted','monthly','1993-01','u','a',1,0,'p'),
+                   ('ted','monthly','1993-01','u','b',1,1,'p'),
+                   ('ted','monthly','2026-07','u','c',1,0,'p'),
+                   ('doe','daily','2026-07-18','u','d',1,0,'p');
+                 INSERT INTO tenders(source, kind, created_at) VALUES
+                   ('ted','procedure',0),('ted','procedure',0),('doe','procedure',0);",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        let fetch = db.fetch_registry_summary().await.unwrap();
+        assert_eq!(
+            fetch,
+            vec![
+                ("doe".to_owned(), 1, "2026-07-18".to_owned(), "2026-07-18".to_owned()),
+                // ted: two distinct periods (the 1993-01 re-fetch counts once), range 1993→2026.
+                ("ted".to_owned(), 2, "1993-01".to_owned(), "2026-07".to_owned()),
+            ],
+        );
+        assert_eq!(db.tenders_by_source().await.unwrap(), vec![("doe".to_owned(), 1), ("ted".to_owned(), 2)]);
 
         let _ = std::fs::remove_file(&path);
     }

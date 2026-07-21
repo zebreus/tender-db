@@ -409,6 +409,7 @@ impl Supervisor {
             members_done: 0,
             members_total: 0,
             notices: 0,
+            duplicates: 0,
         }));
 
         let result = self.run_spec(&job).await;
@@ -524,6 +525,7 @@ impl Supervisor {
                 p.members_total = 0;
             });
             let base_notices = total.notices;
+            let base_duplicates = total.duplicates;
             // Resilient: a corrupt package is quarantined and skipped, so one
             // bad archived file never aborts a multi-year job; only a systemic
             // (database) failure is fatal (ADR-0004).
@@ -539,6 +541,8 @@ impl Supervisor {
                             p.members_done = done;
                             p.members_total = members_total;
                             p.notices = base_notices + r.notices;
+                            // Surfaced so the dashboard can name a re-walk (issue 33).
+                            p.duplicates = base_duplicates + r.duplicates;
                         });
                     }
                 },

@@ -47,6 +47,10 @@ pub struct JobProgress {
     pub members_total: u64,
     /// Notices written so far across the whole job.
     pub notices: u64,
+    /// Members that were already ingested and deduped away (issue 33). During a
+    /// backfill re-walk this climbs while `notices` stays flat — the signal the
+    /// dashboard uses to say "re-walking" instead of a bare 0.0 notices/s.
+    pub duplicates: u64,
 }
 
 /// A job still in the queue — identity plus what it will do, so the operator can
