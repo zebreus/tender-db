@@ -95,8 +95,9 @@ Each check names HOW it was/will be verified. Date-stamped on completion.
 - [ ] Snapshot job: runs (queued #6), lands in /data/snapshots, verified
   offline (integrity + row count). Then: restore drill per runbook with
   measured duration.
-- [ ] Writer-poison trap (turso 0.7 dropped-write-future): confirm the
-  writer ROLLBACK guard exists in code (store) — code-read.
+- [x] Writer-poison trap (turso 0.7 dropped-write-future): unconditional
+  ROLLBACK on error paths confirmed in store (accounts.rs:216,
+  lib.rs:583, canonical.rs ×3). Code-read 2026-07-21.
 - [x] Raw archive on filesystem, DB stores references not blobs —
   confirmed by design + 200GB archive / DB separation on /data. 2026-07-21.
 - [x] Deploy pipeline: flake build on VPS, atomic switch, rev stamping,
