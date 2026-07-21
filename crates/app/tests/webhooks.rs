@@ -155,10 +155,6 @@ impl Fixture {
     }
 }
 
-fn now() -> i64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64
-}
-
 /// Independently verify a Standard-Webhooks signature header, the way a consumer
 /// would — not via the code that produced it.
 fn signature_valid(secret: &str, hit: &Hit) -> bool {
@@ -184,7 +180,7 @@ async fn a_batch_is_delivered_signed_and_the_slot_advances() {
     let secret = webhooks::generate_secret();
     // Register directly (the SSRF guard would reject a loopback URL), starting
     // at 0 so the whole backlog is due.
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, now()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
 
     let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new());
     sweeper.sweep().await.expect("sweep");
@@ -219,7 +215,7 @@ async fn a_failure_holds_the_cursor_then_a_recovery_delivers_the_backlog() {
     let (recv, url) = Receiver::start().await;
     recv.set_status(500);
     let secret = webhooks::generate_secret();
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, now()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
 
     let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new());
     sweeper.sweep().await.unwrap();
@@ -230,7 +226,7 @@ async fn a_failure_holds_the_cursor_then_a_recovery_delivers_the_backlog() {
     assert_eq!(failed.last_delivered_cursor, 0, "a failure never advances the slot");
     assert_eq!(failed.consecutive_failures, 1);
     assert!(failed.failing_since.is_some());
-    assert!(failed.next_attempt_at > now(), "backed off into the future");
+    assert!(failed.next_attempt_at > store::now_unix(), "backed off into the future");
     let log = fx.db.recent_webhook_deliveries(ep.id, 10).await.unwrap();
     assert_eq!(log.len(), 1);
     assert!(!log[0].ok);
@@ -262,11 +258,11 @@ async fn sustained_failure_disables_the_endpoint() {
     let (recv, url) = Receiver::start().await;
     recv.set_status(503);
     let secret = webhooks::generate_secret();
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, now()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
 
     // Pre-age the failure streak to just over the auto-disable window, so the
     // next failed delivery crosses it — the real clock does the rest.
-    let four_days_ago = now() - 4 * 86_400;
+    let four_days_ago = store::now_unix() - 4 * 86_400;
     fx.db.webhook_failed(ep.id, four_days_ago, four_days_ago, false).await.unwrap();
     assert!(fx.db.webhook(fx.user_id, ep.id).await.unwrap().unwrap().disabled_at.is_none());
 
@@ -277,5 +273,5 @@ async fn sustained_failure_disables_the_endpoint() {
     // sweeper's list.
     let after = fx.db.webhook(fx.user_id, ep.id).await.unwrap().unwrap();
     assert!(after.disabled_at.is_some(), "a >3-day failure streak disables the endpoint");
-    assert!(fx.db.due_webhooks(now()).await.unwrap().is_empty());
+    assert!(fx.db.due_webhooks(store::now_unix()).await.unwrap().is_empty());
 }

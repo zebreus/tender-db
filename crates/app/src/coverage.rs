@@ -92,9 +92,7 @@ pub fn init(db: Arc<Db>) {
     }
     tokio::spawn(async move {
         loop {
-            let now = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map_or(0, |d| d.as_secs() as i64);
+            let now = store::now_unix();
             match measure(&db, now).await {
                 Ok(dash) => *cell().write().expect("coverage snapshot") = Some(dash),
                 Err(e) => eprintln!("coverage: refresh failed, keeping last snapshot: {e}"),

@@ -124,7 +124,7 @@ pub async fn fetch(
         url: target.url.clone(),
         sha256,
         bytes,
-        fetched_at: unix_now(),
+        fetched_at: store::now_unix(),
         path: rel_path,
     })
     .await?;
@@ -176,7 +176,7 @@ pub async fn latest_ted_issue(db: &store::Db, year: u16) -> turso::Result<Option
 
 /// Today as (year, month, day) UTC.
 pub fn current_date_utc() -> (u16, u8, u8) {
-    civil_date(unix_now())
+    civil_date(store::now_unix())
 }
 
 /// The (year, month, day) UTC of a unix instant — Howard Hinnant's days→civil
@@ -193,6 +193,20 @@ pub fn civil_date(unix_seconds: i64) -> (u16, u8, u8) {
     let d = doy - (153 * mp + 2) / 5 + 1;
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     ((y + i64::from(m <= 2)) as u16, m as u8, d as u8)
+}
+
+/// The inverse of [`civil_date`]: days since 1970-01-01 for a calendar date —
+/// Howard Hinnant's `days_from_civil` (proleptic Gregorian, no date dependency).
+/// The one civil-date helper the ingest parsers and the server's DST math share
+/// (issue 38, unifying two identical copies).
+pub fn days_from_civil(year: u16, month: u8, day: u8) -> i64 {
+    let y = i64::from(year) - i64::from(month <= 2);
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let m = i64::from(month);
+    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + i64::from(day) - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    era * 146_097 + doe - 719_468
 }
 
 /// Stream the URL to `<final_path>.part`, resuming a previous partial
@@ -265,20 +279,22 @@ fn versioned(rel_path: &str, version: usize) -> String {
     }
 }
 
-fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::versioned;
+    use super::{civil_date, days_from_civil, versioned};
 
     #[test]
     fn versioned_filenames() {
         assert_eq!(versioned("ted/daily/2026-00137.tar.gz", 2), "ted/daily/2026-00137-v2.tar.gz");
         assert_eq!(versioned("plain", 3), "plain-v3");
+    }
+
+    #[test]
+    fn days_from_civil_is_the_inverse_of_civil_date() {
+        assert_eq!(days_from_civil(1970, 1, 1), 0);
+        assert_eq!(days_from_civil(2000, 3, 1), 11017);
+        for &(y, m, d) in &[(1970u16, 1u8, 1u8), (2000, 2, 29), (2026, 7, 19), (1993, 1, 1)] {
+            assert_eq!(civil_date(days_from_civil(y, m, d) * 86_400), (y, m, d));
+        }
     }
 }

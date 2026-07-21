@@ -305,10 +305,7 @@ async fn the_deep_health_probe_reports_operational_health() {
 
     // A successful run refreshes the freshness clock; a later failure trips the
     // last-job check and flips the whole probe to 503 for the pinger.
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
+    let now = store::now_unix();
     server.db.record_job_run("process", "ted daily (all)", now - 20, now - 10, "ok", "42 notices").await.unwrap();
     let ok_run = server.get("/health/deep").await;
     assert_eq!(ok_run["checks"]["ingest_freshness"]["last_success_at"], Value::from(now - 10));

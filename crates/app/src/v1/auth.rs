@@ -12,7 +12,7 @@
 //!
 //! Issues 07 (SQL endpoint) and 08 (webhooks) are the intended callers.
 
-use crate::v1::{ApiError, AppState, now};
+use crate::v1::{ApiError, AppState};
 use axum::extract::FromRequestParts;
 use axum::http::{StatusCode, header, request::Parts};
 
@@ -50,7 +50,7 @@ impl FromRequestParts<AppState> for AuthUser {
         let Some(token) = bearer(parts) else {
             return Err(unauthorized("send an API token as `Authorization: Bearer tdb_…`"));
         };
-        match state.db.authenticate_token(token, now()).await? {
+        match state.db.authenticate_token(token, store::now_unix()).await? {
             Some(user) => Ok(AuthUser(user)),
             None => Err(unauthorized("that API token is unknown or revoked")),
         }
@@ -69,7 +69,7 @@ impl axum::extract::OptionalFromRequestParts<AppState> for AuthUser {
         state: &AppState,
     ) -> Result<Option<AuthUser>, ApiError> {
         let Some(token) = bearer(parts) else { return Ok(None) };
-        Ok(state.db.authenticate_token(token, now()).await?.map(AuthUser))
+        Ok(state.db.authenticate_token(token, store::now_unix()).await?.map(AuthUser))
     }
 }
 

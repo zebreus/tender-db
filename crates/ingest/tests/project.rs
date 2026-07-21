@@ -8,6 +8,14 @@
 use ingest::{eforms, profile, project};
 use store::{Db, Notice, NoticeValue, Parse, Parsed, Section, ValueRow};
 
+/// The change log via the production reader path (`read::changes_since`) — the
+/// tests exercise it now that `Db` no longer duplicates the query (issue 38).
+async fn changes(db: &Db, cursor: i64, limit: i64) -> Vec<store::Change> {
+    let readers = db.readers(1).expect("readers");
+    let reader = readers.get().await.expect("reader");
+    store::read::changes_since(&reader, cursor, limit, None).await.expect("changes")
+}
+
 const SOURCE: &str = "ted";
 
 /// A scratch database with a fetch row to hang notices off (notices carry a
@@ -219,10 +227,7 @@ async fn the_change_log_reads_added_then_changed() {
     }
     project::project(&db, false).await.expect("project");
 
-    let tender_ops: Vec<(i64, String)> = db
-        .changes_since(0, 100)
-        .await
-        .expect("changes")
+    let tender_ops: Vec<(i64, String)> = changes(&db, 0, 100).await
         .into_iter()
         .filter(|c| c.entity_kind == "tender")
         .map(|c| (c.version_seq.unwrap_or(0), c.op))
@@ -237,7 +242,7 @@ async fn the_change_log_reads_added_then_changed() {
         ]
     );
     // The cursor is monotonic and the log is in ingestion order.
-    let all = db.changes_since(0, 1000).await.expect("changes");
+    let all = changes(&db, 0, 1000).await;
     assert!(all.windows(2).all(|w| w[0].cursor < w[1].cursor));
     assert!(all.iter().any(|c| c.entity_kind == "lot" && c.op == "added"));
 
@@ -246,14 +251,14 @@ async fn the_change_log_reads_added_then_changed() {
     let again = project::project(&db, false).await.expect("re-project");
     assert_eq!(again.applied.versions_written, 0);
     assert_eq!(again.applied.changes, 0);
-    assert_eq!(db.changes_since(0, 1000).await.expect("changes").len(), before);
+    assert_eq!(changes(&db, 0, 1000).await.len(), before);
 
     // A rebuild reproduces the same canonical state and appends a fresh set of
     // change rows — the cursor is never renumbered.
     project::project(&db, true).await.expect("rebuild");
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 4);
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
-    let rebuilt = db.changes_since(0, 1000).await.expect("changes");
+    let rebuilt = changes(&db, 0, 1000).await;
     assert!(rebuilt.len() > before, "the rebuild appended rather than rewrote");
     assert_eq!(rebuilt[0].cursor, 1, "the first cursor is untouched");
 
@@ -695,10 +700,7 @@ async fn framework_rounds_accumulate_without_deleting_earlier_results() {
 
     // The change log reads as accumulation: two lot_result additions, never a
     // removal or a rewrite of round one.
-    let ops: Vec<(i64, String)> = db
-        .changes_since(0, 100)
-        .await
-        .expect("changes")
+    let ops: Vec<(i64, String)> = changes(&db, 0, 100).await
         .into_iter()
         .filter(|c| c.entity_kind == "lot_result")
         .map(|c| (c.version_seq.unwrap_or(0), c.op))
@@ -924,9 +926,7 @@ async fn a_late_edge_merges_two_legacy_tenders() {
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 3);
     // The absorbed identity emitted a `removed` tender change event.
     assert!(
-        db.changes_since(0, 1000)
-            .await
-            .expect("changes")
+        changes(&db, 0, 1000).await
             .iter()
             .any(|c| c.entity_kind == "tender" && c.op == "removed"),
         "the absorbed Tender was retired with a removed event"
@@ -967,9 +967,7 @@ async fn an_f14_corrigendum_moves_the_deadline_as_a_version_event() {
     assert_eq!(deadline(&db, 2).await, 728_600_000, "the corrigendum moved it");
     // The change log records the corrigendum as a `changed` version event.
     assert!(
-        db.changes_since(0, 100)
-            .await
-            .expect("changes")
+        changes(&db, 0, 100).await
             .iter()
             .any(|c| c.entity_kind == "tender" && c.op == "changed" && c.version_seq == Some(2))
     );
@@ -1207,10 +1205,7 @@ async fn a_correction_replaces_its_round_instead_of_duplicating_it() {
     );
     // The diff reads replacement: the original round removed, the corrected
     // one added.
-    let ops: Vec<(i64, String)> = db
-        .changes_since(0, 100)
-        .await
-        .expect("changes")
+    let ops: Vec<(i64, String)> = changes(&db, 0, 100).await
         .into_iter()
         .filter(|c| c.entity_kind == "lot_result")
         .map(|c| (c.version_seq.unwrap_or(0), c.op))

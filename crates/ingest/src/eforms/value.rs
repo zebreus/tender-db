@@ -148,7 +148,7 @@ pub fn timestamp(date: &str, time: Option<&str>) -> Result<Value, String> {
         offset = time_offset;
         has_time = true;
     }
-    let utc = days_from_civil(y, m, d) * 86_400 + seconds - offset * 60;
+    let utc = crate::fetch::days_from_civil(y as u16, m as u8, d as u8) * 86_400 + seconds - offset * 60;
     Ok(Value::Date { utc_seconds: utc, offset_minutes: offset, has_time })
 }
 
@@ -188,18 +188,6 @@ fn split_ints(text: &str, sep: char, what: &str) -> Result<Vec<i64>, String> {
     text.split(sep)
         .map(|p| p.parse::<i64>().map_err(|_| format!("not a {what}: {text}")))
         .collect()
-}
-
-/// Days since 1970-01-01, from Howard Hinnant's `days_from_civil`
-/// (<https://howardhinnant.github.io/date_algorithms.html>) — proleptic
-/// Gregorian, valid far beyond any procurement date, and no dependency.
-fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
-    let y = if m <= 2 { y - 1 } else { y };
-    let era = if y >= 0 { y } else { y - 399 } / 400;
-    let yoe = y - era * 400;
-    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + d - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    era * 146_097 + doe - 719_468
 }
 
 #[cfg(test)]
@@ -242,11 +230,5 @@ mod tests {
         assert!(matches!(timestamp("2019-11-26-03:00", None), Ok(Value::Date { offset_minutes: -180, .. })));
         // eForms requires the offset; a bare date is malformed.
         assert!(timestamp("2019-11-26", None).is_err());
-    }
-
-    #[test]
-    fn epoch_is_day_zero() {
-        assert_eq!(days_from_civil(1970, 1, 1), 0);
-        assert_eq!(days_from_civil(2000, 3, 1), 11017);
     }
 }

@@ -1089,6 +1089,16 @@ pub struct Fetch {
     pub path: String,
 }
 
+/// The current wall-clock instant in unix seconds — the one epoch helper the
+/// ingestion and server runtimes share (issue 38), replacing five identical
+/// `unix_now`/`now_unix` copies across `ingest` and `app`. `0` if the clock is
+/// somehow before the epoch (a value the callers only ever store or diff).
+pub fn now_unix() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64)
+}
+
 pub(crate) fn t(s: impl Into<String>) -> Value {
     Value::Text(s.into())
 }

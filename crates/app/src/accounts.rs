@@ -123,12 +123,6 @@ pub fn session_from_cookies(header: &str) -> Option<String> {
 
 // ---------------------------------------------------------------- lifecycle
 
-fn now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
-}
-
 fn account(user: store::User) -> Account {
     Account { id: user.id, username: user.username, created_at: user.created_at }
 }
@@ -165,7 +159,7 @@ pub async fn register(db: &Db, username: &str, password: &str) -> Result<(Accoun
         .await?
         .map_err(|e| AuthError::Db(format!("hashing failed: {e}")))?;
 
-    let Some(user) = db.create_user(username, &phc, now()).await? else {
+    let Some(user) = db.create_user(username, &phc, store::now_unix()).await? else {
         return Err(AuthError::Taken);
     };
     let session = start_session(db, user.id).await?;
@@ -206,7 +200,7 @@ fn dummy_hash() -> String {
 
 async fn start_session(db: &Db, user_id: i64) -> Result<String> {
     let session_id = generate_session_id();
-    db.create_session(&digest(&session_id), user_id, now()).await?;
+    db.create_session(&digest(&session_id), user_id, store::now_unix()).await?;
     Ok(session_id)
 }
 
@@ -219,7 +213,7 @@ pub async fn logout(db: &Db, session_id: &str) -> Result<()> {
 
 /// Who a session cookie belongs to, if it is still valid.
 pub async fn session_account(db: &Db, session_id: &str) -> Result<Option<Account>> {
-    Ok(db.session_user(&digest(session_id), now()).await?.map(account))
+    Ok(db.session_user(&digest(session_id), store::now_unix()).await?.map(account))
 }
 
 /// Mint a token. This is the only moment its plaintext exists outside the
@@ -230,7 +224,7 @@ pub async fn create_token(db: &Db, user_id: i64, name: &str) -> Result<NewToken>
         return Err(AuthError::Invalid("give the token a name (1–60 characters)".into()));
     }
     let secret = generate_token();
-    let record = db.create_token(user_id, &secret, name, now()).await?;
+    let record = db.create_token(user_id, &secret, name, store::now_unix()).await?;
     Ok(NewToken { token: secret, record: token(record) })
 }
 
@@ -239,7 +233,7 @@ pub async fn list_tokens(db: &Db, user_id: i64) -> Result<Vec<Token>> {
 }
 
 pub async fn revoke_token(db: &Db, user_id: i64, token_id: i64) -> Result<bool> {
-    Ok(db.revoke_token(user_id, token_id, now()).await?)
+    Ok(db.revoke_token(user_id, token_id, store::now_unix()).await?)
 }
 
 /// Delete the account, its tokens and its sessions. There is no undo and no

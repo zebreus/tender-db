@@ -61,7 +61,7 @@ pub const SESSION_LIFETIME: i64 = 30 * 24 * 60 * 60;
 
 /// The recognizable prefix every API token carries, GitHub-style: it makes
 /// leaked tokens findable by secret scanners and obvious in a support request.
-pub const TOKEN_PREFIX: &str = "tdb_";
+pub(crate) const TOKEN_PREFIX: &str = "tdb_";
 
 /// An account, as everything outside this module sees it. The password hash
 /// never leaves.
@@ -121,7 +121,7 @@ pub fn generate_session_id() -> String {
 }
 
 /// The head of a token, kept in the clear so the owner can identify it later.
-pub fn prefix_hint(token: &str) -> String {
+pub(crate) fn prefix_hint(token: &str) -> String {
     token.chars().take(TOKEN_PREFIX.len() + 6).collect()
 }
 

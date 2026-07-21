@@ -252,7 +252,7 @@ async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
     if rebuild {
         db.clear_canonical().await?;
     }
-    let now = unix_now();
+    let now = store::now_unix();
     let mut report = Report::default();
 
     // Phase 1 — read the notice-parsed layer in id-ordered chunks, each a
@@ -1565,13 +1565,6 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
         NoticeValue::Date { utc_seconds, .. } => Some(*utc_seconds),
         _ => None,
     })
-}
-
-fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0)
 }
 
 #[cfg(test)]

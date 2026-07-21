@@ -379,7 +379,7 @@ impl Supervisor {
         // `recent_job_runs` reads through the store's reader pool, not the writer
         // an ingestion job holds — so this never queues behind it (issue 20).
         let recent = self.db.recent_job_runs(RECENT_RUNS).await?;
-        Ok(Ingestion { current, queued, recent, measured_at: now_unix() })
+        Ok(Ingestion { current, queued, recent, measured_at: store::now_unix() })
     }
 
     // ------------------------------------------------------------------ worker
@@ -397,7 +397,7 @@ impl Supervisor {
     }
 
     async fn execute(&self, job: Job) {
-        let started_at = now_unix();
+        let started_at = store::now_unix();
         self.set_current(Some(JobProgress {
             id: job.id,
             kind: job.kind.to_owned(),
@@ -421,7 +421,7 @@ impl Supervisor {
         };
         if let Err(e) = self
             .db
-            .record_job_run(&job.kind, &job.params, started_at, now_unix(), outcome, &counts)
+            .record_job_run(&job.kind, &job.params, started_at, store::now_unix(), outcome, &counts)
             .await
         {
             // The log is best-effort telemetry; a failure to persist it must not
@@ -485,7 +485,7 @@ impl Supervisor {
                     report.applied.versions_written
                 ))
             }
-            Spec::Snapshot => snapshot::run(&self.db, &snapshot::Config::from_env(), now_unix()).await,
+            Spec::Snapshot => snapshot::run(&self.db, &snapshot::Config::from_env(), store::now_unix()).await,
         }
     }
 
@@ -585,7 +585,7 @@ impl Supervisor {
     pub fn spawn_scheduler(self: Arc<Self>) {
         tokio::spawn(async move {
             loop {
-                let now = now_unix();
+                let now = store::now_unix();
                 let (tick, weekday) = next_berlin_tick(now, 9, 35);
                 let wait = (tick - now).max(0) as u64;
                 tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
@@ -610,7 +610,7 @@ impl Supervisor {
             .await;
         }
         // DÖE is strictly T+1: yesterday's day is the freshest completed one.
-        let (y, m, d) = fetch::civil_date(now_unix() - 86_400);
+        let (y, m, d) = fetch::civil_date(store::now_unix() - 86_400);
         let period = format!("{y}-{m:02}-{d:02}");
         self.push(
             "fetch",
@@ -742,26 +742,9 @@ fn berlin_offset(unix: i64) -> i64 {
 /// 00:00 UTC of the last Sunday of `(year, month)`. March and October both have
 /// 31 days, which is all this is called for.
 fn last_sunday(year: u16, month: u8) -> i64 {
-    let z = days_from_civil(year, month, 31);
+    let z = fetch::days_from_civil(year, month, 31);
     let weekday = (z + 4).rem_euclid(7); // 0 = Sunday
     (z - weekday) * 86_400
-}
-
-/// Days since the unix epoch for a civil date — Hinnant's civil→days.
-fn days_from_civil(year: u16, month: u8, day: u8) -> i64 {
-    let y = i64::from(year) - i64::from(month <= 2);
-    let era = y.div_euclid(400);
-    let yoe = y - era * 400;
-    let m = i64::from(month);
-    let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + i64::from(day) - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    era * 146_097 + doe - 719_468
-}
-
-fn now_unix() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
 }
 
 #[cfg(test)]
@@ -792,26 +775,26 @@ mod tests {
     #[test]
     fn berlin_offset_follows_the_eu_dst_rule() {
         // 2026: last Sunday of March is the 29th; October is the 25th.
-        let mar29_0030 = days_from_civil(2026, 3, 29) * 86_400 + 30 * 60; // 00:30 UTC → still CET
-        let mar29_0130 = days_from_civil(2026, 3, 29) * 86_400 + 3_600 + 30 * 60; // 01:30 UTC → CEST
+        let mar29_0030 = fetch::days_from_civil(2026, 3, 29) * 86_400 + 30 * 60; // 00:30 UTC → still CET
+        let mar29_0130 = fetch::days_from_civil(2026, 3, 29) * 86_400 + 3_600 + 30 * 60; // 01:30 UTC → CEST
         assert_eq!(berlin_offset(mar29_0030), 3_600);
         assert_eq!(berlin_offset(mar29_0130), 7_200);
 
-        let oct25_0030 = days_from_civil(2026, 10, 25) * 86_400 + 30 * 60; // still CEST
-        let oct25_0130 = days_from_civil(2026, 10, 25) * 86_400 + 3_600 + 30 * 60; // back to CET
+        let oct25_0030 = fetch::days_from_civil(2026, 10, 25) * 86_400 + 30 * 60; // still CEST
+        let oct25_0130 = fetch::days_from_civil(2026, 10, 25) * 86_400 + 3_600 + 30 * 60; // back to CET
         assert_eq!(berlin_offset(oct25_0030), 7_200);
         assert_eq!(berlin_offset(oct25_0130), 3_600);
 
         // Deep winter and deep summer.
-        assert_eq!(berlin_offset(days_from_civil(2026, 1, 15) * 86_400), 3_600);
-        assert_eq!(berlin_offset(days_from_civil(2026, 7, 15) * 86_400), 7_200);
+        assert_eq!(berlin_offset(fetch::days_from_civil(2026, 1, 15) * 86_400), 3_600);
+        assert_eq!(berlin_offset(fetch::days_from_civil(2026, 7, 15) * 86_400), 7_200);
     }
 
     /// 09:35 Berlin on a known summer day is 07:35 UTC; the weekday flag is right.
     #[test]
     fn next_tick_lands_on_0935_berlin() {
         // 2026-07-15 is a Wednesday. 00:00 UTC that day.
-        let midnight = days_from_civil(2026, 7, 15) * 86_400;
+        let midnight = fetch::days_from_civil(2026, 7, 15) * 86_400;
         let (tick, weekday) = next_berlin_tick(midnight, 9, 35);
         // CEST (+2h): 09:35 local = 07:35 UTC.
         assert_eq!(tick, midnight + 7 * 3_600 + 35 * 60);
@@ -822,7 +805,7 @@ mod tests {
         assert_eq!(next, tick + 86_400);
 
         // 2026-07-18 is a Saturday.
-        let sat = days_from_civil(2026, 7, 18) * 86_400;
+        let sat = fetch::days_from_civil(2026, 7, 18) * 86_400;
         let (_, weekend) = next_berlin_tick(sat, 9, 35);
         assert!(!weekend, "Saturday is not a weekday");
     }
@@ -835,7 +818,7 @@ mod tests {
         let path = format!(
             "/tmp/tender-db-sup-{}-{}-{}.db",
             std::process::id(),
-            now_unix(),
+            store::now_unix(),
             N.fetch_add(1, Ordering::Relaxed)
         );
         let _ = std::fs::remove_file(&path);
@@ -1043,13 +1026,5 @@ mod tests {
         let queue = restarted.queue.lock().expect("queue lock");
         let fresh_job = queue.iter().find(|j| j.id == fresh[0]).expect("the fresh job");
         assert!(fresh_job.resume_after.is_none(), "a fresh enqueue never inherits a cursor");
-    }
-
-    #[test]
-    fn days_from_civil_round_trips_against_the_fetch_helper() {
-        for &(y, m, d) in &[(1970u16, 1u8, 1u8), (2000, 2, 29), (2026, 7, 19), (1993, 1, 1)] {
-            let unix = days_from_civil(y, m, d) * 86_400;
-            assert_eq!(fetch::civil_date(unix), (y, m, d));
-        }
     }
 }

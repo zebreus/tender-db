@@ -2564,7 +2564,6 @@ dependencies = [
  "axum",
  "encoding_rs",
  "flate2",
- "model",
  "reqwest",
  "roxmltree",
  "serde",

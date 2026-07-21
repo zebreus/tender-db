@@ -60,7 +60,7 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     // 3. Disk on the volume holding the database file.
     let disk = disk_usage();
 
-    let signals = Signals { now: now_unix(), cursor, last_success, last_job, disk };
+    let signals = Signals { now: store::now_unix(), cursor, last_success, last_job, disk };
     let (ok, checks) = assess(&signals);
 
     let body = json!({ "ok": ok, "rev": rev(), "checks": checks });
@@ -154,12 +154,6 @@ fn disk_usage() -> Option<Disk> {
     // slightly early, which is the right bias for a "grow the disk" cue.
     let used_fraction = if total > 0 { (total - available) as f64 / total as f64 } else { 0.0 };
     Some(Disk { used_fraction, free_bytes: available, total_bytes: total })
-}
-
-fn now_unix() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
 }
 
 #[cfg(test)]

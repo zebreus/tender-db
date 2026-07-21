@@ -60,12 +60,6 @@ fn backoff_seconds(consecutive_failures: i64) -> i64 {
     }
 }
 
-fn now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
-}
-
 /// `TENDER_WEBHOOK_ALLOW_INSECURE=1` relaxes the SSRF guard for local
 /// development — it permits `http` and loopback/private targets. Never set in
 /// production.
@@ -189,7 +183,7 @@ pub async fn register(db: &Db, user_id: i64, url: &str) -> Result<NewWebhook, St
     let secret = generate_secret();
     let head = db.latest_cursor().await.map_err(|e| e.to_string())?;
     let endpoint = db
-        .create_webhook(user_id, url, &secret, head, now())
+        .create_webhook(user_id, url, &secret, head, store::now_unix())
         .await
         .map_err(|e| e.to_string())?;
     Ok(NewWebhook { secret, webhook: view(&endpoint) })
@@ -229,7 +223,7 @@ pub async fn delete(db: &Db, user_id: i64, id: i64) -> Result<bool, String> {
 }
 
 pub async fn disable(db: &Db, user_id: i64, id: i64) -> Result<bool, String> {
-    db.disable_webhook(user_id, id, now()).await.map_err(|e| e.to_string())
+    db.disable_webhook(user_id, id, store::now_unix()).await.map_err(|e| e.to_string())
 }
 
 /// Re-enable an endpoint. `from_now` true resumes at the current log head
@@ -332,7 +326,7 @@ impl Sweeper {
 
     /// One pass over every due endpoint.
     pub async fn sweep(&self) -> Result<(), String> {
-        let due = self.db.due_webhooks(now()).await.map_err(|e| e.to_string())?;
+        let due = self.db.due_webhooks(store::now_unix()).await.map_err(|e| e.to_string())?;
         for endpoint in due {
             self.deliver(endpoint).await;
         }
@@ -386,7 +380,7 @@ impl Sweeper {
         .to_string();
 
         let msg_id = format!("evt_{}_{}_{}", endpoint.id, from, to);
-        let timestamp = now();
+        let timestamp = store::now_unix();
         let signature = sign(&endpoint.secret, &msg_id, timestamp, &body);
 
         let started = std::time::Instant::now();
@@ -418,7 +412,7 @@ impl Sweeper {
     /// Persist the outcome: advance and clear on success, or set the backoff and
     /// maybe disable on failure, and append the log row either way.
     async fn record(&self, endpoint: &Endpoint, from: i64, to: i64, events: i64, outcome: &Outcome) {
-        let now = now();
+        let now = store::now_unix();
         let (ok, status, error, duration_ms) = match outcome {
             Outcome::Ok => (true, None, None, 0),
             Outcome::Failed { status, error, duration_ms } => {

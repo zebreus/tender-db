@@ -255,12 +255,6 @@ impl Params {
     }
 }
 
-fn now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64)
-}
-
 // -------------------------------------------------------------- collections
 
 /// The four collections the API serves. Each one is a list endpoint, an SSE
@@ -334,7 +328,7 @@ async fn collection(
     headers: HeaderMap,
     params: Params,
 ) -> ApiResult {
-    let filter = params.filter(now())?;
+    let filter = params.filter(store::now_unix())?;
     if wants_events(&headers) {
         return sse::subscribe(collection, state, headers, params, filter).await;
     }

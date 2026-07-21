@@ -96,7 +96,11 @@ pub const DENOMINATOR_SQL: &str = "SELECT n.profile, COUNT(*) AS versions \
 
 /// Award→notice linkage per era (docs/research/ted-legacy-mapping.md §3): of the
 /// Tenders that carry an award, how many are a single-notice island — an award
-/// that never chained to its contract notice. Mirrors `Db::award_linkage`.
+/// that never chained to its contract notice. A deliberate mirror of
+/// `store::Db::award_linkage` (the dashboard's typed copy of this same query):
+/// two homes because this catalog holds raw `(label, sql)` strings while that is
+/// a typed reader method. Both use the identical indexed-`EXISTS` shape below —
+/// keep the two in sync.
 ///
 /// Driven from the first version of each Tender (`seq = 1` — one row per Tender,
 /// a small set) and filtered to award-bearing Tenders with an indexed `EXISTS`

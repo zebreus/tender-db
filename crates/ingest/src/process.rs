@@ -133,7 +133,7 @@ pub async fn process_package_resilient(
                 profile: Some("corrupt-package".into()),
                 reason: format!("unreadable package: {e}"),
                 detail: None,
-                first_seen: unix_now(),
+                first_seen: store::now_unix(),
             })
             .await?;
             Ok(Report { quarantined: 1, ..Default::default() })
@@ -226,7 +226,7 @@ pub async fn process_package(
     });
 
     let mut report = Report::default();
-    let now = unix_now();
+    let now = store::now_unix();
     let mut done = 0u64;
     let mut slot = Some(rx);
     loop {
@@ -306,11 +306,4 @@ pub async fn process_package(
     report.ingested = ingested;
     report.skipped = skipped;
     Ok(report)
-}
-
-fn unix_now() -> i64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0)
 }

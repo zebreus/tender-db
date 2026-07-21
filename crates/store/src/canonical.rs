@@ -570,7 +570,7 @@ pub struct Applied {
 }
 
 impl Applied {
-    pub fn add(&mut self, other: Applied) {
+    pub(crate) fn add(&mut self, other: Applied) {
         self.tenders_created += other.tenders_created;
         self.versions_written += other.versions_written;
         self.versions_removed += other.versions_removed;
@@ -590,68 +590,11 @@ pub struct NoticeRef {
 }
 
 impl Db {
-    /// Every notice whose profile parser consumed it — the projection's input.
-    pub async fn parsed_notices(&self) -> turso::Result<Vec<NoticeRef>> {
-        let conn = self.reader().await?;
-        let mut rows = conn
-            .query(
-                "SELECT id, source, publication_id, profile FROM notices
-                 WHERE parse_state = 'parsed' ORDER BY id",
-                (),
-            )
-            .await?;
-        let mut out = Vec::new();
-        while let Some(row) = rows.next().await? {
-            out.push(NoticeRef {
-                id: int(&row, 0),
-                source: text(&row, 1),
-                publication_id: text(&row, 2),
-                profile: text(&row, 3),
-            });
-        }
-        Ok(out)
-    }
-
-    /// Read one notice's parsed form back out of the notice layer — the exact
-    /// [`Parsed`] the profile produced.
-    pub async fn parsed_notice(&self, notice_id: i64) -> turso::Result<Parsed> {
-        let conn = self.reader().await?;
-        let id = Value::Integer(notice_id);
-        let mut parsed = Parsed::default();
-
-        let mut rows = conn
-            .query(
-                "SELECT section_id, kind, parent_section_id FROM notice_sections WHERE notice_id = ?",
-                (id.clone(),),
-            )
-            .await?;
-        while let Some(row) = rows.next().await? {
-            parsed.sections.push(Section {
-                id: text(&row, 0),
-                kind: text(&row, 1),
-                parent: opt_text_of(&row, 2),
-            });
-        }
-
-        for (sql, build) in value_queries() {
-            let mut rows = conn.query(sql, (id.clone(),)).await?;
-            while let Some(row) = rows.next().await? {
-                parsed.values.push(ValueRow {
-                    section_id: text(&row, 0),
-                    field_id: text(&row, 1),
-                    ordinal: int(&row, 2),
-                    value: build(&row),
-                });
-            }
-        }
-        Ok(parsed)
-    }
-
     /// The next chunk of parsed notices with `id > after_id` (up to `limit`),
     /// each with its full [`Parsed`] form, read in a fixed handful of scans over
-    /// the chunk's id window rather than the ~9 queries **per notice** that
-    /// [`parsed_notice`](Self::parsed_notice) costs — the projection's batched
-    /// input (issue 19). Empty when no more parsed notices follow `after_id`.
+    /// the chunk's id window rather than the ~9 queries **per notice** the
+    /// original per-notice read path cost — the projection's batched input
+    /// (issue 19). Empty when no more parsed notices follow `after_id`.
     ///
     /// Chunking (rather than one all-notices read) is what bounds memory: the
     /// projection keeps only the compact per-notice *states* for the whole
@@ -913,13 +856,6 @@ impl Db {
             append_change(conn, "organization", org_id, None, "added", now).await?;
         }
         Ok((org_id, created))
-    }
-
-    /// Reconcile one Tender's computed chain against what is stored, appending
-    /// change rows for whatever actually differs. Re-running an unchanged
-    /// projection writes nothing at all — that is the idempotency guarantee.
-    pub async fn apply_tender(&self, p: &TenderProjection, now: i64) -> turso::Result<Applied> {
-        self.apply_tenders(std::slice::from_ref(p), now).await
     }
 
     /// Reconcile many Tenders, batching [`WRITE_BATCH`] of them per write
@@ -1501,7 +1437,7 @@ impl Db {
     /// absorbed side of an ADR-0003-style merge. When a late edge joins two OJS
     /// components, every member re-projects under the component's surviving
     /// earliest-OJS key; the old key's identity is then orphaned. Its notices'
-    /// versions were re-added under the survivor by [`Self::apply_tender`], so
+    /// versions were re-added under the survivor by [`Self::apply_tenders`], so
     /// here we only emit the `removed` change events and delete the orphan's
     /// rows. Organization mentions are left untouched — they are immutable
     /// evidence and now feed the survivor's parties.
@@ -1594,19 +1530,30 @@ impl Db {
     /// notice — an award that never chained to its contract notice. The era is
     /// the profile of the Tender's first version's notice. Returns
     /// `(profile, award_tenders, unchained)` rows.
+    ///
+    /// A deliberate mirror of `ingest::data_quality::LINKAGE_SQL` — the same
+    /// metric, kept as two copies because this is the dashboard's typed query
+    /// while that is a raw string in the CLI report's `(label, sql)` catalog;
+    /// folding one into the other would couple that self-contained catalog to
+    /// store internals. Both use the indexed-`EXISTS` formulation for a reason:
+    /// wrapping `lot_results`/`tender_versions` in inline `(SELECT … ) JOIN`
+    /// derived tables makes turso re-evaluate them per outer row and times the
+    /// query out at a few thousand awards (verified against prod). Keep the two
+    /// in sync.
     pub async fn award_linkage(&self) -> turso::Result<Vec<(String, i64, i64)>> {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT n.profile,
-                        COUNT(DISTINCT t.id) AS awards,
-                        COUNT(DISTINCT CASE WHEN vc.versions = 1 THEN t.id END) AS unchained
-                   FROM tenders t
-                   JOIN (SELECT DISTINCT tender_id FROM lot_results) ar ON ar.tender_id = t.id
-                   JOIN tender_versions v1 ON v1.tender_id = t.id AND v1.seq = 1
+                        COUNT(*) AS awards,
+                        SUM(CASE WHEN NOT EXISTS(
+                              SELECT 1 FROM tender_versions tv
+                               WHERE tv.tender_id = v1.tender_id AND tv.seq > 1
+                            ) THEN 1 ELSE 0 END) AS unchained
+                   FROM tender_versions v1
                    JOIN notices n ON n.id = v1.caused_by_notice_id
-                   JOIN (SELECT tender_id, COUNT(*) AS versions FROM tender_versions GROUP BY tender_id) vc
-                     ON vc.tender_id = t.id
+                  WHERE v1.seq = 1
+                    AND EXISTS(SELECT 1 FROM lot_results lr WHERE lr.tender_id = v1.tender_id)
                   GROUP BY n.profile
                   ORDER BY n.profile",
                 (),
@@ -1658,32 +1605,6 @@ impl Db {
         })
     }
 
-    /// The change log from a cursor position — the poll/SSE/webhook feed.
-    pub async fn changes_since(&self, cursor: i64, limit: i64) -> turso::Result<Vec<Change>> {
-        let conn = self.reader().await?;
-        let mut rows = conn
-            .query(
-                "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes
-                  WHERE cursor > ? ORDER BY cursor LIMIT ?",
-                (Value::Integer(cursor), Value::Integer(limit)),
-            )
-            .await?;
-        let mut out = Vec::new();
-        while let Some(row) = rows.next().await? {
-            out.push(Change {
-                cursor: int(&row, 0),
-                entity_kind: text(&row, 1),
-                entity_id: int(&row, 2),
-                version_seq: match row.get_value(3) {
-                    Ok(Value::Integer(i)) => Some(i),
-                    _ => None,
-                },
-                op: text(&row, 4),
-                changed_at: int(&row, 5),
-            });
-        }
-        Ok(out)
-    }
 }
 
 /// One entry of the change log.
@@ -1757,59 +1678,7 @@ async fn last_insert_rowid(conn: &Connection) -> turso::Result<i64> {
 
 type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;
 
-/// The eight value tables, read back into their [`crate::NoticeValue`]
-/// variants. Column order is (section_id, field_id, ordinal, …payload).
-fn value_queries() -> Vec<(&'static str, ValueBuilder)> {
-    use crate::NoticeValue as V;
-    vec![
-        (
-            "SELECT section_id, field_id, ordinal, lang, value FROM notice_texts WHERE notice_id = ?",
-            (|r| V::Text { lang: opt_text_of(r, 3), value: text(r, 4) }) as ValueBuilder,
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, list_name, code FROM notice_codes WHERE notice_id = ?",
-            |r| V::Code { list: opt_text_of(r, 3), code: text(r, 4) },
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, scheme, code FROM notice_classifications WHERE notice_id = ?",
-            |r| V::Classification { scheme: text(r, 3), code: text(r, 4) },
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, cents, currency FROM notice_amounts WHERE notice_id = ?",
-            |r| V::Amount { cents: int(r, 3), currency: text(r, 4) },
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, utc_seconds, offset_minutes, has_time
-               FROM notice_dates WHERE notice_id = ?",
-            |r| V::Date {
-                utc_seconds: int(r, 3),
-                offset_minutes: int(r, 4),
-                has_time: int(r, 5) != 0,
-            },
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, value FROM notice_integers WHERE notice_id = ?",
-            |r| V::Integer(int(r, 3)),
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, value, unit FROM notice_numbers WHERE notice_id = ?",
-            |r| V::Number {
-                value: match r.get_value(3) {
-                    Ok(Value::Real(f)) => f,
-                    Ok(Value::Integer(i)) => i as f64,
-                    _ => 0.0,
-                },
-                unit: opt_text_of(r, 4),
-            },
-        ),
-        (
-            "SELECT section_id, field_id, ordinal, scheme, value, is_ref FROM notice_ids WHERE notice_id = ?",
-            |r| V::Id { scheme: opt_text_of(r, 3), value: text(r, 4), is_ref: int(r, 5) != 0 },
-        ),
-    ]
-}
-
-/// The batched form of [`value_queries`]: every value table read over a
+/// Every value table read back into its [`crate::NoticeValue`] variant, over a
 /// `notice_id` window (`>= ?1 AND <= ?2`), in `notice_id` order, with
 /// `notice_id` as column 0 and the payload shifted one column right. Used by
 /// [`Db::parsed_chunk`] so the projection reads the notice layer in a handful of
