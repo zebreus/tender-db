@@ -120,3 +120,56 @@ TENDER_API_TOKEN=tdb_… data-quality --json > dq.json # machine
 
 The full-archive report is the definitive baseline; harvest any new era-scale
 anomalies it surfaces into fresh issues at that point.
+
+## Live prod observations (mid-backfill, rev bad8dda)
+
+Taken from the **public, unauthenticated** `/api/dashboard` (a single 30 s-cached
+GET — no token, no touching the locked DB), while job 1's re-walk sat at ~pkg
+164/401 (2010→2011 boundary) and the `project` job was still queued. So the
+canonical layer is partial *and* pre-re-projection; read these as leads, not
+verdicts.
+
+- **Results DO materialise (issue 22 fear laid to rest).** `lot_results` =
+  12,600, `bids` = 23,987, `contracts` = 14,767 against 7,163 Tenders. The
+  section-3 density metric is the standing check once the full re-projection
+  lands.
+
+- **Award→notice linkage reads ~inverted, but expectedly so (watch-item, not yet
+  a bug).** eForms unchained rates: sdk-1.12 = 98.8 % (402/407), sdk-1.13 =
+  96.1 % (1989/2070), sdk-1.14 = 96.5 % (831/861) — vs research's ≈17 % predicted
+  for legacy R2.0.9. The dashboard lists *only* eForms award eras because the
+  canonical layer here is almost entirely the handful of ingested 2026 eForms
+  days (legacy awards aren't projected yet). An eForms CAN chains to its CN by
+  BT-04 UUID reference; with only a few 2026 dailies fetched, most referenced CNs
+  simply aren't ingested, so near-100 % unchained is the **missing-referent
+  artifact** we'd predict. **Decision rule:** re-measure after the backfill +
+  `project` re-run; if eForms unchained stays **> 90 %** at full data, it is a
+  reference-resolution defect in the projection → file it. Cannot be settled now.
+
+- **Quarantine headline (1,212,695) is mostly benign — the metric needs a
+  category split.** `unparsable-xml` (628,204) + `unknown-field-code` (576,753)
+  dominate, both text-era-shaped, yet ted·text coverage is **96.7 %**
+  (3,784,475 / 3,913,520 held). A million quarantined members coexisting with
+  near-complete notice coverage means the big buckets are overwhelmingly
+  **non-notice / duplicate-representation members** (per-language variants, ISO
+  renderings superseded by UTF8, `_meta_` siblings) that were never going to
+  become their own Tenders — not lost notices. The headline count therefore reads
+  far more alarming than the data warrants; it should be split
+  **benign-non-notice vs actionable-parser-gap** so it stays meaningful. Filed as
+  **issue 30**.
+  - **Classifying the two big buckets definitively needs the token** (the public
+    surface exposes only 50 recent samples, which currently all fall in the
+    small `unclaimed-content` bucket at the re-walk's position). The cheap win the
+    team lead flagged — a top-N of *which* field codes drive the 577 k
+    `unknown-field-code` — is one query once a token exists:
+    `SELECT detail, COUNT(*) FROM quarantine WHERE reason = 'unknown-field-code'
+    GROUP BY detail ORDER BY 2 DESC LIMIT 20`. If a few codes cover most of it,
+    that is a one-line mapping fix.
+  - **Two concrete actionable parser gaps are already visible** in the public
+    samples (both quarantine *real* notices, so they *do* cost completeness):
+    (i) legacy r2.0.8 award notices — `unclaimed attribute at
+    /TED_EXPORT/FORM_SECTION/CONTRACT_AWARD/FD_CONTRACT_AWARD/PROCEDURE` (also
+    `VOLUNTARY_EX_ANTE_TRANSPARENCY_NOTICE`, `CONTRACT_AWARD_UTILITIES`), recurring
+    across 2011 dailies; (ii) text-era — `continuation under scalar field RP` on
+    2010 `UTF8_ORG` bundles. Captured on issue 30 for triage against the
+    profile owners (issues 09/10/11).

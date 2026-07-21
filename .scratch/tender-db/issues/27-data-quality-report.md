@@ -67,3 +67,19 @@ doc, not yet filed — confirm at scale.)
 backfill + issue-22 results re-projection complete; that full-archive run
 is the definitive baseline. Update docs/research/data-quality.md with the
 real numbers and file any new era-scale anomalies.
+
+### 2026-07-21 — live prod leads folded in (via public /api/dashboard)
+
+Team-lead leads analysed against real prod data from the **public**
+`/api/dashboard` (single cached GET; no token, no touching the locked DB) —
+see docs/research/data-quality.md §"Live prod observations". Headlines:
+(1) `lot_results`=12,600 / `bids`=23,987 / `contracts`=14,767 → results
+materialise (issue 22 fear resolved on rev bad8dda); (2) eForms award
+linkage reads 96–99 % unchained, but the canonical layer is pre-project-
+rerun and near-only 2026 eForms days, so it's the expected missing-referent
+artifact — watch-item with rule "re-check post-backfill+project; >90 %
+unchained at full data ⇒ reference-resolution defect, file it"; (3)
+quarantine headline (1.21 M) is mostly benign — 96.7 % text coverage
+coexists with the two big text-era buckets → filed **issue 30** (split the
+metric benign-vs-actionable + field-code top-N, needs token; two concrete
+r2.0.8/text parser gaps captured there).
