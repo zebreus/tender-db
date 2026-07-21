@@ -55,6 +55,11 @@ fn main() {
         // change-cursor doorbell the SSE uses.
         tender_db::webhooks::init(db.clone());
 
+        // The dashboard's coverage refresher (issue 20 part 3): measures on an
+        // interval off the request path, so `/` is always served from a memoized
+        // snapshot and public traffic can never trigger a multi-million-row scan.
+        tender_db::coverage::init(db.clone());
+
         if tender_db::admin::enabled() {
             println!("admin: /admin API enabled (TENDER_ADMIN_SECRET is set)");
         } else {

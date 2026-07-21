@@ -18,14 +18,12 @@ pub async fn list_tenders() -> ServerFnResult<Vec<Tender>> {
     db.list_tenders(200).await.map_err(ServerFnError::new)
 }
 
-/// Everything the dashboard shows, measured in one pass.
+/// Everything the dashboard shows. Served from the background refresher's
+/// memoized snapshot — a request never scans the store (issue 20 part 3), so
+/// public traffic cannot pin a core no matter how cold the page cache is.
 #[get("/api/dashboard")]
 pub async fn dashboard() -> ServerFnResult<Dashboard> {
-    let db = store::state().await;
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0, |d| d.as_secs() as i64);
-    tender_db::coverage::measure(&db, now).await.map_err(ServerFnError::new)
+    Ok(tender_db::coverage::latest())
 }
 
 /// The ingestion Supervisor's live state — current job + queue + recent runs.

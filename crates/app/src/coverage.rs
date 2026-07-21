@@ -9,8 +9,8 @@
 //! which is the correct answer, not a bug to hide.
 
 use model::dashboard::{AwardLinkage, Count, Coverage, Dashboard, Lag, Quarantined};
-use std::sync::{Mutex, OnceLock};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, OnceLock, RwLock};
+use std::time::Duration;
 use store::Db;
 
 /// Notice counts per TED publication year — the coverage denominator. Vendored
@@ -47,37 +47,61 @@ fn ground_truth() -> Vec<Published> {
         .collect()
 }
 
-/// How long a measured dashboard is served before it is recomputed. `/` polls
-/// the coverage panel every few seconds; recomputing per poll rescans millions
-/// of rows (issue 20 reopened), so a burst of pollers is collapsed into one
-/// scan per window. A handful of seconds stale on a public dashboard is
-/// invisible — the numbers move on the scale of an ingestion job, not a poll.
-const COVERAGE_TTL: Duration = Duration::from_secs(30);
+/// How often the background refresher re-measures. Generous on purpose: the
+/// dashboard already shows live job progress from the supervisor (which never
+/// scans), so the coverage numbers moving on a minute boundary is invisible —
+/// and a background scan keeps the millions-of-rows read entirely off the
+/// request path (issue 20 part 3).
+const REFRESH: Duration = Duration::from_secs(60);
 
-/// The last measured dashboard and when it was taken — process-wide, because the
-/// coverage numbers are global, not per-viewer.
-static CACHE: OnceLock<Mutex<Option<(Instant, Dashboard)>>> = OnceLock::new();
+/// The last measured dashboard, recomputed by the background refresher and read
+/// by requests. This is the availability property a request-path TTL cache could
+/// not give: under sustained write churn its scan was always cold (page-cache
+/// thrash) so the TTL never protected, and concurrent cold misses each scanned
+/// and pinned a core. Off the request path, no public traffic can ever trigger a
+/// scan — the page is served from memory, stale-while-revalidate.
+static SNAPSHOT: OnceLock<RwLock<Option<Dashboard>>> = OnceLock::new();
 
-/// Everything the dashboard shows, served from a short-lived cache so polling
-/// cannot turn the public page into a repeated full-table scan.
-pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
-    let cache = CACHE.get_or_init(|| Mutex::new(None));
-    if let Some((at, dash)) = &*cache.lock().expect("coverage cache")
-        && at.elapsed() < COVERAGE_TTL
-    {
-        return Ok(dash.clone());
+fn cell() -> &'static RwLock<Option<Dashboard>> {
+    SNAPSHOT.get_or_init(|| RwLock::new(None))
+}
+
+/// Serve the newest memoized snapshot — a synchronous, store-free read, so a
+/// request can never recompute or block. Before the first refresh completes (a
+/// fresh boot) this is the empty default, which the page renders as "no data
+/// yet"; its `measured_at` tells the client how fresh it is.
+pub fn latest() -> Dashboard {
+    cell().read().expect("coverage snapshot").clone().unwrap_or_default()
+}
+
+/// Spawn the background refresher: measure on an interval, off the request path,
+/// keeping the last good snapshot when a measurement errors. Idempotent — a
+/// second call (dev hot-reload re-runs the server initializer) does not spawn a
+/// second loop. Runs one measurement immediately so the first fill is prompt.
+pub fn init(db: Arc<Db>) {
+    static STARTED: OnceLock<()> = OnceLock::new();
+    if STARTED.set(()).is_err() {
+        return;
     }
-    // Recompute outside the lock — a std mutex must not be held across an await,
-    // and a rare double-compute under a burst is far cheaper than serialising
-    // every dashboard request behind one lock.
-    let dashboard = compute(db, now).await?;
-    *cache.lock().expect("coverage cache") = Some((Instant::now(), dashboard.clone()));
-    Ok(dashboard)
+    tokio::spawn(async move {
+        loop {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |d| d.as_secs() as i64);
+            match measure(&db, now).await {
+                Ok(dash) => *cell().write().expect("coverage snapshot") = Some(dash),
+                Err(e) => eprintln!("coverage: refresh failed, keeping last snapshot: {e}"),
+            }
+            tokio::time::sleep(REFRESH).await;
+        }
+    });
 }
 
 /// Measure everything the dashboard shows, in one pass, so the panels are one
-/// consistent snapshot rather than four independently-timed ones.
-async fn compute(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
+/// consistent snapshot rather than four independently-timed ones. One store
+/// scan — the background refresher ([`init`]) runs it off the request path;
+/// requests read [`latest`] instead.
+pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
     let truth = ground_truth();
     let coverage = db
         .notice_counts_by_profile_year()
@@ -178,5 +202,18 @@ mod tests {
         assert_eq!(total, 13_312_103);
         // Only the current year is partial.
         assert_eq!(truth.iter().filter(|p| p.partial).count(), 1);
+    }
+
+    /// Issue 20 part 3: the request path (`latest`) is a synchronous, store-free
+    /// read of the memoized snapshot — it can never scan, no matter how slow a
+    /// measurement would be. `latest` takes no `Db` and is not `async`, so "a
+    /// request recomputes" is a compile error, not just a runtime assertion; here
+    /// we confirm it returns exactly what the refresher last stored.
+    #[test]
+    fn latest_serves_the_memoized_snapshot_without_measuring() {
+        let mut snapshot = Dashboard::default();
+        snapshot.cursor = 4242; // a marker the empty default never carries
+        *cell().write().unwrap() = Some(snapshot);
+        assert_eq!(latest().cursor, 4242, "the request path returns the memoized snapshot");
     }
 }

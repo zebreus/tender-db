@@ -208,3 +208,34 @@ per-write) or compute it off the request path. **No lasting harm from the probe:
 cores cleared in ~20s, job 1 kept progressing (pkg 220, notices 15.6k→29k).**
 Recommend issue 20 stays open. Stopped probing `/` (each hit costs ~20s of a core);
 monitoring remains /health + authed /admin/jobs only.
+
+## Third fix (2026-07-21) — coverage measured off the request path
+
+The run-driver re-measure above confirmed the two gaps in the bad8dda TTL
+cache: it computed on the REQUEST path, so every cold window paid the scan and
+concurrent misses weren't single-flighted; and under sustained write churn the
+page cache thrashes so the scan is ALWAYS cold — the TTL never protected.
+
+Fix: move coverage measurement off the request path entirely (issue 20 part 3).
+`coverage::init(db)` spawns a background refresher that recomputes on a 60s
+interval, keeping the last good snapshot on error. `coverage::latest()` — a
+synchronous, store-free read of that memoized snapshot — is what
+`/api/dashboard` serves; it takes no `Db` and is not `async`, so "a request
+recomputes" is a compile error, not a runtime hope. No request ever triggers a
+scan, so public traffic cannot pin a core at all — the availability property we
+actually want, stronger than any TTL. First boot serves the empty default ("no
+data yet") until the first refresh fills it; the dashboard's live job progress
+comes from the supervisor, which never scans.
+
+- coverage.rs: removed the request-path TTL cache; added the background
+  refresher (`init`) + memoized snapshot (`latest`); `measure` (the one-pass
+  scan) is now public and called only by the refresher (and the honest-empty
+  test). main.rs spawns `coverage::init` beside the other background tasks;
+  api.rs `/api/dashboard` returns `latest()`.
+- Test `latest_serves_the_memoized_snapshot_without_measuring`; the request
+  path being sync + Db-free is the compile-time guarantee that it never scans.
+  Full app suite (35 lib + accounts/admin/api/sql/webhooks) + wasm check + clippy
+  green.
+
+Needs verification: `/` p99 < 1s under sustained ingestion in prod (served from
+the snapshot; the 60s background scan stays off the request path).
