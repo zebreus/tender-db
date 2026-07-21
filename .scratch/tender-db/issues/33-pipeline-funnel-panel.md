@@ -49,3 +49,14 @@ app suite + wasm check + clippy green.
 
 Acceptance met: a re-walk states in words what it is doing; the funnel shows
 fetch-complete vs processing position at a glance; no new DB load.
+
+## 2026-07-21 15:12 — re-walk label verified in prod (run-driver)
+
+On b0a5cdb, during job 1's one-time re-walk, the dashboard `/` server-renders the
+honest label exactly as designed:
+
+> Re-walking already-ingested packages — 147 742 dup, 0 new · 1 min 29 s elapsed
+
+Confirmed server-side (present in the `/` HTML, not just client hydration). The
+dup/new split + elapsed timer read correctly against the running job (notices=0,
+climbing dup count). Label verified.
