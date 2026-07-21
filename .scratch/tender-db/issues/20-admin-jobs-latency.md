@@ -177,3 +177,34 @@ fix + /health/deep + snapshots). The pathological `/` query is gone:
 Reader-pool half (from da2ab87) already recorded above (/admin/jobs sub-5ms).
 Both halves now green under real ingestion load. Final acceptance / status flip
 left to the team lead.
+
+## 2026-07-21 ~13:55 — CORRECTION: `/` still stalls ~15-25s under ACTIVE write load (run-driver)
+
+**Supersedes the "2ms, ready to close" note above** — that reading (12:20) was
+taken during the dedup fast-forward when job 1 was writing NOTHING (notices=0),
+so it never exercised write contention. Re-tested once job 1 was into REAL
+parsing (notices climbing), i.e. the genuine heavy-write load the acceptance
+asks for. Result is not clean:
+
+Interleaved `curl /` with job state:
+- `/` requests fired **while notices were actively growing** (writer committing):
+  HANG — timed out at 12s / 30s (http=000). Two independent bursts, 4 hung reqs.
+- `/` requests fired **while notices were flat** (writer idle between commits):
+  2–13ms, HTTP 200.
+
+Per-thread CPU during the hangs: 3 blocking threads at ~100% simultaneously,
+box 0% idle — one core pinned per in-flight `/`. BUT bounded: a 60s watch showed
+threads>50%CPU going 1→0→1→1 and idle recovering to 44–73% — the pinned queries
+**self-clear in ~15-25s**, they do NOT spin forever. So this is a big improvement
+over da2ab87 (hours, permanent pin → the notices(fetch_id) index fixed that), but
+it is **not** "p99 < 1s under ingestion": during the backfill's sustained writes,
+each `/` hit takes ~15-25s and burns a core for that duration.
+
+Likely mechanism: the coverage aggregation still costs ~15-25s cold; when the
+writer is active the page cache is churned so every `/` runs cold, and results
+are only fast when the writer pauses (warm/cached). Needs a fix before resolve —
+candidates: memoize the coverage result with a short TTL (invalidate lazily, not
+per-write) or compute it off the request path. **No lasting harm from the probe:
+cores cleared in ~20s, job 1 kept progressing (pkg 220, notices 15.6k→29k).**
+Recommend issue 20 stays open. Stopped probing `/` (each hit costs ~20s of a core);
+monitoring remains /health + authed /admin/jobs only.
