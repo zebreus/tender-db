@@ -9,6 +9,9 @@
 set -euo pipefail
 
 VPS="${VPS:-root@zebreus.click}"
+# Keepalives: without them a dropped TCP connection leaves ssh hanging on a
+# dead socket forever and the deploy looks stuck (2026-07-21 incident).
+SSH="ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o ConnectTimeout=10"
 REF="${1:-main}"
 REMOTE_REPO=/opt/tender-db/repo.git
 SRC=/opt/tender-db/src
@@ -22,7 +25,7 @@ git push vps "$REF:main"
 REV="$(git rev-parse "$REF")"
 
 say "Building $REV on the VPS (this can take a while on a cold store)"
-ssh -o BatchMode=yes "$VPS" bash -euo pipefail -s <<EOF
+$SSH "$VPS" bash -euo pipefail -s <<EOF
 export PATH=/nix/var/nix/profiles/default/bin:\$PATH
 
 # One deploy at a time: two concurrent deploys can build different revs and
@@ -86,7 +89,7 @@ done
 
 if [ "${code:-}" != "200" ]; then
   echo "health check FAILED: $PUBLIC_URL/health returned ${code:-no response}" >&2
-  ssh -o BatchMode=yes "$VPS" 'journalctl -u tender-db -n 40 --no-pager' >&2 || true
+  $SSH "$VPS" 'journalctl -u tender-db -n 40 --no-pager' >&2 || true
   exit 1
 fi
 
@@ -97,7 +100,7 @@ case "$body" in
 esac
 
 echo "OK  $PUBLIC_URL/health -> 200, database ok"
-echo "OK  deployed rev: $(ssh -o BatchMode=yes "$VPS" 'cat /opt/tender-db/deployed-rev')"
+echo "OK  deployed rev: $($SSH "$VPS" 'cat /opt/tender-db/deployed-rev')"
 echo
 echo "Ingestion is in-process via the /admin API (operator secret in"
 echo "/root/tender-admin-secret on the VPS). See docs/operations.md → Ingestion."
