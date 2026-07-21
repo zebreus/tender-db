@@ -1,7 +1,17 @@
 # 22 — lot_results empty in production despite CANs
 
-Status: ready-for-agent
-Blocked by: 15 (job 5 `project` must finish first — it may be the fix)
+Status: resolved
+
+## Resolution (2026-07-21, team lead)
+
+The 2026-07-20 zero was projection-run state, not a code gap. Evidence:
+prod (rev bad8dda) holds 12,600 lot_results / 23,987 bids / 14,767
+contracts for 7,163 Tenders, and issue 27's data-quality measurement
+shows **results materialise at 100% on the projected layer** (award
+notices → lot_results density, measured live 2026-07-21). The original
+observation predated any projection run over those CANs. The era-ladder
+eForms-CAN check re-confirms as part of the standard post-backfill
+`verify` run (issue 15); no separate work remains.
 
 Verify-agent finding (2026-07-20, prod rev 7199300): 2,529 subtype-29
 eForms CANs present but zero `lot_results` rows — the era-ladder check
