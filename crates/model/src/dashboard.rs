@@ -14,8 +14,21 @@ pub struct Dashboard {
     /// When the server measured this, unix seconds.
     pub measured_at: i64,
     pub coverage: Vec<Coverage>,
+    /// Every held member — benign, suspected and actionable together, the raw
+    /// ADR-0004 count. No longer the headline (issue 30): it is dominated by two
+    /// suspected parser gaps, so on its own it overstates real coverage loss.
     pub quarantine_total: i64,
+    /// The honest headline: members identified as notices whose content we could
+    /// not represent — confirmed real coverage loss. See [`quarantine_class`].
+    pub quarantine_actionable: i64,
+    /// Large buckets that look like real notices lost to a single parser gap,
+    /// pending investigate-then-fix — flagged distinctly, neither counted as
+    /// confirmed loss nor dismissed as benign (issues 35/36).
+    pub quarantine_suspected: i64,
     pub quarantine_by_reason: Vec<Count>,
+    /// The field codes driving the `unknown-field-code` suspected bucket, biggest
+    /// first — sampling shows it is ~entirely the one legacy `OC` code.
+    pub quarantine_field_code_gaps: Vec<Count>,
     pub quarantine_recent: Vec<Quarantined>,
     pub lag: Lag,
     pub counts: Vec<Count>,
@@ -56,6 +69,43 @@ pub struct Count {
     pub value: i64,
 }
 
+/// How a quarantine reason relates to notice coverage (issue 30) — the dashboard
+/// splits the headline three ways instead of showing one scary total.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum QuarantineClass {
+    /// A member identified as a notice whose content could not be represented —
+    /// confirmed real coverage loss, held whole (ADR-0004).
+    Actionable,
+    /// A large bucket that looks like real notices lost to one parser gap,
+    /// pending investigate-then-fix — not counted as loss yet, not dismissed as
+    /// benign.
+    SuspectedGap,
+    /// The reason itself proves the member was never a distinct notice: a wrong
+    /// XML root, no publication id, a corrupt archive entry. Benign by design.
+    Benign,
+}
+
+/// Classify a quarantine `reason`. Evidence-based (issue 30): nothing is called
+/// benign without the reason itself proving non-notice. The two big buckets are
+/// `SuspectedGap`, not benign — sampling (2026-07-21) showed `unknown-field-code`
+/// (577k) is ~entirely the legacy `OC` field on real EN notices (the primary
+/// parsed language, not non-EN siblings), and `unparsable-xml` (628k) is
+/// ~entirely "XML with DTD detected"; both are real-notice-shaped, filed as
+/// issues 35 (text OC/ON) and 36 (DTD XML). The small uncertain reasons
+/// (`not-utf8`, `unknown-customization`) are flagged too rather than assumed
+/// benign.
+pub fn quarantine_class(reason: &str) -> QuarantineClass {
+    // A corrupt archive entry is never a notice, whatever its trailing detail.
+    if reason.starts_with("unreadable zip") {
+        return QuarantineClass::Benign;
+    }
+    match reason {
+        "unclaimed-content" | "unrepresentable-value" => QuarantineClass::Actionable,
+        "unknown-root" | "missing-publication-id" => QuarantineClass::Benign,
+        _ => QuarantineClass::SuspectedGap,
+    }
+}
+
 /// Notices held for one (source, profile, year) against what that year is known
 /// to have published.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -94,4 +144,27 @@ pub struct Quarantined {
     pub member_path: String,
     pub detail: Option<String>,
     pub first_seen: i64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{QuarantineClass, quarantine_class};
+
+    #[test]
+    fn quarantine_reasons_class_by_evidence() {
+        use QuarantineClass::{Actionable, Benign, SuspectedGap};
+        // Identified as a notice, content unrepresentable — confirmed loss.
+        assert_eq!(quarantine_class("unclaimed-content"), Actionable);
+        assert_eq!(quarantine_class("unrepresentable-value"), Actionable);
+        // Big real-notice-shaped buckets — flagged, not benign (issues 35/36).
+        assert_eq!(quarantine_class("unknown-field-code"), SuspectedGap);
+        assert_eq!(quarantine_class("unparsable-xml"), SuspectedGap);
+        // Small uncertain reasons are flagged too, never assumed benign.
+        assert_eq!(quarantine_class("not-utf8"), SuspectedGap);
+        assert_eq!(quarantine_class("unknown-customization"), SuspectedGap);
+        // Benign only where the reason itself proves non-notice.
+        assert_eq!(quarantine_class("unknown-root"), Benign);
+        assert_eq!(quarantine_class("missing-publication-id"), Benign);
+        assert_eq!(quarantine_class("unreadable zip bundle: invalid Zip archive"), Benign);
+    }
 }

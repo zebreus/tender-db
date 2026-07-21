@@ -811,6 +811,27 @@ impl Db {
         Ok(out)
     }
 
+    /// The field codes behind the `unknown-field-code` bucket, biggest first
+    /// (issue 30). Each detail is `line <n>: <code>`; grouping by the code (not
+    /// the whole detail, which carries the line number) shows whether one legacy
+    /// code drives the bucket — it does: `OC` on the ISO-era text records.
+    pub async fn quarantine_field_code_gaps(&self, limit: i64) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT substr(detail, instr(detail, ': ') + 2) AS code, COUNT(*) c
+                   FROM quarantine WHERE reason = 'unknown-field-code'
+                  GROUP BY code ORDER BY c DESC LIMIT ?",
+                (Value::Integer(limit),),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok(out)
+    }
+
     /// Notice counts per (mapping profile, publication year) — the dashboard's
     /// coverage grid. The year comes from the package the notice was found in
     /// (periods are `YYYY-NNNNN`, zero-padded and sortable by construction),
@@ -1398,6 +1419,39 @@ mod tests {
         assert!(
             !plan.to_uppercase().contains("TEMP B-TREE"),
             "ordering must come from the index, not a full sort — plan was:\n{plan}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 30: the field-code breakdown groups by the code, not the whole
+    /// `line <n>: <code>` detail, so one code across different line numbers sums
+    /// into a single row — and only the unknown-field-code bucket is counted.
+    #[tokio::test]
+    async fn field_code_gaps_group_by_code_across_line_numbers() {
+        let path = format!("/tmp/tender-db-fcgaps-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen) VALUES
+                   (1,'m1','h1','unknown-field-code','line 20: OC',0),
+                   (1,'m2','h2','unknown-field-code','line 25: OC',0),
+                   (1,'m3','h3','unknown-field-code','line 9: XY',0),
+                   (1,'m4','h4','unclaimed-content','line 5: whatever',0);",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        let gaps = db.quarantine_field_code_gaps(5).await.unwrap();
+        assert_eq!(
+            gaps,
+            vec![("OC".to_owned(), 2), ("XY".to_owned(), 1)],
+            "OC sums across its two line numbers; unclaimed-content is excluded",
         );
 
         let _ = std::fs::remove_file(&path);

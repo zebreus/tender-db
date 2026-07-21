@@ -1,6 +1,6 @@
 # 30 — Quarantine headline is mostly benign: split it, then triage the real gaps
 
-Status: ready-for-agent
+Status: needs-verification
 
 The dashboard's headline data-quality metric (quarantine total) reads
 1,212,695 mid-backfill (rev bad8dda), dominated by `unparsable-xml`
@@ -46,3 +46,43 @@ the full archive, not a mid-re-walk snapshot.
 Acceptance: quarantine headline reflects real notice loss (benign members
 split out); the two big buckets classified with a field-code top-N; each
 genuine parser gap either fixed in its profile or filed with its share.
+
+## Fix (2026-07-21) — three-class split, evidence-based
+
+Triage (sampled via /v1/sql on prod quarantine + byte-exact archive extracts)
+inverted the "big buckets are benign duplicates" premise:
+- `unknown-field-code` (577k) is ~entirely the one legacy field `OC`, on **EN**
+  files (the primary parsed language, not non-EN siblings), 1995–1998, ISO-only,
+  all outstanding. Extracted example is a real notice (ND 4149-1995). → real gap,
+  filed **issue 35** (text OC/ON).
+- `unparsable-xml` (628k) is ~entirely `XML with DTD detected` — a whole
+  DTD-bearing XML era refused wholesale. → suspected real, filed **issue 36**.
+
+So neither big bucket is benign. Per the lead's decision, the metric is split
+**three ways**, nothing called benign without evidence:
+- **Actionable** (headline) — a member identified as a notice whose content we
+  could not represent: `unclaimed-content`, `unrepresentable-value` (~5k).
+- **Suspected gap** (flagged distinctly, ~1.2M) — `unknown-field-code`,
+  `unparsable-xml`, plus the small uncertain `not-utf8` / `unknown-customization`
+  (real-notice-shaped, untriaged).
+- **Benign** (only where the reason itself proves non-notice) — `unknown-root`,
+  `missing-publication-id`, corrupt-zip.
+
+`model::dashboard::quarantine_class` is the one classifier (shared by the
+server measure and the wasm renderer); the dashboard shows the headline =
+actionable, the suspected total flagged with its `OC` driver, the benign
+remainder, and every reason labelled by class. Store adds
+`quarantine_field_code_gaps` (group unknown-field-code by code, not by
+`line N:` detail) — proves it is one code.
+
+Open question carried into issues 35/36 (not hand-waved): the ~1.2M suspected vs
+the quoted 96.7% ted·text coverage (~129k lost) does not reconcile mid-backfill
+— counts are an issue-15 re-walk snapshot and the projection is far behind
+(v_tenders ~7k). Re-measure after the backfill settles.
+
+Tests: `model::quarantine_reasons_class_by_evidence`;
+`store::field_code_gaps_group_by_code_across_line_numbers`. Full app suite +
+clippy green.
+
+Needs verification: dashboard renders the three-class split honestly in prod;
+re-measure the buckets post-backfill to size issues 35/36.

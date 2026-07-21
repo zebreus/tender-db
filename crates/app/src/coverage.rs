@@ -8,7 +8,9 @@
 //! compared against what we hold. Before any backfill the ratios are near zero,
 //! which is the correct answer, not a bug to hide.
 
-use model::dashboard::{AwardLinkage, Count, Coverage, Dashboard, Lag, Quarantined};
+use model::dashboard::{
+    AwardLinkage, Count, Coverage, Dashboard, Lag, QuarantineClass, Quarantined, quarantine_class,
+};
 use std::sync::{Arc, OnceLock, RwLock};
 use std::time::Duration;
 use store::Db;
@@ -23,6 +25,9 @@ const GROUND_TRUTH_SOURCE: &str = "ted";
 
 /// How many quarantined payloads the drill-down lists.
 const QUARANTINE_SAMPLE: i64 = 50;
+
+/// How many top field codes to surface behind the `unknown-field-code` bucket.
+const FIELD_CODE_GAPS: i64 = 5;
 
 /// One vendored row: what the year published, and whether the year is over.
 struct Published {
@@ -129,6 +134,24 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         .into_iter()
         .map(|(label, value)| Count { label, value })
         .collect();
+    // Split the headline three ways (issue 30): confirmed real-notice loss is the
+    // number that matters; the ~1.2M suspected parser gaps are flagged distinctly;
+    // the small benign remainder is neither.
+    let class_total = |class| {
+        quarantine_by_reason
+            .iter()
+            .filter(|c| quarantine_class(&c.label) == class)
+            .map(|c| c.value)
+            .sum()
+    };
+    let quarantine_actionable = class_total(QuarantineClass::Actionable);
+    let quarantine_suspected = class_total(QuarantineClass::SuspectedGap);
+    let quarantine_field_code_gaps: Vec<Count> = db
+        .quarantine_field_code_gaps(FIELD_CODE_GAPS)
+        .await?
+        .into_iter()
+        .map(|(label, value)| Count { label, value })
+        .collect();
 
     let lag = db.import_lag().await?;
     let counts: Vec<Count> = db
@@ -154,7 +177,10 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         measured_at: now,
         coverage,
         quarantine_total: quarantine_by_reason.iter().map(|c| c.value).sum(),
+        quarantine_actionable,
+        quarantine_suspected,
         quarantine_by_reason,
+        quarantine_field_code_gaps,
         quarantine_recent: db
             .recent_quarantine(QUARANTINE_SAMPLE)
             .await?
@@ -211,8 +237,8 @@ mod tests {
     /// we confirm it returns exactly what the refresher last stored.
     #[test]
     fn latest_serves_the_memoized_snapshot_without_measuring() {
-        let mut snapshot = Dashboard::default();
-        snapshot.cursor = 4242; // a marker the empty default never carries
+        // A marker the empty default never carries.
+        let snapshot = Dashboard { cursor: 4242, ..Dashboard::default() };
         *cell().write().unwrap() = Some(snapshot);
         assert_eq!(latest().cursor, 4242, "the request path returns the memoized snapshot");
     }

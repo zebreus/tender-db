@@ -9,7 +9,7 @@ use crate::api;
 use dioxus::fullstack::Transportable;
 use dioxus::prelude::*;
 use model::account::LOST_PASSWORD_NOTICE;
-use model::dashboard::{AwardLinkage, Coverage, Lag, Quarantined};
+use model::dashboard::{AwardLinkage, Coverage, Lag, QuarantineClass, Quarantined, quarantine_class};
 use model::ingestion::{Ingestion, JobProgress, JobRun};
 use model::{Account, NewToken, NewWebhook, Token, Webhook};
 use std::time::Duration;
@@ -79,7 +79,10 @@ pub fn DashboardPage() -> Element {
 
                     QuarantinePanel {
                         total: d.quarantine_total,
+                        actionable: d.quarantine_actionable,
+                        suspected: d.quarantine_suspected,
                         reasons: d.quarantine_by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
+                        field_code_gaps: d.quarantine_field_code_gaps.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
                         recent: d.quarantine_recent.clone(),
                     }
 
@@ -405,20 +408,43 @@ fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
 }
 
 #[component]
-fn QuarantinePanel(total: i64, reasons: Vec<(String, i64)>, recent: Vec<Quarantined>) -> Element {
+fn QuarantinePanel(
+    total: i64,
+    actionable: i64,
+    suspected: i64,
+    reasons: Vec<(String, i64)>,
+    field_code_gaps: Vec<(String, i64)>,
+    recent: Vec<Quarantined>,
+) -> Element {
+    let benign = total - actionable - suspected;
     rsx! {
         section { class: "panel",
             h2 { "Quarantine" }
             p { class: "muted",
                 "A notice with content no profile maps is held whole, never partly imported "
-                "(ADR-0004). This count is the headline data-quality metric."
+                "(ADR-0004). The headline counts only confirmed real-notice loss; two large "
+                "buckets are suspected parser gaps under investigation, and a small remainder "
+                "is benign non-notice members (issue 30)."
             }
-            p { class: "headline", "{group(total)}" }
+            // The honest headline (issue 30): confirmed real-notice loss only.
+            p { class: "headline", "{group(actionable)}" }
+            p { class: "muted", "actionable — real notices held whole" }
+            p { class: "muted",
+                "+ {group(suspected)} suspected parser gap (investigate-then-fix, issues 35/36)"
+            }
+            if !field_code_gaps.is_empty() {
+                p { class: "muted",
+                    "— unknown-field-code is one legacy code: "
+                    {field_code_gaps.iter().map(|(code, n)| format!("{code} ({})", group(*n))).collect::<Vec<_>>().join(", ")}
+                }
+            }
+            p { class: "muted", "+ {group(benign)} benign (non-notice members) — of {group(total)} total held" }
             if !reasons.is_empty() {
                 table {
                     thead {
                         tr {
                             th { "Reason" }
+                            th { "Class" }
                             th { "What it means" }
                             th { class: "num", "Count" }
                         }
@@ -427,6 +453,7 @@ fn QuarantinePanel(total: i64, reasons: Vec<(String, i64)>, recent: Vec<Quaranti
                         for (reason, count) in reasons {
                             tr { key: "{reason}",
                                 td { class: "path", "{reason}" }
+                                td { class: "muted", "{quarantine_class_label(&reason)}" }
                                 td { class: "muted", "{quarantine_reason_explained(&reason)}" }
                                 td { class: "num", "{group(count)}" }
                             }
@@ -856,8 +883,10 @@ fn quarantine_reason_explained(reason: &str) -> &'static str {
     match reason {
         "unclaimed-content" => "Content no mapping profile claims — held whole rather than partly imported.",
         "unknown-customization" => "An eForms CustomizationID (SDK / national profile) with no mapping profile yet.",
-        "unknown-field-code" => "A legacy text-era field code we have no mapping for.",
-        "unparsable-xml" => "The notice XML was malformed and could not be parsed.",
+        "unknown-field-code" => "A legacy text-era field code with no rule — ~all the one OC code on real EN notices (issue 35).",
+        "unknown-root" => "The XML root was not a notice format we ingest — a non-notice sibling member.",
+        "missing-publication-id" => "The member carried no publication id of its own, so it is not a distinct notice.",
+        "unparsable-xml" => "Malformed XML — ~all 'XML with DTD detected', a whole DTD-bearing era rejected (issue 36).",
         "not-utf8" => "The notice file was not valid UTF-8 text and could not be read.",
         "unrepresentable-value" => "A value did not fit its expected type (a malformed amount, date, or code).",
         "ambiguous-field" => "A field matched more than one mapping, so its meaning was unclear.",
@@ -869,6 +898,15 @@ fn quarantine_reason_explained(reason: &str) -> &'static str {
         "no-original-form" => "The notice had no original-language form to key on.",
         "translation-structure-mismatch" => "A translation's structure did not line up with the original.",
         _ => "Content this notice's profile has no mapping for — held whole (ADR-0004).",
+    }
+}
+
+/// The one-word coverage class for a quarantine reason (issue 30).
+fn quarantine_class_label(reason: &str) -> &'static str {
+    match quarantine_class(reason) {
+        QuarantineClass::Actionable => "actionable",
+        QuarantineClass::SuspectedGap => "suspected gap",
+        QuarantineClass::Benign => "benign",
     }
 }
 
