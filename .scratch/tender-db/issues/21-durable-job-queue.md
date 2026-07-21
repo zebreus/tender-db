@@ -1,7 +1,15 @@
 # 21 — Durable supervisor job queue
 
-Status: needs-verification
-Blocked by: — (was 20; cleared when 20's supervisor/store work landed in da2ab87)
+Status: resolved
+
+Resolution (2026-07-21, team lead): production-verified three times in
+one afternoon. The b978c96 restart recovered all 6 queued jobs
+automatically ("supervisor: recovered 6 pending job(s) from the durable
+queue"), job order and the running job intact, zero manual re-enqueue —
+retiring the manual re-enqueue dance that every earlier restart
+required. Two further restarts (deploys #4/#5) recovered equally
+cleanly, combined with the issue-32 cursor for cheap resumes. ADR-0007
+records the design incl. the Spec serde compat contract.
 
 The supervisor's job queue is in-memory only. Every service restart wipes
 queued and running jobs — this has already cost us twice during issue 15
