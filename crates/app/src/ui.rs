@@ -75,7 +75,7 @@ pub fn DashboardPage() -> Element {
                         }
                     }
 
-                    SystemPanel { rev: d.service_rev.clone(), cursor: d.cursor, lag: d.lag }
+                    SystemPanel { rev: d.service_rev.clone(), cursor: d.cursor, lag: d.lag, snapshot_age: d.snapshot_age }
 
                     QuarantinePanel {
                         total: d.quarantine_total,
@@ -97,7 +97,7 @@ pub fn DashboardPage() -> Element {
 /// System status in one compact panel: the running server's revision, the change
 /// cursor, and how stale each end of the import pipeline is.
 #[component]
-fn SystemPanel(rev: String, cursor: i64, lag: Lag) -> Element {
+fn SystemPanel(rev: String, cursor: i64, lag: Lag, snapshot_age: Option<i64>) -> Element {
     rsx! {
         section { class: "panel",
             h2 { "System" }
@@ -113,6 +113,8 @@ fn SystemPanel(rev: String, cursor: i64, lag: Lag) -> Element {
                 dd { "{age(lag.fetch_age)}" }
                 dt { "newest ingested notice" }
                 dd { "{age(lag.notice_age)}" }
+                dt { "last DB snapshot" }
+                dd { "{age(snapshot_age)}" }
             }
         }
     }

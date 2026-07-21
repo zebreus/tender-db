@@ -7,6 +7,7 @@
 //! serialises access.
 
 pub mod accounts;
+pub mod backup;
 pub mod canonical;
 pub mod jobs;
 pub mod read;
@@ -17,6 +18,7 @@ pub mod webhooks;
 pub use turso;
 
 pub use accounts::{TokenRecord, User};
+pub use backup::{BackupError, SnapshotReport};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
     Mention, NoticeRef, Round, TenderProjection, TenderVersion,
@@ -269,6 +271,9 @@ const SCHEMA: &str = "
 pub struct Db {
     database: turso::Database,
     conn: Mutex<Connection>,
+    /// The database file path, kept so [`Db::snapshot`] (issue 23) knows which
+    /// file to copy — turso exposes no path accessor.
+    path: String,
     /// The pool backing `Db`'s own read-only accessors. Reads run over WAL in
     /// parallel with the writer, so a dashboard/admin query never queues behind
     /// an ingestion job that is holding the writer for the length of its
@@ -335,7 +340,7 @@ impl Db {
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
         let read_pool = Readers::open(database.clone(), READ_POOL)?;
-        Ok(Db { database, conn: Mutex::new(conn), read_pool, cursor })
+        Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, cursor })
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {

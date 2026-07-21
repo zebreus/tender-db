@@ -13,6 +13,8 @@ pub mod admin;
 #[cfg(feature = "server")]
 pub mod coverage;
 #[cfg(feature = "server")]
+pub mod snapshot;
+#[cfg(feature = "server")]
 pub mod supervisor;
 #[cfg(feature = "server")]
 pub mod v1;

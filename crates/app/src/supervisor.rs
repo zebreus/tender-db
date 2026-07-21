@@ -21,6 +21,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
+use crate::snapshot;
 use ingest::{doe, fetch, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, QueuedJob};
 use serde::{Deserialize, Serialize};
@@ -90,6 +91,10 @@ enum Spec {
     ProbeTed { refetch: bool },
     Process { source: String, package_kind: String, period: Option<String> },
     Project { rebuild: bool },
+    /// A consistent online snapshot of the store, shipped off-box (issue 23).
+    /// A unit variant, so it serialises into the durable job_queue as `"Snapshot"`
+    /// and survives a restart like any other job.
+    Snapshot,
 }
 
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
@@ -97,7 +102,7 @@ enum Spec {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct JobRequest {
-    /// `fetch` | `process` | `project` | `backfill`.
+    /// `fetch` | `process` | `project` | `backfill` | `snapshot`.
     pub kind: String,
     /// `ted` | `doe`.
     pub source: Option<String>,
@@ -177,6 +182,7 @@ impl Supervisor {
                 Ok(vec![self.push("project", format!("rebuild={rebuild}"), Spec::Project { rebuild }).await])
             }
             "backfill" => self.enqueue_backfill(req).await,
+            "snapshot" => Ok(vec![self.push("snapshot", "snapshot".into(), Spec::Snapshot).await]),
             other => Err(format!("unknown job kind {other:?}")),
         }
     }
@@ -461,6 +467,7 @@ impl Supervisor {
                     report.applied.versions_written
                 ))
             }
+            Spec::Snapshot => snapshot::run(&self.db, &snapshot::Config::from_env(), now_unix()).await,
         }
     }
 
@@ -580,6 +587,10 @@ impl Supervisor {
         .await;
         // One projection folds whatever the fetch+process just landed.
         self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await;
+        // Then a consistent snapshot of the day's result, shipped off-box by the
+        // systemd timer (issue 23). Last in the sequence, so it captures the
+        // freshly folded canonical layer.
+        self.push("snapshot", "snapshot".into(), Spec::Snapshot).await;
     }
 }
 
@@ -908,6 +919,25 @@ mod tests {
         let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         restarted.recover().await;
         assert!(restarted.queued().is_empty(), "a cancelled job is gone from the durable queue too");
+    }
+
+    /// Issue 23: a queued `snapshot` job round-trips through the durable queue —
+    /// `Spec::Snapshot` serialises into `job_queue` and deserialises back on
+    /// recovery. This is exactly the daily-pipeline case (the projection is
+    /// followed by a snapshot), so a restart mid-pipeline must bring it back.
+    #[tokio::test]
+    async fn a_snapshot_job_survives_a_restart() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let id = sup.enqueue_request(&req("snapshot")).await.unwrap();
+        assert_eq!(id.len(), 1);
+        assert_eq!(sup.queued()[0].kind, "snapshot");
+
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        let q = restarted.queued();
+        assert_eq!(q.len(), 1, "the snapshot job is restored");
+        assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
     }
 
     #[test]

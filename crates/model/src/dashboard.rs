@@ -24,6 +24,9 @@ pub struct Dashboard {
     pub award_linkage: Vec<AwardLinkage>,
     /// The change cursor — the spine everything live hangs off.
     pub cursor: i64,
+    /// Age in seconds of the most recent successful DB snapshot (issue 23),
+    /// resolved server-side like the import lag; `None` when none has run.
+    pub snapshot_age: Option<i64>,
     /// The git revision the running server was built from (`dev` for a plain
     /// `cargo build`). Measured server-side so the page always shows the rev that
     /// actually served it.

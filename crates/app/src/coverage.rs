@@ -123,6 +123,8 @@ pub async fn measure(db: &Db, now: i64) -> store::turso::Result<Dashboard> {
         award_linkage,
         cursor: db.latest_cursor().await?,
         service_rev: crate::v1::rev().to_owned(),
+        // An age, not an instant — same discipline as the import lag above.
+        snapshot_age: db.last_snapshot_at().await?.map(|at| now - at),
     })
 }
 
