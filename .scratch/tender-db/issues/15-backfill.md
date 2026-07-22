@@ -292,3 +292,36 @@ job 6 runs (i.e. once job 5 project is current/completing), verify free space �
 DB size; if tight, FLAG THE LEAD FIRST — do not let the ~180G copy run into a
 wall.** Lennart deciding: resize vs relocate-refetchable-archive vs accept-no-
 snapshots. Until then: watch only, no ops actions.
+
+### 2026-07-22 10:2x — Local-restart recovery; volume resized 500G→1TB; continuous-mode day 2, run-driver
+
+Local dev machine had restarted; production (root@zebreus.click, rev 62f7255)
+ran throughout — only the local babysitter session was lost. Resumed. State on
+pickup ~10:19 UTC: job 1 `process ted monthly (all)` at pkg 103/158 (2021-11),
+4.64M notices, 51–62 n/s, RSS ~2.55GB, WAL 421MB (issue 42 holding), then the
+DÖE + project + snapshot remainder queued.
+
+**DISK RISK RESOLVED — volume resized 500G→1TB (lead + Lennart).** Hetzner
+volume grown 500G→1TB, XFS grown online with no interruption. /data now
+1000G, **34% used (660G free)**. This retires the whole disk-trajectory concern
+above:
+- **SNAPSHOT-HEADROOM GUARD is RETIRED.** DB + KEEP=2 snapshots + the 178G
+  archive all fit in 1TB with margin, so the queued snapshot jobs (6 & 12) no
+  longer risk ENOSPC. No more "flag before snapshot on headroom grounds" — only
+  flag if a snapshot job *errors* for some other reason.
+- **New alert thresholds (replace old 60%/72%):** /data **80%**, WAL **30G**,
+  RSS **5GB**. Watch loop re-armed against these.
+
+**Continuous-mode day 2 observed (acceptance item, spec §5 "3 consecutive
+days").** This morning's **09:35 Europe/Berlin scheduler tick** auto-enqueued
+its daily chain — visible in /admin/jobs as queued ids 7–11 (probe → ted daily →
+fetch doe daily 2026-07-21 → process doe daily → project) sitting behind the
+backfill remainder, plus a second snapshot (id 12). The in-app scheduler is
+demonstrating itself day-over-day; day 1 was the 07-21 tick recorded above.
+
+Queue at pickup (durable, /admin/jobs): 1 running → 2 ted daily → 3 doe monthly
+→ 4 doe daily → 5 project rebuild=false → 6 snapshot → 7 probe → 8 ted daily →
+9 fetch doe daily → 10 doe daily → 11 project → 12 snapshot. Watch: bounded
+40-min ssh windows (keepalive-hardened), emitting on job transitions,
+disk80/WAL30G/RSS5GB crosses, poll failures, window-end. Project (job 5) remains
+the WAL/RSS-heavy phase to watch for issue-42/issue-52.
