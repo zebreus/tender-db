@@ -262,3 +262,33 @@ Coverage-query fix confirmed under load (see issue 20): `curl /` now 200 in 2ms
 (issue 23 / point-c) deferred until job 1 resumes **real** parsing (queue is
 FIFO, so a snapshot can't preempt — will enqueue then, confirm non-interruption,
 and verify it lands in job_log + /data/snapshots).
+
+### 2026-07-22 00:15 — Overnight tail checkpoint + snapshot-headroom guard, run-driver
+
+Durable checkpoint (context may summarize over the multi-hour tail).
+
+**State:** rev 62f7255 (contains security + WAL-checkpoint fix 39d29ca as ancestor).
+Job 1 `process ted monthly` cheap-resumed at 2013-04 after the evening's deploy
+burst; now at pkg 52/158 (2017-08), notices ~2.0M, WAL bounded <1G per boundary
+(issue 42 confirmed), disk 55%. Queue durable: 2 ted daily, 3 doe monthly, 4 doe
+daily, 5 project rebuild=false, 6 snapshot. **DEPLOY FREEZE in effect** (lead) —
+no more deploys tonight; remaining issues are polish/post-backfill.
+
+**Today's deploys all verified (recorded on their issues):** 20 (/ latency, WAL
+reader pool + coverage refresher + never-zeros), 21 (durable queue self-recovery),
+26 (build ~10.5min dep-change), 32 (resume cursor — cheap restart), 37/38 (dashboard
+fills, refresher-timeout), 40 (resolved_categories), 42 (WAL package-boundary
+checkpoint + /health/deep wal_bytes).
+
+**DISK TRAJECTORY (open, lead escalated to Lennart):** /data 275G/500G (55%):
+archive 178G static + DB 87G. DB grows ~0.75G/pkg; 106 pkgs left → DB ~167G,
+/data ~69% at job-1 end, ~70-80% after project (job 5). Not exhaustion (~225G
+free). Alert armed at /data 60% (re-project there) + WAL 30G.
+
+**SNAPSHOT-HEADROOM GUARD (critical):** job 6 snapshot is a full DB-file copy
+(~180-200G) needing DB-sized FREE space. At full scale archive(178G)+DB(~180G)
+leaves too little for a snapshot beside them → job 6 would hit ENOSPC. **Before
+job 6 runs (i.e. once job 5 project is current/completing), verify free space ≥
+DB size; if tight, FLAG THE LEAD FIRST — do not let the ~180G copy run into a
+wall.** Lennart deciding: resize vs relocate-refetchable-archive vs accept-no-
+snapshots. Until then: watch only, no ops actions.
