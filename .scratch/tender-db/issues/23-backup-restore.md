@@ -107,3 +107,17 @@ on-demand, KEEP=2 on /data/snapshots) — covers corruption and
 fat-finger deletes; volume loss consciously accepted until a destination
 exists. backup-ship.sh stays dormant (BACKUP_DEST unset by design).
 Revisit when a destination is provided.
+
+### 2026-07-22 — Volume resized to 1TB (Lennart + team lead)
+
+Disk pressure during the backfill (67% at pkg 103/158, projected ~75-80%
+post-project) would have left too little free space for a snapshot (a
+full DB-file copy needs DB-sized headroom) — breaking the local ring at
+full scale. Decision (Lennart): resize the Hetzner /data volume 500G→1TB.
+Lennart grew the volume in the Hetzner console; team lead grew the XFS
+filesystem online (`xfs_growfs /data`, metadata-only, no backfill
+interruption). /data now 1000G, 34% used (340G/1000G, 660G free). The
+archive (178G) stays on-box for reprocessing; DB + KEEP=2 snapshots now
+fit with margin. Off-box shipping still deferred (no external
+destination) — this is headroom for the LOCAL ring only; volume-loss
+risk still consciously accepted.
