@@ -250,100 +250,162 @@ pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
 }
 
 async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
+    project_with_batch(db, rebuild, APPLY_NOTICE_BATCH).await
+}
+
+/// Notices per Phase-2 fold+apply batch. The projection groups a whole corpus's
+/// notices into Tenders whose members are scattered across the id space by
+/// publication history, so it cannot be windowed by period without splitting a
+/// Tender (ADR-0001, issue 57). Instead it plans the grouping first (holding only
+/// compact per-notice identity), then folds and applies **whole** Tenders a
+/// bounded batch of notices at a time — never the whole corpus's states and
+/// mentions at once, which is what OOM-crash-looped the 8 GB VPS. The batch is a
+/// count of notices (not Tenders) so peak memory is bounded regardless of how
+/// large individual Tenders are.
+const APPLY_NOTICE_BATCH: usize = 20_000;
+
+/// How many Phase-2 batches between WAL truncations. The apply burst grows the
+/// WAL; truncating at the clean point between batches returns the space (issue
+/// 42) without checkpointing so often the cost shows.
+const CHECKPOINT_EVERY_BATCHES: usize = 4;
+
+/// The projection with an explicit Phase-2 batch size (notices per fold+apply
+/// batch). [`project`] uses [`APPLY_NOTICE_BATCH`]; tests drive tiny batches to
+/// prove the output is invariant under batching — i.e. that folding whole Tenders
+/// a batch at a time never splits a Tender's notices across a boundary (issue 57).
+pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> turso::Result<Report> {
     if rebuild {
         db.clear_canonical().await?;
     }
     let now = store::now_unix();
     let mut report = Report::default();
 
-    // Phase 1 — read the notice-parsed layer in id-ordered chunks, each a
-    // handful of scans rather than a per-notice query storm (issue 19). Chunking
-    // bounds memory: only the compact per-notice states (needed whole for
-    // grouping) stay in RAM, never the whole raw layer at once. Each notice's
-    // mentions go into one flat list; its slice is remembered so the resolved
-    // organization ids bind back.
+    // Phase 1 — stream the notice-parsed layer in id-ordered chunks (issue 19)
+    // and, per notice, do the two things that need the whole corpus but only a
+    // notice at a time: resolve its Organization mentions (in id order, so canonical
+    // Organization identity is exactly what the whole-RAM projection produced),
+    // and record its compact grouping *identity*. Nothing per-notice heavy (facts,
+    // lots, results) is retained — that is rebuilt per batch in Phase 2. Peak
+    // memory here is one chunk plus the plan, never the whole raw layer.
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
-    let mut states = Vec::new();
-    let mut all_mentions: Vec<Mention> = Vec::new();
-    let mut ranges: Vec<std::ops::Range<usize>> = Vec::new();
+    let mut resolver = db.mention_resolver().await?;
+    let mut idents: Vec<Ident> = Vec::new();
     let mut after_id = 0i64;
     loop {
         let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
         let Some((last, _)) = chunk.last() else { break };
         after_id = last.id;
-        for (notice, parsed) in chunk {
-            let mut state = NoticeState::read(&notice, &parsed);
-            let mentions = state.take_mentions(notice.id, &parsed);
-            let start = all_mentions.len();
-            all_mentions.extend(mentions);
-            ranges.push(start..all_mentions.len());
-            states.push(state);
+        let mut mentions: Vec<Mention> = Vec::new();
+        for (notice, parsed) in &chunk {
+            let ident = Ident::read(notice, parsed);
+            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+            idents.push(ident);
         }
+        report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
-    report.notices = states.len() as u64;
-    report.mentions = all_mentions.len() as u64;
+    db.finish_mention_resolver(resolver).await?;
+    report.notices = idents.len() as u64;
     eprintln!(
-        "[project] read: {} notices, {} mentions in {:.1}s",
+        "[project] plan: {} notices, {} mentions resolved in {:.1}s",
         report.notices,
         report.mentions,
         t0.elapsed().as_secs_f64()
     );
 
-    // Phase 2 — resolve every mention in bounded batches, then bind per notice.
+    // Group the identities into ordered Tenders. This is the one whole-corpus
+    // structure, but it holds only ids and small keys — a Tender's folded content
+    // is never in it.
     let t1 = std::time::Instant::now();
-    let ids = db.resolve_mentions(&all_mentions, now).await?;
-    for (state, range) in states.iter_mut().zip(&ranges) {
-        state.bind_organizations(&all_mentions[range.clone()], &ids[range.clone()]);
-    }
-    eprintln!("[project] mentions: {} resolved in {:.1}s", ids.len(), t1.elapsed().as_secs_f64());
-
-    // Phase 3 — group notices into Tenders (in memory).
-    let t2 = std::time::Instant::now();
-    let projections = group(states);
-    let legacy_keys: BTreeSet<String> = projections
+    let plans = plan_groups(idents);
+    let legacy_keys: BTreeSet<String> = plans
         .iter()
         .filter_map(|p| p.procedure_key.clone())
         .filter(|k| k.starts_with("ojs:"))
         .collect();
-    for projection in &projections {
-        report.tenders += 1;
-        report.islands += u64::from(projection.island_notice_id.is_some());
-    }
-    eprintln!("[project] group: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
+    report.tenders = plans.len() as u64;
+    report.islands = plans.iter().filter(|p| p.island_notice_id.is_some()).count() as u64;
+    eprintln!("[project] group: {} tenders in {:.1}s", report.tenders, t1.elapsed().as_secs_f64());
 
-    // Phase 4 — reconcile all Tenders in batched write transactions, then retire
-    // any legacy Tender a late component-merge absorbed (its rows migrated to the
-    // surviving key; here it gets `removed` change events).
-    let t3 = std::time::Instant::now();
-    report.applied = db.apply_tenders(&projections, now).await?;
+    // Phase 2 — fold and apply the Tenders a bounded batch of whole groups at a
+    // time. Each batch reads only its notices' parsed layer (scattered id read)
+    // and their already-resolved Organizations, folds each group, and reconciles
+    // — so peak memory is one batch, not the corpus.
+    let t2 = std::time::Instant::now();
+    let mut batch: Vec<&GroupPlan> = Vec::new();
+    let mut batch_notices = 0usize;
+    let mut batches_done = 0usize;
+    for plan in &plans {
+        batch.push(plan);
+        batch_notices += plan.notice_ids.len();
+        if batch_notices >= notice_batch {
+            report.applied.add(apply_batch(db, &batch, now).await?);
+            batch.clear();
+            batch_notices = 0;
+            batches_done += 1;
+            if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+                && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
+            {
+                eprintln!("[project] checkpoint after batch {batches_done}: {e}");
+            }
+        }
+    }
+    if !batch.is_empty() {
+        report.applied.add(apply_batch(db, &batch, now).await?);
+    }
+    // Retire any legacy Tender a late component-merge absorbed (its rows migrated
+    // to the surviving key; here it gets `removed` change events).
     report.absorbed = db.retire_absorbed_legacy_tenders(&legacy_keys, now).await?;
-    eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t3.elapsed().as_secs_f64());
+    eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     Ok(report)
 }
 
-/// One notice read in canonical terms, before it is folded into a chain.
+/// Fold one batch of planned Tenders and reconcile them. Reads only the batch's
+/// notices — their parsed form and the Organizations Phase 1 resolved — rebuilds
+/// each notice's canonical state, binds it, folds each group's chain, and applies.
+async fn apply_batch(
+    db: &Db,
+    plans: &[&GroupPlan],
+    now: i64,
+) -> turso::Result<store::Applied> {
+    let ids: Vec<i64> = plans.iter().flat_map(|p| p.notice_ids.iter().copied()).collect();
+    let parsed = db.parsed_by_ids(&ids).await?;
+    let orgs = db.mentions_by_ids(&ids).await?;
+
+    let mut states: HashMap<i64, NoticeState> = HashMap::with_capacity(parsed.len());
+    for (notice, parsed) in &parsed {
+        let mut state = NoticeState::read(notice, parsed);
+        if let Some(by_section) = orgs.get(&notice.id) {
+            state.bind_organizations(by_section);
+        } else {
+            state.bind_organizations(&HashMap::new());
+        }
+        states.insert(notice.id, state);
+    }
+
+    let projections: Vec<TenderProjection> = plans
+        .iter()
+        .map(|plan| {
+            let chain: Vec<&NoticeState> =
+                plan.notice_ids.iter().filter_map(|id| states.get(id)).collect();
+            TenderProjection {
+                source: plan.source.clone(),
+                procedure_key: plan.procedure_key.clone(),
+                island_notice_id: plan.island_notice_id,
+                kind: plan.kind.clone(),
+                versions: fold(&chain),
+            }
+        })
+        .collect();
+    db.apply_tenders(&projections, now).await
+}
+
+/// One notice read in canonical terms, before it is folded into a chain. Carries
+/// only what folding a version needs; the grouping identity that assigns the
+/// notice to a Tender lives in the far smaller [`Ident`] (issue 57).
 struct NoticeState {
     notice_id: i64,
-    source: String,
     publication_id: String,
-    /// True for the legacy TED profiles (text / ted-export-r208 / r209): these
-    /// chain by transitive OJS-number closure, not by BT-04 (research §3).
-    legacy: bool,
-    /// True for the DÖE sdk-0.1 dialect: a distinct node vocabulary
-    /// (`ContractingParty`/`TenderResult`/`WinningParty` in place of eForms'
-    /// `Organization`/`LotResult`), read by its own party- and results-binding
-    /// paths (issue 29).
-    sdk01: bool,
-    procedure_key: Option<String>,
-    /// The notice's own OJS publication number `(year, number)` — the node in
-    /// the legacy chain graph. `None` when the id does not parse (falls back to
-    /// an island). eForms notices have none.
-    ojs_self: Option<OjsKey>,
-    /// Transitive chain edges: every `is_ref` OJS-scheme id the notice carries
-    /// (`REF_NOTICE/NO_DOC_OJS`, `NOTICE_NUMBER_OJ`, text-era `RN`). A missed
-    /// edge splits a Tender, never wrongly merges (research §3).
-    ojs_edges: Vec<OjsKey>,
     published_at: i64,
     dispatched_at: Option<i64>,
     subtype: Option<String>,
@@ -395,7 +457,6 @@ impl NoticeState {
         let sdk01 = is_sdk01_profile(&notice.profile);
         let mut facts = BTreeSet::new();
         let mut raw_roles = Vec::new();
-        let mut ojs_edges = Vec::new();
         // sdk-0.1 names its buyer by the `ContractingParty` section itself, with
         // no OPT-300 role reference — synthesise the buyer role directly at it.
         if sdk01 {
@@ -428,14 +489,13 @@ impl NoticeState {
                     })
                 }
                 NoticeValue::Id { value: target, is_ref: true, scheme } => {
-                    // An OJS-scheme reference is a chain edge; anything else is
-                    // an inline organization role reference (legacy synthesises
-                    // `ORG-n` refs, mirroring eForms' OPT-300 pattern).
-                    if scheme.as_deref() == Some("ojs") {
-                        if let Some(key) = ojs_key(target) {
-                            ojs_edges.push(key);
-                        }
-                    } else if let Some(role) = role_name(&value.field_id) {
+                    // An OJS-scheme reference is a chain edge (grouped via
+                    // [`Ident`]); anything else is an inline organization role
+                    // reference (legacy synthesises `ORG-n` refs, mirroring
+                    // eForms' OPT-300 pattern).
+                    if scheme.as_deref() != Some("ojs")
+                        && let Some(role) = role_name(&value.field_id)
+                    {
                         raw_roles.push((scope.clone(), value.section_id.clone(), role, target.clone()));
                     }
                     None
@@ -474,30 +534,11 @@ impl NoticeState {
             })
             .collect();
 
-        // The node key: the notice's own publication number. The publication id
-        // is authoritative (`000001-2019` DOC form / text-era `ND:`); the
-        // in-form `NO_DOC_OJS` is the OJS-display corroboration.
-        let ojs_self = legacy
-            .then(|| {
-                ojs_key(&notice.publication_id).or_else(|| {
-                    LEGACY_OWN_NUMBER_FIELDS.iter().find_map(|f| first_id(parsed, f).and_then(|v| ojs_key(&v)))
-                })
-            })
-            .flatten();
-        ojs_edges.sort_unstable();
-        ojs_edges.dedup();
-
         let (published_at, dispatched_at) = notice_instants(parsed);
 
         NoticeState {
             notice_id: notice.id,
-            source: notice.source.clone(),
             publication_id: notice.publication_id.clone(),
-            legacy,
-            sdk01,
-            procedure_key: procedure_key(parsed, sdk01),
-            ojs_self,
-            ojs_edges,
             published_at,
             dispatched_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
@@ -518,14 +559,14 @@ impl NoticeState {
     /// official identifier hangs off its `CompanyLegalEntity` child (14 813 of
     /// them on the 2026-136 daily). So a mention collects from the whole
     /// subtree, keyed by the enclosing Organization.
-    fn take_mentions(&mut self, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
+    fn mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
         // sdk-0.1 has no eForms `Organization` sections: its buyer and winners
         // are the inline `ContractingParty`/`WinningParty` sections themselves,
         // each carrying its name on its direct Party subtree (issue 29).
-        let mention_kinds: &[&str] = if self.sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
+        let mention_kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
 
         let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
@@ -558,7 +599,7 @@ impl NoticeState {
             // `COUNTRY` / `NATIONALID` address blocks (research §6); sdk-0.1 reads
             // the party section's *direct* name/country (never the nested
             // `ServiceProviderParty` eSender), and carries no official id there.
-            let (is_name, is_country, is_id) = if self.sdk01 {
+            let (is_name, is_country, is_id) = if sdk01 {
                 (SDK01_PARTY_NAME_FIELDS.contains(&field), SDK01_PARTY_COUNTRY_FIELDS.contains(&field), false)
             } else {
                 (
@@ -595,14 +636,12 @@ impl NoticeState {
     }
 
     /// Turn the notice-local role references into party facts — and the
-    /// results graph into a bound Round — now that each mention has a
-    /// canonical Organization.
-    fn bind_organizations(&mut self, mentions: &[Mention], ids: &[i64]) {
-        let by_section: HashMap<&str, i64> = mentions
-            .iter()
-            .map(|m| m.section_id.as_str())
-            .zip(ids.iter().copied())
-            .collect();
+    /// results graph into a bound Round — now that each mention has a canonical
+    /// Organization. `by_section` maps this notice's Organization section ids to
+    /// the canonical Organization ids Phase 1 resolved and recorded.
+    fn bind_organizations(&mut self, by_section: &HashMap<String, i64>) {
+        let by_section: HashMap<&str, i64> =
+            by_section.iter().map(|(k, &v)| (k.as_str(), v)).collect();
         self.round = (!self.raw_results.is_empty())
             .then(|| self.raw_results.bind(self.notice_id, self.logical_id.clone(), &by_section));
         for (scope, role, target) in std::mem::take(&mut self.roles) {
@@ -628,11 +667,15 @@ impl NoticeState {
         }
     }
 
-    fn kind(&self) -> &'static str {
-        match self.subtype.as_deref() {
-            Some(REGISTRATION_SUBTYPE) => "registration",
-            _ => "procedure",
-        }
+}
+
+/// A Tender's canonical kind, from a notice's subtype: a Business Registration
+/// Information Notice is a Tender of its own kind (CONTEXT.md), everything else a
+/// procurement procedure.
+fn kind_of(subtype: Option<&str>) -> &'static str {
+    match subtype {
+        Some(REGISTRATION_SUBTYPE) => "registration",
+        _ => "procedure",
     }
 }
 
@@ -655,29 +698,34 @@ impl NoticeState {
 /// the component's earliest-OJS identity is deterministic, so the run simply
 /// re-projects every member under the surviving key; the absorbed key's rows
 /// are retired with `removed` change events in [`Db::retire_absorbed_legacy_tenders`].
-fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
+fn plan_groups(idents: Vec<Ident>) -> Vec<GroupPlan> {
     // Keyed Tenders group by procedure key *alone*, across Sources: a TED
     // eForms procedure and its DÖE twin publish one and the same BT-04 UUID
     // (ADR-0003, verified exact), so keying on the shared key is what merges
     // the two Sources into one Tender. Legacy OJS chains and islands stay
     // per-Source (ojs: keys are TED-only, an island is one notice).
-    let mut keyed: BTreeMap<String, Vec<NoticeState>> = BTreeMap::new();
-    let mut islands: Vec<NoticeState> = Vec::new();
-    let mut legacy: Vec<NoticeState> = Vec::new();
-    for state in states {
-        match (&state.procedure_key, state.legacy, state.ojs_self) {
-            (Some(key), _, _) => keyed.entry(key.clone()).or_default().push(state),
-            (None, true, Some(_)) => legacy.push(state),
-            (None, ..) => islands.push(state),
+    let mut keyed: BTreeMap<String, Vec<Ident>> = BTreeMap::new();
+    let mut islands: Vec<Ident> = Vec::new();
+    let mut legacy: Vec<Ident> = Vec::new();
+    for ident in idents {
+        match (&ident.procedure_key, ident.legacy, ident.ojs_self) {
+            (Some(key), _, _) => keyed.entry(key.clone()).or_default().push(ident),
+            (None, true, Some(_)) => legacy.push(ident),
+            (None, ..) => islands.push(ident),
         }
     }
 
-    let mut chains: Vec<Vec<NoticeState>> = keyed.into_values().collect();
+    // Each chain is `(assigned tender key, its notices)`; the key is the BT-04
+    // for keyed chains, the earliest OJS number for legacy components, and `None`
+    // for islands (keyed by their one notice instead).
+    let mut chains: Vec<(Option<String>, Vec<Ident>)> =
+        keyed.into_iter().map(|(k, v)| (Some(k), v)).collect();
+
     // Legacy: transitive closure over OJS edges, one bucket per component,
     // keyed by the component's earliest OJS number.
     let mut uf = UnionFind::default();
     for s in &legacy {
-        let own = uf.node(s.ojs_self.expect("legacy states carry an own key"));
+        let own = uf.node(s.ojs_self.expect("legacy idents carry an own key"));
         for edge in &s.ojs_edges {
             let target = uf.node(*edge);
             uf.union(own, target);
@@ -687,25 +735,22 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
     // then bucket every legacy notice under it — never a per-notice scan, so
     // this stays linear at 9M scale.
     let root_min = uf.root_minimums();
-    let mut components: BTreeMap<OjsKey, Vec<NoticeState>> = BTreeMap::new();
+    let mut components: BTreeMap<OjsKey, Vec<Ident>> = BTreeMap::new();
     for s in legacy {
         let rep = root_min[&uf.find(uf.index[&s.ojs_self.unwrap()])];
         components.entry(rep).or_default().push(s);
     }
     for (rep, chain) in components {
-        chains.push(chain.into_iter().map(|mut s| {
-            s.procedure_key = Some(ojs_procedure_key(rep));
-            s
-        }).collect());
+        chains.push((Some(ojs_procedure_key(rep)), chain));
     }
     // Islands stay one Tender each.
     for island in islands {
-        chains.push(vec![island]);
+        chains.push((None, vec![island]));
     }
 
     chains
         .into_iter()
-        .map(|mut chain| {
+        .map(|(key, mut chain)| {
             // Order by publication instant, then a fixed Source precedence, so a
             // cross-source procedure folds deterministically: on an equal
             // instant the TED reading folds *last* and thus supersedes the DÖE
@@ -715,18 +760,86 @@ fn group(states: Vec<NoticeState>) -> Vec<TenderProjection> {
                     .cmp(&(b.published_at, source_rank(&b.source), &b.publication_id, b.notice_id))
             });
             let first = &chain[0];
-            let projection_kind = first.kind().to_owned();
-            let procedure_key = first.procedure_key.clone();
-            let island_notice_id = procedure_key.is_none().then_some(first.notice_id);
-            TenderProjection {
+            let island_notice_id = key.is_none().then_some(first.notice_id);
+            GroupPlan {
                 source: primary_source(&chain),
-                procedure_key,
+                procedure_key: key,
                 island_notice_id,
-                kind: projection_kind,
-                versions: fold(&chain),
+                kind: kind_of(first.subtype.as_deref()).to_owned(),
+                notice_ids: chain.iter().map(|s| s.notice_id).collect(),
             }
         })
         .collect()
+}
+
+/// The plan for one Tender: its identity and its notices in fold order. Holds no
+/// folded content — Phase 2 rebuilds each notice's state from the parsed layer.
+struct GroupPlan {
+    source: String,
+    procedure_key: Option<String>,
+    island_notice_id: Option<i64>,
+    kind: String,
+    /// The Tender's notice ids, already ordered by publication instant / Source
+    /// precedence — the order the chain folds in.
+    notice_ids: Vec<i64>,
+}
+
+/// One notice's compact grouping identity — everything [`plan_groups`] needs to
+/// assign it to a Tender and order it, and nothing else. Deliberately far
+/// smaller than a [`NoticeState`] (no facts, lots, results, or mentions), so the
+/// whole corpus's identities fit in RAM while the heavy per-notice state is
+/// rebuilt one bounded batch at a time (issue 57).
+struct Ident {
+    notice_id: i64,
+    source: String,
+    publication_id: String,
+    published_at: i64,
+    legacy: bool,
+    sdk01: bool,
+    procedure_key: Option<String>,
+    ojs_self: Option<OjsKey>,
+    ojs_edges: Vec<OjsKey>,
+    subtype: Option<String>,
+}
+
+impl Ident {
+    fn read(notice: &store::NoticeRef, parsed: &Parsed) -> Ident {
+        let legacy = is_legacy_profile(&notice.profile);
+        let sdk01 = is_sdk01_profile(&notice.profile);
+        // The chain edges: every `is_ref` OJS-scheme id the notice carries. Same
+        // reading as [`NoticeState::read`], so the grouping is identical.
+        let mut ojs_edges: Vec<OjsKey> = parsed
+            .values
+            .iter()
+            .filter_map(|v| match &v.value {
+                NoticeValue::Id { value, is_ref: true, scheme } if scheme.as_deref() == Some("ojs") => {
+                    ojs_key(value)
+                }
+                _ => None,
+            })
+            .collect();
+        ojs_edges.sort_unstable();
+        ojs_edges.dedup();
+        let ojs_self = legacy
+            .then(|| {
+                ojs_key(&notice.publication_id).or_else(|| {
+                    LEGACY_OWN_NUMBER_FIELDS.iter().find_map(|f| first_id(parsed, f).and_then(|v| ojs_key(&v)))
+                })
+            })
+            .flatten();
+        Ident {
+            notice_id: notice.id,
+            source: notice.source.clone(),
+            publication_id: notice.publication_id.clone(),
+            published_at: notice_instants(parsed).0,
+            legacy,
+            sdk01,
+            procedure_key: procedure_key(parsed, sdk01),
+            ojs_self,
+            ojs_edges,
+            subtype: first_code(parsed, SUBTYPE_FIELD),
+        }
+    }
 }
 
 /// Fixed cross-source precedence for the supersession tiebreak (ADR-0003). On
@@ -746,7 +859,7 @@ fn source_rank(source: &str) -> u8 {
 /// The Source a merged Tender is labelled by. ADR-0003 puts publication
 /// identity on the TED side, so a procedure present on both Sources is a TED
 /// Tender; a Source-only procedure keeps its own.
-fn primary_source(chain: &[NoticeState]) -> String {
+fn primary_source(chain: &[Ident]) -> String {
     if chain.iter().any(|s| s.source == "ted") {
         "ted".to_owned()
     } else {
@@ -812,7 +925,7 @@ impl UnionFind {
 
 /// Resolve the chain: each version is the notice's own values laid over the
 /// previous version's, per field — except results, which are *additive*.
-fn fold(chain: &[NoticeState]) -> Vec<TenderVersion> {
+fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
     let mut versions: Vec<TenderVersion> = Vec::with_capacity(chain.len());
     for state in chain {
         let previous = versions.last();
