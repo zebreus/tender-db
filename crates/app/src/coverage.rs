@@ -116,20 +116,25 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: boo
     // (actionable = 0 reads as "the guarantee holds"), and its reason-keyed
     // queries are indexed (issue 37), so it lands early and cheap.
     publish(cell, "quarantine", measure_quarantine(db).await, |d, v| d.quarantine = Some(v));
-    publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
+    // Award-linkage is an indexed `EXISTS` per era (issue 38) — bounded work, so
+    // it too keeps the fast cadence.
     publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
-    // Coverage grid and import funnel share the one notices scan (the heaviest
-    // read) — a full `GROUP BY` over every notice row, minutes at backfill scale.
-    // That scan holds a live reader snapshot for its whole duration, which pins
-    // the WAL; while a write-heavy job runs, the package-boundary TRUNCATE (issue
-    // 42) needs reader-free windows to reclaim, and a pinned snapshot blocks it —
-    // the WAL grew to 70 GB in the field. So skip it while such a job is active
-    // and keep the last measured grid (stale-while-revalidate): coverage barely
-    // moves within one job, it re-measures in the idle gap after, and the cheap
-    // sections above kept their per-60s cadence throughout (issue 53).
+
+    // Everything below is a table-proportional scan that holds a live reader
+    // snapshot for its whole duration, pinning the WAL. While a write-heavy job
+    // runs, the package/batch TRUNCATE (issue 42) needs reader-free windows to
+    // reclaim, and a pinned snapshot blocks it — the WAL grew to 70 GB in the
+    // field (issue 53). So skip these while such a job is active and keep the last
+    // measured values (stale-while-revalidate): they barely move within one job,
+    // re-measure in the idle gap after, and the cheap indexed sections above kept
+    // their per-60s cadence throughout. `counts` is a full `COUNT(*)` over every
+    // canonical table — trivial pre-projection, but a heavy scan while the
+    // projection grows those tables; `coverage`/`pipeline` share the one full
+    // `notices` `GROUP BY`, the heaviest read.
     if heavy_write_active {
         return;
     }
+    publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
     publish(cell, "coverage", measure_coverage_pipeline(db, now).await, |d, (coverage, pipeline)| {
         d.coverage = Some(coverage);
         d.pipeline = Some(pipeline);
@@ -409,13 +414,15 @@ mod tests {
     }
 
     /// Issue 53: while a write-heavy job holds the WAL, the refresher must NOT run
-    /// the coverage scan — a live reader snapshot held across that multi-minute
-    /// full-`notices` read pins the WAL and blocks the package-boundary TRUNCATE
-    /// (store::checkpoint proves a pinned snapshot defeats reclaim), which grew
-    /// the log to 70 GB. The cheap sections still refresh, and a previously
-    /// measured coverage grid is kept (stale-while-revalidate), never blanked.
+    /// its table-proportional scans — `coverage` (a full `notices` GROUP BY) and
+    /// `counts` (a full `COUNT(*)` per canonical table, heavy once the projection
+    /// grows them). A live reader snapshot held across such a scan pins the WAL
+    /// and blocks the package/batch TRUNCATE (store::checkpoint proves a pinned
+    /// snapshot defeats reclaim), which grew the log to 70 GB. The cheap indexed
+    /// sections still refresh, and a previously measured value is kept
+    /// (stale-while-revalidate), never blanked.
     #[tokio::test]
-    async fn a_heavy_write_job_skips_the_coverage_scan_but_keeps_the_cheap_sections() {
+    async fn a_heavy_write_job_skips_the_scanning_sections_but_keeps_the_indexed_ones() {
         let path = format!("/tmp/tender-db-refresh-heavy-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
@@ -432,19 +439,22 @@ mod tests {
         refresh_into(&db, &cell, true).await;
         {
             let d = cell.read().unwrap();
-            assert!(d.system.is_some(), "system still refreshes while a job runs");
-            assert!(d.counts.is_some(), "counts still refreshes");
-            assert!(d.quarantine.is_some(), "quarantine still refreshes");
+            assert!(d.system.is_some(), "system (indexed) still refreshes while a job runs");
+            assert!(d.quarantine.is_some(), "quarantine (indexed) still refreshes");
+            assert!(d.award_linkage.is_some(), "award-linkage (indexed) still refreshes");
+            assert!(d.counts.is_some(), "counts keeps its last value (gated, stale-while-revalidate)");
             assert!(d.coverage.is_some(), "the last coverage grid is kept, not blanked");
         }
 
-        // And on a fresh snapshot (nothing measured yet) a heavy pass leaves
-        // coverage unmeasured rather than running the scan.
+        // And on a fresh snapshot (nothing measured yet) a heavy pass leaves the
+        // scanning sections unmeasured rather than running them.
         let fresh = RwLock::new(Dashboard::default());
         refresh_into(&db, &fresh, true).await;
         {
             let f = fresh.read().unwrap();
-            assert!(f.system.is_some(), "cheap sections land");
+            assert!(f.system.is_some(), "cheap indexed sections land");
+            assert!(f.quarantine.is_some(), "quarantine lands");
+            assert!(f.counts.is_none(), "the heavy counts scan never ran while a job is active");
             assert!(f.coverage.is_none(), "the heavy coverage scan never ran while a job is active");
         }
 
