@@ -418,6 +418,79 @@ async fn the_filters_narrow_the_same_way_on_every_collection() {
     assert!(!items(&server.get(&format!("/v1/lots?tender={id}")).await).is_empty());
 }
 
+/// Issue 49: the ids a tender detail hands out — `caused_by_notice_id` and
+/// `parties[].organization_id` — must be fetchable, so the ADR-0001 chain does
+/// not dead-end at the API.
+#[tokio::test]
+async fn advertised_entities_are_fetchable_by_id() {
+    let server = Server::start("by_id").await;
+    server.ingest_chain().await;
+
+    let tender_id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{tender_id}")).await;
+
+    // A notice id from the version chain resolves to that notice.
+    let notice_id = detail["versions"].as_array().expect("versions")[0]["caused_by_notice_id"]
+        .as_i64()
+        .expect("caused_by_notice_id");
+    let notice = server.get(&format!("/v1/notices/{notice_id}")).await;
+    assert_eq!(notice["id"].as_i64(), Some(notice_id));
+    assert!(notice["profile"].is_string(), "the per-id notice carries the list shape");
+
+    // An organization id from parties resolves to that organization.
+    let org_id = detail["parties"]
+        .as_array()
+        .expect("parties")
+        .iter()
+        .find_map(|p| p["organization_id"].as_i64())
+        .expect("a party organization");
+    let org = server.get(&format!("/v1/organizations/{org_id}")).await;
+    assert_eq!(org["id"].as_i64(), Some(org_id));
+    assert!(org["name"].is_string());
+
+    // A missing id is a JSON 404 envelope, never the HTML dashboard.
+    assert_eq!(server.status("/v1/notices/99999999").await, 404);
+    assert_eq!(server.status("/v1/organizations/99999999").await, 404);
+    let missing = server.get_allow_error("/v1/organizations/99999999").await;
+    assert_eq!(missing["error"]["status"].as_u64(), Some(404));
+}
+
+/// Issue 49: `?tender=` lists exactly a tender's notices rather than silently
+/// ignoring the filter and dumping unrelated ones.
+#[tokio::test]
+async fn notices_can_be_scoped_to_a_tender() {
+    let server = Server::start("notices_of_tender").await;
+    server.ingest_chain().await;
+    let tender_id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+
+    let scoped = server.get(&format!("/v1/notices?tender={tender_id}")).await;
+    let scoped_ids: Vec<i64> =
+        items(&scoped).iter().map(|n| n["id"].as_i64().expect("notice id")).collect();
+    assert_eq!(scoped_ids.len(), 4, "the four notices that built this tender");
+    // Every scoped notice is a real notice of the collection.
+    let all_ids: Vec<i64> = items(&server.get("/v1/notices").await)
+        .iter()
+        .map(|n| n["id"].as_i64().unwrap())
+        .collect();
+    assert!(scoped_ids.iter().all(|id| all_ids.contains(id)));
+    // An unknown tender is a 404, not an unfiltered dump.
+    assert_eq!(server.status("/v1/notices?tender=99999999").await, 404);
+}
+
+/// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
+/// mistakes "everything matched" for "my typo'd filter matched".
+#[tokio::test]
+async fn unknown_query_params_are_rejected() {
+    let server = Server::start("unknown_params").await;
+    server.ingest_chain().await;
+
+    // `cvp` is a typo for `cpv`: it must 400, not return every tender.
+    assert_eq!(server.status("/v1/tenders?cvp=72").await, 400);
+    assert_eq!(server.status("/v1/tenders?nonsense=1").await, 400);
+    // The correctly-spelled filter still works.
+    assert_eq!(server.status("/v1/tenders?cpv=45").await, 200);
+}
+
 #[tokio::test]
 async fn pagination_walks_the_whole_collection_exactly_once() {
     let server = Server::start("pages").await;

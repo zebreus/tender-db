@@ -102,7 +102,9 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/tenders/{id}", get(tender))
         .route("/v1/lots", get(lots))
         .route("/v1/organizations", get(organizations))
+        .route("/v1/organizations/{id}", get(organization))
         .route("/v1/notices", get(notices))
+        .route("/v1/notices/{id}", get(notice))
         .route("/v1/changes", get(changes))
         .route("/v1/me", get(me))
         .merge(sql::routes())
@@ -231,7 +233,7 @@ type ApiResult = Result<Response, ApiError>;
 /// shared across collections by design (docs/architecture.md — a subscription
 /// *is* a collection query plus its filters).
 #[derive(Debug, Default, Deserialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct Params {
     source: Option<String>,
     country: Option<String>,
@@ -410,6 +412,14 @@ async fn organizations(
 }
 
 async fn notices(State(s): State<AppState>, h: HeaderMap, Query(p): Query<Params>) -> ApiResult {
+    // `?tender=` lists the Notices that caused a Tender's versions — the
+    // ADR-0001 chain, walkable from a detail's `caused_by_notice_id`. The store
+    // has no notice→tender predicate, so this is answered in the app from the
+    // tender detail rather than silently ignored (issue 49). A lookup, not a
+    // subscription, so it is JSON regardless of Accept.
+    if let Some(tender_id) = p.tender {
+        return tender_notices(&s, tender_id).await;
+    }
     collection(Collection::Notices, s, h, p).await
 }
 
@@ -419,6 +429,52 @@ async fn tender(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult
         Some(detail) => Ok(axum::Json(json::detail(&detail)).into_response()),
         None => Err(ApiError::not_found("tender")),
     }
+}
+
+/// `GET /v1/notices/{id}` — one Notice by id, the counterpart of the
+/// `caused_by_notice_id` a tender detail hands out (issue 49).
+async fn notice(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult {
+    let reader = state.readers.get().await?;
+    match read::notices(&reader, &Filter::default(), Scope::At { id, seq: 0 }).await?.into_iter().next()
+    {
+        Some(row) => Ok(axum::Json(json::notice(&row)).into_response()),
+        None => Err(ApiError::not_found("notice")),
+    }
+}
+
+/// `GET /v1/organizations/{id}` — one Organization by id, the counterpart of a
+/// tender detail's `parties[].organization_id` (issue 49).
+async fn organization(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult {
+    let reader = state.readers.get().await?;
+    match read::organizations(&reader, &Filter::default(), Scope::At { id, seq: 0 })
+        .await?
+        .into_iter()
+        .next()
+    {
+        Some(row) => Ok(axum::Json(json::organization(&row)).into_response()),
+        None => Err(ApiError::not_found("organization")),
+    }
+}
+
+/// The Notices behind a Tender's version chain, in id order. `404` if the
+/// Tender itself is unknown, so `?tender=` never masks a bad id as "no notices".
+async fn tender_notices(state: &AppState, tender_id: i64) -> ApiResult {
+    let reader = state.readers.get().await?;
+    let Some(detail) = read::tender_detail(&reader, tender_id).await? else {
+        return Err(ApiError::not_found("tender"));
+    };
+    let mut ids: Vec<i64> = detail.versions.iter().map(|v| v.caused_by_notice_id).collect();
+    ids.sort_unstable();
+    ids.dedup();
+    let mut items = Vec::new();
+    for id in ids {
+        if let Some(row) =
+            read::notices(&reader, &Filter::default(), Scope::At { id, seq: 0 }).await?.into_iter().next()
+        {
+            items.push(json::notice(&row));
+        }
+    }
+    Ok(axum::Json(json::page(items, None)).into_response())
 }
 
 /// The poll half of the change feed. Same events, same cursor and same
@@ -463,8 +519,8 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
         "endpoints": [
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
-            "/v1/notices", "/v1/changes", "/v1/me", "/v1/sql", "/v1/sql/schema",
-            "/v1/webhooks",
+            "/v1/organizations/{id}", "/v1/notices", "/v1/notices/{id}",
+            "/v1/changes", "/v1/me", "/v1/sql", "/v1/sql/schema", "/v1/webhooks",
         ],
         "live": "send Accept: text/event-stream to any collection endpoint",
     }))

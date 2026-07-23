@@ -120,7 +120,9 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices</td><td>Raw import records. No canonical change rows, so an SSE subscription here is a snapshot then silence.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}</td><td>One Notice by id — the counterpart of a version's <code>caused_by_notice_id</code>.</td></tr>
 </table>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?limit=2"</code></pre>
 <p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false}</code>.</p>
@@ -138,10 +140,13 @@ collection query plus its filters:</p>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline).</td></tr>
   <tr><td class="ep">min_value / max_value</td><td>Value in <strong>cents</strong>.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag.</td></tr>
-  <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id.</td></tr>
+  <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
   <tr><td class="ep">limit</td><td>Page size, default 100, max 500.</td></tr>
   <tr><td class="ep">cursor</td><td>Opaque page position — pass back the previous page's <code>next_cursor</code>.</td></tr>
 </table>
+<p>An unknown or misspelled query parameter is rejected with <code>400</code>
+rather than silently ignored, so a typo (<code>cvp</code> for <code>cpv</code>)
+never reads as "everything matched".</p>
 <p>Paginate by following <code>next_cursor</code> until <code>more</code> is false:</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DEU&amp;status=open&amp;limit=50"
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DEU&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
