@@ -187,6 +187,7 @@ pub fn queries() -> Vec<(String, String)> {
 pub fn era_of(profile: &str) -> &'static str {
     match profile {
         "text" => "text 1993–2010",
+        "internal-ojs" => "INTERNAL_OJS 2008",
         "ted-export-r208" => "TED_EXPORT r2.0.8",
         "ted-export-r209" => "TED_EXPORT r2.0.9",
         "eforms:eforms-sdk-0.1" => "DÖE sdk-0.1 island",
@@ -203,6 +204,7 @@ pub fn era_of(profile: &str) -> &'static str {
 fn display_era(profile: &str) -> String {
     match profile {
         "text" => "text 1993–2010".to_owned(),
+        "internal-ojs" => "INTERNAL_OJS 2008".to_owned(),
         "ted-export-r208" => "TED_EXPORT r2.0.8".to_owned(),
         "ted-export-r209" => "TED_EXPORT r2.0.9".to_owned(),
         "eforms:eforms-sdk-0.1" => "DÖE sdk-0.1 island".to_owned(),
@@ -537,6 +539,7 @@ mod tests {
     #[test]
     fn era_labels_cover_every_profile_family() {
         assert_eq!(era_of("text"), "text 1993–2010");
+        assert_eq!(era_of("internal-ojs"), "INTERNAL_OJS 2008");
         assert_eq!(era_of("ted-export-r208"), "TED_EXPORT r2.0.8");
         assert_eq!(era_of("ted-export-r209"), "TED_EXPORT r2.0.9");
         assert_eq!(era_of("eforms:eforms-sdk-1.13"), "eForms EU");

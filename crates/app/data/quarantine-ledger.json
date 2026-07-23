@@ -33,5 +33,14 @@
     "diagnosis": "The 2008 OPOCE export is real S-series notices behind a DTD (INTERNAL_OJS R2.0.5) that roxmltree refused wholesale; the DTD is now safely stripped and the era is reclassified from a misleading parse error to a tracked unmapped-era (its parser is issue 41).",
     "fix": "issue 36",
     "resolved": "2026-07-21"
+  },
+  {
+    "category": "2008 OPOCE INTERNAL_OJS (parser)",
+    "reason": "unmapped-era",
+    "profile": "internal-ojs",
+    "detail_like": "%INTERNAL_OJS R2.0.5%",
+    "diagnosis": "The INTERNAL_OJS R2.0.5 era (~28k opoce-only S-series notices, the whole 2008 coverage gap) had no mapping profile and was held as a tracked unmapped-era. It is now parsed by the internal-ojs profile: a new envelope reader for the BIB_INFO/BIB_DOC_S coded backbone plus an explicit _SUM alias shim that reuses the r209 walker for the 85%-shared form body. Reprocessing the bucket reclaims the era into notices.",
+    "fix": "issue 41",
+    "resolved": "2026-07-23"
   }
 ]

@@ -126,18 +126,7 @@ pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> D
     if local == "TED_EXPORT" {
         one(dispatch_ted_export(member_path, bytes, &root, ns))
     } else if local == "INTERNAL_OJS" {
-        // The 2008 OPOCE internal export (DTD R2.0.5): real S-series notices in a
-        // vocabulary no profile maps yet (~28k, the whole 2008 verify gap). Held
-        // as an honest, tracked "unmapped era" — not a misleading "DTD detected"
-        // parse error, and not "unknown-root" (which reads as benign non-notice).
-        // The parser is issue 41; this reclassification is issue 36's closure.
-        one(quarantine(
-            member_path,
-            bytes,
-            Some("internal-ojs".into()),
-            "unmapped-era",
-            Some("INTERNAL_OJS R2.0.5 (2008 OPOCE era) — parser tracked in issue 41".into()),
-        ))
+        dispatch_internal_ojs(member_path, bytes, &root)
     } else if EFORMS_ROOT_NS.iter().any(|family| ns.starts_with(family)) {
         one(dispatch_eforms(member_path, bytes, &doc))
     } else {
@@ -156,7 +145,7 @@ pub fn dispatch_with(member_path: &str, bytes: &[u8], ctx: &PackageContext) -> D
 /// *undefined* entity reference, which roxmltree then refuses. So stripping can
 /// never enable an XXE fetch or a billion-laughs expansion — it only turns a
 /// blanket "DTD present" refusal into a normal parse-or-refuse of the body.
-fn strip_doctype(xml: &str) -> Cow<'_, str> {
+pub(crate) fn strip_doctype(xml: &str) -> Cow<'_, str> {
     let Some(start) = xml.find("<!DOCTYPE") else { return Cow::Borrowed(xml) };
     let rest = &xml[start..];
     let first_gt = rest.find('>');
@@ -172,6 +161,54 @@ fn strip_doctype(xml: &str) -> Cow<'_, str> {
     // No closing `>` at all: leave it for roxmltree to reject as malformed.
     let Some(end) = end else { return Cow::Borrowed(xml) };
     Cow::Owned(format!("{}{}", &xml[..start], &xml[start + end + 1..]))
+}
+
+/// The 2008 OPOCE internal export (DTD R2.0.5): real S-series notices, one file
+/// per language for ~28k notices — the whole 2008 verify gap (issue 41). The
+/// per-language siblings are the same notice; EN is ingested and the rest are
+/// skipped as documented duplicates, the text era's language policy. Identity is
+/// the member's `<doc>_<year>` stem in `<doc>-<year>` form, the same key the
+/// text channel uses for 2008 (issue 36 confirmed no text twin).
+fn dispatch_internal_ojs(member_path: &str, bytes: &[u8], root: &roxmltree::Node<'_, '_>) -> Disposition {
+    let Some((publication_id, lang)) = internal_ojs_identity(member_path) else {
+        return one(quarantine(
+            member_path,
+            bytes,
+            Some(crate::internal_ojs::PROFILE.into()),
+            "missing-publication-id",
+            None,
+        ));
+    };
+    if !lang.eq_ignore_ascii_case("en") {
+        return Disposition::Skipped("internal-ojs-non-english");
+    }
+    // R2.0.5 is fixed for the era by the DTD; the form root also carries it as a
+    // VERSION attribute, which is the honest per-payload reading.
+    let declared_version =
+        root.descendants().find_map(|n| n.attribute("VERSION")).map(str::to_owned);
+    one(Record::Notice(NoticeRecord {
+        publication_id,
+        content_hash: sha256_hex(bytes),
+        profile: crate::internal_ojs::PROFILE.into(),
+        declared_version,
+        member_path: member_path.into(),
+        span: None,
+    }))
+}
+
+/// `…/114238_2008.en` → (`114238-2008`, `en`): the publication id in
+/// `<doc>-<year>` form and the file's language (its extension).
+fn internal_ojs_identity(member_path: &str) -> Option<(String, String)> {
+    let name = member_path.rsplit(['!', '/']).next()?;
+    let (stem, lang) = name.rsplit_once('.')?;
+    let (number, year) = stem.split_once('_')?;
+    let ok = !number.is_empty()
+        && number.bytes().all(|b| b.is_ascii_digit())
+        && year.len() == 4
+        && year.bytes().all(|b| b.is_ascii_digit())
+        && lang.len() == 2
+        && lang.bytes().all(|b| b.is_ascii_alphabetic());
+    ok.then(|| (format!("{number}-{year}"), lang.to_owned()))
 }
 
 /// Legacy TED_EXPORT XML (2011–2025). The declared version lives in one of
@@ -490,20 +527,29 @@ mod tests {
     }
 
     #[test]
-    fn internal_ojs_is_held_as_a_tracked_unmapped_era() {
-        // A real 2008 OPOCE DTD notice (issue 36): the DTD is stripped, the body
-        // parses, and its INTERNAL_OJS root routes to the honest tracked bucket —
-        // not "unparsable-xml" (a false parse error) nor "unknown-root" (benign).
+    fn internal_ojs_english_member_dispatches_as_a_notice() {
+        // A real 2008 OPOCE DTD notice (issue 41): the DTD is stripped, the body
+        // parses, and its INTERNAL_OJS root now routes to a Notice of the
+        // `internal-ojs` profile — identity is the member's <doc>-<year> stem.
         let bytes = include_bytes!("../tests/fixtures/internal_ojs/114238_2008.en");
         let Disposition::Records(records) =
             dispatch("20080502_2008085.tar.gz/114238/opoce-input/114238_2008.en", bytes)
         else {
             panic!("INTERNAL_OJS member was not dispatched to a record");
         };
-        let [Record::Quarantine(q)] = &records[..] else { panic!("expected one quarantine") };
-        assert_eq!(q.reason, "unmapped-era");
-        assert_eq!(q.profile.as_deref(), Some("internal-ojs"));
-        assert!(q.detail.as_deref().unwrap().contains("issue 41"));
+        let [Record::Notice(n)] = &records[..] else { panic!("expected one notice") };
+        assert_eq!(n.publication_id, "114238-2008");
+        assert_eq!(n.profile, "internal-ojs");
+        assert_eq!(n.declared_version.as_deref(), None); // the EEIG form root has no VERSION
+    }
+
+    #[test]
+    fn internal_ojs_non_english_siblings_are_skipped() {
+        // The ~22 per-language siblings are the same notice; only EN is ingested
+        // (the text-era language policy), the rest are documented duplicate skips.
+        let bytes = include_bytes!("../tests/fixtures/internal_ojs/114238_2008.en");
+        let path = "20080502_2008085.tar.gz/114238/opoce-input/114238_2008.fr";
+        assert!(matches!(dispatch(path, bytes), Disposition::Skipped("internal-ojs-non-english")));
     }
 
     #[test]

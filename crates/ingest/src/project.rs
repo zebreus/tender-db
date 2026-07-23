@@ -185,6 +185,7 @@ const DISPATCH_DATE_FIELDS: &[&str] = &[
     "SDK01-IssueDate",          // DÖE sdk-0.1 issue date
     "TED-DS_DATE_DISPATCH",     // legacy dispatch (CODIF_DATA)
     "TED-DATE_DISPATCH_NOTICE", // legacy dispatch (form body)
+    "TED-DATE_DISP",            // INTERNAL_OJS 2008 dispatch (BIB_DOC_S)
     "TXT-DS",                   // text-era DS: dispatch
 ];
 
