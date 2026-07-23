@@ -95,7 +95,7 @@ const PER_HOUR: u32 = 300;
 /// re-opened whenever a private table was added. Each entry is public business
 /// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
 /// registry are deliberately absent (see the note below the list).
-const ALLOWED: [&str; 38] = [
+const ALLOWED: [&str; 45] = [
     // Current-state views — the analyst entry points (docs/architecture.md).
     "v_tenders",         // current version of each Tender
     "v_lots",            // current Lots
@@ -103,6 +103,14 @@ const ALLOWED: [&str; 38] = [
     "v_lot_results",     // current award decisions with their winner
     "v_tender_current",  // the (tender_id, seq) current-version pointer
     "notice_withheld_fields", // fields a notice marked withheld — public metadata
+    // Analyst convenience views (issue 50) — the common questions, one view away.
+    "v_tender_buyers",         // buyers of each current Tender
+    "v_awards",                // current award decisions with winner + buyer
+    "v_tender_classifications", // current CPV/NUTS codes
+    "v_tender_amounts",        // current money amounts
+    "v_tender_dates",          // current dates (epoch seconds + offset)
+    "v_tender_notices",        // the notices that caused each Tender version
+    "v_fetches",               // path-free fetch provenance (issue 45)
     // Canonical current tables (ADR-0001): the projected Tender/Lot/Org layer.
     "tenders",
     "tender_versions",
@@ -365,6 +373,16 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("changes", "The change-cursor log behind /v1/changes: ingestion order, never renumbered."),
     ("tender_version_parties", "Organizations linked to a Tender version by role (see role)."),
     ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
+    // Analyst convenience views (issue 50).
+    ("v_tender_buyers", "Buyers of each current Tender (one row per buyer party)."),
+    ("v_awards", "Current award decisions with their winner and a representative buyer — \
+      keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count)."),
+    ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme)."),
+    ("v_tender_amounts", "Money amounts of each current Tender (field, cents, currency)."),
+    ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes)."),
+    ("v_tender_notices", "The notices that caused each Tender version — the ADR-0001 chain, \
+      across all versions."),
+    ("v_fetches", "Path-free fetch provenance: which source package/period a notice came from."),
 ];
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of

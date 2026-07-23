@@ -1,6 +1,6 @@
 # 50 — SQL analyst surface: time format, schema noise, missing views
 
-Status: needs-verification (app-side); analyst VIEWS deferred (store)
+Status: needs-verification (complete — app-side + store views)
 Severity: MEDIUM (the "easy data inspection" goal clause)
 
 Found by usability audit (2026-07-21). The /v1/sql experience has
@@ -52,9 +52,21 @@ App-side parts done (sql.rs + docs.rs):
   the full history).
 Test: `the_schema_documents_time_format_and_enums`.
 
-DEFERRED — Point 3 (analyst VIEWS: buyers-per-tender, awards-with-buyer,
-classifications, dates, amounts, tender's-notices), plus a path-free `v_fetches`
-provenance view (from issue 45's fetches exclusion — expose source/package/
-period/sha256, NOT the filesystem `path`). All store-side
-(crates/store/canonical.rs); build them cheap (indexed / off the current-version
-pointer), not another full scan (issue-20/25 pathology).
+Point 3 — DONE (store lane cleared after wal-fix landed). Added 7 views to
+canonical.rs, all off the maintained `current_seq` pointer (never MAX(seq)):
+v_tender_buyers, v_awards (winner + representative buyer, no fan-out),
+v_tender_classifications, v_tender_amounts, v_tender_dates, v_tender_notices,
+and the path-free v_fetches (source/kind/period/url/sha256/bytes/fetched_at,
+NOT `path`). All allow-listed in /v1/sql + noted in the schema; v_fetches
+re-added to ALLOWED (issue 45). Added tender_version_parties_version index
+(parties was the lone satellite lacking a (tender_id, seq) index).
+
+turso-planner finding (verified via EXPLAIN QUERY PLAN): turso does NOT push a
+WHERE predicate through a view — a filtered `SELECT * FROM v_tender_buyers
+WHERE tender_id=?` materialises the view and scans the satellite, EXACTLY like
+the pre-existing v_tenders/v_lots. So the "cheap" guarantee these deliver is the
+one that matters: no MAX(seq) aggregation (the issue-25 pathology) — they read
+current_seq, same as v_tenders. A filtered scan is bounded by the 10s SQL cap on
+the isolated runtime (issue 17), unlike the dashboard path issue-25 fixed. The
+_version indexes make the seek reachable once turso has row stats (ANALYZE).
+Tests: the_analyst_views_answer (e2e), analyst_views_read_the_current_pointer_not_a_max_aggregation.

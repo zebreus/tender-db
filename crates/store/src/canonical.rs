@@ -187,6 +187,14 @@ pub(crate) const SCHEMA: &str = "
             REFERENCES organization_mentions(notice_id, section_id)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_parties_org ON tender_version_parties(organization_id);
+    -- The by-version index its siblings (texts/amounts/dates/classifications) all
+    -- carry: parties was the lone satellite without one. It lets a (tender_id,
+    -- seq) lookup — the analyst views' access pattern — seek rather than scan once
+    -- the planner has row stats. Idempotent. (turso does not push a predicate
+    -- through a view, so an unanalysed DB still materialises v_tender_buyers, like
+    -- every v_* view; the index is what makes the seek reachable on real data.)
+    CREATE INDEX IF NOT EXISTS tender_version_parties_version
+        ON tender_version_parties(tender_id, seq);
 
     -- A canonical Organization profile. `identifier` is the normalised official
     -- id that merged its mentions; a profile without one is `provisional` — it
@@ -412,6 +420,87 @@ pub(crate) const SCHEMA: &str = "
       LEFT JOIN tender_version_result_winners w
         ON w.tender_id = r.tender_id AND w.seq = c.seq AND w.lot_result_id = r.id
       LEFT JOIN organizations o ON o.id = w.organization_id;
+
+    -- ----------------------------------------------------- analyst views
+    -- Convenience views for the common questions (issue 50), so an analyst does
+    -- not reverse-engineer the version satellites and magic role strings. Every
+    -- one drives off the v_tender_current pointer (or a PK/`_version` index), so
+    -- it stays O(matched) — never a fresh MAX(seq) or full scan (issue 25).
+
+    -- Buyers of each current Tender. Buyer roles are era-dependent ('buyer' or
+    -- 'Procedure-Buyer'), matched with LIKE; one row per buyer party. Joins
+    -- tenders directly on current_seq (like v_tenders) so a per-tender lookup
+    -- seeks parties by the version index instead of scanning (issue 25).
+    DROP VIEW IF EXISTS v_tender_buyers;
+    CREATE VIEW v_tender_buyers AS
+    SELECT t.id AS tender_id,
+           p.organization_id AS buyer_organization_id,
+           o.name            AS buyer_name,
+           o.country         AS buyer_country,
+           o.provisional     AS buyer_provisional
+      FROM tenders t
+      JOIN tender_version_parties p
+        ON p.tender_id = t.id AND p.seq = t.current_seq AND p.role LIKE '%uyer%'
+      JOIN organizations o ON o.id = p.organization_id
+     WHERE t.current_seq IS NOT NULL;
+
+    -- Current award decisions with their winner (from v_lot_results) plus a
+    -- representative buyer — a scalar lookup, so the view keeps v_lot_results'
+    -- one-row-per-winner grain and does not multiply awarded_cents by buyer count.
+    DROP VIEW IF EXISTS v_awards;
+    CREATE VIEW v_awards AS
+    SELECT r.tender_id, r.notice_id, r.result_key, r.lot_id, r.lot_key,
+           r.decision, r.reason, r.awarded_cents, r.awarded_currency,
+           r.winner_organization_id, r.winner_name,
+           (SELECT b.buyer_organization_id FROM v_tender_buyers b
+             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_organization_id,
+           (SELECT b.buyer_name FROM v_tender_buyers b
+             WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_name
+      FROM v_lot_results r;
+
+    -- CPV and NUTS codes of each current Tender (scheme in ('cpv','nuts')). Joins
+    -- tenders on current_seq directly so a per-tender lookup seeks the satellite's
+    -- `_version` index (issue 25); same shape for amounts and dates below.
+    DROP VIEW IF EXISTS v_tender_classifications;
+    CREATE VIEW v_tender_classifications AS
+    SELECT t.id AS tender_id, x.lot_id, x.field, x.scheme, x.code
+      FROM tenders t
+      JOIN tender_version_classifications x ON x.tender_id = t.id AND x.seq = t.current_seq
+     WHERE t.current_seq IS NOT NULL;
+
+    -- Money amounts of each current Tender (field names the amount; cents+currency).
+    DROP VIEW IF EXISTS v_tender_amounts;
+    CREATE VIEW v_tender_amounts AS
+    SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency
+      FROM tenders t
+      JOIN tender_version_amounts a ON a.tender_id = t.id AND a.seq = t.current_seq
+     WHERE t.current_seq IS NOT NULL;
+
+    -- Dates of each current Tender: utc_seconds is epoch seconds in the buyer's
+    -- own offset_minutes; has_time = 0 means the source gave a date only.
+    DROP VIEW IF EXISTS v_tender_dates;
+    CREATE VIEW v_tender_dates AS
+    SELECT t.id AS tender_id, d.lot_id, d.field, d.utc_seconds, d.offset_minutes, d.has_time
+      FROM tenders t
+      JOIN tender_version_dates d ON d.tender_id = t.id AND d.seq = t.current_seq
+     WHERE t.current_seq IS NOT NULL;
+
+    -- The Notices that caused each Tender version — the ADR-0001 chain as a join,
+    -- across all versions (not just current), so the whole history is reachable.
+    DROP VIEW IF EXISTS v_tender_notices;
+    CREATE VIEW v_tender_notices AS
+    SELECT v.tender_id, v.seq, v.caused_by_notice_id AS notice_id,
+           v.notice_subtype, v.published_at,
+           n.source, n.publication_id, n.profile, n.parse_state
+      FROM tender_versions v
+      JOIN notices n ON n.id = v.caused_by_notice_id;
+
+    -- Path-free fetch provenance (issue 45): which source package/period a notice
+    -- came from, without the raw-fetch registry's server filesystem `path`.
+    DROP VIEW IF EXISTS v_fetches;
+    CREATE VIEW v_fetches AS
+    SELECT id, source, kind, period, url, sha256, bytes, fetched_at
+      FROM fetches;
 ";
 
 /// How many Tenders (or Organization mentions) a single projection write

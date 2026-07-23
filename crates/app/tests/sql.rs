@@ -382,6 +382,48 @@ async fn a_real_analytical_query_answers() {
     assert_eq!(body["truncated"], Value::Bool(false));
 }
 
+/// Issue 50: the analyst convenience views answer the common questions and are
+/// queryable through the allow-list; v_fetches surfaces provenance without the
+/// filesystem path.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_analyst_views_answer() {
+    let server = Server::start("analyst_views").await;
+    server.ingest_chain().await;
+
+    for view in [
+        "v_tender_buyers",
+        "v_awards",
+        "v_tender_classifications",
+        "v_tender_amounts",
+        "v_tender_dates",
+        "v_tender_notices",
+        "v_fetches",
+    ] {
+        let status = server.sql(&format!("SELECT * FROM {view} LIMIT 5")).await.status();
+        assert_eq!(status, 200, "{view} must be queryable through the allow-list");
+    }
+
+    // The chain publishes a buyer, CPV codes and causing notices — the views see them.
+    let count = |v: &Value| v["rows"][0][0].as_i64().unwrap();
+    let buyers: Value = server.sql("SELECT count(*) FROM v_tender_buyers").await.json().await.unwrap();
+    assert!(count(&buyers) >= 1, "the chain has a buyer");
+    let cpv: Value = server
+        .sql("SELECT count(*) FROM v_tender_classifications WHERE scheme = 'cpv'")
+        .await
+        .json()
+        .await
+        .unwrap();
+    assert!(count(&cpv) >= 1, "the chain classifies by CPV");
+    let notices: Value = server.sql("SELECT count(*) FROM v_tender_notices").await.json().await.unwrap();
+    assert!(count(&notices) >= 1, "the tender's versions name their causing notices");
+
+    // v_fetches exposes provenance but never the server filesystem path (issue 45).
+    let fetches: Value = server.sql("SELECT * FROM v_fetches LIMIT 1").await.json().await.unwrap();
+    let cols: Vec<&str> = fetches["columns"].as_array().unwrap().iter().filter_map(|c| c.as_str()).collect();
+    assert!(!cols.contains(&"path"), "v_fetches must not expose the filesystem path: {cols:?}");
+    assert!(cols.contains(&"period"), "v_fetches surfaces source provenance: {cols:?}");
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn the_schema_endpoint_documents_the_public_surface() {
     let server = Server::start("schema").await;

@@ -1557,6 +1557,39 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+
+    /// Issue 50: the analyst views take the current version from the maintained
+    /// `current_seq` pointer, never a MAX(seq) GROUP BY over every version — the
+    /// issue-25 pathology. (turso does not push a predicate through a view, so
+    /// like the existing v_tenders/v_lots a filtered query materialises the view;
+    /// the guarantee that matters here is "no version aggregation/sort", which
+    /// holds regardless of the planner's join order or table stats.)
+    #[tokio::test]
+    async fn analyst_views_read_the_current_pointer_not_a_max_aggregation() {
+        let path = format!("/tmp/tender-db-eqp-buyers-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        for view in ["v_tender_buyers", "v_tender_classifications", "v_awards"] {
+            let mut rows = conn
+                .query(&format!("EXPLAIN QUERY PLAN SELECT * FROM {view} WHERE tender_id = 1"), ())
+                .await
+                .unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            // A MAX(seq) GROUP BY would show as an aggregation over a sorted temp
+            // b-tree; the current_seq pointer never does.
+            assert!(
+                !plan.to_uppercase().contains("TEMP B-TREE"),
+                "{view} must not sort/aggregate over versions — plan was:\n{plan}"
+            );
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 37: the resolution-ledger counts must seek the `quarantine_reason`
     /// index — `WHERE reason = ?` narrows to one (usually small) bucket before the
     /// `detail LIKE` filter runs, instead of scanning the whole ~1.2M-row table on

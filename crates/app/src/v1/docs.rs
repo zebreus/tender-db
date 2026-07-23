@@ -225,7 +225,11 @@ logs. Discover the queryable tables and views at
 <a href="/v1/sql/schema"><code class="ep">GET /v1/sql/schema</code></a> (public,
 no token); the main entry points are the current-state views
 <code>v_tenders</code>, <code>v_lots</code>, <code>v_lot_results</code> and
-<code>v_organizations</code>.</p>
+<code>v_organizations</code>. Convenience views answer the common questions
+directly — <code>v_tender_buyers</code>, <code>v_awards</code>,
+<code>v_tender_classifications</code>, <code>v_tender_amounts</code>,
+<code>v_tender_dates</code>, <code>v_tender_notices</code> — and
+<code>v_fetches</code> gives path-free source provenance.</p>
 <pre><code>curl -s -X POST https://tenders.zebreus.click/v1/sql \
   -H "Authorization: Bearer tdb_…" \
   --data 'SELECT source, count(*) FROM v_tenders GROUP BY source'</code></pre>
