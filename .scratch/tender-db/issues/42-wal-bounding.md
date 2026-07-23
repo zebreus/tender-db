@@ -31,6 +31,46 @@ multi-hour eForms package, for real added complexity (the process progress
 callback is a sync `FnMut` and cannot await a checkpoint). Revisit only if a
 dense package's on-disk WAL high-water becomes a disk-headroom problem.
 
+## Confirmed root cause & final fix (2026-07-23) — the SECOND pin
+
+Gating the refresher scans (above) closed the coverage-GROUP-BY pin but the WAL
+still ran away. A deployable pool-borrowed instrument (temporary; since stripped
+in 0eb1c69) pinned it to a single reader held persistently by the **store** pool
+while the WAL climbed. That reader was `store::Db::import_lag()`, called every
+60s by the dashboard's `measure_system` — the ONE section deliberately left
+UNGATED during heavy writes because it was believed to be cheap point-reads.
+
+The mislabel: `import_lag` ran `SELECT MAX(ingested_at) FROM notices`. There is
+no index on `ingested_at`, so `MAX()` over it is a **full table scan** of notices
+(7.5M rows in prod), not the "point read" the `measure_system` design comment
+claimed. A scan holds a live WAL read snapshot for its whole multi-second
+duration (~80ms at 40k rows → ~15s at prod scale), which pins the WAL and
+defeats the per-package TRUNCATE — the same spike mechanism as the refresher,
+from a different query. This is why the issue-53 full-gate alone didn't stop it:
+the pin had moved to the one reader the gate exempted.
+
+Fix (commit 4d023bb, deployed; landed clean on main as 0eb1c69): read the newest
+notice via the id PK — `SELECT ingested_at FROM notices ORDER BY id DESC LIMIT 1`.
+`ingested_at` is assigned at insert (`now_unix`) in id order, so it is monotonic
+with the autoincrement id: the id-newest row's `ingested_at` IS `MAX(ingested_at)`,
+but this reads exactly one row via the PK (O(1), ~300us vs ~80ms; measured ~260x
+cheaper). No scan, no long snapshot, no new index/migration, lag stays live.
+Regression test `import_lag_reads_the_newest_notice_in_o1_not_a_full_scan` (store
+lib) asserts both correctness (id-newest == max ingested_at) and that the read is
+dramatically cheaper than the scan it replaced (self-calibrating, not a brittle
+absolute threshold). The `measure_system` comment is corrected to state the O(1)
+invariant is load-bearing.
+
+Prod acceptance PASSED: WAL folds to 0 at every package boundary, store-pool
+borrowed drops, WAL sawtooths instead of climbing.
+
+**Lesson:** a "cheap point read" is an assumption about the query PLAN, not the
+SQL text. `MAX(col)` is O(1) only with an index on `col`; without one it is a
+full scan regardless of how it reads. Validate any "safe to run ungated / holds
+no long snapshot" claim against `EXPLAIN QUERY PLAN`, not against a comment — the
+`measure_system` comment asserted "no table-proportional scan" for a query that
+was exactly that, and the wrong comment cost multiple days of WAL runaway.
+
 Observed (run-driver, 2026-07-21 ~17:50): tender-db.db-wal at 13G and
 growing ~10G/47min during job 1's bulk parsing (47G main db, /data at
 51%, 98G headroom to the 70% guard). Nothing in the codebase
