@@ -2,10 +2,12 @@
 
 Status: ready-for-agent
 Severity: MEDIUM (daily-wall-clock optimization, not an outage)
-Blocked by: 57 must be validated in prod first — HOLD implementation until
-team-lead gives the go. The bounded streaming fix (issue 57, commit e4ffb8b /
-deployed 20767e8) ended the OOM emergency; this is the follow-up that makes the
-*daily* projection fast. Reproduce-first before implementing.
+Blocked by: 59 must be DEPLOYED and validated in prod first (team-lead, 2026-07-24)
+— this sits on 59's disk-backed plan substrate, so don't stack it on an
+unvalidated rewrite. The bounded streaming fix (57, e4ffb8b / deployed 20767e8)
+ended the OOM; 59 (8d7b3d9) made projection memory corpus-independent; this is the
+follow-up that makes the *daily* projection fast. Reproduce-first before
+implementing.
 
 ## Problem
 
