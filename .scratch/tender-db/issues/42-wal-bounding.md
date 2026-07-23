@@ -18,6 +18,19 @@ AND returns the space. Remaining watch: the project (job 5) write burst
 snapshot still spikes the WAL there, the interval lever is the source-
 side follow-up (noted in the issue body).
 
+Note (2026-07-23, issue 53): the refresher snapshot WAS the spike source —
+its 60s coverage GROUP-BY pinned the WAL nearly continuously at 7.5M rows
+(70G in the field). Fixed source-side (25607d4 + counts gate) by skipping the
+scanning sections while a process/project job runs, so reader-free windows
+exist for the boundary TRUNCATE. Intra-package checkpointing (checkpoint every
+N members, not just at package boundaries) was CONSIDERED and DEFERRED: once
+the reader pin is gone, turso's own PASSIVE autocheckpoint bounds the frame
+count mid-package (throughput is governed by frame count, not file size), and
+disk is not pressured — so it buys only on-disk shrink within a single
+multi-hour eForms package, for real added complexity (the process progress
+callback is a sync `FnMut` and cannot await a checkpoint). Revisit only if a
+dense package's on-disk WAL high-water becomes a disk-headroom problem.
+
 Observed (run-driver, 2026-07-21 ~17:50): tender-db.db-wal at 13G and
 growing ~10G/47min during job 1's bulk parsing (47G main db, /data at
 51%, 98G headroom to the 70% guard). Nothing in the codebase
