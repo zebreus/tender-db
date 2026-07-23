@@ -270,11 +270,61 @@ const APPLY_NOTICE_BATCH: usize = 20_000;
 /// often the cost shows.
 const CHECKPOINT_EVERY_BATCHES: usize = 4;
 
+/// How often Phase 1 logs a heartbeat. A full-corpus plan build streams millions
+/// of notices over many minutes; without a heartbeat the run looks dead from the
+/// outside, which made the issue-57 incident far harder to diagnose (issue 59).
+const PLAN_HEARTBEAT: u64 = 500_000;
+
+/// A projection progress event, for operability. The projection runs for many
+/// minutes on a full corpus, so it reports a live heartbeat in **both** phases —
+/// an operator (and the logs) can see it moving and roughly how far along, and
+/// tell "working" from "stuck". [`project`] logs these to stderr; a caller can
+/// observe them directly via [`project_with_progress`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Progress {
+    /// Phase 1: `notices` of `total` parsed notices planned so far.
+    Planning { notices: u64, total: u64 },
+    /// Phase 1 → 2 transition: the plan grouped into `tenders` (`islands` of them
+    /// single-notice).
+    Grouped { tenders: u64, islands: u64 },
+    /// Phase 2: `tenders` of `total` folded and applied so far.
+    Applying { tenders: u64, total: u64 },
+}
+
 /// The projection with an explicit Phase-2 batch size (notices per fold+apply
 /// batch). [`project`] uses [`APPLY_NOTICE_BATCH`]; tests drive tiny batches to
 /// prove the output is invariant under batching — i.e. that folding whole Tenders
 /// a batch at a time never splits a Tender's notices across a boundary (issue 57).
+/// Progress is logged to stderr; use [`project_with_progress`] to observe it.
 pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> turso::Result<Report> {
+    // Default sink: log heartbeats to stderr, Phase-1 throttled to PLAN_HEARTBEAT.
+    let mut last_plan_log = 0u64;
+    project_with_progress(db, rebuild, notice_batch, |p| match p {
+        Progress::Planning { notices, total } => {
+            if notices - last_plan_log >= PLAN_HEARTBEAT || notices == total {
+                eprintln!("[project] phase 1: {notices}/{total} notices planned");
+                last_plan_log = notices;
+            }
+        }
+        Progress::Grouped { tenders, islands } => {
+            eprintln!("[project] phase 2: folding {tenders} tenders ({islands} islands)");
+        }
+        Progress::Applying { tenders, total } => {
+            eprintln!("[project] phase 2: {tenders}/{total} tenders applied");
+        }
+    })
+    .await
+}
+
+/// The projection core, reporting progress through `on_progress` (called between
+/// awaits, so a cheap closure). See [`Progress`]; [`project_with_batch`] wraps
+/// this with a stderr-logging sink.
+pub async fn project_with_progress(
+    db: &Db,
+    rebuild: bool,
+    notice_batch: usize,
+    mut on_progress: impl FnMut(Progress),
+) -> turso::Result<Report> {
     if rebuild {
         db.clear_canonical().await?;
     }
@@ -291,6 +341,8 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
+    // The Phase-1 total, read once up front so the heartbeat can report a fraction.
+    let total = db.parsed_notice_count().await?;
     let mut resolver = db.mention_resolver().await?;
     let mut after_id = 0i64;
     let mut chunks = 0usize;
@@ -308,6 +360,8 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
         report.notices += rows.len() as u64;
         db.insert_plan(&rows).await?;
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
+        // Heartbeat so a many-minute plan build is visibly alive (issue 59).
+        on_progress(Progress::Planning { notices: report.notices, total });
         // Keep the WAL bounded through the plan build too (issue 42/59): the
         // plan-row inserts are a burst; truncate at the clean point between chunks.
         chunks += 1;
@@ -335,6 +389,7 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     report.tenders = tenders;
     report.islands = islands;
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+    on_progress(Progress::Grouped { tenders, islands });
     eprintln!("[project] group: {} tenders in {:.1}s", report.tenders, t1.elapsed().as_secs_f64());
 
     // Phase 2 — stream whole-Tender batches out of the plan (in fold order) and
@@ -344,11 +399,15 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     let t2 = std::time::Instant::now();
     let mut after = String::new();
     let mut batches_done = 0usize;
+    let mut tenders_done = 0u64;
     loop {
         let groups = db.next_plan_batch(&after, notice_batch).await?;
         let Some(last) = groups.last() else { break };
         after = last.group_key.clone();
+        tenders_done += groups.len() as u64;
         report.applied.add(apply_plan_batch(db, &groups, now).await?);
+        // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
+        on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
         batches_done += 1;
         if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
@@ -362,6 +421,15 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     // Don't leave the transient plan in the durable DB between runs (issue 59).
     db.clear_plan().await?;
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
+    eprintln!(
+        "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
+        report.notices,
+        report.tenders,
+        report.islands,
+        report.applied.versions_written,
+        report.applied.changes,
+        t0.elapsed().as_secs_f64()
+    );
     Ok(report)
 }
 

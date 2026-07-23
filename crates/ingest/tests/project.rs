@@ -1492,3 +1492,48 @@ async fn sdk01_uuid_folder_merges_with_ted_twin_but_non_uuid_stays_island() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------------------------- issue 59: progress heartbeat
+
+/// The projection reports a live heartbeat in BOTH phases (issue 59): a run over
+/// millions of notices takes many minutes, so silence must never be mistaken for
+/// a hang. Here a recording sink captures the events over a small corpus.
+#[tokio::test]
+async fn the_projection_reports_progress_in_both_phases() {
+    let (db, fetch_id, path) = scratch("progress").await;
+    for fixture in [
+        "eforms/brin-x01-00497689-2026.xml",
+        "eforms/pin-4-00496860-2026.xml",
+        "eforms/cn-16-00494343-2026.xml",
+    ] {
+        ingest(&db, fetch_id, fixture).await;
+    }
+
+    let mut events: Vec<project::Progress> = Vec::new();
+    project::project_with_progress(&db, false, 20_000, |p| events.push(p)).await.expect("project");
+
+    // Phase 1 planning heartbeat, ending at the full total.
+    let planning: Vec<_> =
+        events.iter().filter_map(|e| match e {
+            project::Progress::Planning { notices, total } => Some((*notices, *total)),
+            _ => None,
+        }).collect();
+    assert!(!planning.is_empty(), "Phase 1 emitted no planning heartbeat");
+    assert_eq!(planning.last().copied(), Some((3, 3)), "Phase 1 heartbeat reaches the full count");
+
+    // The phase transition, and a Phase-2 apply heartbeat reaching every Tender.
+    assert!(
+        events.iter().any(|e| matches!(e, project::Progress::Grouped { tenders: 3, .. })),
+        "no Grouped transition event"
+    );
+    let applied_max = events
+        .iter()
+        .filter_map(|e| match e {
+            project::Progress::Applying { tenders, .. } => Some(*tenders),
+            _ => None,
+        })
+        .max();
+    assert_eq!(applied_max, Some(3), "Phase 2 apply heartbeat reaches every Tender");
+
+    let _ = std::fs::remove_file(&path);
+}

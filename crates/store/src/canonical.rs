@@ -2208,6 +2208,15 @@ impl Db {
         })
     }
 
+    /// How many notices are parsed — the projection's Phase-1 total, read once up
+    /// front so it can log a progress fraction over a run that spans many minutes.
+    pub async fn parsed_notice_count(&self) -> turso::Result<u64> {
+        let conn = self.reader().await?;
+        let mut rows =
+            conn.query("SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0) as u64))
+    }
+
 }
 
 /// One entry of the change log.

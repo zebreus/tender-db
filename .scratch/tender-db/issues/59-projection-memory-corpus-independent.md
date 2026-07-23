@@ -108,6 +108,26 @@ issue-19 slowdown, so it should only be done if a benchmark shows it is needed.
 Recommendation: keep in RAM for now; note it as the next residual if strict
 corpus-independence is later required.
 
+## Operability requirement: progress logging in BOTH phases (team-lead, 2026-07-24)
+
+A full-corpus projection runs many minutes; Phase 1 streaming the plan was SILENT
+for 20-30 min, so from the outside it looked dead — that silence made the issue-57
+incident far harder to diagnose (Lennart flagged "does not show progress"). Not
+gold-plating; a real operability gap. Required:
+
+- Phase 1: a heartbeat on a cadence (every `PLAN_HEARTBEAT` = 500k notices, or
+  ~30s) — `[project] phase 1: <planned>/<total> notices planned` (total from a
+  cheap `COUNT` up front).
+- Phase 2: a per-batch heartbeat with a running fraction —
+  `[project] phase 2: <M>/<total> tenders applied`.
+- Clear phase-transition lines (plan / group / apply, with elapsed) and a final
+  completion summary (`[project] done: N notices → T tenders … in Xs`).
+- A smoke test that the heartbeat fires in both phases.
+
+Implemented via a `Progress` event + `project_with_progress` (mirrors
+`process.rs`'s `on_progress` hook); `project` logs to stderr, and the smoke test
+`the_projection_reports_progress_in_both_phases` observes the events directly.
+
 ## Reproduce first
 
 Extend `tests/project_memory.rs` to assert peak RSS is ~FLAT across two corpus
