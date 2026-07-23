@@ -180,6 +180,10 @@ pub struct TenderRow {
     pub currency: Option<String>,
     pub deadline: Option<Stamp>,
     pub lots: i64,
+    /// The version's CPV codes and NUTS (place) codes — echoed so a list row
+    /// shows why it matched a `cpv`/`country` filter (issue 49).
+    pub cpv: Vec<String>,
+    pub country: Vec<String>,
 }
 
 /// A Lot in its current (or a specific) version — the `/v1/lots` item.
@@ -452,7 +456,14 @@ pub async fn tenders(
                     {utc}, {offset}, {has_time},
                     (SELECT COUNT(*) FROM tender_version_lots l
                       WHERE l.tender_id = t.id AND l.seq = v.seq),
-                    v.dispatched_at
+                    v.dispatched_at,
+                    -- The version's CPV and NUTS codes, echoed so a list row
+                    -- shows why it matched a cpv/country filter (issue 49). Both
+                    -- seek by (tender_id, seq) on the classifications index.
+                    (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+                      WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
+                    (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+                      WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts')
                FROM tenders t
                JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
             currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
@@ -495,8 +506,18 @@ pub async fn tenders(
         currency: opt_text_of(row, 10),
         deadline: stamp(row, 11),
         lots: int(row, 14),
+        cpv: split_codes(opt_text_of(row, 16)),
+        country: split_codes(opt_text_of(row, 17)),
     })
     .await
+}
+
+/// A `group_concat` result — a comma-joined code list, or `None` when the
+/// version has no codes of that scheme — as a (possibly empty) `Vec`.
+fn split_codes(concat: Option<String>) -> Vec<String> {
+    concat
+        .map(|s| s.split(',').filter(|code| !code.is_empty()).map(str::to_owned).collect())
+        .unwrap_or_default()
 }
 
 /// One Tender's full current state: the version chain, the satellites, the

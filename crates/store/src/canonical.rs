@@ -163,6 +163,14 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_classifications_code
         ON tender_version_classifications(scheme, code);
+    -- The by-version index its siblings (texts/amounts/dates) already carry: the
+    -- /v1/tenders list echoes a row's CPV+NUTS codes with a correlated subquery
+    -- per page row, keyed by (tender_id, seq) — without this it would seek the
+    -- (scheme, code) index and scan half the table per row (issue 49 / the
+    -- issue-25 scan pathology). Idempotent; builds once on first open after
+    -- deploy on an existing table, like notices_fetch_id.
+    CREATE INDEX IF NOT EXISTS tender_version_classifications_version
+        ON tender_version_classifications(tender_id, seq);
 
     -- Who participates, in which role, in this version. The mention columns
     -- keep the row anchored to its evidence in the notice layer.

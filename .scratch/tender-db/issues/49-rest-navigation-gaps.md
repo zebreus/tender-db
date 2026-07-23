@@ -1,6 +1,6 @@
 # 49 — REST: advertised per-id endpoints 404; filters silently ignored
 
-Status: needs-verification (parts 1–3); part 4 deferred (store change)
+Status: needs-verification (parts 1–4 complete)
 Severity: MEDIUM (traceability + correctness footguns)
 
 Found by usability audit, owner-confirmed (2026-07-21). The `/v1` root
@@ -34,10 +34,13 @@ Parts 1–3 landed (app-lane only):
 Tests: `advertised_entities_are_fetchable_by_id`,
 `notices_can_be_scoped_to_a_tender`, `unknown_query_params_are_rejected`.
 
-Part 4 (echo `cpv`+`country` in tender LIST rows) is DEFERRED: it needs a
-`crates/store` change — `TenderRow` carries neither field and `read::tenders()`
-does not select them (they live in `tender_version_classifications`, scheme
-`cpv`/`nuts`). Deriving them app-side would be an N+1 over `tender_detail`,
-unacceptable for a list. Clean fix: two correlated subqueries in
-`read::tenders()` (like the title/deadline picks) + two `TenderRow` fields,
-echoed as arrays in `json::tender`. Pinged lead for a store-lane decision.
+Part 4 (echo `cpv`+`country` in tender LIST rows) — DONE (store lane cleared by
+lead). `TenderRow` gains `cpv`/`country`; `read::tenders()` echoes them via two
+correlated `group_concat` subqueries keyed by (tender_id, seq); `json::tender`
+emits them as arrays. Required a new index — `tender_version_classifications`
+was the ONE version satellite lacking a `(tender_id, seq)` index (texts/amounts/
+dates all had one), so the subqueries would have scanned; added
+`tender_version_classifications_version` mirroring the siblings. An
+EXPLAIN-QUERY-PLAN test (`classification_echo_seeks_the_version_index_not_a_scan`)
+pins the O(page) guarantee. The index builds once on first prod open (a deploy-
+timing consideration the lead owns).

@@ -455,6 +455,37 @@ async fn advertised_entities_are_fetchable_by_id() {
     assert_eq!(missing["error"]["status"].as_u64(), Some(404));
 }
 
+/// Issue 49 part 4: a tender list row echoes the `cpv` and `country` codes it
+/// carries, so a client can see why the row matched a filter (before, you could
+/// filter on them but not see them).
+#[tokio::test]
+async fn tender_list_rows_echo_cpv_and_country() {
+    let server = Server::start("echo_fields").await;
+    server.ingest_chain().await;
+
+    let tender = items(&server.get("/v1/tenders").await)[0].clone();
+    let echoed: Vec<&str> =
+        tender["cpv"].as_array().expect("cpv is an array").iter().filter_map(|c| c.as_str()).collect();
+    assert!(!echoed.is_empty(), "the chain classifies by CPV, so the row must show it");
+    assert!(tender["country"].is_array(), "country is echoed as an array");
+
+    // The echoed codes are exactly the version's CPV classifications (the detail
+    // reads them the same way), so the list agrees with the detail.
+    let id = tender["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    let detail_cpv: Vec<&str> = detail["classifications"]
+        .as_array()
+        .expect("classifications")
+        .iter()
+        .filter(|c| c["scheme"] == "cpv")
+        .filter_map(|c| c["code"].as_str())
+        .collect();
+    assert!(
+        echoed.iter().all(|code| detail_cpv.contains(code)),
+        "echoed cpv {echoed:?} should all appear in the detail {detail_cpv:?}"
+    );
+}
+
 /// Issue 49: `?tender=` lists exactly a tender's notices rather than silently
 /// ignoring the filter and dumping unrelated ones.
 #[tokio::test]

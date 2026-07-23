@@ -1520,6 +1520,43 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Issue 49 part 4: the /v1/tenders list echoes each row's CPV/NUTS codes
+    /// with a correlated subquery keyed by (tender_id, seq). It must seek the
+    /// `tender_version_classifications_version` index, never scan the table —
+    /// otherwise, over a page of rows, it reintroduces the issue-25 scan
+    /// pathology. Asserting the plan pins O(page) at any scale.
+    #[tokio::test]
+    async fn classification_echo_seeks_the_version_index_not_a_scan() {
+        let path = format!("/tmp/tender-db-eqp-cls-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+                  WHERE c.tender_id = 1 AND c.seq = 1 AND c.scheme = 'cpv'",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(
+            plan.contains("tender_version_classifications_version"),
+            "the echo subquery must seek the by-version index — plan was:\n{plan}"
+        );
+        assert!(
+            !plan.to_uppercase().contains("SCAN"),
+            "it must SEARCH by index, never SCAN the table — plan was:\n{plan}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 37: the resolution-ledger counts must seek the `quarantine_reason`
     /// index — `WHERE reason = ?` narrows to one (usually small) bucket before the
     /// `detail LIKE` filter runs, instead of scanning the whole ~1.2M-row table on

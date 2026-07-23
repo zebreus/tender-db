@@ -70,6 +70,10 @@ pub fn tender(t: &TenderRow) -> Value {
         "value": money(t.value_cents, t.currency.as_deref()),
         "submission_deadline": stamp(t.deadline),
         "lots": t.lots,
+        // Echo the fields a client can filter on, so a list row shows why it
+        // matched (issue 49): CPV codes and NUTS place codes of this version.
+        "cpv": t.cpv,
+        "country": t.country,
     })
 }
 

@@ -126,6 +126,9 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 </table>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?limit=2"</code></pre>
 <p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false}</code>.</p>
+<p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
+(NUTS place codes) they carry, so you can see why a row matched a
+<code>cpv</code>/<code>country</code> filter.</p>
 
 <h2 id="filters">Filters &amp; pagination</h2>
 <p>All collections accept the same filter parameters — a subscription is a
