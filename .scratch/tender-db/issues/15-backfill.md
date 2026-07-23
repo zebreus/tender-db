@@ -325,3 +325,54 @@ Queue at pickup (durable, /admin/jobs): 1 running → 2 ted daily → 3 doe mont
 40-min ssh windows (keepalive-hardened), emitting on job transitions,
 disk80/WAL30G/RSS5GB crosses, poll failures, window-end. Project (job 5) remains
 the WAL/RSS-heavy phase to watch for issue-42/issue-52.
+
+### 2026-07-23 ~12:00 — WAL-reclaim regression traced to a turso reader-pool bug, run-driver
+
+Durable checkpoint (long multi-deploy session; context may summarize). Local
+machine had restarted again; production ran throughout (rev 62f7255 on pickup).
+
+**Symptom on pickup (~09:40 UTC):** job 1 `process ted monthly` at pkg 147/158
+(2025-08), 7.52M notices, but throughput collapsed to ~5 n/s and the WAL at
+**70GB and NOT reclaiming across package boundaries** — the issue-42 failure
+mode had returned at scale. Disk was fine (462G/1000G, 47%); this was a
+bounding/correctness problem, not disk exhaustion.
+
+**Deploy sequence (team lead + a wal-fix agent; I monitored each, read/only):**
+1. **25607d4** (coverage-scan gate) — restart opened the 70GB WAL (~6 min),
+   folded it 72GB→81MB, queue self-recovered, job resumed via cursor at 2025-08.
+   Boundary 0/11→1/11 did NOT reclaim (WAL climbed 13→17.5GB through it).
+2. **304ae58** (counts-scan gate) — restart folded ~19GB WAL on reopen; boundary
+   STILL did not reclaim; WAL climbed monotonically within the package.
+3. **4ff9587** (gate ALL table-proportional scans incl. quarantine + award-
+   linkage) — the decisive fine-grained trajectory (du every 25–75s) showed WAL
+   climbing **0.89→6.44GB monotonically** on 2025-09, **no reclaim** through the
+   0/10→1/10 boundary (6.44→7.45GB straight through), still climbing on 2025-10.
+   Full gating made it WORSE (pure monotonic), vs 304ae58's intermittent
+   reclaims — that asymmetry was the decisive clue.
+
+**ROOT CAUSE (lead, confirmed in code):** turso **idle pooled readers hold a
+frozen read-mark until reused.** The coverage refresher's boot-time scan left
+its reader marks at the boot frame; gating stopped it re-scanning, so the marks
+**froze** and pinned the WAL for the whole job. Partial gating still advanced
+marks on the ungated scans (intermittent reclaim); full gating froze them all
+(monotonic climb). It is a **store reader-pool bug, not a refresher bug** —
+fix = reset idle readers' snapshots, with a real reproduction test. Lead is
+**holding deploys** until that fix is confirmed right (no more guess-deploys).
+
+**Monitoring lessons banked this session:**
+- The bf15-monitor logger (`backfill-monitor.sh`) hung its whole loop when
+  /admin+/health went unresponsive during a restart (unbounded curls). Fixed:
+  added `--max-time 10` to both curls + `tmux respawn-pane` (backup at .bak).
+- My ssh watch loops must **inline the ssh command** — a `$SSH` variable holding
+  args is treated as one command word in zsh ("command not found").
+- Empty/transient status-log lines (during restarts) caused false
+  transition/boundary/ERROR alerts; watch loop now skips lines with empty
+  job/ok fields and reads rev from the deployed-rev file (survives log blips).
+
+**State at checkpoint (~12:00 UTC, rev 4ff9587):** WAL ~11.7GB climbing, pkg
+1/10 (2025-10), job 1 progressing (throughput not blocked by WAL size), disk
+42% (601G free). Watch downgraded per lead: WAL size no longer flagged (soft
+heuristic); flag only /data≥80% or job ERROR; deploy detection + boundary
+classification kept so the real store fix's boundary (the one that will finally
+RECLAIM) is the acceptance signal. Issue 42 should reopen — its "resolved" per-
+package-TRUNCATE fix is necessary but not sufficient while idle readers pin.
