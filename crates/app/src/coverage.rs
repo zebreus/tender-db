@@ -111,29 +111,35 @@ pub fn init(db: Arc<Db>) {
 /// full-table-scan sections land as each completes.
 async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: bool) {
     let now = store::now_unix();
+    // `system` is the only measurement safe to run while a write-heavy job holds
+    // the WAL: cursor + a `job_log` point read, no table-proportional scan, so it
+    // never holds a reader snapshot long enough to matter. It lands within a
+    // second of a restart and keeps its per-60s cadence throughout ingestion.
     publish(cell, "system", measure_system(db, now).await, |d, v| d.system = Some(v));
-    // Quarantine next: it is the panel a boot must never show as a false `0`
-    // (actionable = 0 reads as "the guarantee holds"), and its reason-keyed
-    // queries are indexed (issue 37), so it lands early and cheap.
-    publish(cell, "quarantine", measure_quarantine(db).await, |d, v| d.quarantine = Some(v));
-    // Award-linkage is an indexed `EXISTS` per era (issue 38) — bounded work, so
-    // it too keeps the fast cadence.
-    publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
 
-    // Everything below is a table-proportional scan that holds a live reader
-    // snapshot for its whole duration, pinning the WAL. While a write-heavy job
-    // runs, the package/batch TRUNCATE (issue 42) needs reader-free windows to
-    // reclaim, and a pinned snapshot blocks it — the WAL grew to 70 GB in the
-    // field (issue 53). So skip these while such a job is active and keep the last
-    // measured values (stale-while-revalidate): they barely move within one job,
-    // re-measure in the idle gap after, and the cheap indexed sections above kept
-    // their per-60s cadence throughout. `counts` is a full `COUNT(*)` over every
-    // canonical table — trivial pre-projection, but a heavy scan while the
-    // projection grows those tables; `coverage`/`pipeline` share the one full
-    // `notices` `GROUP BY`, the heaviest read.
+    // EVERYTHING BELOW holds a live reader snapshot for the duration of a
+    // table-proportional scan, which pins the WAL: while a write-heavy job runs,
+    // the package/batch TRUNCATE (issue 42) needs reader-free windows to reclaim,
+    // and a pinned snapshot blocks even turso's mid-package PASSIVE autocheckpoint
+    // — the WAL grew to 70 GB and throughput collapsed to 5 n/s in the field
+    // (issue 53). So skip ALL of them while such a job is active and keep the last
+    // measured values (stale-while-revalidate); they barely move within one job,
+    // and re-measure in the idle gap after it. Each is here because it scans:
+    //  * `quarantine` — the reason `GROUP BY` and especially the resolution-ledger
+    //    `detail LIKE` scans sweep 1.2M-row / 577k+ big buckets (issue 40); the
+    //    reason index seeks the bucket but the ledger LIKE still scans it. This was
+    //    the third pin the first two gate passes missed.
+    //  * `award-linkage` — indexed `EXISTS` per era, trivial pre-projection but a
+    //    heavy canonical scan once the projection grows those tables.
+    //  * `counts` — `COUNT(*)` over every canonical table, same projection-scale trap.
+    //  * `coverage`/`pipeline` — the one full `notices` `GROUP BY`, the heaviest read.
+    // (Gated `quarantine`/`coverage` render as "measuring…" not a false `0` — the
+    // sectioned `None` default, issue 37 — so the boot-zero guard still holds.)
     if heavy_write_active {
         return;
     }
+    publish(cell, "quarantine", measure_quarantine(db).await, |d, v| d.quarantine = Some(v));
+    publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
     publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
     publish(cell, "coverage", measure_coverage_pipeline(db, now).await, |d, (coverage, pipeline)| {
         d.coverage = Some(coverage);
@@ -432,28 +438,33 @@ mod tests {
         refresh_into(&db, &cell, false).await;
         assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
 
-        // Now a write-heavy job is active: the cheap sections refresh, but the
-        // coverage scan is skipped and its last value is preserved — no new
+        // Now a write-heavy job is active: only the cheap `system` point-read
+        // refreshes; EVERY table-proportional scan (quarantine, award-linkage,
+        // counts, coverage) is skipped and its last value preserved — no new
         // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
         // never held across the next await.)
         refresh_into(&db, &cell, true).await;
         {
             let d = cell.read().unwrap();
-            assert!(d.system.is_some(), "system (indexed) still refreshes while a job runs");
-            assert!(d.quarantine.is_some(), "quarantine (indexed) still refreshes");
-            assert!(d.award_linkage.is_some(), "award-linkage (indexed) still refreshes");
-            assert!(d.counts.is_some(), "counts keeps its last value (gated, stale-while-revalidate)");
+            assert!(d.system.is_some(), "system (cheap point read) still refreshes while a job runs");
+            // All four scanning sections keep their last value (stale-while-revalidate).
+            assert!(d.quarantine.is_some(), "quarantine keeps its last value (gated)");
+            assert!(d.award_linkage.is_some(), "award-linkage keeps its last value (gated)");
+            assert!(d.counts.is_some(), "counts keeps its last value (gated)");
             assert!(d.coverage.is_some(), "the last coverage grid is kept, not blanked");
         }
 
-        // And on a fresh snapshot (nothing measured yet) a heavy pass leaves the
-        // scanning sections unmeasured rather than running them.
+        // And on a fresh snapshot (nothing measured yet) a heavy pass runs ONLY
+        // `system`, leaving every scanning section unmeasured — none opens a
+        // WAL-pinning snapshot. This is the airtight property: during ingestion
+        // the refresher holds no long-lived reader at all (issue 53).
         let fresh = RwLock::new(Dashboard::default());
         refresh_into(&db, &fresh, true).await;
         {
             let f = fresh.read().unwrap();
-            assert!(f.system.is_some(), "cheap indexed sections land");
-            assert!(f.quarantine.is_some(), "quarantine lands");
+            assert!(f.system.is_some(), "the cheap point-read section lands");
+            assert!(f.quarantine.is_none(), "the quarantine bucket scans never ran while a job is active");
+            assert!(f.award_linkage.is_none(), "award-linkage never ran while a job is active");
             assert!(f.counts.is_none(), "the heavy counts scan never ran while a job is active");
             assert!(f.coverage.is_none(), "the heavy coverage scan never ran while a job is active");
         }
