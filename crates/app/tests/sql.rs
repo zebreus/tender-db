@@ -411,6 +411,62 @@ async fn the_schema_endpoint_documents_the_public_surface() {
     assert!(!tenders["columns"].as_array().unwrap().is_empty());
 }
 
+/// Issue 50: the schema flags the epoch-seconds time format, lists enum
+/// vocabularies, describes tables, ships worked examples, and hides internal
+/// turso bookkeeping tables.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_schema_documents_time_format_and_enums() {
+    let server = Server::start("schema_notes").await;
+    let body: Value = server
+        .http
+        .get(format!("{}/v1/sql/schema", server.base))
+        .send()
+        .await
+        .expect("request")
+        .json()
+        .await
+        .unwrap();
+
+    let tables = body["tables"].as_array().unwrap();
+    let names: Vec<&str> = tables.iter().map(|t| t["name"].as_str().unwrap()).collect();
+    // Internal turso bookkeeping tables never surface.
+    assert!(!names.iter().any(|n| n.starts_with("__turso")), "internal tables hidden: {names:?}");
+
+    // v_tenders has a description, and its published_at column flags the epoch
+    // trap with a strftime hint.
+    let v_tenders = tables.iter().find(|t| t["name"] == "v_tenders").expect("v_tenders");
+    assert!(v_tenders["note"].as_str().is_some_and(|n| !n.is_empty()), "table note present");
+    let published = v_tenders["columns"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["name"] == "published_at")
+        .expect("published_at column");
+    assert!(
+        published["note"].as_str().is_some_and(|n| n.contains("strftime")),
+        "the time-format trap is flagged on the column: {published}"
+    );
+
+    // parse_state's vocabulary is listed on its column.
+    let parse_state = tables
+        .iter()
+        .find(|t| t["name"] == "notices")
+        .expect("notices")["columns"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|c| c["name"] == "parse_state")
+        .expect("parse_state column")
+        .clone();
+    assert!(parse_state["note"].as_str().is_some_and(|n| n.contains("quarantined")), "enum listed");
+
+    // Top-level notes call out epoch time and the mid-backfill scope; examples ship.
+    let notes = body["notes"].as_array().unwrap().iter().filter_map(|n| n.as_str()).collect::<String>();
+    assert!(notes.contains("epoch") && notes.contains("strftime"), "epoch note present");
+    assert!(notes.to_lowercase().contains("backfill"), "mid-backfill scope noted");
+    assert!(!body["examples"].as_array().unwrap().is_empty(), "worked examples present");
+}
+
 // -------------------------------------------------------- runtime isolation
 
 /// Issue 17: SQL execution runs on its own runtime, so a pathological

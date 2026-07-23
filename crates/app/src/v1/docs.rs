@@ -229,7 +229,9 @@ no token); the main entry points are the current-state views
 <p>Rules:</p>
 <ul>
   <li>Exactly one statement, and it must be a bare <code>SELECT</code> — no writes, PRAGMA, ATTACH, EXPLAIN, CTE-wrapped writes or multi-statement bodies.</li>
-  <li>The <code>users</code>, <code>api_tokens</code> and <code>sessions</code> tables are never queryable. Everything else is public business data.</li>
+  <li>The queryable surface is a positive allow-list: the <code>v_*</code> views and the public business tables (canonical, notice, quarantine, changes, fetches). Account, webhook and operator tables are never queryable, and a table not on the list is denied by default.</li>
+  <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing; use <code>strftime(published_at,'unixepoch')</code>. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
+  <li><strong>Backfill in progress:</strong> the canonical <code>v_*</code> layer currently holds only projected tenders (2026 forward, until the historical backfill is projected), so a <code>v_*</code> query scoped to earlier years may return nothing yet; the <code>notice_*</code> and <code>quarantine</code> layers already hold the full imported history.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
   <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>, and its server-side work is abandoned so it never holds a slot past the cap.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>

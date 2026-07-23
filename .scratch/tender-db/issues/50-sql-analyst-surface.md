@@ -1,6 +1,6 @@
 # 50 — SQL analyst surface: time format, schema noise, missing views
 
-Status: ready-for-agent
+Status: needs-verification (app-side); analyst VIEWS deferred (store)
 Severity: MEDIUM (the "easy data inspection" goal clause)
 
 Found by usability audit (2026-07-21). The /v1/sql experience has
@@ -37,3 +37,23 @@ issue-25 pointer — the analyst-view additions here should be built cheap
 Acceptance: SQL time columns are unambiguous; schema is clean +
 documented with enums; the common analyst questions are one view away;
 mid-backfill scope is documented.
+
+## Progress (api-polish, 2026-07-23)
+App-side parts done (sql.rs + docs.rs):
+- Point 1 (time trap): every timestamp column carries an epoch-seconds note with
+  a strftime example, plus a top-level schema note and a /docs bullet.
+- Point 2 (schema noise + gaps): __turso_internal_seq_* are already hidden by
+  the issue-45 allow-list (only allow-listed objects are listed); added per-table
+  descriptions, per-column notes, enum vocabularies (parse_state, scheme, role,
+  decision, notice_subtype, provisional), and an `examples` array of worked
+  queries to /v1/sql/schema.
+- Point 4 (mid-backfill): scope caveat in the schema notes and /docs (v_* is
+  2026-forward until the historical backfill projects; notice_*/quarantine hold
+  the full history).
+Test: `the_schema_documents_time_format_and_enums`.
+
+DEFERRED — Point 3 (analyst VIEWS: buyers-per-tender, awards-with-buyer,
+classifications, dates, amounts, tender's-notices). These are store-side
+(crates/store/canonical.rs) which wal-fix is editing; the lead will assign them
+after wal-fix lands. They must be built cheap (indexed / off the current-version
+pointer), not another full scan (issue-20/25 pathology).

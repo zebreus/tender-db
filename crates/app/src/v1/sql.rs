@@ -338,8 +338,91 @@ enum Executed {
     Timeout,
 }
 
-/// The queryable schema: every table and view except the credential tables,
-/// with its columns — so a client can discover the surface without guessing.
+/// Time columns are Unix epoch seconds in SQL while REST returns ISO — the trap
+/// issue 50 calls out. Reused across every timestamp column.
+const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
+    ISO). Filter/format with strftime(col,'unixepoch'), e.g. \
+    strftime(published_at,'unixepoch') LIKE '2012%'.";
+
+/// One-line descriptions for the tables/views worth explaining in
+/// `/v1/sql/schema` (issue 50); the rest are self-describing.
+const TABLE_NOTES: &[(&str, &str)] = &[
+    ("v_tenders", "Current version of each Tender — the usual entry point (one row per Tender)."),
+    ("v_lots", "Current Lots — subdivisions of a Tender."),
+    ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count."),
+    ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
+      winner_* is NULL for an unresolved or withheld award."),
+    ("v_tender_current", "The (tender_id, seq) current-version pointer — join it to read any \
+      version satellite at current state cheaply."),
+    ("notices", "One row per raw publication event. The parsed payload is in the notice_* \
+      tables; the canonical layer is projected from it (ADR-0001)."),
+    ("quarantine", "Whole notices whose content could not be mapped — public raw payloads \
+      kept for reprocessing."),
+    ("changes", "The change-cursor log behind /v1/changes: ingestion order, never renumbered."),
+    ("tender_version_parties", "Organizations linked to a Tender version by role (see role)."),
+    ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
+    ("fetches", "Raw-fetch provenance: one row per downloaded source file."),
+];
+
+/// Column notes and small enum vocabularies. Table `"*"` matches a column of
+/// that name in any table (the epoch columns recur widely). Open or
+/// era-dependent vocabularies are described rather than exhaustively listed.
+const COLUMN_NOTES: &[(&str, &str, &str)] = &[
+    // The epoch-seconds columns — the time-format trap.
+    ("*", "published_at", EPOCH_NOTE),
+    ("*", "dispatched_at", EPOCH_NOTE),
+    ("*", "ingested_at", EPOCH_NOTE),
+    ("*", "fetched_at", EPOCH_NOTE),
+    ("*", "changed_at", EPOCH_NOTE),
+    ("*", "first_seen", EPOCH_NOTE),
+    ("*", "reprocessed_at", EPOCH_NOTE),
+    ("*", "utc_seconds", EPOCH_NOTE),
+    // Enum / coded columns.
+    ("notices", "parse_state", "One of: pending, parsed, quarantined (ADR-0004)."),
+    ("tender_version_classifications", "scheme", "One of: cpv, nuts."),
+    (
+        "tender_version_parties",
+        "role",
+        "Buyer roles appear as 'buyer' or 'Procedure-Buyer' (era-dependent — match with \
+         role LIKE '%uyer%'); results-layer roles are 'winner', 'tenderer', 'subcontractor'.",
+    ),
+    (
+        "*",
+        "decision",
+        "eForms winner-selection-status code, e.g. 'selec-w' (a winner was selected), \
+         'clos-nw' (closed, no award).",
+    ),
+    (
+        "*",
+        "notice_subtype",
+        "eForms notice subtype id, e.g. '16' (contract notice), '29' (contract award).",
+    ),
+    (
+        "*",
+        "provisional",
+        "1 = a single-mention profile with no official identifier, never merged (CONTEXT.md).",
+    ),
+];
+
+/// The description for a table/view, if one is curated.
+fn table_note(name: &str) -> Option<&'static str> {
+    TABLE_NOTES.iter().find(|(t, _)| *t == name).map(|&(_, note)| note)
+}
+
+/// The note for a column — an exact `(table, column)` match wins over a `"*"`
+/// (any-table) one, so a table can override the generic vocabulary.
+fn column_note(table: &str, column: &str) -> Option<&'static str> {
+    let matches = |t: &str| t == table || t == "*";
+    COLUMN_NOTES
+        .iter()
+        .find(|(t, c, _)| *t == table && *c == column)
+        .or_else(|| COLUMN_NOTES.iter().find(|(t, c, _)| matches(t) && *c == column))
+        .map(|&(_, _, note)| note)
+}
+
+/// The queryable schema: every allow-listed table and view with its columns,
+/// per-table/column notes and enum vocabularies — so a client can discover the
+/// surface without guessing (issue 50).
 async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
     let reader = state.sql.readers.get().await?;
     let mut objects = Vec::new();
@@ -368,14 +451,23 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
         // interpolation into this PRAGMA is safe (PRAGMA takes no bind params).
         let mut info = reader.query(&format!("PRAGMA table_info(\"{name}\")"), ()).await?;
         while let Some(row) = info.next().await? {
-            cols.push(json!({
-                "name": store_text(&row, 1),
+            let col_name = store_text(&row, 1);
+            let mut col = json!({
+                "name": col_name,
                 "type": store_text(&row, 2),
                 "notnull": store_int(&row, 3) != 0,
                 "pk": store_int(&row, 5) != 0,
-            }));
+            });
+            if let Some(note) = column_note(&name, &col_name) {
+                col.as_object_mut().expect("column is an object").insert("note".into(), json!(note));
+            }
+            cols.push(col);
         }
-        tables.push(json!({ "name": name, "type": kind, "columns": cols }));
+        let mut table = json!({ "name": name, "type": kind, "columns": cols });
+        if let Some(note) = table_note(&name) {
+            table.as_object_mut().expect("table is an object").insert("note".into(), json!(note));
+        }
+        tables.push(table);
     }
 
     Ok(Json(json!({
@@ -384,8 +476,17 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
             "Read-only: only a single SELECT is accepted.",
             "Queryable surface is a positive allow-list: only the tables and \
              views listed above are readable. Account, webhook and operator \
-             tables (users, api_tokens, sessions, webhook_endpoints, …) and the \
-             raw-fetch registry are not queryable.",
+             tables (users, api_tokens, sessions, webhook_endpoints, job_queue, …) \
+             are not queryable.",
+            "Time columns are Unix epoch seconds, NOT ISO — the REST API returns \
+             ISO, so the two disagree. Filter/format with strftime(col,'unixepoch'); \
+             each timestamp column's note flags this. WHERE published_at LIKE \
+             '2012%' silently matches nothing.",
+            "Backfill in progress: the canonical v_* layer currently reflects only \
+             PROJECTED tenders (2026 forward, until the historical backfill is \
+             projected), so a v_* query scoped to earlier years may return nothing \
+             yet. The notice_* and quarantine layers already hold the full \
+             imported history.",
             "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
              partial (row_number and aggregate OVER work; rank/lead/lag and \
              custom frames do not).",
@@ -395,6 +496,14 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
                      queries per hour per token; each query may run {}s (a query \
                      past the cap — including a slow aggregate — is 408).",
                     state.sql.timeout.as_secs()),
+        ],
+        "examples": [
+            "SELECT source, count(*) FROM v_tenders GROUP BY source",
+            "SELECT strftime(published_at,'unixepoch','start of year') AS year, \
+             count(*) AS tenders FROM v_tenders GROUP BY year ORDER BY year",
+            "SELECT o.name, count(*) AS lots_won FROM v_lot_results r \
+             JOIN v_organizations o ON o.id = r.winner_organization_id \
+             GROUP BY o.id ORDER BY lots_won DESC LIMIT 10",
         ],
     }))
     .into_response())
