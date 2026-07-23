@@ -49,6 +49,7 @@ pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
             sup.recover().await;
             sup.clone().spawn_worker();
             sup.clone().spawn_scheduler();
+            sup.clone().spawn_wal_watch();
             sup
         })
         .await
@@ -589,13 +590,29 @@ impl Supervisor {
             // a busy result (a reader mid-scan) simply reclaims on the next package
             // (verified in store::checkpoint tests). Best-effort: a failed
             // checkpoint only delays reclaim, never correctness.
+            // [DEBUG-wal01] Snapshot every reader pool's borrowed count right at the
+            // checkpoint. A borrowed reader holding an OPEN snapshot is the ONLY
+            // thing that pins the WAL (store::checkpoint tests falsify the
+            // idle/frozen-mark theories) — so the decisive datum is which pool, if
+            // any, shows a persistently-borrowed reader when the checkpoint is busy.
+            // If ALL pools read 0 at a busy checkpoint, the pin is turso-internal.
+            let pools = store::read::pool_report();
+            let pools_str = pools
+                .iter()
+                .map(|(name, borrowed, cap)| format!("{name}={borrowed}/{cap}"))
+                .collect::<Vec<_>>()
+                .join(" ");
             match self.db.checkpoint(store::CheckpointMode::Truncate).await {
                 Ok(c) if c.busy => eprintln!(
-                    "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB",
+                    "supervisor: job {job_id} checkpoint after {} busy (reader pinned), wal {} MB [DEBUG-wal01 pools: {pools_str}]",
                     pkg.period,
                     self.db.wal_bytes().unwrap_or(0) / 1_048_576
                 ),
-                Ok(_) => {}
+                Ok(_) => eprintln!(
+                    "supervisor: job {job_id} checkpoint after {} ok, wal {} MB [DEBUG-wal01 pools: {pools_str}]",
+                    pkg.period,
+                    self.db.wal_bytes().unwrap_or(0) / 1_048_576
+                ),
                 Err(e) => eprintln!("supervisor: job {job_id} checkpoint after {}: {e}", pkg.period),
             }
         }
@@ -609,6 +626,33 @@ impl Supervisor {
             total.quarantined,
             total.duplicates
         ))
+    }
+
+    /// [DEBUG-wal01] While a write-heavy job runs, log the WAL size and every
+    /// reader pool's borrowed count every 30 s — finer resolution than the
+    /// per-package checkpoint log, since packages can be tens of minutes apart at
+    /// low throughput. A pool that shows a persistently-borrowed reader while the
+    /// WAL climbs is the pin; all-zero while the WAL climbs means the pin is
+    /// turso-internal (writer/checkpoint machinery), not a pooled reader. Cheap:
+    /// one `metadata()` stat + an atomic read per pool, only while heavy.
+    fn spawn_wal_watch(self: Arc<Self>) {
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
+                if !self.heavy_write_in_progress() {
+                    continue;
+                }
+                let pools = store::read::pool_report()
+                    .iter()
+                    .map(|(name, borrowed, cap)| format!("{name}={borrowed}/{cap}"))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                eprintln!(
+                    "[DEBUG-wal01] wal-watch: wal {} MB, pools: {pools}",
+                    self.db.wal_bytes().unwrap_or(0) / 1_048_576
+                );
+            }
+        });
     }
 
     // --------------------------------------------------------------- scheduler

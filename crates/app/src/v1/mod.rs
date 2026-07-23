@@ -80,7 +80,7 @@ impl AppState {
         let cursor = db.cursor_watch();
         // A pool of readers dedicated to `/v1/sql`, kept apart from the REST
         // pool so a slow analytical query cannot starve the live API.
-        let sql = Arc::new(sql::SqlState::new(db.readers(sql::SQL_READERS).expect("sql reader pool")));
+        let sql = Arc::new(sql::SqlState::new(db.readers(sql::SQL_READERS, "sql").expect("sql reader pool")));
         AppState { db, readers, cursor, sql, streams: Arc::new(Mutex::new(HashMap::new())) }
     }
 }

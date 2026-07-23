@@ -75,7 +75,7 @@ async fn ingest_from(db: &Db, fetch_id: i64, source: &str, relative: &str) {
 /// Run one query and return its rows as the JSON matrix the assembler expects —
 /// the same shape `/v1/sql` hands the bin.
 async fn rows(db: &Db, sql: &str) -> data_quality::Rows {
-    let readers = db.readers(1).expect("readers");
+    let readers = db.readers(1, "test").expect("readers");
     let reader = readers.get().await.expect("reader");
     let mut cursor = reader.query(sql, ()).await.expect("query");
     let width = cursor.column_names().len();
