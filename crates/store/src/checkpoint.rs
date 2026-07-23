@@ -101,7 +101,251 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{Db, Fetch};
+    use crate::{Db, Fetch, Notice, Parse};
+
+    /// [DEBUG-wal01] Grow the WAL the way the PROCESS job does: N notices, each
+    /// its own explicit `BEGIN IMMEDIATE … COMMIT` (record_notice), NOT autocommit
+    /// like `grow_wal`/`record_fetch`. This is the exact transaction shape the
+    /// backfill drives through the single writer.
+    async fn grow_wal_notices(db: &Db, n: i64) {
+        db.record_fetch(&Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "2026-00001".into(),
+            url: "u".repeat(64),
+            sha256: "a".repeat(64),
+            bytes: 1,
+            fetched_at: 1,
+            path: "ted/daily/2026-00001.tar.gz".into(),
+        })
+        .await
+        .unwrap();
+        for i in 0..n {
+            db.record_notice(
+                &Notice {
+                    source: "ted".into(),
+                    publication_id: format!("pub-{i:07}"),
+                    content_hash: format!("{i:064}"),
+                    profile: "eforms".into(),
+                    declared_version: None,
+                    fetch_id: 1,
+                    member_path: format!("m/{i}"),
+                    ingested_at: i,
+                    published_at: None,
+                    dispatched_at: None,
+                },
+                &Parse::Pending,
+            )
+            .await
+            .unwrap();
+        }
+    }
+
+    /// [DEBUG-wal01] Insert notices with ids in `[start, start+n)` — unique across
+    /// chunks, so repeated calls actually grow (record_notice dedups on identity).
+    async fn insert_notices(db: &Db, start: i64, n: i64) {
+        for i in start..start + n {
+            db.record_notice(
+                &Notice {
+                    source: "ted".into(),
+                    publication_id: format!("pub-{i:09}"),
+                    content_hash: format!("{i:064}"),
+                    profile: "eforms".into(),
+                    declared_version: None,
+                    fetch_id: 1,
+                    member_path: format!("m/{i}"),
+                    ingested_at: i,
+                    published_at: None,
+                    dispatched_at: None,
+                },
+                &Parse::Pending,
+            )
+            .await
+            .unwrap();
+        }
+    }
+
+    /// [DEBUG-wal01] The faithful prod analog, no deploy needed: the single writer
+    /// walks "packages" (chunks of notices) with a per-package TRUNCATE at each
+    /// boundary — turso's DEFAULT autocheckpoint left ON, exactly like prod — WHILE
+    /// a background task periodically borrows a pooled reader and runs a brief
+    /// drained query (the `measure_system` cadence). If turso's reader/writer/
+    /// checkpoint interaction leaks a read mark under this concurrency, the WAL
+    /// climbs monotonically across boundaries instead of reclaiming. Asserts the
+    /// WAL stays bounded near one package's worth.
+    #[tokio::test]
+    async fn concurrent_periodic_reader_does_not_defeat_per_package_reclaim() {
+        use std::sync::Arc;
+        let (path, db) = scratch("concurrent-prod-analog").await;
+        let db = Arc::new(db);
+        db.record_fetch(&Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "2026-00001".into(),
+            url: "u".repeat(64),
+            sha256: "a".repeat(64),
+            bytes: 1,
+            fetched_at: 1,
+            path: "ted/daily/2026-00001.tar.gz".into(),
+        })
+        .await
+        .unwrap();
+
+        let pool = db.readers(4, "probe").unwrap();
+        let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+
+        // Background reader: the measure_system cadence, tightened so it overlaps
+        // the writer heavily (borrow, brief drained COUNT, return, repeat).
+        let reader_db = db.clone();
+        let reader_pool = pool.clone();
+        let reader_stop = stop.clone();
+        let reader = tokio::spawn(async move {
+            let _ = &reader_db;
+            while !reader_stop.load(std::sync::atomic::Ordering::Relaxed) {
+                let conn = reader_pool.get().await.unwrap();
+                let mut rows = conn.query("SELECT COUNT(*) FROM notices", ()).await.unwrap();
+                while rows.next().await.unwrap().is_some() {}
+                drop(conn);
+                tokio::task::yield_now().await;
+            }
+        });
+
+        // Writer: 20 "packages" of 1000 notices, TRUNCATE at each boundary.
+        let mut peak = 0u64;
+        for chunk in 0..10i64 {
+            insert_notices(&db, chunk * 1000, 1000).await;
+            let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+            let wal = db.wal_bytes().unwrap_or(0);
+            peak = peak.max(wal);
+            if chunk % 5 == 0 || r.busy {
+                eprintln!("[DEBUG-wal01] concurrent chunk {chunk}: busy={} wal={} probe_borrowed={}", r.busy, wal, pool.borrowed());
+            }
+        }
+        stop.store(true, std::sync::atomic::Ordering::Relaxed);
+        let _ = reader.await;
+
+        eprintln!("[DEBUG-wal01] concurrent peak WAL = {peak}");
+        // One 1000-notice package is well under 2 MB; a monotonic leak would reach
+        // ~20× that. Bounded means reclaim survives the concurrent reader.
+        assert!(peak < 8_000_000, "[DEBUG-wal01] WAL not bounded under concurrent reader, peak {peak}");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// [DEBUG-wal01] Does turso 0.7 autocheckpoint AT ALL with our prod PRAGMAs
+    /// (WAL, synchronous=NORMAL, no explicit wal_autocheckpoint)? Write 6k notices
+    /// with NO explicit checkpoint and sample the -wal size. If it plateaus, turso
+    /// folds frames on its own (a mid-package climb that then reclaims is normal);
+    /// if it grows ~linearly, turso does NOT autocheckpoint and the ONLY reclaim
+    /// signal is the boundary TRUNCATE. Prints the trajectory; not an assertion
+    /// about the value, a measurement of turso's default behaviour.
+    #[tokio::test]
+    async fn does_turso_autocheckpoint_by_default() {
+        let (path, db) = scratch("autockpt-default").await;
+        db.record_fetch(&Fetch {
+            source: "ted".into(), kind: "daily".into(), period: "2026-00001".into(),
+            url: "u".repeat(64), sha256: "a".repeat(64), bytes: 1, fetched_at: 1,
+            path: "ted/daily/2026-00001.tar.gz".into(),
+        }).await.unwrap();
+        for k in 0..6i64 {
+            insert_notices(&db, k * 1000, 1000).await;
+            eprintln!("[DEBUG-wal01] autockpt-default: after {} notices, wal = {} bytes (NO explicit checkpoint)",
+                (k + 1) * 1000, db.wal_bytes().unwrap_or(0));
+        }
+        for s in ["", "-wal", "-shm"] { let _ = std::fs::remove_file(format!("{path}{s}")); }
+    }
+
+    /// [DEBUG-wal01] The writer's OWN read-mark: the process job's per-notice txn is
+    /// `BEGIN IMMEDIATE → INSERT → SELECT notice_id → COMMIT` (record_notice_tx,
+    /// lib.rs:607) — the SELECT takes a read snapshot INSIDE the write txn on the
+    /// writer connection. Does that mark linger after COMMIT and pin the WAL when
+    /// the SAME writer runs the boundary TRUNCATE? Autocheckpoint OFF so frames
+    /// accumulate and any self-pin is visible. (record_notice already runs the
+    /// internal SELECT, so grow_wal_notices exercises the exact sequence.)
+    #[tokio::test]
+    async fn the_writers_internal_select_does_not_pin_its_own_truncate() {
+        let (path, db) = scratch("writer-select-pin").await;
+        no_autocheckpoint(&db).await;
+        // record_notice = BEGIN IMMEDIATE; INSERT notice; SELECT notice_id; COMMIT.
+        grow_wal_notices(&db, 3_000).await;
+        let before = db.wal_bytes().unwrap_or(0);
+        let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        let after = db.wal_bytes().unwrap_or(0);
+        eprintln!("[DEBUG-wal01] writer-select-pin: busy={} wal {before} -> {after}", r.busy);
+        assert!(!r.busy, "[DEBUG-wal01] the writer's internal SELECT must not pin its own TRUNCATE");
+        assert!(after < 65_536, "[DEBUG-wal01] writer self-reclaims to ~0, got {after} (was {before})");
+        for s in ["", "-wal", "-shm"] { let _ = std::fs::remove_file(format!("{path}{s}")); }
+    }
+
+    /// [DEBUG-wal01] THE DECISIVE EXPERIMENT (issue 54/55, second pin). No reader
+    /// pool is touched at all: a single writer records N notices — each an explicit
+    /// `BEGIN IMMEDIATE … COMMIT`, the process job's exact shape — and then the
+    /// SAME writer connection runs a TRUNCATE checkpoint at the writer-idle package
+    /// boundary. If turso leaves the writer connection holding a WAL read mark after
+    /// an explicit-transaction COMMIT, the checkpoint sees a pinned frame and
+    /// returns busy=1 with the WAL un-truncated — the field's "busy (reader
+    /// pinned)" with ZERO other connections. Contrast: the autocommit
+    /// `truncate_reclaims_the_wal_file` test above is NOT busy.
+    #[tokio::test]
+    async fn explicit_txn_writer_pins_its_own_wal() {
+        let (path, db) = scratch("explicit-txn-pin").await;
+        grow_wal_notices(&db, 2_000).await;
+
+        let before = db.wal_bytes().expect("a wal exists after writes");
+        assert!(before > 200_000, "2k notices build a non-trivial WAL, got {before}");
+
+        let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        let after = db.wal_bytes().unwrap_or(0);
+        eprintln!("[DEBUG-wal01] explicit-txn: busy={} wal {before} -> {after} checkpointed={} frames={}", r.busy, r.checkpointed, r.wal_frames);
+        assert!(!r.busy, "[DEBUG-wal01] a lone writer must not pin its own WAL, busy={}", r.busy);
+        assert!(after < 65_536, "[DEBUG-wal01] truncate should shrink the -wal, got {after} (was {before})");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// [DEBUG-wal01] THE SECOND PIN, sharpened. The passing
+    /// `an_idle_pooled_reader_does_not_pin_the_wal` checkpoints IMMEDIATELY after
+    /// the idle reader's query — no writes intervene, so the reader's mark is at the
+    /// WAL head and a checkpoint past it is trivially fine. Production is the other
+    /// order: a reader takes a snapshot at frame X, returns to the pool IDLE, then
+    /// the writer appends thousands more frames, THEN the package-boundary
+    /// checkpoint runs. If turso freezes the idle connection's read mark at X, the
+    /// checkpoint cannot pass X → busy, and the WAL grows past X forever (until that
+    /// pooled connection is reused and re-reads, advancing its mark). This is the
+    /// "frozen idle-reader marks" of issue 15 and the field's second pin.
+    #[tokio::test]
+    async fn an_idle_reader_that_took_an_early_mark_pins_later_writes() {
+        let (path, db) = scratch("frozen-idle-mark").await;
+        grow_wal_notices(&db, 500).await;
+
+        // A reader borrows, runs a query (taking a snapshot/mark at the current
+        // head), and returns to the pool IDLE — the drained-autocommit case the
+        // Reader::drop pools back.
+        let pool = db.readers(4, "test").unwrap();
+        {
+            let reader = pool.get().await.unwrap();
+            let mut rows = reader.query("SELECT COUNT(*) FROM notices", ()).await.unwrap();
+            while rows.next().await.unwrap().is_some() {}
+            // dropped here → back in the pool, idle, no open statement/txn
+        }
+
+        // The writer now appends thousands of frames PAST the idle reader's mark.
+        grow_wal_notices(&db, 5_000).await;
+
+        let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        let after = db.wal_bytes().unwrap_or(0);
+        eprintln!("[DEBUG-wal01] frozen-idle-mark: busy={} wal_after={after} checkpointed={} frames={}", r.busy, r.checkpointed, r.wal_frames);
+        assert!(!r.busy, "[DEBUG-wal01] an idle pooled reader froze its mark and pinned later writes (busy)");
+        assert!(after < 65_536, "[DEBUG-wal01] WAL not reclaimed past the frozen idle mark: {after}");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
 
     async fn scratch(tag: &str) -> (String, Db) {
         let path = format!("/tmp/tender-db-ckpt-{}-{}.db", tag, std::process::id());
@@ -130,6 +374,107 @@ mod tests {
             })
             .await
             .unwrap();
+        }
+    }
+
+    /// [DEBUG-wal01] THE PRIME SUSPECT for the second pin: an UNDRAINED `Rows`.
+    /// Many store accessors run a `LIMIT 1` query and take exactly one row via a
+    /// single `rows.next()` — then drop `Rows` WITHOUT stepping to `None`
+    /// (`latest_fetch`, `max_cursor`, `oldest_cursor`, …). If turso holds the read
+    /// snapshot open until the statement is fully stepped/finalized, such a reader
+    /// returns to the pool still pinning a frozen snapshot — yet `is_autocommit()`
+    /// is true (a bare SELECT starts no txn), so the issue-53 discard fix does NOT
+    /// catch it. That exactly fits the field: monotonic climb (snapshot frozen),
+    /// re-running a query on that pooled conn advances it (intermittent reclaim on
+    /// partial gating), full gating freezes it (monotonic). Reproduce it here.
+    #[tokio::test]
+    async fn an_undrained_limit1_reader_pins_the_wal() {
+        let (path, db) = scratch("undrained-rows").await;
+        grow_wal_notices(&db, 500).await;
+
+        let pool = db.readers(4, "test").unwrap();
+        {
+            let reader = pool.get().await.unwrap();
+            // The single-row accessor pattern: take ONE row, never step to None.
+            let mut rows = reader.query("SELECT COUNT(*) FROM notices", ()).await.unwrap();
+            let _one = rows.next().await.unwrap();
+            drop(rows); // Rows dropped un-stepped-to-None
+            eprintln!("[DEBUG-wal01] undrained reader autocommit={:?}", reader.is_autocommit());
+            // reader returns to pool here (autocommit==true → pooled, not discarded)
+        }
+
+        grow_wal_notices(&db, 5_000).await;
+
+        let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        let after = db.wal_bytes().unwrap_or(0);
+        eprintln!("[DEBUG-wal01] undrained-rows: busy={} wal_after={after} checkpointed={} frames={}", r.busy, r.checkpointed, r.wal_frames);
+        assert!(!r.busy, "[DEBUG-wal01] an undrained LIMIT-1 reader pinned the WAL (busy)");
+        assert!(after < 65_536, "[DEBUG-wal01] WAL not reclaimed past an undrained reader: {after}");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// [DEBUG-wal01] Disable turso's size-triggered autocheckpoint on the writer,
+    /// so frames ACCUMULATE and only an explicit checkpoint folds them — removing
+    /// the confound that made the tests above report `frames=0` (turso auto-folded
+    /// my writes before the explicit TRUNCATE ran). With this, a genuinely pinned
+    /// state is observable.
+    async fn no_autocheckpoint(db: &Db) {
+        let conn = db.conn().await;
+        let mut rows = conn.query("PRAGMA wal_autocheckpoint = 0", ()).await.unwrap();
+        while rows.next().await.unwrap().is_some() {}
+    }
+
+    /// [DEBUG-wal01] With autocheckpoint OFF, cleanly separate the two reader
+    /// states against a real accumulated WAL:
+    ///   A. a RETURNED (pooled, idle) reader — drained or undrained — must NOT pin;
+    ///   B. a still-BORROWED reader holding an open snapshot MUST pin (control).
+    #[tokio::test]
+    async fn returned_readers_never_pin_only_a_held_snapshot_does() {
+        let (path, db) = scratch("accumulate").await;
+        no_autocheckpoint(&db).await;
+        grow_wal_notices(&db, 500).await;
+
+        let pool = db.readers(4, "test").unwrap();
+        // (A1) drained-and-returned
+        {
+            let reader = pool.get().await.unwrap();
+            let mut rows = reader.query("SELECT COUNT(*) FROM notices", ()).await.unwrap();
+            while rows.next().await.unwrap().is_some() {}
+        }
+        // (A2) undrained-and-returned (LIMIT-1, one row, drop)
+        {
+            let reader = pool.get().await.unwrap();
+            let mut rows = reader.query("SELECT id FROM notices LIMIT 1", ()).await.unwrap();
+            let _ = rows.next().await.unwrap();
+        }
+        grow_wal_notices(&db, 2_000).await;
+        let a = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        let a_wal = db.wal_bytes().unwrap_or(0);
+        eprintln!("[DEBUG-wal01] accumulate/returned: busy={} frames={} checkpointed={} wal_after={a_wal}", a.busy, a.wal_frames, a.checkpointed);
+        assert!(a.wal_frames > 0 || a_wal == 0, "[DEBUG-wal01] autocheckpoint-off should have accumulated real frames");
+        assert!(!a.busy, "[DEBUG-wal01] returned readers (drained OR undrained) must not pin — busy={}", a.busy);
+        assert!(a_wal < 65_536, "[DEBUG-wal01] returned readers must not block reclaim, wal={a_wal}");
+
+        // (B) still-BORROWED reader with an OPEN transaction — the known real pin.
+        grow_wal_notices(&db, 500).await;
+        let held = pool.get().await.unwrap();
+        held.execute("BEGIN", ()).await.unwrap();
+        let mut rows = held.query("SELECT COUNT(*) FROM notices", ()).await.unwrap();
+        while rows.next().await.unwrap().is_some() {}
+        grow_wal_notices(&db, 2_000).await;
+        let b = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        eprintln!("[DEBUG-wal01] accumulate/held-open-txn: busy={} frames={} wal={}", b.busy, b.wal_frames, db.wal_bytes().unwrap_or(0));
+        assert!(b.busy, "[DEBUG-wal01] a held OPEN-txn reader must pin (control)");
+        held.execute("COMMIT", ()).await.unwrap();
+        drop(held);
+        let c = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        assert!(!c.busy && db.wal_bytes().unwrap_or(0) < 65_536, "[DEBUG-wal01] reclaims once the snapshot ends");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
         }
     }
 
@@ -172,7 +517,7 @@ mod tests {
         let (path, db) = scratch("leaked-txn").await;
         grow_wal(&db, 1_000).await;
 
-        let pool = db.readers(4).unwrap();
+        let pool = db.readers(4, "test").unwrap();
         {
             let reader = pool.get().await.unwrap();
             // The SSE snapshot path, cancelled mid-read: BEGIN, then the future is
@@ -214,7 +559,7 @@ mod tests {
         grow_wal(&db, 4_000).await;
 
         // Warm a pooled reader: borrow, run + fully drain a query, return to pool.
-        let pool = db.readers(4).unwrap();
+        let pool = db.readers(4, "test").unwrap();
         {
             let reader = pool.get().await.unwrap();
             let mut rows = reader.query("SELECT COUNT(*) FROM fetches", ()).await.unwrap();
@@ -242,7 +587,7 @@ mod tests {
         grow_wal(&db, 4_000).await;
         let before = db.wal_bytes().unwrap();
 
-        let pool = db.readers(4).unwrap();
+        let pool = db.readers(4, "test").unwrap();
         let reader = pool.get().await.unwrap();
         // Open an explicit read transaction and touch a row: this takes a WAL read
         // mark and holds the snapshot for the life of the transaction.

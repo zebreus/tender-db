@@ -395,7 +395,7 @@ impl Db {
         conn.execute_batch(webhooks::SCHEMA).await?;
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
-        let read_pool = Readers::open(database.clone(), READ_POOL)?;
+        let read_pool = Readers::open(database.clone(), READ_POOL, "store")?;
         Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, cursor })
     }
 
@@ -426,8 +426,8 @@ impl Db {
     /// `n` reader connections over the same database file. Readers run in
     /// parallel with each other and with the writer (WAL), so the API's fan-out
     /// never queues behind ingestion.
-    pub fn readers(&self, n: usize) -> turso::Result<Arc<Readers>> {
-        Readers::open(self.database.clone(), n)
+    pub fn readers(&self, n: usize, name: &'static str) -> turso::Result<Arc<Readers>> {
+        Readers::open(self.database.clone(), n, name)
     }
 
     /// Subscribe to the change-cursor doorbell. The current value is the newest

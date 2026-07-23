@@ -41,7 +41,7 @@ const READERS: usize = 8;
 fn main() {
     dioxus::server::serve(|| async {
         let db = store::state().await;
-        let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS)?);
+        let api = tender_db::v1::AppState::new(db.clone(), db.readers(READERS, "api")?);
 
         // The ingestion Supervisor (issue 16): a background task owning the
         // writer for its jobs, so a production load runs in-process with zero
