@@ -93,7 +93,11 @@ pub fn init(db: Arc<Db>) {
     }
     tokio::spawn(async move {
         loop {
-            refresh_into(&db, cell()).await;
+            // Skip the heavy coverage scan while a write-heavy job holds the WAL
+            // (issue 53) — see `refresh_into`. The supervisor may not exist yet in
+            // a unit-test server, in which case nothing is writing.
+            let heavy_write = crate::supervisor::get().is_some_and(|s| s.heavy_write_in_progress());
+            refresh_into(&db, cell(), heavy_write).await;
             tokio::time::sleep(REFRESH).await;
         }
     });
@@ -105,7 +109,7 @@ pub fn init(db: Arc<Db>) {
 /// poisoned section (e.g. the coverage scan under ingestion load) never delays
 /// the sections ahead of it. `system` lands within a second of a restart; the
 /// full-table-scan sections land as each completes.
-async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>) {
+async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: bool) {
     let now = store::now_unix();
     publish(cell, "system", measure_system(db, now).await, |d, v| d.system = Some(v));
     // Quarantine next: it is the panel a boot must never show as a false `0`
@@ -115,7 +119,17 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>) {
     publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
     publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
     // Coverage grid and import funnel share the one notices scan (the heaviest
-    // read), so they are measured together and land last.
+    // read) — a full `GROUP BY` over every notice row, minutes at backfill scale.
+    // That scan holds a live reader snapshot for its whole duration, which pins
+    // the WAL; while a write-heavy job runs, the package-boundary TRUNCATE (issue
+    // 42) needs reader-free windows to reclaim, and a pinned snapshot blocks it —
+    // the WAL grew to 70 GB in the field. So skip it while such a job is active
+    // and keep the last measured grid (stale-while-revalidate): coverage barely
+    // moves within one job, it re-measures in the idle gap after, and the cheap
+    // sections above kept their per-60s cadence throughout (issue 53).
+    if heavy_write_active {
+        return;
+    }
     publish(cell, "coverage", measure_coverage_pipeline(db, now).await, |d, (coverage, pipeline)| {
         d.coverage = Some(coverage);
         d.pipeline = Some(pipeline);
@@ -127,7 +141,8 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>) {
 /// uses the background refresher ([`init`]) and serves [`latest`].
 pub async fn measure(db: &Db) -> Dashboard {
     let cell = RwLock::new(Dashboard::default());
-    refresh_into(db, &cell).await;
+    // One-shot: measure every section, including the heavy coverage scan.
+    refresh_into(db, &cell, false).await;
     cell.into_inner().expect("snapshot")
 }
 
@@ -382,7 +397,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell).await;
+        refresh_into(&db, &cell, false).await;
         let d = cell.read().unwrap();
         assert!(d.system.is_some(), "system");
         assert!(d.counts.is_some(), "counts");
@@ -390,6 +405,49 @@ mod tests {
         assert!(d.award_linkage.is_some(), "award_linkage");
         assert!(d.coverage.is_some(), "coverage");
         assert!(d.pipeline.is_some(), "pipeline");
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 53: while a write-heavy job holds the WAL, the refresher must NOT run
+    /// the coverage scan — a live reader snapshot held across that multi-minute
+    /// full-`notices` read pins the WAL and blocks the package-boundary TRUNCATE
+    /// (store::checkpoint proves a pinned snapshot defeats reclaim), which grew
+    /// the log to 70 GB. The cheap sections still refresh, and a previously
+    /// measured coverage grid is kept (stale-while-revalidate), never blanked.
+    #[tokio::test]
+    async fn a_heavy_write_job_skips_the_coverage_scan_but_keeps_the_cheap_sections() {
+        let path = format!("/tmp/tender-db-refresh-heavy-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        // A prior idle pass measured coverage.
+        let cell = RwLock::new(Dashboard::default());
+        refresh_into(&db, &cell, false).await;
+        assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
+
+        // Now a write-heavy job is active: the cheap sections refresh, but the
+        // coverage scan is skipped and its last value is preserved — no new
+        // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
+        // never held across the next await.)
+        refresh_into(&db, &cell, true).await;
+        {
+            let d = cell.read().unwrap();
+            assert!(d.system.is_some(), "system still refreshes while a job runs");
+            assert!(d.counts.is_some(), "counts still refreshes");
+            assert!(d.quarantine.is_some(), "quarantine still refreshes");
+            assert!(d.coverage.is_some(), "the last coverage grid is kept, not blanked");
+        }
+
+        // And on a fresh snapshot (nothing measured yet) a heavy pass leaves
+        // coverage unmeasured rather than running the scan.
+        let fresh = RwLock::new(Dashboard::default());
+        refresh_into(&db, &fresh, true).await;
+        {
+            let f = fresh.read().unwrap();
+            assert!(f.system.is_some(), "cheap sections land");
+            assert!(f.coverage.is_none(), "the heavy coverage scan never ran while a job is active");
+        }
+
         let _ = std::fs::remove_file(&path);
     }
 }

@@ -359,6 +359,21 @@ impl Supervisor {
         }
     }
 
+    /// True while a write-heavy job — a package walk (`process`) or a projection
+    /// (`project`) — is running. These are the jobs whose per-package / per-batch
+    /// TRUNCATE checkpoint (issue 42) needs reader-free windows to reclaim the
+    /// WAL. The dashboard's coverage refresher consults this and skips its
+    /// multi-minute full-`notices` scan while one runs: a live reader snapshot
+    /// held across that scan pins the WAL, blocks the TRUNCATE, and the log
+    /// balloons (70 GB in the field) — issue 53.
+    pub fn heavy_write_in_progress(&self) -> bool {
+        self.current
+            .read()
+            .expect("progress lock")
+            .as_ref()
+            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project"))
+    }
+
     fn queued(&self) -> Vec<QueuedJob> {
         self.queue
             .lock()
@@ -845,6 +860,40 @@ mod tests {
 
     fn req(kind: &str) -> JobRequest {
         JobRequest { kind: kind.into(), ..Default::default() }
+    }
+
+    fn progress(kind: &str) -> JobProgress {
+        JobProgress {
+            id: 1,
+            kind: kind.into(),
+            params: String::new(),
+            started_at: 0,
+            package: None,
+            packages_done: 0,
+            packages_total: 0,
+            members_done: 0,
+            members_total: 0,
+            notices: 0,
+            duplicates: 0,
+        }
+    }
+
+    /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only
+    /// the jobs that write the store heavily and checkpoint it — `process` and
+    /// `project` — count; a light `fetch`/`probe` or an idle supervisor does not,
+    /// so coverage keeps measuring in those gaps.
+    #[tokio::test]
+    async fn heavy_write_in_progress_tracks_the_running_job_kind() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        assert!(!sup.heavy_write_in_progress(), "idle: nothing pins the WAL");
+        sup.set_current(Some(progress("process")));
+        assert!(sup.heavy_write_in_progress(), "a package walk holds the WAL");
+        sup.set_current(Some(progress("project")));
+        assert!(sup.heavy_write_in_progress(), "a projection holds the WAL");
+        sup.set_current(Some(progress("fetch")));
+        assert!(!sup.heavy_write_in_progress(), "a fetch is light — coverage may scan");
+        sup.set_current(None);
+        assert!(!sup.heavy_write_in_progress(), "idle again");
     }
 
     /// Enqueue, inspect the queue, and cancel — all without a running worker, so
