@@ -11,12 +11,18 @@
 //!    `SELECT`. This one check rejects writes, `PRAGMA`, `ATTACH`, `VACUUM`,
 //!    multi-statement bodies, and CTE-wrapped writes (`WITH … INSERT` parses as
 //!    `Stmt::Insert`, never `Stmt::Select`).
-//! 2. **Account-table deny**, complete by construction: a table can only be
-//!    read by naming it, so we tokenise and reject any query whose *identifier*
-//!    tokens include `users`, `api_tokens` or `sessions`. Working on the token
-//!    stream (not the text) means a string literal like `'%sessions%'` does not
-//!    false-trip it. Everything else in the database is public business data
-//!    (CONTEXT.md), so there is no positive table allow-list to maintain.
+//! 2. **Table allow-list**, denied by default: a table can only be read by
+//!    naming it in a table position, so we walk the parsed statement's table
+//!    references (FROM/JOIN entries, `x IN table`, and every nested subquery)
+//!    and reject the query unless *every* base table it reads is on the
+//!    explicit public-surface allow-list ([`ALLOWED`]). Walking the AST — not
+//!    the raw text — means a string literal like `'%sessions%'` or a column
+//!    named `users` never false-trips, and a table-valued function call
+//!    (`generate_series(...)`) is a function, not a base-table read. This is a
+//!    positive allow-list on purpose (issue 45): a deny-list silently re-opened
+//!    the moment a new private table was added, which is exactly how webhook
+//!    signing secrets were exposed (issue 43). A private table added later is
+//!    denied by default because it is simply not in [`ALLOWED`].
 //! 3. **`query_only=1` connection** from a pool dedicated to this endpoint, so
 //!    a long analytical scan never starves the REST readers.
 //! 4. **Timeout-by-drop** (10 s): the query runs under `tokio::time::timeout`,
@@ -70,21 +76,63 @@ const MAX_BODY: usize = 64 * 1024;
 const MAX_CONCURRENT: usize = 2;
 const PER_HOUR: u32 = 300;
 
-/// Tables that hold credentials or account-private data, never queryable via
-/// the public SQL endpoint. Compared lowercased. `webhook_endpoints` stores
-/// per-user signing secrets + private URLs and `webhook_delivery_log` their
-/// cross-account history; `job_queue`/`job_log` carry operator job params —
-/// none is "public business data". The durable fix is a positive allow-list
-/// (issue 45): a deny-list silently re-opens the moment a new private table is
-/// added, which is exactly how the secrets were exposed (issue 43).
-const FORBIDDEN: [&str; 7] = [
-    "users",
-    "api_tokens",
-    "sessions",
-    "webhook_endpoints",
-    "webhook_delivery_log",
-    "job_queue",
-    "job_log",
+/// The public-surface allow-list: the only tables and views `/v1/sql` may read.
+/// Compared lowercased. Denied by default — anything not enumerated here (a new
+/// private table, an internal `__turso_*` table, a future credential store) is
+/// simply not queryable, which is the durable fix for issue 43's deny-list that
+/// re-opened whenever a private table was added. Each entry is public business
+/// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
+/// registry are deliberately absent (see the note below the list).
+const ALLOWED: [&str; 39] = [
+    // Current-state views — the analyst entry points (docs/architecture.md).
+    "v_tenders",         // current version of each Tender
+    "v_lots",            // current Lots
+    "v_organizations",   // canonical Organizations with mention counts
+    "v_lot_results",     // current award decisions with their winner
+    "v_tender_current",  // the (tender_id, seq) current-version pointer
+    "notice_withheld_fields", // fields a notice marked withheld — public metadata
+    // Canonical current tables (ADR-0001): the projected Tender/Lot/Org layer.
+    "tenders",
+    "tender_versions",
+    "lots",
+    "organizations",
+    "organization_mentions",
+    "lot_results",
+    "bids",
+    "contracts",
+    // Canonical version satellites — one Tender version's facts, all public.
+    "tender_version_texts",
+    "tender_version_amounts",
+    "tender_version_dates",
+    "tender_version_classifications",
+    "tender_version_lots",
+    "tender_version_parties",
+    "tender_version_bids",
+    "tender_version_bid_parties",
+    "tender_version_contracts",
+    "tender_version_lot_results",
+    "tender_version_result_winners",
+    "tender_version_result_stats",
+    // Notice-parsed layer — the relational reading of each raw notice payload.
+    "notices",
+    "notice_sections",
+    "notice_texts",
+    "notice_amounts",
+    "notice_dates",
+    "notice_classifications",
+    "notice_codes",
+    "notice_ids",
+    "notice_integers",
+    "notice_numbers",
+    // Raw-ingest provenance, quality + the public change feed.
+    "fetches",           // raw-fetch registry: source/url/sha256/period provenance
+    "quarantine",        // whole raw notices that failed to map — public payloads
+    "changes",           // the change cursor log, served verbatim by /v1/changes
+    // Deliberately NOT allowed:
+    //  * users, api_tokens, sessions — credentials.
+    //  * webhook_endpoints, webhook_delivery_log — per-user signing secrets +
+    //    private URLs + cross-account delivery history (issue 43).
+    //  * job_queue, job_log — operator job params.
 ];
 
 /// Worker threads on the isolated SQL runtime (issue 17). Query execution runs
@@ -252,7 +300,7 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
     while let Some(row) = rows.next().await? {
         let name = store_text(&row, 0);
         let kind = store_text(&row, 1);
-        if FORBIDDEN.contains(&name.to_ascii_lowercase().as_str()) || !safe_identifier(&name) {
+        if !ALLOWED.contains(&name.to_ascii_lowercase().as_str()) || !safe_identifier(&name) {
             continue;
         }
         objects.push((name, kind));
@@ -280,7 +328,10 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
         "tables": tables,
         "notes": [
             "Read-only: only a single SELECT is accepted.",
-            "The users, api_tokens and sessions tables are not queryable.",
+            "Queryable surface is a positive allow-list: only the tables and \
+             views listed above are readable. Account, webhook and operator \
+             tables (users, api_tokens, sessions, webhook_endpoints, …) and the \
+             raw-fetch registry are not queryable.",
             "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
              partial (row_number and aggregate OVER work; rank/lead/lag and \
              custom frames do not).",
@@ -295,8 +346,9 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
 
 // --------------------------------------------------------------- allow-list
 
-/// Parse the body and accept it only if it is exactly one bare `SELECT` that
-/// names no credential table. Every rejection is a 400 with a reason.
+/// Parse the body and accept it only if it is exactly one bare `SELECT` whose
+/// every base-table reference is on the public-surface allow-list. Every
+/// rejection is a 400 with a reason.
 fn classify(sql: &str) -> Result<(), ApiError> {
     use turso_parser::ast::{Cmd, Stmt};
     use turso_parser::parser::Parser;
@@ -307,13 +359,13 @@ fn classify(sql: &str) -> Result<(), ApiError> {
         .ok_or_else(|| bad("empty query"))?
         .map_err(|e| bad(format!("could not parse SQL: {e}")))?;
 
-    match first {
-        Cmd::Stmt(Stmt::Select(_)) => {}
+    let select = match first {
+        Cmd::Stmt(Stmt::Select(select)) => select,
         Cmd::Stmt(_) => return Err(bad("only SELECT statements are allowed")),
         Cmd::Explain(_) | Cmd::ExplainQueryPlan(_) => {
             return Err(bad("EXPLAIN is not allowed; send the SELECT itself"));
         }
-    }
+    };
 
     // A second statement means a multi-statement body — reject the whole thing.
     if parser
@@ -325,31 +377,265 @@ fn classify(sql: &str) -> Result<(), ApiError> {
         return Err(bad("only a single statement is allowed"));
     }
 
-    if let Some(name) = forbidden_identifier(sql) {
-        return Err(bad(format!("the {name} table is not queryable")));
+    if let Some(name) = disallowed_table(&select) {
+        return Err(bad(format!(
+            "the {name} table is not in the queryable public surface"
+        )));
     }
     Ok(())
 }
 
-/// The first credential-table name that appears as an *identifier* token, if
-/// any. Scanning identifier tokens (not raw text) means a value like
-/// `WHERE title LIKE '%sessions%'` — a string literal — is not mistaken for a
-/// table reference.
-fn forbidden_identifier(sql: &str) -> Option<&'static str> {
-    use turso_parser::lexer::Lexer;
-    use turso_parser::token::TokenType;
+/// The base tables an executed SELECT would read, plus the CTE names in scope.
+/// CTE names are held apart: they name derived queries, not base tables, and
+/// any base table a CTE wraps is itself collected from the CTE's own body — so
+/// a reference resolving to a CTE can never launder a private-table read.
+#[derive(Default)]
+struct Tables {
+    /// Base-table references (FROM/JOIN entries and `x IN table`), lowercased.
+    refs: Vec<String>,
+    /// CTE names defined anywhere in the query, lowercased.
+    ctes: std::collections::HashSet<String>,
+}
 
-    for token in Lexer::new(sql.as_bytes()).flatten() {
-        if token.token_type == TokenType::TK_ID {
-            let ident = String::from_utf8_lossy(token.value)
-                .trim_matches(|c| c == '"' || c == '`' || c == '[' || c == ']')
-                .to_ascii_lowercase();
-            if let Some(hit) = FORBIDDEN.into_iter().find(|f| *f == ident) {
-                return Some(hit);
+/// The first referenced base table that is neither a CTE nor allow-listed, if
+/// any — the reason the query is denied.
+fn disallowed_table(select: &turso_parser::ast::Select) -> Option<String> {
+    let mut tables = Tables::default();
+    walk_select(select, &mut tables);
+    tables
+        .refs
+        .into_iter()
+        .find(|name| !tables.ctes.contains(name) && !ALLOWED.contains(&name.as_str()))
+}
+
+fn norm(name: &turso_parser::ast::Name) -> String {
+    name.as_str().to_ascii_lowercase()
+}
+
+fn walk_select(s: &turso_parser::ast::Select, t: &mut Tables) {
+    if let Some(with) = &s.with {
+        for cte in &with.ctes {
+            t.ctes.insert(norm(&cte.tbl_name));
+            walk_select(&cte.select, t);
+        }
+    }
+    walk_one_select(&s.body.select, t);
+    for compound in &s.body.compounds {
+        walk_one_select(&compound.select, t);
+    }
+    for sc in &s.order_by {
+        walk_expr(&sc.expr, t);
+    }
+    if let Some(limit) = &s.limit {
+        walk_expr(&limit.expr, t);
+        if let Some(offset) = &limit.offset {
+            walk_expr(offset, t);
+        }
+    }
+}
+
+fn walk_one_select(o: &turso_parser::ast::OneSelect, t: &mut Tables) {
+    use turso_parser::ast::{OneSelect, ResultColumn};
+    match o {
+        OneSelect::Select { columns, from, where_clause, group_by, window_clause, .. } => {
+            for col in columns {
+                match col {
+                    ResultColumn::Expr(e, _) => walk_expr(e, t),
+                    ResultColumn::Star | ResultColumn::TableStar(_) => {}
+                }
+            }
+            if let Some(from) = from {
+                walk_from(from, t);
+            }
+            if let Some(w) = where_clause {
+                walk_expr(w, t);
+            }
+            if let Some(group) = group_by {
+                for e in &group.exprs {
+                    walk_expr(e, t);
+                }
+                if let Some(having) = &group.having {
+                    walk_expr(having, t);
+                }
+            }
+            for def in window_clause {
+                walk_window(&def.window, t);
+            }
+        }
+        OneSelect::Values(rows) => {
+            for row in rows {
+                for e in row {
+                    walk_expr(e, t);
+                }
             }
         }
     }
-    None
+}
+
+fn walk_from(f: &turso_parser::ast::FromClause, t: &mut Tables) {
+    use turso_parser::ast::JoinConstraint;
+    walk_table(&f.select, t);
+    for join in &f.joins {
+        walk_table(&join.table, t);
+        if let Some(JoinConstraint::On(e)) = &join.constraint {
+            walk_expr(e, t);
+        }
+        // `USING (col, …)` names columns only, never a table.
+    }
+}
+
+fn walk_table(st: &turso_parser::ast::SelectTable, t: &mut Tables) {
+    use turso_parser::ast::SelectTable;
+    match st {
+        // A bare table name — the one place a base table is read.
+        SelectTable::Table(name, _, _) => t.refs.push(norm(&name.name)),
+        // A table-valued function (`generate_series(…)`): a function call, not a
+        // base-table read — turso cannot call a table as a function — so its name
+        // is not allow-list-checked, but its arguments may hide subqueries.
+        SelectTable::TableCall(_, args, _) => {
+            for a in args {
+                walk_expr(a, t);
+            }
+        }
+        SelectTable::Select(s, _) => walk_select(s, t),
+        SelectTable::Sub(f, _) => walk_from(f, t),
+    }
+}
+
+fn walk_window(w: &turso_parser::ast::Window, t: &mut Tables) {
+    use turso_parser::ast::FrameBound;
+    for e in &w.partition_by {
+        walk_expr(e, t);
+    }
+    for sc in &w.order_by {
+        walk_expr(&sc.expr, t);
+    }
+    if let Some(frame) = &w.frame_clause {
+        for bound in [Some(&frame.start), frame.end.as_ref()].into_iter().flatten() {
+            match bound {
+                FrameBound::Following(e) | FrameBound::Preceding(e) => walk_expr(e, t),
+                FrameBound::CurrentRow
+                | FrameBound::UnboundedFollowing
+                | FrameBound::UnboundedPreceding => {}
+            }
+        }
+    }
+}
+
+fn walk_function_tail(ft: &turso_parser::ast::FunctionTail, t: &mut Tables) {
+    use turso_parser::ast::Over;
+    if let Some(e) = &ft.filter_clause {
+        walk_expr(e, t);
+    }
+    match &ft.over_clause {
+        Some(Over::Window(w)) => walk_window(w, t),
+        Some(Over::Name(_)) | None => {}
+    }
+}
+
+/// Walk one expression for the base tables its subqueries read. The match is
+/// exhaustive with no wildcard on purpose: a `turso_parser` upgrade that adds an
+/// `Expr` variant carrying a table reference then fails to compile here rather
+/// than silently opening a hole (issue 45's whole point).
+fn walk_expr(e: &turso_parser::ast::Expr, t: &mut Tables) {
+    use turso_parser::ast::Expr::*;
+    match e {
+        Between { lhs, start, end, .. } => {
+            walk_expr(lhs, t);
+            walk_expr(start, t);
+            walk_expr(end, t);
+        }
+        Binary(a, _, b) => {
+            walk_expr(a, t);
+            walk_expr(b, t);
+        }
+        Case { base, when_then_pairs, else_expr } => {
+            if let Some(b) = base {
+                walk_expr(b, t);
+            }
+            for (when, then) in when_then_pairs {
+                walk_expr(when, t);
+                walk_expr(then, t);
+            }
+            if let Some(el) = else_expr {
+                walk_expr(el, t);
+            }
+        }
+        Cast { expr, .. } => walk_expr(expr, t),
+        Collate(x, _) => walk_expr(x, t),
+        Exists(s) => walk_select(s, t),
+        FieldAccess { base, .. } => walk_expr(base, t),
+        FunctionCall { args, order_by, within_group, filter_over, .. } => {
+            for a in args {
+                walk_expr(a, t);
+            }
+            for sc in order_by.iter().chain(within_group) {
+                walk_expr(&sc.expr, t);
+            }
+            walk_function_tail(filter_over, t);
+        }
+        FunctionCallStar { filter_over, .. } => walk_function_tail(filter_over, t),
+        InList { lhs, rhs, .. } => {
+            walk_expr(lhs, t);
+            for e in rhs {
+                walk_expr(e, t);
+            }
+        }
+        InSelect { lhs, rhs, .. } => {
+            walk_expr(lhs, t);
+            walk_select(rhs, t);
+        }
+        InTable { lhs, rhs, args, .. } => {
+            walk_expr(lhs, t);
+            if args.is_empty() {
+                // `x IN some_table` reads some_table's first column.
+                t.refs.push(norm(&rhs.name));
+            } else {
+                // `x IN tvf(args)` — a table-valued function, not a base table.
+                for a in args {
+                    walk_expr(a, t);
+                }
+            }
+        }
+        IsNull(x) | NotNull(x) => walk_expr(x, t),
+        Like { lhs, rhs, escape, .. } => {
+            walk_expr(lhs, t);
+            walk_expr(rhs, t);
+            if let Some(e) = escape {
+                walk_expr(e, t);
+            }
+        }
+        Parenthesized(xs) => {
+            for x in xs {
+                walk_expr(x, t);
+            }
+        }
+        Raise(_, x) => {
+            if let Some(x) = x {
+                walk_expr(x, t);
+            }
+        }
+        Subquery(s) => walk_select(s, t),
+        Unary(_, x) => walk_expr(x, t),
+        Subscript { base, index } => {
+            walk_expr(base, t);
+            walk_expr(index, t);
+        }
+        Array { elements } => {
+            for e in elements {
+                walk_expr(e, t);
+            }
+        }
+        SubqueryResult { lhs, .. } => {
+            if let Some(x) = lhs {
+                walk_expr(x, t);
+            }
+        }
+        // Leaves: identifiers, literals, columns and parameters — no nested
+        // expression and no base-table reference.
+        Register(_) | DoublyQualified(..) | Id(_) | Column { .. } | RowId { .. }
+        | Literal(_) | Name(_) | Qualified(..) | Variable(_) | Default => {}
+    }
 }
 
 // ---------------------------------------------------------------- execution
@@ -528,29 +814,85 @@ mod tests {
         assert!(classify("SELECT 'users' AS label").is_ok());
     }
 
+    /// The base table `classify` would reject, for a bare SELECT — the test-only
+    /// window onto the allow-list walk.
+    fn denied_table(sql: &str) -> Option<String> {
+        use turso_parser::ast::{Cmd, Stmt};
+        use turso_parser::parser::Parser;
+        match Parser::new(sql.as_bytes()).next().unwrap().unwrap() {
+            Cmd::Stmt(Stmt::Select(select)) => disallowed_table(&select),
+            other => panic!("not a bare SELECT: {other:?}"),
+        }
+    }
+
     #[test]
     fn identifies_which_table_was_denied() {
-        assert_eq!(forbidden_identifier("SELECT * FROM api_tokens"), Some("api_tokens"));
-        assert_eq!(forbidden_identifier("SELECT * FROM v_tenders"), None);
+        assert_eq!(denied_table("SELECT * FROM api_tokens").as_deref(), Some("api_tokens"));
+        assert_eq!(denied_table("SELECT * FROM v_tenders"), None);
     }
 
     #[test]
     fn account_private_tables_are_denied() {
-        // Regression (issue 43): the deny-list must cover every private table,
-        // not just the auth trio. `webhook_endpoints.secret` is a per-user
-        // signing key — reachable here would let any account forge signed
-        // webhooks for every other account.
+        // Regression (issue 43): every private table stays unreachable.
+        // `webhook_endpoints.secret` is a per-user signing key — reachable here
+        // would let any account forge signed webhooks for every other account.
         for sql in [
             "SELECT user_id, url, secret FROM webhook_endpoints",
             "SELECT * FROM webhook_delivery_log",
             "SELECT * FROM job_queue",
             "SELECT * FROM job_log",
+            "SELECT * FROM users",
+            "SELECT * FROM api_tokens",
+            "SELECT * FROM sessions",
         ] {
             assert!(classify(sql).is_err(), "must deny private table: {sql:?}");
         }
         assert_eq!(
-            forbidden_identifier("SELECT secret FROM webhook_endpoints"),
+            denied_table("SELECT secret FROM webhook_endpoints").as_deref(),
             Some("webhook_endpoints"),
+        );
+    }
+
+    #[test]
+    fn a_new_private_table_is_denied_by_default() {
+        // The durable property (issue 45): a table nobody added to ALLOWED — a
+        // future credential store, an internal `__turso_*` table — is denied
+        // without touching this gate. If this test ever fails, a non-public
+        // table has become reachable.
+        for sql in [
+            "SELECT * FROM password_resets",
+            "SELECT * FROM billing_accounts",
+            "SELECT * FROM __turso_internal_seq_notices",
+            // Hidden in a subquery, a comma-join, an IN-table and a CTE body —
+            // every table position the walk must reach.
+            "SELECT * FROM v_tenders WHERE id IN (SELECT id FROM password_resets)",
+            "SELECT * FROM v_tenders, password_resets",
+            "SELECT 1 WHERE 1 IN password_resets",
+            "WITH x AS (SELECT * FROM password_resets) SELECT * FROM x",
+            "SELECT * FROM v_tenders ORDER BY (SELECT max(id) FROM password_resets)",
+        ] {
+            assert!(classify(sql).is_err(), "a non-allowlisted table must be denied: {sql:?}");
+        }
+    }
+
+    #[test]
+    fn every_allowlisted_table_is_queryable() {
+        // The positive half: each advertised public table/view classifies OK,
+        // so the allow-list never accidentally denies its own surface.
+        for name in ALLOWED {
+            let sql = format!("SELECT * FROM {name}");
+            assert!(classify(&sql).is_ok(), "allow-listed table must be queryable: {name}");
+        }
+    }
+
+    #[test]
+    fn table_valued_functions_are_not_table_reads() {
+        // `generate_series(…)` is a function call, not a base table, so it is not
+        // allow-list-checked — but a private table hidden in its arguments is.
+        assert!(classify("SELECT * FROM generate_series(1, 5)").is_ok());
+        assert!(classify("SELECT value FROM generate_series(1, 5) WHERE value > 2").is_ok());
+        assert!(
+            classify("SELECT * FROM generate_series(1, (SELECT count(*) FROM sessions))").is_err()
         );
     }
 

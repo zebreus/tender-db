@@ -1,6 +1,6 @@
 # 45 — Flip the SQL gate from deny-list to positive allow-list
 
-Status: ready-for-agent
+Status: needs-verification
 Blocked by: 43 (immediate deny-list fix ships first)
 
 The /v1/sql credential gate is a deny-list (FORBIDDEN). Issue 43 showed
