@@ -577,7 +577,9 @@ pub struct Applied {
 }
 
 impl Applied {
-    pub(crate) fn add(&mut self, other: Applied) {
+    /// Accumulate another batch's tally — the streaming projection applies in
+    /// bounded batches and sums their reports (issue 57).
+    pub fn add(&mut self, other: Applied) {
         self.tenders_created += other.tenders_created;
         self.versions_written += other.versions_written;
         self.versions_removed += other.versions_removed;
@@ -594,6 +596,17 @@ pub struct NoticeRef {
     pub source: String,
     pub publication_id: String,
     pub profile: String,
+}
+
+/// Streaming Organization dedup state, held across a projection's mention
+/// batches so the same official identifier resolves to one canonical
+/// Organization wherever in the corpus it appears — without holding either the
+/// whole corpus's mentions or the whole `(notice, section)` idempotency map in
+/// RAM at once (issue 57). Open with [`Db::mention_resolver`], drive with
+/// [`Db::resolve_mentions`], close with [`Db::finish_mention_resolver`].
+pub struct MentionResolver {
+    org_of: std::collections::HashMap<(Option<String>, String, String), i64>,
+    created_any: bool,
 }
 
 impl Db {
@@ -661,8 +674,11 @@ impl Db {
         }
         drop(rows);
 
-        for (sql, build) in all_value_queries() {
-            let mut rows = conn.query(sql, window.clone()).await?;
+        for (table, cols, build) in value_sources() {
+            let sql = format!(
+                "SELECT {cols} FROM {table} WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id"
+            );
+            let mut rows = conn.query(&sql, window.clone()).await?;
             while let Some(row) = rows.next().await? {
                 if let Some(&i) = slot.get(&int(&row, 0)) {
                     out[i].1.values.push(ValueRow {
@@ -672,6 +688,127 @@ impl Db {
                         value: build(&row),
                     });
                 }
+            }
+            drop(rows);
+        }
+        Ok(out)
+    }
+
+    /// Read the full [`Parsed`] form of an explicit set of notice ids — the
+    /// projection's Phase 2 read, where a bounded batch of whole Tenders (their
+    /// notices scattered across the id space by publication history) is folded at
+    /// once. Unlike [`Db::parsed_chunk`]'s contiguous id window, the ids here are
+    /// arbitrary, so each satellite is read with an `IN (…)` over the batch —
+    /// index seeks, chunked under the bind-variable ceiling. The returned notices
+    /// are ordered by id; a caller that needs another order re-orders by id.
+    pub async fn parsed_by_ids(&self, ids: &[i64]) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = self.reader().await?;
+        let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
+        let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
+
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT id, source, publication_id, profile FROM notices WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let id = int(&row, 0);
+                slot.insert(id, out.len());
+                out.push((
+                    NoticeRef {
+                        id,
+                        source: text(&row, 1),
+                        publication_id: text(&row, 2),
+                        profile: text(&row, 3),
+                    },
+                    Parsed::default(),
+                ));
+            }
+            drop(rows);
+        }
+        if out.is_empty() {
+            return Ok(out);
+        }
+        // Keep the id order the caller-facing contract promises, independent of
+        // the order the `IN` scans returned rows in.
+        out.sort_by_key(|(n, _)| n.id);
+        for (i, (n, _)) in out.iter().enumerate() {
+            slot.insert(n.id, i);
+        }
+
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT notice_id, section_id, kind, parent_section_id FROM notice_sections
+                 WHERE notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                if let Some(&i) = slot.get(&int(&row, 0)) {
+                    out[i].1.sections.push(Section {
+                        id: text(&row, 1),
+                        kind: text(&row, 2),
+                        parent: opt_text_of(&row, 3),
+                    });
+                }
+            }
+            drop(rows);
+        }
+
+        for (table, cols, build) in value_sources() {
+            for chunk in ids.chunks(IN_CHUNK) {
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let sql = format!(
+                    "SELECT {cols} FROM {table} WHERE notice_id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let mut rows = conn.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    if let Some(&i) = slot.get(&int(&row, 0)) {
+                        out[i].1.values.push(ValueRow {
+                            section_id: text(&row, 1),
+                            field_id: text(&row, 2),
+                            ordinal: int(&row, 3),
+                            value: build(&row),
+                        });
+                    }
+                }
+                drop(rows);
+            }
+        }
+        Ok(out)
+    }
+
+    /// The resolved canonical Organization of every mention of the given notices,
+    /// as `notice_id → (section_id → organization_id)`. Phase 2 uses it to bind a
+    /// rebuilt notice's roles and results back to the Organizations that Phase 1
+    /// already resolved and recorded, without re-resolving.
+    pub async fn mentions_by_ids(
+        &self,
+        ids: &[i64],
+    ) -> turso::Result<std::collections::HashMap<i64, std::collections::HashMap<String, i64>>> {
+        use std::collections::HashMap;
+        let mut out: HashMap<i64, HashMap<String, i64>> = HashMap::new();
+        if ids.is_empty() {
+            return Ok(out);
+        }
+        let conn = self.reader().await?;
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT notice_id, section_id, organization_id FROM organization_mentions
+                 WHERE notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                out.entry(int(&row, 0)).or_default().insert(text(&row, 1), int(&row, 2));
             }
             drop(rows);
         }
@@ -710,31 +847,13 @@ impl Db {
         Ok(())
     }
 
-    /// Resolve every mention onto a canonical Organization, creating ones as
-    /// needed, and record the mentions. Merging happens only on an exact
-    /// normalised identifier; everything else gets its own provisional profile,
-    /// so no mention is ever destroyed by a merge.
-    ///
-    /// The dedup runs in memory, not with a per-mention `SELECT` (issue 19): the
-    /// old org lookup `WHERE country IS ? AND identifier_kind = ? AND identifier
-    /// = ?` scanned the growing organizations table for *every* mention — O(n²),
-    /// the projection's real bottleneck (44 min of a 54 min month at ~350k
-    /// mentions). We preload the two lookup tables once, then each mention is an
-    /// O(1) map hit and only genuinely new rows are written. Writes still commit
-    /// in [`WRITE_BATCH`]-sized transactions with one doorbell at the end, so a
-    /// change-feed consumer sees every new Organization exactly once; and the
-    /// (notice, section) key keeps it idempotent (an already-recorded mention
-    /// keeps its Organization — immutable evidence).
-    pub async fn resolve_mentions(&self, mentions: &[Mention], now: i64) -> turso::Result<Vec<i64>> {
+    /// Open a streaming mention resolver, preloading the Organization dedup key
+    /// `(country, identifier_kind, identifier) → id` **once** for the whole run.
+    /// On `--rebuild` the organizations table was just cleared, so the scan is
+    /// empty and the map fills as the run proceeds. See [`MentionResolver`].
+    pub async fn mention_resolver(&self) -> turso::Result<MentionResolver> {
         use std::collections::HashMap;
-        if mentions.is_empty() {
-            return Ok(Vec::new());
-        }
         let conn = self.conn().await;
-
-        // Preload: the org dedup key (country, identifier_kind, identifier) → id,
-        // and (notice_id, section_id) → org id for already-recorded mentions.
-        // On `--rebuild` both tables were just cleared, so these scans are empty.
         let mut org_of: HashMap<(Option<String>, String, String), i64> = HashMap::new();
         let mut rows = conn
             .query(
@@ -746,18 +865,59 @@ impl Db {
         while let Some(row) = rows.next().await? {
             org_of.insert((opt_text_of(&row, 1), text(&row, 2), text(&row, 3)), int(&row, 0));
         }
-        drop(rows);
-        let mut mention_of: HashMap<(i64, String), i64> = HashMap::new();
-        let mut rows = conn
-            .query("SELECT notice_id, section_id, organization_id FROM organization_mentions", ())
-            .await?;
-        while let Some(row) = rows.next().await? {
-            mention_of.insert((int(&row, 0), text(&row, 1)), int(&row, 2));
+        Ok(MentionResolver { org_of, created_any: false })
+    }
+
+    /// Resolve one bounded batch of mentions onto canonical Organizations,
+    /// creating ones as needed, and record the mentions — returning one id per
+    /// input mention. Merging happens only on an exact normalised identifier;
+    /// everything else gets its own provisional profile, so no mention is ever
+    /// destroyed by a merge.
+    ///
+    /// The dedup runs in memory, not with a per-mention `SELECT` (issue 19): the
+    /// old org lookup `WHERE country IS ? AND identifier_kind = ? AND identifier
+    /// = ?` scanned the growing organizations table for *every* mention — O(n²),
+    /// the projection's original bottleneck (44 min of a 54 min month at ~350k
+    /// mentions). The `org_of` map (held across batches on the resolver) makes it
+    /// O(1). The idempotency map `(notice, section) → org` — which keeps an
+    /// already-recorded mention on its Organization on a re-projection — is
+    /// preloaded **for this batch's notices only** (not the whole corpus, which
+    /// at 7.5M+ notices is gigabytes; issue 57), because each notice is resolved
+    /// exactly once per run. Writes commit in [`WRITE_BATCH`]-sized transactions;
+    /// the change-feed doorbell rings once, from [`Db::finish_mention_resolver`].
+    pub async fn resolve_mentions(
+        &self,
+        resolver: &mut MentionResolver,
+        mentions: &[Mention],
+        now: i64,
+    ) -> turso::Result<Vec<i64>> {
+        use std::collections::HashMap;
+        if mentions.is_empty() {
+            return Ok(Vec::new());
         }
-        drop(rows);
+        let conn = self.conn().await;
+
+        // Idempotency preload, scoped to this batch's notices: an already-recorded
+        // (notice, section) keeps its Organization. Empty on `--rebuild`.
+        let mut notice_ids: Vec<i64> = mentions.iter().map(|m| m.notice_id).collect();
+        notice_ids.sort_unstable();
+        notice_ids.dedup();
+        let mut mention_of: HashMap<(i64, String), i64> = HashMap::new();
+        for chunk in notice_ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT notice_id, section_id, organization_id FROM organization_mentions
+                 WHERE notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                mention_of.insert((int(&row, 0), text(&row, 1)), int(&row, 2));
+            }
+            drop(rows);
+        }
 
         let mut ids = Vec::with_capacity(mentions.len());
-        let mut created_any = false;
         for chunk in mentions.chunks(WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             let mut chunk_ids = Vec::with_capacity(chunk.len());
@@ -765,10 +925,13 @@ impl Db {
             for m in chunk {
                 // The maps are updated as we go, so a later mention in the same
                 // chunk reuses an Organization an earlier one just created.
-                match self.resolve_one_mention(&conn, m, now, &mut org_of, &mut mention_of).await {
+                match self
+                    .resolve_one_mention(&conn, m, now, &mut resolver.org_of, &mut mention_of)
+                    .await
+                {
                     Ok((id, created)) => {
                         chunk_ids.push(id);
-                        created_any |= created;
+                        resolver.created_any |= created;
                     }
                     Err(e) => {
                         error = Some(e);
@@ -789,10 +952,18 @@ impl Db {
                 }
             }
         }
-        if created_any {
+        Ok(ids)
+    }
+
+    /// Ring the change-cursor doorbell once if the resolver created any
+    /// Organization over its lifetime, so a change-feed consumer sees every new
+    /// Organization exactly once.
+    pub async fn finish_mention_resolver(&self, resolver: MentionResolver) -> turso::Result<()> {
+        if resolver.created_any {
+            let conn = self.conn().await;
             self.publish_cursor(&conn).await?;
         }
-        Ok(ids)
+        Ok(())
     }
 
     async fn resolve_one_mention(
@@ -1702,36 +1873,27 @@ type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;
 /// `notice_id` as column 0 and the payload shifted one column right. Used by
 /// [`Db::parsed_chunk`] so the projection reads the notice layer in a handful of
 /// scans per chunk rather than a per-notice query storm (issue 19).
-fn all_value_queries() -> Vec<(&'static str, ValueBuilder)> {
+/// The value satellite tables of the parsed layer, each as `(table, columns,
+/// builder)`. The columns are `notice_id, section_id, field_id, ordinal` then the
+/// table's value columns, so a row's positions are the same whichever `WHERE`
+/// selects it — that is what lets both the id-window read ([`Db::parsed_chunk`])
+/// and the id-set read ([`Db::parsed_by_ids`]) share one builder set.
+fn value_sources() -> Vec<(&'static str, &'static str, ValueBuilder)> {
     use crate::NoticeValue as V;
     vec![
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, lang, value FROM notice_texts WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            (|r| V::Text { lang: opt_text_of(r, 4), value: text(r, 5) }) as ValueBuilder,
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, list_name, code FROM notice_codes WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Code { list: opt_text_of(r, 4), code: text(r, 5) },
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, scheme, code FROM notice_classifications WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Classification { scheme: text(r, 4), code: text(r, 5) },
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, cents, currency FROM notice_amounts WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Amount { cents: int(r, 4), currency: text(r, 5) },
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, utc_seconds, offset_minutes, has_time
-               FROM notice_dates WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Date { utc_seconds: int(r, 4), offset_minutes: int(r, 5), has_time: int(r, 6) != 0 },
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, value FROM notice_integers WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Integer(int(r, 4)),
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, value, unit FROM notice_numbers WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
+        ("notice_texts", "notice_id, section_id, field_id, ordinal, lang, value",
+            (|r| V::Text { lang: opt_text_of(r, 4), value: text(r, 5) }) as ValueBuilder),
+        ("notice_codes", "notice_id, section_id, field_id, ordinal, list_name, code",
+            |r| V::Code { list: opt_text_of(r, 4), code: text(r, 5) }),
+        ("notice_classifications", "notice_id, section_id, field_id, ordinal, scheme, code",
+            |r| V::Classification { scheme: text(r, 4), code: text(r, 5) }),
+        ("notice_amounts", "notice_id, section_id, field_id, ordinal, cents, currency",
+            |r| V::Amount { cents: int(r, 4), currency: text(r, 5) }),
+        ("notice_dates", "notice_id, section_id, field_id, ordinal, utc_seconds, offset_minutes, has_time",
+            |r| V::Date { utc_seconds: int(r, 4), offset_minutes: int(r, 5), has_time: int(r, 6) != 0 }),
+        ("notice_integers", "notice_id, section_id, field_id, ordinal, value",
+            |r| V::Integer(int(r, 4))),
+        ("notice_numbers", "notice_id, section_id, field_id, ordinal, value, unit",
             |r| V::Number {
                 value: match r.get_value(4) {
                     Ok(Value::Real(f)) => f,
@@ -1739,11 +1901,24 @@ fn all_value_queries() -> Vec<(&'static str, ValueBuilder)> {
                     _ => 0.0,
                 },
                 unit: opt_text_of(r, 5),
-            },
-        ),
-        (
-            "SELECT notice_id, section_id, field_id, ordinal, scheme, value, is_ref FROM notice_ids WHERE notice_id >= ? AND notice_id <= ? ORDER BY notice_id",
-            |r| V::Id { scheme: opt_text_of(r, 4), value: text(r, 5), is_ref: int(r, 6) != 0 },
-        ),
+            }),
+        ("notice_ids", "notice_id, section_id, field_id, ordinal, scheme, value, is_ref",
+            |r| V::Id { scheme: opt_text_of(r, 4), value: text(r, 5), is_ref: int(r, 6) != 0 }),
     ]
 }
+
+/// A `?,?,…` placeholder list of `n` bind slots for an `IN (…)` clause.
+fn placeholders(n: usize) -> String {
+    let mut s = String::with_capacity(n * 2);
+    for i in 0..n {
+        if i > 0 {
+            s.push(',');
+        }
+        s.push('?');
+    }
+    s
+}
+
+/// SQLite's default bind-variable ceiling is 999; stay well under it so an
+/// `IN (…)` read of a batch's ids never overflows a single statement.
+const IN_CHUNK: usize = 512;
