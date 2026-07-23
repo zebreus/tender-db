@@ -395,7 +395,7 @@ impl Db {
         conn.execute_batch(webhooks::SCHEMA).await?;
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
-        let read_pool = Readers::open(database.clone(), READ_POOL, "store")?;
+        let read_pool = Readers::open(database.clone(), READ_POOL)?;
         Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, cursor })
     }
 
@@ -426,8 +426,8 @@ impl Db {
     /// `n` reader connections over the same database file. Readers run in
     /// parallel with each other and with the writer (WAL), so the API's fan-out
     /// never queues behind ingestion.
-    pub fn readers(&self, n: usize, name: &'static str) -> turso::Result<Arc<Readers>> {
-        Readers::open(self.database.clone(), n, name)
+    pub fn readers(&self, n: usize) -> turso::Result<Arc<Readers>> {
+        Readers::open(self.database.clone(), n)
     }
 
     /// Subscribe to the change-cursor doorbell. The current value is the newest
@@ -996,7 +996,22 @@ impl Db {
         let conn = self.reader().await?;
         Ok(ImportLag {
             newest_fetch_at: max_instant(&conn, "SELECT MAX(fetched_at) FROM fetches").await?,
-            newest_notice_at: max_instant(&conn, "SELECT MAX(ingested_at) FROM notices").await?,
+            // The newest notice via the id PK, NOT `MAX(ingested_at)`. There is no
+            // index on ingested_at, so `MAX(ingested_at)` is a full table scan of
+            // notices (~80 ms at 40k rows → ~15 s at prod's 7.5M) — and this runs
+            // ungated every 60 s from the dashboard's `measure_system` while a
+            // write-heavy job holds the WAL. A multi-second scan holds a live WAL
+            // read snapshot for its duration, which pins the WAL and defeats the
+            // per-package TRUNCATE — the store-pool reader behind the 70 GB runaway
+            // (issue 42/53). `ingested_at` is assigned at insert time in id order,
+            // so it is monotonic with the autoincrement id: the id-newest row's
+            // `ingested_at` IS `MAX(ingested_at)`, but this reads exactly one row
+            // via the primary key (O(1), microseconds) — no scan, no long snapshot.
+            newest_notice_at: max_instant(
+                &conn,
+                "SELECT ingested_at FROM notices ORDER BY id DESC LIMIT 1",
+            )
+            .await?,
         })
     }
 }
@@ -1198,6 +1213,83 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Regression (issue 42/53, the store-pool WAL pin): `import_lag`'s newest-notice
+    /// read must be O(1), not a full `notices` scan. `MAX(ingested_at)` full-scanned
+    /// the table (no index on ingested_at) — running ungated every 60 s from the
+    /// dashboard's `measure_system` during a write-heavy job, it held a live WAL read
+    /// snapshot for its multi-second duration and pinned the WAL (70 GB in the field).
+    /// The fix reads the newest notice via the id PK. This asserts BOTH correctness
+    /// (id-newest == max ingested_at, which holds because ingested_at is monotonic
+    /// with the autoincrement id) AND that `import_lag` is dramatically cheaper than
+    /// the scan it replaced — self-calibrating against the same machine, so it is not
+    /// a brittle absolute-time threshold.
+    #[tokio::test]
+    async fn import_lag_reads_the_newest_notice_in_o1_not_a_full_scan() {
+        let path = format!("/tmp/tender-db-importlag-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.record_fetch(&Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "2026-00001".into(),
+            url: "u".into(),
+            sha256: "a".into(),
+            bytes: 1,
+            fetched_at: 7,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+
+        // Enough rows that a full scan is clearly measurable; ingested_at monotonic
+        // with the insert order (the production invariant — it is set to now_unix()
+        // per package). One transaction for speed.
+        const N: i64 = 40_000;
+        {
+            let conn = db.conn().await;
+            conn.execute("BEGIN IMMEDIATE", ()).await.unwrap();
+            for i in 0..N {
+                conn.execute(
+                    "INSERT INTO notices(source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at)
+                     VALUES('ted', ?, ?, 'eforms', 1, 'm', ?)",
+                    (t(&format!("p{i}")), t(&format!("{i:064}")), Value::Integer(i)),
+                )
+                .await
+                .unwrap();
+            }
+            conn.execute("COMMIT", ()).await.unwrap();
+        }
+
+        // Correctness: the newest notice's instant is the max ingested_at.
+        let lag = db.import_lag().await.unwrap();
+        assert_eq!(lag.newest_notice_at, Some(N - 1), "newest notice == max ingested_at");
+        assert_eq!(lag.newest_fetch_at, Some(7));
+
+        // Performance: import_lag must NOT scan. Compare it, on THIS machine, to the
+        // full `MAX(ingested_at)` scan it replaced — the fix must be at least 10x
+        // cheaper (in practice ~250x). Self-calibrating, so a slow CI box scales both.
+        let time = |sql: &'static str| {
+            let db = &db;
+            async move {
+                let conn = db.reader().await.unwrap();
+                let t = std::time::Instant::now();
+                for _ in 0..10 {
+                    let mut rows = conn.query(sql, ()).await.unwrap();
+                    while rows.next().await.unwrap().is_some() {}
+                }
+                t.elapsed()
+            }
+        };
+        let scan = time("SELECT MAX(ingested_at) FROM notices").await;
+        let fixed = time("SELECT ingested_at FROM notices ORDER BY id DESC LIMIT 1").await;
+        assert!(
+            fixed * 10 < scan,
+            "import_lag's newest-notice read must be O(1), not the O(n) scan: fixed={fixed:?} scan={scan:?}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
 
     // Exercises the pragmas and the full STRICT schema — both layers — against a
     // real Turso db file.

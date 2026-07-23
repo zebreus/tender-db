@@ -281,7 +281,7 @@ pub fn init(db: Arc<Db>) -> Arc<Sweeper> {
             // A dedicated reader pool so reading the change log never queues
             // behind ingestion on the writer; redirects are failures (Standard
             // Webhooks), so the client must not follow them.
-            let readers = db.readers(2, "webhook").expect("webhook reader pool");
+            let readers = db.readers(2).expect("webhook reader pool");
             let http = reqwest::Client::builder()
                 .timeout(TIMEOUT)
                 .redirect(reqwest::redirect::Policy::none())
@@ -297,7 +297,7 @@ pub fn init(db: Arc<Db>) -> Arc<Sweeper> {
 impl Sweeper {
     /// Construct without spawning — the integration test drives `sweep` directly.
     pub fn new(db: Arc<Db>, http: reqwest::Client) -> Sweeper {
-        let readers = db.readers(2, "webhook").expect("webhook reader pool");
+        let readers = db.readers(2).expect("webhook reader pool");
         Sweeper { db, readers, http }
     }
 

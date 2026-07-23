@@ -112,9 +112,13 @@ pub fn init(db: Arc<Db>) {
 async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: bool) {
     let now = store::now_unix();
     // `system` is the only measurement safe to run while a write-heavy job holds
-    // the WAL: cursor + a `job_log` point read, no table-proportional scan, so it
-    // never holds a reader snapshot long enough to matter. It lands within a
-    // second of a restart and keeps its per-60s cadence throughout ingestion.
+    // the WAL: cursor (MAX over the changes PK), a `job_log` point read, and the
+    // import lag — all O(1) point reads, no table-proportional scan, so none holds
+    // a reader snapshot long enough to matter. This claim is load-bearing: the lag's
+    // newest-notice read MUST stay O(1) (id-PK, not `MAX(ingested_at)` which
+    // full-scans notices) or `measure_system` becomes the WAL-pinning reader it was
+    // in the field (issue 42/53, store::Db::import_lag). It lands within a second of
+    // a restart and keeps its per-60s cadence throughout ingestion.
     publish(cell, "system", measure_system(db, now).await, |d, v| d.system = Some(v));
 
     // EVERYTHING BELOW holds a live reader snapshot for the duration of a

@@ -22,55 +22,15 @@ pub struct Readers {
     database: turso::Database,
     idle: Mutex<Vec<Connection>>,
     permits: Arc<Semaphore>,
-    /// [DEBUG-wal01] Pool size and a stable name, for the WAL-pin diagnosis: a
-    /// reader holding an OPEN snapshot (not a returned/idle one) is the only thing
-    /// that pins the WAL (store::checkpoint tests), so we need to see which pool
-    /// has one *borrowed* at a busy checkpoint.
-    capacity: usize,
-    name: &'static str,
-}
-
-/// [DEBUG-wal01] Process-wide registry of every reader pool, so the checkpoint
-/// site can report each pool's borrowed count without threading handles through
-/// the whole app. Weak refs — a dropped pool simply falls out of the report.
-static POOLS: std::sync::OnceLock<Mutex<Vec<std::sync::Weak<Readers>>>> = std::sync::OnceLock::new();
-
-fn registry() -> &'static Mutex<Vec<std::sync::Weak<Readers>>> {
-    POOLS.get_or_init(|| Mutex::new(Vec::new()))
-}
-
-/// [DEBUG-wal01] `(name, borrowed, capacity)` for every still-live reader pool.
-/// `borrowed` = connections currently checked out (capacity − free permits); a
-/// pool showing a persistently-borrowed reader at a busy checkpoint is the pin.
-pub fn pool_report() -> Vec<(&'static str, usize, usize)> {
-    registry()
-        .lock()
-        .expect("pool registry")
-        .iter()
-        .filter_map(|w| w.upgrade().map(|p| (p.name, p.borrowed(), p.capacity)))
-        .collect()
 }
 
 impl Readers {
-    pub(crate) fn open(
-        database: turso::Database,
-        n: usize,
-        name: &'static str,
-    ) -> turso::Result<Arc<Readers>> {
-        let pool = Arc::new(Readers {
+    pub(crate) fn open(database: turso::Database, n: usize) -> turso::Result<Arc<Readers>> {
+        Ok(Arc::new(Readers {
             database,
             idle: Mutex::new(Vec::with_capacity(n)),
             permits: Arc::new(Semaphore::new(n)),
-            capacity: n,
-            name,
-        });
-        registry().lock().expect("pool registry").push(Arc::downgrade(&pool));
-        Ok(pool)
-    }
-
-    /// [DEBUG-wal01] How many of this pool's connections are checked out right now.
-    pub fn borrowed(&self) -> usize {
-        self.capacity - self.permits.available_permits()
+        }))
     }
 
     /// Borrow a reader, waiting if all of them are busy.
@@ -1108,47 +1068,4 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
         offset_minutes: opt_int_of(row, idx + 1).unwrap_or(0),
         has_time: opt_int_of(row, idx + 2).unwrap_or(0) != 0,
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::Db;
-
-    /// [DEBUG-wal01] The instrument must be trustworthy before we read its
-    /// production output: `borrowed()` counts a checked-out reader and drops back
-    /// to 0 when it returns, and `pool_report()` surfaces the pool by name. This is
-    /// what tells us, at a busy checkpoint, WHICH pool holds an open snapshot.
-    #[tokio::test]
-    async fn borrowed_count_tracks_checked_out_readers() {
-        let path = format!("/tmp/tender-db-borrowed-{}.db", std::process::id());
-        for s in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{s}"));
-        }
-        let db = Db::open(&path).await.unwrap();
-        // A name unique to this test — pool_report() is process-wide and the whole
-        // suite runs in one process, so a shared name would collide with other tests.
-        let pool = db.readers(4, "borrowed-selftest").unwrap();
-
-        assert_eq!(pool.borrowed(), 0, "a fresh pool has nothing borrowed");
-        let a = pool.get().await.unwrap();
-        assert_eq!(pool.borrowed(), 1, "one reader checked out");
-        let b = pool.get().await.unwrap();
-        assert_eq!(pool.borrowed(), 2, "two readers checked out");
-
-        // The named pool shows up in the process-wide report with its live count.
-        let report = super::pool_report();
-        let probe = report
-            .iter()
-            .find(|(n, ..)| *n == "borrowed-selftest")
-            .expect("pool is registered");
-        assert_eq!((probe.1, probe.2), (2, 4), "report shows borrowed/capacity for the pool");
-
-        drop(a);
-        drop(b);
-        assert_eq!(pool.borrowed(), 0, "returning both readers drops the count to 0");
-
-        for s in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{s}"));
-        }
-    }
 }

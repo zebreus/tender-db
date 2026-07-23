@@ -78,7 +78,7 @@ impl Server {
         let token = accounts::create_token(&db, account.id, "cli").await.expect("token").token;
 
         let state =
-            v1::AppState::with_sql_timeout(db.clone(), db.readers(4, "test").expect("readers"), sql_timeout);
+            v1::AppState::with_sql_timeout(db.clone(), db.readers(4).expect("readers"), sql_timeout);
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {

@@ -11,7 +11,7 @@ use store::{Db, Notice, NoticeValue, Parse, Parsed, Section, ValueRow};
 /// The change log via the production reader path (`read::changes_since`) — the
 /// tests exercise it now that `Db` no longer duplicates the query (issue 38).
 async fn changes(db: &Db, cursor: i64, limit: i64) -> Vec<store::Change> {
-    let readers = db.readers(1, "test").expect("readers");
+    let readers = db.readers(1).expect("readers");
     let reader = readers.get().await.expect("reader");
     store::read::changes_since(&reader, cursor, limit, None).await.expect("changes")
 }
@@ -601,7 +601,7 @@ async fn the_award_notice_yields_lot_results_bids_and_contracts() {
     );
 
     // The winner filter the API adds sees the same thing.
-    let readers = db.readers(1, "test").expect("readers");
+    let readers = db.readers(1).expect("readers");
     let reader = readers.get().await.expect("reader");
     let winner = scalar(&db, "SELECT winner_organization_id FROM v_lot_results").await;
     let filter = store::read::Filter { winner: Some(winner), ..store::read::Filter::default() };

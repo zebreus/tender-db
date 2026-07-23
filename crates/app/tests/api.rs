@@ -70,7 +70,7 @@ impl Server {
         .expect("record fetch");
         let fetch_id = db.current_packages(SOURCE, "daily", None).await.expect("packages")[0].fetch_id;
 
-        let state = v1::AppState::new(db.clone(), db.readers(4, "test").expect("readers"));
+        let state = v1::AppState::new(db.clone(), db.readers(4).expect("readers"));
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
