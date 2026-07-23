@@ -609,6 +609,33 @@ pub struct MentionResolver {
     created_any: bool,
 }
 
+/// One notice's grouping identity, as written to the on-disk plan (issue 59).
+/// `ojs_self`/`ojs_edges` are the OJS keys **encoded** `year*1e9 + number`, so a
+/// SQL `MIN` over a component gives its earliest publication.
+pub struct PlanRow {
+    pub notice_id: i64,
+    pub procedure_key: Option<String>,
+    pub legacy: bool,
+    pub ojs_self: Option<i64>,
+    pub source: String,
+    pub source_rank: i64,
+    pub publication_id: String,
+    pub published_at: i64,
+    pub subtype: Option<String>,
+    pub ojs_edges: Vec<i64>,
+}
+
+/// One Tender's notices, streamed from the plan in fold order (issue 59). Carries
+/// only what folding needs beyond the parsed layer: the notice ids in order, each
+/// one's Source (for the ADR-0003 primary-Source rule), and the fold-first
+/// notice's subtype (for the Tender kind).
+pub struct PlanGroup {
+    pub group_key: String,
+    pub notice_ids: Vec<i64>,
+    pub sources: Vec<String>,
+    pub first_subtype: Option<String>,
+}
+
 impl Db {
     /// The next chunk of parsed notices with `id > after_id` (up to `limit`),
     /// each with its full [`Parsed`] form, read in a fixed handful of scans over
@@ -845,6 +872,295 @@ impl Db {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
         Ok(())
+    }
+
+    // --------------------------------------------------------- grouping plan
+    //
+    // The projection's grouping plan lives on disk in scratch tables, not in a
+    // RAM `Vec` (issue 59): at 7.5M+ notices an in-RAM plan is ~1.5 GB and grows
+    // with the corpus. Here the whole grouping — keyed chains, the legacy OJS
+    // transitive-closure union-find, islands — runs in SQL over these tables, and
+    // Phase 2 streams whole-Tender batches out of them, so projection peak RAM is
+    // one batch's working set regardless of corpus size. The tables are real
+    // (not TEMP — turso's temp store is unconfigured) and cleared at both ends of
+    // a run so nothing transient persists into a snapshot.
+
+    /// (Re)create the empty grouping-plan scratch tables — dropped-clean at the
+    /// start of a projection.
+    pub async fn reset_plan(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS plan_notice (
+                 notice_id      INTEGER PRIMARY KEY,
+                 procedure_key  TEXT,
+                 legacy         INTEGER NOT NULL,
+                 ojs_self       INTEGER,
+                 source         TEXT NOT NULL,
+                 source_rank    INTEGER NOT NULL,
+                 publication_id TEXT NOT NULL,
+                 published_at   INTEGER NOT NULL,
+                 subtype        TEXT,
+                 group_key      TEXT
+             ) STRICT",
+            (),
+        )
+        .await?;
+        // The legacy OJS graph: one node per OJS number (including not-yet-ingested
+        // edge targets, so identity is stable as backfill deepens), symmetric edges.
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS plan_ojs_node (key INTEGER PRIMARY KEY, label INTEGER NOT NULL) STRICT",
+            (),
+        )
+        .await?;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS plan_ojs_edge (a INTEGER NOT NULL, b INTEGER NOT NULL) STRICT",
+            (),
+        )
+        .await?;
+        self.clear_plan_on(&conn).await
+    }
+
+    /// Empty the grouping-plan scratch tables (and drop the Phase-2 fold index so
+    /// the next run rebuilds it). Called at the start and the end of a run — the
+    /// durable DB never carries a projection's transient plan between runs.
+    pub async fn clear_plan(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        self.clear_plan_on(&conn).await
+    }
+
+    async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
+        conn.execute("DROP INDEX IF EXISTS plan_notice_fold", ()).await?;
+        conn.execute("DROP INDEX IF EXISTS plan_ojs_edge_a", ()).await?;
+        for table in ["plan_notice", "plan_ojs_node", "plan_ojs_edge"] {
+            conn.execute(&format!("DELETE FROM {table}"), ()).await?;
+        }
+        Ok(())
+    }
+
+    /// Insert one batch of the grouping plan (issue 59) in a single transaction:
+    /// a `plan_notice` row per notice, plus — for a legacy notice that carries its
+    /// own OJS number — its node and the (symmetric) edges to every OJS id it
+    /// references. `INSERT OR IGNORE` on the nodes dedups shared numbers.
+    pub async fn insert_plan(&self, rows: &[PlanRow]) -> turso::Result<()> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result = self.insert_plan_tx(&conn, rows).await;
+        match result {
+            Ok(()) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(())
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    async fn insert_plan_tx(&self, conn: &Connection, rows: &[PlanRow]) -> turso::Result<()> {
+        for r in rows {
+            conn.execute(
+                "INSERT INTO plan_notice(notice_id, procedure_key, legacy, ojs_self, source,
+                     source_rank, publication_id, published_at, subtype, group_key)
+                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)",
+                (
+                    Value::Integer(r.notice_id),
+                    opt_text(r.procedure_key.as_deref()),
+                    Value::Integer(i64::from(r.legacy)),
+                    r.ojs_self.map_or(Value::Null, Value::Integer),
+                    t(&r.source),
+                    Value::Integer(r.source_rank),
+                    t(&r.publication_id),
+                    Value::Integer(r.published_at),
+                    opt_text(r.subtype.as_deref()),
+                ),
+            )
+            .await?;
+            // A legacy notice with its own OJS number seeds the union-find graph.
+            if let Some(own) = r.ojs_self.filter(|_| r.legacy) {
+                conn.execute(
+                    "INSERT OR IGNORE INTO plan_ojs_node(key, label) VALUES(?, ?)",
+                    (Value::Integer(own), Value::Integer(own)),
+                )
+                .await?;
+                for &edge in &r.ojs_edges {
+                    conn.execute(
+                        "INSERT OR IGNORE INTO plan_ojs_node(key, label) VALUES(?, ?)",
+                        (Value::Integer(edge), Value::Integer(edge)),
+                    )
+                    .await?;
+                    conn.execute(
+                        "INSERT INTO plan_ojs_edge(a, b) VALUES(?, ?)",
+                        (Value::Integer(own), Value::Integer(edge)),
+                    )
+                    .await?;
+                    conn.execute(
+                        "INSERT INTO plan_ojs_edge(a, b) VALUES(?, ?)",
+                        (Value::Integer(edge), Value::Integer(own)),
+                    )
+                    .await?;
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Assign every notice its Tender `group_key` — the grouping, done in SQL so it
+    /// never pulls the corpus into RAM (issue 59):
+    ///
+    /// - **keyed** → the procedure key itself (BT-04 / sdk-0.1 uuid), which is what
+    ///   `tenders.procedure_key` stores; a shared key merges across Sources.
+    /// - **island** → `island:<notice_id>`, a unique non-colliding handle.
+    /// - **legacy** → `ojs:<earliest year>-<number>`, the transitive component's
+    ///   minimum OJS number, found by iterative label propagation over the edge
+    ///   graph (turso has no `WITH RECURSIVE`): each pass sets a node's label to the
+    ///   min of itself and its neighbours until the labels stop moving. OJS keys are
+    ///   encoded `year*1e9 + number` so a single `MIN` gives the earliest.
+    ///
+    /// Finally builds the fold-order index Phase 2 streams by.
+    pub async fn build_plan_groups(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        // Keyed and island in one pass; legacy left NULL for the closure below.
+        conn.execute(
+            "UPDATE plan_notice SET group_key = CASE
+                 WHEN procedure_key IS NOT NULL THEN procedure_key
+                 WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
+                 ELSE NULL END",
+            (),
+        )
+        .await?;
+
+        // Legacy transitive closure by label propagation. Index the edge source so
+        // each pass is index joins, not scans.
+        conn.execute("CREATE INDEX IF NOT EXISTS plan_ojs_edge_a ON plan_ojs_edge(a)", ()).await?;
+        let mut previous = -1;
+        // Converges in ~component diameter (real OJS chains are short); the cap is a
+        // runaway guard, never expected to bind.
+        for _ in 0..1024 {
+            conn.execute(
+                "UPDATE plan_ojs_node SET label = (
+                     SELECT MIN(v) FROM (
+                         SELECT plan_ojs_node.label AS v
+                         UNION ALL
+                         SELECT n2.label FROM plan_ojs_edge e JOIN plan_ojs_node n2 ON n2.key = e.b
+                          WHERE e.a = plan_ojs_node.key
+                     )
+                 )",
+                (),
+            )
+            .await?;
+            let mut rows = conn.query("SELECT COALESCE(SUM(label), 0) FROM plan_ojs_node", ()).await?;
+            let sum = int(&rows.next().await?.expect("sum row"), 0);
+            drop(rows);
+            if sum == previous {
+                break;
+            }
+            previous = sum;
+        }
+        // Assign each legacy notice its component's earliest-OJS key, formatted to
+        // match `ojs_procedure_key`: `ojs:{year}-{number:06}`.
+        conn.execute(
+            "UPDATE plan_notice SET group_key = (
+                 SELECT 'ojs:' || (n.label / 1000000000) || '-' || printf('%06d', n.label % 1000000000)
+                   FROM plan_ojs_node n WHERE n.key = plan_notice.ojs_self)
+             WHERE group_key IS NULL AND legacy = 1 AND ojs_self IS NOT NULL",
+            (),
+        )
+        .await?;
+
+        // The fold order Phase 2 streams by: rows arrive grouped by Tender and, within
+        // a Tender, in supersession order (ADR-0003 tiebreak), so no in-RAM sort.
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS plan_notice_fold
+                 ON plan_notice(group_key, published_at, source_rank, publication_id, notice_id)",
+            (),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// `(tenders, islands)` in the built plan — distinct group keys, and those that
+    /// are single-notice islands.
+    pub async fn plan_counts(&self) -> turso::Result<(u64, u64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(DISTINCT group_key),
+                        COUNT(DISTINCT CASE WHEN group_key LIKE 'island:%' THEN group_key END)
+                   FROM plan_notice",
+                (),
+            )
+            .await?;
+        let row = rows.next().await?.expect("counts row");
+        Ok((int(&row, 0) as u64, int(&row, 1) as u64))
+    }
+
+    /// The legacy (`ojs:`) Tender keys the plan produced — the set
+    /// [`Db::retire_absorbed_legacy_tenders`] checks a late merge against. Bounded
+    /// by the legacy Tender count, not the corpus.
+    pub async fn plan_legacy_keys(&self) -> turso::Result<BTreeSet<String>> {
+        let conn = self.conn().await;
+        let mut out = BTreeSet::new();
+        let mut rows = conn
+            .query("SELECT DISTINCT group_key FROM plan_notice WHERE group_key LIKE 'ojs:%'", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.insert(text(&row, 0));
+        }
+        Ok(out)
+    }
+
+    /// Stream the next bounded batch of WHOLE Tenders from the plan, in fold order,
+    /// starting after `after_group_key` (`""` for the first batch). Accumulates
+    /// whole groups until the notice budget is reached — a Tender is never split
+    /// across a batch — so Phase 2 holds one batch, not the corpus (issue 59).
+    /// Empty when the plan is exhausted.
+    pub async fn next_plan_batch(
+        &self,
+        after_group_key: &str,
+        notice_budget: usize,
+    ) -> turso::Result<Vec<PlanGroup>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT notice_id, group_key, source, subtype FROM plan_notice
+                  WHERE group_key > ?
+                  ORDER BY group_key, published_at, source_rank, publication_id, notice_id",
+                (t(after_group_key),),
+            )
+            .await?;
+        let mut groups: Vec<PlanGroup> = Vec::new();
+        let mut total = 0usize;
+        while let Some(row) = rows.next().await? {
+            let notice_id = int(&row, 0);
+            let group_key = text(&row, 1);
+            let source = text(&row, 2);
+            let subtype = opt_text_of(&row, 3);
+            match groups.last_mut() {
+                Some(g) if g.group_key == group_key => {
+                    g.notice_ids.push(notice_id);
+                    g.sources.push(source);
+                }
+                _ => {
+                    // A new group begins. Stop *before* opening it if the budget is
+                    // already met, so groups are never split across a batch.
+                    if total >= notice_budget {
+                        break;
+                    }
+                    groups.push(PlanGroup {
+                        group_key,
+                        first_subtype: subtype,
+                        notice_ids: vec![notice_id],
+                        sources: vec![source],
+                    });
+                }
+            }
+            total += 1;
+        }
+        Ok(groups)
     }
 
     /// Open a streaming mention resolver, preloading the Organization dedup key

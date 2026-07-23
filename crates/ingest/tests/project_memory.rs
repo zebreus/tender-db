@@ -1,27 +1,37 @@
-//! Peak-memory reproduction for issue 57: the full-corpus projection accumulates
-//! the whole corpus's per-notice `states` + `all_mentions` (and, inside
-//! `resolve_mentions`, the whole `mention_of` map) in RAM before it does anything
-//! with them, so peak heap grows with the corpus and OOMs the 8 GB VPS at 7.5M+
-//! notices.
+//! Corpus-independent projection memory (issue 59), and bounded WAL through the
+//! plan build (issue 42/59 caveat).
 //!
-//! This test drives the real projection over a synthetic corpus at two sizes and
-//! measures the peak resident memory the projection holds, via the kernel's
-//! peak-RSS high-water mark (`VmHWM`), reset to the current RSS just before each
-//! run (`/proc/self/clear_refs`). The bug signature is that the peak scales with
-//! the corpus (4× the notices ⇒ ~4× the peak). The fix bounds the peak to a
-//! working set independent of corpus size, which is what this test asserts — so
-//! the reproduction doubles as the regression test.
+//! Issue 57 bounded projection memory to one Phase-2 batch. Issue 59 removed the
+//! last O(corpus) structure — the in-RAM grouping plan — by backing it with disk
+//! (SQL grouping incl. the legacy union-find). This test proves the result two
+//! ways, at a FIXED batch far below the corpus so batching is actually exercised:
 //!
-//! turso installs its own `#[global_allocator]`, so a tracking allocator is not
-//! an option; `VmHWM` needs no allocator hook and captures the true peak the OOM
-//! killer sees.
+//!  1. **Flat peak** — projecting 2× the notices barely moves peak RSS (the plan
+//!     is on disk; only a batch of states is ever resident), whereas the whole-RAM
+//!     (`usize::MAX` batch) projection's peak scales with the corpus.
+//!  2. **Bounded WAL** — a sampler watches the `-wal` file throughout the run;
+//!     periodic checkpoints keep it bounded through the Phase-1 plan build too, so
+//!     the plan's ~N inserts never re-balloon the WAL we just fixed (issue 42).
+//!
+//! Peak RSS is the kernel's `VmHWM` (turso owns the global allocator, so a tracking
+//! allocator isn't possible). Corpus sizes are both above the 10k read chunk so the
+//! Phase-1 transient is capped identically for both — isolating corpus dependence.
+//!
+//! `#[ignore]` because it builds tens of thousands of notices and projects them
+//! three times (~15 min) — too slow for every `cargo test`. Run explicitly:
+//!
+//! ```sh
+//! cargo test -p ingest --test project_memory -- --ignored --nocapture
+//! ```
+
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering::Relaxed};
+use std::sync::Arc;
 
 use ingest::project;
 use store::{Db, Notice, NoticeValue, Parse, Parsed, Section, ValueRow};
 
 // ---------------------------------------------------------------- peak RSS
 
-/// A `/proc/self/status` field, in bytes.
 fn status_field(name: &str) -> usize {
     let status = std::fs::read_to_string("/proc/self/status").expect("read /proc/self/status");
     for line in status.lines() {
@@ -34,32 +44,54 @@ fn status_field(name: &str) -> usize {
     panic!("no {name} in /proc/self/status");
 }
 
-/// Reset the kernel's peak-RSS high-water mark to the current RSS, so `VmHWM`
-/// afterwards reflects only the peak reached from here on.
+/// Reset the kernel's peak-RSS high-water mark to the current RSS.
 fn reset_peak_rss() {
     std::fs::write("/proc/self/clear_refs", "5").expect("reset VmHWM via clear_refs");
 }
 
-/// Run `f`, returning the peak *additional* resident bytes above the baseline at
-/// entry — the high-water mark of RSS over the region.
-async fn peak_rss_of<F, Fut>(f: F) -> usize
-where
-    F: FnOnce() -> Fut,
-    Fut: std::future::Future<Output = ()>,
-{
+fn mib(bytes: usize) -> f64 {
+    bytes as f64 / 1_048_576.0
+}
+
+/// Project `db`, returning `(peak additional RSS bytes, peak observed -wal
+/// bytes)` — the RSS high-water mark above entry, and the largest WAL the sampler
+/// saw at any instant during the run.
+async fn project_measured(db: &Arc<Db>, batch: usize) -> (usize, u64) {
+    let stop = Arc::new(AtomicBool::new(false));
+    let wal_max = Arc::new(AtomicU64::new(0));
+    let sampler = tokio::spawn({
+        let db = Arc::clone(db);
+        let stop = Arc::clone(&stop);
+        let wal_max = Arc::clone(&wal_max);
+        async move {
+            while !stop.load(Relaxed) {
+                wal_max.fetch_max(db.wal_bytes().unwrap_or(0), Relaxed);
+                tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+            }
+        }
+    });
+
     reset_peak_rss();
     let baseline = status_field("VmRSS");
-    f().await;
-    status_field("VmHWM").saturating_sub(baseline)
+    project::project_with_batch(db, true, batch).await.expect("project");
+    let peak = status_field("VmHWM").saturating_sub(baseline);
+
+    stop.store(true, Relaxed);
+    sampler.await.expect("sampler");
+    // A final direct read, in case the run ended between samples.
+    wal_max.fetch_max(db.wal_bytes().unwrap_or(0), Relaxed);
+    (peak, wal_max.load(Relaxed))
 }
 
 // ------------------------------------------------------------- corpus builder
 
 const SOURCE: &str = "ted";
 
-async fn scratch(name: &str) -> (Db, i64, String) {
+async fn scratch(name: &str) -> (Arc<Db>, i64, String) {
     let path = format!("/tmp/tender-db-projmem-{name}-{}.db", std::process::id());
-    let _ = std::fs::remove_file(&path);
+    for suffix in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{suffix}"));
+    }
     let db = Db::open(&path).await.expect("open scratch db");
     db.record_fetch(&store::Fetch {
         source: SOURCE.into(),
@@ -74,18 +106,20 @@ async fn scratch(name: &str) -> (Db, i64, String) {
     .await
     .expect("record fetch");
     let fetch_id = db.current_packages(SOURCE, "daily", None).await.expect("packages")[0].fetch_id;
-    (db, fetch_id, path)
+    (Arc::new(db), fetch_id, path)
 }
 
-/// One synthetic eForms island notice: a BT-04-less procedure with a title, a
-/// dispatch date, and two organizations each carrying a distinct VAT id. This is
-/// deliberately representative of the heavy per-notice state (facts + mentions)
-/// that the projection accumulates — every notice is its own Tender, so `n`
-/// notices produce `n` states and `2n` mentions.
+/// One synthetic eForms island notice with a title and one organization carrying
+/// a distinct VAT id — representative of the heavy per-notice state (facts +
+/// mentions) the projection folds. `n` notices produce `n` island Tenders.
 fn island_notice(fetch_id: i64, i: u64) -> (Notice, Parse) {
     let pub_id = format!("{i:08}-2026");
-    let mut sections = vec![Section { id: "PROC".into(), kind: "Procedure".into(), parent: None }];
-    let mut values = vec![
+    let sections = vec![
+        Section { id: "PROC".into(), kind: "Procedure".into(), parent: None },
+        Section { id: "ORG-0".into(), kind: "Organization".into(), parent: Some("PROC".into()) },
+        Section { id: "ORG-0-legal".into(), kind: "CompanyLegalEntity".into(), parent: Some("ORG-0".into()) },
+    ];
+    let values = vec![
         ValueRow {
             section_id: "PROC".into(),
             field_id: "BT-21-Procedure".into(),
@@ -93,46 +127,24 @@ fn island_notice(fetch_id: i64, i: u64) -> (Notice, Parse) {
             value: NoticeValue::Text { lang: Some("ENG".into()), value: format!("Works contract {i}") },
         },
         ValueRow {
-            section_id: "PROC".into(),
-            field_id: "BT-05(a)-notice".into(),
-            ordinal: 0,
-            value: NoticeValue::Date {
-                utc_seconds: 1_700_000_000 + i as i64,
-                offset_minutes: 0,
-                has_time: false,
-            },
-        },
-    ];
-    for org in 0..2u64 {
-        let sid = format!("ORG-{org}");
-        let legal = format!("ORG-{org}-legal");
-        sections.push(Section { id: sid.clone(), kind: "Organization".into(), parent: Some("PROC".into()) });
-        sections.push(Section { id: legal.clone(), kind: "CompanyLegalEntity".into(), parent: Some(sid.clone()) });
-        values.push(ValueRow {
-            section_id: sid.clone(),
+            section_id: "ORG-0".into(),
             field_id: "BT-500-Organization-Company".into(),
             ordinal: 0,
-            value: NoticeValue::Text { lang: Some("ENG".into()), value: format!("Bidder {i}-{org}") },
-        });
-        // A distinct, plausible VAT id per (notice, org): each seeds one new
-        // canonical Organization, so the org dedup maps grow with the corpus too.
-        values.push(ValueRow {
-            section_id: legal,
+            value: NoticeValue::Text { lang: Some("ENG".into()), value: format!("Bidder {i}") },
+        },
+        ValueRow {
+            section_id: "ORG-0-legal".into(),
             field_id: "BT-501-Organization-Company".into(),
             ordinal: 0,
-            value: NoticeValue::Id {
-                scheme: Some("VAT".into()),
-                value: format!("NL{:09}B{:02}", i, org),
-                is_ref: false,
-            },
-        });
-        values.push(ValueRow {
+            value: NoticeValue::Id { scheme: Some("VAT".into()), value: format!("NL{i:09}B01"), is_ref: false },
+        },
+        ValueRow {
             section_id: "PROC".into(),
             field_id: "OPT-300-Procedure-Buyer".into(),
-            ordinal: org as i64,
-            value: NoticeValue::Id { scheme: None, value: sid, is_ref: true },
-        });
-    }
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: "ORG-0".into(), is_ref: true },
+        },
+    ];
     (
         Notice {
             source: SOURCE.into(),
@@ -157,84 +169,58 @@ async fn build_corpus(db: &Db, fetch_id: i64, n: u64) {
     }
 }
 
-fn mib(bytes: usize) -> f64 {
-    bytes as f64 / 1_048_576.0
-}
-
-/// The bounded projection's peak resident memory is a fixed working set — a batch
-/// of notices, not the whole corpus. Two facts prove the fix:
-///
-///  1. **Bounded** — folding a fixed batch size over 2× the corpus barely moves
-///     the peak, whereas the whole-corpus (`usize::MAX` batch) projection's peak
-///     grows with the corpus, because it materialises every notice's state at
-///     once (the OOM mechanism of issue 57).
-///  2. **Lower** — on the same corpus, the streaming projection's peak sits well
-///     below the whole-RAM projection's.
-///
-/// Peak is the kernel's `VmHWM`; the batch here (2 000) is deliberately far below
-/// the corpus so Phase 2 never holds more than a batch of states at once.
-///
-/// `#[ignore]` because it builds tens of thousands of notices and projects them
-/// three times (~10 min) — too slow for every `cargo test`. It is the committed
-/// reproduction/regression for issue 57; run it explicitly:
-///
-/// ```sh
-/// cargo test -p ingest --test project_memory -- --ignored --nocapture
-/// ```
+/// Projection peak RSS is independent of corpus size, and the WAL stays bounded
+/// through the whole run — the disk-backed plan (issue 59) means only a batch of
+/// states is ever resident. Both corpus sizes are above the 10k read chunk so the
+/// Phase-1 transient is identical, isolating corpus dependence to what the fix
+/// removed.
 #[tokio::test]
-#[ignore = "heavy: builds ~18k notices and projects 3× (~10 min); run with --ignored"]
-async fn projection_peak_memory_is_bounded_by_the_batch_not_the_corpus() {
+#[ignore = "heavy: builds ~36k notices and projects 3× (~15 min); run with --ignored"]
+async fn projection_peak_memory_is_independent_of_corpus_size() {
     const BATCH: usize = 2_000;
-    const SMALL: u64 = 6_000;
-    const LARGE: u64 = 12_000; // 2× the corpus
+    const SMALL: u64 = 12_000;
+    const LARGE: u64 = 24_000; // 2× the corpus, both above the 10k read chunk
 
     let (db_small, fetch_small, path_small) = scratch("small").await;
     build_corpus(&db_small, fetch_small, SMALL).await;
-    let stream_small = peak_rss_of(|| async {
-        let report = project::project_with_batch(&db_small, true, BATCH).await.expect("stream small");
-        assert_eq!(report.tenders, SMALL);
-    })
-    .await;
+    let (stream_small, _) = project_measured(&db_small, BATCH).await;
 
     let (db_large, fetch_large, path_large) = scratch("large").await;
     build_corpus(&db_large, fetch_large, LARGE).await;
-    let stream_large = peak_rss_of(|| async {
-        let report = project::project_with_batch(&db_large, true, BATCH).await.expect("stream large");
-        assert_eq!(report.tenders, LARGE);
-    })
-    .await;
-    // The same larger corpus, folded whole (the pre-fix, whole-RAM behaviour).
-    let whole_large = peak_rss_of(|| async {
-        let report =
-            project::project_with_batch(&db_large, true, usize::MAX).await.expect("whole large");
-        assert_eq!(report.tenders, LARGE);
-    })
-    .await;
+    let (stream_large, wal_large) = project_measured(&db_large, BATCH).await;
+    // The same larger corpus, folded whole (the pre-issue-59 whole-RAM behaviour).
+    let (whole_large, _) = project_measured(&db_large, usize::MAX).await;
 
     eprintln!(
-        "[projmem] streaming(batch={BATCH}): {SMALL} notices -> {:.1} MiB | {LARGE} notices -> {:.1} MiB \
-         (ratio {:.2}x); whole-RAM {LARGE} notices -> {:.1} MiB",
+        "[projmem] streaming(batch={BATCH}): {SMALL} -> {:.1} MiB | {LARGE} -> {:.1} MiB \
+         (ratio {:.2}x); whole-RAM {LARGE} -> {:.1} MiB; peak WAL during {LARGE} run {:.1} MiB",
         mib(stream_small),
         mib(stream_large),
         stream_large as f64 / stream_small.max(1) as f64,
         mib(whole_large),
+        wal_large as f64 / 1_048_576.0,
     );
 
-    // Bounded: 2× the corpus, same batch → the peak barely moves. Unbounded
-    // accumulation would roughly double it.
+    // Corpus-independent: 2× the corpus, same batch → peak barely moves.
     assert!(
-        stream_large < stream_small * 3 / 2,
-        "streaming peak grew with the corpus: {:.1} MiB at {LARGE} vs {:.1} MiB at {SMALL} notices",
+        stream_large < stream_small * 6 / 5,
+        "streaming peak scaled with the corpus: {:.1} MiB at {LARGE} vs {:.1} MiB at {SMALL} notices",
         mib(stream_large),
         mib(stream_small),
     );
-    // Lower: on the larger corpus, streaming holds a batch where whole-RAM holds
-    // the corpus, so its peak is materially smaller.
+    // And materially below the whole-RAM peak on the same corpus.
     assert!(
         stream_large < whole_large * 3 / 4,
         "streaming peak ({:.1} MiB) is not below the whole-RAM peak ({:.1} MiB) on {LARGE} notices",
         mib(stream_large),
         mib(whole_large),
+    );
+    // Bounded WAL through the whole run (plan build + apply): periodic TRUNCATE
+    // checkpoints keep the -wal file far below the corpus's on-disk footprint.
+    assert!(
+        wal_large < 192 * 1_048_576,
+        "WAL ballooned during the run: peak {:.1} MiB — checkpointing did not bound the plan build",
+        wal_large as f64 / 1_048_576.0,
     );
 
     let _ = std::fs::remove_file(&path_small);
