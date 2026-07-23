@@ -157,6 +157,52 @@ mod tests {
         }
     }
 
+    /// Issue 53 regression (the prod root cause): a pooled connection returned
+    /// mid-transaction — the SSE initial-snapshot's `BEGIN` when the request
+    /// future is cancelled before its `COMMIT` — must NOT re-enter the pool, or
+    /// its frozen snapshot pins the WAL and blocks every checkpoint, so the WAL
+    /// grows without bound (70 GB in the field, surviving with zero live
+    /// connections). Without the fix this reproduces as `busy=1` and no reclaim
+    /// (the leaked open transaction also blocks turso's own autocheckpoint, so
+    /// the WAL is far larger here than the idle-reader case below). The pool
+    /// discards a non-autocommit connection on drop, releasing the snapshot at
+    /// once, so the WAL reclaims and the pool stays usable.
+    #[tokio::test]
+    async fn a_reader_returned_mid_transaction_is_discarded_not_pooled() {
+        let (path, db) = scratch("leaked-txn").await;
+        grow_wal(&db, 1_000).await;
+
+        let pool = db.readers(4).unwrap();
+        {
+            let reader = pool.get().await.unwrap();
+            // The SSE snapshot path, cancelled mid-read: BEGIN, then the future is
+            // dropped before COMMIT. The Reader drops with the transaction open.
+            reader.execute("BEGIN", ()).await.unwrap();
+            let mut rows = reader.query("SELECT COUNT(*) FROM fetches", ()).await.unwrap();
+            while rows.next().await.unwrap().is_some() {}
+            // <-- no COMMIT
+        }
+        // The discarded connection released its snapshot, so the writer's frames
+        // fold and a TRUNCATE reclaims to zero.
+        grow_wal(&db, 3_000).await;
+        let r = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        assert!(!r.busy, "a discarded mid-transaction connection must not pin the WAL");
+        assert!(
+            db.wal_bytes().unwrap_or(0) < 65_536,
+            "the WAL reclaims once the leaked snapshot is discarded, got {:?}",
+            db.wal_bytes()
+        );
+
+        // The pool stays usable: a fresh borrow opens a new connection and works.
+        let reader = pool.get().await.unwrap();
+        let mut rows = reader.query("SELECT COUNT(*) FROM fetches", ()).await.unwrap();
+        assert!(rows.next().await.unwrap().is_some(), "the pool reopened a healthy connection");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// The CRITICAL reader-pool question (issue 42): an *idle* pooled reader — one
     /// that ran a query and was returned to the pool — must NOT pin the WAL, or a
     /// checkpoint could never reclaim past it under a live serving workload. We

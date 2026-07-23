@@ -172,7 +172,11 @@ async fn start(
     }
 
     // One read transaction: the cursor and the rows come from the same
-    // consistent snapshot of the database (WAL readers see a stable view).
+    // consistent snapshot of the database (WAL readers see a stable view). If this
+    // future is cancelled (client disconnects) between BEGIN and COMMIT — likely,
+    // since `collect_snapshot` paginates a whole collection — the reader is dropped
+    // mid-transaction; the pool discards such a connection rather than returning it
+    // with an open snapshot that would pin the WAL forever (store::read Drop, issue 53).
     reader.execute("BEGIN", ()).await?;
     let snapshot = collect_snapshot(collection, &reader, filter).await;
     let _ = reader.execute("COMMIT", ()).await;
