@@ -1,6 +1,6 @@
 # 59 — Corpus-independent projection memory: back the grouping plan with disk
 
-Status: needs-triage (DESIGN — awaiting team-lead sign-off before implementation)
+Status: ready-for-agent (design signed off 2026-07-24; in implementation)
 Severity: MEDIUM (latent wall; the deployed issue-57 fix keeps prod safe meanwhile)
 Follow-up to: 57 (bounded per-batch). Relation to 58: see "Coordination".
 
@@ -121,6 +121,21 @@ the per-batch bound. Keep the whole-RAM A/B for contrast.
 (keyed chains, legacy transitive merges + ADR-0003 absorbed-key retirement,
 islands, cross-time attach) must produce the exact same canonical layer. The
 existing 22 projection tests are the correctness oracle.
+
+## Sign-off decisions (team-lead, 2026-07-24)
+
+- Scratch tables in the MAIN db: approved. Two non-negotiable WAL caveats (we
+  just fixed the WAL, issue 42 — must not regress):
+  - (a) The ~7.5M plan-row inserts are a WAL burst — CHECKPOINT (TRUNCATE)
+    periodically DURING the Phase-1 plan build (same cadence as Phase 2), and
+    prove the WAL stays bounded through the plan build in the test.
+  - (b) Clear the plan tables at BOTH start AND end of the run — don't leave
+    transient rows in the durable DB between projections (they'd bloat the
+    off-box snapshot, issue 23). Confirm no path ships a snapshot with a
+    half-built plan (daily snapshot runs after project → normally fine).
+- `org_of` stays in RAM: accepted as the known residual. Do NOT reintroduce
+  per-mention disk lookups (issue-19 O(n²) regression). Revisit trigger: a
+  benchmark, only if distinct-orgs ever grows material against the <4 GB bar.
 
 ## Tradeoffs
 

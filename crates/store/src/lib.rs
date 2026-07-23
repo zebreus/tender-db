@@ -23,7 +23,7 @@ pub use backup::{BackupError, SnapshotReport};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
-    Mention, NoticeRef, Round, TenderProjection, TenderVersion,
+    Mention, MentionResolver, NoticeRef, PlanGroup, PlanRow, Round, TenderProjection, TenderVersion,
 };
 pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
