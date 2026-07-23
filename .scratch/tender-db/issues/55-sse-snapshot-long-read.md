@@ -3,6 +3,13 @@
 Status: ready-for-agent
 Severity: MEDIUM (scaling wart on the live-subscription request path)
 
+De-link note (2026-07-23): this is NOT a cause of the multi-day WAL runaway.
+The runaway was `import_lag`'s full scan (issue 42, fixed), and the mid-txn SSE
+reader leak was already fixed separately (pool discards non-autocommit readers,
+2d2e223). This issue stands on its own merits — a successful large-collection
+snapshot still holds one api-pool reader for minutes, a real latency/robustness
+concern — not as a WAL-pin suspect.
+
 Found during the issue-53 diagnosis. The SSE `start` handler
 (crates/app/src/v1/sse.rs) does BEGIN → collect_snapshot → COMMIT, and
 collect_snapshot paginates the WHOLE subscribed collection. At full-
