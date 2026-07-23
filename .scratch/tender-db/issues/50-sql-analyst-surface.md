@@ -53,7 +53,8 @@ App-side parts done (sql.rs + docs.rs):
 Test: `the_schema_documents_time_format_and_enums`.
 
 DEFERRED — Point 3 (analyst VIEWS: buyers-per-tender, awards-with-buyer,
-classifications, dates, amounts, tender's-notices). These are store-side
-(crates/store/canonical.rs) which wal-fix is editing; the lead will assign them
-after wal-fix lands. They must be built cheap (indexed / off the current-version
+classifications, dates, amounts, tender's-notices), plus a path-free `v_fetches`
+provenance view (from issue 45's fetches exclusion — expose source/package/
+period/sha256, NOT the filesystem `path`). All store-side
+(crates/store/canonical.rs); build them cheap (indexed / off the current-version
 pointer), not another full scan (issue-20/25 pathology).

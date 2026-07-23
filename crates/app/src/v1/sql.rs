@@ -95,7 +95,7 @@ const PER_HOUR: u32 = 300;
 /// re-opened whenever a private table was added. Each entry is public business
 /// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
 /// registry are deliberately absent (see the note below the list).
-const ALLOWED: [&str; 39] = [
+const ALLOWED: [&str; 38] = [
     // Current-state views — the analyst entry points (docs/architecture.md).
     "v_tenders",         // current version of each Tender
     "v_lots",            // current Lots
@@ -136,8 +136,7 @@ const ALLOWED: [&str; 39] = [
     "notice_ids",
     "notice_integers",
     "notice_numbers",
-    // Raw-ingest provenance, quality + the public change feed.
-    "fetches",           // raw-fetch registry: source/url/sha256/period provenance
+    // Raw-ingest quality + the public change feed.
     "quarantine",        // whole raw notices that failed to map — public payloads
     "changes",           // the change cursor log, served verbatim by /v1/changes
     // Deliberately NOT allowed:
@@ -145,6 +144,11 @@ const ALLOWED: [&str; 39] = [
     //  * webhook_endpoints, webhook_delivery_log — per-user signing secrets +
     //    private URLs + cross-account delivery history (issue 43).
     //  * job_queue, job_log — operator job params.
+    //  * fetches — the raw-fetch registry's `path` column is server filesystem
+    //    layout (ingestion/operator infra), not business data. Provenance (which
+    //    package/period a notice came from) is legitimately public and will be
+    //    surfaced through a path-free `v_fetches` view, deferred to the store lane
+    //    with issue 50's analyst views.
 ];
 
 /// Worker threads on the isolated SQL runtime (issue 17). Query execution runs
@@ -361,7 +365,6 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("changes", "The change-cursor log behind /v1/changes: ingestion order, never renumbered."),
     ("tender_version_parties", "Organizations linked to a Tender version by role (see role)."),
     ("tender_version_classifications", "CPV and NUTS codes of a Tender version (see scheme)."),
-    ("fetches", "Raw-fetch provenance: one row per downloaded source file."),
 ];
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
@@ -477,7 +480,8 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
             "Queryable surface is a positive allow-list: only the tables and \
              views listed above are readable. Account, webhook and operator \
              tables (users, api_tokens, sessions, webhook_endpoints, job_queue, …) \
-             are not queryable.",
+             and the raw-fetch registry (fetches, which holds server filesystem \
+             paths) are not queryable.",
             "Time columns are Unix epoch seconds, NOT ISO — the REST API returns \
              ISO, so the two disagree. Filter/format with strftime(col,'unixepoch'); \
              each timestamp column's note flags this. WHERE published_at LIKE \
@@ -1027,6 +1031,9 @@ mod tests {
         for sql in [
             "SELECT * FROM password_resets",
             "SELECT * FROM billing_accounts",
+            // fetches is a real table, deliberately excluded: its `path` column is
+            // server filesystem layout, not public business data (issue 45).
+            "SELECT * FROM fetches",
             "SELECT * FROM __turso_internal_seq_notices",
             // Hidden in a subquery, a comma-join, an IN-table and a CTE body —
             // every table position the walk must reach.

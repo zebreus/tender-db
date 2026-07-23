@@ -193,8 +193,12 @@ async fn the_gate_refuses_everything_that_is_not_a_read() {
     // The database is exactly as the chain left it — nothing was written.
     let notices: Value = server.sql("SELECT COUNT(*) AS n FROM notices").await.json().await.unwrap();
     assert_eq!(notices["rows"][0][0].as_i64(), Some(4), "the four chain notices, untouched");
-    let fetches: Value = server.sql("SELECT COUNT(*) AS n FROM fetches").await.json().await.unwrap();
-    assert_eq!(fetches["rows"][0][0].as_i64(), Some(1), "still only the one fetch");
+    // fetches is NOT on the public allow-list — its `path` column is server
+    // filesystem layout, operator infra not business data (issue 45) — so the
+    // read is denied; confirm the write was blocked via the DB directly instead.
+    assert_eq!(server.sql("SELECT COUNT(*) FROM fetches").await.status(), 400, "fetches is denied");
+    let packages = server.db.current_packages(SOURCE, "daily", None).await.expect("packages");
+    assert_eq!(packages.len(), 1, "still only the one fetch — no write landed");
     // The account the DROP/DELETE attempts could not touch is still there.
     assert!(server.db.user(1).await.expect("user").is_some(), "the account survived");
 }

@@ -26,3 +26,15 @@ Scope:
 Acceptance: only allow-listed tables/views are queryable; a newly added
 private table is denied by default (regression-proven); no legitimate
 public query breaks.
+
+## Resolution (api-polish, 2026-07-23)
+ALLOWED is a 38-entry positive allow-list (v_* views + canonical/notice/org/
+bid/contract/lot tables + quarantine + changes). `fetches` is DELIBERATELY
+excluded (owner call): its `path` column is server filesystem layout —
+ingestion/operator infra, not business data. Provenance (which package/period
+a notice came from) is legitimately public and will be surfaced through a
+path-free `v_fetches` view, deferred to the store lane with issue-50's analyst
+views. classify() walks the parsed statement's table references (FROM/JOIN,
+`x IN table`, every nested subquery/CTE) with an exhaustive no-wildcard `Expr`
+match, so a `turso_parser` bump that adds a table-bearing variant fails to
+compile rather than opening a hole.
