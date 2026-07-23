@@ -25,18 +25,22 @@
 //!    denied by default because it is simply not in [`ALLOWED`].
 //! 3. **`query_only=1` connection** from a pool dedicated to this endpoint, so
 //!    a long analytical scan never starves the REST readers.
-//! 4. **Timeout-by-drop** (10 s): the query runs under `tokio::time::timeout`,
-//!    and turso yields to tokio at every row boundary, so a long *streaming*
-//!    query is dropped between rows and its connection freed (verified, §2).
-//!    Caveat measured here: a single non-yielding aggregate (`SELECT count(*)
-//!    FROM generate_series(1, huge)`) computes inside one poll and cannot be
-//!    interrupted — turso exposes no `interrupt()`. Issue 17 contains the blast
-//!    radius: execution runs on an **isolated runtime** (see
-//!    [`spawn_sql_runtime`]),
-//!    so such a query can pin at most that runtime's threads and never the main
-//!    API/SSE runtime; the per-token limits then bound it further. `query_only`
-//!    guarantees no write can be left half-done to poison the connection either
-//!    way.
+//! 4. **Timeout, two layers** (10 s): the query runs on the isolated runtime
+//!    under an in-task `tokio::time::timeout`, and turso yields at every row
+//!    boundary, so a long *streaming* query is dropped between rows and its
+//!    connection freed (verified, §2). A single non-yielding aggregate (`SELECT
+//!    count(*) FROM generate_series(1, huge)`) computes inside one poll with no
+//!    row boundary, so the in-task timeout can't fire and turso exposes no
+//!    `interrupt()` to stop it — it used to run past 40 s with no 408 (issue
+//!    51). The handler adds a **backstop timeout on the main runtime**: it fires
+//!    on time regardless (the heavy work is isolated), returns 408 at the cap,
+//!    and drops the permit so the concurrency slot frees at once — held for the
+//!    cap, disconnected or not, never 40 s. The aggregate itself still runs to
+//!    completion on the isolated runtime (abandoned via [`AbortOnDrop`], which
+//!    can only cancel at an await point), but issue 17's isolation means it pins
+//!    at most that runtime's threads, never the main API/SSE runtime, and the
+//!    per-token limits bound it further. `query_only` guarantees no write can be
+//!    left half-done to poison the connection either way.
 //! 5. **Result caps** while reading: 10 000 rows / 10 MB, then `truncated:true`.
 //! 6. **Per-token limits**: 2 concurrent (semaphore) + 300/h (governor).
 //!
@@ -62,8 +66,16 @@ use tokio::sync::Semaphore;
 /// the REST pool so a 10 s query here cannot queue behind the live API.
 pub const SQL_READERS: usize = 4;
 
-/// Longest a single query may run before it is dropped.
-const TIMEOUT: Duration = Duration::from_secs(10);
+/// Longest a single query may run before it is dropped (a streaming query,
+/// between rows) or the handler stops waiting and answers 408 (a non-yielding
+/// aggregate). The value the server runs; [`SqlState::with_timeout`] lets a test
+/// watch the cap fire without a 10 s query.
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+
+/// Extra margin the handler-side backstop waits beyond the in-task timeout, so a
+/// streaming query always reports through the in-task path (a clean drop between
+/// rows) and the backstop only ever fires for a non-yielding aggregate.
+const TIMEOUT_GRACE: Duration = Duration::from_secs(1);
 
 /// Result caps, applied while streaming rows out of the engine.
 const MAX_ROWS: usize = 10_000;
@@ -180,16 +192,25 @@ pub struct SqlState {
     concurrency: Mutex<HashMap<i64, Arc<Semaphore>>>,
     /// The isolated runtime queries execute on (issue 17).
     runtime: tokio::runtime::Handle,
+    /// The per-query time limit — [`DEFAULT_TIMEOUT`] in production.
+    timeout: Duration,
 }
 
 impl SqlState {
     pub fn new(readers: Arc<store::Readers>) -> SqlState {
+        SqlState::with_timeout(readers, DEFAULT_TIMEOUT)
+    }
+
+    /// As [`new`](SqlState::new), with an explicit per-query time limit — the
+    /// seam a test uses to observe the 408 cap without running a 10 s query.
+    pub fn with_timeout(readers: Arc<store::Readers>, timeout: Duration) -> SqlState {
         let quota = Quota::per_hour(NonZeroU32::new(PER_HOUR).expect("PER_HOUR is non-zero"));
         SqlState {
             readers,
             rate: RateLimiter::keyed(quota),
             concurrency: Mutex::new(HashMap::new()),
             runtime: spawn_sql_runtime(),
+            timeout,
         }
     }
 
@@ -237,26 +258,37 @@ async fn run(
     classify(&sql)?;
 
     // Run the query on the isolated SQL runtime (issue 17), not this one. The
-    // reader is borrowed and the timeout applied *there*, so even a query that
-    // pins its worker thread cannot touch the main API/SSE runtime. This handler
-    // only awaits the result over a cheap channel — it never blocks a main
-    // worker. The permit is held (on this side) until the result comes back.
+    // reader is borrowed and the in-task timeout applied *there*, so even a query
+    // that pins its worker thread cannot touch the main API/SSE runtime.
     let readers = sql_state.readers.clone();
-    let outcome = sql_state
-        .runtime
-        .spawn(async move {
-            let reader = readers.get().await.map_err(Executed::Db)?;
-            match tokio::time::timeout(TIMEOUT, execute(&reader, &sql)).await {
-                Ok(Ok(result)) => Ok(result),
-                Ok(Err(e)) => Err(Executed::Db(e)),
-                Err(_) => Err(Executed::Timeout),
-            }
-        })
-        .await;
+    let timeout = sql_state.timeout;
+    let handle = sql_state.runtime.spawn(async move {
+        let reader = readers.get().await.map_err(Executed::Db)?;
+        // The in-task timeout drops a *streaming* query between rows, freeing its
+        // reader promptly. A non-yielding aggregate computes in one poll and
+        // slips past it — the handler-side backstop below is what bounds that.
+        match tokio::time::timeout(timeout, execute(&reader, &sql)).await {
+            Ok(Ok(result)) => Ok(result),
+            Ok(Err(e)) => Err(Executed::Db(e)),
+            Err(_) => Err(Executed::Timeout),
+        }
+    });
+    // Abandon the isolated task whenever this handler stops waiting — the backstop
+    // firing, or the request future being dropped when the client disconnects —
+    // so a query never outlives the request that asked for it (issue 51). On a
+    // normal finish the abort is a no-op.
+    let _abandon = AbortOnDrop(handle.abort_handle());
+
+    // The backstop runs here, on the main runtime, so it fires on time even while
+    // a non-yielding aggregate pins an isolated worker (a COUNT/GROUP-BY that used
+    // to run past 40 s with no 408). It bounds how long the concurrency slot is
+    // held — disconnected or not — to the cap: when it or a disconnect ends this
+    // await, `permit` drops and the slot frees at once (issue 51).
+    let outcome = tokio::time::timeout(timeout + TIMEOUT_GRACE, handle).await;
     drop(permit);
 
     match outcome {
-        Ok(Ok(result)) => Ok(Json(json!({
+        Ok(Ok(Ok(result))) => Ok(Json(json!({
             "columns": result.columns,
             "rows": result.rows,
             "row_count": result.rows.len(),
@@ -265,15 +297,37 @@ async fn run(
         .into_response()),
         // A turso execution error is the user's SQL being wrong (unknown column,
         // type error, dialect gap) — a 400 with the engine's message.
-        Ok(Err(Executed::Db(e))) => Err(ApiError(StatusCode::BAD_REQUEST, e.to_string())),
-        // A streaming query past the limit was dropped between rows (§4).
-        Ok(Err(Executed::Timeout)) => Err(ApiError(
-            StatusCode::REQUEST_TIMEOUT,
-            format!("query exceeded the {}s time limit", TIMEOUT.as_secs()),
-        )),
-        // The isolated task panicked or was cancelled — our fault, not the
-        // caller's.
-        Err(e) => Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, format!("sql runtime: {e}"))),
+        Ok(Ok(Err(Executed::Db(e)))) => Err(ApiError(StatusCode::BAD_REQUEST, e.to_string())),
+        // A streaming query dropped between rows by the in-task timeout, or the
+        // backstop firing on a non-yielding aggregate — both are the query
+        // exceeding the time limit, and both are a 408.
+        Ok(Ok(Err(Executed::Timeout))) | Err(_) => Err(timed_out(timeout)),
+        // The task was aborted because we stopped waiting (backstop/disconnect):
+        // report the same 408 rather than a spurious 500.
+        Ok(Err(join)) if join.is_cancelled() => Err(timed_out(timeout)),
+        // A genuine panic on the isolated runtime — our fault, not the caller's.
+        Ok(Err(join)) => {
+            Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, format!("sql runtime: {join}")))
+        }
+    }
+}
+
+/// The 408 a query past its time limit gets.
+fn timed_out(timeout: Duration) -> ApiError {
+    ApiError(
+        StatusCode::REQUEST_TIMEOUT,
+        format!("query exceeded the {}s time limit", timeout.as_secs()),
+    )
+}
+
+/// Aborts the wrapped task on drop, so a query is abandoned the moment the
+/// handler stops waiting for it — the backstop firing or the client
+/// disconnecting — instead of running on and holding a reader (issue 51).
+struct AbortOnDrop(tokio::task::AbortHandle);
+
+impl Drop for AbortOnDrop {
+    fn drop(&mut self) {
+        self.0.abort();
     }
 }
 
@@ -338,7 +392,9 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
             format!("Results are capped at {MAX_ROWS} rows / {}MB; a capped \
                      response carries \"truncated\": true.", MAX_BYTES / 1024 / 1024),
             format!("Limits: {MAX_CONCURRENT} concurrent queries and {PER_HOUR} \
-                     queries per hour per token; each query may run {}s.", TIMEOUT.as_secs()),
+                     queries per hour per token; each query may run {}s (a query \
+                     past the cap — including a slow aggregate — is 408).",
+                    state.sql.timeout.as_secs()),
         ],
     }))
     .into_response())

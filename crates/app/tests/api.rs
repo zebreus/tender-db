@@ -491,6 +491,42 @@ async fn unknown_query_params_are_rejected() {
     assert_eq!(server.status("/v1/tenders?cpv=45").await, 200);
 }
 
+/// Issue 51: an unknown `/v1/*` path is our JSON 404, never a fall-through to
+/// the dashboard's HTML router that would leak its route names.
+#[tokio::test]
+async fn unknown_v1_paths_are_json_404() {
+    let server = Server::start("unknown_path").await;
+    assert_eq!(server.status("/v1/bogus").await, 404);
+    // A JSON body (get_allow_error parses it) with our envelope and no HTML.
+    let body = server.get_allow_error("/v1/nope/deeper").await;
+    assert_eq!(body["error"]["status"].as_u64(), Some(404));
+    assert!(
+        body["error"]["message"].as_str().is_some_and(|m| !m.contains('<')),
+        "no HTML or route name should leak: {body}"
+    );
+}
+
+/// Issue 51: every malformed input is the one documented `{"error":{…}}`
+/// envelope — a bad path never leaks the Rust type `i64`, a bad query string is
+/// not plain text.
+#[tokio::test]
+async fn malformed_inputs_return_the_json_error_envelope() {
+    let server = Server::start("malformed").await;
+
+    // A non-integer id: JSON 400 that never names `i64`.
+    assert_eq!(server.status("/v1/tenders/abc").await, 400);
+    let path_err = server.get_allow_error("/v1/tenders/abc").await;
+    assert_eq!(path_err["error"]["status"].as_u64(), Some(400));
+    assert!(
+        path_err["error"]["message"].as_str().is_some_and(|m| !m.contains("i64")),
+        "the Rust type must not leak: {path_err}"
+    );
+
+    // A bad query string: the same envelope, not axum's plain-text rejection.
+    let query_err = server.get_allow_error("/v1/tenders?cvp=72").await;
+    assert_eq!(query_err["error"]["status"].as_u64(), Some(400));
+}
+
 #[tokio::test]
 async fn pagination_walks_the_whole_collection_exactly_once() {
     let server = Server::start("pages").await;

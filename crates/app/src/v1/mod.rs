@@ -16,14 +16,17 @@ pub mod webhooks;
 pub use auth::AuthUser;
 
 use axum::Router;
-use axum::extract::{Path, Query, State};
+use axum::extract::{FromRequestParts, Path, Query, State};
+use axum::http::request::Parts;
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use axum::routing::get;
+use axum::routing::{any, get};
 use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use store::read::{self, Filter, Scope, Status};
 use tokio::sync::watch;
 use tower_governor::key_extractor::KeyExtractor;
@@ -77,10 +80,24 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(db: Arc<store::Db>, readers: Arc<store::Readers>) -> AppState {
+        AppState::with_sql_timeout(db, readers, sql::DEFAULT_TIMEOUT)
+    }
+
+    /// As [`new`](AppState::new), with an explicit `/v1/sql` time limit.
+    /// Production uses the default (10 s); a test passes a short one to watch the
+    /// 408 cap fire without running a 10 s query.
+    pub fn with_sql_timeout(
+        db: Arc<store::Db>,
+        readers: Arc<store::Readers>,
+        sql_timeout: Duration,
+    ) -> AppState {
         let cursor = db.cursor_watch();
         // A pool of readers dedicated to `/v1/sql`, kept apart from the REST
         // pool so a slow analytical query cannot starve the live API.
-        let sql = Arc::new(sql::SqlState::new(db.readers(sql::SQL_READERS).expect("sql reader pool")));
+        let sql = Arc::new(sql::SqlState::with_timeout(
+            db.readers(sql::SQL_READERS).expect("sql reader pool"),
+            sql_timeout,
+        ));
         AppState { db, readers, cursor, sql, streams: Arc::new(Mutex::new(HashMap::new())) }
     }
 }
@@ -109,7 +126,14 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/me", get(me))
         .merge(sql::routes())
         .merge(webhooks::routes())
-        .layer(GovernorLayer::new(limits))
+        // Any other `/v1/*` path is an unknown endpoint, answered with our JSON
+        // 404 rather than falling through to the dashboard's HTML router and
+        // leaking its route names (issue 51). Static routes above are more
+        // specific, so this only catches the genuinely unmatched.
+        .route("/v1/{*rest}", any(unknown_endpoint))
+        // The rate limiter's own 429 is emitted as our JSON envelope, not
+        // tower_governor's plain-text default (issue 51).
+        .layer(GovernorLayer::new(limits).error_handler(governor_json_error))
         .route("/health", get(health))
         // The deep operational probe an external pinger watches — liveness plus
         // ingest freshness, job failures and disk. Outside the rate limiter, like
@@ -226,6 +250,76 @@ impl IntoResponse for ApiError {
 }
 
 type ApiResult = Result<Response, ApiError>;
+
+/// The JSON 404 for any `/v1/*` path we do not serve — so an unknown endpoint
+/// never falls through to the dashboard's HTML router or leaks a route name.
+async fn unknown_endpoint() -> ApiError {
+    ApiError::not_found("endpoint")
+}
+
+/// tower_governor's 429, re-dressed as our error envelope with a `Retry-After`.
+fn governor_json_error(error: GovernorError) -> Response {
+    match error {
+        GovernorError::TooManyRequests { wait_time, .. } => (
+            StatusCode::TOO_MANY_REQUESTS,
+            [(header::RETRY_AFTER, wait_time.to_string())],
+            axum::Json(json!({ "error": {
+                "status": 429,
+                "message": format!("rate limit exceeded; retry after {wait_time}s"),
+            } })),
+        )
+            .into_response(),
+        GovernorError::UnableToExtractKey => {
+            ApiError(StatusCode::INTERNAL_SERVER_ERROR, "could not identify the client".to_owned())
+                .into_response()
+        }
+        GovernorError::Other { code, msg, .. } => {
+            ApiError(code, msg.unwrap_or_else(|| "rate limiter error".to_owned())).into_response()
+        }
+    }
+}
+
+// -------------------------------------------------------------- extractors
+
+/// `Query`/`Path` with our JSON error envelope in place of axum's plain-text
+/// rejection, which for a path leaked the Rust type (`… to a i64`). Every `/v1`
+/// input error is then the one documented `{"error":{…}}` shape (issue 51).
+struct ApiQuery<T>(T);
+
+impl<T, S> FromRequestParts<S> for ApiQuery<T>
+where
+    T: DeserializeOwned,
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, ApiError> {
+        match Query::<T>::from_request_parts(parts, state).await {
+            Ok(Query(value)) => Ok(ApiQuery(value)),
+            // The message names the offending query field ("unknown field `cvp`"),
+            // which is public API vocabulary — safe and useful to surface.
+            Err(rejection) => Err(ApiError::bad_request(rejection.body_text())),
+        }
+    }
+}
+
+struct ApiPath<T>(T);
+
+impl<T, S> FromRequestParts<S> for ApiPath<T>
+where
+    T: DeserializeOwned + Send,
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, ApiError> {
+        match Path::<T>::from_request_parts(parts, state).await {
+            Ok(Path(value)) => Ok(ApiPath(value)),
+            // A fixed message, never the extractor's — it named the Rust type.
+            Err(_) => Err(ApiError::bad_request("invalid path parameter: expected an integer id")),
+        }
+    }
+}
 
 // ------------------------------------------------------------------- params
 
@@ -395,23 +489,23 @@ fn wants_events(headers: &HeaderMap) -> bool {
 
 // ------------------------------------------------------------------ handlers
 
-async fn tenders(State(s): State<AppState>, h: HeaderMap, Query(p): Query<Params>) -> ApiResult {
+async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
     collection(Collection::Tenders, s, h, p).await
 }
 
-async fn lots(State(s): State<AppState>, h: HeaderMap, Query(p): Query<Params>) -> ApiResult {
+async fn lots(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
     collection(Collection::Lots, s, h, p).await
 }
 
 async fn organizations(
     State(s): State<AppState>,
     h: HeaderMap,
-    Query(p): Query<Params>,
+    ApiQuery(p): ApiQuery<Params>,
 ) -> ApiResult {
     collection(Collection::Organizations, s, h, p).await
 }
 
-async fn notices(State(s): State<AppState>, h: HeaderMap, Query(p): Query<Params>) -> ApiResult {
+async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
     // `?tender=` lists the Notices that caused a Tender's versions — the
     // ADR-0001 chain, walkable from a detail's `caused_by_notice_id`. The store
     // has no notice→tender predicate, so this is answered in the app from the
@@ -423,7 +517,7 @@ async fn notices(State(s): State<AppState>, h: HeaderMap, Query(p): Query<Params
     collection(Collection::Notices, s, h, p).await
 }
 
-async fn tender(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult {
+async fn tender(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
     let reader = state.readers.get().await?;
     match read::tender_detail(&reader, id).await? {
         Some(detail) => Ok(axum::Json(json::detail(&detail)).into_response()),
@@ -433,7 +527,7 @@ async fn tender(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult
 
 /// `GET /v1/notices/{id}` — one Notice by id, the counterpart of the
 /// `caused_by_notice_id` a tender detail hands out (issue 49).
-async fn notice(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult {
+async fn notice(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
     let reader = state.readers.get().await?;
     match read::notices(&reader, &Filter::default(), Scope::At { id, seq: 0 }).await?.into_iter().next()
     {
@@ -444,7 +538,7 @@ async fn notice(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult
 
 /// `GET /v1/organizations/{id}` — one Organization by id, the counterpart of a
 /// tender detail's `parties[].organization_id` (issue 49).
-async fn organization(State(state): State<AppState>, Path(id): Path<i64>) -> ApiResult {
+async fn organization(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
     let reader = state.readers.get().await?;
     match read::organizations(&reader, &Filter::default(), Scope::At { id, seq: 0 })
         .await?
@@ -480,7 +574,7 @@ async fn tender_notices(state: &AppState, tender_id: i64) -> ApiResult {
 /// The poll half of the change feed. Same events, same cursor and same
 /// filtering as SSE — a client that cannot hold a connection open loses
 /// nothing but latency.
-async fn changes(State(state): State<AppState>, Query(params): Query<Params>) -> ApiResult {
+async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Params>) -> ApiResult {
     let limit = params.limit();
     let reader = state.readers.get().await?;
     let rows =
@@ -594,5 +688,26 @@ impl Drop for StreamSlot {
                 streams.remove(&self.key);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod error_envelope_tests {
+    use super::*;
+    use tower_governor::GovernorError;
+
+    #[tokio::test]
+    async fn the_rate_limit_429_is_our_json_envelope() {
+        // tower_governor's default 429 is plain text ("Too Many Requests! Wait
+        // for Ns"); the handler must re-dress it as our envelope with a
+        // Retry-After (issue 51).
+        let response =
+            governor_json_error(GovernorError::TooManyRequests { wait_time: 3, headers: None });
+        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+        assert_eq!(response.headers().get(header::RETRY_AFTER).unwrap(), "3");
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let json: Value = serde_json::from_slice(&body).unwrap();
+        assert_eq!(json["error"]["status"].as_i64(), Some(429));
+        assert!(json["error"]["message"].as_str().is_some_and(|m| m.contains("retry after 3s")));
     }
 }

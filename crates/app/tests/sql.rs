@@ -48,6 +48,12 @@ impl Server {
     /// already minted — the SQL endpoint is account-gated, so every test needs
     /// a credential in hand.
     async fn start(name: &str) -> Server {
+        Server::start_with_sql_timeout(name, v1::sql::DEFAULT_TIMEOUT).await
+    }
+
+    /// Boot with an explicit `/v1/sql` time limit — the seam that lets the cap be
+    /// observed firing on a non-yielding aggregate without a 10 s query.
+    async fn start_with_sql_timeout(name: &str, sql_timeout: Duration) -> Server {
         let path = format!("/tmp/tender-db-sql-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
@@ -71,7 +77,8 @@ impl Server {
             .0;
         let token = accounts::create_token(&db, account.id, "cli").await.expect("token").token;
 
-        let state = v1::AppState::new(db.clone(), db.readers(4).expect("readers"));
+        let state =
+            v1::AppState::with_sql_timeout(db.clone(), db.readers(4).expect("readers"), sql_timeout);
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
@@ -265,6 +272,29 @@ async fn a_long_query_is_dropped_at_the_time_limit() {
     let elapsed = started.elapsed();
     assert_eq!(status, 408, "a query past the limit should be a timeout");
     assert!(elapsed < Duration::from_secs(30), "it should stop near the 10s limit, not run on: {elapsed:?}");
+}
+
+/// A single non-yielding aggregate — the `COUNT(*)`/`GROUP BY` shape that
+/// computes in one uninterruptible poll with no row boundary — is capped at the
+/// time limit by the handler-side backstop and answered 408, rather than running
+/// past 40 s with no timeout (issue 51). A short cap keeps the test quick and
+/// the abandoned query brief; the aggregate far outlasts it on any machine.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_non_yielding_aggregate_is_capped() {
+    let server = Server::start_with_sql_timeout("aggregate", Duration::from_millis(300)).await;
+    // One aggregate over a large cross join: no row is ever emitted, so the
+    // in-task timeout has no boundary to fire on — only the backstop can end it.
+    // 49M iterations far outlast a 300ms cap on any machine.
+    let bomb = "SELECT COUNT(*) FROM generate_series(1, 7000) a, generate_series(1, 7000) b";
+    let started = std::time::Instant::now();
+    let response = server.sql(bomb).await;
+    let status = response.status().as_u16();
+    let elapsed = started.elapsed();
+    assert_eq!(status, 408, "a non-yielding aggregate past the cap should be a timeout");
+    assert!(elapsed < Duration::from_secs(10), "the backstop should fire near the cap: {elapsed:?}");
+    // The 408 is our JSON error envelope, not plain text (issue 51).
+    let body: Value = response.json().await.unwrap();
+    assert_eq!(body["error"]["status"].as_i64(), Some(408));
 }
 
 /// A third simultaneous query is refused rather than queued. The two running

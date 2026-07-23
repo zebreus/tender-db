@@ -231,7 +231,7 @@ no token); the main entry points are the current-state views
   <li>Exactly one statement, and it must be a bare <code>SELECT</code> — no writes, PRAGMA, ATTACH, EXPLAIN, CTE-wrapped writes or multi-statement bodies.</li>
   <li>The <code>users</code>, <code>api_tokens</code> and <code>sessions</code> tables are never queryable. Everything else is public business data.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
-  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; a query past the time limit is <code>408</code>.</li>
+  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>, and its server-side work is abandoned so it never holds a slot past the cap.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>
