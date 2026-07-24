@@ -489,8 +489,19 @@ impl Supervisor {
                     .await
             }
             Spec::Project { rebuild } => {
-                let report =
-                    project::project(&self.db, *rebuild).await.map_err(|e| e.to_string())?;
+                // The daily path is INCREMENTAL (issue 58): re-derive only the
+                // Tenders touched by notices parsed since the last run — seconds,
+                // not the whole-corpus re-fold that scales with the dataset. A
+                // `rebuild` still does the full bounded-streaming projection (the
+                // initial build and after schema changes); it also resets the
+                // `projected` watermark, so the next daily run's change-set is the
+                // notices ingested since.
+                let report = if *rebuild {
+                    project::project(&self.db, true).await
+                } else {
+                    project::project_incremental(&self.db).await
+                }
+                .map_err(|e| e.to_string())?;
                 self.update(|p| p.notices = report.notices);
                 Ok(format!(
                     "{} notices → {} tenders ({} islands), {} versions",
@@ -1093,5 +1104,88 @@ mod tests {
         let queue = restarted.queue.lock().expect("queue lock");
         let fresh_job = queue.iter().find(|j| j.id == fresh[0]).expect("the fresh job");
         assert!(fresh_job.resume_after.is_none(), "a fresh enqueue never inherits a cursor");
+    }
+
+    async fn seed_fetch(db: &store::Db) -> i64 {
+        db.record_fetch(&store::Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "p".into(),
+            url: "u".into(),
+            sha256: "aa".into(),
+            bytes: 1,
+            fetched_at: 0,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        db.current_packages("ted", "daily", None).await.unwrap()[0].fetch_id
+    }
+
+    /// One minimal single-notice keyed Tender.
+    async fn record_keyed(db: &store::Db, fetch_id: i64, n: i64) {
+        let parsed = store::Parsed {
+            sections: vec![store::Section { id: "PROC".into(), kind: "Procedure".into(), parent: None }],
+            values: vec![store::ValueRow {
+                section_id: "PROC".into(),
+                field_id: "BT-04-notice".into(),
+                ordinal: 0,
+                value: store::NoticeValue::Id { scheme: None, value: format!("bt04-{n}"), is_ref: false },
+            }],
+        };
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: format!("pub-{n}"),
+                content_hash: format!("h-{n}"),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(0),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(parsed),
+        )
+        .await
+        .unwrap();
+    }
+
+    /// Issue 58: the daily project job (`rebuild:false`) runs the INCREMENTAL
+    /// projection — its summary reports only the delta, not the whole corpus —
+    /// while `rebuild:true` still does the full projection.
+    #[tokio::test]
+    async fn daily_project_job_is_incremental_while_rebuild_is_full() {
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        for i in 0..3 {
+            record_keyed(&db, fetch_id, i).await;
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        // A rebuild folds the whole corpus (3 notices) and resets the watermark.
+        let rebuild = Job {
+            id: 1,
+            kind: "project".into(),
+            params: "rebuild=true".into(),
+            spec: Spec::Project { rebuild: true },
+            resume_after: None,
+        };
+        let full = sup.run_spec(&rebuild).await.unwrap();
+        assert!(full.starts_with("3 notices"), "rebuild folds the whole corpus: {full}");
+
+        // A daily delta of one notice — the daily job re-derives only its Tender.
+        record_keyed(&db, fetch_id, 3).await;
+        let daily = Job {
+            id: 2,
+            kind: "project".into(),
+            params: "rebuild=false".into(),
+            spec: Spec::Project { rebuild: false },
+            resume_after: None,
+        };
+        let incr = sup.run_spec(&daily).await.unwrap();
+        assert!(incr.starts_with("1 notices"), "daily job is incremental (delta only): {incr}");
+        assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "change-set drained");
     }
 }

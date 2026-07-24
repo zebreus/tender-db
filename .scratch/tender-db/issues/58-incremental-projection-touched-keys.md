@@ -206,10 +206,24 @@ for a future in-place re-parse path, but cannot be produced through the normal
 ingest path now. Retirement on merge is covered for legacy by the existing
 `a_late_edge_merges_two_legacy_tenders` (full path) + the fallback.
 
-REMAINING before deploy-ready: wire the daily pipeline (supervisor.rs
-`Spec::Project { rebuild:false }`) to call `project_incremental` instead of the
-full scan; decide whether `rebuild:false` keeps the old full-scan semantics or is
-replaced. Team-lead to sequence with the 60/62 deploy batch.
+SUPERVISOR WIRED: `Spec::Project { rebuild:false }` (the daily path) now calls
+`project_incremental`; `rebuild:true` (initial/periodic rebuild) still does the
+full bounded-streaming projection. Test `daily_project_job_is_incremental_while_
+rebuild_is_full` asserts the daily summary reports only the delta ("1 notices")
+while a rebuild reports the whole corpus. The branch is now a coherent deployable
+unit (62 + 58 + wiring).
+
+FUTURE LINKAGE (island-upgrade → `retire_regrouped_tenders` goes live): the day an
+in-place RE-PARSE path is built (quarantine reprocess / issue 41 INTERNAL_OJS
+reprocess / profile-fix reprocess), a notice's parsed layer changes on its
+existing id, `set_parse_state` clears its `projected` (the watermark already
+anticipates this), the incremental run re-groups it, and `retire_regrouped_tenders`
+retires its now-empty old Tender. THAT is the trigger to add an island-upgrade
+output-identity test (dormant/defensive until then).
+
+DEPLOY (team-lead sequencing): the 58+62 batch deploys AFTER the current prod run
+completes + the built layer is verified per CONTEXT.md, so the next daily
+projection is incremental (seconds) instead of another ~5h full scan.
 
 ## Comments
 
