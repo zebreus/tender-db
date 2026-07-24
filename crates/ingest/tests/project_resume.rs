@@ -227,6 +227,62 @@ async fn resume_from_complete_plan_matches_a_full_rebuild() {
     }
 }
 
+/// Daily ingestion continues between the plan build and the resume: notices parsed
+/// AFTER Phase-1 get higher ids, fall outside the plan's prefix, and must NOT defeat
+/// the resume signal (the original exact `planned == parsed` check would — issue 60
+/// assumed a frozen corpus). The resume folds the prefix; the newer notice is left
+/// unprojected for the next incremental projection.
+#[tokio::test]
+async fn newer_notices_do_not_defeat_the_resume_signal() {
+    let (db, fid, path) = scratch("suffix").await;
+    build_corpus(&db, fid).await;
+
+    // Finish Phase-1 and STOP — a complete plan over the initial corpus.
+    project::project_plan_only(&db).await.expect("plan only");
+    let prefix = plan_notice_count(&db).await;
+    assert!(db.plan_is_complete().await.unwrap(), "the plan covers its whole prefix");
+
+    // A notice parsed after the plan build (necessarily a higher id).
+    record(
+        &db,
+        fid,
+        "999999-2029",
+        "ted-export-r209",
+        Parsed {
+            sections: vec![sec("PROC", "Notice", None)],
+            values: vec![
+                text_val("PROC", "TED-TITLE", "Fresh daily notice"),
+                date_val("PROC", "TED-DS_DATE_DISPATCH", 99 * 86_400),
+            ],
+        },
+    )
+    .await;
+
+    // The fix: the plan still covers its prefix, so it stays resumable even though
+    // `COUNT(plan_notice) != COUNT(parsed)` now.
+    assert!(
+        db.plan_is_complete().await.unwrap(),
+        "a notice outside the plan's prefix keeps the plan resumable"
+    );
+    assert_eq!(plan_notice_count(&db).await, prefix, "the plan itself is unchanged");
+
+    // Resume folds the prefix; the newer notice stays projected=0 for incremental.
+    project::project(&db, true).await.expect("resume rebuild");
+    let unprojected = match db
+        .scalar("SELECT COUNT(*) FROM notices WHERE parse_state='parsed' AND projected=0")
+        .await
+        .unwrap()
+    {
+        Some(store::turso::Value::Integer(i)) => i,
+        _ => -1,
+    };
+    assert_eq!(unprojected, 1, "the newer suffix notice is left for the incremental projection");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// A normal rebuild leaves NO resumable plan on disk — so a rebuild only ever
 /// resumes a genuinely-interrupted run, never a completed one. (A fresh DB and a
 /// just-completed rebuild both report plan-incomplete, the guard against a normal

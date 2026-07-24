@@ -1226,16 +1226,22 @@ impl Db {
         self.clear_plan_on(&conn).await
     }
 
-    /// Whether a COMPLETE grouping plan from a finished Phase-1 is already on disk
-    /// — the resume-from-plan salvage signal (issue 60): if an interrupted rebuild
-    /// left the disk-backed plan fully populated (`plan_notice` holds one row per
-    /// parsed notice), grouping + Phase-2 can be re-run without redoing the
-    /// expensive Phase-1. Phase-1 resolves each chunk's mentions BEFORE it appends
-    /// that chunk's plan rows, so a full `plan_notice` count implies mentions are
-    /// complete too. Assumes no ingestion between the interrupted run and the
-    /// resume (true for a controlled restart-to-salvage). False on a never-projected
-    /// DB (the scratch table may not exist) or an empty/partial plan, so a normal
-    /// rebuild — whose prior run cleared the plan — always rebuilds from scratch.
+    /// Whether a grouping plan from a finished Phase-1 is on disk that can be
+    /// RESUMED — the resume-from-plan salvage signal (issue 60). Phase-1 streams the
+    /// parsed notices in id order and appends one `plan_notice` row each (mentions
+    /// resolved first, so a planned notice implies its mentions are complete), so a
+    /// finished Phase-1 leaves a gapless PREFIX: every parsed notice up to the
+    /// highest planned id is in the plan. The signal is therefore "the plan covers
+    /// its whole prefix", i.e. `COUNT(plan_notice) == COUNT(parsed notices with id ≤
+    /// MAX(planned id))` — NOT `planned == parsed`.
+    ///
+    /// The distinction matters because daily ingestion continues between the plan
+    /// build and the resume (issue 60 originally assumed it did not): those notices
+    /// are strictly newer, get higher ids, fall OUTSIDE the prefix, and are folded
+    /// by the next incremental projection — so they no longer defeat the salvage.
+    /// False on a never-projected DB (the scratch table may be absent) or an empty
+    /// plan, so a normal rebuild — whose prior run cleared the plan — rebuilds from
+    /// scratch.
     pub async fn plan_is_complete(&self) -> turso::Result<bool> {
         let conn = self.conn().await;
         let mut exists = conn
@@ -1252,11 +1258,22 @@ impl Db {
         if planned == 0 {
             return Ok(false);
         }
-        let parsed = {
-            let mut r = conn.query("SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'", ()).await?;
+        // Parsed notices in the plan's prefix (id ≤ the highest planned notice).
+        // Equal to `planned` exactly when Phase-1 planned every parsed notice up to
+        // where it finished — a complete, resumable prefix. Notices parsed since
+        // (higher id) are excluded and left for the incremental projection.
+        let prefix_parsed = {
+            let mut r = conn
+                .query(
+                    "SELECT COUNT(*) FROM notices
+                     WHERE parse_state = 'parsed'
+                       AND id <= (SELECT MAX(notice_id) FROM plan_notice)",
+                    (),
+                )
+                .await?;
             int(&r.next().await?.expect("count row"), 0)
         };
-        Ok(planned == parsed)
+        Ok(planned == prefix_parsed)
     }
 
     async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
