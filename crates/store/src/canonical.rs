@@ -1183,6 +1183,39 @@ impl Db {
         self.clear_plan_on(&conn).await
     }
 
+    /// Whether a COMPLETE grouping plan from a finished Phase-1 is already on disk
+    /// — the resume-from-plan salvage signal (issue 60): if an interrupted rebuild
+    /// left the disk-backed plan fully populated (`plan_notice` holds one row per
+    /// parsed notice), grouping + Phase-2 can be re-run without redoing the
+    /// expensive Phase-1. Phase-1 resolves each chunk's mentions BEFORE it appends
+    /// that chunk's plan rows, so a full `plan_notice` count implies mentions are
+    /// complete too. Assumes no ingestion between the interrupted run and the
+    /// resume (true for a controlled restart-to-salvage). False on a never-projected
+    /// DB (the scratch table may not exist) or an empty/partial plan, so a normal
+    /// rebuild — whose prior run cleared the plan — always rebuilds from scratch.
+    pub async fn plan_is_complete(&self) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let mut exists = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_notice'", ())
+            .await?;
+        if exists.next().await?.is_none() {
+            return Ok(false);
+        }
+        drop(exists);
+        let planned = {
+            let mut r = conn.query("SELECT COUNT(*) FROM plan_notice", ()).await?;
+            int(&r.next().await?.expect("count row"), 0)
+        };
+        if planned == 0 {
+            return Ok(false);
+        }
+        let parsed = {
+            let mut r = conn.query("SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'", ()).await?;
+            int(&r.next().await?.expect("count row"), 0)
+        };
+        Ok(planned == parsed)
+    }
+
     async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
         conn.execute("DROP INDEX IF EXISTS plan_notice_fold", ()).await?;
         conn.execute("DROP INDEX IF EXISTS plan_ojs_edge_a", ()).await?;
