@@ -46,7 +46,13 @@ async fn fresh_db_has_named_index_and_no_inline_unique() {
         !table_sql(&db, "organizations").await.to_uppercase().contains("UNIQUE"),
         "fresh organizations table must carry no inline UNIQUE constraint"
     );
-    assert!(index_exists(&db, "organizations_identity").await, "named identity index present");
+    // organizations_identity is NOT built at open (that would be a CREATE-INDEX-at-
+    // scale on an existing prod DB — it hung startup); it is built by the first
+    // projection's build_organization_indexes. On a fresh (bare, no inline UNIQUE)
+    // table that build is cheap and produces the named index.
+    assert!(!index_exists(&db, "organizations_identity").await, "identity index not built at open");
+    db.build_organization_indexes().await.unwrap();
+    assert!(index_exists(&db, "organizations_identity").await, "identity index built by a projection");
     assert!(index_exists(&db, "organization_mentions_org").await, "mentions-org index present");
 
     let _ = std::fs::remove_file(&path);

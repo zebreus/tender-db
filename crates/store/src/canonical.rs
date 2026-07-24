@@ -200,13 +200,21 @@ pub(crate) const SCHEMA: &str = "
     -- id that merged its mentions; a profile without one is `provisional` — it
     -- represents exactly one mention and never absorbs another, because
     -- name-only matching would merge distinct companies (CONTEXT.md).
-    -- The org-identity uniqueness is a NAMED index (`organizations_identity`
-    -- below), not an inline `UNIQUE` constraint, so a full-rebuild projection can
-    -- DROP it, bulk-load organizations by sequential id, and rebuild it once at
-    -- the end (issue 60): each new org otherwise did a random-position uniqueness
-    -- *probe* into this index, which — once it outgrew the page cache at millions
-    -- of orgs — became a random-seek storm. The in-RAM org_of map is the run's
+    -- The org-identity uniqueness is a NAMED index (`organizations_identity`),
+    -- not an inline `UNIQUE` constraint, so a full-rebuild projection can DROP it,
+    -- bulk-load organizations by sequential id, and rebuild it once at the end
+    -- (issue 60): each new org otherwise did a random-position uniqueness *probe*
+    -- into this index, which — once it outgrew the page cache at millions of orgs
+    -- — became a random-seek storm. The in-RAM org_of map is the run's
     -- authoritative dedup, so the deferred rebuild never finds a conflict.
+    --
+    -- The index is built by [`Db::build_organization_indexes`] (the end of a
+    -- rebuild), NOT here in the open-time schema batch: on an existing prod DB the
+    -- organizations table is already populated (tens of millions, from a prior
+    -- run's Phase-1) but lacks this named index, so a `CREATE UNIQUE INDEX` at
+    -- open would build it over all of them at once — a pathological
+    -- CREATE-INDEX-at-scale that HUNG prod startup. A fresh DB's table is empty, so
+    -- the first rebuild builds it instantly.
     CREATE TABLE IF NOT EXISTS organizations (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
         country         TEXT,
@@ -216,8 +224,6 @@ pub(crate) const SCHEMA: &str = "
         provisional     INTEGER NOT NULL,
         created_at      INTEGER NOT NULL
     ) STRICT;
-    CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
-        ON organizations(country, identifier_kind, identifier);
 
     -- One appearance of an Organization in one Notice — the immutable evidence
     -- canonical profiles are built from (CONTEXT.md). (notice_id, section_id)
@@ -1129,14 +1135,34 @@ impl Db {
     /// sorted build each, instead of the millions of random-position inserts they
     /// replace (issue 60). The `org_of` map guaranteed no duplicate identifiers,
     /// so the unique index builds without conflict.
+    ///
+    /// Skips `organizations_identity` when the table already carries an inline
+    /// `UNIQUE(country, identifier_kind, identifier)` — a pre-issue-62 (existing
+    /// prod) table does. Building a redundant named unique index over its millions
+    /// of existing orgs is a pathological CREATE-INDEX-at-scale (it HUNG prod
+    /// startup) AND pointless, since the inline constraint already enforces the
+    /// uniqueness. On a resume the org tables were never stripped, so this is the
+    /// path that runs there; a fresh issue-62 bare table has no inline UNIQUE and
+    /// gets the named index built (cheaply, on an empty/small table).
     pub async fn build_organization_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
-                 ON organizations(country, identifier_kind, identifier)",
-            (),
-        )
-        .await?;
+        let inline_unique = {
+            let mut rows = conn
+                .query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'organizations'", ())
+                .await?;
+            match rows.next().await? {
+                Some(row) => text(&row, 0).to_uppercase().contains("UNIQUE"),
+                None => false,
+            }
+        };
+        if !inline_unique {
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
+                     ON organizations(country, identifier_kind, identifier)",
+                (),
+            )
+            .await?;
+        }
         conn.execute(
             "CREATE INDEX IF NOT EXISTS organization_mentions_org
                  ON organization_mentions(organization_id)",
