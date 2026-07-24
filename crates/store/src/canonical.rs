@@ -1054,6 +1054,23 @@ impl Db {
         Ok(out)
     }
 
+    /// Build the `notices_unprojected` partial index if absent (issue 58) — called
+    /// at the END of a projection, when nearly every parsed notice is projected=1,
+    /// so the partial index (over `projected = 0` rows only) is near-empty and
+    /// builds instantly. Deferred to here rather than the schema/migration so a
+    /// large existing DB — where a freshly-added `projected` column leaves ALL rows
+    /// 0 until Phase-2 runs — never indexes the whole corpus at open.
+    pub async fn ensure_unprojected_index(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS notices_unprojected ON notices(id)
+                 WHERE parse_state = 'parsed' AND projected = 0",
+            (),
+        )
+        .await?;
+        Ok(())
+    }
+
     /// Mark notices as folded into the canonical layer (issue 58). Called by
     /// Phase 2 for every notice in an applied batch — whether or not its Tender's
     /// content changed — so the next incremental run's change-set excludes them.

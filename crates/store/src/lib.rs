@@ -410,14 +410,12 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
         )
         .await?;
     }
-    // Depends on the column above; a daily delta is tiny against a huge parsed
-    // corpus, so a PARTIAL index keeps the change-set scan O(delta), not O(corpus).
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS notices_unprojected ON notices(id)
-             WHERE parse_state = 'parsed' AND projected = 0",
-        (),
-    )
-    .await?;
+    // The `notices_unprojected` partial index is built LAZILY at the end of a
+    // projection ([`Db::ensure_unprojected_index`]), NOT here: on a large existing
+    // DB upgraded to this schema, Phase-2 hasn't marked anything projected yet, so
+    // building it at open would index all ~12M rows (minutes). Deferring it to
+    // after the first projection — when nearly every parsed notice is projected=1,
+    // so the partial index is near-empty — makes the (salvage) startup fast.
     Ok(())
 }
 

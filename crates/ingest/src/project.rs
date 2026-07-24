@@ -406,6 +406,9 @@ pub async fn project_with_progress(
         let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
         eprintln!("[project] org indexes rebuilt in {:.1}s", ti.elapsed().as_secs_f64());
     }
+    // Build the incremental change-set index now that (nearly) every parsed notice
+    // is projected=1, so the partial index is near-empty and instant (issue 58).
+    db.ensure_unprojected_index().await?;
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
@@ -629,6 +632,9 @@ async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
         report.applied.add(apply_plan_batch(db, &groups, now).await?);
     }
     db.clear_plan().await?;
+    // Keep the change-set index present for the next daily run (issue 58); cheap —
+    // it exists after the first projection and this is a no-op thereafter.
+    db.ensure_unprojected_index().await?;
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
     eprintln!(
         "[project] incremental: {} changed → {} touched Tenders ({} retired) in {:.1}s",
