@@ -490,8 +490,17 @@ impl Supervisor {
                     .await
             }
             Spec::Project { rebuild } => {
-                let report =
-                    project::project(&self.db, *rebuild).await.map_err(|e| e.to_string())?;
+                // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild flag: a
+                // COMPLETE grouping plan already on disk at projection start can only
+                // be a run that finished the (multi-hour) Phase-1 and died before the
+                // end-clear (a normal run clears its plan first). Re-run grouping +
+                // Phase-2 from it and SKIP Phase-1, whatever this recovered job's
+                // rebuild flag says — project(_, true) detects the complete plan and
+                // resumes.
+                let salvage = self.db.plan_is_complete().await.map_err(|e| e.to_string())?;
+                let report = project::project(&self.db, salvage || *rebuild)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 self.update(|p| p.notices = report.notices);
                 Ok(format!(
                     "{} notices → {} tenders ({} islands), {} versions",
@@ -1137,5 +1146,91 @@ mod tests {
         let queue = restarted.queue.lock().expect("queue lock");
         let fresh_job = queue.iter().find(|j| j.id == fresh[0]).expect("the fresh job");
         assert!(fresh_job.resume_after.is_none(), "a fresh enqueue never inherits a cursor");
+    }
+
+    async fn seed_fetch(db: &store::Db) -> i64 {
+        db.record_fetch(&store::Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "p".into(),
+            url: "u".into(),
+            sha256: "aa".into(),
+            bytes: 1,
+            fetched_at: 0,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        db.current_packages("ted", "daily", None).await.unwrap()[0].fetch_id
+    }
+
+    async fn record_keyed(db: &store::Db, fetch_id: i64, n: i64) {
+        let parsed = store::Parsed {
+            sections: vec![store::Section { id: "PROC".into(), kind: "Procedure".into(), parent: None }],
+            values: vec![store::ValueRow {
+                section_id: "PROC".into(),
+                field_id: "BT-04-notice".into(),
+                ordinal: 0,
+                value: store::NoticeValue::Id { scheme: None, value: format!("bt04-{n}"), is_ref: false },
+            }],
+        };
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: format!("pub-{n}"),
+                content_hash: format!("h-{n}"),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(0),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(parsed),
+        )
+        .await
+        .unwrap();
+    }
+
+    async fn tender_count(db: &store::Db) -> i64 {
+        match db.scalar("SELECT COUNT(*) FROM tenders").await.unwrap() {
+            Some(store::turso::Value::Integer(i)) => i,
+            _ => -1,
+        }
+    }
+
+    /// Issue 60 salvage: a recovered project job — even `rebuild:false` — RESUMES
+    /// from a complete on-disk plan and produces the correct canonical layer,
+    /// instead of routing to a path that would re-scan the whole corpus. The
+    /// interrupted run left a complete plan (Phase-1 done) with the canonical layer
+    /// not yet applied; the recovered job must fold it out.
+    #[tokio::test]
+    async fn a_recovered_job_resumes_from_a_complete_plan_even_when_not_a_rebuild() {
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        for i in 0..3 {
+            record_keyed(&db, fetch_id, i).await;
+        }
+        // Interrupt after Phase-1: a complete plan on disk, canonical empty.
+        ingest::project::project_plan_only(&db).await.unwrap();
+        assert!(db.plan_is_complete().await.unwrap(), "plan complete after plan-only");
+        assert_eq!(tender_count(&db).await, 0, "canonical not yet applied");
+
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        // The recovered daily job is rebuild:FALSE — the complete plan must make it
+        // resume (fold the plan out), not re-scan or no-op.
+        let daily = Job {
+            id: 1,
+            kind: "project".into(),
+            params: "rebuild=false".into(),
+            spec: Spec::Project { rebuild: false },
+            resume_after: None,
+        };
+        let summary = sup.run_spec(&daily).await.unwrap();
+
+        assert_eq!(tender_count(&db).await, 3, "the resume folded the plan into Tenders: {summary}");
+        assert!(!db.plan_is_complete().await.unwrap(), "the resume cleared the plan when done");
+        assert!(summary.starts_with("3 notices"), "resume folded the whole plan: {summary}");
     }
 }

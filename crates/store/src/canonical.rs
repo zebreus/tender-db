@@ -419,6 +419,63 @@ const WRITE_BATCH: usize = 512;
 /// checkpoint cost is noise against the writes it follows.
 const CHECKPOINT_EVERY_BATCHES: usize = 32;
 
+/// Legacy `plan_ojs_node` rows written per transaction when materialising the
+/// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
+/// bounded, like the plan bulk load (issue 60).
+const NODE_WRITE_BATCH: usize = 20_000;
+
+/// An in-memory union-find over legacy OJS keys where each component's root is its
+/// MINIMUM key (union-TO-MIN), so `find(k)` returns the component's earliest OJS
+/// number — exactly the representative the former SQL label-propagation converged
+/// to (the MIN label). Replaces that O(diameter) full-table-rewrite loop with one
+/// near-linear in-memory pass (path-B, issue 60). Bounded by the count of distinct
+/// legacy OJS numbers, not the corpus.
+#[derive(Default)]
+struct MinUnionFind {
+    parent: std::collections::HashMap<i64, i64>,
+}
+
+impl MinUnionFind {
+    /// Register `k` as a (possibly singleton) node.
+    fn add(&mut self, k: i64) {
+        self.parent.entry(k).or_insert(k);
+    }
+
+    /// The component representative of `k` — its minimum key — with path
+    /// compression. An unregistered key is its own representative.
+    fn find(&mut self, k: i64) -> i64 {
+        let mut root = k;
+        while let Some(&p) = self.parent.get(&root) {
+            if p == root {
+                break;
+            }
+            root = p;
+        }
+        let mut cur = k;
+        while let Some(&p) = self.parent.get(&cur).filter(|&&p| p != cur) {
+            self.parent.insert(cur, root);
+            cur = p;
+        }
+        root
+    }
+
+    /// Merge the components of `a` and `b`; the smaller key becomes the root, so
+    /// the representative is always the component MIN.
+    fn union(&mut self, a: i64, b: i64) {
+        self.add(a);
+        self.add(b);
+        let (ra, rb) = (self.find(a), self.find(b));
+        if ra != rb {
+            let (root, child) = if ra < rb { (ra, rb) } else { (rb, ra) };
+            self.parent.insert(child, root);
+        }
+    }
+
+    fn keys(&self) -> Vec<i64> {
+        self.parent.keys().copied().collect()
+    }
+}
+
 /// One canonical value of a Tender version, in its scope. The satellites of
 /// docs/architecture.md, as one comparable type — diffing versions is set
 /// comparison over these.
@@ -937,6 +994,39 @@ impl Db {
         Ok(())
     }
 
+    /// Whether a COMPLETE grouping plan from a finished Phase-1 is already on disk
+    /// — the resume-from-plan salvage signal (issue 60): if an interrupted run left
+    /// the disk-backed plan fully populated (`plan_notice` holds one row per parsed
+    /// notice), grouping + Phase-2 can be re-run without redoing the expensive
+    /// Phase-1. Phase-1 resolves each chunk's mentions BEFORE it appends that
+    /// chunk's plan rows, so a full `plan_notice` count implies mentions are
+    /// complete too. Assumes no ingestion between the interrupted run and the
+    /// resume (true for a controlled restart-to-salvage). False on a never-projected
+    /// DB (the scratch table may not exist) or an empty/partial plan, so a normal
+    /// run — whose prior run cleared the plan — always rebuilds from scratch.
+    pub async fn plan_is_complete(&self) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let mut exists = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'plan_notice'", ())
+            .await?;
+        if exists.next().await?.is_none() {
+            return Ok(false);
+        }
+        drop(exists);
+        let planned = {
+            let mut r = conn.query("SELECT COUNT(*) FROM plan_notice", ()).await?;
+            int(&r.next().await?.expect("count row"), 0)
+        };
+        if planned == 0 {
+            return Ok(false);
+        }
+        let parsed = {
+            let mut r = conn.query("SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'", ()).await?;
+            int(&r.next().await?.expect("count row"), 0)
+        };
+        Ok(planned == parsed)
+    }
+
     /// Insert one batch of the grouping plan (issue 59) in a single transaction.
     /// Every write here is a **sequential append** so the bulk load stays flat as
     /// the plan grows (issue 60 regression): `plan_notice` by its `notice_id` PK
@@ -1031,49 +1121,55 @@ impl Db {
         )
         .await?;
 
-        // Materialise the legacy OJS graph's nodes once, in key order, from the
-        // sequentially-appended plan (issue 60): every legacy notice's own OJS
-        // number and every edge endpoint (edge targets may be OJS numbers no
-        // ingested notice carries yet). `ORDER BY` makes the PK build a sequential
-        // append rather than the random per-row inserts that thrashed at scale.
-        conn.execute(
-            "INSERT INTO plan_ojs_node(key, label)
-             SELECT k, k FROM (
-                 SELECT ojs_self AS k FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL
-                 UNION
-                 SELECT b AS k FROM plan_ojs_edge
-             ) ORDER BY k",
-            (),
-        )
-        .await?;
+        // Legacy transitive components via an in-memory union-find (path-B) —
+        // NOT the former SQL label-propagation, which was O(component-diameter)
+        // full-table rewrites of plan_ojs_node and ran for HOURS at 12.4M scale
+        // (the group phase's pathological cost). Load the legacy adjacency once
+        // (bounded by distinct OJS numbers, not the corpus), union in Rust with
+        // union-TO-MIN so each component's root IS its minimum OJS key — byte-for-
+        // byte the same representative the propagation's converged MIN label
+        // produced — then write the reps back in ONE sorted pass. The `plan_notice`
+        // group_key derivation below is unchanged, so grouping is identical.
+        //
+        // Self-resetting (DELETE first) so grouping can be RE-RUN over an already-
+        // populated plan — the resume-from-plan salvage path (issue 60).
+        conn.execute("DELETE FROM plan_ojs_node", ()).await?;
 
-        // Legacy transitive closure by label propagation. Index the edge source so
-        // each pass is index joins, not scans.
-        conn.execute("CREATE INDEX IF NOT EXISTS plan_ojs_edge_a ON plan_ojs_edge(a)", ()).await?;
-        let mut previous = -1;
-        // Converges in ~component diameter (real OJS chains are short); the cap is a
-        // runaway guard, never expected to bind.
-        for _ in 0..1024 {
-            conn.execute(
-                "UPDATE plan_ojs_node SET label = (
-                     SELECT MIN(v) FROM (
-                         SELECT plan_ojs_node.label AS v
-                         UNION ALL
-                         SELECT n2.label FROM plan_ojs_edge e JOIN plan_ojs_node n2 ON n2.key = e.b
-                          WHERE e.a = plan_ojs_node.key
-                     )
-                 )",
-                (),
-            )
-            .await?;
-            let mut rows = conn.query("SELECT COALESCE(SUM(label), 0) FROM plan_ojs_node", ()).await?;
-            let sum = int(&rows.next().await?.expect("sum row"), 0);
-            drop(rows);
-            if sum == previous {
-                break;
+        // The node set is every edge endpoint plus every legacy notice's own OJS
+        // number (a legacy notice with no refs and no referrer is its own
+        // singleton component). Edges are symmetric, so one side covers endpoints.
+        let mut uf = MinUnionFind::default();
+        {
+            let mut rows = conn.query("SELECT a, b FROM plan_ojs_edge", ()).await?;
+            while let Some(row) = rows.next().await? {
+                uf.union(int(&row, 0), int(&row, 1));
             }
-            previous = sum;
         }
+        {
+            let mut rows = conn
+                .query("SELECT ojs_self FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL", ())
+                .await?;
+            while let Some(row) = rows.next().await? {
+                uf.add(int(&row, 0));
+            }
+        }
+        // Resolve each node's component representative (its MIN key), sorted so the
+        // plan_ojs_node PK build is a sequential append, not the random-position
+        // inserts that thrashed at scale (issue 60).
+        let mut reps: Vec<(i64, i64)> = uf.keys().into_iter().map(|k| (k, uf.find(k))).collect();
+        reps.sort_unstable_by_key(|(k, _)| *k);
+        for chunk in reps.chunks(NODE_WRITE_BATCH) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            for (key, rep) in chunk {
+                conn.execute(
+                    "INSERT INTO plan_ojs_node(key, label) VALUES(?, ?)",
+                    (Value::Integer(*key), Value::Integer(*rep)),
+                )
+                .await?;
+            }
+            conn.execute("COMMIT", ()).await?;
+        }
+
         // Assign each legacy notice its component's earliest-OJS key, formatted to
         // match `ojs_procedure_key`: `ojs:{year}-{number:06}`.
         conn.execute(
@@ -2261,3 +2357,94 @@ fn placeholders(n: usize) -> String {
 /// SQLite's default bind-variable ceiling is 999; stay well under it so an
 /// `IN (…)` read of a batch's ids never overflows a single statement.
 const IN_CHUNK: usize = 512;
+
+#[cfg(test)]
+mod tests {
+    use super::MinUnionFind;
+    use std::collections::{HashMap, HashSet, VecDeque};
+
+    /// A deterministic LCG so the random graphs are reproducible without
+    /// `Math.random`/`rand`.
+    struct Lcg(u64);
+    impl Lcg {
+        fn next(&mut self, n: u64) -> u64 {
+            self.0 = self.0.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1_442_695_040_888_963_407);
+            (self.0 >> 33) % n
+        }
+    }
+
+    /// Brute-force reference: each node's component MINIMUM key, by BFS over the
+    /// undirected adjacency — the invariant the label-propagation converged to and
+    /// the union-find must reproduce exactly.
+    fn component_mins(nodes: &[i64], edges: &[(i64, i64)]) -> HashMap<i64, i64> {
+        let mut adj: HashMap<i64, Vec<i64>> = HashMap::new();
+        for &n in nodes {
+            adj.entry(n).or_default();
+        }
+        for &(a, b) in edges {
+            adj.entry(a).or_default().push(b);
+            adj.entry(b).or_default().push(a);
+        }
+        let mut min_of: HashMap<i64, i64> = HashMap::new();
+        let mut seen: HashSet<i64> = HashSet::new();
+        for &start in adj.keys() {
+            if !seen.insert(start) {
+                continue;
+            }
+            let mut queue = VecDeque::from([start]);
+            let mut members = vec![start];
+            let mut min = start;
+            while let Some(cur) = queue.pop_front() {
+                for &nb in &adj[&cur] {
+                    if seen.insert(nb) {
+                        members.push(nb);
+                        min = min.min(nb);
+                        queue.push_back(nb);
+                    }
+                }
+                min = min.min(cur);
+            }
+            for m in members {
+                min_of.insert(m, min);
+            }
+        }
+        min_of
+    }
+
+    /// The union-find representative MUST equal the component minimum for every
+    /// node, across many random graphs — the byte-identical-grouping guarantee for
+    /// legacy Tenders that lets path-B replace the SQL label-propagation.
+    #[test]
+    fn union_find_rep_is_the_component_min_like_label_propagation() {
+        let mut lcg = Lcg(0x9E37_79B9_7F4A_7C15);
+        for trial in 0..500 {
+            let node_count = 1 + lcg.next(40) as usize;
+            let mut nodes: Vec<i64> = (0..node_count)
+                .map(|_| (lcg.next(5_000) as i64) * 1_000_000_000 + lcg.next(999_999) as i64)
+                .collect();
+            nodes.sort_unstable();
+            nodes.dedup();
+
+            let edge_count = lcg.next(3 * nodes.len() as u64 + 1) as usize;
+            let mut edges = Vec::new();
+            for _ in 0..edge_count {
+                let a = nodes[lcg.next(nodes.len() as u64) as usize];
+                let b = nodes[lcg.next(nodes.len() as u64) as usize];
+                edges.push((a, b));
+            }
+
+            let mut uf = MinUnionFind::default();
+            for &(a, b) in &edges {
+                uf.union(a, b);
+            }
+            for &n in &nodes {
+                uf.add(n);
+            }
+
+            let reference = component_mins(&nodes, &edges);
+            for &n in &nodes {
+                assert_eq!(uf.find(n), reference[&n], "trial {trial}: rep for {n} != component min");
+            }
+        }
+    }
+}

@@ -324,59 +324,32 @@ pub async fn project_with_progress(
     notice_batch: usize,
     mut on_progress: impl FnMut(Progress),
 ) -> turso::Result<Report> {
-    if rebuild {
+    // Resume-from-plan salvage (issue 60): if an interrupted rebuild already left a
+    // COMPLETE grouping plan on disk (Phase-1 finished — the expensive part), skip
+    // the clear + the whole of Phase-1 and re-run only grouping (path-B) → Phase-2
+    // from the immutable on-disk plan. A normal rebuild (its prior run cleared the
+    // plan) sees an empty/absent plan and rebuilds from scratch.
+    let resume = rebuild && db.plan_is_complete().await?;
+    if rebuild && !resume {
         db.clear_canonical().await?;
     }
     let now = store::now_unix();
     let mut report = Report::default();
 
-    // Phase 1 — stream the notice-parsed layer in id-ordered chunks (issue 19)
-    // and, per notice, do the two things that need the whole corpus but only a
-    // notice at a time: resolve its Organization mentions (in id order, so canonical
-    // Organization identity is exactly what the whole-RAM projection produced),
-    // and write its compact grouping *identity* to the on-disk plan. Nothing
-    // per-notice heavy (facts, lots, results) is retained, and the plan is on disk
-    // (issue 59) — so Phase-1 peak RAM is one read chunk, independent of corpus.
-    const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
-    db.reset_plan().await?;
     // The Phase-1 total, read once up front so the heartbeat can report a fraction.
     let total = db.parsed_notice_count().await?;
-    let mut resolver = db.mention_resolver().await?;
-    let mut after_id = 0i64;
-    let mut chunks = 0usize;
-    loop {
-        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
-        let Some((last, _)) = chunk.last() else { break };
-        after_id = last.id;
-        let mut mentions: Vec<Mention> = Vec::new();
-        let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
-        for (notice, parsed) in &chunk {
-            let ident = Ident::read(notice, parsed);
-            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
-            rows.push(ident.into_plan_row());
-        }
-        report.notices += rows.len() as u64;
-        db.insert_plan(&rows).await?;
-        report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
-        // Heartbeat so a many-minute plan build is visibly alive (issue 59).
-        on_progress(Progress::Planning { notices: report.notices, total });
-        // Keep the WAL bounded through the plan build too (issue 42/59): the
-        // plan-row inserts are a burst; truncate at the clean point between chunks.
-        chunks += 1;
-        if chunks.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
-            && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
-        {
-            eprintln!("[project] plan checkpoint after chunk {chunks}: {e}");
-        }
+    if resume {
+        report.notices = total;
+        eprintln!(
+            "[project] RESUME: a complete on-disk plan ({total} notices) was found — \
+             skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
+        );
+    } else {
+        let (notices, mentions) = build_plan(db, now, total, &mut on_progress).await?;
+        report.notices = notices;
+        report.mentions = mentions;
     }
-    db.finish_mention_resolver(resolver).await?;
-    eprintln!(
-        "[project] plan: {} notices, {} mentions resolved in {:.1}s",
-        report.notices,
-        report.mentions,
-        t0.elapsed().as_secs_f64()
-    );
 
     // Group the plan into Tenders — keyed chains, the legacy OJS transitive-closure
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
@@ -429,6 +402,83 @@ pub async fn project_with_progress(
         report.applied.changes,
         t0.elapsed().as_secs_f64()
     );
+    Ok(report)
+}
+
+/// Phase 1 of the projection: stream the notice-parsed layer in id-ordered chunks
+/// (issue 19) and, per notice, resolve its Organization mentions (in id order, so
+/// canonical Organization identity is exactly what the whole-RAM projection
+/// produced) and append its compact grouping *identity* to the on-disk plan.
+/// Nothing per-notice heavy is retained and the plan is on disk (issue 59), so peak
+/// RAM is one read chunk, independent of corpus. Returns `(notices, mentions)`.
+/// Shared by the full projection and [`project_plan_only`].
+///
+/// Mentions are resolved BEFORE the chunk's plan rows are appended, so a full
+/// `plan_notice` implies mentions are complete — the invariant the resume-from-plan
+/// salvage relies on ([`store::Db::plan_is_complete`]).
+async fn build_plan(
+    db: &Db,
+    now: i64,
+    total: u64,
+    mut on_progress: impl FnMut(Progress),
+) -> turso::Result<(u64, u64)> {
+    const READ_CHUNK: i64 = 10_000;
+    let t0 = std::time::Instant::now();
+    db.reset_plan().await?;
+    let mut resolver = db.mention_resolver().await?;
+    let (mut notices, mut mentions_total) = (0u64, 0u64);
+    let mut after_id = 0i64;
+    let mut chunks = 0usize;
+    loop {
+        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        let Some((last, _)) = chunk.last() else { break };
+        after_id = last.id;
+        let mut mentions: Vec<Mention> = Vec::new();
+        let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
+        for (notice, parsed) in &chunk {
+            let ident = Ident::read(notice, parsed);
+            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+            rows.push(ident.into_plan_row());
+        }
+        notices += rows.len() as u64;
+        mentions_total += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
+        db.insert_plan(&rows).await?;
+        // Heartbeat so a many-minute plan build is visibly alive (issue 59).
+        on_progress(Progress::Planning { notices, total });
+        // Keep the WAL bounded through the plan build too (issue 42/59): the
+        // plan-row inserts are a burst; truncate at the clean point between chunks.
+        chunks += 1;
+        if chunks.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+            && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
+        {
+            eprintln!("[project] plan checkpoint after chunk {chunks}: {e}");
+        }
+    }
+    db.finish_mention_resolver(resolver).await?;
+    eprintln!(
+        "[project] plan: {notices} notices, {mentions_total} mentions resolved in {:.1}s",
+        t0.elapsed().as_secs_f64()
+    );
+    Ok((notices, mentions_total))
+}
+
+/// Run only the interruptible PREFIX of a full rebuild — clear the canonical layer
+/// and build the whole grouping plan on disk (Phase 1) — then STOP, leaving a
+/// complete plan on disk. A subsequent `project(db, true)` detects that plan and
+/// RESUMES from it (grouping → Phase 2) without redoing the expensive Phase 1
+/// (issue 60 salvage). Runs with FK enforcement off, like the full projection.
+pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
+    db.set_foreign_keys(false).await?;
+    let result = async {
+        db.clear_canonical().await?;
+        let total = db.parsed_notice_count().await?;
+        let (notices, mentions) = build_plan(db, store::now_unix(), total, |_| {}).await?;
+        Ok::<Report, turso::Error>(Report { notices, mentions, ..Default::default() })
+    }
+    .await;
+    let restored = db.set_foreign_keys(true).await;
+    let report = result?;
+    restored?;
     Ok(report)
 }
 
