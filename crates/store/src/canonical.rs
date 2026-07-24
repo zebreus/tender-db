@@ -200,6 +200,13 @@ pub(crate) const SCHEMA: &str = "
     -- id that merged its mentions; a profile without one is `provisional` — it
     -- represents exactly one mention and never absorbs another, because
     -- name-only matching would merge distinct companies (CONTEXT.md).
+    -- The org-identity uniqueness is a NAMED index (`organizations_identity`
+    -- below), not an inline `UNIQUE` constraint, so a full-rebuild projection can
+    -- DROP it, bulk-load organizations by sequential id, and rebuild it once at
+    -- the end (issue 60): each new org otherwise did a random-position uniqueness
+    -- *probe* into this index, which — once it outgrew the page cache at millions
+    -- of orgs — became a random-seek storm. The in-RAM org_of map is the run's
+    -- authoritative dedup, so the deferred rebuild never finds a conflict.
     CREATE TABLE IF NOT EXISTS organizations (
         id              INTEGER PRIMARY KEY AUTOINCREMENT,
         country         TEXT,
@@ -207,9 +214,10 @@ pub(crate) const SCHEMA: &str = "
         identifier      TEXT,
         name            TEXT NOT NULL,
         provisional     INTEGER NOT NULL,
-        created_at      INTEGER NOT NULL,
-        UNIQUE(country, identifier_kind, identifier)
+        created_at      INTEGER NOT NULL
     ) STRICT;
+    CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
+        ON organizations(country, identifier_kind, identifier);
 
     -- One appearance of an Organization in one Notice — the immutable evidence
     -- canonical profiles are built from (CONTEXT.md). (notice_id, section_id)
@@ -968,6 +976,62 @@ impl Db {
         ] {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
+        Ok(())
+    }
+
+    /// Drop and recreate the Organization tables as BARE tables — no uniqueness
+    /// or org-id index — for a full-rebuild bulk load (issue 60). Every org and
+    /// mention insert is then a sequential PK append instead of a random-position
+    /// index probe; the in-RAM `org_of` dedup map is the run's authority, so no
+    /// duplicate identifiers are ever emitted, and the indexes are rebuilt once by
+    /// [`Db::build_organization_indexes`] at the end. Runs with FK off (the
+    /// projection disables it), and drops the whole table so it works whether the
+    /// db still has the old inline-`UNIQUE` auto-index or the new named index.
+    pub async fn strip_organization_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
+        conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;
+        conn.execute(
+            "CREATE TABLE organizations (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT, country TEXT, identifier_kind TEXT,
+                 identifier TEXT, name TEXT NOT NULL, provisional INTEGER NOT NULL,
+                 created_at INTEGER NOT NULL
+             ) STRICT",
+            (),
+        )
+        .await?;
+        conn.execute(
+            "CREATE TABLE organization_mentions (
+                 notice_id INTEGER NOT NULL REFERENCES notices(id), section_id TEXT NOT NULL,
+                 organization_id INTEGER NOT NULL REFERENCES organizations(id), name TEXT,
+                 country TEXT, raw_identifier TEXT, scheme TEXT,
+                 PRIMARY KEY (notice_id, section_id),
+                 FOREIGN KEY (notice_id, section_id) REFERENCES notice_sections(notice_id, section_id)
+             ) STRICT",
+            (),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// Rebuild the Organization indexes after a full-rebuild bulk load — one
+    /// sorted build each, instead of the millions of random-position inserts they
+    /// replace (issue 60). The `org_of` map guaranteed no duplicate identifiers,
+    /// so the unique index builds without conflict.
+    pub async fn build_organization_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
+                 ON organizations(country, identifier_kind, identifier)",
+            (),
+        )
+        .await?;
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS organization_mentions_org
+                 ON organization_mentions(organization_id)",
+            (),
+        )
+        .await?;
         Ok(())
     }
 

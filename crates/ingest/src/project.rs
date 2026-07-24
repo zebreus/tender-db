@@ -327,6 +327,10 @@ pub async fn project_with_progress(
 ) -> turso::Result<Report> {
     if rebuild {
         db.clear_canonical().await?;
+        // Bulk-load the Organization tables index-free, then rebuild the indexes
+        // once at the end (issue 60): the per-row uniqueness probe into the org
+        // identity index was a random-seek storm once it outgrew the page cache.
+        db.strip_organization_indexes().await?;
     }
     let now = store::now_unix();
     let mut report = Report::default();
@@ -420,6 +424,14 @@ pub async fn project_with_progress(
     report.absorbed = db.retire_absorbed_legacy_tenders(&legacy_keys, now).await?;
     // Don't leave the transient plan in the durable DB between runs (issue 59).
     db.clear_plan().await?;
+    // Rebuild the Organization indexes the bulk load ran without (issue 60) — one
+    // sorted build each, now that every org and mention is in.
+    if rebuild {
+        let ti = std::time::Instant::now();
+        db.build_organization_indexes().await?;
+        let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+        eprintln!("[project] org indexes rebuilt in {:.1}s", ti.elapsed().as_secs_f64());
+    }
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
