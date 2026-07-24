@@ -34,6 +34,35 @@ Directions to investigate (reproduce-first, measure MB/s):
 Acceptance: full-corpus Phase-1 read throughput materially higher (target a
 few×), measured; projection output unchanged (equivalence tests still pass).
 
+## RESOLUTION (2026-07-24, proj-fix)
+
+Reproduce-first confirmed the premise: **turso honors `PRAGMA cache_size`.** A
+mechanism repro (`crates/store/tests/cache_size.rs`) scans a table larger than a
+tiny cache but smaller than a large one and counts read-syscall bytes
+(`/proc/self/io` rchar): tiny (64 KiB) re-reads the table every scan; large
+(256 MiB) keeps it resident and does ~zero reads — a >5000× difference. So the
+default ~2 MB cache re-reading interior pages it can't hold IS the amplification,
+and a large cache fixes it.
+
+FIX SHIPPED: `PRAGMA cache_size = -524288` (512 MiB) added to the store's
+connection PRAGMAS (crates/store/src/lib.rs), applied to the writer and every
+pooled reader (read.rs) — so it reaches the projection's read path.
+
+MEMORY (per-connection cap, mind the 8 GB box): the cache is a per-connection
+*cap* that fills lazily, not a preallocation. Connections: writer(1) +
+read_pool(8) + API(8) + SQL(4) + webhooks(~4) ≈ 25. Light/capped queries (API,
+webhooks, paginated reads) touch few pages → small caches. Heavy scanners fill
+toward the cap. During a **dedicated backfill** the pool reuses ONE reader (LIFO),
+so only the writer + one reader go hot ≈ ~1 GB — safe, and 59 keeps the plan
+off-heap. The theoretical stacking risk is many concurrent *large* SQL reads
+(bounded by SQL_READERS=4 and the SQL result-size/timeout caps). If prod RSS ever
+presses, dial to 256 MiB (still 128× the old default).
+
+Local repro proves the mechanism and that the fix is real; the prod-scale
+before/after (rchar/DB ≈ 1.8× → ~1×, MB/s multi-×) can only be confirmed at
+254 GB — watch run-driver's rchar and throughput after the next projection deploy.
+Batches with the 59 deploy (no separate restart).
+
 ## ROOT-CAUSE LEAD (2026-07-24, high-value, one-line fix)
 
 The store sets NO `PRAGMA cache_size` (see crates/store/src/lib.rs PRAGMAS =
