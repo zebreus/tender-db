@@ -1,6 +1,6 @@
 # 58 — Incremental projection: re-project only the Tenders touched since last run
 
-Status: design-ready (deepened 2026-07-24 by proj-fix; awaiting team-lead sign-off on scope/phasing)
+Status: in-implementation (2026-07-24, proj-fix; team-lead approved all 3 sign-offs) — v1 keyed/island + legacy fallback landed on branch issue62-defer-org-indexes, green; timing curve + supervisor wiring remaining
 Severity: MEDIUM (daily-wall-clock optimization, not an outage) — but it is the
 BIGGEST projection lever: every projection today re-reads+re-plans the whole
 12.4M-notice / 254GB corpus (~5h15m measured), which makes the daily job
@@ -178,6 +178,38 @@ with corpus while incremental scales with delta.
 3. Priority vs the 60/62 batch: incremental makes 60/62 moot for DAILY runs but
    NOT for the periodic full `rebuild:true`. Sequence: deploy 60/62 for the next
    rebuild, build 58 for daily?
+
+## Implementation status (2026-07-24, proj-fix)
+
+All three sign-offs APPROVED by team-lead (boolean watermark; v1 legacy fallback +
+defer v2; sequence 60/62-rebuild + 58-daily). Landed on branch
+issue62-defer-org-indexes (reproduce-first, NOT deployed):
+- df0c2b6 — slice 1: `notices.projected` watermark (column + partial index in
+  migrate; cleared on every transition to 'parsed' via set_parse_state; set by
+  Phase 2; reset by rebuild). Migration backfills projected=1 for already-folded
+  notices so the first incremental after upgrade isn't a whole-corpus scan.
+- bf2e632 — slice 2: `project::project_incremental`; store helpers
+  `touched_existing_tender_ids` / `notice_ids_for_tenders` /
+  `retire_regrouped_tenders`. Keyed late-attach proven byte-identical to full.
+- 64bcc27 — slices 3-4: mixed-delta untouched-invariance + legacy full-rebuild
+  fallback (loud log) tests, both byte-identical to full.
+- (this commit) slice 5: reproduce-first timing curve.
+
+NOTE on island-upgrade (fixture case b): retiring an EXISTING island Tender when
+its notice gains a key requires the notice's parsed layer to change IN PLACE. The
+current pipeline is append-only by (source, publication_id, content_hash) — a
+content change mints a NEW notice id (a separate keyed Tender alongside the old
+island; both a full and incremental run keep both, and incremental matches full),
+and there is no in-place re-parse path today. So `retire_regrouped_tenders` is a
+correct defensive generalization that fires via the legacy fallback and would fire
+for a future in-place re-parse path, but cannot be produced through the normal
+ingest path now. Retirement on merge is covered for legacy by the existing
+`a_late_edge_merges_two_legacy_tenders` (full path) + the fallback.
+
+REMAINING before deploy-ready: wire the daily pipeline (supervisor.rs
+`Spec::Project { rebuild:false }`) to call `project_incremental` instead of the
+full scan; decide whether `rebuild:false` keeps the old full-scan semantics or is
+replaced. Team-lead to sequence with the 60/62 deploy batch.
 
 ## Comments
 
