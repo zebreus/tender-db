@@ -73,6 +73,43 @@ uses the schema-created indexes.
   the NEW-path flatness and characterizes the OLD slope. See numbers in the
   commit / test output.
 
-Commit: 4926149 (branch issue62-defer-org-indexes; source fix). Tests added on
-top. Do NOT deploy from here — team-lead merges to main + deploys at a safe
-boundary (after the current prod run finishes, or as a fallback if it trips).
+## ROOT CAUSE CONFIRMED (2026-07-24) — read-seek, cache-masked at laptop scale
+
+Wall-clock flatness at 96k–320k was AMBIGUOUS (could be "no reads" or "reads
+served from OS page cache in µs"). Disambiguated by counting turso's own read
+bytes (`/proc/self/io` rchar) under a 256 KiB cache — `org_index_read_
+amplification.rs`, 120k inserts:
+
+  A bare-sequential append : 0 B/row       (baseline — appends to one hot leaf)
+  B non-unique scattered   : 29 B/row = 414× A
+  C unique scattered       : 29 B/row = 414× A, and 1.00× B
+
+So a scattered-key index insert DOES a random READ per row — a b-tree traversal
+to the target leaf — 414× the sequential baseline. Confirmed in turso 0.7.0
+source: a UNIQUE insert emits an `Insn::NoConflict` probe (seek) per constraint
+(`translate/insert.rs::emit_preflight_constraint_checks`), and even a non-unique
+`Insn::IdxInsert` uses `require_seek()` to find its leaf. That read is served
+from cache when the index is small (why wall-clock is flat here and the absolute
+volume is only 3.28 MiB), but becomes a DISK seek once the index working set
+outgrows the cache — prod's 3028 random reads/s at 4M notices.
+
+Two consequences for the fix:
+- The UNIQUE constraint's probe is NOT an extra cost beyond the position-seek
+  (C = 1.00× B). It is the b-tree leaf-seek both index types do. So the earlier
+  "organizations UNIQUE ruled out (measured flat)" was a wall-clock artifact
+  (cache-masked); the read IS there. Deferring BOTH indexes is correct.
+- Per-row read cost is equal, so `organization_mentions_org` (~30M mentions >
+  ~12M orgs) is the larger AGGREGATE read source — matches the observed self-
+  limiting as the new-org creation rate fell late in the corpus.
+
+CAVEAT: this is ONE of (at least) two Phase-1 random-read sources on a full
+rebuild; the other is the parsed-layer scattered reads (issue 60, addressed by
+`cache_size`). The laptop test cannot apportion prod's 3028 reads/s between them.
+62 provably removes the org-index share (bare bulk-load reads 0; the one-time
+sorted rebuild reads sequentially).
+
+Commit: 4926149 (source fix) + 008b501 (tests + this issue) on branch
+issue62-defer-org-indexes. Do NOT deploy from here — team-lead merges + deploys
+at a safe boundary, and is weighing 62's schema complexity vs its share of the
+read load and vs issue 58 (incremental — the bigger structural lever, since even
+daily projections currently re-read the whole 12.4M corpus).
