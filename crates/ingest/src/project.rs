@@ -445,6 +445,147 @@ pub async fn project_with_progress(
     Ok(report)
 }
 
+/// The daily projection: re-derive only the Tenders TOUCHED by notices parsed
+/// since the last run, so cost scales with the delta, not the corpus (issue 58).
+///
+/// The reconcile path (`apply_tenders`) is already a per-Tender natural-key
+/// upsert with no global deletes, so feeding Phase 2 only the touched Tenders
+/// leaves every untouched Tender byte-identical and produces the touched ones
+/// exactly as a full non-rebuild projection would. Incremental is therefore only
+/// about SCOPING: (1) the change-set is the unprojected parsed notices (the
+/// `notices.projected` watermark); (2) the plan is seeded with just the touched
+/// Tenders' full notice sets, so the same grouping SQL runs over a bounded set;
+/// (3) retirement is scoped to the touched set.
+///
+/// LEGACY FALLBACK: the transitive OJS union-find needs the whole existing edge
+/// graph, which is not persisted between runs. Legacy notices are the pre-2024
+/// historical era, loaded by bulk backfill (`rebuild:true`), never in the daily
+/// near-real-time feed — so if the delta contains ANY legacy notice this falls
+/// back to a full non-rebuild projection (correct, and effectively never fires
+/// daily). It logs loudly, so if legacy ever starts arriving incrementally we
+/// notice and build the durable-adjacency path (issue 58 v2).
+pub async fn project_incremental(db: &Db) -> turso::Result<Report> {
+    db.set_foreign_keys(false).await?;
+    let result = project_incremental_inner(db).await;
+    let restored = db.set_foreign_keys(true).await;
+    let report = result?;
+    restored?;
+    Ok(report)
+}
+
+async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
+    let changed = db.unprojected_parsed_notice_ids().await?;
+    if changed.is_empty() {
+        return Ok(Report::default());
+    }
+    let now = store::now_unix();
+    let t0 = std::time::Instant::now();
+
+    // Read the changed notices' grouping identity: detect legacy (→ fallback) and
+    // collect their new keyed keys (a notice joining an existing keyed Tender).
+    // Keep the parsed layer — we reuse it to build the plan without re-reading.
+    let mut changed_parsed = db.parsed_by_ids(&changed).await?;
+    changed_parsed.sort_by_key(|(n, _)| n.id);
+    let changed_set: std::collections::HashSet<i64> = changed.iter().copied().collect();
+    let mut new_keyed_keys: Vec<String> = Vec::new();
+    for (notice, parsed) in &changed_parsed {
+        let ident = Ident::read(notice, parsed);
+        if ident.legacy {
+            eprintln!(
+                "[project] INCREMENTAL → FULL fallback: delta contains legacy notice(s) \
+                 (issue 58 v1); re-projecting the whole corpus"
+            );
+            return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
+        }
+        if let Some(key) = &ident.procedure_key {
+            new_keyed_keys.push(key.clone());
+        }
+    }
+    new_keyed_keys.sort_unstable();
+    new_keyed_keys.dedup();
+
+    // Expand to the touched EXISTING Tenders and load their full notice sets, so
+    // each is re-derived in full alongside the changed notices.
+    let touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
+    let existing_ids = db.notice_ids_for_tenders(&touched_tenders).await?;
+
+    // Phase 1 (scoped): plan rows for the WHOLE touched notice set, in id order so
+    // the plan/org bulk-load stays sequential; mentions resolved only for the
+    // changed notices (the existing notices' mentions are already recorded and are
+    // bound in Phase 2 by `mentions_by_ids`).
+    db.reset_plan().await?;
+    let extra_ids: Vec<i64> = existing_ids.iter().copied().filter(|id| !changed_set.contains(id)).collect();
+    let mut extra_parsed = db.parsed_by_ids(&extra_ids).await?;
+    extra_parsed.sort_by_key(|(n, _)| n.id);
+
+    let mut resolver = db.mention_resolver().await?;
+    let mut rows: Vec<store::PlanRow> = Vec::with_capacity(changed_parsed.len() + extra_parsed.len());
+    let mut mentions: Vec<Mention> = Vec::new();
+    // Both slices are id-sorted; merge them so the plan appends in id order and the
+    // mentions resolve in id order (org ids stay identical to a full projection).
+    let mut ci = changed_parsed.iter();
+    let mut ei = extra_parsed.iter();
+    let (mut cn, mut en) = (ci.next(), ei.next());
+    loop {
+        let take_changed = match (cn, en) {
+            (Some((c, _)), Some((e, _))) => c.id <= e.id,
+            (Some(_), None) => true,
+            (None, Some(_)) => false,
+            (None, None) => break,
+        };
+        let (notice, parsed) = if take_changed {
+            let v = cn.unwrap();
+            cn = ci.next();
+            v
+        } else {
+            let v = en.unwrap();
+            en = ei.next();
+            v
+        };
+        let ident = Ident::read(notice, parsed);
+        if changed_set.contains(&notice.id) {
+            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+        }
+        rows.push(ident.into_plan_row());
+    }
+    let mut report = Report::default();
+    report.notices = changed.len() as u64;
+    db.insert_plan(&rows).await?;
+    report.mentions = db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
+    db.finish_mention_resolver(resolver).await?;
+
+    // Group the scoped plan (same SQL as a full run — over the touched set only).
+    db.build_plan_groups().await?;
+    let (tenders, islands) = db.plan_counts().await?;
+    report.tenders = tenders;
+    report.islands = islands;
+
+    // Retire any touched Tender the new plan did not reproduce (island→keyed
+    // upgrade, etc.) BEFORE applying, so a regrouped notice's old Tender is gone.
+    report.absorbed = db.retire_regrouped_tenders(&touched_tenders, now).await?;
+
+    // Phase 2 (unchanged): fold + apply the touched Tenders a bounded batch at a
+    // time; `apply_tenders` upserts each by natural key and marks its notices
+    // projected — untouched Tenders are never read or written.
+    let mut after = String::new();
+    loop {
+        let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
+        let Some(last) = groups.last() else { break };
+        after = last.group_key.clone();
+        report.applied.add(apply_plan_batch(db, &groups, now).await?);
+    }
+    db.clear_plan().await?;
+    let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+    eprintln!(
+        "[project] incremental: {} changed → {} touched Tenders ({} retired) in {:.1}s",
+        report.notices,
+        report.tenders,
+        report.absorbed,
+        t0.elapsed().as_secs_f64()
+    );
+    Ok(report)
+}
+
 /// Fold one streamed batch of whole Tenders and reconcile them. Reads only the
 /// batch's notices — their parsed form and the Organizations Phase 1 resolved —
 /// rebuilds each notice's canonical state, binds it, folds each group's chain,

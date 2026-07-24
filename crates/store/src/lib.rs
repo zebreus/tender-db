@@ -120,11 +120,10 @@ const SCHEMA: &str = "
         UNIQUE(source, publication_id, content_hash)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS notices_profile ON notices(profile);
-    -- The incremental change-set is small (a daily delta) against a huge parsed
-    -- corpus, so a PARTIAL index keyed on the unprojected rows keeps the
-    -- watermark scan O(delta), not O(corpus).
-    CREATE INDEX IF NOT EXISTS notices_unprojected ON notices(id)
-        WHERE parse_state = 'parsed' AND projected = 0;
+    -- The `notices_unprojected` partial index (issue 58) is created in `migrate`,
+    -- not here: on an existing DB the `projected` column is added by ALTER after
+    -- this schema batch runs, so the index — which references it — cannot exist
+    -- until then.
     CREATE INDEX IF NOT EXISTS notices_parse_state ON notices(parse_state);
     -- notices.fetch_id is a foreign key that was unindexed (issue 20 reopened):
     -- any query seeking notices by their fetch — and the old join-based coverage
@@ -390,6 +389,32 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // batch (which runs before this ALTER on a pre-issue-25 database).
     conn.execute(
         "CREATE INDEX IF NOT EXISTS tenders_current_published ON tenders(current_published_at, id)",
+        (),
+    )
+    .await?;
+
+    // The incremental-projection watermark (issue 58). On a database created
+    // before it, every parsed notice is ALREADY folded into the canonical layer,
+    // so backfill `projected = 1` for the notices that caused a version — else the
+    // first incremental run would treat the whole existing corpus as unprojected.
+    // (A parsed notice always causes exactly one version, so the join covers them
+    // all.) Runs once, when the column is first added.
+    let added_projected =
+        add_column(conn, "ALTER TABLE notices ADD COLUMN projected INTEGER NOT NULL DEFAULT 0").await?;
+    if added_projected {
+        conn.execute(
+            "UPDATE notices SET projected = 1
+              WHERE parse_state = 'parsed'
+                AND id IN (SELECT caused_by_notice_id FROM tender_versions)",
+            (),
+        )
+        .await?;
+    }
+    // Depends on the column above; a daily delta is tiny against a huge parsed
+    // corpus, so a PARTIAL index keeps the change-set scan O(delta), not O(corpus).
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS notices_unprojected ON notices(id)
+             WHERE parse_state = 'parsed' AND projected = 0",
         (),
     )
     .await?;

@@ -2243,6 +2243,125 @@ impl Db {
         Ok(())
     }
 
+    // ---------------------------------------------------- incremental (issue 58)
+
+    /// The EXISTING Tenders touched by an incremental change-set: every Tender
+    /// that already contains one of the `changed` notices (old membership — a
+    /// correction/award attaching to an old Tender), plus every Tender whose
+    /// `procedure_key` is a `changed` notice's NEW identity key (a notice joining
+    /// or regrouping into an already-existing keyed Tender). These are the only
+    /// Tenders an incremental run may rewrite or retire; untouched Tenders are
+    /// never read. Bounded by the delta, not the corpus.
+    pub async fn touched_existing_tender_ids(
+        &self,
+        changed: &[i64],
+        new_keyed_keys: &[String],
+    ) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = std::collections::BTreeSet::new();
+        for chunk in changed.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT DISTINCT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        for chunk in new_keyed_keys.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|k| t(k)).collect();
+            let sql = format!(
+                "SELECT id FROM tenders WHERE procedure_key IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// The full notice-id set of the given Tenders — every notice that folds into
+    /// them (`tender_versions.caused_by_notice_id`). An incremental run seeds its
+    /// scoped plan with these (∪ the changed notices) so each touched Tender is
+    /// re-derived IN FULL, exactly as a full projection would.
+    pub async fn notice_ids_for_tenders(&self, tender_ids: &[i64]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = std::collections::BTreeSet::new();
+        for chunk in tender_ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT caused_by_notice_id FROM tender_versions WHERE tender_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// Retire any touched Tender whose identity key the freshly-built plan did NOT
+    /// reproduce (issue 58) — a notice regrouped away (island → keyed upgrade), or
+    /// a legacy component merged. The plan's `group_key` set is authoritative: a
+    /// touched Tender absent from it has no notices left and gets `removed` change
+    /// events, exactly like [`Db::retire_absorbed_legacy_tenders`] but scoped to
+    /// the touched set instead of the whole corpus. Returns the count retired.
+    pub async fn retire_regrouped_tenders(
+        &self,
+        touched: &[i64],
+        now: i64,
+    ) -> turso::Result<u64> {
+        if touched.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        let mut orphaned = Vec::new();
+        for &id in touched {
+            let mut rows = conn
+                .query("SELECT procedure_key, island_notice_id FROM tenders WHERE id = ?", (Value::Integer(id),))
+                .await?;
+            let Some(row) = rows.next().await? else { continue };
+            let key = match opt_text_of(&row, 0) {
+                Some(k) => k,
+                None => format!("island:{}", int(&row, 1)),
+            };
+            drop(rows);
+            let mut hit = conn
+                .query("SELECT 1 FROM plan_notice WHERE group_key = ? LIMIT 1", (t(&key),))
+                .await?;
+            if hit.next().await?.is_none() {
+                orphaned.push(id);
+            }
+        }
+        if orphaned.is_empty() {
+            return Ok(0);
+        }
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let mut result = Ok(());
+        for id in &orphaned {
+            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
+                result = Err(e);
+                break;
+            }
+        }
+        match result {
+            Ok(()) => {
+                conn.execute("COMMIT", ()).await?;
+                self.publish_cursor(&conn).await?;
+                Ok(orphaned.len() as u64)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the
     /// Tenders that carry an award (any `lot_results`), how many are a single
     /// notice — an award that never chained to its contract notice. The era is
