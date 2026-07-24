@@ -307,11 +307,28 @@ impl Supervisor {
                 return;
             }
         };
+        // Operator escape hatch: `TENDER_DROP_JOBS=6,7` removes those durable job
+        // rows at boot, before the worker runs. A job that was *running* when the
+        // process died is recovered at the front (issue 21) and re-runs from the
+        // top; for a long, regenerable job — e.g. a snapshot whose multi-hour
+        // offline `integrity_check` verify is blocking a queued resume — dropping
+        // its row is the only clean, turso-native way to skip it without editing
+        // the live DB out-of-process.
+        let drop_ids: std::collections::HashSet<i64> = std::env::var("TENDER_DROP_JOBS")
+            .unwrap_or_default()
+            .split(',')
+            .filter_map(|s| s.trim().parse().ok())
+            .collect();
         let mut jobs = Vec::with_capacity(pending.len());
         let mut max_id = 0u64;
         for row in pending {
             let id = row.id as u64;
             max_id = max_id.max(id);
+            if drop_ids.contains(&row.id) {
+                eprintln!("supervisor: dropping recovered job {id} per TENDER_DROP_JOBS");
+                let _ = self.db.remove_job(row.id).await;
+                continue;
+            }
             match serde_json::from_str::<Spec>(&row.spec) {
                 Ok(spec) => jobs.push(Job {
                     id,
