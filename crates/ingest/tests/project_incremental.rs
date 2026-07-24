@@ -85,13 +85,13 @@ fn org(parsed: &mut Parsed, section: &str, name: &str, vat: &str, role: &str, or
     });
 }
 
-async fn record(db: &Db, fetch_id: i64, pub_id: &str, parsed: Parsed) {
+async fn record_p(db: &Db, fetch_id: i64, pub_id: &str, profile: &str, parsed: Parsed) {
     db.record_notice(
         &Notice {
             source: SOURCE.into(),
             publication_id: pub_id.into(),
             content_hash: format!("h-{pub_id}"),
-            profile: "eforms:eforms-sdk-1.13".into(),
+            profile: profile.into(),
             declared_version: None,
             fetch_id,
             member_path: format!("{pub_id}.xml"),
@@ -103,6 +103,10 @@ async fn record(db: &Db, fetch_id: i64, pub_id: &str, parsed: Parsed) {
     )
     .await
     .expect("record notice");
+}
+
+async fn record(db: &Db, fetch_id: i64, pub_id: &str, parsed: Parsed) {
+    record_p(db, fetch_id, pub_id, "eforms:eforms-sdk-1.13", parsed).await;
 }
 
 /// A keyed notice under BT-04 `key`, published at `pub_at`, with a buyer org.
@@ -216,5 +220,102 @@ async fn incremental_late_attach_to_keyed_tender_matches_full() {
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{p}{s}"));
         }
+    }
+}
+
+/// A mixed delta — a late attach to an existing Tender, a brand-new keyed Tender,
+/// and a new island — is absorbed identically by full and incremental, and the
+/// Tenders the delta does NOT touch are left byte-for-byte unchanged.
+#[tokio::test]
+async fn incremental_mixed_delta_matches_full_and_leaves_untouched_alone() {
+    let (full, ff, pf) = scratch("mixfull").await;
+    let (incr, fi, pi) = scratch("mixincr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+
+    // Fingerprint the untouched Beta Tender (bt04-0002) before the delta.
+    let beta_before = db_fingerprint(&incr, "bt04-0002").await;
+
+    for (db, fid) in [(&full, ff), (&incr, fi)] {
+        record(db, fid, "A-award", keyed("bt04-0001", 3, "Alpha award")).await; // attach
+        record(db, fid, "C-cn", keyed("bt04-0003", 1, "Gamma CN")).await; // new Tender
+        record(db, fid, "ISL2", island("Island two")).await; // new island
+    }
+    // Three notices changed on the incremental DB (establish used ids 1-4).
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap(), vec![5, 6, 7]);
+
+    project::project(&full, false).await.expect("full absorb");
+    project::project_incremental(&incr).await.expect("incremental absorb");
+
+    assert_eq!(
+        snapshot(&full).await,
+        snapshot(&incr).await,
+        "mixed incremental delta must match a full non-rebuild projection"
+    );
+    assert_eq!(count(&incr, "SELECT COUNT(*) FROM tenders").await, 5, "two new Tenders added");
+    // Beta was never in the touched set — its rows are unchanged.
+    assert_eq!(db_fingerprint(&incr, "bt04-0002").await, beta_before, "untouched Tender changed");
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "change-set drained");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// A delta containing a LEGACY notice falls back to a full non-rebuild projection
+/// (issue 58 v1) — the transitive OJS graph is not persisted incrementally — and
+/// still produces the correct canonical layer.
+#[tokio::test]
+async fn incremental_legacy_delta_falls_back_to_full() {
+    let (full, ff, pf) = scratch("legfull").await;
+    let (incr, fi, pi) = scratch("legincr").await;
+    establish(&full, ff).await;
+    establish(&incr, fi).await;
+
+    // A legacy (ted-export-r209) notice in the delta — must trigger the fallback.
+    let legacy = Parsed {
+        sections: vec![sec("PROC", "Notice", None)],
+        values: vec![
+            text_val("PROC", "TED-TITLE", "Legacy works"),
+            date_val("PROC", "TED-DS_DATE_DISPATCH", 42),
+        ],
+    };
+    record_p(&full, ff, "100000-2019", "ted-export-r209", legacy.clone()).await;
+    record_p(&incr, fi, "100000-2019", "ted-export-r209", legacy).await;
+
+    project::project(&full, false).await.expect("full absorb");
+    // Incremental sees a legacy notice → falls back internally to a full run.
+    project::project_incremental(&incr).await.expect("incremental (fallback) absorb");
+
+    assert_eq!(
+        snapshot(&full).await,
+        snapshot(&incr).await,
+        "legacy fallback must match a full non-rebuild projection"
+    );
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "fallback drains the change-set");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// A per-Tender content fingerprint keyed by natural key — its versions and their
+/// texts — so an "untouched" assertion does not depend on surrogate ids.
+async fn db_fingerprint(db: &Db, procedure_key: &str) -> String {
+    let sql = format!(
+        "SELECT group_concat(r, x'0a') FROM (
+             SELECT tv.seq||'|'||tv.caused_by_notice_id||'|'||coalesce(x.value,'') AS r
+               FROM tenders t JOIN tender_versions tv ON tv.tender_id = t.id
+               LEFT JOIN tender_version_texts x ON x.tender_id = tv.tender_id AND x.seq = tv.seq
+              WHERE t.procedure_key = '{procedure_key}'
+              ORDER BY tv.seq, x.field)"
+    );
+    match db.scalar(&sql).await.expect("fingerprint") {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
     }
 }
