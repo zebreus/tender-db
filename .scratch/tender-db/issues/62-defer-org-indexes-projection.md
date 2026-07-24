@@ -113,3 +113,42 @@ issue62-defer-org-indexes. Do NOT deploy from here — team-lead merges + deploy
 at a safe boundary, and is weighing 62's schema complexity vs its share of the
 read load and vs issue 58 (incremental — the bigger structural lever, since even
 daily projections currently re-read the whole 12.4M corpus).
+
+## FOLLOW-UP (2026-07-24) — turso can't BUILD the org unique index at scale; reconsider 62
+
+A prod-startup HANG surfaced a deeper problem with 62's core mechanism. The batch
+put `CREATE UNIQUE INDEX organizations_identity` in canonical::SCHEMA (run at every
+Db::open). On the existing prod DB — organizations populated with tens of millions
+of orgs (from an interrupted run's Phase-1), MANY with identifier_kind=NULL,
+identifier=NULL (name-only provisional profiles) — that CREATE UNIQUE INDEX built
+over all of them at open and SPUN in a turso-internal tight loop (flat I/O, same
+instruction 20s; gdb, prod). turso's incremental INSERT-into-unique path handles
+those NULL keys fine (the old inline-UNIQUE binary's Phase-1 completed), but its
+bulk CREATE-INDEX build path over millions of NULL keys does not.
+
+IMMEDIATE FIX (shipped, commit 528054a): removed organizations_identity from the
+open-time schema; build_organization_indexes skips it when an inline UNIQUE already
+enforces identity. The salvage resume keeps the inline UNIQUE, so it never builds
+the named index → no hang.
+
+THE DEEPER ISSUE for 62 itself: 62's from-scratch path is strip → bulk-load BARE →
+build_organization_indexes at the end. On a real 12.4M-scale FULL REBUILD that
+final build is exactly the pathological CREATE-UNIQUE-INDEX over millions of
+NULL-key bare orgs → it would hang the same way. **So 62's "defer + build once"
+is broken at prod scale as written.**
+
+OPTIONS (decide before any 62 deploy):
+1. DROP 62. The org-index thrash it targeted SELF-LIMITED in prod (the live run
+   completed Phase-1 with the inline UNIQUE as the new-org rate fell), and issue 58
+   makes daily projections incremental (tiny delta, no thrash). So inline UNIQUE +
+   58 may be sufficient, and 62's complexity (bare table + deferred build + the
+   turso build-at-scale hazard) may not be worth it. LEADING CANDIDATE.
+2. Keep 62 but build the index a turso-safe way: keep the inline UNIQUE (insert-
+   time maintenance, which works), or build the named index in chunks / partitioned
+   so no single CREATE INDEX sees millions of NULL keys at once.
+3. Report the CREATE-UNIQUE-INDEX-over-NULLs-at-scale spin upstream to turso.
+
+Recommendation: (1) drop 62, lean on inline UNIQUE + 58 — pending team-lead call
+after the salvage. The read-amplification 62 removed is real but self-limiting and
+moot for daily (58); it only matters for the rare full rebuild, which can keep the
+inline UNIQUE.
