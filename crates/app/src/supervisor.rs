@@ -489,14 +489,25 @@ impl Supervisor {
                     .await
             }
             Spec::Project { rebuild } => {
-                // The daily path is INCREMENTAL (issue 58): re-derive only the
-                // Tenders touched by notices parsed since the last run — seconds,
-                // not the whole-corpus re-fold that scales with the dataset. A
-                // `rebuild` still does the full bounded-streaming projection (the
-                // initial build and after schema changes); it also resets the
-                // `projected` watermark, so the next daily run's change-set is the
-                // notices ingested since.
-                let report = if *rebuild {
+                // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
+                // incremental routing. A COMPLETE grouping plan already on disk at
+                // the start of a projection can only be a run that finished the
+                // (multi-hour) Phase-1 and died before the end-clear — a normal
+                // daily/incremental run clears its plan first, so this is false for
+                // them. Re-run grouping + Phase-2 from that plan and SKIP Phase-1,
+                // whatever THIS recovered job's rebuild flag says: `project(_, true)`
+                // detects the complete plan and resumes. Without this precedence a
+                // recovered `rebuild:false` job would route to `project_incremental`,
+                // see an all-unprojected corpus (Phase-2 never ran, so nothing is
+                // marked projected), and re-do the whole Phase-1 — discarding the
+                // salvage.
+                let salvage = self.db.plan_is_complete().await.map_err(|e| e.to_string())?;
+
+                // Otherwise: the daily path is INCREMENTAL (issue 58) — re-derive
+                // only the Tenders touched since the last run; a `rebuild` does the
+                // full bounded-streaming projection (initial build / schema change)
+                // and resets the `projected` watermark.
+                let report = if salvage || *rebuild {
                     project::project(&self.db, true).await
                 } else {
                     project::project_incremental(&self.db).await
@@ -1187,5 +1198,49 @@ mod tests {
         let incr = sup.run_spec(&daily).await.unwrap();
         assert!(incr.starts_with("1 notices"), "daily job is incremental (delta only): {incr}");
         assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "change-set drained");
+    }
+
+    async fn index_exists(db: &store::Db, name: &str) -> bool {
+        matches!(
+            db.scalar(&format!("SELECT 1 FROM sqlite_master WHERE type='index' AND name='{name}'"))
+                .await
+                .unwrap(),
+            Some(store::turso::Value::Integer(1))
+        )
+    }
+
+    /// Issue 60 salvage: a recovered project job — even `rebuild:false` — RESUMES
+    /// from a complete on-disk plan (skips Phase-1) rather than routing to the
+    /// incremental path and re-scanning the whole corpus. Proven by the org
+    /// indexes: `project_plan_only` strips them; only the resume path (project(_,
+    /// true)) rebuilds them at the end — `project_incremental` never does.
+    #[tokio::test]
+    async fn a_recovered_job_resumes_from_a_complete_plan_even_when_not_a_rebuild() {
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        for i in 0..4 {
+            record_keyed(&db, fetch_id, i).await;
+        }
+        // Interrupt after Phase-1: a complete plan on disk, org indexes stripped,
+        // Phase-2 not yet run.
+        ingest::project::project_plan_only(&db).await.unwrap();
+        assert!(db.plan_is_complete().await.unwrap(), "plan complete after plan-only");
+        assert!(!index_exists(&db, "organizations_identity").await, "plan-only strips the org index");
+
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        // The recovered daily job is rebuild:FALSE — but the complete plan must make
+        // it resume, not re-scan.
+        let daily = Job {
+            id: 1,
+            kind: "project".into(),
+            params: "rebuild=false".into(),
+            spec: Spec::Project { rebuild: false },
+            resume_after: None,
+        };
+        let summary = sup.run_spec(&daily).await.unwrap();
+
+        assert!(index_exists(&db, "organizations_identity").await, "resume rebuilds the org index (Phase-2 ran via project(true), not incremental)");
+        assert!(!db.plan_is_complete().await.unwrap(), "the resume cleared the plan when done");
+        assert!(summary.starts_with("4 notices"), "resume folded the whole plan: {summary}");
     }
 }
