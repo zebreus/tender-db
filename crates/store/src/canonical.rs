@@ -1034,10 +1034,15 @@ impl Db {
         Ok(())
     }
 
-    /// Insert one batch of the grouping plan (issue 59) in a single transaction:
-    /// a `plan_notice` row per notice, plus — for a legacy notice that carries its
-    /// own OJS number — its node and the (symmetric) edges to every OJS id it
-    /// references. `INSERT OR IGNORE` on the nodes dedups shared numbers.
+    /// Insert one batch of the grouping plan (issue 59) in a single transaction.
+    /// Every write here is a **sequential append** so the bulk load stays flat as
+    /// the plan grows (issue 60 regression): `plan_notice` by its `notice_id` PK
+    /// (Phase 1 streams in id order) and `plan_ojs_edge` by rowid. The legacy
+    /// nodes are NOT inserted here — a node's key is a random OJS number, so
+    /// per-row `INSERT OR IGNORE` into `plan_ojs_node`'s PK was a random-position
+    /// probe that thrashed once the node table outgrew the page cache (the
+    /// superlinear Phase-1 at 12.4M). They are built once, sorted, in
+    /// [`Db::build_plan_groups`] instead.
     pub async fn insert_plan(&self, rows: &[PlanRow]) -> turso::Result<()> {
         if rows.is_empty() {
             return Ok(());
@@ -1076,19 +1081,12 @@ impl Db {
                 ),
             )
             .await?;
-            // A legacy notice with its own OJS number seeds the union-find graph.
+            // A legacy notice with its own OJS number seeds the union-find graph:
+            // append its symmetric edges (sequential). Its node — and every edge
+            // target's node — is materialised later from these rows and
+            // plan_notice.ojs_self, so nothing random is written here.
             if let Some(own) = r.ojs_self.filter(|_| r.legacy) {
-                conn.execute(
-                    "INSERT OR IGNORE INTO plan_ojs_node(key, label) VALUES(?, ?)",
-                    (Value::Integer(own), Value::Integer(own)),
-                )
-                .await?;
                 for &edge in &r.ojs_edges {
-                    conn.execute(
-                        "INSERT OR IGNORE INTO plan_ojs_node(key, label) VALUES(?, ?)",
-                        (Value::Integer(edge), Value::Integer(edge)),
-                    )
-                    .await?;
                     conn.execute(
                         "INSERT INTO plan_ojs_edge(a, b) VALUES(?, ?)",
                         (Value::Integer(own), Value::Integer(edge)),
@@ -1126,6 +1124,22 @@ impl Db {
                  WHEN procedure_key IS NOT NULL THEN procedure_key
                  WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
                  ELSE NULL END",
+            (),
+        )
+        .await?;
+
+        // Materialise the legacy OJS graph's nodes once, in key order, from the
+        // sequentially-appended plan (issue 60): every legacy notice's own OJS
+        // number and every edge endpoint (edge targets may be OJS numbers no
+        // ingested notice carries yet). `ORDER BY` makes the PK build a sequential
+        // append rather than the random per-row inserts that thrashed at scale.
+        conn.execute(
+            "INSERT INTO plan_ojs_node(key, label)
+             SELECT k, k FROM (
+                 SELECT ojs_self AS k FROM plan_notice WHERE legacy = 1 AND ojs_self IS NOT NULL
+                 UNION
+                 SELECT b AS k FROM plan_ojs_edge
+             ) ORDER BY k",
             (),
         )
         .await?;

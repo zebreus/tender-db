@@ -34,6 +34,34 @@ Directions to investigate (reproduce-first, measure MB/s):
 Acceptance: full-corpus Phase-1 read throughput materially higher (target a
 few×), measured; projection output unchanged (equivalence tests still pass).
 
+## RESOLUTION 2 (2026-07-24): superlinear plan-build inserts (12.4M scale)
+
+Surfaced on the live 12.4M-notice run (rev 8f0dc74): Phase-1's per-500k interval
+was SUPERLINEAR (152→…→551s), disk unsaturated → random-I/O, not throughput. Not
+the fold index (that was already deferred to build_plan_groups). The culprit:
+`plan_ojs_node` has PRIMARY KEY(key) where key = the encoded OJS number (random
+w.r.t. insert order), and Phase-1 did `INSERT OR IGNORE` per legacy notice + per
+edge — random-position probes that thrashed once the node table outgrew the
+cache. Classic bulk-load-into-randomly-indexed-table trap.
+
+FIX: Phase-1 now appends ONLY sequential rows (plan_notice by its notice_id PK,
+plan_ojs_edge by rowid); `plan_ojs_node` is built ONCE, sorted, in
+build_plan_groups from `SELECT ojs_self FROM plan_notice WHERE legacy UNION SELECT
+b FROM plan_ojs_edge`. Reproduced (`crates/store/tests/plan_bulk_load.rs`, bounded
+cache): OLD random-key inserts degrade 3.1× tail/head; NEW append-only stays flat
+(1.03×). Grouping output identical (equivalence + 22 tests pass). Net win: the
+sorted build does strictly less work than the random inserts it replaces, and
+Phase-1 is now flat.
+
+OPEN (measure at prod): the one-time deferred node build + label-propagation is a
+bounded grouping-phase cost, but in the DEBUG test it was ~linear-with-high-
+constant (71s/200k nodes). Release should be far faster; the group-phase heartbeat
+logs it. If prod grouping is too slow at 12.4M, the fallback is an in-memory Rust
+union-find over the OJS nodes only (~hundreds of MB, bounded by distinct OJS
+numbers, not total notices — the small structure, unlike the 1.9 GB per-notice
+plan which stays on disk) — fast, and a modest bounded-RAM compromise on the
+flat-memory goal. Flagged for team-lead's call.
+
 ## RESOLUTION (2026-07-24, proj-fix)
 
 Reproduce-first confirmed the premise: **turso honors `PRAGMA cache_size`.** A
