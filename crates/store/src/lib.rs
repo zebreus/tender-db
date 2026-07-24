@@ -38,11 +38,25 @@ use turso::{Connection, Value};
 /// enforce foreign keys, retry on lock contention instead of failing with
 /// SQLITE_BUSY, WAL for concurrent reads during writes, and NORMAL sync (safe
 /// under WAL, much faster than FULL).
-pub(crate) const PRAGMAS: [&str; 4] = [
+///
+/// `cache_size = -524288` is 512 MiB of page cache per connection (negative =
+/// KiB), up from turso's ~2 MB default (issue 60). On the multi-hundred-GB prod
+/// DB the projection's Phase-1 does ~11 indexed range scans per chunk (notices +
+/// notice_sections + 9 value tables); a 2 MB cache cannot hold those B-trees'
+/// interior pages, so they evict and re-read every chunk — the ~1.8× read
+/// amplification behind the ~4 h Phase-1 (verified: turso honors cache_size, and
+/// a working set exceeding the cache re-reads it in full). The cache is a per-
+/// connection *cap* that fills lazily, so light connections (capped API/webhook
+/// queries) stay small; it is the heavy scanners (the projection reader, big SQL
+/// reads) that benefit. During a dedicated backfill only the writer and one
+/// reused pooled reader go hot (~1 GB), well within the 8 GB box now that issue
+/// 59 keeps the plan off-heap.
+pub(crate) const PRAGMAS: [&str; 5] = [
     "PRAGMA foreign_keys = ON",
     "PRAGMA busy_timeout = 5000",
     "PRAGMA journal_mode = WAL",
     "PRAGMA synchronous = NORMAL",
+    "PRAGMA cache_size = -524288",
 ];
 
 /// Reader connections backing `Db`'s own read-only accessors — the dashboard,
