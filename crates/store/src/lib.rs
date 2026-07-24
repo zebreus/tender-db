@@ -108,9 +108,23 @@ const SCHEMA: &str = "
         -- consumed the payload exhaustively, 'quarantined' when it could not,
         -- 'pending' for profiles whose parser does not exist yet.
         parse_state      TEXT NOT NULL DEFAULT 'pending',
+        -- The incremental-projection watermark (issue 58): 0 = this notice's
+        -- parsed layer has NOT been folded into the canonical layer since it was
+        -- last (re)parsed; 1 = it has. New rows default 0; `set_parse_state`
+        -- clears it to 0 on every transition to 'parsed' (the choke-point for
+        -- (re)parsing, so a future in-place re-parse path stays covered); Phase 2
+        -- sets it to 1 for every notice it applies; a full rebuild resets all to
+        -- 0. The daily incremental change-set is exactly
+        -- `parse_state='parsed' AND projected=0`.
+        projected        INTEGER NOT NULL DEFAULT 0,
         UNIQUE(source, publication_id, content_hash)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS notices_profile ON notices(profile);
+    -- The incremental change-set is small (a daily delta) against a huge parsed
+    -- corpus, so a PARTIAL index keyed on the unprojected rows keeps the
+    -- watermark scan O(delta), not O(corpus).
+    CREATE INDEX IF NOT EXISTS notices_unprojected ON notices(id)
+        WHERE parse_state = 'parsed' AND projected = 0;
     CREATE INDEX IF NOT EXISTS notices_parse_state ON notices(parse_state);
     -- notices.fetch_id is a foreign key that was unindexed (issue 20 reopened):
     -- any query seeking notices by their fetch — and the old join-based coverage
@@ -660,9 +674,18 @@ impl Db {
         Ok(rows.next().await?.map(|row| int(&row, 0)))
     }
 
+    /// Set a notice's parse state. A transition to 'parsed' also clears the
+    /// incremental-projection watermark (`projected = 0`, issue 58): this is the
+    /// single choke-point through which a notice's parsed layer becomes current,
+    /// so clearing here keeps the change-set correct even for a future in-place
+    /// re-parse path (today every parse is a fresh row, already 0).
     async fn set_parse_state(&self, conn: &Connection, id: i64, state: &str) -> turso::Result<()> {
-        conn.execute("UPDATE notices SET parse_state = ? WHERE id = ?", (t(state), Value::Integer(id)))
-            .await?;
+        conn.execute(
+            "UPDATE notices SET parse_state = ?1, projected = projected AND (?1 <> 'parsed')
+              WHERE id = ?2",
+            (t(state), Value::Integer(id)),
+        )
+        .await?;
         Ok(())
     }
 

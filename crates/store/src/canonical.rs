@@ -976,6 +976,43 @@ impl Db {
         ] {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
+        // Reset the incremental-projection watermark (issue 58): a full rebuild
+        // re-derives everything, so every parsed notice must be re-folded.
+        conn.execute("UPDATE notices SET projected = 0 WHERE projected <> 0", ()).await?;
+        Ok(())
+    }
+
+    /// The incremental-projection change-set (issue 58): parsed notices not yet
+    /// folded into the canonical layer since their last (re)parse. Bounded by the
+    /// daily delta via the `notices_unprojected` partial index, not the corpus.
+    pub async fn unprojected_parsed_notice_ids(&self) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut out = Vec::new();
+        let mut rows = conn
+            .query("SELECT id FROM notices WHERE parse_state = 'parsed' AND projected = 0 ORDER BY id", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.push(int(&row, 0));
+        }
+        Ok(out)
+    }
+
+    /// Mark notices as folded into the canonical layer (issue 58). Called by
+    /// Phase 2 for every notice in an applied batch — whether or not its Tender's
+    /// content changed — so the next incremental run's change-set excludes them.
+    pub async fn mark_projected(&self, ids: &[i64]) -> turso::Result<()> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        let conn = self.conn().await;
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "UPDATE notices SET projected = 1 WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            conn.execute(&sql, params).await?;
+        }
         Ok(())
     }
 

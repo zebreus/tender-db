@@ -484,7 +484,11 @@ async fn apply_plan_batch(
             }
         })
         .collect();
-    db.apply_tenders(&projections, now).await
+    let applied = db.apply_tenders(&projections, now).await?;
+    // Mark every applied notice as folded into the canonical layer (issue 58) —
+    // whether or not its Tender changed — so the next incremental run skips it.
+    db.mark_projected(&ids).await?;
+    Ok(applied)
 }
 
 /// One notice read in canonical terms, before it is folded into a chain. Carries
