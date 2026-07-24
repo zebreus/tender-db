@@ -53,6 +53,15 @@ cache): OLD random-key inserts degrade 3.1× tail/head; NEW append-only stays fl
 sorted build does strictly less work than the random inserts it replaces, and
 Phase-1 is now flat.
 
+SECOND SUSPECT RULED OUT: `organizations` UNIQUE(country,identifier_kind,identifier)
+was the other candidate scattered-index insert. Measured the same way (bounded
+cache, random identifiers, 96k inserts): tail/head = 0.83× — FLAT, at the same
+scale where plan_ojs_node's INSERT OR IGNORE was 3.11×. The specific culprit is
+`INSERT OR IGNORE`'s explicit existence-probe (a random seek per row); a plain
+`INSERT` into a UNIQUE index is cache-tolerant in turso. So organizations needs no
+change (and its schema/inline-id path stays intact). If prod still shows a Phase-1
+slope after the plan_ojs_node fix, revisit — but the data says it's fine.
+
 OPEN (measure at prod): the one-time deferred node build + label-propagation is a
 bounded grouping-phase cost, but in the DEBUG test it was ~linear-with-high-
 constant (71s/200k nodes). Release should be far faster; the group-phase heartbeat
