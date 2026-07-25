@@ -160,7 +160,7 @@ async fn run() {
         ingest(&db, fetch_id, fixture).await;
     }
 
-    project::project_with_progress_phase2(&db, true, 7, Phase2::Buckets, |_| {})
+    project::project_with_progress_phase2(&db, true, 7, Phase2::Buckets { shards: None }, |_| {})
         .await
         .expect("projection");
 
