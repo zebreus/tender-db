@@ -20,6 +20,8 @@ roxmltree = { workspace = true }
 encoding_rs = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+# Codec for the Phase-2 bucketed fold's on-disk notice-state buckets (issue 62).
+postcard = { workspace = true }
 
 [dev-dependencies]
 # Local HTTP fixture server for fetcher tests — no network in tests.

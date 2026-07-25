@@ -13,3 +13,7 @@ turso = { workspace = true }
 argon2 = { workspace = true }
 sha2 = { workspace = true }
 tokio = { workspace = true }
+# The canonical Fact/LotState/Round/... types derive Serialize/Deserialize so the
+# projection's Phase-2 bucketed fold (issue 62) can spill resolved notice state to
+# disk (postcard) and read it back byte-identically.
+serde = { workspace = true }

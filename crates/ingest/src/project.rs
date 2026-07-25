@@ -33,7 +33,11 @@
 //! Change scoping is diff-based (ADR-0001 amendment) and lives in `store`,
 //! which has both the old and the new version in hand.
 
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Read, Write};
+use std::path::{Path, PathBuf};
 use store::{
     BidParty, BidState, ContractState, Db, Fact, Identifier, LotResultState, LotState, Mention,
     NoticeValue, Parsed, Round, TenderProjection, TenderVersion,
@@ -291,6 +295,24 @@ pub enum Progress {
     Applying { tenders: u64, total: u64 },
 }
 
+/// Which Phase-2 fold the projection runs. Byte-identical either way — both build
+/// the same [`TenderProjection`]s and feed them to `apply_tenders` in the same
+/// global fold order — so the choice is purely how the parsed layer is READ.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Phase2 {
+    /// Read each fold batch's parsed layer by an `IN(…)` over its scattered notice
+    /// ids — random rowid seeks into the cold notice tables in group_key order,
+    /// ~50ms/notice at scale (the ~7-day Phase-2, issue 62). Still used by
+    /// [`project_incremental`] (its delta is small and already scoped) and kept as
+    /// the fold-source-invariance baseline.
+    ParsedFold,
+    /// Read the WHOLE parsed layer ONCE, sequentially in notice_id order (a forward
+    /// read-ahead-friendly sweep), spilling each resolved notice state to an
+    /// order-preserving on-disk bucket; then fold each bucket sorted in RAM (issue
+    /// 62). The default — minutes, not days — with peak RAM of one bucket.
+    Buckets,
+}
+
 /// The projection with an explicit Phase-2 batch size (notices per fold+apply
 /// batch). [`project`] uses [`APPLY_NOTICE_BATCH`]; tests drive tiny batches to
 /// prove the output is invariant under batching — i.e. that folding whole Tenders
@@ -316,13 +338,26 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
     .await
 }
 
-/// The projection core, reporting progress through `on_progress` (called between
-/// awaits, so a cheap closure). See [`Progress`]; [`project_with_batch`] wraps
-/// this with a stderr-logging sink.
+/// The projection core with the default (bucketed) Phase-2 fold, reporting progress
+/// through `on_progress`. See [`Phase2`] and [`project_with_progress_phase2`].
 pub async fn project_with_progress(
     db: &Db,
     rebuild: bool,
     notice_batch: usize,
+    on_progress: impl FnMut(Progress),
+) -> turso::Result<Report> {
+    project_with_progress_phase2(db, rebuild, notice_batch, Phase2::Buckets, on_progress).await
+}
+
+/// The projection core, reporting progress through `on_progress` (called between
+/// awaits, so a cheap closure), with an explicit Phase-2 fold selector ([`Phase2`]).
+/// See [`Progress`]; [`project_with_batch`] wraps this with a stderr-logging sink
+/// and the default (bucketed) fold.
+pub async fn project_with_progress_phase2(
+    db: &Db,
+    rebuild: bool,
+    notice_batch: usize,
+    phase2: Phase2,
     mut on_progress: impl FnMut(Progress),
 ) -> turso::Result<Report> {
     // Resume-from-plan salvage (issue 60): if an interrupted rebuild already left a
@@ -383,27 +418,36 @@ pub async fn project_with_progress(
     on_progress(Progress::Grouped { tenders, islands });
     eprintln!("[project] group: {} tenders in {:.1}s", report.tenders, t1.elapsed().as_secs_f64());
 
-    // Phase 2 — stream whole-Tender batches out of the plan (in fold order) and
-    // apply them a bounded batch of notices at a time. Each batch reads only its
-    // notices' parsed layer and their already-resolved Organizations, folds each
-    // group, and reconciles — so peak RAM is one batch, independent of corpus.
+    // Phase 2 — fold whole Tenders out of the plan (in global fold order) and apply
+    // them, holding at most one bounded working set at a time (issue 57/62). Both
+    // folds produce byte-identical output; they differ only in how they READ the
+    // parsed layer (see [`Phase2`]).
     let t2 = std::time::Instant::now();
-    let mut after = String::new();
-    let mut batches_done = 0usize;
-    let mut tenders_done = 0u64;
-    loop {
-        let groups = db.next_plan_batch(&after, notice_batch).await?;
-        let Some(last) = groups.last() else { break };
-        after = last.group_key.clone();
-        tenders_done += groups.len() as u64;
-        report.applied.add(apply_plan_batch(db, &groups, now, rebuild).await?);
-        // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
-        on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
-        batches_done += 1;
-        if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
-            && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
-        {
-            eprintln!("[project] checkpoint after batch {batches_done}: {e}");
+    match phase2 {
+        Phase2::ParsedFold => {
+            // Stream whole-Tender batches from the plan in fold order and apply each,
+            // reading only its notices' scattered parsed rows — the original path.
+            let mut after = String::new();
+            let mut batches_done = 0usize;
+            let mut tenders_done = 0u64;
+            loop {
+                let groups = db.next_plan_batch(&after, notice_batch).await?;
+                let Some(last) = groups.last() else { break };
+                after = last.group_key.clone();
+                tenders_done += groups.len() as u64;
+                report.applied.add(apply_plan_batch(db, &groups, now, rebuild).await?);
+                // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
+                on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+                batches_done += 1;
+                if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+                    && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
+                {
+                    eprintln!("[project] checkpoint after batch {batches_done}: {e}");
+                }
+            }
+        }
+        Phase2::Buckets => {
+            bucketed_fold(db, notice_batch, now, rebuild, &mut report, &mut on_progress).await?;
         }
     }
     // Retire any legacy Tender a late component-merge absorbed (its rows migrated
@@ -715,6 +759,259 @@ async fn apply_plan_batch(
     // whether or not its Tender changed — so the next incremental run skips it.
     db.mark_projected(&ids).await?;
     Ok(applied)
+}
+
+// ------------------------------------------------------- bucketed Phase-2 fold
+//
+// The read fix (issue 62). [`apply_plan_batch`] reads each fold batch's parsed
+// layer in group_key (fold) order — random rowid seeks across ten notice-keyed
+// tables, ~50ms/notice at 12.4M scale (~7 days). The bucketed fold instead reads
+// the parsed layer ONCE, sequentially in notice_id order (a forward sweep), resolves
+// each notice's state, and spills it to an order-preserving on-disk bucket; then it
+// folds each bucket sorted in RAM. The buckets partition the plan by contiguous
+// group_key ranges (whole groups, never split), taken in fold order — so the global
+// fold order, and thus every surrogate id, is identical to [`Phase2::ParsedFold`].
+// Peak RAM is one bucket.
+
+/// Orchestrate the bucketed Phase-2 fold: compute the fold-order bucket boundaries,
+/// stream the parsed layer once into buckets, then fold each bucket in order. See
+/// the module note above.
+async fn bucketed_fold(
+    db: &Db,
+    notice_batch: usize,
+    now: i64,
+    rebuild: bool,
+    report: &mut Report,
+    mut on_progress: impl FnMut(Progress),
+) -> turso::Result<()> {
+    let dir = db.scratch_dir("proj_buckets");
+    let _ = std::fs::remove_dir_all(&dir);
+
+    // Contiguous group_key boundaries partitioning the plan into ~`notice_batch`
+    // -notice buckets in fold order. A group never splits across a boundary
+    // (`next_plan_batch` stops before opening a group past the budget).
+    let boundaries = bucket_boundaries(db, notice_batch).await?;
+    if boundaries.is_empty() {
+        return Ok(()); // Empty plan — nothing to fold.
+    }
+
+    // Pre-pass: sequential parsed read → resolved state → order-preserving bucket.
+    let paths = write_buckets(db, &boundaries, &dir).await?;
+
+    // Fold pass: each bucket in order, sorted in RAM by the fold key, then applied.
+    let mut tenders_done = 0u64;
+    for (i, path) in paths.iter().enumerate() {
+        let mut rows = read_bucket(path);
+        rows.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
+        let (applied, groups) = fold_bucket(db, &rows, now, rebuild).await?;
+        report.applied.add(applied);
+        tenders_done += groups;
+        on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+        if (i + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+            && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
+        {
+            eprintln!("[project] checkpoint after bucket {i}: {e}");
+        }
+    }
+    // The buckets are transient scratch — never leave them behind (issue 59 spirit).
+    let _ = std::fs::remove_dir_all(&dir);
+    Ok(())
+}
+
+/// The fold-order group_key boundaries that partition the plan into buckets: the
+/// LAST group_key of each successive [`Db::next_plan_batch`] window of `notice_batch`
+/// notices. Ascending (fold order); the final entry is the global max group_key, so
+/// every notice's group_key routes into some bucket.
+async fn bucket_boundaries(db: &Db, notice_batch: usize) -> turso::Result<Vec<String>> {
+    let mut boundaries = Vec::new();
+    let mut after = String::new();
+    loop {
+        let groups = db.next_plan_batch(&after, notice_batch).await?;
+        let Some(last) = groups.last() else { break };
+        after = last.group_key.clone();
+        boundaries.push(after.clone());
+    }
+    Ok(boundaries)
+}
+
+/// Pre-pass: stream the parsed layer in notice_id order, resolve each notice's
+/// [`NoticeState`] (binding the Organizations Phase-1 recorded), and append it —
+/// postcard-framed `[u32 len][bytes]` — to the order-preserving bucket its group_key
+/// routes to. Sequential over the notice tables (the read fix); one range scan of the
+/// plan per chunk. Returns the bucket file paths in fold order.
+async fn write_buckets(db: &Db, boundaries: &[String], dir: &Path) -> turso::Result<Vec<PathBuf>> {
+    std::fs::create_dir_all(dir).expect("create bucket dir");
+    let paths: Vec<PathBuf> =
+        (0..boundaries.len()).map(|i| dir.join(format!("bucket_{i}.bin"))).collect();
+    let mut writers: Vec<BufWriter<File>> =
+        paths.iter().map(|p| BufWriter::new(File::create(p).expect("create bucket file"))).collect();
+    const READ_CHUNK: i64 = 10_000;
+    let empty = HashMap::new();
+    let mut after_id = 0i64;
+    loop {
+        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        let Some((last, _)) = chunk.last() else { break };
+        let (lo, hi) = (chunk[0].0.id, last.id);
+        after_id = last.id;
+        // notice_id → group_key over the chunk's id window (one range scan).
+        let group_keys = db.plan_group_keys(lo, hi).await?;
+        let ids: Vec<i64> = chunk.iter().map(|(n, _)| n.id).collect();
+        let orgs = db.mentions_by_ids(&ids).await?;
+        for (notice, parsed) in &chunk {
+            // A notice absent from the plan is a resume's post-Phase-1 suffix — not
+            // grouped, so leave it unprojected for the incremental projection (it is
+            // never folded and never marked projected).
+            let Some(group_key) = group_keys.get(&notice.id) else { continue };
+            let mut state = NoticeState::read(notice, parsed);
+            state.bind_organizations(orgs.get(&notice.id).unwrap_or(&empty));
+            let row = BucketRow::snapshot(group_key.clone(), notice, state);
+            let bucket = boundaries.partition_point(|b| b.as_str() < group_key.as_str());
+            let bytes = postcard::to_stdvec(&row).expect("serialize bucket row");
+            let w = &mut writers[bucket];
+            w.write_all(&(bytes.len() as u32).to_le_bytes()).expect("write bucket frame length");
+            w.write_all(&bytes).expect("write bucket frame");
+        }
+    }
+    for w in &mut writers {
+        w.flush().expect("flush bucket");
+    }
+    Ok(paths)
+}
+
+/// Read back a bucket file written by [`write_buckets`] — the `[u32 len][bytes]`
+/// postcard frames, in append order.
+fn read_bucket(path: &Path) -> Vec<BucketRow> {
+    let mut reader = BufReader::new(File::open(path).expect("open bucket"));
+    let mut rows = Vec::new();
+    let mut len_buf = [0u8; 4];
+    loop {
+        match reader.read_exact(&mut len_buf) {
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => panic!("read bucket frame length: {e}"),
+        }
+        let len = u32::from_le_bytes(len_buf) as usize;
+        let mut buf = vec![0u8; len];
+        reader.read_exact(&mut buf).expect("read bucket frame");
+        rows.push(postcard::from_bytes(&buf).expect("deserialize bucket row"));
+    }
+    rows
+}
+
+/// Fold one bucket — already sorted by the fold key — into Tenders and apply them.
+/// Walks adjacent equal-group_key runs (each a whole Tender, since a group never
+/// spans a bucket and the bucket is sorted by `(group_key, …)`), rebuilds each
+/// group's [`NoticeState`] chain, and folds it EXACTLY as [`apply_plan_batch`] does.
+/// Returns the batch's [`store::Applied`] tally and the number of Tenders folded.
+async fn fold_bucket(
+    db: &Db,
+    rows: &[BucketRow],
+    now: i64,
+    rebuild: bool,
+) -> turso::Result<(store::Applied, u64)> {
+    let mut projections: Vec<TenderProjection> = Vec::new();
+    let mut applied_ids: Vec<i64> = Vec::new();
+    let mut i = 0;
+    while i < rows.len() {
+        let group_key = &rows[i].group_key;
+        let mut j = i;
+        while j < rows.len() && &rows[j].group_key == group_key {
+            j += 1;
+        }
+        let group = &rows[i..j];
+        let chain: Vec<NoticeState> = group.iter().map(BucketRow::to_notice_state).collect();
+        let island_notice_id = group_key.strip_prefix("island:").and_then(|s| s.parse::<i64>().ok());
+        let procedure_key = island_notice_id.is_none().then(|| group_key.clone());
+        projections.push(TenderProjection {
+            source: primary_source(&group.iter().map(|r| r.source.clone()).collect::<Vec<_>>()),
+            procedure_key,
+            island_notice_id,
+            kind: kind_of(group[0].subtype.as_deref()).to_owned(),
+            versions: fold(&chain.iter().collect::<Vec<_>>()),
+        });
+        applied_ids.extend(group.iter().map(|r| r.notice_id));
+        i = j;
+    }
+    let groups = projections.len() as u64;
+    let applied = db.apply_tenders(&projections, now, rebuild).await?;
+    // Mark every folded notice projected (issue 58), exactly as apply_plan_batch does.
+    db.mark_projected(&applied_ids).await?;
+    Ok((applied, groups))
+}
+
+/// One resolved notice spilled to an on-disk fold bucket (issue 62). Carries the
+/// fold-order key fields (from the plan / the notice's Source) and the bound fold
+/// payload (from the resolved [`NoticeState`]) — enough to rebuild a NoticeState for
+/// [`fold`] without re-reading the parsed layer.
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+struct BucketRow {
+    group_key: String,
+    source: String,
+    source_rank: i64,
+    notice_id: i64,
+    publication_id: String,
+    published_at: i64,
+    dispatched_at: Option<i64>,
+    subtype: Option<String>,
+    is_correction: bool,
+    facts: BTreeSet<Fact>,
+    lots: Vec<LotState>,
+    round: Option<Round>,
+}
+
+impl BucketRow {
+    /// Snapshot a fully-resolved notice (after `NoticeState::read` +
+    /// `bind_organizations`). `group_key` is the grouping plan's; `source`/
+    /// `source_rank` the notice's Source; everything else the bound state. The plan
+    /// and the state agree on published_at/publication_id/subtype by construction
+    /// (both read `notice_instants(parsed).0` / `notice.publication_id` /
+    /// `first_code(parsed, SUBTYPE_FIELD)`), so one field serves both the fold-order
+    /// sort key and the written version.
+    fn snapshot(group_key: String, notice: &store::NoticeRef, state: NoticeState) -> BucketRow {
+        BucketRow {
+            group_key,
+            source: notice.source.clone(),
+            source_rank: i64::from(source_rank(&notice.source)),
+            notice_id: state.notice_id,
+            publication_id: state.publication_id,
+            published_at: state.published_at,
+            dispatched_at: state.dispatched_at,
+            subtype: state.subtype,
+            is_correction: state.is_correction,
+            facts: state.facts,
+            lots: state.lots,
+            round: state.round,
+        }
+    }
+
+    /// The fold-order key — IDENTICAL to `plan_notice_fold` / `next_plan_batch`'s
+    /// `ORDER BY group_key, published_at, source_rank, publication_id, notice_id`.
+    /// Sorting a bucket by this reproduces the exact per-group and cross-group order
+    /// the streaming path folds in, so surrogate ids come out identical.
+    fn sort_key(&self) -> (&str, i64, i64, &str, i64) {
+        (&self.group_key, self.published_at, self.source_rank, &self.publication_id, self.notice_id)
+    }
+
+    /// Rebuild a [`NoticeState`] for [`fold`]. Roles and raw results were already
+    /// consumed by `bind_organizations` (their output is in `facts`/`lots`/`round`),
+    /// so they reconstruct empty; `logical_id` is only read pre-bind, so it is unused
+    /// here. [`fold`] reads only the fields restored below.
+    fn to_notice_state(&self) -> NoticeState {
+        NoticeState {
+            notice_id: self.notice_id,
+            publication_id: self.publication_id.clone(),
+            published_at: self.published_at,
+            dispatched_at: self.dispatched_at,
+            subtype: self.subtype.clone(),
+            logical_id: None,
+            is_correction: self.is_correction,
+            facts: self.facts.clone(),
+            lots: self.lots.clone(),
+            roles: Vec::new(),
+            raw_results: RawResults::default(),
+            round: self.round.clone(),
+        }
+    }
 }
 
 /// One notice read in canonical terms, before it is folded into a chain. Carries
@@ -1879,6 +2176,76 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The Phase-2 bucket codec must be lossless: a [`BucketRow`] carrying every
+    /// fold-relevant shape (all Fact variants, a lot with facts, a full results
+    /// Round) survives `postcard` serialize → `[u32 len][bytes]` framing →
+    /// deserialize byte-for-byte. If it did not, the bucketed fold would not be
+    /// byte-identical to the streaming path.
+    #[test]
+    fn bucket_row_survives_the_postcard_codec() {
+        let mut facts = BTreeSet::new();
+        facts.insert(Fact::Text { field: "BT-21".into(), lang: Some("ENG".into()), value: "Title".into() });
+        facts.insert(Fact::Amount { field: "BT-27".into(), cents: 1_234_500, currency: "EUR".into() });
+        facts.insert(Fact::Classification { field: "BT-262".into(), scheme: "CPV".into(), code: "45000000".into() });
+        facts.insert(Fact::Date { field: "BT-131".into(), utc_seconds: 700_000_000, offset_minutes: 60, has_time: true });
+        facts.insert(Fact::Party { role: "buyer".into(), organization_id: 7, notice_id: 3, section_id: "ORG-1".into() });
+
+        let mut lot_facts = BTreeSet::new();
+        lot_facts.insert(Fact::Text { field: "BT-21".into(), lang: None, value: "Lot title".into() });
+
+        let round = Round {
+            notice_id: 3,
+            logical_notice_id: Some("PID-9".into()),
+            lot_results: vec![LotResultState {
+                key: "RES-1".into(),
+                lot_key: Some("LOT-1".into()),
+                decision: Some("selected".into()),
+                reason: None,
+                awarded_cents: Some(999),
+                awarded_currency: Some("EUR".into()),
+                winners: vec![7, 8],
+                statistics: vec![("t1".into(), 4)],
+            }],
+            bids: vec![BidState {
+                key: "TEN-1".into(),
+                lot_key: Some("LOT-1".into()),
+                cents: Some(500),
+                currency: Some("EUR".into()),
+                parties: vec![BidParty { role: "tenderer".into(), organization_id: 8, section_id: "ORG-2".into() }],
+            }],
+            contracts: vec![ContractState {
+                key: "CON-1".into(),
+                buyer_contract_id: Some("BC-1".into()),
+                concluded: Some((700_100_000, 0, false)),
+                cents: Some(999),
+                currency: Some("EUR".into()),
+            }],
+        };
+
+        let row = BucketRow {
+            group_key: "bt04-0001".into(),
+            source: "ted".into(),
+            source_rank: 1,
+            notice_id: 3,
+            publication_id: "k0001-w0".into(),
+            published_at: 42,
+            dispatched_at: Some(41),
+            subtype: Some("cn-standard".into()),
+            is_correction: true,
+            facts,
+            lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
+            round: Some(round),
+        };
+
+        // Frame exactly as write_buckets does, then read exactly as read_bucket does.
+        let bytes = postcard::to_stdvec(&row).expect("serialize");
+        let mut framed = (bytes.len() as u32).to_le_bytes().to_vec();
+        framed.extend_from_slice(&bytes);
+        let len = u32::from_le_bytes(framed[..4].try_into().unwrap()) as usize;
+        let decoded: BucketRow = postcard::from_bytes(&framed[4..4 + len]).expect("deserialize");
+        assert_eq!(row, decoded, "the bucket row must round-trip byte-identically");
+    }
 
     #[test]
     fn business_term_stems_survive_their_context_suffix() {

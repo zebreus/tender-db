@@ -454,6 +454,23 @@ impl Db {
         self.conn.lock().await
     }
 
+    /// A scratch directory beside the database file — where a projection spills its
+    /// transient on-disk working set (the Phase-2 fold buckets, issue 62). Placing it
+    /// next to the db keeps it on the same volume as the durable file (so it inherits
+    /// the db's disk headroom) without ever entering a snapshot. The projection
+    /// creates and removes it around its run.
+    ///
+    /// The directory is namespaced by the db FILE NAME (`{file}.{name}`), not just
+    /// `name`: several databases can live in one parent dir (parallel test scratch
+    /// DBs all sit in `/tmp`), and a bare `name` would make concurrent projections
+    /// over different db files clobber each other's buckets.
+    pub fn scratch_dir(&self, name: &str) -> std::path::PathBuf {
+        let path = std::path::Path::new(&self.path);
+        let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+        let file = path.file_name().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+        parent.join(format!("{file}.{name}"))
+    }
+
     /// Borrow a pooled reader for a read-only accessor — never the writer, which
     /// an ingestion job holds for the length of its transaction (issue 20).
     async fn reader(&self) -> turso::Result<Reader> {
