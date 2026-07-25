@@ -1994,10 +1994,17 @@ impl Db {
         let mut changed_any = false;
         for (batch, chunk) in projections.chunks(WRITE_BATCH).enumerate() {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
+            // Accumulate the batchable leaf/satellite rows of the whole
+            // transaction (issue 67) and flush them as chunked multi-row INSERTs
+            // just before COMMIT — one statement per ~150 rows instead of one per
+            // row. Only tables whose row order is unobservable go here (no emitted
+            // or referenced surrogate id); the identity tables and `changes` keep
+            // inserting in place, so their ids/cursor stay in fold order.
+            let mut pending = Pending::default();
             let mut applied = Applied::default();
             let mut error = None;
             for p in chunk {
-                match self.apply_tender_tx(&conn, p, now, rebuild, &mut stmts).await {
+                match self.apply_tender_tx(&conn, p, now, rebuild, &mut stmts, &mut pending).await {
                     Ok(a) => applied.add(a),
                     Err(e) => {
                         error = Some(e);
@@ -2007,6 +2014,7 @@ impl Db {
             }
             match error {
                 None => {
+                    pending.flush(&conn).await?;
                     conn.execute("COMMIT", ()).await?;
                     changed_any |= applied.changes > 0;
                     total.add(applied);
@@ -2042,6 +2050,7 @@ impl Db {
         now: i64,
         rebuild: bool,
         stmts: &mut TenderInserts,
+        pending: &mut Pending,
     ) -> turso::Result<Applied> {
         let mut applied = Applied::default();
         let (tender_id, created) = self.tender_identity(conn, p, now, rebuild, stmts).await?;
@@ -2051,7 +2060,12 @@ impl Db {
         // is the state key: an unchanged sequence means an unchanged chain, and
         // a changed one is repaired from the first differing position (a
         // late-arriving notice that belongs mid-chain rewrites the tail).
-        let stored = self.stored_chain(conn, tender_id).await?;
+        //
+        // On a rebuild the tender id was just minted by tender_identity's rebuild
+        // fast-path, so its version chain is empty by construction — skip the
+        // SELECT (issue 67, ~one per tender). keep stays 0 and every version is
+        // written: byte-identical to today's empty-`stored` path.
+        let stored = if rebuild { Vec::new() } else { self.stored_chain(conn, tender_id).await? };
         let keep = stored
             .iter()
             .zip(&p.versions)
@@ -2069,7 +2083,7 @@ impl Db {
         for (i, version) in p.versions.iter().enumerate().skip(keep) {
             let seq = i as i64 + 1;
             let previous = i.checked_sub(1).map(|j| &p.versions[j]);
-            self.write_version(conn, tender_id, seq, version, stmts).await?;
+            self.write_version(conn, tender_id, seq, version, stmts, pending).await?;
             applied.versions_written += 1;
             applied.changes += self
                 .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
@@ -2082,15 +2096,14 @@ impl Db {
         // leaves an already-correct pointer (set when those versions were written,
         // or by the one-time backfill at open for pre-issue-25 rows).
         if let Some(head) = p.versions.last() {
-            conn.execute(
-                "UPDATE tenders SET current_seq = ?, current_published_at = ? WHERE id = ?",
-                (
+            stmts
+                .head_update
+                .execute((
                     Value::Integer(p.versions.len() as i64),
                     Value::Integer(head.published_at),
                     Value::Integer(tender_id),
-                ),
-            )
-            .await?;
+                ))
+                .await?;
         }
         Ok(applied)
     }
@@ -2199,35 +2212,30 @@ impl Db {
         seq: i64,
         v: &TenderVersion,
         stmts: &mut TenderInserts,
+        pending: &mut Pending,
     ) -> turso::Result<()> {
-        stmts
-            .versions
-            .execute((
-                Value::Integer(tender_id),
-                Value::Integer(seq),
-                Value::Integer(v.caused_by_notice_id),
-                Value::Integer(v.published_at),
-                opt_int(v.dispatched_at),
-                opt_text(v.notice_subtype.as_deref()),
-                t(&v.publication_id),
-            ))
-            .await?;
-        self.write_facts(tender_id, seq, None, &v.facts, stmts).await?;
+        pending.versions.extend([
+            Value::Integer(tender_id),
+            Value::Integer(seq),
+            Value::Integer(v.caused_by_notice_id),
+            Value::Integer(v.published_at),
+            opt_int(v.dispatched_at),
+            opt_text(v.notice_subtype.as_deref()),
+            t(&v.publication_id),
+        ]);
+        self.write_facts(tender_id, seq, None, &v.facts, pending);
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
-            stmts
-                .version_lots
-                .execute((
-                    Value::Integer(tender_id),
-                    Value::Integer(seq),
-                    Value::Integer(lot_id),
-                    t(&lot.kind),
-                ))
-                .await?;
-            self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, stmts).await?;
+            pending.version_lots.extend([
+                Value::Integer(tender_id),
+                Value::Integer(seq),
+                Value::Integer(lot_id),
+                t(&lot.kind),
+            ]);
+            self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending);
         }
         for round in &v.rounds {
-            self.write_round(conn, tender_id, seq, round, stmts).await?;
+            self.write_round(conn, tender_id, seq, round, stmts, pending).await?;
         }
         Ok(())
     }
@@ -2239,78 +2247,68 @@ impl Db {
         seq: i64,
         round: &Round,
         stmts: &mut TenderInserts,
+        pending: &mut Pending,
     ) -> turso::Result<()> {
         let scope = || (Value::Integer(tender_id), Value::Integer(seq));
         for result in &round.lot_results {
             let id = self
-                .result_identity(conn, "lot_results", "result_key", tender_id, round.notice_id, &result.key)
+                .result_identity(conn, "lot_results", "result_key", tender_id, round.notice_id, &result.key, stmts)
                 .await?;
             let lot_id = self.result_lot(conn, tender_id, result.lot_key.as_deref(), stmts).await?;
             let (a, b) = scope();
-            stmts
-                .lot_results
-                .execute((
-                    a,
-                    b,
-                    Value::Integer(id),
-                    opt_int(lot_id),
-                    opt_text(result.decision.as_deref()),
-                    opt_text(result.reason.as_deref()),
-                    opt_int(result.awarded_cents),
-                    opt_text(result.awarded_currency.as_deref()),
-                ))
-                .await?;
+            pending.lot_results.extend([
+                a,
+                b,
+                Value::Integer(id),
+                opt_int(lot_id),
+                opt_text(result.decision.as_deref()),
+                opt_text(result.reason.as_deref()),
+                opt_int(result.awarded_cents),
+                opt_text(result.awarded_currency.as_deref()),
+            ]);
             for organization_id in &result.winners {
                 let (a, b) = scope();
-                stmts
+                pending
                     .result_winners
-                    .execute((a, b, Value::Integer(id), Value::Integer(*organization_id)))
-                    .await?;
+                    .extend([a, b, Value::Integer(id), Value::Integer(*organization_id)]);
             }
             for (kind, count) in &result.statistics {
                 let (a, b) = scope();
-                stmts
+                pending
                     .result_stats
-                    .execute((a, b, Value::Integer(id), t(kind), Value::Integer(*count)))
-                    .await?;
+                    .extend([a, b, Value::Integer(id), t(kind), Value::Integer(*count)]);
             }
         }
         for bid in &round.bids {
             let id = self
-                .result_identity(conn, "bids", "bid_key", tender_id, round.notice_id, &bid.key)
+                .result_identity(conn, "bids", "bid_key", tender_id, round.notice_id, &bid.key, stmts)
                 .await?;
             let lot_id = self.result_lot(conn, tender_id, bid.lot_key.as_deref(), stmts).await?;
             let (a, b) = scope();
-            stmts
-                .bids
-                .execute((
+            pending.bids.extend([
+                a,
+                b,
+                Value::Integer(id),
+                opt_int(lot_id),
+                opt_int(bid.cents),
+                opt_text(bid.currency.as_deref()),
+            ]);
+            for party in &bid.parties {
+                let (a, b) = scope();
+                pending.bid_parties.extend([
                     a,
                     b,
                     Value::Integer(id),
-                    opt_int(lot_id),
-                    opt_int(bid.cents),
-                    opt_text(bid.currency.as_deref()),
-                ))
-                .await?;
-            for party in &bid.parties {
-                let (a, b) = scope();
-                stmts
-                    .bid_parties
-                    .execute((
-                        a,
-                        b,
-                        Value::Integer(id),
-                        t(&party.role),
-                        Value::Integer(party.organization_id),
-                        Value::Integer(round.notice_id),
-                        t(&party.section_id),
-                    ))
-                    .await?;
+                    t(&party.role),
+                    Value::Integer(party.organization_id),
+                    Value::Integer(round.notice_id),
+                    t(&party.section_id),
+                ]);
             }
         }
         for contract in &round.contracts {
             let id = self
-                .result_identity(conn, "contracts", "contract_key", tender_id, round.notice_id, &contract.key)
+                .result_identity(conn, "contracts", "contract_key", tender_id, round.notice_id, &contract.key, stmts)
                 .await?;
             let (a, b) = scope();
             let (utc, offset, has_time) = match contract.concluded {
@@ -2319,20 +2317,17 @@ impl Db {
                 }
                 None => (None, None, None),
             };
-            stmts
-                .contracts
-                .execute((
-                    a,
-                    b,
-                    Value::Integer(id),
-                    opt_text(contract.buyer_contract_id.as_deref()),
-                    opt_int(utc),
-                    opt_int(offset),
-                    opt_int(has_time),
-                    opt_int(contract.cents),
-                    opt_text(contract.currency.as_deref()),
-                ))
-                .await?;
+            pending.contracts.extend([
+                a,
+                b,
+                Value::Integer(id),
+                opt_text(contract.buyer_contract_id.as_deref()),
+                opt_int(utc),
+                opt_int(offset),
+                opt_int(has_time),
+                opt_int(contract.cents),
+                opt_text(contract.currency.as_deref()),
+            ]);
         }
         Ok(())
     }
@@ -2346,16 +2341,26 @@ impl Db {
         tender_id: i64,
         notice_id: i64,
         key: &str,
+        stmts: &mut TenderInserts,
     ) -> turso::Result<i64> {
-        let mut rows = conn
-            .query(
-                &format!("SELECT id FROM {table} WHERE tender_id = ? AND notice_id = ? AND {key_column} = ?"),
-                (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
-            )
+        // The dedup SELECT is one of three fixed shapes (lot_results/bids/
+        // contracts), so it is prepared once and reused (issue 67) rather than
+        // re-planned per call. It is load-bearing even on a rebuild — it dedupes a
+        // result across a tender's re-published rounds. The INSERT stays a
+        // dynamic-table statement (low volume, miss-only).
+        let lookup = match table {
+            "lot_results" => &mut stmts.lot_result_lookup,
+            "bids" => &mut stmts.bid_lookup,
+            "contracts" => &mut stmts.contract_lookup,
+            _ => unreachable!("a results entity is one of the three fixed shapes"),
+        };
+        let mut rows = lookup
+            .query((Value::Integer(tender_id), Value::Integer(notice_id), t(key)))
             .await?;
         if let Some(row) = rows.next().await? {
             return Ok(int(&row, 0));
         }
+        drop(rows);
         conn.execute(
             &format!("INSERT INTO {table}(tender_id, notice_id, {key_column}) VALUES(?, ?, ?)"),
             (Value::Integer(tender_id), Value::Integer(notice_id), t(key)),
@@ -2380,67 +2385,55 @@ impl Db {
         })
     }
 
-    async fn write_facts(
+    /// Buffer a version's facts into the batchable satellites (issue 67). These
+    /// tables carry no emitted/referenced surrogate id, so their row order is
+    /// unobservable; the rows are flushed as multi-row INSERTs at end of batch.
+    /// Pure accumulation — no SQL runs here, so it is synchronous.
+    fn write_facts(
         &self,
         tender_id: i64,
         seq: i64,
         lot_id: Option<i64>,
         facts: &BTreeSet<Fact>,
-        stmts: &mut TenderInserts,
-    ) -> turso::Result<()> {
+        pending: &mut Pending,
+    ) {
         let scope = || (Value::Integer(tender_id), Value::Integer(seq), opt_int(lot_id));
         for fact in facts {
             let (a, b, c) = scope();
             match fact {
                 Fact::Text { field, lang, value } => {
-                    stmts
-                        .texts
-                        .execute((a, b, c, t(field), opt_text(lang.as_deref()), t(value)))
-                        .await?;
+                    pending.texts.extend([a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
                 }
                 Fact::Amount { field, cents, currency } => {
-                    stmts
-                        .amounts
-                        .execute((a, b, c, t(field), Value::Integer(*cents), t(currency)))
-                        .await?;
+                    pending.amounts.extend([a, b, c, t(field), Value::Integer(*cents), t(currency)]);
                 }
                 Fact::Classification { field, scheme, code } => {
-                    stmts
-                        .classifications
-                        .execute((a, b, c, t(field), t(scheme), t(code)))
-                        .await?;
+                    pending.classifications.extend([a, b, c, t(field), t(scheme), t(code)]);
                 }
                 Fact::Date { field, utc_seconds, offset_minutes, has_time } => {
-                    stmts
-                        .dates
-                        .execute((
-                            a,
-                            b,
-                            c,
-                            t(field),
-                            Value::Integer(*utc_seconds),
-                            Value::Integer(*offset_minutes),
-                            Value::Integer(i64::from(*has_time)),
-                        ))
-                        .await?;
+                    pending.dates.extend([
+                        a,
+                        b,
+                        c,
+                        t(field),
+                        Value::Integer(*utc_seconds),
+                        Value::Integer(*offset_minutes),
+                        Value::Integer(i64::from(*has_time)),
+                    ]);
                 }
                 Fact::Party { role, organization_id, notice_id, section_id } => {
-                    stmts
-                        .parties
-                        .execute((
-                            a,
-                            b,
-                            c,
-                            t(role),
-                            Value::Integer(*organization_id),
-                            Value::Integer(*notice_id),
-                            t(section_id),
-                        ))
-                        .await?;
+                    pending.parties.extend([
+                        a,
+                        b,
+                        c,
+                        t(role),
+                        Value::Integer(*organization_id),
+                        Value::Integer(*notice_id),
+                        t(section_id),
+                    ]);
                 }
             }
         }
-        Ok(())
     }
 
     async fn lot_identity(
@@ -2450,15 +2443,14 @@ impl Db {
         key: &str,
         stmts: &mut TenderInserts,
     ) -> turso::Result<i64> {
-        let mut rows = conn
-            .query(
-                "SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?",
-                (Value::Integer(tender_id), t(key)),
-            )
+        let mut rows = stmts
+            .lot_lookup
+            .query((Value::Integer(tender_id), t(key)))
             .await?;
         if let Some(row) = rows.next().await? {
             return Ok(int(&row, 0));
         }
+        drop(rows);
         stmts.lots.execute((Value::Integer(tender_id), t(key))).await?;
         last_insert_rowid(conn).await
     }
@@ -2506,7 +2498,9 @@ impl Db {
         }
 
         let previous_rounds = previous.map(|p| p.rounds.as_slice()).unwrap_or_default();
-        count += self.append_round_changes(conn, tender_id, seq, previous_rounds, &v.rounds, now).await?;
+        count += self
+            .append_round_changes(conn, tender_id, seq, previous_rounds, &v.rounds, now, stmts)
+            .await?;
         Ok(count)
     }
 
@@ -2522,6 +2516,7 @@ impl Db {
         previous: &[Round],
         current: &[Round],
         now: i64,
+        stmts: &mut TenderInserts,
     ) -> turso::Result<u64> {
         let mut count = 0;
         for (kind, table, column) in [
@@ -2537,7 +2532,7 @@ impl Db {
                     Some((_, _, before)) if before != state => "changed",
                     Some(_) => continue,
                 };
-                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key).await?;
+                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key, stmts).await?;
                 append_change(conn, kind, id, Some(seq), op, now).await?;
                 count += 1;
             }
@@ -2545,7 +2540,7 @@ impl Db {
                 if curr.iter().any(|(n, k, _)| n == notice_id && k == key) {
                     continue;
                 }
-                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key).await?;
+                let id = self.result_identity(conn, table, column, tender_id, *notice_id, key, stmts).await?;
                 append_change(conn, kind, id, Some(seq), "removed", now).await?;
                 count += 1;
             }
@@ -2934,34 +2929,31 @@ async fn last_insert_rowid(conn: &Connection) -> turso::Result<i64> {
     Ok(conn.last_insert_rowid())
 }
 
-/// The hot per-row INSERTs of the Phase-2 fold apply path, prepared ONCE per
-/// [`Db::apply_tenders`] connection and reused across every row of the batch.
-/// turso re-parses the SQL on each `conn.execute("INSERT …", …)`; a handle reused
-/// across rows skips the re-parse (~2.87x on the fold's uniform inserts,
-/// docs/research/turso-scale.md). Every [`Statement::execute`] resets the statement
-/// and rebinds all positional parameters, so a reused handle is a drop-in for the
-/// old `conn.execute` — same rows, same INSERT order, same AUTOINCREMENT surrogate
-/// ids. Handles hold their own connection clone, so they survive the per-batch
+/// The per-tender identity/dedup/head statements of the Phase-2 fold apply path,
+/// prepared ONCE per [`Db::apply_tenders`] connection and reused across every
+/// tender of every batch. turso re-parses the SQL on each `conn.execute`/
+/// `conn.query`; a reused handle skips the re-parse (docs/research/turso-scale.md).
+/// Every [`Statement::execute`]/[`Statement::query`] resets the statement and
+/// rebinds all positional parameters, so a reused handle is a drop-in for the old
+/// `conn.execute` — same rows, same order, same AUTOINCREMENT surrogate ids.
+/// Handles hold their own connection clone, so they survive the per-batch
 /// BEGIN/COMMIT and the between-batch checkpoints; no DDL runs during the fold, so
-/// no compiled plan goes stale. Only the uniform single-table inserts live here —
-/// the dynamic-table identity insert ([`Db::result_identity`]) stays on
-/// `conn.execute`.
+/// no compiled plan goes stale.
+///
+/// Only the id-then-use tables live here: `tenders`/`lots` inserts (whose
+/// AUTOINCREMENT id is captured and referenced), their dedup lookups, the head
+/// pointer UPDATE, and the three fixed result-identity dedup SELECTs. The
+/// order-independent leaf/satellite tables are batched instead (see [`Pending`]),
+/// so they need no single-row handle; the dynamic-table result-identity INSERT
+/// (miss-only, low volume) stays on `conn.execute`.
 struct TenderInserts {
     tenders: Statement,
-    versions: Statement,
-    version_lots: Statement,
     lots: Statement,
-    texts: Statement,
-    amounts: Statement,
-    classifications: Statement,
-    dates: Statement,
-    parties: Statement,
-    lot_results: Statement,
-    result_winners: Statement,
-    result_stats: Statement,
-    bids: Statement,
-    bid_parties: Statement,
-    contracts: Statement,
+    head_update: Statement,
+    lot_lookup: Statement,
+    lot_result_lookup: Statement,
+    bid_lookup: Statement,
+    contract_lookup: Statement,
 }
 
 impl TenderInserts {
@@ -2973,96 +2965,119 @@ impl TenderInserts {
                      VALUES(?, ?, ?, ?, ?)",
                 )
                 .await?,
-            versions: conn
-                .prepare(
-                    "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at,
-                         dispatched_at, notice_subtype, publication_id)
-                     VALUES(?, ?, ?, ?, ?, ?, ?)",
-                )
-                .await?,
-            version_lots: conn
-                .prepare(
-                    "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES(?, ?, ?, ?)",
-                )
-                .await?,
             lots: conn
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
-            texts: conn
-                .prepare(
-                    "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value)
-                     VALUES(?, ?, ?, ?, ?, ?)",
-                )
+            head_update: conn
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ? WHERE id = ?")
                 .await?,
-            amounts: conn
-                .prepare(
-                    "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency)
-                     VALUES(?, ?, ?, ?, ?, ?)",
-                )
+            lot_lookup: conn
+                .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")
                 .await?,
-            classifications: conn
-                .prepare(
-                    "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field,
-                         scheme, code)
-                     VALUES(?, ?, ?, ?, ?, ?)",
-                )
+            lot_result_lookup: conn
+                .prepare("SELECT id FROM lot_results WHERE tender_id = ? AND notice_id = ? AND result_key = ?")
                 .await?,
-            dates: conn
-                .prepare(
-                    "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field,
-                         utc_seconds, offset_minutes, has_time)
-                     VALUES(?, ?, ?, ?, ?, ?, ?)",
-                )
+            bid_lookup: conn
+                .prepare("SELECT id FROM bids WHERE tender_id = ? AND notice_id = ? AND bid_key = ?")
                 .await?,
-            parties: conn
-                .prepare(
-                    "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role,
-                         organization_id, mention_notice_id, mention_section_id)
-                     VALUES(?, ?, ?, ?, ?, ?, ?)",
-                )
-                .await?,
-            lot_results: conn
-                .prepare(
-                    "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id,
-                         decision, reason, awarded_cents, awarded_currency)
-                     VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-                )
-                .await?,
-            result_winners: conn
-                .prepare(
-                    "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id,
-                         organization_id)
-                     VALUES(?, ?, ?, ?)",
-                )
-                .await?,
-            result_stats: conn
-                .prepare(
-                    "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count)
-                     VALUES(?, ?, ?, ?, ?)",
-                )
-                .await?,
-            bids: conn
-                .prepare(
-                    "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency)
-                     VALUES(?, ?, ?, ?, ?, ?)",
-                )
-                .await?,
-            bid_parties: conn
-                .prepare(
-                    "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role,
-                         organization_id, mention_notice_id, mention_section_id)
-                     VALUES(?, ?, ?, ?, ?, ?, ?)",
-                )
-                .await?,
-            contracts: conn
-                .prepare(
-                    "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id,
-                         concluded_utc, concluded_offset, concluded_has_time, cents, currency)
-                     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                )
+            contract_lookup: conn
+                .prepare("SELECT id FROM contracts WHERE tender_id = ? AND notice_id = ? AND contract_key = ?")
                 .await?,
         })
     }
+}
+
+/// Accumulated rows of the batchable leaf/satellite tables for one WRITE_BATCH
+/// transaction (issue 67), flushed as chunked multi-row INSERTs just before
+/// COMMIT. Each `Vec<Value>` is row-major (`cols` values per row). Only tables
+/// whose row order is unobservable belong here — no emitted or referenced
+/// surrogate id (their implicit rowid is never joined on, and every snapshot
+/// digest ORDERs BY content columns), so collapsing N per-row INSERTs into one
+/// N-row INSERT is byte-identical while cutting the serial writer's per-statement
+/// floor ~N-fold. The identity tables (`tenders`/`lots`/`lot_results`/`bids`/
+/// `contracts`) and `changes` are NOT here: their AUTOINCREMENT id/cursor is
+/// emitted or observed, so they keep inserting in place, in fold order.
+///
+/// Bounded by WRITE_BATCH (~512 tenders × ~30 facts ≈ 15k rows), so peak RAM is
+/// flat vs corpus size.
+#[derive(Default)]
+struct Pending {
+    versions: Vec<Value>,
+    version_lots: Vec<Value>,
+    texts: Vec<Value>,
+    amounts: Vec<Value>,
+    classifications: Vec<Value>,
+    dates: Vec<Value>,
+    parties: Vec<Value>,
+    lot_results: Vec<Value>,
+    result_winners: Vec<Value>,
+    result_stats: Vec<Value>,
+    bids: Vec<Value>,
+    bid_parties: Vec<Value>,
+    contracts: Vec<Value>,
+}
+
+impl Pending {
+    /// Flush every buffered table as chunked multi-row INSERTs, then clear.
+    /// Parents before children so a foreign-keys-ON caller (some store unit tests)
+    /// still finds each referenced `(tender_id, seq)` present at insert time; the
+    /// projection itself runs with FK off.
+    async fn flush(&mut self, conn: &Connection) -> turso::Result<()> {
+        flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, publication_id) VALUES ", 7, &mut self.versions).await?;
+        flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
+        flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency) VALUES ", 6, &mut self.amounts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
+        flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
+        flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
+        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency) VALUES ", 8, &mut self.lot_results).await?;
+        flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
+        flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
+        flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency) VALUES ", 6, &mut self.bids).await?;
+        flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
+        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, cents, currency) VALUES ", 9, &mut self.contracts).await?;
+        Ok(())
+    }
+}
+
+/// Bind-parameter budget for one multi-row INSERT (issue 67): rows-per-statement
+/// is `MAX_BATCH_BIND / cols`. Kept well under turso's ceiling — a version rarely
+/// exceeds it for one fact type, but per-batch accumulation does, so the chunk
+/// guard is required.
+const MAX_BATCH_BIND: usize = 900;
+
+/// Emit `rows` (row-major, `cols` values per row) as chunked multi-row INSERTs
+/// with `prefix` (`INSERT INTO t(cols) VALUES `), then clear the buffer.
+async fn flush_rows(conn: &Connection, prefix: &str, cols: usize, rows: &mut Vec<Value>) -> turso::Result<()> {
+    if rows.is_empty() {
+        return Ok(());
+    }
+    let per_stmt = (MAX_BATCH_BIND / cols).max(1);
+    let total = rows.len() / cols;
+    let mut done = 0;
+    while done < total {
+        let n = (total - done).min(per_stmt);
+        let mut sql = String::with_capacity(prefix.len() + n * (cols * 2 + 2));
+        sql.push_str(prefix);
+        for r in 0..n {
+            if r > 0 {
+                sql.push(',');
+            }
+            sql.push('(');
+            for c in 0..cols {
+                if c > 0 {
+                    sql.push(',');
+                }
+                sql.push('?');
+            }
+            sql.push(')');
+        }
+        let params: Vec<Value> = rows[done * cols..(done + n) * cols].to_vec();
+        conn.execute(&sql, params).await?;
+        done += n;
+    }
+    rows.clear();
+    Ok(())
 }
 
 type ValueBuilder = fn(&turso::Row) -> crate::NoticeValue;
