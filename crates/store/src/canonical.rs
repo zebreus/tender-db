@@ -581,10 +581,6 @@ impl MinUnionFind {
             self.parent.insert(child, root);
         }
     }
-
-    fn keys(&self) -> Vec<i64> {
-        self.parent.keys().copied().collect()
-    }
 }
 
 /// One canonical value of a Tender version, in its scope. The satellites of
@@ -1381,20 +1377,12 @@ impl Db {
         .await?;
         eprintln!("[project] group step keyed/island: {:.1}s", t.elapsed().as_secs_f64());
 
-        // Legacy transitive components via an in-memory union-find (path-B) —
-        // NOT the former SQL label-propagation, which was O(component-diameter)
-        // full-table rewrites of plan_ojs_node and ran for HOURS at 12.4M scale
-        // (the group phase's pathological cost). Load the legacy adjacency once
-        // (bounded by distinct OJS numbers, not the corpus), union in Rust with
-        // union-TO-MIN so each component's root IS its minimum OJS key — byte-for-
-        // byte the same representative the propagation's converged MIN label
-        // produced — then write the reps back in ONE sorted pass. The `plan_notice`
-        // group_key derivation below is unchanged, so grouping is identical.
+        // Legacy transitive components via an in-memory union-find (path-B). Load
+        // the legacy adjacency once (bounded by distinct OJS numbers, not the
+        // corpus) and union with union-TO-MIN so each component's root IS its
+        // minimum OJS key — byte-for-byte the representative the former SQL
+        // label-propagation's converged MIN label produced.
         //
-        // Self-resetting (DELETE first) so grouping can be RE-RUN over an already-
-        // populated plan — the resume-from-plan salvage path (issue 58/60).
-        conn.execute("DELETE FROM plan_ojs_node", ()).await?;
-
         // The node set is every edge endpoint plus every legacy notice's own OJS
         // number (a legacy notice with no refs and no referrer is its own
         // singleton component). Edges are symmetric, so one side covers endpoints.
@@ -1415,39 +1403,46 @@ impl Db {
             }
         }
         eprintln!("[project] group step union-load: {:.1}s ({} nodes)", t.elapsed().as_secs_f64(), uf.parent.len());
-        // Resolve each node's component representative (its MIN key), sorted so the
-        // plan_ojs_node PK build is a sequential append, not the random-position
-        // inserts that thrashed at scale (issue 60).
+
+        // Assign each legacy notice its component's earliest-OJS key, formatted to
+        // match `ojs_procedure_key`: `ojs:{year}-{number:06}`, computed in Rust from
+        // the union-find. The former path materialised the reps into `plan_ojs_node`
+        // and then ran a per-row correlated-subquery UPDATE (`SELECT … FROM
+        // plan_ojs_node WHERE key = plan_notice.ojs_self`). turso 0.7's planner did
+        // not lower that inner PK-equality to a rowid seek, so it re-scanned the node
+        // table for every one of millions of legacy rows — 100 % CPU, ~0 disk I/O,
+        // hours at 12.4M scale. Here `rep = uf.find(ojs_self)` and the same format
+        // give byte-identical group keys with no per-row subquery; writes are point
+        // UPDATEs by `notice_id` PK in ascending order. `plan_ojs_node` has no other
+        // reader in the codebase, so it is no longer materialised.
         let t = std::time::Instant::now();
-        let mut reps: Vec<(i64, i64)> = uf.keys().into_iter().map(|k| (k, uf.find(k))).collect();
-        reps.sort_unstable_by_key(|(k, _)| *k);
-        eprintln!("[project] group step reps: {:.1}s ({} reps)", t.elapsed().as_secs_f64(), reps.len());
-        let t = std::time::Instant::now();
-        for chunk in reps.chunks(NODE_WRITE_BATCH) {
+        let mut legacy: Vec<(i64, i64)> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT notice_id, ojs_self FROM plan_notice
+                      WHERE legacy = 1 AND ojs_self IS NOT NULL ORDER BY notice_id",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                legacy.push((int(&row, 0), int(&row, 1)));
+            }
+        }
+        for chunk in legacy.chunks(NODE_WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
-            for (key, rep) in chunk {
+            for (notice_id, ojs_self) in chunk {
+                let rep = uf.find(*ojs_self);
+                let group_key = format!("ojs:{}-{:06}", rep / 1_000_000_000, rep % 1_000_000_000);
                 conn.execute(
-                    "INSERT INTO plan_ojs_node(key, label) VALUES(?, ?)",
-                    (Value::Integer(*key), Value::Integer(*rep)),
+                    "UPDATE plan_notice SET group_key = ? WHERE notice_id = ?",
+                    (Value::Text(group_key), Value::Integer(*notice_id)),
                 )
                 .await?;
             }
             conn.execute("COMMIT", ()).await?;
         }
-        eprintln!("[project] group step node-write: {:.1}s", t.elapsed().as_secs_f64());
-
-        // Assign each legacy notice its component's earliest-OJS key, formatted to
-        // match `ojs_procedure_key`: `ojs:{year}-{number:06}`.
-        let t = std::time::Instant::now();
-        conn.execute(
-            "UPDATE plan_notice SET group_key = (
-                 SELECT 'ojs:' || (n.label / 1000000000) || '-' || printf('%06d', n.label % 1000000000)
-                   FROM plan_ojs_node n WHERE n.key = plan_notice.ojs_self)
-             WHERE group_key IS NULL AND legacy = 1 AND ojs_self IS NOT NULL",
-            (),
-        )
-        .await?;
-        eprintln!("[project] group step legacy-update: {:.1}s", t.elapsed().as_secs_f64());
+        eprintln!("[project] group step legacy-update: {:.1}s ({} legacy)", t.elapsed().as_secs_f64(), legacy.len());
 
         // The fold order Phase 2 streams by: rows arrive grouped by Tender and, within
         // a Tender, in supersession order (ADR-0003 tiebreak), so no in-RAM sort.
