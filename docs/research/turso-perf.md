@@ -251,6 +251,17 @@ document is the source basis for making sequential reads and bulk writes fast.
   whole b-tree in one operation — far cheaper than millions of per-row deletes, and
   it resets the table to a fresh (empty-freelist-relative) state so subsequent
   appends lay down sequentially. Recreate indexes afterward (post-load, lever 5).
+- **⚠ `sqlite_sequence` / AUTOINCREMENT reset on DROP.** turso maintains
+  `sqlite_sequence` for AUTOINCREMENT tables, and **DROP TABLE deletes the dropped
+  table's `sqlite_sequence` row** (translate/schema.rs:2273-2323), matching C SQLite.
+  So DROP+recreate **resets the high-water-mark to 0** and the next inserts re-issue
+  ids from 1. A plain `INTEGER PRIMARY KEY` (rowid, no AUTOINCREMENT) likewise
+  restarts at 1 on the empty table. Harmless for a cursor-based append-only feed
+  **only if every consumer also resets its cursor at cutover**; if any downstream
+  consumer must never see a repeated id, either keep the counter (don't DROP, or
+  re-seed `sqlite_sequence` after recreate) or carry the id forward explicitly.
+  `DELETE FROM` does NOT touch `sqlite_sequence`, so it preserves the counter —
+  another reason the two clears are not equivalent.
 
 ### `PRAGMA page_size` is creation-time only
 
@@ -262,6 +273,47 @@ document is the source basis for making sequential reads and bulk writes fast.
   page_size (e.g. 8192/16384) is viable *only* via such a rebuild; it would raise
   the inline-blob threshold (`usable − 35`) and cut tree depth, at the cost of more
   read/write amplification per page — worth a bench before committing.
+
+## Future rebuild checklist (next from-scratch build)
+
+A from-scratch DB rebuild is the only chance to change creation-time properties.
+Whoever does the next one should decide, with numbers:
+
+- **`page_size` candidate** — evaluate 8192 / 16384 vs the current 4096. Bigger pages
+  raise the inline-blob threshold (`usable − 35`: ~8157 B at 8 KB, ~16371 B at 16 KB
+  vs 4061 B today → far fewer overflow chains for the 10–50 KB award blobs) and cut
+  tree depth (fewer descent reads per seek), at the cost of more read/write
+  amplification per page touched and a larger minimum WAL frame. Set it before
+  writing any table (§"page_size is creation-time only"). **Open question for
+  turso-bench** — see below.
+- **Blob-at-Phase-1 fold-input layout** (from blob-schema) — the converged design is
+  a **plain rowid `plan_state` table** (blob keyed by notice_id, written during the
+  sequential Phase-1 parsed read), **not WITHOUT ROWID** (the 4061 B table-leaf
+  inline threshold beats WITHOUT ROWID's ~1002 B index-leaf threshold for 1–3 KB
+  median blobs; rowid = insertion order gives clustering for free). **Build-once,
+  never mutate/VACUUM** (freelist reuse scatters overflow → random seeks); append-only
+  into fresh space. Bucket-reorder by hash(group_key) instead of a global
+  `INSERT…SELECT…ORDER BY` sort.
+- **Load discipline** — PK-only load, secondary indexes built afterward via
+  CREATE INDEX (levers 5–6); never maintain a random-key unique index during insert.
+- **temp/runtime env for the build** — `TMPDIR` on the NVMe (not tmpfs); modest
+  `cache_size` on any sort/index-build connection (§4 coupling); run heavy scans off
+  the HTTP tokio runtime (§6).
+
+## Open questions
+
+- **[turso-bench] `page_size` at rebuild** — fold an 8 KB (and/or 16 KB) variant into
+  a `TARGET_GB` bench pass and measure vs 4096: bulk-load rate, full-scan MB/s, cold
+  point-query latency, CREATE INDEX time, overflow-chain reduction for wide blob rows,
+  and peak RSS. The next real rebuild should pick a page_size from these numbers, not
+  intuition. (Trade-off summarized in the checklist above.)
+- **[turso-bench] interleaved-cursor sequential read** — effective MB/s of (a) one
+  ordered full-table scan vs (b) N interleaved ordered cursors merged by key on **one
+  fd** vs (c) chunked k-way merge with large per-table runs vs (d) N independent
+  `Database` opens = N fds. Determines whether a windowed single-pass merge is
+  read-bound-sequential or readahead-thrashed. (turso has no readahead; the ~490 MB/s
+  is kernel buffered-read prefetch, tracked per fd — one shared fd across cursors can
+  collapse it. Windowed is currently deprioritized, but this decides it if revived.)
 
 ---
 
