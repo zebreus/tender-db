@@ -1370,6 +1370,7 @@ impl Db {
     pub async fn build_plan_groups(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         // Keyed and island in one pass; legacy left NULL for the closure below.
+        let t = std::time::Instant::now();
         conn.execute(
             "UPDATE plan_notice SET group_key = CASE
                  WHEN procedure_key IS NOT NULL THEN procedure_key
@@ -1378,6 +1379,7 @@ impl Db {
             (),
         )
         .await?;
+        eprintln!("[project] group step keyed/island: {:.1}s", t.elapsed().as_secs_f64());
 
         // Legacy transitive components via an in-memory union-find (path-B) —
         // NOT the former SQL label-propagation, which was O(component-diameter)
@@ -1396,6 +1398,7 @@ impl Db {
         // The node set is every edge endpoint plus every legacy notice's own OJS
         // number (a legacy notice with no refs and no referrer is its own
         // singleton component). Edges are symmetric, so one side covers endpoints.
+        let t = std::time::Instant::now();
         let mut uf = MinUnionFind::default();
         {
             let mut rows = conn.query("SELECT a, b FROM plan_ojs_edge", ()).await?;
@@ -1411,11 +1414,15 @@ impl Db {
                 uf.add(int(&row, 0));
             }
         }
+        eprintln!("[project] group step union-load: {:.1}s ({} nodes)", t.elapsed().as_secs_f64(), uf.parent.len());
         // Resolve each node's component representative (its MIN key), sorted so the
         // plan_ojs_node PK build is a sequential append, not the random-position
         // inserts that thrashed at scale (issue 60).
+        let t = std::time::Instant::now();
         let mut reps: Vec<(i64, i64)> = uf.keys().into_iter().map(|k| (k, uf.find(k))).collect();
         reps.sort_unstable_by_key(|(k, _)| *k);
+        eprintln!("[project] group step reps: {:.1}s ({} reps)", t.elapsed().as_secs_f64(), reps.len());
+        let t = std::time::Instant::now();
         for chunk in reps.chunks(NODE_WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             for (key, rep) in chunk {
@@ -1427,9 +1434,11 @@ impl Db {
             }
             conn.execute("COMMIT", ()).await?;
         }
+        eprintln!("[project] group step node-write: {:.1}s", t.elapsed().as_secs_f64());
 
         // Assign each legacy notice its component's earliest-OJS key, formatted to
         // match `ojs_procedure_key`: `ojs:{year}-{number:06}`.
+        let t = std::time::Instant::now();
         conn.execute(
             "UPDATE plan_notice SET group_key = (
                  SELECT 'ojs:' || (n.label / 1000000000) || '-' || printf('%06d', n.label % 1000000000)
@@ -1438,15 +1447,18 @@ impl Db {
             (),
         )
         .await?;
+        eprintln!("[project] group step legacy-update: {:.1}s", t.elapsed().as_secs_f64());
 
         // The fold order Phase 2 streams by: rows arrive grouped by Tender and, within
         // a Tender, in supersession order (ADR-0003 tiebreak), so no in-RAM sort.
+        let t = std::time::Instant::now();
         conn.execute(
             "CREATE INDEX IF NOT EXISTS plan_notice_fold
                  ON plan_notice(group_key, published_at, source_rank, publication_id, notice_id)",
             (),
         )
         .await?;
+        eprintln!("[project] group step fold-index: {:.1}s", t.elapsed().as_secs_f64());
         Ok(())
     }
 
