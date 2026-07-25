@@ -1258,6 +1258,12 @@ impl Db {
         ] {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
+        // Note: `changes` (the CDC cursor spine) is deliberately NOT cleared here.
+        // A rebuild re-derives identical deterministic surrogate ids (ADR-0001), so
+        // existing change rows stay valid; re-projection appends a fresh set and the
+        // cursor is never renumbered (docs/architecture.md; covered by
+        // `the_change_log_reads_added_then_changed`).
+        //
         // Also clear tenders' high-water row explicitly: the DROP above already
         // removes it on turso, so this is belt-and-suspenders — correctness no longer
         // depends on turso's DROP-TABLE-clears-sqlite_sequence behavior. A no-op if
