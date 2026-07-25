@@ -264,7 +264,7 @@ async fn bucketed_fold_matches_the_parsed_fold() {
 
     let (buckets, fb, path_buckets) = scratch("buckets").await;
     build_corpus(&buckets, fb).await;
-    project::project_with_progress_phase2(&buckets, true, BATCH, Phase2::Buckets, |_| {})
+    project::project_with_progress_phase2(&buckets, true, BATCH, Phase2::Buckets { shards: None }, |_| {})
         .await
         .expect("bucketed projection");
 
@@ -300,5 +300,51 @@ async fn bucketed_fold_matches_the_parsed_fold() {
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{p}{s}"));
         }
+    }
+}
+
+/// The sharded pre-pass (issue 66) is byte-identical to the serial one for ANY worker
+/// count. Sharding the parsed read by notice-id splits a group's notices across shard
+/// files (a keyed procedure's waves, a legacy CN and its award), but routing is by
+/// group_key, so they land in one logical bucket that the fold re-concatenates and
+/// sorts — the total fold order, and every surrogate id, is unchanged. We rebuild the
+/// same rich corpus with 1, 3 and 8 pre-pass workers (8 stripes narrow enough to split
+/// even the legacy chains) and assert the whole canonical snapshot is identical.
+#[tokio::test]
+async fn sharded_prepass_matches_the_serial_prepass() {
+    const BATCH: usize = 7;
+
+    async fn run(name: &str, shards: usize) -> String {
+        let (db, fetch, path) = scratch(name).await;
+        build_corpus(&db, fetch).await;
+        project::project_with_progress_phase2(
+            &db,
+            true,
+            BATCH,
+            Phase2::Buckets { shards: Some(shards) },
+            |_| {},
+        )
+        .await
+        .expect("sharded projection");
+        let snap = snapshot(&db).await;
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        snap
+    }
+
+    let serial = run("shard1", 1).await;
+    assert!(
+        serial.contains("--- digest 0 ---"),
+        "the corpus must actually project some Tenders for the comparison to bite"
+    );
+    for shards in [3, 8] {
+        assert_eq!(
+            serial,
+            run(&format!("shard{shards}"), shards).await,
+            "the canonical layer must be byte-identical whether the pre-pass runs with \
+             1 worker or {shards} — sharding changes only which worker writes a notice, \
+             never which bucket it lands in or the order it folds"
+        );
     }
 }

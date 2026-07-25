@@ -49,6 +49,12 @@ tokio = { version = "1", features = ["rt", "macros", "sync"] }
 # serializer) for the server-side spill.
 postcard = { version = "1", features = ["use-std"] }
 
+# FFI-only bindings to the system libc (no C compiled, already in the tree
+# transitively) — used solely to raise the process `RLIMIT_NOFILE` for the sharded
+# Phase-2 pre-pass (issue 66), which holds `n_buckets × workers` shard files open at
+# once. Keeps the `nix build` self-contained.
+libc = "0.2"
+
 # The public API (`/v1`). axum is already in the tree via dioxus-server, so the
 # API sub-router merges into the dioxus router with no version skew
 # (docs/research/api-layer.md §1). tower_governor is the per-IP rate limiter,

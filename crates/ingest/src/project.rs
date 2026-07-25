@@ -37,7 +37,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use store::{
     BidParty, BidState, ContractState, Db, Fact, Identifier, LotResultState, LotState, Mention,
     NoticeValue, Parsed, Round, TenderProjection, TenderVersion,
@@ -310,7 +310,12 @@ pub enum Phase2 {
     /// read-ahead-friendly sweep), spilling each resolved notice state to an
     /// order-preserving on-disk bucket; then fold each bucket sorted in RAM (issue
     /// 62). The default — minutes, not days — with peak RAM of one bucket.
-    Buckets,
+    ///
+    /// `shards` is how many parallel id-stripe workers the pre-pass runs (issue 66);
+    /// `None` picks `cores − 1`, capped to the file-descriptor budget. The fold is
+    /// always serial and the output is byte-identical for any worker count — sharding
+    /// only changes which worker writes a notice, never which bucket it lands in.
+    Buckets { shards: Option<usize> },
 }
 
 /// The projection with an explicit Phase-2 batch size (notices per fold+apply
@@ -346,7 +351,7 @@ pub async fn project_with_progress(
     notice_batch: usize,
     on_progress: impl FnMut(Progress),
 ) -> turso::Result<Report> {
-    project_with_progress_phase2(db, rebuild, notice_batch, Phase2::Buckets, on_progress).await
+    project_with_progress_phase2(db, rebuild, notice_batch, Phase2::Buckets { shards: None }, on_progress).await
 }
 
 /// The projection core, reporting progress through `on_progress` (called between
@@ -452,8 +457,9 @@ pub async fn project_with_progress_phase2(
                 }
             }
         }
-        Phase2::Buckets => {
-            bucketed_fold(db, notice_batch, now, rebuild, &mut report, &mut on_progress).await?;
+        Phase2::Buckets { shards } => {
+            bucketed_fold(db, notice_batch, shards, now, rebuild, &mut report, &mut on_progress)
+                .await?;
         }
     }
     // Retire any legacy Tender a late component-merge absorbed (its rows migrated
@@ -785,6 +791,7 @@ async fn apply_plan_batch(
 async fn bucketed_fold(
     db: &Db,
     notice_batch: usize,
+    shards: Option<usize>,
     now: i64,
     rebuild: bool,
     report: &mut Report,
@@ -801,22 +808,31 @@ async fn bucketed_fold(
         return Ok(()); // Empty plan — nothing to fold.
     }
 
-    // Pre-pass: sequential parsed read → resolved state → order-preserving bucket.
-    let paths = write_buckets(db, &boundaries, &dir).await?;
+    // Pre-pass (issue 66): shard the parsed read across `k` id-stripe workers, each
+    // resolving state and spilling to its OWN `shard{s}_bucket{b}.bin` files. A group
+    // still routes to ONE logical bucket `b` (routing is by group_key, not id), so a
+    // group split across id stripes just lands in different physical files of the
+    // same `b`; the fold re-concatenates and sorts them. All workers must finish
+    // before the fold — a group can span any stripe (barrier is the `join` inside).
+    let fd_budget = raise_fd_limit();
+    let k = worker_count(shards, boundaries.len(), fd_budget);
+    write_buckets_sharded(db, &boundaries, &dir, k).await?;
 
-    // Fold pass: each bucket in order, sorted in RAM by the fold key, then applied.
+    // Fold pass: each bucket in order, its K shard files concatenated then sorted in
+    // RAM by the fold key, then applied. Serial — `apply_tenders` assigns surrogate
+    // ids in global fold order through the single writer (byte-identity, ADR-0001).
     let mut tenders_done = 0u64;
-    for (i, path) in paths.iter().enumerate() {
-        let mut rows = read_bucket(path);
+    for b in 0..boundaries.len() {
+        let mut rows = read_bucket_shards(&dir, b, k);
         rows.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
         let (applied, groups) = fold_bucket(db, &rows, now, rebuild).await?;
         report.applied.add(applied);
         tenders_done += groups;
         on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
-        if (i + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
+        if (b + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
         {
-            eprintln!("[project] checkpoint after bucket {i}: {e}");
+            eprintln!("[project] checkpoint after bucket {b}: {e}");
         }
     }
     // The buckets are transient scratch — never leave them behind (issue 59 spirit).
@@ -840,29 +856,133 @@ async fn bucket_boundaries(db: &Db, notice_batch: usize) -> turso::Result<Vec<St
     Ok(boundaries)
 }
 
-/// Pre-pass: stream the parsed layer in notice_id order, resolve each notice's
-/// [`NoticeState`] (binding the Organizations Phase-1 recorded), and append it —
-/// postcard-framed `[u32 len][bytes]` — to the order-preserving bucket its group_key
-/// routes to. Sequential over the notice tables (the read fix); one range scan of the
-/// plan per chunk. Returns the bucket file paths in fold order.
-async fn write_buckets(db: &Db, boundaries: &[String], dir: &Path) -> turso::Result<Vec<PathBuf>> {
+/// Headroom left below the file-descriptor budget when auto-sizing the worker
+/// count — the writer connection, the WAL, stdio, and the K reader connections all
+/// need descriptors alongside the `n_buckets × workers` open shard files (issue 66).
+const FD_MARGIN: usize = 256;
+
+/// Raise the process's soft `RLIMIT_NOFILE` toward its hard limit and return the
+/// effective soft limit. The sharded pre-pass holds `n_buckets × workers` shard
+/// files open at once (a route-by-content worker cannot close a bucket early — a
+/// notice may route to any bucket at any point in its id sweep), which on a default
+/// 1024-fd box would EMFILE. Best-effort: on any failure the current soft limit is
+/// returned and [`worker_count`] caps the fan-out to fit it (FFI, issue 66 §4).
+fn raise_fd_limit() -> usize {
+    // SAFETY: plain getrlimit/setrlimit on RLIMIT_NOFILE with a well-formed struct.
+    unsafe {
+        let mut lim = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+        if libc::getrlimit(libc::RLIMIT_NOFILE, &mut lim) != 0 {
+            return FD_MARGIN;
+        }
+        if lim.rlim_cur < lim.rlim_max {
+            lim.rlim_cur = lim.rlim_max;
+            libc::setrlimit(libc::RLIMIT_NOFILE, &lim); // denial is tolerated
+        }
+        let mut cur = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+        let held = if libc::getrlimit(libc::RLIMIT_NOFILE, &mut cur) == 0 {
+            cur.rlim_cur
+        } else {
+            lim.rlim_cur
+        };
+        usize::try_from(held).unwrap_or(usize::MAX)
+    }
+}
+
+/// The parallel-pre-pass worker count (issue 66). A pinned `shards` (tests, and the
+/// byte-identity gate at 1 vs 3+) is honoured verbatim; otherwise `cores − 1`,
+/// clamped to at least 1 and capped so the `n_buckets × workers` open shard files
+/// stay within `fd_budget` (§4).
+fn worker_count(shards: Option<usize>, n_buckets: usize, fd_budget: usize) -> usize {
+    if let Some(k) = shards {
+        return k.max(1);
+    }
+    let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
+    let fd_cap = (fd_budget.saturating_sub(FD_MARGIN) / n_buckets.max(1)).max(1);
+    cores.saturating_sub(1).clamp(1, fd_cap)
+}
+
+/// Pre-pass (issue 66): shard the parsed read into `k` contiguous notice-id stripes,
+/// each swept by its own worker on its own reader connection, spilling resolved
+/// states to its own `shard{s}_bucket{b}.bin` files. Routing is by group_key, so a
+/// group always lands in one logical bucket `b` whichever stripe produced it; the
+/// fold re-concatenates a bucket's K shard files and sorts (see [`read_bucket_shards`]).
+/// Joins all workers before returning — the barrier the fold's global order relies on.
+async fn write_buckets_sharded(
+    db: &Db,
+    boundaries: &[String],
+    dir: &Path,
+    k: usize,
+) -> turso::Result<()> {
     std::fs::create_dir_all(dir).expect("create bucket dir");
-    let paths: Vec<PathBuf> =
-        (0..boundaries.len()).map(|i| dir.join(format!("bucket_{i}.bin"))).collect();
-    let mut writers: Vec<BufWriter<File>> =
-        paths.iter().map(|p| BufWriter::new(File::create(p).expect("create bucket file"))).collect();
+    // Partition (0, max_id] into k contiguous stripes; the last runs to infinity so
+    // it always reaches the true maximum. Gaps (unparsed ids) are harmless — a stripe
+    // just reads fewer notices.
+    let max_id = db.max_parsed_notice_id().await?;
+    let width = ((max_id + k as i64 - 1) / k as i64).max(1);
+    let readers = db.readers(k)?;
+
+    // Each worker drives its stripe on its own thread (the decode/fold/encode is
+    // CPU-bound, so real threads — not tokio tasks on the CLI's current-thread
+    // runtime — are what parallelises it) with its own current-thread runtime and its
+    // own reader connection. Scoped threads let the workers borrow `boundaries`/`dir`.
+    std::thread::scope(|scope| -> turso::Result<()> {
+        let handles: Vec<_> = (0..k)
+            .map(|s| {
+                let readers = readers.clone();
+                let lo = s as i64 * width;
+                let hi = if s + 1 == k { i64::MAX } else { (s as i64 + 1) * width };
+                scope.spawn(move || -> turso::Result<()> {
+                    let rt = tokio::runtime::Builder::new_current_thread()
+                        .enable_all()
+                        .build()
+                        .expect("build worker runtime");
+                    rt.block_on(async move {
+                        let conn = readers.get().await?;
+                        write_shard(&conn, boundaries, dir, s, lo, hi).await
+                    })
+                })
+            })
+            .collect();
+        for h in handles {
+            h.join().expect("shard worker panicked")?;
+        }
+        Ok(())
+    })
+}
+
+/// One pre-pass worker: sweep notice ids in `(lo, hi]` on `conn`, resolve each
+/// notice's [`NoticeState`] (binding the Organizations Phase-1 recorded), and append
+/// it — postcard-framed `[u32 len][bytes]` — to `shard{shard}_bucket{b}.bin` for the
+/// bucket its group_key routes to. Identical per-notice work to the old single-pass
+/// `write_buckets`; only the id range and the shard-scoped file names differ.
+async fn write_shard(
+    conn: &store::Reader,
+    boundaries: &[String],
+    dir: &Path,
+    shard: usize,
+    lo: i64,
+    hi: i64,
+) -> turso::Result<()> {
+    // Every bucket file is created (even if it stays empty) so the fold's
+    // `read_bucket_shards` can open `shard{s}_bucket{b}.bin` for every (s, b).
+    let mut writers: Vec<BufWriter<File>> = (0..boundaries.len())
+        .map(|b| {
+            let p = dir.join(format!("shard{shard}_bucket{b}.bin"));
+            BufWriter::new(File::create(&p).expect("create shard bucket file"))
+        })
+        .collect();
     const READ_CHUNK: i64 = 10_000;
     let empty = HashMap::new();
-    let mut after_id = 0i64;
+    let mut after_id = lo;
     loop {
-        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        let chunk = Db::parsed_chunk_on(conn, after_id, hi, READ_CHUNK).await?;
         let Some((last, _)) = chunk.last() else { break };
-        let (lo, hi) = (chunk[0].0.id, last.id);
+        let (clo, chi) = (chunk[0].0.id, last.id);
         after_id = last.id;
         // notice_id → group_key over the chunk's id window (one range scan).
-        let group_keys = db.plan_group_keys(lo, hi).await?;
+        let group_keys = Db::plan_group_keys_on(conn, clo, chi).await?;
         let ids: Vec<i64> = chunk.iter().map(|(n, _)| n.id).collect();
-        let orgs = db.mentions_by_ids(&ids).await?;
+        let orgs = Db::mentions_by_ids_on(conn, &ids).await?;
         for (notice, parsed) in &chunk {
             // A notice absent from the plan is a resume's post-Phase-1 suffix — not
             // grouped, so leave it unprojected for the incremental projection (it is
@@ -880,12 +1000,25 @@ async fn write_buckets(db: &Db, boundaries: &[String], dir: &Path) -> turso::Res
         }
     }
     for w in &mut writers {
-        w.flush().expect("flush bucket");
+        w.flush().expect("flush shard bucket");
     }
-    Ok(paths)
+    Ok(())
 }
 
-/// Read back a bucket file written by [`write_buckets`] — the `[u32 len][bytes]`
+/// All of logical bucket `b`'s rows — the K `shard{s}_bucket{b}.bin` files a sharded
+/// pre-pass wrote for it, concatenated (issue 66). Concatenation order across shards
+/// is irrelevant: the caller re-establishes the total fold order by sorting on
+/// `sort_key` before folding, so the merged bucket folds byte-identically to the
+/// single-file bucket a serial pre-pass would have written.
+fn read_bucket_shards(dir: &Path, bucket: usize, shards: usize) -> Vec<BucketRow> {
+    let mut rows = Vec::new();
+    for s in 0..shards {
+        rows.extend(read_bucket(&dir.join(format!("shard{s}_bucket{bucket}.bin"))));
+    }
+    rows
+}
+
+/// Read back a bucket file written by a pre-pass worker — the `[u32 len][bytes]`
 /// postcard frames, in append order.
 fn read_bucket(path: &Path) -> Vec<BucketRow> {
     let mut reader = BufReader::new(File::open(path).expect("open bucket"));

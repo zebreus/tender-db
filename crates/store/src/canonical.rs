@@ -828,14 +828,27 @@ impl Db {
     /// is O(tables) per chunk, which is what removes the read storm.
     pub async fn parsed_chunk(&self, after_id: i64, limit: i64) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
         let conn = self.reader().await?;
+        Self::parsed_chunk_on(&conn, after_id, i64::MAX, limit).await
+    }
+
+    /// As [`Db::parsed_chunk`], but through an explicit connection and bounded to
+    /// notice ids `≤ hi`. The bound lets the sharded Phase-2 pre-pass (issue 66)
+    /// give each worker its own reader connection and its own contiguous id stripe
+    /// `(after_id, hi]`; the un-sharded [`Db::parsed_chunk`] passes `hi = i64::MAX`.
+    pub async fn parsed_chunk_on(
+        conn: &Connection,
+        after_id: i64,
+        hi: i64,
+        limit: i64,
+    ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
         let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
         let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
 
         let mut rows = conn
             .query(
                 "SELECT id, source, publication_id, profile FROM notices
-                 WHERE parse_state = 'parsed' AND id > ? ORDER BY id LIMIT ?",
-                (Value::Integer(after_id), Value::Integer(limit)),
+                 WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id LIMIT ?",
+                (Value::Integer(after_id), Value::Integer(hi), Value::Integer(limit)),
             )
             .await?;
         while let Some(row) = rows.next().await? {
@@ -999,12 +1012,22 @@ impl Db {
         &self,
         ids: &[i64],
     ) -> turso::Result<std::collections::HashMap<i64, std::collections::HashMap<String, i64>>> {
+        let conn = self.reader().await?;
+        Self::mentions_by_ids_on(&conn, ids).await
+    }
+
+    /// As [`Db::mentions_by_ids`], but through an explicit connection — the sharded
+    /// Phase-2 pre-pass (issue 66) resolves each worker's mentions on the worker's
+    /// own reader.
+    pub async fn mentions_by_ids_on(
+        conn: &Connection,
+        ids: &[i64],
+    ) -> turso::Result<std::collections::HashMap<i64, std::collections::HashMap<String, i64>>> {
         use std::collections::HashMap;
         let mut out: HashMap<i64, HashMap<String, i64>> = HashMap::new();
         if ids.is_empty() {
             return Ok(out);
         }
-        let conn = self.reader().await?;
         for chunk in ids.chunks(IN_CHUNK) {
             let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
             let sql = format!(
@@ -1736,6 +1759,16 @@ impl Db {
         hi: i64,
     ) -> turso::Result<std::collections::HashMap<i64, String>> {
         let conn = self.reader().await?;
+        Self::plan_group_keys_on(&conn, lo, hi).await
+    }
+
+    /// As [`Db::plan_group_keys`], but through an explicit connection — each sharded
+    /// Phase-2 pre-pass worker (issue 66) routes its stripe on its own reader.
+    pub async fn plan_group_keys_on(
+        conn: &Connection,
+        lo: i64,
+        hi: i64,
+    ) -> turso::Result<std::collections::HashMap<i64, String>> {
         let mut out = std::collections::HashMap::new();
         let mut rows = conn
             .query(
@@ -2820,6 +2853,16 @@ impl Db {
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0) as u64))
     }
 
+    /// The largest parsed notice id — the top of the id space the sharded Phase-2
+    /// pre-pass (issue 66) partitions into contiguous worker stripes. `0` when no
+    /// notices are parsed.
+    pub async fn max_parsed_notice_id(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT COALESCE(MAX(id), 0) FROM notices WHERE parse_state = 'parsed'", ())
+            .await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
 }
 
 /// One entry of the change log.
