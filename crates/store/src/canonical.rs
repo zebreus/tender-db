@@ -1168,6 +1168,44 @@ impl Db {
         Ok(())
     }
 
+    /// The tender satellite indexes whose keys are RANDOM across the corpus —
+    /// `organization_id` (millions of orgs), CPV `code`, `published_at`, and the
+    /// causing `notice_id` — as opposed to the append-mostly `(tender_id, seq)` and
+    /// natural-key UNIQUE indexes. Maintaining these live during a from-scratch
+    /// Phase-2 fold is a random-position b-tree write storm past the page cache (the
+    /// issue-60/62 thrash, here on the tender side). They are dropped before the fold
+    /// and rebuilt once, sorted, at the end. All NON-unique over NON-NULL keys, so
+    /// the bulk build is the measured-safe kind — not the org-identity NULL-unique
+    /// hang.
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 6] = [
+        ("tender_versions_published", "tender_versions(published_at)"),
+        ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
+        ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
+        ("tender_version_parties_org", "tender_version_parties(organization_id)"),
+        ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
+        ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
+    ];
+
+    /// Drop the random-key tender satellite indexes before a full Phase-2 (issue
+    /// 60/62). Runs for a fresh rebuild AND a resume — both do a from-scratch fold.
+    pub async fn strip_tender_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        for (name, _) in Self::DEFERRED_TENDER_INDEXES {
+            conn.execute(&format!("DROP INDEX IF EXISTS {name}"), ()).await?;
+        }
+        Ok(())
+    }
+
+    /// Rebuild the deferred tender satellite indexes after the fold — one sorted
+    /// build each, over the now-complete tables.
+    pub async fn build_tender_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        for (name, cols) in Self::DEFERRED_TENDER_INDEXES {
+            conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
+        Ok(())
+    }
+
     // --------------------------------------------------------- grouping plan
     //
     // The projection's grouping plan lives on disk in scratch tables, not in a

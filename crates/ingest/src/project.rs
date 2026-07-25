@@ -338,6 +338,14 @@ pub async fn project_with_progress(
         // identity index was a random-seek storm once it outgrew the page cache.
         db.strip_organization_indexes().await?;
     }
+    if rebuild {
+        // Defer the random-key tender satellite indexes for the from-scratch Phase-2
+        // fold — this runs for BOTH a fresh rebuild and a resume (both fold from an
+        // empty canonical layer). Maintaining organization_id / CPV / published_at /
+        // notice_id indexes live during the fold is the issue-60/62 random-position
+        // write storm; they are rebuilt sorted at the end.
+        db.strip_tender_indexes().await?;
+    }
     let now = store::now_unix();
     let mut report = Report::default();
 
@@ -402,8 +410,9 @@ pub async fn project_with_progress(
     if rebuild {
         let ti = std::time::Instant::now();
         db.build_organization_indexes().await?;
+        db.build_tender_indexes().await?;
         let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
-        eprintln!("[project] org indexes rebuilt in {:.1}s", ti.elapsed().as_secs_f64());
+        eprintln!("[project] org + tender indexes rebuilt in {:.1}s", ti.elapsed().as_secs_f64());
     }
     // Build the incremental change-set index now that (nearly) every parsed notice
     // is projected=1, so the partial index is near-empty and instant (issue 58).
