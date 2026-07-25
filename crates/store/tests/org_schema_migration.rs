@@ -26,6 +26,18 @@ async fn table_sql(db: &Db, table: &str) -> String {
     }
 }
 
+/// The `sql` DDL SQLite recorded for an index — we check it for `UNIQUE`.
+async fn index_sql(db: &Db, name: &str) -> String {
+    match db
+        .scalar(&format!("SELECT sql FROM sqlite_master WHERE type='index' AND name='{name}'"))
+        .await
+        .unwrap()
+    {
+        Some(turso::Value::Text(s)) => s,
+        other => panic!("no index sql for {name}: {other:?}"),
+    }
+}
+
 async fn index_exists(db: &Db, name: &str) -> bool {
     matches!(
         db.scalar(&format!("SELECT 1 FROM sqlite_master WHERE type='index' AND name='{name}'"))
@@ -54,6 +66,15 @@ async fn fresh_db_has_named_index_and_no_inline_unique() {
     db.build_organization_indexes().await.unwrap();
     assert!(index_exists(&db, "organizations_identity").await, "identity index built by a projection");
     assert!(index_exists(&db, "organization_mentions_org").await, "mentions-org index present");
+    // Issue 62: the identity index is PLAIN (non-unique). Org identity is
+    // deduplicated in RAM (org_of), so nothing needs a DB UNIQUE constraint — and a
+    // UNIQUE build over the NULLable identity columns HANGS at ~30M orgs (the resume
+    // cutover reaches this over a bare-but-full org table). A plain index serves the
+    // lookup without that pathology; guard against a regression back to UNIQUE.
+    assert!(
+        !index_sql(&db, "organizations_identity").await.to_uppercase().contains("UNIQUE"),
+        "organizations_identity must be a PLAIN index (a UNIQUE build over 30M orgs hangs prod)"
+    );
 
     let _ = std::fs::remove_file(&path);
 }

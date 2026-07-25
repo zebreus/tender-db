@@ -1147,14 +1147,21 @@ impl Db {
     /// replace (issue 60). The `org_of` map guaranteed no duplicate identifiers,
     /// so the unique index builds without conflict.
     ///
-    /// Skips `organizations_identity` when the table already carries an inline
-    /// `UNIQUE(country, identifier_kind, identifier)` — a pre-issue-62 (existing
-    /// prod) table does. Building a redundant named unique index over its millions
-    /// of existing orgs is a pathological CREATE-INDEX-at-scale (it HUNG prod
-    /// startup) AND pointless, since the inline constraint already enforces the
-    /// uniqueness. On a resume the org tables were never stripped, so this is the
-    /// path that runs there; a fresh issue-62 bare table has no inline UNIQUE and
-    /// gets the named index built (cheaply, on an empty/small table).
+    /// Builds `organizations_identity` as a PLAIN (non-unique) index. Nothing
+    /// relies on a DB UNIQUE constraint for org identity: the dedup is the in-RAM
+    /// `org_of` map (the run's authority) and there is no `INSERT … ON CONFLICT` on
+    /// organizations anywhere, so a plain index serves every lookup identically —
+    /// while a UNIQUE build over the NULLable identity columns is the cross-corpus
+    /// uniqueness-CHECK that HUNG prod startup at ~30M orgs (issue 62, the same
+    /// random-key CREATE-INDEX-at-scale pathology Task-1 removed from the tenders
+    /// identity keys). CRITICAL for the resume cutover: `strip_organization_indexes`
+    /// recreates `organizations` BARE (no inline UNIQUE) and the salvage loads it
+    /// full in Phase-1 but only builds indexes at a completed fold's end — so a
+    /// resume whose Phase-2 never finished reaches here with a bare-but-FULL table.
+    /// A unique build there would wedge; a plain one is bulk-load-safe (measured).
+    /// Still skipped when the table carries a pre-issue-62 inline
+    /// `UNIQUE(country, identifier_kind, identifier)` — its auto-index already
+    /// serves the lookup, so a redundant named index is pointless.
     pub async fn build_organization_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         let inline_unique = {
@@ -1168,7 +1175,7 @@ impl Db {
         };
         if !inline_unique {
             conn.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS organizations_identity
+                "CREATE INDEX IF NOT EXISTS organizations_identity
                      ON organizations(country, identifier_kind, identifier)",
                 (),
             )
