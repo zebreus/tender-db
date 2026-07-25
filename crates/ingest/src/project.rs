@@ -339,11 +339,17 @@ pub async fn project_with_progress(
         db.strip_organization_indexes().await?;
     }
     if rebuild {
+        // Empty the tender-content layer and DROP+recreate `tenders` bare (fresh AND
+        // resume both fold from empty): this strips the inline-UNIQUE auto-indexes
+        // that steepened the fold and resets sqlite_sequence so ids restart at 1 in
+        // fold order — resume becomes byte-identical to fresh. Preserves the Phase-1
+        // Organizations the resume relies on (issue 60).
+        db.reset_tender_layer().await?;
         // Defer the random-key tender satellite indexes for the from-scratch Phase-2
         // fold — this runs for BOTH a fresh rebuild and a resume (both fold from an
         // empty canonical layer). Maintaining organization_id / CPV / published_at /
-        // notice_id indexes live during the fold is the issue-60/62 random-position
-        // write storm; they are rebuilt sorted at the end.
+        // notice_id / tenders-identity indexes live during the fold is the
+        // issue-60/62 random-position write storm; they are rebuilt sorted at the end.
         db.strip_tender_indexes().await?;
     }
     let now = store::now_unix();
@@ -390,7 +396,7 @@ pub async fn project_with_progress(
         let Some(last) = groups.last() else { break };
         after = last.group_key.clone();
         tenders_done += groups.len() as u64;
-        report.applied.add(apply_plan_batch(db, &groups, now).await?);
+        report.applied.add(apply_plan_batch(db, &groups, now, rebuild).await?);
         // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
         on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
         batches_done += 1;
@@ -637,7 +643,9 @@ async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
         let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
         let Some(last) = groups.last() else { break };
         after = last.group_key.clone();
-        report.applied.add(apply_plan_batch(db, &groups, now).await?);
+        // Incremental folds touched Tenders against the populated layer, so identity
+        // keeps the natural-key probe (rebuild=false).
+        report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
     }
     db.clear_plan().await?;
     // Keep the change-set index present for the next daily run (issue 58); cheap —
@@ -662,6 +670,7 @@ async fn apply_plan_batch(
     db: &Db,
     groups: &[store::PlanGroup],
     now: i64,
+    rebuild: bool,
 ) -> turso::Result<store::Applied> {
     // Read the batch's parsed layer + mentions in ascending notice_id order, not
     // fold (group_key) order: the batch's notices are scattered across id space, and
@@ -701,7 +710,7 @@ async fn apply_plan_batch(
             }
         })
         .collect();
-    let applied = db.apply_tenders(&projections, now).await?;
+    let applied = db.apply_tenders(&projections, now, rebuild).await?;
     // Mark every applied notice as folded into the canonical layer (issue 58) —
     // whether or not its Tender changed — so the next incremental run skips it.
     db.mark_projected(&ids).await?;

@@ -58,14 +58,28 @@ pub(crate) const SCHEMA: &str = "
         -- tender_versions stays fully append-only -- this is a derived head pointer
         -- (ADR-0001 allows validity-range writes on the canonical layer).
         current_seq          INTEGER,
-        current_published_at INTEGER,
+        current_published_at INTEGER
         -- A procedure key is globally unique across Sources: a TED eForms
         -- procedure and its DÖE twin share one BT-04 UUID and must collapse into
         -- one Tender (ADR-0003), and legacy `ojs:` keys are TED-only, so the key
         -- alone identifies the Tender. `source` is the primary Source label
         -- (TED where the procedure appears on both).
-        UNIQUE(procedure_key),
-        UNIQUE(island_notice_id)
+        --
+        -- Identity is served by PLAIN (non-unique) named indexes, not inline
+        -- UNIQUE auto-indexes: uniqueness is guaranteed by construction — a
+        -- rebuild assigns one distinct group_key per group (the identity probe is
+        -- skipped, reset_tender_layer having emptied the layer first), and the
+        -- incremental path probes these indexes before inserting — while turso
+        -- hangs building UNIQUE indexes at scale (issue 62). The inline UNIQUEs
+        -- were also the random-key probe+maintenance storm that steepened the
+        -- Phase-2 fold (issue 60/62, here on the tender side).
+        --
+        -- Those named indexes (`tenders_procedure_key`, `tenders_island`) are NOT
+        -- created here: a schema-batch CREATE INDEX runs at every Db::open and would
+        -- build over prod's millions of existing tenders on open (the hang that hit
+        -- organizations_identity). They live only in DEFERRED_TENDER_INDEXES, built
+        -- once by build_tender_indexes at a rebuild's end; the incremental probe
+        -- uses whatever the last rebuild left in place.
     ) STRICT;
     -- The index that serves the newest-current-Tenders list (issue 25) is
     -- created in migrate(), not here: on a pre-issue-25 database the
@@ -1169,22 +1183,92 @@ impl Db {
     }
 
     /// The tender satellite indexes whose keys are RANDOM across the corpus —
-    /// `organization_id` (millions of orgs), CPV `code`, `published_at`, and the
-    /// causing `notice_id` — as opposed to the append-mostly `(tender_id, seq)` and
-    /// natural-key UNIQUE indexes. Maintaining these live during a from-scratch
-    /// Phase-2 fold is a random-position b-tree write storm past the page cache (the
-    /// issue-60/62 thrash, here on the tender side). They are dropped before the fold
-    /// and rebuilt once, sorted, at the end. All NON-unique over NON-NULL keys, so
-    /// the bulk build is the measured-safe kind — not the org-identity NULL-unique
-    /// hang.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 6] = [
+    /// `organization_id` (millions of orgs), CPV `code`, `published_at`, the
+    /// causing `notice_id`, and the two `tenders` identity keys (a rebuild inserts
+    /// tenders in fold order, so `procedure_key`/`island_notice_id` land at random
+    /// b-tree positions) — as opposed to the append-mostly `(tender_id, seq)`
+    /// indexes. Maintaining these live during a from-scratch Phase-2 fold is a
+    /// random-position b-tree write storm past the page cache (the issue-60/62
+    /// thrash, here on the tender side — the `tenders` identity probe+maintenance is
+    /// exactly what steepened the fold). They are dropped before the fold and
+    /// rebuilt once, sorted, at the end. All PLAIN (non-unique), so the bulk build
+    /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
+    /// the identity indexes are non-unique because a rebuild's group_keys are
+    /// distinct by construction and the incremental probe guards otherwise.
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 8] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
         ("tender_version_parties_org", "tender_version_parties(organization_id)"),
         ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
         ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
+        ("tenders_procedure_key", "tenders(procedure_key)"),
+        ("tenders_island", "tenders(source, island_notice_id)"),
     ];
+
+    /// Empty and schema-migrate the tender-CONTENT layer for a from-scratch Phase-2
+    /// fold — a fresh rebuild OR a resume (both fold from an empty tender layer).
+    /// DROP+recreate `tenders` BARE (no inline `UNIQUE`) both strips the inline
+    /// auto-indexes that steepened the fold — the issue-60 fix finally applied to
+    /// tenders — and, by dropping the table, clears its `sqlite_sequence` row so ids
+    /// restart at 1 in fold order (making a resume byte-identical to a fresh run).
+    /// The other AUTOINCREMENT content tables (`lots`/`bids`/`contracts`/
+    /// `lot_results`) are emptied and their `sqlite_sequence` rows reset likewise.
+    ///
+    /// Preserves everything Phase-1 produced or the resume relies on:
+    /// `organizations`, `organization_mentions`, the `plan_*` tables, the notice /
+    /// value layer, and the `changes` cursor. Unlike [`Db::clear_canonical`] it does
+    /// NOT reset the `notices.projected` watermark — the projection marks notices
+    /// projected as it folds them.
+    pub async fn reset_tender_layer(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        // Drop the table (removing its inline-UNIQUE auto-indexes AND its
+        // sqlite_sequence row) and recreate it bare — identity is served by the
+        // deferred plain named indexes instead.
+        conn.execute("DROP TABLE IF EXISTS tenders", ()).await?;
+        conn.execute(
+            "CREATE TABLE tenders (
+                 id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
+                 procedure_key TEXT, island_notice_id INTEGER REFERENCES notices(id),
+                 kind TEXT NOT NULL, created_at INTEGER NOT NULL,
+                 current_seq INTEGER, current_published_at INTEGER
+             ) STRICT",
+            (),
+        )
+        .await?;
+        for table in [
+            "tender_version_result_winners",
+            "tender_version_result_stats",
+            "tender_version_lot_results",
+            "tender_version_bid_parties",
+            "tender_version_bids",
+            "tender_version_contracts",
+            "tender_version_parties",
+            "tender_version_texts",
+            "tender_version_dates",
+            "tender_version_amounts",
+            "tender_version_classifications",
+            "tender_version_lots",
+            "tender_versions",
+            "lot_results",
+            "bids",
+            "contracts",
+            "lots",
+        ] {
+            conn.execute(&format!("DELETE FROM {table}"), ()).await?;
+        }
+        // Also clear tenders' high-water row explicitly: the DROP above already
+        // removes it on turso, so this is belt-and-suspenders — correctness no longer
+        // depends on turso's DROP-TABLE-clears-sqlite_sequence behavior. A no-op if
+        // the DROP cleared it; the reset if it did not. Either way the next tenders
+        // INSERT gets id 1.
+        conn.execute(
+            "DELETE FROM sqlite_sequence WHERE name IN ('tenders','lots','bids','contracts','lot_results')",
+            (),
+        )
+        .await?;
+        Ok(())
+    }
 
     /// Drop the random-key tender satellite indexes before a full Phase-2 (issue
     /// 60/62). Runs for a fresh rebuild AND a resume — both do a from-scratch fold.
@@ -1822,7 +1906,7 @@ impl Db {
     /// unchanged, so an unchanged projection still writes nothing; and the
     /// cursor doorbell rings once at the end, so a change-feed consumer sees
     /// every version exactly once — only the batching, not the set, changes.
-    pub async fn apply_tenders(&self, projections: &[TenderProjection], now: i64) -> turso::Result<Applied> {
+    pub async fn apply_tenders(&self, projections: &[TenderProjection], now: i64, rebuild: bool) -> turso::Result<Applied> {
         let conn = self.conn().await;
         let mut total = Applied::default();
         let mut changed_any = false;
@@ -1831,7 +1915,7 @@ impl Db {
             let mut applied = Applied::default();
             let mut error = None;
             for p in chunk {
-                match self.apply_tender_tx(&conn, p, now).await {
+                match self.apply_tender_tx(&conn, p, now, rebuild).await {
                     Ok(a) => applied.add(a),
                     Err(e) => {
                         error = Some(e);
@@ -1874,9 +1958,10 @@ impl Db {
         conn: &Connection,
         p: &TenderProjection,
         now: i64,
+        rebuild: bool,
     ) -> turso::Result<Applied> {
         let mut applied = Applied::default();
-        let (tender_id, created) = self.tender_identity(conn, p, now).await?;
+        let (tender_id, created) = self.tender_identity(conn, p, now, rebuild).await?;
         applied.tenders_created += u64::from(created);
 
         // The projection is deterministic, so the sequence of causing notices
@@ -1931,32 +2016,44 @@ impl Db {
         conn: &Connection,
         p: &TenderProjection,
         now: i64,
+        rebuild: bool,
     ) -> turso::Result<(i64, bool)> {
-        // A keyed Tender is found by its procedure key alone — that is what
-        // merges a procedure's TED and DÖE readings into one Tender (ADR-0003).
-        // Islands stay per-notice.
-        let mut rows = match (&p.procedure_key, p.island_notice_id) {
-            (Some(key), _) => {
-                conn.query("SELECT id, source FROM tenders WHERE procedure_key = ?", (t(key),)).await?
+        // On a rebuild the tender-content layer was just emptied by
+        // [`Db::reset_tender_layer`] and every group_key is distinct, so identity is
+        // ALWAYS a fresh insert — skip the random-position probe into the (now
+        // deferred) identity indexes that steepened the Phase-2 fold (issue 60/62).
+        // Byte-identical: clear_canonical never reset sqlite_sequence, so a fresh
+        // rebuild already re-inserts at ever-climbing ids and always missed this
+        // probe; the reset-to-1 just makes it deterministic (resume == fresh). The
+        // incremental/non-rebuild path keeps the probe — it folds touched Tenders
+        // against a populated layer.
+        if !rebuild {
+            // A keyed Tender is found by its procedure key alone — that is what
+            // merges a procedure's TED and DÖE readings into one Tender (ADR-0003).
+            // Islands stay per-notice.
+            let mut rows = match (&p.procedure_key, p.island_notice_id) {
+                (Some(key), _) => {
+                    conn.query("SELECT id, source FROM tenders WHERE procedure_key = ?", (t(key),)).await?
+                }
+                (None, Some(notice_id)) => {
+                    conn.query(
+                        "SELECT id, source FROM tenders WHERE source = ? AND island_notice_id = ?",
+                        (t(&p.source), Value::Integer(notice_id)),
+                    )
+                    .await?
+                }
+                (None, None) => unreachable!("a Tender is keyed by its procedure or by its island notice"),
+            };
+            if let Some(row) = rows.next().await? {
+                let id = int(&row, 0);
+                // As backfill deepens, a DÖE-first procedure gains its TED twin and
+                // the primary Source flips to TED (ADR-0003); keep the label current.
+                if text(&row, 1) != p.source {
+                    conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
+                        .await?;
+                }
+                return Ok((id, false));
             }
-            (None, Some(notice_id)) => {
-                conn.query(
-                    "SELECT id, source FROM tenders WHERE source = ? AND island_notice_id = ?",
-                    (t(&p.source), Value::Integer(notice_id)),
-                )
-                .await?
-            }
-            (None, None) => unreachable!("a Tender is keyed by its procedure or by its island notice"),
-        };
-        if let Some(row) = rows.next().await? {
-            let id = int(&row, 0);
-            // As backfill deepens, a DÖE-first procedure gains its TED twin and
-            // the primary Source flips to TED (ADR-0003); keep the label current.
-            if text(&row, 1) != p.source {
-                conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
-                    .await?;
-            }
-            return Ok((id, false));
         }
         conn.execute(
             "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)
