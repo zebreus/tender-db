@@ -663,7 +663,15 @@ async fn apply_plan_batch(
     groups: &[store::PlanGroup],
     now: i64,
 ) -> turso::Result<store::Applied> {
-    let ids: Vec<i64> = groups.iter().flat_map(|g| g.notice_ids.iter().copied()).collect();
+    // Read the batch's parsed layer + mentions in ascending notice_id order, not
+    // fold (group_key) order: the batch's notices are scattered across id space, and
+    // notices/notice_sections/values are all keyed by notice_id, so an unsorted
+    // (fold-order) read is ~random rowid seeks into the cold multi-hundred-GB notice
+    // tables — the Phase-2 bottleneck at scale. A sorted read is a forward sweep
+    // (read-ahead friendly). The fold below is unaffected: it indexes `states` by id
+    // and iterates each group's own notice_ids.
+    let mut ids: Vec<i64> = groups.iter().flat_map(|g| g.notice_ids.iter().copied()).collect();
+    ids.sort_unstable();
     let parsed = db.parsed_by_ids(&ids).await?;
     let orgs = db.mentions_by_ids(&ids).await?;
 

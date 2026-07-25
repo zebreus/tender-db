@@ -1403,11 +1403,27 @@ impl Db {
     /// Finally builds the fold-order index Phase 2 streams by.
     pub async fn build_plan_groups(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        // Drop the fold index before the group_key UPDATEs so they don't pay per-row
-        // index maintenance on every one of ~22M writes. It persists across an
-        // interrupted resume (grouping re-runs over an already-populated plan), and
-        // is rebuilt once at the end.
-        conn.execute("DROP INDEX IF EXISTS plan_notice_fold", ()).await?;
+        // Resumable grouping: the fold index is this method's LAST write, so its
+        // presence means a prior run already assigned every group_key from the SAME
+        // plan with the SAME logic (grouping is a pure function of the plan). Reuse it
+        // rather than redo the ~25 min at 12.4M — the resume salvage, extended past
+        // Phase-1 to grouping. A fresh rebuild's build_plan → reset_plan drops the
+        // fold index (and clears the plan) first, so this only fires on a resume/retry
+        // where grouping genuinely completed on disk. (If grouping logic ever changes,
+        // drop plan_notice_fold to force a recompute.)
+        {
+            let mut r = conn
+                .query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = 'plan_notice_fold'", ())
+                .await?;
+            if r.next().await?.is_some() {
+                drop(r);
+                eprintln!("[project] group: reusing complete on-disk grouping (fold index present)");
+                return Ok(());
+            }
+        }
+        // Fresh grouping (the fold index is absent — reset_plan dropped it). The
+        // group_key UPDATEs run index-free so they don't pay per-row index
+        // maintenance on ~22M writes; the fold index is rebuilt once at the end.
         // Keyed and island in one pass; legacy left NULL for the closure below.
         let t = std::time::Instant::now();
         conn.execute(
