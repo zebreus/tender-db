@@ -1497,6 +1497,17 @@ impl Db {
         )
         .await?;
         eprintln!("[project] group step fold-index: {:.1}s", t.elapsed().as_secs_f64());
+        // Give turso's planner row stats so plan_summary and Phase-2's next_plan_batch
+        // stream via plan_notice_fold instead of sorting the group_key tail (turso
+        // keeps no stats otherwise, and its young planner has mis-planned at scale).
+        // Non-fatal — without stats the planner should still match the fold index to
+        // the range+order; this just removes the risk it doesn't. Cheap here: the
+        // canonical layer is empty at grouping time, so only the notice tables scan.
+        let t = std::time::Instant::now();
+        if let Err(e) = conn.execute("ANALYZE plan_notice", ()).await {
+            eprintln!("[project] ANALYZE plan_notice failed (non-fatal): {e}");
+        }
+        eprintln!("[project] group step analyze: {:.1}s", t.elapsed().as_secs_f64());
         Ok(())
     }
 
