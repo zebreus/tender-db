@@ -374,18 +374,24 @@ pub async fn project_with_progress_phase2(
         db.strip_organization_indexes().await?;
     }
     if rebuild {
+        // Defer the random-key tender satellite indexes for the from-scratch Phase-2
+        // fold — this runs for BOTH a fresh rebuild and a resume (both fold from an
+        // empty canonical layer). Maintaining organization_id / CPV / published_at /
+        // notice_id / tenders-identity indexes live during the fold is the
+        // issue-60/62 random-position write storm; they are rebuilt sorted at the end.
+        //
+        // Strip BEFORE reset (issue 64): a resume over a fully-indexed partial layer
+        // (e.g. the rebuild=false fallback) would otherwise pay reset's per-row
+        // content DELETEs against the live random-key indexes — a random-position
+        // b-tree delete storm scaling with the partial's satellite rows. Dropping the
+        // indexes first makes those DELETEs sequential page frees.
+        db.strip_tender_indexes().await?;
         // Empty the tender-content layer and DROP+recreate `tenders` bare (fresh AND
         // resume both fold from empty): this strips the inline-UNIQUE auto-indexes
         // that steepened the fold and resets sqlite_sequence so ids restart at 1 in
         // fold order — resume becomes byte-identical to fresh. Preserves the Phase-1
         // Organizations the resume relies on (issue 60).
         db.reset_tender_layer().await?;
-        // Defer the random-key tender satellite indexes for the from-scratch Phase-2
-        // fold — this runs for BOTH a fresh rebuild and a resume (both fold from an
-        // empty canonical layer). Maintaining organization_id / CPV / published_at /
-        // notice_id / tenders-identity indexes live during the fold is the
-        // issue-60/62 random-position write storm; they are rebuilt sorted at the end.
-        db.strip_tender_indexes().await?;
     }
     let now = store::now_unix();
     let mut report = Report::default();
