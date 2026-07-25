@@ -29,6 +29,7 @@
 
 use crate::checkpoint::{CheckpointMode, checkpoint_on};
 use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_text, opt_text_of, t, text};
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Value};
 
@@ -600,7 +601,7 @@ impl MinUnionFind {
 /// One canonical value of a Tender version, in its scope. The satellites of
 /// docs/architecture.md, as one comparable type — diffing versions is set
 /// comparison over these.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Fact {
     Text { field: String, lang: Option<String>, value: String },
     Amount { field: String, cents: i64, currency: String },
@@ -625,7 +626,7 @@ impl Fact {
 }
 
 /// A Lot as one version publishes it.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LotState {
     pub key: String,
     pub kind: String,
@@ -637,7 +638,7 @@ pub struct LotState {
 /// a later version never supersedes an earlier round's results (the verified
 /// tranche pattern), except that a correction — a change notice republishing
 /// the same logical notice — replaces the round it corrects.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Round {
     /// The result notice this round came from; results keys are local to it.
     pub notice_id: i64,
@@ -649,7 +650,7 @@ pub struct Round {
 }
 
 /// The award decision for one Lot (eForms LotResult, RES-).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LotResultState {
     pub key: String,
     /// The referenced lot id as published (BT-13713) — resolved defensively,
@@ -666,7 +667,7 @@ pub struct LotResultState {
 }
 
 /// A Bid (eForms LotTender, TEN-): one offer on one Lot.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BidState {
     pub key: String,
     pub lot_key: Option<String>,
@@ -676,7 +677,7 @@ pub struct BidState {
 }
 
 /// One Organization behind a Bid — the eForms TenderingParty flattened.
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct BidParty {
     pub role: String, // tenderer | subcontractor
     pub organization_id: i64,
@@ -685,7 +686,7 @@ pub struct BidParty {
 }
 
 /// A settled Contract (eForms SettledContract, CON-).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ContractState {
     pub key: String,
     pub buyer_contract_id: Option<String>,
@@ -1706,6 +1707,34 @@ impl Db {
             total += 1;
         }
         Ok(groups)
+    }
+
+    /// The `notice_id → group_key` map for a contiguous notice-id range — the
+    /// Phase-2 bucketed fold's routing lookup (issue 62). The fold's pre-pass reads
+    /// the parsed layer in id-order chunks ([`Db::parsed_chunk`]) and needs each
+    /// notice's grouping key to route it to its order-preserving bucket; a ranged
+    /// scan over `plan_notice`'s `notice_id` PK matches that burst-sequential
+    /// pattern (one range scan per chunk, not an `IN(…)` per-notice probe). Notices
+    /// outside the plan — a resume's post-Phase-1 suffix — are simply absent from
+    /// the map and skipped (left for the incremental projection).
+    pub async fn plan_group_keys(
+        &self,
+        lo: i64,
+        hi: i64,
+    ) -> turso::Result<std::collections::HashMap<i64, String>> {
+        let conn = self.reader().await?;
+        let mut out = std::collections::HashMap::new();
+        let mut rows = conn
+            .query(
+                "SELECT notice_id, group_key FROM plan_notice
+                  WHERE notice_id >= ? AND notice_id <= ? AND group_key IS NOT NULL",
+                (Value::Integer(lo), Value::Integer(hi)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.insert(int(&row, 0), text(&row, 1));
+        }
+        Ok(out)
     }
 
     /// Open a streaming mention resolver, preloading the Organization dedup key

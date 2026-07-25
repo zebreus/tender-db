@@ -42,6 +42,13 @@ wasm-bindgen = "=0.2.118"
 turso = "=0.7.0"
 tokio = { version = "1", features = ["rt", "macros", "sync"] }
 
+# The Phase-2 bucketed fold (issue 62) spills each resolved notice state to an
+# order-preserving on-disk bucket as postcard — a compact, self-describing serde
+# codec — so the fold reads the parsed layer once sequentially instead of in random
+# group_key order. Pure Rust, no C. `use-std` enables `to_stdvec` (the alloc Vec
+# serializer) for the server-side spill.
+postcard = { version = "1", features = ["use-std"] }
+
 # The public API (`/v1`). axum is already in the tree via dioxus-server, so the
 # API sub-router merges into the dioxus router with no version skew
 # (docs/research/api-layer.md §1). tower_governor is the per-IP rate limiter,
