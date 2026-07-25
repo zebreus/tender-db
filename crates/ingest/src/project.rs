@@ -874,7 +874,8 @@ async fn write_buckets(db: &Db, boundaries: &[String], dir: &Path) -> turso::Res
             let bucket = boundaries.partition_point(|b| b.as_str() < group_key.as_str());
             let bytes = postcard::to_stdvec(&row).expect("serialize bucket row");
             let w = &mut writers[bucket];
-            w.write_all(&(bytes.len() as u32).to_le_bytes()).expect("write bucket frame length");
+            w.write_all(&u32::try_from(bytes.len()).expect("bucket row < 4GB").to_le_bytes())
+                .expect("write bucket frame length");
             w.write_all(&bytes).expect("write bucket frame");
         }
     }
