@@ -1274,6 +1274,69 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 mod tests {
     use super::*;
 
+    /// [`Db::reset_tender_layer`] must leave every tender-side AUTOINCREMENT table's
+    /// sqlite_sequence high-water cleared, so a from-scratch fold (fresh OR resume)
+    /// re-inserts ids from 1 in fold order — the invariant that makes a resumed
+    /// rebuild byte-identical to a fresh one, and the projection's surrogate ids
+    /// deterministic. Proves the turso behavior the projection depends on
+    /// (DROP TABLE clears the sequence) AND the explicit sqlite_sequence DELETE, so
+    /// the cutover has no unproven unknown.
+    #[tokio::test]
+    async fn reset_tender_layer_restarts_autoincrement_at_one() {
+        let path = format!("/tmp/tender-db-resettender-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        // reset_tender_layer runs FK-off in prod (the projection disables FK).
+        db.set_foreign_keys(false).await.unwrap();
+
+        // Push every tender-side sequence high-water above 1 (two rows each), so a
+        // reset that did NOT clear the sequence would hand out ids 3+, not 1.
+        {
+            let conn = db.conn().await;
+            for i in 1..=2i64 {
+                conn.execute(
+                    "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)
+                     VALUES('ted', ?, NULL, 'procedure', 0)",
+                    (t(&format!("bt04-{i}")),),
+                )
+                .await
+                .unwrap();
+                conn.execute("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)", (Value::Integer(i), t(&format!("L{i}")))).await.unwrap();
+                conn.execute("INSERT INTO bids(tender_id, notice_id, bid_key) VALUES(?, 1, ?)", (Value::Integer(i), t(&format!("TEN-{i}")))).await.unwrap();
+                conn.execute("INSERT INTO contracts(tender_id, notice_id, contract_key) VALUES(?, 1, ?)", (Value::Integer(i), t(&format!("CON-{i}")))).await.unwrap();
+                conn.execute("INSERT INTO lot_results(tender_id, notice_id, result_key) VALUES(?, 1, ?)", (Value::Integer(i), t(&format!("RES-{i}")))).await.unwrap();
+            }
+        }
+
+        db.reset_tender_layer().await.unwrap();
+
+        // Every fresh insert restarts at id 1.
+        let conn = db.conn().await;
+        conn.execute(
+            "INSERT INTO tenders(source, procedure_key, island_notice_id, kind, created_at)
+             VALUES('ted', 'bt04-fresh', NULL, 'procedure', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        assert_eq!(conn.last_insert_rowid(), 1, "tenders id restarts at 1 after reset_tender_layer");
+        conn.execute("INSERT INTO lots(tender_id, lot_key) VALUES(1, 'x')", ()).await.unwrap();
+        assert_eq!(conn.last_insert_rowid(), 1, "lots id restarts at 1 after sqlite_sequence reset");
+        conn.execute("INSERT INTO bids(tender_id, notice_id, bid_key) VALUES(1, 1, 'x')", ()).await.unwrap();
+        assert_eq!(conn.last_insert_rowid(), 1, "bids id restarts at 1");
+        conn.execute("INSERT INTO contracts(tender_id, notice_id, contract_key) VALUES(1, 1, 'x')", ()).await.unwrap();
+        assert_eq!(conn.last_insert_rowid(), 1, "contracts id restarts at 1");
+        conn.execute("INSERT INTO lot_results(tender_id, notice_id, result_key) VALUES(1, 1, 'x')", ()).await.unwrap();
+        assert_eq!(conn.last_insert_rowid(), 1, "lot_results id restarts at 1");
+        drop(conn);
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Regression (issue 42/53, the store-pool WAL pin): `import_lag`'s newest-notice
     /// read must be O(1), not a full `notices` scan. `MAX(ingested_at)` full-scanned
     /// the table (no index on ingested_at) — running ungated every 60 s from the
