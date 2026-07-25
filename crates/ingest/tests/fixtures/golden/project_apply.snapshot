@@ -1,0 +1,159 @@
+--- tenders ---
+1|32c34097-960e-4d02-b04d-3ceac32cf020|-1|procedure|ted|4
+2||5|registration|ted|1
+3||6|procedure|ted|1
+--- tender_versions ---
+1|1|1|00831374-2025|16|1765753200|1765472418
+1|2|2|00006281-2026|16|1767740400|1767705463
+1|3|3|00018902-2026|16|1768258800|1768045538
+1|4|4|00380868-2026|29|1780437600|1780391852
+2|1|5|00497689-2026|X01|1784239200|1784199584
+3|1|6|00496860-2026|4|1784239200|1784211228
+--- tender_version_lots ---
+1|1|1|Lot
+1|2|1|Lot
+1|3|1|Lot
+1|4|1|Lot
+3|1|2|Part
+--- tender_version_texts ---
+1|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+1|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+1|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
+3|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
+3|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|2
+3|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
+3|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|2
+--- tender_version_dates ---
+1|1|opening_date|1768986000|60|1|1
+1|1|submission_deadline|1768984200|60|1|1
+1|2|opening_date|1769504400|60|1|1
+1|2|submission_deadline|1769502600|60|1|1
+1|3|opening_date|1770282000|60|1|1
+1|3|submission_deadline|1770280200|60|1|1
+1|4|opening_date|1770282000|60|1|1
+1|4|submission_deadline|1770280200|60|1|1
+--- tender_version_classifications ---
+1|1|main|cpv|33693100|-1
+1|1|main|cpv|33693100|1
+1|1|place|nuts|MT001|-1
+1|1|place|nuts|MT001|1
+1|2|main|cpv|33693100|-1
+1|2|main|cpv|33693100|1
+1|2|place|nuts|MT001|-1
+1|2|place|nuts|MT001|1
+1|3|main|cpv|33693100|-1
+1|3|main|cpv|33693100|1
+1|3|place|nuts|MT001|-1
+1|3|place|nuts|MT001|1
+1|4|main|cpv|33693100|-1
+1|4|main|cpv|33693100|1
+1|4|place|nuts|MT001|-1
+1|4|place|nuts|MT001|1
+3|1|main|cpv|33000000|-1
+3|1|main|cpv|33000000|2
+3|1|place|nuts|LV00A|-1
+3|1|place|nuts|LV00A|2
+--- tender_version_amounts ---
+1|1|estimated_value|81686300|EUR|-1
+1|1|estimated_value|81686300|EUR|1
+1|2|estimated_value|81686300|EUR|-1
+1|2|estimated_value|81686300|EUR|1
+1|3|estimated_value|81686300|EUR|-1
+1|3|estimated_value|81686300|EUR|1
+1|4|estimated_value|81686300|EUR|-1
+1|4|estimated_value|81686300|EUR|1
+1|4|result_value|23968954|EUR|-1
+--- tender_version_parties ---
+1|1|Lot-DocProvider|1|1|ORG-0001|1
+1|1|Lot-ReviewInfo|1|1|ORG-0001|1
+1|1|Lot-ReviewOrg|2|1|ORG-0002|1
+1|1|Lot-TenderEval|1|1|ORG-0001|1
+1|1|Lot-TenderReceipt|1|1|ORG-0001|1
+1|1|Procedure-Buyer|1|1|ORG-0001|-1
+1|1|Procedure-SProvider|3|1|ORG-0003|-1
+1|2|Lot-DocProvider|1|2|ORG-0001|1
+1|2|Lot-ReviewInfo|1|2|ORG-0001|1
+1|2|Lot-ReviewOrg|4|2|ORG-0002|1
+1|2|Lot-TenderEval|1|2|ORG-0001|1
+1|2|Lot-TenderReceipt|1|2|ORG-0001|1
+1|2|Procedure-Buyer|1|2|ORG-0001|-1
+1|2|Procedure-SProvider|3|2|ORG-0003|-1
+1|3|Lot-DocProvider|1|3|ORG-0001|1
+1|3|Lot-ReviewInfo|1|3|ORG-0001|1
+1|3|Lot-ReviewOrg|5|3|ORG-0002|1
+1|3|Lot-TenderEval|1|3|ORG-0001|1
+1|3|Lot-TenderReceipt|1|3|ORG-0001|1
+1|3|Procedure-Buyer|1|3|ORG-0001|-1
+1|3|Procedure-SProvider|3|3|ORG-0003|-1
+1|4|Lot-DocProvider|1|4|ORG-0001|1
+1|4|Lot-ReviewInfo|1|3|ORG-0001|1
+1|4|Lot-ReviewOrg|7|4|ORG-0003|1
+1|4|Lot-TenderEval|1|3|ORG-0001|1
+1|4|Lot-TenderReceipt|1|3|ORG-0001|1
+1|4|Procedure-Buyer|1|4|ORG-0001|-1
+1|4|Procedure-SProvider|3|4|ORG-0004|-1
+1|4|Tenderer|6|4|ORG-0002|1
+3|1|Part-AddInfo|8|6|ORG-0001|2
+3|1|Part-EmployLegis|8|6|ORG-0001|2
+3|1|Part-EnvironLegis|8|6|ORG-0001|2
+3|1|Part-FiscalLegis|8|6|ORG-0001|2
+3|1|Part-ReviewOrg|9|6|ORG-0002|2
+3|1|Procedure-Buyer|8|6|ORG-0001|-1
+--- lots ---
+1|1|LOT-0001
+2|3|PAR-0000
+--- bids ---
+1|1|4|TEN-0001
+--- contracts ---
+1|1|4|CON-0001
+--- lot_results ---
+1|1|4|RES-0001
+--- tender_version_lot_results ---
+1|4|1|1|selec-w||23968954|EUR
+--- tender_version_result_winners ---
+1|4|1|6
+--- tender_version_result_stats ---
+1|4|1|tenders|11
+--- tender_version_bids ---
+1|4|1|1|23968954|EUR
+--- tender_version_bid_parties ---
+1|4|1|tenderer|6|4|ORG-0002
+--- tender_version_contracts ---
+1|4|1|127804511|1779228000|120|0|23968954|EUR
+--- changes ---
+organization|added|-1|1
+organization|added|-1|2
+organization|added|-1|3
+organization|added|-1|4
+organization|added|-1|5
+organization|added|-1|6
+organization|added|-1|7
+organization|added|-1|8
+organization|added|-1|9
+tender|added|1|1
+lot|added|1|1
+tender|changed|2|1
+lot|changed|2|1
+tender|changed|3|1
+lot|changed|3|1
+tender|changed|4|1
+lot|changed|4|1
+lot_result|added|4|1
+bid|added|4|1
+contract|added|4|1
+tender|added|1|2
+tender|added|1|3
+lot|added|1|2
