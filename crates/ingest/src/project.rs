@@ -262,7 +262,7 @@ async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
 /// mentions at once, which is what OOM-crash-looped the 8 GB VPS. The batch is a
 /// count of notices (not Tenders) so peak memory is bounded regardless of how
 /// large individual Tenders are.
-const APPLY_NOTICE_BATCH: usize = 20_000;
+const APPLY_NOTICE_BATCH: usize = 160_000;
 
 /// How many Phase-2 batches (and Phase-1 plan chunks) between WAL truncations.
 /// Both the plan build and the apply burst grow the WAL; truncating at the clean
