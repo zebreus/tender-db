@@ -362,8 +362,7 @@ pub async fn project_with_progress(
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
     db.build_plan_groups().await?;
-    let legacy_keys = db.plan_legacy_keys().await?;
-    let (tenders, islands) = db.plan_counts().await?;
+    let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
     report.islands = islands;
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;

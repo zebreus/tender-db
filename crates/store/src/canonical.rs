@@ -1365,6 +1365,11 @@ impl Db {
     /// Finally builds the fold-order index Phase 2 streams by.
     pub async fn build_plan_groups(&self) -> turso::Result<()> {
         let conn = self.conn().await;
+        // Drop the fold index before the group_key UPDATEs so they don't pay per-row
+        // index maintenance on every one of ~22M writes. It persists across an
+        // interrupted resume (grouping re-runs over an already-populated plan), and
+        // is rebuilt once at the end.
+        conn.execute("DROP INDEX IF EXISTS plan_notice_fold", ()).await?;
         // Keyed and island in one pass; legacy left NULL for the closure below.
         let t = std::time::Instant::now();
         conn.execute(
@@ -1473,19 +1478,35 @@ impl Db {
         Ok((int(&row, 0) as u64, int(&row, 1) as u64))
     }
 
-    /// The legacy (`ojs:`) Tender keys the plan produced — the set
-    /// [`Db::retire_absorbed_legacy_tenders`] checks a late merge against. Bounded
-    /// by the legacy Tender count, not the corpus.
-    pub async fn plan_legacy_keys(&self) -> turso::Result<BTreeSet<String>> {
+    /// `(tenders, islands, legacy_keys)` from ONE index-ordered pass over the plan —
+    /// the resume/rebuild grouping summary. Streams `group_key` in fold-index order
+    /// (so distinct keys arrive consecutively) and folds distinctness in Rust. turso
+    /// builds an in-memory hash/sort for `COUNT(DISTINCT)` / `SELECT DISTINCT`, which
+    /// is O(distinct) in RAM and spun for many minutes at 12.4M scale — islands have
+    /// unique keys, so a DISTINCT over all group keys is ~corpus-wide. Here islands
+    /// and tenders are plain counters; only the legacy (`ojs:`) key set is
+    /// materialised — bounded by the legacy Tender count (which retirement needs),
+    /// not the corpus. `legacy_keys` is what [`Db::retire_absorbed_legacy_tenders`]
+    /// checks a late merge against.
+    pub async fn plan_summary(&self) -> turso::Result<(u64, u64, BTreeSet<String>)> {
         let conn = self.conn().await;
-        let mut out = BTreeSet::new();
-        let mut rows = conn
-            .query("SELECT DISTINCT group_key FROM plan_notice WHERE group_key LIKE 'ojs:%'", ())
-            .await?;
+        let mut rows = conn.query("SELECT group_key FROM plan_notice ORDER BY group_key", ()).await?;
+        let (mut tenders, mut islands) = (0u64, 0u64);
+        let mut legacy = BTreeSet::new();
+        let mut prev: Option<String> = None;
         while let Some(row) = rows.next().await? {
-            out.insert(text(&row, 0));
+            let gk = text(&row, 0);
+            if prev.as_deref() != Some(gk.as_str()) {
+                tenders += 1;
+                if gk.starts_with("island:") {
+                    islands += 1;
+                } else if gk.starts_with("ojs:") {
+                    legacy.insert(gk.clone());
+                }
+                prev = Some(gk);
+            }
         }
-        Ok(out)
+        Ok((tenders, islands, legacy))
     }
 
     /// Stream the next bounded batch of WHOLE Tenders from the plan, in fold order,
