@@ -31,6 +31,43 @@ use tokio::sync::{Notify, OnceCell};
 /// How many recent runs the dashboard/admin log shows.
 const RECENT_RUNS: i64 = 20;
 
+/// Worker threads on the isolated job runtime (issue 61). A job's heavy body —
+/// projection/process/fetch/snapshot — runs here, never on the main
+/// API/SSE/dashboard runtime, so turso's *blocking* preads pin these threads and
+/// leave the API responsive. Jobs still run one at a time (the store has a single
+/// writer), so this is for isolation, not parallelism — a couple of threads,
+/// mirroring the SQL runtime (`crate::v1::sql`).
+const WORKER_RUNTIME_THREADS: usize = 2;
+
+/// A tokio runtime dedicated to running the Supervisor's jobs, owned by a parked
+/// thread so it lives for the whole process and is never dropped in an async
+/// context (which tokio panics on). The exact pattern issue 17 proved for
+/// `/v1/sql` (`crate::v1::sql::spawn_sql_runtime`).
+///
+/// One is created per [`Supervisor`] — once per server in production. The `Db`
+/// writer (`tokio::sync::Mutex<Connection>`) and reader pool are tokio async
+/// primitives, safe to use from this runtime and the main one alike, so a job's
+/// blocking reads land here while the API keeps reading on the main runtime.
+fn spawn_worker_runtime() -> tokio::runtime::Handle {
+    let (tx, rx) = std::sync::mpsc::channel();
+    std::thread::Builder::new()
+        .name("job-runtime".into())
+        .spawn(move || {
+            let runtime = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(WORKER_RUNTIME_THREADS)
+                .thread_name("job-exec")
+                .enable_all()
+                .build()
+                .expect("build the isolated job runtime");
+            tx.send(runtime.handle().clone()).expect("hand back the runtime handle");
+            // Park the owner thread on a future that never completes, so the
+            // runtime stays alive without this thread busy-waiting.
+            runtime.block_on(std::future::pending::<()>());
+        })
+        .expect("spawn the job runtime thread");
+    rx.recv().expect("receive the job runtime handle")
+}
+
 /// The process-wide Supervisor. Set once at server startup.
 static SUPERVISOR: OnceCell<Arc<Supervisor>> = OnceCell::const_new();
 
@@ -71,6 +108,9 @@ pub struct Supervisor {
     wake: Notify,
     next_id: AtomicU64,
     current: RwLock<Option<JobProgress>>,
+    /// The isolated runtime a job's heavy body runs on (issue 61), kept off the
+    /// main API/SSE/dashboard runtime so blocking turso preads never starve it.
+    worker_runtime: tokio::runtime::Handle,
 }
 
 /// A queued unit of work: a display identity plus what to do.
@@ -134,6 +174,7 @@ impl Supervisor {
             wake: Notify::new(),
             next_id: AtomicU64::new(1),
             current: RwLock::new(None),
+            worker_runtime: spawn_worker_runtime(),
         }
     }
 
@@ -417,11 +458,28 @@ impl Supervisor {
     // ------------------------------------------------------------------ worker
 
     /// Spawn the worker loop: pop a job, run it, sleep on the doorbell when idle.
+    ///
+    /// The loop itself (pop + doorbell) stays on the main runtime, but each job's
+    /// heavy body runs on the isolated `worker_runtime` (issue 61): the loop
+    /// submits `execute` there via `Handle::spawn` and only awaits the
+    /// `JoinHandle` — a cheap channel wait — so the job's blocking turso preads
+    /// pin the job runtime's threads, never a main API/SSE/dashboard worker.
+    /// Awaiting the single handle preserves the one-job-at-a-time serialisation.
     pub fn spawn_worker(self: Arc<Self>) {
         tokio::spawn(async move {
             loop {
                 match self.pop() {
-                    Some(job) => self.execute(job).await,
+                    Some(job) => {
+                        let sup = self.clone();
+                        let handle = self.worker_runtime.spawn(async move { sup.execute(job).await });
+                        if let Err(e) = handle.await {
+                            // A panic inside a job must not take the worker loop
+                            // down: log it and move on to the next job. The job's
+                            // durable row survives (execute never reached its
+                            // remove_job), so it recovers on the next restart.
+                            eprintln!("supervisor: job runtime task failed: {e}");
+                        }
+                    }
                     None => self.wake.notified().await,
                 }
             }
@@ -1259,5 +1317,57 @@ mod tests {
         assert!(index_exists(&db, "organizations_identity").await, "resume rebuilds the org index (Phase-2 ran via project(true), not incremental)");
         assert!(!db.plan_is_complete().await.unwrap(), "the resume cleared the plan when done");
         assert!(summary.starts_with("4 notices"), "resume folded the whole plan: {summary}");
+    }
+
+    /// Issue 61: a job's body runs on the Supervisor's isolated runtime, off the
+    /// main API/SSE/dashboard runtime — the whole point of the fix. A task
+    /// submitted to `worker_runtime` executes on a `job-exec` thread, not the
+    /// test's own runtime threads, so a job's blocking turso preads can never pin
+    /// a main worker.
+    #[tokio::test]
+    async fn a_job_runs_on_the_isolated_runtime() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let thread_name = sup
+            .worker_runtime
+            .spawn(async { std::thread::current().name().unwrap_or_default().to_owned() })
+            .await
+            .unwrap();
+        assert!(
+            thread_name.starts_with("job-exec"),
+            "a job runs on the isolated runtime's threads, got {thread_name:?}"
+        );
+    }
+
+    /// Issue 61: the worker loop still executes a queued job correctly through the
+    /// isolated runtime — it folds the corpus, records an `ok` run, and clears the
+    /// durable row (the recovery contract is unchanged by the runtime hop).
+    #[tokio::test]
+    async fn spawn_worker_runs_a_job_through_the_isolated_runtime() {
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        for i in 0..3 {
+            record_keyed(&db, fetch_id, i).await;
+        }
+        let sup = Arc::new(Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new()));
+        sup.enqueue_request(&req("project")).await.unwrap();
+        sup.clone().spawn_worker();
+
+        // Wait for the durable queue to drain: execute() ran on the isolated
+        // runtime and removed the finished job's row.
+        for _ in 0..200 {
+            if db.pending_jobs().await.unwrap().is_empty() {
+                break;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(25)).await;
+        }
+        assert!(
+            db.pending_jobs().await.unwrap().is_empty(),
+            "the worker executed the job on the isolated runtime and cleared its durable row"
+        );
+        let runs = db.recent_job_runs(5).await.unwrap();
+        assert!(
+            runs.iter().any(|r| r.kind == "project" && r.outcome == "ok"),
+            "the project job logged an ok run: {runs:?}"
+        );
     }
 }
