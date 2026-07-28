@@ -7,10 +7,15 @@
 //! "did this version match?" question). That is why filtered SSE cannot drift
 //! from filtered REST — there is no second copy of the predicate.
 
-use crate::{Change, int, max_cursor, opt_int_of, opt_text, opt_text_of, t, text};
+use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
 use std::sync::{Arc, Mutex};
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 use turso::{Connection, Value};
+
+/// The `changes.entity_kind` values the projection ever emits. `changes_since`
+/// short-circuits an unknown kind to an empty result (issue 61 finding 2) — a kind
+/// with no rows must never trigger a table walk to discover it has none.
+const ENTITY_KINDS: [&str; 6] = ["tender", "lot", "organization", "lot_result", "bid", "contract"];
 
 // --------------------------------------------------------------- connections
 
@@ -1021,19 +1026,42 @@ pub async fn changes_since(
     limit: i64,
     entity: Option<&str>,
 ) -> turso::Result<Vec<Change>> {
-    let mut rows = conn
-        .query(
-            "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes
-              WHERE cursor > ? AND (? IS NULL OR entity_kind = ?)
-              ORDER BY cursor LIMIT ?",
-            (
-                Value::Integer(cursor),
-                opt_text(entity),
-                opt_text(entity),
-                Value::Integer(limit),
-            ),
-        )
-        .await?;
+    // Two query shapes, each planner-clean (issue 61 finding 2):
+    //  * no filter → `cursor > ? ORDER BY cursor` seeks the cursor PK and walks
+    //    forward `limit` rows — bounded.
+    //  * entity filter → `entity_kind = ? AND cursor > ? ORDER BY cursor` seeks the
+    //    `changes_entity_cursor(entity_kind, cursor)` index directly and walks that
+    //    kind's rows in cursor order. WITHOUT that index (or the old
+    //    `(? IS NULL OR entity_kind = ?)` disjunction that defeats it) a rare or
+    //    NONEXISTENT kind with `since=0` walked the whole 80M-row table to collect
+    //    `limit` matches — a public-endpoint wedge (`/v1/changes?entity=x&since=0`).
+    // Guard: an entity_kind the schema never emits has zero rows by definition, so
+    // return empty WITHOUT touching the table — closes the wedge even before the
+    // (lazily built) index exists. Behaviour-identical: a nonexistent kind always
+    // yielded empty, just after a full scan.
+    if let Some(kind) = entity
+        && !ENTITY_KINDS.contains(&kind)
+    {
+        return Ok(Vec::new());
+    }
+    let mut rows = match entity {
+        Some(kind) => {
+            conn.query(
+                "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes
+                  WHERE entity_kind = ? AND cursor > ? ORDER BY cursor LIMIT ?",
+                (Value::Text(kind.to_owned()), Value::Integer(cursor), Value::Integer(limit)),
+            )
+            .await?
+        }
+        None => {
+            conn.query(
+                "SELECT cursor, entity_kind, entity_id, version_seq, op, changed_at FROM changes
+                  WHERE cursor > ? ORDER BY cursor LIMIT ?",
+                (Value::Integer(cursor), Value::Integer(limit)),
+            )
+            .await?
+        }
+    };
     let mut out = Vec::new();
     while let Some(row) = rows.next().await? {
         out.push(Change {
@@ -1052,8 +1080,20 @@ pub async fn changes_since(
 /// served incrementally and gets an SSE `reset` instead (Firestore's expired-
 /// token semantics, docs/research/api-layer.md §3).
 pub async fn oldest_cursor(conn: &Connection) -> turso::Result<i64> {
-    let mut rows = conn.query("SELECT COALESCE(MIN(cursor), 0) FROM changes", ()).await?;
-    Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    // O(1). This runs on the SSE RESUME path (every reconnect-with-Last-Event-ID),
+    // so a cold scan here starves the HTTP runtime exactly like the other issue-61
+    // instances. turso 0.7 short-circuits NEITHER `MIN(cursor)` NOR `... ORDER BY
+    // cursor LIMIT 1` — both FULL-SCAN the 80M-row changes table (verified: identical
+    // timing over 60k rows). The only O(1) answer comes from the log's invariant: the
+    // change log is APPEND-ONLY and never trimmed (ADR-0001; there is no
+    // `DELETE FROM changes` anywhere), and `cursor` is AUTOINCREMENT from 1, so the
+    // oldest surviving cursor is 1 the instant the log is non-empty, else 0.
+    // Non-empty is the O(1) sqlite_sequence high-water (`max_cursor`).
+    //
+    // ⚠️ If a future cursor-expiry / changes-trim path is added (CONTEXT.md hints at
+    // one), it MUST maintain a real oldest watermark here — this returns 1 for any
+    // non-empty log and would otherwise under-report a trimmed floor.
+    Ok(i64::from(max_cursor(conn).await? > 0))
 }
 
 /// The newest cursor — the snapshot boundary `N` and the `/health` liveness

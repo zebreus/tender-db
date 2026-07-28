@@ -1521,6 +1521,89 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Issue 61 finding: `oldest_cursor` (SSE resume path) must be O(1). turso
+    /// short-circuits neither MIN(cursor) nor ORDER BY cursor LIMIT 1 — both
+    /// full-scan the 80M-row changes table (verified) — so it derives from the
+    /// append-only invariant: 1 when the log is non-empty (via the O(1)
+    /// sqlite_sequence high-water, whose O(1)-ness `max_cursor_is_o1` already
+    /// proves), else 0. Here we prove it returns the CORRECT value — equal to the
+    /// authoritative MIN(cursor) scan — on both empty and non-empty logs.
+    #[tokio::test]
+    async fn oldest_cursor_is_o1_for_the_append_only_log() {
+        let path = format!("/tmp/tender-db-oldest-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+
+        // Empty log → 0, matching MIN(cursor)'s COALESCE.
+        assert_eq!(crate::read::oldest_cursor(&conn).await.unwrap(), 0, "empty log → 0");
+
+        for i in 0..5 {
+            conn.execute(
+                &format!(
+                    "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) \
+                     VALUES ('tender', {i}, 1, 'added', 0)"
+                ),
+                (),
+            )
+            .await
+            .unwrap();
+        }
+
+        // The authoritative MIN scan says 1 (AUTOINCREMENT from 1, never trimmed);
+        // the O(1) form must agree.
+        let min_scan = {
+            let mut r = conn.query("SELECT COALESCE(MIN(cursor), 0) FROM changes", ()).await.unwrap();
+            int(&r.next().await.unwrap().unwrap(), 0)
+        };
+        assert_eq!(min_scan, 1, "the append-only log's true oldest cursor is 1");
+        assert_eq!(
+            crate::read::oldest_cursor(&conn).await.unwrap(),
+            min_scan,
+            "O(1) oldest_cursor == the MIN(cursor) scan"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 61 finding: `changes_since` with an entity filter uses the
+    /// (entity_kind, cursor) index shape and short-circuits an UNKNOWN kind to empty
+    /// without a table walk (the `/v1/changes?entity=x&since=0` wedge). Correctness:
+    /// filters to the kind, returns all with no filter, empty for a nonexistent kind.
+    #[tokio::test]
+    async fn changes_since_filters_by_kind_and_guards_unknown() {
+        let path = format!("/tmp/tender-db-changessince-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+        for (kind, id) in [("tender", 100), ("organization", 200), ("tender", 101)] {
+            conn.execute(
+                &format!(
+                    "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) \
+                     VALUES ('{kind}', {id}, 1, 'added', 0)"
+                ),
+                (),
+            )
+            .await
+            .unwrap();
+        }
+        let kinds = |rows: &[crate::Change]| rows.iter().map(|c| c.entity_kind.clone()).collect::<Vec<_>>();
+
+        let all = crate::read::changes_since(&conn, 0, 100, None).await.unwrap();
+        assert_eq!(all.len(), 3, "no filter returns every change");
+
+        let tenders = crate::read::changes_since(&conn, 0, 100, Some("tender")).await.unwrap();
+        assert_eq!(kinds(&tenders), vec!["tender", "tender"], "filters to the tender rows in cursor order");
+
+        let orgs = crate::read::changes_since(&conn, 0, 100, Some("organization")).await.unwrap();
+        assert_eq!(orgs.len(), 1, "filters to the single organization row");
+
+        let bogus = crate::read::changes_since(&conn, 0, 100, Some("nonexistent_kind")).await.unwrap();
+        assert!(bogus.is_empty(), "an unknown entity_kind short-circuits to empty (no table walk)");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Salvage-loop fix: the resume signal is the durable `rebuild_in_progress`
     /// flag, decoupled from "a plan is on disk". A fresh DB is not rebuilding; a
     /// rebuild sets it; `clear_plan` (clean completion) clears it — so a finished

@@ -1126,6 +1126,23 @@ impl Db {
         Ok(())
     }
 
+    /// The `(entity_kind, cursor)` index that lets an entity-filtered change query
+    /// (`/v1/changes?entity=…`, the SSE diff loop) seek to its kind's rows in cursor
+    /// order instead of walking the whole `changes` table (issue 61 finding 2).
+    /// Built here — at the END of a projection, alongside `ensure_unprojected_index`
+    /// — NOT in the schema batch, deliberately: a `CREATE INDEX` over the 80M-row
+    /// `changes` table at `Db::open` would re-introduce the very multi-minute slow
+    /// boot issue 61 just removed. `IF NOT EXISTS`, so it builds once then no-ops.
+    pub async fn ensure_changes_entity_cursor_index(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS changes_entity_cursor ON changes(entity_kind, cursor)",
+            (),
+        )
+        .await?;
+        Ok(())
+    }
+
     /// Mark notices as folded into the canonical layer (issue 58). Called by
     /// Phase 2 for every notice in an applied batch — whether or not its Tender's
     /// content changed — so the next incremental run's change-set excludes them.

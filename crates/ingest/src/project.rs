@@ -486,6 +486,10 @@ pub async fn project_with_progress_phase2(
     // Build the incremental change-set index now that (nearly) every parsed notice
     // is projected=1, so the partial index is near-empty and instant (issue 58).
     db.ensure_unprojected_index().await?;
+    // Build the (entity_kind, cursor) change-feed index off the boot path (issue 61
+    // finding 2): a no-op once present, and cheap on a fresh build's still-small
+    // changes table vs a multi-minute CREATE INDEX at open on the full 80M rows.
+    db.ensure_changes_entity_cursor_index().await?;
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
@@ -714,6 +718,10 @@ async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
     // Keep the change-set index present for the next daily run (issue 58); cheap —
     // it exists after the first projection and this is a no-op thereafter.
     db.ensure_unprojected_index().await?;
+    // Ensure the (entity_kind, cursor) change-feed index too (issue 61 finding 2) —
+    // the daily incremental is where it first gets built on the existing prod DB,
+    // off the boot path. No-op once present.
+    db.ensure_changes_entity_cursor_index().await?;
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
     eprintln!(
         "[project] incremental: {} changed → {} touched Tenders ({} retired) in {:.1}s",
