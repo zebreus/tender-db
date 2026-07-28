@@ -91,16 +91,67 @@ pub fn init(db: Arc<Db>) {
     if STARTED.set(()).is_err() {
         return;
     }
-    tokio::spawn(async move {
-        loop {
-            // Skip the heavy coverage scan while a write-heavy job holds the WAL
-            // (issue 53) — see `refresh_into`. The supervisor may not exist yet in
-            // a unit-test server, in which case nothing is writing.
-            let heavy_write = crate::supervisor::get().is_some_and(|s| s.heavy_write_in_progress());
-            refresh_into(&db, cell(), heavy_write).await;
-            tokio::time::sleep(REFRESH).await;
-        }
-    });
+    // Ops safety valve: turn the dashboard measurement off entirely.
+    if std::env::var_os("TENDER_DISABLE_COVERAGE").is_some() {
+        eprintln!("coverage: refresher disabled via TENDER_DISABLE_COVERAGE");
+        return;
+    }
+    // Run the refresher on its OWN dedicated thread + runtime, NOT the HTTP runtime
+    // (issue 61 coverage regression). The heavy sections do turso full-table scans,
+    // and turso does BLOCKING preads inline on the executing worker thread; at
+    // projection scale a cold ~25GB scan pinned the HTTP runtime's workers until the
+    // acceptor starved and EVERY endpoint hung — even the memoized root `/` (no DB),
+    // because the runtime had no free thread to poll it. Isolated here, those
+    // blocking preads pin this one thread; the API runtime stays free. Mirrors the
+    // job-worker isolation (supervisor::spawn_worker_runtime).
+    std::thread::Builder::new()
+        .name("coverage".into())
+        .spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("build the coverage runtime");
+            rt.block_on(async move {
+                let mut last_heavy_key: Option<HeavyKey> = None;
+                loop {
+                    // Skip the heavy coverage scan while a write-heavy job holds the
+                    // WAL (issue 53) — see `refresh_into`. The supervisor may not
+                    // exist yet in a unit-test server, in which case nothing writes.
+                    let heavy_write =
+                        crate::supervisor::get().is_some_and(|s| s.heavy_write_in_progress());
+                    refresh_into(&db, cell(), heavy_write, &mut last_heavy_key).await;
+                    tokio::time::sleep(REFRESH).await;
+                }
+            });
+        })
+        .expect("spawn the coverage thread");
+}
+
+/// A cheap O(1) watermark of everything the heavy dashboard sections depend on:
+/// the in-memory change cursor (canonical/projection writes) plus the newest fetch
+/// and notice instants (ingestion). Equal across two refreshes ⇒ nothing was
+/// written between them ⇒ the heavy full-table scans would recompute identical
+/// numbers, so they can be skipped. This is what stops an IDLE server from re-running
+/// the ~25GB scan every 60s (issue 61 coverage: even isolated, that cold-scan I/O
+/// every minute is real disk load that competes with ingestion).
+#[derive(Clone, PartialEq, Eq)]
+struct HeavyKey {
+    cursor: i64,
+    newest_fetch_at: Option<i64>,
+    newest_notice_at: Option<i64>,
+}
+
+/// Read the current [`HeavyKey`] — O(1): the cursor from the in-memory doorbell (no
+/// DB), the fetch/notice instants from `import_lag` (small-table MAX + an id-PK
+/// read). `None` only if the watermark read itself errors, in which case the caller
+/// measures (never skips on an error).
+async fn current_heavy_key(db: &Db) -> Option<HeavyKey> {
+    let lag = db.import_lag().await.ok()?;
+    Some(HeavyKey {
+        cursor: db.current_cursor(),
+        newest_fetch_at: lag.newest_fetch_at,
+        newest_notice_at: lag.newest_notice_at,
+    })
 }
 
 /// One refresh pass: measure each section and publish it the moment it is ready,
@@ -109,7 +160,12 @@ pub fn init(db: Arc<Db>) {
 /// poisoned section (e.g. the coverage scan under ingestion load) never delays
 /// the sections ahead of it. `system` lands within a second of a restart; the
 /// full-table-scan sections land as each completes.
-async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: bool) {
+async fn refresh_into(
+    db: &Db,
+    cell: &RwLock<Dashboard>,
+    heavy_write_active: bool,
+    last_heavy_key: &mut Option<HeavyKey>,
+) {
     let now = store::now_unix();
     // `system` is the only measurement safe to run while a write-heavy job holds
     // the WAL: cursor (MAX over the changes PK), a `job_log` point read, and the
@@ -142,6 +198,18 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: boo
     if heavy_write_active {
         return;
     }
+    // Change-gate (issue 61 coverage): when nothing has been written since the last
+    // heavy measure, keep the last values and DON'T re-scan — so an idle server never
+    // re-runs the ~25GB full-table scan (it fired every 60s and, even isolated, its
+    // cold-scan I/O competes with ingestion). The watermark is O(1). A fully-
+    // quarantined package with no new notice is the only residual staleness, tolerable
+    // on a dashboard; during an active job the `heavy_write` gate above already skips.
+    let key = current_heavy_key(db).await;
+    if let (Some(k), Some(last)) = (key.as_ref(), last_heavy_key.as_ref())
+        && k == last
+    {
+        return;
+    }
     publish(cell, "quarantine", measure_quarantine(db).await, |d, v| d.quarantine = Some(v));
     publish(cell, "award-linkage", measure_award_linkage(db).await, |d, v| d.award_linkage = Some(v));
     publish(cell, "counts", measure_counts(db).await, |d, v| d.counts = Some(v));
@@ -149,6 +217,11 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: boo
         d.coverage = Some(coverage);
         d.pipeline = Some(pipeline);
     });
+    // Record the watermark the heavy sections were measured at, so the next idle pass
+    // with an unchanged DB skips the scan above.
+    if let Some(k) = key {
+        *last_heavy_key = Some(k);
+    }
 }
 
 /// Measure every section once and return the assembled snapshot — the one-shot
@@ -156,8 +229,9 @@ async fn refresh_into(db: &Db, cell: &RwLock<Dashboard>, heavy_write_active: boo
 /// uses the background refresher ([`init`]) and serves [`latest`].
 pub async fn measure(db: &Db) -> Dashboard {
     let cell = RwLock::new(Dashboard::default());
-    // One-shot: measure every section, including the heavy coverage scan.
-    refresh_into(db, &cell, false).await;
+    // One-shot: measure every section, including the heavy coverage scan. A fresh
+    // `None` watermark forces the measure (never skips).
+    refresh_into(db, &cell, false, &mut None).await;
     cell.into_inner().expect("snapshot")
 }
 
@@ -412,7 +486,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false).await;
+        refresh_into(&db, &cell, false, &mut None).await;
         let d = cell.read().unwrap();
         assert!(d.system.is_some(), "system");
         assert!(d.counts.is_some(), "counts");
@@ -439,7 +513,7 @@ mod tests {
 
         // A prior idle pass measured coverage.
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false).await;
+        refresh_into(&db, &cell, false, &mut None).await;
         assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
 
         // Now a write-heavy job is active: only the cheap `system` point-read
@@ -447,7 +521,7 @@ mod tests {
         // counts, coverage) is skipped and its last value preserved — no new
         // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
         // never held across the next await.)
-        refresh_into(&db, &cell, true).await;
+        refresh_into(&db, &cell, true, &mut None).await;
         {
             let d = cell.read().unwrap();
             assert!(d.system.is_some(), "system (cheap point read) still refreshes while a job runs");
@@ -463,7 +537,7 @@ mod tests {
         // WAL-pinning snapshot. This is the airtight property: during ingestion
         // the refresher holds no long-lived reader at all (issue 53).
         let fresh = RwLock::new(Dashboard::default());
-        refresh_into(&db, &fresh, true).await;
+        refresh_into(&db, &fresh, true, &mut None).await;
         {
             let f = fresh.read().unwrap();
             assert!(f.system.is_some(), "the cheap point-read section lands");
@@ -472,6 +546,61 @@ mod tests {
             assert!(f.counts.is_none(), "the heavy counts scan never ran while a job is active");
             assert!(f.coverage.is_none(), "the heavy coverage scan never ran while a job is active");
         }
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 61 coverage change-gate — BOTH directions, so we neither freeze
+    /// coverage (always-skip) nor leave it always-scanning:
+    ///  * UNCHANGED DB → the heavy scan is SKIPPED (last values kept), so an idle
+    ///    box never re-scans ~25GB every 60s.
+    ///  * A WRITE that advances the watermark (here a new fetch) → the heavy scan
+    ///    RE-RUNS, so coverage stays accurate the moment data changes.
+    /// Observed by poisoning `counts`: it survives the skip, and is overwritten by
+    /// the re-measure. `system` refreshes every pass regardless.
+    #[tokio::test]
+    async fn the_change_gate_skips_when_unchanged_and_runs_after_a_write() {
+        let path = format!("/tmp/tender-db-refresh-gate-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let cell = RwLock::new(Dashboard::default());
+        let mut key = None;
+
+        // First pass measures the heavy sections and records the watermark.
+        refresh_into(&db, &cell, false, &mut key).await;
+        assert!(key.is_some(), "the first pass records the heavy-measure watermark");
+        assert!(cell.read().unwrap().counts.is_some(), "the first pass measures counts");
+
+        // (A) UNCHANGED → SKIP. Poison `counts`; an unchanged pass must leave it.
+        cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
+        refresh_into(&db, &cell, false, &mut key).await;
+        assert_eq!(
+            cell.read().unwrap().counts.as_ref().unwrap()[0].label,
+            "SENTINEL",
+            "an unchanged DB skips the heavy re-scan (the poisoned value survives)"
+        );
+
+        // (B) A WRITE advances the watermark (newest fetch instant) → RE-MEASURE.
+        db.record_fetch(&store::Fetch {
+            source: "ted".into(),
+            kind: "daily".into(),
+            period: "2026-07".into(),
+            url: "u".into(),
+            sha256: "h".into(),
+            bytes: 1,
+            fetched_at: 999_999,
+            path: "p".into(),
+        })
+        .await
+        .unwrap();
+        refresh_into(&db, &cell, false, &mut key).await;
+        let d = cell.read().unwrap();
+        assert_ne!(
+            d.counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
+            Some("SENTINEL"),
+            "a write that advances the watermark forces a re-measure (poison overwritten)"
+        );
+        assert!(d.system.is_some(), "system refreshes every pass regardless of the gate");
 
         let _ = std::fs::remove_file(&path);
     }
