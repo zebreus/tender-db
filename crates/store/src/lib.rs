@@ -39,24 +39,31 @@ use turso::{Connection, Value};
 /// SQLITE_BUSY, WAL for concurrent reads during writes, and NORMAL sync (safe
 /// under WAL, much faster than FULL).
 ///
-/// `cache_size = -524288` is 512 MiB of page cache per connection (negative =
-/// KiB), up from turso's ~2 MB default (issue 60). On the multi-hundred-GB prod
-/// DB the projection's Phase-1 does ~11 indexed range scans per chunk (notices +
-/// notice_sections + 9 value tables); a 2 MB cache cannot hold those B-trees'
-/// interior pages, so they evict and re-read every chunk — the ~1.8× read
-/// amplification behind the ~4 h Phase-1 (verified: turso honors cache_size, and
-/// a working set exceeding the cache re-reads it in full). The cache is a per-
-/// connection *cap* that fills lazily, so light connections (capped API/webhook
-/// queries) stay small; it is the heavy scanners (the projection reader, big SQL
-/// reads) that benefit. During a dedicated backfill only the writer and one
-/// reused pooled reader go hot (~1 GB), well within the 8 GB box now that issue
-/// 59 keeps the plan off-heap.
+/// `cache_size = -131072` is 128 MiB of page cache per connection (negative =
+/// KiB), up from turso's ~2 MB default (issue 60). It is a per-connection *cap*
+/// that fills lazily, but it is charged PER CONNECTION, and the process opens
+/// many: the writer + the store read pool (8) + the API/SQL/webhook pools (~14) +
+/// the Phase-2 parallel pre-pass's K shard readers. At the old 512 MiB the
+/// aggregate CEILING was ~11.5 GiB on the 8 GB box, and during a full-corpus
+/// rebuild the ACTIVE fillers (writer + K pre-pass readers, each sweeping the
+/// corpus) grew toward 512 MiB apiece and tipped the box into swap-thrash
+/// (issue 61 incident: RSS 4.1 G + 4.2 G swapped). 128 MiB drops the aggregate
+/// CEILING to ~23 conns × 128 MiB ≈ 2.9 GiB and bounds the ACTIVE set well under
+/// ~2 GB (writer + K≈3 ≈ ~0.5 GB) while still dwarfing turso's default, so point
+/// queries and the sequential scans (which ride the kernel's per-fd readahead, not
+/// this cache) are unaffected on our hot paths — the resume and the incremental
+/// both SKIP Phase-1, the only pass the larger cache measurably helped. CAVEAT
+/// (not blocking, tracked in issue 68): a from-scratch rebuild's Phase-1 does ~11
+/// indexed range scans per chunk and benefited from the bigger cache; if a fresh
+/// rebuild's Phase-1 regresses, promote to the targeted split (projection writer +
+/// pre-pass readers → 256 MiB, API/SQL/webhook pools → 64 MiB) rather than raising
+/// this shared default back up.
 pub(crate) const PRAGMAS: [&str; 5] = [
     "PRAGMA foreign_keys = ON",
     "PRAGMA busy_timeout = 5000",
     "PRAGMA journal_mode = WAL",
     "PRAGMA synchronous = NORMAL",
-    "PRAGMA cache_size = -524288",
+    "PRAGMA cache_size = -131072",
 ];
 
 /// Reader connections backing `Db`'s own read-only accessors — the dashboard,
@@ -1444,6 +1451,39 @@ mod tests {
         drop(db);
         let db = Db::open(&path).await.unwrap();
         assert!(db.canonical_counts().await.unwrap().iter().all(|(_, n)| *n == 0));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Salvage-loop fix: the resume signal is the durable `rebuild_in_progress`
+    /// flag, decoupled from "a plan is on disk". A fresh DB is not rebuilding; a
+    /// rebuild sets it; `clear_plan` (clean completion) clears it — so a finished
+    /// build's leftover complete plan can never re-trigger a layer-nuking resume.
+    #[tokio::test]
+    async fn rebuild_in_progress_flag_lifecycle() {
+        let path = format!("/tmp/tender-db-rebuildflag-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        let db = Db::open(&path).await.unwrap();
+        assert!(!db.rebuild_in_progress().await.unwrap(), "a fresh DB is not mid-rebuild");
+
+        db.set_rebuild_in_progress().await.unwrap();
+        assert!(db.rebuild_in_progress().await.unwrap(), "set marks the rebuild in-flight");
+
+        // reset_plan (start of a run, via clear_plan_on) must NOT touch the flag —
+        // a fresh rebuild sets the flag and then builds its plan.
+        db.reset_plan().await.unwrap();
+        assert!(db.rebuild_in_progress().await.unwrap(), "reset_plan leaves the flag set");
+
+        // clear_plan is the clean-completion path; it must also clear the flag so a
+        // restart does not re-salvage a fully-built layer.
+        db.clear_plan().await.unwrap();
+        assert!(!db.rebuild_in_progress().await.unwrap(), "clear_plan retires the flag");
+
+        // Survives a reopen (durable, not in-memory) and defaults off.
+        drop(db);
+        let db = Db::open(&path).await.unwrap();
+        assert!(!db.rebuild_in_progress().await.unwrap(), "flag is durable and defaults off");
 
         let _ = std::fs::remove_file(&path);
     }

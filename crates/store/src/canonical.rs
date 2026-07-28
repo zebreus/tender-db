@@ -389,6 +389,21 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS changes_entity ON changes(entity_kind, entity_id);
 
+    -- Durable projection control (salvage-loop fix). `rebuild_in_progress` is 1
+    -- while a full rebuild's Phase-2 is mid-flight: set together with
+    -- `reset_tender_layer` (the moment a rebuild commits to emptying the layer),
+    -- cleared with `clear_plan` on clean completion. The resume-from-plan salvage
+    -- keys on THIS flag, NOT on a complete grouping plan being present on disk --
+    -- a complete plan is ALSO left by a finished build (whose plan was retired) or an
+    -- interrupted rebuild=false full-fallback over an intact layer, and resuming
+    -- those re-nukes a good 6.96M-tender layer on every restart (a livelock).
+    -- Single row, id pinned to 0.
+    CREATE TABLE IF NOT EXISTS projection_state (
+        id                  INTEGER PRIMARY KEY CHECK (id = 0),
+        rebuild_in_progress INTEGER NOT NULL DEFAULT 0
+    ) STRICT;
+    INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
+
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
@@ -1378,7 +1393,55 @@ impl Db {
     /// durable DB never carries a projection's transient plan between runs.
     pub async fn clear_plan(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        self.clear_plan_on(&conn).await
+        // Retire the plan AND clear the rebuild watermark ATOMICALLY (one
+        // transaction): the only dangerous end state is "plan retired but still
+        // marked rebuilding" (→ the salvage would re-nuke a fully-built layer on the
+        // next restart). A single transaction makes that state unreachable regardless
+        // of crash timing. A no-op on the incremental path (flag already 0). Kept out
+        // of `clear_plan_on`, which the START-of-run `reset_plan` uses and must NOT
+        // touch the flag. Per the turso ROLLBACK-on-dropped-write discipline
+        // (CONTEXT.md), any failure rolls back before propagating.
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result = async {
+            conn.execute("UPDATE projection_state SET rebuild_in_progress = 0 WHERE id = 0", ()).await?;
+            self.clear_plan_on(&conn).await
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(())
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    /// Mark that a full rebuild's Phase-2 is mid-flight (salvage-loop fix). Set the
+    /// instant a rebuild commits to emptying the layer (with `reset_tender_layer`),
+    /// so an interruption is resumable; cleared by `clear_plan` on clean completion.
+    pub async fn set_rebuild_in_progress(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("UPDATE projection_state SET rebuild_in_progress = 1 WHERE id = 0", ()).await?;
+        Ok(())
+    }
+
+    /// Whether a full rebuild's Phase-2 was interrupted and should be resumed — the
+    /// resume-from-plan salvage signal. This, NOT `plan_is_complete`, is what the
+    /// supervisor keys the salvage on: a complete plan on disk is also the resting
+    /// state of a FINISHED build and of an interrupted rebuild=false full-fallback,
+    /// neither of which must trigger a layer-nuking resume.
+    pub async fn rebuild_in_progress(&self) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        let mut r = conn
+            .query("SELECT rebuild_in_progress FROM projection_state WHERE id = 0", ())
+            .await?;
+        match r.next().await? {
+            Some(row) => Ok(int(&row, 0) != 0),
+            None => Ok(false),
+        }
     }
 
     /// Whether a grouping plan from a finished Phase-1 is on disk that can be

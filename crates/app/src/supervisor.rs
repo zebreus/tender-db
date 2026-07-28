@@ -565,18 +565,25 @@ impl Supervisor {
             }
             Spec::Project { rebuild } => {
                 // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
-                // incremental routing. A COMPLETE grouping plan already on disk at
-                // the start of a projection can only be a run that finished the
-                // (multi-hour) Phase-1 and died before the end-clear — a normal
-                // daily/incremental run clears its plan first, so this is false for
-                // them. Re-run grouping + Phase-2 from that plan and SKIP Phase-1,
-                // whatever THIS recovered job's rebuild flag says: `project(_, true)`
-                // detects the complete plan and resumes. Without this precedence a
-                // recovered `rebuild:false` job would route to `project_incremental`,
-                // see an all-unprojected corpus (Phase-2 never ran, so nothing is
-                // marked projected), and re-do the whole Phase-1 — discarding the
-                // salvage.
-                let salvage = self.db.plan_is_complete().await.map_err(|e| e.to_string())?;
+                // incremental routing: if a full rebuild's Phase-2 was interrupted,
+                // finish it (re-run grouping + Phase-2 from the on-disk plan, SKIP
+                // Phase-1) whatever THIS recovered job's rebuild flag says —
+                // `project(_, true)` detects the complete plan and resumes. Without
+                // it a recovered `rebuild:false` job would route to
+                // `project_incremental`, see an all-unprojected corpus, and re-do the
+                // whole Phase-1, discarding the salvage.
+                //
+                // The signal is the durable `rebuild_in_progress` flag, NOT
+                // `plan_is_complete()`. A complete plan on disk is NOT proof of an
+                // interrupted rebuild: it is also the resting state of a FINISHED
+                // build (whose layer is fully applied) and of an interrupted
+                // rebuild=false full-fallback (over an intact layer). Keying the
+                // salvage on plan-completeness re-fired `reset_tender_layer` on every
+                // restart, nuking a good 6.96M-tender layer into a ~15h re-fold each
+                // time — a livelock. The flag is set only when a rebuild empties the
+                // layer and cleared with the plan on clean completion, so it is true
+                // exactly when there is an interrupted rebuild to finish.
+                let salvage = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
 
                 // Otherwise: the daily path is INCREMENTAL (issue 58) — re-derive
                 // only the Tenders touched since the last run; a `rebuild` does the
@@ -1285,26 +1292,31 @@ mod tests {
     }
 
     /// Issue 60 salvage: a recovered project job — even `rebuild:false` — RESUMES
-    /// from a complete on-disk plan (skips Phase-1) rather than routing to the
-    /// incremental path and re-scanning the whole corpus. Proven by the org
-    /// indexes: `project_plan_only` strips them; only the resume path (project(_,
-    /// true)) rebuilds them at the end — `project_incremental` never does.
+    /// an interrupted rebuild (skips Phase-1) rather than routing to the incremental
+    /// path and re-scanning the whole corpus. The salvage signal is the durable
+    /// `rebuild_in_progress` flag (a real rebuild sets it before Phase-1), NOT merely
+    /// a complete plan on disk. Proven by the org indexes: `project_plan_only` strips
+    /// them; only the resume path (project(_, true)) rebuilds them at the end —
+    /// `project_incremental` never does.
     #[tokio::test]
-    async fn a_recovered_job_resumes_from_a_complete_plan_even_when_not_a_rebuild() {
+    async fn a_recovered_job_resumes_an_interrupted_rebuild_even_when_not_a_rebuild() {
         let db = scratch().await;
         let fetch_id = seed_fetch(&db).await;
         for i in 0..4 {
             record_keyed(&db, fetch_id, i).await;
         }
-        // Interrupt after Phase-1: a complete plan on disk, org indexes stripped,
-        // Phase-2 not yet run.
+        // Interrupt an in-flight REBUILD after Phase-1: a real rebuild sets the
+        // in-progress flag before Phase-1 (with reset_tender_layer), then builds the
+        // plan; here project_plan_only leaves the complete plan + stripped org indexes
+        // and we set the flag to represent that the interrupted run was a rebuild.
         ingest::project::project_plan_only(&db).await.unwrap();
+        db.set_rebuild_in_progress().await.unwrap();
         assert!(db.plan_is_complete().await.unwrap(), "plan complete after plan-only");
         assert!(!index_exists(&db, "organizations_identity").await, "plan-only strips the org index");
 
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
-        // The recovered daily job is rebuild:FALSE — but the complete plan must make
-        // it resume, not re-scan.
+        // The recovered daily job is rebuild:FALSE — but the in-progress flag must
+        // make it resume, not re-scan.
         let daily = Job {
             id: 1,
             kind: "project".into(),
@@ -1316,7 +1328,47 @@ mod tests {
 
         assert!(index_exists(&db, "organizations_identity").await, "resume rebuilds the org index (Phase-2 ran via project(true), not incremental)");
         assert!(!db.plan_is_complete().await.unwrap(), "the resume cleared the plan when done");
+        assert!(!db.rebuild_in_progress().await.unwrap(), "the resume cleared the in-progress flag");
         assert!(summary.starts_with("4 notices"), "resume folded the whole plan: {summary}");
+    }
+
+    /// Salvage-loop regression (issue 61 incident): a COMPLETE plan on disk with the
+    /// `rebuild_in_progress` flag UNSET — the resting state of a FINISHED build whose
+    /// plan lingered, or of an interrupted rebuild=false full-fallback over an intact
+    /// layer — must NOT trigger the layer-nuking resume. The recovered rebuild:false
+    /// job routes to the incremental path instead (org index NOT rebuilt), and the
+    /// flag stays clear. Before the fix, salvage keyed on `plan_is_complete()` and
+    /// re-fired reset_tender_layer on every restart forever.
+    #[tokio::test]
+    async fn a_complete_plan_without_the_flag_does_not_re_salvage() {
+        let db = scratch().await;
+        let fetch_id = seed_fetch(&db).await;
+        for i in 0..4 {
+            record_keyed(&db, fetch_id, i).await;
+        }
+        // A complete plan on disk, but the flag is UNSET (no interrupted rebuild).
+        ingest::project::project_plan_only(&db).await.unwrap();
+        assert!(db.plan_is_complete().await.unwrap(), "plan complete after plan-only");
+        assert!(!db.rebuild_in_progress().await.unwrap(), "no rebuild is in progress");
+
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let daily = Job {
+            id: 1,
+            kind: "project".into(),
+            params: "rebuild=false".into(),
+            spec: Spec::Project { rebuild: false },
+            resume_after: None,
+        };
+        sup.run_spec(&daily).await.unwrap();
+
+        // Incremental was taken, NOT the project(true) salvage: the org identity index
+        // (only ever rebuilt by the full resume path) stays absent, and the flag never
+        // flips. No layer-nuking resume fired.
+        assert!(
+            !index_exists(&db, "organizations_identity").await,
+            "a flagless complete plan must route to incremental, not the org-index-rebuilding resume"
+        );
+        assert!(!db.rebuild_in_progress().await.unwrap(), "the flag stays clear — no spurious salvage");
     }
 
     /// Issue 61: a job's body runs on the Supervisor's isolated runtime, off the

@@ -390,6 +390,13 @@ pub async fn project_with_progress_phase2(
         // content DELETEs against the live random-key indexes — a random-position
         // b-tree delete storm scaling with the partial's satellite rows. Dropping the
         // indexes first makes those DELETEs sequential page frees.
+        // Mark the rebuild in-flight BEFORE emptying the layer, so an interruption
+        // anywhere in Phase-2 is resumable (the supervisor's salvage keys on this
+        // flag). Crucially it is set only for a rebuild that resets the layer — a
+        // rebuild=false full-fallback never sets it, so an interrupted fallback over
+        // an intact layer is NOT mistaken for a resumable rebuild. Cleared with the
+        // plan on clean completion (`clear_plan`).
+        db.set_rebuild_in_progress().await?;
         db.strip_tender_indexes().await?;
         // Empty the tender-content layer and DROP+recreate `tenders` bare (fresh AND
         // resume both fold from empty): this strips the inline-UNIQUE auto-indexes
