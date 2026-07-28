@@ -517,6 +517,15 @@ impl Db {
         max_cursor(&conn).await
     }
 
+    /// The newest committed cursor from the IN-MEMORY doorbell — no DB access at all
+    /// (issue 61). The watch is seeded at open and advanced on every change-append
+    /// (`publish_cursor`), so it is the newest committed cursor without a reader or a
+    /// query. `/health` uses this so a liveness probe never queues behind the writer
+    /// or touches turso — it stays instant regardless of `changes`-table size.
+    pub fn current_cursor(&self) -> i64 {
+        *self.cursor.borrow()
+    }
+
     /// Ring the doorbell for whatever the just-committed transaction appended.
     /// Called after COMMIT, so a subscriber that reads immediately can only see
     /// durable rows.
@@ -1287,10 +1296,23 @@ pub(crate) fn opt_int_of(row: &turso::Row, idx: usize) -> Option<i64> {
     }
 }
 
-/// The newest cursor in the change log, 0 when it is empty. The log is
-/// append-only and never renumbered, so this is a high-water mark.
+/// The newest cursor in the change log, 0 when it is empty — a high-water mark.
+///
+/// O(1): reads the AUTOINCREMENT high-water from `sqlite_sequence`, NOT
+/// `MAX(cursor)`. turso 0.7 does not lower `MAX()` over an INTEGER PRIMARY KEY to a
+/// b-tree extremum seek — it FULL-SCANS `changes`, which at prod (80M rows ≈ 8 GB)
+/// is the ~8-minute boot (this runs once in `Db::open`) and the `/health` timeout
+/// (issue 61), and it also fired on every `publish_cursor` after a change-append.
+/// `changes.cursor` is `INTEGER PRIMARY KEY AUTOINCREMENT` and the table is
+/// strictly append-only (never deleted or renumbered — ADR-0001; not in
+/// `clear_canonical`/`reset_tender_layer`), so `sqlite_sequence.seq` equals
+/// `MAX(cursor)` exactly. Even a future one-time changes-clean would leave the
+/// high-water, which is still a safe (≥ any existing cursor) doorbell init. No row
+/// exists until the first append, hence the COALESCE to 0.
 pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
-    let mut rows = conn.query("SELECT COALESCE(MAX(cursor), 0) FROM changes", ()).await?;
+    let mut rows = conn
+        .query("SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'changes'), 0)", ())
+        .await?;
     Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
 }
 
@@ -1451,6 +1473,50 @@ mod tests {
         drop(db);
         let db = Db::open(&path).await.unwrap();
         assert!(db.canonical_counts().await.unwrap().iter().all(|(_, n)| *n == 0));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 61 root cause: `max_cursor` must be O(1) (sqlite_sequence high-water),
+    /// NOT a `MAX(cursor)` full scan of the 80M-row `changes` table. Proves the O(1)
+    /// form equals the old MAX after appends and survives a reopen, and that it reads
+    /// 0 on an empty log (no sqlite_sequence row yet).
+    #[tokio::test]
+    async fn max_cursor_is_o1_and_matches_the_scan() {
+        let path = format!("/tmp/tender-db-maxcursor-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        let db = Db::open(&path).await.unwrap();
+        {
+            let conn = db.conn().await;
+            // Empty log: no sqlite_sequence row for `changes` yet → 0.
+            assert_eq!(max_cursor(&conn).await.unwrap(), 0, "empty change log reads 0");
+            for i in 0..5 {
+                conn.execute(
+                    &format!(
+                        "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) \
+                         VALUES ('tender', {i}, 1, 'added', 0)"
+                    ),
+                    (),
+                )
+                .await
+                .unwrap();
+            }
+            // The O(1) form must equal the authoritative MAX(cursor) scan.
+            let scan = {
+                let mut r = conn.query("SELECT COALESCE(MAX(cursor), 0) FROM changes", ()).await.unwrap();
+                int(&r.next().await.unwrap().unwrap(), 0)
+            };
+            assert_eq!(scan, 5, "5 AUTOINCREMENT appends → MAX(cursor) = 5");
+            assert_eq!(max_cursor(&conn).await.unwrap(), scan, "O(1) max_cursor == MAX(cursor) scan");
+        }
+
+        // Survives reopen (sqlite_sequence is durable; this is exactly the Db::open
+        // init path that stalled for 8 minutes at prod).
+        drop(db);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+        assert_eq!(max_cursor(&conn).await.unwrap(), 5, "high-water survives reopen");
 
         let _ = std::fs::remove_file(&path);
     }

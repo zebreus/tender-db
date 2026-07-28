@@ -20,7 +20,6 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use model::ingestion::JobRun;
 use serde_json::{Value, json};
-use store::read;
 
 use super::{AppState, rev};
 
@@ -44,12 +43,9 @@ const JOB_SCAN: i64 = 100;
 /// The deep probe: liveness + ingest freshness + last-job outcome + disk, folded
 /// into one `ok` the external pinger alerts on.
 pub async fn deep(State(state): State<AppState>) -> Response {
-    // 1. Liveness + DB — the same cursor read `/health` runs, through the reader
-    //    pool so it never queues behind an ingest job holding the writer.
-    let cursor = match state.readers.get().await {
-        Ok(reader) => read::latest_cursor(&reader).await.ok(),
-        Err(_) => None,
-    };
+    // 1. Liveness — the newest cursor from the in-memory doorbell, NO DB access, so
+    //    the probe never queues behind the writer nor scans `changes` (issue 61).
+    let cursor = Some(state.db.current_cursor());
 
     // 2. Ingest freshness and the last job's outcome, from the persisted log
     //    (also reader-pooled — see [`store::Db::recent_job_runs`], issue 20).

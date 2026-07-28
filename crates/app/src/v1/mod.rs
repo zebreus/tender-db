@@ -641,10 +641,9 @@ async fn source() -> Response {
 /// The deploy script's readiness probe: the process is up, the database
 /// answers, and this is what it was built from.
 async fn health(State(state): State<AppState>) -> Response {
-    let cursor = match state.readers.get().await {
-        Ok(reader) => read::latest_cursor(&reader).await.ok(),
-        Err(_) => None,
-    };
+    // The newest cursor from the in-memory doorbell — no DB access, so the deploy
+    // readiness probe stays instant regardless of `changes`-table size (issue 61).
+    let cursor = Some(state.db.current_cursor());
     let body = json!({
         "ok": cursor.is_some(),
         "rev": rev(),
