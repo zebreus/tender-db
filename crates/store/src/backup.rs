@@ -171,13 +171,23 @@ async fn verify_copy(path: &Path) -> Result<(i64, bool), BackupError> {
     let database = turso::Builder::new_local(path).build().await?;
     let conn = database.connect()?;
 
-    let mut rows = conn.query("PRAGMA integrity_check", ()).await?;
-    let mut integrity_ok = false;
-    let mut seen = 0;
-    while let Some(row) = rows.next().await? {
-        seen += 1;
-        integrity_ok = seen == 1 && matches!(row.get_value(0), Ok(turso::Value::Text(s)) if s == "ok");
-    }
+    // A full `PRAGMA integrity_check` on a full-corpus copy is a ~day-long scan
+    // (~26.7h measured at 274 GB) whose blocking preads starve the HTTP runtime
+    // (issue 61) — untenable for a DAILY snapshot. Gated OFF by default: the copy
+    // is a byte copy of a WAL-checkpointed file taken under the writer guard, and
+    // the notice-count cross-check below already catches torn/short copies. Set
+    // `TENDER_SNAPSHOT_INTEGRITY=1` for an occasional full structural verify.
+    let integrity_ok = if std::env::var("TENDER_SNAPSHOT_INTEGRITY").is_ok() {
+        let mut rows = conn.query("PRAGMA integrity_check", ()).await?;
+        let (mut ok, mut seen) = (false, 0);
+        while let Some(row) = rows.next().await? {
+            seen += 1;
+            ok = seen == 1 && matches!(row.get_value(0), Ok(turso::Value::Text(s)) if s == "ok");
+        }
+        ok
+    } else {
+        true // skipped — the notice-count cross-check is the fast integrity guard
+    };
 
     let copy_notices = count_notices(&conn).await?;
     Ok((copy_notices, integrity_ok))
