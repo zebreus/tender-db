@@ -176,6 +176,9 @@ pub struct JobRequest {
     pub reason: Option<String>,
     pub detail_like: Option<String>,
     pub profile: Option<String>,
+    /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
+    /// notices `projected=0` for one later `rebuild:true` to fold in bulk.
+    pub reclaim_only: Option<bool>,
 }
 
 impl Supervisor {
@@ -266,10 +269,16 @@ impl Supervisor {
                     detail_like.as_deref().map(|d| format!(" LIKE {d}")).unwrap_or_default(),
                     profile.as_deref().map(|p| format!(" [{p}]")).unwrap_or_default(),
                 );
-                Ok(vec![
-                    self.push("reprocess", params, Spec::Reprocess { reason, detail_like, profile }).await,
-                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await,
-                ])
+                let mut ids =
+                    vec![self.push("reprocess", params, Spec::Reprocess { reason, detail_like, profile }).await];
+                // `reclaim_only` skips the trailing incremental fold: a bulk reclaim
+                // leaves its members projected=0 for one later `rebuild:true` to fold
+                // sequentially, instead of paying a random-seek incremental fold per
+                // bucket (issue 81 note / bulk-recovery plan).
+                if !req.reclaim_only.unwrap_or(false) {
+                    ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
+                }
+                Ok(ids)
             }
             other => Err(format!("unknown job kind {other:?}")),
         }
@@ -1568,5 +1577,36 @@ mod tests {
             runs.iter().any(|r| r.kind == "project" && r.outcome == "ok"),
             "the project job logged an ok run: {runs:?}"
         );
+    }
+
+    /// A default reprocess enqueues the reclaim + a trailing incremental fold;
+    /// `reclaim_only` (bulk-recovery mode) enqueues only the reclaim, leaving its
+    /// members `projected=0` for one later `rebuild:true`.
+    #[tokio::test]
+    async fn reprocess_reclaim_only_omits_the_trailing_project() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+
+        let full = sup
+            .enqueue_request(&JobRequest {
+                kind: "reprocess".into(),
+                reason: Some("unknown-field-code".into()),
+                detail_like: Some("%: OC".into()),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(full.len(), 2, "reprocess enqueues the reclaim + a trailing project");
+
+        let bulk = sup
+            .enqueue_request(&JobRequest {
+                kind: "reprocess".into(),
+                reason: Some("unknown-field-code".into()),
+                reclaim_only: Some(true),
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        assert_eq!(bulk.len(), 1, "reclaim_only enqueues only the reclaim, no fold");
     }
 }
