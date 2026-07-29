@@ -1,6 +1,6 @@
 # 74 — xpath grammar: descendant axis `//` + boolean `or` (unblocks SDK 1.0/1.3/1.5/1.6/1.7, ~390K)
 
-Status: code-complete + green (grammar + vendoring + fixture); team-lead reviews, then batch deploy + reprocess
+Status: DONE — deployed (46bc21e) 2026-07-29 (xpath grammar + SDK 1.0-1.7 vendored + BT-165 binding); reclaim of these SDK versions runs on the blanket unknown-customization job.
 
 ## Implementation outcome (proj-fix, 2026-07-29)
 

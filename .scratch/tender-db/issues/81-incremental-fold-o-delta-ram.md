@@ -1,6 +1,6 @@
 # 81 — incremental project fold is O(delta) in RAM (OOM on a large reclaim)
 
-Status: fixed + green (team-lead reviews, deploys before folding the big reclaim buckets)
+Status: DONE — deployed (8ae9159) + prod-validated 2026-07-29: streamed Phase-1 fold of the 300K SDK-1.7 delta ran bounded (RSS sawtooth ~0.5–3GB, swap flat, no OOM) vs the old ~14GB whole-delta climb. NOTE: for BULK reclaim the strategy pivoted to reclaim-all-then-one-rebuild (ADR-0009) — this bounded incremental fix stays for the steady-state daily delta.
 Kind: performance / bounded-memory-principle violation
 Relates to: 58 (incremental projection), 76/77 (reprocess), bounded-memory-principle
 Found: 2026-07-29, SDK 1.7 reprocess trailing project (job 2) — 299,829 reclaimed

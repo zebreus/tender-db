@@ -1,6 +1,6 @@
 # 77 — reprocess re-parses whole packages (slow for sparse quarantine buckets)
 
-Status: implemented + green (team-lead reviews, deploys after the running 1.0 reprocess finishes)
+Status: DONE — deployed (8cea162) + prod-validated (parse-only-held; combined with issue 80's index, reclaims run at seek-speed).
 Kind: performance
 Relates to: 76 (the reprocess mechanism), 71/72/73/74/75 (the buckets it reclaims)
 

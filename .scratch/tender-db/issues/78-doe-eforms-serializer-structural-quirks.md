@@ -1,6 +1,6 @@
 # 78 — DÖE eForms serializer nests subtrees the SDK anchors elsewhere (blocks part of the 1.0 reclaim)
 
-Status: implemented + green (48/48 DÖE 1.0 sample parses; team-lead deploys in a later batch)
+Status: DONE — deployed (ae4ec08) 2026-07-29 (DÖE serializer grafts live; reclaim of DÖE-dialect buckets runs on the blanket unknown-customization job).
 
 ## Implementation (proj-fix, 2026-07-29)
 

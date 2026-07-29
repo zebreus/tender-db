@@ -1,6 +1,6 @@
 # 76 — the quarantine reprocess mechanism (the reclaim linchpin)
 
-Status: in-review (built + green; team-lead reviews the in-place write closely before deploy)
+Status: DONE — deployed + prod-validated 2026-07-29 (reprocess mechanism live; reclaimed SDK 1.0=1,634, 1.7=299,829, 1.10=254,523; resume + isolation + in-place write all validated). See ADR-0009 for the reclaim-all-then-rebuild strategy.
 Kind: mechanism / completeness
 Blocked by: —
 Unblocks: 71 (SDK cohort, ~1.2M), 72 (OC, 577K parse-level), and the bookkeeping for 73

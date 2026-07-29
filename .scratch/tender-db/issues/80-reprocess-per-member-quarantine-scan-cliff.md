@@ -1,6 +1,6 @@
 # 80 — reprocess per-member CPU cliff: unindexed quarantine.notice_id → 2.4M-row scan/member
 
-Status: fixed + green (team-lead deploys before re-running the dense big buckets)
+Status: DONE — deployed (9f2450c) + prod-validated 2026-07-29: quarantine.notice_id index took fetch-18 from ~1.5 members/s to ~45/s (30×), RSS bounded by the 5k checkpoint.
 Kind: performance / correctness-of-scale
 Relates to: 76 (reprocess mechanism), 77 (parse-only-held)
 Found: 2026-07-29, SDK 1.7 reprocess prod run, package "fetch 18" (69,930 members)

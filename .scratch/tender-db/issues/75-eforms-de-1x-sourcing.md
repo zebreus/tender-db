@@ -1,6 +1,6 @@
 # 75 — eForms-DE 1.0/1.1/1.2 sourcing spike (~219K quarantined, German)
 
-Status: IMPLEMENTED (commit 7d1317e) — merged empirical inventory vendored + unit-green; ops deploy+reprocess pending
+Status: DONE — deployed (7d1317e) 2026-07-29 (eForms-DE 1.x empirical inventory vendored); reclaim runs on the blanket unknown-customization job (ADR-0009); folds in the final rebuild.
 Kind: completeness / data-quality
 Blocked by: —
 Relates to: 71 (parent), 12 (DÖE eforms-de-2.x + sdk-0.1 vendoring), ADR-0002, ADR-0004, CONTEXT.md (~40% German volume)

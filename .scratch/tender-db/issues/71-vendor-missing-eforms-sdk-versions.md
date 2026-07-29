@@ -1,6 +1,6 @@
 # 71 — vendor missing eForms SDK versions (recover ~1.2M quarantined notices)
 
-Status: open (analysis done; feasibility + implementation needed)
+Status: IN PROGRESS 2026-07-29 — all versions vendored + deployed (issues 74/75 + f85ab07/dcea702). Reclaiming into the parse layer via reclaim-all (ADR-0009): SDK 1.0/1.7/1.10 done (556,986 reclaimed), blanket unknown-customization job running for the rest (1.6/1.8/1.9/1.11/1.3/1.5 + DE 1.x). Tender-layer fold pending the final rebuild.
 Kind: completeness / data-quality
 Blocked by: —
 Relates to: ADR-0004 (strict quarantine), CONTEXT.md (all eForms BTs representable)

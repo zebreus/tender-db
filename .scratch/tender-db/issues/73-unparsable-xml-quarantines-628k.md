@@ -1,6 +1,6 @@
 # 73 — unparsable-xml quarantines 628K notices (format/era our parser rejects)
 
-Status: resolved as DUPLICATE of issues 36+41 — no code change; 2008-05 "XML with DTD detected" is stale rows already handled by deployed code, reclaimable by a `process` re-run (team-lead ops step)
+Status: resolved as DUPLICATE of issues 36+41 — no code change. Reclaim QUEUED 2026-07-29 as reprocess job [5] (reason=unparsable-xml, detail_like='XML with DTD detected', reclaim_only) in the reclaim-all sequence (ADR-0009); folds in the final rebuild.
 Kind: completeness / data-quality
 Relates to: 36 (XXE-safe DTD strip), 41 (internal-ojs parser), 71, 72, ADR-0004, CONTEXT.md (three TED format eras)
 

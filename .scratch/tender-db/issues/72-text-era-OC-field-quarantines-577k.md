@@ -1,6 +1,6 @@
 # 72 — text-era "OC" field quarantines 577K notices (unknown-field-code)
 
-Status: resolved as DUPLICATE of issue 35 — no code change; needs only the reprocess (team-lead ops step)
+Status: resolved as DUPLICATE of issue 35 — no code change. Reclaim QUEUED 2026-07-29 as reprocess job [4] (reason=unknown-field-code, detail_like='%: OC', reclaim_only) in the reclaim-all sequence (ADR-0009); folds in the final rebuild.
 Kind: completeness / data-quality
 Relates to: 35 (the OC/ON mapping — already implemented + deployed), 71 (SDK vendoring), ADR-0004, CONTEXT.md (text era = header-only, EN-only for now)
 
