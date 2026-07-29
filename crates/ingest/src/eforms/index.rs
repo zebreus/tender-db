@@ -93,6 +93,45 @@ pub const ALIASES: &[(&str, &str)] = &[
     ("/*/cac:ProcurementProject", "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:ProcurementProject"),
     ("/*/cac:TenderingTerms", "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms"),
     ("/*/cac:TenderingProcess", "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess"),
+    // --- DÖE JAXB serializer quirks (issue 78). The DÖE OpenData export emits
+    // eForms with a few structures the SDK models elsewhere; each is grafted
+    // gap-fill (standard TED notices never carry these shapes, so they are
+    // untouched).
+    //
+    // The whole UltimateBeneficialOwner (with efac:Nationality/BT-706) is nested
+    // under efac:Organization; the SDK models the full UBO directly under
+    // efac:Organizations, keeping only a reference cbc:ID under the Organization.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:UltimateBeneficialOwner",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:UltimateBeneficialOwner",
+    ),
+    // DÖE emits a UBL cac:AppealTerms block with the review body inlined as a full
+    // party (WebsiteURI, PartyName, PostalAddress, Contact) — the SDK models the
+    // review organisation via the efac register instead. Graft the Company org
+    // subtree onto the inline party so its name/address/website/contact are claimed.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty",
+    ),
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty",
+    ),
+    // DÖE inlines the tender-recipient (submission) body as a full party under
+    // cac:TenderingTerms/cac:TenderRecipientParty — at Lot level, and at procedure
+    // level for the appeal bodies. Same Company graft.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:TenderRecipientParty",
+    ),
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty",
+    ),
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty",
+    ),
     // Result-layer blocks nested one level deeper than the SDK models them.
     (
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotTender",

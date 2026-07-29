@@ -1,6 +1,29 @@
 # 78 — DÖE eForms serializer nests subtrees the SDK anchors elsewhere (blocks part of the 1.0 reclaim)
 
-Status: open (iterative mapping mop-up; found during the issue-74 1.0 validation)
+Status: implemented + green (48/48 DÖE 1.0 sample parses; team-lead deploys in a later batch)
+
+## Implementation (proj-fix, 2026-07-29)
+
+Iterated a 48-member real DÖE `eforms-sdk-1.0` sample from 21/48 → **48/48 parsing**
+with six gap-fill `ALIASES` grafts (byte-identical to standard TED notices, which
+never carry these shapes — full store+ingest+app suites green incl. the projection
+golden/equivalence/resume gates). The DÖE JAXB serializer deviations found:
+
+1. **UBO nested under `efac:Organization`** (with `efac:Nationality`/BT-706) — the
+   SDK models the full UBO directly under `efac:Organizations`. Graft the UBO subtree.
+2. **Inlined bodies as full UBL parties** where the SDK references an org by id:
+   `cac:AppealTerms/{AppealReceiverParty, AppealInformationParty}` and
+   `cac:TenderRecipientParty` (WebsiteURI, PartyName, PostalAddress, Contact). These
+   mirror the `efac:Company` shape, so graft Company onto each — at procedure AND Lot
+   level (DÖE emits AppealTerms at both). Six grafts total.
+
+Fixtures: two real DÖE 1.0 notices (`doe-sdk10-ubo-appeal`, `doe-sdk10-tenderrecipient`)
+in the eForms corpus, exercising the UBO + appeal + tender-recipient grafts; the
+nested UBO's nationality is asserted claimed as BT-706. Deploy → reprocess reclaims
+the DÖE 1.0-1.7 remainder.
+
+---
+
 Kind: completeness / data-quality
 Relates to: 74 (SDK 1.0-1.7 vendoring), 75 (eforms-de empirical inventory), ADR-0004, ADR-0002
 

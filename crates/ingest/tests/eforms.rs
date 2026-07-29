@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 13, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 15, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -302,6 +302,25 @@ fn sdk_17_company_size_join_field_is_captured() {
     );
 }
 
+/// Issue 78: real DÖE `eforms-sdk-1.0` notices parse exhaustively — the DÖE JAXB
+/// serializer's structural quirks (UBO nested under `efac:Organization`, and the
+/// appeal/tender-recipient bodies inlined as full UBL parties) are grafted onto
+/// the SDK's Company/UBO subtrees so nothing goes unclaimed.
+#[test]
+fn doe_sdk10_serializer_quirks_are_consumed() {
+    // Nested UBO: its efac:Nationality is claimed as BT-706, and the inlined
+    // AppealReceiverParty's fields land via the Company graft.
+    let ubo = parse_fixture("eforms/doe-sdk10-ubo-appeal.xml");
+    assert!(
+        ubo.values.iter().any(|v| v.field_id == "BT-706-UBO"),
+        "the nested UBO's nationality is claimed as BT-706"
+    );
+
+    // Inlined tender-recipient party under a Lot's TenderingTerms.
+    let tr = parse_fixture("eforms/doe-sdk10-tenderrecipient.xml");
+    assert!(!tr.values.is_empty(), "the tender-recipient notice parses to fields");
+}
+
 // -------------------------------------------------------------- completeness
 
 /// ADR-0002's harness: walk the vendored `fields.json` of every accepted SDK
@@ -381,3 +400,4 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
         assert_eq!(sdk::resolve(minor, None), Some("eforms-de-1.x"));
     }
 }
+
