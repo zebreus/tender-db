@@ -1,0 +1,133 @@
+# 63 — Adopt `plan_state` blob@Phase-1 for fast full rebuilds
+
+Status: scoped (proj-fix, 2026-07-29) — smaller than the design's ~1-2 day estimate; the
+serialization machinery already exists. Concrete implementation plan below.
+
+## Concrete implementation plan (proj-fix — grounded in the current code)
+
+KEY FINDING: the blob machinery is ALREADY BUILT, so this is NOT a from-scratch
+serialization job. `postcard` is an ingest dep; `BucketRow` (Serialize/Deserialize,
+project.rs:1100), `NoticeState::read` + `bind_organizations`, and the pre-pass's
+`NoticeState::read → bind → BucketRow::snapshot → postcard` are all in place
+(`write_buckets_sharded`, project.rs:1000-1014). The pre-pass just re-reads the 254GB
+parsed layer to build those blobs; this issue moves the build into Phase-1.
+
+Steps:
+1. **`plan_state(notice_id INTEGER PRIMARY KEY, blob BLOB)`** — plain rowid table.
+   `reset_plan` must also clear it; `plan_is_complete`'s COUNT must cover it (so a
+   complete plan ⇒ blobs exist — the resume-salvage invariant).
+2. **Split `BucketRow` into `(group_key, StateRow)`** — the Phase-1 blob is the
+   group_key-INDEPENDENT payload (`StateRow` = today's BucketRow minus `group_key`),
+   because grouping runs AFTER Phase-1, so the group_key isn't known at write time.
+   The pre-pass then joins `plan_state.blob` (StateRow) + `plan_notice.group_key`
+   (both notice_id-PK-ordered) to reconstruct a BucketRow for bucketing.
+3. **Phase-1 write** (`build_plan` chunk loop, project.rs:537-544): after
+   `resolve_mentions` (whose returned ids are aligned to the input `&[Mention]`,
+   each carrying notice_id+section_id — canonical.rs:1665), zip ids→`by_section`,
+   `NoticeState::read(notice, parsed)` + `bind_organizations(by_section)`, serialize
+   a StateRow, `insert` into `plan_state` in the SAME chunk txn as `insert_plan`.
+4. **Pre-pass swap** (`write_buckets_sharded`): read `plan_state` (StateRow, ~25-50GB)
+   sequentially instead of `parsed_chunk_on` (254GB), joined with `plan_group_keys_on`,
+   → BucketRow → buckets. Phase-2 unchanged.
+5. **Byte-identity gate:** project_golden + project_equivalence + project_resume +
+   fold_source-invariance must stay byte-identical (the StateRow must round-trip to the
+   exact NoticeState; org ids already resolve in the same id order in Phase-1).
+
+Effort: ~half-to-full day of careful work — the risk is byte-identity of the StateRow
+round-trip and the resume-invariant (plan_state completeness), not new machinery.
+
+---
+
+Severity: MEDIUM (turns every future full rebuild's Phase-2 from ~days into
+~minutes; removes a whole 254GB sequential re-read from the fast-Phase-2 pipeline)
+Relates to: Phase-2 blaze effort (bucketed range-fold, Task-1/Task-2), 59, 60, 62
+Design: `.scratch/tender-db/design/phase2-blob-storage.md` (converged design +
+"Follow-up" + "Read-path guardrail" sections)
+
+## Context
+
+The Phase-2 "blazingly fast" effort ships a **bucketed sequential-fold**: a
+post-grouping pre-pass materialises each notice's fully-resolved fold-input
+(`NoticeState`) as a serialized blob, routes blobs into fold-ordered range
+buckets, and Phase-2 reads each bucket sequentially. For the CURRENT salvage the
+pre-pass reads the existing parsed layer sequentially (Phase-1 already complete on
+disk), which is a full ~254GB sequential re-read.
+
+This issue captures the optimization that makes that re-read **free on the next
+from-scratch rebuild**: write the blob during Phase-1's existing sequential pass.
+Deferred out of the salvage cutover on purpose (Phase-1 is already done there);
+adopt on the next `rebuild:true`.
+
+## The optimization
+
+`build_plan` (Phase-1, project.rs ~445-489) already streams the entire parsed
+layer sequentially via `parsed_chunk` AND resolves each chunk's org mentions in id
+order — then discards the heavy `Parsed` after computing the light `Ident`. Instead,
+in the same chunk loop, also materialise the fold-input blob:
+
+1. **Schema:** a separate `plan_state(notice_id INTEGER PRIMARY KEY, blob BLOB)`
+   **plain ROWID** table.
+   - Separate table, NOT a column on `plan_notice`: `build_plan_groups` does a
+     full-table `UPDATE plan_notice SET group_key=…`, which would rewrite every
+     blob (~25-50GB) for nothing.
+   - Plain rowid, NOT WITHOUT ROWID: a table leaf's inline-blob threshold is
+     ~4061B vs ~1002B for a WITHOUT-ROWID index leaf, so the common 1-3KB blobs
+     stay inline (fewer overflow hops); rowid = insertion order gives
+     clustering-by-notice-id for free (turso-internals, btree.rs:9027-9036).
+2. **Write point:** in the chunk loop, after `resolve_mentions` (which returns org
+   ids aligned index-for-index to the input `&[Mention]`, each carrying
+   notice_id+section_id — canonical.rs:1665), zip the ids back to build each
+   notice's `HashMap<section_id, org_id>`, run `NoticeState::read` +
+   `bind_organizations(by_section)`, postcard-serialize, and append the
+   `plan_state` row **in the SAME transaction as `insert_plan`**. Then
+   `plan_is_complete`'s COUNT check (canonical.rs:1279) atomically covers blobs
+   too — the resume-salvage invariant ("a complete plan implies its blobs exist")
+   holds for free.
+3. **Cost:** the 254GB read already happens in Phase-1; added work is CPU
+   (`read`+`bind`+postcard on the `Parsed` already in RAM, Phase-1 is
+   I/O/resolve-bound so ~free) + a sequential ~25-50GB blob append. Saves a whole
+   254GB sweep vs a separate materialisation pass.
+4. **Downstream unchanged:** the post-grouping range-bucket routing pass reads
+   `plan_state` (~25-50GB) sequentially instead of the 254GB parsed layer; Phase-2
+   folds per bucket.
+
+## Prerequisites
+
+- serde derives on the store fold types (`Fact`, `LotState`, `Round`, and the
+  results structs) + make `NoticeState` (ingest, project.rs) serializable.
+- Add `postcard` to the ingest crate (compact varint codec; smaller than bincode).
+
+## Companion next-rebuild levers (turso-perf)
+
+Fold in while touching the rebuild write path — each independently shrinks
+rebuild wall-time and composes with the blob write:
+
+- **64K `page_size`** on the rebuild DB: fewer/larger IO ops for the big
+  sequential blob writes + reads; fewer overflow pages per large blob (raises the
+  per-page inline capacity). Set at create time (companion to the plan_state
+  layout). Validate against the VPS page-cache budget.
+- **Prepared statements** for the per-row `plan_state`/`plan_notice` inserts:
+  `conn.execute` re-parses SQL each call (memory: ~10M point writes ≈ 18min of
+  pure re-parse at 12.4M). A prepared insert removes that.
+- **Read-path guardrail:** any sequential materialisation (this piggyback OR the
+  salvage pre-pass) MUST read via `parsed_chunk`'s [lo,hi]-per-table bursts, never
+  a per-notice or lockstep-10-cursor read — turso has no readahead; the ~490MB/s
+  comes from the kernel's per-fd readahead, which a naive 10-cursor-on-one-fd merge
+  thrashes down to tens of MB/s. `parsed_chunk` already does the safe chunked-merge
+  (10k-notice per-table runs; every parsed table PK-clustered by notice_id). The
+  pre-pass's side-reads (group_key from plan_notice, mentions from
+  organization_mentions) must ALSO use `WHERE notice_id BETWEEN lo AND hi`, not
+  `IN(chunk_ids)`, to stay on the burst discipline (proj-fix). Window W is a
+  RAM-vs-run-length knob, not read-throughput (size off cache_size). Optional
+  upside: N independent read-only `Database` opens = N fds = N kernel readahead
+  windows (turso-internals; off happy-path, A/B it, read-only/no-writer only).
+
+## Validation (byte-identical gate)
+
+Moving `NoticeState::read`+`bind` into Phase-1 must be output-identical:
+- `BTreeSet<Fact>` round-trips through postcard order-preservingly (fold relies on
+  `Fact::key()` order).
+- Org ids identical (Phase-1 already resolves mentions in id order today).
+- Gate: `project_equivalence` + `project_resume` green + the fold-source-invariance
+  test (sequential/blob fold vs parsed fold → all canonical tables equal
+  ORDER BY pk on a fresh scratch DB).
