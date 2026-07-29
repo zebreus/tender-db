@@ -251,17 +251,18 @@ fn framework_award_and_business_registration_notices_parse() {
 }
 
 /// A `CustomizationID` outside the vendored range quarantines rather than
-/// being parsed against a neighbouring version's metadata. (The DÖE profiles
-/// — eforms-de-2.x and sdk-0.1 — are vendored since issue 12 and covered by
-/// `tests/doe.rs`; eforms-de-1.x has no SDK-DE artifact and stays out.)
+/// being parsed against a neighbouring version's metadata. (The DÖE profiles —
+/// eforms-de-2.x, eforms-de-1.x and sdk-0.1 — are vendored, as are EU SDK
+/// 1.8–1.15; EU SDK 1.0/1.3/1.5/1.6/1.7 stay out pending the xpath grammar work,
+/// issue 74.)
 #[test]
 fn customizations_outside_the_vendored_range_quarantine() {
     let xml = r#"<?xml version="1.0"?>
 <ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
     xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
-  <cbc:CustomizationID>eforms-de-1.1</cbc:CustomizationID>
+  <cbc:CustomizationID>eforms-sdk-1.5</cbc:CustomizationID>
 </ContractNotice>"#;
-    match eforms::parse_payload("eforms:eforms-de-1.1", xml.as_bytes()) {
+    match eforms::parse_payload("eforms:eforms-sdk-1.5", xml.as_bytes()) {
         Parse::Quarantined { reason, detail } => {
             assert_eq!(reason, "unknown-customization");
             assert!(detail.unwrap_or_default().contains("no vendored SDK metadata"));
@@ -289,9 +290,11 @@ fn every_sdk_field_has_a_mapping_decision() {
             sdk.sdk_version,
             unaccounted.len()
         );
-        // The empirical sdk-0.1 inventory is smaller by nature (293 observed
-        // leaf paths); every SDK-derived inventory carries 1200+ fields.
-        let min = if customization == "eforms-sdk-0.1" { 250 } else { 700 };
+        // The empirical inventories (sdk-0.1, eforms-de-1.x) are smaller by
+        // nature — a few hundred observed leaf paths; every SDK-derived
+        // inventory carries 1200+ fields.
+        let empirical = matches!(customization, "eforms-sdk-0.1" | "eforms-de-1.x");
+        let min = if empirical { 250 } else { 700 };
         assert!(decisions.len() > min, "{customization}: only {} fields loaded", decisions.len());
     }
 }
@@ -326,6 +329,7 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
             "eforms-de-2.1@eforms-sdk-1.13",
             "eforms-de-2.1@eforms-sdk-1.14",
             "eforms-sdk-0.1",
+            "eforms-de-1.x",
         ]
     );
     assert_eq!(sdk::load("eforms-sdk-1.15").unwrap().sdk_version, "eforms-sdk-1.15.0");
@@ -335,4 +339,9 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
     assert_eq!(sdk::load("eforms-de-2.1@eforms-sdk-1.13").unwrap().sdk_version, "eforms-de-2.1.0");
     assert_eq!(sdk::load("eforms-de-2.1@eforms-sdk-1.14").unwrap().sdk_version, "eforms-de-2.1.0");
     assert_eq!(sdk::load("eforms-sdk-0.1").unwrap().sdk_version, "eforms-sdk-0.1");
+    // The eForms-DE 1.x minors all resolve to the one merged empirical inventory.
+    assert_eq!(sdk::load("eforms-de-1.x").unwrap().sdk_version, "eforms-de-1.x");
+    for minor in ["eforms-de-1.0", "eforms-de-1.1", "eforms-de-1.2"] {
+        assert_eq!(sdk::resolve(minor, None), Some("eforms-de-1.x"));
+    }
 }

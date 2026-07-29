@@ -1,7 +1,8 @@
 //! DÖE (oeffentlichevergabe.de) profile tests: the eforms-de-2.x national
-//! profiles (SDK-DE inventories) and the empirically-inventoried
-//! `eforms-sdk-0.1` below-threshold dialect, both in their real serializer
-//! shapes — the JAXB `ns2`…`ns9` numeric channel included (issue 12).
+//! profiles (SDK-DE inventories), the empirically-inventoried eForms-DE 1.x
+//! generation (issue 75) and the `eforms-sdk-0.1` below-threshold dialect, all
+//! in their real serializer shapes — the JAXB `ns2`…`ns9` numeric channel
+//! included (issue 12).
 
 use ingest::process;
 use ingest::profile::{self, Disposition, Record};
@@ -15,6 +16,10 @@ const UUID_CAN: &str = "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b
 const DE_CAN: &str = "doe/eforms-de-2.1-can-15063f7d-0f02-42f6-960a-96e35c9cc374-01.xml";
 const PAIR_DOE: &str = "doe-ted-pair/doe-cn-ebb72363-832d-4cea-8db6-04999414ea8c-01.xml";
 const PAIR_TED: &str = "doe-ted-pair/ted-cn-00373130-2026.xml";
+// eForms-DE 1.x: the earlier national generation (issue 75). No SDK-DE artifact
+// exists, so it is parsed against the merged empirical inventory (fields-de-1.x.json).
+const DE1_CN: &str = "doe/eforms-de-1.1-cn-7d69b0f7.xml";
+const DE1_CAN: &str = "doe/eforms-de-1.2-can-799811c4.xml";
 
 fn dispatch_fixture(relative: &str) -> (ingest::profile::NoticeRecord, Vec<u8>) {
     let path = format!("tests/fixtures/{relative}");
@@ -76,7 +81,7 @@ fn section_of_kind<'a>(parsed: &'a Parsed, kind: &str) -> &'a store::Section {
 /// sdk-0.1 serializer channels and eforms-de-2.1 — is consumed exhaustively.
 #[test]
 fn every_doe_fixture_is_consumed_exhaustively() {
-    for relative in [NUMERIC_CN, UUID_CAN, DE_CAN, PAIR_DOE] {
+    for relative in [NUMERIC_CN, UUID_CAN, DE_CAN, DE1_CN, DE1_CAN, PAIR_DOE] {
         let parsed = parse_fixture(relative);
         assert!(!parsed.values.is_empty(), "{relative}: parsed but empty");
         for v in &parsed.values {
@@ -294,8 +299,11 @@ fn eforms_de_versions_resolve_to_their_eu_base() {
         Some("eforms-de-2.1@eforms-sdk-1.14")
     );
     assert_eq!(resolve("eforms-de-2.1", None), Some("eforms-de-2.1@eforms-sdk-1.13"));
-    // eforms-de-1.x has no SDK-DE artifact and is not vendored: quarantine.
-    assert_eq!(resolve("eforms-de-1.1", None), None);
+    // eForms-DE 1.x has no SDK-DE artifact either, so — like sdk-0.1 — all three
+    // minors resolve to one merged empirical inventory (issue 75).
+    assert_eq!(resolve("eforms-de-1.0", None), Some("eforms-de-1.x"));
+    assert_eq!(resolve("eforms-de-1.1", None), Some("eforms-de-1.x"));
+    assert_eq!(resolve("eforms-de-1.2", None), Some("eforms-de-1.x"));
     assert_eq!(resolve("eforms-sdk-0.1", None), Some("eforms-sdk-0.1"));
 }
 
@@ -368,4 +376,75 @@ async fn doe_zip_package_processes_end_to_end() {
     );
 
     let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// eForms-DE 1.x has no SDK-DE `fields.json` artifact (issue 75), so it is
+/// parsed against the merged empirical era inventory — every element path
+/// observed across the archived eforms-de-1.0/1.1/1.2 corpus. Both minors must
+/// parse exhaustively (ADR-0004) into the expected sections and business
+/// content, exactly like the vendored 2.x profiles.
+#[test]
+fn eforms_de_1x_contract_notice_parses_against_the_empirical_inventory() {
+    let cn = parse_fixture(DE1_CN);
+
+    // The declared national customization is claimed content, not plumbing.
+    assert!(matches!(
+        value(&cn, "PROCEDURE", "DE1-CustomizationID"),
+        NoticeValue::Id { value, .. } if value == "eforms-de-1.1"
+    ));
+    // German legal basis + notice subtype, procedure-level.
+    assert!(matches!(
+        value(&cn, "PROCEDURE", "DE1-RegulatoryDomain"),
+        NoticeValue::Text { value, .. } if value == "32014L0024"
+    ));
+    assert!(matches!(
+        value(&cn, "PROCEDURE", "DE1-NoticeSubType-SubTypeCode"),
+        NoticeValue::Code { code, .. } if code == "16"
+    ));
+
+    // The organization register: sections keyed on the published ORG id (the
+    // empirical inventory's deep identifier under efac:Company).
+    let org = cn.sections.iter().find(|s| s.id == "ORG-7001").expect("ORG-7001 section");
+    assert_eq!(org.kind, "Organization");
+    // The org name sits in its PartyName block, which hangs off the org section.
+    let name = cn
+        .sections
+        .iter()
+        .filter(|s| s.parent.as_deref() == Some("ORG-7001"))
+        .flat_map(|s| values(&cn, &s.id, "DE1-Organizations-Organization-Company-PartyName-Name"))
+        .next()
+        .expect("an org name");
+    assert!(matches!(name, NoticeValue::Text { value, .. } if value == "Städtisches Klinikum Görlitz gGmbH"));
+    // NUTS is a classification even here.
+    assert!(matches!(
+        value(&cn, "ORG-7001", "DE1-Organizations-Organization-Company-PostalAddress-CountrySubentityCode"),
+        NoticeValue::Classification { scheme, code } if scheme == "nuts" && code == "DED2D"
+    ));
+
+    // Lots are addressed by their published id.
+    let lot = section_of_kind(&cn, "ProcurementProjectLot");
+    assert_eq!(lot.id, "LOT-0000");
+}
+
+/// The award-notice (eForms-DE 1.2) result layer — LotResult, LotTender,
+/// SettledContract, TenderingParty — sections and parses whole.
+#[test]
+fn eforms_de_1x_award_notice_builds_the_result_layer() {
+    let can = parse_fixture(DE1_CAN);
+    assert!(matches!(
+        value(&can, "PROCEDURE", "DE1-CustomizationID"),
+        NoticeValue::Id { value, .. } if value == "eforms-de-1.2"
+    ));
+    for kind in ["LotResult", "LotTender", "SettledContract", "TenderingParty", "Organization"] {
+        assert!(
+            can.sections.iter().any(|s| s.kind == kind),
+            "expected a {kind} section; got {:?}",
+            can.sections.iter().map(|s| &s.kind).collect::<Vec<_>>()
+        );
+    }
+    // Every value belongs to a real section (ADR-0004 exhaustiveness sanity).
+    assert!(!can.values.is_empty());
+    for v in &can.values {
+        assert!(can.sections.iter().any(|s| s.id == v.section_id), "orphan {}", v.field_id);
+    }
 }

@@ -56,6 +56,13 @@ pub const ACCEPTED: &[(&str, &str)] = &[
     ("eforms-de-2.1@eforms-sdk-1.13", include_str!("../../sdk/fields-de-2.1.0-eu-1.13.json")),
     ("eforms-de-2.1@eforms-sdk-1.14", include_str!("../../sdk/fields-de-2.1.0-eu-1.14.json")),
     ("eforms-sdk-0.1", include_str!("../../sdk/fields-sdk-0.1.json")),
+    // The DÖE eForms-DE 1.0/1.1/1.2 national dialect. No SDK-DE `fields.json`
+    // artifact exists for the 1.x line (issue 75: the SDK-eForms-DE fork begins
+    // at national 2.0; the 1.x line is spec+schematron only), so — like
+    // `eforms-sdk-0.1` — this inventory is empirical: the full observed element
+    // path set across the archived eforms-de-1.x corpus, one merged era file for
+    // all three minors (686/773 paths are shared, and a superset only over-claims).
+    ("eforms-de-1.x", include_str!("../../sdk/fields-de-1.x.json")),
 ];
 
 /// Resolve a notice's `CustomizationID` (plus its `cbc:ProfileID`, when
@@ -75,6 +82,11 @@ pub fn resolve(customization: &str, profile_id: Option<&str>) -> Option<&'static
             Some("eforms-sdk-1.14") => "eforms-de-2.1@eforms-sdk-1.14",
             _ => "eforms-de-2.1@eforms-sdk-1.13",
         });
+    }
+    // The three eForms-DE 1.x minors share one merged empirical inventory; no
+    // ProfileID split (unlike 2.1, each minor is its own CustomizationID).
+    if matches!(customization, "eforms-de-1.0" | "eforms-de-1.1" | "eforms-de-1.2") {
+        return Some("eforms-de-1.x");
     }
     None
 }
