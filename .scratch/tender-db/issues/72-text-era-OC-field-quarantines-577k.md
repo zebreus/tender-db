@@ -28,12 +28,15 @@ the window in between). The deployed parser already handles OC correctly; any
 
 ## Remaining action (team-lead ops step — NOT a code task)
 
-Reprocess the text-era quarantine bucket from the archive to recover the ~577K:
+Reprocess the text-era quarantine bucket from the archive to recover the ~577K.
+The reprocess mechanism this needed is now built (**issue 76**):
 
-    reason = 'unknown-field-code' AND detail LIKE '%: OC'
+    POST /admin/jobs {"kind":"reprocess","reason":"unknown-field-code","detail_like":"%: OC"}
 
-This also flips **issue 35** from `needs-verification` → done (its whole purpose
-was this reprocess-and-verify). No deploy needed (fix already in prod).
+(OC is parse-level — a `notices` row exists in state `quarantined` — so a plain
+`process` re-run is a no-op; issue 76's in-place re-parse is required.) This also
+flips **issue 35** from `needs-verification` → done. No parser deploy needed
+(the OC fix is already in prod); deploy issue 76 first, then run the above.
 
 ---
 

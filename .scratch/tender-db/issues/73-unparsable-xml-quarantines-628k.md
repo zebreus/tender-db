@@ -35,17 +35,21 @@ duplicate-skips, not notices.
 ### Reclaim path (team-lead ops step)
 
 These are **profile-level** quarantines (failed at XML-parse, so NO `notices`
-row exists) — unlike OC. So a plain `process` re-run DOES reclaim them:
+row exists) — unlike OC. Two ways to reclaim:
 
-    POST /admin/jobs {"kind":"process","source":"ted","package_kind":"monthly","period":"2008-05"}
-    POST /admin/jobs {"kind":"project","rebuild":false}
+- Preferred, now that the reprocess mechanism exists (**issue 76**) — it reclaims
+  the notices AND flags the stale rows, so the ledger is correct:
 
-(+ repeat `process` for the thin 2004–2010 monthly tail.) The EN members insert as
-fresh `internal-ojs` notices; the project folds them. Caveat: the stale quarantine
-rows are not cleared (`reprocessed_at` stays NULL — no reprocess-bookkeeping path
-exists yet; see the reprocess-mechanism note handed to team-lead), so the ledger
-"outstanding" count won't drop even though the notices ARE recovered. Cosmetic; a
-real reprocess job (needed for OC/SDK anyway) would fix the bookkeeping too.
+      POST /admin/jobs {"kind":"reprocess","reason":"unparsable-xml","detail_like":"XML with DTD detected"}
+
+- Or a bare `process` re-run over the affected periods (works because it's
+  profile-level, but leaves the stale rows unflagged):
+
+      POST /admin/jobs {"kind":"process","source":"ted","package_kind":"monthly","period":"2008-05"}
+      POST /admin/jobs {"kind":"project","rebuild":false}
+
+Either way the EN members insert as fresh `internal-ojs` notices and the project
+folds them; the ~591k non-EN siblings correctly become duplicate-skips.
 
 ## To investigate (original — superseded by the root cause above)
 

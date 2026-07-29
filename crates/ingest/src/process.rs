@@ -152,13 +152,20 @@ pub async fn process_package_resilient(
 /// to it, and `report` is the running tally — the Supervisor turns this into
 /// the live progress bar (issue 16). It is a pure UI hook; passing
 /// `|_, _, _| {}` is the plain processing path.
-pub async fn process_package(
-    db: &store::Db,
-    archive: &Path,
-    source: &str,
-    fetch_id: i64,
-    mut on_progress: impl FnMut(u64, u64, &Report),
-) -> Result<Report, Error> {
+type WalkerHandle = std::thread::JoinHandle<Result<(u64, u64, u64), package::Error>>;
+type RecordRx = std::sync::mpsc::Receiver<(Record, store::Parse)>;
+
+/// Spawn the walker: it reads `archive`, dispatches every member to its profile,
+/// and field-maps each record, all on a dedicated CPU thread that streams
+/// `(Record, Parse)` items over a bounded channel to the async writer. The bound
+/// keeps memory flat: a monthly-scale package (66k notices) held whole as parsed
+/// values is gigabytes, which is how the first TED monthly run died.
+///
+/// Shared by [`process_package`] (fresh ingest) and [`reclaim_package`]
+/// (reprocess) so a reclaimed member sees a byte-identical parse to a first
+/// ingest. Returns the receiver, the walker handle (yielding its
+/// `(members, ingested, skipped)` tally), and the entry-count progress estimate.
+fn spawn_record_producer(archive: &Path) -> Result<(RecordRx, WalkerHandle, u64), Error> {
     // Cheap name-only pre-scan: dispatch policy that spans members (the text
     // era's ISO-vs-UTF8 variant selection) needs the package's shape up front;
     // the entry count doubles as the progress total.
@@ -166,11 +173,6 @@ pub async fn process_package(
     let estimated = names.len() as u64;
     let ctx = profile::PackageContext::from_entry_names(&names);
 
-    // The walker is synchronous and dispatch + field mapping are pure CPU, so
-    // they run on their own thread and stream each parsed record through a
-    // bounded channel to the async writer. The bound is what keeps memory flat:
-    // a monthly-scale package (66k notices) held whole as parsed values is
-    // gigabytes, which is how the first TED monthly run died.
     let (tx, rx) = std::sync::mpsc::sync_channel::<(Record, store::Parse)>(64);
     let archive = archive.to_owned();
     let walker = std::thread::spawn(move || -> Result<(u64, u64, u64), package::Error> {
@@ -226,52 +228,71 @@ pub async fn process_package(
         })?;
         Ok((members, ingested, skipped))
     });
+    Ok((rx, walker, estimated))
+}
 
+/// Pull the next streamed record. `recv` blocks, so it hops to the blocking
+/// pool; the receiver rides along because `spawn_blocking` needs `'static`.
+async fn recv_next(slot: &mut Option<RecordRx>) -> Option<(Record, store::Parse)> {
+    let rx = slot.take().expect("receiver in flight");
+    let (msg, rx) = tokio::task::spawn_blocking(move || {
+        let msg = rx.recv();
+        (msg, rx)
+    })
+    .await
+    .expect("record receiver panicked");
+    *slot = Some(rx);
+    msg.ok()
+}
+
+/// Build the store Notice for one parsed record, resolving its own
+/// publication/dispatch dates now while the payload is in hand (issue 18) — the
+/// same resolution the projection uses, so the notice row and its versions agree.
+fn resolved_notice(
+    source: &str,
+    fetch_id: i64,
+    ingested_at: i64,
+    n: profile::NoticeRecord,
+    parse: &store::Parse,
+) -> store::Notice {
+    let (published_at, dispatched_at) = match parse {
+        store::Parse::Parsed(parsed) => {
+            let (published, dispatched) = crate::project::notice_instants(parsed);
+            (Some(published), dispatched)
+        }
+        _ => (None, None),
+    };
+    store::Notice {
+        source: source.into(),
+        publication_id: n.publication_id,
+        content_hash: n.content_hash,
+        profile: n.profile,
+        declared_version: n.declared_version,
+        fetch_id,
+        member_path: n.member_path,
+        ingested_at,
+        published_at,
+        dispatched_at,
+    }
+}
+
+pub async fn process_package(
+    db: &store::Db,
+    archive: &Path,
+    source: &str,
+    fetch_id: i64,
+    mut on_progress: impl FnMut(u64, u64, &Report),
+) -> Result<Report, Error> {
+    let (rx, walker, estimated) = spawn_record_producer(archive)?;
     let mut report = Report::default();
     let now = store::now_unix();
     let mut done = 0u64;
     let mut slot = Some(rx);
-    loop {
-        // `recv` blocks, so it hops to the blocking pool; the receiver rides
-        // along because `spawn_blocking` needs `'static`.
-        let rx = slot.take().expect("receiver in flight");
-        let (msg, rx) = tokio::task::spawn_blocking(move || {
-            let msg = rx.recv();
-            (msg, rx)
-        })
-        .await
-        .expect("record receiver panicked");
-        slot = Some(rx);
-        let Ok((record, parse)) = msg else { break };
+    while let Some((record, parse)) = recv_next(&mut slot).await {
         match record {
             Record::Notice(n) => {
-                // Resolve the notice's own publication/dispatch dates now, while
-                // the parsed payload is in hand (issue 18) — the same resolution
-                // the projection uses, so the notice row and its versions agree.
-                let (published_at, dispatched_at) = match &parse {
-                    store::Parse::Parsed(parsed) => {
-                        let (published, dispatched) = crate::project::notice_instants(parsed);
-                        (Some(published), dispatched)
-                    }
-                    _ => (None, None),
-                };
-                let inserted = db
-                    .record_notice(
-                        &store::Notice {
-                            source: source.into(),
-                            publication_id: n.publication_id,
-                            content_hash: n.content_hash,
-                            profile: n.profile,
-                            declared_version: n.declared_version,
-                            fetch_id,
-                            member_path: n.member_path,
-                            ingested_at: now,
-                            published_at,
-                            dispatched_at,
-                        },
-                        &parse,
-                    )
-                    .await?;
+                let inserted =
+                    db.record_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await?;
                 if inserted {
                     report.notices += 1;
                     match parse {
@@ -302,10 +323,61 @@ pub async fn process_package(
     }
     drop(slot);
 
-    let (members, ingested, skipped) =
-        walker.join().expect("package walker panicked")?;
+    let (members, ingested, skipped) = walker.join().expect("package walker panicked")?;
     report.members = members;
     report.ingested = ingested;
     report.skipped = skipped;
+    Ok(report)
+}
+
+/// Per-package outcome of a reprocess pass over a held quarantine bucket.
+#[derive(Debug, Default, PartialEq)]
+pub struct ReclaimReport {
+    /// Members the walker read.
+    pub members: u64,
+    /// Held members that now parse and were written in place (or freshly).
+    pub reclaimed: u64,
+    /// Members that still do not parse: left held.
+    pub still_held: u64,
+    /// Members already parsed (a prior reclaim, or one that never failed).
+    pub already: u64,
+}
+
+/// Re-parse one archived package and reclaim every member that now parses,
+/// writing its parsed layer in place ([`store::Db::reclaim_notice`]). The
+/// walk/dispatch/parse is [`spawn_record_producer`] — identical to a fresh
+/// ingest — so a reclaimed member's parsed layer matches one. Members that still
+/// fail (or are still unrecognised profile-level quarantines / corruption) stay
+/// held. Memory stays flat: the producer streams one record at a time.
+pub async fn reclaim_package(
+    db: &store::Db,
+    archive: &Path,
+    source: &str,
+    fetch_id: i64,
+    mut on_progress: impl FnMut(u64, u64, &ReclaimReport),
+) -> Result<ReclaimReport, Error> {
+    let (rx, walker, estimated) = spawn_record_producer(archive)?;
+    let mut report = ReclaimReport::default();
+    let now = store::now_unix();
+    let mut done = 0u64;
+    let mut slot = Some(rx);
+    while let Some((record, parse)) = recv_next(&mut slot).await {
+        // Only Notice records can reclaim; a still-failing profile-level
+        // Quarantine (or corruption) needs no write — its INSERT OR IGNORE row is
+        // untouched and stays held.
+        if let Record::Notice(n) = record {
+            match db.reclaim_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await? {
+                store::Reclaim::Reclaimed => report.reclaimed += 1,
+                store::Reclaim::StillHeld => report.still_held += 1,
+                store::Reclaim::AlreadyParsed => report.already += 1,
+            }
+        }
+        done += 1;
+        on_progress(done, estimated.max(done), &report);
+    }
+    drop(slot);
+
+    let (members, _ingested, _skipped) = walker.join().expect("package walker panicked")?;
+    report.members = members;
     Ok(report)
 }

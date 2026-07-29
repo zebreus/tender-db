@@ -730,6 +730,98 @@ impl Db {
         Ok(rows.next().await?.map(|row| int(&row, 0)))
     }
 
+    /// The id and parse state of a notice by identity, if it exists.
+    async fn notice_state(&self, conn: &Connection, n: &Notice) -> turso::Result<Option<(i64, String)>> {
+        let mut rows = conn
+            .query(
+                "SELECT id, parse_state FROM notices
+                  WHERE source = ? AND publication_id = ? AND content_hash = ?",
+                (t(&n.source), t(&n.publication_id), t(&n.content_hash)),
+            )
+            .await?;
+        Ok(rows.next().await?.map(|row| (int(&row, 0), text(&row, 1))))
+    }
+
+    /// Re-attempt one member whose earlier ingest quarantined it, writing its
+    /// parsed layer IN PLACE when it now parses — the reprocess mechanism the
+    /// reclaim program was missing (issues 72/73). Transactional and idempotent:
+    /// the parsed-layer insert, the `parsed` transition (which clears `projected`
+    /// so the trailing projection re-folds it) and the `reprocessed_at` flag
+    /// commit together, so a crash leaves the member held and a re-run redoes it.
+    ///
+    /// `n.ingested_at` is the reprocess wall-clock, recorded as `reprocessed_at`.
+    /// An already-parsed notice keeps its original `ingested_at`; only its parse
+    /// state, `projected` watermark and resolved instants change — the tender
+    /// layer orders by `published_at`, never `ingested_at`, so a reclaimed fold is
+    /// byte-identical to a fresh ingest of the member.
+    pub async fn reclaim_notice(&self, n: &Notice, parse: &Parse) -> turso::Result<Reclaim> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result = self.reclaim_notice_tx(&conn, n, parse).await;
+        match result {
+            Ok(outcome) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(outcome)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    async fn reclaim_notice_tx(&self, conn: &Connection, n: &Notice, parse: &Parse) -> turso::Result<Reclaim> {
+        match self.notice_state(conn, n).await? {
+            // Already good — never re-touch a parsed notice (guards double-writes
+            // and makes a re-run a no-op).
+            Some((_, state)) if state == "parsed" => Ok(Reclaim::AlreadyParsed),
+            // A held parse-level quarantine: the notice row exists (empty of parsed
+            // values — it was quarantined before `insert_parsed` ran), so write the
+            // parsed layer in place when it now parses. This is the case a plain
+            // re-run of `process` can never reach (its `INSERT OR IGNORE` short-
+            // circuits) — OC (issue 72) and the SDK cohort (issue 71).
+            Some((id, _)) => match parse {
+                Parse::Parsed(parsed) => {
+                    self.insert_parsed(conn, id, parsed).await?;
+                    conn.execute(
+                        "UPDATE notices SET parse_state = 'parsed', projected = 0,
+                             published_at = ?, dispatched_at = ? WHERE id = ?",
+                        (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
+                    )
+                    .await?;
+                    conn.execute(
+                        "UPDATE quarantine SET reprocessed_at = ?
+                          WHERE notice_id = ? AND reprocessed_at IS NULL",
+                        (Value::Integer(n.ingested_at), Value::Integer(id)),
+                    )
+                    .await?;
+                    Ok(Reclaim::Reclaimed)
+                }
+                _ => Ok(Reclaim::StillHeld),
+            },
+            // No notice row — a profile-level quarantine (failed before an identity
+            // existed). The ordinary ingest write now records it; flag the held
+            // member's row by (fetch_id, member_path) so a content-hash difference
+            // between the raw-bytes quarantine and the notice can't leave it stuck.
+            None => {
+                if !self.record_notice_tx(conn, n, parse).await? {
+                    return Ok(Reclaim::AlreadyParsed);
+                }
+                if matches!(parse, Parse::Parsed(_)) {
+                    conn.execute(
+                        "UPDATE quarantine SET reprocessed_at = ?
+                          WHERE fetch_id = ? AND member_path = ? AND reprocessed_at IS NULL",
+                        (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
+                    )
+                    .await?;
+                    Ok(Reclaim::Reclaimed)
+                } else {
+                    Ok(Reclaim::StillHeld)
+                }
+            }
+        }
+    }
+
     /// Set a notice's parse state. A transition to 'parsed' also clears the
     /// incremental-projection watermark (`projected = 0`, issue 58): this is the
     /// single choke-point through which a notice's parsed layer becomes current,
@@ -888,6 +980,40 @@ impl Db {
             )
             .await?;
         Ok(changed > 0)
+    }
+
+    /// The archived packages still holding quarantined members of a bucket —
+    /// `reason`, plus an optional `detail LIKE` pattern and exact `profile` — that
+    /// a prior reprocess has not yet reclaimed (`reprocessed_at IS NULL`), whose
+    /// `fetch_id` exceeds `after`. The reprocess job's resumable work list: it
+    /// returns distinct packages (not rows), so the result is bounded by package
+    /// count regardless of how large the bucket is, and reclaimed packages fall
+    /// out of a re-query automatically.
+    pub async fn quarantine_reclaim_packages(
+        &self,
+        reason: &str,
+        detail_like: Option<&str>,
+        profile: Option<&str>,
+        after: i64,
+    ) -> turso::Result<Vec<(i64, String, String)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT DISTINCT q.fetch_id, f.source, f.path
+                   FROM quarantine q JOIN fetches f ON f.id = q.fetch_id
+                  WHERE q.reason = ?1 AND q.reprocessed_at IS NULL
+                    AND (?2 IS NULL OR q.detail LIKE ?2)
+                    AND (?3 IS NULL OR q.profile = ?3)
+                    AND q.fetch_id > ?4
+                  ORDER BY q.fetch_id",
+                (t(reason), opt_text(detail_like), opt_text(profile), Value::Integer(after)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((int(&row, 0), text(&row, 1), text(&row, 2)));
+        }
+        Ok(out)
     }
 
     /// Notice counts per mapping profile — the era-split check and the
@@ -1219,6 +1345,19 @@ pub enum Parse {
     /// Unmapped content or an unrepresentable value: the notice is recorded,
     /// its payload stays in the archive, and nothing of it is imported.
     Quarantined { reason: String, detail: Option<String> },
+}
+
+/// The outcome of re-attempting one quarantined member ([`Db::reclaim_notice`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Reclaim {
+    /// A held member now parses: its parsed layer was written and the quarantine
+    /// row flagged `reprocessed_at`, ready for the trailing projection to fold.
+    Reclaimed,
+    /// The member still does not parse (or is still unrecognised): left held.
+    StillHeld,
+    /// The notice is already parsed — a prior reclaim, or a member that never
+    /// failed. Nothing to do; this makes a re-run a no-op.
+    AlreadyParsed,
 }
 
 /// A payload that could not be turned into a Notice (ADR-0004).
@@ -2199,6 +2338,191 @@ mod tests {
         // And it is writable — the resume cursor works on the migrated table.
         db.record_job_progress(3, "2008-06").await.unwrap();
         assert_eq!(db.pending_jobs().await.unwrap()[0].progress.as_deref(), Some("2008-06"));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    // ---------------------------------------------------------- reclaim (issue 72/73)
+
+    async fn seed_fetch(db: &Db) {
+        db.conn()
+            .await
+            .execute(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                 VALUES(1,'ted','daily','2001-1','u','h',1,0,'pkg')",
+                (),
+            )
+            .await
+            .unwrap();
+    }
+
+    fn tiny_parsed() -> Parsed {
+        Parsed {
+            sections: vec![Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+            values: vec![ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "TITLE".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: Some("EN".into()), value: "hello".into() },
+            }],
+        }
+    }
+
+    fn held_notice() -> Notice {
+        Notice {
+            source: "ted".into(),
+            publication_id: "123-2001".into(),
+            content_hash: "hash1".into(),
+            profile: "text".into(),
+            declared_version: None,
+            fetch_id: 1,
+            member_path: "pkg/m1".into(),
+            ingested_at: 100,
+            published_at: None,
+            dispatched_at: None,
+        }
+    }
+
+    async fn int_of(db: &Db, sql: &str) -> Option<i64> {
+        match db.scalar(sql).await.unwrap() {
+            Some(Value::Integer(i)) => Some(i),
+            _ => None,
+        }
+    }
+    async fn text_of(db: &Db, sql: &str) -> Option<String> {
+        match db.scalar(sql).await.unwrap() {
+            Some(Value::Text(s)) => Some(s),
+            _ => None,
+        }
+    }
+
+    /// A parse-level held notice (the OC/SDK class: a `notices` row exists in
+    /// state `quarantined`, empty of parsed values) is written IN PLACE when it
+    /// now parses — the case a plain `process` re-run can never reach.
+    #[tokio::test]
+    async fn reclaim_writes_a_held_parse_level_notice_in_place() {
+        let path = format!("/tmp/tender-db-reclaim-parse-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // Ingest quarantined: a notice row (state quarantined) + a held quarantine
+        // row keyed to it, no parsed values.
+        assert!(db
+            .record_notice(
+                &held_notice(),
+                &Parse::Quarantined { reason: "unknown-field-code".into(), detail: Some("line 3: OC".into()) },
+            )
+            .await
+            .unwrap());
+        assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE id=1").await.as_deref(), Some("quarantined"));
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts WHERE notice_id=1").await, Some(0));
+
+        // A re-attempt that STILL fails leaves the notice held, untouched.
+        assert_eq!(
+            db.reclaim_notice(&held_notice(), &Parse::Quarantined { reason: "still".into(), detail: None }).await.unwrap(),
+            Reclaim::StillHeld
+        );
+        assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE id=1").await.as_deref(), Some("quarantined"));
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id=1").await, None);
+
+        // Reprocess: the same identity now parses. The reclaim carries the fresh
+        // ingest's wall-clock (999) and resolved instants (published 1_000_000).
+        let mut fresh = held_notice();
+        fresh.ingested_at = 999;
+        fresh.published_at = Some(1_000_000);
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+
+        // Parsed in place: state flipped, value written, watermark cleared so the
+        // projection re-folds it, instants filled — and the quarantine row flagged.
+        assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE id=1").await.as_deref(), Some("parsed"));
+        assert_eq!(int_of(&db, "SELECT projected FROM notices WHERE id=1").await, Some(0));
+        assert_eq!(int_of(&db, "SELECT published_at FROM notices WHERE id=1").await, Some(1_000_000));
+        assert_eq!(int_of(&db, "SELECT ingested_at FROM notices WHERE id=1").await, Some(100), "original ingest time is preserved");
+        assert_eq!(text_of(&db, "SELECT value FROM notice_texts WHERE notice_id=1").await.as_deref(), Some("hello"));
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id=1").await, Some(999));
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().contains(&1), "reclaimed notice is in the projection change-set");
+
+        // Idempotent: a second pass is a no-op — never double-writes the values.
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::AlreadyParsed);
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts WHERE notice_id=1").await, Some(1));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A profile-level held member (the DTD class: it failed before an identity
+    /// existed, so there is NO `notices` row) is recorded fresh and its held
+    /// quarantine row flagged — matched by (fetch_id, member_path), so a content
+    /// hash difference between the raw-bytes quarantine and the notice can't strand
+    /// it.
+    #[tokio::test]
+    async fn reclaim_records_a_held_profile_level_member() {
+        let path = format!("/tmp/tender-db-reclaim-profile-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // Profile-level quarantine: raw-bytes hash, no notice row.
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "pkg/m1".into(),
+                content_hash: "raw-bytes-hash".into(),
+                profile: None,
+                reason: "unparsable-xml".into(),
+                detail: Some("XML with DTD detected".into()),
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+        assert!(int_of(&db, "SELECT id FROM notices WHERE publication_id='123-2001'").await.is_none(), "no notice row before reclaim");
+
+        // Now it parses: the notice is recorded and the held row (with a DIFFERENT
+        // content hash) flagged by (fetch_id, member_path).
+        let mut fresh = held_notice();
+        fresh.ingested_at = 999;
+        fresh.published_at = Some(1_000_000);
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE publication_id='123-2001'").await.as_deref(), Some("parsed"));
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path='pkg/m1'").await, Some(999));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The work list is package-granular, held-only, and resumable: it returns the
+    /// distinct packages of a bucket whose `fetch_id` exceeds the cursor, and
+    /// reclaimed rows (`reprocessed_at` set) fall out.
+    #[tokio::test]
+    async fn reclaim_packages_lists_held_buckets_resumably() {
+        let path = format!("/tmp/tender-db-reclaim-list-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        db.conn()
+            .await
+            .execute_batch(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path) VALUES
+                   (1,'ted','daily','a','u','h',1,0,'p1'),(2,'ted','daily','b','u','h',1,0,'p2'),(3,'doe','daily','c','u','h',1,0,'p3');
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at) VALUES
+                   (1,'m1','h1','unknown-field-code','line 3: OC',0,NULL),
+                   (1,'m2','h2','unknown-field-code','line 9: OC',0,NULL),
+                   (2,'m3','h3','unknown-field-code','line 3: OC',0,NULL),
+                   (3,'m4','h4','unknown-field-code','line 3: OC',0,123),
+                   (2,'m5','h5','unparsable-xml','other',0,NULL);",
+            )
+            .await
+            .unwrap();
+        db.set_foreign_keys(true).await.unwrap();
+
+        // The OC bucket: two held packages (1 and 2), deduped; pkg 3 is already
+        // reclaimed (reprocessed_at set) and pkg 2's row m5 is a different reason.
+        let all = db.quarantine_reclaim_packages("unknown-field-code", Some("%: OC"), None, 0).await.unwrap();
+        assert_eq!(all.iter().map(|(id, ..)| *id).collect::<Vec<_>>(), vec![1, 2]);
+        assert_eq!(all[0].2, "p1");
+
+        // Resume past fetch 1: only package 2 remains.
+        let rest = db.quarantine_reclaim_packages("unknown-field-code", Some("%: OC"), None, 1).await.unwrap();
+        assert_eq!(rest.iter().map(|(id, ..)| *id).collect::<Vec<_>>(), vec![2]);
 
         let _ = std::fs::remove_file(&path);
     }

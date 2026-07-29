@@ -139,6 +139,10 @@ enum Spec {
     /// missed scheduler tick catches up instead of leaving a permanent hole.
     ProbeDoe,
     Process { source: String, package_kind: String, period: Option<String> },
+    /// Re-attempt a held quarantine bucket from the archive, writing the parsed
+    /// layer in place for members that now parse (issues 71/72/73). The bucket is
+    /// `reason` + optional `detail LIKE` + optional exact `profile`.
+    Reprocess { reason: String, detail_like: Option<String>, profile: Option<String> },
     Project { rebuild: bool },
     /// A consistent online snapshot of the store, shipped off-box (issue 23).
     /// A unit variant, so it serialises into the durable job_queue as `"Snapshot"`
@@ -152,7 +156,7 @@ enum Spec {
 #[serde(default)]
 pub struct JobRequest {
     /// `fetch` | `process` | `project` | `backfill` | `snapshot` | `daily`
-    /// (`daily` forces the full daily reconciliation now — issue 69 catch-up).
+    /// (issue 69 catch-up) | `reprocess` (re-attempt a held quarantine bucket).
     pub kind: String,
     /// `ted` | `doe`.
     pub source: Option<String>,
@@ -166,6 +170,12 @@ pub struct JobRequest {
     pub rebuild: Option<bool>,
     /// `fetch` only: re-download and hash-compare a known period (finality).
     pub refetch: Option<bool>,
+    /// `reprocess` only: the held quarantine bucket to re-attempt — `reason` is
+    /// required, `detail_like` (a SQL LIKE pattern, e.g. `%: OC`) and `profile`
+    /// narrow it further.
+    pub reason: Option<String>,
+    pub detail_like: Option<String>,
+    pub profile: Option<String>,
 }
 
 impl Supervisor {
@@ -244,6 +254,23 @@ impl Supervisor {
             // issue 69). Always runs both source probes — the TED probe self-heals
             // a multi-day gap and is a cheap no-op walk on a non-publishing day.
             "daily" => Ok(self.enqueue_daily(true).await),
+            // Re-attempt a held quarantine bucket now that a fix ships, then fold
+            // what it reclaims (issues 71/72/73). The bucket is reason + optional
+            // detail-LIKE + profile.
+            "reprocess" => {
+                let reason = req.reason.clone().ok_or("reprocess needs a reason")?;
+                let detail_like = req.detail_like.clone();
+                let profile = req.profile.clone();
+                let params = format!(
+                    "reprocess {reason}{}{}",
+                    detail_like.as_deref().map(|d| format!(" LIKE {d}")).unwrap_or_default(),
+                    profile.as_deref().map(|p| format!(" [{p}]")).unwrap_or_default(),
+                );
+                Ok(vec![
+                    self.push("reprocess", params, Spec::Reprocess { reason, detail_like, profile }).await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await,
+                ])
+            }
             other => Err(format!("unknown job kind {other:?}")),
         }
     }
@@ -439,7 +466,7 @@ impl Supervisor {
             .read()
             .expect("progress lock")
             .as_ref()
-            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project"))
+            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project" | "reprocess"))
     }
 
     fn queued(&self) -> Vec<QueuedJob> {
@@ -594,6 +621,16 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
+            Spec::Reprocess { reason, detail_like, profile } => {
+                self.run_reprocess(
+                    job.id,
+                    reason,
+                    detail_like.as_deref(),
+                    profile.as_deref(),
+                    job.resume_after.as_deref(),
+                )
+                .await
+            }
             Spec::Project { rebuild } => {
                 // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
                 // incremental routing: if a full rebuild's Phase-2 was interrupted,
@@ -743,6 +780,77 @@ impl Supervisor {
             total.parse_quarantined,
             total.quarantined,
             total.duplicates
+        ))
+    }
+
+    /// Re-attempt a held quarantine bucket, package by package, writing the parsed
+    /// layer in place for members that now parse (issues 71/72/73). Resumable by
+    /// `fetch_id` cursor (like `run_process`) and idempotent — a reclaimed member
+    /// is `parsed` on the next pass, so a restart mid-bucket redoes nothing.
+    async fn run_reprocess(
+        &self,
+        job_id: u64,
+        reason: &str,
+        detail_like: Option<&str>,
+        profile: Option<&str>,
+        resume_after: Option<&str>,
+    ) -> Result<String, String> {
+        // The work list is re-derived each run: reclaimed packages fall out (their
+        // rows carry `reprocessed_at`), and `after` skips those a prior run drained.
+        let after = resume_after.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
+        let packages = self
+            .db
+            .quarantine_reclaim_packages(reason, detail_like, profile, after)
+            .await
+            .map_err(|e| e.to_string())?;
+        self.update(|p| p.packages_total = packages.len() as u64);
+        if packages.is_empty() {
+            return Ok("no held packages to reprocess".into());
+        }
+
+        let (mut reclaimed, mut still_held, mut already) = (0u64, 0u64, 0u64);
+        for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
+            self.update(|p| {
+                p.package = Some(format!("fetch {fetch_id}"));
+                p.packages_done = i as u64;
+                p.members_done = 0;
+                p.members_total = 0;
+            });
+            let report = process::reclaim_package(
+                &self.db,
+                &self.archive.join(path),
+                source,
+                *fetch_id,
+                |done, members_total, _| {
+                    if done % 64 == 0 || done == members_total {
+                        self.update(|p| {
+                            p.members_done = done;
+                            p.members_total = members_total;
+                        });
+                    }
+                },
+            )
+            .await
+            .map_err(|e| format!("db: {e}"))?;
+            reclaimed += report.reclaimed;
+            still_held += report.still_held;
+            already += report.already;
+            self.update(|p| p.packages_done = (i + 1) as u64);
+            // Advance the durable resume cursor once the package is fully drained
+            // (issue 32 pattern). Best-effort: a failed write only re-walks this
+            // package next restart — idempotent, never a correctness cost.
+            if let Err(e) = self.db.record_job_progress(job_id as i64, &fetch_id.to_string()).await {
+                eprintln!("supervisor: job {job_id} record reprocess progress {fetch_id}: {e}");
+            }
+            // Bound the WAL between packages, exactly as `run_process` does.
+            if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                eprintln!("supervisor: job {job_id} checkpoint after fetch {fetch_id}: {e}");
+            }
+        }
+
+        Ok(format!(
+            "{} package(s): {reclaimed} reclaimed, {still_held} still held, {already} already parsed",
+            packages.len()
         ))
     }
 

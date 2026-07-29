@@ -317,3 +317,87 @@ async fn a_corrupt_package_is_quarantined_and_the_run_continues() {
 
     let _ = std::fs::remove_dir_all(&archive);
 }
+
+// --- reprocess / reclaim (issues 71/72/73) ----------------------------------
+
+async fn count(db: &store::Db, table: &str, id: i64) -> i64 {
+    match db.scalar(&format!("SELECT COUNT(*) FROM {table} WHERE notice_id = {id}")).await.unwrap() {
+        Some(store::turso::Value::Integer(n)) => n,
+        other => panic!("count({table}): {other:?}"),
+    }
+}
+async fn cell_i64(db: &store::Db, sql: &str) -> Option<i64> {
+    match db.scalar(sql).await.unwrap() {
+        Some(store::turso::Value::Integer(n)) => Some(n),
+        _ => None,
+    }
+}
+
+/// Rewind a parsed notice to the pre-fix state a stale quarantine row records:
+/// empty parsed layer, `quarantined`, projected, plus a held quarantine row —
+/// exactly what OC/SDK members looked like before their fix shipped. Writes over
+/// a raw connection to the same file (the store write API is intentionally
+/// narrow); `id` is a trusted i64, inlined.
+async fn make_held(db_path: &Path, id: i64) {
+    let raw = store::turso::Builder::new_local(db_path.to_str().unwrap()).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    for table in [
+        "notice_sections", "notice_texts", "notice_codes", "notice_classifications",
+        "notice_amounts", "notice_dates", "notice_integers", "notice_numbers", "notice_ids",
+    ] {
+        conn.execute(&format!("DELETE FROM {table} WHERE notice_id = {id}"), ()).await.unwrap();
+    }
+    conn.execute(&format!("UPDATE notices SET parse_state = 'quarantined', projected = 1 WHERE id = {id}"), ())
+        .await
+        .unwrap();
+    conn.execute(
+        &format!(
+            "INSERT INTO quarantine(notice_id, fetch_id, member_path, content_hash, profile, reason, detail, first_seen)
+             SELECT id, fetch_id, member_path, content_hash, profile, 'unknown-field-code', 'line 1: OC', 0
+               FROM notices WHERE id = {id}"
+        ),
+        (),
+    )
+    .await
+    .unwrap();
+}
+
+/// The reprocess pass re-parses one held member in place from the archive, and
+/// leaves every already-parsed notice untouched — the two properties the reclaim
+/// program was missing (issues 71/72/73), end to end through the real walker.
+#[tokio::test]
+async fn reclaim_package_reclaims_a_held_member_and_never_touches_parsed_ones() {
+    let (archive, db) = fixture("reclaim").await;
+    run(&db, &archive).await;
+    let pkg = archive.join("ted/daily/2026-00137.tar.gz");
+
+    // Over a fully-parsed package the reprocess is a safe no-op: the 4 parsed
+    // notices are AlreadyParsed, the 3 eForms stubs still fail (StillHeld), and
+    // nothing is reclaimed or corrupted.
+    let noop = process::reclaim_package(&db, &pkg, "ted", 1, |_, _, _| {}).await.unwrap();
+    assert_eq!((noop.reclaimed, noop.already, noop.still_held), (0, 4, 3));
+
+    // Rewind one genuinely-parsed notice to the held state, then reprocess.
+    let id = cell_i64(&db, "SELECT MIN(id) FROM notices WHERE parse_state = 'parsed'").await.unwrap();
+    let sections = count(&db, "notice_sections", id).await;
+    assert!(sections > 0);
+    make_held(&archive.join("test.db"), id).await;
+    assert_eq!(count(&db, "notice_sections", id).await, 0);
+
+    let report = process::reclaim_package(&db, &pkg, "ted", 1, |_, _, _| {}).await.unwrap();
+    assert_eq!(report.reclaimed, 1, "exactly the rewound member is reclaimed");
+    assert_eq!(report.already, 3, "the other parsed notices are left as-is");
+    assert_eq!(report.still_held, 3, "the eForms stubs are still held");
+
+    // Its parsed layer is restored, the watermark cleared, and the row flagged.
+    assert_eq!(
+        db.scalar(&format!("SELECT parse_state FROM notices WHERE id = {id}")).await.unwrap(),
+        Some(store::turso::Value::Text("parsed".into()))
+    );
+    assert_eq!(count(&db, "notice_sections", id).await, sections, "the parsed layer is rebuilt");
+    assert_eq!(cell_i64(&db, &format!("SELECT projected FROM notices WHERE id = {id}")).await, Some(0));
+    assert!(cell_i64(&db, &format!("SELECT reprocessed_at FROM quarantine WHERE notice_id = {id}")).await.is_some());
+    assert!(db.unprojected_parsed_notice_ids().await.unwrap().contains(&id));
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
