@@ -174,6 +174,62 @@ pub async fn latest_ted_issue(db: &store::Db, year: u16) -> turso::Result<Option
     Ok(latest.and_then(|p| p.split_once('-').and_then(|(_, n)| n.parse().ok())))
 }
 
+/// Walk DÖE daily exports forward from the newest day already registered up to
+/// and including `end` (the last completed T+1 day), fetching each. A normal run
+/// advances a single day; a gap since the last successful fetch catches up every
+/// missed day. DÖE has no server-side "next issue" probe like TED, so this
+/// last-watermark→forward walk is what stops a skipped scheduler tick from
+/// silently dropping a day (issue 69 / ADR-0004 completeness).
+///
+/// The walk starts the day *after* the watermark, not at it: a DÖE completed day
+/// is final once fetchable (strictly T+1), so there is no TED-style finality
+/// re-check to do. And it never triggers a full-archive backfill — with no DÖE
+/// daily on record it fetches only `end` (a single day), leaving the monthly
+/// backfill job to seed history.
+pub async fn probe_doe_daily(
+    db: &store::Db,
+    client: &reqwest::Client,
+    archive_root: &Path,
+    base: &str,
+    end: (u16, u8, u8),
+    mut on_day: impl FnMut(&str, &Outcome),
+) -> Result<Vec<(String, Outcome)>, Error> {
+    let mut day = match latest_doe_day(db).await? {
+        Some(prev) => next_civil_day(prev),
+        None => end,
+    };
+    let mut out = Vec::new();
+    while day <= end {
+        let target = crate::doe::day(base, day);
+        let outcome = fetch(db, client, archive_root, &target, false).await?;
+        on_day(&target.period, &outcome);
+        out.push((target.period.clone(), outcome));
+        day = next_civil_day(day);
+    }
+    Ok(out)
+}
+
+/// Newest DÖE daily day already registered. Periods are zero-padded `YYYY-MM-DD`,
+/// so `MAX(period)` is the newest across every year.
+pub async fn latest_doe_day(db: &store::Db) -> turso::Result<Option<(u16, u8, u8)>> {
+    let latest = db.latest_fetch_period_max("doe", "daily", "").await?;
+    Ok(latest.as_deref().and_then(parse_ymd))
+}
+
+/// Parse a zero-padded `YYYY-MM-DD` period into a civil date.
+fn parse_ymd(period: &str) -> Option<(u16, u8, u8)> {
+    let (y, rest) = period.split_once('-')?;
+    let (m, d) = rest.split_once('-')?;
+    Some((y.parse().ok()?, m.parse().ok()?, d.parse().ok()?))
+}
+
+/// The calendar day after `date` (proleptic Gregorian), via the civil-date
+/// round-trip so month/year rollovers fall out for free.
+fn next_civil_day(date: (u16, u8, u8)) -> (u16, u8, u8) {
+    let (y, m, d) = date;
+    civil_date((days_from_civil(y, m, d) + 1) * 86_400)
+}
+
 /// Today as (year, month, day) UTC.
 pub fn current_date_utc() -> (u16, u8, u8) {
     civil_date(store::now_unix())

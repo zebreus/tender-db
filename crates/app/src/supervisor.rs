@@ -127,12 +127,17 @@ struct Job {
 }
 
 /// What a job does. Fetch/process/project map onto ingest's library entry
-/// points; `ProbeTed` is the realtime daily walk-forward. `Serialize`/
-/// `Deserialize` so a job survives a restart in the durable queue (issue 21).
+/// points; `ProbeTed`/`ProbeDoe` are the realtime daily walk-forwards (TED probes
+/// the server for the next issue, DÖE walks calendar days from its last
+/// watermark). `Serialize`/`Deserialize` so a job survives a restart in the
+/// durable queue (issue 21).
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
     ProbeTed { refetch: bool },
+    /// Walk DÖE daily exports forward from the last fetched day (issue 69), so a
+    /// missed scheduler tick catches up instead of leaving a permanent hole.
+    ProbeDoe,
     Process { source: String, package_kind: String, period: Option<String> },
     Project { rebuild: bool },
     /// A consistent online snapshot of the store, shipped off-box (issue 23).
@@ -146,7 +151,8 @@ enum Spec {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct JobRequest {
-    /// `fetch` | `process` | `project` | `backfill` | `snapshot`.
+    /// `fetch` | `process` | `project` | `backfill` | `snapshot` | `daily`
+    /// (`daily` forces the full daily reconciliation now — issue 69 catch-up).
     pub kind: String,
     /// `ted` | `doe`.
     pub source: Option<String>,
@@ -234,6 +240,10 @@ impl Supervisor {
             }
             "backfill" => self.enqueue_backfill(req).await,
             "snapshot" => Ok(vec![self.push("snapshot", "snapshot".into(), Spec::Snapshot).await]),
+            // Force the full daily reconciliation now (post-downtime catch-up,
+            // issue 69). Always runs both source probes — the TED probe self-heals
+            // a multi-day gap and is a cheap no-op walk on a non-publishing day.
+            "daily" => Ok(self.enqueue_daily(true).await),
             other => Err(format!("unknown job kind {other:?}")),
         }
     }
@@ -559,6 +569,27 @@ impl Supervisor {
                     .count();
                 Ok(format!("probed {} issue(s), {fetched} new", results.len()))
             }
+            Spec::ProbeDoe => {
+                // The last completed T+1 day (DÖE rejects today/future): yesterday UTC.
+                let end = fetch::civil_date(store::now_unix() - 86_400);
+                let results = fetch::probe_doe_daily(
+                    &self.db,
+                    &self.http,
+                    &self.archive,
+                    &self.doe_base,
+                    end,
+                    |period, _| self.update(|p| p.package = Some(period.to_owned())),
+                )
+                .await
+                .map_err(|e| e.to_string())?;
+                let fetched = results
+                    .iter()
+                    .filter(|(_, o)| {
+                        matches!(o, fetch::Outcome::Fetched | fetch::Outcome::NewVersion)
+                    })
+                    .count();
+                Ok(format!("probed {} day(s), {fetched} new", results.len()))
+            }
             Spec::Process { source, package_kind, period } => {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
@@ -733,40 +764,41 @@ impl Supervisor {
         });
     }
 
-    /// The daily pipeline, in execution order (jobs run sequentially).
-    async fn enqueue_daily(&self, weekday: bool) {
+    /// The daily pipeline, in execution order (jobs run sequentially). Returns
+    /// the enqueued job ids so the admin "run daily now" path can report them.
+    async fn enqueue_daily(&self, weekday: bool) -> Vec<u64> {
+        let mut ids = Vec::new();
         // TED publishes Mon–Fri; probe forward and re-fetch the current day for
         // the finality window (a daily may be rewritten until 09:30 CET).
         if weekday {
-            self.push("probe", "ted daily (probe)".into(), Spec::ProbeTed { refetch: true }).await;
+            ids.push(self.push("probe", "ted daily (probe)".into(), Spec::ProbeTed { refetch: true }).await);
+            ids.push(
+                self.push(
+                    "process",
+                    "ted daily (all)".into(),
+                    Spec::Process { source: "ted".into(), package_kind: "daily".into(), period: None },
+                )
+                .await,
+            );
+        }
+        // DÖE walks forward from its last fetched day up to yesterday (the freshest
+        // completed T+1 day), so a missed tick catches up instead of leaving a hole.
+        ids.push(self.push("probe", "doe daily (probe)".into(), Spec::ProbeDoe).await);
+        ids.push(
             self.push(
                 "process",
-                "ted daily (all)".into(),
-                Spec::Process { source: "ted".into(), package_kind: "daily".into(), period: None },
+                "doe daily (all)".into(),
+                Spec::Process { source: "doe".into(), package_kind: "daily".into(), period: None },
             )
-            .await;
-        }
-        // DÖE is strictly T+1: yesterday's day is the freshest completed one.
-        let (y, m, d) = fetch::civil_date(store::now_unix() - 86_400);
-        let period = format!("{y}-{m:02}-{d:02}");
-        self.push(
-            "fetch",
-            format!("doe daily {period}"),
-            Spec::Fetch { source: "doe".into(), package_kind: "daily".into(), period, refetch: false },
-        )
-        .await;
-        self.push(
-            "process",
-            "doe daily (all)".into(),
-            Spec::Process { source: "doe".into(), package_kind: "daily".into(), period: None },
-        )
-        .await;
+            .await,
+        );
         // One projection folds whatever the fetch+process just landed.
-        self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await;
+        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
         // Then a consistent snapshot of the day's result, shipped off-box by the
         // systemd timer (issue 23). Last in the sequence, so it captures the
         // freshly folded canonical layer.
-        self.push("snapshot", "snapshot".into(), Spec::Snapshot).await;
+        ids.push(self.push("snapshot", "snapshot".into(), Spec::Snapshot).await);
+        ids
     }
 }
 
