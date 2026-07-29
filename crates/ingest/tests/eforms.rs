@@ -314,6 +314,7 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
     assert_eq!(
         versions,
         [
+            "eforms-sdk-1.10",
             "eforms-sdk-1.12",
             "eforms-sdk-1.13",
             "eforms-sdk-1.14",
