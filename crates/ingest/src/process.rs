@@ -357,6 +357,11 @@ pub struct ReclaimReport {
     pub already: u64,
 }
 
+/// How often the reprocess checkpoints inside one package to bound WAL/RAM on a
+/// huge package (issue 80). Every N members walked, not reclaimed, so a sparse
+/// bucket still checkpoints on schedule.
+const CHECKPOINT_EVERY: u64 = 5_000;
+
 /// Re-parse a package's HELD members and reclaim every one that now parses,
 /// writing its parsed layer in place ([`store::Db::reclaim_notice`]). `held` is
 /// the bucket's still-held member files for this package
@@ -391,6 +396,13 @@ pub async fn reclaim_package(
             }
         }
         done += 1;
+        // Bound the WAL/RAM WITHIN a huge package (issue 80): reclaim writes each
+        // commit but only checkpoint per-package by default, so a 70k-member
+        // package would grow the WAL its whole length. Truncate periodically —
+        // best-effort (a busy result reclaims on the next tick), writer-idle here.
+        if done % CHECKPOINT_EVERY == 0 {
+            let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+        }
         on_progress(done, estimated.max(done), &report);
     }
     drop(slot);

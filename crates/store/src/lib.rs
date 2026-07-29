@@ -164,6 +164,12 @@ const SCHEMA: &str = "
     -- of one reason. Idempotent CREATE INDEX, built once on first open after
     -- deploy like `notices_fetch_id` (issues 37/40).
     CREATE INDEX IF NOT EXISTS quarantine_reason ON quarantine(reason);
+    -- The reprocess flags a reclaimed member's row by its notice_id
+    -- (`reclaim_notice`, issues 76/77). Without this index that per-member UPDATE
+    -- full-scans the whole ~2.4M-row table — O(held × 2.4M) per package, which
+    -- cliffed a 70k-member dense bucket to ~1 s/member (issue 80). With it the
+    -- UPDATE seeks its row. Built once on first open like `quarantine_reason`.
+    CREATE INDEX IF NOT EXISTS quarantine_notice_id ON quarantine(notice_id);
 
     -- ------------------------------------------------------------------
     -- Notice-parsed layer. The relational reading of one notice's payload,
@@ -2600,6 +2606,41 @@ mod tests {
         let mut got: Vec<_> = held.into_iter().collect();
         got.sort();
         assert_eq!(got, vec!["pkg/a.xml".to_string(), "pkg/bundle.zip".to_string()]);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 80: the reprocess flags a reclaimed member by notice_id every member,
+    /// so that lookup must SEEK the `quarantine_notice_id` index — a SCAN of the
+    /// ~2.4M-row table per member cliffs a dense bucket. Asserting the plan proves
+    /// the seek at any scale.
+    #[tokio::test]
+    async fn reclaim_flag_seeks_the_notice_id_index() {
+        let path = format!("/tmp/tender-db-qnid-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT id FROM quarantine WHERE notice_id = ? AND reprocessed_at IS NULL",
+                (Value::Integer(1),),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(
+            plan.contains("quarantine_notice_id"),
+            "the reclaim flag must seek the notice_id index — plan was:\n{plan}"
+        );
+        assert!(
+            !plan.to_uppercase().contains("SCAN"),
+            "it must SEARCH by index, never SCAN the ~2.4M-row table — plan was:\n{plan}"
+        );
 
         let _ = std::fs::remove_file(&path);
     }
