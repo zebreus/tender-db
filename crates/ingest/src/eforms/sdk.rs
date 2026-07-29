@@ -44,7 +44,10 @@ pub const ACCEPTED: &[(&str, &str)] = &[
     // use descendant axes and boolean `or` that the [`super::xpath`] grammar
     // does not model. Those notices quarantine as unknown-customization until
     // a slice extends the grammar and vendors 1.0.
+    ("eforms-sdk-1.8", include_str!("../../sdk/fields-1.8.0.json")),
+    ("eforms-sdk-1.9", include_str!("../../sdk/fields-1.9.0.json")),
     ("eforms-sdk-1.10", include_str!("../../sdk/fields-1.10.0.json")),
+    ("eforms-sdk-1.11", include_str!("../../sdk/fields-1.11.0.json")),
     ("eforms-sdk-1.12", include_str!("../../sdk/fields-1.12.0.json")),
     ("eforms-sdk-1.13", include_str!("../../sdk/fields-1.13.0.json")),
     ("eforms-sdk-1.14", include_str!("../../sdk/fields-1.14.0.json")),
