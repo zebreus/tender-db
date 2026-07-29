@@ -612,87 +612,89 @@ pub async fn project_incremental(db: &Db) -> turso::Result<Report> {
 }
 
 async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
+    project_incremental_chunked(db, INCREMENTAL_CHUNK).await
+}
+
+/// Notices per Phase-1 chunk of the incremental fold (issue 81). The incremental
+/// path used to load the WHOLE delta's parsed layer (changed + touched-Tender
+/// notices) into RAM before planning — O(delta), which OOM'd on a 300k+ reclaim.
+/// It now streams the plan build in id-ordered chunks of this size; the daily
+/// delta is far smaller than one chunk, so it stays effectively single-pass.
+const INCREMENTAL_CHUNK: usize = 50_000;
+
+/// The incremental projection with a bounded, streamed Phase 1 (issue 81). Grouping
+/// and Phase 2 stay GLOBAL (one plan, one fold) so the output — surrogate ids
+/// included — is byte-identical to the old whole-delta path; only the parsed-layer
+/// read + plan build are chunked, so peak RAM is flat vs delta size instead of
+/// O(delta). `chunk_size` is exposed for the batch-invariance test.
+pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::Result<Report> {
     let changed = db.unprojected_parsed_notice_ids().await?;
     if changed.is_empty() {
         return Ok(Report::default());
     }
+    let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
     let t0 = std::time::Instant::now();
 
-    // Read the changed notices' grouping identity: detect legacy (→ fallback) and
-    // collect their new keyed keys (a notice joining an existing keyed Tender).
-    // Keep the parsed layer — we reuse it to build the plan without re-reading.
-    let mut changed_parsed = db.parsed_by_ids(&changed).await?;
-    changed_parsed.sort_by_key(|(n, _)| n.id);
-    let changed_set: std::collections::HashSet<i64> = changed.iter().copied().collect();
+    // Pass 1 (streamed): read the changed notices' grouping identity in id-ordered
+    // chunks — detect legacy (→ fallback) and collect their new keyed keys — without
+    // holding the whole delta's parsed layer.
     let mut new_keyed_keys: Vec<String> = Vec::new();
-    for (notice, parsed) in &changed_parsed {
-        let ident = Ident::read(notice, parsed);
-        if ident.legacy {
-            eprintln!(
-                "[project] INCREMENTAL → FULL fallback: delta contains legacy notice(s) \
-                 (issue 58 v1); re-projecting the whole corpus"
-            );
-            return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
-        }
-        if let Some(key) = &ident.procedure_key {
-            new_keyed_keys.push(key.clone());
+    for chunk in changed.chunks(chunk_size) {
+        for (notice, parsed) in &db.parsed_by_ids(chunk).await? {
+            let ident = Ident::read(notice, parsed);
+            if ident.legacy {
+                eprintln!(
+                    "[project] INCREMENTAL → FULL fallback: delta contains legacy notice(s) \
+                     (issue 58 v1); re-projecting the whole corpus"
+                );
+                return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
+            }
+            if let Some(key) = &ident.procedure_key {
+                new_keyed_keys.push(key.clone());
+            }
         }
     }
     new_keyed_keys.sort_unstable();
     new_keyed_keys.dedup();
 
-    // Expand to the touched EXISTING Tenders and load their full notice sets, so
-    // each is re-derived in full alongside the changed notices.
+    // Expand to the touched EXISTING Tenders and their full notice sets; the plan
+    // covers changed ∪ touched-existing, in one global id order.
     let touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
     let existing_ids = db.notice_ids_for_tenders(&touched_tenders).await?;
+    let changed_set: std::collections::HashSet<i64> = changed.iter().copied().collect();
+    let mut all_ids: Vec<i64> = changed
+        .iter()
+        .copied()
+        .chain(existing_ids.iter().copied().filter(|id| !changed_set.contains(id)))
+        .collect();
+    all_ids.sort_unstable();
 
-    // Phase 1 (scoped): plan rows for the WHOLE touched notice set, in id order so
-    // the plan/org bulk-load stays sequential; mentions resolved only for the
-    // changed notices (the existing notices' mentions are already recorded and are
-    // bound in Phase 2 by `mentions_by_ids`).
+    // Pass 2 (streamed): build the ONE plan in id-ordered chunks so the org bulk-load
+    // stays sequential and RAM bounded; mentions resolve only for the changed notices
+    // (existing notices' mentions are already recorded, bound in Phase 2 by
+    // `mentions_by_ids`), in global id order so org ids match a whole-delta pass.
     db.reset_plan().await?;
-    let extra_ids: Vec<i64> = existing_ids.iter().copied().filter(|id| !changed_set.contains(id)).collect();
-    let mut extra_parsed = db.parsed_by_ids(&extra_ids).await?;
-    extra_parsed.sort_by_key(|(n, _)| n.id);
-
     let mut resolver = db.mention_resolver().await?;
-    let mut rows: Vec<store::PlanRow> = Vec::with_capacity(changed_parsed.len() + extra_parsed.len());
-    let mut mentions: Vec<Mention> = Vec::new();
-    // Both slices are id-sorted; merge them so the plan appends in id order and the
-    // mentions resolve in id order (org ids stay identical to a full projection).
-    let mut ci = changed_parsed.iter();
-    let mut ei = extra_parsed.iter();
-    let (mut cn, mut en) = (ci.next(), ei.next());
-    loop {
-        let take_changed = match (cn, en) {
-            (Some((c, _)), Some((e, _))) => c.id <= e.id,
-            (Some(_), None) => true,
-            (None, Some(_)) => false,
-            (None, None) => break,
-        };
-        let (notice, parsed) = if take_changed {
-            let v = cn.unwrap();
-            cn = ci.next();
-            v
-        } else {
-            let v = en.unwrap();
-            en = ei.next();
-            v
-        };
-        let ident = Ident::read(notice, parsed);
-        if changed_set.contains(&notice.id) {
-            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
-        }
-        rows.push(ident.into_plan_row());
-    }
     let mut report = Report::default();
-    report.notices = changed.len() as u64;
-    db.insert_plan(&rows).await?;
-    report.mentions = db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
+    for chunk in all_ids.chunks(chunk_size) {
+        let mut parsed = db.parsed_by_ids(chunk).await?;
+        parsed.sort_by_key(|(n, _)| n.id);
+        let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
+        let mut mentions: Vec<Mention> = Vec::new();
+        for (notice, p) in &parsed {
+            let ident = Ident::read(notice, p);
+            if changed_set.contains(&notice.id) {
+                mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, p));
+            }
+            rows.push(ident.into_plan_row());
+        }
+        db.insert_plan(&rows).await?;
+        report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
+    }
     db.finish_mention_resolver(resolver).await?;
 
-    // Group the scoped plan (same SQL as a full run — over the touched set only).
+    // Group the whole plan (same SQL as a full run — over the touched set only).
     db.build_plan_groups().await?;
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
@@ -702,25 +704,22 @@ async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
     // upgrade, etc.) BEFORE applying, so a regrouped notice's old Tender is gone.
     report.absorbed = db.retire_regrouped_tenders(&touched_tenders, now).await?;
 
-    // Phase 2 (unchanged): fold + apply the touched Tenders a bounded batch at a
-    // time; `apply_tenders` upserts each by natural key and marks its notices
-    // projected — untouched Tenders are never read or written.
+    // Phase 2: fold + apply the touched Tenders a bounded batch at a time;
+    // `apply_tenders` upserts each by natural key and marks its notices projected —
+    // untouched Tenders are never read or written.
     let mut after = String::new();
     loop {
         let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
         let Some(last) = groups.last() else { break };
         after = last.group_key.clone();
-        // Incremental folds touched Tenders against the populated layer, so identity
-        // keeps the natural-key probe (rebuild=false).
         report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
     }
     db.clear_plan().await?;
-    // Keep the change-set index present for the next daily run (issue 58); cheap —
-    // it exists after the first projection and this is a no-op thereafter.
+    report.notices = changed.len() as u64;
+
+    // Keep the change-set + change-feed indexes present for the next run (issues
+    // 58/61) — no-ops once built.
     db.ensure_unprojected_index().await?;
-    // Ensure the (entity_kind, cursor) change-feed index too (issue 61 finding 2) —
-    // the daily incremental is where it first gets built on the existing prod DB,
-    // off the boot path. No-op once present.
     db.ensure_changes_entity_cursor_index().await?;
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
     eprintln!(

@@ -223,6 +223,57 @@ async fn incremental_late_attach_to_keyed_tender_matches_full() {
     }
 }
 
+/// Issue 81: folding the delta in tiny chunks is byte-identical to a single pass,
+/// and a Tender whose changed notices span chunks is re-folded whole in the later
+/// chunk (bounded RAM without splitting Tenders).
+#[tokio::test]
+async fn incremental_chunked_is_byte_identical_to_single_pass() {
+    let (one, f1, p1) = scratch("chunk-one").await;
+    let (many, fm, pm) = scratch("chunk-many").await;
+    establish(&one, f1).await;
+    establish(&many, fm).await;
+    assert_eq!(snapshot(&one).await, snapshot(&many).await, "established layers differ");
+
+    // A multi-Tender delta: a NEW keyed Tender (bt04-0003) with TWO notices — under
+    // chunk=1 they land in different chunks and must still fold into ONE Tender — a
+    // late attach to the existing Alpha, a new keyed Tender, and a new island.
+    for (db, fid) in [(&one, f1), (&many, fm)] {
+        record(db, fid, "C-cn", keyed("bt04-0003", 1, "Gamma CN")).await;
+        record(db, fid, "C-corr", keyed("bt04-0003", 2, "Gamma corrigendum")).await;
+        record(db, fid, "A-award", keyed("bt04-0001", 3, "Alpha award")).await;
+        record(db, fid, "D-cn", keyed("bt04-0004", 1, "Delta CN")).await;
+        record(db, fid, "ISL2", island("Island two")).await;
+    }
+    assert_eq!(one.unprojected_parsed_notice_ids().await.unwrap().len(), 5, "five changed notices");
+
+    // One pass vs one-notice-at-a-time chunks.
+    project::project_incremental_chunked(&one, 10_000).await.expect("single-pass incremental");
+    project::project_incremental_chunked(&many, 1).await.expect("chunked incremental");
+
+    assert_eq!(
+        snapshot(&one).await,
+        snapshot(&many).await,
+        "chunked incremental must be byte-identical to a single pass"
+    );
+    assert_eq!(many.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "change-set drained");
+    // Gamma's two notices folded into ONE Tender with two versions, across chunks.
+    assert_eq!(
+        count(
+            &many,
+            "SELECT COUNT(*) FROM tender_versions WHERE tender_id=(SELECT id FROM tenders WHERE procedure_key='bt04-0003')"
+        )
+        .await,
+        2,
+        "the cross-chunk Tender's two notices did not split"
+    );
+
+    for p in [p1, pm] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// A mixed delta — a late attach to an existing Tender, a brand-new keyed Tender,
 /// and a new island — is absorbed identically by full and incremental, and the
 /// Tenders the delta does NOT touch are left byte-for-byte unchanged.
