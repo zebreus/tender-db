@@ -197,10 +197,9 @@ async fn dispatches_every_era_and_accounts_for_every_file() {
     assert_eq!(
         reasons,
         vec![
-            // The two truncated 1.13 stubs.
-            ("unclaimed-content".to_string(), 2),
-            // The 1.7 stub: outside the vendored SDK range.
-            ("unknown-customization".to_string(), 1),
+            // The three truncated stubs (two 1.13, one 1.7 — all now vendored, so
+            // each is parsed against its SDK and rejected for its missing body).
+            ("unclaimed-content".to_string(), 3),
             // Not a notice at all — rejected before a profile was chosen.
             ("unknown-root".to_string(), 1),
         ]

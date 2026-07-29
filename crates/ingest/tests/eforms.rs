@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 12, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 13, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -251,24 +251,55 @@ fn framework_award_and_business_registration_notices_parse() {
 }
 
 /// A `CustomizationID` outside the vendored range quarantines rather than
-/// being parsed against a neighbouring version's metadata. (The DÖE profiles —
-/// eforms-de-2.x, eforms-de-1.x and sdk-0.1 — are vendored, as are EU SDK
-/// 1.8–1.15; EU SDK 1.0/1.3/1.5/1.6/1.7 stay out pending the xpath grammar work,
-/// issue 74.)
+/// being parsed against a neighbouring version's metadata. (Vendored: the DÖE
+/// profiles — eforms-de-2.x, eforms-de-1.x, sdk-0.1 — and EU SDK 1.0/1.3/1.5/1.6/1.7
+/// (issue 74) + 1.8–1.15. EU minors with no notices in the corpus — e.g. 1.2 —
+/// are deliberately not vendored, so they still quarantine.)
 #[test]
 fn customizations_outside_the_vendored_range_quarantine() {
     let xml = r#"<?xml version="1.0"?>
 <ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
     xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
-  <cbc:CustomizationID>eforms-sdk-1.5</cbc:CustomizationID>
+  <cbc:CustomizationID>eforms-sdk-1.2</cbc:CustomizationID>
 </ContractNotice>"#;
-    match eforms::parse_payload("eforms:eforms-sdk-1.5", xml.as_bytes()) {
+    match eforms::parse_payload("eforms:eforms-sdk-1.2", xml.as_bytes()) {
         Parse::Quarantined { reason, detail } => {
             assert_eq!(reason, "unknown-customization");
             assert!(detail.unwrap_or_default().contains("no vendored SDK metadata"));
         }
         other => panic!("should have quarantined, got {other:?}"),
     }
+}
+
+/// Issue 74: a real SDK 1.7 award notice bearing `efbc:CompanySizeCode` (BT-165)
+/// — the field whose `//` + boolean-`or` node-set-join predicate blocked SDK
+/// 1.0–1.7 — parses exhaustively (`parse_fixture` panics on any quarantine), and
+/// every company size is claimed as its Organization's BT-165. A size code on an
+/// org the join does not select still consumes via the walker's relaxed claim, so
+/// none is dropped — which is why the whole notice parses whole.
+#[test]
+fn sdk_17_company_size_join_field_is_captured() {
+    let parsed = parse_fixture("eforms/can-maximal-sdk17.xml");
+    let sizes: Vec<&NoticeValue> = parsed
+        .values
+        .iter()
+        .filter(|v| v.field_id == "BT-165-Organization-Company")
+        .map(|v| &v.value)
+        .collect();
+    // The maximal example carries four `efbc:CompanySizeCode` elements; all four
+    // are captured (none dropped), each as a code in an Organization section.
+    assert_eq!(sizes.len(), 4, "all four company sizes are claimed as BT-165");
+    for v in &sizes {
+        assert!(matches!(v, NoticeValue::Code { .. }), "company size is a code: {v:?}");
+    }
+    assert!(
+        parsed
+            .values
+            .iter()
+            .filter(|v| v.field_id == "BT-165-Organization-Company")
+            .all(|v| v.section_id != "PROCEDURE"),
+        "each company size hangs off its Organization section, not the notice root"
+    );
 }
 
 // -------------------------------------------------------------- completeness
@@ -317,6 +348,11 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
     assert_eq!(
         versions,
         [
+            "eforms-sdk-1.0",
+            "eforms-sdk-1.3",
+            "eforms-sdk-1.5",
+            "eforms-sdk-1.6",
+            "eforms-sdk-1.7",
             "eforms-sdk-1.8",
             "eforms-sdk-1.9",
             "eforms-sdk-1.10",

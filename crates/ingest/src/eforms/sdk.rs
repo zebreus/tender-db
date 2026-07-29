@@ -38,12 +38,16 @@ use serde::Deserialize;
 ///   (ADR-0004); extending the inventory is a reviewed commit + reprocess,
 ///   exactly like the text-era profile.
 pub const ACCEPTED: &[(&str, &str)] = &[
-    // Not vendored, deliberately: `eforms-sdk-1.0` — a small permanent DÖE
-    // stream of E2/E3 below-threshold notices (~82/month, e.g.
-    // vergabe.bremen.de) declares the EU SDK 1.0, whose fields.json predicates
-    // use descendant axes and boolean `or` that the [`super::xpath`] grammar
-    // does not model. Those notices quarantine as unknown-customization until
-    // a slice extends the grammar and vendors 1.0.
+    // The 1.0–1.7 minors (issue 74, ~390K notices incl. 1.7 = 344K). Their one
+    // `efbc:CompanySizeCode` (BT-165) field uses the `//` descendant axis + a
+    // boolean `or` node-set join — the construct the [`super::xpath`] grammar now
+    // models (issue 74) and the EU SDK dropped at 1.8. Vendored at each minor's
+    // `.0` tag, verbatim, like the 1.8–1.15 line.
+    ("eforms-sdk-1.0", include_str!("../../sdk/fields-1.0.0.json")),
+    ("eforms-sdk-1.3", include_str!("../../sdk/fields-1.3.0.json")),
+    ("eforms-sdk-1.5", include_str!("../../sdk/fields-1.5.0.json")),
+    ("eforms-sdk-1.6", include_str!("../../sdk/fields-1.6.0.json")),
+    ("eforms-sdk-1.7", include_str!("../../sdk/fields-1.7.0.json")),
     ("eforms-sdk-1.8", include_str!("../../sdk/fields-1.8.0.json")),
     ("eforms-sdk-1.9", include_str!("../../sdk/fields-1.9.0.json")),
     ("eforms-sdk-1.10", include_str!("../../sdk/fields-1.10.0.json")),

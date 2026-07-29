@@ -636,6 +636,24 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             insert_extra(&mut root, xpath, field_id, kind, false)?;
         }
 
+        // BT-165 company size (issue 74). SDK 1.0–1.7 gate `efbc:CompanySizeCode`
+        // behind a `//`+`or` join predicate the EU SDK dropped at 1.8 — and whose
+        // subcontractor side never matches real data anyway (the SDK writes
+        // `efac:Subcontractor`, the schema and every notice write `efac:SubContractor`).
+        // So on those versions an economic operator's size code hangs under a bare
+        // `efac:Company` and would go unclaimed. Bind it predicate-free, exactly as
+        // 1.8+ declares it, so it is always consumed. Gap-fill (`true`): the 1.8+
+        // inventories that already declare this leaf keep their own field untouched,
+        // and the stored list comes from the element's `@listName` regardless.
+        insert_extra(
+            &mut root,
+            "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension\
+             /efac:Organizations/efac:Organization/efac:Company/efbc:CompanySizeCode",
+            "BT-165-Organization-Company",
+            "code",
+            true,
+        )?;
+
         // Gap-filling aliases, after every declared path is in place.
         for &(source, target) in ALIASES {
             for field in &sdk.fields {

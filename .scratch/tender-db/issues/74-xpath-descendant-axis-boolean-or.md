@@ -1,6 +1,41 @@
 # 74 — xpath grammar: descendant axis `//` + boolean `or` (unblocks SDK 1.0/1.3/1.5/1.6/1.7, ~390K)
 
-Status: grammar implemented + green (team-lead reviews xpath.rs eval); vendoring 1.0/1.3/1.5/1.6/1.7 is the remaining step
+Status: code-complete + green (grammar + vendoring + fixture); team-lead reviews, then batch deploy + reprocess
+
+## Implementation outcome (proj-fix, 2026-07-29)
+
+Grammar (`e7d5f3c`) + vendoring/binding (this commit). Green across store+ingest+app,
+incl. the byte-identity projection gates.
+
+- **Grammar** (`xpath.rs`): `Pred::Or`, `Origin::Descendant` (`//`), `Pred::TextJoin`
+  (node-set `text()=path/text()`), plus a `.` self-step (another pre-1.8 construct).
+  A scan of all five vendored fields.json confirmed these are the ONLY constructs
+  1.0–1.7 add beyond the 1.8+ subset (no `and`/union/axis/function predicates).
+- **Vendoring**: `sdk/fields-1.{0,3,5,6,7}.0.json` from the OP-TED/eForms-SDK `.0`
+  tags, added to `ACCEPTED` + the pinned-versions test. `every_sdk_xpath_folds` now
+  folds all five (build no longer panics — the original bug).
+- **KEY FINDING — grammar alone does NOT guarantee consumption.** The relaxed-claim
+  safety net (design insight #3) does NOT save this field: a *bare* `efac:Company`
+  branch (for the org's other fields) matches by name and pre-empts relaxed claim, so
+  `CompanySizeCode` — declared only under `efac:Company[JOIN]` — is unreachable when
+  the join is false. And the join IS false on real data: the SDK's own predicate
+  writes `efac:Subcontractor` while the schema and every notice write
+  `efac:SubContractor` (capital C) — a genuine SDK typo, which is exactly why the EU
+  SDK DROPPED the predicate at 1.8 and declares BT-165 predicate-free there.
+- **Fix = grammar (a) + a predicate-free gap-fill binding (b)**, `index.rs build`:
+  bind `efac:Company/efbc:CompanySizeCode → BT-165-Organization-Company (code)`
+  gap-fill, exactly as 1.8+ declares it. Gap-fill means 1.8–1.15 (which declare that
+  leaf) are untouched → byte-identical; 1.0–1.7 get the binding → the size code is
+  always consumed. The stored list still comes from the element's `@listName`, so
+  `code_list: None` on the binding loses nothing. The grammar is still required (build
+  must parse the `[JOIN]` node/field xpaths); the join eval is correct but now
+  redundant for consumption.
+- **Fixture**: the official SDK-1.7 `can_24_maximal` award notice (4 real
+  `CompanySizeCode`, incl. a subcontractor) parses exhaustively — all four claimed as
+  BT-165 in their Organization sections, no quarantine — proving the failed-join case
+  still consumes.
+
+Rollout: deploy in the batch → reprocess `{"kind":"reprocess","reason":"unknown-customization","detail_like":"%eforms-sdk-1.7%"}` (and 1.0/1.3/1.5/1.6) via issue 76.
 Kind: completeness / data-quality
 Blocked by: —
 Relates to: 71 (parent), ADR-0002 (fields.json is the checklist), ADR-0004 (exhaustive-or-quarantine), CONTEXT.md (all eForms BTs representable, "no omissions")

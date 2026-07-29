@@ -118,7 +118,10 @@ fn parse_relative(input: &str) -> Result<(Path, Option<String>), Error> {
     let mut attribute = None;
     for segment in split_top_level(body, '/') {
         let segment = segment.trim();
-        if segment == ".." {
+        if segment == "." {
+            // The self step (`./x` ≡ `x`, SDK 1.0–1.7 predicates) — a no-op.
+            continue;
+        } else if segment == ".." {
             // `..` is only valid leading the path, and never on a `//` root.
             if !steps.is_empty() || descendant {
                 return Err(Error(input.into()));
