@@ -42,5 +42,21 @@
     "diagnosis": "The INTERNAL_OJS R2.0.5 era (~28k opoce-only S-series notices, the whole 2008 coverage gap) had no mapping profile and was held as a tracked unmapped-era. It is now parsed by the internal-ojs profile: a new envelope reader for the BIB_INFO/BIB_DOC_S coded backbone plus an explicit _SUM alias shim that reuses the r209 walker for the 85%-shared form body. Reprocessing the bucket reclaims the era into notices.",
     "fix": "issue 41",
     "resolved": "2026-07-23"
+  },
+  {
+    "category": "eForms SDK 1.0-1.11 (unvendored)",
+    "reason": "unknown-customization",
+    "detail_like": "%eforms-sdk-1.%",
+    "diagnosis": "eForms notices declaring an SDK version (1.0-1.11) whose fields.json we had not vendored were held whole as unknown-customization - by far the largest bucket. All versions are now vendored (1.8-1.11 directly; 1.0-1.7 also needed an xpath grammar extension for descendant-axis and boolean-or predicates plus a predicate-free BT-165 binding), and the reprocess mechanism reclaims each held notice from the archive in place. The recovery rebuild (ADR-0009) folds them into the tender layer.",
+    "fix": "issues 71/74/76",
+    "resolved": "2026-07-29"
+  },
+  {
+    "category": "eForms-DE 1.x (German dialect)",
+    "reason": "unknown-customization",
+    "detail_like": "%eforms-de-1.%",
+    "diagnosis": "German eForms-DE 1.0/1.1/1.2 notices were held as unknown-customization - the SDK-DE fork is not on OP-TED's GitHub. Vendored from an empirical field inventory (issue 75), plus grafts for the DOE JAXB serializer's structural quirks: parties the SDK references by id are inlined instead (nested UBO under efac:Organization, an inlined AppealTerms recipient), so six gap-fill aliases graft them back (issue 78). The reprocess mechanism reclaims them; the recovery rebuild (ADR-0009) folds them in.",
+    "fix": "issues 75/78/76",
+    "resolved": "2026-07-29"
   }
 ]
