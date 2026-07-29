@@ -36,6 +36,26 @@ Steps:
 Effort: ~half-to-full day of careful work — the risk is byte-identity of the StateRow
 round-trip and the resume-invariant (plan_state completeness), not new machinery.
 
+Refinement (lower churn): store the whole `BucketRow` in `plan_state` with `group_key=""`
+(unknown at Phase-1 write time); the pre-pass overwrites `group_key` from `plan_notice`
+before bucketing. `group_key` is only used for sort/bucket, never in `to_notice_state`,
+so this reuses `BucketRow` AS-IS — no StateRow struct split, byte-identical.
+
+### ⚠ CRITICAL COUPLING (surfaced 2026-07-29) — build it as ONE atomic change
+
+`plan_is_complete` (canonical.rs:1518) is the resume-from-plan salvage invariant: a
+complete `plan_notice` ⇒ mentions complete ⇒ safe to resume Phase-2. For this issue,
+"a complete plan ⇒ blobs exist" must ALSO hold, so `plan_is_complete` must additionally
+require `COUNT(plan_state) == COUNT(plan_notice)`. That change is COUPLED to the Phase-1
+write: it CANNOT land before the write is live, or a rebuild resumes with a complete
+plan but NO blobs and the pre-pass (reading plan_state) folds nothing. So plan_state
+schema + Phase-1 write + `plan_is_complete` + pre-pass swap must ship as ONE change and
+deploy together — no partial stage. Deploying a `plan_is_complete`-only or plan_state-only
+increment would break resume for the ACTIVE recovery salvage.
+
+⇒ **Build AFTER the recovery lands**, when the salvage/resume path is no longer live, in a
+focused uninterrupted session with the full byte-identity gate. Plan + approach are banked.
+
 ---
 
 Severity: MEDIUM (turns every future full rebuild's Phase-2 from ~days into
