@@ -2610,6 +2610,49 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Issue 81: the one-time CDC clean drops the feed + its high-water, resets the
+    /// in-memory cursor watch, keeps both change indexes, and restarts the cursor at
+    /// 1 — so a paired rebuild re-emits one clean generation.
+    #[tokio::test]
+    async fn clear_changes_resets_the_feed_and_cursor() {
+        let path = format!("/tmp/tender-db-clearchanges-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        // Seed the feed and advance the in-memory cursor watch to the high-water.
+        {
+            let conn = db.conn().await;
+            conn.execute(
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at)
+                 VALUES('tender',1,1,'added',0),('tender',2,1,'added',0)",
+                (),
+            )
+            .await
+            .unwrap();
+            db.publish_cursor(&conn).await.unwrap();
+        }
+        assert_eq!(db.current_cursor(), 2, "watch advanced to the high-water");
+
+        db.clear_changes().await.unwrap();
+
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM changes").await, Some(0), "feed emptied");
+        assert_eq!(db.current_cursor(), 0, "the in-memory cursor watch is reset");
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name IN ('changes_entity','changes_entity_cursor')").await,
+            Some(2),
+            "both change indexes are recreated"
+        );
+        // A fresh append restarts the cursor at 1 (the autoincrement high-water dropped).
+        db.conn()
+            .await
+            .execute("INSERT INTO changes(entity_kind, entity_id, op, changed_at) VALUES('tender',9,'added',0)", ())
+            .await
+            .unwrap();
+        assert_eq!(int_of(&db, "SELECT MIN(cursor) FROM changes").await, Some(1), "cursor restarts at 1");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 80: the reprocess flags a reclaimed member by notice_id every member,
     /// so that lookup must SEEK the `quarantine_notice_id` index — a SCAN of the
     /// ~2.4M-row table per member cliffs a dense bucket. Asserting the plan proves

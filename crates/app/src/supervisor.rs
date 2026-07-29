@@ -143,7 +143,15 @@ enum Spec {
     /// layer in place for members that now parse (issues 71/72/73). The bucket is
     /// `reason` + optional `detail LIKE` + optional exact `profile`.
     Reprocess { reason: String, detail_like: Option<String>, profile: Option<String> },
-    Project { rebuild: bool },
+    /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
+    /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
+    /// generation for the recovered baseline instead of appending. `#[serde(default)]`
+    /// keeps pre-flag durable job rows deserializable.
+    Project {
+        rebuild: bool,
+        #[serde(default)]
+        clear_changes: bool,
+    },
     /// A consistent online snapshot of the store, shipped off-box (issue 23).
     /// A unit variant, so it serialises into the durable job_queue as `"Snapshot"`
     /// and survives a restart like any other job.
@@ -179,6 +187,9 @@ pub struct JobRequest {
     /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
     /// notices `projected=0` for one later `rebuild:true` to fold in bulk.
     pub reclaim_only: Option<bool>,
+    /// `project` + `rebuild` only: DROP+recreate the CDC feed before folding, so the
+    /// rebuild re-emits ONE clean generation for the recovered baseline (issue 81).
+    pub clear_changes: Option<bool>,
 }
 
 impl Supervisor {
@@ -249,7 +260,11 @@ impl Supervisor {
             }
             "project" => {
                 let rebuild = req.rebuild.unwrap_or(false);
-                Ok(vec![self.push("project", format!("rebuild={rebuild}"), Spec::Project { rebuild }).await])
+                // `clear_changes` only pairs with a rebuild (it resets the CDC feed
+                // for the rebuild to re-emit); ignored on an incremental project.
+                let clear_changes = rebuild && req.clear_changes.unwrap_or(false);
+                let params = format!("rebuild={rebuild}{}", if clear_changes { " clear_changes" } else { "" });
+                Ok(vec![self.push("project", params, Spec::Project { rebuild, clear_changes }).await])
             }
             "backfill" => self.enqueue_backfill(req).await,
             "snapshot" => Ok(vec![self.push("snapshot", "snapshot".into(), Spec::Snapshot).await]),
@@ -276,7 +291,7 @@ impl Supervisor {
                 // sequentially, instead of paying a random-seek incremental fold per
                 // bucket (issue 81 note / bulk-recovery plan).
                 if !req.reclaim_only.unwrap_or(false) {
-                    ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
+                    ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
                 }
                 Ok(ids)
             }
@@ -336,7 +351,7 @@ impl Supervisor {
             )
             .await,
         );
-        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
+        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
         Ok(ids)
     }
 
@@ -640,7 +655,7 @@ impl Supervisor {
                 )
                 .await
             }
-            Spec::Project { rebuild } => {
+            Spec::Project { rebuild, clear_changes } => {
                 // Resume-from-plan salvage (issue 60) OUTRANKS the rebuild/
                 // incremental routing: if a full rebuild's Phase-2 was interrupted,
                 // finish it (re-run grouping + Phase-2 from the on-disk plan, SKIP
@@ -661,6 +676,16 @@ impl Supervisor {
                 // layer and cleared with the plan on clean completion, so it is true
                 // exactly when there is an interrupted rebuild to finish.
                 let salvage = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
+
+                // One-time CDC baseline reset (issue 81): on a rebuild flagged
+                // `clear_changes`, DROP+recreate the feed FIRST so the rebuild
+                // re-emits ONE clean generation for the recovered baseline instead of
+                // appending onto the accumulated feed. Only on a rebuild path (never
+                // an incremental project). Idempotent on a salvage resume — the durable
+                // flag re-clears any partial generation the interrupted rebuild wrote.
+                if *clear_changes && (salvage || *rebuild) {
+                    self.db.clear_changes().await.map_err(|e| e.to_string())?;
+                }
 
                 // Otherwise: the daily path is INCREMENTAL (issue 58) — re-derive
                 // only the Tenders touched since the last run; a `rebuild` does the
@@ -917,7 +942,7 @@ impl Supervisor {
             .await,
         );
         // One projection folds whatever the fetch+process just landed.
-        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false }).await);
+        ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
         // Then a consistent snapshot of the day's result, shipped off-box by the
         // systemd timer (issue 23). Last in the sequence, so it captures the
         // freshly folded canonical layer.
@@ -1418,7 +1443,7 @@ mod tests {
             id: 1,
             kind: "project".into(),
             params: "rebuild=true".into(),
-            spec: Spec::Project { rebuild: true },
+            spec: Spec::Project { rebuild: true, clear_changes: false },
             resume_after: None,
         };
         let full = sup.run_spec(&rebuild).await.unwrap();
@@ -1430,7 +1455,7 @@ mod tests {
             id: 2,
             kind: "project".into(),
             params: "rebuild=false".into(),
-            spec: Spec::Project { rebuild: false },
+            spec: Spec::Project { rebuild: false, clear_changes: false },
             resume_after: None,
         };
         let incr = sup.run_spec(&daily).await.unwrap();
@@ -1477,7 +1502,7 @@ mod tests {
             id: 1,
             kind: "project".into(),
             params: "rebuild=false".into(),
-            spec: Spec::Project { rebuild: false },
+            spec: Spec::Project { rebuild: false, clear_changes: false },
             resume_after: None,
         };
         let summary = sup.run_spec(&daily).await.unwrap();
@@ -1512,7 +1537,7 @@ mod tests {
             id: 1,
             kind: "project".into(),
             params: "rebuild=false".into(),
-            spec: Spec::Project { rebuild: false },
+            spec: Spec::Project { rebuild: false, clear_changes: false },
             resume_after: None,
         };
         sup.run_spec(&daily).await.unwrap();

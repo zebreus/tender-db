@@ -1339,6 +1339,44 @@ impl Db {
         Ok(())
     }
 
+    /// One-time reset of the CDC `changes` table for the recovered baseline (issue
+    /// 81 / bulk-recovery). DROP+recreate it — dropping its `sqlite_sequence`
+    /// high-water so the cursor restarts at 0 — and reset the in-memory cursor watch
+    /// to match, so a paired `rebuild:true` re-emits ONE clean generation reflecting
+    /// the final layer instead of appending onto the accumulated feed. `changes` is
+    /// derived data (the rebuild regenerates it), so this loses nothing
+    /// reconstructable; only meaningful WITH a rebuild that re-emits (clearing alone
+    /// would leave the feed empty against an intact layer). No external consumers
+    /// yet; the internal coverage refresher uses the cursor only as a change-detector
+    /// (its `HeavyKey`), so it re-measures on the reset rather than breaking.
+    pub async fn clear_changes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("DROP TABLE IF EXISTS changes", ()).await?;
+        conn.execute(
+            "CREATE TABLE changes (
+                 cursor      INTEGER PRIMARY KEY AUTOINCREMENT,
+                 entity_kind TEXT NOT NULL,
+                 entity_id   INTEGER NOT NULL,
+                 version_seq INTEGER,
+                 op          TEXT NOT NULL,
+                 changed_at  INTEGER NOT NULL
+             ) STRICT",
+            (),
+        )
+        .await?;
+        conn.execute("CREATE INDEX IF NOT EXISTS changes_entity ON changes(entity_kind, entity_id)", ())
+            .await?;
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS changes_entity_cursor ON changes(entity_kind, cursor)",
+            (),
+        )
+        .await?;
+        // The watch was seeded from the OLD high-water; reset it to the new empty
+        // table's max (0) so /health and the coverage refresher see the reset at once.
+        self.publish_cursor(&conn).await?;
+        Ok(())
+    }
+
     /// Drop the random-key tender satellite indexes before a full Phase-2 (issue
     /// 60/62). Runs for a fresh rebuild AND a resume — both do a from-scratch fold.
     pub async fn strip_tender_indexes(&self) -> turso::Result<()> {
