@@ -1016,6 +1016,37 @@ impl Db {
         Ok(out)
     }
 
+    /// The still-held member FILES of one package for a bucket (issue 77): the
+    /// distinct `member_path`s (text-era `#<ordinal>` suffix stripped to the
+    /// member file the walker yields) matching the bucket in `fetch_id`, not yet
+    /// reclaimed. Lets the reprocess parse ONLY these members and skip the rest —
+    /// a sparse bucket re-parses `held/total` of the package instead of all of it.
+    /// Seeks by `fetch_id` (the leading column of the quarantine unique index), so
+    /// it is a bounded per-package lookup.
+    pub async fn quarantine_held_member_files(
+        &self,
+        fetch_id: i64,
+        reason: &str,
+        detail_like: Option<&str>,
+        profile: Option<&str>,
+    ) -> turso::Result<std::collections::HashSet<String>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT DISTINCT member_path FROM quarantine
+                  WHERE fetch_id = ?1 AND reason = ?2 AND reprocessed_at IS NULL
+                    AND (?3 IS NULL OR detail LIKE ?3)
+                    AND (?4 IS NULL OR profile = ?4)",
+                (Value::Integer(fetch_id), t(reason), opt_text(detail_like), opt_text(profile)),
+            )
+            .await?;
+        let mut out = std::collections::HashSet::new();
+        while let Some(row) = rows.next().await? {
+            out.insert(member_file(text(&row, 0)));
+        }
+        Ok(out)
+    }
+
     /// Notice counts per mapping profile — the era-split check and the
     /// dashboard's coverage breakdown.
     pub async fn notice_counts_by_profile(&self) -> turso::Result<Vec<(String, i64)>> {
@@ -1418,6 +1449,18 @@ pub(crate) fn int(row: &turso::Row, idx: usize) -> i64 {
     match row.get_value(idx) {
         Ok(Value::Integer(i)) => i,
         _ => 0,
+    }
+}
+
+/// The archive member file a quarantine `member_path` names: text-era records
+/// carry a `#<ordinal>` suffix (`…ISO_ORG.zip#3`), but the package walker yields
+/// the member file, so strip a trailing `#<digits>` to key on it (issue 77).
+fn member_file(member_path: String) -> String {
+    match member_path.rsplit_once('#') {
+        Some((base, ord)) if !ord.is_empty() && ord.bytes().all(|b| b.is_ascii_digit()) => {
+            base.to_owned()
+        }
+        _ => member_path,
     }
 }
 
@@ -2523,6 +2566,40 @@ mod tests {
         // Resume past fetch 1: only package 2 remains.
         let rest = db.quarantine_reclaim_packages("unknown-field-code", Some("%: OC"), None, 1).await.unwrap();
         assert_eq!(rest.iter().map(|(id, ..)| *id).collect::<Vec<_>>(), vec![2]);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The per-package held-member work list (issue 77): distinct member FILES of
+    /// the bucket for one package, text-era `#<ordinal>` stripped, excluding other
+    /// reasons and already-reclaimed rows.
+    #[tokio::test]
+    async fn held_member_files_are_the_bucket_of_one_package() {
+        let path = format!("/tmp/tender-db-held-files-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        db.conn()
+            .await
+            .execute_batch(
+                "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at) VALUES
+                   (1,'pkg/a.xml','h1','unknown-field-code','line 3: OC',0,NULL),
+                   (1,'pkg/bundle.zip#0','h2','unknown-field-code','line 3: OC',0,NULL),
+                   (1,'pkg/bundle.zip#1','h3','unknown-field-code','line 9: OC',0,NULL),
+                   (1,'pkg/done.xml','h4','unknown-field-code','line 3: OC',0,555),
+                   (1,'pkg/other.xml','h5','unclaimed-content','x',0,NULL),
+                   (2,'pkg2/z.xml','h6','unknown-field-code','line 3: OC',0,NULL);",
+            )
+            .await
+            .unwrap();
+        db.set_foreign_keys(true).await.unwrap();
+
+        let held = db.quarantine_held_member_files(1, "unknown-field-code", Some("%: OC"), None).await.unwrap();
+        // a.xml + the two bundle records collapsed to the one member file; NOT the
+        // reclaimed done.xml, the other-reason row, or fetch 2.
+        let mut got: Vec<_> = held.into_iter().collect();
+        got.sort();
+        assert_eq!(got, vec!["pkg/a.xml".to_string(), "pkg/bundle.zip".to_string()]);
 
         let _ = std::fs::remove_file(&path);
     }

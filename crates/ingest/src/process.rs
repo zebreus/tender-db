@@ -165,7 +165,15 @@ type RecordRx = std::sync::mpsc::Receiver<(Record, store::Parse)>;
 /// (reprocess) so a reclaimed member sees a byte-identical parse to a first
 /// ingest. Returns the receiver, the walker handle (yielding its
 /// `(members, ingested, skipped)` tally), and the entry-count progress estimate.
-fn spawn_record_producer(archive: &Path) -> Result<(RecordRx, WalkerHandle, u64), Error> {
+///
+/// `only` restricts parsing to a set of member files: a member whose path is not
+/// in it is read but neither dispatched nor parsed (issue 77 — the reprocess of a
+/// sparse bucket skips the members it would only no-op on). `None` parses every
+/// member, the plain ingest path.
+fn spawn_record_producer(
+    archive: &Path,
+    only: Option<std::collections::HashSet<String>>,
+) -> Result<(RecordRx, WalkerHandle, u64), Error> {
     // Cheap name-only pre-scan: dispatch policy that spans members (the text
     // era's ISO-vs-UTF8 variant selection) needs the package's shape up front;
     // the entry count doubles as the progress total.
@@ -182,6 +190,12 @@ fn spawn_record_producer(archive: &Path) -> Result<(RecordRx, WalkerHandle, u64)
         let mut dead = false;
         package::walk(&archive, |Member { path, bytes, corruption }| {
             members += 1;
+            // Issue 77: in a targeted reprocess, only the bucket's held members
+            // are worth parsing — every other member would just no-op. Skip them
+            // before the expensive dispatch+parse (the tar is still read).
+            if only.as_ref().is_some_and(|set| !set.contains(&path)) {
+                return;
+            }
             // A member the walker recovered from archive corruption (a
             // truncated/unreadable inner bundle or entry) is quarantined with
             // its reason (ADR-0004) — a visible data-quality metric, never a
@@ -283,7 +297,7 @@ pub async fn process_package(
     fetch_id: i64,
     mut on_progress: impl FnMut(u64, u64, &Report),
 ) -> Result<Report, Error> {
-    let (rx, walker, estimated) = spawn_record_producer(archive)?;
+    let (rx, walker, estimated) = spawn_record_producer(archive, None)?;
     let mut report = Report::default();
     let now = store::now_unix();
     let mut done = 0u64;
@@ -343,9 +357,12 @@ pub struct ReclaimReport {
     pub already: u64,
 }
 
-/// Re-parse one archived package and reclaim every member that now parses,
-/// writing its parsed layer in place ([`store::Db::reclaim_notice`]). The
-/// walk/dispatch/parse is [`spawn_record_producer`] — identical to a fresh
+/// Re-parse a package's HELD members and reclaim every one that now parses,
+/// writing its parsed layer in place ([`store::Db::reclaim_notice`]). `held` is
+/// the bucket's still-held member files for this package
+/// ([`store::Db::quarantine_held_member_files`]); only those are dispatched +
+/// parsed (issue 77), so a sparse bucket skips the members it would only no-op on.
+/// The walk/dispatch/parse is [`spawn_record_producer`] — identical to a fresh
 /// ingest — so a reclaimed member's parsed layer matches one. Members that still
 /// fail (or are still unrecognised profile-level quarantines / corruption) stay
 /// held. Memory stays flat: the producer streams one record at a time.
@@ -354,9 +371,10 @@ pub async fn reclaim_package(
     archive: &Path,
     source: &str,
     fetch_id: i64,
+    held: std::collections::HashSet<String>,
     mut on_progress: impl FnMut(u64, u64, &ReclaimReport),
 ) -> Result<ReclaimReport, Error> {
-    let (rx, walker, estimated) = spawn_record_producer(archive)?;
+    let (rx, walker, estimated) = spawn_record_producer(archive, Some(held))?;
     let mut report = ReclaimReport::default();
     let now = store::now_unix();
     let mut done = 0u64;

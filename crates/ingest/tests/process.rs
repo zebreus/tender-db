@@ -362,31 +362,39 @@ async fn make_held(db_path: &Path, id: i64) {
 }
 
 /// The reprocess pass re-parses one held member in place from the archive, and
-/// leaves every already-parsed notice untouched — the two properties the reclaim
-/// program was missing (issues 71/72/73), end to end through the real walker.
+/// (issue 77) parses ONLY the bucket's held members — walking the package but
+/// dispatching just the held one, so a sparse bucket does a fraction of the work.
 #[tokio::test]
-async fn reclaim_package_reclaims_a_held_member_and_never_touches_parsed_ones() {
+async fn reclaim_package_reclaims_only_the_held_members() {
     let (archive, db) = fixture("reclaim").await;
     run(&db, &archive).await;
     let pkg = archive.join("ted/daily/2026-00137.tar.gz");
 
-    // Over a fully-parsed package the reprocess is a safe no-op: the 4 parsed
-    // notices are AlreadyParsed, the 3 eForms stubs still fail (StillHeld), and
-    // nothing is reclaimed or corrupted.
-    let noop = process::reclaim_package(&db, &pkg, "ted", 1, |_, _, _| {}).await.unwrap();
-    assert_eq!((noop.reclaimed, noop.already, noop.still_held), (0, 4, 3));
+    // An empty held set (a bucket with nothing held here) parses nothing at all —
+    // the whole package is walked but skipped, not even no-op'd.
+    let empty = process::reclaim_package(&db, &pkg, "ted", 1, Default::default(), |_, _, _| {})
+        .await
+        .unwrap();
+    assert_eq!((empty.reclaimed, empty.already, empty.still_held), (0, 0, 0));
+    assert_eq!(empty.members, 9, "all members are walked, none parsed");
 
-    // Rewind one genuinely-parsed notice to the held state, then reprocess.
+    // Rewind one genuinely-parsed notice to the held state, then reprocess just it.
     let id = cell_i64(&db, "SELECT MIN(id) FROM notices WHERE parse_state = 'parsed'").await.unwrap();
     let sections = count(&db, "notice_sections", id).await;
     assert!(sections > 0);
     make_held(&archive.join("test.db"), id).await;
     assert_eq!(count(&db, "notice_sections", id).await, 0);
 
-    let report = process::reclaim_package(&db, &pkg, "ted", 1, |_, _, _| {}).await.unwrap();
-    assert_eq!(report.reclaimed, 1, "exactly the rewound member is reclaimed");
-    assert_eq!(report.already, 3, "the other parsed notices are left as-is");
-    assert_eq!(report.still_held, 3, "the eForms stubs are still held");
+    // The reprocess work list for this package + bucket is exactly the held member.
+    let held =
+        db.quarantine_held_member_files(1, "unknown-field-code", Some("%: OC"), None).await.unwrap();
+    assert_eq!(held.len(), 1, "one held member file in this bucket");
+
+    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+    // Only the held member is dispatched: it reclaims, and the other 8 members
+    // (4 parsed, 3 stubs, 1 garbage) are skipped — never counted as already/held.
+    assert_eq!((report.reclaimed, report.already, report.still_held), (1, 0, 0));
+    assert_eq!(report.members, 9, "the package is still walked, but only 1 parsed");
 
     // Its parsed layer is restored, the watermark cleared, and the row flagged.
     assert_eq!(

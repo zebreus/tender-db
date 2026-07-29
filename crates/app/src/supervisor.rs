@@ -816,11 +816,18 @@ impl Supervisor {
                 p.members_done = 0;
                 p.members_total = 0;
             });
+            // Issue 77: parse only this package's held members, not all of them.
+            let held = self
+                .db
+                .quarantine_held_member_files(*fetch_id, reason, detail_like, profile)
+                .await
+                .map_err(|e| e.to_string())?;
             let report = process::reclaim_package(
                 &self.db,
                 &self.archive.join(path),
                 source,
                 *fetch_id,
+                held,
                 |done, members_total, _| {
                     if done % 64 == 0 || done == members_total {
                         self.update(|p| {
