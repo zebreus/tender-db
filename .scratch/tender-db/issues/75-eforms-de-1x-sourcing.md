@@ -1,6 +1,6 @@
 # 75 — eForms-DE 1.0/1.1/1.2 sourcing spike (~219K quarantined, German)
 
-Status: spiked — no SDK-DE artifact exists; empirical-inventory path required, NOT issue-74-blocked (see Findings)
+Status: IMPLEMENTED (commit 7d1317e) — merged empirical inventory vendored + unit-green; ops deploy+reprocess pending
 Kind: completeness / data-quality
 Blocked by: —
 Relates to: 71 (parent), 12 (DÖE eforms-de-2.x + sdk-0.1 vendoring), ADR-0002, ADR-0004, CONTEXT.md (~40% German volume)
@@ -101,3 +101,39 @@ Build the inventory empirically:
   minor (design call at build time; the DÖE OPT-002 ProfileID delta + DE codelists ride the normal
   channels as they do for 2.x).
 - Effort: on the order of the sdk-0.1 build (issue 12) — one focused implementation issue.
+
+## Implementation (2026-07-29, commit 7d1317e)
+
+Built the merged empirical era inventory, sdk-0.1 pattern, unit-green.
+
+**Scan (whole DÖE archive, /opt/tender-db/doe12/de1x_scan.py):** 218,876 eforms-de-1.x
+notices — 1.0=31, 1.1=145,859, 1.2=72,986 (matches the quarantine table exactly), 0 unparsable,
+774 distinct element paths.
+
+**Merged, not per-minor (decided from the data):** 686/773 paths common to 1.1 and 1.2; the
+minor tails are real structural deltas from the different EU bases (1.1↔SDK 1.7, 1.2↔1.8/1.9). A
+superset only over-claims (ADR-0004 never quarantines *more* under a superset), so one file
+`fields-de-1.x.json` (460 fields, 90 nodes) serves all three; `resolve()` maps
+`eforms-de-1.{0,1,2}` → `eforms-de-1.x`. No ProfileID split (each minor is its own CustomizationID).
+
+**Generator (de1x_gen.py):** one field per observed text leaf; type from element naming +
+observed listName/currencyID/unitCode, cross-checked against sampled text. Every attribute in the
+corpus is auto-claimed (the 9 VALUE_ATTRIBUTES + xsi:schemaLocation) — no attribute-fields needed.
+Published section ids only for the two provably-unique non-grafted sections (lot cbc:ID,
+organization deep id under efac:Company); all other sections synthetic (the TEN-/RES-/CON- result
+ids legitimately repeat across grafted positions → would collide; still captured as field values).
+Predicate-free → independent of issue 74.
+
+**Full-corpus validation (all 218,876, de1x_validate.py replicating value::convert + section-id):**
+ZERO duplicate-section-id; only unrepresentable values are ~293 amounts (0.13%) with >2 fraction
+digits (e.g. `569490.808523652`, `.0`) the money converter correctly rejects per CONTEXT.md —
+identical to the vendored 1.12–1.15 path. So **~99.87% (~218,580) reprocess cleanly**, ~293
+correctly quarantine as malformed-money.
+
+**Tests (tests/doe.rs):** real DE-1.1 CN → org register (ORG-7001 "Städtisches Klinikum Görlitz
+gGmbH") + LOT-0000 + NUTS/codes/BTs; DE-1.2 CAN → full result layer; both exhaustive. Pinned +
+completeness + fold-into-index green. Scripts live at /opt/tender-db/doe12/de1x_*.py (+ .scratch).
+
+**Deferred to ops/end-to-end (team-lead):** deploy the binary → reprocess the ~218K quarantined
+DE-1.x notices from the archive → project. Section `kind`s are the raw element names for now;
+refining them for the projection is part of that end-to-end pass.
