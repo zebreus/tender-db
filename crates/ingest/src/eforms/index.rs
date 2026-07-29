@@ -606,7 +606,10 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             .filter(|f| f.kind == "id")
             .map(|f| locate(&f.xpath))
             .transpose()?
-            .map(|loc| Path { up: 0, steps: loc.steps[steps.len()..].to_vec() });
+            .map(|loc| Path {
+                origin: xpath::Origin::Context { up: 0 },
+                steps: loc.steps[steps.len()..].to_vec(),
+            });
         // The kind comes from the node id, not `businessEntityId`: node ids are
         // stable across SDK minors, while the entity names were recased and
         // reshaped (1.13 "lot" → 1.15 "Lot") and are absent from older SDKs

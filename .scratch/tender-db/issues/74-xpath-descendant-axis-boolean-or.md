@@ -1,6 +1,6 @@
 # 74 — xpath grammar: descendant axis `//` + boolean `or` (unblocks SDK 1.0/1.3/1.5/1.6/1.7, ~390K)
 
-Status: design-for-review (proj-fix design below; team-lead reviews before implementation)
+Status: grammar implemented + green (team-lead reviews xpath.rs eval); vendoring 1.0/1.3/1.5/1.6/1.7 is the remaining step
 Kind: completeness / data-quality
 Blocked by: —
 Relates to: 71 (parent), ADR-0002 (fields.json is the checklist), ADR-0004 (exhaustive-or-quarantine), CONTEXT.md (all eForms BTs representable, "no omissions")
