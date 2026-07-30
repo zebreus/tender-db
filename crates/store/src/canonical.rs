@@ -28,7 +28,7 @@
 //! notices).
 
 use crate::checkpoint::{CheckpointMode, checkpoint_on};
-use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_text, opt_text_of, t, text};
+use crate::{Db, Parsed, Section, ValueRow, int, opt_int, opt_int_of, opt_text, opt_text_of, t, text};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Statement, Value};
@@ -564,6 +564,14 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
 const NODE_WRITE_BATCH: usize = 20_000;
+
+/// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
+/// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
+/// optimisation), one uncheckpointable statement that balloons the in-RAM
+/// WAL-index to OOM at 14M rows (issue 63). Splitting it into `notice_id` ranges
+/// with a TRUNCATE between keeps the WAL bounded; each row's key is a pure
+/// function of its own columns, so the split is byte-identical to the one-shot.
+const GROUP_KEY_UPDATE_BATCH: i64 = 200_000;
 
 /// An in-memory union-find over legacy OJS keys where each component's root is its
 /// MINIMUM key (union-TO-MIN), so `find(k)` returns the component's earliest OJS
@@ -1671,15 +1679,35 @@ impl Db {
         // group_key UPDATEs run index-free so they don't pay per-row index
         // maintenance on ~22M writes; the fold index is rebuilt once at the end.
         // Keyed and island in one pass; legacy left NULL for the closure below.
+        // BATCHED by notice_id range with a TRUNCATE between (issue 63): a single
+        // whole-corpus UPDATE writes a WAL frame per row and cannot be checkpointed
+        // mid-statement, ballooning the in-RAM WAL-index to OOM at 14M. Byte-identical
+        // to the one-shot — each row's key is a pure function of its own columns.
         let t = std::time::Instant::now();
-        conn.execute(
-            "UPDATE plan_notice SET group_key = CASE
-                 WHEN procedure_key IS NOT NULL THEN procedure_key
-                 WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
-                 ELSE NULL END",
-            (),
-        )
-        .await?;
+        let (min_id, max_id) = {
+            let mut r = conn.query("SELECT MIN(notice_id), MAX(notice_id) FROM plan_notice", ()).await?;
+            match r.next().await? {
+                Some(row) => (opt_int_of(&row, 0), opt_int_of(&row, 1)),
+                None => (None, None),
+            }
+        };
+        if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
+            let mut lo = min_id;
+            while lo <= max_id {
+                let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
+                conn.execute(
+                    "UPDATE plan_notice SET group_key = CASE
+                         WHEN procedure_key IS NOT NULL THEN procedure_key
+                         WHEN NOT (legacy = 1 AND ojs_self IS NOT NULL) THEN 'island:' || notice_id
+                         ELSE NULL END
+                     WHERE notice_id BETWEEN ? AND ?",
+                    (Value::Integer(lo), Value::Integer(hi)),
+                )
+                .await?;
+                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                lo = hi.saturating_add(1);
+            }
+        }
         eprintln!("[project] group step keyed/island: {:.1}s", t.elapsed().as_secs_f64());
 
         // Legacy transitive components via an in-memory union-find (path-B). Load
@@ -1734,6 +1762,9 @@ impl Db {
                 legacy.push((int(&row, 0), int(&row, 1)));
             }
         }
+        // TRUNCATE between chunks so the accumulated legacy UPDATEs (millions of
+        // rows across all chunks) don't balloon the WAL as one un-checkpointed run
+        // (issue 63) — the per-chunk BEGIN/COMMIT alone never reclaimed it.
         for chunk in legacy.chunks(NODE_WRITE_BATCH) {
             conn.execute("BEGIN IMMEDIATE", ()).await?;
             for (notice_id, ojs_self) in chunk {
@@ -1746,11 +1777,14 @@ impl Db {
                 .await?;
             }
             conn.execute("COMMIT", ()).await?;
+            let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
         eprintln!("[project] group step legacy-update: {:.1}s ({} legacy)", t.elapsed().as_secs_f64(), legacy.len());
 
         // The fold order Phase 2 streams by: rows arrive grouped by Tender and, within
         // a Tender, in supersession order (ADR-0003 tiebreak), so no in-RAM sort.
+        // A single CREATE INDEX over the whole plan is one bounded statement; reclaim
+        // its WAL immediately after so it doesn't sit as a multi-GB tail (issue 63).
         let t = std::time::Instant::now();
         conn.execute(
             "CREATE INDEX IF NOT EXISTS plan_notice_fold
@@ -1758,6 +1792,7 @@ impl Db {
             (),
         )
         .await?;
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         eprintln!("[project] group step fold-index: {:.1}s", t.elapsed().as_secs_f64());
         // Give turso's planner row stats so plan_summary and Phase-2's next_plan_batch
         // stream via plan_notice_fold instead of sorting the group_key tail (turso
