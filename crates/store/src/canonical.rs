@@ -1451,34 +1451,9 @@ impl Db {
     /// start of a projection.
     pub async fn reset_plan(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS plan_notice (
-                 notice_id      INTEGER PRIMARY KEY,
-                 procedure_key  TEXT,
-                 legacy         INTEGER NOT NULL,
-                 ojs_self       INTEGER,
-                 source         TEXT NOT NULL,
-                 source_rank    INTEGER NOT NULL,
-                 publication_id TEXT NOT NULL,
-                 published_at   INTEGER NOT NULL,
-                 subtype        TEXT,
-                 group_key      TEXT
-             ) STRICT",
-            (),
-        )
-        .await?;
-        // The legacy OJS graph: one node per OJS number (including not-yet-ingested
-        // edge targets, so identity is stable as backfill deepens), symmetric edges.
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS plan_ojs_node (key INTEGER PRIMARY KEY, label INTEGER NOT NULL) STRICT",
-            (),
-        )
-        .await?;
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS plan_ojs_edge (a INTEGER NOT NULL, b INTEGER NOT NULL) STRICT",
-            (),
-        )
-        .await?;
+        // DROP+recreate the plan tables bare (O(1) WAL) — see clear_plan_on. Was
+        // CREATE-IF-NOT-EXISTS then a whole-table DELETE, whose DELETE ballooned the
+        // WAL over a partial plan left by a killed run (issue 63).
         self.clear_plan_on(&conn).await
     }
 
@@ -1588,12 +1563,41 @@ impl Db {
         Ok(planned == prefix_parsed)
     }
 
+    /// Reset the transient plan tables to present-but-empty by DROP+recreate — the
+    /// single home of the plan DDL, used by both `reset_plan` (start of a run) and
+    /// `clear_plan` (end). DROP (not `DELETE FROM`) because a DELETE of the ~14M-row
+    /// plan_notice writes a WAL frame PER ROW and balloons the in-RAM WAL-index to
+    /// OOM (issue 63; turso has no truncate optimisation), whereas DROP is O(1).
+    /// DROP TABLE cascades the fold/edge indexes, so no explicit DROP INDEX is needed.
     async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
-        conn.execute("DROP INDEX IF EXISTS plan_notice_fold", ()).await?;
-        conn.execute("DROP INDEX IF EXISTS plan_ojs_edge_a", ()).await?;
         for table in ["plan_notice", "plan_ojs_node", "plan_ojs_edge"] {
-            conn.execute(&format!("DELETE FROM {table}"), ()).await?;
+            conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
         }
+        conn.execute(
+            "CREATE TABLE plan_notice (
+                 notice_id      INTEGER PRIMARY KEY,
+                 procedure_key  TEXT,
+                 legacy         INTEGER NOT NULL,
+                 ojs_self       INTEGER,
+                 source         TEXT NOT NULL,
+                 source_rank    INTEGER NOT NULL,
+                 publication_id TEXT NOT NULL,
+                 published_at   INTEGER NOT NULL,
+                 subtype        TEXT,
+                 group_key      TEXT
+             ) STRICT",
+            (),
+        )
+        .await?;
+        // The legacy OJS graph: one node per OJS number (including not-yet-ingested
+        // edge targets, so identity is stable as backfill deepens), symmetric edges.
+        conn.execute(
+            "CREATE TABLE plan_ojs_node (key INTEGER PRIMARY KEY, label INTEGER NOT NULL) STRICT",
+            (),
+        )
+        .await?;
+        conn.execute("CREATE TABLE plan_ojs_edge (a INTEGER NOT NULL, b INTEGER NOT NULL) STRICT", ())
+            .await?;
         Ok(())
     }
 
