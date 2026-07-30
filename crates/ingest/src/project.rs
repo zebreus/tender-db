@@ -385,6 +385,15 @@ pub async fn project_with_progress_phase2(
     // the clear + strip + the whole of Phase-1 and re-run only grouping (path-B) →
     // Phase-2 from the immutable on-disk plan. A normal rebuild (its prior run
     // cleared the plan) sees an empty/absent plan and rebuilds from scratch.
+    // Force a FRESH rebuild (rebuild the plan from the current parsed corpus) instead
+    // of resuming an on-disk plan — set when the existing plan may not reflect the
+    // current corpus (e.g. after a reclaim), so the fold cannot silently reuse a stale
+    // plan. Drops the plan tables (O(1), via reset_plan) so plan_is_complete → false
+    // and the from-scratch Phase-1 runs. Env valve, like TENDER_DISABLE_COVERAGE.
+    if rebuild && std::env::var_os("TENDER_FORCE_FRESH_PLAN").is_some() {
+        db.reset_plan().await?;
+        db.log_diag("force-fresh: dropped the on-disk plan (TENDER_FORCE_FRESH_PLAN set)");
+    }
     let resume = rebuild && db.plan_is_complete().await?;
     // Run-start marker on the .diag.log (issue 63) — confirms the channel works and
     // the run began, before the first stage probe (teardown) fires.
