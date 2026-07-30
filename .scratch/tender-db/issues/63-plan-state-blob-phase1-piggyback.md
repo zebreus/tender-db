@@ -156,6 +156,40 @@ the next boot, so a retry is expensive to abort).
   reader-free instant for TRUNCATE. Engaged ONLY if 6b816bd's log shows `busy=true` (reader
   pin). `None` unless the env is set, so the measurement run is uncontaminated.
 
+### ⚠ 2nd BALLOON (2026-07-30) — turso writes per-row WAL for bulk DML (MEASURED)
+
+6b816bd did NOT hold: WAL 4MB→3.8GB, +670MB/min, cursor 0, and — the key clue —
+NO checkpoint self-diagnosis log. That means the ballooning write is NOT in
+build_plan's per-chunk loop; it's a single whole-corpus statement elsewhere.
+
+ROOT CAUSE, measured on a scratch DB: turso has no truncate optimisation — a
+`DELETE FROM t` writes a WAL frame PER ROW (~240 B/row: DELETE of 100k rows = 24MB
+WAL; `DROP TABLE` of the same = 36KB, 650x less). A single statement can't be
+checkpointed mid-way, so EVERY whole-corpus DELETE/UPDATE/CREATE INDEX in the
+rebuild balloons the in-RAM WAL-index to OOM, invisibly to the per-chunk log.
+
+Structural (separate rebuild DB) does NOT help: the mechanism is per-row WAL +
+WAL-index RAM, independent of readers/serving-IO, so an isolated DB OOMs identically.
+
+FIXES LANDED (all byte-identity-gated: golden/equivalence/resume/fold_source):
+- dbf57a5: clear_canonical stops DELETEing organizations/organization_mentions —
+  strip_organization_indexes DROPs them right after (O(1)). + stage-boundary WAL
+  probes (wal_bytes after teardown / Phase-1 / grouping).
+- 2004eac: build_plan_groups batches its 3 whole-corpus writes — the keyed/island
+  UPDATE (by notice_id range + TRUNCATE between), a TRUNCATE per legacy chunk, and
+  a TRUNCATE after the fold-index build.
+- 062761c: clear_canonical batches the `UPDATE notices SET projected=0` watermark
+  reset by id range + TRUNCATE.
+
+RESIDUAL (not batchable):
+- End-of-fold CREATE INDEXes (build_organization_indexes / build_tender_indexes):
+  single statements over the full org/tender tables — a bounded-but-large WAL spike,
+  reclaimed by the existing checkpoint-after (project.rs). Can't be batched; relies
+  on the 16GB swap (the 12.4M build survived this). CONFIRM swap is on prod.
+- reset_tender_layer's tender_version_* DELETEs: cheap NOW (tables empty in the
+  wiped state) but would balloon on a rebuild over a POPULATED layer — future
+  follow-up (convert to DROP+recreate), not needed for the current wiped restore.
+
 Decision tree for the instrumented restore run:
 - silence + tiny WAL → throughput fixed by cadence (6b816bd) → prod restored in ~hours.
 - `busy=true` → reader pin → set `TENDER_WAL_READ_GATE=1`, re-run with 3ba2e36.
