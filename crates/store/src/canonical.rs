@@ -1104,8 +1104,32 @@ impl Db {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
         // Reset the incremental-projection watermark (issue 58): a full rebuild
-        // re-derives everything, so every parsed notice must be re-folded.
-        conn.execute("UPDATE notices SET projected = 0 WHERE projected <> 0", ()).await?;
+        // re-derives everything, so every parsed notice must be re-folded. Over a
+        // fully-projected corpus this touches ~14M rows, so batch it by id range
+        // with a TRUNCATE between (issue 63) — a single whole-corpus UPDATE writes
+        // a WAL frame per row and balloons the in-RAM WAL-index to OOM.
+        let (min_id, max_id) = {
+            let mut r = conn
+                .query("SELECT MIN(id), MAX(id) FROM notices WHERE projected <> 0", ())
+                .await?;
+            match r.next().await? {
+                Some(row) => (opt_int_of(&row, 0), opt_int_of(&row, 1)),
+                None => (None, None),
+            }
+        };
+        if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
+            let mut lo = min_id;
+            while lo <= max_id {
+                let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
+                conn.execute(
+                    "UPDATE notices SET projected = 0 WHERE projected <> 0 AND id BETWEEN ? AND ?",
+                    (Value::Integer(lo), Value::Integer(hi)),
+                )
+                .await?;
+                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                lo = hi.saturating_add(1);
+            }
+        }
         Ok(())
     }
 
