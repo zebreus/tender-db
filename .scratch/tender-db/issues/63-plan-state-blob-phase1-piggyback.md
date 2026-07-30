@@ -180,6 +180,17 @@ FIXES LANDED (all byte-identity-gated: golden/equivalence/resume/fold_source):
   a TRUNCATE after the fold-index build.
 - 062761c: clear_canonical batches the `UPDATE notices SET projected=0` watermark
   reset by id range + TRUNCATE.
+- 781cea9: clear_plan_on DROP+recreates the plan tables (single DDL home; reset_plan
+  is now just clear_plan_on) instead of `DELETE FROM plan_notice` (~14M rows). This
+  fires at BOTH reset_plan (Phase-1 start, over a partial plan a kill left — a strong
+  candidate for the observed "3min, notices=0, no log" balloon) and clear_plan (end).
+- 2d9aa63: TRUNCATE after ensure_changes_entity_cursor_index — on rebuild+clear_changes
+  the changes table is fully re-emitted (~50-60M rows) so that index build is big, not
+  the "still-small" one its comment assumed; its WAL was left as a tail.
+
+Every whole-corpus DELETE/UPDATE that is non-empty in the current wiped-state run is
+now bounded. Full sweep confirmed only two `DELETE FROM {table}` sites remain
+unbounded (below), both empty in the wiped state.
 
 RESIDUAL (not batchable):
 - End-of-fold CREATE INDEXes (build_organization_indexes / build_tender_indexes):
