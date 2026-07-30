@@ -563,7 +563,7 @@ async fn build_plan(
         // divergence). Silence = healthy; the first line tells us which failure
         // mode a ballooning WAL is, in the first minute, not at OOM (issue 63).
         if chunks.is_multiple_of(PLAN_CHECKPOINT_EVERY) {
-            match db.checkpoint(store::CheckpointMode::Truncate).await {
+            match db.checkpoint_gated(store::CheckpointMode::Truncate).await {
                 Ok(c) if c.busy || c.wal_frames > c.checkpointed + 20_000 => eprintln!(
                     "[project] plan checkpoint after chunk {chunks} (notices={notices}): \
                      busy={} wal_frames={} checkpointed={} — WAL not fully reclaimed",

@@ -90,6 +90,33 @@ impl Db {
         checkpoint_on(&conn, mode).await
     }
 
+    /// Like [`checkpoint`], but when the WAL read-gate is enabled
+    /// (`TENDER_WAL_READ_GATE`, issue 63) it first takes the gate's EXCLUSIVE side,
+    /// so in-flight pooled reads drain and no new read starts — giving the TRUNCATE
+    /// a reader-free instant to wrap the WAL on a live box, where a continuous
+    /// stream of overlapping short reads otherwise denies it that instant and the
+    /// WAL grows without bound under a full-corpus write burst.
+    ///
+    /// Bounded and safe: if the exclusive side can't be had within a few seconds (a
+    /// genuinely long reader), it logs and checkpoints plain — never worse than
+    /// ungated, never a stall. A plain pass-through when the gate is disabled (the
+    /// default), so the normal projection path is unchanged. Deadlock-free: readers
+    /// never take the writer lock, so the exclusive holder only ever waits on reads
+    /// that are draining.
+    pub async fn checkpoint_gated(&self, mode: CheckpointMode) -> turso::Result<Checkpointed> {
+        let Some(gate) = self.wal_gate.clone() else {
+            return self.checkpoint(mode).await;
+        };
+        let wait = std::time::Duration::from_secs(5);
+        match tokio::time::timeout(wait, gate.write_owned()).await {
+            Ok(_exclusive) => self.checkpoint(mode).await, // readers excluded for the truncate
+            Err(_) => {
+                eprintln!("[wal-gate] readers did not drain in {wait:?}; checkpoint proceeds ungated");
+                self.checkpoint(mode).await
+            }
+        }
+    }
+
     /// Size of the `-wal` sidecar in bytes, or `None` if it is absent (a freshly
     /// checkpointed/closed database has no WAL). Surfaced to monitoring so a
     /// runaway WAL is visible (issue 42).
@@ -265,6 +292,46 @@ mod tests {
         let freed = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
         assert!(!freed.busy, "once the snapshot ends the checkpoint completes");
         assert!(db.wal_bytes().unwrap_or(0) < 65_536, "the WAL reclaims once unpinned");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 63: with the WAL read-gate ON, the gated checkpoint takes the gate's
+    /// EXCLUSIVE side, drains readers, truncates, and releases — wired end-to-end,
+    /// reclaiming fully and never deadlocking (a reader never blocks itself: it
+    /// takes only the shared side and never the writer lock). An IDLE pooled reader
+    /// holds no lease, so the gated checkpoint proceeds at once. The exclusion of a
+    /// LIVE reader is the tokio `RwLock` write-vs-read guarantee — the guard is held
+    /// for the whole borrow — so this asserts the wiring and the no-hang property.
+    #[tokio::test]
+    async fn the_gated_checkpoint_reclaims_under_the_read_gate() {
+        let path = format!("/tmp/tender-db-ckpt-gated-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open_inner(&path, true).await.unwrap();
+        grow_wal(&db, 4_000).await;
+        let before = db.wal_bytes().unwrap();
+        assert!(before > 65_536, "the WAL grew");
+
+        // Warm then fully release a pooled reader: idle, so it holds neither a WAL
+        // snapshot nor the gate lease.
+        let pool = db.readers(4).unwrap();
+        {
+            let reader = pool.get().await.unwrap();
+            let mut rows = reader.query("SELECT COUNT(*) FROM fetches", ()).await.unwrap();
+            while rows.next().await.unwrap().is_some() {}
+        }
+
+        // The gated checkpoint acquires the exclusive side (no lease outstanding),
+        // truncates, and returns promptly — no hang, full reclaim.
+        let t = std::time::Instant::now();
+        let r = db.checkpoint_gated(CheckpointMode::Truncate).await.unwrap();
+        assert!(t.elapsed().as_secs() < 2, "the gated checkpoint returns promptly, no deadlock");
+        assert!(!r.busy, "no reader lease is held, so the gate lets the truncate reclaim");
+        assert!(db.wal_bytes().unwrap_or(0) < 65_536, "the WAL reclaims to ~zero under the gate");
 
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));

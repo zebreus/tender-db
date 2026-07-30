@@ -337,6 +337,10 @@ pub struct Db {
     /// transaction (issue 20). The writer (`conn`) is reserved for writes and
     /// schema; this is separate from the public API's own pool (`readers`).
     read_pool: Arc<Readers>,
+    /// The WAL read-gate (issue 63), shared by every reader pool and the gated
+    /// bulk-load checkpoint. `None` unless `TENDER_WAL_READ_GATE` is set at open,
+    /// so the default build is byte-for-byte the old behaviour.
+    wal_gate: read::WalGate,
     /// The change-cursor doorbell (docs/research/api-layer.md §2): the writer
     /// publishes the newest cursor after every committed change-append, and SSE
     /// streams wake on it and read the log themselves. It carries only the
@@ -444,6 +448,13 @@ async fn add_column(conn: &Connection, statement: &str) -> turso::Result<bool> {
 
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
+        Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
+    }
+
+    /// `gate_on` forces the issue-63 WAL read-gate on; production derives it from
+    /// `TENDER_WAL_READ_GATE` in [`open`]. Split out so tests drive the gate
+    /// without touching the process environment (a data race under parallel tests).
+    async fn open_inner(path: &str, gate_on: bool) -> turso::Result<Db> {
         let database = turso::Builder::new_local(path).build().await?;
         let conn = database.connect()?;
         // Some pragmas report their new value as a row, so go through `query`
@@ -459,8 +470,12 @@ impl Db {
         conn.execute_batch(webhooks::SCHEMA).await?;
         migrate(&conn).await?;
         let cursor = watch::Sender::new(max_cursor(&conn).await?);
-        let read_pool = Readers::open(database.clone(), READ_POOL)?;
-        Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, cursor })
+        // The WAL read-gate is opt-in (issue 63): only a full-corpus rebuild whose
+        // Phase-1 checkpoint is being pinned by live readers needs it, and it adds a
+        // shared-lock acquire to every read, so the default leaves it off (None).
+        let wal_gate: read::WalGate = gate_on.then(|| Arc::new(tokio::sync::RwLock::new(())));
+        let read_pool = Readers::open(database.clone(), READ_POOL, wal_gate.clone())?;
+        Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, wal_gate, cursor })
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {
@@ -508,7 +523,7 @@ impl Db {
     /// parallel with each other and with the writer (WAL), so the API's fan-out
     /// never queues behind ingestion.
     pub fn readers(&self, n: usize) -> turso::Result<Arc<Readers>> {
-        Readers::open(self.database.clone(), n)
+        Readers::open(self.database.clone(), n, self.wal_gate.clone())
     }
 
     /// Subscribe to the change-cursor doorbell. The current value is the newest

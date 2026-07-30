@@ -9,8 +9,15 @@
 
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
 use std::sync::{Arc, Mutex};
-use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+use tokio::sync::{OwnedRwLockReadGuard, OwnedSemaphorePermit, RwLock, Semaphore};
 use turso::{Connection, Value};
+
+/// A process-wide gate that lets a bulk-load checkpoint briefly EXCLUDE readers
+/// so a WAL TRUNCATE gets a reader-free instant to wrap on a live box (issue 63).
+/// Every pooled read holds the SHARED side for its borrow; a gated checkpoint
+/// takes the EXCLUSIVE side. `None` unless `TENDER_WAL_READ_GATE` is set at open,
+/// so the default path constructs and acquires nothing — zero overhead when off.
+pub type WalGate = Option<Arc<RwLock<()>>>;
 
 /// The `changes.entity_kind` values the projection ever emits. `changes_since`
 /// short-circuits an unknown kind to an empty result (issue 61 finding 2) — a kind
@@ -27,20 +34,33 @@ pub struct Readers {
     database: turso::Database,
     idle: Mutex<Vec<Connection>>,
     permits: Arc<Semaphore>,
+    gate: WalGate,
 }
 
 impl Readers {
-    pub(crate) fn open(database: turso::Database, n: usize) -> turso::Result<Arc<Readers>> {
+    pub(crate) fn open(database: turso::Database, n: usize, gate: WalGate) -> turso::Result<Arc<Readers>> {
         Ok(Arc::new(Readers {
             database,
             idle: Mutex::new(Vec::with_capacity(n)),
             permits: Arc::new(Semaphore::new(n)),
+            gate,
         }))
     }
 
     /// Borrow a reader, waiting if all of them are busy.
     pub async fn get(self: &Arc<Self>) -> turso::Result<Reader> {
         let permit = self.permits.clone().acquire_owned().await.expect("semaphore is never closed");
+        // Hold the WAL gate's SHARED side for the borrow's lifetime so a gated
+        // checkpoint (issue 63) can take the EXCLUSIVE side and get a reader-free
+        // instant to wrap the WAL. Acquired BEFORE taking a connection, so a
+        // pending exclusive holder is never made to wait on a live read snapshot.
+        // `None` (gate disabled) acquires nothing. Deadlock-free: readers never
+        // take the writer lock, so the exclusive holder only ever waits on reads
+        // that are draining, never on itself.
+        let gate = match &self.gate {
+            Some(g) => Some(g.clone().read_owned().await),
+            None => None,
+        };
         let idle = self.idle.lock().expect("reader pool lock").pop();
         let conn = match idle {
             Some(conn) => conn,
@@ -53,7 +73,7 @@ impl Readers {
                 conn
             }
         };
-        Ok(Reader { pool: self.clone(), conn: Some(conn), _permit: permit })
+        Ok(Reader { pool: self.clone(), conn: Some(conn), _permit: permit, _gate: gate })
     }
 }
 
@@ -62,6 +82,10 @@ pub struct Reader {
     pool: Arc<Readers>,
     conn: Option<Connection>,
     _permit: OwnedSemaphorePermit,
+    /// The WAL-gate shared lease (issue 63), held for the borrow's lifetime so a
+    /// gated checkpoint's exclusive acquire waits out this read. `None` when the
+    /// gate is disabled. Dropped with the Reader, releasing the lease.
+    _gate: Option<OwnedRwLockReadGuard<()>>,
 }
 
 impl std::ops::Deref for Reader {
