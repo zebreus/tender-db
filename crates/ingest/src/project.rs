@@ -509,6 +509,12 @@ pub async fn project_with_progress_phase2(
     // finding 2): a no-op once present, and cheap on a fresh build's still-small
     // changes table vs a multi-minute CREATE INDEX at open on the full 80M rows.
     db.ensure_changes_entity_cursor_index().await?;
+    // Reclaim the WAL left by the end-of-run index builds (issue 63): on a
+    // rebuild+clear_changes the changes table was fully re-emitted during the fold,
+    // so this (entity_kind, cursor) index is a big single-statement build, not the
+    // "still-small" one the comment above assumes — its WAL must not sit as a tail.
+    let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+    eprintln!("[project] WAL after end-of-run index builds: {} MB", wal_mb(db));
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
