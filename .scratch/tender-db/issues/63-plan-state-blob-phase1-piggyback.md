@@ -71,6 +71,78 @@ Note the plan_state piggyback ALONE does not fix this — it shrinks the pre-pas
 re-read but the WAL-under-readers blow-up is Phase-1's WRITE side. Both must be addressed
 for a 14.2M rebuild to complete.
 
+### ⚠ REVISED DIAGNOSIS (2026-07-30, after the coverage-OFF retry ALSO ballooned)
+
+The coverage-off retry (`rebuild:true clear_changes`, `TENDER_DISABLE_COVERAGE` set) STILL
+ballooned: WAL 1MB→3MB→647MB→2.16GB→3.5GB, ~+640MB/min, killed at 3.5GB. Coverage-off did
+NOT hold it. That falsifies the "coverage refresher is the pin" root cause above, and forces
+a revision. Two things are now established from the code + the retry data:
+
+1. **The self-pin hypothesis (build_plan holds a read cursor across its writes) is FALSE.**
+   `build_plan` reads each chunk via `parsed_chunk` on the READER POOL, fully drains it into
+   a `Vec`, and drops the reader (returns it to the pool, autocommit → no snapshot per the
+   `read.rs` Drop + the `an_idle_pooled_reader_does_not_pin_the_wal` test) BEFORE any write.
+   `insert_plan`/`resolve_mentions`/`checkpoint` all run on the SINGLE writer conn. Read and
+   write never overlap. Proof by control: `project_incremental_chunked` uses the IDENTICAL
+   pattern (`parsed_by_ids`→drain→`insert_plan`+`resolve_mentions`) and its WAL stays sub-MB.
+   The ONLY structural difference is cadence (rebuild TRUNCATEs every 4 chunks mid-loop; the
+   incremental once at the end) and VOLUME (14.2M+28M rows vs a small delta).
+
+2. **No continuous app reader exists in the code to pin the WAL with coverage off.** Audited
+   every reader entry point: public API is memoized (never scans the store, `api.rs:22`),
+   `/health` is DB-free (issue 61), the webhook sweeper drops its reader BEFORE the outbound
+   POST and only ticks every 15s (`webhooks.rs:367`), the snapshot backup runs as a
+   SERIALIZED supervisor job (one-job-at-a-time queue → cannot overlap the rebuild), and
+   `heavy_write_in_progress` already gates coverage (its only consumer). So a reader-pin
+   would have to be a RUNTIME/EXTERNAL reader not visible in code (a left-open admin SQL
+   console, an SSE client, an external probe) — possible, but not the code's default state.
+
+**Leading hypothesis now: checkpoint-THROUGHPUT divergence at 254GB, not a reader pin.**
+The WAL's knee-shaped monotonic growth (small and controlled early, then 647MB→2.16GB→3.5GB
+runaway) fits a positive-feedback loop: each TRUNCATE must backfill its WAL frames as random
+writes into the 254GB main DB; as Phase-1 proceeds under IO/page-cache contention the
+backfill slows, so more WAL accrues between the every-4-chunks checkpoints, so the next
+TRUNCATE has more frames to backfill and is slower still → runaway. This elegantly explains
+BOTH why coverage-off didn't help (the bottleneck is checkpoint IO throughput vs write rate,
+not a reader) AND why the 12.4M build survived quiesced (no competing IO → backfill kept up)
+AND why the incremental/process-loop stay bounded (small WAL → instant TRUNCATE). It is a
+HYPOTHESIS, not yet confirmed.
+
+**Decisive, zero-risk measurement to confirm the mechanism:** `build_plan`'s checkpoint
+ALREADY computes `Checkpointed { busy, wal_frames, checkpointed }` and DISCARDS it
+(`if let Err(e) = db.checkpoint(...)` at project.rs:550). Log it (+ any Err) at each
+Phase-1 checkpoint. The next run reads the mechanism in the FIRST minute:
+- `busy = true`, `checkpointed ≈ 0`, `wal_frames` climbing → a READER pins it → hunt the
+  runtime reader (and/or add the checkpoint reader-gate below).
+- `busy = false`, `checkpointed > 0` but WAL still grows → THROUGHPUT divergence → the
+  checkpoint can't keep up; readers are irrelevant.
+This is a 3-line change with zero failure risk; ship it before the next retry so the retry
+is diagnostic even if it's also a fix attempt.
+
+**Fix directions, keyed to the measurement:**
+- THROUGHPUT branch (most likely): the real fix is to stop making Phase-1's checkpoint
+  compete with the 254GB serving DB's IO. Options, in rough order of leverage: (a) build the
+  rebuild into a SEPARATE DB file / its own WAL and atomically swap it in — the structural
+  end-state this issue already points at; its WAL checkpoints without contending against the
+  live 254GB main DB, and it has no concurrent readers; (b) 64K `page_size` on the rebuild DB
+  (fewer WAL frames → smaller WAL-index in RAM → faster backfill — already a companion lever
+  above); (c) cut Phase-1 write VOLUME — the ~28M org/mention re-inserts dominate; if a
+  rebuild PRESERVED `organizations` (canonical org identity is deterministic) instead of
+  clear+recreate, Phase-1 would write only ~14.2M plan rows, roughly halving the WAL (needs a
+  correctness check that org identity is stable across a rebuild); (d) run quiesced (the
+  proven 12.4M condition) — pause the webhook sweeper + any background IO under
+  `heavy_write_in_progress`, and don't just rely on coverage-off.
+- READER branch (if the measurement shows busy): add a WAL checkpoint reader-gate — an async
+  RwLock every reader borrow takes `.read()` on and the periodic checkpoint takes `.write()`
+  on, forcing a guaranteed reader-free instant for TRUNCATE to wrap, with a bounded-wait
+  fallback to PASSIVE (so a genuinely long reader degrades safely, not deadlocks). Broad
+  change (routes every reader entry point) — only worth it if a reader is actually the pin.
+
+Either way, the plan_state piggyback (this issue's main body) is orthogonal — it speeds the
+pre-pass, not Phase-1's write side. Do the measurement FIRST; do not blind-retry (every
+rebuild pays the upfront `strip_tender_indexes` cost = ~30min synchronous index rebuild on
+the next boot, so a retry is expensive to abort).
+
 ### ⚠ CRITICAL COUPLING (surfaced 2026-07-29) — build it as ONE atomic change
 
 `plan_is_complete` (canonical.rs:1518) is the resume-from-plan salvage invariant: a

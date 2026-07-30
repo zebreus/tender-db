@@ -268,11 +268,20 @@ async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
 /// large individual Tenders are.
 const APPLY_NOTICE_BATCH: usize = 50_000;
 
-/// How many Phase-2 batches (and Phase-1 plan chunks) between WAL truncations.
-/// Both the plan build and the apply burst grow the WAL; truncating at the clean
-/// point between batches returns the space (issue 42) without checkpointing so
-/// often the cost shows.
+/// How many Phase-2 batches between WAL truncations. The apply burst grows the
+/// WAL; truncating at the clean point between batches returns the space (issue
+/// 42) without checkpointing so often the cost shows.
 const CHECKPOINT_EVERY_BATCHES: usize = 4;
+
+/// Phase-1 (`build_plan`) truncates the WAL EVERY chunk, tighter than the Phase-2
+/// cadence: a full-corpus plan build writes ~40M rows (14.2M plan + ~28M
+/// org/mention), and a sparse cadence lets the WAL — and turso's in-RAM WAL-index,
+/// which holds an entry per un-checkpointed frame — grow to the OOM point (the
+/// 2026-07-30 rebuild: WAL 1MB→3.5GB, +640MB/min, OOM). One TRUNCATE per
+/// 10k-notice chunk keeps the WAL (and its index) tiny throughout, bounding the
+/// RAM regardless of write volume; a small WAL also truncates fast, so the added
+/// checkpoints are cheap (issue 63).
+const PLAN_CHECKPOINT_EVERY: usize = 1;
 
 /// How often Phase 1 logs a heartbeat. A full-corpus plan build streams millions
 /// of notices over many minutes; without a heartbeat the run looks dead from the
@@ -547,10 +556,22 @@ async fn build_plan(
         // Keep the WAL bounded through the plan build too (issue 42/59): the
         // plan-row inserts are a burst; truncate at the clean point between chunks.
         chunks += 1;
-        if chunks.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
-            && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
-        {
-            eprintln!("[project] plan checkpoint after chunk {chunks}: {e}");
+        // Truncate every chunk to keep the WAL (and its in-RAM index) tiny, and
+        // log the outcome when it does NOT fully reclaim — `busy` means a reader
+        // pinned frames (a reader-pin), a large `wal_frames` residual over
+        // `checkpointed` means the checkpoint could not keep up (throughput
+        // divergence). Silence = healthy; the first line tells us which failure
+        // mode a ballooning WAL is, in the first minute, not at OOM (issue 63).
+        if chunks.is_multiple_of(PLAN_CHECKPOINT_EVERY) {
+            match db.checkpoint(store::CheckpointMode::Truncate).await {
+                Ok(c) if c.busy || c.wal_frames > c.checkpointed + 20_000 => eprintln!(
+                    "[project] plan checkpoint after chunk {chunks} (notices={notices}): \
+                     busy={} wal_frames={} checkpointed={} — WAL not fully reclaimed",
+                    c.busy, c.wal_frames, c.checkpointed
+                ),
+                Ok(_) => {}
+                Err(e) => eprintln!("[project] plan checkpoint after chunk {chunks}: {e}"),
+            }
         }
     }
     db.finish_mention_resolver(resolver).await?;
