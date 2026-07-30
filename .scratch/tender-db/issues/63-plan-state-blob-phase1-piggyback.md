@@ -201,6 +201,36 @@ RESIDUAL (not batchable):
   wiped state) but would balloon on a rebuild over a POPULATED layer — future
   follow-up (convert to DROP+recreate), not needed for the current wiped restore.
 
+### ⚠ THE DEADLOCK (2026-07-30) — the real balloon, found via the .diag.log
+
+After the batching fixes, the rebuild STILL ballooned — but the .diag.log (c5694c5,
+the channel that survives the worker-runtime→journald blindness) showed only
+`projection start: rebuild=true resume=TRUE` and nothing else: the balloon fired
+BEFORE the first stage probe, on the RESUME path.
+
+Root cause: `reset_tender_layer` DROPs `tenders` (O(1) → the table 404s, which read as
+"tender layer wiped") but DELETEd the tender_version_* / lots / bids / contracts /
+lot_results tables — STILL FULL (~tens of millions of rows) from the original 12.4M
+build. A DEADLOCK: every rebuild attempt's per-row DELETE balloons the WAL, is killed,
+and the kill ROLLS BACK the DELETE → the satellite tables never clear → the next
+attempt hits the identical balloon. `tenders` empty + satellites full is why it looked
+"wiped" but kept ballooning. NOT resume-specific — the fresh path's `clear_canonical`
+has the same un-batched DELETEs over the same full tables. (My earlier "empty in the
+wiped state" residual note was WRONG on exactly this point.)
+
+Fixes (byte-identity gated; all on branch, HEAD 3b983ea):
+- c5694c5: the .diag.log channel (Db::log_diag) — WITHOUT it we'd still be blind, since
+  the worker-runtime job's eprintln! never reached journald.
+- 1f6ab90: generic Db::drop_and_recreate(table) — capture table+index DDL from
+  sqlite_master, DROP (O(1) WAL), recreate. Used for the tender-content clears in BOTH
+  reset_tender_layer and clear_canonical. + teardown sub-step probes.
+- 3b983ea: TENDER_FORCE_FRESH_PLAN=1 env valve — drop the on-disk plan so resume=false
+  and Phase-1 rebuilds from the current corpus (guards against a stale plan; resume is
+  otherwise correct via plan_is_complete + faster).
+
+NOT reader-pin: the gate-ON run (covers all HTTP + sweeper) still ballooned → confirmed
+throughput/single-statement, never a reader. The gate (3ba2e36) stays default-off.
+
 Decision tree for the instrumented restore run:
 - silence + tiny WAL → throughput fixed by cadence (6b816bd) → prod restored in ~hours.
 - `busy=true` → reader pin → set `TENDER_WAL_READ_GATE=1`, re-run with 3ba2e36.
