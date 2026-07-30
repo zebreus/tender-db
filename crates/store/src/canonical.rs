@@ -1101,7 +1101,10 @@ impl Db {
             "lots",
             "tenders",
         ] {
-            conn.execute(&format!("DELETE FROM {table}"), ()).await?;
+            // DROP+recreate, NOT DELETE (issue 63): over the tens-of-millions-of-row
+            // tender-content tables a per-row DELETE balloons the WAL to OOM. Same
+            // fix as reset_tender_layer; the fresh path must not balloon either.
+            Self::drop_and_recreate(&conn, table).await?;
         }
         // Reset the incremental-projection watermark (issue 58): a full rebuild
         // re-derives everything, so every parsed notice must be re-folded. Over a
@@ -1308,6 +1311,35 @@ impl Db {
         ("tenders_island", "tenders(source, island_notice_id)"),
     ];
 
+    /// DROP+recreate `table` from its own captured DDL (table + any named indexes),
+    /// emptying it at O(1) WAL. A `DELETE FROM` writes a WAL frame PER ROW (turso has
+    /// no truncate optimisation) — over the tens-of-millions-of-row tender-content
+    /// tables that is a single un-checkpointable statement that balloons the in-RAM
+    /// WAL-index to OOM (issue 63). Recreating from `sqlite_master.sql` keeps the exact
+    /// schema (no DDL duplication) and, by dropping the table, resets its
+    /// `sqlite_sequence` high-water — the same reset the callers already intend. Runs
+    /// under the rebuild's FK-off teardown, so drop order is unconstrained.
+    async fn drop_and_recreate(conn: &Connection, table: &str) -> turso::Result<()> {
+        let mut ddls: Vec<String> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT sql FROM sqlite_master WHERE tbl_name = ?1 AND sql IS NOT NULL
+                     ORDER BY (type <> 'table')",
+                    (Value::Text(table.to_string()),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                ddls.push(text(&row, 0));
+            }
+        }
+        conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
+        for ddl in ddls {
+            conn.execute(&ddl, ()).await?;
+        }
+        Ok(())
+    }
+
     /// Empty and schema-migrate the tender-CONTENT layer for a from-scratch Phase-2
     /// fold — a fresh rebuild OR a resume (both fold from an empty tender layer).
     /// DROP+recreate `tenders` BARE (no inline `UNIQUE`) both strips the inline
@@ -1357,7 +1389,10 @@ impl Db {
             "contracts",
             "lots",
         ] {
-            conn.execute(&format!("DELETE FROM {table}"), ()).await?;
+            // DROP+recreate, NOT DELETE: these tables are still full from the prior
+            // build (each attempt's per-row DELETE ballooned the WAL and was rolled
+            // back on kill, so they never cleared — the deadlock, issue 63).
+            Self::drop_and_recreate(&conn, table).await?;
         }
         // Note: `changes` (the CDC cursor spine) is deliberately NOT cleared here.
         // A rebuild re-derives identical deterministic surrogate ids (ADR-0001), so

@@ -391,6 +391,7 @@ pub async fn project_with_progress_phase2(
     db.log_diag(&format!("=== projection start: rebuild={rebuild} resume={resume} ==="));
     if rebuild && !resume {
         db.clear_canonical().await?;
+        db.log_diag(&format!("WAL after clear_canonical: {} MB", db.wal_bytes().unwrap_or(0) / 1_048_576));
         // Bulk-load the Organization tables index-free, then rebuild the indexes
         // once at the end (issue 60): the per-row uniqueness probe into the org
         // identity index was a random-seek storm once it outgrew the page cache.
@@ -416,12 +417,14 @@ pub async fn project_with_progress_phase2(
         // plan on clean completion (`clear_plan`).
         db.set_rebuild_in_progress().await?;
         db.strip_tender_indexes().await?;
+        db.log_diag(&format!("WAL before reset_tender_layer: {} MB", db.wal_bytes().unwrap_or(0) / 1_048_576));
         // Empty the tender-content layer and DROP+recreate `tenders` bare (fresh AND
         // resume both fold from empty): this strips the inline-UNIQUE auto-indexes
         // that steepened the fold and resets sqlite_sequence so ids restart at 1 in
         // fold order — resume becomes byte-identical to fresh. Preserves the Phase-1
         // Organizations the resume relies on (issue 60).
         db.reset_tender_layer().await?;
+        db.log_diag(&format!("WAL after reset_tender_layer: {} MB", db.wal_bytes().unwrap_or(0) / 1_048_576));
     }
     // Stage-boundary WAL probe (issue 63): a full-corpus DELETE/UPDATE/CREATE INDEX
     // writes per-row WAL that no per-chunk checkpoint covers (it is one statement),
