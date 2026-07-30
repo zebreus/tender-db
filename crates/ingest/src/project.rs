@@ -414,6 +414,14 @@ pub async fn project_with_progress_phase2(
         // Organizations the resume relies on (issue 60).
         db.reset_tender_layer().await?;
     }
+    // Stage-boundary WAL probe (issue 63): a full-corpus DELETE/UPDATE/CREATE INDEX
+    // writes per-row WAL that no per-chunk checkpoint covers (it is one statement),
+    // so a balloon here is invisible to build_plan's checkpoint log. Print the WAL
+    // size at each stage boundary so a rebuild pinpoints exactly which stage balloons.
+    let wal_mb = |db: &Db| db.wal_bytes().unwrap_or(0) / 1_048_576;
+    if rebuild {
+        eprintln!("[project] WAL after teardown (clear/strip/reset): {} MB", wal_mb(db));
+    }
     let now = store::now_unix();
     let mut report = Report::default();
 
@@ -432,12 +440,14 @@ pub async fn project_with_progress_phase2(
         report.notices = notices;
         report.mentions = mentions;
     }
+    eprintln!("[project] WAL after Phase-1 (build_plan): {} MB", wal_mb(db));
 
     // Group the plan into Tenders — keyed chains, the legacy OJS transitive-closure
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
     db.build_plan_groups().await?;
+    eprintln!("[project] WAL after grouping (build_plan_groups): {} MB", wal_mb(db));
     let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
     report.islands = islands;

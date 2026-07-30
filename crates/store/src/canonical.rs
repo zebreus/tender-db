@@ -1062,6 +1062,15 @@ impl Db {
     /// Wipe the canonical layer's *content*, leaving the change log intact —
     /// what `project --rebuild` runs before re-deriving everything. The cursor
     /// is never renumbered (docs/architecture.md), so the rebuild appends.
+    ///
+    /// `organizations`/`organization_mentions` are NOT cleared here: both callers
+    /// (the `project` rebuild and `project_plan_only`) invoke
+    /// [`Db::strip_organization_indexes`] immediately after, which DROPs+recreates
+    /// those two tables bare. A DROP is O(1) WAL; a `DELETE FROM` over the ~28M-row
+    /// org layer writes a WAL frame PER ROW (turso has no truncate optimisation,
+    /// measured ~240 B/row → multi-GB), a single uncheckpointed statement that
+    /// balloons the in-RAM WAL-index to OOM on a full-corpus rebuild (issue 63).
+    /// Clearing them here was pure redundant work in front of the DROP.
     pub async fn clear_canonical(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for table in [
@@ -1083,8 +1092,6 @@ impl Db {
             "contracts",
             "lots",
             "tenders",
-            "organization_mentions",
-            "organizations",
         ] {
             conn.execute(&format!("DELETE FROM {table}"), ()).await?;
         }
