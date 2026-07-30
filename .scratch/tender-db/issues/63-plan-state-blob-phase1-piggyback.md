@@ -41,6 +41,36 @@ Refinement (lower churn): store the whole `BucketRow` in `plan_state` with `grou
 before bucketing. `group_key` is only used for sort/bucket, never in `to_notice_state`,
 so this reuses `BucketRow` AS-IS — no StateRow struct split, byte-identical.
 
+### ⚠ REBUILD WAL-HARDENING (added 2026-07-30, from the finale-rebuild OOM) — in scope for this session
+
+The 2026-07-30 `rebuild:true` over the full 14.2M corpus OOM-looped in Phase-1 (killed
+before OOM; layer intact, uncommitted WAL discarded). Root cause: build_plan commits
+per chunk and checkpoints TRUNCATE every 4 chunks, but on a LIVE box the coverage
+refresher (60s scans) + /api + /health continuously hold WAL read-marks, so TRUNCATE
+was perpetually busy → the WAL grew with every whole-corpus write (14.2M plan rows +
+~28M org/mention rows) → 127GB, and turso's in-memory WAL-INDEX grew with it →
+monotonic+accelerating swap → OOM trajectory. (org_of is bounded ~5-6GB and plateaus —
+proven by the 300K incremental control which preloads the same cache and sat at ~3GB;
+NOT the driver. The WAL-index was.) The 12.4M first build survived only because it ran
+quiesced (swap band-aid + TENDER_DROP_JOBS, few live readers).
+
+So a completing `rebuild:true` at 14.2M REQUIRES, in this session:
+- **Run with `TENDER_DISABLE_COVERAGE` set** (removes the refresher's reader snapshots)
+  AND ensure no other long reader snapshot is held during Phase-1.
+- **A WAL-truncate strategy that reclaims under any incidental readers** — a FULL (not
+  TRUNCATE) checkpoint reclaims WAL space without needing reader-exclusivity, or
+  checkpoint more aggressively / gate the projection's readers. Without this the WAL
+  grows unbounded regardless of the plan_state optimization.
+- (OPTIONAL) bound the resolver (drop the all-orgs preload; DB-seek the dedup key via an
+  index + bounded LRU) — only if a `COUNT(*) FROM organizations WHERE identifier IS NOT
+  NULL` shows org_of is genuinely large (~tens of millions). Pending that measurement.
+- **Re-emit a clean CDC baseline** — the feed is currently empty (the killed rebuild's
+  clear_changes committed); the completing rebuild (clear_changes:true) re-emits it.
+
+Note the plan_state piggyback ALONE does not fix this — it shrinks the pre-pass's 254GB
+re-read but the WAL-under-readers blow-up is Phase-1's WRITE side. Both must be addressed
+for a 14.2M rebuild to complete.
+
 ### ⚠ CRITICAL COUPLING (surfaced 2026-07-29) — build it as ONE atomic change
 
 `plan_is_complete` (canonical.rs:1518) is the resume-from-plan salvage invariant: a
