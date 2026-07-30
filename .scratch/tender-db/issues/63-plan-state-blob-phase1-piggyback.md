@@ -143,6 +143,43 @@ pre-pass, not Phase-1's write side. Do the measurement FIRST; do not blind-retry
 rebuild pays the upfront `strip_tender_indexes` cost = ~30min synchronous index rebuild on
 the next boot, so a retry is expensive to abort).
 
+### STATUS (2026-07-30, proj-fix) — measurement + both fixes landed/staged
+
+- **6b816bd** (LANDED): build_plan Phase-1 TRUNCATEs every chunk (`PLAN_CHECKPOINT_EVERY=1`),
+  bounding the WAL + its in-RAM index (the OOM driver) regardless of write volume; the
+  checkpoint result (busy/wal_frames/checkpointed), previously discarded, is now logged when
+  it fails to fully reclaim → the next run self-diagnoses the mechanism in the first minute.
+  This is the cheap throughput fix + the measurement, in one. Byte-identity gates green.
+- **3ba2e36** (STAGED, default-OFF): opt-in WAL read-gate (`TENDER_WAL_READ_GATE`). Every
+  pooled reader holds the shared side of a process-wide RwLock for its borrow; the Phase-1
+  checkpoint takes the exclusive side (5s-timeout fallback to plain, deadlock-free) → a
+  reader-free instant for TRUNCATE. Engaged ONLY if 6b816bd's log shows `busy=true` (reader
+  pin). `None` unless the env is set, so the measurement run is uncontaminated.
+
+Decision tree for the instrumented restore run:
+- silence + tiny WAL → throughput fixed by cadence (6b816bd) → prod restored in ~hours.
+- `busy=true` → reader pin → set `TENDER_WAL_READ_GATE=1`, re-run with 3ba2e36.
+- large `wal_frames` residual (not busy) → cadence didn't beat the backfill → structural
+  separate-rebuild-DB escalation (below), NOT org-preservation (see next note).
+
+**Org-preservation does NOT apply to the current wiped-layer restore:** `clear_canonical`
+DELETEs organizations + organization_mentions (canonical.rs:1086-7), and the killed rebuild
+left a PARTIAL/garbage org table (partial Phase-1, WAL replayed on boot) — so orgs MUST be
+rebuilt from the clean parse layer this run; the ~28M org/mention writes are unavoidable.
+6b816bd bounds the RAM despite that volume (per-chunk WAL, not cumulative). Org-preservation
+stays a FUTURE optimization for a rebuild that starts from a CLEAN org table, and it's
+correctness-sensitive (breaks byte-identity-to-from-scratch on org id VALUES → needs a
+reframed "identical modulo a stable org-id remap" invariant + sign-off).
+
+**Cheap-kill note (index strip):** deferring `strip_tender_indexes` does NOT make Phase-1
+kills cheap — tenders are wiped to 0 rows so their index rebuild on boot is instant. The
+~49min boot cost is `organization_mentions_org` (a schema-batch index) rebuilt over the
+PARTIAL organization_mentions, and `strip_organization_indexes` must clear that table before
+Phase-1 (index-free bulk load) so it can't be deferred. 6b816bd's first-minute diagnosis
+mitigates this for free: kill on the FIRST bad checkpoint line → small partial → single-digit
+minute boot. The real cheap-kill fix (boot skips rebuild-managed index creation while
+`rebuild_in_progress` is set) is issue-64-adjacent, moderate, deferred past this run.
+
 ### ⚠ CRITICAL COUPLING (surfaced 2026-07-29) — build it as ONE atomic change
 
 `plan_is_complete` (canonical.rs:1518) is the resume-from-plan salvage invariant: a
