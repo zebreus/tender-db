@@ -123,6 +123,25 @@ impl Db {
     pub fn wal_bytes(&self) -> Option<u64> {
         std::fs::metadata(format!("{}-wal", self.path)).ok().map(|m| m.len())
     }
+
+    /// Best-effort append-and-flush of a diagnostic line to `{db}.diag.log` — a
+    /// channel that does NOT depend on journald or stderr capture. The rebuild's
+    /// projection runs on the isolated worker runtime (issue 61) whose `eprintln!`
+    /// output did not reach journald, leaving the WAL-balloon diagnosis blind
+    /// (issue 63). A flushed file is read on the box with `cat {db}.diag.log` and
+    /// works regardless of the fd/systemd wiring. Never fails the caller: any I/O
+    /// error is dropped (diagnostics must not abort a run).
+    pub fn log_diag(&self, line: &str) {
+        use std::io::Write;
+        if let Ok(mut f) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(format!("{}.diag.log", self.path))
+        {
+            let _ = writeln!(f, "{} {}", crate::now_unix(), line);
+            let _ = f.flush();
+        }
+    }
 }
 
 #[cfg(test)]

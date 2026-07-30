@@ -283,6 +283,12 @@ const CHECKPOINT_EVERY_BATCHES: usize = 4;
 /// checkpoints are cheap (issue 63).
 const PLAN_CHECKPOINT_EVERY: usize = 1;
 
+/// How often Phase-1 records a diagnostic line (chunk, notices, WAL size, last
+/// checkpoint busy/frames) to the DB-side `.diag.log` (issue 63) — a channel that
+/// survives the worker-runtime stderr not reaching journald. Every 16 chunks
+/// (~160k notices) traces the WAL trend without flooding.
+const PLAN_DIAG_EVERY: usize = 16;
+
 /// How often Phase 1 logs a heartbeat. A full-corpus plan build streams millions
 /// of notices over many minutes; without a heartbeat the run looks dead from the
 /// outside, which made the issue-57 incident far harder to diagnose (issue 59).
@@ -380,6 +386,9 @@ pub async fn project_with_progress_phase2(
     // Phase-2 from the immutable on-disk plan. A normal rebuild (its prior run
     // cleared the plan) sees an empty/absent plan and rebuilds from scratch.
     let resume = rebuild && db.plan_is_complete().await?;
+    // Run-start marker on the .diag.log (issue 63) — confirms the channel works and
+    // the run began, before the first stage probe (teardown) fires.
+    db.log_diag(&format!("=== projection start: rebuild={rebuild} resume={resume} ==="));
     if rebuild && !resume {
         db.clear_canonical().await?;
         // Bulk-load the Organization tables index-free, then rebuild the indexes
@@ -418,9 +427,16 @@ pub async fn project_with_progress_phase2(
     // writes per-row WAL that no per-chunk checkpoint covers (it is one statement),
     // so a balloon here is invisible to build_plan's checkpoint log. Print the WAL
     // size at each stage boundary so a rebuild pinpoints exactly which stage balloons.
-    let wal_mb = |db: &Db| db.wal_bytes().unwrap_or(0) / 1_048_576;
+    // Emit each stage's WAL size to BOTH stderr and the DB-side .diag.log (issue 63):
+    // the worker-runtime job's stderr did not reach journald, so the .diag.log is the
+    // channel we can actually read (`cat {db}.diag.log`).
+    let probe = |db: &Db, stage: &str| {
+        let mb = db.wal_bytes().unwrap_or(0) / 1_048_576;
+        db.log_diag(&format!("WAL after {stage}: {mb} MB"));
+        eprintln!("[project] WAL after {stage}: {mb} MB");
+    };
     if rebuild {
-        eprintln!("[project] WAL after teardown (clear/strip/reset): {} MB", wal_mb(db));
+        probe(db, "teardown (clear/strip/reset)");
     }
     let now = store::now_unix();
     let mut report = Report::default();
@@ -440,14 +456,14 @@ pub async fn project_with_progress_phase2(
         report.notices = notices;
         report.mentions = mentions;
     }
-    eprintln!("[project] WAL after Phase-1 (build_plan): {} MB", wal_mb(db));
+    probe(db, "Phase-1 (build_plan)");
 
     // Group the plan into Tenders — keyed chains, the legacy OJS transitive-closure
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
     // whole-corpus structure ever enters RAM.
     let t1 = std::time::Instant::now();
     db.build_plan_groups().await?;
-    eprintln!("[project] WAL after grouping (build_plan_groups): {} MB", wal_mb(db));
+    probe(db, "grouping (build_plan_groups)");
     let (tenders, islands, legacy_keys) = db.plan_summary().await?;
     report.tenders = tenders;
     report.islands = islands;
@@ -514,7 +530,7 @@ pub async fn project_with_progress_phase2(
     // so this (entity_kind, cursor) index is a big single-statement build, not the
     // "still-small" one the comment above assumes — its WAL must not sit as a tail.
     let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
-    eprintln!("[project] WAL after end-of-run index builds: {} MB", wal_mb(db));
+    probe(db, "end-of-run index builds");
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} change rows in {:.1}s",
@@ -580,13 +596,33 @@ async fn build_plan(
         // mode a ballooning WAL is, in the first minute, not at OOM (issue 63).
         if chunks.is_multiple_of(PLAN_CHECKPOINT_EVERY) {
             match db.checkpoint_gated(store::CheckpointMode::Truncate).await {
-                Ok(c) if c.busy || c.wal_frames > c.checkpointed + 20_000 => eprintln!(
-                    "[project] plan checkpoint after chunk {chunks} (notices={notices}): \
-                     busy={} wal_frames={} checkpointed={} — WAL not fully reclaimed",
-                    c.busy, c.wal_frames, c.checkpointed
-                ),
-                Ok(_) => {}
-                Err(e) => eprintln!("[project] plan checkpoint after chunk {chunks}: {e}"),
+                Ok(c) => {
+                    let unreclaimed = c.busy || c.wal_frames > c.checkpointed + 20_000;
+                    // Trace to the .diag.log every PLAN_DIAG_EVERY chunks (the WAL
+                    // trend + busy flag), and ALWAYS when a checkpoint fails to fully
+                    // reclaim — this is what tells us busy=true (reader-pin → the
+                    // reader-gate) vs a climbing WAL at busy=false (throughput).
+                    if unreclaimed || chunks.is_multiple_of(PLAN_DIAG_EVERY) {
+                        db.log_diag(&format!(
+                            "phase1 chunk={chunks} notices={notices} wal={}MB ckpt_busy={} wal_frames={} checkpointed={}",
+                            db.wal_bytes().unwrap_or(0) / 1_048_576,
+                            c.busy,
+                            c.wal_frames,
+                            c.checkpointed
+                        ));
+                    }
+                    if unreclaimed {
+                        eprintln!(
+                            "[project] plan checkpoint after chunk {chunks} (notices={notices}): \
+                             busy={} wal_frames={} checkpointed={} — WAL not fully reclaimed",
+                            c.busy, c.wal_frames, c.checkpointed
+                        );
+                    }
+                }
+                Err(e) => {
+                    db.log_diag(&format!("phase1 chunk={chunks} checkpoint ERROR: {e}"));
+                    eprintln!("[project] plan checkpoint after chunk {chunks}: {e}");
+                }
             }
         }
     }
