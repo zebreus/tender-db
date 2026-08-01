@@ -1552,6 +1552,10 @@ fn de1_value(section: &str, field: &str, value: NoticeValue) -> ValueRow {
 }
 
 fn de1_notice(fetch_id: i64, pub_id: &str, profile: &str) -> (Notice, Parse) {
+    de1_notice_keyed(fetch_id, pub_id, profile, "3f2504e0-4f89-41d3-9a0c-0305e82c3301")
+}
+
+fn de1_notice_keyed(fetch_id: i64, pub_id: &str, profile: &str, folder: &str) -> (Notice, Parse) {
     let parsed = Parsed {
         sections: vec![
             sec("PROCEDURE", "Notice", None),
@@ -1566,11 +1570,7 @@ fn de1_notice(fetch_id: i64, pub_id: &str, profile: &str) -> (Notice, Parse) {
             de1_value(
                 "PROCEDURE",
                 "DE1-ContractFolderID",
-                NoticeValue::Id {
-                    scheme: None,
-                    value: "3f2504e0-4f89-41d3-9a0c-0305e82c3301".into(),
-                    is_ref: false,
-                },
+                NoticeValue::Id { scheme: None, value: folder.into(), is_ref: false },
             ),
             de1_value(
                 "PROCEDURE",
@@ -1751,6 +1751,62 @@ async fn the_de1_alias_fold_is_scoped_to_the_1x_line() {
         scalar(&db, "SELECT COUNT(*) FROM tender_version_texts").await,
         0,
         "eforms-de-2.x must not be folded through the 1.x alias table"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The DE-1.x folder id keys a Tender only when it is a genuine uuid (issue 34's
+/// rule, applied to issue 85's alias). Two notices sharing a *portal-local*
+/// reference must stay two island Tenders — ungated they would collapse into one,
+/// and at cohort scale that is an unrecoverable wrong merge inside a run that is
+/// already renumbering.
+#[tokio::test]
+async fn a_non_uuid_de1_folder_id_does_not_merge_notices() {
+    let (db, fetch_id, path) = scratch("de1x-folder-gate").await;
+    let (a, pa) = de1_notice_keyed(fetch_id, "de1-a", "eforms:eforms-de-1.1", "VG-2024-0815");
+    let (b, pb) = de1_notice_keyed(fetch_id, "de1-b", "eforms:eforms-de-1.1", "VG-2024-0815");
+    db.record_notice(&a, &pa).await.expect("a");
+    db.record_notice(&b, &pb).await.expect("b");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.tenders, 2, "a shared portal-local reference must NOT merge two procedures");
+    assert_eq!(report.islands, 2, "each stays an island until a real key appears");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key IS NOT NULL").await,
+        0,
+        "a non-uuid folder id never becomes a procedure key"
+    );
+    // The gate costs no content: both are still full Tenders, just unmerged.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL"
+        )
+        .await,
+        2,
+        "each island still carries its own title"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The converse, and the reason the gate is free: a genuine uuid still merges, so
+/// no legitimate DÖE↔TED twin is lost to the gate.
+#[tokio::test]
+async fn a_uuid_de1_folder_id_still_merges_the_procedure() {
+    let (db, fetch_id, path) = scratch("de1x-folder-merge").await;
+    let uuid = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+    let (a, pa) = de1_notice_keyed(fetch_id, "de1-c", "eforms:eforms-de-1.1", uuid);
+    let (b, pb) = de1_notice_keyed(fetch_id, "de1-d", "eforms:eforms-de-1.1", uuid);
+    db.record_notice(&a, &pa).await.expect("a");
+    db.record_notice(&b, &pb).await.expect("b");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.tenders, 1, "a shared BT-04 uuid is the ADR-0003 merge");
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some(uuid)
     );
 
     let _ = std::fs::remove_file(&path);

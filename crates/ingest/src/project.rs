@@ -247,9 +247,9 @@ const SDK01_FOLDER_FIELD: &str = "SDK01-ContractFolderID";
 /// 460-field inventory stays in the notice layer under its `DE1-*` id, retrievable
 /// but not surfaced as a canonical fact — exactly how the legacy eras are handled.
 const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
-    // Notice identity: folder (BT-04) keys the Tender, subtype drives fold order,
-    // and the three instants resolve published/dispatched (issue 18).
-    ("DE1-ContractFolderID", PROCEDURE_KEY_FIELD),
+    // Notice identity: subtype drives fold order, and the three instants resolve
+    // published/dispatched (issue 18). The folder id is deliberately NOT aliased
+    // onto BT-04 — see [`DE1_FOLDER_FIELD`], it is keyed through the gated path.
     ("DE1-ID", LOGICAL_NOTICE_FIELD),
     ("DE1-NoticeSubType-SubTypeCode", SUBTYPE_FIELD),
     ("DE1-Publication-PublicationDate", "OPP-012-notice"),
@@ -343,6 +343,25 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
 /// element name. The distinction is not lost — it is exactly the section id's own
 /// prefix, which is where [`de1_lot_kind`] reads it back from.
 const DE1_LOT_KIND: &str = "ProcurementProjectLot";
+
+/// eForms-DE 1.x's procedure folder id — its BT-04 analogue, and the only alias
+/// deliberately kept OUT of [`DE1_FIELD_ALIASES`], because keying a Tender is not
+/// the same trust decision as mapping a fact.
+///
+/// `procedure_key` accepts any non-empty BT-04 unchecked, because on TED BT-04 is
+/// a spec-guaranteed uuid. eForms-DE 1.x carries no such guarantee: the inventory
+/// is empirical (issue 75) and the national spec is not the EU one, so a portal
+/// -local reference number here would key a Tender on a string that is only
+/// notice-local — and every notice sharing it would collapse into one Tender.
+/// That is issue 34's failure exactly, which is why the sdk-0.1 folder id is
+/// gated, and this one is gated the same way.
+///
+/// The gate cannot cost a real merge: a DÖE notice with a genuine TED twin shares
+/// that twin's BT-04, which *is* a uuid, so it passes untouched. A folder id that
+/// fails the gate leaves the notice an island — the state it is in today — so the
+/// bad case is a missed link that splits and re-merges cleanly when a real key
+/// appears, never an unrecoverable wrong merge across 218k notices (ADR-0003).
+const DE1_FOLDER_FIELD: &str = "DE1-ContractFolderID";
 
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
@@ -1727,7 +1746,7 @@ impl Ident {
             published_at: notice_instants(parsed).0,
             legacy,
             sdk01,
-            procedure_key: procedure_key(parsed, sdk01),
+            procedure_key: procedure_key(parsed, sdk01, is_de1_profile(&notice.profile)),
             ojs_self,
             ojs_edges,
             subtype: first_code(parsed, SUBTYPE_FIELD),
@@ -2443,18 +2462,29 @@ fn de1_lot_kind(section_id: &str) -> &'static str {
     }
 }
 
-/// The Tender's procedure key: BT-04 for eForms/eForms-DE, or — for the sdk-0.1
-/// dialect — its `ContractFolderID` when that is a genuine uuid. A shared uuid is
-/// the strong explicit cross-reference ADR-0003 merges on (a TED eForms
-/// procedure and its DÖE twin publish the same BT-04 uuid), so keying sdk-0.1 on
-/// it upgrades a uuid-bearing island into the merged Tender. Non-uuid folder ids
-/// (the sdk-0.1 numeric channel) are notice-local and never key a Tender — a
-/// missed link splits, it must never wrongly merge (issue 34).
-fn procedure_key(parsed: &Parsed, sdk01: bool) -> Option<String> {
+/// The Tender's procedure key: BT-04 for eForms / eForms-DE 2.x, or — for the
+/// national dialects that carry no BT-04 — their own `ContractFolderID` when that
+/// is a genuine uuid. A shared uuid is the strong explicit cross-reference
+/// ADR-0003 merges on (a TED eForms procedure and its DÖE twin publish the same
+/// BT-04 uuid), so keying a dialect on it upgrades a uuid-bearing island into the
+/// merged Tender. Non-uuid folder ids — the sdk-0.1 numeric channel (issue 34),
+/// and any eForms-DE 1.x portal-local reference (issue 85) — are notice-local and
+/// never key a Tender: a missed link splits, it must never wrongly merge.
+fn procedure_key(parsed: &Parsed, sdk01: bool, de1: bool) -> Option<String> {
     if let Some(key) = first_id(parsed, PROCEDURE_KEY_FIELD).filter(|k| !k.trim().is_empty()) {
         return Some(key);
     }
-    sdk01.then(|| first_id(parsed, SDK01_FOLDER_FIELD).filter(|k| is_uuid(k))).flatten()
+    // The national dialects' folder ids, each gated: only a genuine uuid is a
+    // strong-enough cross-reference to key a Tender on (issue 34, and see
+    // [`DE1_FOLDER_FIELD`]).
+    let folder = if sdk01 {
+        Some(SDK01_FOLDER_FIELD)
+    } else if de1 {
+        Some(DE1_FOLDER_FIELD)
+    } else {
+        None
+    };
+    folder.and_then(|field| first_id(parsed, field).filter(|k| is_uuid(k)))
 }
 
 /// A genuine uuid (`8-4-4-4-12` hex). Only these sdk-0.1 folder ids are strong
@@ -2711,6 +2741,42 @@ mod tests {
         for id in ["LOT-0001", "GLO-0001", "PAR-0001"] {
             assert!(LOT_KINDS.contains(&de1_lot_kind(id)), "{id}");
         }
+    }
+
+    /// The DE-1.x folder id keys a Tender only when it is a genuine uuid, exactly
+    /// as sdk-0.1's is. Ungated it would key on any non-empty string, and every
+    /// notice sharing a portal-local reference number would collapse into one
+    /// Tender — issue 34's wrong merge, at 218k scale (issue 85).
+    #[test]
+    fn a_de1_folder_id_keys_a_tender_only_when_it_is_a_uuid() {
+        let folder = |value: &str| Parsed {
+            sections: vec![store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+            values: vec![store::ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: DE1_FOLDER_FIELD.into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+            }],
+        };
+
+        let uuid = folder("3f2504e0-4f89-41d3-9a0c-0305e82c3301");
+        assert_eq!(
+            procedure_key(&uuid, false, true).as_deref(),
+            Some("3f2504e0-4f89-41d3-9a0c-0305e82c3301"),
+            "a genuine uuid keys the Tender, so a DÖE notice still merges with its TED twin"
+        );
+
+        // Portal-local shapes that must never key a Tender.
+        for local in ["2023-001", "VG-2024-0815", "12345", "", "   ", "not-a-uuid"] {
+            assert_eq!(
+                procedure_key(&folder(local), false, true),
+                None,
+                "{local:?} must stay an island, not merge every notice that shares it"
+            );
+        }
+
+        // The gate is scoped: a non-DE-1.x notice never reads this field at all.
+        assert_eq!(procedure_key(&uuid, false, false), None);
     }
 
     #[test]
