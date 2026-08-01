@@ -1,6 +1,6 @@
 # 83 — service TMPDIR is tmpfs (RAM) → large external sorts spill into RAM and fail with ENOSPC
 
-Status: open — ROOT-CAUSED 2026-08-01 (run-driver). Workaround drop-in applied on prod (TMPDIR→/data/tmp); needs to be made canonical + verified.
+Status: open — ROOT-CAUSED 2026-08-01 (run-driver). PROD PATCHED via machine-local drop-in (`/etc/systemd/system/tender-db.service.d/tmpdir.conf` → `TMPDIR=/data/tmp`, `ReadWritePaths=/data/tmp`). REPO FIX DEFERRED: the source is `nix/module.nix:135 PrivateTmp = true` (puts /tmp on tmpfs); the canonical fix must set `TMPDIR` (+ `ReadWritePaths`) to a disk-backed path matching where the DB lives on the deployment (`/data`) — confirm the `stateDir`↔`/data` mapping first so the nix change doesn't mis-map the spill or break the sandbox. Land with the issue-82 deploy after the recovery verifies.
 Kind: reliability / ops-correctness
 Blocked by: —
 Relates to: 82 (the index build that exposed it), 62/63 (large sorts in the projection/index builds), coverage refresher scans
