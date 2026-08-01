@@ -1537,3 +1537,221 @@ async fn the_projection_reports_progress_in_both_phases() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// -------------------------------------------------- the eForms-DE 1.x dialect
+
+/// eForms-DE 1.x names every leaf by its element path (`DE1-*`) because the
+/// national 1.x line shipped no SDK (issue 75). This is the guard the sdk-0.1
+/// case lacked (issue 29 → 85): before the alias fold, all 218 876 reclaimed
+/// DE-1.x notices projected to Tender versions carrying *nothing* — a version row
+/// with no title, no CPV/NUTS, no amount, no lot and no buyer. Shaped after the
+/// real prod notice 26195620 (eforms-de-1.1, DÖE), whose parse layer is rich and
+/// whose Tender was empty.
+fn de1_value(section: &str, field: &str, value: NoticeValue) -> ValueRow {
+    ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value }
+}
+
+fn de1_notice(fetch_id: i64, pub_id: &str, profile: &str) -> (Notice, Parse) {
+    let parsed = Parsed {
+        sections: vec![
+            sec("PROCEDURE", "Notice", None),
+            // The predicate-free inventory's single lot node: the kind is the
+            // element name, and only the section id says it is a Lot.
+            sec("LOT-0001", "ProcurementProjectLot", Some("PROCEDURE")),
+            sec("ORG-0001", "Organization", Some("PROCEDURE")),
+            sec("ND-PartyName#0", "PartyName", Some("ORG-0001")),
+            sec("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")),
+        ],
+        values: vec![
+            de1_value(
+                "PROCEDURE",
+                "DE1-ContractFolderID",
+                NoticeValue::Id {
+                    scheme: None,
+                    value: "3f2504e0-4f89-41d3-9a0c-0305e82c3301".into(),
+                    is_ref: false,
+                },
+            ),
+            de1_value(
+                "PROCEDURE",
+                "DE1-NoticeSubType-SubTypeCode",
+                NoticeValue::Code { list: Some("notice-subtype".into()), code: "29".into() },
+            ),
+            de1_value(
+                "PROCEDURE",
+                "DE1-IssueDate",
+                NoticeValue::Date { utc_seconds: 1_700_000_000, offset_minutes: 60, has_time: false },
+            ),
+            de1_value(
+                "PROCEDURE",
+                "DE1-ProcurementProject-Name",
+                NoticeValue::Text {
+                    lang: Some("DEU".into()),
+                    value: "Neugestaltung der Alten Holstenstraße".into(),
+                },
+            ),
+            de1_value(
+                "PROCEDURE",
+                "DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+                NoticeValue::Classification { scheme: "cpv".into(), code: "71240000".into() },
+            ),
+            de1_value(
+                "LOT-0001",
+                "DE1-ProcurementProjectLot-ProcurementProject-Name",
+                NoticeValue::Text {
+                    lang: Some("DEU".into()),
+                    value: "Freianlagenplanung gem. §§ 38 HOAI".into(),
+                },
+            ),
+            de1_value(
+                "LOT-0001",
+                "DE1-ProcurementProjectLot-ProcurementProject-Description",
+                NoticeValue::Text {
+                    lang: Some("DEU".into()),
+                    value: "Auftragsgegenstand sind Planungsleistungen zur Entwicklung.".into(),
+                },
+            ),
+            de1_value(
+                "LOT-0001",
+                "DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
+                NoticeValue::Classification { scheme: "nuts".into(), code: "DE600".into() },
+            ),
+            de1_value(
+                "LOT-0001",
+                "DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+                NoticeValue::Amount { cents: 590_000_000, currency: "EUR".into() },
+            ),
+            de1_value(
+                "LOT-0001",
+                "DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate",
+                NoticeValue::Date { utc_seconds: 1_705_000_000, offset_minutes: 60, has_time: true },
+            ),
+            // The buyer: an Organization section carrying name/id/country, pointed
+            // at by the ContractingParty's reference (eForms' OPT-300 pattern).
+            de1_value(
+                "ND-PartyName#0",
+                "DE1-Organizations-Organization-Company-PartyName-Name",
+                NoticeValue::Text { lang: Some("DEU".into()), value: "Bezirksamt Bergedorf".into() },
+            ),
+            de1_value(
+                "ORG-0001",
+                "DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode",
+                NoticeValue::Code { list: Some("country".into()), code: "DEU".into() },
+            ),
+            de1_value(
+                "ND-ContractingParty#0",
+                "DE1-ContractingParty-Party-PartyIdentification-ID",
+                NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: true },
+            ),
+        ],
+    };
+    legacy_record(fetch_id, pub_id, profile, parsed)
+}
+
+#[tokio::test]
+async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
+    let (db, fetch_id, path) = scratch("de1x-facts").await;
+    let (notice, parse) = de1_notice(fetch_id, "de1-000001", "eforms:eforms-de-1.1");
+    db.record_notice(&notice, &parse).await.expect("de-1.1 notice");
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+    assert_eq!(report.tenders, 1);
+
+    // The version is not a shell: every fact kind the dialect carries lands.
+    assert_eq!(
+        title(&db, 1).await.as_deref(),
+        Some("Neugestaltung der Alten Holstenstraße"),
+        "DE1-ProcurementProject-Name must fold onto the canonical title"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT value FROM tender_version_texts WHERE field = 'description' AND lot_id IS NOT NULL"
+        )
+        .await
+        .as_deref(),
+        Some("Auftragsgegenstand sind Planungsleistungen zur Entwicklung."),
+        "the German lot description survives intact"
+    );
+    assert_eq!(
+        query_text(&db, "SELECT code FROM tender_version_classifications WHERE field = 'main'")
+            .await
+            .as_deref(),
+        Some("71240000"),
+        "main-object CPV"
+    );
+    assert_eq!(
+        query_text(&db, "SELECT code FROM tender_version_classifications WHERE field = 'place'")
+            .await
+            .as_deref(),
+        Some("DE600"),
+        "realized-location NUTS"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT cents FROM tender_version_amounts WHERE field = 'estimated_value'").await,
+        590_000_000,
+        "the lot's estimated value"
+    );
+    assert_eq!(deadline(&db, 1).await, 1_705_000_000, "the tender-submission deadline");
+
+    // The predicate-free `ProcurementProjectLot` node still yields a Lot.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lots").await, 1, "the lot is projected");
+    assert_eq!(
+        query_text(&db, "SELECT lot_key FROM lots").await.as_deref(),
+        Some("LOT-0001"),
+        "and keeps its own key"
+    );
+
+    // The buyer resolves through the Organization register.
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE p.role LIKE '%uyer%'"
+        )
+        .await
+        .as_deref(),
+        Some("Bezirksamt Bergedorf"),
+        "the ContractingParty reference must resolve to the buyer organization"
+    );
+
+    // Identity: the folder id keys the Tender (so a TED twin can merge onto it),
+    // and the subtype is read for fold order.
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("3f2504e0-4f89-41d3-9a0c-0305e82c3301"),
+        "DE1-ContractFolderID is the BT-04 procedure key"
+    );
+    assert_eq!(
+        query_text(&db, "SELECT notice_subtype FROM tender_versions").await.as_deref(),
+        Some("29")
+    );
+    assert_eq!(
+        scalar(&db, "SELECT published_at FROM tender_versions").await,
+        1_700_000_000,
+        "DE1-IssueDate resolves the instant (no publication stamp on a DÖE notice)"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// eForms-DE **2.x** is a real SDK fork emitting ordinary `BT-*` ids, so the
+/// alias fold must leave it alone. Same notice shape, 2.0 profile: the `DE1-*`
+/// ids stay unmapped and the version stays empty — proving the fold is what
+/// produces the facts above, and that it is scoped to the 1.x line.
+#[tokio::test]
+async fn the_de1_alias_fold_is_scoped_to_the_1x_line() {
+    let (db, fetch_id, path) = scratch("de1x-scope").await;
+    let (notice, parse) = de1_notice(fetch_id, "de2-000001", "eforms:eforms-de-2.0");
+    db.record_notice(&notice, &parse).await.expect("de-2.0 notice");
+
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts").await,
+        0,
+        "eforms-de-2.x must not be folded through the 1.x alias table"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}

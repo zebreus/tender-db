@@ -226,6 +226,124 @@ const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
 /// channel's non-uuid folder ids are notice-local and stay islands.
 const SDK01_FOLDER_FIELD: &str = "SDK01-ContractFolderID";
 
+/// eForms-DE 1.x speaks the eForms *structure* with its own field-id vocabulary.
+/// The national 1.x line shipped no SDK `fields.json` (issue 75), so the vendored
+/// inventory is empirical and names every leaf by its element path
+/// (`DE1-ProcurementProject-Name`) instead of by business term (`BT-21-Lot`).
+/// Every canonical mapping in this module keys on the eForms ids, so a DE-1.x
+/// notice folded as-is matched nothing at all: 218k notices reclaimed into a rich
+/// parse layer projected to Tender versions with no title, no CPV/NUTS, no
+/// amounts, no lots and no parties (issue 85 — the same class of gap the DÖE
+/// sdk-0.1 dialect hit in issue 29).
+///
+/// Rather than teach ~15 match sites a second vocabulary, the dialect is folded
+/// onto the eForms one ONCE, as a chunk is read ([`normalise_de1`]): downstream
+/// the whole projection sees standard `BT-*`/`OPT-*` ids and every existing rule
+/// — stem matching, the results graph, org mentions, the instant resolution —
+/// applies unchanged. The stored notice layer keeps its `DE1-*` ids: they are the
+/// source's own names, and the parse layer records what the publisher sent.
+///
+/// Only the leaves with a genuine eForms equivalent are listed. The rest of the
+/// 460-field inventory stays in the notice layer under its `DE1-*` id, retrievable
+/// but not surfaced as a canonical fact — exactly how the legacy eras are handled.
+const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
+    // Notice identity: folder (BT-04) keys the Tender, subtype drives fold order,
+    // and the three instants resolve published/dispatched (issue 18).
+    ("DE1-ContractFolderID", PROCEDURE_KEY_FIELD),
+    ("DE1-ID", LOGICAL_NOTICE_FIELD),
+    ("DE1-NoticeSubType-SubTypeCode", SUBTYPE_FIELD),
+    ("DE1-Publication-PublicationDate", "OPP-012-notice"),
+    ("DE1-RequestedPublicationDate", "BT-738-notice"),
+    ("DE1-IssueDate", "BT-05(a)-notice"),
+    // Title and description, at Tender and Lot scope.
+    ("DE1-ProcurementProject-Name", "BT-21-Procedure"),
+    ("DE1-ProcurementProjectLot-ProcurementProject-Name", "BT-21-Lot"),
+    ("DE1-ProcurementProject-Description", "BT-24-Procedure"),
+    ("DE1-ProcurementProjectLot-ProcurementProject-Description", "BT-24-Lot"),
+    // Values: the estimate and its framework ceiling, at Tender and Lot scope.
+    ("DE1-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount", "BT-27-Procedure"),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+        "BT-27-Lot",
+    ),
+    ("DE1-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount", "BT-271-Procedure"),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-FrameworkMaximumAmount",
+        "BT-271-Lot",
+    ),
+    ("DE1-NoticeResult-TotalAmount", "BT-161-NoticeResult"),
+    // CPV (main + additional) and the realized-location NUTS, at both scopes.
+    ("DE1-ProcurementProject-MainCommodityClassification-ItemClassificationCode", "BT-262-Procedure"),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode",
+        "BT-262-Lot",
+    ),
+    (
+        "DE1-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+        "BT-263-Procedure",
+    ),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+        "BT-263-Lot",
+    ),
+    ("DE1-ProcurementProject-RealizedLocation-Address-CountrySubentityCode", "BT-5071-Procedure"),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
+        "BT-5071-Lot",
+    ),
+    // Dates. The parser has already reunited each `EndDate`/`EndTime` pair into one
+    // instant (issue 03), so these are the whole deadline — the `(d)` ids.
+    ("DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "BT-131(d)-Procedure"),
+    ("DE1-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "BT-131(d)-Lot"),
+    (
+        "DE1-ProcurementProjectLot-TenderingProcess-ParticipationRequestReceptionPeriod-EndDate",
+        "BT-1311(d)-Lot",
+    ),
+    ("DE1-TenderingProcess-OpenTenderEvent-OccurrenceDate", "BT-132(d)-Procedure"),
+    ("DE1-ProcurementProjectLot-TenderingProcess-OpenTenderEvent-OccurrenceDate", "BT-132(d)-Lot"),
+    (
+        "DE1-ProcurementProjectLot-TenderingProcess-AdditionalInformationRequestPeriod-EndDate",
+        "BT-13(d)-Lot",
+    ),
+    ("DE1-ProcurementProject-PlannedPeriod-StartDate", "BT-536-Procedure"),
+    ("DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-StartDate", "BT-536-Lot"),
+    ("DE1-ProcurementProject-PlannedPeriod-EndDate", "BT-537-Procedure"),
+    ("DE1-ProcurementProjectLot-ProcurementProject-PlannedPeriod-EndDate", "BT-537-Lot"),
+    // Organization identity. DE-1.x carries the standard `efac:Organization`
+    // sections, so only the leaf names differ.
+    ("DE1-Organizations-Organization-Company-PartyName-Name", ORG_NAME_FIELD),
+    ("DE1-Organizations-Organization-Company-PartyLegalEntity-CompanyID", ORG_IDENTIFIER_FIELD),
+    ("DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode", ORG_COUNTRY_FIELD),
+    // Organization role references (eForms' OPT-300/301 pattern).
+    ("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer"),
+    ("DE1-NoticeResult-TenderingParty-Tenderer-ID", "OPT-300-Tenderer"),
+    ("DE1-NoticeResult-TenderingParty-SubContractor-ID", "OPT-301-Tenderer-SubCont"),
+    // The results graph: award decision, its lot, and the bid/contract edges that
+    // resolve a winner.
+    ("DE1-NoticeResult-LotResult-TenderResultCode", "BT-142-LotResult"),
+    ("DE1-NoticeResult-LotResult-DecisionReason-DecisionReasonCode", "BT-144-LotResult"),
+    ("DE1-NoticeResult-LotResult-TenderLot-ID", "BT-13713-LotResult"),
+    ("DE1-NoticeResult-LotResult-LotTender-ID", "OPT-320-LotResult"),
+    ("DE1-NoticeResult-LotResult-SettledContract-ID", "OPT-315-LotResult"),
+    ("DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsNumeric", "BT-759-LotResult"),
+    ("DE1-NoticeResult-LotResult-ReceivedSubmissionsStatistics-StatisticsCode", "BT-760-LotResult"),
+    ("DE1-NoticeResult-LotTender-LegalMonetaryTotal-PayableAmount", "BT-720-Tender"),
+    ("DE1-NoticeResult-LotResult-LotTender-LegalMonetaryTotal-PayableAmount", "BT-720-Tender"),
+    ("DE1-NoticeResult-LotTender-TenderLot-ID", "BT-13714-Tender"),
+    ("DE1-NoticeResult-LotTender-TenderingParty-ID", "OPT-310-Tender"),
+    ("DE1-NoticeResult-SettledContract-ContractReference-ID", "BT-150-Contract"),
+    ("DE1-NoticeResult-SettledContract-IssueDate", "BT-145-Contract"),
+    ("DE1-NoticeResult-SettledContract-LotTender-ID", "BT-3202-Contract"),
+];
+
+/// eForms-DE 1.x's single, predicate-free lot node. The EU SDK splits
+/// `cac:ProcurementProjectLot` into ND-Lot / ND-LotsGroup / ND-Part by an
+/// `[cbc:ID/@schemeName='…']` predicate; the empirical DE-1.x inventory carries no
+/// predicates (issue 75), so all three collapse onto one node whose kind is the
+/// element name. The distinction is not lost — it is exactly the section id's own
+/// prefix, which is where [`de1_lot_kind`] reads it back from.
+const DE1_LOT_KIND: &str = "ProcurementProjectLot";
+
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
 const SUBTYPE_FIELD: &str = "OPP-070-notice";
@@ -582,7 +700,8 @@ async fn build_plan(
     let mut after_id = 0i64;
     let mut chunks = 0usize;
     loop {
-        let chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        let mut chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
+        normalise_de1(&mut chunk);
         let Some((last, _)) = chunk.last() else { break };
         after_id = last.id;
         let mut mentions: Vec<Mention> = Vec::new();
@@ -726,7 +845,9 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
     // holding the whole delta's parsed layer.
     let mut new_keyed_keys: Vec<String> = Vec::new();
     for chunk in changed.chunks(chunk_size) {
-        for (notice, parsed) in &db.parsed_by_ids(chunk).await? {
+        let mut batch = db.parsed_by_ids(chunk).await?;
+        normalise_de1(&mut batch);
+        for (notice, parsed) in &batch {
             let ident = Ident::read(notice, parsed);
             if ident.legacy {
                 eprintln!(
@@ -764,6 +885,7 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
     let mut report = Report::default();
     for chunk in all_ids.chunks(chunk_size) {
         let mut parsed = db.parsed_by_ids(chunk).await?;
+        normalise_de1(&mut parsed);
         parsed.sort_by_key(|(n, _)| n.id);
         let mut rows: Vec<store::PlanRow> = Vec::with_capacity(parsed.len());
         let mut mentions: Vec<Mention> = Vec::new();
@@ -836,7 +958,8 @@ async fn apply_plan_batch(
     // and iterates each group's own notice_ids.
     let mut ids: Vec<i64> = groups.iter().flat_map(|g| g.notice_ids.iter().copied()).collect();
     ids.sort_unstable();
-    let parsed = db.parsed_by_ids(&ids).await?;
+    let mut parsed = db.parsed_by_ids(&ids).await?;
+    normalise_de1(&mut parsed);
     let orgs = db.mentions_by_ids(&ids).await?;
 
     let mut states: HashMap<i64, NoticeState> = HashMap::with_capacity(parsed.len());
@@ -1074,7 +1197,8 @@ async fn write_shard(
     let empty = HashMap::new();
     let mut after_id = lo;
     loop {
-        let chunk = Db::parsed_chunk_on(conn, after_id, hi, READ_CHUNK).await?;
+        let mut chunk = Db::parsed_chunk_on(conn, after_id, hi, READ_CHUNK).await?;
+        normalise_de1(&mut chunk);
         let Some((last, _)) = chunk.last() else { break };
         let (clo, chi) = (chunk[0].0.id, last.id);
         after_id = last.id;
@@ -2280,6 +2404,45 @@ fn is_sdk01_profile(profile: &str) -> bool {
     profile == "eforms:eforms-sdk-0.1"
 }
 
+/// The eForms-DE 1.x national dialect (issue 85): eForms structure, path-shaped
+/// `DE1-*` field ids. Covers `eforms-de-1.0`, `-1.1` and `-1.2`; the 2.x line is a
+/// real SDK fork that emits ordinary `BT-*` ids and is deliberately not matched.
+fn is_de1_profile(profile: &str) -> bool {
+    profile.starts_with("eforms:eforms-de-1.")
+}
+
+/// Fold a DE-1.x chunk onto the eForms vocabulary in place, so every rule below
+/// this point sees one vocabulary (see [`DE1_FIELD_ALIASES`]). Done on the chunk
+/// the projection already owns, so no notice is cloned; non-DE-1.x notices are
+/// skipped on the profile test and cost one string compare each.
+fn normalise_de1(chunk: &mut [(store::NoticeRef, Parsed)]) {
+    for (_, parsed) in chunk.iter_mut().filter(|(n, _)| is_de1_profile(&n.profile)) {
+        for section in &mut parsed.sections {
+            if section.kind == DE1_LOT_KIND {
+                section.kind = de1_lot_kind(&section.id).to_owned();
+            }
+        }
+        for value in &mut parsed.values {
+            if let Some((_, eforms)) = DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == value.field_id) {
+                value.field_id = (*eforms).to_owned();
+            }
+        }
+    }
+}
+
+/// Which kind of lot a DE-1.x `ProcurementProjectLot` section is, read back from
+/// its own id: eForms numbers lots `LOT-nnnn`, lots groups `GLO-nnnn` and parts
+/// `PAR-nnnn`, and the id is the `cbc:ID` the predicate would have tested. An
+/// unrecognised prefix is a plain Lot — the overwhelmingly dominant case, and the
+/// one that keeps a lot visible rather than dropping it.
+fn de1_lot_kind(section_id: &str) -> &'static str {
+    match section_id.split('-').next() {
+        Some("GLO") => "LotsGroup",
+        Some("PAR") => "Part",
+        _ => "Lot",
+    }
+}
+
 /// The Tender's procedure key: BT-04 for eForms/eForms-DE, or — for the sdk-0.1
 /// dialect — its `ContractFolderID` when that is a genuine uuid. A shared uuid is
 /// the strong explicit cross-reference ADR-0003 merges on (a TED eForms
@@ -2493,6 +2656,73 @@ mod tests {
         assert_eq!(stem("BT-131(d)-Lot"), "BT-131(d)");
         assert_eq!(stem("OPP-070-notice"), "OPP-070");
         assert_eq!(stem("BT-04"), "BT-04");
+    }
+
+    /// The DE-1.x fold is only correct if every alias target is an id the
+    /// projection actually recognises — a typo'd target is silent, exactly the
+    /// failure mode issue 85 was. Each target must be reachable by one of the
+    /// canonical tables, the instant lists, the org/identity constants, or the
+    /// results-graph stems.
+    #[test]
+    fn every_de1_alias_target_is_a_field_the_projection_reads() {
+        const RESULT_STEMS: &[&str] = &[
+            "BT-142", "BT-144", "BT-13713", "OPT-320", "OPT-315", "BT-759", "BT-760", "BT-720",
+            "BT-13714", "OPT-310", "BT-150", "BT-145", "BT-3202", "BT-161",
+        ];
+        const IDENTITY: &[&str] = &[PROCEDURE_KEY_FIELD, LOGICAL_NOTICE_FIELD, SUBTYPE_FIELD];
+        const ORG: &[&str] = &[ORG_NAME_FIELD, ORG_IDENTIFIER_FIELD, ORG_COUNTRY_FIELD];
+
+        for (de1, target) in DE1_FIELD_ALIASES {
+            let known = canonical_name(TEXTS, target).is_some()
+                || canonical_name(AMOUNTS, target).is_some()
+                || canonical_name(CLASSIFICATIONS, target).is_some()
+                || canonical_name(DATES, target).is_some()
+                || PUBLICATION_DATE_FIELDS.contains(target)
+                || DISPATCH_DATE_FIELDS.contains(target)
+                || IDENTITY.contains(target)
+                || ORG.contains(target)
+                || role_name(target).is_some()
+                || RESULT_STEMS.contains(&stem(target));
+            assert!(known, "{de1} → {target}: the projection reads no such field");
+            assert!(de1.starts_with("DE1-"), "{de1}: not a DE-1.x source id");
+        }
+    }
+
+    /// One source id must not map two ways — a duplicate would make the fold
+    /// depend on table order.
+    #[test]
+    fn de1_aliases_are_unique() {
+        let mut seen: Vec<&str> = DE1_FIELD_ALIASES.iter().map(|(de1, _)| *de1).collect();
+        seen.sort_unstable();
+        let before = seen.len();
+        seen.dedup();
+        assert_eq!(seen.len(), before, "duplicate DE-1.x source id in the alias table");
+    }
+
+    #[test]
+    fn the_de1_lot_node_splits_back_into_lot_lotsgroup_and_part() {
+        assert_eq!(de1_lot_kind("LOT-0001"), "Lot");
+        assert_eq!(de1_lot_kind("GLO-0001"), "LotsGroup");
+        assert_eq!(de1_lot_kind("PAR-0001"), "Part");
+        // Unknown shapes stay visible as plain Lots rather than being dropped.
+        assert_eq!(de1_lot_kind("LOT-0002-extra"), "Lot");
+        assert_eq!(de1_lot_kind(""), "Lot");
+        // The kinds it produces are the ones the fold actually looks for.
+        for id in ["LOT-0001", "GLO-0001", "PAR-0001"] {
+            assert!(LOT_KINDS.contains(&de1_lot_kind(id)), "{id}");
+        }
+    }
+
+    #[test]
+    fn the_de1_fold_is_scoped_to_the_1x_line() {
+        assert!(is_de1_profile("eforms:eforms-de-1.0"));
+        assert!(is_de1_profile("eforms:eforms-de-1.1"));
+        assert!(is_de1_profile("eforms:eforms-de-1.2"));
+        // 2.x is a real SDK fork emitting BT-* ids; sdk-* is the EU line.
+        assert!(!is_de1_profile("eforms:eforms-de-2.0"));
+        assert!(!is_de1_profile("eforms:eforms-de-2.1"));
+        assert!(!is_de1_profile("eforms:eforms-sdk-1.7"));
+        assert!(!is_de1_profile("eforms:eforms-sdk-0.1"));
     }
 
     #[test]
