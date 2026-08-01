@@ -156,6 +156,12 @@ enum Spec {
     /// A unit variant, so it serialises into the durable job_queue as `"Snapshot"`
     /// and survives a restart like any other job.
     Snapshot,
+    /// Rebuild any missing DEFERRED_TENDER_INDEXES / org indexes on the existing
+    /// layer WITHOUT re-folding (issues 82/83): `build_tender_indexes` only runs at a
+    /// rebuild's end, and a tmpfs-truncated run can leave the tender indexes partial,
+    /// dropping the tenders list to a full scan. Idempotent (`CREATE INDEX IF NOT
+    /// EXISTS` loops), so it builds only what's missing. A unit variant → durable.
+    Reindex,
 }
 
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
@@ -268,6 +274,9 @@ impl Supervisor {
             }
             "backfill" => self.enqueue_backfill(req).await,
             "snapshot" => Ok(vec![self.push("snapshot", "snapshot".into(), Spec::Snapshot).await]),
+            // Rebuild any missing deferred indexes on the existing layer, no re-fold
+            // (issues 82/83). Safe to fire repeatedly (idempotent).
+            "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
             // Force the full daily reconciliation now (post-downtime catch-up,
             // issue 69). Always runs both source probes — the TED probe self-heals
             // a multi-day gap and is a cheap no-op walk on a non-publishing day.
@@ -490,7 +499,7 @@ impl Supervisor {
             .read()
             .expect("progress lock")
             .as_ref()
-            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project" | "reprocess"))
+            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project" | "reprocess" | "reindex"))
     }
 
     fn queued(&self) -> Vec<QueuedJob> {
@@ -707,6 +716,16 @@ impl Supervisor {
                 ))
             }
             Spec::Snapshot => snapshot::run(&self.db, &snapshot::Config::from_env(), store::now_unix()).await,
+            Spec::Reindex => {
+                // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
+                // this rebuilds only the missing deferred indexes without touching the
+                // fold. Pair the TRUNCATE checkpoint to reclaim the build's WAL tail,
+                // exactly as the rebuild's end-of-fold index build does (project.rs).
+                self.db.build_organization_indexes().await.map_err(|e| e.to_string())?;
+                self.db.build_tender_indexes().await.map_err(|e| e.to_string())?;
+                let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
+                Ok("deferred org + tender indexes rebuilt".into())
+            }
         }
     }
 
