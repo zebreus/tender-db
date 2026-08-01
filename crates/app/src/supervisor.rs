@@ -169,6 +169,14 @@ enum Spec {
     /// run aborts BEFORE writing if the cohort is not about that size, which is what
     /// a mistyped profile string looks like.
     Refold { profiles: Vec<String>, expect: Option<u64> },
+    /// Clear a STALE `rebuild_in_progress` flag (the issue-85 interlock's escape
+    /// hatch). The flag routes any `project` — including the 09:35 daily tick — into
+    /// the salvage branch, which `reset_tender_layer()`s a good layer; a rebuild that
+    /// completed cleanly clears it itself, so a flag left set over an intact layer is
+    /// stale by definition. [`Db::clear_plan`] clears it and retires the plan in one
+    /// transaction. Fire ONLY with the layer verified intact; jobs run sequentially,
+    /// so this cannot race a projection. Reports whether it actually cleared anything.
+    ClearRebuildFlag,
 }
 
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
@@ -289,6 +297,11 @@ impl Supervisor {
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
+            // Escape hatch for a stale rebuild watermark (issue 85 interlock). No-op
+            // safe: it reports whether the flag was actually set.
+            "clear-rebuild-flag" => {
+                Ok(vec![self.push("clear-rebuild-flag", "clear-rebuild-flag".into(), Spec::ClearRebuildFlag).await])
+            }
             // Re-project a profile cohort the projection mis-read (issue 85): clear its
             // watermark, then fold it incrementally. Two jobs like `reprocess`, so the
             // fold is a normal queued projection; if the guard aborts the mark, that
@@ -779,6 +792,17 @@ impl Supervisor {
                 let requeued =
                     self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
                 Ok(format!("re-queued {requeued} notices for the incremental fold"))
+            }
+            Spec::ClearRebuildFlag => {
+                let was_set = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
+                self.db.clear_plan().await.map_err(|e| e.to_string())?;
+                Ok(if was_set {
+                    "stale rebuild_in_progress CLEARED (plan retired) — projections route \
+                     incremental again"
+                        .into()
+                } else {
+                    "rebuild_in_progress was already clear — nothing to do".to_owned()
+                })
             }
         }
     }

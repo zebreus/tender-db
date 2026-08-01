@@ -149,12 +149,48 @@ at project.rs:289-292 warns about; expect materially slower per-notice than a re
 fold. Run it alone, and watch WAL — the path checkpoints only at the end (project.rs:809), relying on
 `APPLY_NOTICE_BATCH` turnover in between.
 
+## The re-fold changes GROUPING, not just facts
+
+sdk-vendor's fix aliases `DE1-ContractFolderID → BT-04-notice`, so the cohort **gains a procedure key
+it never had**. Before: no BT-04 → each notice falls to the island rule → ~218K single-notice island
+Tenders. After: real uuids → they group into multi-notice procedures, and per ADR-0003 a shared uuid
+merges a DÖE notice with its TED twin.
+
+The incremental path already covers this — it is not a facts-only re-derivation:
+
+- `touched_existing_tender_ids` (canonical.rs:2881-2911) expands on **two** axes: the cohort's
+  current tenders (`caused_by_notice_id IN changed`) **and** `SELECT id FROM tenders WHERE
+  procedure_key IN (new_keyed_keys)`, where `new_keyed_keys` are the uuids the notices carry *after*
+  the fix. That second axis is what pulls the TED twins in, so the ADR-0003 merge is in scope.
+- `notice_ids_for_tenders` then expands to the full notice sets of both groups, and the normal global
+  grouping SQL runs over that closed set.
+- `retire_regrouped_tenders` (project.rs:790, canonical.rs:3013-3060) re-derives each touched
+  tender's group_key — `island:N` for a keyless one — and retires it if the new plan no longer
+  contains that key, emitting `removed` events. Its doc comment names this case: *"island→keyed
+  upgrade"*.
+
+**Open check:** the legacy fallback tests `ident.legacy` only over `changed`, not over the expansion,
+so a legacy notice pulled in via `notice_ids_for_tenders` would enter the plan without tripping it.
+Believed unreachable here — legacy tenders carry `ojs:`-prefixed keys (canonical.rs:65-67) which a
+DE1 uuid cannot match, and the cohort's islands are DE-only — but confirm the DE1 ContractFolderID
+format cannot collide before firing.
+
 ## Validation
 
 1. All 218,635 back to `projected=1`, zero left at 0.
 2. Sample DE-1.1/DE-1.2 tenders render facts (title, description, CPV, NUTS, amounts, lots, buyer
-   party) — the point of the exercise, per issue 85's own validation criteria.
-3. **Tender count stays ~8,107,362.** A re-fold upserts by natural key and must NOT add ~218K
-   tenders. A jump of roughly the cohort size means the identity probe missed and the cohort was
-   *duplicated* — precisely what a missing `tenders_procedure_key` produces, so the count is a direct
-   canary for precondition 1. Take it immediately before and after.
+   party) — per issue 85's own criteria — **and are no longer 1-version islands**. The grouping change
+   is the deeper proof the fix worked.
+3. **The tender count should DROP**, by roughly (218K islands − resulting distinct procedures) minus
+   those absorbed into existing TED tenders — order of magnitude 100-150K, i.e. ~8.107M → ~7.96-8.0M.
+   A *flat* count is the suspicious result: it would mean the regrouping did not happen and the facts
+   were re-folded into the same islands. Record exact before/after so the delta is explainable.
+   (Earlier drafts of this note claimed the count must stay flat and that a jump would indicate
+   duplication from a missing `tenders_procedure_key`. Both were wrong: the re-fold regroups, and a
+   missing index makes the identity probe *slow*, never incorrect — a full scan still finds the row.)
+4. The CDC feed carries `removed` events for the retired islands — expect a large cursor jump, also
+   normal here.
+
+**Canary for precondition 1 is completion time, not the count.** If the fold shows no visible
+progress within minutes, kill it and check the two `tenders` indexes rather than letting it grind
+through ~10^12 row reads.
