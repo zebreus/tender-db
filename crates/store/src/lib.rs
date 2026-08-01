@@ -2144,6 +2144,49 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Issue 82 regression: a rebuild empties the tender layer via
+    /// `reset_tender_layer`, which DROPs the `tenders` table — losing every index on
+    /// it, including `tenders_current_published` (created only by `migrate()` at
+    /// process open). Only `DEFERRED_TENDER_INDEXES` is rebuilt at fold end, so that
+    /// index MUST be in the set or the newest-Tenders list silently falls back to a
+    /// full scan of all 8M+ tenders until the next restart. Reproduce the rebuild's
+    /// index lifecycle and assert the list plan still reads the covering index.
+    #[tokio::test]
+    async fn rebuild_preserves_the_current_published_covering_index() {
+        let path = format!("/tmp/tender-db-eqp-rebuild-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        // The from-scratch rebuild's tender-index lifecycle: strip the deferred
+        // indexes, empty the layer (DROPs `tenders`), then rebuild the deferred set.
+        db.strip_tender_indexes().await.unwrap();
+        db.reset_tender_layer().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT t.id FROM tenders t WHERE t.current_published_at IS NOT NULL
+                  ORDER BY t.current_published_at DESC, t.id DESC LIMIT 200",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(
+            plan.contains("tenders_current_published"),
+            "after a rebuild the list must still read the covering index (issue 82) — plan was:\n{plan}"
+        );
+        assert!(
+            !plan.to_uppercase().contains("TEMP B-TREE"),
+            "after a rebuild the list must not materialise-and-sort — plan was:\n{plan}"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 49 part 4: the /v1/tenders list echoes each row's CPV/NUTS codes
     /// with a correlated subquery keyed by (tender_id, seq). It must seek the
     /// `tender_version_classifications_version` index, never scan the table —

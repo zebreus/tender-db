@@ -1300,7 +1300,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 8] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 9] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
@@ -1309,6 +1309,12 @@ impl Db {
         ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
         ("tenders_procedure_key", "tenders(procedure_key)"),
         ("tenders_island", "tenders(source, island_notice_id)"),
+        // The newest-Tenders list's covering index (issue 25; issue 82). `migrate()`
+        // creates it too, but only at process open — and `reset_tender_layer` DROPs the
+        // `tenders` table, so a rebuild loses it and the list falls to a full scan until
+        // the next boot rebuilds it. `current_published_at` is random in fold order, so it
+        // belongs here — dropped before the fold, rebuilt once sorted at the end.
+        ("tenders_current_published", "tenders(current_published_at, id)"),
     ];
 
     /// DROP+recreate `table` from its own captured DDL (table + any named indexes),
