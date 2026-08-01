@@ -1373,13 +1373,23 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 9] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 10] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
         ("tender_version_parties_org", "tender_version_parties(organization_id)"),
         ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
         ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
+        // The by-version index every other satellite carries — bid_parties was the
+        // one left without one when `tender_version_parties_version` closed the same
+        // gap for `parties`. `tender_detail` reads it by `(tender_id, seq)` like all
+        // its siblings (read.rs:794), and the table has NO primary key and no other
+        // index, so without this every `/v1/tenders/{id}` full-scans it. Deferred
+        // rather than added to the schema batch: a schema-batch CREATE INDEX would
+        // build it over the whole table at every `Db::open`, which is the multi-hour
+        // boot issue 82/83 just removed. `(tender_id, seq)` is append-mostly rather
+        // than random-key, so it is here for the boot-path reason, not the issue-60 one.
+        ("tender_version_bid_parties_version", "tender_version_bid_parties(tender_id, seq)"),
         ("tenders_procedure_key", "tenders(procedure_key)"),
         ("tenders_island", "tenders(source, island_notice_id)"),
         // The newest-Tenders list's covering index (issue 25; issue 82). `migrate()`
