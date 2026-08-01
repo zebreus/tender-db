@@ -162,6 +162,13 @@ enum Spec {
     /// dropping the tenders list to a full scan. Idempotent (`CREATE INDEX IF NOT
     /// EXISTS` loops), so it builds only what's missing. A unit variant → durable.
     Reindex,
+    /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
+    /// `projected` watermark so the trailing `project rebuild=false` re-derives just
+    /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
+    /// the parsed layer is already correct, so no re-parse. `expect` is a guard: the
+    /// run aborts BEFORE writing if the cohort is not about that size, which is what
+    /// a mistyped profile string looks like.
+    Refold { profiles: Vec<String>, expect: Option<u64> },
 }
 
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
@@ -196,6 +203,11 @@ pub struct JobRequest {
     /// `project` + `rebuild` only: DROP+recreate the CDC feed before folding, so the
     /// rebuild re-emits ONE clean generation for the recovered baseline (issue 81).
     pub clear_changes: Option<bool>,
+    /// `refold` only: the notice profiles whose cohort to re-project, and the size it
+    /// is expected to be. `expect` aborts the run before any write if the cohort is
+    /// off by more than a quarter — the shape of a mistyped profile string.
+    pub profiles: Option<Vec<String>>,
+    pub expect: Option<u64>,
 }
 
 impl Supervisor {
@@ -277,6 +289,22 @@ impl Supervisor {
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
+            // Re-project a profile cohort the projection mis-read (issue 85): clear its
+            // watermark, then fold it incrementally. Two jobs like `reprocess`, so the
+            // fold is a normal queued projection; if the guard aborts the mark, that
+            // projection simply finds an empty change-set and returns.
+            "refold" => {
+                let profiles = req.profiles.clone().unwrap_or_default();
+                if profiles.is_empty() {
+                    return Err("refold needs at least one profile".into());
+                }
+                let params = format!("refold {}", profiles.join(","));
+                Ok(vec![
+                    self.push("refold", params, Spec::Refold { profiles, expect: req.expect }).await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
             // Force the full daily reconciliation now (post-downtime catch-up,
             // issue 69). Always runs both source probes — the TED probe self-heals
             // a multi-day gap and is a cheap no-op walk on a non-publishing day.
@@ -499,7 +527,9 @@ impl Supervisor {
             .read()
             .expect("progress lock")
             .as_ref()
-            .is_some_and(|p| matches!(p.kind.as_str(), "process" | "project" | "reprocess" | "reindex"))
+            .is_some_and(|p| {
+                matches!(p.kind.as_str(), "process" | "project" | "reprocess" | "reindex" | "refold")
+            })
     }
 
     fn queued(&self) -> Vec<QueuedJob> {
@@ -725,6 +755,30 @@ impl Supervisor {
                 self.db.build_tender_indexes().await.map_err(|e| e.to_string())?;
                 let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
                 Ok("deferred org + tender indexes rebuilt".into())
+            }
+            Spec::Refold { profiles, expect } => {
+                let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
+                // Count BEFORE writing: a mistyped profile string matching a far larger
+                // set would otherwise re-queue that set silently, and the trailing
+                // projection would fold it. Abort while nothing has been written yet.
+                let found = self
+                    .db
+                    .projected_notice_count_for_profiles(&refs)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if let Some(expect) = expect {
+                    let slack = expect / 4;
+                    if found.abs_diff(*expect) > slack {
+                        return Err(format!(
+                            "refold aborted: {} notices match {:?}, expected ~{expect} — \
+                             check the profile strings (nothing was written)",
+                            found, profiles
+                        ));
+                    }
+                }
+                let requeued =
+                    self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
+                Ok(format!("re-queued {requeued} notices for the incremental fold"))
             }
         }
     }

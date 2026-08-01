@@ -59,34 +59,86 @@ If the durable flag is still set, a `rebuild=false` job routes into `project(&db
 supervisor.rs:682-686 records this exact livelock having happened. **Verify the flag is clear
 immediately before firing.**
 
+### Escape hatch: clearing a stale flag without triggering a rebuild
+
+`Db::clear_plan()` (canonical.rs:1504-1529) is the safe clear. It sets `rebuild_in_progress = 0` AND
+retires the plan inside one `BEGIN IMMEDIATE` transaction — written that way precisely so the
+dangerous end state ("plan retired but still marked rebuilding", which would make the next restart
+re-nuke a fully-built layer) is unreachable at any crash point. The plan is transient scratch
+(issue 59), so clearing it when no rebuild needs resuming loses nothing.
+
+It is safe **only when no rebuild genuinely needs resuming** — the layer verified intact (8.1M
+tenders) and the job queue idle. In that state a set flag is stale by definition: a clean completion
+would have cleared it (project.rs:523 calls `clear_plan()` at the end of a run).
+
+Note the circularity that makes this an explicit step rather than something self-healing: a
+projection is what normally clears the flag, but a projection fired *while* the flag is set routes to
+salvage and nukes the layer. So the flag cannot be cleared by "just running a projection" — it needs
+a direct `clear_plan()`.
+
+No admin op exposes `clear_plan()` today. If the flag is ever found set, add a narrow op rather than
+hand-running SQL (no-dev-shortcuts-in-prod); it is a three-line dispatch arm alongside `reindex`.
+
+### The daily scheduler makes this an UNATTENDED risk, not just a pre-flight check
+
+`Supervisor::init` calls `spawn_scheduler()` (supervisor.rs:88), which fires `enqueue_daily` at 09:35
+Europe/Berlin **every day**; `enqueue_daily` enqueues a `project rebuild=false` (supervisor.rs:964).
+
+So a stale `rebuild_in_progress` is not only a hazard when we fire the refold — the next daily tick
+walks into the same salvage branch on its own and drops the layer, with nobody having run anything.
+**Check the flag as soon as the API serves, not just before the refold.**
+
 ## Precondition 3 — mappings deployed before marking
 
 If the cohort is marked `projected=0` and any projection runs before the `DE1-*` mappings ship —
 including a daily reconciliation tick — it re-folds to empty shells again and marks them
-`projected=1`, silently consuming the re-fold with no error. Order: deploy mappings → mark → fold,
-with the daily scheduler accounted for in the window.
+`projected=1`, silently consuming the re-fold with no error. Order: deploy mappings → mark → fold.
 
-## Mechanism
+Satisfied by shipping the mappings in the same batch as the refold op, i.e. before any mark exists.
 
-No scoped un-mark exists; `clear_canonical` (canonical.rs:1109-1135) is corpus-wide. Add:
+**A daily tick between the batch deploy and the refold is harmless.** At that point the cohort is
+still `projected=1`, so it is not in the change-set and the daily projection does not touch it; the
+queue serialises, so it cannot overlap the reindex or the refold either. The only thing that makes a
+daily tick dangerous is a stale `rebuild_in_progress` — see precondition 2.
+
+## Mechanism (as built)
+
+No scoped un-mark existed; `clear_canonical` (canonical.rs:1109-1135) is corpus-wide.
+
+**`crates/store/src/canonical.rs`**
 
 ```rust
-/// Re-queue a profile cohort for the incremental fold (issue 85): the parsed layer is
-/// intact but the projection mis-read it, so clearing the watermark alone re-derives
-/// them. Batched by id range with a TRUNCATE between — a single 218K-row UPDATE writes
-/// a WAL frame per row (issue 63).
+pub async fn projected_notice_count_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64>
 pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64>
 ```
 
-- `notices_profile` index exists, so the profile filter seeks.
-- Batch by id range + TRUNCATE checkpoint between, mirroring `clear_canonical`'s issue-63 lesson.
-- **Return the affected count**; the caller asserts it is ≈218,635 and aborts on a wild mismatch —
-  cheap insurance against a typo'd profile string matching a far larger set, on an operation whose
-  failure mode is "silently re-fold the corpus".
+The count is a separate method so the guard can abort **before anything is written** — checking after
+the mark would mean the damage is already done. `notices_profile` serves the filter. The update is
+batched by id range with a TRUNCATE between (mirroring `clear_canonical`'s issue-63 lesson: a single
+cohort-wide UPDATE writes a WAL frame per row), and the walk is bounded to the cohort's own MIN/MAX
+id, so a clustered cohort costs a few batches rather than a walk of the whole notices table.
 
-Expose as a supervisor op (`{"kind":"refold","profiles":[…]}`) that enqueues mark → `project
-rebuild=false`, rather than hand-run SQL (no-dev-shortcuts-in-prod; durable and observable like every
-other job). Add `"refold"` to `heavy_write_in_progress()`, same reasoning as `reindex`.
+**`crates/app/src/supervisor.rs`** — `Spec::Refold { profiles, expect }` (durable), a `"refold"`
+request arm, `profiles`/`expect` on `JobRequest`, and `"refold"` in `heavy_write_in_progress()` (same
+issue-53 reasoning as `reindex`).
+
+`"refold"` enqueues **two** jobs — mark, then `project rebuild=false` — the same idiom `reprocess`
+already uses, so the fold is an ordinary queued projection rather than something bespoke. If the
+guard aborts the mark, that projection simply finds an empty change-set and returns
+`Report::default()` (project.rs:717-719): a clean no-op needing no special case.
+
+Guard semantics: with `expect` supplied, a match off by more than ±25% aborts, naming the found count
+and the profiles, having written nothing. Fire it as:
+
+```json
+{"kind":"refold","profiles":["eforms:eforms-de-1.0","eforms:eforms-de-1.1","eforms:eforms-de-1.2"],"expect":218635}
+```
+
+**Test** — `unmark_projected_re_queues_only_the_named_profile_cohort` (store lib): scope is exactly
+the named profiles (an sdk-1.7 sibling keeps its watermark), the returned count is what was
+re-queued, an unmatched profile counts 0 (the mistyped-string case), the cohort lands in
+`unprojected_parsed_notice_ids`, the parse layer is byte-untouched (`parse_state` still `parsed`,
+values intact — proving projection-only), and it is idempotent.
 
 ## Cost and residual risk
 

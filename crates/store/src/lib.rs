@@ -2503,6 +2503,64 @@ mod tests {
         }
     }
 
+    /// Issue 85: a cohort the projection MIS-READ is re-queued for the incremental
+    /// fold by clearing its `projected` watermark alone — the parsed layer is already
+    /// correct, so nothing else may move. Asserts the scope is exactly the named
+    /// profiles (siblings keep their watermark and their values), the returned count
+    /// is the number actually re-queued, and the cohort lands in the change-set.
+    #[tokio::test]
+    async fn unmark_projected_re_queues_only_the_named_profile_cohort() {
+        let path = format!("/tmp/tender-db-unmark-cohort-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // Three profiles: two in the cohort, one sibling that must not be touched.
+        for (i, profile) in
+            ["eforms:eforms-de-1.1", "eforms:eforms-de-1.2", "eforms:eforms-sdk-1.7"].iter().enumerate()
+        {
+            let notice = Notice {
+                publication_id: format!("{i}-2026"),
+                content_hash: format!("hash-{i}"),
+                profile: (*profile).into(),
+                member_path: format!("pkg/m{i}"),
+                ..held_notice()
+            };
+            assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        }
+        // Fold them: every notice is projected, so the change-set is empty.
+        db.mark_projected(&[1, 2, 3]).await.unwrap();
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "all three start folded");
+
+        // The guard's pre-count sees exactly the cohort, never the sibling.
+        let cohort = ["eforms:eforms-de-1.1", "eforms:eforms-de-1.2"];
+        assert_eq!(db.projected_notice_count_for_profiles(&cohort).await.unwrap(), 2);
+        assert_eq!(
+            db.projected_notice_count_for_profiles(&["eforms:eforms-de-9.9"]).await.unwrap(),
+            0,
+            "an unmatched profile counts zero — the mistyped-string case the guard catches"
+        );
+
+        // Re-queue: the two DE notices come back, the sdk-1.7 sibling does not.
+        assert_eq!(db.unmark_projected_for_profiles(&cohort).await.unwrap(), 2, "returns what it re-queued");
+        assert_eq!(db.unprojected_parsed_notice_ids().await.unwrap(), vec![1, 2]);
+        assert_eq!(int_of(&db, "SELECT projected FROM notices WHERE id=3").await, Some(1), "sibling untouched");
+
+        // Byte-safe: clearing the watermark re-derives, it never edits the parse layer.
+        assert_eq!(
+            text_of(&db, "SELECT parse_state FROM notices WHERE id=1").await.as_deref(),
+            Some("parsed"),
+            "the cohort stays parsed — a re-fold is projection-only, never a re-parse"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts WHERE notice_id=1").await, Some(1));
+
+        // Idempotent: nothing left projected in the cohort, so a second pass is a no-op.
+        assert_eq!(db.unmark_projected_for_profiles(&cohort).await.unwrap(), 0);
+        assert_eq!(db.unmark_projected_for_profiles(&[]).await.unwrap(), 0, "an empty profile list is a no-op");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// A parse-level held notice (the OC/SDK class: a `notices` row exists in
     /// state `quarantined`, empty of parsed values) is written IN PLACE when it
     /// now parses — the case a plain `process` re-run can never reach.

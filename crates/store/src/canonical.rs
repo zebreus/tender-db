@@ -1204,6 +1204,79 @@ impl Db {
         Ok(())
     }
 
+    /// Parsed notices in `profiles` still marked projected — exactly the set
+    /// [`Db::unmark_projected_for_profiles`] would re-queue. Counted first so a caller
+    /// can refuse a cohort that is not the size it expected BEFORE anything is
+    /// written: the failure mode being guarded is a mistyped profile string matching a
+    /// far larger set, whose re-fold would be a corpus-wide surprise (issue 85).
+    pub async fn projected_notice_count_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
+        if profiles.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        let sql = format!(
+            "SELECT COUNT(*) FROM notices
+              WHERE parse_state = 'parsed' AND projected <> 0 AND profile IN ({})",
+            placeholders(profiles.len())
+        );
+        let params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0).max(0) as u64,
+            None => 0,
+        })
+    }
+
+    /// Re-queue a profile cohort for the incremental fold (issue 85): clear the
+    /// `projected` watermark for its parsed notices so the next `project rebuild=false`
+    /// re-derives just those Tenders. The parsed layer is untouched — this is for a
+    /// cohort the projection MIS-READ (unmapped field ids), not one that was parsed
+    /// wrong, so no re-parse is needed.
+    ///
+    /// Batched by id range with a TRUNCATE between, like [`Db::clear_canonical`]: a
+    /// single cohort-wide UPDATE writes a WAL frame per row and balloons the in-RAM
+    /// WAL-index (issue 63). Returns the number of notices re-queued.
+    pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
+        let requeued = self.projected_notice_count_for_profiles(profiles).await?;
+        if requeued == 0 {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        let list = placeholders(profiles.len());
+        // Bound the id walk to the cohort itself, so a cohort clustered in one id
+        // range costs a few batches rather than a walk over the whole notices table.
+        let (min_id, max_id) = {
+            let sql = format!(
+                "SELECT MIN(id), MAX(id) FROM notices
+                  WHERE parse_state = 'parsed' AND projected <> 0 AND profile IN ({list})"
+            );
+            let params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
+            let mut rows = conn.query(&sql, params).await?;
+            match rows.next().await? {
+                Some(row) => (opt_int_of(&row, 0), opt_int_of(&row, 1)),
+                None => (None, None),
+            }
+        };
+        if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
+            let sql = format!(
+                "UPDATE notices SET projected = 0
+                  WHERE parse_state = 'parsed' AND projected <> 0 AND profile IN ({list})
+                    AND id BETWEEN ? AND ?"
+            );
+            let mut lo = min_id;
+            while lo <= max_id {
+                let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
+                let mut params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
+                params.push(Value::Integer(lo));
+                params.push(Value::Integer(hi));
+                conn.execute(&sql, params).await?;
+                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                lo = hi.saturating_add(1);
+            }
+        }
+        Ok(requeued)
+    }
+
     /// Drop and recreate the Organization tables as BARE tables — no uniqueness
     /// or org-id index — for a full-rebuild bulk load (issue 60). Every org and
     /// mention insert is then a sequential PK append instead of a random-position
