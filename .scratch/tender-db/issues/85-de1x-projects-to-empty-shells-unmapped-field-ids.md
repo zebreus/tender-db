@@ -42,10 +42,17 @@ the coarse `stem()`). DE-1.x needs the same treatment.
    organization/company party name — plus the rest of the DE-1.x field inventory (sdk-vendor owns the full
    list from issue 75's `fields-de-1.x.json`; map each `DE1-*` leaf to its canonical fact kind).
 2. **Re-fold the DE-1.x cohort only** — projection-only, NO re-parse (the parse layer is already complete
-   and correct). Design the re-fold with proj-fix: mark the ~218K DE-1.x notices `projected=0` and run an
-   incremental `project rebuild=false` (bounded — the cohort touches its own tenders, not corpus-wide, so it
-   avoids the issue-62/81 corpus-wide-touch pathology), OR a scoped re-projection. Do NOT do a full
-   `rebuild=true` (wipes + re-folds all 8.1M).
+   and correct). Design: **`.scratch/tender-db/design/de1x-refold.md`** (proj-fix, 2026-08-01). Confirmed
+   mark-`projected=0` → incremental `project rebuild=false` is correct and bounded (the legacy full-corpus
+   fallback is unreachable for `eforms:eforms-de-1.x`; RAM flat via the issue-81 chunking). Do NOT do a full
+   `rebuild=true` (wipes + re-folds all 8.1M). **Three hard preconditions** — see the note:
+   - `tenders_procedure_key` + `tenders_island` must exist first (the incremental per-Tender identity probe,
+     canonical.rs:2357-2372, full-scans 8.1M tenders without them) → the issue-82/83 reindex op is a
+     prerequisite, not cleanup;
+   - `rebuild_in_progress` must be clear (supervisor.rs:687 — `salvage` OUTRANKS `rebuild=false` and would
+     `reset_tender_layer()` the whole 8.1M layer);
+   - the `DE1-*` mappings must be deployed BEFORE marking, or the cohort re-folds to empty shells again and
+     silently re-marks itself `projected=1`.
 
 ## Validation
 
