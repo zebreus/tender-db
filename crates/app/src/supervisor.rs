@@ -795,14 +795,29 @@ impl Supervisor {
             }
             Spec::ClearRebuildFlag => {
                 let was_set = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
+                if !was_set {
+                    return Ok("rebuild_in_progress was already clear — nothing to do".to_owned());
+                }
+                // The flag is only STALE over an intact layer. An EMPTY tenders table
+                // with the flag set is a rebuild genuinely mid-flight (reset_tender_layer
+                // has run, the fold has not finished) — clearing there would discard a
+                // real salvage and force a full re-fold. O(1): existence, not a count.
+                let intact = self
+                    .db
+                    .scalar("SELECT 1 FROM tenders LIMIT 1")
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .is_some();
+                if !intact {
+                    return Err("refusing to clear rebuild_in_progress: the tenders table is EMPTY, \
+                                so a rebuild is genuinely mid-flight and its salvage would be lost \
+                                — let it finish (nothing was written)"
+                        .to_owned());
+                }
                 self.db.clear_plan().await.map_err(|e| e.to_string())?;
-                Ok(if was_set {
-                    "stale rebuild_in_progress CLEARED (plan retired) — projections route \
-                     incremental again"
-                        .into()
-                } else {
-                    "rebuild_in_progress was already clear — nothing to do".to_owned()
-                })
+                Ok("stale rebuild_in_progress CLEARED (plan retired) — projections route \
+                    incremental again"
+                    .to_owned())
             }
         }
     }

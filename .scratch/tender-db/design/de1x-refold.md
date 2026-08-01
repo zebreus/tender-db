@@ -169,11 +169,47 @@ The incremental path already covers this — it is not a facts-only re-derivatio
   contains that key, emitting `removed` events. Its doc comment names this case: *"island→keyed
   upgrade"*.
 
-**Open check:** the legacy fallback tests `ident.legacy` only over `changed`, not over the expansion,
-so a legacy notice pulled in via `notice_ids_for_tenders` would enter the plan without tripping it.
-Believed unreachable here — legacy tenders carry `ojs:`-prefixed keys (canonical.rs:65-67) which a
-DE1 uuid cannot match, and the cohort's islands are DE-only — but confirm the DE1 ContractFolderID
-format cannot collide before firing.
+**Legacy check — closed.** The legacy fallback tests `ident.legacy` only over `changed`, not over the
+expansion, so a legacy notice pulled in via `notice_ids_for_tenders` would enter the plan without
+tripping it. Unreachable here: legacy keys are *constructed* with an `ojs:` prefix
+(canonical.rs:64-66) and a BT-04 folder id is stored raw, so no legacy tender is reachable via
+`new_keyed_keys` regardless of folder-id format (confirmed by sdk-vendor).
+
+### Soundness of a cohort-scoped incremental for cross-cohort merges
+
+The property that must hold: **for every Tender the plan touches, the plan contains ALL notices that
+would group into it in a full rebuild.** Then `build_plan_groups()` — the same SQL a full run uses —
+computes the same grouping. For a keyed group with key `U`:
+
+- DE notices carrying `U` → in `changed` (the marked cohort).
+- TED notices carrying `U` → their Tender `T` has `procedure_key = U` (grouping is deterministic by
+  key), so `T` is returned by `SELECT id FROM tenders WHERE procedure_key IN (new_keyed_keys)` and
+  `notice_ids_for_tenders([T])` returns its full notice set.
+- Any other unprojected notice carrying `U` → `changed` is *all* unprojected parsed notices, not just
+  the cohort, so it is already included.
+
+There is no fourth category: a notice carrying `U` cannot sit in a Tender keyed other than `U`. So
+every keyed group in the plan is complete, island groups trivially so, and **a merge-partner TED
+tender cannot be left mis-grouped**.
+
+Qualification on "byte-identical to a rebuild": the grouping and content match, the **surrogate
+tender ids do not**. A rebuild renumbers from 1 in fold order; the incremental keeps existing ids for
+merge partners and appends fresh ones for new Tenders. Semantics match, the id column does not —
+relevant if anyone diffs two snapshots.
+
+### 🚩 Precondition 4 — BT-04 needs a uuid gate before this runs
+
+`procedure_key()` (project.rs:2290) accepts **any non-empty BT-04 string**; the `is_uuid` filter
+exists only on the sdk-0.1 path (issue 34: *"a missed link splits, it must never wrongly merge"*).
+The `DE1-ContractFolderID → BT-04-notice` alias routes DE folder ids through that ungated path. If
+any are portal-local reference numbers rather than uuids, every notice sharing such a string
+collapses into one Tender — a wrong merge at 218K scale, in the same run that is already retiring
+islands and emitting `removed` events.
+
+Gate the DE-1.x folder id on `is_uuid`, as sdk-0.1 already is. This **cannot block a legitimate
+merge**: on TED, BT-04 is a spec-guaranteed uuid (the reason the eForms path is ungated at all), so
+any DE notice with a genuine TED twin shares a uuid key with it and passes the gate. All-uuid → the
+gate is a no-op; not-all-uuid → it prevents an unrecoverable corruption. Empty downside set.
 
 ## Validation
 
@@ -181,10 +217,23 @@ format cannot collide before firing.
 2. Sample DE-1.1/DE-1.2 tenders render facts (title, description, CPV, NUTS, amounts, lots, buyer
    party) — per issue 85's own criteria — **and are no longer 1-version islands**. The grouping change
    is the deeper proof the fix worked.
-3. **The tender count should DROP**, by roughly (218K islands − resulting distinct procedures) minus
-   those absorbed into existing TED tenders — order of magnitude 100-150K, i.e. ~8.107M → ~7.96-8.0M.
-   A *flat* count is the suspicious result: it would mean the regrouping did not happen and the facts
-   were re-folded into the same islands. Record exact before/after so the delta is explainable.
+3. **The tender count should DROP** — but the magnitude is not predictable from the cohort size
+   alone, so predict it first rather than eyeballing it. Post-refold the cohort yields ~2,185
+   permanent islands (that many carry no ContractFolderID at all, sdk-vendor measured), plus one
+   Tender per *distinct* key with no TED match, plus nothing for keys that merge into existing TED
+   tenders:
+
+   > drop ≈ 218,635 − 2,185 − (distinct DE keys with no TED match)
+
+   If every folder id were a distinct uuid with no TED twin, the drop would be ≈ **zero**. So "flat"
+   only signals failure *given* that keys populated. Two cheap queries make this predictive, to be
+   run before firing: `COUNT(DISTINCT value)` over DE-1.x `DE1-ContractFolderID`, and how many of
+   those distinct values already exist as a TED tender's `procedure_key`. Check the post-refold
+   number against that prediction, not against intuition.
+
+   Read of the signals: DROP matching the prediction = correct · INCREASE ≈ +218K = the identity
+   probe failed to find partners · FLAT with keys populated = regrouping did not happen.
+
    (Earlier drafts of this note claimed the count must stay flat and that a jump would indicate
    duplication from a missing `tenders_procedure_key`. Both were wrong: the re-fold regroups, and a
    missing index makes the identity probe *slow*, never incorrect — a full scan still finds the row.)
