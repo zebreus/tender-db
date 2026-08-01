@@ -133,3 +133,59 @@ ledger is `include_str!`-compiled (app/src/ledger.rs:15), so any correction can 
 **Still open:** deploy + the projection-only re-fold (proj-fix owns the mechanism; it regroups rather than
 just re-deriving facts, since the cohort goes from keyless islands to uuid-keyed procedures that can merge
 with TED twins under ADR-0003), then live re-verification against the served layer.
+
+### 2026-08-01 — sdk-vendor — the post-fold verification (V1) is prepared and dry-run
+
+Runnable, read-only, waiting on the re-fold: **`.scratch/tender-db/canonical-verify/de1x_verify.sh`**
+(statistical) and **`de1x_spotcheck.sh`** (two named tenders), documented in that directory's README.
+Both were executed end-to-end against a stub server backed by a real store schema, so every query is
+known to parse and every bash path is exercised — nothing gets debugged against prod.
+
+**Query design is constrained by two live facts.** `/v1/tenders/{id}` is out until the issue-89
+bid_parties index deploys, so no check uses `read::tender_detail`; a single tender row comes from the
+LIST endpoint via `?cursor=<id-1>&limit=1` (the cursor is just the last row id) and its lots from
+`/v1/lots?tender=`. And turso re-evaluates a joined derived table per outer row, so there are no CTE
+joins and no DISTINCT anywhere: each fact query is a literal rowid window (`n.id BETWEEN a AND b`,
+anchors found by two cheap OFFSET scalars) with correlated `EXISTS` on the satellites' `(tender_id,
+seq)` indexes. Every call touches ~100 rows and stays far inside the 10 s cap.
+
+**The gates are the publisher's own rates, not guesses.** From the full-corpus scan of all 218,876
+DE-1.x payloads (`.scratch/de1x-scan.json`): title 100.0% · description 100.0% · main CPV 100.0% ·
+NUTS 98.1% · **ProcurementProjectLot 99.99%** (up to 404 per notice) · buyer reference 100.0% ·
+subtype 100.0% · any deadline ~47.7% · tender-scope estimate 17.6% · lot estimate 10.7% · award
+payable 18.8%. Measuring against the source rate is what makes a "the facts landed" claim falsifiable
+rather than a vibe — pre-fold the same windows return 0 for all of them.
+
+**Lots are gated separately and hard**, because the fix has two halves and a field-only fix would
+leave `tender_version_lots` empty while every text/CPV check passed. `C5` gates lot presence, `D2/D3`
+gate that `kind ∈ {Lot, LotsGroup, Part}` and that it agrees with the `LOT-`/`GLO-`/`PAR-` prefix of
+the key (`de1_lot_kind`), and `D4` compares parse-layer `ProcurementProjectLot` sections against
+projected lot rows for the same notices.
+
+**Two named tenders, both real archive payloads** (the issue-75 fixtures, so the expected values are
+read off the publisher's XML rather than off the projection under test):
+`990acec0-88c0-48e2-86d5-92abb2293542` — DE-1.1 CN, subtype 16, "Erschließung Starkstrom", LOT-0000,
+CPV 45310000, NUTS DED2D, deadline 2024-04-02+02:00, buyer **Städtisches Klinikum Görlitz gGmbH**;
+and `469efb81-40de-4d7e-817f-8dd45659eaee` — DE-1.2 CAN, subtype 38, "NA 26a+b Dachabdichtungs- und
+Spenglerarbeiten", LOT-0001, CPV 45000000/45261410, NUTS DE212, awarded 73332.89 EUR, buyer MRG
+Münchner Raumentwicklungsgesellschaft mbH, winner Gebrüder Schneller GmbH & Co. KG. Both folder ids
+are uuids, so both must come back **keyed** — which makes the pair a live test of the `029d2a7` gate
+as well as of the facts. The spot-check also asserts the canonical title is byte-identical to
+`DE1-ProcurementProject-Name` in the parse layer: two PK seeks, nothing that can pass by coincidence.
+
+**The briefed third check — "no new quarantine reason bucket for DE-1.x" — was dropped: it is issue
+87 and cannot fail.** `Reclaim::StillHeld` never rewrites `reason`/`detail`, so the answer is "no new
+bucket" whether the cohort reclaimed perfectly or every member failed for a novel reason. What the
+script reports instead is the falsifiable part: the parse layer must be bit-for-bit unchanged by a
+projection-only re-fold (145,717 / 72,887 / 31 parsed, `projected=0` leftovers zero), the ledger split
+must read 218,635 resolved / 241 held, and it prints the `(fetch_id, member_path)` list of the 241 for
+an offline re-parse — the only way to close the unexplained 293-predicted vs 241-actual gap.
+
+**Not gated, deliberately: the island-vs-keyed split** (`E1`-`E3`). Nobody knows what fraction of the
+216,691 folder ids are uuid-shaped, so a number there would be invented. It is reported as an eyeball
+because it is the first real measurement of what the gate did, and `t.source='ted'` rows among the
+cohort are the first ADR-0003 DÖE↔TED merges the fix makes possible.
+
+**Cohort-wide zero-shell proof stays [HEAVY]**: the exhaustive "no DE-1.x version without texts / without
+lots" anti-join is 218k × 2 index seeks and belongs on a post-fold snapshot under stock `sqlite3`, not
+on the live endpoint. Both queries are in the README.
