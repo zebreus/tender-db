@@ -66,3 +66,70 @@ facts land (guards the mapping the way the SDK01 case should be guarded).
 This is content-completeness, not data loss — the ~218K are safe and complete in the parse layer, just
 mis-projected. It's the German dialect (the largest cohort), so it matters for the "full data" goal. The
 ~1.5M non-DE reclaimed (SDK/OC/2008-opoce) folded WITH content (verified), so this is scoped to DE-1.x.
+
+## Comments
+
+### 2026-08-01 — sdk-vendor — fix implemented, committed, tests green (not deployed)
+
+**Commits:** `43d36dd` (the vocabulary fold) and `029d2a7` (the uuid gate). `cargo test -p ingest` green,
+including `project_golden` and `project_equivalence` — the byte-identity gates, so no existing fixture's
+grouping or fold output changed.
+
+**Implementation deviates from the obvious approach, deliberately.** The brief was to add `DE1-*` entries to
+`canonical_name()`'s tables. That alone would not have fixed it: those tables are one of ~15 sites keying on
+eForms ids — the results graph matches on `stem()`, org mentions on `ORG_NAME_FIELD`/`BT-501`/`BT-514`, party
+roles on the `OPT-300/301` prefixes, and subtype / procedure-key / instants on their own scalars. That path
+yields title + CPV + NUTS and still no buyer, no lots, no awards, no procedure key.
+
+Instead the dialect is folded onto the eForms vocabulary **once**, in `normalise_de1`, at the 5 sites where
+the projection loads a parsed chunk — in place on memory the projection already owns, so no notice is cloned
+and a non-DE-1.x notice costs one string compare. Downstream, every existing rule applies unchanged. 51
+aliases, full-id keyed per the SDK01 precedent. The stored notice layer keeps its `DE1-*` ids: they are the
+source's own names, and the parse layer records what the publisher sent.
+
+**Second gap found during implementation, not in the original diagnosis.** The EU SDK splits
+`cac:ProcurementProjectLot` into Lot / LotsGroup / Part with an `[cbc:ID/@schemeName=…]` predicate. The
+empirical DE-1.x inventory is predicate-free (issue 75), so all three collapse onto one node whose kind is
+`ProcurementProjectLot` — which matches no `LOT_KIND`, so **every DE-1.x lot was dropped regardless of field
+mapping**. Fixed by reading the distinction back from the section id's own prefix (`LOT-`/`GLO-`/`PAR-`),
+which is exactly what the predicate would have tested.
+
+**The uuid gate (`029d2a7`).** Aliasing `DE1-ContractFolderID` onto `BT-04-notice` routed it through a path
+that accepts any non-empty string, because on TED BT-04 is a spec-guaranteed uuid. eForms-DE 1.x carries no
+such guarantee. A portal-local reference number would have keyed a Tender on a notice-local string,
+collapsing every notice sharing it into one Tender — issue 34's wrong merge, at cohort scale, inside the run
+that also retires ~218K islands and renumbers. So the folder id is kept OUT of the alias table (keying a
+Tender is not the same trust decision as mapping a fact) and keyed through the gated dialect path, exactly as
+sdk-0.1's has been since issue 34. The gate has no failure direction: a genuine TED twin shares that twin's
+uuid and passes untouched, while a failing id leaves the notice an island — its state today.
+
+Evidence deliberately did **not** drive this: all six `ContractFolderID` samples in the empirical scan are
+well-formed uuids, but the sampler keeps only the first six distinct values of 216,691, so that is consistent
+with all-uuid and nowhere near proof. Recorded here so nobody later unpicks the gate citing the samples.
+
+**Correction to the symptom figures above.** The "109/110" in the Symptom section is 109 of 110 **notices**,
+not of 110 *parsed* notices — the sampling query filtered on `profile` only, never on `parse_state`, so the
+sample included some of the 241 still-quarantined notices, which have no `tender_versions` row by design. The
+single miss may therefore be entirely benign. The substantive finding is unaffected: **0/110 had any facts**,
+across every window, regardless of parse state. Being chased as a possible breach of the documented invariant
+at store/lib.rs:417 (*"A parsed notice always causes exactly one version"*) — proj-fix holds a discriminating
+query that filters `parse_state='parsed'`.
+
+**Known diagnostic, not a blocker — key matching is case-sensitive.** `procedure_key` returns the raw stored
+string (`first_id(...).filter(...)` does not transform), and `tenders.procedure_key` is matched under BINARY
+collation. `is_uuid` accepts upper-case hex, so `550E8400-…` would not equal `550e8400-…`. Fails safe (a
+split, not a wrong merge) so it is a yield risk, not a correctness risk. Whitespace is **not** a risk:
+`eforms::value::convert()` trims at value.rs:24 and is the sole constructor of `Value::Id` in the eForms
+module (one call site, parse.rs:244). Being measured as binary vs `COLLATE NOCASE`; if the counts differ it
+gets its own issue — cross-source key normalisation, pre-existing, SDK01 affected equally, honest fix a
+corpus-wide key rewrite, not a passenger on this batch.
+
+**Ledger.** `crates/app/data/quarantine-ledger.json` already carries an `eForms-DE 1.x` entry marked
+`"resolved": "2026-07-29"` whose diagnosis claims "the recovery rebuild (ADR-0009) folds them in" — false
+until this refold lands. Decision (team-lead): no edit this batch; nginx comes up as the last step, strictly
+after the cohort verifiably renders facts, so the claim becomes true before it is ever served publicly. The
+ledger is `include_str!`-compiled (app/src/ledger.rs:15), so any correction can only ship with a deploy.
+
+**Still open:** deploy + the projection-only re-fold (proj-fix owns the mechanism; it regroups rather than
+just re-deriving facts, since the cohort goes from keyless islands to uuid-keyed procedures that can merge
+with TED twins under ADR-0003), then live re-verification against the served layer.
