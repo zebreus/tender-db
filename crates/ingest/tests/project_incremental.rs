@@ -315,6 +315,89 @@ async fn incremental_mixed_delta_matches_full_and_leaves_untouched_alone() {
     }
 }
 
+/// Fold-source invariance for the INCREMENTAL path (issue 91). Phase 2 now picks
+/// its parsed-layer read by plan size — `ParsedFold` for a small daily delta,
+/// the bucketed sequential sweep for a re-fold — so both must absorb the SAME delta
+/// into a byte-identical canonical layer, and both must equal what a full
+/// non-rebuild projection produces.
+///
+/// This is the load-bearing proof for routing a re-fold at `bucketed_fold`. The
+/// bucketed pre-pass sweeps the WHOLE parsed layer and routes each notice by the
+/// plan's `group_key`, skipping notices absent from the plan (`write_shard`) — so
+/// the assertion that actually matters here is that it honours a SCOPED plan:
+/// the untouched Tenders must come through unchanged, not be re-folded or dropped.
+#[tokio::test]
+async fn incremental_bucketed_fold_matches_parsed_fold_and_full() {
+    use ingest::project::Phase2;
+
+    let (full, ff, pf) = scratch("fsfull").await;
+    let (parsed_fold, fp, pp) = scratch("fsparsed").await;
+    let (buckets, fb, pb) = scratch("fsbuckets").await;
+    establish(&full, ff).await;
+    establish(&parsed_fold, fp).await;
+    establish(&buckets, fb).await;
+    assert_eq!(snapshot(&parsed_fold).await, snapshot(&buckets).await, "established layers differ");
+
+    // Fingerprint the Tender the delta does NOT touch — the bucketed sweep reads
+    // its notices too (it sweeps everything) and must still leave it alone.
+    let beta_before = db_fingerprint(&buckets, "bt04-0002").await;
+
+    // A delta spanning every grouping regime: a late attach to an existing keyed
+    // Tender, a brand-new keyed Tender with TWO notices (a chain), and a new island.
+    for (db, fid) in [(&full, ff), (&parsed_fold, fp), (&buckets, fb)] {
+        record(db, fid, "A-award", keyed("bt04-0001", 3, "Alpha award")).await;
+        record(db, fid, "C-cn", keyed("bt04-0003", 1, "Gamma CN")).await;
+        record(db, fid, "C-corr", keyed("bt04-0003", 2, "Gamma corrigendum")).await;
+        record(db, fid, "ISL2", island("Island two")).await;
+    }
+
+    project::project(&full, false).await.expect("full absorb");
+    project::project_incremental_chunked_phase2(&parsed_fold, 10_000, Some(Phase2::ParsedFold))
+        .await
+        .expect("incremental absorb via ParsedFold");
+    project::project_incremental_chunked_phase2(
+        &buckets,
+        10_000,
+        Some(Phase2::Buckets { shards: None }),
+    )
+    .await
+    .expect("incremental absorb via Buckets");
+
+    let (full_snap, parsed_snap, bucket_snap) =
+        (snapshot(&full).await, snapshot(&parsed_fold).await, snapshot(&buckets).await);
+    assert_eq!(
+        parsed_snap, bucket_snap,
+        "the bucketed incremental fold must be byte-identical to ParsedFold over the same scoped plan"
+    );
+    assert_eq!(
+        full_snap, bucket_snap,
+        "the bucketed incremental fold must match a full non-rebuild projection"
+    );
+    // The scoped plan was honoured: the untouched Tender was not re-folded, and the
+    // chain that arrived as two notices folded into one Tender with two versions.
+    assert_eq!(db_fingerprint(&buckets, "bt04-0002").await, beta_before, "untouched Tender changed");
+    assert_eq!(
+        count(
+            &buckets,
+            "SELECT COUNT(*) FROM tender_versions WHERE tender_id=(SELECT id FROM tenders WHERE procedure_key='bt04-0003')"
+        )
+        .await,
+        2,
+        "the new chain's two notices folded into one Tender"
+    );
+    assert_eq!(
+        buckets.unprojected_parsed_notice_ids().await.unwrap().len(),
+        0,
+        "the bucketed fold marks every folded notice projected"
+    );
+
+    for p in [pf, pp, pb] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// A delta containing a LEGACY notice falls back to a full non-rebuild projection
 /// (issue 58 v1) — the transitive OJS graph is not persisted incrementally — and
 /// still produces the correct canonical layer.

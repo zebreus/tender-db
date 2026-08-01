@@ -845,12 +845,46 @@ async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
 /// delta is far smaller than one chunk, so it stays effectively single-pass.
 const INCREMENTAL_CHUNK: usize = 50_000;
 
+/// Planned notices above which the incremental fold reads the parsed layer with the
+/// BUCKETED sweep ([`Phase2::Buckets`]) instead of [`Phase2::ParsedFold`] (issue 91).
+///
+/// `ParsedFold` re-reads each fold batch's notices by an `IN (…)` over ids scattered
+/// across the corpus — random rowid seeks into the cold multi-hundred-GB notice
+/// tables (the issue-62 read storm). That is the right trade for a daily delta of a
+/// few hundred notices, where a whole-corpus sweep would be absurd; it is the wrong
+/// trade for a re-fold, where the scattered re-read dominates. Measured on prod: a
+/// 7 211-notice delta took 8h21m through `ParsedFold`, of which 7h13m was
+/// post-grouping, while the bucketed sweep resolved the whole 14.1M-notice parsed
+/// layer in 7h13m and folded 8.1M Tenders. Crossover is therefore well below the
+/// corpus size; 100k keeps a normal daily on the cheap path with a wide margin and
+/// routes any re-fold onto the path that is proven at full scale.
+///
+/// Both folds are byte-identical by construction (see [`Phase2`]) — this only
+/// chooses HOW the parsed layer is read — and `write_shard` skips notices absent
+/// from the plan, so the bucketed sweep honours a SCOPED plan unchanged.
+const INCREMENTAL_BUCKET_THRESHOLD: usize = 100_000;
+
 /// The incremental projection with a bounded, streamed Phase 1 (issue 81). Grouping
 /// and Phase 2 stay GLOBAL (one plan, one fold) so the output — surrogate ids
 /// included — is byte-identical to the old whole-delta path; only the parsed-layer
 /// read + plan build are chunked, so peak RAM is flat vs delta size instead of
 /// O(delta). `chunk_size` is exposed for the batch-invariance test.
+///
+/// Phase 2 picks its fold by plan size (see [`INCREMENTAL_BUCKET_THRESHOLD`]);
+/// [`project_incremental_chunked_phase2`] forces one, for the invariance test.
 pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::Result<Report> {
+    project_incremental_chunked_phase2(db, chunk_size, None).await
+}
+
+/// As [`project_incremental_chunked`], with an explicit Phase-2 fold — `None` picks
+/// by plan size, `Some(_)` forces one. The forcing form exists so the fold-source
+/// invariance test can prove BOTH folds produce a byte-identical canonical layer
+/// over the same SCOPED plan, at a corpus size far below the routing threshold.
+pub async fn project_incremental_chunked_phase2(
+    db: &Db,
+    chunk_size: usize,
+    phase2: Option<Phase2>,
+) -> turso::Result<Report> {
     let changed = db.unprojected_parsed_notice_ids().await?;
     if changed.is_empty() {
         return Ok(Report::default());
@@ -858,6 +892,17 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
     let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
     let t0 = std::time::Instant::now();
+    // Per-stage timings (issue 90). This path used to print NOTHING between its
+    // start and its one-line summary, so a run that wedged for hours gave no clue
+    // WHICH stage was wedged — the 2026-07-30 reclaim and the 2026-08-01 eForms-DE
+    // re-fold both had to be diagnosed from `/proc` I/O counters and WAL size. Every
+    // stage boundary now prints elapsed seconds, so the next stall names itself.
+    let mut mark = std::time::Instant::now();
+    let mut stage = |label: &str| {
+        eprintln!("[project] incremental stage {label}: {:.1}s", mark.elapsed().as_secs_f64());
+        mark = std::time::Instant::now();
+    };
+    eprintln!("[project] incremental: {} changed notices", changed.len());
 
     // Pass 1 (streamed): read the changed notices' grouping identity in id-ordered
     // chunks — detect legacy (→ fallback) and collect their new keyed keys — without
@@ -882,6 +927,7 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
     }
     new_keyed_keys.sort_unstable();
     new_keyed_keys.dedup();
+    stage(&format!("pass-1 identity ({} new keyed keys)", new_keyed_keys.len()));
 
     // Expand to the touched EXISTING Tenders and their full notice sets; the plan
     // covers changed ∪ touched-existing, in one global id order.
@@ -894,6 +940,11 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
         .chain(existing_ids.iter().copied().filter(|id| !changed_set.contains(id)))
         .collect();
     all_ids.sort_unstable();
+    stage(&format!(
+        "touched expansion ({} touched Tenders → {} planned notices)",
+        touched_tenders.len(),
+        all_ids.len()
+    ));
 
     // Pass 2 (streamed): build the ONE plan in id-ordered chunks so the org bulk-load
     // stays sequential and RAM bounded; mentions resolve only for the changed notices
@@ -919,27 +970,56 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     db.finish_mention_resolver(resolver).await?;
+    stage(&format!("pass-2 plan build ({} mentions resolved)", report.mentions));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).
     db.build_plan_groups().await?;
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
     report.islands = islands;
+    stage(&format!("grouping ({tenders} Tenders, {islands} islands)"));
 
     // Retire any touched Tender the new plan did not reproduce (island→keyed
     // upgrade, etc.) BEFORE applying, so a regrouped notice's old Tender is gone.
     report.absorbed = db.retire_regrouped_tenders(&touched_tenders, now).await?;
+    stage(&format!("retire regrouped ({} retired)", report.absorbed));
 
-    // Phase 2: fold + apply the touched Tenders a bounded batch at a time;
-    // `apply_tenders` upserts each by natural key and marks its notices projected —
-    // untouched Tenders are never read or written.
-    let mut after = String::new();
-    loop {
-        let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
-        let Some(last) = groups.last() else { break };
-        after = last.group_key.clone();
-        report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
+    // Phase 2: fold + apply the touched Tenders, reading the parsed layer the way
+    // that suits the plan's size (see [`INCREMENTAL_BUCKET_THRESHOLD`]). Either fold
+    // upserts each Tender by natural key and marks its notices projected, so
+    // untouched Tenders are never read or written — and both produce the identical
+    // canonical layer, so this choice is purely about read cost.
+    let phase2 = phase2.unwrap_or(if all_ids.len() >= INCREMENTAL_BUCKET_THRESHOLD {
+        Phase2::Buckets { shards: None }
+    } else {
+        Phase2::ParsedFold
+    });
+    eprintln!("[project] incremental phase 2: {phase2:?} over {} planned notices", all_ids.len());
+    match phase2 {
+        Phase2::ParsedFold => {
+            let mut after = String::new();
+            let mut tenders_done = 0u64;
+            loop {
+                let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
+                let Some(last) = groups.last() else { break };
+                after = last.group_key.clone();
+                tenders_done += groups.len() as u64;
+                report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
+                // Heartbeat per batch: without it a wedged fold is indistinguishable
+                // from a slow one (issue 90).
+                eprintln!("[project] incremental fold: {tenders_done}/{tenders} Tenders applied");
+            }
+        }
+        Phase2::Buckets { shards } => {
+            bucketed_fold(db, APPLY_NOTICE_BATCH, shards, now, false, &mut report, |p| {
+                if let Progress::Applying { tenders, total } = p {
+                    eprintln!("[project] incremental fold: {tenders}/{total} Tenders applied");
+                }
+            })
+            .await?;
+        }
     }
+    stage("phase 2 fold + apply");
     db.clear_plan().await?;
     report.notices = changed.len() as u64;
 

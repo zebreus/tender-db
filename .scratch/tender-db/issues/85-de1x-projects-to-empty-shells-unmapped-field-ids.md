@@ -189,3 +189,39 @@ cohort are the first ADR-0003 DÖE↔TED merges the fix makes possible.
 **Cohort-wide zero-shell proof stays [HEAVY]**: the exhaustive "no DE-1.x version without texts / without
 lots" anti-join is 218k × 2 index seeks and belongs on a post-fold snapshot under stock `sqlite3`, not
 on the live endpoint. Both queries are in the README.
+
+## Note (proj-fix, 2026-08-02) — the gate's empirical justification is "zero found", not a non-zero count
+
+The island-vs-keyed split above was left ungated because "nobody knows what fraction of the 216,691
+folder ids are uuid-shaped". It is now measured, off the archives rather than the DB (the prod DB is
+held open by the server, so `sqlite3` cannot attach; this needed no DB at all).
+
+Direct scan of `/data/archive/doe`, extracting every eForms-DE 1.x notice's `cbc:ContractFolderID` and
+applying the same `8-4-4-4-12` hex test `is_uuid` applies. **104,581 DE-1.x notices** (the sample is
+those whose `CustomizationID` falls in the first 6 KB of the file; the distribution is unambiguous):
+
+| metric | value |
+|---|---|
+| notices with a folder id | 102,622 |
+| notices with **no** folder id | 1,959 |
+| folder ids **rejected as non-uuid** | **0** |
+| distinct uuid keys (G) | 81,646 |
+| max notices sharing one key | **42** |
+| keys with exactly 1 notice | 66,698 |
+
+Two consequences for this issue's verification plan:
+
+1. **Prediction-pass check (4), `folder_id_non_uuid_REJECTED`, will read 0.** The SQL comment says
+   "Non-zero here is also the direct justification for the `029d2a7` gate" — that expectation does not
+   hold. The gate is still correct and should stay: it is fail-safe against a portal-local reference
+   number keying a Tender (issue 34's failure mode), and its cost when nothing is rejected is zero.
+   But its justification is precedent + fail-safety, not an observed population of bad ids. The
+   sdk-vendor file scan found the same thing on its sample. Reword the check's expectation rather than
+   treating a zero as a red flag.
+2. **`I` (cohort notices that stay islands) ≈ the no-folder-id count alone**, ~1,944–2,185 as the
+   `(cohort - with_folder_id)` band already predicted, with the `non_uuid_rejected` term at 0. So the
+   predicted drop is `cohort - (G - M) - I` with the third term collapsing to the no-folder-id count.
+
+Also relevant to the re-fold mechanism: **the largest DE-1.x chain is 42 notices** and 65% of keys are
+single-notice, which is what ruled out a giant-chain fold blowup as the cause of the 2026-08-01 stall
+(see issues 91 and 92).
