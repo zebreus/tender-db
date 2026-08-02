@@ -101,7 +101,12 @@ TAB=$(printf '\t')
 if [ -n "${TDB_SNAPSHOT:-}" ]; then
   q() {
     local out
+    # 256 MB page cache per query. The box has ~4 GB free against a 441 GB file,
+    # and each q() is its own process, so nothing persists between queries except
+    # the OS page cache — the heavy gates re-walk the same index pages 218k times,
+    # which is exactly what this keeps resident. Peak is one process at a time.
     if ! out=$(sqlite3 -readonly -noheader -separator "$TAB" \
+                 -cmd "PRAGMA cache_size=-262144" \
                  "file:${TDB_SNAPSHOT}?immutable=1" "$1" 2>&1); then
       echo "  sqlite3: $(printf '%s' "$out" | head -1)" >&2
       return 1
