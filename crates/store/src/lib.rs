@@ -446,6 +446,49 @@ async fn add_column(conn: &Connection, statement: &str) -> turso::Result<bool> {
     }
 }
 
+/// Warn — loudly, once, at open — when large temporary spill files would land in
+/// RAM (issue 83).
+///
+/// turso's external sort spills to `TMPDIR`. A systemd unit with `PrivateTmp`
+/// (or any default `/tmp`) puts that on tmpfs — RAM — which on this deployment is
+/// ~3.8 GB against a 450 GB database. A full-corpus `CREATE INDEX` spills many GB,
+/// fills the tmpfs, and dies with `I/O error (pwrite): no storage space` while the
+/// data disk sits at 180 GB free. That is what killed the recovery rebuild's index
+/// build and left `tenders_current_published` missing (issues 82/83).
+///
+/// It is a warning, not a hard failure: a small database on tmpfs is perfectly
+/// fine, and refusing to open would take the service down for a condition that is
+/// only fatal at scale. The point is that the next occurrence names itself in the
+/// log instead of surfacing hours later as an opaque ENOSPC.
+fn warn_if_spill_dir_is_ram() {
+    let dir = std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into());
+    let Ok(mounts) = std::fs::read_to_string("/proc/mounts") else { return };
+    // The mount governing `dir` is the one with the longest matching mount point.
+    let mut best: Option<(usize, &str)> = None;
+    for line in mounts.lines() {
+        let mut f = line.split_whitespace();
+        let (Some(_dev), Some(point), Some(fstype)) = (f.next(), f.next(), f.next()) else {
+            continue;
+        };
+        let covers = dir == point
+            || (point == "/" && dir.starts_with('/'))
+            || dir.starts_with(&format!("{}/", point.trim_end_matches('/')));
+        if covers && best.is_none_or(|(len, _)| point.len() > len) {
+            best = Some((point.len(), fstype));
+        }
+    }
+    if let Some((_, fstype)) = best
+        && matches!(fstype, "tmpfs" | "ramfs")
+    {
+        eprintln!(
+            "[store] WARNING: TMPDIR={dir} is {fstype} (RAM). turso spills large external \
+             sorts there, so a full-corpus CREATE INDEX or scan can exhaust it and fail with \
+             \"no storage space\" while the data disk is nearly empty (issue 83). Point TMPDIR \
+             at disk-backed storage on the same filesystem as the database."
+        );
+    }
+}
+
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
         Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
@@ -455,6 +498,7 @@ impl Db {
     /// `TENDER_WAL_READ_GATE` in [`open`]. Split out so tests drive the gate
     /// without touching the process environment (a data race under parallel tests).
     async fn open_inner(path: &str, gate_on: bool) -> turso::Result<Db> {
+        warn_if_spill_dir_is_ram();
         let database = turso::Builder::new_local(path).build().await?;
         let conn = database.connect()?;
         // Some pragmas report their new value as a row, so go through `query`

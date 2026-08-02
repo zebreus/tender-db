@@ -85,6 +85,25 @@ in
         reference secrets via a `*_COMMAND` variable that reads them at runtime.
       '';
     };
+
+    spillDir = lib.mkOption {
+      type = lib.types.str;
+      default = "${stateDir}/tmp";
+      description = ''
+        Where large temporary spill files go (`TMPDIR`). turso's external sort
+        uses it for full-corpus `CREATE INDEX` builds and big scans, and the
+        spill runs to many GB on a large database.
+
+        This MUST be disk-backed with headroom comparable to the database. The
+        service runs with `PrivateTmp`, so the default `/tmp` is tmpfs — RAM —
+        and a large sort there fails with `no storage space` while the data disk
+        sits nearly empty (issue 83). The default keeps the spill inside the
+        state directory, which systemd creates and owns; point it at the
+        database's own filesystem when that lives elsewhere, and pre-create it
+        writable by the service user (paths outside the state directory are
+        added to `ReadWritePaths` but are not created here).
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -116,20 +135,34 @@ in
       # The server resolves `public/` relative to its own location in the bundle,
       # so the working directory only needs to be writable state for the Turso
       # database (`tender-db.db`, workdir-relative by default).
-      environment = builtins.mapAttrs (_name: toString) cfg.settings;
+      # `TMPDIR` first so an operator can still override it through `settings`.
+      environment = {
+        TMPDIR = cfg.spillDir;
+      } // builtins.mapAttrs (_name: toString) cfg.settings;
 
       serviceConfig = {
         ExecStart = serverBin;
         Restart = "on-failure";
 
-        StateDirectory = "tender-db";
+        # The spill directory is a state directory when it lives under one, so
+        # systemd creates it and chowns it to the DynamicUser (issue 83).
+        StateDirectory =
+          [ "tender-db" ]
+          ++ lib.optional (lib.hasPrefix "${stateDir}/" cfg.spillDir) (
+            lib.removePrefix "/var/lib/" cfg.spillDir
+          );
         StateDirectoryMode = "0700";
         WorkingDirectory = stateDir;
 
         # Run as a transient, unprivileged user.
         DynamicUser = true;
 
-        # Sandbox: writable access limited to the state directory.
+        # Sandbox: writable access limited to the state directory — plus the spill
+        # directory when it deliberately lives elsewhere (e.g. on the database's
+        # own, larger filesystem). `PrivateTmp` stays: it is a hardening win, and
+        # the ENOSPC it used to cause is fixed by `TMPDIR` pointing off tmpfs, not
+        # by giving the service the host's /tmp back.
+        ReadWritePaths = lib.optional (!lib.hasPrefix "${stateDir}/" cfg.spillDir) cfg.spillDir;
         ProtectSystem = "strict";
         ProtectHome = true;
         PrivateTmp = true;
