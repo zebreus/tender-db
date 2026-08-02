@@ -292,7 +292,17 @@ rate C10 "${T[lottext]}" "${T[n]}" 90 soft "lot-scoped text (BT-21/24-Lot landed
 # DE-1.x contributed nothing. A version can show a full set of parties and have
 # produced none of them.
 rate C11 "${T[ownparty]}" "${T[n]}" 90 hard "parties EVIDENCED BY the DE notice (pre-98: 0%)"
-rate C12 "${T[ownwin]}"   "${T[n]}" 10 soft "winners evidenced by the DE notice (award notices only)"
+# C12 — MEASURED AND DISCLOSED, never blocking (issue 100, user decision 2026-08-02).
+# DE-1.x award winners do not resolve: the result graph references sections by
+# their published ids (TEN-/TPA-/CON-) while those sections are keyed
+# synthetically, so LotResult -> LotTender -> TenderingParty never links. That is
+# a parse-layer defect needing a re-parse, deliberately out of this batch. The
+# small non-zero rate that DOES appear is winners carried forward from merged TED
+# twins, not DE data — the same carry-forward that made the buyer rate read 35%
+# when DE contributed 0%. So this reports; it must not gate. If it ever climbs
+# well above the carry-forward baseline, issue 100 has been fixed and this should
+# become a real gate again.
+report EYE C12 "winners evidenced by the DE notice = ${T[ownwin]}/${T[n]} — EXPECTED ~0 until issue 100 (parse-layer); any non-zero here is TED carry-forward, not DE"
 
 # ---------------------------------------------------------------------------
 # D. Lots in detail — the Lot/LotsGroup/Part section-id fix (de1_lot_kind).
@@ -580,6 +590,35 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
             WHERE $COHORT GROUP BY vl.kind" "exact lot-kind split across the cohort"
 else
   report EYE H0 "exhaustive checks skipped — set TDB_SNAPSHOT=/path/post-refold.db to run them (they are the actual acceptance wording of issue 85)"
+fi
+
+# ---------------------------------------------------------------------------
+# I. HONESTY — the ledger must disclose what this ship does NOT deliver.
+#
+# The user decided to ship 98+99 with award winners openly labelled pending
+# (issue 100). That makes the disclosure part of the gate, not a nicety: the
+# dashboard's "Resolved categories" entry for eForms-DE 1.x is the claim a user
+# reads, and shipping it while it implies award completeness is precisely the
+# dishonesty the whole nginx-hold exists to prevent.
+#
+# Checked against the RUNNING app, not the repo file: the ledger is compiled in
+# (include_str!), so only what the deployed binary serves counts. Skipped, loudly,
+# when the app is not reachable — a check that cannot run must not read as passed.
+# ---------------------------------------------------------------------------
+echo "-- I. honest disclosure of the winners gap (issue 100)"
+if page=$(curl -sS --max-time 20 "$BASE_URL/" 2>/dev/null) && [ -n "$page" ]; then
+  miss=""
+  printf '%s' "$page" | grep -qi "eForms-DE 1" || miss="$miss no-DE-1.x-entry"
+  printf '%s' "$page" | grep -qi "winner" || miss="$miss no-mention-of-winners"
+  printf '%s' "$page" | grep -qi "issue 100" || miss="$miss no-pointer-to-issue-100"
+  if [ -z "$miss" ]; then
+    report PASS I1 "the served ledger entry discloses the award-winner gap and cites issue 100"
+  else
+    report FAIL I1 "the served ledger does NOT disclose the winners gap ($miss) — shipping this implies award completeness we do not have"
+    HARDFAIL=$((HARDFAIL+1))
+  fi
+else
+  report EYE I0 "app not reachable at $BASE_URL — disclosure UNCHECKED (not passed). Re-run against the live app before nginx comes up."
 fi
 
 echo
