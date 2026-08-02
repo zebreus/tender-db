@@ -1,121 +1,127 @@
-# 106 — pre-pass stripes balance notice COUNT, but per-notice read cost rises ~4.7× with id
+# 106 — count-balanced stripes cannot parallelise a CONCENTRATED cohort: 94 is necessary but insufficient for the reprocess
 
 Status: proposed
-Kind: performance / follow-up refinement
+Kind: performance / **blocker for the quarantine reprocess at scale**
 Design owner: proj-fix
-Relates to: 94 (balanced stripes — this is the second-order residual), 66 (the sharded pre-pass itself), 96 (apply-side variability), 76 (quarantine reprocess — the beneficiary)
+Relates to: 94 (balanced stripes — necessary, and working; this is what it does *not* solve), 66 (the sharded pre-pass), 96 (apply-side variability), 76 (quarantine reprocess — the work this blocks)
 
-## Context
+## Headline
 
-Measured live on prod during the 2026-08-02 eForms-DE 1.1+1.2 re-fold (job 4, rev
-`33dfba7`), the first at-scale exercise of issue 94's balanced striping.
+On the 2026-08-02 eForms-DE 1.1+1.2 re-fold, **issue 94's balanced striping worked exactly
+as designed and delivered ~10% — not the 5-8× it appears to promise** — because the cohort
+being folded is concentrated in one stripe.
 
-**94's core fix works and is not in question here.** The pre-pass reported
+| | pre-pass wall-clock |
+|---|---|
+| 2026-08-01, pre-94 (effective 1 worker) | **402 min** |
+| 2026-08-02, with 94, 8 balanced stripes | **~366 min** (projected from the slowest shard) |
+
+Seven workers finished in the first quarter of the phase and idled at the join barrier;
+the eighth did the real work alone. **That is the same single-threaded shape as the night
+before, reproduced despite the fix functioning perfectly.**
+
+The stripes are balanced by **notice count**. The work is not divisible that way.
+
+## Evidence
+
+Measured live on prod (job 4, rev `33dfba7`), first at-scale exercise of 94.
+
+**94 itself is not in question.** The pre-pass reported
 
 ```
 [project] phase 2 pre-pass: 8 shard(s) over notice ids (177, 27297321] (99% of the id space)
 ```
 
-— 8 real stripes, sized by notice count (visibly *not* by id width: shard 0 spans 2.23M
-ids, shard 1 spans 1.77M, shard 2 spans 13.86M, all holding comparable notice counts).
-All 8 workers ran concurrently for the whole phase; none idled at DONE; the catastrophic
-1× collapse of the previous night did not recur.
+8 real stripes, sized by notice **count** — visibly not by id width (shard 0 spans 2.23M
+ids, shard 1 spans 1.77M, shard 2 spans 13.86M). Counts are balanced *exactly*: shards 0
+and 1 both reported `1768800 swept` on completion. All 8 workers ran concurrently; none
+started idle; the pre-94 collapse to one effective worker did not recur.
 
-## The residual: equal notice counts ≠ equal time
+### Throughput collapses ~21× across the id space
 
-Per-shard heartbeats, ~12 min in:
+Self-labelled per-shard heartbeats:
 
 | shard | id range | notices/s | spilled |
 |---|---|---|---|
-| 0 | 177 – 2,232,185 | **1,722** | 20 |
-| 1 | 2,232,185 – 4,004,574 | **1,494** | 0 |
-| 2 | 4,004,574 – 17,861,049 | **722** | 0 |
-| 3 | 17,861,049 – 19,629,867 | **359** | 0 |
+| 0 | 177 – 2,232,185 | **1,712** | 20 |
+| 1 | 2,232,185 – 4,004,574 | **1,427** | 0 |
+| 2 | 4,004,574 – 17,861,049 | **722 → 544** | 0 |
+| 3 | 17,861,049 – 19,629,867 | **416** | 0 |
+| 4 | 19,629,867 – 21,398,728 | **349** | 0 |
+| 5 | 21,398,728 – 23,167,755 | **268** | 0 |
+| 6 | 23,167,755 – 25,043,650 | **200** | **20,408** |
+| 7 | 25,043,650 – 27,297,321 | **81** | **3,771 and climbing** |
 
-**A monotonic ~4.7× decline in throughput as notice id rises.**
+**21× between the fastest and slowest stripe**, and the slowest is the one holding the
+cohort.
 
-Per-worker cumulative reads at the same moment spread only **2.9×**
-(9,885 MB … 3,359 MB), while notices swept spread **≥4.4×** — i.e. the slow workers both
-read fewer bytes per second *and* extract fewer notices per byte.
+### Two distinct mechanisms, and they stack
 
-### The cause is the data, not the workers
+1. **Byte cost rises with id** — explains shards 2-5, which are slow while spilling
+   *nothing*. The decisive evidence is a **within-shard** gradient: shard 2 fell
+   **1,309 → 722 → 544 notices/s while advancing through its own stripe** — same thread,
+   same code, same device, only the ids rising. That rules out scheduling, pool
+   contention and stripe assignment, and pins the cause on the data: recent eForms records
+   are fatter than the legacy TED records at low ids.
 
-Two observations rule out per-worker artefacts:
+2. **Plan density** — explains shards 6 and 7, which additionally pay resolve + encode +
+   spill per plan member. Shard 6 went from 0 to 20,408 spilled as it entered the cohort;
+   shard 7 is the only shard that has been producing throughout.
 
-1. **Shard 2 slowed from 1,309 → 722 notices/s *within its own stripe*** as it advanced
-   to higher ids. Same thread, same code, same device — only the ids changed. That is a
-   **within-shard gradient**, so it cannot be scheduling, reader-pool contention, or
-   stripe assignment.
-2. **Shard 3 is 4.7× slower than shard 0 while having spilled ZERO.** It performs no
-   resolve/encode/spill work at all, so plan density (the obvious first guess, and the
-   one initially proposed) is falsified as the mechanism for the slow shards. Only
-   shard 7, at the very top of the id space, spills materially.
+Shard 7 carries **both** — high byte cost *and* the bulk of the producer work — which is
+why it is 21× slower rather than the ~5× the byte gradient alone would give.
 
-The remaining explanation consistent with all of it: **per-notice read cost rises with
-id.** The high-id range is recent eForms, whose records are substantially fatter and
-span more pages/sections than the legacy TED records dominating the low-id range.
+> A note on method: "plan density" was proposed first and **falsified** for shards 3-6 by
+> their zero-spill readings, then found to be genuinely operating on shards 6-7 once their
+> spill climbed. Both mechanisms are real; neither alone explains the spread. An earlier
+> per-thread attribution (mapping tids to shards to derive KB/notice) was **retracted** —
+> it failed an arithmetic check. Only self-labelled shard heartbeats are used above.
 
-## Consequence
+## Why this blocks the reprocess
 
-`parsed_id_stripes` equalises **notices per stripe**, so a stripe of cheap old notices
-finishes long before a stripe of expensive recent ones. The `join` barrier waits for the
-slowest, so the fast workers idle.
+Effective parallelism on this run is **~2.4× of a theoretical 8×** — the sum of per-shard
+runtimes over the wall-clock set by the slowest.
 
-On this run shards 0 and 1 were ~56% through their allocation at 12 min (finishing in
-~20 min) while shards 3-7 were under 14%. Effective parallelism decays toward the count
-of slow shards — delivering roughly **5-6×** of the theoretical **8×**.
+The quarantine reprocess (issue 76) targets **2.42M notices**, and like this cohort they
+are **concentrated in recent ids**. It therefore hits exactly the same wall: one stripe
+inherits nearly all the work, the other seven idle, and adding shards does not help
+because the bottleneck is a single stripe's serial workload.
 
-That is a real win versus the pre-94 effective 1× (6h42m → ~1.3h on this run), and this
-issue is strictly a refinement on top of it — **not a regression, not blocking**.
+**Sizing the reprocess off aggregate throughput would badly under-estimate it.** The
+correct estimate is *the slowest stripe's* runtime, not total work ÷ shards.
 
-## Proposal
+## What will and will not fix it
 
-Stripe by **estimated read cost**, not raw notice count. Options, cheapest first:
+- ❌ **Byte-weighted stripes.** Would flatten mechanism (1), not (2). A cohort concentrated
+  in one id range still lands in one stripe however the boundaries are weighted — you
+  cannot split a stripe's *plan membership* by choosing where to cut the id axis, because
+  the members are contiguous in that axis.
+- ❌ **Profile-weighted stripes.** Same limitation, cheaper to compute.
+- ❌ **More shards (`TENDER_PREPASS_SHARDS`).** Finer slicing of a concentrated cohort
+  still puts the dense region in one slice unless the slicing is *driven* by density —
+  and if it were, that is byte/plan weighting, which fails for the reason above.
+- ✅ **Work-stealing.** A worker that finishes its stripe claims unswept ranges from the
+  slowest. This is the only scheme that parallelises **concentrated** work, because it
+  subdivides at runtime according to what is actually left, requiring **no prediction of
+  the cost distribution at all** — and this issue is precisely the evidence that the
+  distribution is neither uniform nor predictable in advance.
 
-- **(a) Byte-weighted stripes.** Size stripes so each holds a comparable sum of
-  `length(raw_xml)` (or whatever per-notice size column is cheapest to aggregate) rather
-  than a comparable row count. A coarse histogram over id ranges is enough — the goal is
-  removing a 4.7× skew, not perfection.
-- **(b) Profile-weighted stripes.** Cheaper proxy: weight each notice by a per-profile
-  constant (eForms ≈ N× legacy TED), calibrated once. Avoids scanning sizes at all.
-- **(c) Work-stealing.** Leave striping alone; let a finished worker claim unswept id
-  ranges from the slowest. Removes the barrier idle entirely and is robust to any future
-  cost skew, at the cost of coordination between workers.
-
-### (c) is the PREFERRED direction
-
-(a) and (b) both require **predicting the cost distribution in advance**. This issue is
-the evidence that the distribution is *not* uniform and *shifts with the data* — the
-gradient measured here is a property of this corpus's era mix (legacy TED at low ids,
-eForms at high ids), not a constant of the system.
-
-**The quarantine reprocess (issue 76) has a different era mix and therefore a different,
-unmeasured cost profile.** A statically-weighted stripe calibrated on today's gradient
-could be wrong for it in either direction — and "make the reprocess feasible" is the
-entire point of this line of work.
-
-**Work-stealing self-corrects at runtime without predicting the skew at all**, so it is
-robust to a cost distribution nobody has measured yet. Prefer it if the cheaper static
-options (a)/(b) don't hold up under test; treat them as stopgaps that buy time rather
-than as the endpoint.
-
-## Why this matters — the reprocess
-
-The quarantine reprocess (issue 76) targets **2.42M notices**, concentrated in exactly
-the id ranges that are most expensive per notice. A 4.7× cost gradient with count-based
-striping means the slowest stripes dominate, so the run costs materially more than
-`total_work / 8`. Sizing that work off this run's aggregate throughput would
-under-estimate it.
+On this run, work-stealing would have had seven idle workers absorb shard 7's remaining
+range instead of waiting ~5 hours at the barrier.
 
 ## Acceptance
 
-- Per-shard `notices/s` within a small factor of each other across the whole id space, or
-- fast workers no longer idle at the barrier (under (c)), and
-- the reprocess sized against a measured per-notice cost curve rather than a flat average.
+- A concentrated cohort's pre-pass wall-clock approaches `total_work / workers` rather
+  than `slowest_stripe_work`.
+- No worker idles at the join barrier while another still has unswept range.
+- The 2.42M reprocess sized against the slowest-stripe model, or the model made obsolete
+  by work-stealing.
 
 ## Comments
 
-Filed 2026-08-02 from live prod measurement during the DE-1.x re-fold. The plan-density
-hypothesis was proposed first and **falsified** by the zero-spill readings on shards 3-6
-before this was written; the record recorded here is the surviving explanation, not the
-first one.
+Filed 2026-08-02 from live prod measurement during the DE-1.x re-fold; rewritten the same
+evening when shard 7's self-labelled 81 notices/s revealed the effect was an order of
+magnitude larger than first assessed. The original framing ("second-order refinement,
+~5-6× of 8×") was **wrong** — it was extrapolated before the slowest shard had reported.
+The corrected finding is that 94 is necessary but insufficient, and that work-stealing is
+the actual enabler for the reprocess.
