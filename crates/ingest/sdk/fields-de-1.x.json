@@ -29,12 +29,12 @@
   },
   {
    "id": "DE1-ContractingParty-Party-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -614,7 +614,7 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -639,17 +639,17 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -894,7 +894,7 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:DocumentProviderParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -909,7 +909,7 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:EmploymentLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -924,7 +924,7 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:EnvironmentalLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -939,7 +939,7 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:FiscalLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1019,12 +1019,12 @@
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderEvaluationParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:TenderRecipientParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1444,17 +1444,17 @@
   },
   {
    "id": "DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1554,7 +1554,7 @@
   },
   {
    "id": "DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:EmploymentLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1564,7 +1564,7 @@
   },
   {
    "id": "DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:EnvironmentalLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1574,7 +1574,7 @@
   },
   {
    "id": "DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:FiscalLegislationDocumentReference/cac:IssuerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1649,7 +1649,7 @@
   },
   {
    "id": "DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/cac:TenderingTerms/cac:TenderRecipientParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -1949,12 +1949,12 @@
   },
   {
    "id": "DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/cac:FinancingParty/cac:PartyIdentification/cbc:ID"
   },
   {
    "id": "DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/cac:PayerParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -2384,7 +2384,7 @@
   },
   {
    "id": "DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:SettledContract/cac:SignatoryParty/cac:PartyIdentification/cbc:ID"
   },
   {
@@ -2454,17 +2454,17 @@
   },
   {
    "id": "DE1-NoticeResult-TenderingParty-SubContractor-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty/efac:SubContractor/cbc:ID"
   },
   {
    "id": "DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty/efac:SubContractor/efac:MainContractor/cbc:ID"
   },
   {
    "id": "DE1-NoticeResult-TenderingParty-Tenderer-ID",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty/efac:Tenderer/cbc:ID"
   },
   {

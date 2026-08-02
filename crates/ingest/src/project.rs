@@ -316,8 +316,38 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
     ("DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode", ORG_COUNTRY_FIELD),
     // Organization role references (eForms' OPT-300/301 pattern).
     ("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer"),
+    ("DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID", "OPT-300-Procedure-SProvider"),
     ("DE1-NoticeResult-TenderingParty-Tenderer-ID", "OPT-300-Tenderer"),
     ("DE1-NoticeResult-TenderingParty-SubContractor-ID", "OPT-301-Tenderer-SubCont"),
+    ("DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID", "OPT-301-Tenderer-MainCont"),
+    ("DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID", "OPT-300-Contract-Signatory"),
+    ("DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID", "OPT-301-LotResult-Financing"),
+    ("DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID", "OPT-301-LotResult-Paying"),
+    // The lot-level role parties (issue 98). eForms splits each of these into a
+    // `Lot-`/`Part-` pair by the `schemeName` predicate DE-1.x does not carry
+    // (issue 75), and the DE dialect publishes some at procedure scope and some
+    // under the lot — both fold onto the `Lot-` id, because `role_name` uses the
+    // suffix verbatim as the role string and the projection resolves the scope
+    // separately. That yields exactly the role names TED twins already carry
+    // onto these same Tenders (`Lot-ReviewOrg`, `Lot-AddInfo`, …), which is what
+    // makes a DE version and its TED twin agree instead of inventing a dialect.
+    ("DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+    ("DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+    ("DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+    ("DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "OPT-301-Lot-AddInfo"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID", "OPT-301-Lot-DocProvider"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID", "OPT-301-Lot-TenderEval"),
+    ("DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-FiscalLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-FiscalLegis"),
+    ("DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EmployLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EmployLegis"),
+    ("DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EnvironLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EnvironLegis"),
     // The results graph: award decision, its lot, and the bid/contract edges that
     // resolve a winner.
     ("DE1-NoticeResult-LotResult-TenderResultCode", "BT-142-LotResult"),
@@ -2524,8 +2554,46 @@ fn normalise_de1(chunk: &mut [(store::NoticeRef, Parsed)]) {
         for value in &mut parsed.values {
             if let Some((_, eforms)) = DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == value.field_id) {
                 value.field_id = (*eforms).to_owned();
+                de1_mark_reference(value);
             }
         }
+    }
+}
+
+/// Flag an aliased organization-role reference as a reference (issue 98).
+///
+/// The vendored DE-1.x inventory is empirical (issue 75) and types every
+/// identifier `id`, never `id-ref` — a reference and an identifier are
+/// indistinguishable by their lexical form, so the generator could not tell them
+/// apart. `value::convert` derives `is_ref` from exactly that type
+/// (`is_ref: field.kind == "id-ref"`), so every DE-1.x id reaches the projection
+/// with `is_ref = false`, and the role arm — which matches only
+/// `NoticeValue::Id { is_ref: true, .. }` — never sees one. The whole
+/// organization layer of the cohort was therefore empty: no buyer, no review
+/// body, no tenderer, and so no award winner (issue 98; measured at 0% of
+/// 218,635 notices, the visible ~35% being parties carried forward from merged
+/// TED twins, never DE's own).
+///
+/// The flag is set HERE rather than by fixing only the vendored json because
+/// `is_ref` is written at parse time: correcting the metadata alone would
+/// require re-parsing all 218,635 notices from the archive, where doing it in the
+/// projection's existing in-memory pass keeps this a projection-only fix and a
+/// scoped re-fold. The json is corrected too, so future ingests are right at the
+/// source — the two are idempotent, since a value that already arrives `is_ref`
+/// is simply set `is_ref` again.
+///
+/// Scoped to the `OPT-300-`/`OPT-301-` families deliberately, NOT to every id:
+/// those two prefixes are exactly what [`role_name`] recognises, so this marks
+/// the ids that become party roles and nothing else. A blanket flip would also
+/// flag identifiers (`DE1-ProcurementProjectLot-ID`, the folder id, document
+/// reference ids), and an identifier read as a reference emits a party pointing
+/// at whatever section happens to share its value.
+fn de1_mark_reference(value: &mut store::ValueRow) {
+    if !(value.field_id.starts_with("OPT-300-") || value.field_id.starts_with("OPT-301-")) {
+        return;
+    }
+    if let store::NoticeValue::Id { is_ref, .. } = &mut value.value {
+        *is_ref = true;
     }
 }
 

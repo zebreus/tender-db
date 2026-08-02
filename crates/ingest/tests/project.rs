@@ -1565,6 +1565,9 @@ fn de1_notice_keyed(fetch_id: i64, pub_id: &str, profile: &str, folder: &str) ->
             sec("ORG-0001", "Organization", Some("PROCEDURE")),
             sec("ND-PartyName#0", "PartyName", Some("ORG-0001")),
             sec("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")),
+            sec("ORG-0002", "Organization", Some("PROCEDURE")),
+            sec("ND-PartyName#1", "PartyName", Some("ORG-0002")),
+            sec("ND-AppealTerms#0", "AppealTerms", Some("PROCEDURE")),
         ],
         values: vec![
             de1_value(
@@ -1638,10 +1641,37 @@ fn de1_notice_keyed(fetch_id: i64, pub_id: &str, profile: &str, folder: &str) ->
                 "DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode",
                 NoticeValue::Code { list: Some("country".into()), code: "DEU".into() },
             ),
+            // `is_ref: FALSE` — and that is not an oversight, it is the whole point
+            // of issue 98. The vendored DE-1.x inventory types every identifier
+            // `id`, never `id-ref` (a reference is lexically indistinguishable from
+            // an identifier, so the empirical generator could not tell them apart),
+            // and `value::convert` derives `is_ref` from exactly that type. So no
+            // DE-1.x reference ever reaches the projection flagged, and this fixture
+            // must reproduce that or it tests a parse layer that does not exist.
+            //
+            // It previously said `true`, which is why this test passed green while
+            // the cohort projected 0% buyers in production: the fixture asserted the
+            // behaviour we wished the parse layer had.
             de1_value(
                 "ND-ContractingParty#0",
                 "DE1-ContractingParty-Party-PartyIdentification-ID",
-                NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: true },
+                NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: false },
+            ),
+            // A second role from the class the alias table did not cover at all
+            // (issue 98): the review body, the single most frequent reference in
+            // the real cohort at 693 values per 400 notices.
+            de1_value(
+                "ND-AppealTerms#0",
+                "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID",
+                NoticeValue::Id { scheme: None, value: "ORG-0002".into(), is_ref: false },
+            ),
+            de1_value(
+                "ND-PartyName#1",
+                "DE1-Organizations-Organization-Company-PartyName-Name",
+                NoticeValue::Text {
+                    lang: Some("DEU".into()),
+                    value: "Vergabekammer Hamburg".into(),
+                },
             ),
         ],
     };
@@ -1714,6 +1744,43 @@ async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
         .as_deref(),
         Some("Bezirksamt Bergedorf"),
         "the ContractingParty reference must resolve to the buyer organization"
+    );
+
+    // Issue 98. The reference arrives `is_ref: false`, as the real parse layer
+    // delivers it, so these two assertions FAIL on the pre-98 projection: without
+    // `de1_mark_reference` the role arm never sees the reference and no party row
+    // is written at all. This is the regression gate for the whole organization
+    // class — the class that was 0% in production while this test was green.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_parties").await,
+        2,
+        "both organization references must become parties (issue 98)"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE p.role = 'Lot-ReviewOrg'"
+        )
+        .await
+        .as_deref(),
+        Some("Vergabekammer Hamburg"),
+        "the review body — a role the alias table did not cover before issue 98"
+    );
+    // Provenance, not presence: a party must be evidenced by THIS notice's own
+    // mention. In production the cohort showed a 35% buyer rate that was entirely
+    // carried forward from merged TED twins (`mention_notice_id` pointing at the
+    // twin), which is what made 0% look like success.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_parties p
+              JOIN tender_versions v ON v.tender_id = p.tender_id AND v.seq = p.seq
+             WHERE p.mention_notice_id = v.caused_by_notice_id"
+        )
+        .await,
+        2,
+        "every party must be evidenced by the DE-1.x notice itself, not inherited"
     );
 
     // Identity: the folder id keys the Tender (so a TED twin can merge onto it),

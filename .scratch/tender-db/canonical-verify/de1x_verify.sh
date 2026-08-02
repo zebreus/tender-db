@@ -247,12 +247,14 @@ SELECT COUNT(*),
  COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_lots l WHERE l.tender_id=v.tender_id AND l.seq=v.seq) THEN 1 ELSE 0 END),0),
  COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_parties p WHERE p.tender_id=v.tender_id AND p.seq=v.seq AND p.role LIKE '%uyer%') THEN 1 ELSE 0 END),0),
  COALESCE(SUM(CASE WHEN v.notice_subtype IS NOT NULL THEN 1 ELSE 0 END),0),
- COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts x WHERE x.tender_id=v.tender_id AND x.seq=v.seq AND x.lot_id IS NOT NULL) THEN 1 ELSE 0 END),0)
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts x WHERE x.tender_id=v.tender_id AND x.seq=v.seq AND x.lot_id IS NOT NULL) THEN 1 ELSE 0 END),0),
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_parties p WHERE p.tender_id=v.tender_id AND p.seq=v.seq AND p.mention_notice_id=n.id) THEN 1 ELSE 0 END),0),
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w JOIN organization_mentions om ON om.organization_id=w.organization_id AND om.notice_id=n.id WHERE w.tender_id=v.tender_id AND w.seq=v.seq) THEN 1 ELSE 0 END),0)
 FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
 WHERE n.profile='$1' AND n.parse_state='parsed' AND n.id BETWEEN $2 AND $3
 SQL
 }
-declare -A T=( [n]=0 [title]=0 [desc]=0 [cpv]=0 [nuts]=0 [amt]=0 [date]=0 [lots]=0 [buyer]=0 [sub]=0 [lottext]=0 )
+declare -A T=( [n]=0 [title]=0 [desc]=0 [cpv]=0 [nuts]=0 [amt]=0 [date]=0 [lots]=0 [buyer]=0 [sub]=0 [lottext]=0 [ownparty]=0 [ownwin]=0 )
 for P in "${MINORS[@]}"; do
   total=$(scalar "SELECT COUNT(*) FROM notices WHERE profile='$P'")
   [ -z "$total" ] && continue
@@ -263,12 +265,13 @@ for P in "${MINORS[@]}"; do
     [ -z "$lo" ] && continue
     [ -z "$hi" ] && hi=$(scalar "SELECT MAX(id) FROM notices WHERE profile='$P'")
     r=$(row "$(facts_sql "$P" "$lo" "$hi")") || continue
-    IFS=$'\t' read -r c ti de cp nu am da lo_ bu su lt <<<"$r"
-    printf '   %-24s ids %-10s..%-10s  n=%-4s title=%-4s desc=%-4s cpv=%-4s nuts=%-4s amt=%-4s date=%-4s LOTS=%-4s buyer=%-4s subtype=%-4s lot-text=%s\n' \
-      "$P" "$lo" "$hi" "$c" "$ti" "$de" "$cp" "$nu" "$am" "$da" "$lo_" "$bu" "$su" "$lt"
+    IFS=$'\t' read -r c ti de cp nu am da lo_ bu su lt op ow <<<"$r"
+    printf '   %-24s ids %-10s..%-10s  n=%-4s title=%-4s desc=%-4s cpv=%-4s nuts=%-4s amt=%-4s date=%-4s LOTS=%-4s buyer=%-4s subtype=%-4s lot-text=%-4s OWN-party=%s\n' \
+      "$P" "$lo" "$hi" "$c" "$ti" "$de" "$cp" "$nu" "$am" "$da" "$lo_" "$bu" "$su" "$lt" "$op"
     T[n]=$((T[n]+c)); T[title]=$((T[title]+ti)); T[desc]=$((T[desc]+de)); T[cpv]=$((T[cpv]+cp))
     T[nuts]=$((T[nuts]+nu)); T[amt]=$((T[amt]+am)); T[date]=$((T[date]+da)); T[lots]=$((T[lots]+lo_))
     T[buyer]=$((T[buyer]+bu)); T[sub]=$((T[sub]+su)); T[lottext]=$((T[lottext]+lt))
+    T[ownparty]=$((T[ownparty]+${op:-0})); T[ownwin]=$((T[ownwin]+${ow:-0}))
   done
 done
 echo "   -- pooled over all windows (n=${T[n]}):"
@@ -282,6 +285,14 @@ rate C7  "${T[sub]}"     "${T[n]}" 95 hard "notice_subtype (was NULL pre-fold)"
 rate C8  "${T[amt]}"     "${T[n]}" 15 soft "amounts      (source ~35-45% union)"
 rate C9  "${T[date]}"    "${T[n]}" 35 soft "dates        (source ~47.7% deadline)"
 rate C10 "${T[lottext]}" "${T[n]}" 90 soft "lot-scoped text (BT-21/24-Lot landed)"
+# C11/C12 — PROVENANCE, not presence (issue 98). C6 counts a party sitting on the
+# version; this counts a party EVIDENCED BY THIS NOTICE. The distinction is the
+# whole lesson of the first re-fold: the cohort showed a 35% buyer rate that was
+# 100% carried forward from merged TED twins, so presence read as success while
+# DE-1.x contributed nothing. A version can show a full set of parties and have
+# produced none of them.
+rate C11 "${T[ownparty]}" "${T[n]}" 90 hard "parties EVIDENCED BY the DE notice (pre-98: 0%)"
+rate C12 "${T[ownwin]}"   "${T[n]}" 10 soft "winners evidenced by the DE notice (award notices only)"
 
 # ---------------------------------------------------------------------------
 # D. Lots in detail — the Lot/LotsGroup/Part section-id fix (de1_lot_kind).
@@ -503,6 +514,16 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
     HARDFAIL=$((HARDFAIL+1))
   fi
   hstep "H4 (double-count, exhaustive)"
+  hstep "H7 (party provenance, exhaustive)"
+  own=$(scalar "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
+                 JOIN tender_version_parties p ON p.tender_id=v.tender_id AND p.seq=v.seq
+                WHERE $COHORT AND p.mention_notice_id = n.id")
+  if [ "${own:-0}" -gt 0 ]; then
+    report PASS H7 "party rows evidenced by a DE-1.x notice itself = $own (pre-98: exactly 0)"
+  else
+    report FAIL H7 "ZERO party rows across the whole cohort are evidenced by a DE-1.x notice — the org class is still dead (issue 98)"
+    HARDFAIL=$((HARDFAIL+1))
+  fi
   zero H4 "SELECT COUNT(*) FROM (
              SELECT v.caused_by_notice_id FROM notices n JOIN tender_versions v
                ON v.caused_by_notice_id=n.id WHERE $COHORT
