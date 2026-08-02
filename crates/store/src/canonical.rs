@@ -2455,6 +2455,29 @@ impl Db {
             return Ok(applied);
         }
 
+        // A note for whoever reconciles a re-fold's numbers, because the obvious
+        // reading is wrong and it reconciles anyway.
+        //
+        // `applied.versions_written` below counts WRITE OPERATIONS, not rows in
+        // `tender_versions`. A forced rewrite (`keep = 0`) deletes and re-writes the
+        // SAME versions, so it inflates `versions_written` while leaving the net row
+        // count untouched. Comparing `versions_written` against the planned-notice
+        // count therefore yields a "shortfall" that is really the set of Tenders that
+        // early-returned — and after an epoch bump that shortfall collapses, which
+        // looks exactly like the version count having GROWN. It has not.
+        //
+        // The net count cannot grow through this path: the early return above
+        // requires `stored.len() == p.versions.len()`, so a Tender with a SHORT
+        // stored chain could never have been skipped — it falls through here and the
+        // write loop appends the missing versions on the spot. Chains are repaired by
+        // the ordinary path, never left truncated for an epoch bump to find.
+        //
+        // If a re-fold really does change the net `COUNT(*) FROM tender_versions`,
+        // the cause is upstream of this function — a notice planned but absent from
+        // the fold chain (`parse_state` no longer 'parsed', so the pre-pass never
+        // spilled it; see issue 105) — and it means the grouping moved. Treat it as a
+        // stop, not as expected growth.
+
         for seq in (keep + 1..=stored.len()).rev() {
             self.delete_version(conn, tender_id, seq as i64).await?;
             applied.versions_removed += 1;
