@@ -100,3 +100,36 @@ PREFIX  DELETE FROM lots WHERE tender_id = ? (no match)       0.091 ms
 
 So there is no full-scan-per-tender here and no index to add. The cost is purely statement count ×
 orphan count.
+
+## Decision — partial-retirement visibility is ACCEPTED (team-lead, 2026-08-02)
+
+Chunking retirement changes one piece of observable API behaviour, so it was escalated for an explicit
+decision rather than folded in silently.
+
+**What changes.** A poller on `/v1/changes` can now observe a **partial** retirement mid-run — some
+Tenders removed, others not yet — where previously the whole retirement appeared atomically at one
+COMMIT. Note that `publish_cursor` does **not** gate this: it is the in-memory SSE doorbell (issue 61),
+and committed rows are readable through `/v1/changes` before it fires. The initial assumption that it
+preserved a visibility boundary was checked and found false.
+
+**Accepted, for these reasons:**
+
+1. The feed's contract is an append-only, cursor-ordered stream of independent per-entity events
+   consumed via `cursor > last`. It has never promised cross-entity transactional atomicity — this
+   exercises the contract as designed rather than violating it.
+2. Each `removed` event is independent. No cross-Tender invariant breaks if a consumer sees X removed
+   before Y; they are separate business notices, not rows of one record.
+3. It manifests only during a fold — a background mutation window in which the tender layer is already
+   in flux, which is what the honesty gate exists for. It is not a steady-state anomaly.
+4. On the daily incremental the window is a handful of Tenders over sub-second. It is observable at all
+   only on a large regrouping like the eForms-DE 1.x re-fold.
+5. The alternative is the defect this issue exists for: one unbounded transaction, i.e. a WAL/RAM
+   balloon, no heartbeat, and a crash losing *every* retirement to the rollback. The chunked version's
+   crash behaviour — earlier chunks committed, the next run re-derives the orphan set and finishes — is
+   strictly better and self-healing.
+
+The trade is a slightly longer observable partial-retirement window in exchange for bounded memory,
+crash resilience and observability. Worth it.
+
+**Also settled:** cursor gaps are possible when a chunk rolls back (AUTOINCREMENT advances regardless).
+Harmless — consumers seek with `cursor > last`, so a gap is indistinguishable from a quiet period.
