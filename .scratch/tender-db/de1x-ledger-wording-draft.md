@@ -22,16 +22,16 @@ narrative column the dashboard renders (`ui.rs:623`), so the disclosure belongs 
 **Counts are deliberately not written into the prose.** The dashboard joins each entry against
 `Db::quarantine_resolution` live, so resolved/held render themselves. Hard-coding them would go stale.
 
-## Proposed entry
+## The entry as applied (verbatim from the committed file)
 
 ```json
 {
   "category": "eForms-DE 1.x (German dialect)",
   "reason": "unknown-customization",
   "detail_like": "%eforms-de-1.%",
-  "diagnosis": "German eForms-DE 1.0/1.1/1.2 notices were held as unknown-customization: the national 1.x line is spec-and-schematron only, with no published field metadata to parse against. The inventory was rebuilt empirically from the archived corpus (issue 75), with grafts for the DÖE serializer's inlined parties (issue 78), then the cohort was reclaimed and projected. These tenders now carry their German title and description, CPV, NUTS, lots, deadlines and estimated values, the buyer, and the other named organization roles — review body, information and document providers, tender recipient, evaluator, mediator. AWARD WINNERS ARE NOT RESOLVED for this dialect (issue 100): the result graph references sections by their published ids while those sections are keyed synthetically, so the LotResult → LotTender → TenderingParty chain does not link. Award notices therefore show their lots, contracts and awarded values, and bidders where a notice names them, but not which bidder won. That is a parse-layer defect: fixing it requires re-parsing the cohort, so it is deliberately not part of this batch.",
+  "diagnosis": "German eForms-DE 1.0/1.1/1.2 notices were held as unknown-customization: the national 1.x line is spec-and-schematron only, with no published field metadata to parse against. The inventory was rebuilt empirically from the archived corpus (issue 75), with grafts for the DÖE serializer's inlined parties (issue 78), then the cohort was reclaimed and projected. These tenders now carry their German title and description, CPV, NUTS, lots, deadlines and estimated values, the buyer, and the other named organization roles — review body, information and document providers, tender recipient, evaluator, mediator. AWARD WINNERS ARE NOT RESOLVED for this dialect (issue 100): the result graph references sections by their published ids while those sections are keyed synthetically, so the LotResult → LotTender → TenderingParty chain does not link. Award notices therefore show their lots, contracts and awarded values, and bidders where a notice names them, but not which bidder won. That is a parse-layer defect: fixing it requires re-parsing the cohort, so it is deliberately not part of this batch. A residual ~241 notices remain held pending re-parse and still carry their original unknown-customization reason, which is now stale; they are tracked separately (issue 87).",
   "fix": "issues 75/78/76/85/98/99 — award winners pending, issue 100",
-  "resolved": "<SET TO THE DATE THE 98+99 FOLD LANDS>"
+  "resolved": "2026-08-02"
 }
 ```
 
