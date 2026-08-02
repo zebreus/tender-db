@@ -136,10 +136,35 @@ So the plan half **requires** a turso-backed source at the deployed version and 
 3. Stock sqlite3 — **not evidence** for this defect class. Valid only for the
    index-presence/DDL half, where reading a catalogue is not planning a query.
 
-Corollary for the assertion itself: assert **"does not SCAN <table>"**, not "uses index
-`<name>`". The `lots` access is served by the *implicit* `sqlite_autoindex_lots_1` from
-the UNIQUE constraint, so a name assertion would be wrong for the very read this gate
-exists for.
+### 1c. "SEARCH not SCAN" is ALSO a correlate — turso's plan text misleads
+
+Third false-green in this story, found by run-driver. Turso prints the `lots` full walk
+as:
+
+```
+SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+```
+
+That reads like a point lookup. It is a forward walk of all 13.2M rows. So a
+`SEARCH`-vs-`SCAN` assertion — the obvious one, and the one this issue originally
+specified — **passes the defect it was built for**, even with the correct engine.
+
+The load-bearing signal is the **access path the plan names**: the target table's line
+must name a real INDEX. A rowid / `INTEGER PRIMARY KEY` access on the target is RED
+exactly like a SCAN. Where a specific index is the point of the read, the name is
+required too, since a different index can still be the wrong path.
+
+Two scoping rules that matter:
+- **The rowid rule applies to the target table only.** In the `lots_of` plan,
+  `SEARCH t USING INTEGER PRIMARY KEY (rowid=?)` for the joined `tenders` is a correct
+  primary-key point lookup and must not be flagged.
+- **`lots` is served by an implicit index** (`sqlite_autoindex_lots_1`, from the UNIQUE
+  constraint), so the expected-index rule must accept it — a rule that only ever
+  accepted explicitly-named indexes would be wrong for this very read.
+
+The running tally of correlates that each looked load-bearing and were not: the index
+exists → sqlite3 says SEARCH → turso says SEARCH. Each was one level closer to the
+truth and still green over a live 2.2s scan.
 
 ### 2. Derive the expected set from the DEPLOYED BUILD — never a hand-copied list
 
@@ -244,8 +269,24 @@ nothing" kind this issue is about:
   reports "0 missing" having examined nothing. An expectation of fewer than 5 indexes is
   now refused outright as no-input.
 
+Access-path assertion landed in `3f6e2f7` (§1c): rowid-walk on the target → FAIL, wrong
+index → FAIL naming both, healthy plan → PASS with the joined rowid lookup correctly not
+flagged. Full clean run 27 pass / 0 fail / 0 no-input.
+
 Open: it needs a turso plan source (`TDB_PLAN_CMD`) to produce any plan verdict. Until
 one exists, section B is permanently no-input and only the presence half is live.
+
+**Decision on the plan source: option 1, the turso-linked harness**, on the independence
+tie-breaker — a gate that borrows the app's own EQP path is closer to grading its own
+homework, and the whole point of this issue is that the gate must be able to catch a
+defect in the thing it checks. Option 2 (app-side diagnostic through the serving pool)
+stays an acceptable fallback if the harness proves heavy, since for *plans* it has the
+strongest claim to being load-bearing — it is literally the engine serving traffic.
+
+The contract is deliberately trivial so either can satisfy it: `TDB_PLAN_CMD` reads SQL
+on stdin and writes a turso-produced plan on stdout. If run-driver-2's `planlab-lots_of`
+experiment already runs through turso, that harness *is* the plan source and wiring it in
+is one environment variable.
 
 ## Sequencing
 
