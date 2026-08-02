@@ -3170,6 +3170,84 @@ impl Db {
             .await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
     }
+
+    /// Split `(lo, hi]` into at most `k` contiguous notice-id stripes holding ~the
+    /// same number of PARSED notices each — the Phase-2 pre-pass's work partition
+    /// (issue 94).
+    ///
+    /// The pre-pass used to stripe by equal id WIDTH, which silently assumes notices
+    /// are uniformly dense across id space. They are not: `MAX(id)` sits far above
+    /// the dense region and bulk reclaims append late, so equal-width stripes put
+    /// nearly all the work in one worker while the others finish instantly on empty
+    /// id space — the sharded sweep then runs at ~1× however many workers it has.
+    /// Striping by parsed-notice COUNT makes every worker's stripe genuinely
+    /// equal-cost whatever the id distribution.
+    ///
+    /// Cheap: `notices_parse_state` is an index on `(parse_state)`, so
+    /// `WHERE parse_state = 'parsed' … ORDER BY id` is an index-ONLY scan yielding
+    /// ids already in ascending order — no table rows are touched. Two such scans
+    /// (count, then split points) cost far less than one stripe of the sweep itself.
+    ///
+    /// Returns `(lo, hi]`-style half-open-below stripes covering exactly `(lo, hi]`,
+    /// in ascending order, with no gaps; a single stripe when the range holds fewer
+    /// parsed notices than `k`. The last stripe always ends at `hi`.
+    pub async fn parsed_id_stripes(
+        &self,
+        lo: i64,
+        hi: i64,
+        k: usize,
+    ) -> turso::Result<Vec<(i64, i64)>> {
+        let one = vec![(lo, hi)];
+        if k <= 1 || lo >= hi {
+            return Ok(one);
+        }
+        let conn = self.reader().await?;
+        let total = {
+            let mut r = conn
+                .query(
+                    "SELECT COUNT(*) FROM notices
+                      WHERE parse_state = 'parsed' AND id > ? AND id <= ?",
+                    (Value::Integer(lo), Value::Integer(hi)),
+                )
+                .await?;
+            r.next().await?.map_or(0, |row| int(&row, 0))
+        };
+        let per = total / k as i64;
+        if per == 0 {
+            return Ok(one);
+        }
+        // One index-only pass, taking every `per`-th id as a split point. Splitting
+        // AFTER the n-th row (not at it) keeps the stripes half-open-below, matching
+        // the `id > lo AND id <= hi` window the pre-pass reads with.
+        let mut splits: Vec<i64> = Vec::with_capacity(k - 1);
+        let mut seen = 0i64;
+        let mut rows = conn
+            .query(
+                "SELECT id FROM notices
+                  WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id",
+                (Value::Integer(lo), Value::Integer(hi)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            seen += 1;
+            if seen % per == 0 && splits.len() < k - 1 {
+                let id = int(&row, 0);
+                if id < hi {
+                    splits.push(id);
+                }
+            }
+        }
+        drop(rows);
+        splits.dedup();
+        let mut stripes = Vec::with_capacity(splits.len() + 1);
+        let mut start = lo;
+        for s in splits {
+            stripes.push((start, s));
+            start = s;
+        }
+        stripes.push((start, hi));
+        Ok(stripes)
+    }
 }
 
 /// One entry of the change log.

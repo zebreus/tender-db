@@ -348,3 +348,69 @@ async fn sharded_prepass_matches_the_serial_prepass() {
         );
     }
 }
+
+/// Issue 94: the pre-pass's work partition must balance by parsed-notice COUNT, not
+/// by id WIDTH.
+///
+/// Equal-width striping silently assumes notices are uniformly dense across id
+/// space. On prod they are not — `MAX(id)` sits far above the dense region and bulk
+/// reclaims append late — so equal-width stripes handed one worker nearly the whole
+/// corpus while the others returned instantly on empty id space, and the "sharded"
+/// sweep ran at ~1× however many workers it had.
+///
+/// The skew is reproduced here by asking for stripes over a range far wider than
+/// the data occupies: equal-width would put every notice in stripe 0 and leave the
+/// rest empty. Count-striping must instead give every stripe ~the same number of
+/// parsed notices, while still covering `(lo, hi]` exactly and contiguously — the
+/// property `write_shard`'s `id > lo AND id <= hi` window depends on for
+/// completeness.
+#[tokio::test]
+async fn prepass_stripes_balance_by_notice_count_not_id_width() {
+    let (db, fetch, path) = scratch("stripes").await;
+    build_corpus(&db, fetch).await;
+
+    let max_id = db.max_parsed_notice_id().await.expect("max id");
+    let total = db.parsed_notice_count().await.expect("count") as i64;
+    assert!(total >= 8, "corpus must be big enough to split ({total} notices)");
+
+    // A range 1000× wider than the data — the prod shape, exaggerated.
+    let (lo, hi) = (0i64, max_id * 1000);
+    for k in [2usize, 4, 8] {
+        let stripes = db.parsed_id_stripes(lo, hi, k).await.expect("stripes");
+        assert_eq!(stripes.len(), k, "expected {k} stripes, got {}", stripes.len());
+
+        // Contiguous, gapless, and covering exactly (lo, hi] — a gap would silently
+        // drop notices from the fold.
+        assert_eq!(stripes[0].0, lo, "first stripe must start at lo");
+        assert_eq!(stripes[k - 1].1, hi, "last stripe must end at hi");
+        for w in stripes.windows(2) {
+            assert_eq!(w[0].1, w[1].0, "stripes must be contiguous: {:?}", stripes);
+        }
+
+        // Every stripe carries real work, and the split is even. Equal-width striping
+        // over this range would give stripe 0 everything and the rest zero, so the
+        // `min > 0` assertion alone is what fails on the old behaviour.
+        let mut counts = Vec::new();
+        for (s_lo, s_hi) in &stripes {
+            let sql = format!(
+                "SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed' \
+                   AND id > {s_lo} AND id <= {s_hi}"
+            );
+            counts.push(match db.scalar(&sql).await.expect("stripe count") {
+                Some(store::turso::Value::Integer(n)) => n,
+                _ => 0,
+            });
+        }
+        let (min, max) = (*counts.iter().min().unwrap(), *counts.iter().max().unwrap());
+        assert_eq!(counts.iter().sum::<i64>(), total, "stripes must cover every notice exactly once");
+        assert!(min > 0, "every stripe must carry work, got {counts:?} for k={k}");
+        assert!(
+            max - min <= 1 + total / (k as i64) / 4,
+            "stripes must be balanced by notice count, got {counts:?} for k={k}"
+        );
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

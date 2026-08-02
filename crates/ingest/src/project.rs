@@ -1166,8 +1166,13 @@ async fn bucketed_fold(
     // same `b`; the fold re-concatenates and sorts them. All workers must finish
     // before the fold — a group can span any stripe (barrier is the `join` inside).
     let fd_budget = raise_fd_limit();
-    let k = worker_count(shards, boundaries.len(), fd_budget);
-    write_buckets_sharded(db, &boundaries, &dir, k).await?;
+    let k = write_buckets_sharded(
+        db,
+        &boundaries,
+        &dir,
+        worker_count(shards, boundaries.len(), fd_budget),
+    )
+    .await?;
 
     // Fold pass: each bucket in order, its K shard files concatenated then sorted in
     // RAM by the fold key, then applied. Serial — `apply_tenders` assigns surrogate
@@ -1247,10 +1252,32 @@ fn worker_count(shards: Option<usize>, n_buckets: usize, fd_budget: usize) -> us
     if let Some(k) = shards {
         return k.max(1);
     }
-    let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
     let fd_cap = (fd_budget.saturating_sub(FD_MARGIN) / n_buckets.max(1)).max(1);
-    cores.saturating_sub(1).clamp(1, fd_cap)
+    // Ops valve — the right number is a property of the DEVICE, not the build, and
+    // this is the one knob worth turning without a redeploy while a many-hour sweep
+    // is the critical path.
+    if let Some(k) = std::env::var("TENDER_PREPASS_SHARDS").ok().and_then(|v| v.parse::<usize>().ok())
+    {
+        return k.clamp(1, fd_cap);
+    }
+    let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
+    cores.saturating_sub(1).max(PREPASS_MIN_WORKERS).clamp(1, fd_cap)
 }
+
+/// Floor on the pre-pass worker count, independent of core count (issue 94).
+///
+/// `cores − 1` sizes for a CPU-bound sweep. This one is not: a pre-pass worker sits
+/// in uninterruptible disk wait with one read outstanding, and on prod the box was
+/// measured 75% idle with 17.5% iowait while a single worker held ~16 MB/s. What
+/// buys throughput here is DEVICE QUEUE DEPTH — more readers in flight — not more
+/// cores, and the per-worker read chunk shrinks as workers are added
+/// ([`PREPASS_CHUNK_BUDGET`]) so the memory bill does not follow.
+///
+/// 8 is deliberately conservative rather than optimal: it is a solid multiple of the
+/// 3 the 4-core prod box was getting, stays sane on small dev machines, and the real
+/// optimum is a device property — measure it with `TENDER_PREPASS_SHARDS` rather
+/// than guess it here.
+const PREPASS_MIN_WORKERS: usize = 8;
 
 /// Pre-pass (issue 66): shard the parsed read into `k` contiguous notice-id stripes,
 /// each swept by its own worker on its own reader connection, spilling resolved
@@ -1263,25 +1290,38 @@ async fn write_buckets_sharded(
     boundaries: &[String],
     dir: &Path,
     k: usize,
-) -> turso::Result<()> {
+) -> turso::Result<usize> {
     std::fs::create_dir_all(dir).expect("create bucket dir");
-    // Partition (0, max_id] into k contiguous stripes; the last runs to infinity so
-    // it always reaches the true maximum. Gaps (unparsed ids) are harmless — a stripe
-    // just reads fewer notices.
+
     let max_id = db.max_parsed_notice_id().await?;
-    let width = ((max_id + k as i64 - 1) / k as i64).max(1);
+    let (lo, hi) = (0, max_id);
+
+    // Partition the swept range into contiguous stripes holding equally many PARSED
+    // notices (issue 94) — NOT equal id widths, which put ~all the work in one
+    // worker whenever the id space is unevenly dense (which it is: reclaims append
+    // late). Falls back to one stripe when the range is too small to split.
+    let stripes = db.parsed_id_stripes(lo, hi, k).await?;
+    let k = stripes.len();
+    eprintln!(
+        "[project] phase 2 pre-pass: {k} shard(s) over notice ids ({lo}, {hi}]"
+    );
     let readers = db.readers(k)?;
 
     // Each worker drives its stripe on its own thread (the decode/fold/encode is
     // CPU-bound, so real threads — not tokio tasks on the CLI's current-thread
     // runtime — are what parallelises it) with its own current-thread runtime and its
     // own reader connection. Scoped threads let the workers borrow `boundaries`/`dir`.
+    // Keep peak RAM flat as `k` rises: each worker holds one read chunk of resolved
+    // notices, so the per-worker chunk shrinks as workers are added (issue 94 /
+    // the bounded-memory principle). Concurrency goes up, the working set does not.
+    let chunk = (PREPASS_CHUNK_BUDGET / k).clamp(PREPASS_CHUNK_MIN, PREPASS_CHUNK_MAX) as i64;
     std::thread::scope(|scope| -> turso::Result<()> {
-        let handles: Vec<_> = (0..k)
-            .map(|s| {
+        let handles: Vec<_> = stripes
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(s, (lo, hi))| {
                 let readers = readers.clone();
-                let lo = s as i64 * width;
-                let hi = if s + 1 == k { i64::MAX } else { (s as i64 + 1) * width };
                 scope.spawn(move || -> turso::Result<()> {
                     let rt = tokio::runtime::Builder::new_current_thread()
                         .enable_all()
@@ -1289,7 +1329,7 @@ async fn write_buckets_sharded(
                         .expect("build worker runtime");
                     rt.block_on(async move {
                         let conn = readers.get().await?;
-                        write_shard(&conn, boundaries, dir, s, lo, hi).await
+                        write_shard(&conn, boundaries, dir, s, lo, hi, chunk).await
                     })
                 })
             })
@@ -1298,8 +1338,27 @@ async fn write_buckets_sharded(
             h.join().expect("shard worker panicked")?;
         }
         Ok(())
-    })
+    })?;
+    Ok(k)
 }
+
+/// Total notices a sharded pre-pass holds in RAM at once, across ALL workers. Each
+/// worker reads `PREPASS_CHUNK_BUDGET / k` notices per chunk, so raising the worker
+/// count buys I/O concurrency without raising peak memory (issue 94). Clamped at
+/// both ends: too small a chunk pays per-query overhead on every satellite scan, too
+/// large a one puts the old un-sharded working set back on a single worker.
+const PREPASS_CHUNK_BUDGET: usize = 30_000;
+const PREPASS_CHUNK_MIN: usize = 1_000;
+const PREPASS_CHUNK_MAX: usize = 10_000;
+
+/// How many notices a pre-pass worker sweeps between heartbeats (issue 94). The
+/// pre-pass used to print NOTHING for hours, and its one external proxy — the bucket
+/// files — is actively misleading, because they are `BufWriter`-wrapped and flushed
+/// only at the end, so their on-disk size stays near zero however far along the
+/// sweep is. Diagnosing a live sweep meant reconstructing worker positions from
+/// `/proc/<pid>/task/*/io`. Per shard, so with `k` workers the line rate is `k` per
+/// this many notices swept.
+const PREPASS_HEARTBEAT: u64 = 250_000;
 
 /// One pre-pass worker: sweep notice ids in `(lo, hi]` on `conn`, resolve each
 /// notice's [`NoticeState`] (binding the Organizations Phase-1 recorded), and append
@@ -1313,6 +1372,7 @@ async fn write_shard(
     shard: usize,
     lo: i64,
     hi: i64,
+    read_chunk: i64,
 ) -> turso::Result<()> {
     // Every bucket file is created (even if it stays empty) so the fold's
     // `read_bucket_shards` can open `shard{s}_bucket{b}.bin` for every (s, b).
@@ -1322,11 +1382,12 @@ async fn write_shard(
             BufWriter::new(File::create(&p).expect("create shard bucket file"))
         })
         .collect();
-    const READ_CHUNK: i64 = 10_000;
     let empty = HashMap::new();
     let mut after_id = lo;
+    let t0 = std::time::Instant::now();
+    let (mut swept, mut spilled, mut last_beat) = (0u64, 0u64, 0u64);
     loop {
-        let mut chunk = Db::parsed_chunk_on(conn, after_id, hi, READ_CHUNK).await?;
+        let mut chunk = Db::parsed_chunk_on(conn, after_id, hi, read_chunk).await?;
         normalise_de1(&mut chunk);
         let Some((last, _)) = chunk.last() else { break };
         let (clo, chi) = (chunk[0].0.id, last.id);
@@ -1349,8 +1410,25 @@ async fn write_shard(
             w.write_all(&u32::try_from(bytes.len()).expect("bucket row < 4GB").to_le_bytes())
                 .expect("write bucket frame length");
             w.write_all(&bytes).expect("write bucket frame");
+            spilled += 1;
+        }
+        // Heartbeat (issue 94): position and rate, per shard. `at` is how far the
+        // stripe has been consumed, which is what makes an unbalanced partition or a
+        // slow stripe visible while it is happening rather than afterwards.
+        swept += chunk.len() as u64;
+        if swept - last_beat >= PREPASS_HEARTBEAT {
+            last_beat = swept;
+            eprintln!(
+                "[project] pre-pass shard {shard}: {swept} swept, {spilled} spilled, \
+                 at id {after_id} of ({lo}, {hi}], {:.0} notices/s",
+                swept as f64 / t0.elapsed().as_secs_f64().max(1e-9)
+            );
         }
     }
+    eprintln!(
+        "[project] pre-pass shard {shard} DONE: {swept} swept, {spilled} spilled from ({lo}, {hi}] in {:.1}s",
+        t0.elapsed().as_secs_f64()
+    );
     for w in &mut writers {
         w.flush().expect("flush shard bucket");
     }
