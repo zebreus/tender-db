@@ -446,47 +446,70 @@ async fn add_column(conn: &Connection, statement: &str) -> turso::Result<bool> {
     }
 }
 
-/// Warn — loudly, once, at open — when large temporary spill files would land in
-/// RAM (issue 83).
-///
-/// turso's external sort spills to `TMPDIR`. A systemd unit with `PrivateTmp`
-/// (or any default `/tmp`) puts that on tmpfs — RAM — which on this deployment is
-/// ~3.8 GB against a 450 GB database. A full-corpus `CREATE INDEX` spills many GB,
-/// fills the tmpfs, and dies with `I/O error (pwrite): no storage space` while the
-/// data disk sits at 180 GB free. That is what killed the recovery rebuild's index
-/// build and left `tenders_current_published` missing (issues 82/83).
-///
-/// It is a warning, not a hard failure: a small database on tmpfs is perfectly
-/// fine, and refusing to open would take the service down for a condition that is
-/// only fatal at scale. The point is that the next occurrence names itself in the
-/// log instead of surfacing hours later as an opaque ENOSPC.
-fn warn_if_spill_dir_is_ram() {
-    let dir = std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into());
-    let Ok(mounts) = std::fs::read_to_string("/proc/mounts") else { return };
-    // The mount governing `dir` is the one with the longest matching mount point.
-    let mut best: Option<(usize, &str)> = None;
+/// The mount point and filesystem type governing `path` — the `/proc/mounts` entry
+/// with the longest matching mount point.
+fn mount_of<'a>(mounts: &'a str, path: &str) -> Option<(&'a str, &'a str)> {
+    let mut best: Option<(&str, &str)> = None;
     for line in mounts.lines() {
         let mut f = line.split_whitespace();
         let (Some(_dev), Some(point), Some(fstype)) = (f.next(), f.next(), f.next()) else {
             continue;
         };
-        let covers = dir == point
-            || (point == "/" && dir.starts_with('/'))
-            || dir.starts_with(&format!("{}/", point.trim_end_matches('/')));
-        if covers && best.is_none_or(|(len, _)| point.len() > len) {
-            best = Some((point.len(), fstype));
+        let covers = path == point
+            || point == "/"
+            || path.starts_with(&format!("{}/", point.trim_end_matches('/')));
+        if covers && best.is_none_or(|(p, _)| point.len() > p.len()) {
+            best = Some((point, fstype));
         }
     }
-    if let Some((_, fstype)) = best
-        && matches!(fstype, "tmpfs" | "ramfs")
-    {
-        eprintln!(
-            "[store] WARNING: TMPDIR={dir} is {fstype} (RAM). turso spills large external \
-             sorts there, so a full-corpus CREATE INDEX or scan can exhaust it and fail with \
-             \"no storage space\" while the data disk is nearly empty (issue 83). Point TMPDIR \
-             at disk-backed storage on the same filesystem as the database."
-        );
+    best
+}
+
+/// Warn at open when large temporary spill files would land in RAM (issue 83).
+///
+/// turso's external sort spills to `TMPDIR`. A systemd unit with `PrivateTmp` (or
+/// any default `/tmp`) puts that on tmpfs — RAM — which on the production box is
+/// ~3.8 GB against a 450 GB database. A full-corpus `CREATE INDEX` spills many GB,
+/// fills the tmpfs, and dies with `I/O error (pwrite): no storage space` while the
+/// data disk sits at 180 GB free. That killed the recovery rebuild's index build and
+/// left `tenders_current_published` missing (issues 82/83).
+///
+/// The hazard is specifically a **mismatch**: a large database on disk whose spill
+/// goes to RAM. A database that lives on the same RAM filesystem as its spill is a
+/// coherent, deliberately small setup — every scratch and test DB is one — so that
+/// case is silent. Without that distinction this would fire on every `Db::open` in
+/// the test suite on any host whose `/tmp` is tmpfs, and a warning that cries wolf
+/// in CI is a warning nobody reads in production.
+///
+/// A warning, not a hard failure: refusing to open would take the service down for a
+/// condition that is only fatal at scale. The point is that the next occurrence names
+/// itself in the log instead of surfacing hours later as an opaque ENOSPC.
+fn warn_if_spill_dir_is_ram(db_path: &str) {
+    let dir = std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into());
+    let Ok(mounts) = std::fs::read_to_string("/proc/mounts") else { return };
+    let Some((spill_point, fstype)) = mount_of(&mounts, &dir) else { return };
+    if !matches!(fstype, "tmpfs" | "ramfs") {
+        return;
     }
+    // Resolve the database to an absolute path without requiring it to exist yet.
+    let db_abs = if db_path.starts_with('/') {
+        db_path.to_owned()
+    } else {
+        std::env::current_dir()
+            .map(|d| d.join(db_path).to_string_lossy().into_owned())
+            .unwrap_or_else(|_| db_path.to_owned())
+    };
+    if let Some((db_point, _)) = mount_of(&mounts, &db_abs)
+        && db_point == spill_point
+    {
+        return; // database and spill share the RAM filesystem — coherent, stay quiet
+    }
+    eprintln!(
+        "[store] WARNING: TMPDIR={dir} is {fstype} (RAM) but the database {db_abs} is not. \
+         turso spills large external sorts to TMPDIR, so a full-corpus CREATE INDEX or scan \
+         can exhaust it and fail with \"no storage space\" while the data disk is nearly \
+         empty (issue 83). Point TMPDIR at disk-backed storage on the database's filesystem."
+    );
 }
 
 impl Db {
@@ -498,7 +521,7 @@ impl Db {
     /// `TENDER_WAL_READ_GATE` in [`open`]. Split out so tests drive the gate
     /// without touching the process environment (a data race under parallel tests).
     async fn open_inner(path: &str, gate_on: bool) -> turso::Result<Db> {
-        warn_if_spill_dir_is_ram();
+        warn_if_spill_dir_is_ram(path);
         let database = turso::Builder::new_local(path).build().await?;
         let conn = database.connect()?;
         // Some pragmas report their new value as a row, so go through `query`
@@ -1565,6 +1588,40 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 83: the spill-directory warning must resolve the mount governing a path
+    /// by LONGEST matching mount point, and must distinguish the real hazard (a
+    /// database on disk spilling to RAM) from the coherent case (a small scratch
+    /// database that lives on the same tmpfs as its spill). Without the second half
+    /// this fires on every `Db::open` in the suite on any host whose `/tmp` is
+    /// tmpfs, and a warning that cries wolf in CI is one nobody reads in production.
+    #[test]
+    fn spill_mount_resolution_finds_the_longest_prefix() {
+        use super::mount_of;
+        const MOUNTS: &str = "\
+/dev/root / ext4 rw 0 0
+tmpfs /tmp tmpfs rw 0 0
+/dev/sdb /data ext4 rw 0 0
+tmpfs /data/ramcache tmpfs rw 0 0
+";
+        // Longest prefix wins over `/`, and over a shorter real mount.
+        assert_eq!(mount_of(MOUNTS, "/tmp/sort.tmp"), Some(("/tmp", "tmpfs")));
+        assert_eq!(mount_of(MOUNTS, "/data/db/tender-db.db"), Some(("/data", "ext4")));
+        assert_eq!(mount_of(MOUNTS, "/data/ramcache/x"), Some(("/data/ramcache", "tmpfs")));
+        assert_eq!(mount_of(MOUNTS, "/home/someone/db"), Some(("/", "ext4")));
+        // An exact mount point resolves to itself, not to its parent.
+        assert_eq!(mount_of(MOUNTS, "/data"), Some(("/data", "ext4")));
+
+        // The hazard: spill in RAM, database on disk — different mount points.
+        let spill = mount_of(MOUNTS, "/tmp").expect("spill mount");
+        let prod_db = mount_of(MOUNTS, "/data/db/tender-db.db").expect("db mount");
+        assert_eq!(spill.1, "tmpfs");
+        assert_ne!(spill.0, prod_db.0, "prod shape must be reported as a mismatch");
+
+        // The coherent case: a scratch database on the same tmpfs as the spill.
+        let scratch_db = mount_of(MOUNTS, "/tmp/scratch-1234.db").expect("scratch mount");
+        assert_eq!(spill.0, scratch_db.0, "a tmpfs-resident scratch DB must stay silent");
+    }
+
     use super::*;
 
     /// [`Db::reset_tender_layer`] must leave every tender-side AUTOINCREMENT table's
