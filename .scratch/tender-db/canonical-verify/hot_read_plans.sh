@@ -219,6 +219,20 @@ fi
 #   `SEARCH t USING INTEGER PRIMARY KEY (rowid=?)` for the joined `tenders` is a
 #   correct point lookup on the primary key and must NOT be flagged; only the
 #   `lots` access is under test.
+#
+# KNOWN LIMITATION — THE SQL BELOW IS A HAND-WRITTEN APPROXIMATION  (issue 112,
+# and it is issue 114's point 1 applied to this gate itself)
+#   These statements were written to match the shape `read.rs` emits. They are NOT
+#   extracted from the builder, so they can DRIFT: change the query in `read.rs`
+#   and the string here keeps planning the OLD shape, staying green while the read
+#   that actually runs regresses. A gate verifying a paraphrase of the artifact is
+#   the same artifact-vs-proxy error as issues 110 and 102 — the difference is that
+#   here it is documented rather than discovered later.
+#   BEFORE THE POST-FIX RUN: replace B1 with the exact SQL the fixed builder emits
+#   (dump it from the builder's `q.sql`, as proj-fix did — do not retype it).
+#   Longer term the fix is to source these from the builder rather than restate
+#   them; until then this comment is the only thing standing between the gate and
+#   a stale paraphrase.
 # ---------------------------------------------------------------------------
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 

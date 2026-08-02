@@ -308,6 +308,26 @@ whose input DB is unidentified cannot have its stats state established, so `TDB_
 is required *even with a custom `TDB_PLAN_CMD`*. A check is only as trustworthy as its
 knowledge of its own inputs.
 
+### OPEN — blocking the post-fix run: B1's SQL is a paraphrase
+
+Issue 114's point 1, applied to this gate itself. Section B's statements were
+hand-written to match the shape `read.rs` emits; they are **not** extracted from the
+builder. So they can drift: change the query in `read.rs` and the string in the gate
+keeps planning the *old* shape — green, while the read that actually runs regresses.
+That is the artifact-vs-proxy error of 110 and 102, and it would be a fourth false
+green after "the index exists / sqlite3 says SEARCH / turso says SEARCH".
+
+**Before the post-fix run**, replace B1 with the exact SQL the fixed builder emits —
+dumped from the builder's `q.sql`, not retyped. The final shape is not settled yet
+(row-value cursor `1830d50`, or a bounded-seek variant, pending run-driver's timings),
+so this cannot be done until the fix lands. Both candidate shapes plan via
+`sqlite_autoindex_lots_1`, so the *index assertion* holds either way; it is the SQL
+text under test that must be synced.
+
+Marked in the script at section B as well, so it is visible to whoever runs it.
+Longer term the durable fix is to source these statements from the builder rather
+than restate them.
+
 ### The pre-fix falsifier is on record
 
 run-driver-2, same DB and same run: **B2 GREEN** (`USING INDEX
