@@ -105,6 +105,42 @@ cannot create. Assert the identity-probe reads too, not just `tender_detail`: a
 missing `tenders_procedure_key` full-scans 8.1M rows *per folded Tender* and would
 surface only as "the daily fold got slow" (111's discriminator table).
 
+### 1b. The plan must come from TURSO — sqlite3 is the wrong engine (measured)
+
+Found while implementing, and it invalidates the obvious read path. `/v1/sql` rejects
+`EXPLAIN` outright (`v1/sql.rs:553`), so the live HTTP path cannot produce a plan at
+all. That leaves a snapshot — and **stock SQLite disagrees with turso on exactly the
+query that motivated this issue.** On the real `lots` schema, with and without
+`ANALYZE`:
+
+```
+EXPLAIN QUERY PLAN SELECT l.id, l.tender_id, l.lot_key FROM lots l
+  JOIN tenders t ON t.id = l.tender_id WHERE l.tender_id = 42 ORDER BY l.id LIMIT 1000;
+
+|--SEARCH l USING COVERING INDEX sqlite_autoindex_lots_1 (tender_id=?)
+```
+
+`SEARCH`, not `SCAN` — **GREEN** — for the read turso scans in prod. A snapshot is the
+right *data*; sqlite3 is the wrong *engine*, and a plan verdict from the wrong engine
+would have certified the live 2.2s defect as healthy. That is issue 110's mirror one
+level deeper: validating turso's behaviour against a different engine's assumptions.
+
+So the plan half **requires** a turso-backed source at the deployed version and reports
+`no-input` without one — it must never fall back to sqlite3. Ranked sources:
+
+1. **A turso-linked harness** run over a snapshot — right engine, and independent of
+   the app, so it does not become a mirror of the thing it checks.
+2. **An app-side diagnostic** running EQP through the server's own pool. For *plans*
+   this is arguably the most load-bearing source that exists — it is literally the
+   engine serving traffic — and it is metadata-only, so it stays live-safe.
+3. Stock sqlite3 — **not evidence** for this defect class. Valid only for the
+   index-presence/DDL half, where reading a catalogue is not planning a query.
+
+Corollary for the assertion itself: assert **"does not SCAN <table>"**, not "uses index
+`<name>`". The `lots` access is served by the *implicit* `sqlite_autoindex_lots_1` from
+the UNIQUE constraint, so a name assertion would be wrong for the very read this gate
+exists for.
+
 ### 2. Derive the expected set from the DEPLOYED BUILD — never a hand-copied list
 
 **This is the whole game.** A shell gate with ten literal index names goes green the
@@ -182,11 +218,34 @@ blocks) is the correct shape; this note exists so a later simplification does no
   both pass and fail.
 - Break 111's `missing_deferred_indexes()` (e.g. drop a name from its list) → gate
   still goes RED (proves independence from the detector it verifies).
-- **Run it against prod as it stands today → it must go RED on `lots_of`**, with
-  `tender_version_bid_parties_version` GREEN. This is the sharpest acceptance test
-  available, because it is the live state: the index that is present passes, and the
-  scan that no presence-check could see fails. A gate that goes fully green against
-  today's prod is measuring the wrong thing and must be rejected.
+- **Run it against prod as it stands today, THROUGH A TURSO PLAN SOURCE → it must go
+  RED on `lots_of`**, with `tender_version_bid_parties_version` GREEN. This is the
+  sharpest acceptance test available, because it is the live state: the index that is
+  present passes, and the scan that no presence-check could see fails. A gate that goes
+  fully green against today's prod is measuring the wrong thing and must be rejected.
+  **Caveat added after measuring (§1b): this is unachievable with stock sqlite3**, which
+  reports SEARCH for that shape. Run under sqlite3 the gate cannot go red here, and a
+  green must be read as no-input, not as a pass.
+
+## Status of the implementation
+
+Landed as `canonical-verify/hot_read_plans.sh` (`ec936e6`). Falsified before commit in
+every dimension: drop an index → FAIL naming it; same name with wrong columns → FAIL
+showing declared vs on-disk; plan says SCAN → FAIL; plan empty/unrecognisable →
+no-input; run outside the repo (no `git show`) → refuses rather than assumes.
+
+Two silent-failure traps closed while building it, both of the "passes having checked
+nothing" kind this issue is about:
+- **`plan_*` scratch indexes are excluded.** `clear_plan` drops them by design, so
+  asserting their presence would fail *correctly* — the fastest way to get a gate
+  ignored.
+- **The const parse avoids gawk's 3-arg `match()`.** The box's `/usr/bin/awk` may be
+  mawk, where that is a syntax error — yielding an empty expectation and a section that
+  reports "0 missing" having examined nothing. An expectation of fewer than 5 indexes is
+  now refused outright as no-input.
+
+Open: it needs a turso plan source (`TDB_PLAN_CMD`) to produce any plan verdict. Until
+one exists, section B is permanently no-input and only the presence half is live.
 
 ## Sequencing
 
