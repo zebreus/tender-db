@@ -920,56 +920,87 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     }
     version_predicates(&mut q, filter);
     match scope {
-        // Emit the cursor predicate only when it actually CONSTRAINS. `lots.id` is
-        // `INTEGER PRIMARY KEY AUTOINCREMENT` (ids start at 1), so a first page's
-        // `l.id > 0` is a TAUTOLOGY — but its presence makes turso drive the whole
-        // query from `lots` in rowid order to satisfy `ORDER BY l.id`, full-scanning
-        // 13.2M rows instead of seeking `UNIQUE(tender_id, lot_key)` when the query
-        // is tender-scoped. That single no-op predicate is the `/v1/tenders/{id}`
-        // ~2.2s regression (via `lots_of`) and the same cost on the public
-        // `/v1/lots?tender=` filter.
+        // A tender-scoped read is a BOUNDED SET, not a page of a stream: one Tender's
+        // lots are a real-world quantity (whole-corpus max 2,604), not a growth curve.
+        // So seek the index and take the whole set — no `l.id > ?` term, because ANY
+        // such term makes turso drive the query from `lots` in rowid order to satisfy
+        // `ORDER BY l.id`, walking all 13.2M rows and filtering `tender_id` (measured
+        // 2.2-2.5s; the same query with no id term seeks `UNIQUE(tender_id, lot_key)`
+        // in 0.5ms). That walk was the `/v1/tenders/{id}` regression via `lots_of` and
+        // the identical cost on `/v1/lots?tender=`.
         //
-        // The underlying mismatch: `lots_of` asks "all lots of ONE Tender" — a
-        // containment question — and inherited the predicate that answers "the next
-        // page of a global list". Dropping the predicate exactly when it cannot
-        // exclude anything is semantics-preserving: identical rows, identical
-        // `ORDER BY l.id` ordering (so no visible reorder anywhere), no schema
-        // change, and no dependence on the planner for correctness.
+        // The mismatch underneath: `lots_of` asks "all lots of ONE Tender" — a
+        // containment question — and answered it by reusing the cursor-paginated list
+        // scope, which answers "the next page of a global list".
         //
-        // A genuine second page (`after > 0`) keeps the predicate and therefore
-        // today's plan — correct, and no worse than before. It is unreachable for a
-        // tender-scoped read in practice (no Tender has `MAX_PAGE` lots), so the
-        // scoped path is index-served for every real request.
+        // The cursor is still HONOURED, just not pushed into SQL: the fetch is capped
+        // at [`TENDER_LOTS_CAP`], which exceeds the corpus maximum, so the rows in hand
+        // are the Tender's complete set and `after`/`limit` are applied to them below.
+        // That keeps pagination semantics exact for `/v1/lots?tender=&after=N` —
+        // dropping the predicate outright would re-serve rows the client already had —
+        // while never emitting the term that costs 2.2s. No schema change, no new
+        // index, no planner dependence for correctness.
+        //
+        // The unfiltered list keeps the plain cursor: driving from `lots` in rowid
+        // order is the right plan for a global id-ordered page.
         Scope::Page { after, limit } => {
-            if after > 0 {
-                q.push(" AND l.id > ?", [Value::Integer(after)]);
+            if filter.tender.is_some() {
+                q.push(" ORDER BY l.id LIMIT ?", [Value::Integer(TENDER_LOTS_CAP)]);
+            } else {
+                q.push(
+                    " AND l.id > ? ORDER BY l.id LIMIT ?",
+                    [Value::Integer(after), Value::Integer(limit)],
+                );
             }
-            q.push(" ORDER BY l.id LIMIT ?", [Value::Integer(limit)]);
         }
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
 
-    q.rows(conn, |row| LotRow {
-        id: int(row, 0),
-        tender_id: int(row, 1),
-        lot_key: text(row, 2),
-        kind: text(row, 3),
-        seq: int(row, 4),
-        title: opt_text_of(row, 5),
-        value_cents: opt_int_of(row, 6),
-        currency: opt_text_of(row, 7),
-        deadline: stamp(row, 8),
-    })
-    .await
+    let mut rows = q
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: opt_text_of(row, 5),
+            value_cents: opt_int_of(row, 6),
+            currency: opt_text_of(row, 7),
+            deadline: stamp(row, 8),
+        })
+        .await?;
+    // Apply the cursor a tender-scoped query deliberately kept out of SQL (above).
+    // The rows in hand are the Tender's COMPLETE set, so this is exactly what the
+    // `l.id > ?` term would have selected — over at most `TENDER_LOTS_CAP` rows,
+    // already ordered by `l.id`.
+    if let (Scope::Page { after, limit }, true) = (scope, filter.tender.is_some()) {
+        if after > 0 {
+            rows.retain(|r| r.id > after);
+        }
+        rows.truncate(limit.max(0) as usize);
+    }
+    Ok(rows)
 }
 
+/// Every Lot of one Tender. A Tender's lots are a BOUNDED set, so this asks for the
+/// whole of it rather than a page: at `MAX_PAGE` the detail response silently
+/// truncated the 16 Tenders (of 4.26M) that carry more than 1,000 lots — reporting
+/// `"lots": 2604` while shipping 1,000 `lot_details`, a response that contradicted
+/// itself about its own data.
 async fn lots_of(conn: &Connection, tender_id: i64) -> turso::Result<Vec<LotRow>> {
     let filter = Filter { tender: Some(tender_id), ..Filter::default() };
-    lots(conn, &filter, Scope::Page { after: 0, limit: MAX_PAGE }).await
+    lots(conn, &filter, Scope::Page { after: 0, limit: TENDER_LOTS_CAP }).await
 }
 
 /// The hard ceiling on any one page — a client asking for more gets this.
 pub const MAX_PAGE: i64 = 1000;
+
+/// The ceiling on a tender-scoped lots read. Not a page size: a Tender's lot count
+/// is a bounded real-world quantity (whole-corpus maximum 2,604, measured on the
+/// post-refold snapshot), so this is a sanity bound that must sit comfortably above
+/// the true maximum — never a value the data is expected to reach. It exists so a
+/// corrupt `tender_id` cannot turn one read into an unbounded scan, not to paginate.
+const TENDER_LOTS_CAP: i64 = 20_000;
 
 // ------------------------------------------------------------- organizations
 
