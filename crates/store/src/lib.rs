@@ -2367,6 +2367,63 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
+    /// A tender-scoped lots read must SEEK `UNIQUE(tender_id, lot_key)`, never walk
+    /// `lots` (13.2M rows on prod) in rowid order. This is the `/v1/tenders/{id}`
+    /// ~2.2s regression: `read::lots` carried the cursor as a plain `l.id > ?`, which
+    /// makes turso drive the query from `lots` to satisfy `ORDER BY l.id` and filter
+    /// `tender_id` per row. Carrying it as the row value `(l.tender_id, l.id) > (?, ?)`
+    /// lets `tender_id` drive instead.
+    ///
+    /// Covers `after > 0` — a REAL cursor page — not just the first page. A first-page
+    /// -only fix leaves `/v1/lots?tender=&after=N` on the 2.2s plan (measured 2237ms),
+    /// so testing only `after = 0` would certify a half-fix as whole.
+    ///
+    /// Asserting the PLAN, not rows or latency: the rows were correct throughout the
+    /// outage and every functional test passed — what was wrong was how they were
+    /// reached. Note a presence-of-index gate would ALSO have passed here: the index
+    /// existed the whole time. Only the plan shows it.
+    #[tokio::test]
+    async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_walking_rowids() {
+        let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // Both the first page and a real cursor page must seek the index.
+        for after in [0i64, 49_377] {
+            let mut rows = conn
+                .query(
+                    "EXPLAIN QUERY PLAN
+                     SELECT l.id FROM lots l
+                      WHERE l.tender_id = ? AND (l.tender_id, l.id) > (?, ?)
+                      ORDER BY l.id LIMIT 1000",
+                    (Value::Integer(1), Value::Integer(1), Value::Integer(after)),
+                )
+                .await
+                .unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            let upper = plan.to_uppercase();
+            // The discriminator is WHICH key drives the query, not SCAN-vs-SEARCH:
+            // turso renders the rowid walk as `SEARCH l USING INTEGER PRIMARY KEY
+            // (rowid=?)`, which reads like a point lookup but traverses the whole
+            // table. So `!contains("SCAN")` passes for the DEFECTIVE shape too and
+            // proves nothing — this assertion pair was verified to FAIL against the
+            // pre-fix `l.id > ?` form before being committed.
+            assert!(
+                upper.contains("TENDER_ID="),
+                "after={after}: the tender_id index must drive the read — plan was:\n{plan}"
+            );
+            assert!(
+                !upper.contains("INTEGER PRIMARY KEY"),
+                "after={after}: must not walk rowids filtering tender_id — plan was:\n{plan}"
+            );
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 37: the resolution-ledger counts must seek the `quarantine_reason`
     /// index — `WHERE reason = ?` narrows to one (usually small) bucket before the
     /// `detail LIKE` filter runs, instead of scanning the whole ~1.2M-row table on

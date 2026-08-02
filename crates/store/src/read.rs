@@ -920,10 +920,44 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     }
     version_predicates(&mut q, filter);
     match scope {
-        Scope::Page { after, limit } => q.push(
-            " AND l.id > ? ORDER BY l.id LIMIT ?",
-            [Value::Integer(after), Value::Integer(limit)],
-        ),
+        // A tender-scoped page carries the cursor as a ROW VALUE. The plain
+        // `l.id > ?` makes turso drive the query from `lots` in rowid order to
+        // satisfy `ORDER BY l.id` — walking all 13.2M rows and filtering
+        // `tender_id` — which is the `/v1/tenders/{id}` ~2.2s regression (via
+        // `lots_of`) and the same cost on the public `/v1/lots?tender=` filter.
+        // Written as `(l.tender_id, l.id) > (?, ?)` the planner seeks
+        // `UNIQUE(tender_id, lot_key)` on `tender_id` instead (~0.5ms).
+        //
+        // The mismatch underneath: `lots_of` asks "all lots of ONE Tender" — a
+        // containment question — and answered it by reusing the cursor-paginated
+        // list scope, inheriting the predicate that answers "the next page of a
+        // global list".
+        //
+        // Semantics are unchanged, not merely preserved-in-practice: `tender_id`
+        // is already pinned by the `filter.tender` equality pushed above, so
+        // `(tender_id, id) > (tender, after)` reduces identically to `id > after`.
+        // Same rows, same `ORDER BY l.id` ordering (no visible reorder — the legacy
+        // era's `lot_key` is a section id, not a padded `LOT-nnnn`, so ordering by
+        // it would NOT have been cosmetic), every page, no schema change and so no
+        // new deferred index to materialise.
+        //
+        // It IS planner-dependent — a future turso could stop using the index for
+        // the row-value form. That is what the read-side plan gate (issue 112)
+        // exists to catch, with a turso version bump as its trigger.
+        //
+        // The unfiltered list keeps the plain cursor: driving from `lots` in rowid
+        // order is the RIGHT plan for a global id-ordered page, and its SQL is
+        // unchanged here.
+        Scope::Page { after, limit } => {
+            match filter.tender {
+                Some(tender) => q.push(
+                    " AND (l.tender_id, l.id) > (?, ?)",
+                    [Value::Integer(tender), Value::Integer(after)],
+                ),
+                None => q.push(" AND l.id > ?", [Value::Integer(after)]),
+            }
+            q.push(" ORDER BY l.id LIMIT ?", [Value::Integer(limit)]);
+        }
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
 
