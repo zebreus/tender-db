@@ -414,3 +414,66 @@ async fn prepass_stripes_balance_by_notice_count_not_id_width() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 94 (3): bounding the pre-pass sweep to the PLAN's id range must not change
+/// a single byte of the canonical layer.
+///
+/// `write_shard` already skips notices absent from the plan, so ids outside
+/// `[MIN(plan_notice.notice_id), MAX(…)]` can never produce a bucket row — visiting
+/// them is pure waste. The optimisation is therefore invisible by construction, and
+/// this pins that: a scoped incremental fold whose delta sits at the TOP of the id
+/// space (the shape of a late bulk reclaim, where the win is largest) must produce
+/// exactly what an unscoped full non-rebuild projection produces, untouched Tenders
+/// at low ids included.
+///
+/// The caveat worth knowing rather than discovering: the touched-Tender expansion
+/// can pull merge partners from anywhere in id space, which widens the range back
+/// out. That degrades the optimisation to a no-op, never to a wrong answer — which
+/// is exactly why it is safe to stack on top of the count-striping.
+#[tokio::test]
+async fn scoping_the_sweep_to_the_plan_range_changes_nothing() {
+    let (full, ff, pf) = scratch("scopefull").await;
+    let (scoped, fs, ps) = scratch("scopescoped").await;
+    build_corpus(&full, ff).await;
+    build_corpus(&scoped, fs).await;
+    project::project(&full, false).await.expect("establish full");
+    project::project(&scoped, false).await.expect("establish scoped");
+    assert_eq!(snapshot(&full).await, snapshot(&scoped).await, "established layers differ");
+
+    // A delta at the TOP of the id space — every planned notice sits far above the
+    // established corpus, so the plan range covers a small slice of the whole.
+    for (db, fid) in [(&full, ff), (&scoped, fs)] {
+        for p in 0..4u64 {
+            let key = format!("bt04-late-{p:04}");
+            let parsed = Parsed {
+                sections: vec![sec("PROC", "Procedure", None)],
+                values: vec![
+                    id_val("PROC", "BT-04-notice", &key, false),
+                    date_val("PROC", "BT-05(a)-notice", 9_000 + p as i64),
+                    text_val("PROC", "BT-21-Procedure", &format!("Late procedure {p}")),
+                ],
+            };
+            record(db, fid, SOURCE, &format!("late-{p:04}"), "eforms:eforms-sdk-1.13", parsed).await;
+        }
+    }
+
+    project::project(&full, false).await.expect("full absorb");
+    project::project_incremental(&scoped).await.expect("scoped incremental absorb");
+
+    assert_eq!(
+        snapshot(&full).await,
+        snapshot(&scoped).await,
+        "a plan-range-scoped sweep must be byte-identical to an unscoped full projection"
+    );
+    assert_eq!(
+        scoped.unprojected_parsed_notice_ids().await.unwrap().len(),
+        0,
+        "the scoped sweep must still mark every planned notice projected"
+    );
+
+    for p in [pf, ps] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}

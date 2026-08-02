@@ -3171,6 +3171,22 @@ impl Db {
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
     }
 
+    /// The `(min, max)` notice id the current grouping plan covers, or `None` when
+    /// the plan is empty. The Phase-2 pre-pass sweeps notice ids in order and skips
+    /// anything absent from the plan, so ids outside this range are pure waste —
+    /// this is what bounds the sweep to the part of the id space that can produce a
+    /// row (issue 94). On a full rebuild the plan covers the whole corpus and the
+    /// range degenerates to the whole id space, which is exactly right.
+    pub async fn plan_notice_id_range(&self) -> turso::Result<Option<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT MIN(notice_id), MAX(notice_id) FROM plan_notice", ()).await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        Ok(match (opt_int_of(&row, 0), opt_int_of(&row, 1)) {
+            (Some(lo), Some(hi)) => Some((lo, hi)),
+            _ => None,
+        })
+    }
+
     /// Split `(lo, hi]` into at most `k` contiguous notice-id stripes holding ~the
     /// same number of PARSED notices each — the Phase-2 pre-pass's work partition
     /// (issue 94).

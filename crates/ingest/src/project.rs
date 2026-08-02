@@ -1293,8 +1293,19 @@ async fn write_buckets_sharded(
 ) -> turso::Result<usize> {
     std::fs::create_dir_all(dir).expect("create bucket dir");
 
+    // Bound the sweep to the id range the PLAN covers (issue 94). `write_shard`
+    // already skips notices absent from the plan, so ids outside this range can
+    // never produce a bucket row — reading them is pure waste. On a rebuild the plan
+    // covers the corpus and this degenerates to the whole id space; on a scoped
+    // re-fold whose cohort is clustered (a late bulk reclaim is, by construction) it
+    // removes most of the sweep. It can never change the OUTPUT, only which ids are
+    // visited, so byte-identity is untouched.
     let max_id = db.max_parsed_notice_id().await?;
-    let (lo, hi) = (0, max_id);
+    let (lo, hi) = match db.plan_notice_id_range().await? {
+        // `id > lo` is exclusive, so step one below the first planned notice.
+        Some((plan_lo, plan_hi)) => (plan_lo - 1, plan_hi.min(max_id)),
+        None => (0, max_id),
+    };
 
     // Partition the swept range into contiguous stripes holding equally many PARSED
     // notices (issue 94) — NOT equal id widths, which put ~all the work in one
@@ -1303,7 +1314,9 @@ async fn write_buckets_sharded(
     let stripes = db.parsed_id_stripes(lo, hi, k).await?;
     let k = stripes.len();
     eprintln!(
-        "[project] phase 2 pre-pass: {k} shard(s) over notice ids ({lo}, {hi}]"
+        "[project] phase 2 pre-pass: {k} shard(s) over notice ids ({lo}, {hi}] \
+         ({} of the id space)",
+        if max_id > 0 { format!("{}%", (hi - lo) * 100 / max_id.max(1)) } else { "100%".into() }
     );
     let readers = db.readers(k)?;
 
