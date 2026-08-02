@@ -473,8 +473,17 @@ pub enum Progress {
     /// Phase 1 → 2 transition: the plan grouped into `tenders` (`islands` of them
     /// single-notice).
     Grouped { tenders: u64, islands: u64 },
-    /// Phase 2: `tenders` of `total` folded and applied so far.
-    Applying { tenders: u64, total: u64 },
+    /// Phase 2: `tenders` of `total` folded so far, and `versions` version rows
+    /// actually WRITTEN.
+    ///
+    /// The two are deliberately separate. `tenders` counts groups the fold has
+    /// processed, which climbs to completion even when every single one hits
+    /// `apply_tender_tx`'s unchanged-chain early return and writes nothing — so a
+    /// fold that is a total no-op looks identical to a healthy one on that counter
+    /// alone. `versions` is what distinguishes them, and it is the first-heartbeat
+    /// signal that a projection-logic re-fold (issue 99's epoch) is really
+    /// rewriting rather than silently skipping.
+    Applying { tenders: u64, total: u64, versions: u64 },
 }
 
 /// Which Phase-2 fold the projection runs. Byte-identical either way — both build
@@ -518,8 +527,8 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
         Progress::Grouped { tenders, islands } => {
             eprintln!("[project] phase 2: folding {tenders} tenders ({islands} islands)");
         }
-        Progress::Applying { tenders, total } => {
-            eprintln!("[project] phase 2: {tenders}/{total} tenders applied");
+        Progress::Applying { tenders, total, versions } => {
+            eprintln!("[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written");
         }
     })
     .await
@@ -669,7 +678,11 @@ pub async fn project_with_progress_phase2(
                 tenders_done += groups.len() as u64;
                 report.applied.add(apply_plan_batch(db, &groups, now, rebuild).await?);
                 // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
-                on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+                on_progress(Progress::Applying {
+                    tenders: tenders_done,
+                    total: report.tenders,
+                    versions: report.applied.versions_written,
+                });
                 batches_done += 1;
                 if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
                     && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
@@ -1037,13 +1050,22 @@ pub async fn project_incremental_chunked_phase2(
                 report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
                 // Heartbeat per batch: without it a wedged fold is indistinguishable
                 // from a slow one (issue 90).
-                eprintln!("[project] incremental fold: {tenders_done}/{tenders} Tenders applied");
+                eprintln!(
+                    "[project] incremental fold: {tenders_done}/{tenders} Tenders folded, \
+                     {} versions written",
+                    report.applied.versions_written
+                );
             }
         }
         Phase2::Buckets { shards } => {
             bucketed_fold(db, APPLY_NOTICE_BATCH, shards, now, false, &mut report, |p| {
-                if let Progress::Applying { tenders, total } = p {
-                    eprintln!("[project] incremental fold: {tenders}/{total} Tenders applied");
+                if let Progress::Applying { tenders, total, versions } = p {
+                    // `versions` is the load-bearing number: `tenders` climbs to
+                    // completion even if every fold early-returns (issue 99).
+                    eprintln!(
+                        "[project] incremental fold: {tenders}/{total} Tenders folded, \
+                         {versions} versions written"
+                    );
                 }
             })
             .await?;
@@ -1184,7 +1206,11 @@ async fn bucketed_fold(
         let (applied, groups) = fold_bucket(db, &rows, now, rebuild).await?;
         report.applied.add(applied);
         tenders_done += groups;
-        on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+        on_progress(Progress::Applying {
+            tenders: tenders_done,
+            total: report.tenders,
+            versions: report.applied.versions_written,
+        });
         if (b + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
         {
