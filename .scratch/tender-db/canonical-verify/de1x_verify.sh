@@ -449,14 +449,40 @@ fi
 #    had facts" and "zero of 218,635 lack them" — issue 85's actual acceptance
 #    wording. Minutes, not seconds; every lookup is an index seek.
 # ---------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# INTERIM PROGRESS — everything above (A, B1, C, D, F, G1/G2/G6/G7) is the cheap
+# core. It is an early health signal ONLY. It is NOT the verdict and must never
+# be read as one: H1 is strictly stronger than C's sampled ≥95% — a sample can
+# pass while H1 finds a real pocket of factless versions, which is precisely the
+# failure the fold exists to prevent. The exit code comes after H.
+# --------------------------------------------------------------------------
+echo
+echo "  ==============================================================="
+if [ "$HARDFAIL" -eq 0 ]; then
+  echo "  INTERIM — NOT THE VERDICT. Cheap core gates: $PASS passed, 0 hard-fail."
+  echo "  On track, but H can still fail: a sampled rate can pass while the"
+  echo "  exhaustive pass finds factless versions the sample never touched."
+else
+  echo "  INTERIM — NOT THE VERDICT. Cheap core gates: $HARDFAIL HARD-FAIL already."
+  echo "  This is heading to NO-GO; H runs anyway so the report is complete."
+fi
+echo "  Exhaustive H next (~30-60 min on 441 GB). Exit code comes after it."
+echo "  ==============================================================="
+echo
+
 COHORT="n.profile IN ('eforms:eforms-de-1.0','eforms:eforms-de-1.1','eforms:eforms-de-1.2')"
+# Heartbeat for the long phase — a silent 30-60 min terminal is indistinguishable
+# from a hung one.
+hstep() { printf '   [%s] running %s …\n' "$(date -u +%H:%M:%SZ)" "$1"; }
 if [ -n "${TDB_SNAPSHOT:-}" ]; then
-  echo "-- H. exhaustive whole-cohort checks (snapshot; this takes minutes)"
+  echo "-- H. exhaustive whole-cohort checks (snapshot) — started $(date -u +%H:%M:%SZ)"
+  hstep "H1 (cohort versions with no text)"
   zero H1 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
             WHERE $COHORT AND n.parse_state='parsed'
               AND NOT EXISTS (SELECT 1 FROM tender_version_texts x
                                WHERE x.tender_id=v.tender_id AND x.seq=v.seq)" \
        hard "cohort versions with NO text at all (issue 85's symptom, exhaustively)"
+  hstep "H2 (cohort versions with no CPV)"
   zero H2 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
             WHERE $COHORT AND n.parse_state='parsed'
               AND NOT EXISTS (SELECT 1 FROM tender_version_classifications c
@@ -465,6 +491,7 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
   # 218,853 of 218,876 payloads carry a ProcurementProjectLot — ~23 genuinely have
   # none, so this is a small-threshold gate, not a zero gate. Anything larger is
   # the lot fix failing, not the source.
+  hstep "H3 (cohort versions with no lots)"
   lotless=$(scalar "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
                      WHERE $COHORT AND n.parse_state='parsed'
                        AND NOT EXISTS (SELECT 1 FROM tender_version_lots l
@@ -475,11 +502,13 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
     report FAIL H3 "cohort versions with NO lots = $lotless (> 50) — the Lot/LotsGroup/Part fix is not landing"
     HARDFAIL=$((HARDFAIL+1))
   fi
+  hstep "H4 (double-count, exhaustive)"
   zero H4 "SELECT COUNT(*) FROM (
              SELECT v.caused_by_notice_id FROM notices n JOIN tender_versions v
                ON v.caused_by_notice_id=n.id WHERE $COHORT
               GROUP BY v.caused_by_notice_id HAVING COUNT(*) > 1)" \
        hard "cohort notices holding versions in >1 Tender (G6, exhaustively)"
+  hstep "H5 (exact per-fact rates — the slowest, 6 probes per notice)"
   info H5 "SELECT COUNT(*),
              SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts x WHERE x.tender_id=v.tender_id AND x.seq=v.seq AND x.field='title') THEN 1 ELSE 0 END),
              SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_classifications c WHERE c.tender_id=v.tender_id AND c.seq=v.seq AND c.scheme='nuts') THEN 1 ELSE 0 END),
@@ -489,6 +518,7 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
            FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
             WHERE $COHORT AND n.parse_state='parsed'" \
     "exact cohort rates: versions/title/nuts/amount/date/buyer (source: 100/98.1/~35-45/~47.7/100 %)"
+  hstep "H6 (exact lot-kind split)"
   info H6 "SELECT vl.kind, COUNT(*) FROM notices n
              JOIN tender_versions v ON v.caused_by_notice_id=n.id
              JOIN tender_version_lots vl ON vl.tender_id=v.tender_id AND vl.seq=v.seq
