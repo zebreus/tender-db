@@ -55,10 +55,10 @@ Self-labelled per-shard heartbeats:
 **21× between the fastest and slowest stripe**, and the slowest is the one holding the
 cohort.
 
-### Byte cost dominates; plan density is a minor additive term
+### Read cost rises with id; plan density's contribution is unquantified
 
-**Byte cost rising with id is the primary mechanism and explains essentially the whole
-gradient.** The decisive evidence is a **within-shard** measurement: shard 2 fell
+**Per-notice read cost rising with id is established.** The clean evidence is a
+**within-shard** measurement with plan density held constant *at zero*: shard 2 fell
 **1,309 → 722 → 544 notices/s while advancing through its own stripe** — same thread, same
 code, same device, only the ids rising. That rules out scheduling, pool contention and
 stripe assignment, and pins the cause on the data: recent eForms records are fatter than
