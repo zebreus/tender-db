@@ -55,27 +55,45 @@ Self-labelled per-shard heartbeats:
 **21× between the fastest and slowest stripe**, and the slowest is the one holding the
 cohort.
 
-### Two distinct mechanisms, and they stack
+### Byte cost dominates; plan density is a minor additive term
 
-1. **Byte cost rises with id** — explains shards 2-5, which are slow while spilling
-   *nothing*. The decisive evidence is a **within-shard** gradient: shard 2 fell
-   **1,309 → 722 → 544 notices/s while advancing through its own stripe** — same thread,
-   same code, same device, only the ids rising. That rules out scheduling, pool
-   contention and stripe assignment, and pins the cause on the data: recent eForms records
-   are fatter than the legacy TED records at low ids.
+**Byte cost rising with id is the primary mechanism and explains essentially the whole
+gradient.** The decisive evidence is a **within-shard** measurement: shard 2 fell
+**1,309 → 722 → 544 notices/s while advancing through its own stripe** — same thread, same
+code, same device, only the ids rising. That rules out scheduling, pool contention and
+stripe assignment, and pins the cause on the data: recent eForms records are fatter than
+the legacy TED records at low ids.
 
-2. **Plan density** — explains shards 6 and 7, which additionally pay resolve + encode +
-   spill per plan member. Shard 6 went from 0 to 20,408 spilled as it entered the cohort;
-   shard 7 is the only shard that has been producing throughout.
+**Plan density (resolve + encode + spill per cohort member) is real but secondary**, and
+the controlled comparison inverts the intuitive ordering:
 
-Shard 7 carries **both** — high byte cost *and* the bulk of the producer work — which is
-why it is 21× slower rather than the ~5× the byte gradient alone would give.
+| | swept | spilled | cohort share of swept | notices/s |
+|---|---|---|---|---|
+| shard 6 | 1,005,000 | 121,537 | **12.1%** | **161** |
+| shard 7 | 502,500 | 6,737 | **1.3%** | **97** |
 
-> A note on method: "plan density" was proposed first and **falsified** for shards 3-6 by
-> their zero-spill readings, then found to be genuinely operating on shards 6-7 once their
-> spill climbed. Both mechanisms are real; neither alone explains the spread. An earlier
-> per-thread attribution (mapping tids to shards to derive KB/notice) was **retracted** —
-> it failed an arithmetic check. Only self-labelled shard heartbeats are used above.
+**Shard 6 carries ~9× more producer work per notice swept, and is 1.7× FASTER.** If plan
+density drove the cost, the heavier producer would be the slower shard. It is the
+opposite — so the byte-cost difference between adjacent stripes outweighs a 9× difference
+in producer load.
+
+**Shard 7 is the slowest because it holds the highest ids and therefore the fattest
+records — not because it carries the cohort.** It actually carries *less* cohort work than
+shard 6.
+
+> **Method note.** The causal account went through three revisions, each forced by a new
+> measurement rather than by re-reasoning old data:
+> 1. "Slow shards are slow because they're producing" — **falsified** by shards 3-6 being
+>    slow at *zero* spill.
+> 2. "Both mechanisms stack on shard 7" — **falsified** by the normalised comparison above
+>    (shard 6: 9× the producer load, 1.7× faster).
+> 3. A per-thread attribution mapping tids to shards to derive KB/notice was
+>    **retracted** — it failed an arithmetic check (cumulative read implied a swept count
+>    that would have fired heartbeats which never fired).
+>
+> Only **self-labelled shard heartbeats** are used in this issue. The headline conclusion
+> was unchanged by all three revisions, which is the reason to trust it: it does not
+> depend on which mechanism dominates.
 
 ## Why this blocks the reprocess
 
