@@ -513,7 +513,7 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
             WHERE $COHORT AND n.parse_state='parsed'
               AND NOT EXISTS (SELECT 1 FROM tender_version_texts x
                                WHERE x.tender_id=v.tender_id AND x.seq=v.seq)" \
-       hard "cohort versions with NO text at all (issue 85's symptom, exhaustively)"
+       hard "cohort versions with NO text at all (issue 85's symptom). If H1==H2==H3 these are versions the fold never rewrote — the unchanged-chain skip, not a mapping gap"
   hstep "H2 (cohort versions with no CPV)"
   zero H2 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
             WHERE $COHORT AND n.parse_state='parsed'
@@ -531,7 +531,7 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
   if [ "${lotless:-0}" -le 50 ]; then
     report PASS H3 "cohort versions with NO lots = ${lotless:-?} (≤ 50; ~23 payloads genuinely carry none)"
   else
-    report FAIL H3 "cohort versions with NO lots = $lotless (> 50). Check H1/H2 FIRST: if all three report the SAME count, these versions have no facts of any kind, which is the unchanged-chain skip (apply_tender_tx returns early when a Tender\047s notice sequence is unchanged, so a projection-logic fix never rewrites it) — NOT a lot-mapping failure. Only a count that differs from H1/H2 implicates de1_lot_kind."
+    report FAIL H3 "cohort versions with NO lots = $lotless (> 50). Check H1/H2 FIRST: if all three report the SAME count, these versions have no facts of any kind, which is the unchanged-chain skip (apply_tender_tx returns early when a Tender's notice sequence is unchanged, so a projection-logic fix never rewrites it) — NOT a lot-mapping failure. Only a count that differs from H1/H2 implicates de1_lot_kind."
     HARDFAIL=$((HARDFAIL+1))
   fi
   hstep "H4 (double-count, exhaustive)"
