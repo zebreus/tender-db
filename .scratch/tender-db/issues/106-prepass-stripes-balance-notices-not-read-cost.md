@@ -64,22 +64,35 @@ code, same device, only the ids rising. That rules out scheduling, pool contenti
 stripe assignment, and pins the cause on the data: recent eForms records are fatter than
 the legacy TED records at low ids.
 
-**Plan density (resolve + encode + spill per cohort member) is real but secondary**, and
-the controlled comparison inverts the intuitive ordering:
+**Plan density does not drive cost — it is anti-correlated with it.** The decisive
+measurement is *within a single worker*, holding thread, stripe, code and device constant
+so that only the region changes:
 
-| | swept | spilled | cohort share of swept | notices/s |
-|---|---|---|---|---|
-| shard 6 | 1,005,000 | 121,537 | **12.1%** | **161** |
-| shard 7 | 502,500 | 6,737 | **1.3%** | **97** |
+| shard 7 segment | spill added | notices/s |
+|---|---|---|
+| 753,750 → 1,005,000 swept | **+1,612** | **186** |
+| 1,005,000 → 1,256,250 swept | **+57,254** | **372** |
 
-**Shard 6 carries ~9× more producer work per notice swept, and is 1.7× FASTER.** If plan
-density drove the cost, the heavier producer would be the slower shard. It is the
-opposite — so the byte-cost difference between adjacent stripes outweighs a 9× difference
-in producer load.
+**The same worker did 35× more producer work in the second segment and ran 2× FASTER.**
+No model in which resolve/encode/spill is what slows a shard survives that.
 
-**Shard 7 is the slowest because it holds the highest ids and therefore the fattest
-records — not because it carries the cohort.** It actually carries *less* cohort work than
-shard 6.
+(A cross-shard comparison pointed the same way — shard 6 carried ~9× more producer work
+per notice swept than shard 7, at 12.1% vs 1.3% cohort share, and was 1.7× faster — but it
+has the confound of different workers at different progress points. The within-worker
+result above does not.)
+
+**So the sole surviving explanation is per-notice read cost varying by region**, and the
+cohort's own region is *cheaper* per notice than the surrounding sparse high-id notices —
+plausibly because the reclaimed cohort was written recently and contiguously.
+
+### The long pole changed mid-run
+
+Shard 7 holds the highest ids and was, on every model considered during the run, the
+stripe that "should" dominate. It finished **before** shard 6.
+
+**Which stripe is the bottleneck was not fixed** — it changed as the workers crossed
+regions. A static weighting scheme would have to predict not merely the cost gradient but
+*which stripe wins the race*, and there was no correct answer to predict.
 
 > **Method note.** The causal account went through three revisions, each forced by a new
 > measurement rather than by re-reasoning old data:
