@@ -1,4 +1,4 @@
-# 109 — section I verifies the wrong artifact: it greps SSR HTML for a client-hydrated ledger
+# 110 — section I verifies the wrong artifact: it greps SSR HTML for a client-hydrated ledger
 
 Status: open — POST-LANDING follow-up. Found during the 98+99 ship, 2026-08-02.
 Kind: verification tooling / false-negative gate
