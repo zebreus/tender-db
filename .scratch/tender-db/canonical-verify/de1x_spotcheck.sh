@@ -45,7 +45,8 @@ BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
 TAB=$(printf '\t')
 if [ -n "${TDB_SNAPSHOT:-}" ]; then
   [ -r "$TDB_SNAPSHOT" ] || { echo "TDB_SNAPSHOT=$TDB_SNAPSHOT is not readable" >&2; exit 2; }
-  [ -e "${TDB_SNAPSHOT}-wal" ] && { echo "REFUSING: ${TDB_SNAPSHOT}-wal exists — immutable=1 would read stale data." >&2; exit 2; }
+  # Non-empty only — snapshots here ship a harmless 0-byte -wal (see de1x_verify.sh).
+  [ -s "${TDB_SNAPSHOT}-wal" ] && { echo "REFUSING: ${TDB_SNAPSHOT}-wal is non-empty — immutable=1 would read stale data." >&2; exit 2; }
   command -v sqlite3 >/dev/null || { echo "sqlite3 not found (try: nix shell nixpkgs#sqlite --command …)" >&2; exit 2; }
   q() {
     local out
