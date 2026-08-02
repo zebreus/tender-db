@@ -390,6 +390,15 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // it, the columns are added here and backfilled once from tender_versions;
     // thereafter the projection maintains them, so this is a no-op. `MAX(seq)` and
     // the head's `published_at` come straight off the PK index (tender_id, seq).
+    // The projection-logic epoch (issue 99). Metadata-only on a STRICT table with a
+    // constant default, so O(1) even on the 8.1M-row prod `tenders` — the same shape
+    // `alter_add_column_cost.rs` proved for the issue-58 watermark. Existing rows read
+    // the default 0, i.e. "folded under unknown/older logic", so the first fold that
+    // touches each one rewrites it. That is the intended semantics, not a migration
+    // cost: nothing is rewritten until a refold marks it.
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN projection_epoch INTEGER NOT NULL DEFAULT 0")
+        .await?;
+
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_seq INTEGER").await?;
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_published_at INTEGER").await? || added;
     if added {

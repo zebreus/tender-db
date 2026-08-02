@@ -59,7 +59,15 @@ pub(crate) const SCHEMA: &str = "
         -- tender_versions stays fully append-only -- this is a derived head pointer
         -- (ADR-0001 allows validity-range writes on the canonical layer).
         current_seq          INTEGER,
-        current_published_at INTEGER
+        current_published_at INTEGER,
+        -- Which PROJECTION LOGIC this Tender's content was last folded under
+        -- (issue 99). The fold's early-return keys on the chain of causing
+        -- notices, which is a state key only while the logic is fixed: a mapping
+        -- change makes the same chain yield different content, and the unchanged
+        -- chain then skips it. Issue 85 left 2,185 factless shells that way and
+        -- issue 98 would have written zero parties. Stamped on every rewrite; a
+        -- mismatch forces one.
+        projection_epoch     INTEGER NOT NULL DEFAULT 0
         -- A procedure key is globally unique across Sources: a TED eForms
         -- procedure and its DÖE twin share one BT-04 UUID and must collapse into
         -- one Tender (ADR-0003), and legacy `ojs:` keys are TED-only, so the key
@@ -563,6 +571,41 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// Legacy `plan_ojs_node` rows written per transaction when materialising the
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
+/// The version of the projection LOGIC that produced a Tender's stored content
+/// (issue 99).
+///
+/// `apply_tender_tx` skips a Tender whose chain of causing notices is unchanged,
+/// on the stated assumption that "the projection is deterministic, so the sequence
+/// of causing notices is the state key". That holds only while the logic is fixed.
+/// A mapping change makes the SAME chain yield different content, so the chain
+/// stops being a state key and the new content is silently discarded — issue 85
+/// left 2,185 factless shells exactly that way, and issue 98 would have written
+/// zero party rows at all. Every rewrite stamps this; a stored value that differs
+/// forces a rewrite the chain alone would have skipped.
+///
+/// **Bump this on any change to the projection's mapping or fold logic** — the
+/// alias tables, `canonical_name`, `NoticeState::read`, `read_results`, `fold`.
+/// Not for changes that only affect grouping (those change the chain, which the
+/// existing check already catches) and not for read-path or performance work.
+///
+/// **A bump MUST be paired with a SCOPED refold.** The rewrite set is the
+/// `projected = 0` marking, never the epoch, so a profile-scoped `refold` rewrites
+/// only that cohort. A bump plus a whole-corpus refold would re-emit version change
+/// events for all ~8.1M Tenders — the feed is append-only, so that noise is
+/// permanent. Scope the refold to the profiles the logic change actually touched.
+///
+/// Bumping is human discipline, and the coupling that partly guards it has a known
+/// hole: `project_golden` turns red when fold output moves, but its corpus contains
+/// no eForms-DE 1.x notice, so a DE-only change — issue 98 exactly — would not have
+/// tripped it. Closing that needs a DE-1.x golden fixture (see the issue-99
+/// follow-up), which is also what would give the DE path multi-notice fold-order
+/// coverage.
+///
+/// | epoch | change |
+/// |---|---|
+/// | 1 | issue 98 — DE-1.x organization references (`is_ref` + 25 role aliases) |
+pub const PROJECTION_EPOCH: i64 = 1;
+
 const NODE_WRITE_BATCH: usize = 20_000;
 
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
@@ -1236,6 +1279,18 @@ impl Db {
     /// Batched by id range with a TRUNCATE between, like [`Db::clear_canonical`]: a
     /// single cohort-wide UPDATE writes a WAL frame per row and balloons the in-RAM
     /// WAL-index (issue 63). Returns the number of notices re-queued.
+    /// Age every Tender's stored projection epoch — **tests only** (issue 99).
+    ///
+    /// Production never needs this: bumping [`PROJECTION_EPOCH`] in code makes every
+    /// stored value stale by definition. The epoch-invariance gates need to drive the
+    /// branch directly, and forcing them through a runtime-injectable epoch would
+    /// mean making a compile-time constant configurable in production purely to be
+    /// testable — a worse trade than one narrow, clearly-labelled writer.
+    pub async fn set_projection_epoch_for_test(&self, epoch: i64) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("UPDATE tenders SET projection_epoch = ?", (Value::Integer(epoch),)).await
+    }
+
     pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
         let requeued = self.projected_notice_count_for_profiles(profiles).await?;
         if requeued == 0 {
@@ -1454,7 +1509,8 @@ impl Db {
                  id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
                  procedure_key TEXT, island_notice_id INTEGER REFERENCES notices(id),
                  kind TEXT NOT NULL, created_at INTEGER NOT NULL,
-                 current_seq INTEGER, current_published_at INTEGER
+                 current_seq INTEGER, current_published_at INTEGER,
+                 projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
         )
@@ -2365,7 +2421,8 @@ impl Db {
         pending: &mut Pending,
     ) -> turso::Result<Applied> {
         let mut applied = Applied::default();
-        let (tender_id, created) = self.tender_identity(conn, p, now, rebuild, stmts).await?;
+        let (tender_id, created, stored_epoch) =
+            self.tender_identity(conn, p, now, rebuild, stmts).await?;
         applied.tenders_created += u64::from(created);
 
         // The projection is deterministic, so the sequence of causing notices
@@ -2378,12 +2435,23 @@ impl Db {
         // SELECT (issue 67, ~one per tender). keep stays 0 and every version is
         // written: byte-identical to today's empty-`stored` path.
         let stored = if rebuild { Vec::new() } else { self.stored_chain(conn, tender_id).await? };
-        let keep = stored
-            .iter()
-            .zip(&p.versions)
-            .take_while(|(a, b)| **a == b.caused_by_notice_id)
-            .count();
-        if keep == stored.len() && keep == p.versions.len() {
+        // A stored epoch from older projection LOGIC makes the chain meaningless as a
+        // state key: the same notices now fold to different content (issue 99). Force
+        // a full rewrite by keeping nothing — which re-uses the repair path below
+        // unchanged, so there is no second write mechanism to keep correct. Merely
+        // skipping the early return would do NOTHING: with the chain unchanged,
+        // `keep == stored.len() == p.versions.len()`, so both loops are no-ops.
+        let stale = stored_epoch != PROJECTION_EPOCH;
+        let keep = if stale {
+            0
+        } else {
+            stored
+                .iter()
+                .zip(&p.versions)
+                .take_while(|(a, b)| **a == b.caused_by_notice_id)
+                .count()
+        };
+        if !stale && keep == stored.len() && keep == p.versions.len() {
             return Ok(applied);
         }
 
@@ -2413,6 +2481,7 @@ impl Db {
                 .execute((
                     Value::Integer(p.versions.len() as i64),
                     Value::Integer(head.published_at),
+                    Value::Integer(PROJECTION_EPOCH),
                     Value::Integer(tender_id),
                 ))
                 .await?;
@@ -2427,7 +2496,7 @@ impl Db {
         now: i64,
         rebuild: bool,
         stmts: &mut TenderInserts,
-    ) -> turso::Result<(i64, bool)> {
+    ) -> turso::Result<(i64, bool, i64)> {
         // On a rebuild the tender-content layer was just emptied by
         // [`Db::reset_tender_layer`] and every group_key is distinct, so identity is
         // ALWAYS a fresh insert — skip the random-position probe into the (now
@@ -2443,11 +2512,16 @@ impl Db {
             // Islands stay per-notice.
             let mut rows = match (&p.procedure_key, p.island_notice_id) {
                 (Some(key), _) => {
-                    conn.query("SELECT id, source FROM tenders WHERE procedure_key = ?", (t(key),)).await?
+                    conn.query(
+                        "SELECT id, source, projection_epoch FROM tenders WHERE procedure_key = ?",
+                        (t(key),),
+                    )
+                    .await?
                 }
                 (None, Some(notice_id)) => {
                     conn.query(
-                        "SELECT id, source FROM tenders WHERE source = ? AND island_notice_id = ?",
+                        "SELECT id, source, projection_epoch FROM tenders
+                          WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
                     .await?
@@ -2462,7 +2536,7 @@ impl Db {
                     conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
                         .await?;
                 }
-                return Ok((id, false));
+                return Ok((id, false, int(&row, 2)));
             }
         }
         stmts
@@ -2475,7 +2549,7 @@ impl Db {
                 Value::Integer(now),
             ))
             .await?;
-        Ok((last_insert_rowid(conn).await?, true))
+        Ok((last_insert_rowid(conn).await?, true, PROJECTION_EPOCH))
     }
 
     async fn stored_chain(&self, conn: &Connection, tender_id: i64) -> turso::Result<Vec<i64>> {
@@ -3446,7 +3520,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")

@@ -172,6 +172,17 @@ async fn snapshot(db: &Db) -> String {
     out
 }
 
+/// `snapshot` minus the change feed — the CONTENT surface. A forced rewrite
+/// re-emits version change events by design (issue 99), so the feed is expected to
+/// grow; what must not move is the canonical content itself.
+async fn snapshot_content(db: &Db) -> String {
+    let full = snapshot(db).await;
+    match full.find("--- digest 8 ---") {
+        Some(at) => full[..at].to_owned(),
+        None => full,
+    }
+}
+
 async fn count(db: &Db, sql: &str) -> i64 {
     match db.scalar(sql).await.expect("count") {
         Some(store::turso::Value::Integer(i)) => i,
@@ -510,4 +521,66 @@ async fn retirement_is_identical_however_it_is_chunked() {
     );
     assert_eq!(one_shot, paired, "an uneven chunk size must be identical too");
     assert!(one_shot.contains("removed"), "the feed must actually carry the removed events");
+}
+
+/// Issue 99 gate 1: a forced rewrite is a CONTENT no-op.
+///
+/// The fold skips a Tender whose chain of causing notices is unchanged, on the
+/// assumption that the chain is a state key. It is only while the projection LOGIC
+/// is fixed — a mapping change makes the same chain yield different content, and the
+/// unchanged chain then discards it (issue 85's 2,185 factless shells; issue 98's
+/// zero parties). The epoch forces the rewrite.
+///
+/// This pins the half that makes the mechanism SAFE: forced against UNCHANGED logic,
+/// the rewrite must reproduce byte-identical content. If it did not, an epoch bump
+/// would perturb every Tender it touched and the whole scheme would be unusable.
+///
+/// Staleness is simulated by writing an impossible stored epoch rather than by
+/// making `PROJECTION_EPOCH` injectable — the production constant stays a constant,
+/// and the test drives the exact condition the code branches on.
+#[tokio::test]
+async fn an_epoch_forced_rewrite_reproduces_identical_content() {
+    let (db, fetch, path) = scratch("epoch-noop").await;
+    establish(&db, fetch).await;
+    for p in 0..4u64 {
+        record(&db, fetch, &format!("E{p}-cn"), keyed(&format!("bt04-e{p:03}"), 1, "Epoch")).await;
+        record(&db, fetch, &format!("E{p}-corr"), keyed(&format!("bt04-e{p:03}"), 2, "Epoch corr")).await;
+    }
+    project::project(&db, false).await.expect("establish");
+    let before = snapshot_content(&db).await;
+
+    // Nothing has changed, so an ordinary incremental fold is a no-op: it has no
+    // unprojected notices at all. Re-mark everything and prove the chain-unchanged
+    // early-return really does skip — this is the defect, asserted.
+    db.unmark_projected_for_profiles(&["eforms:eforms-sdk-1.13"]).await.expect("re-mark");
+    let skipped = project::project_incremental(&db).await.expect("re-fold, epoch current");
+    assert_eq!(
+        skipped.applied.versions_written, 0,
+        "with a current epoch and unchanged chains the fold must skip every Tender — \
+         this is the issue-99 defect, and gate 2 depends on it being real"
+    );
+
+    // Now age every Tender's stored epoch and re-fold: the chains are still
+    // unchanged, so ONLY the epoch can force the rewrite.
+    db.set_projection_epoch_for_test(-1).await.expect("age the stored epoch");
+    db.unmark_projected_for_profiles(&["eforms:eforms-sdk-1.13"]).await.expect("re-mark");
+    let forced = project::project_incremental(&db).await.expect("re-fold, epoch stale");
+    assert!(
+        forced.applied.versions_written > 0,
+        "a stale epoch must force the rewrite the chain check skipped"
+    );
+    assert_eq!(
+        before,
+        snapshot_content(&db).await,
+        "a forced rewrite under UNCHANGED logic must reproduce byte-identical content"
+    );
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> 1").await,
+        0,
+        "every rewritten Tender must be stamped with the current epoch"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
 }
