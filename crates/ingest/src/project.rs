@@ -2959,6 +2959,59 @@ mod tests {
 
     /// One source id must not map two ways — a duplicate would make the fold
     /// depend on table order.
+    /// Issues 94/98: an alias may never move a value INTO a field that decides the
+    /// Tender key, its kind, or the fold order — the second lever, distinct from
+    /// `is_ref`, by which a "mapping-only" change can silently re-group the corpus.
+    ///
+    /// `normalise_de1` rewrites `field_id`, so an alias targeting one of these
+    /// injects a value the grouping reads. The worst case is `BT-04-notice`:
+    /// `procedure_key` returns it **unchecked** (on TED it is a spec-guaranteed
+    /// uuid), so an alias pointing there would key Tenders on a raw portal string
+    /// with no gate at all — the issue-34 collapse, reached around the `is_uuid`
+    /// guard that exists to prevent it. `published_at` is the subtler one: it
+    /// orders versions inside a Tender via `plan_notice_fold`, so perturbing it
+    /// renumbers every `seq`.
+    ///
+    /// An allowlist rather than a ban, because five identity aliases legitimately
+    /// target this set and produced the current fold. Anything else must be a
+    /// deliberate edit here, with a fold-impact review attached.
+    #[test]
+    fn no_de1_alias_reaches_the_grouping_or_the_fold_order() {
+        let mut decides_the_fold: Vec<&str> = vec![
+            PROCEDURE_KEY_FIELD,  // the Tender key, read UNCHECKED
+            DE1_FOLDER_FIELD,     // the gated key fallback
+            SUBTYPE_FIELD,        // tenders.kind + the plan group's first_subtype
+            LOGICAL_NOTICE_FIELD, // correction dedup — moves results, not grouping
+        ];
+        decides_the_fold.extend(PUBLICATION_DATE_FIELDS); // published_at = fold order
+        decides_the_fold.extend(DISPATCH_DATE_FIELDS); // dispatched_at, and published_at by fallback
+        decides_the_fold.extend(LEGACY_OWN_NUMBER_FIELDS); // legacy OJS identity
+
+        // The identity aliases that deliberately target it (issue 85's DE-1.x line).
+        const IDENTITY: &[(&str, &str)] = &[
+            ("DE1-ID", LOGICAL_NOTICE_FIELD),
+            ("DE1-NoticeSubType-SubTypeCode", SUBTYPE_FIELD),
+            ("DE1-Publication-PublicationDate", "OPP-012-notice"),
+            ("DE1-RequestedPublicationDate", "BT-738-notice"),
+            ("DE1-IssueDate", "BT-05(a)-notice"),
+        ];
+
+        for (de1, target) in DE1_FIELD_ALIASES {
+            if decides_the_fold.contains(target) {
+                assert!(
+                    IDENTITY.contains(&(de1, target)),
+                    "alias {de1} → {target} moves a value into the grouping/fold-order set. \
+                     That re-groups or re-orders the corpus and needs a fold-impact review, \
+                     not a mapping review — add it to IDENTITY here only once that is done."
+                );
+            }
+            assert_ne!(
+                *de1, DE1_FOLDER_FIELD,
+                "aliasing the folder id AWAY would destroy the DE-1.x Tender key"
+            );
+        }
+    }
+
     #[test]
     fn de1_aliases_are_unique() {
         let mut seen: Vec<&str> = DE1_FIELD_ALIASES.iter().map(|(de1, _)| *de1).collect();
