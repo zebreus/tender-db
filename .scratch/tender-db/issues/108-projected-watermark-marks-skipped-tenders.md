@@ -40,6 +40,32 @@ The epoch removes the *cause* for logic changes. It does not fix the watermark's
 `'parsed'` is never spilled by the pre-pass, never reaches a fold chain, produces no version row — and
 is still marked projected.
 
+## Two distinct failure modes — and G2 only sees one of them
+
+Measured 2026-08-02 against the pre-re-fold snapshot (`tender-db-1785661162.db`):
+
+```
+COUNT(*) FROM tender_versions                                    = 14,150,061
+COUNT(*) FROM notices WHERE parse_state='parsed' AND projected=1 = 14,150,061   EQUAL
+```
+
+That result forces a distinction this issue originally ran together:
+
+- **The issue-99 route — rows present, content stale.** A logic-change skip leaves the version rows
+  exactly where they were and marks the notices projected. G2 stays **equal**, because G2 counts rows.
+  This is what issue 85 did: 2,185 Tenders reported fully projected, their version rows all present,
+  their content factless. **G2 was blind to it and would never have caught it.**
+- **The issue-105 route — no row at all.** A planned notice absent from the fold chain (`parse_state` no
+  longer `'parsed'`, so the pre-pass never spilled it) is marked projected with no version row. **This
+  one does break G2.**
+
+The equal PRE measurement therefore says two things: the 105 route was **not** active before the
+re-fold (nothing was marked-without-a-row), and G2's equality was never evidence that the 99 route was
+absent — it cannot be.
+
+So the watermark's dangerous case is precisely the one no production invariant currently detects.
+Content staleness has no counting check; it was found by sampling facts, not by a gate.
+
 ## Why it matters beyond tidiness
 
 `G2` (`COUNT(tender_versions)` vs `COUNT(notices WHERE parse_state='parsed' AND projected=1)`) is a
