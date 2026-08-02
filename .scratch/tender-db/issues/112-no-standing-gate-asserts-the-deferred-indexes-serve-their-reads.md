@@ -1,9 +1,32 @@
-# 112 — no standing gate asserts the deferred indexes actually serve their reads
+# 112 — no standing gate asserts the hot read paths actually use an index
 
 Status: open — filed 2026-08-03 (sdk-vendor), from the `/v1/tenders/{id}` ~2.2s regression
 Kind: verification (missing gate)
-Blocked by: 110 — land the section-I artifact fix first, then implement this
+Blocked by: 110 — DONE (section I landed `a2835b5`); this is next
 Relates to: 111 (the app-side detect+repair this gate must verify INDEPENDENTLY), 89, 82/83, 62/60, 107
+
+Scope note: filed as "the deferred indexes serve their reads" (the filename), broadened
+2026-08-03 to **any hot read-path query whose plan can silently degrade to a scan**.
+The deferred indexes are one cause of that; the turso planner gap below is another, and
+the gate that catches one catches the other. The filename is left alone to avoid churn.
+
+## Motivating example — this is not hypothetical, and it refutes the issue's own first draft
+
+Filed on the theory that `tender_version_bid_parties_version` was **missing** on prod.
+run-driver then read the live schema from the post-refold snapshot: **the index exists**
+(job 534's reindex built it). The unapplied-migration thesis was right about the code and
+wrong about the live DB — a code-read cannot see which jobs actually ran.
+
+The real cause of the ~2.2s is a **turso planner gap**: `lots_of` (read.rs:944 → `lots()`
+with `Scope::Page { after: 0, limit: MAX_PAGE }`) scans the 13.2M-row `lots` table on every
+request, because turso declines to use the existing `UNIQUE(tender_id, lot_key)`
+(canonical.rs:113-114) under an `ORDER BY l.id LIMIT` shape.
+
+**The index exists and the planner scans anyway.** That is precisely why this gate asserts
+the *plan* and not the *name*: the naive presence-check version of this gate — the obvious
+one to write — would have gone green over a 2.2s full scan. Presence-of-name was already
+the correlate; this incident is the proof, and it widens the target from "is the index
+there?" to "is the read actually served by one?"
 
 ## What this is, and how it differs from 111
 
@@ -37,10 +60,29 @@ The suite also had no notion that a code-declared index is not a live index
 
 ## Design
 
-### 1. Assert the query PLAN, not the index name
+### 1. Assert the query PLAN of every HOT READ, not the index name
 
-Presence-of-name is a **correlate**. The load-bearing signal is that the planner
-picks the index for the read it was added for:
+Presence-of-name is a **correlate** — and per the motivating example above it is a
+correlate that was *already true* while the site served 2.2s pages. The load-bearing
+signal is that the planner actually picks an index for the read:
+
+**Target set = the hot read-path queries**, not just the deferred-index-backed ones.
+Each must show `SEARCH … USING INDEX …` and must not show `SCAN`:
+
+| read | table | the plan must not scan |
+|---|---|---|
+| `lots_of` / `GET /v1/lots?tender=` | `lots` (13.2M) | the turso `ORDER BY l.id LIMIT` gap — **live defect today** |
+| `tender_detail` satellites | `tender_version_*` by `(tender_id, seq)` | issue 89's shape |
+| the incremental identity probe | `tenders(procedure_key)`, `tenders(source, island_notice_id)` | full scan of 8.1M **per folded Tender** |
+| the Phase-1 mention resolver | `organizations(country, kind, identifier)` | full scan of ~30M per new mention |
+| the newest-Tenders list | `tenders(current_published_at, id)` | issue 25/82 |
+
+The last three matter disproportionately because they are invisible from the outside:
+a scanning identity probe surfaces only as "the daily fold got slow", never as a slow
+page. A latency canary on `/v1/tenders/{id}` would not catch them; an EQP assertion does.
+
+For the index-backed reads specifically, the plan check is what the name check was
+standing in for:
 
 ```sql
 EXPLAIN QUERY PLAN
@@ -87,8 +129,8 @@ not `pass`.
 
 | state | meaning | alarm |
 |---|---|---|
-| **pass** | every const entry present, DDL matches cols, EQP uses it | — |
-| **fail** | an entry missing / wrong cols / plan says `SCAN` | name the specific index and the read it starves |
+| **pass** | every hot read's plan is `SEARCH … USING INDEX`; every const entry present with DDL matching cols | — |
+| **fail** | a plan says `SCAN`, or an entry is missing / has wrong cols | name the specific read, and the index it should have used |
 | **no-input** | `sqlite_master` unreadable, deployed sha unresolvable, EQP unavailable | distinct alarm — MUST NOT silently pass |
 
 The no-input state is the one 110 is about. A gate that cannot tell "verified good"
@@ -113,6 +155,10 @@ Run after any of:
    build's** — the trigger that would have caught this incident on Aug 1, and the one
    a fold-side-only fix misses entirely. This is the deploy/migration path, which is
    where 111 correctly places the root cause.
+5. **any turso version bump.** The `lots_of` defect is a planner behaviour, not a
+   schema fact: the same schema and the same query can change plan under a new engine,
+   in either direction. Nothing else in the suite would notice a regression that
+   arrives with a dependency upgrade rather than with our own code.
 
 ## Note for 111's implementation (boot-time caveat)
 
@@ -136,9 +182,15 @@ blocks) is the correct shape; this note exists so a later simplification does no
   both pass and fail.
 - Break 111's `missing_deferred_indexes()` (e.g. drop a name from its list) → gate
   still goes RED (proves independence from the detector it verifies).
+- **Run it against prod as it stands today → it must go RED on `lots_of`**, with
+  `tender_version_bid_parties_version` GREEN. This is the sharpest acceptance test
+  available, because it is the live state: the index that is present passes, and the
+  scan that no presence-check could see fails. A gate that goes fully green against
+  today's prod is measuring the wrong thing and must be rejected.
 
 ## Sequencing
 
-110 first (its section-I verdict is known-invalid — wrong artifact), then this, then
-re-run the fixed suite against a snapshot when nothing is serving as the durable
+110 is **done** — section I landed greenfield in `a2835b5` (it had never existed in the
+committed suite; the prior session committed the issue and not the code). This is next.
+Then re-run the fixed suite against a snapshot when nothing is serving, as the durable
 record.
