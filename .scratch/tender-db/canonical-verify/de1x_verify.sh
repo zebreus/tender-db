@@ -194,11 +194,17 @@ zero A6 "SELECT COUNT(*) FROM notices WHERE profile='eforms:eforms-de-1.2' AND p
 #    applied. Windowed per minor to stay bounded.
 # ---------------------------------------------------------------------------
 echo "-- B. one version per parsed notice"
+# Mechanical, not an eyeball comparison: the invariant is exact. 218,635 parsed
+# cohort notices ⇒ exactly 218,635 cohort-caused versions. Fewer = notices that
+# folded to nothing; more = the double-count G6/H4 chase. (A merge into a TED
+# twin still yields one version — it just hangs off a different Tender.)
+eq B1 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
+        WHERE n.profile IN ('eforms:eforms-de-1.0','eforms:eforms-de-1.1','eforms:eforms-de-1.2')
+          AND n.parse_state='parsed'" 218635 hard "cohort versions (== parsed notices)"
 for P in "${MINORS[@]}"; do
   n=$(scalar "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id WHERE n.profile='$P'")
   report EYE "B:$P" "versions caused = $n"
 done
-echo "   (hard gate: versions caused == parsed count, per minor — compare A1..A3)"
 
 # ---------------------------------------------------------------------------
 # C. THE FACTS CHECK — 5 rowid windows per minor.
@@ -295,8 +301,13 @@ info E3 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_no
 #    STRUCTURALLY UNABLE TO FAIL for this cohort. What can fail: the counts.
 # ---------------------------------------------------------------------------
 echo "-- F. quarantine ledger counts (see the issue-87 caveat below)"
-info F1 "SELECT COALESCE(SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),0), COALESCE(SUM(CASE WHEN reprocessed_at IS NULL THEN 1 ELSE 0 END),0) FROM quarantine WHERE reason='unknown-customization' AND detail LIKE '%eforms-de-1.%'" \
-  "ledger entry resolved/held (expect 218635 / 241 — the dashboard's Resolved section)"
+# HARD, because this pair IS the dashboard's user-facing "Resolved" claim, and
+# nginx coming up is what publishes it. The ledger says eForms-DE 1.x resolved
+# 2026-07-29; that only becomes true when the cohort renders facts.
+eq F1a "SELECT COALESCE(SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),0) FROM quarantine WHERE reason='unknown-customization' AND detail LIKE '%eforms-de-1.%'" \
+  218635 hard "ledger: resolved"
+eq F1b "SELECT COALESCE(SUM(CASE WHEN reprocessed_at IS NULL THEN 1 ELSE 0 END),0) FROM quarantine WHERE reason='unknown-customization' AND detail LIKE '%eforms-de-1.%'" \
+  241 hard "ledger: still held"
 info F2 "SELECT reason, COUNT(*) FROM quarantine WHERE profile IN ('eforms:eforms-de-1.0','eforms:eforms-de-1.1','eforms:eforms-de-1.2') AND reprocessed_at IS NULL GROUP BY reason" \
   "held DE-1.x rows by reason (expect ONLY the stale unknown-customization bucket)"
 cat <<'CAVEAT'
