@@ -3250,10 +3250,30 @@ impl Db {
     /// Striping by parsed-notice COUNT makes every worker's stripe genuinely
     /// equal-cost whatever the id distribution.
     ///
-    /// Cheap: `notices_parse_state` is an index on `(parse_state)`, so
-    /// `WHERE parse_state = 'parsed' … ORDER BY id` is an index-ONLY scan yielding
-    /// ids already in ascending order — no table rows are touched. Two such scans
-    /// (count, then split points) cost far less than one stripe of the sweep itself.
+    /// **Streams; never sorts.** `notices.id` is `INTEGER PRIMARY KEY`, i.e. the
+    /// rowid, so `ORDER BY id` is free — the scan is already in that order and no
+    /// sort is materialised. Verified against turso rather than assumed, because a
+    /// filesort here would buffer ~14.2M ids (~100 MB+) and quietly break the
+    /// bounded-memory guarantee this whole path exists to keep:
+    ///
+    /// ```text
+    /// EXPLAIN QUERY PLAN → SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+    /// 800k rows: time-to-first-row 0.0000s, time-to-last-row 0.272s
+    /// ```
+    ///
+    /// The first-row latency is the load-bearing half: a sort cannot emit row 1
+    /// until it has consumed every row, so a ratio of 0.00015 is proof of streaming
+    /// independent of how the plan text is worded.
+    ///
+    /// Note the planner picks the **rowid range seek**, not `notices_parse_state`,
+    /// and that is the better plan here: it seeks straight to `id > lo` and stops at
+    /// `id <= hi`, whereas forcing `INDEXED BY notices_parse_state` walks every
+    /// `parsed` entry and filters (measured: `SEARCH … USING INDEX
+    /// notices_parse_state (parse_state=?)`, no id range applied). Since this is
+    /// normally called over a SCOPED range, forcing the compact index would be a
+    /// pessimisation. It reads table rows rather than index entries, so the two
+    /// scans (count, then split points) are not free — but they are one bounded pass
+    /// over a range the sweep is about to read anyway, and they warm it.
     ///
     /// Returns `(lo, hi]`-style half-open-below stripes covering exactly `(lo, hi]`,
     /// in ascending order, with no gaps; a single stripe when the range holds fewer
