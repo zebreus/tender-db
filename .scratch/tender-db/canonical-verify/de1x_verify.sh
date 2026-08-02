@@ -420,6 +420,27 @@ if [ -f "$BASELINE" ]; then
   post_p=$(scalar "SELECT COUNT(*) FROM notices WHERE parse_state='parsed' AND projected=1")
   echo "   pre : tenders=$PRE_TENDERS islands=$PRE_ISLANDS keyed=$PRE_KEYED versions=$PRE_VERSIONS projected=$PRE_PROJECTED"
   echo "   post: tenders=$post_t islands=$post_i keyed=$post_k versions=$post_v projected=$post_p"
+  # EXPECT_PARTY_ONLY — the invariant for the issue-98 re-fold specifically.
+  # 98 adds party rows and moves nothing else (proved as a unit gate in
+  # tests/project.rs::the_de1_reference_flag_adds_parties_and_moves_nothing_else,
+  # and mechanically: is_ref gates only the role arm, while first_id — which
+  # resolves the procedure key and so the grouping — never reads it). So against a
+  # baseline captured from the PREVIOUS post-fold snapshot, nothing structural may
+  # move at all. A moving tender or version count is a stop signal, not a proceed:
+  # it would mean the fix perturbed grouping, which is the expensive kind of wrong
+  # because a re-fold renumbers on it.
+  if [ "${EXPECT_PARTY_ONLY:-0}" = "1" ]; then
+    for pair in "tenders:$PRE_TENDERS:$post_t" "islands:$PRE_ISLANDS:$post_i" \
+                "keyed:$PRE_KEYED:$post_k" "versions:$PRE_VERSIONS:$post_v"; do
+      what=${pair%%:*}; rest=${pair#*:}; was=${rest%%:*}; now=${rest#*:}
+      if [ "$was" = "$now" ]; then
+        report PASS "G-po" "$what unchanged at $now (party-only re-fold)"
+      else
+        report FAIL "G-po" "$what MOVED $was → $now — a party-only re-fold must not touch grouping; STOP"
+        HARDFAIL=$((HARDFAIL+1))
+      fi
+    done
+  fi
   di=$((PRE_ISLANDS - post_i)); dk=$((post_k - PRE_KEYED)); dt=$((PRE_TENDERS - post_t))
   echo "   Δ islands retired=$di · new keyed groups=$dk · net tenders lost=$dt"
   if [ "$dt" -eq $((di - dk)) ]; then
