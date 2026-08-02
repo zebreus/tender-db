@@ -64,26 +64,28 @@ code, same device, only the ids rising. That rules out scheduling, pool contenti
 stripe assignment, and pins the cause on the data: recent eForms records are fatter than
 the legacy TED records at low ids.
 
-**Plan density does not drive cost — it is anti-correlated with it.** The decisive
-measurement is *within a single worker*, holding thread, stripe, code and device constant
-so that only the region changes:
+**Plan density's contribution is NOT isolable from this run's data, in either direction.**
+
+Segment-to-segment comparisons within one worker look controlled but are not: as a worker
+advances through its stripe it changes **region**, and region carries the read cost. Each
+segment therefore differs in plan density *and* per-notice read cost simultaneously.
+Shard 7's own segments demonstrate the trap by contradicting each other:
 
 | shard 7 segment | spill added | notices/s |
 |---|---|---|
-| 753,750 → 1,005,000 swept | **+1,612** | **186** |
-| 1,005,000 → 1,256,250 swept | **+57,254** | **372** |
+| 753,750 → 1,005,000 | +1,612 | 186 |
+| 1,005,000 → 1,256,250 | **+57,254** | **372** (35× more work, 2× faster) |
+| 1,256,250 → 1,507,500 | **+129,904** | **223** (2.3× more work, 1.7× slower) |
 
-**The same worker did 35× more producer work in the second segment and ran 2× FASTER.**
-No model in which resolve/encode/spill is what slows a shard survives that.
+The middle row was briefly taken as decisive proof that plan density is anti-correlated
+with cost. The next row inverts it. **Neither is evidence about plan density** — both
+confound it with region cost.
 
-(A cross-shard comparison pointed the same way — shard 6 carried ~9× more producer work
-per notice swept than shard 7, at 12.1% vs 1.3% cohort share, and was 1.7× faster — but it
-has the confound of different workers at different progress points. The within-worker
-result above does not.)
+The cross-shard comparison (shard 6 carrying ~9× more producer work per notice swept than
+shard 7 while running 1.7× faster) has the same defect plus a second one: different workers
+at different progress points.
 
-**So the sole surviving explanation is per-notice read cost varying by region**, and the
-cohort's own region is *cheaper* per notice than the surrounding sparse high-id notices —
-plausibly because the reclaimed cohort was written recently and contiguously.
+**Conclusion: plan density is unquantified here. Do not cite a figure for it.**
 
 ### The long pole changed mid-run
 
@@ -94,19 +96,28 @@ stripe that "should" dominate. It finished **before** shard 6.
 regions. A static weighting scheme would have to predict not merely the cost gradient but
 *which stripe wins the race*, and there was no correct answer to predict.
 
-> **Method note.** The causal account went through three revisions, each forced by a new
+> **Method note.** The causal account went through FOUR revisions, each forced by a new
 > measurement rather than by re-reasoning old data:
 > 1. "Slow shards are slow because they're producing" — **falsified** by shards 3-6 being
 >    slow at *zero* spill.
-> 2. "Both mechanisms stack on shard 7" — **falsified** by the normalised comparison above
->    (shard 6: 9× the producer load, 1.7× faster).
+> 2. "Both mechanisms stack on shard 7" — **falsified** by shard 6 carrying ~9× the
+>    producer load and running faster.
 > 3. A per-thread attribution mapping tids to shards to derive KB/notice was
 >    **retracted** — it failed an arithmetic check (cumulative read implied a swept count
 >    that would have fired heartbeats which never fired).
+> 4. "Plan density is anti-correlated with cost", claimed from one within-worker segment
+>    (35× more work, 2× faster) — **falsified by the very next segment** (2.3× more work,
+>    1.7× slower). The comparison was never controlled: advancing through a stripe changes
+>    region, and region carries the read cost.
 >
-> Only **self-labelled shard heartbeats** are used in this issue. The headline conclusion
-> was unchanged by all three revisions, which is the reason to trust it: it does not
-> depend on which mechanism dominates.
+> Only **self-labelled shard heartbeats** are used in this issue.
+>
+> **The headline conclusion was unchanged by all four revisions** — which is the reason to
+> trust it, and the lesson worth carrying: the scheduling conclusion never depended on
+> knowing the mechanism. Four attempts to pin the mechanism were wrong; the finding that
+> static striping cannot parallelise this cohort was right throughout, because it rests on
+> *where the work is* and *that its cost is not stationary*, not on *why* any particular
+> stripe is slow.
 
 ## Why this blocks the reprocess
 
