@@ -110,10 +110,23 @@ correct estimate is *the slowest stripe's* runtime, not total work ÷ shards.
 
 ## What will and will not fix it
 
-- ❌ **Byte-weighted stripes.** Would flatten mechanism (1), not (2). A cohort concentrated
-  in one id range still lands in one stripe however the boundaries are weighted — you
-  cannot split a stripe's *plan membership* by choosing where to cut the id axis, because
-  the members are contiguous in that axis.
+- ❌ **Byte-weighted stripes.** Two independent reasons it fails.
+
+  **(i) Concentration.** A cohort concentrated in one id range still lands in one stripe
+  however the boundaries are weighted — you cannot split a stripe's *plan membership* by
+  choosing where to cut the id axis, because the members are contiguous in that axis.
+
+  **(ii) The cost is non-stationary WITHIN a stripe.** Shard 7's own segment rates were
+  **81 → 122 → 186 notices/s** — a **2.3× variation for the same worker on the same
+  stripe**, as it crossed regions of differing record size and cohort density. Its spill
+  over those segments went 3,771 → 6,737 → 8,349, i.e. it moved from a dense stretch into
+  a sparse one mid-stripe.
+
+  So a static weight is not merely *hard to calibrate ahead of time* — **there is no
+  correct constant to calibrate to.** Any weight derived from a point-in-time rate, or
+  from an average, is wrong by up to 2.3× for that very stripe at some point during its
+  run. Perfect foreknowledge of stripe boundaries would not help; the cost varies inside
+  the boundary.
 - ❌ **Profile-weighted stripes.** Same limitation, cheaper to compute.
 - ❌ **More shards (`TENDER_PREPASS_SHARDS`).** Finer slicing of a concentrated cohort
   still puts the dense region in one slice unless the slicing is *driven* by density —
