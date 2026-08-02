@@ -5,6 +5,25 @@ Kind: performance / **blocker for the quarantine reprocess at scale**
 Design owner: proj-fix
 Relates to: 94 (balanced stripes — necessary, and working; this is what it does *not* solve), 66 (the sharded pre-pass), 96 (apply-side variability), 76 (quarantine reprocess — the work this blocks)
 
+> ## Read this first: the conclusion does not depend on the cause
+>
+> **The recommendation below rests on *where the work is* and *that its cost is not
+> stationary* — not on *why* any particular stripe is slow.**
+>
+> The causal mechanism is **under-determined by this run** and went through four
+> measurement-driven revisions (see the Method note). The scheduling conclusion was
+> unchanged by every one of them.
+>
+> **Do not re-litigate the mechanism believing the recommendation hangs on it.** It does
+> not. If a future run isolates the cause properly, that is worth knowing — but it will
+> not change what needs building here.
+>
+> *The general form, worth carrying beyond this issue: separate the decision-relevant
+> conclusion from the satisfying-but-fragile explanation, and don't let the latter's
+> uncertainty hold the former hostage. The error in this investigation was never a bad
+> measurement — it was investing certainty in the fragile layer when the robust layer was
+> already sufficient to decide.*
+
 ## Headline
 
 On the 2026-08-02 eForms-DE 1.1+1.2 re-fold, **issue 94's balanced striping worked exactly
