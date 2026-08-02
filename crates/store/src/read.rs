@@ -920,10 +920,32 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     }
     version_predicates(&mut q, filter);
     match scope {
-        Scope::Page { after, limit } => q.push(
-            " AND l.id > ? ORDER BY l.id LIMIT ?",
-            [Value::Integer(after), Value::Integer(limit)],
-        ),
+        // Emit the cursor predicate only when it actually CONSTRAINS. `lots.id` is
+        // `INTEGER PRIMARY KEY AUTOINCREMENT` (ids start at 1), so a first page's
+        // `l.id > 0` is a TAUTOLOGY — but its presence makes turso drive the whole
+        // query from `lots` in rowid order to satisfy `ORDER BY l.id`, full-scanning
+        // 13.2M rows instead of seeking `UNIQUE(tender_id, lot_key)` when the query
+        // is tender-scoped. That single no-op predicate is the `/v1/tenders/{id}`
+        // ~2.2s regression (via `lots_of`) and the same cost on the public
+        // `/v1/lots?tender=` filter.
+        //
+        // The underlying mismatch: `lots_of` asks "all lots of ONE Tender" — a
+        // containment question — and inherited the predicate that answers "the next
+        // page of a global list". Dropping the predicate exactly when it cannot
+        // exclude anything is semantics-preserving: identical rows, identical
+        // `ORDER BY l.id` ordering (so no visible reorder anywhere), no schema
+        // change, and no dependence on the planner for correctness.
+        //
+        // A genuine second page (`after > 0`) keeps the predicate and therefore
+        // today's plan — correct, and no worse than before. It is unreachable for a
+        // tender-scoped read in practice (no Tender has `MAX_PAGE` lots), so the
+        // scoped path is index-served for every real request.
+        Scope::Page { after, limit } => {
+            if after > 0 {
+                q.push(" AND l.id > ?", [Value::Integer(after)]);
+            }
+            q.push(" ORDER BY l.id LIMIT ?", [Value::Integer(limit)]);
+        }
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
 

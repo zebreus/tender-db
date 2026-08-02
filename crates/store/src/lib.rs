@@ -2367,6 +2367,57 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
+    /// A tender-scoped lots read must SEEK `UNIQUE(tender_id, lot_key)`, never scan
+    /// `lots` (13.2M rows on prod). This is the `/v1/tenders/{id}` ~2.2s regression:
+    /// `read::lots` appended a `l.id > ?` cursor predicate even on a first page,
+    /// where `after = 0` makes it a tautology (`lots.id` is AUTOINCREMENT, so ids
+    /// start at 1) — and its presence made turso drive the query from `lots` in
+    /// rowid order to satisfy `ORDER BY l.id`, full-scanning the table on every
+    /// `/v1/tenders/{id}` (via `lots_of`) and every `/v1/lots?tender=`.
+    ///
+    /// Asserting the PLAN, not a row count or a latency: the rows were correct
+    /// throughout the outage and every functional test passed — what was wrong was
+    /// how they were reached. A presence-of-index check would also have passed here
+    /// (the index existed the whole time); only the plan shows the defect.
+    #[tokio::test]
+    async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_scanning() {
+        let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // The shape `read::lots` now emits for a tender-scoped first page: the
+        // tautological cursor predicate is omitted, so `tender_id = ?` can drive.
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT l.id FROM lots l WHERE l.tender_id = ? ORDER BY l.id LIMIT 1000",
+                (Value::Integer(1),),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        let upper = plan.to_uppercase();
+        // The discriminator is WHICH key drives the query, not SCAN-vs-SEARCH: turso
+        // reports the defective shape as `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)`,
+        // which reads like a seek but walks the whole rowid range filtering `tender_id`
+        // — a full table walk over 13.2M rows. Asserting "not SCAN" therefore passes
+        // for BOTH shapes and proves nothing. Assert the seek key instead.
+        assert!(
+            upper.contains("TENDER_ID="),
+            "a tender-scoped lots read must be driven by the tender_id index — plan was:\n{plan}"
+        );
+        assert!(
+            !upper.contains("INTEGER PRIMARY KEY"),
+            "a tender-scoped lots read must not be driven by rowid (that walks the whole \
+             table filtering tender_id) — plan was:\n{plan}"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 37: the resolution-ledger counts must seek the `quarantine_reason`
     /// index — `WHERE reason = ?` narrows to one (usually small) bucket before the
     /// `detail LIKE` filter runs, instead of scanning the whole ~1.2M-row table on
