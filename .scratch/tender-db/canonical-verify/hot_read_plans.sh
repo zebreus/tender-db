@@ -177,42 +177,76 @@ fi
 # ---------------------------------------------------------------------------
 # B. PLANS — the load-bearing half.
 #
-# Each hot read below is written parameter-free so any engine can compile it.
-# The assertion is deliberately "does not SCAN <table>" rather than "uses index
-# <name>": the `lots` access is served by an IMPLICIT index
-# (sqlite_autoindex_lots_1, from the UNIQUE constraint), so asserting a name
-# would be wrong for exactly the read that motivated this gate.
+# Each hot read is parameter-free so any engine can compile it.
+#
+# WHAT IS ASSERTED, AND WHY NOT "SEARCH NOT SCAN"
+#   "SEARCH rather than SCAN" is ITSELF a correlate, and turso's plan text makes
+#   it a dangerous one: for the `lots` full walk turso prints
+#       SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+#   which READS like a point lookup and is in fact a forward walk of all 13.2M
+#   rows. A naive SEARCH-vs-SCAN gate passes the very defect it was built for —
+#   the third false-green in this story, after "the index exists" and "sqlite3
+#   says SEARCH".
+#
+#   So the assertion is on the ACCESS PATH: the target table's plan line must
+#   name a real INDEX. A rowid/INTEGER PRIMARY KEY access on the target is RED,
+#   the same as a SCAN. Where a specific index is the point of the read, its name
+#   is required too (the EXPECT column below) — `*` means "any real index", used
+#   where more than one index would legitimately serve.
+#
+#   Note the rowid rule is scoped to the TARGET table only. In B1,
+#   `SEARCH t USING INTEGER PRIMARY KEY (rowid=?)` for the joined `tenders` is a
+#   correct point lookup on the primary key and must NOT be flagged; only the
+#   `lots` access is under test.
 # ---------------------------------------------------------------------------
-echo "-- B. hot reads must be served by an index (turso plans only)"
+echo "-- B. hot reads must be served by a real index (turso plans only)"
 
-# id | table that must not be scanned | SQL
+# Fields separated by `~` (NOT `|`, which appears inside the expected-index
+# alternations below). id ~ table ~ alias ~ expected-index-regex ~ SQL
+# The expected-index regex is matched against the index name turso reports; `*`
+# means "any real index is acceptable", used where more than one would serve.
 READS=$(cat <<'SQLS'
-B1|lots|SELECT l.id, l.tender_id, l.lot_key FROM lots l JOIN tenders t ON t.id = l.tender_id WHERE l.tender_id = 1 ORDER BY l.id LIMIT 1000
-B2|tender_version_bid_parties|SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
-B3|tenders|SELECT id FROM tenders WHERE procedure_key = 'x'
-B4|tenders|SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
-B5|organizations|SELECT id FROM organizations WHERE country = 'DE' AND identifier_kind = 'national' AND identifier = 'x'
-B6|tenders|SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
+B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key FROM lots l JOIN tenders t ON t.id = l.tender_id WHERE l.tender_id = 1 ORDER BY l.id LIMIT 1000
+B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
+B3~tenders~tenders~tenders_procedure_key~SELECT id FROM tenders WHERE procedure_key = 'x'
+B4~tenders~tenders~tenders_island~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
+B5~organizations~organizations~organizations_identity~SELECT id FROM organizations WHERE country = 'DE' AND identifier_kind = 'national' AND identifier = 'x'
+B6~tenders~tenders~tenders_current_published~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
 SQLS
 )
 
 if [ -z "${TDB_PLAN_CMD:-}" ]; then
   report NONE B0 "no TDB_PLAN_CMD — no turso plan source. NOT falling back to sqlite3: measured, stock sqlite3 reports SEARCH ... USING COVERING INDEX for the B1 shape that turso SCANs, so a sqlite3 verdict here would be GREEN over the live defect. Plans NOT verified."
 else
-  while IFS='|' read -r id tbl sql; do
+  while IFS='~' read -r id tbl alias want sql; do
     [ -n "$id" ] || continue
     if ! plan=$(printf '%s\n' "$sql" | eval "$TDB_PLAN_CMD" 2>/dev/null) || [ -z "$plan" ]; then
       report NONE "$id" "plan source produced nothing for $tbl — NOT verified (is TDB_PLAN_CMD right?)"
       continue
     fi
-    # A scan of the target table is the failure. Match SCAN against the table
-    # name with or without an alias, case-insensitively.
-    if printf '%s\n' "$plan" | grep -qiE "SCAN[[:space:]]+([a-z_0-9]+[[:space:]]+)?\b${tbl}\b|SCAN[[:space:]]+${tbl}\b"; then
-      report FAIL "$id" "$tbl is SCANNED — $(printf '%s' "$plan" | tr '\n' ' ' | cut -c1-160)"
-    elif printf '%s\n' "$plan" | grep -qiE "SEARCH|USING (COVERING )?INDEX"; then
-      report PASS "$id" "$tbl served by an index — $(printf '%s' "$plan" | tr '\n' ' ' | cut -c1-120)"
+    # Isolate the TARGET table's access line. Anchoring on "(SCAN|SEARCH) <alias|table>"
+    # keeps a single-letter alias from matching stray text, and keeps the rowid
+    # rule below scoped to the table under test — a rowid lookup on a JOINED
+    # table (B1's `t`) is correct and must not be flagged.
+    line=$(printf '%s\n' "$plan" | grep -iE "(SCAN|SEARCH)[[:space:]]+(${alias}|${tbl})([[:space:]]|\$)" | head -1)
+    if [ -z "$line" ]; then
+      report NONE "$id" "no access line for $tbl in the plan — cannot tell how it is read: $(printf '%s' "$plan" | tr '\n' ' ' | cut -c1-160)"
+      continue
+    fi
+    idx=$(printf '%s' "$line" | sed -nE 's/.*USING (COVERING )?INDEX ([a-z_0-9]+).*/\2/Ip')
+    if printf '%s' "$line" | grep -qiE '^[[:space:]]*[|`-]*[[:space:]]*SCAN'; then
+      report FAIL "$id" "$tbl is SCANNED — $line"
+    elif printf '%s' "$line" | grep -qiE 'INTEGER PRIMARY KEY|rowid='; then
+      # The trap this gate exists to survive: turso prints a full forward walk of
+      # `lots` as "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)", which reads like
+      # a point lookup. On the target table that is a walk, not an index seek.
+      report FAIL "$id" "$tbl is read by ROWID, not by an index — this is a full walk that PRINTS like a seek: $line"
+    elif [ -z "$idx" ]; then
+      report NONE "$id" "$tbl access names no index and is not a recognisable scan — read it by hand: $line"
+    elif [ "$want" = '*' ] || printf '%s' "$idx" | grep -qE "^(${want})\$"; then
+      report PASS "$id" "$tbl served by index $idx"
     else
-      report NONE "$id" "plan for $tbl is neither a recognisable SCAN nor SEARCH — read it by hand: $(printf '%s' "$plan" | tr '\n' ' ' | cut -c1-160)"
+      report FAIL "$id" "$tbl is served by index '$idx', not the expected ${want} — a different index can still be the wrong access path for this read: $line"
     fi
   done <<< "$READS"
 fi
