@@ -26,20 +26,35 @@ Relates to: 94 (balanced stripes — necessary, and working; this is what it doe
 
 ## Headline
 
-On the 2026-08-02 eForms-DE 1.1+1.2 re-fold, **issue 94's balanced striping worked exactly
-as designed and delivered ~10% — not the 5-8× it appears to promise** — because the cohort
-being folded is concentrated in one stripe.
+On the 2026-08-02 eForms-DE 1.1+1.2 re-fold, **issue 94's balanced striping worked as
+designed and delivered 2.18× — against a theoretical 8×** — because the cohort being
+folded is concentrated in one stripe.
 
-| | pre-pass wall-clock |
-|---|---|
-| 2026-08-01, pre-94 (effective 1 worker) | **402 min** |
-| 2026-08-02, with 94, 8 balanced stripes | **~366 min** (projected from the slowest shard) |
+| | pre-pass wall-clock | |
+|---|---|---|
+| 2026-08-01, pre-94 (effective 1 worker) | **402 min** | |
+| 2026-08-02, with 94, 8 balanced stripes | **184.7 min** | **2.18× — measured** |
 
-Seven workers finished in the first quarter of the phase and idled at the join barrier;
-the eighth did the real work alone. **That is the same single-threaded shape as the night
-before, reproduced despite the fix functioning perfectly.**
+**Effective parallelism: 688.8 worker-minutes ÷ 184.7 min wall-clock = 3.73× of 8, i.e.
+~56% of worker capacity was spent idling at the join barrier.** Shard 0 finished in 17.8
+min and then waited **167 minutes — 90% of the phase.** Six of eight finished in the first
+half.
 
-The stripes are balanced by **notice count**. The work is not divisible that way.
+The stripes are balanced by **notice count**, exactly (every stripe swept 1,768,800; the
+last took the 3-notice remainder). The **work** is not divisible that way.
+
+> **A magnitude claim retracted, and why it matters.** This headline first read "~10%",
+> projected mid-run from the slowest shard's *early* rate. That shard then accelerated 2×
+> and a different shard became the long pole. The projection was wrong by a factor of two.
+>
+> The lesson is narrower and sharper than "projections are unreliable": the *scheduling*
+> conclusion below survived four causal revisions because it is structural, and that
+> robustness was then wrongly extended to cover a *quantitative* claim which had no such
+> protection. **"The conclusion is independent of the cause" licenses dropping the causal
+> story — it does not license trusting a projected magnitude.** Magnitudes need
+> measurement; they cannot inherit credibility from a robust qualitative finding.
+>
+> Every figure in this issue is now measured post-completion.
 
 ## Evidence
 
@@ -68,11 +83,21 @@ Self-labelled per-shard heartbeats:
 | 3 | 17,861,049 – 19,629,867 | **416** | 0 |
 | 4 | 19,629,867 – 21,398,728 | **349** | 0 |
 | 5 | 21,398,728 – 23,167,755 | **268** | 0 |
-| 6 | 23,167,755 – 25,043,650 | **200** | **20,408** |
-| 7 | 25,043,650 – 27,297,321 | **81** | **3,771 and climbing** |
+| 6 | 23,167,755 – 25,043,650 | **200** | **216,967** |
+| 7 | 25,043,650 – 27,297,321 | **81 → 175** | **256,104** |
 
-**21× between the fastest and slowest stripe**, and the slowest is the one holding the
-cohort.
+**21× between the fastest and slowest stripe** at the point of measurement. Note shard 7
+more than doubled its rate over its run (81 → 175 notices/s), and **shard 6, not shard 7,
+turned out to be the long pole** — see "the long pole changed mid-run".
+
+Final per-shard wall-clocks (measured):
+
+| shard | 0 | 1 | 2 | 3 | 4 | 5 | 7 | 6 |
+|---|---|---|---|---|---|---|---|---|
+| min | 17.8 | 22.0 | 55.3 | 68.6 | 79.8 | 91.8 | 168.8 | **184.7** |
+
+Total spilled across all shards = **473,091 = exactly the planned notice count**; every
+planned notice was spilled precisely once.
 
 ### Read cost rises with id; plan density's contribution is unquantified
 
@@ -140,8 +165,8 @@ regions. A static weighting scheme would have to predict not merely the cost gra
 
 ## Why this blocks the reprocess
 
-Effective parallelism on this run is **~2.4× of a theoretical 8×** — the sum of per-shard
-runtimes over the wall-clock set by the slowest.
+Effective parallelism on this run is **3.73× of a theoretical 8×** (688.8 worker-min ÷
+184.7 min wall-clock) — **~56% of worker capacity wasted at the barrier**, measured.
 
 The quarantine reprocess (issue 76) targets **2.42M notices**, and like this cohort they
 are **concentrated in recent ids**. It therefore hits exactly the same wall: one stripe
