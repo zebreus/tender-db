@@ -34,6 +34,21 @@
 #   Hence: the plan half REQUIRES a turso-backed plan source ($TDB_PLAN_CMD) and
 #   reports NO-INPUT without one. It never falls back to sqlite3 for a plan.
 #
+# "IF EQP CAN LIE, WHY DOES THIS GATE TRUST IT?"  — the asymmetry
+#   Both things are true at once, because they are two different jobs for one
+#   instrument:
+#     * As a REGRESSION DETECTOR, EQP is sound. A plan that names a real index
+#       and later names a rowid walk is a real, specific signal, and it is
+#       available cheaply, standing, without executing anything. That is this
+#       gate.
+#     * As PROOF OF A SPEEDUP, EQP is not sound — the very text that misleads
+#       (`SEARCH … USING INTEGER PRIMARY KEY (rowid=?)`) is the one that claims
+#       to be fast while walking 13.2M rows. Proving a fix made something faster
+#       needs a clock, not a plan.
+#   So this gate is built on plans, AND a fix to a scanning read must still be
+#   validated by timing it. Neither position contradicts the other; do not
+#   "simplify" one into the other.
+#
 # THREE STATES, NEVER TWO
 #   pass     the read is served by an index / the declared index is present
 #   fail     the plan SCANs, or a declared index is missing or has wrong columns

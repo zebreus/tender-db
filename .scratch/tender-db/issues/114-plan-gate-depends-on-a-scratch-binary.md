@@ -1,10 +1,28 @@
-# 114 — 112's plan half depends on a scratch binary; make the app the standing plan source
+# 114 — the plan gate must DERIVE its SQL and its engine from the artifacts, never restate them
 
-Status: open — filed 2026-08-03 (sdk-vendor). LOW priority, but tracked so the lapse is a
-decision rather than a drift.
+Status: open — filed 2026-08-03 (sdk-vendor), scope widened same day. LOW priority, but
+tracked so the lapse is a decision rather than a drift.
 Kind: verification durability
 Blocked by: — (112 is functional today; this is its durable replacement)
-Relates to: 112 (the gate), 111, 107
+Relates to: 112 (the gate), 111, 107, 110/102 (the same artifact-vs-proxy error)
+
+## The one principle, two instances
+
+112 asserts things about production using two inputs it does not own: the **engine** that
+produces a plan, and the **SQL** whose plan is produced. Today it *restates* both — it
+borrows a scratch probe for the engine, and it hand-writes SQL to match what `read.rs`
+emits. Each restatement can drift from the artifact it stands for, silently, while the
+gate keeps reporting green.
+
+This issue covers both, because they are the same defect and the same fix shape: **derive
+from the artifact, never paraphrase it.**
+
+| input | restated as | drifts when | consequence |
+|---|---|---|---|
+| the planning **engine** | a scratch probe binary on one box | the probe is deleted, or its pinned turso diverges from the server's | section B → no-input; the plan half quietly stops covering anything |
+| the **SQL** under test | statements hand-written to match `read.rs` | `read.rs`'s query changes and the gate's string does not | section B stays GREEN while the read that actually runs regresses |
+
+The second is the more dangerous of the two — it fails *green* rather than *yellow*.
 
 ## The dependency
 
@@ -68,6 +86,24 @@ diagnostic must expose which DB it planned against (or the gate must be able to 
 its stats state some other way). If prod is ever `ANALYZE`d, this precondition is what stops
 the plans silently ceasing to describe production — do not drop it in the port.
 
+## Fix, part 2 — source the SQL from the builder
+
+Section B's statements are currently hand-written approximations of what `read.rs`
+emits. 112 carries this as a **blocking pre-run item** — before each post-fix run,
+B1 must be replaced with the exact SQL the builder emits, dumped from `q.sql` rather
+than retyped. That is a manual discipline, and manual disciplines lapse.
+
+The durable fix is to stop restating: have the gate obtain the statements from the
+builder itself (a dump mode on the query builder, or a test fixture the builder writes
+and the gate reads), so a change to `read.rs` either updates what the gate plans or
+makes the gate say it can no longer establish its input. Either is acceptable; silently
+planning the previous query is not.
+
+Note this composes with part 1: an app-side diagnostic that plans **the real read**
+(rather than a string handed to it) solves both halves at once — the engine is the
+serving engine and the SQL is the emitted SQL. That is the strongest end state and
+probably the reason to do them together.
+
 ## Acceptance
 
 - With the app-side source configured, 112 section B produces the same verdicts as the
@@ -78,6 +114,9 @@ the plans silently ceasing to describe production — do not drop it in the port
   the SELECT itself, only plan it).
 - The stats precondition still fires: point it at an `ANALYZE`d DB and section B reports
   no-input, not a verdict.
+- **Change the `lots` query in `read.rs` and re-run the gate without touching it:** it
+  must either plan the NEW query or report no-input. Continuing to report green against
+  the old string is the failure this part exists to prevent.
 
 ## Note
 
