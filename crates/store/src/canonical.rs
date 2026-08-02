@@ -2889,66 +2889,123 @@ impl Db {
             return Ok(0);
         }
 
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let mut result = Ok(());
-        for id in &absorbed {
-            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
-                result = Err(e);
-                break;
-            }
-        }
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                self.publish_cursor(&conn).await?;
-                Ok(absorbed.len() as u64)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        self.retire_tenders_chunked(&conn, &absorbed, now, NODE_WRITE_BATCH, "absorbed legacy").await?;
+        self.publish_cursor(&conn).await?;
+        Ok(absorbed.len() as u64)
     }
 
-    async fn retire_tender_tx(&self, conn: &Connection, tender_id: i64, now: i64) -> turso::Result<()> {
-        let id = Value::Integer(tender_id);
-        append_change(conn, "tender", tender_id, None, "removed", now).await?;
-        for (kind, table) in
-            [("lot", "lots"), ("lot_result", "lot_results"), ("bid", "bids"), ("contract", "contracts")]
-        {
-            let mut rows =
-                conn.query(&format!("SELECT id FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
-            let mut ids = Vec::new();
-            while let Some(row) = rows.next().await? {
-                ids.push(int(&row, 0));
-            }
-            drop(rows);
-            for entity in ids {
-                append_change(conn, kind, entity, None, "removed", now).await?;
+    /// Every content table a retired Tender's rows must be deleted from, in
+    /// dependency order (satellites before the entities they reference).
+    const RETIRE_TABLES: [&'static str; 17] = [
+        "tender_version_result_winners",
+        "tender_version_result_stats",
+        "tender_version_lot_results",
+        "tender_version_bid_parties",
+        "tender_version_bids",
+        "tender_version_contracts",
+        "tender_version_parties",
+        "tender_version_texts",
+        "tender_version_dates",
+        "tender_version_amounts",
+        "tender_version_classifications",
+        "tender_version_lots",
+        "tender_versions",
+        "lot_results",
+        "bids",
+        "contracts",
+        "lots",
+    ];
+
+    /// Retire `ids` in BOUNDED chunks — the shared body of both retirement paths
+    /// (issue 93).
+    ///
+    /// Retirement used to run as one unbounded `BEGIN IMMEDIATE`, ~23 statements per
+    /// Tender, with no checkpoint and no output. On the eForms-DE 1.x re-fold that
+    /// was 216,450 Tenders → ~5M statements in a single transaction taking 5m45s,
+    /// which read as a wedge and came within minutes of being killed. It is the one
+    /// bulk writer here that issue 63 never chunked; every other one already commits
+    /// and TRUNCATE-checkpoints in batches.
+    ///
+    /// Each chunk is independently consistent — a retirement is a whole Tender's
+    /// removal plus its `removed` events, and a chunk never splits one — so an
+    /// interruption leaves earlier chunks retired and later ones simply still
+    /// orphaned, which the next run re-derives and finishes. That is strictly better
+    /// than the previous all-or-nothing transaction, whose failure mode at scale was
+    /// a WAL/RAM balloon and then losing every retirement to the rollback.
+    async fn retire_tenders_chunked(
+        &self,
+        conn: &Connection,
+        ids: &[i64],
+        now: i64,
+        batch: usize,
+        what: &str,
+    ) -> turso::Result<()> {
+        let total = ids.len();
+        let mut done = 0usize;
+        for chunk in ids.chunks(batch.max(1)) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            match self.retire_chunk_tx(conn, chunk, now).await {
+                Ok(()) => conn.execute("COMMIT", ()).await?,
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            };
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            done += chunk.len();
+            eprintln!("[project] retire {what}: {done}/{total} Tenders retired");
+        }
+        Ok(())
+    }
+
+    /// One chunk's retirement, inside the caller's transaction.
+    ///
+    /// The `removed` change events are emitted **per Tender, in the caller's id
+    /// order**, and within a Tender in the same kind order as before — the `changes`
+    /// feed is ordered by its autoincrement cursor and is part of the projection's
+    /// byte-identity surface, so that sequence is not free to change. Only the
+    /// DELETEs are batched: they are ~88% of the per-Tender cost (17 statements at
+    /// ~0.09 ms against 4 entity reads at ~0.013 ms), and batching them is invisible
+    /// to the feed because a DELETE writes no change row. Doing all reads before any
+    /// delete is equivalent — a Tender's deletes never touch another Tender's rows.
+    async fn retire_chunk_tx(&self, conn: &Connection, ids: &[i64], now: i64) -> turso::Result<()> {
+        for &tender_id in ids {
+            append_change(conn, "tender", tender_id, None, "removed", now).await?;
+            for (kind, table) in [
+                ("lot", "lots"),
+                ("lot_result", "lot_results"),
+                ("bid", "bids"),
+                ("contract", "contracts"),
+            ] {
+                let mut rows = conn
+                    .query(
+                        &format!("SELECT id FROM {table} WHERE tender_id = ?"),
+                        (Value::Integer(tender_id),),
+                    )
+                    .await?;
+                let mut entities = Vec::new();
+                while let Some(row) = rows.next().await? {
+                    entities.push(int(&row, 0));
+                }
+                drop(rows);
+                for entity in entities {
+                    append_change(conn, kind, entity, None, "removed", now).await?;
+                }
             }
         }
-        for table in [
-            "tender_version_result_winners",
-            "tender_version_result_stats",
-            "tender_version_lot_results",
-            "tender_version_bid_parties",
-            "tender_version_bids",
-            "tender_version_contracts",
-            "tender_version_parties",
-            "tender_version_texts",
-            "tender_version_dates",
-            "tender_version_amounts",
-            "tender_version_classifications",
-            "tender_version_lots",
-            "tender_versions",
-            "lot_results",
-            "bids",
-            "contracts",
-            "lots",
-        ] {
-            conn.execute(&format!("DELETE FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
+        for table in Self::RETIRE_TABLES {
+            for part in ids.chunks(IN_CHUNK) {
+                let sql =
+                    format!("DELETE FROM {table} WHERE tender_id IN ({})", placeholders(part.len()));
+                let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+                conn.execute(&sql, params).await?;
+            }
         }
-        conn.execute("DELETE FROM tenders WHERE id = ?", (id,)).await?;
+        for part in ids.chunks(IN_CHUNK) {
+            let sql = format!("DELETE FROM tenders WHERE id IN ({})", placeholders(part.len()));
+            let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+            conn.execute(&sql, params).await?;
+        }
         Ok(())
     }
 
@@ -3020,10 +3077,20 @@ impl Db {
     /// touched Tender absent from it has no notices left and gets `removed` change
     /// events, exactly like [`Db::retire_absorbed_legacy_tenders`] but scoped to
     /// the touched set instead of the whole corpus. Returns the count retired.
-    pub async fn retire_regrouped_tenders(
+    pub async fn retire_regrouped_tenders(&self, touched: &[i64], now: i64) -> turso::Result<u64> {
+        self.retire_regrouped_tenders_chunked(touched, now, NODE_WRITE_BATCH).await
+    }
+
+    /// As [`Db::retire_regrouped_tenders`], with an explicit retirement chunk size.
+    /// Exposed so the chunk-invariance test can drive a tiny chunk and prove the
+    /// canonical layer — the cursor-ordered `changes` feed included — is identical
+    /// however the retirement is split (issue 93); production uses
+    /// [`NODE_WRITE_BATCH`].
+    pub async fn retire_regrouped_tenders_chunked(
         &self,
         touched: &[i64],
         now: i64,
+        chunk: usize,
     ) -> turso::Result<u64> {
         if touched.is_empty() {
             return Ok(0);
@@ -3050,25 +3117,9 @@ impl Db {
         if orphaned.is_empty() {
             return Ok(0);
         }
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let mut result = Ok(());
-        for id in &orphaned {
-            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
-                result = Err(e);
-                break;
-            }
-        }
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                self.publish_cursor(&conn).await?;
-                Ok(orphaned.len() as u64)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        self.retire_tenders_chunked(&conn, &orphaned, now, chunk, "regrouped").await?;
+        self.publish_cursor(&conn).await?;
+        Ok(orphaned.len() as u64)
     }
 
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the

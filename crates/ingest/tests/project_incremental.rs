@@ -453,3 +453,61 @@ async fn db_fingerprint(db: &Db, procedure_key: &str) -> String {
         _ => String::new(),
     }
 }
+
+/// Issue 93: retirement is now committed in BOUNDED chunks rather than one
+/// unbounded transaction, and the split must be invisible.
+///
+/// The `changes` feed is ordered by its autoincrement cursor and is part of the
+/// projection's byte-identity surface, so chunking retirement is only safe if the
+/// `removed` events come out in exactly the same sequence however the work is
+/// divided. That is the claim this pins: retire the same Tenders one-at-a-time and
+/// all-at-once, and the whole canonical layer — feed included — must match.
+///
+/// Driven through the real API with an EMPTY plan, which is the orphan condition
+/// (`retire_regrouped_tenders` retires every touched Tender whose key the new plan
+/// did not reproduce), so every established Tender is retired.
+#[tokio::test]
+async fn retirement_is_identical_however_it_is_chunked() {
+    async fn retire_with(name: &str, chunk: usize) -> (String, u64) {
+        let (db, fetch, path) = scratch(name).await;
+        establish(&db, fetch).await;
+        // Extra Tenders so a chunk of 1 genuinely crosses several boundaries.
+        for p in 0..5u64 {
+            record(&db, fetch, &format!("X{p}-cn"), keyed(&format!("bt04-x{p:03}"), 1, "Extra")).await;
+            record(&db, fetch, &format!("Y{p}-isl"), island(&format!("Extra island {p}"))).await;
+        }
+        project::project(&db, false).await.expect("establish");
+
+        // A generous id span: ids with no `tenders` row are skipped, so this is
+        // simply "every Tender", without needing a private reader.
+        let live = count(&db, "SELECT COUNT(*) FROM tenders").await;
+        assert!(live >= 12, "need enough Tenders to cross chunk boundaries, got {live}");
+        let ids: Vec<i64> = (1..=live + 10).collect();
+
+        // An empty plan means no touched Tender's key is reproduced → all orphaned.
+        db.reset_plan().await.expect("reset plan");
+        let retired = db
+            .retire_regrouped_tenders_chunked(&ids, 1_000_000, chunk)
+            .await
+            .expect("retire");
+        let snap = snapshot(&db).await;
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        (snap, retired)
+    }
+
+    let (one_shot, n_one) = retire_with("retire-oneshot", 10_000).await;
+    let (chunked, n_chunk) = retire_with("retire-chunked", 1).await;
+    let (paired, n_pair) = retire_with("retire-paired", 3).await;
+
+    assert!(n_one >= 12, "the retirement must actually have happened, got {n_one}");
+    assert_eq!((n_one, n_one), (n_chunk, n_pair), "the same Tenders must be retired");
+    assert_eq!(
+        one_shot, chunked,
+        "retiring one Tender per chunk must be byte-identical to one transaction — \
+         the cursor-ordered changes feed included"
+    );
+    assert_eq!(one_shot, paired, "an uneven chunk size must be identical too");
+    assert!(one_shot.contains("removed"), "the feed must actually carry the removed events");
+}
