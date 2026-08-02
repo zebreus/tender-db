@@ -1,6 +1,6 @@
-# 96 — incremental apply degrades ~13%/bucket as the tender layer fills (hot-index maintenance + page-cache collapse)
+# 96 — incremental apply: per-bucket time is highly variable, and the page cache collapses as the layer fills
 
-Status: proposed
+Status: proposed — **the original "~13%/bucket monotonic degradation" claim is RETRACTED, see Correction below**
 Kind: performance / scaling risk
 Design owner: proj-fix
 Relates to: 62 + 82 (deferred tender indexes — the existing mitigation, rebuild-only), 64 (reset index thrash), 67 (fold apply statement reduction), 94 (bucketed pre-pass stripe imbalance), 76 (quarantine reprocess mechanism)
@@ -20,8 +20,36 @@ bucket size stays flat.** This is not larger buckets — it is slower work per T
 | 2 | 08:04:06 → 08:09:59 | 353s | 13,509 | 2,296/min |
 | 3 | 08:09:59 → 08:16:39 | 400s | 13,237 | 1,986/min |
 | 4 | 08:16:39 → 08:24:12 | **453s** | 13,090 | **1,734/min** |
+| 5 | 08:24:12 → 08:30:11 | **359s** | 13,243 | **2,214/min** |
 
-Steps: +47s, +53s. Extrapolated over the run this turned a ~08:55 ETA into ~09:20-09:30.
+## CORRECTION — the monotonic-degradation reading was wrong
+
+This issue was originally filed after buckets 2-4 (353s → 400s → 453s) as a clean
++~50s/bucket (~13%) degradation. **Bucket 5 came in at 359s and broke it** — back to
+near bucket-2 speed, on the same flat ~13,200-Tender bucket size.
+
+Four intervals: **353, 400, 453, 359** — mean ~391s, range 353-453s (±13%). That is
+**variance, not a trend.** Three ascending points were not enough to establish
+monotonicity, and the conclusion drawn from them ("self-reinforcing, expect it to
+continue") was premature and is retracted.
+
+What survives, and what does not:
+
+- **RETRACTED**: per-bucket apply time degrades monotonically as the layer fills.
+  Not supported by four intervals.
+- **STANDS (observation)**: the page cache really does collapse during the apply —
+  `buff/cache` 5,791 → 2,349 → 1,846 MB while process `used` climbs 1,707 → 3,395 MB.
+  This is measured and reproducible.
+- **UNPROVEN**: that the cache collapse actually costs throughput. Bucket 5 was fast
+  *while the cache continued to shrink*, so the mechanism is not demonstrated by this
+  data. It remains plausible but is now a hypothesis, not a finding.
+- **OPEN**: what actually drives the ±13% spread between buckets. Most likely candidate
+  is per-bucket content (Tenders differ in version-chain length and satellite-row count,
+  so equal Tender counts are not equal work) rather than layer size.
+
+The scaling question below is therefore **still worth answering** — a 50+ bucket
+reprocess is a real unknown — but it must be answered by measuring a long run, not by
+extrapolating this one.
 
 ### Mechanism
 
