@@ -1839,7 +1839,7 @@
   },
   {
    "id": "DE1-Changes-Change-ChangedSection-ChangedSectionIdentifier",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Changes/efac:Change/efac:ChangedSection/efbc:ChangedSectionIdentifier"
   },
   {
@@ -1849,7 +1849,7 @@
   },
   {
    "id": "DE1-Changes-Change-ChangedSectionIdentifier",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Changes/efac:Change/efbc:ChangedSectionIdentifier"
   },
   {
@@ -1884,7 +1884,7 @@
   },
   {
    "id": "DE1-ContractModification-Change-ChangedSection-ChangedSectionIdentifier",
-   "type": "id",
+   "type": "id-ref",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efac:Change/efac:ChangedSection/efbc:ChangedSectionIdentifier"
   },
   {

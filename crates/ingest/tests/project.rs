@@ -1803,6 +1803,100 @@ async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// The aspects of the canonical layer this fix must NOT move. Same shape as
+/// `project_incremental.rs::snapshot` — grouping identity, the version chain, and
+/// every fact satellite — minus `tender_version_parties`, which is the one table
+/// issue 98 is allowed to change. Keep the two in sync if either grows a table.
+const LAYER_DIGESTS: &[(&str, &str)] = &[
+    ("tenders", "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||coalesce(procedure_key,'')||'|'||coalesce(island_notice_id,-1)||'|'||kind||'|'||source AS r FROM tenders ORDER BY id)"),
+    ("versions", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||caused_by_notice_id||'|'||published_at AS r FROM tender_versions ORDER BY tender_id, seq)"),
+    ("texts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||coalesce(lang,'')||'|'||value||'|'||coalesce(lot_id,-1) AS r FROM tender_version_texts ORDER BY tender_id, seq, field, lang, value, lot_id)"),
+    ("classifications", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||scheme||'|'||code||'|'||coalesce(lot_id,-1) AS r FROM tender_version_classifications ORDER BY tender_id, seq, field, scheme, code, lot_id)"),
+    ("amounts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||cents||'|'||currency||'|'||coalesce(lot_id,-1) AS r FROM tender_version_amounts ORDER BY tender_id, seq, field, cents, lot_id)"),
+    ("dates", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||utc_seconds||'|'||coalesce(lot_id,-1) AS r FROM tender_version_dates ORDER BY tender_id, seq, field, utc_seconds, lot_id)"),
+    ("lots", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||lot_key AS r FROM lots ORDER BY tender_id, lot_key)"),
+    ("version_lots", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_id||'|'||kind AS r FROM tender_version_lots ORDER BY tender_id, seq, lot_id)"),
+    ("lot_results", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_result_id||'|'||coalesce(decision,'') AS r FROM tender_version_lot_results ORDER BY tender_id, seq, lot_result_id)"),
+    ("organizations", "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||coalesce(country,'')||'|'||coalesce(identifier,'')||'|'||name||'|'||provisional AS r FROM organizations ORDER BY id)"),
+    ("mentions", "SELECT group_concat(r, x'0a') FROM (SELECT notice_id||'|'||section_id||'|'||organization_id AS r FROM organization_mentions ORDER BY notice_id, section_id)"),
+];
+
+/// Issue 98 must be **surgical**: it may add party rows and move nothing else.
+///
+/// A gate asserting only "parties are now non-zero" would pass a fix that also
+/// perturbed the fact layer or the grouping — and grouping is what a re-fold
+/// renumbers, so a silent perturbation there is the expensive kind of wrong.
+///
+/// The two inputs differ in exactly one respect: whether the notice carries its
+/// organization-role references at all. That isolates the fix, because a
+/// reference the pre-98 projection could not see is *behaviourally identical to
+/// an absent one*: `is_ref` gates only the role arm, and both the role arm and
+/// the fall-through produce no `Fact`. `first_id` — which resolves the procedure
+/// key, and so the grouping — matches `Id { value, .. }` and never reads
+/// `is_ref`, so identity cannot move either.
+///
+/// So: every digest identical, parties the sole difference. That is the same
+/// invariant the post-re-fold verification must see against production — same
+/// tender, version, fact, lot and result counts, only party rows appearing. A
+/// tender or version count that MOVES is a stop-and-investigate signal, not a
+/// proceed.
+#[tokio::test]
+async fn the_de1_reference_flag_adds_parties_and_moves_nothing_else() {
+    let (with_refs, f1, p1) = scratch("de1x-refs-on").await;
+    let (without_refs, f2, p2) = scratch("de1x-refs-off").await;
+
+    let (notice, parse) = de1_notice(f1, "de1-000001", "eforms:eforms-de-1.1");
+    with_refs.record_notice(&notice, &parse).await.expect("with refs");
+
+    // The same notice with only the organization-role references removed.
+    let (notice, mut parse) = de1_notice(f2, "de1-000001", "eforms:eforms-de-1.1");
+    if let store::Parse::Parsed(parsed) = &mut parse {
+        parsed.values.retain(|v| {
+            !v.field_id.ends_with("PartyIdentification-ID") && !v.field_id.ends_with("Tenderer-ID")
+        });
+    }
+    without_refs.record_notice(&notice, &parse).await.expect("without refs");
+
+    project::project(&with_refs, false).await.expect("project with refs");
+    project::project(&without_refs, false).await.expect("project without refs");
+
+    // The references are the only source of parties, and they do produce them.
+    assert_eq!(
+        scalar(&without_refs, "SELECT COUNT(*) FROM tender_version_parties").await,
+        0,
+        "without the references there are no parties — so parties below are attributable to them"
+    );
+    assert_eq!(
+        scalar(&with_refs, "SELECT COUNT(*) FROM tender_version_parties").await,
+        2,
+        "the buyer and the review body both land (issue 98)"
+    );
+
+    // And nothing else moved — grouping, chain, and every fact satellite.
+    //
+    // Each digest is checked non-empty first. Comparing two NULLs is a gate that
+    // passes because it measured nothing, which is the failure mode that let the
+    // org class ship: `lot_results` is legitimately empty for a contract notice,
+    // so it is named as the one permitted exception rather than silently allowed.
+    for (label, sql) in LAYER_DIGESTS {
+        let left = query_text(&with_refs, sql).await;
+        let right = query_text(&without_refs, sql).await;
+        if *label != "lot_results" {
+            assert!(
+                left.as_deref().is_some_and(|d| !d.is_empty()),
+                "digest `{label}` is empty — it would compare equal without measuring anything"
+            );
+        }
+        assert_eq!(
+            left, right,
+            "issue 98 must not move `{label}`: the fix may add parties and nothing else"
+        );
+    }
+
+    let _ = std::fs::remove_file(&p1);
+    let _ = std::fs::remove_file(&p2);
+}
+
 /// eForms-DE **2.x** is a real SDK fork emitting ordinary `BT-*` ids, so the
 /// alias fold must leave it alone. Same notice shape, 2.0 profile: the `DE1-*`
 /// ids stay unmapped and the version stays empty — proving the fold is what
