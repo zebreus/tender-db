@@ -1,4 +1,4 @@
-# 103 — bake a snapshot-freshness witness into de1x_verify.sh (a verify must prove its input is the input it thinks)
+# 107 — bake a snapshot-freshness witness into de1x_verify.sh (a verify must prove its input is the input it thinks)
 
 Status: open — POST-LANDING follow-up (team-lead, 2026-08-02). Deliberately kept manual during the ship.
 Kind: verification tooling / false-signal prevention

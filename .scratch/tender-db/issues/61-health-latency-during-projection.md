@@ -32,3 +32,35 @@ Fixes to weigh (only if it recurs / matters):
 
 Acceptance: /health stays sub-second (or a fast cached answer) even during a
 full projection; cache win on the projection preserved.
+
+## UPDATE 2026-07-28 — it's full HTTP starvation at prod scale, not 4.5s
+
+At full prod scale (6.96M-tender layer built; daily incremental + snapshot jobs),
+/health and /admin/jobs FULLY TIME OUT (>8-30s) for the entire duration of ANY
+heavy job — not the mild 4.5s originally diagnosed. Confirmed: the daily
+`project` (incremental fold) and `process` jobs each take the API/dashboard dark
+for their whole run (~tens of min), and the daily `snapshot`'s integrity_check
+took the API down for ~26.7h (that specific starve is now fixed by af4c2b2 —
+`TENDER_SNAPSHOT_INTEGRITY` gate — but the projection/process starvation remains).
+
+Root cause is broader than disk contention: the supervisor's job worker runs
+`execute(job).await` on the MAIN tokio runtime (supervisor.rs:421 `tokio::spawn`),
+and turso does BLOCKING preads on the worker threads — a long job saturates the
+runtime so the API/SSE/dashboard tasks can't be scheduled.
+
+THE FIX (proven pattern already in this codebase): isolate the job worker on its
+own dedicated tokio runtime, exactly as issue 17 did for `/v1/sql`
+(`crates/app/src/v1/sql.rs` → `spawn_sql_runtime`: a parked OS thread owns a
+small multi-thread runtime; work is submitted via `Handle::spawn` and only the
+`JoinHandle` is awaited on the main runtime). Move the supervisor worker's job
+execution onto such a dedicated runtime so projections/snapshots pin the job
+runtime's threads, never the API runtime. The Db writer (`Mutex<Connection>`) +
+`read_pool` are already shared across runtimes (the SQL endpoint proves turso
+connections work off the main runtime), so the API's read-pool queries stay
+responsive.
+
+Severity is now HIGH (was LOW-MEDIUM): the API/dashboard being unavailable during
+every daily job is the biggest gap vs "operating" + "easy to inspect". Also
+consider the issue-61 palliatives (cached /health cursor; tune per-conn
+cache_size) as belt-and-suspenders. Acceptance: /health + /v1 stay sub-second
+while a full projection AND a snapshot run.
