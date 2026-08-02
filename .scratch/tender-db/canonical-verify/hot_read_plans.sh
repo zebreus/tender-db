@@ -44,11 +44,32 @@
 #   TDB_SNAPSHOT=/path/db     read sqlite_master with stock sqlite3 (metadata only)
 #   BASE_URL=http://…:8080    used ONLY to ask the service which build it is
 #   TDB_REV=<sha>             override the build to compare against (else asked)
-#   TDB_PLAN_CMD='…'          REQUIRED for plan verdicts. A command that reads SQL
-#                             on stdin and writes a turso-produced query plan on
-#                             stdout, at the DEPLOYED turso version. Example: a
-#                             small bin linked against the workspace turso dep,
-#                             run over a snapshot, or an app diagnostic endpoint.
+#   TDB_PLAN_BIN=/opt/tender-db/turso-bench/plan   run-driver-2's on-box turso
+#   TDB_PLAN_DB=/path/snapshot.db                  probe (pinned turso ="=0.7.0",
+#                             invoked `plan <db> eqp <sqlfile>`). Setting both
+#                             satisfies the plan-source contract — no build needed.
+#                             TDB_PLAN_DB is ALSO the stats precondition's input,
+#                             so it is required even with a custom TDB_PLAN_CMD.
+#   TDB_PLAN_CMD='…'          alternative plan source: any command reading SQL on
+#                             stdin and writing a turso-produced plan on stdout,
+#                             at the DEPLOYED turso version.
+#
+# THE STATS PRECONDITION (not a caveat — enforced)
+#   These schema-only plans are representative ONLY while `sqlite_stat1` carries
+#   no rows for the tables under test. Run ANALYZE on prod and the planner may
+#   choose differently, at which point a plan derived here silently stops
+#   describing production. The gate checks TDB_PLAN_DB for stat rows and reports
+#   no-input rather than a verdict if any exist, or if the stats state cannot be
+#   established at all.
+#
+# THE RECORDED PRE-FIX ARTIFACT (run-driver-2, same DB, same run)
+#   B2 GREEN:  SEARCH tender_version_bid_parties USING INDEX
+#                     tender_version_bid_parties_version
+#   B1 RED:    SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+#   That pair is the falsifier this gate was built to produce: the index that IS
+#   present passes, and the walk that no presence-check could see fails. After the
+#   `lots_of` fix, B1 must flip to naming a real index (sqlite_autoindex_lots_1,
+#   or a named lots_* index if that route is taken — both are accepted).
 # ============================================================================
 set -uo pipefail
 
@@ -215,8 +236,62 @@ B6~tenders~tenders~tenders_current_published~SELECT id FROM tenders ORDER BY cur
 SQLS
 )
 
+# Adapter for run-driver-2's on-box turso probe, which takes a FILE rather than
+# stdin: `plan <db> eqp <sqlfile>`, built against a pinned turso ="=0.7.0". Set
+# TDB_PLAN_BIN + TDB_PLAN_DB and the stdin contract is satisfied for you.
+#   TDB_PLAN_BIN=/opt/tender-db/turso-bench/plan TDB_PLAN_DB=/path/snapshot.db
+probe_plan() {
+  local f rc
+  f=$(mktemp) || return 1
+  cat > "$f"
+  "$TDB_PLAN_BIN" "$TDB_PLAN_DB" eqp "$f"
+  rc=$?
+  rm -f "$f"
+  return $rc
+}
+if [ -z "${TDB_PLAN_CMD:-}" ] && [ -n "${TDB_PLAN_BIN:-}" ] && [ -n "${TDB_PLAN_DB:-}" ]; then
+  if [ -x "$TDB_PLAN_BIN" ]; then
+    TDB_PLAN_CMD='probe_plan'
+  else
+    report NONE B0 "TDB_PLAN_BIN=$TDB_PLAN_BIN is not executable — no plan source."
+  fi
+fi
+
+# ---- PRECONDITION: the plan DB's STATS state must be known and match prod ----
+# A schema-only EQP is representative ONLY because `sqlite_stat1` carries no rows
+# for these tables: with stats present the planner can choose differently, so a
+# plan derived from a stats-carrying DB (or from a stats-free one when prod has
+# stats) silently stops describing production. This is a precondition, not a
+# caveat in a comment — if it cannot be established, section B does not run.
+PLAN_STATS_OK=no
+if [ -n "${TDB_PLAN_CMD:-}" ]; then
+  if [ -z "${TDB_PLAN_DB:-}" ]; then
+    report NONE B0 "a plan source is set but the DB it reads is not identified (TDB_PLAN_DB) — the ANALYZE/sqlite_stat1 state of the planning input cannot be established, so no plan verdict is trustworthy. Plans NOT verified."
+  elif [ ! -r "$TDB_PLAN_DB" ] || ! command -v sqlite3 >/dev/null 2>&1; then
+    report NONE B0 "cannot inspect TDB_PLAN_DB=$TDB_PLAN_DB for sqlite_stat1 (unreadable, or sqlite3 absent) — stats state unknown. Plans NOT verified."
+  else
+    has_stat=$(sqlite3 -readonly -noheader "file:${TDB_PLAN_DB}?immutable=1" \
+      "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='sqlite_stat1'" 2>/dev/null)
+    if [ -z "$has_stat" ]; then
+      report NONE B0 "could not read sqlite_master on TDB_PLAN_DB — stats state unknown. Plans NOT verified."
+    elif [ "$has_stat" = 0 ]; then
+      PLAN_STATS_OK=yes
+    else
+      n=$(sqlite3 -readonly -noheader "file:${TDB_PLAN_DB}?immutable=1" \
+        "SELECT COUNT(*) FROM sqlite_stat1 WHERE tbl IN ('lots','tenders','organizations','tender_version_bid_parties')" 2>/dev/null)
+      if [ "${n:-0}" = 0 ]; then
+        PLAN_STATS_OK=yes
+      else
+        report NONE B0 "TDB_PLAN_DB carries ANALYZE stats ($n sqlite_stat1 rows for the tables under test). The plans below would be derived under different statistics than the schema-only assumption this gate was validated against. Re-derive against a DB whose stats state matches prod's before trusting any plan verdict. Plans NOT verified."
+      fi
+    fi
+  fi
+fi
+
 if [ -z "${TDB_PLAN_CMD:-}" ]; then
-  report NONE B0 "no TDB_PLAN_CMD — no turso plan source. NOT falling back to sqlite3: measured, stock sqlite3 reports SEARCH ... USING COVERING INDEX for the B1 shape that turso SCANs, so a sqlite3 verdict here would be GREEN over the live defect. Plans NOT verified."
+  report NONE B0 "no plan source. Set TDB_PLAN_BIN+TDB_PLAN_DB (the on-box turso probe) or TDB_PLAN_CMD. NOT falling back to sqlite3: measured, stock sqlite3 reports SEARCH ... USING COVERING INDEX for the B1 shape that turso walks, so a sqlite3 verdict here would be GREEN over the live defect. Plans NOT verified."
+elif [ "$PLAN_STATS_OK" != yes ]; then
+  : # the precondition already reported why
 else
   while IFS='~' read -r id tbl alias want sql; do
     [ -n "$id" ] || continue
