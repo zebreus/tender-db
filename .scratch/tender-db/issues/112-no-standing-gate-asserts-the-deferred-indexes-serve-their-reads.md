@@ -284,9 +284,39 @@ stays an acceptable fallback if the harness proves heavy, since for *plans* it h
 strongest claim to being load-bearing — it is literally the engine serving traffic.
 
 The contract is deliberately trivial so either can satisfy it: `TDB_PLAN_CMD` reads SQL
-on stdin and writes a turso-produced plan on stdout. If run-driver-2's `planlab-lots_of`
-experiment already runs through turso, that harness *is* the plan source and wiring it in
-is one environment variable.
+on stdin and writes a turso-produced plan on stdout.
+
+**Resolved — wired, no build needed** (`4c6297e`). run-driver-2 left a turso probe on the
+box at `/opt/tender-db/turso-bench/plan` (pinned `turso ="=0.7.0"`), invoked
+`plan <db> eqp <sqlfile>`. It takes a *file*, not stdin, so the gate carries a small
+adapter: set `TDB_PLAN_BIN` + `TDB_PLAN_DB` and section B runs against the right engine
+at the deployed version, independent of the app. The app-side EQP diagnostic remains the
+better *standing* answer long-term — it survives the probe binary being cleaned up and is
+the actual serving engine — but it is a follow-up, not a blocker.
+
+### The stats precondition — enforced, not documented
+
+These schema-only plans are representative **only** while `sqlite_stat1` carries no rows
+for the tables under test. Run `ANALYZE` on prod and the planner may choose differently,
+at which point every plan this gate produces silently stops describing production —
+another input the gate would not know it had lost.
+
+So it is a precondition with teeth: the gate inspects `TDB_PLAN_DB` and reports
+**no-input, never a verdict**, if stat rows exist, if the DB is unreadable, or if
+`TDB_PLAN_DB` was not given at all. That last case is the subtle one — a plan source
+whose input DB is unidentified cannot have its stats state established, so `TDB_PLAN_DB`
+is required *even with a custom `TDB_PLAN_CMD`*. A check is only as trustworthy as its
+knowledge of its own inputs.
+
+### The pre-fix falsifier is on record
+
+run-driver-2, same DB and same run: **B2 GREEN** (`USING INDEX
+tender_version_bid_parties_version`), **B1 RED** (`USING INTEGER PRIMARY KEY (rowid=?)`).
+The index that *is* present passes; the walk no presence-check could see fails. That pair
+is exactly what this gate was built to produce, and it is captured in the script header.
+After the `lots_of` fix, B1 must flip to naming a real index — both
+`sqlite_autoindex_lots_1` and a named `lots_*` index are accepted, so the gate stays
+valid whichever route the fix takes.
 
 ## Sequencing
 
