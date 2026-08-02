@@ -55,6 +55,38 @@ Worth doing at the same time, since the per-orphan constant is dominated by stat
 
 Measured baseline to beat: **1.59 ms/orphan**.
 
+### Where the 344.8s actually went — batch the RETIRE loop, not just the scan loop
+
+Worth being precise, because the two loops differ by ~7× in statement count and only one of them
+matters:
+
+| loop | statements | share of 344.8s |
+|---|---|---|
+| scan loop — 339,914 touched × 2 queries | 679,828 | ~41 s (12%) |
+| **retire loop — 216,450 orphans × ~23 statements** | **~4.98M** | **~304 s (88%)** |
+| total | ~5.66M | 344.8s ⇒ **~61 µs/statement** |
+
+So collapsing the scan loop into a single set-based query (one join of the touched Tenders against
+`plan_notice`'s group keys) is correct and cheap — but on its own it recovers only ~12%. The fix has
+to cut the **retire** loop's 23 statements per orphan: prepare-once or batch the 17 DELETEs with
+`tender_id IN (…)` over the chunk, and fold the 4 entity `SELECT id`s into the same pass.
+
+Note the per-statement cost is ~61 µs, not the ~0.5–1 ms that a prepare-per-call model suggests —
+turso is evidently caching some of the parse. The lever is statement *count*, not per-statement
+overhead.
+
+### WAL behaviour, measured
+
+During the retire the WAL grew **4KB → 38MB** while RSS stayed ~2–3GB. So turso spills an open
+transaction's dirty pages to the WAL incrementally rather than buffering all ~5M statements' worth in
+RAM — which is why this committed comfortably and why the "static WAL" reading was taken before the
+retire loop began.
+
+That *weakens* but does not remove the unbounded-transaction risk: 38MB of WAL per 216K orphans is
+linear, so ~2M orphans would mean ~350MB of WAL that cannot be checkpointed mid-statement, plus the
+in-RAM WAL-index entry per un-checkpointed frame that issue 63 identified as the actual OOM ceiling.
+Chunking is still the right fix; the urgency is lower than first assumed.
+
 ## Not a defect (measured, recorded so it is not re-investigated)
 
 `lots` / `lot_results` / `bids` / `contracts` have no explicit `tender_id` index, but each carries
