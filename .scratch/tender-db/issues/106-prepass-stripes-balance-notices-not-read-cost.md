@@ -1,12 +1,9 @@
-# 98b — pre-pass stripes balance notice COUNT, but per-notice read cost rises ~4.7× with id
+# 106 — pre-pass stripes balance notice COUNT, but per-notice read cost rises ~4.7× with id
 
 Status: proposed
 Kind: performance / follow-up refinement
 Design owner: proj-fix
 Relates to: 94 (balanced stripes — this is the second-order residual), 66 (the sharded pre-pass itself), 96 (apply-side variability), 76 (quarantine reprocess — the beneficiary)
-
-> Numbered 98b to avoid colliding with the in-flight issue 98 (DE-1.x org refs).
-> Renumber on triage if the tracker prefers.
 
 ## Context
 
@@ -85,9 +82,22 @@ Stripe by **estimated read cost**, not raw notice count. Options, cheapest first
   ranges from the slowest. Removes the barrier idle entirely and is robust to any future
   cost skew, at the cost of coordination between workers.
 
-(c) is the most general and the only one that self-corrects for skews we haven't measured
-yet — worth considering given the reprocess's cohort may have a different cost profile
-again.
+### (c) is the PREFERRED direction
+
+(a) and (b) both require **predicting the cost distribution in advance**. This issue is
+the evidence that the distribution is *not* uniform and *shifts with the data* — the
+gradient measured here is a property of this corpus's era mix (legacy TED at low ids,
+eForms at high ids), not a constant of the system.
+
+**The quarantine reprocess (issue 76) has a different era mix and therefore a different,
+unmeasured cost profile.** A statically-weighted stripe calibrated on today's gradient
+could be wrong for it in either direction — and "make the reprocess feasible" is the
+entire point of this line of work.
+
+**Work-stealing self-corrects at runtime without predicting the skew at all**, so it is
+robust to a cost distribution nobody has measured yet. Prefer it if the cheaper static
+options (a)/(b) don't hold up under test; treat them as stopgaps that buy time rather
+than as the endpoint.
 
 ## Why this matters — the reprocess
 
