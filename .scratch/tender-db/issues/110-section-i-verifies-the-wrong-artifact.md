@@ -50,3 +50,62 @@ gate measuring server-rendered HTML for data that is never server-rendered.
 The reasoning was right — *"the ledger is `include_str!`-compiled, so only the deployed binary counts"* —
 and the implementation then checked something else entirely. Being right about what matters does not
 guarantee measuring it.
+
+## Confirming run — 2026-08-03, live service (sdk-vendor)
+
+Section I had never been run against a service with a populated `.quarantine`; the
+prior attempt could only report the null state. Run against
+`https://tenders.zebreus.click`:
+
+```
+I1 PASS  served Resolved-categories carries the 'eForms-DE 1.x (German dialect)' row
+I2 PASS  the gap is stated in caps, in its own sentence
+I3 PASS  the gap names its tracking issue (100)
+I4 PASS  the 241 residual is stated, not left unexplained on a Resolved row
+I5 PASS  the residual's stale reason names its issue (87)
+I6 PASS  served row reconciles with F1a/F1b: reclaimed=218635 outstanding=241
+I7 EYE   resolved 2026-08-02 · fix: issues 75/78/76/85/98/99 — award winners pending, issue 100
+```
+
+I6 reconciled with **no refresher lag** — the served counts and the store agree
+exactly, so the 60 s window that would have made a real panel/store split look like
+lag was not in play. The preflight independently reported the serving build as
+`1830d50c74a26e32e70c1c72ab377b323a93e4d9`.
+
+The disclosure claim of 98/100 is therefore verified against the artifact a browser
+actually receives, which is the whole point of this issue.
+
+### `TDB_ONLY=I` — why the run needed changing before it could happen
+
+Section I is two GETs against a public endpoint: no token, no SQL, no data pages.
+It was gated behind a box window only because it shares a file with sections A-H,
+which are corpus-wide aggregates over 6.9M-row tables. That coupling means the free
+honesty check goes unverified for exactly as long as the box is busy — which is when
+a stale disclosure is most likely and least likely to be noticed. `TDB_ONLY=I` runs
+section I alone, needing neither `TDB_TOKEN` nor `TDB_SNAPSHOT`.
+
+It announces what it skipped in three places (banner, summary, pass message). A quiet
+section selector would reintroduce this issue's own failure mode — silence about a
+check being indistinguishable from a check that passed — at the level of the whole file.
+
+### The bug the selector exposed: a verdict-less run exited 0
+
+With A-H skipped there is nothing else in the run, so a null `.quarantine` printed
+"0 passed, 0 failed" and exited **0**: green to anything reading a status code, from
+a run that verified nothing. The EYE line said so in prose, but no consumer reads
+prose. Exit codes are now distinct — `0` discloses, `1` fails to disclose, `2` could
+not tell.
+
+Falsified against a stub in four states before being pointed at anything real:
+
+| stub serves | result |
+|---|---|
+| the approved wording | I1-I6 PASS, exit 0 |
+| the row, but wording silent about the gap | I2-I5 FAIL, exit 1 |
+| no DE-1.x row at all | I1 FAIL, exit 1 |
+| `.quarantine: null` | no verdict, exit 2 |
+
+The stub also returned 500 and logged any `POST`. **Zero POSTs were issued** under
+`TDB_ONLY=I`, so "this mode touches no data" is measured rather than asserted.
+
+Landed `089e715`.
