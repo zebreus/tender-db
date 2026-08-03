@@ -28,6 +28,29 @@
 #   taken is invisible and would report ABSENT, so the reader is told what they are
 #   looking at instead of inferring it.
 #
+# WHAT RULES 1 AND 6 HAVE IN COMMON (proj-fix's synthesis, and it is the sharpest
+# sentence anyone produced today)
+#   A check whose subject is TEXT ABOUT the artifact, rather than the artifact, can be
+#   fooled by text that resembles it. A check that EVALUATES the thing cannot.
+#
+#   text about the artifact          | evaluates the artifact
+#   ---------------------------------|--------------------------------
+#   a grep                           | a compile-time assertion
+#   a hand-copied SQL statement      | a statement dumped from the builder
+#   AN EXPLAIN QUERY PLAN            | a clock
+#
+#   That is one category, not three coincidences. B1's hand-written SQL and a one-line
+#   `grep '#\[ignore'` had the IDENTICAL defect — one looked obviously risky and the
+#   other looked trivial, and both matched something that merely resembled the fact
+#   (a paraphrase of a query; a `//!` comment mentioning the attribute it was counting).
+#
+#   AND IT EXPLAINS THIS WHOLE FILE'S BOUNDARY. A query plan is text about an execution,
+#   not the execution — so rule 6 is not a separate limitation of plans, it is rule 1
+#   applied to the instrument this gate is built on. That is why a plan can be perfect
+#   while the read takes 248.8s, and why the timing instrument is not an optional
+#   companion to this gate but the other half of it: one reads the description, one runs
+#   the thing.
+#
 # THE RULES THIS FILE LEARNED THE HARD WAY (2026-08-03)
 #   Each was paid for with a real false verdict. Detail lives at the point of use and
 #   in issues 112/114; this is the index, so a future editor meets them before the code.
