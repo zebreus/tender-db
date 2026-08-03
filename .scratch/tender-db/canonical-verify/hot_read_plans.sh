@@ -44,6 +44,30 @@
 #   other looked trivial, and both matched something that merely resembled the fact
 #   (a paraphrase of a query; a `//!` comment mentioning the attribute it was counting).
 #
+#   THE SAME IDEA ONE STEP OVER (proj-fix again): a test whose subject is the ANSWER
+#   cannot verify a change that only affects the PATH. Their short-circuit test asserted
+#   on returned rows — but the guard changes speed and never results, by design, so a
+#   guarded and an unguarded query return identical rows and no assertion on the answer
+#   can tell them apart. It would have passed with the boundary anywhere at all.
+#
+#   PUT THE TWO TOGETHER AND THIS ISSUE'S ENTIRE HISTORY IS ONE PICTURE. A read has
+#   three independent properties, and an instrument that sees one is blind to the others:
+#
+#       ANSWER   which rows come back      | row-count gates, result assertions
+#       PATH     how they are reached      | THIS FILE (EXPLAIN QUERY PLAN)
+#       COST     how much work it took     | a clock, an execution count
+#
+#     * the row-counting gates were green through the whole 2.2s `lots_of` outage —
+#       ANSWER blind to PATH. That is the observation 112 was OPENED on.
+#     * this gate passed `tender_detail` at 248.8s — PATH blind to COST (rule 6).
+#     * proj-fix's guard test could not fail — ANSWER blind to PATH again, in a test
+#       written by someone who had just cited the first case.
+#
+#   So "which instrument?" is answerable before writing a check: name the property that
+#   changed. A fix to the path needs a path instrument; a fix to the cost needs a clock.
+#   Nothing here is a hierarchy — this file is not weaker than a clock, it is blind to a
+#   different axis, and the clock is blind to this one.
+#
 #   AND IT EXPLAINS THIS WHOLE FILE'S BOUNDARY. A query plan is text about an execution,
 #   not the execution — so rule 6 is not a separate limitation of plans, it is rule 1
 #   applied to the instrument this gate is built on. That is why a plan can be perfect
