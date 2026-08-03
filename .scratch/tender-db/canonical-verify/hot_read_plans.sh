@@ -927,6 +927,62 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# E. IS THE CHECKED SET STILL THE WHOLE SET?  (issue 114 part 2)
+#
+# Every check above answers "is this read served properly". None of them answers
+# "are these the right reads to be checking" — and on 2026-08-03 that was the more
+# expensive question. The READS table was hand-written from the reads someone
+# remembered being hot, so it carried B5, a check for a read issue 19 had DELETED,
+# while NOTHING checked `read::organizations`, which was walking 25.3M rows on a
+# public endpoint at 22.0s. Not a wrong check: a missing one. Coverage chosen by
+# recall is the artifact-vs-paraphrase error applied to WHICH reads get checked.
+#
+# So the set is DERIVED: `checked-set.tsv` is emitted by a generator that walks every
+# Collection `read_items` dispatches to, crossed with every `Filter` field, through the
+# statement seams — so a new collection, a new filter or a changed builder all change
+# it with no edit here. `checked-set-triage.tsv` gives each one a disposition. A key in
+# the set with no disposition is a FAILURE, loudly, because that is exactly the state
+# `read::organizations` was in for months.
+#
+# THE FIXTURE IS CHECKED IN, WHICH MEANS IT CAN GO STALE, so staleness is tested
+# rather than hoped for: the generator records the rev it ran at, and this section
+# compares `read.rs` between that rev and the SERVING rev. Any difference and the
+# audit is no-input — a fixture describing a build that is not running is exactly the
+# paraphrase problem it was built to solve.
+# ---------------------------------------------------------------------------
+echo "-- E. the checked SET is derived from the code, not from memory"
+E_DIR=$(dirname "$0")
+E_SET="$E_DIR/checked-set.tsv"
+E_TRI="$E_DIR/checked-set-triage.tsv"
+if [ ! -r "$E_SET" ] || [ ! -r "$E_TRI" ]; then
+  report NONE E0 "checked-set.tsv or checked-set-triage.tsv missing — the coverage audit did NOT run, so nothing here says the checked set is complete."
+else
+  E_REV=$(grep -m1 '^# generated-from-rev' "$E_SET" | awk '{print $3}')
+  if [ -z "$E_REV" ]; then
+    report NONE E0 "checked-set.tsv does not record the rev it was generated from, so it cannot be shown to describe the serving build. NOT verified."
+  elif ! git cat-file -e "${E_REV}^{commit}" 2>/dev/null; then
+    report NONE E0 "checked-set.tsv was generated at '$E_REV', which this repo does not contain — cannot establish whether it still describes the serving build."
+  elif ! git diff --quiet "$E_REV" "$REV" -- crates/store/src/read.rs 2>/dev/null; then
+    report NONE E0 "STALE SET: read.rs differs between the fixture's rev ($E_REV) and the serving build ($REV), so the enumeration may no longer match the reads that run. Regenerate checked-set.tsv. NOT verified."
+  else
+    e_missing=0; e_n=0
+    while IFS=$'\t' read -r c f _sql; do
+      case "$c" in ''|'#'*) continue;; esac
+      e_n=$((e_n+1))
+      if ! awk -F'\t' -v c="$c" -v f="$f" '$1==c && $2==f {found=1} END{exit !found}' "$E_TRI"; then
+        report FAIL "E:$c/$f" "the code can emit this read and NOTHING dispositions it — neither asserted, excluded, nor explained. This is the state read::organizations was in while serving 22.0s pages."
+        e_missing=$((e_missing+1))
+      fi
+    done < "$E_SET"
+    if [ "$e_n" -lt 20 ]; then
+      report NONE E1 "only $e_n reads in checked-set.tsv — the fixture is implausibly thin (expected ~44), so the enumeration probably failed rather than the code having shrunk. NOT verified."
+    elif [ "$e_missing" = 0 ]; then
+      report PASS E1 "all $e_n derived reads carry a disposition ($(awk -F'\t' '!/^#/ && NF{print $3}' "$E_TRI" | sort | uniq -c | tr '\n' ' ' | sed 's/  */ /g'))"
+    fi
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 # C. THE NEGATIVE CONTROL — can this probe still produce a RED at all?
 #
 # A gate that has never been observed to fail on the run that matters is not

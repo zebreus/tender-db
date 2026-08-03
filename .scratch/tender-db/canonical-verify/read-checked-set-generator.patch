@@ -1,0 +1,127 @@
+diff --git i/crates/store/src/read.rs w/crates/store/src/read.rs
+index 4525b0e..77e5cb6 100644
+--- i/crates/store/src/read.rs
++++ w/crates/store/src/read.rs
+@@ -1338,3 +1338,122 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
+         has_time: opt_int_of(row, idx + 2).unwrap_or(0) != 0,
+     })
+ }
++
++
++#[cfg(test)]
++mod checked_set_registry {
++    //! 114 part 2 — DERIVE the set of hot reads the gate asserts, do not restate it.
++    //!
++    //! The gate's coverage used to be a hand-written list of rows. That inherits the
++    //! blind spots of whoever wrote it: on 2026-08-03 it carried a check for a read
++    //! issue 19 had DELETED (B5) while nothing checked `read::organizations`, which was
++    //! walking 25.3M rows on a public endpoint. Coverage chosen by memory is the
++    //! artifact-vs-paraphrase error applied to WHICH reads are checked.
++    //!
++    //! So the set is enumerated from the code: every Collection `read_items` dispatches
++    //! to, crossed with every `Filter` field and both cursor positions. New collection,
++    //! new filter, or a changed builder all change this output with no edit here.
++    use super::*;
++
++    /// Every collection `read_items` dispatches to, with its statement seam. Adding an
++    /// arm to that match without adding it here is caught by `every_collection_covered`.
++    fn collections() -> Vec<(&'static str, fn(&Filter, Scope) -> (String, Vec<Value>))> {
++        vec![
++            ("tenders", tenders_statement as fn(&Filter, Scope) -> (String, Vec<Value>)),
++            ("lots", lots_statement),
++            ("organizations", organizations_statement),
++            ("notices", notices_statement),
++        ]
++    }
++
++    /// One probe value per `Filter` field. The VALUE is irrelevant to the plan shape;
++    /// only which predicate is pushed matters.
++    fn filters() -> Vec<(&'static str, Filter)> {
++        let b = Filter::default();
++        vec![
++            ("none", b.clone()),
++            ("source", Filter { source: Some("ted".into()), ..b.clone() }),
++            ("country", Filter { country: Some("DE".into()), ..b.clone() }),
++            ("cpv", Filter { cpv: Some("4521".into()), ..b.clone() }),
++            ("buyer", Filter { buyer: Some(42), ..b.clone() }),
++            ("winner", Filter { winner: Some(42), ..b.clone() }),
++            ("min_value", Filter { min_value: Some(1000), ..b.clone() }),
++            ("max_value", Filter { max_value: Some(9000), ..b.clone() }),
++            ("kind", Filter { kind: Some("procedure".into()), ..b.clone() }),
++            ("tender", Filter { tender: Some(7), ..b.clone() }),
++            ("status", Filter { status: Some(Status::Open), ..b.clone() }),
++        ]
++    }
++
++    /// `filters()` above is a hand-written list, which is the restatement problem one
++    /// level down: add a field to `Filter` and the enumeration silently stops covering
++    /// it — the same way the old hand-written READS table stopped covering
++    /// `read::organizations`.
++    ///
++    /// Rust has no reflection, so the guard is an EXHAUSTIVE DESTRUCTURE: adding a field
++    /// to `Filter` makes this fail to COMPILE, which is stronger than any runtime check
++    /// and cannot be forgotten. `now` is excluded deliberately — it is a clock reading
++    /// the status predicate needs, not a filter a caller can vary.
++    #[test]
++    fn every_filter_field_is_enumerated() {
++        let Filter {
++            source, country, cpv, buyer, winner, status, min_value, max_value, kind,
++            tender, now,
++        } = Filter::default();
++        let _ = (&source, &country, &cpv, &buyer, &winner, &status, &min_value,
++                 &max_value, &kind, &tender, &now);
++        let fields = 10; // every binding above except `now`
++        assert_eq!(
++            filters().len(),
++            fields + 1,
++            "filters() must carry the unfiltered baseline plus exactly one probe per \
++             Filter field; if this fires, a field was added to the destructure above \
++             without a probe beside it"
++        );
++    }
++
++    /// `--` comments live INSIDE these builders' SQL. Flattening to one line without
++    /// stripping them comments out every token that follows — a fixture that silently
++    /// truncates the statement it claims to describe. Found while prototyping; it is
++    /// the reason this strips before it flattens.
++    fn flatten(sql: &str) -> String {
++        sql.lines()
++            .map(|l| match l.find("--") { Some(i) => &l[..i], None => l })
++            .collect::<Vec<_>>()
++            .join(" ")
++            .split_whitespace()
++            .collect::<Vec<_>>()
++            .join(" ")
++    }
++
++    #[test]
++    fn emit_checked_set() {
++        let mut rows = Vec::new();
++        for (cname, stmt) in collections() {
++            for (fname, f) in filters() {
++                for (cur, after) in [("first", 0i64), ("page", 49_377)] {
++                    let (sql, params) =
++                        stmt(&f, Scope::Page { after, limit: MAX_PAGE });
++                    let flat = flatten(&sql);
++                    assert!(!flat.contains('\t'), "tab in emitted SQL breaks the TSV fixture");
++                    assert!(!flat.contains("--"), "comment survived flattening: {flat}");
++                    rows.push(format!("{cname}\t{fname}\t{cur}\t{}\t{flat}", params.len()));
++                }
++            }
++        }
++        println!("---8<---REGISTRY");
++        for r in &rows { println!("{r}"); }
++        println!("---8<---END {} rows", rows.len());
++    }
++
++    /// The set is only DERIVED if adding a collection changes it. This fails when
++    /// `read_items` gains an arm that `collections()` does not list.
++    #[test]
++    fn every_collection_covered() {
++        // read_items dispatches on exactly these; kept as a literal so a new arm in
++        // v1/mod.rs makes this list visibly wrong rather than silently short.
++        let expected = ["tenders", "lots", "organizations", "notices"];
++        let got: Vec<&str> = collections().iter().map(|(n, _)| *n).collect();
++        assert_eq!(got, expected, "collections() is out of step with read_items");
++    }
++}
