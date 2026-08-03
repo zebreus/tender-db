@@ -582,7 +582,17 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # ABSENT" there, nothing is broken and a reindex is owed.
 note_for() {
   case "$1" in
-    B7|B8|B9) printf '%s' "  [known] this is the live 117 read-path defect, not a regression in whatever you are testing. Expected RED until an index giving both the filter seek and the id bound is deployed AND BUILT — three of the four are deferred (issue 111), so check section A first: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
+    # ONE ARM PER CHECK, deliberately, even though the text is nearly identical.
+    # 111 may land in two steps, and 117's indexes do not all materialise together —
+    # `notices(source, id)` is in the schema batch and builds itself at first open,
+    # while the other two are deferred and wait for a reindex. So these checks will go
+    # green at DIFFERENT times, and un-suppression has to be per-check: a shared
+    # `B7|B8|B9)` arm would force removing the excuse for checks still legitimately red,
+    # or keeping it for one already fixed. Each arm also names the index it waits on, so
+    # section A's "DECLARED but ABSENT" can be matched against something specific.
+    B7) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on organizations(country, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
+    B8) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on notices(source, id), which is in the SCHEMA BATCH and builds itself at first open — so unlike B7/B9 this one should go green on deploy alone. If it is still red after 117 deploys, that IS worth investigating.";;
+    B9) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on tenders(source, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
     *) printf '';;
   esac
 }
