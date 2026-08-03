@@ -541,64 +541,63 @@ else
   # read whenever a non-empty WAL exists; fall back to `immutable=1` only when
   # there are no frames to miss; and if the merged read cannot be had, say so
   # rather than quietly reporting a main-file view as the truth.
-  A_VIEW=""
-  if [ -s "${TDB_SNAPSHOT}-wal" ]; then
-    report NONE A0 "TDB_SNAPSHOT=$TDB_SNAPSHOT has a NON-EMPTY -wal ($(wc -c < "${TDB_SNAPSHOT}-wal") bytes). An immutable=1 read would IGNORE those frames — an index living only in the WAL would report ABSENT on a healthy DB, and one dropped there would report present. Index presence NOT verified. Point TDB_SNAPSHOT at a CHECKPOINTED snapshot (0-byte -wal); do not aim it at the live serving file."
-  else
-    HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
-             "file:${TDB_SNAPSHOT}?immutable=1" \
-             "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
-    if [ -n "$HAVE" ]; then
-      # DECLARE THE INPUT. A snapshot is a photograph of the catalogue, and a check is
-      # only as trustworthy as its knowledge of its own inputs — so the age is printed
-      # rather than left for the reader to wonder about. An index built AFTER this file
-      # was taken (a reindex job, 111's boot repair) is invisible here and would report
-      # as ABSENT; an index dropped since would report as present.
-      a_age="unknown age"
-      a_mtime=$(stat -c %Y "$TDB_SNAPSHOT" 2>/dev/null || stat -f %m "$TDB_SNAPSHOT" 2>/dev/null)
-      if [ -n "$a_mtime" ]; then
-        a_min=$(( ( $(date -u +%s) - a_mtime ) / 60 ))
-        a_age="${a_min} min old"
-      fi
-      A_VIEW="snapshot $TDB_SNAPSHOT, $a_age, checkpointed (0-byte -wal) — NOT the live catalogue; valid only if no reindex has run since"
-    fi
-  fi
+  # ---- READ THE CATALOGUE, AND KNOW WHICH HALF OF THE ANSWER IS SOUND ----------
+  # `immutable=1` ignores the `-wal`. Refusing outright when a WAL exists was wrong
+  # twice over: it crashed the run (HAVE unset under `set -u`, taking sections B, C and
+  # E down with it — a correct refusal that destroys the good sections is harsher than
+  # the stale read it prevents), and on prod it is unachievable anyway. The live WAL
+  # does not checkpoint at idle (it is volume-triggered), the DB is 453 GB with 122 GB
+  # free so no fresh snapshot can be cut, and the newest snapshot was 304 minutes old
+  # and pre-Reindex. "Point it at a checkpointed snapshot" was not advice, it was a
+  # refusal to answer. (issue 119)
+  #
+  # THE STALENESS ONLY INVALIDATES ONE DIRECTION, so only that direction is withheld:
+  #   PRESENT in the main file -> SOUND. WAL frames can only ADD to what is committed
+  #                               there, so a visible index exists. (A `DROP INDEX`
+  #                               living unread in the WAL is the one exception, and it
+  #                               is a deliberate act — flagged in the message, not
+  #                               silently assumed away.)
+  #   ABSENT from the main file -> NOT ESTABLISHED. An index created recently enough to
+  #                               live only in WAL frames looks exactly like one that
+  #                               was never built. That is the unsound half, and it is
+  #                               reported no-input rather than FAIL.
+  # Refusing threw away the sound half to avoid the unsound one. Reporting both, each
+  # labelled, keeps the answer we can defend and withholds only the one we cannot.
+  A_WAL=0
+  [ -s "${TDB_SNAPSHOT}-wal" ] && A_WAL=$(wc -c < "${TDB_SNAPSHOT}-wal" 2>/dev/null || echo 0)
+  HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
+           "file:${TDB_SNAPSHOT}?immutable=1" \
+           "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
   if [ -z "$HAVE" ]; then
-    [ -s "${TDB_SNAPSHOT}-wal" ] || report NONE A0 "sqlite_master returned nothing — wrong file, or unreadable. NOT verified."
+    report NONE A0 "sqlite_master returned nothing from $TDB_SNAPSHOT — wrong file, or unreadable. Index presence NOT verified."
   else
-    # State the provenance of the observation, not just its verdict. A reader who
-    # cannot tell which catalogue was read cannot tell what a PASS is worth.
-    echo "   catalogue read: $A_VIEW"
-
+    a_age="unknown age"
+    a_mtime=$(stat -c %Y "$TDB_SNAPSHOT" 2>/dev/null || stat -f %m "$TDB_SNAPSHOT" 2>/dev/null)
+    [ -n "$a_mtime" ] && a_age="$(( ( $(date -u +%s) - a_mtime ) / 60 )) min old"
+    if [ "$A_WAL" = 0 ]; then
+      echo "   catalogue read: $TDB_SNAPSHOT, $a_age, checkpointed (0-byte -wal) — NOT the live catalogue; valid only if no reindex has run since"
+    else
+      echo "   catalogue read: $TDB_SNAPSHOT MAIN FILE ONLY, $a_age; its ${A_WAL}-byte -wal was NOT read. Present-verdicts stand (frames only add); ABSENT cannot be established and is reported no-input. (issue 119)"
+    fi
     while IFS=$'\t' read -r name cols; do
       [ -n "$name" ] || continue
       line=$(printf '%s\n' "$HAVE" | awk -F'\t' -v n="$name" '$1==n{print $2; exit}')
       if [ -z "$line" ] && ! printf '%s\n' "$HAVE" | cut -f1 | grep -qx "$name"; then
-        report FAIL "A:$name" "DECLARED at $REV but ABSENT from the DB — the read it serves is scanning"
+        if [ "$A_WAL" = 0 ]; then
+          report FAIL "A:$name" "DECLARED at $REV but ABSENT from the DB — the read it serves is scanning"
+        else
+          report NONE "A:$name" "not in the main file, and the ${A_WAL}-byte -wal was not read. An index built recently enough to live only in WAL frames is indistinguishable from one never built, so ABSENT is NOT established here. Re-check against a checkpointed catalogue before treating this as missing."
+        fi
         continue
       fi
-      # Compare declared columns against the stored DDL, whitespace-insensitively.
-      #
-      # The trailing `WHERE …` of a PARTIAL index is part of the definition, not
-      # decoration: `notices(id) WHERE parse_state='parsed' AND projected=0` and
-      # `notices(id) WHERE projected=1` are different indexes serving different
-      # reads. The capture above therefore takes the predicate too. It used to
-      # stop at the first `)`, which broke this comparison BOTH ways: the
-      # expectation lost the predicate while the on-disk DDL kept it, so every
-      # partial index failed with a bogus mismatch (`notices_unprojected` did) —
-      # and, far worse, an index REBUILT WITH THE WRONG PREDICATE would have
-      # compared equal and PASSED. A silent no-check of exactly the kind this
-      # file exists to prevent, hiding behind a visible false alarm.
-      #
-      # Strip the `CREATE … ON ` prefix by consuming only text BEFORE the first
-      # `(`. A greedy `.* ON ` would eat into the predicate the moment one
-      # contains the letters " ON " (a column named `on_hold`, a nested table).
       want=$(printf '%s' "$cols" | tr -d ' ')
       got=$(printf '%s' "$line" | sed -E 's/^[^(]* ON +//I' | tr -d ' ')
+      w=""
+      [ "$A_WAL" != 0 ] && w=" (main file; a DROP INDEX sitting unread in the ${A_WAL}-byte WAL would still read as present)"
       if [ -z "$line" ]; then
-        report PASS "A:$name" "present (implicit/auto index — no DDL to compare)"
+        report PASS "A:$name" "present (implicit/auto index — no DDL to compare)$w"
       elif [ "$want" = "$got" ]; then
-        report PASS "A:$name" "present, columns match $cols"
+        report PASS "A:$name" "present, columns match $cols$w"
       else
         report FAIL "A:$name" "present but columns DIFFER — declared $want, on-disk $got (a same-name index built from a stale definition serves the read no better than nothing)"
       fi
