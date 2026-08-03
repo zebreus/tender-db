@@ -564,12 +564,27 @@ from a statement of known provenance, every time it runs.
   extracted statement against a demonstrated-discriminating control. The other
   hot reads are not.**
 
-  **This is a GATE-coverage gap, not a hidden prod defect.** run-driver EQP'd the
-  underlying prod reads directly and separately — the identity probes came back
-  index-served. So there is no reason to think production is scanning anywhere. What
-  is missing is a *standing check* that would notice if it started. Both statements
-  need saying: overstating the gap invents an outage, understating it re-creates the
-  false green.
+  **For the reads the gate names, this is a GATE-coverage gap and not a hidden prod
+  defect** — run-driver EQP'd those underlying reads directly and the identity probes
+  came back index-served. What is missing there is a *standing check* that would
+  notice if they regressed.
+
+  **But I overstated this and must correct it.** I originally wrote "there is no
+  reason to think production is scanning anywhere." That is false, and it was falsified
+  within the hour. `read::organizations` (read.rs ~990-1020, serving
+  `/v1/organizations`) carries a plain `o.id > ?` cursor with `ORDER BY o.id` and plans
+  `SEARCH o USING INTEGER PRIMARY KEY (rowid=?)` over 25.3M rows — **the identical
+  shape as the `lots_of` defect this whole issue was opened for.** Measured live by
+  run-driver: `?kind=zzz` **99.08s**, `?country=ZZ` **22.0s** cold.
+
+  The correct statement is narrower: *the reads the gate names are not scanning.* A
+  different read, on a table the gate does check the indexes of, is scanning in
+  production right now — and the gate did not catch it, because it has no check for
+  that read. That is the same coverage gap as B5, seen from the other side: B5 asserted
+  a read that no longer exists, while nothing asserted a read that does.
+
+  Keep these distinct in the record. The B5 deletion must NOT later be read as
+  "the organizations reads were checked and were fine".
 
   **B5 has been DELETED** (not repaired) — it planned the per-mention organizations
   probe that issue 19 removed, so its green protected nothing, and pointing it at the

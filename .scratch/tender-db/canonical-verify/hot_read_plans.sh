@@ -92,9 +92,16 @@
 #   Building one (run-driver, 2026-08-03): read prod's `sqlite_master` DDL with
 #   `immutable=1` and replay it through TURSO's own exec mode. A sqlite3-built
 #   clone is NOT readable by turso 0.7.0 — it demands its
-#   `__turso_internal_autoincrement_*` shadow tables. Verify the clone by index
-#   count against prod (62 at the time of writing) and by `sqlite_stat1` being
-#   empty for the tables under test.
+#   `__turso_internal_autoincrement_*` shadow tables.
+#
+#   VERIFY THE CLONE BY: every index named in a B-check being present, and
+#   `sqlite_stat1` carrying no rows for the tables under test. Both are stable.
+#   Do NOT verify by index count against prod — an earlier version of this note
+#   said to, and it is wrong: the count was 62 one hour and 61 the next, because
+#   `plan_*` scratch indexes come and go with `clear_plan` at each end of a
+#   projection. That is the same reason `plan_*` is excluded from section A, and
+#   asserting on a number that correctly varies would have someone conclude their
+#   plan DB was broken when it was fine.
 #   TDB_PLAN_CMD='…'          alternative plan source: any command reading SQL on
 #                             stdin and writing a turso-produced plan on stdout,
 #                             at the DEPLOYED turso version.
@@ -123,6 +130,32 @@
 #   in the file of why an artifact must be extracted rather than restated.
 #   Section C now carries this weight properly — it establishes the RED in-run,
 #   from a statement of known provenance, every time.
+#
+# EVERY CHECK IS DEMONSTRATED TO BE ABLE TO FAIL (run-driver, 2026-08-03)
+#   A green from a check that CANNOT go red is worth nothing — B5 was reported PASS
+#   in a canonical run while planning a statement the application does not issue.
+#   So each check was run against a variant plan DB with exactly ONE index removed:
+#
+#     plan DB                  B1   B1b  B2   B3   B4   B6   C1
+#     planschema.db (intact)   P    P    P    P    P    P    P(red)
+#     nx_lots                  F    F    P    P    P    P    P
+#     nx_bidp                  P    P    F    P    P    P    P
+#     nx_pkey                  P    P    P    F    P    P    P
+#     nx_isl                   P    P    P    P    F    P    P
+#     nx_curpub                P    P    P    P    P    F    P
+#
+#   Sensitivity AND specificity: every diagonal fails, every off-diagonal passes. A
+#   check that went red on ANY index removal would be as useless as one that never
+#   went red — it would report "something changed", not "this read regressed".
+#   C1 is unperturbed throughout, which is what a control should do.
+#
+#   Variants live at /data/scratch-lots/nx_{lots,bidp,pkey,isl,curpub}.db (~528 KB
+#   each), built by the recipe above with one `sed` on the DDL. For B1/B1b the
+#   removal is dropping `UNIQUE (tender_id, lot_key)` from the `lots` DDL, since
+#   `sqlite_autoindex_lots_1` cannot be `DROP INDEX`ed.
+#   RE-RUN THIS whenever turso is bumped — the version bump is this gate's stated
+#   trigger, and a planner change can make a check unfalsifiable as easily as it can
+#   make a read regress.
 #
 # THE POST-FIX RUN (run-driver, 2026-08-03, on-box turso 0.7.0, prod catalogue)
 #   28 pass, 1 fail, 0 no-input — the single fail was the partial-index parse bug
