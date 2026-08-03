@@ -145,6 +145,21 @@ Ran against the falsification design above, all three traps executed:
   whether requests were outstanding; run-driver measured it by **thread CPU**. That made
   the *post-cap* window the strongest evidence: **21 s of `sql-exec` burn while the main
   API stayed at 0.01 s and every request had already returned.**
+
+  **Where that fact came from, because it is the transferable part** (run-driver's own
+  correction to my write-up, which had implied they found it under pressure): the
+  cap-does-not-halt-turso-work property was measured **hours earlier, for an unrelated
+  question** — whether task #5 could reuse `/v1/sql`'s timeout as a cancellation
+  mechanism. `tokio::time::timeout` cannot fire mid-poll, cold or warm, streaming or
+  aggregate. So at trap 2 they were not solving it; they were **recognising that a fact
+  already in hand made the trap's premise inapplicable.** My trap was correctly written
+  for a world where a cap ends the work, and this is not that world.
+
+  The reusable move is therefore not "find a way around the trap" but **"check whether
+  something already measured invalidates the trap's premise"** — and the precondition for
+  that move is that the earlier measurement was written down somewhere findable. A
+  measurement taken for a #5 design decision is what made an issue-17 verification
+  possible at all.
 * **Verdict:** `/v1/sql` isolation is real. `sql.rs`'s "the backstop bounds the RESPONSE
   and frees the concurrency slot; issue 17's isolation bounds the BLAST RADIUS" is now a
   measured statement rather than a design intention — and the two halves were observed
