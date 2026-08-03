@@ -99,6 +99,16 @@ impl Server {
         response.json().await.expect("json body")
     }
 
+    /// Status and body from ONE request. `/health/deep` folds a live measurement
+    /// (disk) into its verdict, so asserting a relationship between its status and
+    /// its body across two requests would be asserting across two different
+    /// measurements.
+    async fn get_with_status(&self, path: &str) -> (u16, Value) {
+        let response = self.http.get(format!("{}{path}", self.base)).send().await.expect("request");
+        let status = response.status().as_u16();
+        (status, response.json().await.expect("json body"))
+    }
+
     async fn status(&self, path: &str) -> u16 {
         self.http
             .get(format!("{}{path}", self.base))
@@ -287,16 +297,55 @@ async fn the_service_root_and_health_answer() {
     assert_eq!(server.status("/_source").await, 200);
 }
 
+/// `/health/deep`'s verdict is exactly the conjunction of its per-check verdicts,
+/// and the status code is `200` iff that verdict is healthy — the contract the
+/// external pinger relies on, since it alerts on the status alone.
+///
+/// This holds on ANY host, which is the point: it is the strongest statement about
+/// the probe that does not depend on the machine running it. It catches the wiring
+/// defect that matters — a check computed and reported but not folded into `ok`,
+/// which would leave the pinger silent through a real outage.
+fn assert_verdict_is_the_conjunction(status: u16, body: &Value, when: &str) {
+    let checks = body["checks"].as_object().expect("the probe names its checks");
+    // Named explicitly rather than derived from the body: a check that vanished
+    // from the JSON must fail this test, and iterating whatever is present would
+    // silently accept its absence.
+    for name in ["database", "ingest_freshness", "last_job", "disk"] {
+        assert!(checks.contains_key(name), "{when}: /health/deep dropped the {name} check");
+    }
+    let all_green = checks.values().all(|c| c["ok"] == Value::Bool(true));
+    assert_eq!(
+        body["ok"],
+        Value::Bool(all_green),
+        "{when}: the overall verdict must be the conjunction of the checks, got {body}"
+    );
+    let expected = if all_green { 200 } else { 503 };
+    assert_eq!(status, expected, "{when}: the pinger judges by status alone, got {body}");
+}
+
 /// The deep health probe (issue 24): a fresh, live box — database answering, no
-/// ingest run yet — reports healthy, and the body carries every operational
-/// check the external pinger judges production by.
+/// ingest run yet — is healthy on every signal the test controls, and the body
+/// carries every operational check the external pinger judges production by.
+///
+/// **What this test may and may not assert.** One of the four checks — `disk` — is
+/// a property of the HOST rather than of the code: this machine's free space
+/// decides it. So the three checks the test controls are asserted by value, and
+/// the fourth only through [`assert_verdict_is_the_conjunction`], which holds
+/// everywhere.
+///
+/// It used to assert a bare `200`, which made the verdict a function of the
+/// developer's free disk space: **red in the gate at 90% used, green at 89%** —
+/// and this box sits at 89%. That is not a flake to retry, it is a test reporting
+/// on the wrong subject, and a standing expected-red is how a team learns to scroll
+/// past a real one. The thresholds themselves are unit-tested in `v1::health`,
+/// where the disk figure is an input rather than a measurement — which is why
+/// nothing is lost by refusing to re-measure them here.
 #[tokio::test]
 async fn the_deep_health_probe_reports_operational_health() {
     let server = Server::start("deep-health").await;
 
-    assert_eq!(server.status("/health/deep").await, 200, "a live box is healthy");
-    let deep = server.get("/health/deep").await;
-    assert_eq!(deep["ok"], Value::Bool(true));
+    let (status, deep) = server.get_with_status("/health/deep").await;
+    assert_verdict_is_the_conjunction(status, &deep, "fresh box");
     assert_eq!(deep["checks"]["database"]["ok"], Value::Bool(true));
     // No scheduled run has fired yet — absence is not an alarm.
     assert_eq!(deep["checks"]["ingest_freshness"]["ok"], Value::Bool(true));
@@ -307,12 +356,16 @@ async fn the_deep_health_probe_reports_operational_health() {
     // last-job check and flips the whole probe to 503 for the pinger.
     let now = store::now_unix();
     server.db.record_job_run("process", "ted daily (all)", now - 20, now - 10, "ok", "42 notices").await.unwrap();
-    let ok_run = server.get("/health/deep").await;
+    let (status, ok_run) = server.get_with_status("/health/deep").await;
+    assert_verdict_is_the_conjunction(status, &ok_run, "after a successful run");
     assert_eq!(ok_run["checks"]["ingest_freshness"]["last_success_at"], Value::from(now - 10));
 
+    // The unhealthy direction IS asserted absolutely: one failing check must force
+    // 503 whatever the disk says, because failure is monotone in the conjunction.
     server.db.record_job_run("project", "rebuild=false", now - 5, now, "error", "db: locked").await.unwrap();
-    assert_eq!(server.status("/health/deep").await, 503, "the last job errored");
-    let errored = server.get_allow_error("/health/deep").await;
+    let (status, errored) = server.get_with_status("/health/deep").await;
+    assert_verdict_is_the_conjunction(status, &errored, "after a failed job");
+    assert_eq!(status, 503, "the last job errored — unhealthy regardless of the host");
     assert_eq!(errored["ok"], Value::Bool(false));
     assert_eq!(errored["checks"]["last_job"]["ok"], Value::Bool(false));
 }
