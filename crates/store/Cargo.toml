@@ -17,3 +17,11 @@ tokio = { workspace = true, features = ["time"] }
 # projection's Phase-2 bucketed fold (issue 62) can spill resolved notice state to
 # disk (postcard) and read it back byte-identically.
 serde = { workspace = true }
+
+# Test-only. `scan_budget_probe` must run on the runtime flavour PRODUCTION uses
+# (crates/app builds a multi_thread runtime), because the question it answers — can an
+# app-layer timeout abort a warm walk? — could plausibly depend on whether another
+# worker can fire the timer. Measuring it on a current-thread runtime would be an
+# instrument narrower than the claim.
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
