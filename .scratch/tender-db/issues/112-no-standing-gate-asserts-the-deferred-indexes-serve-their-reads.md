@@ -1,7 +1,8 @@
 # 112 — no standing gate asserts the hot read paths actually use an index
 
-Status: DONE — the gate exists, ran on the box, and confirmed the `1830d50` fix
-with a control that held. Filed 2026-08-03 (sdk-vendor), from the `/v1/tenders/{id}` ~2.2s regression
+Status: DONE **for what it was opened for** — the `lots_of` access path. The gate
+exists, ran on the box, and confirmed the `1830d50` fix with a control that held.
+**Read the B2-B6 caveat below before treating this as "all six hot reads verified".** Filed 2026-08-03 (sdk-vendor), from the `/v1/tenders/{id}` ~2.2s regression
 Kind: verification (missing gate)
 Blocked by: 110 — DONE (section I landed `a2835b5`); this is next
 Relates to: 111 (the app-side detect+repair this gate must verify INDEPENDENTLY), 89, 82/83, 62/60, 107
@@ -549,9 +550,21 @@ from a statement of known provenance, every time it runs.
 
 ## What remains open
 
-* **B2-B6 are still paraphrases** (114's point 1). B1/B1b are extracted; the other
-  five carry exactly the drift risk that just proved fatal for B1's predecessor.
-  This is now a demonstrated failure mode in this file, not a theoretical one.
+* **B2-B6 are paraphrases, and a static audit (114) found all five wrong.** The run
+  above reports `B2-B6 PASS`; those passes are worth much less than they look.
+  In particular **B5 is VACUOUS** — it plans the per-mention organizations lookup,
+  which issue 19 deleted; the deployed resolver preloads the table with a one-time
+  full scan instead. B5's green in the canonical run above protects nothing at all.
+  **B6** drops `WHERE current_published_at IS NOT NULL` and names `read.rs` for a
+  query that lives in `lib.rs`. **B3/B4** select fewer columns than the real identity
+  probe, making the index covering when in production it is not. **B2** drops a JOIN.
+  Detail and severity order in 114.
+
+  So the honest scope of this issue's DONE is: **`lots_of` is verified, by an
+  extracted statement against a demonstrated-discriminating control. The other five
+  hot reads are not.** B1's predecessor proved a paraphrase can be unfalsifiable;
+  the audit then showed the same construction had produced a check that asserts a
+  read which no longer exists. That is not a theoretical failure mode in this file.
 * **The gate is structurally blind to issue 115** — see the B7 note above, now
   with the plan text from this issue's own run as proof rather than argument.
 * **Section A's catalogue view** was fixed (`1df8ef3`) after run-driver found it
