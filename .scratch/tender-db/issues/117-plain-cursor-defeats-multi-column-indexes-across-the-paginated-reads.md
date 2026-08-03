@@ -689,3 +689,47 @@ One correction to the test's own claims: the superseded-version case does NOT fa
 guard (mutation shows such a guard passes), because that variant would be equivalent in scope and
 merely costlier. The comment now says so. A test comment claiming coverage it lacks is how a suite
 stops meaning what it says — the same failure as a gate implying coverage it cannot have.
+
+## `organizations_kind_id` — measured at real scale, and Class B shrinks to one entry
+
+The `?kind=` read was recorded above as **not fixable by any cursor shape**, because `identifier_kind`
+is the *second* column of `organizations_identity` and no leading-column seek exists. That was correct
+about the cursor and wrong about the conclusion: the answer is the same `(filter, id)` index the rest of
+Class A gets. `organizations(identifier_kind, id)` gives `identifier_kind` a leading column of its own.
+
+Measured on the 8,132,478-real-row copy, **query unchanged** (plain `id > ?` cursor throughout):
+
+| class | filter | rows | limit | before | after | factor |
+|---|---|---|---|---|---|---|
+| dense-early | `kind=vat` (ids from 31) | 49,421 | 50 | 0.2 ms | 0.3 ms | *noise, see below* |
+| | | | 1000 | 544.8 ms | **5.0 ms** | **109×** |
+| matches-late | `kind=national` (ids from 1.17 M) | 60,981 | 50 | 103.1 ms | **0.3 ms** | **344×** |
+| | | | 1000 | 241.5 ms | **4.1 ms** | 59× |
+| matches-nothing | `kind=zzz` | 0 | 50 | 1,666.1 ms | **0.1 ms** | **~16,600×** |
+| | | | 1000 | 1,667.5 ms | **0.1 ms** | ~16,700× |
+
+`SEARCH o USING INDEX organizations_kind_id (identifier_kind=? AND id>?)` — no sorter, `LIMIT`
+truncates. Prod's live `?kind=zzz` was **99.08 s**; this is the read that fixes it.
+
+**The one cell that is not an improvement is `vat@50`, 0.2 → 0.3 ms.** Recorded rather than rounded
+away, because "dense no-slower" is the acceptance criterion and this is the only cell that does not
+strictly meet it. It is a single tick at the probe's resolution, and the mechanism cannot make a
+dense-early case meaningfully slower — the seek positions and reads 50 rows, exactly as the walk did
+when the matches were early. The same-class `vat@1000` cell at 109× faster is the decisive dense
+evidence.
+
+**No cross-index regression.** With both `organizations_country_id` and `organizations_kind_id`
+present, the country classes are unchanged: DE 0.3 ms, MT 0.3 ms, ZZ 0.1 ms at `limit=50`.
+
+**Build cost — a second point for the memory budget:** 34.9 s, peak RSS 330,320 KB ≈ 323 MiB at
+8.13 M rows, i.e. **~41 B/row** against `organizations_country_id`'s ~45 B/row on the same table. The
+narrower key does cost less, so the 45 B/row constant used for the size guard is **conservative,
+measured rather than assumed**.
+
+### Class B now has exactly one member
+
+With `?kind=` moved into Class A, the only read left that no `(filter, id)` index can serve is
+**`/v1/tenders?country=`** (>380 s, did not complete). Its filter is not a column of the driven table at
+all — it is an `EXISTS` over `tender_version_classifications` evaluated per row across 4.26 M Tenders —
+so it needs the restructure, not an index. The existence short-circuit fixes its *matches-nothing* case
+only, and remains a performance fix rather than a DoS defence.
