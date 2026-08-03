@@ -953,11 +953,41 @@ deliberately not extrapolated**: the members fixed here ran 10–1000× worse in
 scaling from equivalent synthetics predicted, so 400k rows establishes *that* it walks and nothing about
 *how long*. team-lead has authorised a prod measurement.
 
-**Resolution: isolation, not an index.** A `(kind, id)` index over a two-value column is barely a filter,
-carries the dense-regression risk of a non-covering shape, and would only make the nothing-matching value
-cheap. `kind` also has no matches-late case — both real values are dense and return under `LIMIT`
-immediately — so the only slow case is the adversarial nothing-match, which task 5's isolated pool
-confines. No index, no new exception.
+~~**Resolution: isolation, not an index.** A `(kind, id)` index over a two-value column is barely a
+filter, carries the dense-regression risk of a non-covering shape, and would only make the
+nothing-matching value cheap. `kind` also has no matches-late case — both real values are dense and
+return under `LIMIT` immediately — so the only slow case is the adversarial nothing-match, which task 5's
+isolated pool confines. No index, no new exception.~~
+
+> **SUPERSEDED — "both real values are dense" was an unstated assumption about the corpus, and it is
+> false. The correction is immediately below, so the claim cannot be quoted without it.**
+
+### Correction: `?kind=` was resolved on a wrong ASSUMPTION, not a wrong method (proj-fix)
+
+*Supplied by proj-fix and folded in verbatim by this file's single editor. Their attribution note: the
+`18.7 s` figure and the "one Class B member an index can fix" framing are run-driver's and team-lead's;
+the assumption-vs-method distinction and the `notices_fetch_id` parallel are proj-fix's own.*
+
+Issue 117 resolved `/v1/tenders?kind=` to isolation rather than an index, reasoning that `kind` has only
+two values so both are dense and only an adversarial nothing-match is slow. run-driver then measured
+`?kind=registration` at **18.7 s on prod** — the second of two *documented* values, sent by ordinary
+clients with no crafted input.
+
+So the assumption was wrong, not the reasoning from it. `registration` is rare enough in the data to be a
+**matches-late** case: it exists, so the short-circuit cannot veto it, and it sits late enough in id order
+that the walk runs nearly to completion before `LIMIT` fills.
+
+That flips the resolution. `t.kind` is a column of the **driven table**, unlike `country`'s
+`EXISTS`-per-row or `lots`' joined-table filters, so it is the one Class B member that an index can fix.
+`tenders(kind, id)` makes the ordinary `registration` request milliseconds; isolation confines it but
+leaves a legitimate user waiting 18.7 s, which reads as broken.
+
+**The distinction worth preserving:** the audit's *method* found the member correctly and classified it
+correctly given what it believed about the data. What failed was an unstated assumption about the data
+itself — that a two-value column has two dense values. Density is a property of the corpus, not of the
+schema, and nothing in the schema said which. It is the same shape as `notices_fetch_id`'s "tens of
+seconds" comment, written when that table was 3.5 M rows and still there at 27.4 M: a claim true of the
+data when written, not re-checked when the data moved.
 
 ### What this says about the audit, and about the fix that found it
 
@@ -1054,22 +1084,12 @@ filed, and it is why the record was held open for the clock.
 mechanism.** Both statements belong here: an agreement is worth what the weaker
 instrument could actually have established, not what the conclusion sounds like.
 
-### 2. `?kind=` — the audit's ASSUMPTION was wrong, not its method
+### 2. `?kind=` — see the correction at the claim it corrects
 
-The read-path audit treated both `kind` values as dense and reasoned from that. `?kind=
-registration` at **18.7 s** falsifies it: the assumption was wrong, the method was not.
-The method — enumerate the derived set, measure across a selectivity spread — is what
-surfaced the counter-example in the first place, and it holds. Tracked as its own
-follow-up (`tenders(kind, id)`).
+proj-fix's text has arrived and is folded in **beside the superseded "both real values are dense"
+sentence**, ~120 lines above, rather than here. A correction that far from its claim reads as a second
+opinion, and the claim could still be quoted without it.
 
-Worth keeping the distinction visible, because "the audit was wrong" and "an input the
-audit assumed was wrong" invite very different responses, and only the second is true.
-
-**PROVENANCE OF THIS PARAGRAPH — it is a paraphrase, and on this issue that matters.**
-proj-fix was to hand over their own text; it had not reached me when I wrote this, so the
-above is my rendering of a one-line summary of their finding — a paraphrase of a
-paraphrase, in the record of a defect that a paraphrase caused. The substance (18.7 s on
-`registration`; assumption wrong, method sound) I believe is right; the wording is not
-theirs and no number here was taken from their measurement directly. **Replace this
-section with proj-fix's own text when it arrives** — and if the two differ in substance
-rather than phrasing, theirs is the artifact and this is the restatement.
+What stood here was my paraphrase of a one-line summary of that finding — a paraphrase of a paraphrase,
+in the record of a defect a paraphrase caused. It existed only because their wording had not yet
+arrived. It is gone; theirs stands, with their attribution intact.
