@@ -493,3 +493,164 @@ ordered — which makes the 99.08s case fixable rather than a design dead end.
 If the fix takes that form, a plan check becomes meaningful again for these reads,
 because "seek on the filter column with no top-level sorter" is then both *achievable*
 and *equivalent* to the property we care about. Until then, timing only.
+
+### The Class B short-circuit, measured (proj-fix)
+
+200k Tenders, all `nuts = 'DE300'` except the last 20 at `MT001` — so `MT` exists but only at high
+`tender_id`s, which is the *matches-late* case the guard cannot fix.
+
+```
+case                          time    rows
+filter dense (DE)          0.0026s    1000
+filter late (MT)           0.5000s      20
+filter absent (ZZ)         0.4954s       0
+
+guard  dense (DE)          0.0000s       1   (range form)
+guard  late (MT)           0.0000s       1
+guard  absent (ZZ)         0.0000s       0
+```
+
+`absent (ZZ)` goes **0.4954s → 0.0000s** at 200k Tenders; prod's 4.26M is where that walk is the
+>380 s hang.
+
+**The prefix-range form is REQUIRED — `LIKE` does not seek.**
+
+```
+guard, LIKE:
+  SEARCH … USING INDEX tender_version_classifications_code (scheme=?)
+guard, range:
+  SEARCH … USING INDEX tender_version_classifications_code (scheme=? AND code>=? AND code<?)
+```
+
+turso uses `LIKE` only to seek `scheme`, then scans every `nuts` row — 0.0273 s against 0.0000 s. So
+write `code >= ? AND code < ?` with the prefix and its successor; the obvious `LIKE 'ZZ%'` version
+would scan a whole scheme's slice on every request.
+
+**Measured limitation.** `filter late (MT)` is **0.5000 s and the guard does not help**: it reports
+"found", the query proceeds, and the walk happens — the same order as the absent case. So the guard
+removes the *matches-nothing* walk and nothing else. `MT` is a real country, not a contrived value, so
+this is reachable without adversarial intent.
+
+**It is therefore a correctness-preserving performance fix, NOT a security control, and must not be
+recorded as mitigating the DoS.** Bounding worst-case work on `/v1/tenders?country=` needs something
+else.
+
+Worth doing on those terms: one seek, correct rather than approximate, no schema change, matching the
+established `changes_since` unknown-`entity_kind` pattern (issue 61 finding 2), surviving the real fix
+so nothing is unwound, and generalising to `?cpv=` (same index) and `?buyer=`/`?winner=` via
+`tender_version_parties_org` / `tender_version_result_winners_org`.
+
+Probe: `crates/store/tests/exists_shortcircuit_probe.rs`, which keeps the MT case so the limitation
+stays visible in the tree.
+
+## THE SELECTIVITY SPREAD — the pre-fix half, warm-vs-warm, on the deployed engine
+
+The dense table above was captured cold-then-repeated. This is the same set taken **warm** —
+first request discarded as cache-warming, then two consecutive samples — so a post-fix number can be
+compared like with like. Rev `a39d53a`, loopback, deployed turso 0.7.0. **Compare warm to warm.**
+
+Three selectivity classes per filter, because two are not enough to see the shape:
+
+* **dense** — the filter matches early and often. Fast today; the case a fix can *regress*.
+* **matches-late** — the filter matches, but not near the start of the rowid order. Middling today.
+* **matches-nothing** — no rows at all. Pathological today; the case the fix is *for*.
+
+| read | filter | class | limit=50 | limit=1000 |
+|---|---|---|---|---|
+| `organizations` | `country=DE` (3.85 M) | dense | 0.0119 / 0.0096 s | 0.0574 / 0.0568 s |
+| `organizations` | `country=FR` (4.25 M) | dense | 0.0211 / 0.0229 s | — |
+| `organizations` | `country=MT` (24,911) | matches-late | 0.0409 / 0.0467 s | 0.2755 / 0.2776 s |
+| `organizations` | `country=ZZ` (0) | matches-nothing | 22.0 s cold / 1.15 s warm | — |
+| `organizations` | `kind=zzz` | matches-nothing, **no index possible** | 99.08 s | — |
+| `notices` | `source=ted` (~13.1 M) | dense | 0.0023 / 0.0014 s | 0.0112 / 0.0067 s |
+| `notices` | `source=doe` (~1.1 M) | matches-late | 0.0998 / 0.1126 s | 0.1136 / 0.1146 s |
+| `notices` | `source=zz` (0) | matches-nothing | ≥226 s (client cap) | — |
+| `tenders` | `source=ted` | dense | 0.0369 / 0.0334 s | 0.2976 / 0.2947 s |
+| `tenders` | `source=doe` | matches-late | 0.0084 / 0.0065 s | 0.1222 / 0.1112 s |
+| `tenders` | `country=ZZ` | matches-nothing, **EXISTS, no index possible** | **>380 s (did not complete)** | — |
+
+Two things worth reading off this table that the sparse/dense pair alone would hide:
+
+1. **`notices?source=doe` is 40–70× SLOWER than `?source=ted`** despite matching ~12× fewer rows. The
+   walk starts at rowid 0, where `ted` rows dominate, so collecting 50 `doe` rows means walking past a
+   great many `ted` ones. Selectivity is not the variable — **position in rowid order** is. A fix
+   validated only on `ted` would look like it had nothing to improve.
+2. **`organizations?country=MT` at `limit=1000` is 0.276 s** — the matches-late floor. It is the control
+   that keeps the short-circuit honest: a short-circuit fixes matches-nothing and leaves this untouched.
+
+### The short-circuit is a PERF fix, not a DoS mitigation
+
+Measured (plan on turso 0.7.0, timings via sqlite3 on the real data — engine caveat stated):
+
+| probe | result | time |
+|---|---|---|
+| `scheme='nuts' AND code >= 'ZZ' AND code < 'Z['` | absent | **0.01 s** |
+| same, `XX` | absent | 0.00 s |
+| same, `DE` / `MT` | present | 0.00 s |
+| `scheme='nuts' AND code LIKE 'ZZ%'` | absent | **41.05 s** |
+
+`SEARCH tender_version_classifications USING INDEX tender_version_classifications_code
+(scheme=? AND code>=? AND code<?)` — both bounds used. So `/v1/tenders?country=ZZ` goes **>380 s → ~0**.
+
+But `LIKE` and the range form **both plan as `SEARCH … USING INDEX`**, and differ by ~4,000× because
+`LIKE` keeps only the `scheme=?` bound. Third instance in one day of the cost living in partition size,
+which EQP does not express. **Write the explicit range; never the `LIKE`.**
+
+And the limitation, which must stay visible: the short-circuit fixes **matches-nothing only**. A prefix
+that exists but only on high ids still walks — `?country=MT`-class behaviour, 0.276 s here and far worse
+at prod scale on a filter that goes through `version_predicates`. **It removes the worst measured case
+and the naive crawler. It is not a DoS defence and must not be described as one.**
+
+
+## The `(filter, id)` route is measured and committed — `8cdc35d` (proj-fix)
+
+Four indexes, and **no `read.rs` change at all**:
+
+```
+organizations(country, id)          organizations(identifier_kind, id)
+notices(source, id)                 tenders(source, id)
+```
+
+The plain cursor stays, which is the whole point: with a `(filter, id)` index it uses
+**both** the filter and the cursor as index bounds, so no sorter runs and `LIMIT`
+truncates early. The row-value route is not needed and is the weaker of the two.
+
+### The kind-only overturn, confirmed by measurement rather than argument
+
+This issue originally recorded that no index could serve the kind-only filter. I argued
+that was wrong — reasoning from the index that *exists* rather than the one the read
+*needs* — and proj-fix measured it on the real `read::organizations`:
+
+| | dense (`vat`) | absent (`zzz`) |
+|---|---|---|
+| before | 0.0002s | 0.0423s |
+| after | 0.0001s | **0.0000s** |
+
+Worth keeping the *shape* of that error, not just its correction: an index's existence
+was treated as the boundary of what was achievable, so a read with no good index was
+recorded as a read with no good plan. Those are different claims, and only the second
+one was ever checked.
+
+proj-fix measured all four rather than generalising from `organizations` — including
+`notices`, which is shape-identical to `tenders`. "Same shape, therefore same result"
+is precisely the reasoning that produced this issue's original fix table, and that was
+wrong by 151,648×.
+
+### Verification, and an operational caveat that will look like a regression
+
+112's B7/B8/B9 assert `cursor-bound` — that the seek carries `id>?`. They are keyed on
+the **property**, not on `8cdc35d`, so they need no guard and no sha: red now, green by
+themselves once an index giving both the seek and the id bound is serving.
+
+**But three of the four indexes are DEFERRED** — only `notices(source, id)` is in the
+schema batch. `organizations(country,id)`, `organizations(identifier_kind,id)` and
+`tenders(source,id)` are built at a rebuild's end or by a `Reindex` job (issue 111). So
+between deploying `8cdc35d` and the first reindex, **B7/B8/B9 stay red for an
+operational reason**, and the deploy will look like it did not work.
+
+Section A distinguishes them: an index `DECLARED at <rev> but ABSENT from the DB` means
+a reindex is owed; the index present while the plan ignores it would be the regression.
+The B-rows say this in their own output, so nobody chases a phantom.
+
+**A deploy of `8cdc35d` is therefore not complete until a reindex has run.** That is an
+ordering requirement, not a caveat.
