@@ -1064,3 +1064,12 @@ follow-up (`tenders(kind, id)`).
 
 Worth keeping the distinction visible, because "the audit was wrong" and "an input the
 audit assumed was wrong" invite very different responses, and only the second is true.
+
+**PROVENANCE OF THIS PARAGRAPH — it is a paraphrase, and on this issue that matters.**
+proj-fix was to hand over their own text; it had not reached me when I wrote this, so the
+above is my rendering of a one-line summary of their finding — a paraphrase of a
+paraphrase, in the record of a defect that a paraphrase caused. The substance (18.7 s on
+`registration`; assumption wrong, method sound) I believe is right; the wording is not
+theirs and no number here was taken from their measurement directly. **Replace this
+section with proj-fix's own text when it arrives** — and if the two differ in substance
+rather than phrasing, theirs is the artifact and this is the restatement.
