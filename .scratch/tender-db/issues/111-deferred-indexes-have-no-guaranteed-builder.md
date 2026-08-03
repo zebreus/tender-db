@@ -531,3 +531,36 @@ The isolated numbers remain the trustworthy ones, and the cap stays calibrated a
 
 Same misreading class as `ps %CPU` (a lifetime average read as instantaneous) — flagged here rather than
 quoted as a result, because 4.9 GB against a ~4 GB ceiling would look alarming and would be wrong.
+
+### Watch item RESOLVED — the 99.8% was an artefact, and the headroom is better than the arithmetic
+
+`organization_mentions_org` measured on the deployed engine over **40,917,927 real rows**: **1.42 GB
+peak, ~36 B/row**, 3:02 wall clock — against the **~1.96 GB** the 48 B/row constant projected.
+
+The suspicion was right: 48 was derived entirely from `(TEXT, INTEGER)` keys, and
+`organization_mentions_org` keys a **single INTEGER**. The five-point series is legible rather than
+noisy:
+
+| index | key | B/row |
+|---|---|---|
+| `organization_mentions_org` | single INTEGER | **36** |
+| `organizations_kind_id` | (TEXT, INTEGER) | 41 |
+| `organizations_country_id` | (TEXT, INTEGER) | 45 |
+| `tenders_source_id` | (TEXT, INTEGER) | 45 |
+| `notices_source_id` | (TEXT, INTEGER) | 48 |
+
+So 48 is correctly conservative *for the key shapes it came from*, and over-projects a narrow integer
+key by ~33%.
+
+**Consequence: keep 48 and the 41M cap unchanged, and drop the key-aware guard.** The alarming 99.8%
+figure was the model, not the table. `organization_mentions` lands at 1.42 GB, comfortably inside, and
+**the true largest build in the auto-build set is `organizations` at 1.07 GB measured** — not
+`organization_mentions` at a projected 1.96 GB. A key-aware estimate would be more accurate and more
+code, and buys only headroom that already exists. If `organization_mentions` ever does approach the cap,
+that is the moment to make the constant key-aware, and there is now a measured 36 to use.
+
+**Why the measurement happened is worth keeping.** run-driver recommended it *because* their earlier
+"45 B/row is conservative" had been falsified by the notices 48 — and it resolved with **more** headroom
+rather than less. That is the argument for measuring in both directions rather than only when you fear
+the answer: the same instinct that caught an under-estimate also corrected an over-estimate, and only one
+of those felt urgent at the time.
