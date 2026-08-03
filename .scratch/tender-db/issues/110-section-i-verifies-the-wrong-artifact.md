@@ -217,3 +217,46 @@ is not. A record is an input, verifiable like any other, and this one was wrong 
 details while right in substance. The narrower correct form: **do not decide which
 invariants are right; do verify the record's factual claims.** proj-fix did exactly that,
 and it is why the seven checks still exist.
+
+### Re-verified with a method that catches helper-emitted ids — `issue62` is a STRICT SUPERSET
+
+The earlier `comm` matched only `report … <id>`, so it missed every id emitted through a
+helper (`disc`, `hstep`, `eq`, `zero`, `subset`, …). Redone against all emitters:
+
+```
+issue62-defer-org-indexes         42 check ids
+issue5-country-filter-restructure 35 check ids
+
+in issue62 but NOT in the code line :  I2 I3 I4 I5 I6 I7 I8
+in the code line but NOT in issue62 :  (none)
+```
+
+**Nothing exists on the code line that `issue62` lacks.** So the resolution is simpler than
+a per-section split: **take `issue62-defer-org-indexes`'s `de1x_verify.sh` whole.** No
+union, no section-by-section reconciliation — `e8af573` already folded in the code line's
+C12/H3/H7 additions, which is why the superset holds.
+
+### A correction to the post-mortem, because the wrong cause implies the wrong remedy
+
+The incident was explained as: *the justification said "their HTML-grep section I
+deliberately absent", but the current file greps no HTML, so the record described section I
+before your own improvement landed and was never re-derived.*
+
+**That is not what happened.** Measured by branch:
+
+| branch | greps HTML | asserts `/api/dashboard` |
+|---|---|---|
+| `issue62-defer-org-indexes` | 0 | 9 |
+| `issue5-country-filter-restructure` | **1** | 0 |
+
+The HTML-grep gate is on **the code line**, exactly as the justification said. The record's
+substance was right and did not go stale. The two things actually wrong were:
+
+1. **an invertible pronoun** — "take ours", whose referent flips with merge direction; and
+2. **a verification that matched the shape a check usually takes** rather than the checks
+   themselves.
+
+The distinction matters because the remedies differ. "The record went stale under a later
+improvement" implies *re-derive records after changes*. The real causes imply *never write
+`ours`/`theirs` across branches*, and *verify against the artifact, not against the pattern
+you expect the artifact to follow*. Only the second pair would have prevented this.
