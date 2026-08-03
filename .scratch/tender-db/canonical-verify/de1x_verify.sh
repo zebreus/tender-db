@@ -68,9 +68,23 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
     exit 2
   fi
   command -v sqlite3 >/dev/null || { echo "sqlite3 not found (try: nix shell nixpkgs#sqlite --command …)" >&2; exit 2; }
-else
+elif [ "${TDB_ONLY:-}" != I ]; then
   : "${TDB_TOKEN:?set TDB_TOKEN (live /v1/sql) or TDB_SNAPSHOT (a post-refold snapshot file)}"
 fi
+
+# TDB_ONLY=I — run ONLY the disclosure section.
+#
+# Section I is two GETs against a PUBLIC endpoint: no token, no SQL, no data
+# pages, nothing that competes with live traffic. Sections A-H are corpus-wide
+# aggregates over 6.9M-row tables and DO compete, so they belong in a window.
+# Bundling a free honesty check behind an expensive fact check means the honesty
+# check only ever runs when someone can afford the fact check — so the honesty
+# claim goes unverified for exactly as long as the box is busy.
+#
+# The selector is LOUD about what it skipped, in the banner and in the summary.
+# Section I's own rule is that silence about a check is indistinguishable from a
+# check that passed; a quiet section selector would reintroduce that at the level
+# of the whole file.
 
 MINORS=("eforms:eforms-de-1.1" "eforms:eforms-de-1.2" "eforms:eforms-de-1.0")
 
@@ -194,6 +208,12 @@ else
   echo "-- preflight"
   curl -sS --max-time 10 "$BASE_URL/health" | head -c 200; echo
 fi
+
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "-- SECTIONS A-H NOT RUN (TDB_ONLY=I)."
+  echo "   This run asserts NOTHING about whether the facts are right — only about"
+  echo "   whether the page admits what is still wrong. Do not read it as a layer check."
+else
 
 # ---------------------------------------------------------------------------
 # A. Parse layer must be UNTOUCHED by a projection-only re-fold.
@@ -592,36 +612,135 @@ else
   report EYE H0 "exhaustive checks skipped — set TDB_SNAPSHOT=/path/post-refold.db to run them (they are the actual acceptance wording of issue 85)"
 fi
 
+# NOTE — A SECOND SECTION I EXISTED ON `issue115` AND WAS SUPERSEDED HERE, 2026-08-03.
+# Both branches independently grew a section I for this same obligation, weeks apart,
+# neither author able to see the other's (canonical-verify/README.md: one verification
+# owner per obligation). `issue115`'s version grepped the SERVER-RENDERED HTML —
+#     page=$(curl -sS "$BASE_URL/"); grep -qi "eForms-DE 1" / "winner" / "issue 100"
+# which is the predecessor gate issue 110 was filed to replace. Verified on issue115's
+# own tip (5c197e7): `resolved_categories` lives in `ui.rs`, the disclosure text in the
+# `include_str!` ledger JSON, fetched by the client from `/api/dashboard`. So `GET /`
+# does not carry it, and that gate reports MISSING for a HEALTHY deployment.
+# Both were NOT kept: two gates for one obligation, one of which cannot pass on a
+# healthy deploy, is an uninterpretable red — and the reliable human response to an
+# uninterpretable red is to stop reading the section. Its intent (that this obligation
+# deserves a standing check) is preserved below; only the artifact it reads changed.
+fi
+
 # ---------------------------------------------------------------------------
-# I. HONESTY — the ledger must disclose what this ship does NOT deliver.
+# I. DISCLOSURE — does the award-winner gap actually REACH a user?
 #
-# The user decided to ship 98+99 with award winners openly labelled pending
-# (issue 100). That makes the disclosure part of the gate, not a nicety: the
-# dashboard's "Resolved categories" entry for eForms-DE 1.x is the claim a user
-# reads, and shipping it while it implies award completeness is precisely the
-# dishonesty the whole nginx-hold exists to prevent.
+# The honesty requirement of issues 98/100. Every other section asks "are the
+# facts right?"; this one asks "does the page admit what is still wrong?" — a
+# different failure, and the only one a user can be misled by while every fact
+# gate above is green.
 #
-# Checked against the RUNNING app, not the repo file: the ledger is compiled in
-# (include_str!), so only what the deployed binary serves counts. Skipped, loudly,
-# when the app is not reachable — a check that cannot run must not read as passed.
+# WHY THIS ARTIFACT AND NOT THE HTML (issue 110)
+#   The dashboard renders Resolved-categories CLIENT-SIDE. The disclosure is in
+#   NO server-rendered HTML and NOT in the hydration payload — the browser
+#   fetches it from GET /api/dashboard afterwards. A gate that greps `GET /`
+#   reports MISSING for a correct deployment, and its false alarm is
+#   indistinguishable from the ledger genuinely being absent. So assert the
+#   SERVED JSON at the exact path the client reads:
+#     .quarantine.resolved_categories[] | select(.category == <the DE-1.x row>)
+#   /api/dashboard is PUBLIC (api.rs — no auth), so this needs no token and gets
+#   byte-for-byte what a browser gets.
+#
+#   The deployed BINARY is corroboration only (the ledger is include_str!-
+#   compiled, so the string is in the binary): necessary, NOT sufficient — a
+#   string in a binary is not proof it reaches a user. It never passes this gate
+#   on its own; it only separates "disclosure missing" from "wrong build shipped".
+#
+# THREE STATES, NOT TWO
+#   Dashboard sections are Option (model/dashboard.rs): each is null until the
+#   background refresher measures it once, and TENDER_DISABLE_COVERAGE turns the
+#   refresher off entirely. A null `quarantine` means THE DASHBOARD HAS NO DATA —
+#   its own alarm, and NOT evidence either way about disclosure.
+#     served and discloses          -> PASS
+#     served, populated, no disclose-> FAIL (hard): the honesty claim is broken
+#     null / unreachable / no jq    -> EYE "could not verify" — NEVER a pass
+#   The rule applies to this SECTION's own absence too: if it cannot run it says
+#   so out loud (like H0). The failure this suite actually made once was a run
+#   that printed PASS while never checking the disclosure at all — silence about
+#   a check is indistinguishable from a check that passed, so it must not be
+#   possible to run this file and learn nothing about disclosure without being
+#   told.
+#
+# NOT VALIDATED AGAINST A STUB. The predecessor gate passed review because it was
+# exercised against a mock that returned the string, written by the same author
+# as the grep — a mirror, not a test (issue 110). The fragments below were read
+# out of the DEPLOYED ledger (33dfba7 crates/app/data/quarantine-ledger.json);
+# the only evidence accepted here is the real service's response.
 # ---------------------------------------------------------------------------
-echo "-- I. honest disclosure of the winners gap (issue 100)"
-if page=$(curl -sS --max-time 20 "$BASE_URL/" 2>/dev/null) && [ -n "$page" ]; then
-  miss=""
-  printf '%s' "$page" | grep -qi "eForms-DE 1" || miss="$miss no-DE-1.x-entry"
-  printf '%s' "$page" | grep -qi "winner" || miss="$miss no-mention-of-winners"
-  printf '%s' "$page" | grep -qi "issue 100" || miss="$miss no-pointer-to-issue-100"
-  if [ -z "$miss" ]; then
-    report PASS I1 "the served ledger entry discloses the award-winner gap and cites issue 100"
-  else
-    report FAIL I1 "the served ledger does NOT disclose the winners gap ($miss) — shipping this implies award completeness we do not have"
+DISCLOSURE_VERDICT=no
+echo "-- I. disclosure: the DE-1.x award-winner gap must reach the user"
+DE1X_CAT="eForms-DE 1.x (German dialect)"
+I_DIAG=""
+# disc <id> <fragment> <label> — a load-bearing claim of the approved wording.
+# Hard: each of these is a specific promise the Resolved row makes to a reader.
+disc() {
+  case "$I_DIAG" in
+    *"$2"*) report PASS "$1" "$3";;
+    *)      report FAIL "$1" "$3 — ABSENT from the served diagnosis"
+            HARDFAIL=$((HARDFAIL+1));;
+  esac
+}
+
+if ! command -v jq >/dev/null 2>&1; then
+  report EYE I0 "jq not found — cannot read /api/dashboard. Disclosure NOT VERIFIED (not a pass)."
+elif ! I_DASH=$(curl -sS --max-time 20 "$BASE_URL/api/dashboard" 2>/dev/null); then
+  report EYE I0 "GET $BASE_URL/api/dashboard unreachable — disclosure NOT VERIFIED (is the app up? snapshot mode needs the live service for this one section)."
+elif ! printf '%s' "$I_DASH" | jq -e . >/dev/null 2>&1; then
+  report EYE I0 "/api/dashboard did not return JSON — disclosure NOT VERIFIED. First bytes: $(printf '%s' "$I_DASH" | head -c 120)"
+elif [ "$(printf '%s' "$I_DASH" | jq -r 'if .quarantine == null then "null" else "ok" end')" = null ]; then
+  report EYE I0 "/api/dashboard .quarantine is NULL — the coverage refresher has not completed a cycle, or TENDER_DISABLE_COVERAGE is set. The dashboard has NO DATA: that is a separate alarm, and it is NOT a disclosure verdict."
+else
+  I_ENTRY=$(printf '%s' "$I_DASH" | jq -c --arg c "$DE1X_CAT" \
+              '.quarantine.resolved_categories[]? | select(.category == $c)')
+  if [ -z "$I_ENTRY" ]; then
+    DISCLOSURE_VERDICT=yes
+    report FAIL I1 "the SERVED payload has NO Resolved-categories row for '$DE1X_CAT' (categories present: $(printf '%s' "$I_DASH" | jq -r '[.quarantine.resolved_categories[]?.category] | join("; ")'))"
     HARDFAIL=$((HARDFAIL+1))
+  else
+    DISCLOSURE_VERDICT=yes
+    report PASS I1 "served Resolved-categories carries the '$DE1X_CAT' row"
+    I_DIAG=$(printf '%s' "$I_ENTRY" | jq -r '.diagnosis // ""')
+    disc I2 "AWARD WINNERS ARE NOT RESOLVED" "the gap is stated in caps, in its own sentence"
+    disc I3 "issue 100" "the gap names its tracking issue (100)"
+    disc I4 "241 notices remain held" "the 241 residual is stated, not left unexplained on a Resolved row"
+    disc I5 "issue 87" "the residual's stale reason names its issue (87)"
+    # Reconcile the SERVED counts against the DB counts F1a/F1b asserted. Not a
+    # verdict: `reclaimed`/`outstanding` are measured by the refresher on a 60 s
+    # cycle (coverage.rs REFRESH), so a disagreement is as likely to be one cycle
+    # of lag as a real defect. Reported so the two can be read together — a
+    # PERSISTENT disagreement is a real split between panel and store.
+    I_REC=$(printf '%s' "$I_ENTRY" | jq -r '.reclaimed // "?"')
+    I_OUT=$(printf '%s' "$I_ENTRY" | jq -r '.outstanding // "?"')
+    if [ "$I_REC" = 218635 ] && [ "$I_OUT" = 241 ]; then
+      report PASS I6 "served row reconciles with F1a/F1b: reclaimed=$I_REC outstanding=$I_OUT"
+    else
+      report EYE I6 "served row says reclaimed=$I_REC outstanding=$I_OUT; F1a/F1b assert 218635/241. One refresher cycle (60 s) of lag looks like this — re-read if it persists."
+    fi
+    report EYE I7 "served resolved-date: $(printf '%s' "$I_ENTRY" | jq -r '.resolved // "?"') · fix: $(printf '%s' "$I_ENTRY" | jq -r '.fix // "?"')"
+  fi
+fi
+# Corroboration only — necessary, never sufficient, and never a substitute for
+# the served payload above. Off by default: the binary lives on the box, while
+# this script commonly runs from a workstation through a tunnel.
+if [ -n "${TDB_BINARY:-}" ]; then
+  if [ -r "$TDB_BINARY" ] && grep -qa "AWARD WINNERS ARE NOT RESOLVED" "$TDB_BINARY"; then
+    report EYE I8 "corroboration: the disclosure string IS present in $TDB_BINARY (necessary, not sufficient — presence in a binary is not proof it reaches a user)"
+  else
+    report EYE I8 "corroboration: disclosure string NOT found in $TDB_BINARY — if I1-I5 also failed, the deployed build predates the ledger commit rather than the ledger being wrong"
   fi
 else
-  report EYE I0 "app not reachable at $BASE_URL — disclosure UNCHECKED (not passed). Re-run against the live app before nginx comes up."
+  report EYE I8 "binary corroboration skipped (set TDB_BINARY=/path/to/deployed/server). The served payload above is the load-bearing check; this only tells a missing disclosure apart from a stale build."
 fi
 
 echo
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "== DISCLOSURE-ONLY RUN (TDB_ONLY=I) — sections A-H did not execute. =="
+fi
 echo "== CORE (drives the exit code): $PASS passed, $FAIL failed ($HARDFAIL hard-fail), $EYE eyeball =="
 echo "== CONSERVATION (never blocks): $CONS_OK confirmed, $CONS_UNK unverified =="
 echo "Named spot-checks — run ./de1x_spotcheck.sh"
@@ -630,8 +749,25 @@ if [ "$HARDFAIL" -ne 0 ]; then
   echo "NO-GO — a core gate failed: the DE-1.x cohort did not fold correctly. Hold nginx."
   exit 1
 fi
+# A disclosure-only run that reached no disclosure verdict must NOT exit 0. With
+# sections A-H skipped there is nothing else in the run, so "0 passed, 0 failed"
+# plus exit 0 reads as green to anything that checks a status code — a run that
+# learned nothing, reporting success. That is precisely the failure section I was
+# written against, one level up: silence about a check is indistinguishable from a
+# check that passed. Exit 2 (incomplete), never 0.
+if [ "${TDB_ONLY:-}" = I ] && [ "$DISCLOSURE_VERDICT" != yes ]; then
+  echo
+  echo "INCOMPLETE — this run produced NO disclosure verdict (see the EYE line above:"
+  echo "unreachable, non-JSON, null .quarantine, or no jq). Nothing was verified. This"
+  echo "is not a pass; fix the input and re-run."
+  exit 2
+fi
 echo
-if [ "$CONS_UNK" -gt 0 ]; then
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "PASS (disclosure only) — the served /api/dashboard payload carries the DE-1.x"
+  echo "Resolved row and states the award-winner gap, its issue, the 241 residual and"
+  echo "its issue. Says NOTHING about whether the facts are right: A-H did not run."
+elif [ "$CONS_UNK" -gt 0 ]; then
   echo "PASS (core) — facts land, no double-count, parse layer intact. $CONS_UNK conservation"
   echo "gate(s) UNVERIFIED against a stale baseline; report says unverified, not verified."
 else

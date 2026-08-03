@@ -1,7 +1,37 @@
 # 41 — INTERNAL_OJS R2.0.5 era profile (the 2008 OPOCE export)
 
-Status: ready-for-agent
+Status: needs-verification
 Priority: completeness-critical (the last verify-blocking year)
+
+## Resolution (2026-07-23, commit c496898)
+
+Realized exactly as designed: `internal-ojs` profile = new envelope reader +
+explicit `_SUM` alias shim over the reused r209 walker. The walker gained two
+identity-default hooks (`alias`, `overlay`); `ted-export` is unchanged (r209
+suite green). Envelope backbone (SECTOR/MARKET/PROC/… bare-text codes,
+ISO_COUNTRY, DATE_DISP/DATE_REC/DEADLINE_*, ORIGINAL_CPV) mapped; the 77-entry
+alias table is inlined and pinned by a test (every base ∈ r209, mechanical
+`_SUM` strip). Traps handled: ISO_COUNTRY→CodeText, SERVICE_CATEGORY/_PUB→@VALUE;
+ORIGINAL_CPV/NUTS need no override (r209 Cpv/Nuts already fall back to text).
+Dispatch ingests EN, skips ~21 sibling langs; identity = `<doc>-<year>` stem.
+
+Fixtures pulled byte-exact (nuance 3 satisfied): `_SUM` contract (2110, 115165),
+`_SUM` award (1180, 114382, with RES section + exact PLN value + REF_NOTICE
+chain edge), full CONTRACT (3310, 115908), FR original (skip-test), plus the
+committed EEIG. `cargo test -p ingest` + `clippy -D warnings` green. Breadth
+sweep: every EN notice in packages 2008085 + 2008105 (2804 notices) → 0
+quarantine.
+
+**2010 tail: deferred (safe).** Not present in the 2008-05 packages (no
+non-`_2008` members across all 21) nor in the 2010 monthlies (no opoce-input at
+all). Can't be located without the reason index (deploy #6). Needs no code:
+dispatch routes *any* INTERNAL_OJS root + any `_<year>` stem through this
+profile, so an R2.0.5 tail reprocesses automatically; a version-divergent tail
+quarantines visibly (ADR-0004), never a silent drop. Follow-up after #6: locate
+the tail package, confirm its DOCTYPE, extend only if it quarantines.
+
+Ledger entry added (reason=unmapped-era / profile=internal-ojs, issue 40).
+Post-deploy: reprocess the quarantine bucket to reclaim the era into 2008.
 
 Split out of issue 36 (2026-07-21) once the DTD investigation overturned the
 "duplicate era" hypothesis. The 2008 `opoce-input/` bucket is **real,

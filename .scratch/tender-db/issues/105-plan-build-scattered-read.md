@@ -1,8 +1,9 @@
-# 97 — the incremental PLAN BUILD reads scattered, and is what makes the quarantine reprocess infeasible
+# 105 — the incremental PLAN BUILD reads scattered, and is what makes the quarantine reprocess infeasible
 
 Status: DESIGN — awaiting team-lead review before implementation. Next work-unit after Group 1,
 ahead of Group 2.
 Kind: performance (projection Phase 1) — the reprocess blocker
+Renumbered: filed as 97, moved to 105 — 97 collided with the nginx request-timing issue, which keeps the number.
 Blocked by: — (independent of 95; see "Not blocked on the ParsedFold unknown")
 Relates to: 91 (the Phase-2 half of the same defect, fixed), 94 (the sweep machinery this reuses),
 96 (apply-phase degradation), 76/77 (the quarantine reprocess this gates), 58, 81

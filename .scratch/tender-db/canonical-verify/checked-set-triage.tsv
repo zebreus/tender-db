@@ -1,0 +1,66 @@
+# TRIAGE for the derived checked set (issue 114 part 2).
+#
+# Every (collection, filter) the code can emit must appear here with a disposition.
+# A key present in checked-set.tsv and absent here is a LOUD FAILURE, not a silent
+# omission — that is the whole point. The gate's old coverage was a hand-written list
+# of rows, which is why it carried a check for a read issue 19 had deleted (B5) while
+# nothing checked read::organizations, walking 25.3M rows on a public endpoint.
+#
+# Dispositions:
+#   asserted        a B-row in hot_read_plans.sh plans this read
+#   unfiltered-page correct by design: no filter, so driving the table in primary-key
+#                   order IS the page order. Nothing to assert.
+#   ignored-filter  the builder drops this parameter and emits the unfiltered statement
+#                   byte-for-byte (issue 118). Not a distinct read; the DEFECT is that
+#                   the client is not told. Tracked there, not assertable here.
+#   candidate       a filter-specific read with no check yet. NOT a defect claim — a
+#                   rowid access is printed both for a one-row lookup and a full walk,
+#                   so each needs reading before it is asserted or dismissed.
+#   unservable      no index can serve it; needs a schema answer before a check can
+#                   have an achievable pass state (rule 4). Reason required.
+#
+# collection	filter	disposition	note
+lots	buyer	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	country	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	cpv	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	kind	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	max_value	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	min_value	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	none	unfiltered-page	primary-key order is the page order
+lots	source	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	status	candidate	not yet read — rowid access is ambiguous between lookup and walk
+lots	tender	asserted	B1/B1b
+lots	winner	candidate	not yet read — rowid access is ambiguous between lookup and walk
+notices	buyer	ignored-filter	issue 118 — builder drops this parameter
+notices	country	ignored-filter	issue 118 — builder drops this parameter
+notices	cpv	ignored-filter	issue 118 — builder drops this parameter
+notices	kind	candidate	not yet read — rowid access is ambiguous between lookup and walk
+notices	max_value	ignored-filter	issue 118 — builder drops this parameter
+notices	min_value	ignored-filter	issue 118 — builder drops this parameter
+notices	none	unfiltered-page	primary-key order is the page order
+notices	source	asserted	B8
+notices	status	ignored-filter	issue 118 — builder drops this parameter
+notices	tender	ignored-filter	issue 118 — builder drops this parameter
+notices	winner	ignored-filter	issue 118 — builder drops this parameter
+organizations	buyer	candidate	not yet read — rowid access is ambiguous between lookup and walk
+organizations	country	asserted	B7
+organizations	cpv	ignored-filter	issue 118 — builder drops this parameter
+organizations	kind	asserted	B10 — was 'unservable', then 'candidate'; 8cdc35d adds organizations(identifier_kind, id) so the property is now achievable
+organizations	max_value	ignored-filter	issue 118 — builder drops this parameter
+organizations	min_value	ignored-filter	issue 118 — builder drops this parameter
+organizations	none	unfiltered-page	primary-key order is the page order
+organizations	source	ignored-filter	issue 118 — builder drops this parameter
+organizations	status	ignored-filter	issue 118 — builder drops this parameter
+organizations	tender	ignored-filter	issue 118 — builder drops this parameter
+organizations	winner	ignored-filter	issue 118 — builder drops this parameter
+tenders	buyer	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	country	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	cpv	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	kind	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	max_value	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	min_value	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	none	unfiltered-page	primary-key order is the page order
+tenders	source	asserted	B9
+tenders	status	candidate	not yet read — rowid access is ambiguous between lookup and walk
+tenders	tender	ignored-filter	issue 118 — builder drops this parameter
+tenders	winner	candidate	not yet read — rowid access is ambiguous between lookup and walk

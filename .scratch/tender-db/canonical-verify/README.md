@@ -4,6 +4,119 @@ Read-only checks to run the moment the full canonical rebuild lands, to confirm
 the tender layer is sound. Derived from CONTEXT.md, docs/adr/, and the schema
 (crates/store/src/canonical.rs). **Read-only — nothing here writes or deploys.**
 
+## A TEST RUN IS AN ARTIFACT TOO: BUILD IT THE WAY PRODUCTION IS BUILT
+
+`cargo test --workspace` looked like the widest possible check and was a **proxy for a
+different binary**. `crates/app` declares `default = []`, and its `server` feature is what
+pulls in `store`, `axum`, `tokio/rt-multi-thread` and gates the `v1` and `supervisor`
+modules behind `#[cfg(feature = "server")]`. Production is built by
+`nix/package.nix` with `-p tender-db --features server`. So the workspace run **never
+compiled `v1/` or `supervisor.rs` at all** — the deploy gate blessed a binary that was
+not the one shipping.
+
+Two runs of that command, by two people, agreed exactly — and the agreement was worth
+nothing. **Two instruments agreeing means something only if they COULD have disagreed**,
+and two identical invocations share every blind spot they have.
+
+Use the feature set the release build uses. The project's own workspace incantation is in
+`nix/package.nix` (`cargoClippyExtraArgs`):
+
+```sh
+cargo test --workspace --features tender-db/server --no-fail-fast
+```
+
+**`--no-fail-fast` is not optional.** `cargo test` stops at the first failing *target* by
+default, so a failure early in the run **silently skips every later target** and the
+summary still reads like a complete result. Measured on the same tree: without it,
+328 passed / 1 failed across 47 targets; with it, **343 passed / 1 failed / 22 ignored
+across 53** — fifteen tests that simply never ran.
+
+It also corrupted an earlier verdict here. A run on `5c197e7` reported "290 passed,
+5 failed" and I read the five as the whole story; in fact the lib target failed, cargo
+stopped, and the app's five integration targets never executed. The disk-health probe
+appeared to *pass* on that tree when it had never run — which then looked like evidence
+that a later failure of the same test must be a code change rather than the box. Silence
+about a target is indistinguishable from a target that passed.
+
+**What the corrected command found immediately:** 290 passed, **5 failed** — five
+`supervisor::tests` queue-recovery tests, invisible to every prior run because the module
+did not compile.
+
+**And what it cost, measured:** with `server` on, the app lib runs **54 tests** —
+`v1` **20**, `supervisor` **19**, `accounts` 7, `coverage` 6, `ledger` 1. Without it those
+modules are not compiled at all, so the gate had **zero coverage of the entire public HTTP
+API surface** (`v1`) and of the job supervisor, while reporting a confident 243/0. The
+missing coverage was not a corner: it was the two subsystems a deploy is most likely to
+break. Same family as B5 and the by-name index parser: a check whose *subject*
+was assembled from what came to mind (packages) rather than derived from what ships
+(packages **and features**). The unifying form: **derive the check's subject from what
+ships, not from what comes to mind.**
+
+### Is the corrected command the WHOLE shipped feature set? (checked 2026-08-03, task #19)
+
+Adding `--features tender-db/server` fixed the gap that was *noticed*. The rule says
+derive from what ships, so the fix itself was checked rather than extended from the one
+gap. Result: **closed, with one sized and benign residual.**
+
+The shipped artifact is built **twice** (`nix/package.nix`) — `dx build --platform server`
+for the native binary and `dx build --platform web` for the WASM client — so "the
+artifact" is two compilations, not one, and the corrected command performs only the first.
+What that costs was established exhaustively rather than reasoned about:
+
+* **Exactly one feature gates any first-party code: `server`** (19 `cfg(feature = …)`
+  sites, all of them `server`). **No code anywhere is gated on `web`**, so the web
+  compilation contains no first-party code the server compilation lacks.
+* `model`, `store` and `ingest` declare **no `[features]` at all** — nothing can hide in
+  them under any flag.
+* There is exactly **one** `cfg(not(feature = "server"))` in the workspace,
+  `crates/app/src/main.rs:23`: the three-line WASM entry point
+  (`fn main() { dioxus::launch(App); }`), containing **zero tests**. This is the only
+  shipped code the corrected command does not compile.
+* All five `crates/app` integration targets — `accounts`, `admin`, `api`, `sql`,
+  `webhooks` — compile and enumerate under the corrected command (verified with
+  `cargo test … -- --list`), alongside both `tender_db` lib/bin targets.
+* The workspace has **no doc-tests** (all four `Doc-tests` targets report 0).
+
+**Residual, recorded as out of scope with the reason:** the WASM entry stub. Testing it
+would require a `web`-featured build, which targets wasm and contains no tests, so it
+would add a compilation and zero assertions. Re-open this if first-party code ever
+appears behind `cfg(feature = "web")` or `cfg(not(feature = "server"))` — the greps above
+are the check, and they are one command each.
+
+**The other cargo invocation in this suite was checked, not assumed.** The checked-set
+generator and the statement/LIKE probes all run `cargo test -p store …`, and
+`crates/store` has **no `[features]` section at all** and zero `cfg(feature)` in its
+source — so there is no feature under which its code could fail to compile, and those
+probes are not exposed to this defect. Recorded as a verified negative so the next
+person does not have to re-derive it; re-check it if `store` ever grows features.
+
+## ONE VERIFICATION OWNER PER OBLIGATION
+
+Learned the expensive way, 2026-08-03. Two branches independently grew a **section I**
+in `de1x_verify.sh` for the same obligation — the issue-98/100 winners-gap disclosure —
+written weeks apart by authors who could not see each other's. Both passed, on their own
+branch, indefinitely. The duplicate surfaced **only** when the branches merged.
+
+They did not agree. One asserted the served JSON at `/api/dashboard`; the other grepped
+`GET /` for the same words. The disclosure is rendered client-side, so the second
+**cannot pass on a healthy deployment** — it was the predecessor that issue 110 was filed
+to replace, still alive on the other branch, still reporting.
+
+The rule that follows:
+
+* **Each honesty obligation gets exactly one check, with one owner.** Not one per
+  branch, not one per person who noticed the obligation.
+* **Before adding a check, look for the one that already exists.** Two gates for one
+  obligation are worse than either alone: when they disagree the red is
+  uninterpretable, and the reliable human response to an uninterpretable red is to stop
+  reading the section.
+* **A duplicate is invisible from inside a branch.** Neither gate could have detected
+  the other; nothing but the merge could. So the search has to be deliberate — grep the
+  suite for the obligation, not for the filename you were about to create.
+
+This is why convergence matters and not merely that it tidies history: it is what
+establishes a single owner per check.
+
 Expected top-line (deterministic, from the completed grouping):
 - **tenders = 6,961,311**
 - **islands (island_notice_id NOT NULL) = 640,745**  ⇒  keyed = **6,320,566**

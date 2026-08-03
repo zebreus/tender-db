@@ -1,0 +1,427 @@
+diff --git i/crates/store/src/read.rs w/crates/store/src/read.rs
+index 0d64f22..cbb13f9 100644
+--- i/crates/store/src/read.rs
++++ w/crates/store/src/read.rs
+@@ -470,6 +470,38 @@ pub async fn tenders(
+     filter: &Filter,
+     scope: Scope,
+ ) -> turso::Result<Vec<TenderRow>> {
++    let q = tenders_query(filter, scope);
++    q.rows(conn, |row| TenderRow {
++        id: int(row, 0),
++        source: text(row, 1),
++        procedure_key: opt_text_of(row, 2),
++        kind: text(row, 3),
++        seq: int(row, 4),
++        published_at: int(row, 5),
++        dispatched_at: opt_int_of(row, 15),
++        publication_id: text(row, 6),
++        notice_subtype: opt_text_of(row, 7),
++        title: opt_text_of(row, 8),
++        value_cents: opt_int_of(row, 9),
++        currency: opt_text_of(row, 10),
++        deadline: stamp(row, 11),
++        lots: int(row, 14),
++        cpv: split_codes(opt_text_of(row, 16)),
++        country: split_codes(opt_text_of(row, 17)),
++    })
++    .await
++}
++
++/// The statement [`tenders`] builds, without running it — the seam 112's plan gate
++/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
++#[cfg(test)]
++pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
++    let q = tenders_query(filter, scope);
++    (q.sql, q.params)
++}
++
++/// The identity half of [`tenders`], built but not run.
++fn tenders_query(filter: &Filter, scope: Scope) -> Query {
+     let mut q = Query::default();
+     let title = pick(
+         "tender_version_texts",
+@@ -534,26 +566,7 @@ pub async fn tenders(
+         ),
+         Scope::At { id, .. } => q.push(" AND t.id = ?", [Value::Integer(id)]),
+     }
+-
+-    q.rows(conn, |row| TenderRow {
+-        id: int(row, 0),
+-        source: text(row, 1),
+-        procedure_key: opt_text_of(row, 2),
+-        kind: text(row, 3),
+-        seq: int(row, 4),
+-        published_at: int(row, 5),
+-        dispatched_at: opt_int_of(row, 15),
+-        publication_id: text(row, 6),
+-        notice_subtype: opt_text_of(row, 7),
+-        title: opt_text_of(row, 8),
+-        value_cents: opt_int_of(row, 9),
+-        currency: opt_text_of(row, 10),
+-        deadline: stamp(row, 11),
+-        lots: int(row, 14),
+-        cpv: split_codes(opt_text_of(row, 16)),
+-        country: split_codes(opt_text_of(row, 17)),
+-    })
+-    .await
++    q
+ }
+ 
+ /// A `group_concat` result — a comma-joined code list, or `None` when the
+@@ -1116,6 +1129,29 @@ pub async fn organizations(
+     filter: &Filter,
+     scope: Scope,
+ ) -> turso::Result<Vec<OrganizationRow>> {
++    let q = organizations_query(filter, scope);
++    q.rows(conn, |row| OrganizationRow {
++        id: int(row, 0),
++        name: text(row, 1),
++        country: opt_text_of(row, 2),
++        identifier_kind: opt_text_of(row, 3),
++        identifier: opt_text_of(row, 4),
++        provisional: int(row, 5) != 0,
++        mentions: int(row, 6),
++    })
++    .await
++}
++
++/// The statement [`organizations`] builds, without running it — the seam 112's plan gate
++/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
++#[cfg(test)]
++pub(crate) fn organizations_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
++    let q = organizations_query(filter, scope);
++    (q.sql, q.params)
++}
++
++/// The identity half of [`organizations`], built but not run.
++fn organizations_query(filter: &Filter, scope: Scope) -> Query {
+     let mut q = Query::default();
+     q.push(
+         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
+@@ -1138,17 +1174,7 @@ pub async fn organizations(
+             [Value::Integer(after), Value::Integer(limit)],
+         ),
+         Scope::At { id, .. } => q.push(" AND o.id = ?", [Value::Integer(id)]),
+-    }
+-    q.rows(conn, |row| OrganizationRow {
+-        id: int(row, 0),
+-        name: text(row, 1),
+-        country: opt_text_of(row, 2),
+-        identifier_kind: opt_text_of(row, 3),
+-        identifier: opt_text_of(row, 4),
+-        provisional: int(row, 5) != 0,
+-        mentions: int(row, 6),
+-    })
+-    .await
++    }    q
+ }
+ 
+ // ------------------------------------------------------------------- notices
+@@ -1160,6 +1186,33 @@ pub async fn notices(
+     filter: &Filter,
+     scope: Scope,
+ ) -> turso::Result<Vec<NoticeRow>> {
++    let q = notices_query(filter, scope);
++    q.rows(conn, |row| NoticeRow {
++        id: int(row, 0),
++        source: text(row, 1),
++        publication_id: text(row, 2),
++        content_hash: text(row, 3),
++        profile: text(row, 4),
++        declared_version: opt_text_of(row, 5),
++        member_path: text(row, 6),
++        ingested_at: int(row, 7),
++        parse_state: text(row, 8),
++        published_at: opt_int_of(row, 9),
++        dispatched_at: opt_int_of(row, 10),
++    })
++    .await
++}
++
++/// The statement [`notices`] builds, without running it — the seam 112's plan gate
++/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
++#[cfg(test)]
++pub(crate) fn notices_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
++    let q = notices_query(filter, scope);
++    (q.sql, q.params)
++}
++
++/// The identity half of [`notices`], built but not run.
++fn notices_query(filter: &Filter, scope: Scope) -> Query {
+     let mut q = Query::default();
+     q.push(
+         "SELECT id, source, publication_id, content_hash, profile, declared_version,
+@@ -1179,21 +1232,7 @@ pub async fn notices(
+             [Value::Integer(after), Value::Integer(limit)],
+         ),
+         Scope::At { id, .. } => q.push(" AND id = ?", [Value::Integer(id)]),
+-    }
+-    q.rows(conn, |row| NoticeRow {
+-        id: int(row, 0),
+-        source: text(row, 1),
+-        publication_id: text(row, 2),
+-        content_hash: text(row, 3),
+-        profile: text(row, 4),
+-        declared_version: opt_text_of(row, 5),
+-        member_path: text(row, 6),
+-        ingested_at: int(row, 7),
+-        parse_state: text(row, 8),
+-        published_at: opt_int_of(row, 9),
+-        dispatched_at: opt_int_of(row, 10),
+-    })
+-    .await
++    }    q
+ }
+ 
+ // ------------------------------------------------------------------- changes
+diff --git i/crates/store/src/lib.rs w/crates/store/src/lib.rs
+index 48160a6..af07f49 100644
+--- i/crates/store/src/lib.rs
++++ w/crates/store/src/lib.rs
+@@ -2395,6 +2395,227 @@ tmpfs /data/ramcache tmpfs rw 0 0
+     /// A plan is a sound instrument for THIS question (which key drives the read) and
+     /// an unsound one for cost — issue 115's quadratic read had a fully optimal plan
+     /// while it took 248.8s. Hence the separate timing tests; see `lot_summary_cost`.
++    /// EXTRACTION SEAM for 112's gate — a printer, not an assertion.
++    ///
++    /// Prints the statement the deployed `lots` builder ACTUALLY emits, with each `?`
++    /// replaced by the value the builder ITSELF bound in the same call, so the gate
++    /// plans the artifact rather than a hand-written paraphrase of it (issue 114
++    /// part 2). No token is rewritten: the SQL comes from `lots_statement`, the
++    /// values come from the params it returned alongside it.
++    #[test]
++    fn dump_lots_statement_for_the_plan_gate() {
++        use super::read::{self, Filter, Scope};
++        use turso::Value;
++        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
++        /// carry explanatory comments inside their SQL, and flattening a statement to
++        /// one line turns the first of them into a comment over EVERYTHING after it —
++        /// turso then rejects the result as "incomplete input". A one-line fixture
++        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
++        /// string literal survives.
++        fn decomment(sql: &str) -> String {
++            let mut out = String::new();
++            for line in sql.lines() {
++                let mut qd = false;
++                let b: Vec<char> = line.chars().collect();
++                let mut i = 0;
++                while i < b.len() {
++                    if b[i] == '\'' {
++                        qd = !qd;
++                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
++                        break;
++                    }
++                    out.push(b[i]);
++                    i += 1;
++                }
++                out.push('\n');
++            }
++            out
++        }
++        fn inline(sql: &str, params: &[Value]) -> String {
++            let sql = &decomment(sql);
++            let mut out = String::new();
++            let mut p = params.iter();
++            for ch in sql.chars() {
++                if ch == '?' {
++                    match p.next() {
++                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
++                        Some(Value::Text(t)) => {
++                            out.push('\'');
++                            out.push_str(&t.replace('\'', "''"));
++                            out.push('\'');
++                        }
++                        Some(other) => out.push_str(&format!("{other:?}")),
++                        None => out.push('?'),
++                    }
++                } else if ch == '\n' {
++                    out.push(' ');
++                } else {
++                    out.push(ch);
++                }
++            }
++            // collapse the builder's indentation to one line, as the gate's table needs
++            let mut flat = String::with_capacity(out.len());
++            let mut space = false;
++            for ch in out.chars() {
++                if ch == ' ' {
++                    if !space {
++                        flat.push(ch);
++                    }
++                    space = true;
++                } else {
++                    space = false;
++                    flat.push(ch);
++                }
++            }
++            flat.trim().to_owned()
++        }
++        for (label, after) in [("B1", 0i64), ("B1b", 49_377)] {
++            let filter = Filter { tender: Some(424_242), ..Filter::default() };
++            let (sql, params) = read::lots_statement(&filter, Scope::Page { after, limit: 1000 });
++            println!("GATE-SQL {label}: {}", inline(&sql, &params));
++        }
++    }
++
++    /// 114 PART 2 PROTOTYPE — enumerate the paginated read set MECHANICALLY.
++    ///
++    /// The set is (collection x filter x cursor position), not "the reads someone
++    /// remembered": `read_items`' match on `Collection` is the app's own exhaustive
++    /// statement of which reads paginate, and one builder emits a DIFFERENT statement
++    /// per filter — `organizations` was 22.0s fixable with `country` and 99.08s
++    /// unservable with `kind`, from the same function.
++    #[test]
++    fn enumerate_paginated_read_statements() {
++        use super::read::{self, Filter, Scope, Status};
++        use turso::Value;
++        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
++        /// carry explanatory comments inside their SQL, and flattening a statement to
++        /// one line turns the first of them into a comment over EVERYTHING after it —
++        /// turso then rejects the result as "incomplete input". A one-line fixture
++        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
++        /// string literal survives.
++        fn decomment(sql: &str) -> String {
++            let mut out = String::new();
++            for line in sql.lines() {
++                let mut qd = false;
++                let b: Vec<char> = line.chars().collect();
++                let mut i = 0;
++                while i < b.len() {
++                    if b[i] == '\'' {
++                        qd = !qd;
++                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
++                        break;
++                    }
++                    out.push(b[i]);
++                    i += 1;
++                }
++                out.push('\n');
++            }
++            out
++        }
++        fn inline(sql: &str, params: &[Value]) -> String {
++            let sql = &decomment(sql);
++            let mut out = String::new();
++            let mut p = params.iter();
++            for ch in sql.chars() {
++                match ch {
++                    '?' => match p.next() {
++                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
++                        Some(Value::Text(t)) => out.push_str(&format!("'{}'", t.replace('\'', "''"))),
++                        Some(other) => out.push_str(&format!("{other:?}")),
++                        None => out.push('?'),
++                    },
++                    '\n' => out.push(' '),
++                    c => out.push(c),
++                }
++            }
++            let mut flat = String::new();
++            let mut sp = false;
++            for c in out.chars() {
++                if c == ' ' {
++                    if !sp { flat.push(c) }
++                    sp = true;
++                } else { sp = false; flat.push(c) }
++            }
++            flat.trim().to_owned()
++        }
++        let base = Filter::default();
++        let filters: Vec<(&str, Filter)> = vec![
++            ("none", base.clone()),
++            ("source", Filter { source: Some("ted".into()), ..base.clone() }),
++            ("country", Filter { country: Some("DE".into()), ..base.clone() }),
++            ("cpv", Filter { cpv: Some("4521".into()), ..base.clone() }),
++            ("buyer", Filter { buyer: Some(7), ..base.clone() }),
++            ("winner", Filter { winner: Some(7), ..base.clone() }),
++            ("status", Filter { status: Some(Status::Open), ..base.clone() }),
++            ("min_value", Filter { min_value: Some(1000), ..base.clone() }),
++            ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
++            ("kind", Filter { kind: Some("Lot".into()), ..base.clone() }),
++            ("tender", Filter { tender: Some(424_242), ..base.clone() }),
++        ];
++        for (fname, f) in &filters {
++            for after in [0i64, 49_377] {
++                let scope = Scope::Page { after, limit: 1000 };
++                for (coll, (sql, params)) in [
++                    ("tenders", read::tenders_statement(f, scope)),
++                    ("lots", read::lots_statement(f, scope)),
++                    ("organizations", read::organizations_statement(f, scope)),
++                    ("notices", read::notices_statement(f, scope)),
++                ] {
++                    println!("ENUM\t{coll}\t{fname}\tafter={after}\t{}", inline(&sql, &params));
++                }
++            }
++        }
++    }
++
++    /// LOCAL PLAN PROBE for 112's gate — plans whatever statements `TDB_PLAN_SQL`
++    /// names (one per line), against a schema-only DB built by `Db::open`, through
++    /// the workspace's pinned turso (`=0.7.0`, the same version the on-box probe
++    /// pins). Prints the plan in the on-box probe's column form so the gate's own
++    /// parser can consume it unchanged.
++    #[tokio::test]
++    async fn local_eqp_probe() {
++        let Ok(sqlfile) = std::env::var("TDB_PLAN_SQL") else { return };
++        // Plan against the DB the caller names, so the gate's stats precondition
++        // inspects the SAME file these plans come from.
++        let path = std::env::var("TDB_PLAN_DB")
++            .unwrap_or_else(|_| format!("/tmp/tender-db-eqp-probe-{}.db", std::process::id()));
++        // TDB_PLAN_RAW opens the file AS IT IS, with no migration — the only way to
++        // plan against a deliberately MUTILATED catalogue (an index removed) and see
++        // a check go red. `Db::open` would repair the schema it is meant to be missing.
++        // TDB_PLAN_DDL builds the catalogue from DDL executed BY TURSO, which is how a
++        // deliberately mutilated schema (a PK or index removed) becomes a DB this engine
++        // can actually open — one built by sqlite3 is not loadable here.
++        if let Ok(ddl) = std::env::var("TDB_PLAN_DDL") {
++            let _ = std::fs::remove_file(&path);
++            let db = turso::Builder::new_local(&path).build().await.unwrap();
++            let c = db.connect().unwrap();
++            for stmt in std::fs::read_to_string(&ddl).unwrap().split(";\n") {
++                if !stmt.trim().is_empty() {
++                    c.execute(stmt, ()).await.unwrap();
++                }
++            }
++        }
++        let held;
++        let conn = if std::env::var("TDB_PLAN_RAW").is_ok() {
++            let db = turso::Builder::new_local(&path).build().await.unwrap();
++            db.connect().unwrap()
++        } else {
++            held = Db::open(&path).await.unwrap();
++            (*held.reader().await.unwrap()).clone()
++        };
++        for line in std::fs::read_to_string(&sqlfile).unwrap().lines() {
++            if line.trim().is_empty() {
++                continue;
++            }
++            println!("PLAN-BEGIN");
++            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {line}"), ()).await.unwrap();
++            while let Some(row) = rows.next().await.unwrap() {
++                println!("PLAN 1 | 0 | 0 | {}", text(&row, 3));
++            }
++            println!("PLAN-END");
++        }
++    }
++
+     #[tokio::test]
+     async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_walking_rowids() {
+         let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());
