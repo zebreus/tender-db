@@ -880,3 +880,41 @@ cleanest statement of the EQP asymmetry in this whole issue: a plan gate is a so
 times* a good access path is taken. The 115 timing instrument — a clock and a scaling
 ratio, with a control that must not improve — is what covers that, and no amount of
 improvement to this file ever will.
+
+
+## B7/B8/B9 — the ruling, and the hazard in it (2026-08-03)
+
+**team-lead's ruling:** do not re-add B7 as a standing red. When proj-fix commits the
+117 `(filter, id)` index, add B7/B8/B9 guarded `applies-when: +<that sha>`, with
+`expected-index` left as `*` so the check does not depend on proj-fix's naming, and
+`cursor-bound` carrying the actual property. Stated reason: a standing red is cry-wolf
+for days, and *"nobody remembers to lift a suspension"*.
+
+The rows are extracted, falsified both ways, and ready (see above). Implementing the
+ruling is **blocked**: `+<sha>` cannot be written before the sha exists.
+
+### The hazard, recorded because it is the ruling's own argument turned around
+
+The ruling avoids "somebody must remember to lift a suspension" by requiring that
+**somebody must remember to add guarded rows in the window between proj-fix's commit
+and its deploy** — team-lead's own open item 1 says the class ships unguarded if that
+window is missed. That is the same failure mode in a narrower window, and it is the one
+that produced B5: a check nobody remembered to revisit looks exactly like a check that
+was never written.
+
+**The alternative needs no memory at all.** Add the rows now with `applies-when` EMPTY:
+
+* today they are **RED** — correctly, over a live, unauthenticated, user-reachable
+  22.0s / 99.08s read;
+* the moment the `(filter, id)` index is the serving rev they go **GREEN by
+  themselves**, because `cursor-bound` tests the property rather than a build;
+* nobody has to act at any particular minute, and there is no unguarded window.
+
+The cost is a red report while the defect is live. That cost is real — a red every run
+teaches readers to filter — but the red is **true, actionable, and names its reachable
+green**, which is the distinction drawn under rule 4 and the one that separated B7 from
+the kind-only case.
+
+Both are defensible; the ruling stands until team-lead says otherwise, and either can be
+implemented in minutes. What must NOT happen is the window being missed silently, so if
+the ruling holds, the sha ping is a blocking handoff and not a courtesy.
