@@ -181,8 +181,19 @@ Two consequences for this issue's plan of record:
 
 1. The strikethrough above — the cap is not a protective bound, and lifting it to 2,604
    does **not** cost "~2.6× more". The work is already being done for every request.
-2. The sorter is itself a candidate fix, and possibly the cheaper one: an ordering the
-   index can satisfy would let `LIMIT` truncate before the subqueries run, which turns
-   a full-set cost into a page-sized one *without* touching the per-lot shape. Worth
-   measuring before committing to the batching rewrite — the two are independent, and
-   the ordering change may be a fraction of the work.
+2. ~~The sorter is itself a candidate fix, and possibly the cheaper one.~~
+   **Considered and REJECTED as the fix — do not revive it as a shortcut.** An
+   index-satisfiable ordering would let `LIMIT` truncate before the subqueries run,
+   which reduces the number of ROWS running subqueries (all → one page). But each
+   surviving row still re-walks the O(lots) satellite slice, because `lot_id` is
+   unindexed — so it is **O(page × lots)**, a mitigation of the re-walk rather than
+   its removal. It also does nothing for the all-lots case that issue 116 wants,
+   where it collapses to **O(lots²)**. The batching fix is **O(lots)**: walk each
+   satellite slice once.
+
+   The sorter finding stays recorded above as a **latent fact**, not a pending task:
+   the batching fix resolves it too, since sorting bare rows is cheap once the
+   per-row subqueries are gone. (Raised by sdk-vendor as a possible cheaper path,
+   settled against by team-lead's scaling analysis and proj-fix's scaling-ratio test.
+   Recorded because "why didn't we just fix the ORDER BY?" is the obvious question
+   for the next reader, and it deserves an answer rather than a rediscovery.)
