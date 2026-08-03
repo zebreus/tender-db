@@ -25,14 +25,23 @@
 //!    denied by default because it is simply not in [`ALLOWED`].
 //! 3. **`query_only=1` connection** from a pool dedicated to this endpoint, so
 //!    a long analytical scan never starves the REST readers.
-//! 4. **Timeout, two layers** (10 s): the query runs on the isolated runtime
-//!    under an in-task `tokio::time::timeout`, and turso yields at every row
+//! 4. **Timeout, one layer that works** (10 s). The in-task
+//!    `tokio::time::timeout` on the isolated runtime **does not bound anything**,
+//!    and this comment used to say otherwise. It claimed turso yields at every row
 //!    boundary, so a long *streaming* query is dropped between rows and its
-//!    connection freed (verified, §2). A single non-yielding aggregate (`SELECT
-//!    count(*) FROM generate_series(1, huge)`) computes inside one poll with no
-//!    row boundary, so the in-task timeout can't fire and turso exposes no
-//!    `interrupt()` to stop it — it used to run past 40 s with no 408 (issue
-//!    51). The handler adds a **backstop timeout on the main runtime**: it fires
+//!    connection freed. **Measured 2026-08-03 on the deployed turso 0.7.0: it is
+//!    not dropped — cold or warm.** A 0.5 s budget over a 3.5 s streaming read
+//!    never fired, on a pass verified to reach disk (1.26 M filesystem inputs
+//!    against zero warm); a 50 ms budget over a 0.95 s 4 M-row read never fired
+//!    either. Likely mechanism, offered as hypothesis: `Statement::step` returns
+//!    `Poll::Pending` only on `TursoStatusCode::Io`, and a synchronous VFS blocks
+//!    *inside* the poll rather than returning `Io`, so there is no await point for
+//!    the timer and cache state changes only how long the poll takes. The claim may
+//!    have held on another engine version or VFS; it does not hold here. The
+//!    non-yielding aggregate (`SELECT count(*) FROM generate_series(1, huge)`) was
+//!    always known to slip past it — it used to run past 40 s with no 408 (issue
+//!    51) — and it turns out the streaming case is no different.
+//!    The handler adds a **backstop timeout on the main runtime**: it fires
 //!    on time regardless (the heavy work is isolated), returns 408 at the cap,
 //!    and drops the permit so the concurrency slot frees at once — held for the
 //!    cap, disconnected or not, never 40 s. The aggregate itself still runs to
@@ -41,6 +50,13 @@
 //!    at most that runtime's threads, never the main API/SSE runtime, and the
 //!    per-token limits bound it further. `query_only` guarantees no write can be
 //!    left half-done to poison the connection either way.
+//!
+//!    **So the endpoint's protection against an expensive query is the backstop
+//!    plus the isolation, and nothing else.** The backstop bounds the RESPONSE and
+//!    frees the concurrency slot; issue 17's isolation bounds the BLAST RADIUS. The
+//!    work itself is never stopped — turso exposes no `interrupt()`, and no timeout
+//!    at any layer can take its place. Nothing here should be designed as if a
+//!    per-query time cap can halt turso work; it cannot.
 //! 5. **Result caps** while reading: 10 000 rows / 10 MB, then `truncated:true`.
 //! 6. **Per-token limits**: 2 concurrent (semaphore) + 300/h (governor).
 //!
