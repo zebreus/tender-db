@@ -287,10 +287,10 @@
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
-PASS=0; FAIL=0; NOINPUT=0; FAILED_IDS=""; NA=0
+PASS=0; FAIL=0; NOINPUT=0; FAILED_IDS=""; PASSED_IDS=""; NA=0
 report() {
   case "$1" in
-    PASS) PASS=$((PASS+1));       printf '  \033[32mPASS\033[0m %-6s %s\n' "$2" "$3";;
+    PASS) PASS=$((PASS+1)); PASSED_IDS="$PASSED_IDS $2"; printf '  \033[32mPASS\033[0m %-6s %s\n' "$2" "$3";;
     FAIL) FAIL=$((FAIL+1)); FAILED_IDS="$FAILED_IDS $2"; printf '  \033[31mFAIL\033[0m %-6s %s\n' "$2" "$3";;
     NONE) NOINPUT=$((NOINPUT+1)); printf '  \033[33mNO-IN\033[0m %-6s %s\n' "$2" "$3";;
     # n/a is NOT a fourth verdict — it says the row does not describe the build
@@ -1060,6 +1060,21 @@ fi
 # `note_for` has something to say about it. One source of truth, so the two cannot drift
 # apart — a list of exceptions maintained beside the checks it excepts is how a
 # suppression outlives the thing it was suppressing.
+# ---- has an expected-red outlived the defect it excuses? --------------------------
+# `note_for` marks a check as expected-red. It only speaks on FAILURE, so the moment the
+# fix lands and the check goes green the note falls dormant — still present, still
+# excusing, invisible. A LATER genuine regression on that check would then be reported
+# as "known, expected". That is B5's failure exactly: a suppression outliving the thing
+# it suppressed.
+#
+# No auto-expiry was built — every expiry is another thing to remember. Instead the run
+# announces the moment removal becomes due, which is the same memory-free argument used
+# for the rows themselves: do not ask anyone to notice, make the gate say it.
+STALE_NOTES=""
+for pid in $PASSED_IDS; do
+  [ -n "$(note_for "${pid%%:*}")" ] && STALE_NOTES="$STALE_NOTES $pid"
+done
+
 EXPECTED_RED=""; UNEXPECTED_RED=""
 for fid in $FAILED_IDS; do
   if [ -n "$(note_for "${fid%%:*}")" ]; then EXPECTED_RED="$EXPECTED_RED ${fid}"
@@ -1068,6 +1083,14 @@ done
 
 echo
 echo "== $PASS pass, $FAIL fail, $NOINPUT no-input, $NA n/a (wrong build) =="
+if [ -n "$STALE_NOTES" ]; then
+  echo
+  echo "ACTION DUE —$STALE_NOTES now PASS but are still marked expected-red by a"
+  echo "note_for entry. That entry excuses a defect which has evidently been fixed, and"
+  echo "while it stays, a FUTURE regression on those checks is reported as \"known,"
+  echo "expected\" instead of raising an alarm. Remove their note_for entries: this is a"
+  echo "required close-out step of the fix, not tidying."
+fi
 if [ "$CONTROL" = void ]; then
   echo "VOID — the negative control passed, so this probe cannot be shown to tell a"
   echo "walk from a seek. Any GREEN above is uninterpretable, not good news. Fix the"
