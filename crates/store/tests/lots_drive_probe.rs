@@ -120,6 +120,37 @@ const SHIP_CANDIDATE: &str = "SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.s
       AND vl.lot_id = l.id
     WHERE vl.kind = ? AND l.id > ? ORDER BY l.id LIMIT 50";
 
+
+/// **S2** — the shippable candidate. `lots` alone in FROM (plus a PK join to `tenders`
+/// for `current_seq`), output columns from a SELECT-list correlated subquery that runs
+/// per OUTPUT row rather than per candidate. Keeps `lots` the sole driver, which the
+/// gate established is the sufficient condition.
+const SHIP_S2: &str = "SELECT l.id, l.tender_id, l.lot_key,
+         (SELECT vl.kind FROM tender_version_lots vl
+           WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq AND vl.lot_id = l.id),
+         t.current_seq
+       FROM lots l JOIN tenders t ON t.id = l.tender_id
+      WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                     WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
+                       AND vl.lot_id = l.id AND vl.kind = ?)
+        AND l.id > ? ORDER BY l.id LIMIT 50";
+
+/// **S2b** — as S2 but recomputing `MAX(seq)` instead of trusting `tenders.current_seq`.
+/// Costs extra seeks; keeps today's redundancy rather than converting it into a trust
+/// relationship on a projection-maintained invariant.
+const SHIP_S2B: &str = "SELECT l.id, l.tender_id, l.lot_key,
+         (SELECT vl.kind FROM tender_version_lots vl
+           WHERE vl.tender_id = l.tender_id
+             AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+             AND vl.lot_id = l.id),
+         (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+       FROM lots l
+      WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                     WHERE vl.tender_id = l.tender_id
+                       AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                       AND vl.lot_id = l.id AND vl.kind = ?)
+        AND l.id > ? ORDER BY l.id LIMIT 50";
+
 /// Whole rows as text, so equivalence covers the `kind` and `seq` VALUES rather than
 /// ids alone. A shape that returns the right lots with the wrong version's `kind` is
 /// the defect an id-only comparison cannot see.
@@ -418,6 +449,7 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
              "SHIP today", "ratio", "SHIP cand", "ratio");
     let (mut baseline, mut baseline2) = (0.0, 0.0);
     let (mut baseline3, mut baseline4) = (0.0, 0.0);
+    let (mut baseline5, mut baseline6) = (0.0, 0.0);
     for (run, seqs) in [1i64, 8, 32].into_iter().enumerate() {
         let path = format!("/tmp/tender-db-slice-{}-{seqs}.db", std::process::id());
         for s in ["", "-wal", "-shm"] {
@@ -499,6 +531,14 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
         let (t3, _) = time(&conn, SHIP_TODAY, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
         let (t4, _) =
             time(&conn, SHIP_CANDIDATE, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        let (t5, _) = time(&conn, SHIP_S2, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        let (t6, _) = time(&conn, SHIP_S2B, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        if run == 0 {
+            baseline5 = t5;
+            baseline6 = t6;
+        }
+        println!("        S2  {t5:>9.4}s  {:>6.2}x      S2b {t6:>9.4}s  {:>6.2}x",
+                 t5 / baseline5, t6 / baseline6);
         if run == 0 {
             baseline3 = t3;
             baseline4 = t4;
@@ -519,11 +559,21 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
             println!("\nSHIPPING equivalence on whole rows (id|tender|key|kind|seq):");
             for kind in ["Lot", "Part", "zzz"] {
                 let p = vec![Value::Text(kind.into()), Value::Integer(0)];
+                let p2 = p.clone();
                 let today = full_rows(&conn, SHIP_TODAY, p.clone()).await;
                 let cand = full_rows(&conn, SHIP_CANDIDATE, p).await;
                 println!("    kind={kind:<5} today {:>3} rows · candidate {:>3}", today.len(), cand.len());
+                let s2 = full_rows(&conn, SHIP_S2, p2.clone()).await;
+                let s2b = full_rows(&conn, SHIP_S2B, p2).await;
+                println!("             S2 {:>3} · S2b {:>3}", s2.len(), s2b.len());
                 assert_eq!(cand, today, "SHIPPING candidate changed the answer for kind={kind}");
+                assert_eq!(s2, today, "S2 changed the answer for kind={kind}");
+                assert_eq!(s2b, today, "S2b changed the answer for kind={kind}");
             }
+            plan(&conn, "S2 plan (deep slice):", SHIP_S2,
+                 vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
+            plan(&conn, "S2b plan (deep slice):", SHIP_S2B,
+                 vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
             plan(&conn, "branch A' plan (deep slice):", PK_EXISTS_SCALAR,
                  vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
             // Equivalence on a MULTI-VERSION fixture, which the main probe cannot
