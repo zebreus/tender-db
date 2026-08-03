@@ -227,8 +227,10 @@ async fn the_s2c_candidate_answers_identically_across_the_filter_surface() {
     for (name, f) in &cases {
         for after in [0, all / 2] {
             let scope = Scope::Page { after, limit: all + 10 };
+            // `lots` is now the S2c shape; `lots_previous_shape` is the oracle it
+            // replaced. Named so the comparison reads the right way round after the swap.
             let today = store::read::lots(&conn, f, scope).await.unwrap();
-            let cand = store::read::lots_s2c(&conn, f, scope).await.unwrap();
+            let cand = store::read::lots_previous_shape(&conn, f, scope).await.unwrap();
             let key = |r: &store::read::LotRow| {
                 (r.id, r.tender_id, r.lot_key.clone(), r.kind.clone(), r.seq,
                  r.title.clone(), r.value_cents, r.currency.clone())
@@ -264,7 +266,75 @@ async fn dump_s2c_statements_for_scale_plan_check() {
         ("min_value", Filter { min_value: Some(100000), ..base() }),
         ("max_value", Filter { max_value: Some(100000), ..base() }),
     ] {
-        let (sql, params) = store::read::lots_statement_s2c(&f, scope);
+        let (sql, params) = store::read::lots_statement(&f, scope);
         println!("\n===== {name} =====\n{sql};\n-- params: {params:?}");
+    }
+}
+
+/// **The perf guard.** Asserts the PLAN of the statement the shipped builder emits.
+///
+/// It cannot be a result assertion, because this fix's failure mode is silent: adding
+/// any table to the `lots` FROM clause hands the planner another candidate driver and
+/// restores `SCAN tender_version_lots` + a top-level sorter — **without changing a
+/// single returned row.** The equivalence gate would stay green while the read went
+/// from 0.004s back to 164.6s at prod scale.
+///
+/// Planned from `read::lots_statement`, the builder's own output, not a hand-written
+/// string. A plan test that plans its own SQL keeps passing while the builder drifts
+/// underneath it — this read has been bitten by exactly that (issue 115's row-value
+/// cursor).
+#[tokio::test]
+async fn the_shipped_lots_plan_keeps_lots_driving() {
+    let path = format!("/tmp/tender-db-lotsplan-{}.db", std::process::id());
+    let conn = seed(&path).await;
+
+    for (name, f) in [
+        ("kind only", Filter { kind: Some("Lot".into()), ..base() }),
+        ("kind+source", Filter { kind: Some("Lot".into()), source: Some("ted".into()), ..base() }),
+        ("kind+country", Filter { kind: Some("Lot".into()), country: Some("DE".into()), ..base() }),
+        ("status=Closed", Filter { status: Some(Status::Closed), ..base() }),
+        ("min_value", Filter { min_value: Some(1_000_00), ..base() }),
+    ] {
+        let (sql, params) = store::read::lots_statement(&f, Scope::Page { after: 0, limit: 50 });
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+        let mut plan = Vec::new();
+        while let Some(r) = rows.next().await.unwrap() {
+            plan.push(r.get_value(3).unwrap().as_text().cloned().unwrap_or_default());
+        }
+        let joined = plan.join("\n");
+        println!("\n--- {name}\n{joined}");
+
+        assert!(
+            plan.first().is_some_and(|l| l.contains("SEARCH l USING INTEGER PRIMARY KEY")),
+            "{name}: `lots` must be the driving table, got: {joined}"
+        );
+        // The sorter is the >330s term: it materialises every match before LIMIT.
+        assert!(
+            !joined.contains("USE SORTER FOR ORDER BY"),
+            "{name}: ORDER BY must come from the drive, not a sorter: {joined}"
+        );
+        // Any second FROM-clause table lets the planner start elsewhere. `tenders`
+        // reached by JOIN rather than by correlated subquery is the measured relapse.
+        assert!(
+            !joined.contains("SCAN tenders"),
+            "{name}: `tenders` must be a correlated PK probe, not a driver: {joined}"
+        );
+        assert!(
+            !joined.contains("SCAN tender_version_lots"),
+            "{name}: the whole point is not scanning tender_version_lots: {joined}"
+        );
+        // Satellite predicates are evaluated per candidate lot, so an unindexed one is
+        // a full pass over a 137M-row table per lot. Every satellite the read probes
+        // carries a `(tender_id, seq)` index in the schema; this catches its loss.
+        for satellite in ["tender_version_classifications", "tender_version_parties",
+                          "tender_version_dates", "tender_version_amounts"] {
+            assert!(
+                !joined.contains(&format!("SCAN {satellite}")),
+                "{name}: {satellite} must be index-served, not scanned: {joined}"
+            );
+        }
+    }
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }

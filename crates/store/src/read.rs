@@ -485,8 +485,22 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // 4.26M rows exactly as the filters issue 117 fixed did. It was not in 117's
         // audit; routing it here is what stops it being a silent survivor.
         Collection::Tenders => version_predicate || kind.is_some(),
-        // `source` is `t.source` and `kind` is `vl.kind` — both on tables JOINED to the
-        // driven one, so no index on `lots` can serve either.
+        // Isolated because the COST is unbounded for sparse and absent values — NOT
+        // because the filter is unserved. That distinction became load-bearing when
+        // issue 16 restructured this read: `lots` now drives and the probe is a
+        // three-column primary-key seek, so the old justification ("no index on
+        // `lots` can serve either") is simply false.
+        //
+        // The cost argument survives the change and any future index. `?kind=` on a
+        // value with fewer rows than the page limit walks all 13.2M lots to collect a
+        // page it can never fill — 132.1s measured at prod scale — because the work is
+        // bounded by DENSITY, not by the filter being index-served. `?source=` is the
+        // same shape.
+        //
+        // **A fast common case is not grounds for de-isolation.** `?kind=Lot` is now
+        // 0.004s; `?kind=` on a sparse value is unchanged. Deleting this arm because
+        // the default request got quick would return the sparse and absent cases to
+        // the main reader pool, which is what issue 120 exists to prevent.
         Collection::Lots => version_predicate || source.is_some() || kind.is_some(),
         // `country` and `identifier_kind` are served by the issue-117 indexes, and
         // `buyer` is `o.id`, the primary key. Nothing here can walk.
@@ -502,7 +516,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
 ///
 /// Parameterised rather than duplicated because two query shapes need the same
 /// predicates against different scopes: the JOIN form has `t`/`v` in FROM and passes
-/// `"t.id"`/`"v.seq"`, while [`lots_query_s2c`] has neither and correlates on
+/// `"t.id"`/`"v.seq"`, while [`lots_query`] has neither and correlates on
 /// `l.tender_id` with `seq` recomputed. Writing them twice is the paraphrase hazard
 /// that blocked issue 112's B1 — one edit to a predicate would silently apply to one
 /// shape and not the other.
@@ -1150,6 +1164,38 @@ fn blank() -> FactRow {
 /// parent Tender's version, so `/v1/lots?country=DE` means the same thing it
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    // A `kind` that exists NOWHERE turns the per-lot probe into a full pass over
+    // `lots` to prove a negative: 132.1s at prod scale against 18.6s for today's
+    // shape, the one class where this read is slower than what it replaces.
+    //
+    // The guard is an unindexed scan of `tender_version_lots` and that is deliberate.
+    // It costs 1ms on every kind that exists — prod's first `Lot` row is row 0 of the
+    // table, `LotsGroup` 0.0037% in, `Part` 0.0528% — and ~18.6s to prove absence,
+    // which is the same sequential pass today's shape makes. So the absent case
+    // returns to parity instead of regressing, and the present case pays a millisecond.
+    //
+    // An index on `(kind, lot_id)` would make the absent case ~0 instead of ~18.6s,
+    // and is NOT worth it: 40.6M rows against the 41M auto-build cap, a 1.8GB
+    // memory-linear build, and a shelf life ending at the next corpus growth.
+    //
+    // What it does NOT cover: a kind that EXISTS but has fewer rows than the page
+    // limit. The probe returns true, and the read then walks everything to collect a
+    // page it can never fill — `T(K) = T_full * 50/K`, saturating at K = LIMIT, so a
+    // kind with <=50 lots costs the full 132.1s. No value in the corpus is near that
+    // (smallest is LotsGroup at 12,097) but `kind` is data-driven, so one arriving in
+    // a handful of notices lands there through ordinary ingestion. Latent, confined
+    // by the isolation of issue 120, and recorded rather than fixed.
+    if matches!(scope, Scope::Page { .. })
+        && let Some(kind) = &filter.kind
+        && !exists(
+            conn,
+            "SELECT 1 FROM tender_version_lots WHERE kind = ? LIMIT 1",
+            vec![t(kind)],
+        )
+        .await?
+    {
+        return Ok(Vec::new());
+    }
     let mut rows = lots_query(filter, scope)
         .rows(conn, |row| LotRow {
             id: int(row, 0),
@@ -1167,18 +1213,15 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     Ok(rows)
 }
 
-/// **Issue 16 candidate, end to end — wired to nothing in production.**
+/// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped
+/// read against what it replaced on data where every filter provably discriminates.
 ///
-/// Runs [`lots_query_s2c`] through the same row mapping and [`summarise`] as [`lots`],
-/// so the equivalence test compares two complete read paths rather than two SQL
-/// strings. Testing generated SQL alone would leave the mapping and summarisation
-/// untested and would still be comparing a proxy of the shipped behaviour.
-///
-/// `#[doc(hidden)]` and public only so `store`'s integration tests can reach it. When
-/// the caller swaps, this disappears and [`lots`] itself uses the new builder.
+/// Not dead code: it is the oracle. Deleting it would leave the equivalence assertion
+/// with nothing to compare against, and a rewrite of this size wants its predecessor
+/// available to answer "did the answer change" for as long as anyone might ask.
 #[doc(hidden)]
-pub async fn lots_s2c(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
-    let mut rows = lots_query_s2c(filter, scope)
+pub async fn lots_previous_shape(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    let mut rows = lots_query_previous(filter, scope)
         .rows(conn, |row| LotRow {
             id: int(row, 0),
             tender_id: int(row, 1),
@@ -1210,28 +1253,14 @@ pub async fn lots_s2c(conn: &Connection, filter: &Filter, scope: Scope) -> turso
 /// nothing in production wants the statement without running it. What it exposes is
 /// [`lots_query`], the same production code [`lots`] itself runs — a view, not a
 /// second path.
-#[cfg(test)]
-pub(crate) fn lots_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+#[doc(hidden)]
+pub fn lots_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
     let q = lots_query(filter, scope);
     (q.sql, q.params)
 }
 
-/// [`lots_statement`]'s counterpart for the issue-16 candidate — the window the
-/// perf-guard test needs onto [`lots_query_s2c`], and the source of the SQL sent for
-/// plan confirmation at prod scale.
-///
-/// `#[doc(hidden)] pub` rather than `#[cfg(test)]` because the statements are also
-/// read out to be planned on the 40.6M bed, which is a separate process from this
-/// crate's tests. Sending hand-written SQL for that would plan a paraphrase of the
-/// builder instead of the builder — the failure this whole task has been avoiding.
-#[doc(hidden)]
-pub fn lots_statement_s2c(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
-    let q = lots_query_s2c(filter, scope);
-    (q.sql, q.params)
-}
-
 /// The identity half of [`lots`], built but not run.
-fn lots_query(filter: &Filter, scope: Scope) -> Query {
+fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     // Two questions, two driving tables — and that is the point, not an
     // optimisation. "Which Lots does THIS Tender's current version publish?" is a
@@ -1353,7 +1382,7 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
 /// the data is already wrong — removing a cross-check at the moment it is most needed.
 /// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
 /// See issue 27 for enforcing the invariant, after which this may be revisited.
-fn lots_query_s2c(filter: &Filter, scope: Scope) -> Query {
+fn lots_query(filter: &Filter, scope: Scope) -> Query {
     let scoped = match scope {
         Scope::Page { .. } => filter.tender,
         Scope::At { .. } => None,
@@ -1361,7 +1390,7 @@ fn lots_query_s2c(filter: &Filter, scope: Scope) -> Query {
     // The containment shape (issue 115) and the single-lot probe already drive from
     // the right table; only the stream shape is rebuilt here.
     if scoped.is_some() || matches!(scope, Scope::At { .. }) {
-        return lots_query(filter, scope);
+        return lots_query_previous(filter, scope);
     }
 
     // The current version, correlated on the outer lot. Used in the SELECT list, the

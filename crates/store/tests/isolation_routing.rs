@@ -46,8 +46,15 @@ fn every_version_predicate_isolates_on_the_collections_that_apply_them() {
 
 #[test]
 fn the_joined_table_filters_on_lots_isolate() {
-    // `t.source` and `vl.kind` sit on tables JOINED to `lots`, so no index on `lots`
-    // can serve either — the same shape as the version predicates, one join over.
+    // Isolated for unbounded COST on sparse and absent values, not for lack of an
+    // index. Issue 16 made `lots` the driving table with a three-column primary-key
+    // probe, so "no index can serve it" is no longer true — but `?kind=` on a value
+    // with fewer rows than the page limit still walks all 13.2M lots (132.1s at prod
+    // scale) because the work scales with DENSITY.
+    //
+    // If this assertion ever fails, the fix is not to delete it. A fast `?kind=Lot`
+    // is not grounds for de-isolation: the sparse and absent cases are unchanged, and
+    // de-isolating returns them to the main reader pool.
     assert!(walks(Collection::Lots, &Filter { source: Some("ted".into()), ..f() }));
     assert!(walks(Collection::Lots, &Filter { kind: Some("Lot".into()), ..f() }));
 }
