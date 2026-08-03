@@ -434,3 +434,31 @@ stderr line discovered mid-rebuild. Options: accept it; raise the budget from 2 
 well under the ceiling); or accept a lower safety factor for that table alone. Left at 2 GB because
 that is the reviewed number, and changing a policy constant to make an inconvenient result disappear is
 the move one would challenge in someone else's work.
+
+### Resolution of the watch item: the guard is conservative, not the table on the edge
+
+Team-lead's call, and it corrects a gap in the analysis above: **the 99.8% figure is against a
+`48`-for-all constant, and 48 came from TEXT-keyed indexes.**
+
+Every measured point keys a TEXT column plus an integer — `organizations(country, id)`,
+`tenders(source, id)`, `notices(source, id)` — at 41/45/45/48 B/row. But
+`organization_mentions_org` keys `organization_mentions(organization_id)`, a **single INTEGER**. A
+narrower key should cost less per row, so its real build is likely comfortably under budget and the
+99.8% is an artefact of applying a TEXT-derived constant to an INTEGER-keyed index.
+
+So the correct reading is that **the guard is conservative here, not that the table is at its limit** —
+and the right response is neither to raise the budget nor to accept the refusal, but to measure the
+one case in question. run-driver has that queued (~2 min); it decides how far the real per-row figure
+sits below 48.
+
+Decision: **keep the 41M cap and the 2 GB budget.** Nothing is urgent — `organization_mentions` passes
+today (40.9M < 41M) and this deploy does not rebuild its index.
+
+If the measurement shows the refusal would be **false**, the principled fix is a **key-width-aware
+estimate** — derive bytes-per-row from the indexed columns rather than applying the global maximum to
+every index — which is more precise than inflating the budget for everyone. Raising the budget would
+make one inconvenient result disappear at the cost of loosening the guard for every table; the
+key-aware estimate tightens the model instead.
+
+That preserves the separability the constant was designed around: the empirical model gets more
+accurate, the policy margin stays where it is.
