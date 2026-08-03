@@ -568,7 +568,17 @@ fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
     /// avoids; beyond that the guard stops paying for itself.
     const MAX_CASE_VARIANTS: usize = 16;
 
-    if prefix.is_empty() || !prefix.is_ascii() {
+    // A `LIKE` METACHARACTER makes the prefix a pattern, and a range is not one.
+    // `version_predicates` binds `format!("{prefix}%")`, so `?country=%` becomes
+    // `LIKE '%%'` — which matches EVERY code — while the range `['%', '&')` matches
+    // none, and the guard would return an empty page for a filter that matches
+    // everything. `_` is the same trap one character at a time: `?country=_E` matches
+    // `DE300` and the range does not. Nothing upstream validates these — `Params`
+    // passes `country` and `cpv` through verbatim — so this is the only place it can
+    // be caught, and the answer is to decline the guard rather than to interpret the
+    // pattern. `\` is literal in SQLite's `LIKE` without an `ESCAPE` clause, but it is
+    // declined too so that adding one later cannot silently make this wrong.
+    if prefix.is_empty() || !prefix.is_ascii() || prefix.contains(['%', '_', '\\']) {
         return None;
     }
     let letters = prefix.chars().filter(char::is_ascii_alphabetic).count();

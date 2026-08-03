@@ -74,6 +74,75 @@ async fn ids(conn: &turso::Connection, f: &Filter) -> Vec<i64> {
         .collect()
 }
 
+/// The invariant the guard rests on, asserted against TURSO rather than remembered
+/// from a scratch run against another engine.
+///
+/// `prefix_ranges` claims the union of a prefix's ASCII-case variants covers exactly
+/// what `LIKE prefix || '%'` matches. That holds only if the engine folds AT MOST
+/// ASCII case in `LIKE` — if it folded Unicode too, the union would be narrower than
+/// the predicate and the guard would drop rows. sqlite3 and turso are not
+/// interchangeable for questions like this (issue 112's wrong-engine discipline), and
+/// the deployed engine is the one whose answer counts.
+#[tokio::test]
+async fn turso_folds_ascii_case_in_like_and_no_more() {
+    let path = format!("/tmp/tender-db-fold-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    store::Db::open(&path).await.unwrap();
+    let db = turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = db.connect().unwrap();
+    for (id, code) in [(1i64, "DE300"), (2, "\u{130}STANBUL")] {
+        conn.execute(
+            "INSERT INTO tender_version_classifications (tender_id, seq, lot_id, field, scheme, code)
+             VALUES (?, 1, NULL, 'place', 'nuts', ?)",
+            (Value::Integer(id), Value::Text(code.to_owned())),
+        )
+        .await
+        .unwrap();
+    }
+    let matches = |pat: &str| {
+        let pat = pat.to_owned();
+        let conn = &conn;
+        async move {
+            let mut rows = conn
+                .query(
+                    "SELECT tender_id FROM tender_version_classifications
+                      WHERE scheme = 'nuts' AND code LIKE ? ORDER BY tender_id",
+                    (Value::Text(pat),),
+                )
+                .await
+                .unwrap();
+            let mut out = Vec::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                out.push(r.get_value(0).unwrap().as_integer().copied().unwrap());
+            }
+            out
+        }
+    };
+
+    // ASCII case IS folded — both directions. This is why one range over the prefix
+    // as given is not enough, and why the variants exist at all.
+    assert_eq!(matches("DE%").await, vec![1]);
+    assert_eq!(matches("de%").await, vec![1], "turso folds ASCII case in LIKE");
+    assert_eq!(matches("dE%").await, vec![1]);
+
+    // Non-ASCII is NOT folded: the dotted capital I does not match its lowercase
+    // form. If this ever fails, turso has grown Unicode folding and the ASCII-variant
+    // union is no longer a superset of LIKE — `prefix_ranges` would then have to
+    // decline any prefix that could case-fold outside ASCII, not merely non-ASCII
+    // ones.
+    assert!(
+        matches("i%").await.is_empty(),
+        "turso must not fold non-ASCII case in LIKE, or the ASCII-variant union in \
+         prefix_ranges is narrower than the predicate it stands in for"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 #[tokio::test]
 async fn the_guard_changes_speed_not_results() {
     let path = format!("/tmp/tender-db-scguard-{}.db", std::process::id());
@@ -105,6 +174,29 @@ async fn the_guard_changes_speed_not_results() {
          narrower than its predicate returns wrong rows, not slow ones"
     );
     assert_eq!(ids(&conn, &country("dE300")).await, vec![1], "mixed case likewise");
+
+    // LIKE METACHARACTERS. The bound predicate is `LIKE prefix || '%'`, so `%` and `_`
+    // are wildcards in the prefix and a range comparison is not a pattern match. These
+    // are the same family as the case-fold bug: a guard narrower than its predicate.
+    // `?country=%` is the sharpest — `LIKE '%%'` matches EVERY code, so a guard that
+    // vetoed it would return an empty page for the filter that matches everything.
+    // Nothing upstream validates these: `Params` passes country/cpv through verbatim.
+    assert_eq!(
+        ids(&conn, &country("%")).await,
+        vec![1],
+        "`%` is a LIKE wildcard matching everything — the guard must decline, not veto"
+    );
+    assert_eq!(
+        ids(&conn, &country("_E")).await,
+        vec![1],
+        "`_` matches any single character, so `_E%` matches the stored DE300"
+    );
+    assert_eq!(ids(&conn, &cpv("%")).await, vec![1], "same for cpv");
+    assert_eq!(
+        ids(&conn, &country("D%0")).await,
+        vec![1],
+        "a metacharacter anywhere in the prefix, not just at the start"
+    );
 
     // Absent: the whole point. Empty, and reached without the walk.
     assert!(ids(&conn, &country("ZZ")).await.is_empty(), "absent country -> empty");
