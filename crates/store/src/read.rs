@@ -1022,7 +1022,16 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
 async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> {
     // Lot ids are unique across the result, so one map resolves a satellite row's
     // `lot_id` to the row it decorates — and drops any lot outside this page.
-    let at: HashMap<i64, usize> = rows.iter().enumerate().map(|(i, r)| (r.id, i)).collect();
+    // Keyed on the WHOLE of what the correlated subquery matched on —
+    // `s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id` — not on `lot_id`
+    // alone. A satellite row belongs to a lot only if it also belongs to that lot's
+    // Tender AND version. Keying on `lot_id` by itself lets one Tender's slice
+    // decorate another Tender's lot whenever a satellite row carries a foreign
+    // `lot_id` (the issue-103 orphan shape, in the satellites rather than in
+    // `tender_version_lots`) — a leak the old per-lot subqueries could not produce,
+    // because their `s.tender_id = t.id` never matched.
+    let at: HashMap<(i64, i64, i64), usize> =
+        rows.iter().enumerate().map(|(i, r)| ((r.tender_id, r.seq, r.id), i)).collect();
     let mut versions: Vec<(i64, i64)> = rows.iter().map(|r| (r.tender_id, r.seq)).collect();
     versions.sort_unstable();
     versions.dedup();
@@ -1045,7 +1054,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
             )
             .await?;
         while let Some(row) = got.next().await? {
-            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
             let rank = match opt_text_of(&row, 1).as_deref() {
                 Some("ENG") => 2,
                 Some(_) => 1,
@@ -1065,7 +1074,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
             )
             .await?;
         while let Some(row) = got.next().await? {
-            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
             let cents = opt_int_of(&row, 1);
             // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
             // ranks below every real amount rather than above them.
@@ -1087,7 +1096,7 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
             )
             .await?;
         while let Some(row) = got.next().await? {
-            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
             let rank = opt_int_of(&row, 1).unwrap_or(i64::MIN);
             if best_deadline[i].is_none_or(|best| rank > best) {
                 best_deadline[i] = Some(rank);
