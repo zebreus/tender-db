@@ -502,7 +502,36 @@ intended to save someone time will cost it unless the sender checks the receiver
 not their own.**
 
 The cheap practice that would have caught all three: **report what an instrument cannot see alongside
-what it reports.** "Green on `/v1/tenders/{id}` — does not exercise the multi-Tender path" costs one
+what it reports.**
+
+### The question that operationalises it
+
+Naming the failure mode did not prevent committing it — four times in one day, each after recording the
+pattern and citing it to someone else. Knowledge was not the defence. What worked, every time, was
+running one specific question before reporting:
+
+> **What would a correct-but-slow version of this look like, and can my check tell it from the fixed
+> one?**
+
+If the check cannot distinguish them, it is on the wrong axis and cannot fail for the reason it claims
+to test.
+
+It disposes of each failure in a line. A correct-but-slow lots read returns the same rows — so a
+row-count gate is blind to it. A correct-but-slow organizations read is *index-served* — so an
+index-name assertion is blind to it. A correct-but-slow short-circuit returns the same page — so an
+end-to-end result assertion is blind to it.
+
+The distinction underneath is asking what the CHANGE did rather than what the CHECK is about; the
+question is just how to run that. It assists the hard step — naming the property that changed — which
+no classification of instruments can do, because every such classification only applies *after* the
+naming is already right.
+
+And that is the recursive part, which is the real finding rather than an irony: **every abstraction
+produced here was itself an instrument, and each acquired the failure mode it was written to describe.**
+The rule about paraphrases was violated by its author two hours after writing it; a guard against
+silently-skipped tests had a silent coverage bug; a taxonomy of instrument-blindness is blind in exactly
+the way it classifies. The only defence any of it produced is the habit of running the specific check
+before reporting. "Green on `/v1/tenders/{id}` — does not exercise the multi-Tender path" costs one
 clause and converts a false all-clear into a scoped one. Likewise a fixture's doc comment should say
 which axes it does NOT vary, since that is where the next defect will live.
 
