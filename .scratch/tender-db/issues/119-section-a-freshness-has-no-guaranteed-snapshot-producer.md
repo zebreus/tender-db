@@ -59,8 +59,44 @@ snapshot without holding a deploy.
    Honest but it is 111's rejected answer: a durability obligation transferred to
    someone's memory.
 
-Preference is (1), with (2) as a useful complement — (1) fixes the input, (2) removes the
-dependency for the specific case where the system has just told us the file is current.
+~~Preference is (1), with (2) as a useful complement.~~ **CORRECTED — option (1) is not
+implementable on this box, and I filed this issue without the numbers.**
+
+## The measured constraint (run-driver, 2026-08-03) — a snapshot is IMPOSSIBLE, not awkward
+
+* prod DB **453 GB**; `/data` has **~122 GB free**. A fresh snapshot cannot be cut in
+  place at all — not "inconveniently large", *there is nowhere to put it*.
+* the live `-wal` **never reaches 0 at idle**: checkpointing is volume-triggered, and it
+  sat at **12,392 B across 18 polls over 4½ minutes**.
+
+So "point `TDB_SNAPSHOT` at a checkpointed snapshot" has **no achievable input on this
+box**. It was not advice; it was a refusal to answer wearing the shape of a prerequisite.
+The snapshot ring's two files exist because they were cut when the DB was smaller.
+
+### What this changes
+
+**The main-file split (`b1d5669`) is not a stopgap pending this issue — given the disk it
+is currently the ONLY way section A can ever answer**, and it does answer: run-driver's
+re-run reported **25/25 present with columns matching, against the live serving file**,
+each verdict carrying its own inline caveat.
+
+That reorders the options:
+
+1. ~~Give the snapshot ring a guaranteed producer~~ — **unimplementable at 453 GB with
+   122 GB free.** Anyone planning one should read this section first; the disk cannot
+   hold the artifact.
+2. **Read the live main file, split by direction** — DONE. Present is sound (frames only
+   add); absent is unknowable and reported no-input. This is now the primary mechanism.
+3. **Close the remaining gap: the WAL's contents.** What is still unestablished is
+   narrow — an index created since the last checkpoint, or dropped in unread frames.
+   The honest asks are either a way to read the WAL-merged catalogue through the engine
+   that owns it (the app, since stock sqlite3 cannot), or a trigger that checkpoints on
+   demand so the main file can be made current without copying 453 GB.
+
+**So this issue is no longer "section A has no fresh input".** It is "section A's input
+is sound in one direction and silent in the other, and closing the silent half needs
+either a WAL-aware reader or an on-demand checkpoint — not a snapshot." Filed originally
+under the wrong premise, corrected by measurement rather than by argument.
 
 ## Acceptance
 
