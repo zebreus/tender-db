@@ -175,3 +175,45 @@ Both gates were written for the same obligation, weeks apart, on branches that n
 met. Neither author could see the other's. The duplicate is not a process failure so
 much as evidence for a single verification owner per obligation — which is what the
 convergence establishes.
+
+## The resolution instruction, restated so it cannot invert (2026-08-03)
+
+proj-fix halted the #11 merge on this file and was right to. The instruction had been
+recorded as **"take ours"** — written from `issue62`'s vantage. But in a merge,
+`ours`/`theirs` are defined by **merge direction**, and the merge runs from the code line,
+where `ours` is the *other* branch. Under that reading "take ours" deletes I2–I8.
+
+**Never use `ours`/`theirs` in a cross-branch instruction.** The referent flips with who
+runs the command. By name, and this is the resolution:
+
+> **Take `issue62-defer-org-indexes`'s section I. Discard the code line's.**
+
+Verified by branch name rather than pronoun:
+
+| branch | section-I ids | greps HTML | asserts `/api/dashboard` |
+|---|---|---|---|
+| `issue62-defer-org-indexes` | **I0–I8** | 0 | 9 |
+| `issue5-country-filter-restructure` | **I0, I1** | 1 | 0 |
+
+I4–I8 (the 241 residual, issue 87, the F1a/F1b reconciliation, the resolved-date, the
+binary corroboration) have **no counterpart at all** on the code line.
+
+### And a correction to how the record was verified
+
+My `comm` check that produced *"nothing of theirs lost"* matched `report … I<n>` — but
+**I2–I5 are emitted through the `disc()` helper**, so it never saw them. I recorded
+`issue62` as carrying I0/I1/I6/I7/I8 when it carries I0–I8. proj-fix's count was right and
+mine was wrong.
+
+The check was too narrow in exactly the way this suite keeps finding: it matched the
+*shape* a check usually takes rather than the checks themselves. Had the pronoun pointed
+the other way, my grep would not have caught the loss.
+
+### What "resolve from the record" was supposed to mean
+
+The instruction was meant to stop a merger adjudicating invariants they did not write. It
+was read — reasonably, because I wrote it loosely — as *the record is authoritative*. It
+is not. A record is an input, verifiable like any other, and this one was wrong in two
+details while right in substance. The narrower correct form: **do not decide which
+invariants are right; do verify the record's factual claims.** proj-fix did exactly that,
+and it is why the seven checks still exist.
