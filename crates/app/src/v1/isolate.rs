@@ -20,6 +20,29 @@
 //! (N+1)th concurrent walk-capable request gets a 503, which is a deliberate trade for
 //! an unauthenticated endpoint whose worst case is a multi-minute walk.
 //!
+//! **Recovery is bounded, and that is measured rather than assumed.** A walk is finite:
+//! `/v1/lots?kind=Lot` over 13.2M real lots on a dedicated bed completed in **231.6 s**.
+//! So a slot always frees on its own and no intervention is needed — [`SLOTS`] is a
+//! tuning knob, not a countdown to permanent unavailability. This was worth measuring
+//! rather than reasoning: "a finite scan must terminate" is plausible, but the cost
+//! that could have hidden unboundedness was the top-level SORTER over the matched set,
+//! not the scan.
+//!
+//! **But bounded is not small, and that is what [`SLOTS`] must be sized against.**
+//! Nothing cancels on client disconnect, so **every abandoned request costs its FULL
+//! runtime** of executor capacity with nobody waiting for the answer. A client that
+//! retries and gives up — the natural behaviour of a browser or a retrying script —
+//! ACCUMULATES load rather than replacing it; prod was measured carrying ~2.6 cores of
+//! exactly this residue ~50 minutes after every client had gone. So size against
+//! **arrival rate × full query runtime**, never against concurrent clients, and note
+//! that an ingress rate limit bounds arrival and does nothing about in-flight
+//! accumulation.
+//!
+//! The 231.6 s figure is a **lower bound on prod's per-query cost, not an estimate** —
+//! the bed is 100% `kind='lot'`, deliberately the dense worst case, while prod's table
+//! is larger and differently distributed. The termination conclusion transfers; the
+//! number does not, and nothing should be sized off it.
+//!
 //! **The guarantee is unverified until measured on this endpoint.** Confinement — that
 //! the burn really lands on these threads and not on the main API workers — has never
 //! been confirmed for `/v1/sql` either; it was assumed from the construction. The
