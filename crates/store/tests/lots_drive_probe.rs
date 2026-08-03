@@ -185,6 +185,57 @@ async fn can_a_joined_filter_keep_lots_driving() {
     plan(&conn, "EXISTS (dense) plan, WITH the index:", EXISTS_SHAPE,
          vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
 
+    // ---------------------------------------------------------------- column order
+    //
+    // The design so far assumed `(lot_id, kind)`, because the probe's *unserved*
+    // lookup was `vl.lot_id = l.id`. But BOTH of the subquery's predicates on `vl`
+    // are equalities — `vl.lot_id = l.id AND vl.kind = ?` — so a composite index
+    // seeks on both columns whichever order they are in. The order is therefore free
+    // to be chosen for what ELSE it can serve.
+    //
+    // `(kind, lot_id)` additionally serves `WHERE kind = ? LIMIT 1`, the issue-117
+    // existence short-circuit. `(lot_id, kind)` cannot: `kind` is its second column,
+    // so answering "does any row carry this kind" means walking every lot_id.
+    //
+    // That matters because matches-nothing is the ONLY class where the new shape
+    // stays O(N) — it must probe every lot to prove nothing matches — and it is the
+    // cell blocking acceptance. If the short-circuit serves it, that class collapses
+    // to a single seek and stops being a full pass at all.
+    //
+    // Two things are being measured, and only one of them transfers across scale:
+    // whether the planner SERVES both uses from one index is structural and testable
+    // here; the COSTS are not, and belong to the prod-scale clock.
+    conn.execute("DROP INDEX tvl_lot_kind", ()).await.unwrap();
+    conn.execute(
+        "CREATE INDEX tvl_kind_lot ON tender_version_lots(kind, lot_id)",
+        (),
+    )
+    .await
+    .unwrap();
+    println!("\n--- with tender_version_lots(kind, lot_id) instead ---");
+    for (label, kind) in [
+        ("EXISTS, kind=Lot (dense)", "Lot"),
+        ("EXISTS, kind=Part (rare)", "Part"),
+        ("EXISTS, kind=zzz (nothing)", "zzz"),
+    ] {
+        let (t, n) =
+            time(&conn, EXISTS_SHAPE, vec![Value::Text(kind.into()), Value::Integer(0)]).await;
+        println!("{label:<44} {t:>9.4}s  {n:>5}");
+    }
+
+    // The short-circuit this column order unlocks: one seek, no walk. Timed by the
+    // clock and not read off a plan — EQP calls both a `SEARCH ... USING INDEX` and
+    // issue 112 rule 6 is that only the clock separates a seek from a walk.
+    const REACHABLE: &str = "SELECT 1 FROM tender_version_lots WHERE kind = ? LIMIT 1";
+    println!("\nexistence short-circuit, `WHERE kind = ? LIMIT 1`:");
+    for (label, kind) in
+        [("kind=Lot (present)", "Lot"), ("kind=Part (present)", "Part"), ("kind=zzz (absent)", "zzz")]
+    {
+        let (t, n) = time(&conn, REACHABLE, vec![Value::Text(kind.into())]).await;
+        println!("    {label:<40} {t:>9.4}s  {n:>5}");
+    }
+    plan(&conn, "the short-circuit's plan:", REACHABLE, vec![Value::Text("zzz".into())]).await;
+
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
