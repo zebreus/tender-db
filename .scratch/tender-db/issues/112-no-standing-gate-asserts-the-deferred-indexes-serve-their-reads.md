@@ -665,7 +665,39 @@ The durable answer belongs with 114 part 2: if the statements come from the buil
 the *set* of hot reads can come from the builders too — every `Scope::Page` read in
 `read.rs` is a paginated hot read by construction, and enumerating them is mechanical.
 
-### Ready to add when the fix lands — with the pre-fix RED captured FIRST
+### B7 (country) IS NOW IN THE GATE — expected RED until the fix
+
+Added 2026-08-03, reversing the "wait until the fix lands" position below. The
+argument that a standing red trains readers to scroll past reds is real, but it
+applies to reds that are *expected and unactionable* — the reason `plan_*` is
+excluded from section A. A red flagging a live, unauthenticated, user-reachable 22s
+read with an open fix is neither. **The gate exiting 0 while that read walked 25.3M
+rows is the false green; exiting 1 is the gate finally working.** If the red is
+unwelcome, the remedy is the fix, not silencing the check.
+
+Falsified in both directions before adding: `SEARCH o USING INTEGER PRIMARY KEY
+(rowid=?)` (what prod does today) → **FAIL**; `SEARCH o USING INDEX
+organizations_identity (country=?)` (what a row-value cursor gives) → **PASS**. So
+the red has a reachable green and will flip on the fix.
+
+### The kind-only case is deliberately NOT a check — achievability, not severity
+
+`?kind=` at **99.08s** is the worse defect, and it gets no check yet. Not squeamishness:
+
+`organizations_identity` is `(country, identifier_kind, identifier)` and is the **only**
+index on the table (confirmed against `1830d50` — there is no inline `UNIQUE`, it is a
+plain named index built by `build_tender_indexes`). A filter on `identifier_kind` alone
+has no leading `country`, so **no index can serve it**, and a row-value cursor does not
+change that. A check demanding a plan that cannot exist has no achievable pass state —
+it is a permanent alarm, not a test, and it could never distinguish "still broken" from
+"broken in a new way".
+
+So the kind-only read needs a **schema or access-path answer first** (an index leading
+with `identifier_kind`, or refusing the unbounded kind-only listing). It gets a check
+the moment there is a plan it could pass. B7 is red with a green available; kind-only
+would be red with none, and that difference decides whether something belongs in a gate.
+
+### The original "ready to add" note (superseded for B7, still stands for kind-only)
 
 Extracted now, deliberately, so this fix gets the controlled before/after that B1's did
 not. Hand these to the probe **before** the fix and record the RED; the same statements

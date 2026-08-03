@@ -439,6 +439,31 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # traversal, not a seek, so the report SAYS SO rather than blurring the two.
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
+# B7 IS EXPECTED TO BE **RED** UNTIL `read::organizations` IS FIXED — that is the
+# point of it, not a bug in it.
+#   `/v1/organizations?country=` was measured at 22.0s cold on prod (run-driver,
+#   2026-08-03) and `?kind=` at 99.08s, unauthenticated and user-reachable. The cause
+#   is the SAME defect this whole gate was built for: `read::organizations` carries a
+#   plain `o.id > ?` cursor under `ORDER BY o.id`, so the planner drives from the
+#   25.3M-row table in rowid order — exactly as `l.id > ?` did for `lots`.
+#   This statement is EXTRACTED from the deployed builder at 1830d50, not written to
+#   match it. A row-value cursor gives it `SEARCH o USING INDEX organizations_identity
+#   (country=?)`, so the RED here has a reachable GREEN and will flip when the fix
+#   lands.
+#
+#   THE KIND-ONLY VARIANT IS DELIBERATELY NOT A CHECK HERE, and the distinction is
+#   not squeamishness about a red report:
+#     `organizations_identity` is `(country, identifier_kind, identifier)`. It is the
+#     ONLY index on the table. A filter on `identifier_kind` alone has no leading
+#     `country`, so NO INDEX CAN SERVE IT — a row-value cursor does not help either.
+#     A check demanding a plan that cannot exist has no achievable pass state; it is a
+#     permanent alarm, not a test, and it would never distinguish "still broken" from
+#     "broken in a new way". `?kind=` at 99.08s is a real, worse defect — it is
+#     tracked in 112, and it gets a check once there is a schema or access-path answer
+#     it could pass.
+#   The difference is achievability, not severity: B7 is red with a green available,
+#   the kind-only case is red with none.
+
 # B5 WAS DELETED, NOT FIXED (2026-08-03) — and the reason generalises
 #   B5 planned `SELECT id FROM organizations WHERE country = ? AND identifier_kind
 #   = ? AND identifier = ?`, justified as "the Phase-1 mention resolver". Issue 19
@@ -472,6 +497,7 @@ B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_part
 B3~tenders~tenders~tenders_procedure_key~SELECT id FROM tenders WHERE procedure_key = 'x'
 B4~tenders~tenders~tenders_island~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
 B6~tenders~tenders~tenders_current_published~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
+B7~organizations~o~organizations_identity|organizations_[a-z_]+~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
 SQLS
 )
 
