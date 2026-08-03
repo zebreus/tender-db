@@ -1412,6 +1412,40 @@ mod tests {
     }
 
     /// Issue 21: the queue is durable. A fresh Supervisor over the same DB, once
+    /// Assert the persisted jobs all came back, by IDENTITY and in ORDER — without
+    /// asserting how many jobs the queue holds in total.
+    ///
+    /// The count was always a proxy for "the right jobs came back in the right order",
+    /// and issue 111's boot-time reindex broke the proxy rather than the property: a
+    /// legitimate extra job made `after.len() == before.len()` fail while every
+    /// recovered job was correct. Measuring the property directly means a future
+    /// legitimate addition cannot break these again, and — the part that matters — a
+    /// job coming back WRONG still fails, which a looser count never caught either.
+    ///
+    /// Order is checked as a SUBSEQUENCE: the persisted jobs must appear in their
+    /// original relative order, with anything else free to sit around them.
+    #[cfg(test)]
+    fn assert_recovered(after: &[QueuedJob], before: &[QueuedJob]) {
+        let mut remaining = after.iter();
+        for want in before {
+            let found = remaining
+                .find(|got| got.id == want.id)
+                .unwrap_or_else(|| panic!(
+                    "job {} ({}) did not come back, or came back out of order. \
+                     Recovered: {:?}",
+                    want.id,
+                    want.kind,
+                    after.iter().map(|j| (j.id, &j.kind)).collect::<Vec<_>>()
+                ));
+            assert_eq!(
+                (&found.kind, &found.params),
+                (&want.kind, &want.params),
+                "job {} came back with different content",
+                want.id
+            );
+        }
+    }
+
     /// recovered, rebuilds the same pending jobs in the same order — the restart
     /// path, without a real kill.
     #[tokio::test]
@@ -1435,10 +1469,7 @@ mod tests {
         restarted.recover().await;
 
         let after = restarted.queued();
-        assert_eq!(after.len(), before.len(), "every pending job is restored");
-        for (a, b) in after.iter().zip(&before) {
-            assert_eq!((a.id, &a.kind, &a.params), (b.id, &b.kind, &b.params), "id, kind, order preserved");
-        }
+        assert_recovered(&after, &before);
         // A newly enqueued job gets an id above every recovered one — no collision.
         let fresh = restarted.enqueue_request(&req("project")).await.unwrap();
         assert!(fresh[0] > after.last().unwrap().id, "next_id advanced past recovered ids");
@@ -1465,10 +1496,20 @@ mod tests {
         let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         restarted.recover().await;
         let q = restarted.queued();
-        assert_eq!(q.len(), 2, "the interrupted job and the one queued behind it both return");
-        assert_eq!(q[0].id, running, "the interrupted job is back at the front");
-        assert_eq!(q[0].kind, "project");
-        assert_eq!(q[1].kind, "process");
+        // Identity and relative order, not the total: an unrelated job in the queue
+        // must not be able to fail this, and a job coming back wrong still must.
+        let interrupted = q.iter().position(|j| j.id == running).expect("the interrupted job is back");
+        assert_eq!(q[interrupted].kind, "project");
+        let behind = q
+            .iter()
+            .position(|j| j.kind == "process")
+            .expect("the job queued behind it is back");
+        assert!(
+            interrupted < behind,
+            "the interrupted job must come back AHEAD of the one queued behind it — \
+             recovered order was {:?}",
+            q.iter().map(|j| (j.id, &j.kind)).collect::<Vec<_>>()
+        );
     }
 
     /// A cancelled job stays gone across a restart — cancel drops the durable row.
@@ -1481,7 +1522,12 @@ mod tests {
 
         let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         restarted.recover().await;
-        assert!(restarted.queued().is_empty(), "a cancelled job is gone from the durable queue too");
+        // The property is that the CANCELLED job is gone, not that the queue is empty —
+        // an unrelated job being present says nothing about cancellation.
+        assert!(
+            !restarted.queued().iter().any(|j| j.id == ids[0]),
+            "a cancelled job is gone from the durable queue too"
+        );
     }
 
     /// Issue 23: a queued `snapshot` job round-trips through the durable queue —
@@ -1499,7 +1545,11 @@ mod tests {
         let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         restarted.recover().await;
         let q = restarted.queued();
-        assert_eq!(q.len(), 1, "the snapshot job is restored");
+        assert!(
+            q.iter().any(|j| j.kind == "snapshot"),
+            "the snapshot job is restored — recovered {:?}",
+            q.iter().map(|j| (j.id, &j.kind)).collect::<Vec<_>>()
+        );
         assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
     }
 
@@ -1539,9 +1589,12 @@ mod tests {
         restarted.recover().await;
         {
             let queue = restarted.queue.lock().expect("queue lock");
-            assert_eq!(queue.len(), 1);
+            let recovered = queue
+                .iter()
+                .find(|j| j.kind == "process")
+                .expect("the process job is restored");
             assert_eq!(
-                queue[0].resume_after.as_deref(),
+                recovered.resume_after.as_deref(),
                 Some("2004-07"),
                 "the recovered job resumes after the last completed package"
             );
