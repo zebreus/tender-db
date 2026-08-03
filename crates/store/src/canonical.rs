@@ -33,13 +33,30 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Statement, Value};
 
-/// Peak RSS of a bulk `CREATE INDEX`, per row of the table being indexed.
+/// Peak RSS of a bulk `CREATE INDEX`, per row of the table being indexed — the
+/// LARGEST measured, not the typical one.
 ///
-/// Measured by run-driver on the deployed turso 0.7.0: 366 MiB at 8,132,478 rows and
-/// 1.07 GB at 25,289,344 — 3.11x the rows for 2.91x the memory, with no spill
-/// threshold between them. The sort is O(rows) and there is no batching knob, so this
-/// constant is what turns a row count into a memory prediction.
-const INDEX_BUILD_BYTES_PER_ROW: i64 = 45;
+/// Four points on the deployed turso 0.7.0, from run-driver:
+///
+/// | rows | index | B/row |
+/// |---|---|---|
+/// | 8,132,478 | `organizations(country, id)` | 45 |
+/// | 25,289,344 | `organizations(country, id)` | 45 |
+/// | (tenders) | `tenders(source, id)` | 41 |
+/// | 14,240,000 | `notices(source, id)` | **48** |
+///
+/// This constant was first set to 45, which two consecutive measurements agreed on —
+/// and 45 turned out to be CENTRAL rather than an upper bound. Taking a
+/// repeated sample for a bound is the same error as taking a measurement to license a
+/// conclusion about something it did not vary; the fourth point exceeded it and would
+/// have made every cap derived from it optimistic by 7%.
+///
+/// So it is now the measured maximum, and it must be RAISED — never averaged — the
+/// moment a wider key measures above it. The margin deliberately lives in
+/// [`AUTO_INDEX_MEMORY_BUDGET`] (half the ceiling) rather than being padded into this
+/// number, so the two stay separable: this is an empirical fact about turso, that is
+/// a policy choice about how much of the box a build may use.
+const INDEX_BUILD_BYTES_PER_ROW: i64 = 48;
 
 /// What one auto-triggered index build may consume. Half the project's ~4 GB
 /// bounded-memory ceiling, leaving the other half for the rest of the process on a
@@ -1550,17 +1567,18 @@ impl Db {
     /// small, and go stale silently the moment one grows — which is precisely the
     /// mistake that put `notices(source, id)` in the schema batch on the strength of a
     /// comment written when the table was 8x smaller.
-    /// 44M x 45 B/row = 1.98 GB, just inside the budget. The obvious round number
-    /// (45M) is 2.025 GB and does NOT fit — the compile-time assertion below caught
-    /// that when this constant was first written, which is the whole argument for
-    /// having it.
+    /// 41M x 48 B/row = 1.97 GB, just inside the budget. Lowered from 44M when the
+    /// bytes-per-row constant rose from 45 to the measured maximum of 48 — at 48 the
+    /// old cap implied 2.11 GB and no longer fit. The compile-time assertion below is
+    /// what forces that recalculation instead of leaving the two numbers to drift.
     ///
-    /// Headroom is thinner than it looks: `organization_mentions` at 40.9M rows is
-    /// only ~7% under this cap, so it is the table to watch. When it crosses, the
-    /// builder refuses loudly and its index must move to an index-first rebuild —
-    /// that is the designed outcome, not a failure, but it will need a decision
-    /// rather than a surprise.
-    const MAX_AUTO_INDEX_ROWS: i64 = 44_000_000;
+    /// WATCH ITEM, and it is now urgent rather than distant: `organization_mentions`
+    /// at 40.9M rows is **99.8% of this cap** — it needs 1.963 GB against a 1.968 GB
+    /// allowance. Any growth at all trips it, and then its index refuses to auto-build
+    /// and must come from an index-first rebuild. That is the guard working as
+    /// designed, but it is a decision someone should make deliberately rather than
+    /// discover from a stderr line during a rebuild.
+    const MAX_AUTO_INDEX_ROWS: i64 = 41_000_000;
 
     /// Refuse to bulk-build an index over a table too large to sort within the memory
     /// budget. Returns the offending row estimate, or `None` if the build may proceed.
