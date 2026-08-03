@@ -82,3 +82,56 @@ distinguish a cheap request from an expensive one either.
 `READERS = 8` is read from source. Before any limit is derived from it, **confirm the value in the
 deployed configuration** — an environment override would silently invalidate the arithmetic. Know the
 inputs of the derivation, not just its form.
+
+## The isolation backstop, built (`f67aa90`) — and what it does not yet claim
+
+Walk-capable reads now run on a dedicated runtime with their own reader pool, behind a semaphore that
+**sheds rather than queues**. Routing is `store::read::walks`, derived from the read layer's own
+predicates rather than a maintained list — which is how it caught `/v1/tenders?kind=`, a member issue
+117's audit had missed. **The backstop caught an unaudited expensive read before shipping, which is
+what a backstop is for.**
+
+Slots, runtime threads and pool connections all equal **4**, and the first two are tied by a
+compile-time assertion. That is correctness, not tuning: a walk cannot be cancelled, so an admitted
+request occupies a thread until the query ends naturally, and a surplus slot would queue behind it —
+the exact starvation `try_acquire`-to-shed exists to prevent, relocated inside the sandbox where it is
+harder to see. It was 2 threads against 4 slots until review caught it.
+
+The permit is moved **into** the spawned task, so it tracks the QUERY and not the caller. `AbortOnDrop`
+fires when the handler stops waiting, but `abort()` only lands at an await point the task cannot reach
+until the query returns — so the future cannot drop mid-query and the permit cannot release mid-query.
+**The non-cancellability that makes this problem hard is what makes the permit honest.** Were it
+otherwise, a new request would be admitted while an abandoned one still burned a thread: ~2.77 cores
+were measured still burning from clients that had exited minutes earlier.
+
+### What it explicitly does not do
+
+It does not reduce the work, does not bound any single request's duration, and sheds the (N+1)th
+concurrent walk-capable request with a 503. The semaphore is **global** — these endpoints are
+unauthenticated, so there is no token to key on and per-IP is spoofable and belongs at the ingress. A
+heavy client can take all four slots and shed a second legitimate one; that degrades other rare-filter
+requests and never the browsing path, and keying is the lever if an observed 503 rate shows it.
+
+### The guarantee is UNVERIFIED, deliberately stated as such
+
+Nobody has confirmed — for `/v1/sql` either, where it was assumed from the construction — that a
+runaway's burn actually lands on the isolated threads rather than the main API workers. The worker
+threads are named `slow-read-exec` precisely so `/proc/<pid>/task/*/stat` deltas can settle it, and the
+ship gate is that measurement on this endpoint, not the code compiling. A doc that says *"this is the
+claim and here is how to falsify it"* is worth more than one asserting a property nobody checked.
+
+### Open: does an abandoned walk terminate? (task 22)
+
+This decides the WORDING, not the design — shed is right either way — but the difference is not
+cosmetic:
+
+- **If walks terminate**, `SLOTS` is a concurrency limit and "confines a runaway" is accurate.
+- **If they do not**, permits never return and `SLOTS` is a **countdown**: four requests and the
+  filtered endpoints are permanently unavailable. That is still a strict improvement — the main API
+  survives, which today it does not — but the honest description becomes *"trades the filtered reads to
+  save the rest"*, and containment would need a process-level kill (respawning the executor to reclaim
+  stuck permits), which is a materially different piece of work.
+
+The module currently claims the first. If the measurement says the second, the doc gets corrected rather
+than left asserting what the evidence does not support — the same correction the `/v1/sql` timeout claim
+required.
