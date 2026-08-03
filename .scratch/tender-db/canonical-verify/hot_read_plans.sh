@@ -459,7 +459,20 @@ if ! git show "${REV}:crates/store/src/canonical.rs" > "$SRC" 2>/dev/null; then
 fi
 echo "-- expectation derived from build $REV ($(wc -l < "$SRC") lines of canonical.rs)"
 
-# Every index the DEPLOYED code declares: the DEFERRED_TENDER_INDEXES entries
+# EVERY `DEFERRED_*_INDEXES` CONST, not a named one. This read `DEFERRED_TENDER_INDEXES`
+# alone until 2026-08-03, when 111/117 added `DEFERRED_ORG_INDEXES` and
+# `DEFERRED_NOTICE_INDEXES` — and section A silently stopped covering three of the four
+# indexes the 117 deploy exists to create, while still reporting a clean 22/22. Caught
+# by running the gate against the new build before the post-deploy run, not by review.
+#
+# That is rule 5 inside this file's own parser: coverage enumerated by NAMING the thing
+# to look for inherits the blind spot of whoever wrote the name. It is the same defect
+# as B5 (a check for a deleted read while nothing checked a live one), and it fails in
+# the SILENT direction — green while not looking. The const list is now derived from the
+# source's shape rather than recalled, and the consts found are PRINTED so a fourth one
+# appearing is visible in the output rather than absorbed.
+#
+# Every index the DEPLOYED code declares: the DEFERRED_*_INDEXES entries
 # plus every `CREATE INDEX IF NOT EXISTS`. Union, so a new index of either kind
 # is picked up with no edit here.
 #
@@ -475,7 +488,7 @@ EXPECT=$(
     # expectation and a section that "passes" having checked nothing — the exact
     # silent-no-check failure this gate exists to catch. sed+grep only, and the
     # emptiness guard below is the backstop.
-    sed -n '/const DEFERRED_TENDER_INDEXES/,/^[[:space:]]*\];/p' "$SRC" |
+    sed -n '/const DEFERRED_[A-Z_]*INDEXES/,/^[[:space:]]*\];/p' "$SRC" |
       grep -oE '\("[a-z_0-9]+",[[:space:]]*"[^"]+"\)' |
       sed -E "s/\\(\"([a-z_0-9]+)\",[[:space:]]*\"([^\"]+)\"\\)/\\1${TAB}\\2/"
     tr '\n' ' ' < "$SRC" |
@@ -494,6 +507,7 @@ if [ "$EXPECT_N" -lt 5 ]; then
   exit 2
 fi
 echo "   $EXPECT_N declared indexes to account for (plan_* scratch excluded)"
+echo "   from $(grep -c 'const DEFERRED_[A-Z_]*INDEXES' "$SRC") deferred-index const(s): $(grep -oE 'const DEFERRED_[A-Z_]*INDEXES' "$SRC" | sed 's/const //' | sort -u | tr '\n' ' ')"
 
 # ---------------------------------------------------------------------------
 # A. PRESENCE + COLUMNS — the necessary half. Observation is sqlite_master on the
