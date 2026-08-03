@@ -239,3 +239,194 @@ direction is certain; the magnitude at prod scale is run-driver's to establish. 
 settle it: `?country=DE` and `?country=ZZ`, before and after adding the index on a scratch copy.
 
 Probe kept at `crates/store/tests/org_cursor_probe.rs`.
+
+## Prod slice sizes and dense timings (run-driver, on the snapshot / live `2751ce3`)
+
+The inputs that turn the trade-off above from a shape into a magnitude:
+
+| slice | rows |
+|---|---|
+| `organizations WHERE country='DE'` | **3,854,017** |
+| `organizations WHERE country='FR'` | **4,253,550** |
+| `notices WHERE source='ted'` | **~13.1M** |
+
+Current dense timings on the plain cursor (the shape live today):
+
+| request | now |
+|---|---|
+| `/v1/organizations?country=DE&limit=50` | **11 ms** |
+| `/v1/organizations?country=DE&limit=1000` | 3.24 s |
+| `/v1/notices?source=ted&limit=1000` | 72 ms |
+| `/v1/notices?kind=text&limit=1000` | 84 ms |
+| `/v1/tenders?source=ted&limit=1000` | 2.24 s |
+
+**`?country=DE&limit=50` at 11 ms is the case that decides this.** Under the row-value fix it becomes a
+sort of 3.85M rows *regardless of page size*, because the sorter runs before `LIMIT` — the same
+ordering seen in issue 115's flat `LIMIT 125→1000` sweep. A 50-row page of German organizations is
+about as ordinary a request as this API serves.
+
+So the trade as originally designed is: `?country=ZZ` 22 s → fast, against `?country=DE&limit=50`
+11 ms → seconds. **A net loss on real traffic.** `ZZ` is a crawler artifact; `DE` is the use case.
+
+The plan pair, free EQP on the prod catalogue, confirming the mechanism on both tables:
+
+```
+organizations, CURRENT (plain cursor)
+  SEARCH o USING INTEGER PRIMARY KEY (rowid=?)              <- walk, LIMIT truncates it
+organizations, ROW-VALUE FIX
+  SEARCH o USING INDEX organizations_identity (country=?)
+  USE SORTER FOR ORDER BY                                   <- the whole 3.85M slice
+```
+
+`notices` gives the identical pair. **`tenders_island(source, island_notice_id)` has the same defect**,
+so `/v1/tenders?source=` — 2.24 s today — would gain a ~13M-row sort.
+
+### Class B has a confirmed worst member
+
+`/v1/tenders?country=ZZ` **exceeded 380 s** (did not complete at the client cap). Not cursor-fixable
+under any shape: `country` is an `EXISTS` over `tender_version_classifications` evaluated per row
+across 4.26M Tenders. It is now the worst measured member of the class and belongs to the
+not-cursor-fixable half.
+
+### Attribution of what is and is not established
+
+run-driver's contribution here is **the mechanism confirmed at plan level and the input sized** — the
+plans, the slice counts, the current timings. The post-fix dense case has **not** been clocked
+end-to-end on prod; "sort 3.85M rows costs X" is inferred from the plan, not measured, and run-driver
+flagged it as such. Closing that gap is what `crates/store/tests/org_cursor_probe.rs` is for, run at
+`TDB_ORG_ROWS=3854017` to match the DE slice exactly.
+
+## Prod-scale measurement: the row-value fix is 151,648× slower (proj-fix)
+
+Re-run of the probe at run-driver's exact measured DE slice — 3,854,017 rows.
+
+```
+--- today's indexes (organizations_identity only) ---
+filter        limit        plain    row value
+dense (DE)       50      0.0001s     15.1648s     <-- 151,648x SLOWER
+dense (DE)     1000      0.0003s     15.6361s     <--  52,120x
+absent (ZZ)      50      0.4421s      0.0000s
+absent (ZZ)    1000      0.4375s      0.0000s
+```
+
+`?country=DE&limit=50` — 11 ms live today — becomes **15 seconds**. Page size is irrelevant (15.16 s
+at 50 against 15.64 s at 1000) because the sorter runs before `LIMIT`.
+
+```
+organizations(country, id) built in 9.2s   (3.85M rows)
+
+--- with organizations(country, id) ---
+filter        limit        plain    row value
+dense (DE)       50      0.0001s      0.0001s
+dense (DE)     1000      0.0008s      0.0010s
+absent (ZZ)      50      0.0000s      0.0000s
+absent (ZZ)    1000      0.0000s      0.0000s
+
+plain plan: SEARCH o USING INDEX organizations_country_id (country=? AND id>?)
+```
+
+Every case fast, **and `read::organizations` needs no code change**. For issue 111: 9.2 s per 3.85M
+rows suggests roughly a minute at 25.3M — the builder obligation is the cost, not the build itself.
+
+Limits: 100% DE synthetic with scattered identifiers. run-driver's real-distribution bed is the
+confirmation; if the two disagree, the real-distribution one wins.
+
+## Class B: an existence short-circuit, and the precedent for it
+
+For the not-index-fixable half (`?country=`, `?cpv=`, `?buyer=`, `?winner=` on `/v1/tenders` — all
+`EXISTS` subqueries), the *matches-nothing* case has a cheap correct answer that is **already an
+established pattern in this file**:
+
+`read::changes_since` short-circuits an unknown `entity_kind` to an empty result (issue 61 finding 2) —
+*"a kind with no rows must never trigger a table walk to discover it has none."* That is precisely
+`/v1/tenders?country=ZZ` at >380 s.
+
+Probe the existing `tender_version_classifications_code(scheme, code)` index before building the query:
+
+```sql
+SELECT 1 FROM tender_version_classifications
+ WHERE scheme = 'nuts' AND code >= ? AND code < ?   -- 'ZZ', 'Z['
+ LIMIT 1
+```
+
+One index seek. If nothing comes back, no Tender can satisfy the `EXISTS`, so the empty page is the
+**correct** answer rather than an approximation. Prefer the explicit prefix range over `LIKE` — turso's
+`LIKE` prefix optimisation is not something to assume.
+
+Preferable to the alternatives considered: it is not a rejection of a documented filter, not a
+bounded/partial response (which would reintroduce the self-contradicting body issue 116 exists to
+kill), and not really a stopgap — it stays correct after the real fix, so nothing has to be unwound.
+Generalises to `cpv` (same index) and to `buyer`/`winner` via `tender_version_parties_org` and
+`tender_version_result_winners_org`.
+
+**Limitation, which decides how much it is worth:** it fixes *matches-nothing*, not *matches-late*. A
+prefix that exists but only on high `tender_id`s still walks. So it removes the worst measured case and
+the naive crawler, but **it is not a complete DoS defence** and must not be described as one.
+
+**Not yet measured.** Whether that seek is actually index-served needs the stopwatch before anything
+relies on it — the same discipline that killed Class A's row-value fix.
+
+## THE DENSE BASELINE — measured live, unrecoverable once a fix deploys
+
+The Class A row-value fix was killed by a **dense** measurement (proj-fix: 4,209× slower on
+`?country=DE`), and the verification this issue originally specified — time a nothing-matching filter —
+is *structurally blind* to that regression: an empty partition sorts instantly, so the gate goes green
+precisely because it measures the only case the fix helps.
+
+So any 117 fix must be validated against **both** halves, before and after. The sparse half is recorded
+above. This is the dense half, captured on prod at rev `a39d53a` (the reads below are untouched by 115,
+so these are the pre-117 numbers). **Once an index or a query change lands, the "before" is gone** — it
+cannot be recovered from a snapshot, because it is a property of the live engine, the live cache state
+and the real data distribution together.
+
+Two samples per request, cold-ish then repeated, because the spread between them is large and a single
+figure invites the same cold-vs-warm confusion that made an earlier deploy report pessimistic:
+
+| request | 1st | 2nd |
+|---|---|---|
+| `/v1/organizations?country=DE&limit=5` | 0.0118 s | 0.0009 s |
+| `/v1/organizations?country=DE&limit=50` | 0.158 s | 0.0097 s |
+| `/v1/organizations?country=DE&limit=200` | 0.250 s | 0.0273 s |
+| `/v1/organizations?country=FR&limit=50` | 1.088 s | 0.0241 s |
+| `/v1/organizations?country=FR&limit=1000` | 0.0349 s | 0.0286 s |
+| `/v1/organizations?country=MT&limit=50` | 0.0985 s | 0.0408 s |
+| `/v1/notices?source=ted&limit=50` | 0.0034 s | 0.0010 s |
+| `/v1/notices?source=ted&limit=1000` | 0.0521 s | 0.0093 s |
+| `/v1/notices?kind=text&limit=50` | 0.0099 s | 0.0019 s |
+| `/v1/tenders?source=ted&limit=50` | 0.103 s | 0.0310 s |
+| `/v1/tenders?source=ted&limit=1000` | 1.112 s | 0.299 s |
+
+Earlier samples of the same endpoints on rev `2751ce3`, taken with a colder page cache, read
+`?country=DE&limit=50` at 11 ms and `?source=ted&limit=1000` at 2.24 s. **Both sets are honest; the
+spread is cache state, not disagreement.** Compare like with like — a post-fix number taken warm against
+a pre-fix number taken cold would manufacture a win, which is the mirror of the mistake that made an
+earlier deploy report look worse than reality.
+
+Partition sizes the sorter would have to sort, measured on prod:
+
+| partition | rows |
+|---|---|
+| `organizations WHERE country = 'DE'` | 3,854,017 |
+| `organizations WHERE country = 'FR'` | 4,253,550 |
+| `notices WHERE source = 'ted'` | ~13.1 M |
+
+### The acceptance gate for any 117 fix
+
+1. every sparse case at least as fast as recorded above (`?country=ZZ`, `?source=zz`, `?kind=zzz`,
+   `?country=ZZ` on tenders);
+2. **every dense case above no slower than its recorded figure**, compared like-for-like on cache state;
+3. both measured with a clock on the deployed engine — not from a plan.
+
+### Why (3) is not negotiable, and why no plan gate can replace it
+
+The row-value fix was certified GREEN from a plan that read
+`SEARCH o USING INDEX organizations_identity (country=?)` — a walk becoming an index seek, the exact
+transition a plan gate exists to reward. Issue 112's B7 would have flipped **RED → GREEN** on the change
+that made the common query 4,209× slower: the gate would not merely have missed the regression, it
+would have **endorsed** it.
+
+Nor is "assert no sorter" the repair. Issue 115's *fixed* `lots` read ends in `USE SORTER FOR ORDER BY`
+and is correct, because its partition is ~2 rows. The discriminator is the **size of the partition being
+sorted**, and that quantity appears nowhere in EQP output. **This defect class is therefore not
+detectable by any plan assertion**, and 112's B-checks should say so about themselves rather than imply
+a coverage they cannot have.
