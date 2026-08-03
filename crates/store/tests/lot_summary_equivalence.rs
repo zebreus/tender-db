@@ -224,6 +224,31 @@ async fn set_based_lot_summary_agrees_with_the_correlated_subqueries() {
     .unwrap();
     text(&conn, 8, Some("SWE"), "acht-sv", "title").await;
 
+    // An issue-103 orphan: a `tender_version_lots` row of THIS Tender pointing at a
+    // Lot that belongs to another one. Both shapes must exclude it, by different
+    // means — the old one because it drives from `lots` filtered on `l.tender_id`,
+    // the new one through its explicit `l.tender_id = vl.tender_id` guard. They
+    // agree today, so this asserts nothing about the present; it exists to LOCK the
+    // guard, so that deleting it turns the new shape into a superset of the old and
+    // fails this test rather than silently leaking another Tender's Lot.
+    conn.execute(
+        "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
+         VALUES (99, 'ted', 'pk-other', 'procedure', 1, 1700000000, 1700000000)",
+        (),
+    ).await.unwrap();
+    conn.execute(
+        "INSERT INTO lots (id, tender_id, lot_key) VALUES (999, 99, 'FOREIGN-LOT')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, 1, 999, 'Lot')",
+        (Value::Integer(TENDER),),
+    )
+    .await
+    .unwrap();
+
     let expected = oracle(&conn).await;
     let got: Vec<Summary> = read::lots(
         &conn,
@@ -262,6 +287,11 @@ async fn set_based_lot_summary_agrees_with_the_correlated_subqueries() {
         title: None, value_cents: None, currency: None, deadline: None,
     });
     assert_eq!(expected[7].title.as_deref(), Some("acht-sv"), "a Tender-level title is not a lot's");
+    assert!(
+        !got.iter().any(|s| s.lot_key == "FOREIGN-LOT"),
+        "another Tender's Lot reached this Tender's answer — the \
+         `l.tender_id = vl.tender_id` containment guard in read::lots is gone (issue 103)"
+    );
 
     // The kind filter still selects on the version's lot kind, through the new
     // driving table.

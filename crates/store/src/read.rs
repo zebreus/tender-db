@@ -856,6 +856,46 @@ fn blank() -> FactRow {
 /// parent Tender's version, so `/v1/lots?country=DE` means the same thing it
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    let mut rows = lots_query(filter, scope)
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: None,
+            value_cents: None,
+            currency: None,
+            deadline: None,
+        })
+        .await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
+/// The SQL and bind parameters [`lots`] would run, without running them — the seam
+/// a plan test needs to assert the access path of the statement the builder ACTUALLY
+/// emits.
+///
+/// A plan test that plans its own hand-written string keeps passing while the builder
+/// drifts underneath it: the same artifact-versus-proxy failure as issues 110 and
+/// 102, and one this read has already been bitten by. The test guarding `1830d50`'s
+/// row-value cursor spelled that cursor out in its own SQL, so it went on passing
+/// after issue 115 removed the form from the builder — certifying a statement nothing
+/// emitted.
+///
+/// Test-only, because it is a window onto the builder rather than a way to use it:
+/// nothing in production wants the statement without running it. What it exposes is
+/// [`lots_query`], the same production code [`lots`] itself runs — a view, not a
+/// second path.
+#[cfg(test)]
+pub(crate) fn lots_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = lots_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`lots`], built but not run.
+fn lots_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     // Two questions, two driving tables — and that is the point, not an
     // optimisation. "Which Lots does THIS Tender's current version publish?" is a
@@ -948,22 +988,7 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
         ),
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
-
-    let mut rows = q
-        .rows(conn, |row| LotRow {
-            id: int(row, 0),
-            tender_id: int(row, 1),
-            lot_key: text(row, 2),
-            kind: text(row, 3),
-            seq: int(row, 4),
-            title: None,
-            value_cents: None,
-            currency: None,
-            deadline: None,
-        })
-        .await?;
-    summarise(conn, &mut rows).await?;
-    Ok(rows)
+    q
 }
 
 /// Fill in each Lot's summary fields from the version satellites: the title, the

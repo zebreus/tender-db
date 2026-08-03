@@ -2367,37 +2367,47 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
-    /// A tender-scoped lots read must SEEK `UNIQUE(tender_id, lot_key)`, never walk
-    /// `lots` (13.2M rows on prod) in rowid order. This is the `/v1/tenders/{id}`
-    /// ~2.2s regression: `read::lots` carried the cursor as a plain `l.id > ?`, which
-    /// makes turso drive the query from `lots` to satisfy `ORDER BY l.id` and filter
-    /// `tender_id` per row. Carrying it as the row value `(l.tender_id, l.id) > (?, ?)`
-    /// lets `tender_id` drive instead.
+    /// A tender-scoped lots read must be driven by a `tender_id` key, never by a walk
+    /// of `lots` (13.2M rows on prod) or of `tender_version_lots` in rowid order.
+    ///
+    /// This started as the `/v1/tenders/{id}` ~2.2s regression, where `read::lots`
+    /// carried the cursor as a plain `l.id > ?` and turso drove from `lots` to satisfy
+    /// `ORDER BY l.id`, filtering `tender_id` per row. Issue 115 then moved the read
+    /// off `lots` entirely: the containment question is answered by seeking
+    /// `tender_version_lots` on its `(tender_id, seq)` PK prefix.
     ///
     /// Covers `after > 0` — a REAL cursor page — not just the first page. A first-page
-    /// -only fix leaves `/v1/lots?tender=&after=N` on the 2.2s plan (measured 2237ms),
+    /// -only fix leaves `/v1/lots?tender=&after=N` on the bad plan (measured 2237ms),
     /// so testing only `after = 0` would certify a half-fix as whole.
     ///
     /// Asserting the PLAN, not rows or latency: the rows were correct throughout the
     /// outage and every functional test passed — what was wrong was how they were
     /// reached. Note a presence-of-index gate would ALSO have passed here: the index
     /// existed the whole time. Only the plan shows it.
+    ///
+    /// It plans the statement `read::lots` ACTUALLY builds, via `lots_statement`,
+    /// rather than a restatement of it. The earlier version of this test planned its
+    /// own hand-written `(l.tender_id, l.id) > (?, ?)` string — and went on passing
+    /// after issue 115 removed that cursor form from the builder, certifying SQL no
+    /// code emitted. A plan test decoupled from its artifact is worse than none: it
+    /// reports green about a shape nothing runs.
+    ///
+    /// A plan is a sound instrument for THIS question (which key drives the read) and
+    /// an unsound one for cost — issue 115's quadratic read had a fully optimal plan
+    /// while it took 248.8s. Hence the separate timing tests; see `lot_summary_cost`.
     #[tokio::test]
     async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_walking_rowids() {
         let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let conn = db.reader().await.unwrap();
-        // Both the first page and a real cursor page must seek the index.
+        // Both the first page and a real cursor page must seek a tender_id key.
         for after in [0i64, 49_377] {
+            let filter = read::Filter { tender: Some(1), ..read::Filter::default() };
+            let (sql, params) =
+                read::lots_statement(&filter, read::Scope::Page { after, limit: 1000 });
             let mut rows = conn
-                .query(
-                    "EXPLAIN QUERY PLAN
-                     SELECT l.id FROM lots l
-                      WHERE l.tender_id = ? AND (l.tender_id, l.id) > (?, ?)
-                      ORDER BY l.id LIMIT 1000",
-                    (Value::Integer(1), Value::Integer(1), Value::Integer(after)),
-                )
+                .query(&format!("EXPLAIN QUERY PLAN {sql}"), params)
                 .await
                 .unwrap();
             let mut plan = String::new();
@@ -2405,22 +2415,97 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 plan.push_str(&text(&row, 3));
                 plan.push('\n');
             }
-            let upper = plan.to_uppercase();
-            // The discriminator is WHICH key drives the query, not SCAN-vs-SEARCH:
-            // turso renders the rowid walk as `SEARCH l USING INTEGER PRIMARY KEY
-            // (rowid=?)`, which reads like a point lookup but traverses the whole
-            // table. So `!contains("SCAN")` passes for the DEFECTIVE shape too and
-            // proves nothing — this assertion pair was verified to FAIL against the
-            // pre-fix `l.id > ?` form before being committed.
             assert!(
-                upper.contains("TENDER_ID="),
-                "after={after}: the tender_id index must drive the read — plan was:\n{plan}"
+                plan.to_uppercase().contains("TENDER_ID="),
+                "after={after}: a tender_id key must drive the read — plan was:\n{plan}"
             );
-            assert!(
-                !upper.contains("INTEGER PRIMARY KEY"),
-                "after={after}: must not walk rowids filtering tender_id — plan was:\n{plan}"
+            assert_eq!(
+                driver(&plan),
+                Driver::VersionLots,
+                "after={after}: `tender_version_lots` must be the OUTER loop — plan was:\n{plan}"
             );
         }
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Which table a lots plan enters first — the only thing that separates the
+    /// linear read from the quadratic one.
+    ///
+    /// Neither `SCAN`-vs-`SEARCH` nor the presence of `INTEGER PRIMARY KEY` can tell
+    /// them apart, and both mislead in opposite directions. turso renders a full
+    /// rowid traversal as `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)`, which reads
+    /// like a point lookup, so `!contains("SCAN")` passes for the DEFECTIVE shape.
+    /// And the fixed shape contains that same string for a genuine one-row lookup of
+    /// `l.id = vl.lot_id`, so asserting its absence rejects the CORRECT shape. The
+    /// string is identical either way; only its position in the join order differs.
+    #[derive(Debug, PartialEq)]
+    enum Driver {
+        VersionLots,
+        Lots,
+        Other,
+    }
+
+    fn driver(plan: &str) -> Driver {
+        let upper = plan.to_uppercase();
+        // Ignore lines belonging to the uncorrelated MAX(seq) subquery: it is
+        // evaluated once, before the join, and names neither `l` nor `vl`.
+        let order = |needle: &str| upper.find(needle).unwrap_or(usize::MAX);
+        let vl = order("SEARCH VL ");
+        let l = order("SEARCH L ").min(order("SCAN L "));
+        match (vl, l) {
+            (usize::MAX, usize::MAX) => Driver::Other,
+            (vl, l) if vl < l => Driver::VersionLots,
+            _ => Driver::Lots,
+        }
+    }
+
+    /// The negative control for the test above, and the reason a green there is
+    /// attributable to the fix rather than to the statement having been reworded.
+    ///
+    /// It plans the PRE-115 shape — `lots` in the outer loop, `tender_version_lots`
+    /// probed per row — through the SAME discriminator, and requires it to still come
+    /// out `Driver::Lots`. That is what makes the pair meaningful: one statement, one
+    /// measure, opposite verdicts. Without it, the test above could go green merely
+    /// because the query was reworded.
+    ///
+    /// If this ever fails, turso has learned to reorder that join itself, and the
+    /// containment/stream split in `read::lots` may have stopped earning its keep.
+    #[tokio::test]
+    async fn the_pre_115_lots_shape_still_plans_as_the_walk_we_left() {
+        let path = format!("/tmp/tender-db-lots-eqp-ctl-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // Verbatim pre-115 identity half: driven from `lots`, vl probed per row.
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT l.id, vl.kind, v.seq
+                   FROM lots l
+                   JOIN tenders t ON t.id = l.tender_id
+                   JOIN tender_versions v ON v.tender_id = t.id
+                    AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                                  WHERE x.tender_id = t.id)
+                   JOIN tender_version_lots vl
+                     ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+                  WHERE 1 = 1 AND l.tender_id = ? AND l.id > ?
+                  ORDER BY l.id LIMIT 1000",
+                (Value::Integer(1), Value::Integer(0)),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert_eq!(
+            driver(&plan),
+            Driver::Lots,
+            "the pre-115 shape no longer drives from `lots` — the control has stopped \
+             controlling, so re-check whether read::lots still needs its \
+             containment/stream split. Plan was:\n{plan}"
+        );
         let _ = std::fs::remove_file(&path);
     }
 
