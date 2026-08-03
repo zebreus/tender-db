@@ -384,3 +384,53 @@ happened.
 Anything above the cap must be built **index-first at a rebuild**, or in a maintenance window —
 never auto-bulk-built on the populated database. That is the line, and the cap enforces it rather
 than documenting it.
+
+## The bytes-per-row constant was central, not a bound — and how the fix stayed falsifiable
+
+`INDEX_BUILD_BYTES_PER_ROW` was first set to **45**, from two consecutive measurements that agreed.
+A fourth build (`notices`, 14.24M rows) measured **48**. The series is **41 / 45 / 45 / 48**, so 45 sat
+in the *middle* of the range — exactly where a typical value sits and exactly where a safety cap must
+not.
+
+At 48 the old cap implied `44M × 48 = 2.11 GB` against a 2 GB budget. Constant raised to the measured
+**maximum** (48), cap lowered to **41M** (`41M × 48 = 1.97 GB`).
+
+**The error, stated generally: repetition measures the centre of a distribution and says nothing about
+its tail.** "It agreed N times, therefore it is stable" is a check evaluating *typical* behaviour in
+support of a claim about the *worst* case. It is a sibling of the text-versus-artifact family rather
+than an instance of it — the instrument is sound and the sampling is what's too narrow.
+
+So the constant is documented as a maximum, to be **raised, never averaged**, when a wider key measures
+above it.
+
+### The part worth transferring: the margin is kept OUT of the constant
+
+Padding `INDEX_BUILD_BYTES_PER_ROW` to 55 would have made the cap safe *and hidden this correction* —
+the 48 would have been quietly absorbed instead of contradicting anything.
+
+**A padded constant is unfalsifiable: it cannot be wrong, so it can never be corrected.** Keeping the
+constant a bare empirical fact, with the policy margin held separately in
+`AUTO_INDEX_MEMORY_BUDGET`, is what turned a later measurement into a *contradiction* rather than
+noise.
+
+That generalises past constants — it is the same reason a freshness check should print a snapshot's
+**age** rather than silently refusing anything stale, and the same reason a suppression annotation
+should print ACTION DUE rather than expiring quietly: **a mechanism that absorbs its own contradictions
+stops being able to tell you it was wrong.**
+
+### What the compile-time assertion did and did not do
+
+It did **not** catch this — the data changed underneath it, and it only ever checked the two constants
+against each other. What it did was make the recalculation *unavoidable*: raising bytes-per-row without
+lowering the cap is a build failure. Second time it has forced an arithmetic correction that inspection
+would have waved through.
+
+### Watch item, now urgent
+
+`organization_mentions` at 40.9M rows needs 1.963 GB against a 1.968 GB allowance — **99.8% of the
+cap**. Any growth trips it, after which its index refuses to auto-build and must come from an
+index-first rebuild. The guard working as designed, but it wants a deliberate decision rather than a
+stderr line discovered mid-rebuild. Options: accept it; raise the budget from 2 GB to ~2.5 GB (still
+well under the ceiling); or accept a lower safety factor for that table alone. Left at 2 GB because
+that is the reviewed number, and changing a policy constant to make an inconvenient result disappear is
+the move one would challenge in someone else's work.
