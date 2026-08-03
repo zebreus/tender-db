@@ -391,6 +391,40 @@ After the `lots_of` fix, B1 must flip to naming a real index — both
 `sqlite_autoindex_lots_1` and a named `lots_*` index are accepted, so the gate stays
 valid whichever route the fix takes.
 
+### The 115 blindness is not theoretical — it is visible in the plan B1 just PASSED
+
+run-driver's verbatim plan for the B1 statement, on the box, in the run that
+certified the fix:
+
+```
+1  | 0 | 0 | SEARCH l USING INDEX sqlite_autoindex_lots_1 (tender_id=?)   <- the fix
+...
+42 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+76 | 0 | 0 | CORRELATED SCALAR SUBQUERY 2      (+ USE SORTER FOR ORDER BY)
+113| 0 | 0 | CORRELATED SCALAR SUBQUERY 3
+139| 0 | 0 | CORRELATED SCALAR SUBQUERY 4      (+ USE SORTER FOR ORDER BY)
+171| 0 | 0 | CORRELATED SCALAR SUBQUERY 5      (+ USE SORTER FOR ORDER BY)
+204| 0 | 0 | CORRELATED SCALAR SUBQUERY 6      (+ USE SORTER FOR ORDER BY)
+238| 0 | 0 | CORRELATED SCALAR SUBQUERY 7      (+ USE SORTER FOR ORDER BY)
+```
+
+**Seven correlated scalar subqueries, five of them sorting, all re-evaluated per
+lot — and every single plan line is GREEN.** Each subquery is index-served
+(`tender_version_texts_version`, `tender_version_amounts_version`,
+`tender_version_dates_version`), so there is nothing for a plan gate to object to.
+A 1000-lot tender pays ~7000 index seeks and ~5000 sorts for one page, and this
+gate reports `PASS B1 lots served by index sqlite_autoindex_lots_1`.
+
+That is issue 115's defect, sitting inside the statement this gate certifies, in
+the artifact of the run that certified it. The blindness was argued in the
+abstract when the B7 note was written; it is now **measured, in this issue's own
+evidence**. It also means 115 is not confined to `tender_detail` — the same
+per-lot shape is in `lots_of`, i.e. on `/v1/lots?tender=` too.
+
+Nothing here is a criticism of the fix or of B1's green: `1830d50` fixed the
+access path, which was the ~2.2s uniform regression, and the plan proves it did.
+Cost-that-scales-with-lot-count is a different defect that was always there.
+
 ### Deferred — a B7 once issue 115 lands
 
 115 (16 big Tenders slow: `tender_detail` issues per-lot correlated subqueries, so cost
@@ -518,4 +552,8 @@ from a statement of known provenance, every time it runs.
 * **B2-B6 are still paraphrases** (114's point 1). B1/B1b are extracted; the other
   five carry exactly the drift risk that just proved fatal for B1's predecessor.
   This is now a demonstrated failure mode in this file, not a theoretical one.
-* **The gate is structurally blind to issue 115** — see the B7 note above.
+* **The gate is structurally blind to issue 115** — see the B7 note above, now
+  with the plan text from this issue's own run as proof rather than argument.
+* **Section A's catalogue view** was fixed (`1df8ef3`) after run-driver found it
+  reading prod's main file while a 4.5 GB WAL went unread. Escaped the run by
+  timing alone.
