@@ -20,6 +20,19 @@
 //! (N+1)th concurrent walk-capable request gets a 503, which is a deliberate trade for
 //! an unauthenticated endpoint whose worst case is a multi-minute walk.
 //!
+//! **There is deliberately no timeout here, and adding one would make this worse.**
+//! [`IsolatedReads::read`] wraps nothing in a time limit, so an admitted request waits
+//! the full walk — measured at 168.8 s on the rig with nothing firing under it. That
+//! looks like an omission and is not. Because turso cannot be interrupted, a timeout
+//! would free the CLIENT while the query kept burning its thread *and holding its
+//! permit* (the permit lives in the spawned task — see [`IsolatedReads::read`]). The
+//! caller would get a 504 and retry; the slot would still be held, so the retry sheds
+//! 503. Same work, same occupancy, plus a client now retrying into a wall — the
+//! accumulation failure mode issue 120 records. **A backstop is only worth having once
+//! cancellation exists**; until then it converts "slow" into "slow and misleading".
+//! `/v1/sql`'s own timeout is the cautionary case: it bounds nothing on a warm read,
+//! and its module doc claimed otherwise until that was corrected.
+//!
 //! **Recovery is bounded, and that is measured rather than assumed.** A walk is finite:
 //! `/v1/lots?kind=Lot` over 13.2M real lots on a dedicated bed completed in **231.6 s**.
 //! So a slot always frees on its own and no intervention is needed — [`SLOTS`] is a
