@@ -68,9 +68,23 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
     exit 2
   fi
   command -v sqlite3 >/dev/null || { echo "sqlite3 not found (try: nix shell nixpkgs#sqlite --command …)" >&2; exit 2; }
-else
+elif [ "${TDB_ONLY:-}" != I ]; then
   : "${TDB_TOKEN:?set TDB_TOKEN (live /v1/sql) or TDB_SNAPSHOT (a post-refold snapshot file)}"
 fi
+
+# TDB_ONLY=I — run ONLY the disclosure section.
+#
+# Section I is two GETs against a PUBLIC endpoint: no token, no SQL, no data
+# pages, nothing that competes with live traffic. Sections A-H are corpus-wide
+# aggregates over 6.9M-row tables and DO compete, so they belong in a window.
+# Bundling a free honesty check behind an expensive fact check means the honesty
+# check only ever runs when someone can afford the fact check — so the honesty
+# claim goes unverified for exactly as long as the box is busy.
+#
+# The selector is LOUD about what it skipped, in the banner and in the summary.
+# Section I's own rule is that silence about a check is indistinguishable from a
+# check that passed; a quiet section selector would reintroduce that at the level
+# of the whole file.
 
 MINORS=("eforms:eforms-de-1.1" "eforms:eforms-de-1.2" "eforms:eforms-de-1.0")
 
@@ -194,6 +208,12 @@ else
   echo "-- preflight"
   curl -sS --max-time 10 "$BASE_URL/health" | head -c 200; echo
 fi
+
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "-- SECTIONS A-H NOT RUN (TDB_ONLY=I)."
+  echo "   This run asserts NOTHING about whether the facts are right — only about"
+  echo "   whether the page admits what is still wrong. Do not read it as a layer check."
+else
 
 # ---------------------------------------------------------------------------
 # A. Parse layer must be UNTOUCHED by a projection-only re-fold.
@@ -527,6 +547,8 @@ else
   report EYE H0 "exhaustive checks skipped — set TDB_SNAPSHOT=/path/post-refold.db to run them (they are the actual acceptance wording of issue 85)"
 fi
 
+fi
+
 # ---------------------------------------------------------------------------
 # I. DISCLOSURE — does the award-winner gap actually REACH a user?
 #
@@ -572,6 +594,7 @@ fi
 # out of the DEPLOYED ledger (33dfba7 crates/app/data/quarantine-ledger.json);
 # the only evidence accepted here is the real service's response.
 # ---------------------------------------------------------------------------
+DISCLOSURE_VERDICT=no
 echo "-- I. disclosure: the DE-1.x award-winner gap must reach the user"
 DE1X_CAT="eForms-DE 1.x (German dialect)"
 I_DIAG=""
@@ -597,9 +620,11 @@ else
   I_ENTRY=$(printf '%s' "$I_DASH" | jq -c --arg c "$DE1X_CAT" \
               '.quarantine.resolved_categories[]? | select(.category == $c)')
   if [ -z "$I_ENTRY" ]; then
+    DISCLOSURE_VERDICT=yes
     report FAIL I1 "the SERVED payload has NO Resolved-categories row for '$DE1X_CAT' (categories present: $(printf '%s' "$I_DASH" | jq -r '[.quarantine.resolved_categories[]?.category] | join("; ")'))"
     HARDFAIL=$((HARDFAIL+1))
   else
+    DISCLOSURE_VERDICT=yes
     report PASS I1 "served Resolved-categories carries the '$DE1X_CAT' row"
     I_DIAG=$(printf '%s' "$I_ENTRY" | jq -r '.diagnosis // ""')
     disc I2 "AWARD WINNERS ARE NOT RESOLVED" "the gap is stated in caps, in its own sentence"
@@ -635,6 +660,9 @@ else
 fi
 
 echo
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "== DISCLOSURE-ONLY RUN (TDB_ONLY=I) — sections A-H did not execute. =="
+fi
 echo "== CORE (drives the exit code): $PASS passed, $FAIL failed ($HARDFAIL hard-fail), $EYE eyeball =="
 echo "== CONSERVATION (never blocks): $CONS_OK confirmed, $CONS_UNK unverified =="
 echo "Named spot-checks — run ./de1x_spotcheck.sh"
@@ -643,8 +671,25 @@ if [ "$HARDFAIL" -ne 0 ]; then
   echo "NO-GO — a core gate failed: the DE-1.x cohort did not fold correctly. Hold nginx."
   exit 1
 fi
+# A disclosure-only run that reached no disclosure verdict must NOT exit 0. With
+# sections A-H skipped there is nothing else in the run, so "0 passed, 0 failed"
+# plus exit 0 reads as green to anything that checks a status code — a run that
+# learned nothing, reporting success. That is precisely the failure section I was
+# written against, one level up: silence about a check is indistinguishable from a
+# check that passed. Exit 2 (incomplete), never 0.
+if [ "${TDB_ONLY:-}" = I ] && [ "$DISCLOSURE_VERDICT" != yes ]; then
+  echo
+  echo "INCOMPLETE — this run produced NO disclosure verdict (see the EYE line above:"
+  echo "unreachable, non-JSON, null .quarantine, or no jq). Nothing was verified. This"
+  echo "is not a pass; fix the input and re-run."
+  exit 2
+fi
 echo
-if [ "$CONS_UNK" -gt 0 ]; then
+if [ "${TDB_ONLY:-}" = I ]; then
+  echo "PASS (disclosure only) — the served /api/dashboard payload carries the DE-1.x"
+  echo "Resolved row and states the award-winner gap, its issue, the 241 residual and"
+  echo "its issue. Says NOTHING about whether the facts are right: A-H did not run."
+elif [ "$CONS_UNK" -gt 0 ]; then
   echo "PASS (core) — facts land, no double-count, parse layer intact. $CONS_UNK conservation"
   echo "gate(s) UNVERIFIED against a stale baseline; report says unverified, not verified."
 else
