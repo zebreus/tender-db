@@ -27,7 +27,14 @@ cargo test --workspace --features tender-db/server
 
 **What the corrected command found immediately:** 290 passed, **5 failed** — five
 `supervisor::tests` queue-recovery tests, invisible to every prior run because the module
-did not compile. Same family as B5 and the by-name index parser: a check whose *subject*
+did not compile.
+
+**And what it cost, measured:** with `server` on, the app lib runs **54 tests** —
+`v1` **20**, `supervisor` **19**, `accounts` 7, `coverage` 6, `ledger` 1. Without it those
+modules are not compiled at all, so the gate had **zero coverage of the entire public HTTP
+API surface** (`v1`) and of the job supervisor, while reporting a confident 243/0. The
+missing coverage was not a corner: it was the two subsystems a deploy is most likely to
+break. Same family as B5 and the by-name index parser: a check whose *subject*
 was assembled from what came to mind (packages) rather than derived from what ships
 (packages **and features**).
 
