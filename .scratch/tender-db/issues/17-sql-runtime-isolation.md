@@ -1,8 +1,10 @@
 # 17 — Isolate SQL-endpoint execution on its own runtime
 
 Status: resolved (IMPLEMENTED) — but the isolation itself has NEVER BEEN MEASURED.
-See "What would falsify this" at the end. The claim is load-bearing for the Class B
-confinement deployed in 223330a, so it is an assumed claim under load, not a verified one.
+See "What would falsify this" at the end. It protects `/v1/sql` only; it is an assumed
+claim under load, not a verified one. (An earlier version of this line said it was
+load-bearing for the Class B confinement deployed in `223330a`. That was wrong — see the
+correction at the end.)
 Blocked by: 07
 
 Goal: close the residual resource gap in the SQL endpoint: a single
@@ -70,9 +72,25 @@ Files: `crates/app/src/v1/sql.rs`, `crates/app/tests/sql.rs`.
 
 This issue is marked resolved on the strength of the code being written. **The property it
 claims — that a pathological `/v1/sql` query cannot starve the API/SSE/dashboard runtime —
-has not been measured.** `sql.rs`'s own header now leans on it: *"the backstop bounds the
+has not been measured.** `sql.rs`'s own header leans on it: *"the backstop bounds the
 RESPONSE and frees the concurrency slot; issue 17's isolation bounds the BLAST RADIUS."*
-The Class B confinement deployed in `223330a` rests partly on that sentence.
+
+**CORRECTION (sdk-vendor, same day): I first wrote that the Class B confinement deployed
+in `223330a` rests on this. It does not, and the distinction matters enough to state
+plainly — otherwise "load-bearing for the deploy" reads as "the deploy is unverified".**
+They are two separate runtimes, verified in the code:
+
+| mechanism | thread pool | status |
+|---|---|---|
+| Class B confinement (task #5) | `slow-read-exec` — `v1/isolate.rs:113` | **measured directly** (99.9% on the rig; threads verified present on prod) |
+| `/v1/sql` isolation (this issue) | `sql-exec` — `v1/sql.rs:200` | **never measured** |
+
+So this is a pre-existing gap **beside** what shipped, not a foundation **under** it, and
+the `sql.rs` header cites it for `/v1/sql`'s own protection. My error was the day's usual
+shape: I saw the header citing issue 17, and generalised "load-bearing for `/v1/sql`" into
+"load-bearing for the deploy" without checking which pool the confinement actually uses —
+a subset claim carried onto the whole by the sentence it landed in. One `git grep` for the
+two thread names settles it, and I ran it only after being corrected.
 
 That makes it the same shape as the `?kind=` density assumption and `notices_fetch_id`'s
 "tens of seconds": a claim true-by-construction when written, load-bearing later, never
