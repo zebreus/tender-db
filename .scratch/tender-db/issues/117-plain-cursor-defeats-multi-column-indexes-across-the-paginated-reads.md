@@ -808,6 +808,7 @@ independent list is that its author did not write the code:
 
 Cases 3–6 are where I would expect a divergence if there is one; 7 is the one this
 measurement proves is safe *provided the short-circuit does not do its own folding*.
+
 ## The short-circuit's real scope: matches-nothing **on a ≤4-letter prefix**
 
 `reachable()` (`3c5ae52`) is narrower than "matches-nothing is now fast", and the difference is
