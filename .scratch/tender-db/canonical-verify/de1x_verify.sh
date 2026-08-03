@@ -267,12 +267,14 @@ SELECT COUNT(*),
  COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_lots l WHERE l.tender_id=v.tender_id AND l.seq=v.seq) THEN 1 ELSE 0 END),0),
  COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_parties p WHERE p.tender_id=v.tender_id AND p.seq=v.seq AND p.role LIKE '%uyer%') THEN 1 ELSE 0 END),0),
  COALESCE(SUM(CASE WHEN v.notice_subtype IS NOT NULL THEN 1 ELSE 0 END),0),
- COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts x WHERE x.tender_id=v.tender_id AND x.seq=v.seq AND x.lot_id IS NOT NULL) THEN 1 ELSE 0 END),0)
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts x WHERE x.tender_id=v.tender_id AND x.seq=v.seq AND x.lot_id IS NOT NULL) THEN 1 ELSE 0 END),0),
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_parties p WHERE p.tender_id=v.tender_id AND p.seq=v.seq AND p.mention_notice_id=n.id) THEN 1 ELSE 0 END),0),
+ COALESCE(SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w JOIN organization_mentions om ON om.organization_id=w.organization_id AND om.notice_id=n.id WHERE w.tender_id=v.tender_id AND w.seq=v.seq) THEN 1 ELSE 0 END),0)
 FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
 WHERE n.profile='$1' AND n.parse_state='parsed' AND n.id BETWEEN $2 AND $3
 SQL
 }
-declare -A T=( [n]=0 [title]=0 [desc]=0 [cpv]=0 [nuts]=0 [amt]=0 [date]=0 [lots]=0 [buyer]=0 [sub]=0 [lottext]=0 )
+declare -A T=( [n]=0 [title]=0 [desc]=0 [cpv]=0 [nuts]=0 [amt]=0 [date]=0 [lots]=0 [buyer]=0 [sub]=0 [lottext]=0 [ownparty]=0 [ownwin]=0 )
 for P in "${MINORS[@]}"; do
   total=$(scalar "SELECT COUNT(*) FROM notices WHERE profile='$P'")
   [ -z "$total" ] && continue
@@ -283,12 +285,13 @@ for P in "${MINORS[@]}"; do
     [ -z "$lo" ] && continue
     [ -z "$hi" ] && hi=$(scalar "SELECT MAX(id) FROM notices WHERE profile='$P'")
     r=$(row "$(facts_sql "$P" "$lo" "$hi")") || continue
-    IFS=$'\t' read -r c ti de cp nu am da lo_ bu su lt <<<"$r"
-    printf '   %-24s ids %-10s..%-10s  n=%-4s title=%-4s desc=%-4s cpv=%-4s nuts=%-4s amt=%-4s date=%-4s LOTS=%-4s buyer=%-4s subtype=%-4s lot-text=%s\n' \
-      "$P" "$lo" "$hi" "$c" "$ti" "$de" "$cp" "$nu" "$am" "$da" "$lo_" "$bu" "$su" "$lt"
+    IFS=$'\t' read -r c ti de cp nu am da lo_ bu su lt op ow <<<"$r"
+    printf '   %-24s ids %-10s..%-10s  n=%-4s title=%-4s desc=%-4s cpv=%-4s nuts=%-4s amt=%-4s date=%-4s LOTS=%-4s buyer=%-4s subtype=%-4s lot-text=%-4s OWN-party=%s\n' \
+      "$P" "$lo" "$hi" "$c" "$ti" "$de" "$cp" "$nu" "$am" "$da" "$lo_" "$bu" "$su" "$lt" "$op"
     T[n]=$((T[n]+c)); T[title]=$((T[title]+ti)); T[desc]=$((T[desc]+de)); T[cpv]=$((T[cpv]+cp))
     T[nuts]=$((T[nuts]+nu)); T[amt]=$((T[amt]+am)); T[date]=$((T[date]+da)); T[lots]=$((T[lots]+lo_))
     T[buyer]=$((T[buyer]+bu)); T[sub]=$((T[sub]+su)); T[lottext]=$((T[lottext]+lt))
+    T[ownparty]=$((T[ownparty]+${op:-0})); T[ownwin]=$((T[ownwin]+${ow:-0}))
   done
 done
 echo "   -- pooled over all windows (n=${T[n]}):"
@@ -302,6 +305,24 @@ rate C7  "${T[sub]}"     "${T[n]}" 95 hard "notice_subtype (was NULL pre-fold)"
 rate C8  "${T[amt]}"     "${T[n]}" 15 soft "amounts      (source ~35-45% union)"
 rate C9  "${T[date]}"    "${T[n]}" 35 soft "dates        (source ~47.7% deadline)"
 rate C10 "${T[lottext]}" "${T[n]}" 90 soft "lot-scoped text (BT-21/24-Lot landed)"
+# C11/C12 — PROVENANCE, not presence (issue 98). C6 counts a party sitting on the
+# version; this counts a party EVIDENCED BY THIS NOTICE. The distinction is the
+# whole lesson of the first re-fold: the cohort showed a 35% buyer rate that was
+# 100% carried forward from merged TED twins, so presence read as success while
+# DE-1.x contributed nothing. A version can show a full set of parties and have
+# produced none of them.
+rate C11 "${T[ownparty]}" "${T[n]}" 90 hard "parties EVIDENCED BY the DE notice (pre-98: 0%)"
+# C12 — MEASURED AND DISCLOSED, never blocking (issue 100, user decision 2026-08-02).
+# DE-1.x award winners do not resolve: the result graph references sections by
+# their published ids (TEN-/TPA-/CON-) while those sections are keyed
+# synthetically, so LotResult -> LotTender -> TenderingParty never links. That is
+# a parse-layer defect needing a re-parse, deliberately out of this batch. The
+# small non-zero rate that DOES appear is winners carried forward from merged TED
+# twins, not DE data — the same carry-forward that made the buyer rate read 35%
+# when DE contributed 0%. So this reports; it must not gate. If it ever climbs
+# well above the carry-forward baseline, issue 100 has been fixed and this should
+# become a real gate again.
+report EYE C12 "winners evidenced by the DE notice = ${T[ownwin]}/${T[n]} — EXPECTED ~0 until issue 100 (parse-layer); any non-zero here is TED carry-forward, not DE"
 
 # ---------------------------------------------------------------------------
 # D. Lots in detail — the Lot/LotsGroup/Part section-id fix (de1_lot_kind).
@@ -429,6 +450,40 @@ if [ -f "$BASELINE" ]; then
   post_p=$(scalar "SELECT COUNT(*) FROM notices WHERE parse_state='parsed' AND projected=1")
   echo "   pre : tenders=$PRE_TENDERS islands=$PRE_ISLANDS keyed=$PRE_KEYED versions=$PRE_VERSIONS projected=$PRE_PROJECTED"
   echo "   post: tenders=$post_t islands=$post_i keyed=$post_k versions=$post_v projected=$post_p"
+  # EXPECT_NO_REGROUPING — the structural invariant for the combined 98+99 re-fold.
+  #
+  # It asserts FOUR COUNTS and nothing else: tenders, islands, keyed, versions.
+  # It deliberately says NOTHING about satellite contents, because the combined
+  # re-fold is expected to change them substantially:
+  #   * all 218,635 versions GAIN party rows (98 — the organization class);
+  #   * the 2,185 shells 85 skipped GAIN their entire fact set — texts, CPV,
+  #     lots, dates (99 — the epoch stamp finally rewrites them).
+  # Neither moves a count: the 2,185 are existing versions on existing Tenders
+  # that were merely factless, and neither fix touches grouping (first_id, which
+  # resolves the procedure key, never reads is_ref).
+  #
+  # So a moving count is still a hard stop — it would mean the fold regrouped
+  # something it had no business regrouping — while the satellites filling in is
+  # the intended outcome, gated elsewhere: fact-completeness by H1/H2/H3 (which
+  # must fall from 2,185 to ~0) and party provenance by C11/C12/H7.
+  #
+  # (Renamed from EXPECT_PARTY_ONLY, which named an assertion this never made and
+  # misled a reader into thinking a fact-immutability check lived here. The
+  # blanket "only parties differ" claim is a UNIT gate over a single fixture —
+  # tests/project.rs::the_de1_reference_flag_adds_parties_and_moves_nothing_else —
+  # where nothing is a shell; it is not, and must not become, a production gate.)
+  if [ "${EXPECT_NO_REGROUPING:-${EXPECT_PARTY_ONLY:-0}}" = "1" ]; then
+    for pair in "tenders:$PRE_TENDERS:$post_t" "islands:$PRE_ISLANDS:$post_i" \
+                "keyed:$PRE_KEYED:$post_k" "versions:$PRE_VERSIONS:$post_v"; do
+      what=${pair%%:*}; rest=${pair#*:}; was=${rest%%:*}; now=${rest#*:}
+      if [ "$was" = "$now" ]; then
+        report PASS "G-nr" "$what unchanged at $now (no regrouping — satellites may and should fill in)"
+      else
+        report FAIL "G-nr" "$what MOVED $was → $now — 98/99 must not regroup anything; STOP"
+        HARDFAIL=$((HARDFAIL+1))
+      fi
+    done
+  fi
   di=$((PRE_ISLANDS - post_i)); dk=$((post_k - PRE_KEYED)); dt=$((PRE_TENDERS - post_t))
   echo "   Δ islands retired=$di · new keyed groups=$dk · net tenders lost=$dt"
   if [ "$dt" -eq $((di - dk)) ]; then
@@ -501,7 +556,7 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
             WHERE $COHORT AND n.parse_state='parsed'
               AND NOT EXISTS (SELECT 1 FROM tender_version_texts x
                                WHERE x.tender_id=v.tender_id AND x.seq=v.seq)" \
-       hard "cohort versions with NO text at all (issue 85's symptom, exhaustively)"
+       hard "cohort versions with NO text at all (issue 85's symptom). If H1==H2==H3 these are versions the fold never rewrote — the unchanged-chain skip, not a mapping gap"
   hstep "H2 (cohort versions with no CPV)"
   zero H2 "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
             WHERE $COHORT AND n.parse_state='parsed'
@@ -519,10 +574,20 @@ if [ -n "${TDB_SNAPSHOT:-}" ]; then
   if [ "${lotless:-0}" -le 50 ]; then
     report PASS H3 "cohort versions with NO lots = ${lotless:-?} (≤ 50; ~23 payloads genuinely carry none)"
   else
-    report FAIL H3 "cohort versions with NO lots = $lotless (> 50) — the Lot/LotsGroup/Part fix is not landing"
+    report FAIL H3 "cohort versions with NO lots = $lotless (> 50). Check H1/H2 FIRST: if all three report the SAME count, these versions have no facts of any kind, which is the unchanged-chain skip (apply_tender_tx returns early when a Tender's notice sequence is unchanged, so a projection-logic fix never rewrites it) — NOT a lot-mapping failure. Only a count that differs from H1/H2 implicates de1_lot_kind."
     HARDFAIL=$((HARDFAIL+1))
   fi
   hstep "H4 (double-count, exhaustive)"
+  hstep "H7 (party provenance, exhaustive)"
+  own=$(scalar "SELECT COUNT(*) FROM notices n JOIN tender_versions v ON v.caused_by_notice_id=n.id
+                 JOIN tender_version_parties p ON p.tender_id=v.tender_id AND p.seq=v.seq
+                WHERE $COHORT AND p.mention_notice_id = n.id")
+  if [ "${own:-0}" -gt 0 ]; then
+    report PASS H7 "party rows evidenced by a DE-1.x notice itself = $own (pre-98: exactly 0)"
+  else
+    report FAIL H7 "ZERO party rows across the whole cohort are evidenced by a DE-1.x notice — the org class is still dead (issue 98)"
+    HARDFAIL=$((HARDFAIL+1))
+  fi
   zero H4 "SELECT COUNT(*) FROM (
              SELECT v.caused_by_notice_id FROM notices n JOIN tender_versions v
                ON v.caused_by_notice_id=n.id WHERE $COHORT
@@ -547,6 +612,19 @@ else
   report EYE H0 "exhaustive checks skipped — set TDB_SNAPSHOT=/path/post-refold.db to run them (they are the actual acceptance wording of issue 85)"
 fi
 
+# NOTE — A SECOND SECTION I EXISTED ON `issue115` AND WAS SUPERSEDED HERE, 2026-08-03.
+# Both branches independently grew a section I for this same obligation, weeks apart,
+# neither author able to see the other's (canonical-verify/README.md: one verification
+# owner per obligation). `issue115`'s version grepped the SERVER-RENDERED HTML —
+#     page=$(curl -sS "$BASE_URL/"); grep -qi "eForms-DE 1" / "winner" / "issue 100"
+# which is the predecessor gate issue 110 was filed to replace. Verified on issue115's
+# own tip (5c197e7): `resolved_categories` lives in `ui.rs`, the disclosure text in the
+# `include_str!` ledger JSON, fetched by the client from `/api/dashboard`. So `GET /`
+# does not carry it, and that gate reports MISSING for a HEALTHY deployment.
+# Both were NOT kept: two gates for one obligation, one of which cannot pass on a
+# healthy deploy, is an uninterpretable red — and the reliable human response to an
+# uninterpretable red is to stop reading the section. Its intent (that this obligation
+# deserves a standing check) is preserved below; only the artifact it reads changed.
 fi
 
 # ---------------------------------------------------------------------------
