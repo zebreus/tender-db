@@ -33,6 +33,38 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Statement, Value};
 
+/// Peak RSS of a bulk `CREATE INDEX`, per row of the table being indexed.
+///
+/// Measured by run-driver on the deployed turso 0.7.0: 366 MiB at 8,132,478 rows and
+/// 1.07 GB at 25,289,344 — 3.11x the rows for 2.91x the memory, with no spill
+/// threshold between them. The sort is O(rows) and there is no batching knob, so this
+/// constant is what turns a row count into a memory prediction.
+const INDEX_BUILD_BYTES_PER_ROW: i64 = 45;
+
+/// What one auto-triggered index build may consume. Half the project's ~4 GB
+/// bounded-memory ceiling, leaving the other half for the rest of the process on a
+/// box still carrying issue 57's swap band-aid.
+const AUTO_INDEX_MEMORY_BUDGET: i64 = 2_000_000_000;
+
+// The one part of the size cap that IS a compile-time fact, and so is checked as one.
+//
+// The cap itself must stay a RUNTIME check: the hazard is a row count, and row counts
+// are not known at compile time — a static allowlist of "small" tables would encode
+// today's judgement and go stale the moment one grew, which is exactly how
+// `notices(source, id)` ended up in the schema batch on the strength of a comment
+// written when that table was 8x smaller.
+//
+// But the cap's DERIVATION is static: raising `MAX_AUTO_INDEX_ROWS` without
+// re-deriving it against the measured bytes-per-row is a compile error, not a
+// production discovery. That is the half that never leaves the branch.
+const _: () = assert!(
+    Db::MAX_AUTO_INDEX_ROWS * INDEX_BUILD_BYTES_PER_ROW <= AUTO_INDEX_MEMORY_BUDGET,
+    "MAX_AUTO_INDEX_ROWS exceeds the auto-build memory budget at the measured \
+     bytes-per-row: a build at that size would sort past the bounded-memory ceiling. \
+     Re-derive the cap against INDEX_BUILD_BYTES_PER_ROW, or raise the budget only \
+     with a new measurement behind it."
+);
+
 pub(crate) const SCHEMA: &str = "
     -- A Tender: one procurement opportunity, independent of how many Notices
     -- documented it. `procedure_key` is the source's procedure identity (BT-04
@@ -1518,7 +1550,17 @@ impl Db {
     /// small, and go stale silently the moment one grows — which is precisely the
     /// mistake that put `notices(source, id)` in the schema batch on the strength of a
     /// comment written when the table was 8x smaller.
-    const MAX_AUTO_INDEX_ROWS: i64 = 45_000_000;
+    /// 44M x 45 B/row = 1.98 GB, just inside the budget. The obvious round number
+    /// (45M) is 2.025 GB and does NOT fit — the compile-time assertion below caught
+    /// that when this constant was first written, which is the whole argument for
+    /// having it.
+    ///
+    /// Headroom is thinner than it looks: `organization_mentions` at 40.9M rows is
+    /// only ~7% under this cap, so it is the table to watch. When it crosses, the
+    /// builder refuses loudly and its index must move to an index-first rebuild —
+    /// that is the designed outcome, not a failure, but it will need a decision
+    /// rather than a surprise.
+    const MAX_AUTO_INDEX_ROWS: i64 = 44_000_000;
 
     /// Refuse to bulk-build an index over a table too large to sort within the memory
     /// budget. Returns the offending row estimate, or `None` if the build may proceed.
