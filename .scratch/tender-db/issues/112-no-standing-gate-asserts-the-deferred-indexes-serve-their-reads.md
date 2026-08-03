@@ -628,3 +628,62 @@ than a boolean could carry, and it survives someone later removing the `LIMIT`.
 Section A reported `catalogue read: main file, immutable=1 (no -wal frames to miss)`,
 which is the provenance line doing its job: it says which of the two views produced
 the verdicts, so this run can be told apart from one taken six minutes earlier.
+
+
+## The gate MISSED a live defect of its own target class — `read::organizations`
+
+run-driver measured `/v1/organizations` on 2026-08-03: `?kind=zzz` **99.08s**,
+`?country=ZZ` **22.0s** cold. `read::organizations` plans
+`SEARCH o USING INTEGER PRIMARY KEY (rowid=?)` over 25.3M rows.
+
+**This is not a new defect class. It is the SAME defect, in the same file, with the
+same shape as the one this issue was opened for** — a plain `o.id > ?` cursor with
+`ORDER BY o.id`, which makes the planner drive from the table in rowid order and
+filter per row, exactly as `l.id > ?` did for `lots`. Extracted from the deployed
+builder at `1830d50` by the `Query::rows` dump:
+
+```sql
+-- ?kind=  (the 99.08s case)
+… FROM organizations o WHERE 1 = 1 AND o.identifier_kind = ? AND o.id > ? ORDER BY o.id LIMIT ?
+-- ?country=  (22.0s)
+… FROM organizations o WHERE 1 = 1 AND o.country = ?        AND o.id > ? ORDER BY o.id LIMIT ?
+```
+
+Note the unfiltered case (`WHERE 1 = 1 AND o.id > ?`) is **correct** and must stay —
+driving from the table in rowid order is the right plan for a global id-ordered page.
+Identical to the `lots` fix's `Some(tender) => row value, None => plain cursor` split.
+
+**Why the gate did not catch it, and what that says.** 112's target set was written by
+listing the reads someone thought were hot. `read::organizations` was not on the list,
+so no check existed — while B5, on the *same table*, asserted a read that had been
+deleted. The failure is not that a check was wrong; it is that **coverage was chosen by
+recall rather than derived from the code.** A gate whose target set is hand-enumerated
+inherits the blind spots of whoever enumerated it, which is the artifact-vs-paraphrase
+error one level up — applied to *which* reads are checked rather than to their SQL.
+
+The durable answer belongs with 114 part 2: if the statements come from the builders,
+the *set* of hot reads can come from the builders too — every `Scope::Page` read in
+`read.rs` is a paginated hot read by construction, and enumerating them is mechanical.
+
+### Ready to add when the fix lands — with the pre-fix RED captured FIRST
+
+Extracted now, deliberately, so this fix gets the controlled before/after that B1's did
+not. Hand these to the probe **before** the fix and record the RED; the same statements
+then become the checks:
+
+```
+B7~organizations~o~organizations_identity|organizations_[a-z_]+~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.identifier_kind = 'zzz' AND o.id > 0 ORDER BY o.id LIMIT 1000
+B8~organizations~o~organizations_identity|organizations_[a-z_]+~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
+```
+
+Not added yet on purpose: they would be RED against prod today, and a gate that ships
+with a standing red trains its readers to scroll past reds — the same reason `plan_*`
+is excluded from section A.
+
+**One caveat for whoever fixes it:** run-driver verified a row-value cursor fixes
+`country` and `country+kind` (`SEARCH o USING INDEX organizations_identity (country=?)`),
+but **not kind-only** — `identifier_kind` is the second column of
+`organizations(country, identifier_kind, identifier)` with no leading `country`, so no
+seek exists for it. B7 (kind-only) will still be RED after a row-value fix. It needs its
+own answer, and B7 should not be added until there is one, or it becomes the standing
+red described above.
