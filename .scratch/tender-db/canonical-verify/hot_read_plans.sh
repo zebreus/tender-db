@@ -717,20 +717,18 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # ABSENT" there, nothing is broken and a reindex is owed.
 note_for() {
   case "$1" in
-    # ONE ARM PER CHECK, deliberately, even though the text is nearly identical.
-    # These four now materialise TOGETHER — all deferred, all built by the background
-    # reindex. `notices(source, id)` was the exception until `c5a28dd` moved it out of
-    # the schema batch (27.4M rows blocked `Db::open` for ~7 minutes). One arm per check
-    # is kept anyway: the arms are removed as each check is CONFIRMED green, which is a
-    # per-check event even when the builds are simultaneous, and the next index added
-    # here will have its own timing again. A shared
-    # `B7|B8|B9)` arm would force removing the excuse for checks still legitimately red,
-    # or keeping it for one already fixed. Each arm also names the index it waits on, so
-    # section A's "DECLARED but ABSENT" can be matched against something specific.
-    B7) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on organizations(country, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
-    B8) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on notices(source, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed. (It was in the schema batch until c5a28dd; at 27.4M rows that blocked Db::open for ~7 minutes, so it moved out.)";;
-    B10) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. This is the WORST of the set — /v1/organizations?kind= measured at 99.08s. Waits on organizations(identifier_kind, id), which is DEFERRED (issue 111). Note this case was recorded as UNSERVABLE until 2026-08-03: that was reasoning from the index that existed rather than the one the read needs, and it was wrong.";;
-    B9) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on tenders(source, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
+    # NO EXPECTED-RED CHECKS AT PRESENT — the four arms that lived here were removed
+    # 2026-08-03 the moment 117's indexes served (task #9). They excused B7/B8/B9/B10
+    # over the live read-path DoS; keeping them one run longer would have meant a
+    # FUTURE regression on those same checks being reported as "known, expected".
+    # A suppression that outlives its defect defeats the check it annotates — which is
+    # why the gate announces ACTION DUE the moment an annotated check starts passing,
+    # rather than trusting anyone to remember. It announced; this is the response.
+    #
+    # To add one: a new arm here, and NOTHING else. `note_for` is the single source of
+    # truth for "expected red" — the summary derives the expected/unexpected split from
+    # it, so an id is expected-red exactly when this function speaks about it. Do not
+    # add a second list.
     *) printf '';;
   esac
 }
@@ -1254,9 +1252,13 @@ if [ "$FAIL" -ne 0 ]; then
     u_show=$(printf '%s' "$UNEXPECTED_RED" | tr ' ' '\n' | grep . | head -6 | tr '\n' ' ')
     [ "$u_n" -gt 6 ] && u_show="$u_show(+$((u_n-6)) more)"
     echo "FAIL — $u_n check(s) went red that were NOT expected to: $u_show"
-    echo "A check that was green"
-    echo "has flipped: treat this as a regression in whatever changed, not as the known"
-    echo "117 defect. The expected reds above are unrelated to it."
+    echo "A check that was green has flipped: treat this as a regression in whatever"
+    echo "changed."
+    # Only mention the expected reds when there ARE any. Naming a specific past defect
+    # here ("...not the known 117 defect") was correct while B7-B10 carried notes and
+    # became misleading the moment they were removed — the same stale-annotation
+    # failure the ACTION DUE announcement exists to prevent, in the summary text.
+    [ -n "$EXPECTED_RED" ] && echo "The expected reds listed above are a separate, known matter and unrelated to it."
   else
     echo "FAIL — but ONLY the known-expected reds are red, and nothing else regressed."
     echo "Exit is still non-zero because the defect they name is live in production; the"
