@@ -180,3 +180,69 @@ async fn every_lots_filter_selects_a_proper_subset() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+
+/// **The equivalence gate.** `lots_s2c` must return exactly what `lots` returns, for
+/// every filter and combination, on data where each filter provably discriminates.
+///
+/// Both sides are real read paths — `store::read::lots` and `store::read::lots_s2c` —
+/// not hand-written SQL. A test comparing today's builder against an imitation of the
+/// builder I intend to write would pass while `read.rs` shipped something else, which
+/// is the artifact-versus-proxy gap that cost the issue-16 shape detour.
+#[tokio::test]
+async fn the_s2c_candidate_answers_identically_across_the_filter_surface() {
+    let path = format!("/tmp/tender-db-s2ceq-{}.db", std::process::id());
+    let conn = seed(&path).await;
+    let all = TENDERS * LOTS_PER;
+
+    let mut cases: Vec<(String, Filter)> = vec![("unfiltered".into(), base())];
+    for (name, f) in [
+        ("kind=Lot", Filter { kind: Some("Lot".into()), ..base() }),
+        ("kind=LotsGroup", Filter { kind: Some("LotsGroup".into()), ..base() }),
+        ("kind=Part(superseded)", Filter { kind: Some("Part".into()), ..base() }),
+        ("kind=zzz", Filter { kind: Some("zzz".into()), ..base() }),
+        ("source=ted", Filter { source: Some("ted".into()), ..base() }),
+        ("source=doe", Filter { source: Some("doe".into()), ..base() }),
+        ("country=DE", Filter { country: Some("DE".into()), ..base() }),
+        ("cpv=452", Filter { cpv: Some("452".into()), ..base() }),
+        ("buyer=1", Filter { buyer: Some(1), ..base() }),
+        ("status=Open", Filter { status: Some(Status::Open), ..base() }),
+        ("status=Closed(NOT EXISTS)", Filter { status: Some(Status::Closed), ..base() }),
+        ("min_value", Filter { min_value: Some(1_000_00), ..base() }),
+        ("max_value", Filter { max_value: Some(1_000_00), ..base() }),
+        ("kind+source", Filter { kind: Some("Lot".into()), source: Some("doe".into()), ..base() }),
+        ("kind+country", Filter { kind: Some("Lot".into()), country: Some("DE".into()), ..base() }),
+        ("kind+source+country", Filter { kind: Some("Lot".into()), source: Some("ted".into()),
+                                          country: Some("DE".into()), ..base() }),
+        ("kind+status+min_value", Filter { kind: Some("Lot".into()), status: Some(Status::Open),
+                                            min_value: Some(1_000_00), ..base() }),
+        ("tender=3 (containment)", Filter { tender: Some(3), ..base() }),
+    ] {
+        cases.push((name.into(), f));
+    }
+
+    // Two cursor positions: the second lands mid-stream, where a shape that mishandles
+    // the cursor returns a correct-looking but shifted page.
+    println!("\n{:<28}{:>8}{:>8}  {}", "filter", "today", "s2c", "verdict");
+    for (name, f) in &cases {
+        for after in [0, all / 2] {
+            let scope = Scope::Page { after, limit: all + 10 };
+            let today = store::read::lots(&conn, f, scope).await.unwrap();
+            let cand = store::read::lots_s2c(&conn, f, scope).await.unwrap();
+            let key = |r: &store::read::LotRow| {
+                (r.id, r.tender_id, r.lot_key.clone(), r.kind.clone(), r.seq,
+                 r.title.clone(), r.value_cents, r.currency.clone())
+            };
+            let a: Vec<_> = today.iter().map(key).collect();
+            let b: Vec<_> = cand.iter().map(key).collect();
+            if after == 0 {
+                println!("{name:<28}{:>8}{:>8}  {}", a.len(), b.len(),
+                         if a == b { "identical" } else { "DIFFERS" });
+            }
+            assert_eq!(b, a, "s2c differs from today: filter={name} after={after}");
+        }
+    }
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

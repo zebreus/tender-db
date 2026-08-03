@@ -497,36 +497,45 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     }
 }
 
-fn version_predicates(q: &mut Query, f: &Filter) {
+/// The version-scoped filters, emitted against caller-supplied expressions for the
+/// Tender id and the version `seq`.
+///
+/// Parameterised rather than duplicated because two query shapes need the same
+/// predicates against different scopes: the JOIN form has `t`/`v` in FROM and passes
+/// `"t.id"`/`"v.seq"`, while [`lots_query_s2c`] has neither and correlates on
+/// `l.tender_id` with `seq` recomputed. Writing them twice is the paraphrase hazard
+/// that blocked issue 112's B1 — one edit to a predicate would silently apply to one
+/// shape and not the other.
+fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
     if let Some(country) = &f.country {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_classifications c
-                           WHERE c.tender_id = t.id AND c.seq = v.seq
-                             AND c.scheme = 'nuts' AND c.code LIKE ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                           WHERE c.tender_id = {tid} AND c.seq = {seq}
+                             AND c.scheme = 'nuts' AND c.code LIKE ?)"),
             [t(format!("{country}%"))],
         );
     }
     if let Some(cpv) = &f.cpv {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_classifications c
-                           WHERE c.tender_id = t.id AND c.seq = v.seq
-                             AND c.scheme = 'cpv' AND c.code LIKE ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                           WHERE c.tender_id = {tid} AND c.seq = {seq}
+                             AND c.scheme = 'cpv' AND c.code LIKE ?)"),
             [t(format!("{cpv}%"))],
         );
     }
     if let Some(buyer) = f.buyer {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_parties p
-                           WHERE p.tender_id = t.id AND p.seq = v.seq
-                             AND p.organization_id = ? AND p.role LIKE '%Buyer%')",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_parties p
+                           WHERE p.tender_id = {tid} AND p.seq = {seq}
+                             AND p.organization_id = ? AND p.role LIKE '%Buyer%')"),
             [Value::Integer(buyer)],
         );
     }
     if let Some(winner) = f.winner {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_result_winners w
-                           WHERE w.tender_id = t.id AND w.seq = v.seq
-                             AND w.organization_id = ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_result_winners w
+                           WHERE w.tender_id = {tid} AND w.seq = {seq}
+                             AND w.organization_id = ?)"),
             [Value::Integer(winner)],
         );
     }
@@ -534,9 +543,9 @@ fn version_predicates(q: &mut Query, f: &Filter) {
         // "Open" is a submission deadline still in the future. A Tender that
         // never published one (award notices) is therefore Closed, which is the
         // useful reading: it cannot be bid on.
-        let exists = "EXISTS (SELECT 1 FROM tender_version_dates d
-                               WHERE d.tender_id = t.id AND d.seq = v.seq
-                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?)";
+        let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
+                               WHERE d.tender_id = {tid} AND d.seq = {seq}
+                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?)");
         match status {
             Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
             Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
@@ -547,7 +556,7 @@ fn version_predicates(q: &mut Query, f: &Filter) {
             q.push(
                 &format!(
                     " AND (SELECT MAX(a.cents) FROM tender_version_amounts a
-                            WHERE a.tender_id = t.id AND a.seq = v.seq) {op} ?"
+                            WHERE a.tender_id = {tid} AND a.seq = {seq}) {op} ?"
                 ),
                 [Value::Integer(cents)],
             );
@@ -830,7 +839,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     if let Some(kind) = &filter.kind {
         q.push(" AND t.kind = ?", [t(kind)]);
     }
-    version_predicates(&mut q, filter);
+    version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -1158,6 +1167,34 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     Ok(rows)
 }
 
+/// **Issue 16 candidate, end to end — wired to nothing in production.**
+///
+/// Runs [`lots_query_s2c`] through the same row mapping and [`summarise`] as [`lots`],
+/// so the equivalence test compares two complete read paths rather than two SQL
+/// strings. Testing generated SQL alone would leave the mapping and summarisation
+/// untested and would still be comparing a proxy of the shipped behaviour.
+///
+/// `#[doc(hidden)]` and public only so `store`'s integration tests can reach it. When
+/// the caller swaps, this disappears and [`lots`] itself uses the new builder.
+#[doc(hidden)]
+pub async fn lots_s2c(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    let mut rows = lots_query_s2c(filter, scope)
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: None,
+            value_cents: None,
+            currency: None,
+            deadline: None,
+        })
+        .await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
 /// The SQL and bind parameters [`lots`] would run, without running them — the seam
 /// a plan test needs to assert the access path of the statement the builder ACTUALLY
 /// emits.
@@ -1265,7 +1302,84 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter);
+    version_predicates(&mut q, filter, "t.id", "v.seq");
+    match scope {
+        Scope::Page { after, limit } => q.push(
+            " AND l.id > ? ORDER BY l.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(limit)],
+        ),
+        Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
+    }
+    q
+}
+
+/// **Issue 16 candidate — wired to nothing yet.** The stream-shape `lots` query
+/// rebuilt so that `lots` is the ONLY table in the FROM clause.
+///
+/// Today's shape puts `tender_version_lots` in FROM, and the planner therefore drives
+/// from it: `SCAN tender_version_lots` plus a top-level sorter over the whole matched
+/// set, which is why `?kind=Lot` — the DEFAULT value — costs 164.6s at prod scale
+/// against 0.004s here.
+///
+/// **The sufficient condition is being the only candidate driver**, not the index
+/// available. Measured: an `EXISTS` whose FROM holds only `lots` keeps `lots` driving;
+/// the same predicate as a JOIN reverts to the scan even when all three primary-key
+/// columns are bindable. Adding `JOIN tenders t` back for `?source=` reverts it too —
+/// `SCAN tenders AS t` — so **every** other table access here is a correlated
+/// subquery, including the one for `source`.
+///
+/// **Anyone adding a table to this FROM clause silently undoes the fix.** The symptom
+/// is not a wrong answer; it is the old plan returning, which only a plan assertion or
+/// a clock will show.
+///
+/// `seq` is recomputed as `MAX(seq)` rather than read from `tenders.current_seq`.
+/// `current_seq` equals it for all 4,262,716 production Tenders today, but that is a
+/// projection-MAINTAINED property with no schema constraint behind it. Trusting it
+/// would make this read serve a superseded version's `kind` in exactly the state where
+/// the data is already wrong — removing a cross-check at the moment it is most needed.
+/// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
+/// See issue 27 for enforcing the invariant, after which this may be revisited.
+fn lots_query_s2c(filter: &Filter, scope: Scope) -> Query {
+    let scoped = match scope {
+        Scope::Page { .. } => filter.tender,
+        Scope::At { .. } => None,
+    };
+    // The containment shape (issue 115) and the single-lot probe already drive from
+    // the right table; only the stream shape is rebuilt here.
+    if scoped.is_some() || matches!(scope, Scope::At { .. }) {
+        return lots_query(filter, scope);
+    }
+
+    // The current version, correlated on the outer lot. Used in the SELECT list, the
+    // EXISTS probe and every version predicate, so they cannot disagree about which
+    // version they are reading.
+    const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
+
+    let mut q = Query::default();
+    q.push(
+        &format!(
+            "SELECT l.id, l.tender_id, l.lot_key,
+                    (SELECT vl.kind FROM tender_version_lots vl
+                      WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
+                        AND vl.lot_id = l.id),
+                    {SEQ}
+               FROM lots l
+              WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                             WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
+                               AND vl.lot_id = l.id"
+        ),
+        [],
+    );
+    // `kind` filters INSIDE the existence probe: it is a property of the version's lot
+    // row, so a lot whose current version does not carry the kind must not match.
+    if let Some(kind) = &filter.kind {
+        q.push(" AND vl.kind = ?", [t(kind)]);
+    }
+    q.push(")", []);
+    if let Some(source) = &filter.source {
+        q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
+    }
+    version_predicates(&mut q, filter, "l.tender_id", SEQ);
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
