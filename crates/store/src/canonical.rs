@@ -1412,6 +1412,28 @@ impl Db {
             (),
         )
         .await?;
+        // Issue 117: `(filter, id)` indexes for the paginated `/v1/organizations`
+        // reads, so `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` uses BOTH the
+        // filter and the cursor as index bounds and no sorter runs.
+        //
+        // `organizations_identity(country, identifier_kind, identifier)` cannot serve
+        // either read: its trailing column is not `id`, so seeking `country` yields the
+        // slice in identifier order and `ORDER BY id` must sort all of it before
+        // `LIMIT` — measured at 15.16s against 0.0001s for `?country=DE&limit=50` over
+        // prod's 3.85M-row DE slice. And `identifier_kind` is its SECOND column, so a
+        // kind-only listing cannot seek it at all (the 99.08s case). Both are fixed by
+        // an index that leads with the filter and ends with `id`; the reads are
+        // unchanged. Measured in `crates/store/tests/paginated_index_probe.rs`: the
+        // dense case is unchanged and the absent case collapses to nothing.
+        //
+        // ISSUE 111 APPLIES: this function runs at a rebuild's end or via the `Reindex`
+        // admin job, and at no other time. Deploying the code does not create them.
+        for (name, cols) in [
+            ("organizations_country_id", "organizations(country, id)"),
+            ("organizations_kind_id", "organizations(identifier_kind, id)"),
+        ] {
+            conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
         Ok(())
     }
 
@@ -1428,7 +1450,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 10] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 11] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
@@ -1453,6 +1475,36 @@ impl Db {
         // the next boot rebuilds it. `current_published_at` is random in fold order, so it
         // belongs here — dropped before the fold, rebuilt once sorted at the end.
         ("tenders_current_published", "tenders(current_published_at, id)"),
+        // Issue 117: the paginated reads' `(filter, id)` indexes. Each one exists so
+        // that `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` can use BOTH the
+        // filter and the cursor as index bounds — the shape `tenders_current_published`
+        // above and `changes_entity_cursor` (issue 61) already have.
+        //
+        // Without them the read has no good plan for both densities, only a choice of
+        // which density to be bad at. The plain cursor walks in rowid order and stops
+        // at `LIMIT` matches: fast when the filter is dense, a full table walk when it
+        // matches nothing or only late — measured on prod at 22.0s (`?country=ZZ`),
+        // 99.08s (`?kind=`) and 226s+ (`?source=`), unauthenticated. Rewriting the
+        // cursor as a row value inverts it: turso then seeks the EXISTING index, whose
+        // trailing column is not `id`, so `ORDER BY id` sorts the whole matched slice
+        // before `LIMIT` — measured at 15.16s against 0.0001s for `?country=DE&limit=50`
+        // over prod's 3.85M-row DE slice, a 151,648x regression on the ORDINARY query.
+        // These indexes end in `id`, so the seek yields id order, `LIMIT` truncates
+        // immediately, and no sorter runs. Measured: the dense case is unchanged and
+        // the absent case collapses to nothing (crates/store/tests/paginated_index_probe.rs,
+        // org_cursor_probe.rs). The reads themselves are NOT changed — that is the point.
+        //
+        // Only the `tenders` one lives here, because only `tenders` is dropped and
+        // refolded: `reset_tender_layer` DROPs the table, so a schema-batch index would
+        // be lost by a rebuild and not return until the next process open. The
+        // `organizations` pair belongs to [`Db::build_organization_indexes`] and the
+        // `notices` one to the schema batch, each for the same reason — the builder
+        // that owns the table's lifecycle owns its indexes.
+        //
+        // ISSUE 111 APPLIES TO THIS ONE: it materialises at a rebuild's end or via the
+        // `Reindex` admin job, and at no other time. Deploying the code does not create
+        // it, so `?source=` stays slow until one of those runs.
+        ("tenders_source_id", "tenders(source, id)"),
     ];
 
     /// DROP+recreate `table` from its own captured DDL (table + any named indexes),
