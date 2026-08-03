@@ -567,6 +567,26 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # The real question is whether the access reaches rows THROUGH AN INDEX at all.
 # A SCAN that names an index is still index-served — but it is a full ordered
 # traversal, not a seek, so the report SAYS SO rather than blurring the two.
+# ---- context for checks that are EXPECTED to be red right now --------------------
+# A red is only useful if the reader can tell "this is the known defect we are waiting
+# on a fix for" from "the change I am testing broke something". B7/B8/B9 are red by
+# design until 117's `(filter, id)` indexes are both deployed AND built, so they say so
+# in their own output rather than relying on anyone having read this file's header.
+#
+# The second half matters and is proj-fix's point: three of the four indexes
+# (`organizations(country,id)`, `organizations(identifier_kind,id)`, `tenders(source,id)`)
+# are DEFERRED — they exist only after a rebuild or a `Reindex` job, not at deploy
+# (issue 111). Only `notices(source,id)` is in the schema batch. So between deploying
+# 117 and the first reindex these rows stay red for an OPERATIONAL reason, not a code
+# regression, and section A is what tells the two apart: if the index is "DECLARED but
+# ABSENT" there, nothing is broken and a reindex is owed.
+note_for() {
+  case "$1" in
+    B7|B8|B9) printf '%s' "  [known] this is the live 117 read-path defect, not a regression in whatever you are testing. Expected RED until an index giving both the filter seek and the id bound is deployed AND BUILT — three of the four are deferred (issue 111), so check section A first: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
+    *) printf '';;
+  esac
+}
+
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
 # B7 / B8 / B9 ARE EXPECTED **RED** TODAY. THAT IS THE POINT OF THEM.
@@ -860,9 +880,9 @@ else
       # The trap this gate exists to survive: turso prints a full forward walk of
       # `lots` as "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)", which reads like
       # a point lookup. On the target table that is a walk, not an index seek.
-      report FAIL "$id" "$tbl is read by ROWID, not by an index — this is a full walk that PRINTS like a seek: $line"
+      report FAIL "$id" "$tbl is read by ROWID, not by an index — this is a full walk that PRINTS like a seek: $line$(note_for "$id")"
     elif [ -z "$idx" ] && [ "$mode" = SCAN ]; then
-      report FAIL "$id" "$tbl is SCANNED and the plan names NO index — every row is visited: $line"
+      report FAIL "$id" "$tbl is SCANNED and the plan names NO index — every row is visited: $line$(note_for "$id")"
     elif [ -z "$idx" ]; then
       report NONE "$id" "$tbl access names no index and is not a recognisable scan — read it by hand: $line"
     elif [ "$want" != '*' ] && ! printf '%s' "$idx" | grep -qE "^(${want})\$"; then
@@ -882,7 +902,7 @@ else
       # the current walk stops at LIMIT matches.
       # So "names an index" is a CORRELATE again, one level in from where this gate
       # started, and without this field the weaker fix reports green.
-      report FAIL "$id" "$tbl is served by index $idx but the seek does NOT bound the cursor column '$bound' — so rows do not arrive in cursor order, LIMIT cannot stop early, and every row matching the filter is visited on every request (O(partition), not O(page)): $line"
+      report FAIL "$id" "$tbl is served by index $idx but the seek does NOT bound the cursor column '$bound' — so rows do not arrive in cursor order, LIMIT cannot stop early, and every row matching the filter is visited on every request (O(partition), not O(page)): $line$(note_for "$id")"
     elif [ -n "$drives" ] && [ -z "$pos_d" ]; then
       report NONE "$id" "$tbl is served by index $idx, but no access line for '$drives' was found, so the JOIN ORDER could not be established — and join order is what separates a linear read from a quadratic one here. NOT verified."
     elif [ -n "$drives" ] && [ "${pos_t:-0}" -ge "${pos_d:-0}" ]; then
