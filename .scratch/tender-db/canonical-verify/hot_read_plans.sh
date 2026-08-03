@@ -598,6 +598,33 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # traversal, not a seek, so the report SAYS SO rather than blurring the two.
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
+# B7 / B8 / B9 ARE EXPECTED **RED** TODAY. THAT IS THE POINT OF THEM.
+#   These three are the 117 class: a plain `<pk> > ?` cursor under `ORDER BY <pk>`, so
+#   the planner drives from the table in rowid order and filters per row — the same
+#   defect as `lots_of`, measured live at 22.0s (`/v1/organizations?country=`) and
+#   99.08s (`?kind=`), unauthenticated and user-reachable.
+#
+#   THE PROPERTY IS `cursor-bound`, NOT AN INDEX NAME, and that is what makes them
+#   sound where the first attempt at B7 was not. An earlier B7 asserted merely
+#   "index-served"; proj-fix then measured the proposed row-value fix at 4,209x SLOWER
+#   (151,648x at prod scale) while plumping the plan from a walk to a seek — so that B7
+#   would have flipped GREEN over the regression. `cursor-bound` demands the seek carry
+#   `id>?`, which is red for the rowid walk AND red for the row-value shape, because the
+#   row-value form loses the `id` bound and re-enters the partition from its start.
+#   `expected-index` is `*` deliberately: naming the future index would couple this gate
+#   to whatever proj-fix calls it, and the property is what matters, not the name.
+#
+#   NO `applies-when` GUARD, deliberately. Guarding them on the fix's commit would mean
+#   somebody must add them in the window between that commit and its deploy, or the
+#   class ships unchecked — the same "nobody remembered" failure that produced B5, just
+#   relocated. Unguarded they are red today (truthfully), and they go GREEN BY
+#   THEMSELVES the moment an index giving both the seek and the id ordering is the
+#   serving rev. Nobody has to act at any particular minute.
+#
+#   So a red run is expected until 117 lands. If that red is unwelcome, the remedy is
+#   the fix; silencing the check is how the 22.0s read survived unnoticed in the first
+#   place.
+
 # B7 WAS ADDED, THEN SUSPENDED (2026-08-03). ITS EXPECTATION WAS UNSOUND.
 #   Kept as the worked example, because the mistake is subtle and mine.
 #   `/v1/organizations?country=` was measured at 22.0s cold on prod (run-driver,
@@ -745,6 +772,9 @@ B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_part
 B3~tenders~tenders~tenders_procedure_key~~~~SELECT id FROM tenders WHERE procedure_key = 'x'
 B4~tenders~tenders~tenders_island~~~~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
 B6~tenders~tenders~tenders_current_published~~~~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
+B7~organizations~o~*~~id~~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
+B8~notices~notices~*~~id~~SELECT id, source, publication_id, content_hash, profile, declared_version, member_path, ingested_at, parse_state, published_at, dispatched_at FROM notices WHERE 1 = 1 AND source = 'ted' AND id > 0 ORDER BY id LIMIT 1000
+B9~tenders~t~*~~id~~SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at, v.publication_id, v.notice_subtype, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND 1 = 1 AND s.field = 'title' ORDER BY (s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND 1 = 1 ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND 1 = 1 AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND 1 = 1 AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND 1 = 1 AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT COUNT(*) FROM tender_version_lots l WHERE l.tender_id = t.id AND l.seq = v.seq), v.dispatched_at, (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'), (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts') FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) WHERE 1 = 1 AND t.source = 'ted' AND t.id > 0 ORDER BY t.id LIMIT 1000
 SQLS
 )
 
