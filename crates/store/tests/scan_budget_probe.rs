@@ -32,6 +32,82 @@ async fn drain(conn: &turso::Connection, sql: &str) {
     while rows.next().await.unwrap().is_some() {}
 }
 
+/// Prediction 2, and the one that decides whether `/v1/sql`'s streaming cap is real.
+///
+/// `crates/app/src/v1/sql.rs` documents that "turso yields at every ROW boundary, so a
+/// long streaming query is dropped between rows and its connection freed (verified)".
+/// run-driver reads the engine differently: it yields on `TursoStatusCode::Io` — an
+/// **IO** boundary. Over cold pages the two coincide often enough not to matter; over
+/// pages already in cache a `next()` may return rows without ever going to IO, and
+/// then the in-task timeout has no more chance to fire than on the aggregate.
+///
+/// If that is right, "streaming is dropped between rows" holds only while the data is
+/// COLD, the `(verified)` claim was established on exactly that case, and the endpoint
+/// is weaker than its own documentation. Which is why this runs the identical query
+/// twice — the same statement giving opposite answers by cache state is the finding,
+/// and a single run would have picked one and called it the behaviour.
+///
+/// Note `tokio`'s cooperative budget is a third possibility neither of us raised: it
+/// forces a yield after ~128 ready-polls, which could let the timeout fire even with
+/// no IO at all. That would make streaming droppable when warm for a reason unrelated
+/// to turso. Measuring distinguishes all three.
+#[tokio::test]
+#[ignore = "probe: does a WARM streaming query yield often enough to be aborted?"]
+async fn a_streaming_query_warm_and_cold() {
+    let path = format!("/tmp/tender-db-stream-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    store::Db::open(&path).await.unwrap();
+    let db = turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = db.connect().unwrap();
+    drain(&conn, "PRAGMA journal_mode = WAL").await;
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+
+    conn.execute("BEGIN", ()).await.unwrap();
+    for i in 0..ROWS {
+        if i > 0 && i % 500_000 == 0 {
+            conn.execute("COMMIT", ()).await.unwrap();
+            conn.execute("BEGIN", ()).await.unwrap();
+        }
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+             VALUES (?, 'DE', 'vat', ?, ?, 0, 1700000000)",
+            (Value::Integer(i), Value::Text(format!("{i:012}")), Value::Text(format!("org {i}"))),
+        ).await.unwrap();
+    }
+    conn.execute("COMMIT", ()).await.unwrap();
+
+    // Streams rows the whole way — the shape the doc comment says is droppable.
+    const STREAM: &str = "SELECT o.id, o.name FROM organizations o WHERE o.id > 0 ORDER BY o.id";
+
+    for pass in ["cold-ish (first touch)", "warm (second touch)"] {
+        let t = Instant::now();
+        let outcome = tokio::time::timeout(BUDGET, async {
+            let mut rows = conn.query(STREAM, ()).await.unwrap();
+            let mut n = 0u64;
+            while rows.next().await.unwrap().is_some() {
+                n += 1;
+            }
+            n
+        })
+        .await;
+        let elapsed = t.elapsed().as_secs_f64();
+        match outcome {
+            Err(_) => println!(
+                "  {pass:<24} budget FIRED after {elapsed:.4}s -> a streaming query CAN be aborted"
+            ),
+            Ok(n) => println!(
+                "  {pass:<24} completed {n} rows in {elapsed:.4}s -> NOT abortable, budget never fired"
+            ),
+        }
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 #[tokio::test]
 #[ignore = "probe: task 5 scan-budget feasibility; run with --ignored"]
 async fn current_thread_runtime() {
