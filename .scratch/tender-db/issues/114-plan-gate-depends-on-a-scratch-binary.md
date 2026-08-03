@@ -344,6 +344,71 @@ the system and nothing noticing.
    planning yesterday's SQL, and it needs no box, no turso and no snapshot.
 5. 112 consumes the fixture instead of its hand-written `READS` table.
 
+### PROTOTYPED AND RUN, 2026-08-03 (sdk-vendor) — 88 candidates, 56 distinct, 24 filter-specific
+
+Built end-to-end in a detached worktree at `2ea1b23` and run. The seam patch is checked
+in beside the gate as `canonical-verify/read-statement-seams.patch` — it splits
+`tenders`/`organizations`/`notices` the way `2ea1b23` split `lots` (body into a
+`*_query` returning the unrun `Query`, plus a `#[cfg(test)] *_statement`). Pure
+function-boundary extraction: **all 56 `store` lib tests pass unchanged**, including
+proj-fix's own plan tests.
+
+Numbers came out exactly as the design predicted: 11 filters x 2 cursor positions x 4
+collections = **88 candidates**, deduplicating by emitted text to **56 distinct
+statements**, of which **24 are filter-specific** (the rest are a filter the builder
+ignores, emitting the unfiltered statement byte-for-byte).
+
+**A trap the prototype hit, which any fixture format inherits.** The builders carry
+`--` comments INSIDE their SQL. Flatten a statement to one line for a line-delimited
+fixture and the first comment silently comments out everything after it; turso then
+rejects the whole statement as `"incomplete input"`. Quote-aware comment stripping is
+therefore mandatory in the extractor, not a nicety — and anyone hand-syncing B2-B6 by
+copy-paste is one collapsed newline away from planning a truncated statement.
+
+#### What the plans say (local lab, turso 0.7.0, `Db::open` catalogue + all deferred indexes)
+
+Index-served drivers — 3 of the 24:
+
+| endpoint | driver |
+|---|---|
+| `/v1/lots?tender=` | `SEARCH vl USING INDEX sqlite_autoindex_tender_version_lots_1` — issue 115's fix |
+| `/v1/notices?kind=` | `SEARCH notices USING INDEX notices_profile (profile=?)` |
+| `/v1/lots?source=` | `SEARCH t USING INDEX tenders_island (source=?)` |
+
+The other 21 filter-specific statements drive by a rowid access on the outer table.
+**That is a candidate list, not 21 defects**, and the reason is the same ambiguity this
+gate was built around: `SEARCH o USING INTEGER PRIMARY KEY (rowid=?)` is printed for a
+genuine one-row lookup AND for a full walk. `/v1/organizations?buyer=` is the clean
+example — the filter is `o.id = ?`, so that rowid access is a point lookup and there is
+nothing wrong with it. Plan text alone cannot separate the two; the statement's
+semantics decide. Cross-check that the lab is honest: `/v1/organizations?country=`
+plans as a rowid access here even with `organizations_identity` present — which is
+exactly what run-driver measured on prod at 22.0s. Adding the three projection-built
+indexes (`organizations_identity`, `changes_entity_cursor`, `notices_unprojected`)
+changed **zero** verdicts, so none of these are artefacts of a thin local catalogue.
+
+**This is precisely why the triage step is load-bearing rather than bureaucracy.** A
+mechanical sweep can enumerate the set and produce the plans; only a human (or a clock)
+can say which rowid access is a lookup, which is a walk with a reachable green, and
+which is unservable as the query is shaped today.
+
+#### A second finding, of a different kind: silently ignored filters
+
+15 of the 88 candidates are a query parameter the API **accepts and then ignores**,
+because `Params::filter` builds one `Filter` for every collection and each builder uses
+only the fields meaningful to it. `/v1/organizations?cpv=`, `?status=`, `?min_value=`,
+`?max_value=`, `?winner=`, `?source=`, `?tender=`, `/v1/notices?buyer=`, `?country=`,
+`?cpv=`, `?winner=`, `?status=`, `?min_value=`, `?max_value=`, `?tender=` and
+`/v1/tenders?tender=` all emit the UNFILTERED statement byte-for-byte.
+
+That is a correctness question, not a plan question: a client asking for
+`organizations?cpv=4521` gets every organization and no indication that its filter was
+dropped. It may well be deliberate (`organizations`' doc comment says only `country`
+and `kind` narrow it), but "accepted and silently ignored" and "rejected as a bad
+request" are very different contracts. **Filed here as an observation for triage, not
+asserted as a defect** — and worth noting that it was found by enumerating the set
+mechanically, which is the entire argument of this part.
+
 ### Sequencing note (2026-08-03, sdk-vendor)
 
 Step 1 touches `tenders`/`organizations`/`notices` — the exact functions proj-fix is
