@@ -145,6 +145,24 @@
 #      not carry the conclusion off that axis. The axes that have bitten this project
 #      are: data distribution, engine and version, concurrency, and scale.
 #
+#      AND A SAMPLE IS NOT A BOUND (proj-fix, the same day, on themselves). The index
+#      build's bytes-per-row was fixed at 45 from two consecutive measurements that
+#      both said 45 — the agreement was read as confirmation. The series turned out to
+#      be 41 / 45 / 45 / 48, so 45 was the MIDDLE of the range, which is where a
+#      typical value sits and exactly where a safety cap must not. At 48 the cap
+#      implied 2.11 GB against a 2 GB budget.
+#      No number of agreeing samples establishes a worst case: repetition measures the
+#      centre of a distribution and says nothing about its tail. "It agreed N times,
+#      therefore it is stable" is the whole family — a check evaluating TYPICAL
+#      behaviour supporting a claim about the WORST.
+#
+#      THE FIX IS ALSO WORTH COPYING: keep the margin OUT of the constant. Padding
+#      bytes-per-row to 55 would have made the cap safe AND hidden the correction —
+#      the 48 would have been absorbed instead of contradicting anything. Leaving the
+#      constant a bare empirical fact, with the policy margin held separately, is what
+#      let a later measurement surface as a contradiction. A padded number is
+#      unfalsifiable: it cannot be wrong, so it can never be corrected.
+#
 # WHAT THIS GATE CANNOT DETECT, AT ALL, EVER (rule 6, and the boundary of the file)
 #   A plan says which ACCESS PATH was chosen. It does not say how many rows that path
 #   touches, and the cost of a read is rows x work-per-row. So an entire class of
