@@ -2,7 +2,19 @@
 # read-checked-set-generator.patch (issue 114 part 2), applied on a rev with the
 # statement seams, then: cargo test -p store --lib emit_checked_set -- --nocapture
 #
-# generated-from-rev	b70971a
+# generated-from-rev	3c5ae52
+# Re-generated at 3c5ae52 (the 117/111 deploy tip) and compared against the b70971a
+# output: 44 pairs, 0 added, 0 removed, 0 CHANGED — byte-identical, despite read.rs
+# gaining 174 lines in between. The short-circuit is a pre-query guard; it does not
+# alter the statements the builders emit. The stamp is bumped because it was VERIFIED
+# current, not to silence the staleness check.
+#
+# NOTE the staleness check (section E diffs read.rs between this rev and the serving
+# rev) is deliberately COARSER than the set it guards: it fires on any read.rs change,
+# including ones like this that leave every statement identical. That is the safe
+# direction — it says "I cannot establish this is current" rather than guessing — but
+# it does mean a no-input after any read.rs edit until someone re-runs the generator.
+# The remedy is cheap and documented; do not "fix" it by loosening the check.
 # The cursor axis (after=0 vs after>0) is omitted: it is a BOUND PARAMETER in every
 # builder, so it never changes the statement text. Verified, not assumed — the
 # generator emits both and all 44 pairs matched.
