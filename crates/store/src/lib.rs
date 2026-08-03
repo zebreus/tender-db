@@ -139,20 +139,6 @@ const SCHEMA: &str = "
     -- open after this change builds it once (tens of seconds; the process/query
     -- rewrite is the actual DoS fix, this is FK-hygiene insurance).
     CREATE INDEX IF NOT EXISTS notices_fetch_id ON notices(fetch_id);
-    -- Issue 117: the `(source, id)` index that lets `/v1/notices?source=` use BOTH the
-    -- filter and the page cursor as index bounds. `UNIQUE(source, publication_id,
-    -- content_hash)` cannot: its trailing columns are not `id`, so seeking `source`
-    -- yields the slice out of id order and `ORDER BY id` sorts all ~13.1M `ted` rows
-    -- before `LIMIT`. Without any usable index the read walks instead, which is the
-    -- measured 226s+ on `?source=` matching nothing — unauthenticated.
-    --
-    -- In the schema batch, not a deferred list, and deliberately: `notices` is never
-    -- dropped by a rebuild, so a schema-batch index is durable, and being here means it
-    -- builds itself on the first open after deploy rather than waiting for someone to
-    -- fire `Reindex` (issue 111). Same trade `notices_fetch_id` above already makes;
-    -- a plain non-unique index over 27.35M rows, so tens of seconds once, not the
-    -- UNIQUE-at-scale hang of issue 62.
-    CREATE INDEX IF NOT EXISTS notices_source_id ON notices(source, id);
 
     -- The only failure mode of ingestion (ADR-0004): a notice with unmapped or
     -- unrecognised content is quarantined whole, never partially imported. The

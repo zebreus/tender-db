@@ -764,10 +764,18 @@ impl Supervisor {
                 // this rebuilds only the missing deferred indexes without touching the
                 // fold. Pair the TRUNCATE checkpoint to reclaim the build's WAL tail,
                 // exactly as the rebuild's end-of-fold index build does (project.rs).
+                // SEQUENTIALLY, and that is a hard constraint rather than style:
+                // run-driver measured turso's CREATE INDEX peak RSS as LINEAR in row
+                // count (~45 B/row — 366 MiB at 8.13M rows, 1.07 GB at 25.3M, no spill
+                // threshold between them). Concurrent builds add their peaks, so
+                // organizations + notices together would be ~2.3 GB against a ~4 GB
+                // bounded-memory ceiling on a box still carrying issue 57's swap
+                // band-aid. One at a time.
                 self.db.build_organization_indexes().await.map_err(|e| e.to_string())?;
                 self.db.build_tender_indexes().await.map_err(|e| e.to_string())?;
+                self.db.build_notice_indexes().await.map_err(|e| e.to_string())?;
                 let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
-                Ok("deferred org + tender indexes rebuilt".into())
+                Ok("deferred org + tender + notice indexes rebuilt".into())
             }
             Spec::Refold { profiles, expect } => {
                 let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();

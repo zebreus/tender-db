@@ -1448,6 +1448,35 @@ impl Db {
         ("organizations_kind_id", "organizations(identifier_kind, id)"),
     ];
 
+    /// The notice indexes that are deferred rather than schema-batch.
+    ///
+    /// `notices(source, id)` (issue 117) started in the schema batch, next to
+    /// `notices_fetch_id`, because `notices` is never dropped by a rebuild so a
+    /// schema-batch index is durable and needs no operator step. Moved here once the
+    /// build was measured: run-driver clocked `CREATE INDEX` at **413 s over 25.3M
+    /// rows on the real 441 GB file**, so ~27.4M notices is ~7 minutes — and the
+    /// schema batch runs inside `Db::open`, which would make that a SEVEN-MINUTE
+    /// BLOCKING BOOT on the deploy restart. That is precisely the start-up regression
+    /// issues 82/83 removed, and `IF NOT EXISTS` only makes it once rather than never.
+    ///
+    /// `notices_fetch_id`'s comment estimates "tens of seconds" for its own build on
+    /// 3.5M rows, which is where the schema-batch placement was reasonable; at 27.4M
+    /// it no longer is. The estimate did not scale, and nobody re-checked it — the
+    /// reason this one was measured instead of reasoned by analogy.
+    const DEFERRED_NOTICE_INDEXES: [(&'static str, &'static str); 1] =
+        [("notices_source_id", "notices(source, id)")];
+
+    /// Build the deferred notice indexes. Separate from the org and tender builders
+    /// because `notices` has neither's lifecycle: it is never dropped by a rebuild, so
+    /// these are build-once rather than rebuild-after-fold.
+    pub async fn build_notice_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        for (name, cols) in Self::DEFERRED_NOTICE_INDEXES {
+            conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
+        Ok(())
+    }
+
     /// Which deferred indexes are absent from this database.
     ///
     /// Issue 111: the deferred indexes have no guaranteed builder. They are created at
@@ -1473,6 +1502,7 @@ impl Db {
         Ok(Self::DEFERRED_TENDER_INDEXES
             .iter()
             .chain(Self::DEFERRED_ORG_INDEXES.iter())
+            .chain(Self::DEFERRED_NOTICE_INDEXES.iter())
             .map(|(name, _)| *name)
             .filter(|name| !present.contains(*name))
             .map(str::to_owned)

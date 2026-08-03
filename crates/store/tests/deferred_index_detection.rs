@@ -45,13 +45,14 @@ async fn a_fresh_database_reports_its_deferred_indexes_missing() {
     for name in ["organizations_country_id", "organizations_kind_id", "tenders_source_id"] {
         assert!(missing.contains(name), "{name} must be reported missing on a fresh db");
     }
-    // `notices_source_id` is in the SCHEMA BATCH, not a deferred list — it builds
-    // itself at open. If it ever shows up as missing, it has been moved into a
-    // deferred set and has silently acquired the issue-111 obligation.
+    // `notices_source_id` is deferred TOO, and deliberately: it was in the schema
+    // batch until the build was measured at 413s over 25.3M rows on the real file,
+    // which would have made `Db::open` block for ~7 minutes on the deploy restart —
+    // the start-up regression issues 82/83 removed.
     assert!(
-        !missing.contains("notices_source_id"),
-        "notices_source_id is schema-batch and must exist at open; if this fails it \
-         has been moved to a deferred list and now needs a builder like the rest"
+        missing.contains("notices_source_id"),
+        "notices_source_id must be deferred, not schema-batch: building it inside \
+         Db::open is a multi-minute blocking boot at prod scale"
     );
 
     clean(&path);
@@ -66,11 +67,12 @@ async fn building_them_empties_the_report() {
 
     db.build_organization_indexes().await.unwrap();
     db.build_tender_indexes().await.unwrap();
+    db.build_notice_indexes().await.unwrap();
 
     let after = db.missing_deferred_indexes().await.unwrap();
     assert!(
         after.is_empty(),
-        "after running BOTH builders nothing may still be reported missing, or the \
+        "after running EVERY builder nothing may still be reported missing, or the \
          detector's list has drifted from what the builders actually create — the \
          failure that makes a green meaningless. Still missing: {after:?}"
     );
@@ -79,6 +81,7 @@ async fn building_them_empties_the_report() {
     // detector must stay quiet on a second pass rather than re-reporting work done.
     db.build_organization_indexes().await.unwrap();
     db.build_tender_indexes().await.unwrap();
+    db.build_notice_indexes().await.unwrap();
     assert!(db.missing_deferred_indexes().await.unwrap().is_empty());
 
     clean(&path);
@@ -89,6 +92,7 @@ async fn dropping_one_index_is_noticed() {
     let (path, db) = open("dropped").await;
     db.build_organization_indexes().await.unwrap();
     db.build_tender_indexes().await.unwrap();
+    db.build_notice_indexes().await.unwrap();
     assert!(db.missing_deferred_indexes().await.unwrap().is_empty());
 
     // A rebuild strips the tender indexes; this is the state a truncated or
