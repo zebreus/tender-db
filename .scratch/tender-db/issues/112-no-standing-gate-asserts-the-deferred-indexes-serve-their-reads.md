@@ -567,6 +567,34 @@ from a statement of known provenance, every time it runs.
   read which no longer exists. That is not a theoretical failure mode in this file.
 * **The gate is structurally blind to issue 115** — see the B7 note above, now
   with the plan text from this issue's own run as proof rather than argument.
-* **Section A's catalogue view** was fixed (`1df8ef3`) after run-driver found it
-  reading prod's main file while a 4.5 GB WAL went unread. Escaped the run by
-  timing alone.
+* **Section A's catalogue view** was fixed (`1df8ef3`). Attribution corrected by
+  run-driver against his own report, and worth keeping accurate: he measured prod's
+  `-wal` at 4.5 GB at 08:43, but the app checkpointed it at 08:49, so **both of his
+  runs read a complete catalogue** — the 21/21 was never at risk and section A was
+  not, in fact, reading a stale view that day. The defect is real for the *standing*
+  gate; what demonstrates it is the purpose-built DB whose index lives only in WAL
+  frames, on which the committed gate reported a serving index as ABSENT.
+  The luck point survives and sharpens: gigabytes at 08:43, zero at 08:49, and
+  nothing in the old output said which view a run had used. That is what the
+  `catalogue read:` line now makes legible.
+
+## The clean run — 2026-08-03 09:11, gate at `1df8ef3`
+
+`29 pass, 0 fail, 0 no-input`, exit 0. `A:notices_unprojected` passes with its
+predicate carried through; B1/B1b/C1 verdicts unchanged from the canonical run.
+B6 now reads:
+
+```
+PASS B6  tenders read by an ordered FULL TRAVERSAL of index tenders_current_published
+         (SCAN, not a seek) — correct only while the read's ORDER BY matches that
+         index and a LIMIT stops it early:
+         1 | 0 | 0 | SCAN tenders USING COVERING INDEX tenders_current_published
+```
+
+That line is the reason the SCAN fix was not "make SCAN fail": the verdict is a pass,
+and the message states the condition under which the pass is valid — strictly more
+than a boolean could carry, and it survives someone later removing the `LIMIT`.
+
+Section A reported `catalogue read: main file, immutable=1 (no -wal frames to miss)`,
+which is the provenance line doing its job: it says which of the two views produced
+the verdicts, so this run can be told apart from one taken six minutes earlier.
