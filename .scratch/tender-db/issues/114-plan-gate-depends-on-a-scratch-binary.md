@@ -232,6 +232,125 @@ probably the reason to do them together.
   being incapable of failing; "it goes green on a healthy DB" is not evidence that a
   check works, and this acceptance line is what distinguishes the two.
 
+## Part 2, second half — the SET of checked reads is derivable too, and deriving it is the whole point
+
+Everything above fixes *how* each check states its query. It does not fix **which queries
+get a check at all**, and that is where the day's most expensive miss actually came from.
+
+112's six checks were enumerated **by recall**. The consequence, measured on 2026-08-03:
+
+* B5 asserted a read issue 19 had **deleted** — a check on a query nothing issues.
+* Nothing at all asserted `read::organizations`, which walked 25.3M rows on an
+  unauthenticated public endpoint (22.0s with `?country=`, 99.08s with `?kind=`).
+
+Same table, same file, same sitting. One check pointed at a corpse while the live defect
+of exactly this gate's target class sat uncovered. Fixing each check's SQL would not have
+found it: **a paraphrase can be corrected, a missing check cannot.**
+
+### The derivation anchor: `read_items`
+
+There is already a single exhaustive statement of what the paginated read set IS —
+`app/src/v1/mod.rs`:
+
+```rust
+pub async fn read_items(collection: Collection, conn, filter: &Filter, scope: Scope) -> …
+    match collection {
+        Collection::Tenders       => read::tenders(conn, filter, scope),
+        Collection::Lots          => read::lots(conn, filter, scope),
+        Collection::Organizations => read::organizations(conn, filter, scope),
+        Collection::Notices       => read::notices(conn, filter, scope),
+    }
+```
+
+Its own doc comment says it: *"the single evaluation point for the filter predicates: the
+list endpoint, the SSE snapshot and the SSE diff probe all come through here."* Four
+variants, four builders, and **the compiler enforces the exhaustiveness of that match**.
+
+So the completeness guarantee should be a compile error, not a convention and not a grep:
+key the gate's statement registry by `Collection` and build it with a `match` on it. Add a
+fifth collection and the registry **fails to build** until it is covered. That is strictly
+stronger than any source-text count (`grep "Scope::Page { after, limit }"` and friends),
+which a rename or a rustfmt change can silently defeat.
+
+Reads *outside* that match are not covered by this derivation and must be named as such
+rather than assumed absent — `changes_since` (its own `cursor`/`limit`, not a `Scope`),
+and the `tender_detail` fan-out (`results_of`, `lots_of`, the bid-parties read). They need
+their own rule; what they must not have is silence.
+
+### A read is not a statement — the organizations lesson, generalised
+
+Coverage per *read* would still have missed half of what was measured. One builder emits a
+different statement per filter, and the plans differ in kind:
+
+| statement | plan | measured |
+|---|---|---|
+| `organizations` + `country` | rowid walk; a row-value cursor gives it `organizations_identity` | 22.0s, **fixable** |
+| `organizations` + `kind` | no index can serve it — `organizations_identity` is `(country, identifier_kind, identifier)` and `kind` has no leading `country` | 99.08s, **unservable as schema'd** |
+
+Same function, same table, one check each would have been wrong. The unit of coverage is
+therefore **(collection × filter shape × cursor position)**, not the read.
+
+Every one of those is publicly reachable: `Params` accepts `source, country, cpv, buyer,
+winner, status, min_value, max_value, kind, tender` on any collection endpoint, plus
+`cursor`. Full cross-product is 2^10 per collection and pointless; the bounded enumeration
+that actually catches this defect class is
+
+* the **empty** filter, plus **each single filter alone** (11 per collection), and
+* each of those at **`after = 0` and `after > 0`** — a first-page-only assertion certifies
+  a half-fix as whole (measured: `/v1/lots?tender=&after=N` stayed at 2237ms under an
+  `after == 0`-only fix),
+
+= 88 candidate statements, **deduplicated by emitted text** (a filter the builder ignores
+produces byte-identical SQL, so the distinct set is far smaller). 88 EQP compiles is
+nothing; the cost of this enumeration is entirely in the triage below, not in running it.
+
+Documented blind spot, to be logged rather than silently dropped: filter **combinations**.
+They matter only where a composite index could be unlocked by a second predicate. Out of
+scope for now, and said out loud, per "no silent caps".
+
+### Triage — enumeration must not resurrect the cry-wolf problem
+
+Mechanical enumeration collides head-on with the gate's rule 4 (*a check needs an
+achievable pass state*). `?kind=` is precisely the case: red, with **no reachable green**,
+because no index on the table can serve it. Enumerate everything and assert everything and
+the gate acquires a permanent alarm — which is how gates get switched off, and then catch
+nothing at all.
+
+So each **distinct** derived statement gets exactly one of three dispositions, and the
+disposition is recorded next to it:
+
+| disposition | meaning | report state |
+|---|---|---|
+| **asserted** | an index-served plan is reachable | pass / fail, as today |
+| **known-unservable** | no access path exists under the current schema; tracked as a defect, not as a gate failure | reported, never counted as fail |
+| **excluded, with reason** | e.g. correct-by-design full scan (the `org_of` preload) | reported once, with the reason |
+| *(unclassified)* | a statement the enumeration produced that nobody has dispositioned | **no-input — LOUD**, never silence |
+
+The last row is the load-bearing one. A newly-added filter or collection must arrive as a
+*noisy unknown*, because the failure mode this whole part exists to fix is a read entering
+the system and nothing noticing.
+
+### Implementation shape
+
+1. `#[cfg(test)] pub(crate) fn <read>_statement(filter, scope) -> (String, Vec<Value>)` per
+   builder — `read::lots_statement` (proj-fix, `2ea1b23`) is the prototype and the pattern:
+   the body moves into a `*_query` that returns the assembled `Query` unrun, `lots()` calls
+   it, so test and production share **one** builder rather than a copy.
+2. A registry built by `match` on `Collection`, so a new collection is a **build failure**.
+3. An enumerator that walks (collection × single filter × cursor position), inlines each
+   `?` with the value the builder itself bound, dedupes by text, and writes the set as a
+   fixture.
+4. A test that fails when the checked-in fixture is **stale** — that is what stops the gate
+   planning yesterday's SQL, and it needs no box, no turso and no snapshot.
+5. 112 consumes the fixture instead of its hand-written `READS` table.
+
+### Sequencing note (2026-08-03, sdk-vendor)
+
+Step 1 touches `tenders`/`organizations`/`notices` — the exact functions proj-fix is
+changing for the DoS-class fixes. The seam is a pure function-boundary extraction, so the
+cheapest and least conflict-prone moment to add it is **inside those fixes**, not in a
+parallel branch afterwards. `lots` already has its seam and needs nothing.
+
 ## Note
 
 Filed because 112's plan half is the part that catches the defect class nothing else sees,

@@ -721,7 +721,67 @@ own answer, and B7 should not be added until there is one, or it becomes the sta
 red described above.
 
 
-## SCHEDULED: B1/B1b must be re-baselined the moment 115 deploys
+## DONE (2026-08-03): B1/B1b re-baselined for 115 — as a BUILD-GUARDED PAIR, not a swap
+
+Landed. What was scheduled below was "swap B1 when 115 deploys"; what shipped is
+different in one important way, and the difference is worth reading before the next
+time a read's correct plan changes.
+
+**A swap would have been wrong for whichever rev was not serving.** Section A derives
+its expectation from the deployed build's own `canonical.rs`; the `READS` table did
+not — it was a flat literal that asserted ONE build's shape whatever was running. So
+overwriting B1 makes the gate red against a healthy pre-115 deployment, and leaving it
+makes the gate green against a shape nothing emits. Both are the drift 114 is about.
+
+So `READS` rows can now carry an **`applies-when`** field naming a commit the row
+depends on (`+sha` / `-sha`), evaluated with `git merge-base --is-ancestor` against the
+rev section 0 already establishes **from the service**. Both B1 pairs are present:
+
+```
+B1 ~ lots               ~ l  ~ sqlite_autoindex_lots_1              ~      ~ -2751ce3 ~ <1830d50's SQL>
+B1 ~ tender_version_lots~ vl ~ sqlite_autoindex_tender_version_lots_1~ l|lots ~ +2751ce3 ~ <2ea1b23's SQL>
+```
+
+Exactly one applies; the other prints **n/a with the reason** and is counted in the
+summary (`n/a (wrong build)`). It is never silent — a check that quietly disappears is
+indistinguishable from one that was never written, which is how B5 survived.
+
+A commit sha is a fact about history and cannot drift, so this is not the paraphrasing
+that 114 forbids; the SQL beside it is still extracted from that build's own builder.
+The end state is still 114 part 2 (a fixture generated FROM the deployed rev).
+
+**The discriminator is the DRIVING TABLE.** `SEARCH l USING INTEGER PRIMARY KEY
+(rowid=?)` appears in both plans and means opposite things — outer loop (13.2M walk)
+before, one-row inner lookup after. And `vl` is index-served in BOTH, so an
+expected-index check alone would call the walk green. The new row asserts
+`drives-before = l|lots`, the same discriminator proj-fix's `driver()` helper uses.
+
+**Falsified in both directions before the box run** (local, workspace turso `=0.7.0`):
+
+| input | verdict |
+|---|---|
+| post-115 statement, intact catalogue | PASS — "drives the join ahead of `l\|lots` (line 3 before 4)" |
+| **pre-115** statement through the new row | **FAIL — "JOIN ORDER INVERTED: `l\|lots` is read FIRST (line 1)"** |
+| post-115 statement, `tender_version_lots` PK removed | **FAIL — "is SCANNED and the plan names NO index"** |
+| any of the above | B2/B3/B4/B6 stayed green — specificity |
+
+Guard checked both ways too: at `TDB_REV=1830d50` the pre-115 pair runs and passes and
+the post-115 pair is n/a; at `2ea1b23` the reverse.
+
+**Section C was NOT re-based — because it was measured rather than assumed.** The
+pre-115 `lots_of` statement still compiles and still returns `SEARCH l USING INTEGER
+PRIMARY KEY (rowid=?)` on the post-115 catalogue, so it is still a known-bad and still
+does its only job. Re-basing a control whenever the real read moves couples it to the
+thing it exists to be independent of. The retirement rule stands unchanged: retire only
+if the old shape stops compiling or stops walking.
+
+**Still outstanding: the box run.** Everything above was planned locally through the
+workspace's pinned turso against a `Db::open` catalogue plus the deferred indexes
+derived from `canonical.rs`. That is the same engine VERSION, not the deployed process
+or the prod catalogue. The verdict of record is the on-box run once `2751ce3` is
+serving; if the two ever disagree, the box wins and the disagreement is the finding.
+
+## (superseded, kept for the reasoning) SCHEDULED: B1/B1b must be re-baselined the moment 115 deploys
 
 115 changes the tender-scoped read's **driving table** from `lots` to
 `tender_version_lots` (the containment builder). B1/B1b assert:

@@ -106,6 +106,9 @@
 #   fail     the plan SCANs, or a declared index is missing or has wrong columns
 #   no-input the expectation or the observation could not be established at all
 #            (unknown build, no plan engine, unreachable DB) — LOUD, never a pass
+#   (n/a is not a fourth verdict: it says a row does not describe the BUILD that is
+#    serving — see `applies-when`. It is printed and counted, never silent, because
+#    a check that quietly disappears looks exactly like one that never existed.)
 #
 # INPUTS
 #   TDB_SNAPSHOT=/path/db     read sqlite_master with stock sqlite3 (metadata only)
@@ -220,16 +223,82 @@
 #   If C ever goes GREEN, every B verdict in that run is void: the probe has
 #   stopped discriminating (wrong DB, wrong engine, stats appeared), and a B1
 #   green would be the fourth false-green in this issue's story, not the fix.
+#
+# THE 115 RE-BASELINE — B1 NOW ASSERTS THE DRIVING TABLE (sdk-vendor, 2026-08-03)
+#   Issue 115 moved the tender-scoped lots read off `lots` and onto
+#   `tender_version_lots` (the containment shape). B1 was re-based onto it, and the
+#   re-base is NOT a string swap:
+#
+#     old B1: target `lots` / `l`,                 expect sqlite_autoindex_lots_1
+#     new B1: target `tender_version_lots` / `vl`, expect its PK autoindex,
+#             AND `drives-before = l|lots`
+#
+#   The `drives-before` half is the load-bearing one. Measured, both plans below are
+#   from the SAME probe and the SAME DB:
+#
+#     post-115 statement   SEARCH vl USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=?)   <- line 3
+#                          SEARCH l  USING INTEGER PRIMARY KEY (rowid=?)                                <- line 4
+#     pre-115 statement    SEARCH l  USING INTEGER PRIMARY KEY (rowid=?)                                <- line 1
+#                          SEARCH vl USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=?)   <- line 3
+#
+#   `vl` is index-served in BOTH. An index-name check alone would call the 13.2M-row
+#   walk GREEN. Only the join order separates them, which is why the row asserts it.
+#
+#   FALSIFIED IN BOTH DIRECTIONS, locally, before the box run:
+#     1. JOIN-ORDER SENSITIVITY. Feed the new B1 row the PRE-115 statement:
+#          FAIL B1 "JOIN ORDER INVERTED: 'l|lots' is read FIRST (plan line 1),
+#                   tender_version_lots only at line 3"
+#        while B2/B3/B4/B6 stayed green — sensitivity WITH specificity.
+#     2. INDEX SENSITIVITY. Plan against a DB whose `tender_version_lots` DDL has no
+#        `PRIMARY KEY (tender_id, seq, lot_id)`:
+#          FAIL B1 "is SCANNED and the plan names NO index"
+#        again with B2/B3/B4/B6 green.
+#     3. HEALTHY: post-115 statement on the intact catalogue -> PASS, "drives the
+#        join ahead of 'l|lots' (line 3 before 4)".
+#
+#   REPRODUCING IT WITHOUT THE BOX (this is also 114 part 1's dry run)
+#   The engine was the WORKSPACE's pinned turso — `turso ="=0.7.0"`, the same version
+#   the on-box probe pins — driven by a `#[cfg(test)] local_eqp_probe` in the store
+#   crate that plans statements from a file. Catalogue: a DB from `Db::open` (the real
+#   schema) plus the 10 `DEFERRED_TENDER_INDEXES` created from canonical.rs by the same
+#   derivation section A uses. Two traps worth recording, both cost time:
+#     * a mutant catalogue must be built by executing DDL THROUGH TURSO. A DB built by
+#       sqlite3 does not open here at all ("internal sequence backing table … is empty"),
+#       so the falsifier silently becomes a no-input rather than a red.
+#     * `.schema` output carries `sqlite_sequence` and `__turso_internal_*` objects that
+#       turso refuses to create by name. Filter them or the DDL aborts halfway and you
+#       are planning against a HALF-BUILT catalogue — which fails checks for a reason
+#       that has nothing to do with the read.
+#   This is a local cross-check, not a replacement for the box: the box run is what
+#   plans against the deployed engine and the prod catalogue. Two sources that agree
+#   are the point (114 part 1); if they ever disagree, the box wins and the disagreement
+#   is itself the finding.
+#
+# SECTION C NEEDED NO RE-BASE, AND THAT WAS CHECKED RATHER THAN ASSUMED
+#   The plan was to re-base the negative control onto the new shape's predecessor when
+#   115 landed. Measured instead: the pre-115 `lots_of` statement STILL COMPILES and
+#   STILL WALKS on the post-115 catalogue —
+#       SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+#   which is exactly and only what the control's retirement rule asks of it ("retire it
+#   only if the old shape stops compiling or stops walking"). A control's job is to be a
+#   known-bad this probe can still call bad; it does not need to be a query anyone runs.
+#   So it stays as it is. Re-basing it "to match 115" would have coupled the control to
+#   the thing it is supposed to be independent of.
 # ============================================================================
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
-PASS=0; FAIL=0; NOINPUT=0
+PASS=0; FAIL=0; NOINPUT=0; NA=0
 report() {
   case "$1" in
     PASS) PASS=$((PASS+1));       printf '  \033[32mPASS\033[0m %-6s %s\n' "$2" "$3";;
     FAIL) FAIL=$((FAIL+1));       printf '  \033[31mFAIL\033[0m %-6s %s\n' "$2" "$3";;
     NONE) NOINPUT=$((NOINPUT+1)); printf '  \033[33mNO-IN\033[0m %-6s %s\n' "$2" "$3";;
+    # n/a is NOT a fourth verdict — it says the row does not describe the build
+    # that is serving (see `applies-when`). It is printed and counted rather than
+    # skipped, because a check that silently vanishes cannot be told apart from one
+    # that was never written, and that is how B5 survived.
+    NA)   NA=$((NA+1));           printf '  \033[2mn/a  \033[0m %-6s %s\n' "$2" "$3";;
   esac
 }
 
@@ -423,7 +492,10 @@ fi
 #   `lots` access is under test.
 #
 # PROVENANCE OF THE SQL — B1/B1b ARE EXTRACTED, B2-B6 ARE STILL PARAPHRASES
-#   B1 and B1b are the literal text the DEPLOYED `lots_of` builder emits at
+#   There are TWO B1/B1b pairs, one per side of issue 115's deploy, selected by the
+#   `applies-when` guard. Both are extracted; neither is retyped.
+#
+#   THE PRE-115 PAIR (`-2751ce3`) is the literal text the `lots_of` builder emits at
 #   rev 1830d50 (the row-value-cursor fix). They were not retyped. Extraction,
 #   reproducible from this repo:
 #     git worktree add /tmp/w 1830d50
@@ -442,6 +514,21 @@ fi
 #   page, and 1830d50 rejected an `after == 0`-only fix precisely because that
 #   variant stayed at a measured 2237ms. A first-page-only assertion would certify
 #   a half-fix as whole.
+#
+#   THE POST-115 PAIR (`+2751ce3`) IS EXTRACTED THE SAME WAY, ONE SEAM BETTER.
+#   `2ea1b23` added `#[cfg(test)] read::lots_statement(filter, scope)`, which returns
+#   the SQL and params of the very `Query` that `lots()` runs — so the extraction is
+#   now a supported seam rather than a temporary patch in a throwaway worktree:
+#     git worktree add --detach /tmp/w 2ea1b23
+#     # in /tmp/w: a #[test] that calls
+#     #   read::lots_statement(&Filter { tender: Some(424_242), ..default() },
+#     #                        Scope::Page { after, limit: 1000 })
+#     # for after in [0, 49_377], inlining each `?` with the value it returned
+#     cargo test -p store --lib <that test> -- --nocapture
+#   Same two edits as above and no others: whitespace collapsed to one line, and each
+#   `?` replaced by the value THE BUILDER ITSELF bound ([424242, 424242, 0|49377, 1000]).
+#   Note the post-115 statement is shorter because 115 moved the six per-lot summary
+#   subqueries out of the row query into `summarise` — that is the fix, not a trim.
 #
 #   B2-B6 REMAIN HAND-WRITTEN APPROXIMATIONS of the shapes `read.rs` emits. They
 #   can DRIFT: change the query and the string here keeps planning the OLD shape,
@@ -525,18 +612,64 @@ echo "-- B. hot reads must be served by a real index (turso plans only)"
 #   does filter by country/kind), it must be EXTRACTED from that builder. Writing
 #   another statement by hand here is how B5 came to exist.
 
-# Fields separated by `~` (NOT `|`, which appears inside the expected-index
-# alternations below). id ~ table ~ alias ~ expected-index-regex ~ SQL
+# Fields separated by `~` (NOT `|`, which appears inside the alternations below).
+#   id ~ table ~ alias ~ expected-index-regex ~ drives-before ~ applies-when ~ SQL
 # The expected-index regex is matched against the index name turso reports; `*`
 # means "any real index is acceptable", used where more than one would serve.
+#
+# `applies-when` — WHY A ROW CAN BE BUILD-CONDITIONAL, AND WHY THAT IS NOT A HEDGE
+#   Section A derives its expectation from the DEPLOYED build's canonical.rs. This
+#   table did not: it was a flat literal, so it silently asserted ONE build's shape
+#   whatever was serving. That is fine until a read's correct plan CHANGES, and then
+#   it is the same drift 114 is about, pointed the other way — the gate reporting RED
+#   against a deployment that is healthy for its own rev, or GREEN because it is still
+#   planning last week's statement.
+#
+#   Issue 115 is exactly that event: it moved the tender-scoped lots read from driving
+#   off `lots` to driving off `tender_version_lots`, so the CORRECT plan before and
+#   after 115 are different plans. A re-baseline that just overwrote B1 would have been
+#   wrong for whichever rev was not serving, with no way for the gate to say so.
+#
+#   So a row may name a commit it depends on:
+#       +<sha>  the row applies only if the serving build CONTAINS that commit
+#       -<sha>  the row applies only if it does NOT
+#       (empty) the row always applies
+#   Evaluated with `git merge-base --is-ancestor` against the rev section 0 already
+#   established from the service itself. A sha this repo does not know is NO-INPUT for
+#   that row, never a skip. Rows that do not apply are PRINTED as n/a with the reason —
+#   a check that quietly vanishes is indistinguishable from one that was never written,
+#   and that is precisely how B5 survived.
+#
+#   Note what is and is not restated here. A commit sha is a FACT ABOUT HISTORY and
+#   cannot drift; the SQL beside it is still extracted from that build's own builder.
+#   The end state remains 114 part 2 — a fixture generated FROM the deployed rev, so
+#   even the pairing is derived — and this is the honest interim, not a substitute.
+#
+# `drives-before` (usually empty) is an alias|table alternation that the target must
+# be read BEFORE. It exists because of a trap proj-fix measured on the 115 shape:
+#
+#     SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+#
+# appears in BOTH the pre-115 and post-115 plans, meaning OPPOSITE things.
+#   pre-115 : `l` is the OUTER loop      -> a 13.2M-row walk        (quadratic)
+#   post-115: `l` is joined from `vl` on `l.id = vl.lot_id`
+#                                        -> a genuine one-row lookup (linear)
+# Identical string, opposite verdicts; the ONLY difference is position in the join
+# order. So `!contains("INTEGER PRIMARY KEY")` rejects the correct shape and
+# `!contains("SCAN")` accepts the broken one — the rowid rule below is right for a
+# table that DRIVES and wrong for one that is driven. What actually separates linear
+# from quadratic is which table is the outer loop, and that is what this field
+# asserts. (Same discriminator proj-fix's store-crate tests now use.)
 READS=$(cat <<'SQLS'
-B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 0) ORDER BY l.id LIMIT 1000
-B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 49377) ORDER BY l.id LIMIT 1000
-B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
-B3~tenders~tenders~tenders_procedure_key~SELECT id FROM tenders WHERE procedure_key = 'x'
-B4~tenders~tenders~tenders_island~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
-B6~tenders~tenders~tenders_current_published~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
-B7~organizations~o~organizations_identity|organizations_[a-z_]+~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
+B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 0) ORDER BY l.id LIMIT 1000
+B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 49377) ORDER BY l.id LIMIT 1000
+B1~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 0 ORDER BY l.id LIMIT 1000
+B1b~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 49377 ORDER BY l.id LIMIT 1000
+B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~~~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
+B3~tenders~tenders~tenders_procedure_key~~~SELECT id FROM tenders WHERE procedure_key = 'x'
+B4~tenders~tenders~tenders_island~~~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
+B6~tenders~tenders~tenders_current_published~~~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
+B7~organizations~o~organizations_identity|organizations_[a-z_]+~~~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
 SQLS
 )
 
@@ -597,8 +730,26 @@ if [ -z "${TDB_PLAN_CMD:-}" ]; then
 elif [ "$PLAN_STATS_OK" != yes ]; then
   : # the precondition already reported why
 else
-  while IFS='~' read -r id tbl alias want sql; do
+  while IFS='~' read -r id tbl alias want drives when sql; do
     [ -n "$id" ] || continue
+    # ---- BUILD GUARD (see `applies-when` above) --------------------------------
+    # The correct plan for a read can CHANGE with a deploy (issue 115 moved the
+    # tender-scoped lots read onto a different driving table). A row may therefore
+    # name the commit it depends on, and it is evaluated against the rev section 0
+    # established FROM THE SERVICE — not against this checkout, which is routinely
+    # ahead of what is deployed.
+    if [ -n "$when" ]; then
+      sha=${when#[+-]}
+      if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+        report NONE "$id" "row is conditioned on commit $sha, which this repo does not contain — whether it describes build $REV cannot be established, so it is NOT verified (rather than assumed to apply)."
+        continue
+      fi
+      if git merge-base --is-ancestor "$sha" "$REV" 2>/dev/null; then has=yes; else has=no; fi
+      case "$when" in
+        +*) [ "$has" = yes ] || { report NA "$id" "build $REV does NOT contain $sha — this row states the post-$sha shape, so it does not describe what is serving."; continue; };;
+        -*) [ "$has" = no  ] || { report NA "$id" "build $REV contains $sha — this row states the pre-$sha shape, so it does not describe what is serving."; continue; };;
+      esac
+    fi
     if ! plan=$(printf '%s\n' "$sql" | eval "$TDB_PLAN_CMD" 2>/dev/null) || [ -z "$plan" ]; then
       report NONE "$id" "plan source produced nothing for $tbl — NOT verified (is TDB_PLAN_CMD right?)"
       continue
@@ -613,6 +764,10 @@ else
       continue
     fi
     det=$(detail_of "$line")
+    # Position of the target's access line, and of the table it must precede.
+    pos_t=$(printf '%s\n' "$plan" | grep -niE "(SCAN|SEARCH)[[:space:]]+(${alias}|${tbl})([[:space:]]|\$)" | head -1 | cut -d: -f1)
+    pos_d=""
+    [ -n "$drives" ] && pos_d=$(printf '%s\n' "$plan" | grep -niE "(SCAN|SEARCH)[[:space:]]+(${drives})([[:space:]]|\$)" | head -1 | cut -d: -f1)
     idx=$(printf '%s' "$det" | sed -nE 's/.*USING (COVERING )?INDEX ([a-z_0-9]+).*/\2/Ip')
     mode=$(printf '%s' "$det" | grep -oiE '^(SCAN|SEARCH)' | tr '[:lower:]' '[:upper:]')
     if printf '%s' "$det" | grep -qiE 'INTEGER PRIMARY KEY|rowid='; then
@@ -626,8 +781,14 @@ else
       report NONE "$id" "$tbl access names no index and is not a recognisable scan — read it by hand: $line"
     elif [ "$want" != '*' ] && ! printf '%s' "$idx" | grep -qE "^(${want})\$"; then
       report FAIL "$id" "$tbl is served by index '$idx', not the expected ${want} — a different index can still be the wrong access path for this read: $line"
+    elif [ -n "$drives" ] && [ -z "$pos_d" ]; then
+      report NONE "$id" "$tbl is served by index $idx, but no access line for '$drives' was found, so the JOIN ORDER could not be established — and join order is what separates a linear read from a quadratic one here. NOT verified."
+    elif [ -n "$drives" ] && [ "${pos_t:-0}" -ge "${pos_d:-0}" ]; then
+      report FAIL "$id" "JOIN ORDER INVERTED: '$drives' is read FIRST (plan line $pos_d), $tbl only at line $pos_t — $tbl must be the outer loop and drive the join. The index on $tbl is fine; the DRIVING TABLE is wrong, which is the difference between one lookup per row and a full walk: $line"
     elif [ "$mode" = SCAN ]; then
       report PASS "$id" "$tbl read by an ordered FULL TRAVERSAL of index $idx (SCAN, not a seek) — correct only while the read's ORDER BY matches that index and a LIMIT stops it early: $line"
+    elif [ -n "$drives" ]; then
+      report PASS "$id" "$tbl served by index $idx (seek), and drives the join ahead of '$drives' (line $pos_t before $pos_d)"
     else
       report PASS "$id" "$tbl served by index $idx (seek)"
     fi
@@ -664,11 +825,15 @@ fi
 #     THIS is a DELIBERATE KNOWN-BAD, whose only job is to show that the probe can
 #     still tell a walk from a seek IN THIS RUN. That needs the shape to still WALK.
 #     It does not need anyone to run it in production.
-#   When the read it mirrors changes (issue 115 moves the driving table from `lots`
-#   to `tender_version_lots`), RE-BASE this control onto the new shape's known-bad
-#   predecessor. Retire it only if the old shape stops compiling or stops walking —
-#   i.e. only if it has stopped being a known-bad, which is the one thing that would
-#   actually invalidate it.
+#   When the read it mirrors changes, ASK WHETHER THE OLD SHAPE STILL WALKS before
+#   touching this section — do not re-base reflexively. Issue 115 moved the driving
+#   table from `lots` to `tender_version_lots`, and the answer was measured on the
+#   post-115 catalogue: the statement below still compiles and still comes back
+#   `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)`. It is therefore still a known-bad
+#   and still does its job, so it was left ALONE. Retire it only if the old shape stops
+#   compiling or stops walking — i.e. only if it has stopped being a known-bad, which is
+#   the one thing that would actually invalidate it. Re-basing a control every time the
+#   real read moves quietly couples it to the thing it exists to be independent of.
 #   The real hazard with a stale control is MISLABELLING, not invalidity: someone
 #   reading `C1 PASS` as "the lots_of read is fine" rather than "the probe
 #   discriminates". Keep the report wording that explicit through any re-base.
@@ -709,7 +874,7 @@ CTLSQL
 fi
 
 echo
-echo "== $PASS pass, $FAIL fail, $NOINPUT no-input =="
+echo "== $PASS pass, $FAIL fail, $NOINPUT no-input, $NA n/a (wrong build) =="
 if [ "$CONTROL" = void ]; then
   echo "VOID — the negative control passed, so this probe cannot be shown to tell a"
   echo "walk from a seek. Any GREEN above is uninterpretable, not good news. Fix the"
