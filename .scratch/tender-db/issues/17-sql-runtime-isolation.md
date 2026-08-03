@@ -1,6 +1,8 @@
 # 17 — Isolate SQL-endpoint execution on its own runtime
 
-Status: resolved
+Status: resolved (IMPLEMENTED) — but the isolation itself has NEVER BEEN MEASURED.
+See "What would falsify this" at the end. The claim is load-bearing for the Class B
+confinement deployed in 223330a, so it is an assumed claim under load, not a verified one.
 Blocked by: 07
 
 Goal: close the residual resource gap in the SQL endpoint: a single
@@ -62,3 +64,50 @@ interrupt even a single non-yielding aggregate instead of merely containing it.
 Tracked in docs/research/turso-scale.md.
 
 Files: `crates/app/src/v1/sql.rs`, `crates/app/tests/sql.rs`.
+
+
+## What would falsify this — a design, because the claim has never been tested (sdk-vendor, 2026-08-03)
+
+This issue is marked resolved on the strength of the code being written. **The property it
+claims — that a pathological `/v1/sql` query cannot starve the API/SSE/dashboard runtime —
+has not been measured.** `sql.rs`'s own header now leans on it: *"the backstop bounds the
+RESPONSE and frees the concurrency slot; issue 17's isolation bounds the BLAST RADIUS."*
+The Class B confinement deployed in `223330a` rests partly on that sentence.
+
+That makes it the same shape as the `?kind=` density assumption and `notices_fetch_id`'s
+"tens of seconds": a claim true-by-construction when written, load-bearing later, never
+checked against the thing it describes.
+
+### The measurement, and the one way it is easy to get wrong
+
+**Falsification target:** with the isolated runtime saturated, latency on an ordinary
+endpoint is unchanged.
+
+1. **Saturate the isolated pool, do not merely occupy it.** The runtime is *1–2 threads*.
+   **One pathological query cannot falsify starvation** — it leaves a thread free, so a
+   clean result proves only that one query fits. Run **N ≥ threads + 1** concurrent
+   pathological `/v1/sql` queries. Getting this wrong yields a confident green that tested
+   nothing, which is this project's most repeated failure.
+2. **Verify the load is actually pathological** — each query must still be running when the
+   latency samples are taken. A query that finished early tests an idle system.
+3. **Measure an endpoint that shares the runtime under test**, not `/health` if health is
+   served from somewhere else. Check which runtime serves the probe before trusting it.
+4. **Take a control in the same run**: identical latency samples with the isolated pool
+   idle, same box, same minute. Without it, degradation is indistinguishable from load
+   elsewhere — and this box is shared by four sessions.
+5. **State the concurrency the conclusion is licensed for** (rule 7). "N=3 did not degrade
+   it" says nothing about N=50. If the isolated pool has a queue, the interesting question
+   is what happens when the queue is deep, not when it is short.
+
+### What a pass and a fail each mean
+
+* **Pass** — ordinary-endpoint latency is flat while the isolated pool is saturated:
+  isolation holds *at that concurrency*, and the record should say which.
+* **Fail** — latency degrades: the isolation is nominal, and every downstream claim that
+  cites it (including the Class B confinement) inherits the gap.
+
+**A third outcome is likely and must not be read as a pass:** the pathological queries are
+killed by the 10 s cap before the isolated pool is ever saturated. That measures the
+*backstop*, not the isolation, and the two are explicitly different mechanisms in
+`sql.rs`'s own account. If the cap fires first, the isolation is untestable through that
+path and the record should say so rather than record a green.
