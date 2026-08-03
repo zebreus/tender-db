@@ -421,6 +421,31 @@ pub enum Collection {
 /// pool and reintroduce the defect — the same staleness that put `notices(source, id)`
 /// in the schema batch on the strength of a comment written when the table was eight
 /// times smaller.
+/// Every field of [`Filter`], and why it can or cannot walk — the classification
+/// [`walks`] implements, written out so a test can check none has been missed.
+///
+/// The destructuring in `walks` makes adding a field a COMPILE error, which forces a
+/// decision. It does not force a CORRECT one: the compiler helpfully suggests `..` to
+/// ignore the new field, and taking that suggestion silently routes it to the fast
+/// pool. This list is the belt to that brace — `filter_classification_is_exhaustive`
+/// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
+/// absent here, so a field added with `..` is caught by a test even though it compiled.
+#[cfg(test)]
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 11] = [
+    ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
+    ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
+    ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
+    ("buyer", "EXISTS per row -> isolates. Organizations: o.id, the primary key"),
+    ("winner", "EXISTS per row -> isolates"),
+    ("status", "EXISTS over tender_version_dates per row -> isolates"),
+    ("min_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("max_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
+              Organizations/Notices: index-served"),
+    ("tender", "the containment shape (issue 115), index-served -> never isolates"),
+    ("now", "not a predicate: the reference instant `status` compares against"),
+];
+
 pub fn walks(collection: Collection, f: &Filter) -> bool {
     let Filter {
         source,

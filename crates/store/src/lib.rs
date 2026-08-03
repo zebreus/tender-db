@@ -2680,6 +2680,57 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Every `Filter` field must be explicitly classified as walk-capable or not.
+    ///
+    /// `read::walks` destructures `Filter` field by field, so adding a field is a
+    /// compile error — but the compiler suggests `..` to ignore it, and taking that
+    /// suggestion routes the new filter to the fast pool silently. A compile error
+    /// forces a decision, not a correct one.
+    ///
+    /// So the field names are recovered from `Filter`'s own `Debug` output rather than
+    /// written down twice, and checked against the classification list. A field added
+    /// with `..` compiles and then fails HERE. If the derive's format ever changes this
+    /// test breaks loudly rather than passing vacuously, which is the right direction
+    /// for a check whose whole job is noticing an omission.
+    #[test]
+    fn filter_classification_is_exhaustive() {
+        let debug = format!("{:?}", read::Filter::default());
+        let body = debug
+            .split_once('{')
+            .and_then(|(_, rest)| rest.rsplit_once('}'))
+            .map(|(inner, _)| inner.to_owned())
+            .expect("derived Debug renders as `Filter { field: value, .. }`");
+        let fields: Vec<String> = body
+            .split(',')
+            .filter_map(|part| part.split_once(':'))
+            .map(|(name, _)| name.trim().to_owned())
+            .filter(|name| !name.is_empty())
+            .collect();
+        assert!(
+            fields.len() >= 5,
+            "recovered too few fields from Debug ({fields:?}) — the derive's format \
+             has probably changed and this check has stopped checking"
+        );
+
+        for field in &fields {
+            assert!(
+                read::FILTER_CLASSIFICATION.iter().any(|(name, _)| name == field),
+                "Filter::{field} is not classified in read::FILTER_CLASSIFICATION. \
+                 Every field must be recorded as index-served or walk-capable, because \
+                 `walks` decides from it whether a request may starve the main reader \
+                 pool (issue 120). If it compiled, the destructuring was bypassed with \
+                 `..` — classify it rather than ignoring it."
+            );
+        }
+        for (name, _) in read::FILTER_CLASSIFICATION {
+            assert!(
+                fields.iter().any(|f| f == name),
+                "read::FILTER_CLASSIFICATION lists `{name}`, which is no longer a \
+                 Filter field — a stale entry hides the absence of a real one"
+            );
+        }
+    }
+
     /// The short-circuit guard's BOUNDARY, asserted on the function itself.
     ///
     /// The end-to-end cases in `tenders_shortcircuit.rs` cannot establish this: the
