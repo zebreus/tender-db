@@ -246,3 +246,25 @@ async fn the_s2c_candidate_answers_identically_across_the_filter_surface() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+
+/// Dump the GENERATED S2c statements for the version-predicate arms, so plan
+/// confirmation at 40.6M plans the builder rather than a paraphrase of it.
+#[tokio::test]
+#[ignore = "utility: prints generated S2c SQL for off-box plan confirmation"]
+async fn dump_s2c_statements_for_scale_plan_check() {
+    let scope = Scope::Page { after: 0, limit: 50 };
+    for (name, f) in [
+        ("country", Filter { country: Some("DE".into()), ..base() }),
+        ("cpv", Filter { cpv: Some("452".into()), ..base() }),
+        ("buyer", Filter { buyer: Some(1), ..base() }),
+        ("winner", Filter { winner: Some(1), ..base() }),
+        ("status=Open", Filter { status: Some(Status::Open), ..base() }),
+        ("status=Closed(NOT EXISTS)", Filter { status: Some(Status::Closed), ..base() }),
+        ("min_value", Filter { min_value: Some(100000), ..base() }),
+        ("max_value", Filter { max_value: Some(100000), ..base() }),
+    ] {
+        let (sql, params) = store::read::lots_statement_s2c(&f, scope);
+        println!("\n===== {name} =====\n{sql};\n-- params: {params:?}");
+    }
+}

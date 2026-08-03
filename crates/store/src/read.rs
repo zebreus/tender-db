@@ -1216,6 +1216,20 @@ pub(crate) fn lots_statement(filter: &Filter, scope: Scope) -> (String, Vec<Valu
     (q.sql, q.params)
 }
 
+/// [`lots_statement`]'s counterpart for the issue-16 candidate — the window the
+/// perf-guard test needs onto [`lots_query_s2c`], and the source of the SQL sent for
+/// plan confirmation at prod scale.
+///
+/// `#[doc(hidden)] pub` rather than `#[cfg(test)]` because the statements are also
+/// read out to be planned on the 40.6M bed, which is a separate process from this
+/// crate's tests. Sending hand-written SQL for that would plan a paraphrase of the
+/// builder instead of the builder — the failure this whole task has been avoiding.
+#[doc(hidden)]
+pub fn lots_statement_s2c(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = lots_query_s2c(filter, scope);
+    (q.sql, q.params)
+}
+
 /// The identity half of [`lots`], built but not run.
 fn lots_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
