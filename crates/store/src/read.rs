@@ -8,6 +8,7 @@
 //! from filtered REST — there is no second copy of the predicate.
 
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{OwnedRwLockReadGuard, OwnedSemaphorePermit, RwLock, Semaphore};
 use turso::{Connection, Value};
@@ -856,123 +857,220 @@ fn blank() -> FactRow {
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
     let mut q = Query::default();
-    let lot_scope = "s.lot_id = l.id";
-    let deadline = |column| {
-        pick(
-            "tender_version_dates",
-            column,
-            Some("submission_deadline"),
-            "s.utc_seconds DESC",
-            lot_scope,
-        )
+    // Two questions, two driving tables — and that is the point, not an
+    // optimisation. "Which Lots does THIS Tender's current version publish?" is a
+    // containment question, and the set it asks for is literally the rows of
+    // `tender_version_lots` under one `(tender_id, seq)`; it drives from there.
+    // "The next page of the lot stream after this cursor" is a stream question, and
+    // it drives from `lots` in id order. Answering the first with the second's
+    // machinery is what made `/v1/tenders/{id}` cost minutes.
+    //
+    // Only `Scope::Page` splits: `Scope::At` probes one lot by id for the SSE diff
+    // loop, where the id is already the whole answer.
+    let scoped = match scope {
+        Scope::Page { .. } => filter.tender,
+        Scope::At { .. } => None,
     };
-    q.push(
-        &format!(
-            "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq,
-                    {title},
-                    (SELECT MAX(a.cents) FROM tender_version_amounts a
-                      WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id),
-                    {currency},
-                    {utc}, {offset}, {has_time}
-               FROM lots l
-               JOIN tenders t ON t.id = l.tender_id
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
-            title = pick(
-                "tender_version_texts",
-                "value",
-                Some("title"),
-                "(s.lang = 'ENG') DESC",
-                lot_scope
-            ),
-            currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", lot_scope),
-            utc = deadline("utc_seconds"),
-            offset = deadline("offset_minutes"),
-            has_time = deadline("has_time"),
-        ),
-        [],
-    );
-    let seq = match scope {
-        Scope::Page { .. } => {
-            "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned()
+    match scoped {
+        // The containment shape. `vl.tender_id = ?` seeks the PK's leading column
+        // and the MAX(seq) subquery is uncorrelated, so it is evaluated once.
+        //
+        // Driving this from `lots` instead — a per-lot `vl.lot_id = l.id` probe —
+        // is the second half of issue 115's blow-up. turso resolves that probe by
+        // seeking the `(tender_id, seq)` PK prefix and then WALKING that version's
+        // whole slice: it does not use the third PK column, and adding an explicit
+        // `(tender_id, seq, lot_id)` index does not change that (measured —
+        // identical cost with and without). One walk per lot is quadratic, so the
+        // join alone cost 0.96s at 2,400 lots against 0.005s here (178x).
+        //
+        // `l.tender_id = vl.tender_id` is not redundant: it is the containment
+        // guard the old shape got from driving off `lots`, and it keeps a
+        // cross-Tender `vl.lot_id` (issue 103's orphaned rows) out of the answer.
+        Some(tender) => {
+            q.push(
+                "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+                   FROM tender_version_lots vl
+                   JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id
+                   JOIN tenders t ON t.id = vl.tender_id
+                   JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq
+                  WHERE vl.tender_id = ?
+                    AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                                   WHERE x.tender_id = ?)",
+                [Value::Integer(tender), Value::Integer(tender)],
+            );
         }
-        Scope::At { seq, .. } => {
-            q.params.push(Value::Integer(seq));
-            "?".to_owned()
+        // The stream shape, unchanged: driving from `lots` in rowid order is the
+        // right plan for a global id-ordered page.
+        None => {
+            q.push(
+                "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+                   FROM lots l
+                   JOIN tenders t ON t.id = l.tender_id
+                   JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
+                [],
+            );
+            let seq = match scope {
+                Scope::Page { .. } => {
+                    "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned()
+                }
+                Scope::At { seq, .. } => {
+                    q.params.push(Value::Integer(seq));
+                    "?".to_owned()
+                }
+            };
+            q.push(
+                &format!(
+                    "{seq}
+                       JOIN tender_version_lots vl
+                         ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+                      WHERE 1 = 1"
+                ),
+                [],
+            );
         }
-    };
-    q.push(
-        &format!(
-            "{seq}
-               JOIN tender_version_lots vl
-                 ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
-              WHERE 1 = 1"
-        ),
-        [],
-    );
+    }
     if let Some(source) = &filter.source {
         q.push(" AND t.source = ?", [t(source)]);
     }
     if let Some(kind) = &filter.kind {
         q.push(" AND vl.kind = ?", [t(kind)]);
     }
-    if let Some(tender) = filter.tender {
+    if scoped.is_none()
+        && let Some(tender) = filter.tender
+    {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
     version_predicates(&mut q, filter);
     match scope {
-        // A tender-scoped page carries the cursor as a ROW VALUE. The plain
-        // `l.id > ?` makes turso drive the query from `lots` in rowid order to
-        // satisfy `ORDER BY l.id` — walking all 13.2M rows and filtering
-        // `tender_id` — which is the `/v1/tenders/{id}` ~2.2s regression (via
-        // `lots_of`) and the same cost on the public `/v1/lots?tender=` filter.
-        // Written as `(l.tender_id, l.id) > (?, ?)` the planner seeks
-        // `UNIQUE(tender_id, lot_key)` on `tender_id` instead (~0.5ms).
-        //
-        // The mismatch underneath: `lots_of` asks "all lots of ONE Tender" — a
-        // containment question — and answered it by reusing the cursor-paginated
-        // list scope, inheriting the predicate that answers "the next page of a
-        // global list".
-        //
-        // Semantics are unchanged, not merely preserved-in-practice: `tender_id`
-        // is already pinned by the `filter.tender` equality pushed above, so
-        // `(tender_id, id) > (tender, after)` reduces identically to `id > after`.
-        // Same rows, same `ORDER BY l.id` ordering (no visible reorder — the legacy
-        // era's `lot_key` is a section id, not a padded `LOT-nnnn`, so ordering by
-        // it would NOT have been cosmetic), every page, no schema change and so no
-        // new deferred index to materialise.
-        //
-        // It IS planner-dependent — a future turso could stop using the index for
-        // the row-value form. That is what the read-side plan gate (issue 112)
-        // exists to catch, with a turso version bump as its trigger.
-        //
-        // The unfiltered list keeps the plain cursor: driving from `lots` in rowid
-        // order is the RIGHT plan for a global id-ordered page, and its SQL is
-        // unchanged here.
-        Scope::Page { after, limit } => {
-            match filter.tender {
-                Some(tender) => q.push(
-                    " AND (l.tender_id, l.id) > (?, ?)",
-                    [Value::Integer(tender), Value::Integer(after)],
-                ),
-                None => q.push(" AND l.id > ?", [Value::Integer(after)]),
-            }
-            q.push(" ORDER BY l.id LIMIT ?", [Value::Integer(limit)]);
-        }
+        Scope::Page { after, limit } => q.push(
+            " AND l.id > ? ORDER BY l.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(limit)],
+        ),
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
 
-    q.rows(conn, |row| LotRow {
-        id: int(row, 0),
-        tender_id: int(row, 1),
-        lot_key: text(row, 2),
-        kind: text(row, 3),
-        seq: int(row, 4),
-        title: opt_text_of(row, 5),
-        value_cents: opt_int_of(row, 6),
-        currency: opt_text_of(row, 7),
-        deadline: stamp(row, 8),
-    })
-    .await
+    let mut rows = q
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: None,
+            value_cents: None,
+            currency: None,
+            deadline: None,
+        })
+        .await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
+/// Fill in each Lot's summary fields from the version satellites: the title, the
+/// value and its currency, the submission deadline.
+///
+/// These used to be six correlated scalar subqueries on the row query above — one
+/// set per lot. The satellites are indexed on `(tender_id, seq)` and nothing else;
+/// `lot_id` appears in no index. So each subquery seeked the version and then
+/// walked that version's WHOLE satellite slice to find one lot's rows. One walk per
+/// lot per subquery is O(lots × slice), i.e. QUADRATIC in the Tender's lot count —
+/// measured at 16.1× the time for 4× the lots (issue 115). The 4.26M Tenders with a
+/// handful of lots never noticed; the 16 with more than a thousand took minutes per
+/// request.
+///
+/// So read each satellite ONCE per version instead — the same
+/// `WHERE tender_id = ? AND seq = ?` slice `tender_detail` already reads for the
+/// response's own `texts`/`amounts`/`dates` — and do the per-lot pick in memory.
+/// Cost is O(slice) per distinct version, independent of how many lots were asked
+/// for: a whole-Tender read is three queries whether it has 2 lots or 2,604. A page
+/// of the global list, whose lots span many versions, does three queries per version
+/// against the old six per lot, so it gets cheaper too.
+///
+/// The picks are the SQL's, exactly:
+///   * title — `ORDER BY (lang = 'ENG') DESC LIMIT 1`. SQLite sorts NULL below both
+///     0 and 1 under DESC, so the preference is ENG, then any other language, then
+///     an unlabelled row; ties keep the first in scan order.
+///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
+///     to the SAME row, so one max-cents row serves both.
+///   * deadline — the three columns were three subqueries sharing
+///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
+async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> {
+    // Lot ids are unique across the result, so one map resolves a satellite row's
+    // `lot_id` to the row it decorates — and drops any lot outside this page.
+    let at: HashMap<i64, usize> = rows.iter().enumerate().map(|(i, r)| (r.id, i)).collect();
+    let mut versions: Vec<(i64, i64)> = rows.iter().map(|r| (r.tender_id, r.seq)).collect();
+    versions.sort_unstable();
+    versions.dedup();
+
+    // Best key seen so far per row, `None` until the first candidate — kept beside
+    // the rows rather than in them because it is the ORDER BY's key, not output.
+    let mut best_title: Vec<Option<u8>> = vec![None; rows.len()];
+    let mut best_value: Vec<Option<i64>> = vec![None; rows.len()];
+    let mut best_deadline: Vec<Option<i64>> = vec![None; rows.len()];
+
+    for (tender_id, seq) in versions {
+        let key = (Value::Integer(tender_id), Value::Integer(seq));
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.lang, s.value FROM tender_version_texts s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'title'
+                    AND s.lot_id IS NOT NULL",
+                key.clone(),
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let rank = match opt_text_of(&row, 1).as_deref() {
+                Some("ENG") => 2,
+                Some(_) => 1,
+                None => 0,
+            };
+            if best_title[i].is_none_or(|best| rank > best) {
+                best_title[i] = Some(rank);
+                rows[i].title = opt_text_of(&row, 2);
+            }
+        }
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.cents, s.currency FROM tender_version_amounts s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL",
+                key.clone(),
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let cents = opt_int_of(&row, 1);
+            // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
+            // ranks below every real amount rather than above them.
+            let rank = cents.unwrap_or(i64::MIN);
+            if best_value[i].is_none_or(|best| rank > best) {
+                best_value[i] = Some(rank);
+                rows[i].value_cents = cents;
+                rows[i].currency = opt_text_of(&row, 2);
+            }
+        }
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.utc_seconds, s.offset_minutes, s.has_time
+                   FROM tender_version_dates s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'submission_deadline'
+                    AND s.lot_id IS NOT NULL",
+                key,
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&id)) else { continue };
+            let rank = opt_int_of(&row, 1).unwrap_or(i64::MIN);
+            if best_deadline[i].is_none_or(|best| rank > best) {
+                best_deadline[i] = Some(rank);
+                rows[i].deadline = stamp(&row, 1);
+            }
+        }
+    }
+    Ok(())
 }
 
 async fn lots_of(conn: &Connection, tender_id: i64) -> turso::Result<Vec<LotRow>> {
