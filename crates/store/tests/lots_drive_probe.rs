@@ -300,3 +300,137 @@ async fn can_a_joined_filter_keep_lots_driving() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// **Does branch A's probe seek WITHIN a tender's slice, or walk all of it?**
+///
+/// This is the single number run-driver's 6.34-billion estimate hangs on. They measured
+/// prod's real joint distribution and found branch A's probe costs **480 tvl-row visits
+/// per lot** — but only *if* each probe walks the tender's whole `tender_version_lots`
+/// slice. Their own caveat: if turso can use the `(tender_id, seq, lot_id)` PK to seek
+/// further into the slice, the true figure is far lower and branch A survives.
+///
+/// The plan text says `SEARCH vl USING INDEX sqlite_autoindex_… (tender_id=?)` — only
+/// the leading column bound. But issue 112 rule 6 is that EQP cannot tell a seek from a
+/// walk, so the plan is exactly what must NOT be trusted here. The clock can.
+///
+/// **The design holds lots constant and varies only the slice depth.** Same lot count,
+/// same query, same matched set — only `SEQS` (versions per tender, hence tvl rows per
+/// tender) changes. `kind='zzz'` is used because it probes every lot and returns
+/// nothing, so the measurement is pure probe cost with no result assembly.
+///
+///   * cost scaling ~linearly in `SEQS`  → each probe WALKS the slice → the 480x
+///     amplification is real and branch A is in serious trouble on the `zzz` arm.
+///   * cost flat in `SEQS`               → the probe SEEKS within the slice → the
+///     estimate is a large overbound and branch A survives.
+///
+/// A ratio, not an absolute — so a loaded box cannot change the verdict, only the noise.
+#[tokio::test]
+#[ignore = "probe: does the PK probe seek within a tender's slice? run with --ignored"]
+async fn does_the_pk_probe_seek_within_the_tender_slice() {
+    const TENDERS: i64 = 2_000;
+    const LOTS_PER: i64 = 5;
+
+    println!("\n{:>6}  {:>12}  {:>12}  {:>10}  {:>12}  {:>10}",
+             "seqs", "tvl rows", "A zzz", "A ratio", "A' zzz", "A' ratio");
+    let (mut baseline, mut baseline2) = (0.0, 0.0);
+    for (run, seqs) in [1i64, 8, 32].into_iter().enumerate() {
+        let path = format!("/tmp/tender-db-slice-{}-{seqs}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        store::Db::open(&path).await.unwrap();
+        let db = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = db.connect().unwrap();
+        drain(&conn, "PRAGMA journal_mode = WAL").await;
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+
+        conn.execute("BEGIN", ()).await.unwrap();
+        for tender in 1..=TENDERS {
+            // `current_seq` is the LAST seq, so a walking probe pays the whole slice
+            // before it finds the current row — the honest worst case for the shape.
+            conn.execute(
+                "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
+                 VALUES (?, 'ted', ?, 'procedure', ?, 1700000000, 1700000000)",
+                (Value::Integer(tender), Value::Text(format!("pk-{tender}")), Value::Integer(seqs)),
+            ).await.unwrap();
+            for seq in 1..=seqs {
+                conn.execute(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
+                     VALUES (?, ?, 1700000000, ?, ?)",
+                    (Value::Integer(tender), Value::Integer(seq),
+                     Value::Text(format!("pub-{tender}-{seq}")),
+                     Value::Integer((tender - 1) * seqs + seq)),
+                ).await.unwrap();
+            }
+            for k in 1..=LOTS_PER {
+                let lot = (tender - 1) * LOTS_PER + k;
+                conn.execute(
+                    "INSERT INTO lots (id, tender_id, lot_key) VALUES (?, ?, ?)",
+                    (Value::Integer(lot), Value::Integer(tender), Value::Text(format!("LOT-{lot}"))),
+                ).await.unwrap();
+                // Every (seq, lot) pair exists: the slice is LOTS_PER * seqs deep.
+                for seq in 1..=seqs {
+                    conn.execute(
+                        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, ?, ?, 'Lot')",
+                        (Value::Integer(tender), Value::Integer(seq), Value::Integer(lot)),
+                    ).await.unwrap();
+                }
+            }
+        }
+        conn.execute("COMMIT", ()).await.unwrap();
+
+        const PK_EXISTS: &str = "SELECT l.id FROM lots l
+             WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                            JOIN tenders t ON t.id = l.tender_id
+                            WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
+                              AND vl.lot_id = l.id AND vl.kind = ?)
+               AND l.id > ? ORDER BY l.id LIMIT 50";
+        // Branch A' — the same answer, with `current_seq` moved into a scalar subquery.
+        //
+        // A's plan probes `vl` BEFORE `t`, so `t.current_seq` is not yet available and
+        // only the PK's leading column can be bound; the rest of the slice is filtered
+        // row by row. That makes the amplification a JOIN-ORDER artifact rather than a
+        // property of the shape. Resolving `current_seq` independently should let all
+        // three PK columns bind at once and collapse the probe to one descent.
+        const PK_EXISTS_SCALAR: &str = "SELECT l.id FROM lots l
+             WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                            WHERE vl.tender_id = l.tender_id
+                              AND vl.seq = (SELECT current_seq FROM tenders WHERE id = l.tender_id)
+                              AND vl.lot_id = l.id AND vl.kind = ?)
+               AND l.id > ? ORDER BY l.id LIMIT 50";
+
+        let (t, _) = time(&conn, PK_EXISTS, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        let (t2, _) =
+            time(&conn, PK_EXISTS_SCALAR, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        if run == 0 {
+            baseline = t;
+            baseline2 = t2;
+        }
+        println!("{seqs:>6}  {:>12}  {t:>11.4}s  {:>9.2}x  {t2:>11.4}s  {:>9.2}x",
+                 TENDERS * LOTS_PER * seqs, t / baseline, t2 / baseline2);
+        if seqs == 32 {
+            plan(&conn, "branch A plan (deep slice):", PK_EXISTS,
+                 vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+            plan(&conn, "branch A' plan (deep slice):", PK_EXISTS_SCALAR,
+                 vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+            // Equivalence: A' must answer identically, on a value that MATCHES.
+            let mut x = conn.query(PK_EXISTS, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
+            let mut y = conn.query(PK_EXISTS_SCALAR, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
+            let (mut xs, mut ys) = (Vec::new(), Vec::new());
+            while let Some(r) = x.next().await.unwrap() {
+                xs.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+            }
+            while let Some(r) = y.next().await.unwrap() {
+                ys.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+            }
+            println!("\nequivalence on kind=Lot: A {} ids, A' {} ids, identical={}",
+                     xs.len(), ys.len(), xs == ys);
+        }
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+    println!("\nlots held constant at {}; only slice depth varies.", TENDERS * LOTS_PER);
+    println!("~linear in seqs => probe WALKS the slice (run-driver's 480x stands)");
+    println!("flat in seqs    => probe SEEKS within it (the estimate is an overbound)");
+}
