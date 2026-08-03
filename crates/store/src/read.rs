@@ -465,11 +465,154 @@ fn pick(table: &str, column: &str, field: Option<&str>, order: &str, lot: &str) 
 /// Tenders matching `filter`, in the given scope. `Scope::Page` yields the
 /// current state of every match after a cursor; `Scope::At` answers whether one
 /// specific version matched, which is how the SSE diff loop classifies a change.
+/// Can any Tender satisfy this filter at all?
+///
+/// The value-shaped predicates in [`version_predicates`] are `EXISTS` subqueries
+/// evaluated PER ROW. When the value matches nothing the query still walks every
+/// Tender to discover that — measured on prod at over 380 seconds for
+/// `/v1/tenders?country=ZZ`, unauthenticated, on a documented filter. No cursor
+/// shape helps, because the filter is not a column of the driven table (issue 117
+/// Class B).
+///
+/// But each of those subqueries is satisfiable only if SOME row exists carrying the
+/// value at all, and that is one index seek. If the seek finds nothing, no Tender can
+/// match and the empty page is the CORRECT answer rather than an approximation —
+/// reached without the walk. Same move [`changes_since`] already makes for an
+/// unknown `entity_kind` (issue 61 finding 2): a kind with no rows must never trigger
+/// a table walk to discover it has none.
+///
+/// Deliberately CONSERVATIVE in the safe direction. The probes ignore the
+/// `c.seq = v.seq` correlation and the buyer's `role LIKE '%Buyer%'`, so a value
+/// present only in a superseded version, or an organization present only in a
+/// non-buyer role, fails to short-circuit and falls through to the full query. That
+/// costs a walk we could have avoided; the reverse — short-circuiting something that
+/// does match — would be a wrong answer, so the asymmetry is the right way round.
+///
+/// **This is a performance fix that reduces the DoS surface; it is NOT a defence.**
+/// It answers *matches-nothing* only. A prefix that exists but sits on high
+/// `tender_id`s still walks — measured at 0.5s against 0.4954s for the absent case on
+/// a 200k-Tender fixture, i.e. the guard buys nothing there. `MT` is a real country,
+/// so that case is reachable without adversarial intent. Bounding worst-case work
+/// needs the real fix (restructuring the per-row `EXISTS`), not this.
+async fn reachable(conn: &Connection, filter: &Filter) -> turso::Result<bool> {
+    // A prefix range, NOT `LIKE`. Measured on prod: `code LIKE 'ZZ%'` takes 41.05s
+    // against 0.01s for the range, because turso keeps the index but drops the second
+    // bound — `(scheme=?)` alone — and then filters the whole scheme's partition row
+    // by row. Both forms plan as `SEARCH ... USING INDEX`, so a plan cannot tell them
+    // apart; only the clock can (issue 112 rule 6).
+    for (scheme, prefix) in [("nuts", &filter.country), ("cpv", &filter.cpv)] {
+        let Some(prefix) = prefix else { continue };
+        // `LIKE` is ASCII-case-INSENSITIVE and a range comparison is not, so one range
+        // over the prefix as given is NARROWER than the predicate it stands in for.
+        // Verified: with `DE300` stored, `LIKE 'de%'` matches and `code >= 'de' AND
+        // code < 'df'` does not — so a lowercase `?country=de` would have short-
+        // circuited to an empty page while the real query returns rows. A guard that
+        // is narrower than what it guards does not make the read faster, it makes it
+        // WRONG.
+        //
+        // So probe every case variant of the prefix and treat the value as reachable
+        // if ANY of them hits: their union is exactly the set `LIKE` would match.
+        // `None` means too many variants to be worth it — skip the guard and let the
+        // full query answer, which is slow but correct.
+        let Some(ranges) = prefix_ranges(prefix) else { continue };
+        let mut any = false;
+        for (low, high) in ranges {
+            if exists(
+                conn,
+                "SELECT 1 FROM tender_version_classifications
+                  WHERE scheme = ? AND code >= ? AND code < ? LIMIT 1",
+                vec![t(scheme), t(&low), t(&high)],
+            )
+            .await?
+            {
+                any = true;
+                break;
+            }
+        }
+        if !any {
+            return Ok(false);
+        }
+    }
+    for (org, table) in
+        [(filter.buyer, "tender_version_parties"), (filter.winner, "tender_version_result_winners")]
+    {
+        let Some(org) = org else { continue };
+        // Both seek `..._org(organization_id)`, the indexes issue 62 deferred.
+        let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");
+        if !exists(conn, &sql, vec![Value::Integer(org)]).await? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+async fn exists(conn: &Connection, sql: &str, params: Vec<Value>) -> turso::Result<bool> {
+    Ok(conn.query(sql, params).await?.next().await?.is_some())
+}
+
+/// The index ranges whose union is exactly `code LIKE '<prefix>%'`.
+///
+/// One range per ASCII-case variant of the prefix, because `LIKE` folds ASCII case
+/// and `>=`/`<` do not. `de` yields the four ranges `de..df`, `dE..dF`, `De..Df`,
+/// `DE..DF`; a prefix of digits (CPV) yields one. Non-ASCII bytes are not folded by
+/// `LIKE` either, so they do not branch.
+///
+/// `None` when the guard is not worth applying — an empty prefix, more than
+/// [`MAX_CASE_VARIANTS`] variants, or a prefix with no representable upper bound.
+/// The caller then skips the short-circuit and lets the full query answer: slower,
+/// and still correct. Every `None` path must stay on that side, because a guard that
+/// matches less than the predicate it stands in for returns wrong rows rather than
+/// slow ones.
+fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
+    /// 2^4 = 16 seeks at ~0.01s is still four orders of magnitude under the walk it
+    /// avoids; beyond that the guard stops paying for itself.
+    const MAX_CASE_VARIANTS: usize = 16;
+
+    if prefix.is_empty() || !prefix.is_ascii() {
+        return None;
+    }
+    let letters = prefix.chars().filter(char::is_ascii_alphabetic).count();
+    if 1usize.checked_shl(letters as u32)? > MAX_CASE_VARIANTS {
+        return None;
+    }
+
+    let mut variants = vec![String::new()];
+    for c in prefix.chars() {
+        variants = variants
+            .into_iter()
+            .flat_map(|v| {
+                if c.is_ascii_alphabetic() {
+                    vec![format!("{v}{}", c.to_ascii_lowercase()), format!("{v}{}", c.to_ascii_uppercase())]
+                } else {
+                    vec![format!("{v}{c}")]
+                }
+            })
+            .collect();
+    }
+    variants.into_iter().map(|v| successor(&v).map(|hi| (v, hi))).collect()
+}
+
+/// The least string greater than every string starting with `prefix`, so
+/// `code >= prefix AND code < successor` is exactly "has this prefix".
+fn successor(prefix: &str) -> Option<String> {
+    let mut bytes = prefix.as_bytes().to_vec();
+    while let Some(last) = bytes.pop() {
+        if last < 0xFF {
+            bytes.push(last + 1);
+            return String::from_utf8(bytes).ok();
+        }
+    }
+    None
+}
+
 pub async fn tenders(
     conn: &Connection,
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<TenderRow>> {
+    if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter).await? {
+        return Ok(Vec::new());
+    }
     let q = tenders_query(filter, scope);
     q.rows(conn, |row| TenderRow {
         id: int(row, 0),
