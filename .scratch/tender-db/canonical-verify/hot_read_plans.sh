@@ -85,6 +85,22 @@
 #   present passes, and the walk that no presence-check could see fails. After the
 #   `lots_of` fix, B1 must flip to naming a real index (sqlite_autoindex_lots_1,
 #   or a named lots_* index if that route is taken — both are accepted).
+#
+#   READ THIS BEFORE TREATING A POST-FIX B1 GREEN AS THE FLIP OF THAT RED.
+#   The B1 statement was REPLACED after that run (see PROVENANCE below): the RED
+#   was produced by a hand-written paraphrase, the GREEN by text extracted from
+#   the deployed builder. Different probe, so red→green is NOT by itself a
+#   controlled comparison — a green could mean "the fix works" or "the new
+#   statement is one this planner happens to like". Section C exists to close
+#   exactly that hole: it plans the PRE-FIX builder's own SQL (extracted the same
+#   way, from 1830d50^) in the same run, on the same DB, through the same probe,
+#   and requires it to still come back a rowid walk. Both extracted texts differ
+#   in one place only — `l.id > ?` versus `(l.tender_id, l.id) > (?, ?)` — so with
+#   C RED and B1 GREEN in one run, the cursor predicate is the only thing that
+#   changed, and the fix is the only thing that can explain the difference.
+#   If C ever goes GREEN, every B verdict in that run is void: the probe has
+#   stopped discriminating (wrong DB, wrong engine, stats appeared), and a B1
+#   green would be the fourth false-green in this issue's story, not the fix.
 # ============================================================================
 set -uo pipefail
 
@@ -235,19 +251,33 @@ fi
 #   correct point lookup on the primary key and must NOT be flagged; only the
 #   `lots` access is under test.
 #
-# KNOWN LIMITATION — THE SQL BELOW IS A HAND-WRITTEN APPROXIMATION  (issue 112,
-# and it is issue 114's point 1 applied to this gate itself)
-#   These statements were written to match the shape `read.rs` emits. They are NOT
-#   extracted from the builder, so they can DRIFT: change the query in `read.rs`
-#   and the string here keeps planning the OLD shape, staying green while the read
-#   that actually runs regresses. A gate verifying a paraphrase of the artifact is
-#   the same artifact-vs-proxy error as issues 110 and 102 — the difference is that
-#   here it is documented rather than discovered later.
-#   BEFORE THE POST-FIX RUN: replace B1 with the exact SQL the fixed builder emits
-#   (dump it from the builder's `q.sql`, as proj-fix did — do not retype it).
-#   Longer term the fix is to source these from the builder rather than restate
-#   them; until then this comment is the only thing standing between the gate and
-#   a stale paraphrase.
+# PROVENANCE OF THE SQL — B1/B1b ARE EXTRACTED, B2-B6 ARE STILL PARAPHRASES
+#   B1 and B1b are the literal text the DEPLOYED `lots_of` builder emits at
+#   rev 1830d50 (the row-value-cursor fix). They were not retyped. Extraction,
+#   reproducible from this repo:
+#     git worktree add /tmp/w 1830d50
+#     # in /tmp/w: env-gate an eprintln of `self.sql`/`self.params` inside
+#     # read.rs `Query::rows`, and add a test that calls `lots_of(&conn, 424242)`
+#     TDB_DUMP_SQL=1 cargo test -p store --lib <that test> -- --nocapture
+#   The ONLY edits applied to that output are (a) newline/indent collapse to one
+#   line, because this table is newline-delimited, and (b) substituting each `?`
+#   with the value the builder ITSELF bound in the same dump
+#   ([424242, 424242, 0, 1000] — i.e. tender, tender, after=0, limit=MAX_PAGE),
+#   because the probe compiles parameter-free statements. No token was rewritten.
+#
+#   B1b is the same extracted text with the cursor moved off the first page
+#   (after=49377). It is not redundant: `lots_of` only ever asks after=0, but the
+#   public `/v1/lots?tender=&after=N` runs the identical builder on a real cursor
+#   page, and 1830d50 rejected an `after == 0`-only fix precisely because that
+#   variant stayed at a measured 2237ms. A first-page-only assertion would certify
+#   a half-fix as whole.
+#
+#   B2-B6 REMAIN HAND-WRITTEN APPROXIMATIONS of the shapes `read.rs` emits. They
+#   can DRIFT: change the query and the string here keeps planning the OLD shape,
+#   staying green while the read that actually runs regresses — the same
+#   artifact-vs-proxy error as issues 110 and 102. Extending the extraction above
+#   to cover them is issue 114's point 1; until then this comment is the only
+#   thing standing between those five checks and a stale paraphrase.
 # ---------------------------------------------------------------------------
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
@@ -256,7 +286,8 @@ echo "-- B. hot reads must be served by a real index (turso plans only)"
 # The expected-index regex is matched against the index name turso reports; `*`
 # means "any real index is acceptable", used where more than one would serve.
 READS=$(cat <<'SQLS'
-B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key FROM lots l JOIN tenders t ON t.id = l.tender_id WHERE l.tender_id = 1 ORDER BY l.id LIMIT 1000
+B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 0) ORDER BY l.id LIMIT 1000
+B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 49377) ORDER BY l.id LIMIT 1000
 B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
 B3~tenders~tenders~tenders_procedure_key~SELECT id FROM tenders WHERE procedure_key = 'x'
 B4~tenders~tenders~tenders_island~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
@@ -355,8 +386,65 @@ else
   done <<< "$READS"
 fi
 
+# ---------------------------------------------------------------------------
+# C. THE NEGATIVE CONTROL — can this probe still produce a RED at all?
+#
+# A gate that has never been observed to fail on the run that matters is not
+# evidence. Section B's greens are only meaningful if the same probe, same DB,
+# same engine, in the SAME RUN, still calls the KNOWN-BAD shape bad.
+#
+# The statement below is the PRE-FIX builder's own SQL, extracted from 1830d50^
+# by the identical method used for B1 (see PROVENANCE). It differs from B1 in
+# exactly one place: `l.id > 0` where B1 has `(l.tender_id, l.id) > (424242, 0)`.
+# Nothing else. So:
+#   C RED + B1 GREEN  -> the cursor predicate is the only variable, and the fix
+#                        is the only available explanation. This is the result.
+#   C GREEN           -> the probe no longer discriminates. Section B's greens
+#                        say nothing, and this run is NOT a pass — it is a
+#                        broken instrument reporting good news, which is the
+#                        single most expensive outcome in this issue's history.
+# Note this is NOT a copy of B1 with a predicate edited by hand: both texts came
+# out of the builder at their respective revisions. Do not "tidy" one into the
+# other.
+# ---------------------------------------------------------------------------
+CONTROL=unknown
+echo "-- C. negative control: the pre-fix shape must still come back RED"
+if [ -z "${TDB_PLAN_CMD:-}" ] || [ "$PLAN_STATS_OK" != yes ]; then
+  report NONE C1 "no usable plan source — the control did not run, so section B's results are UNCONTROLLED and must not be read as a confirmed fix."
+else
+  # Quoted heredoc, NOT a '…' assignment: this SQL contains its own single
+  # quotes ('title', 'ENG', 'submission_deadline'). In a single-quoted string
+  # those close and reopen it, so `'title'` silently degrades to the bare
+  # identifier `title` — a different statement, planned without comment.
+  CONTROL_SQL=$(cat <<'CTLSQL'
+SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND l.id > 0 ORDER BY l.id LIMIT 1000
+CTLSQL
+)
+  if ! cplan=$(printf '%s\n' "$CONTROL_SQL" | eval "$TDB_PLAN_CMD" 2>/dev/null) || [ -z "$cplan" ]; then
+    report NONE C1 "the control statement produced no plan — the probe cannot be shown to discriminate, so section B is UNCONTROLLED."
+  else
+    cline=$(printf '%s\n' "$cplan" | grep -iE "(SCAN|SEARCH)[[:space:]]+(l|lots)([[:space:]]|\$)" | head -1)
+    if [ -z "$cline" ]; then
+      report NONE C1 "no access line for lots in the control plan — cannot establish that the probe discriminates: $(printf '%s' "$cplan" | tr '\n' ' ' | cut -c1-160)"
+    elif printf '%s' "$cline" | grep -qiE '^[[:space:]]*[|`-]*[[:space:]]*SCAN|INTEGER PRIMARY KEY|rowid='; then
+      CONTROL=discriminates
+      report PASS C1 "control still RED (pre-fix shape walks lots) — the probe discriminates, so B1's verdict is meaningful: $cline"
+    else
+      CONTROL=void
+      report FAIL C1 "CONTROL WENT GREEN. The pre-fix shape — the one measured at ~2.2s on prod — now plans as an index seek through this probe: $cline. The probe is not discriminating (wrong DB, wrong engine version, or ANALYZE stats appeared), so EVERY section B verdict in this run is void. Do not report B1 as a confirmed fix."
+    fi
+  fi
+fi
+
 echo
 echo "== $PASS pass, $FAIL fail, $NOINPUT no-input =="
+if [ "$CONTROL" = void ]; then
+  echo "VOID — the negative control passed, so this probe cannot be shown to tell a"
+  echo "walk from a seek. Any GREEN above is uninterpretable, not good news. Fix the"
+  echo "probe (wrong DB? wrong turso version? ANALYZE stats?) and re-run before"
+  echo "reporting anything about the hot reads."
+  exit 1
+fi
 if [ "$FAIL" -ne 0 ]; then
   echo "FAIL — a hot read is scanning, or a declared index is missing/stale."
   exit 1
@@ -366,6 +454,7 @@ if [ "$NOINPUT" -ne 0 ]; then
   echo "the gate could not see its own inputs. Supply TDB_SNAPSHOT / TDB_PLAN_CMD / TDB_REV."
   exit 2
 fi
-echo "PASS — every declared index is present with its declared columns, and every"
-echo "hot read compiles to an index-served plan on the deployed engine."
+echo "PASS — every declared index is present with its declared columns, every hot"
+echo "read compiles to an index-served plan on the deployed engine, and the"
+echo "negative control still fails, so the probe was shown to discriminate."
 exit 0

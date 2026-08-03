@@ -308,25 +308,77 @@ whose input DB is unidentified cannot have its stats state established, so `TDB_
 is required *even with a custom `TDB_PLAN_CMD`*. A check is only as trustworthy as its
 knowledge of its own inputs.
 
-### OPEN — blocking the post-fix run: B1's SQL is a paraphrase
+### DONE — B1 synced to the deployed builder, and the swap forced a new control
 
 Issue 114's point 1, applied to this gate itself. Section B's statements were
-hand-written to match the shape `read.rs` emits; they are **not** extracted from the
+hand-written to match the shape `read.rs` emits; they were **not** extracted from the
 builder. So they can drift: change the query in `read.rs` and the string in the gate
 keeps planning the *old* shape — green, while the read that actually runs regresses.
 That is the artifact-vs-proxy error of 110 and 102, and it would be a fourth false
 green after "the index exists / sqlite3 says SEARCH / turso says SEARCH".
 
-**Before the post-fix run**, replace B1 with the exact SQL the fixed builder emits —
-dumped from the builder's `q.sql`, not retyped. The final shape is not settled yet
-(row-value cursor `1830d50`, or a bounded-seek variant, pending run-driver's timings),
-so this cannot be done until the fix lands. Both candidate shapes plan via
-`sqlite_autoindex_lots_1`, so the *index assertion* holds either way; it is the SQL
-text under test that must be synced.
+**Closed for B1.** The deployed shape is the row-value cursor (`1830d50`). Its SQL was
+*extracted* from the builder, not retyped: at a worktree on `1830d50`, an env-gated
+`eprintln!` of `self.sql`/`self.params` inside `read.rs`'s `Query::rows` (the single
+choke point every read passes through), with a test that calls `lots_of(&conn, 424242)`.
+The only edits applied to that output are newline collapse (the gate's table is
+newline-delimited) and substituting each `?` with the value **the builder itself bound**
+in the same dump — `[424242, 424242, 0, 1000]`, i.e. tender, tender, `after = 0`,
+`limit = MAX_PAGE`. No token was rewritten. Both substitutions were round-tripped back
+through the gate's own parser and compared byte-for-byte against the dump.
 
-Marked in the script at section B as well, so it is visible to whoever runs it.
-Longer term the durable fix is to source these statements from the builder rather
-than restate them.
+**B1b added.** `lots_of` only ever asks `after = 0`, but the public
+`/v1/lots?tender=&after=N` runs the identical builder on a real cursor page, and
+`1830d50` rejected an `after == 0`-only fix precisely because that variant stayed at a
+measured 2237ms. A first-page-only assertion would certify a half-fix as whole, so B1b
+is the same extracted text with the cursor moved off the first page.
+
+**B2–B6 are still paraphrases** and are now labelled as such in the script rather than
+left implicit. Extending the extraction to them is 114's point 1.
+
+#### The swap invalidated the red→green comparison — hence section C
+
+Replacing B1's statement quietly destroyed the thing the post-fix run was supposed to
+prove. The recorded **RED** was produced by the old paraphrase; a post-fix **GREEN**
+would be produced by different text. Red→green across two different probes is not a
+controlled result — the green could mean "the fix works" or "the new statement is one
+this planner happens to like". Fixing the drift would have created a fresh false green,
+in the very act of removing one.
+
+So the gate now carries a **negative control (section C)**: the *pre-fix* builder's own
+SQL, extracted the same way from `1830d50^`, planned in the same run, on the same DB,
+through the same probe, and required to still come back a rowid walk. The two extracted
+texts were diffed and differ in exactly one place —
+
+```
+pre :  AND l.tender_id = ? AND l.id > ?                    ORDER BY l.id LIMIT ?
+post:  AND l.tender_id = ? AND (l.tender_id, l.id) > (?, ?) ORDER BY l.id LIMIT ?
+```
+
+— so with C RED and B1 GREEN in one run, the cursor predicate is the only variable and
+the fix is the only available explanation. If C ever goes **green**, the probe has
+stopped discriminating (wrong DB, wrong turso, `ANALYZE` stats appeared) and the run
+exits `VOID`: every section-B verdict is uninterpretable, and a B1 green is the fourth
+false green rather than the fix.
+
+Falsified in both directions before use, with a stub plan source:
+
+| stub says | B1/B1b | C1 | verdict |
+|---|---|---|---|
+| rowid walk for everything | FAIL | PASS | gate red, control sound |
+| index seek for everything, *including the known-bad shape* | PASS | **FAIL** | **VOID** — greens refused |
+| no plan source | no-input | no-input | INCOMPLETE, "section B is UNCONTROLLED" |
+
+The middle row is the one that matters: it is the run where the gate reports the good
+news it was built to report, and refuses to let it stand.
+
+One incidental find while wiring C, worth keeping because it is the same failure class:
+the control SQL was first embedded as `CONTROL_SQL='…'`. The statement contains its own
+single quotes (`'title'`, `'ENG'`, `'submission_deadline'`), which close and reopen the
+shell string, silently degrading `'title'` to the bare identifier `title` — a *different
+statement*, planned without complaint, `bash -n` clean. Now a quoted heredoc, verified
+by round-trip. A gate that mangles its own probe text is indistinguishable from one that
+works, right up until it certifies the wrong thing.
 
 ### The pre-fix falsifier is on record
 
@@ -337,6 +389,18 @@ is exactly what this gate was built to produce, and it is captured in the script
 After the `lots_of` fix, B1 must flip to naming a real index — both
 `sqlite_autoindex_lots_1` and a named `lots_*` index are accepted, so the gate stays
 valid whichever route the fix takes.
+
+### Deferred — a B7 once issue 115 lands
+
+115 (16 big Tenders slow: `tender_detail` issues per-lot correlated subqueries, so cost
+grows with lot count) is a second read-path defect of the same family — right rows,
+wrong access pattern, invisible to every row-counting gate. It is *not* a plan defect
+the current B-set can see: the per-lot subqueries may each be index-served and the read
+still be slow, because the fault is how MANY of them run, not how each is planned.
+
+So when proj-fix batches it, this gate grows a **B7** on the batched query's plan, and
+that is a regression detector only — per the EQP asymmetry above, the *speedup* still
+has to be proved with a clock. Blocked on the fix landing; nothing to assert against yet.
 
 ## Sequencing
 
