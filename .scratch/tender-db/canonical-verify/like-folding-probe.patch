@@ -1,0 +1,92 @@
+diff --git i/crates/store/src/read.rs w/crates/store/src/read.rs
+index c8e0047..5f14ea4 100644
+--- i/crates/store/src/read.rs
++++ w/crates/store/src/read.rs
+@@ -1299,3 +1299,87 @@ fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
+         has_time: opt_int_of(row, idx + 2).unwrap_or(0) != 0,
+     })
+ }
++
++#[cfg(test)]
++mod like_folding_ground_truth {
++    //! MEASUREMENT, not an assertion. Issue 117's `tenders?country=` short-circuit rests
++    //! on "the union of ASCII-case variants of the pattern ⊇ everything `LIKE` matches".
++    //! That holds only if turso folds AT MOST ASCII. If it folds any non-ASCII pair, a
++    //! row whose value differs from every ASCII variant would be matched by `LIKE` and
++    //! missed by the short-circuit — silently wrong results, not slow ones.
++    //!
++    //! Nobody had established this on the deployed engine; it was assumed. This prints
++    //! what turso 0.7.0 actually does.
++    use super::*;
++
++    async fn like(conn: &Connection, value: &str, pattern: &str) -> bool {
++        let mut rows = conn
++            .query("SELECT ? LIKE ?", (t(value), t(pattern)))
++            .await
++            .unwrap();
++        match rows.next().await.unwrap() {
++            Some(r) => int(&r, 0) == 1,
++            None => false,
++        }
++    }
++
++    #[tokio::test]
++    async fn measure_like_folding() {
++        let path = format!("/tmp/like-probe-{}.db", std::process::id());
++        let _ = std::fs::remove_file(&path);
++        let db = crate::Db::open(&path).await.unwrap();
++        let conn = db.reader().await.unwrap();
++
++        let cases: Vec<(&str, &str, &str)> = vec![
++            ("ASCII lower vs upper",        "abc",  "ABC"),
++            ("ASCII upper vs lower",        "ABC",  "abc"),
++            ("ASCII mixed",                 "AbC",  "aBc"),
++            ("latin-1 a-umlaut",            "\u{e4}", "\u{c4}"),
++            ("latin-1 e-acute",             "\u{e9}", "\u{c9}"),
++            ("latin-1 o-slash",             "\u{f8}", "\u{d8}"),
++            ("german sharp s vs SS",        "\u{df}", "SS"),
++            ("greek sigma",                 "\u{3c3}", "\u{3a3}"),
++            ("cyrillic a",                  "\u{430}", "\u{410}"),
++            ("turkish dotted I vs i",       "\u{130}", "i"),
++            ("turkish dotless i vs I",      "\u{131}", "I"),
++            ("percent is a wildcard",       "abc",  "a%"),
++            ("underscore is one char",      "abc",  "a_c"),
++            ("underscore is exactly one",   "abc",  "a_"),
++            // `"a%b" LIKE "a%b"` does NOT discriminate — it matches whether % is a
++            // wildcard or a literal. These do.
++            ("% IS a wildcard",             "axb",  "a%b"),
++            ("% matches empty too",         "ab",   "a%b"),
++            ("value contains literal %",    "a%b",  "a\\%b"),
++            ("escaped % must NOT wildcard", "axb",  "a\\%b"),
++            ("_ escaped",                   "a_b",  "a\\_b"),
++            ("escaped _ must NOT wildcard", "axb",  "a\\_b"),
++            ("backslash is not special",    "a\\b", "a\\b"),
++            ("empty vs empty",              "",     ""),
++            ("nonempty vs empty",           "x",    ""),
++            ("prefix like country filter",  "DE",   "de%"),
++            ("prefix, value lowercase",     "de",   "DE%"),
++        ];
++
++        println!("---8<---LIKE-GROUND-TRUTH turso 0.7.0");
++        for (label, v, p) in cases {
++            let r = like(&conn, v, p).await;
++            println!("{:<28} {:?} LIKE {:?}  ->  {}", label, v, p, if r { "MATCH" } else { "no" });
++        }
++        println!("-- with an explicit ESCAPE clause --");
++        for (label, v, p) in [
++            ("literal % via ESCAPE",   "a%b", "a\\%b"),
++            ("escaped % rejects other","axb", "a\\%b"),
++            ("literal _ via ESCAPE",   "a_b", "a\\_b"),
++            ("escaped _ rejects other","axb", "a\\_b"),
++        ] {
++            let mut rows = conn
++                .query("SELECT ? LIKE ? ESCAPE '\\'", (t(v), t(p)))
++                .await
++                .unwrap();
++            let r = match rows.next().await.unwrap() { Some(x) => int(&x, 0) == 1, None => false };
++            println!("{:<28} {:?} LIKE {:?} ESCAPE bslash -> {}", label, v, p, if r {"MATCH"} else {"no"});
++        }
++        println!("---8<---END");
++        let _ = std::fs::remove_file(&path);
++    }
++}

@@ -733,3 +733,78 @@ With `?kind=` moved into Class A, the only read left that no `(filter, id)` inde
 all — it is an `EXISTS` over `tender_version_classifications` evaluated per row across 4.26 M Tenders —
 so it needs the restructure, not an index. The existence short-circuit fixes its *matches-nothing* case
 only, and remains a performance fix rather than a DoS defence.
+
+
+## GROUND TRUTH: how turso 0.7.0's `LIKE` actually folds (sdk-vendor, measured)
+
+The `tenders?country=` short-circuit rests on **"the union of ASCII-case variants of the
+pattern ⊇ everything `LIKE` matches"**. That holds only if turso folds *at most* ASCII.
+Nobody had established it on the deployed engine — it was assumed — so it is measured
+here, on turso **`0.7.0`**, the version pinned both in the workspace and at the deployed
+rev `a39d53a`. Probe kept as `canonical-verify/like-folding-probe.patch`; **re-run it on
+any turso bump**, because this is a property of the engine, not of our code.
+
+### 1. Case folding is ASCII-ONLY — the assumption HOLDS
+
+| value | pattern | result |
+|---|---|---|
+| `abc` | `ABC` | **MATCH** |
+| `AbC` | `aBc` | **MATCH** |
+| `ä` | `Ä` | no |
+| `é` | `É` | no |
+| `ø` | `Ø` | no |
+| `ß` | `SS` | no |
+| `σ` | `Σ` | no |
+| `а` (Cyrillic) | `А` | no |
+| `İ` | `i` | no |
+| `ı` | `I` | no |
+
+Eight non-ASCII pairs, none folded. So enumerating ASCII-case variants does cover
+everything `LIKE` matches, and the short-circuit is sound **on this axis**.
+
+### 2. But metacharacters are NOT covered by that argument, and this is the live risk
+
+| value | pattern | result | |
+|---|---|---|---|
+| `axb` | `a%b` | **MATCH** | `%` is a wildcard |
+| `ab` | `a%b` | **MATCH** | `%` matches empty |
+| `abc` | `a_c` | **MATCH** | `_` is exactly one char |
+| `abc` | `a_` | no | …exactly one, not one-or-more |
+| `a\b` | `a\b` | **MATCH** | **backslash is NOT an escape by default** |
+| `a%b` | `a\%b` | no | so `\%` without ESCAPE matches nothing useful |
+| `a%b` | `a\%b` **ESCAPE `\`** | **MATCH** | escaping works only with the clause |
+| `axb` | `a\%b` **ESCAPE `\`** | no | and then it is exact |
+
+**The consequence for the short-circuit is a correctness one, not a performance one.**
+If a user-supplied value is interpolated into a `LIKE` pattern *without* an `ESCAPE`
+clause, any `%` or `_` in that value is a **wildcard**. Then:
+
+* `?country=d%` — `LIKE 'd%%'` matches `DE`, `DK`, `d-anything`; a short-circuit that
+  treats the value as a literal and enumerates `{d%, D%}` as exact strings matches
+  **nothing**. Different rows, silently.
+* `?country=_E` — same shape, `_` matching any single character.
+
+So the short-circuit is equivalent to `LIKE` only for values containing neither `%` nor
+`_`. Whether that is guaranteed is a question about the *input path*, not about `LIKE`,
+and it is the part I cannot answer from the engine — it belongs with proj-fix's point 1.
+
+### 3. Adversarial case list, offered as a SPEC for proj-fix's test
+
+Not an edit to `tenders_shortcircuit.rs` — handing over the cases, since the value of an
+independent list is that its author did not write the code:
+
+1. `de` — the ordinary path; short-circuit and `LIKE` must return identical rows.
+2. `DE`, `De`, `dE` — every ASCII case variant, same rows as (1).
+3. `d%` — **`%` in the input.** Must not silently diverge.
+4. `_E`, `%`, `%%` — `_` and bare-wildcard inputs, including the pattern that matches
+   everything.
+5. `d\` and `\%` — backslash, which is NOT special without `ESCAPE`; verify whichever
+   behaviour is chosen is the one implemented.
+6. `` (empty) — `'' LIKE ''` is **MATCH** but `'x' LIKE ''` is **no**; an empty filter
+   must mean the same thing on both paths.
+7. `Ä`, `ß`, `İ` — non-ASCII, which do NOT fold. The short-circuit must not fold them
+   either, or it returns rows `LIKE` would not.
+8. A value longer than any stored country code, and one containing a NUL or a newline.
+
+Cases 3–6 are where I would expect a divergence if there is one; 7 is the one this
+measurement proves is safe *provided the short-circuit does not do its own folding*.
