@@ -84,6 +84,9 @@ pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
                 std::env::var("TENDER_ARCHIVE").unwrap_or_else(|_| "archive".into()).into();
             let sup = Arc::new(Supervisor::new(db, archive, reqwest::Client::new()));
             sup.recover().await;
+            // Issue 111: notice a missing deferred index and ask the existing Reindex
+            // job to build it. After `recover`, so an already-queued Reindex is seen.
+            sup.ensure_deferred_indexes().await;
             sup.clone().spawn_worker();
             sup.clone().spawn_scheduler();
             sup
@@ -510,17 +513,10 @@ impl Supervisor {
         if max_id + 1 > self.next_id.load(Ordering::Relaxed) {
             self.next_id.store(max_id + 1, Ordering::Relaxed);
         }
-        let has_reindex = self
-            .queue
-            .lock()
-            .expect("queue lock")
-            .iter()
-            .any(|j| matches!(j.spec, Spec::Reindex));
         if recovered > 0 {
             eprintln!("supervisor: recovered {recovered} pending job(s) from the durable queue");
             self.wake.notify_one();
         }
-        self.ensure_deferred_indexes(has_reindex).await;
     }
 
     /// Issue 111: notice at startup that a deferred index is missing, and ask the
@@ -539,7 +535,22 @@ impl Supervisor {
     /// Skipped when a `Reindex` is already queued, so a restart loop cannot stack
     /// them. The job itself is idempotent — `CREATE INDEX IF NOT EXISTS` loops — so a
     /// redundant one is harmless, just wasteful.
-    async fn ensure_deferred_indexes(&self, reindex_already_queued: bool) {
+    /// Called by [`init`] AFTER [`recover`], never from inside it.
+    ///
+    /// `recover` restores the durable queue and does nothing else; this ADDS a job.
+    /// Folding an enqueue into a restore made recovery's own tests fail — they assert
+    /// the queue contains exactly what was persisted, and on a fresh database every
+    /// deferred index is missing, so recovery silently gained a fifth job. That was a
+    /// real design smell caught by a real test, and the separation is the fix rather
+    /// than an accommodation: a function named for restoring state should not create
+    /// any.
+    pub(crate) async fn ensure_deferred_indexes(&self) {
+        let reindex_already_queued = self
+            .queue
+            .lock()
+            .expect("queue lock")
+            .iter()
+            .any(|j| matches!(j.spec, Spec::Reindex));
         let missing = match self.db.missing_deferred_indexes().await {
             Ok(m) => m,
             Err(e) => {
