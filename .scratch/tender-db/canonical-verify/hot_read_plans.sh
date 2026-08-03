@@ -37,6 +37,13 @@
 #      USING INDEX — green — with OR without the fix, because the paraphrase had
 #      dropped the cursor predicate and the cursor predicate WAS the defect. It could
 #      never have failed. Extract statements from the builder. (114 part 2)
+#      The smallest instance, and the one that shows how cheap the error is: a
+#      pre-deploy check for silently-skipped tests grepped for the STRING `#[ignore`
+#      and reported a bare one — a test skipped with no stated reason. There was none.
+#      The 17th match was a `//!` comment EXPLAINING why a test is ignored. A comment
+#      mentioning the attribute is a paraphrase of the attribute, and the grep could
+#      not tell them apart. Even a one-line check has an artifact and a proxy, and
+#      picking the proxy is the default rather than the exception.
 #
 #   2. A CHECK THAT HAS NOT BEEN SEEN TO FAIL IS NOT EVIDENCE.
 #      Every check here has been run against a plan DB with its own index removed and
