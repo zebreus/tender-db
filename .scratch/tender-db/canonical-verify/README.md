@@ -22,8 +22,21 @@ Use the feature set the release build uses. The project's own workspace incantat
 `nix/package.nix` (`cargoClippyExtraArgs`):
 
 ```sh
-cargo test --workspace --features tender-db/server
+cargo test --workspace --features tender-db/server --no-fail-fast
 ```
+
+**`--no-fail-fast` is not optional.** `cargo test` stops at the first failing *target* by
+default, so a failure early in the run **silently skips every later target** and the
+summary still reads like a complete result. Measured on the same tree: without it,
+328 passed / 1 failed across 47 targets; with it, **343 passed / 1 failed / 22 ignored
+across 53** — fifteen tests that simply never ran.
+
+It also corrupted an earlier verdict here. A run on `5c197e7` reported "290 passed,
+5 failed" and I read the five as the whole story; in fact the lib target failed, cargo
+stopped, and the app's five integration targets never executed. The disk-health probe
+appeared to *pass* on that tree when it had never run — which then looked like evidence
+that a later failure of the same test must be a code change rather than the box. Silence
+about a target is indistinguishable from a target that passed.
 
 **What the corrected command found immediately:** 290 passed, **5 failed** — five
 `supervisor::tests` queue-recovery tests, invisible to every prior run because the module
