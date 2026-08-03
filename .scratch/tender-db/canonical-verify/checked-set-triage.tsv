@@ -45,7 +45,7 @@ notices	winner	ignored-filter	issue 118 — builder drops this parameter
 organizations	buyer	candidate	not yet read — rowid access is ambiguous between lookup and walk
 organizations	country	asserted	B7
 organizations	cpv	ignored-filter	issue 118 — builder drops this parameter
-organizations	kind	candidate	was 'unservable'; 8cdc35d adds organizations(identifier_kind, id), so a check is now possible once it is built — measured 0.0423s -> 0.0000s on the absent-value case
+organizations	kind	asserted	B10 — was 'unservable', then 'candidate'; 8cdc35d adds organizations(identifier_kind, id) so the property is now achievable
 organizations	max_value	ignored-filter	issue 118 — builder drops this parameter
 organizations	min_value	ignored-filter	issue 118 — builder drops this parameter
 organizations	none	unfiltered-page	primary-key order is the page order
