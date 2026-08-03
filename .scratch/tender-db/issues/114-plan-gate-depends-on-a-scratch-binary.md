@@ -425,3 +425,51 @@ Filed because 112's plan half is the part that catches the defect class nothing 
 and it currently rests on a file someone else owns and may reasonably delete. The gate will
 say so when that happens. This issue exists so that saying so leads to a fix rather than to
 a permanently-yellow line in a report.
+
+
+## LANDED 2026-08-03 (sdk-vendor) — and a counting reconciliation
+
+Part 2 is in: `read-checked-set-generator.patch` (the enumerator), `checked-set.tsv`
+(the derived set), `checked-set-triage.tsv` (dispositions), and section E of the gate,
+which FAILS on any read the code can emit that carries no disposition.
+
+Two guards make the enumeration itself derived rather than another hand-list. The
+important one is `every_filter_field_is_enumerated`, which destructures `Filter`
+**exhaustively**: adding a field is a **compile error**, not a silently narrower sweep.
+Rust has no reflection, so a compile error is the only guard here that cannot be
+forgotten. Falsified both ways — adding a field gives `pattern does not mention field
+brand_new_filter`; dropping a probe fails the count assertion.
+
+### The two prototype runs agree — the counts differ only in unit
+
+The prototype recorded "88 candidates, **56 distinct**, 24 filter-specific". My
+independent run got 88 candidates, **28 distinct**, 24 filter-specific, and for a while
+that looked like one of us being wrong — 56 exceeds the ceiling of 44 that 88 candidates
+allow if each cursor pair is textually identical, which I had just measured them to be.
+
+It is not an error, it is a different unit:
+
+| unit | count |
+|---|---|
+| distinct statement texts | **28** |
+| distinct (statement, cursor position) | **56** ← the prototype's figure |
+| filter-specific (collection, filter) pairs | **24** ← both agree |
+
+Recorded because the natural instinct on seeing 56 vs 28 is to "correct" one of them,
+and both are right about different things. The unit that matters for triage is the
+**(collection, filter) pair — 44 of them** — because that is what a client can actually
+request; the cursor position is a bound parameter and never changes the text (verified
+across all 44, not assumed).
+
+The other independent agreement is worth more: the prototype's corrected count of **16**
+silently-ignored `(collection, filter)` pairs, with a 7 organizations / 8 notices /
+1 tenders breakdown, came out identically here from a separate enumeration. Two methods,
+one answer — which is the only reason either is trustworthy.
+
+### Known limitation, stated rather than discovered
+
+The fixture is checked in, so it can go stale. Section E tests for that rather than
+hoping: it records the rev it was generated at and diffs `read.rs` against the serving
+rev. **That check fires today** — the fixture is from `b70971a` and prod runs
+`1830d50` — so section E is no-input on prod until the seams deploy. The audit cannot
+describe a build that is not running, and says so rather than implying coverage.
