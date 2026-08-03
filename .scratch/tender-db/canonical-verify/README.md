@@ -4,6 +4,33 @@ Read-only checks to run the moment the full canonical rebuild lands, to confirm
 the tender layer is sound. Derived from CONTEXT.md, docs/adr/, and the schema
 (crates/store/src/canonical.rs). **Read-only — nothing here writes or deploys.**
 
+## ONE VERIFICATION OWNER PER OBLIGATION
+
+Learned the expensive way, 2026-08-03. Two branches independently grew a **section I**
+in `de1x_verify.sh` for the same obligation — the issue-98/100 winners-gap disclosure —
+written weeks apart by authors who could not see each other's. Both passed, on their own
+branch, indefinitely. The duplicate surfaced **only** when the branches merged.
+
+They did not agree. One asserted the served JSON at `/api/dashboard`; the other grepped
+`GET /` for the same words. The disclosure is rendered client-side, so the second
+**cannot pass on a healthy deployment** — it was the predecessor that issue 110 was filed
+to replace, still alive on the other branch, still reporting.
+
+The rule that follows:
+
+* **Each honesty obligation gets exactly one check, with one owner.** Not one per
+  branch, not one per person who noticed the obligation.
+* **Before adding a check, look for the one that already exists.** Two gates for one
+  obligation are worse than either alone: when they disagree the red is
+  uninterpretable, and the reliable human response to an uninterpretable red is to stop
+  reading the section.
+* **A duplicate is invisible from inside a branch.** Neither gate could have detected
+  the other; nothing but the merge could. So the search has to be deliberate — grep the
+  suite for the obligation, not for the filename you were about to create.
+
+This is why convergence matters and not merely that it tidies history: it is what
+establishes a single owner per check.
+
 Expected top-line (deterministic, from the completed grouping):
 - **tenders = 6,961,311**
 - **islands (island_notice_id NOT NULL) = 640,745**  ⇒  keyed = **6,320,566**
