@@ -99,14 +99,27 @@ async fn can_a_joined_filter_keep_lots_driving() {
             "INSERT INTO lots (id, tender_id, lot_key) VALUES (?, ?, ?)",
             (Value::Integer(i), Value::Integer(tender), Value::Text(format!("LOT-{i}"))),
         ).await.unwrap();
-        let kind = if i > LOTS - 50 { "Part" } else { "Lot" };
+        // Placement of the rare kind is the UNKNOWN this probe brackets. `TDB_RARE=late`
+        // clusters every rare lot in the last 50 rows — matches-late by construction,
+        // the worst case. `scattered` spreads the same count evenly. Which one prod
+        // resembles decides whether the EXISTS trade is acceptable, and that is a
+        // property of the corpus nobody can read off the schema.
+        let late = std::env::var("TDB_RARE").as_deref() != Ok("scattered");
+        let kind = if late {
+            if i > LOTS - 50 { "Part" } else { "Lot" }
+        } else if i % 20 == 0 {
+            "Part"
+        } else {
+            "Lot"
+        };
         conn.execute(
             "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, 1, ?, ?)",
             (Value::Integer(tender), Value::Integer(i), Value::Text(kind.to_owned())),
         ).await.unwrap();
     }
     conn.execute("COMMIT", ()).await.unwrap();
-    println!("\n{LOTS} lots seeded in {:.1}s ('Lot' dense, 'Part' rare and late)",
+    let placement = std::env::var("TDB_RARE").unwrap_or_else(|_| "late".into());
+    println!("\n{LOTS} lots seeded in {:.1}s ('Lot' dense, 'Part' rare, placement={placement})",
              seeded.elapsed().as_secs_f64());
 
     // The target: unfiltered, driving from `lots`, ORDER BY satisfied by the drive.
