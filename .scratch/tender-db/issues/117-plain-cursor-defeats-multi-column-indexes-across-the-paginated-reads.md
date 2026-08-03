@@ -932,3 +932,39 @@ An earlier note in this issue called 45 conservative on the strength of two poin
 at or below it; that was wrong, and the guard's constant should be the measured **maximum**, not the
 middle. At 48 B/row a 44 M-row table projects to 2.11 GB, which puts `organization_mentions` (40.9 M)
 at the boundary rather than comfortably inside it.
+
+## CORRECTION: this issue's audit was incomplete — `/v1/tenders?kind=` is a fifth member
+
+The four fixes deployed in `5c197e7` are real and verified. **The claim that they close the class is
+not.** A fifth walk-capable read was missed by this issue's audit and found later, while deriving task
+5's isolation routing from the code rather than from this issue's list.
+
+`/v1/tenders?kind=` filters `t.kind`, which **no index covers** — `tenders_procedure_key`,
+`tenders_island`, `tenders_current_published` and `tenders_source_id` are the whole set. Measured
+locally rather than inferred from the schema:
+
+| request | limit | time | rows |
+|---|---|---|---|
+| `?kind=procedure` (matches) | 50 | 0.0009 s | 50 |
+| `?kind=zzz` (matches nothing) | 50 | **0.0437 s** | 0 |
+
+48× — a full walk, the same shape as the filters fixed here. Its **magnitude at prod scale is
+deliberately not extrapolated**: the members fixed here ran 10–1000× worse in production than naive
+scaling from equivalent synthetics predicted, so 400k rows establishes *that* it walks and nothing about
+*how long*. team-lead has authorised a prod measurement.
+
+**Resolution: isolation, not an index.** A `(kind, id)` index over a two-value column is barely a filter,
+carries the dense-regression risk of a non-covering shape, and would only make the nothing-matching value
+cheap. `kind` also has no matches-late case — both real values are dense and return under `LIMIT`
+immediately — so the only slow case is the adversarial nothing-match, which task 5's isolated pool
+confines. No index, no new exception.
+
+### What this says about the audit, and about the fix that found it
+
+The audit was the best available and it was **incomplete**. Any hand-maintained list derived from it —
+including task 5's routing table, had it been written by hand — would have inherited the gap silently.
+Deriving the routing predicate from the code found the member *in the course of doing something else*.
+
+That is also the first evidence for issue 120's thesis: the isolated pool caught an expensive read
+**nobody had audited**, which is what a backstop is for. The general defence earned its keep before it
+shipped.
