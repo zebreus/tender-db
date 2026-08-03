@@ -90,6 +90,34 @@ source — so there is no feature under which its code could fail to compile, an
 probes are not exposed to this defect. Recorded as a verified negative so the next
 person does not have to re-derive it; re-check it if `store` ever grows features.
 
+## A BROKEN DETECTOR IS INVISIBLE WHEN SOMETHING ELSE SUPPLIES THE ANSWER
+
+The sharpest instance of this is not in the gate — it is in the tooling around it
+(proj-fix, 2026-08-03). Eleven background waiters were written as:
+
+```sh
+until ! pgrep -f "cargo test --workspace"; do sleep 30; done
+```
+
+That string appears in the **watcher's own command line**. `pgrep` excludes its own PID
+but not its siblings or parent, so every watcher matched itself: `pgrep -fc "cargo test
+--workspace"` returned **12 with no cargo running at all** — the twelve were the watchers.
+**The condition was never satisfiable, and not one of them ever fired.**
+
+It went unnoticed all day because **the harness's task-completion notifications supplied
+every answer independently.** Each wait *appeared* to work; the result always arrived. The
+detector's total failure was masked by a second, working channel delivering the same
+information.
+
+That is a category beyond "a check that has never been seen to fail" (rule 2). This check
+had never been seen to **succeed** either — nobody could tell, because success and failure
+produced identical observable outcomes as long as something else answered the question.
+
+**The test:** if this check broke completely, would anything look different? If the answer
+is no — because another path supplies the same result — the check is decorative until
+proven otherwise, and it should be exercised in isolation at least once. A poll that never
+fires looks exactly like a poll still waiting.
+
 ## ONE VERIFICATION OWNER PER OBLIGATION
 
 Learned the expensive way, 2026-08-03. Two branches independently grew a **section I**
