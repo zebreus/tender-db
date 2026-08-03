@@ -1015,3 +1015,52 @@ not vary. A plan is also text about an execution, never a duration (112 rule 6).
 `tenders.db` fixture to agree before the record calls it closed.** The two instruments can
 genuinely disagree — independent construction and a clock, against a plan on an empty
 schema — which is what would make agreement worth something.
+
+## POST-DEPLOY RECORD — two corrections (sdk-vendor, sole editor, 2026-08-03)
+
+### 1. `/v1/lots?source=ted` — 117 did NOT cause it, and it is NOT a rollback
+
+**Verdict: the regression predates 117. 117 made it ~1.7x faster while leaving it
+catastrophic.** Two instruments, built independently and reported before either saw the
+other's result:
+
+| instrument | setup | result |
+|---|---|---|
+| plan (sdk-vendor) | empty schema from `Db::open()` | drives from `tenders` with **and** without `tenders_source_id`; top-level sorter in both |
+| clock (run-driver) | populated real-scale `probe.db` | no source-leading index **4.6 ms** · `tenders_island` **160 s** · `tenders_source_id` **93 s** |
+
+**The cause is that ANY source-leading index flips the drive**, and one already existed:
+`tenders_island` is `tenders(source, island_notice_id)` and predates 117 (present at
+`1830d50`). So the pre-117 state was **160 s**, and 117's index made the same read 93 s.
+Removing `tenders_source_id` would return it to `tenders_island` at 160 s while
+re-breaking four DoS reads now at milliseconds — which is why this is not a rollback,
+reached independently by both the plan half and team-lead.
+
+#### A limitation of MY half, recorded because the record should not credit it with more than it did
+
+My counterfactual was a fresh `Db::open()`, and **both** `tenders_island` and
+`tenders_source_id` are deferred — so it had **neither**. That models a state prod has
+never been in. It answers "does `tenders_source_id` *specifically* flip the drive?" but
+the load-bearing question was "did the drive already flip before 117?", and the honest
+comparison there is `tenders_island` vs `tenders_source_id` — which only the clock made.
+
+The empty schema also shows its limits directly: my plan predicted a `tenders` **scan**
+in the no-index case, and a full scan of 6.9M rows cannot be run-driver's 4.6 ms, so the
+populated planner evidently chooses a different drive than the empty-schema plan
+predicts. That is exactly the empty-vs-populated axis flagged when the plan half was
+filed, and it is why the record was held open for the clock.
+
+**So the two instruments agree on the verdict, and the plan half under-determined the
+mechanism.** Both statements belong here: an agreement is worth what the weaker
+instrument could actually have established, not what the conclusion sounds like.
+
+### 2. `?kind=` — the audit's ASSUMPTION was wrong, not its method
+
+The read-path audit treated both `kind` values as dense and reasoned from that. `?kind=
+registration` at **18.7 s** falsifies it: the assumption was wrong, the method was not.
+The method — enumerate the derived set, measure across a selectivity spread — is what
+surfaced the counter-example in the first place, and it holds. Tracked as its own
+follow-up (`tenders(kind, id)`).
+
+Worth keeping the distinction visible, because "the audit was wrong" and "an input the
+audit assumed was wrong" invite very different responses, and only the second is true.
