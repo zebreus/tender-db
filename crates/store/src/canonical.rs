@@ -1429,6 +1429,14 @@ impl Db {
         // ISSUE 111 APPLIES: this function runs at a rebuild's end or via the `Reindex`
         // admin job, and at no other time. Deploying the code does not create them.
         for (name, cols) in Self::DEFERRED_ORG_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
         }
         Ok(())
@@ -1472,9 +1480,62 @@ impl Db {
     pub async fn build_notice_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for (name, cols) in Self::DEFERRED_NOTICE_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
         }
         Ok(())
+    }
+
+    /// The largest table an index may be auto-built over, in rows.
+    ///
+    /// A bulk `CREATE INDEX` over a populated table sorts the whole table and its peak
+    /// RSS is LINEAR in row count — run-driver measured ~45 bytes/row on the deployed
+    /// turso 0.7.0 (366 MiB at 8.13M rows, 1.07 GB at 25.3M, no spill threshold
+    /// between them). It cannot be batched: `CREATE INDEX` has no range knob, and N
+    /// partial indexes over disjoint id ranges do not compose into one usable index
+    /// (a partial index serves only queries whose `WHERE` implies its predicate, so a
+    /// filter with no id bound would use none of them).
+    ///
+    /// So the only protection is not to start a build that will not fit. At ~45 B/row
+    /// this cap is ~2 GB of peak RSS — half the project's ~4 GB bounded-memory ceiling,
+    /// leaving room for the rest of the process on a box still carrying issue 57's
+    /// swap band-aid. Today's largest member, `organization_mentions` at 40.9M rows,
+    /// passes; `changes` at 93.6M (~4 GB alone) would not, and is deliberately in
+    /// neither deferred list — its indexes are built index-first in the schema DDL or
+    /// at projection end, which is bounded (24 MiB measured) because maintaining an
+    /// index during insert never sorts the whole table.
+    ///
+    /// Enforced at build time rather than as a compile-time assertion because the
+    /// hazard is a ROW COUNT, and row counts are not compile-time facts. A static
+    /// allowlist of table names would encode today's judgement about which tables are
+    /// small, and go stale silently the moment one grows — which is precisely the
+    /// mistake that put `notices(source, id)` in the schema batch on the strength of a
+    /// comment written when the table was 8x smaller.
+    const MAX_AUTO_INDEX_ROWS: i64 = 45_000_000;
+
+    /// Refuse to bulk-build an index over a table too large to sort within the memory
+    /// budget. Returns the offending row estimate, or `None` if the build may proceed.
+    ///
+    /// Uses `MAX(rowid)`, which is an O(1) index seek to the end rather than a
+    /// `COUNT(*)` scan — and an OVER-estimate once rows have been deleted, so it errs
+    /// toward refusing. Erring toward refusing is right: a refused index leaves a read
+    /// slow and says so, while an accepted one that does not fit takes the process
+    /// down mid-build, and turso has no way to interrupt a running statement.
+    async fn too_large_to_build(conn: &Connection, cols: &str) -> turso::Result<Option<i64>> {
+        let Some(table) = cols.split('(').next().map(str::trim) else { return Ok(None) };
+        let mut rows = conn.query(&format!("SELECT MAX(rowid) FROM {table}"), ()).await?;
+        let estimate = match rows.next().await? {
+            Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+            None => 0,
+        };
+        Ok((estimate > Self::MAX_AUTO_INDEX_ROWS).then_some(estimate))
     }
 
     /// Which deferred indexes are absent from this database.
@@ -1741,6 +1802,16 @@ impl Db {
     pub async fn build_tender_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for (name, cols) in Self::DEFERRED_TENDER_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the \
+                     {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111). \
+                     Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
         }
         Ok(())

@@ -112,3 +112,49 @@ async fn dropping_one_index_is_noticed() {
 
     clean(&path);
 }
+
+/// The size cap must actually refuse, not merely exist.
+///
+/// A bulk `CREATE INDEX` sorts the whole table and its peak RSS is linear in row
+/// count (~45 B/row measured on the deployed turso), and it cannot be batched. So the
+/// only protection against a future `changes`-sized index entering a deferred set is
+/// to decline the build — and a cap nobody has watched refuse is a cap that might not.
+///
+/// Driven by `rowid`, not by inserting 45M rows: `too_large_to_build` estimates with
+/// `MAX(rowid)` precisely so it costs an index seek instead of a scan, which also
+/// makes it testable with two rows.
+#[tokio::test]
+async fn an_oversized_table_is_refused_not_built() {
+    let (path, db) = open("oversize").await;
+    let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+
+    // One organization at a rowid above the cap. MAX(rowid) is the estimate, so this
+    // is a 45-million-row table as far as the guard is concerned.
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
+         VALUES (46000000, 'DE', 'vat', 'X', 'Org', 0, 1700000000)",
+        (),
+    )
+    .await
+    .unwrap();
+
+    db.build_organization_indexes().await.unwrap();
+
+    let missing = db.missing_deferred_indexes().await.unwrap();
+    assert!(
+        missing.contains(&"organizations_country_id".to_owned()),
+        "the builder must REFUSE an oversized table and leave the index missing, so \
+         the condition stays visible instead of the process dying mid-build — turso \
+         cannot interrupt a running statement. Reported missing: {missing:?}"
+    );
+    // And it must not be a blanket failure: the tender indexes are on empty tables
+    // and must still build.
+    db.build_tender_indexes().await.unwrap();
+    let after = db.missing_deferred_indexes().await.unwrap();
+    assert!(
+        !after.contains(&"tenders_source_id".to_owned()),
+        "refusing one oversized table must not stop the others building"
+    );
+
+    clean(&path);
+}

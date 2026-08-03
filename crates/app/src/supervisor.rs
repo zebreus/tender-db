@@ -510,10 +510,60 @@ impl Supervisor {
         if max_id + 1 > self.next_id.load(Ordering::Relaxed) {
             self.next_id.store(max_id + 1, Ordering::Relaxed);
         }
+        let has_reindex = self
+            .queue
+            .lock()
+            .expect("queue lock")
+            .iter()
+            .any(|j| matches!(j.spec, Spec::Reindex));
         if recovered > 0 {
             eprintln!("supervisor: recovered {recovered} pending job(s) from the durable queue");
             self.wake.notify_one();
         }
+        self.ensure_deferred_indexes(has_reindex).await;
+    }
+
+    /// Issue 111: notice at startup that a deferred index is missing, and ask the
+    /// existing `Reindex` job to build it.
+    ///
+    /// The deferred indexes are created at a rebuild's end or when an operator fires
+    /// `Reindex`, and at no other time — so a deploy that ADDS one leaves it
+    /// uncreated, and the read it exists for stays slow until somebody notices. That
+    /// is how issue 117's DoS fix would have shipped without taking effect.
+    ///
+    /// Detection is one `sqlite_master` scan (one row per object, not per row of
+    /// data), and the BUILD does not happen here: it is enqueued and runs on the
+    /// worker after the service is up. Building at boot is the multi-hour start-up
+    /// issues 82/83 removed, and `notices(source, id)` alone would be ~7 minutes.
+    ///
+    /// Skipped when a `Reindex` is already queued, so a restart loop cannot stack
+    /// them. The job itself is idempotent — `CREATE INDEX IF NOT EXISTS` loops — so a
+    /// redundant one is harmless, just wasteful.
+    async fn ensure_deferred_indexes(&self, reindex_already_queued: bool) {
+        let missing = match self.db.missing_deferred_indexes().await {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("supervisor: check deferred indexes: {e}");
+                return;
+            }
+        };
+        if missing.is_empty() {
+            return;
+        }
+        if reindex_already_queued {
+            eprintln!(
+                "supervisor: {} deferred index(es) missing ({}); a reindex is already queued",
+                missing.len(),
+                missing.join(", ")
+            );
+            return;
+        }
+        eprintln!(
+            "supervisor: {} deferred index(es) missing ({}) — queueing a background reindex",
+            missing.len(),
+            missing.join(", ")
+        );
+        self.push("reindex", format!("auto: {}", missing.join(", ")), Spec::Reindex).await;
     }
 
     // ---------------------------------------------------------------- progress

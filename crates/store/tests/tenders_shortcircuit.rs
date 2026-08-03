@@ -198,6 +198,46 @@ async fn the_guard_changes_speed_not_results() {
         "a metacharacter anywhere in the prefix, not just at the start"
     );
 
+    // From sdk-vendor's adversarial case list, written against the guard by someone
+    // who did not write it — the same multi-author principle that caught the issue-115
+    // cross-tender leak. These are the cases their list flagged that the author's own
+    // fixture had missed.
+    //
+    // EMPTY prefix. The bound pattern is `LIKE '' || '%'` = `LIKE '%'`, which matches
+    // every non-NULL code, so an empty filter must behave like no filter at all — not
+    // like a filter for the empty string.
+    assert_eq!(
+        ids(&conn, &country("")).await,
+        vec![1],
+        "an empty country prefix binds `LIKE '%'`, which matches everything"
+    );
+    assert_eq!(ids(&conn, &cpv("")).await, vec![1], "same for an empty cpv");
+
+    // BACKSLASH is NOT an escape character in SQLite `LIKE` without an explicit
+    // `ESCAPE` clause, and this predicate has none — so `\` is a literal, `d\` matches
+    // nothing, and `\%` is a literal backslash followed by the wildcard. The guard
+    // declines on `\` rather than reasoning about which of those it is.
+    assert!(
+        ids(&conn, &country("d\\")).await.is_empty(),
+        "a literal backslash matches no stored code, and the guard must not turn that \
+         into a claim about anything else"
+    );
+    assert_eq!(
+        ids(&conn, &country("\\%")).await.len(),
+        0,
+        "`\\%` is a literal backslash then a wildcard — no code starts with a backslash"
+    );
+
+    // Odd bytes: NUL, newline, and an over-long value. None may panic or be
+    // interpreted; all fall through or return empty, never a wrong non-empty answer.
+    for odd in ["\0", "\n", "DE\0", &"D".repeat(4096)] {
+        let got = ids(&conn, &country(odd)).await;
+        assert!(
+            got.is_empty() || got == vec![1],
+            "an odd prefix must yield the real answer or nothing, never invention"
+        );
+    }
+
     // Absent: the whole point. Empty, and reached without the walk.
     assert!(ids(&conn, &country("ZZ")).await.is_empty(), "absent country -> empty");
     assert!(ids(&conn, &cpv("99")).await.is_empty(), "absent cpv -> empty");
