@@ -6,61 +6,27 @@
 # It never executes a data query, so it touches no data pages — unlike every other
 # gate in this directory it is safe to run against the serving DB.
 #
-# ONE PRECISION, because the original claim here was "takes no lock" and that is
-# no longer literally true. Section A opens the DB NON-immutable when a non-empty
-# `-wal` exists (see section A for why: immutable=1 silently reads a stale
-# catalogue). In WAL mode that registers a read mark in the `-shm`; it does NOT
-# take the writer's lock and does NOT block writers.
-# Measured rather than asserted, against a live writer committing continuously:
-#   writer alone             p50 5.355 ms   347 commits / 2 s
-#   writer + catalogue reads p50 5.732 ms   334 commits / 2 s   (-3.7%)
-#   289 catalogue reads completed concurrently, 0 failures
-# and that is with reads in a tight loop — one run of this gate does ONE such read,
-# so the effect is not measurable. The read is a single `sqlite_master` scan, so it
-# also cannot hold back a WAL checkpoint in any meaningful way (a long-lived reader
-# could; this is milliseconds).
+# ONE PRECISION, and a correction that cost a measurement.
+#   Section A reads `sqlite_master` with `immutable=1` and takes no lock. It used to
+#   fall back to a WAL-MERGED read (`mode=ro`) when a non-empty `-wal` existed, so that
+#   an index living only in WAL frames could not read as ABSENT. I measured that
+#   fallback as safe — 289 concurrent catalogue reads against a live writer, zero
+#   failures, writer p50 5.355 -> 5.732 ms.
 #
-# WHY THIS EXISTS
-#   Every other gate here counts rows. The layer can be perfectly correct while a
-#   hot read full-scans, because a full scan returns the right answer — that is
-#   the /v1/tenders/{id} ~2.2s regression, invisible to all of them.
+#   THAT MEASUREMENT WAS AGAINST THE WRONG PAIR. I had stock sqlite3 reading a WAL
+#   written by stock sqlite3. Prod is stock sqlite3 reading a WAL written by TURSO,
+#   and there turso's lock gives `database is locked (5)` regardless of `.timeout`.
+#   run-driver hit it on the box: the fallback can never succeed on a busy prod, so it
+#   was a branch that could only ever produce no-input. It is REMOVED.
+#   This is the same wrong-engine trap the plan half of this gate is built around
+#   (sqlite3 disagreeing with turso), one level deeper — in the CONCURRENCY behaviour
+#   rather than the planner — and I walked into it while being careful about the other.
 #
-# THE TRAP THIS GATE IS BUILT TO AVOID
-#   The obvious implementation asserts that the expected indexes EXIST. That is a
-#   CORRELATE, and on 2026-08-03 it was a correlate that was already TRUE while
-#   the site served 2.2s pages: `tender_version_bid_parties_version` was present
-#   (job 534 built it) and `lots_of` scanned 13.2M `lots` rows anyway, because
-#   turso declines `UNIQUE(tender_id, lot_key)` under an `ORDER BY l.id LIMIT`
-#   shape. The index existed and the planner scanned. So the load-bearing signal
-#   is the PLAN, not the name.
-#
-# THE SECOND TRAP — WHICH ENGINE PRODUCED THE PLAN  (read this before "fixing"
-# this script to just use sqlite3)
-#   Stock SQLite and turso DISAGREE on exactly this query. Measured on the real
-#   `lots` schema, with and without ANALYZE, stock sqlite3 says:
-#       SEARCH l USING COVERING INDEX sqlite_autoindex_lots_1 (tender_id=?)
-#   i.e. SEARCH, not SCAN — GREEN — for the very query turso scans in prod.
-#   Running these plan checks under stock sqlite3 would therefore CERTIFY THE
-#   LIVE DEFECT AS HEALTHY. A snapshot is the right DATA but sqlite3 is the wrong
-#   ENGINE, and a plan verdict from the wrong engine is not evidence — it is the
-#   same mirror as issue 110, one level deeper.
-#   Hence: the plan half REQUIRES a turso-backed plan source ($TDB_PLAN_CMD) and
-#   reports NO-INPUT without one. It never falls back to sqlite3 for a plan.
-#
-# "IF EQP CAN LIE, WHY DOES THIS GATE TRUST IT?"  — the asymmetry
-#   Both things are true at once, because they are two different jobs for one
-#   instrument:
-#     * As a REGRESSION DETECTOR, EQP is sound. A plan that names a real index
-#       and later names a rowid walk is a real, specific signal, and it is
-#       available cheaply, standing, without executing anything. That is this
-#       gate.
-#     * As PROOF OF A SPEEDUP, EQP is not sound — the very text that misleads
-#       (`SEARCH … USING INTEGER PRIMARY KEY (rowid=?)`) is the one that claims
-#       to be fast while walking 13.2M rows. Proving a fix made something faster
-#       needs a clock, not a plan.
-#   So this gate is built on plans, AND a fix to a scanning read must still be
-#   validated by timing it. Neither position contradicts the other; do not
-#   "simplify" one into the other.
+#   So section A requires a CHECKPOINTED snapshot and refuses a non-empty `-wal`, the
+#   same rule `de1x_verify.sh` already enforces. And because a snapshot is a photograph,
+#   it now PRINTS its input and that input's AGE: an index built after the file was
+#   taken is invisible and would report ABSENT, so the reader is told what they are
+#   looking at instead of inferring it.
 #
 # THE FIVE RULES THIS FILE LEARNED THE HARD WAY (2026-08-03)
 #   Each was paid for with a real false verdict. Detail lives at the point of use and
@@ -441,20 +407,25 @@ else
   # rather than quietly reporting a main-file view as the truth.
   A_VIEW=""
   if [ -s "${TDB_SNAPSHOT}-wal" ]; then
-    HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
-             "file:${TDB_SNAPSHOT}?mode=ro" \
-             "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
-    if [ -n "$HAVE" ]; then
-      A_VIEW="WAL-merged ($(wc -c < "${TDB_SNAPSHOT}-wal") byte -wal included)"
-    else
-      report NONE A0 "TDB_SNAPSHOT has a NON-EMPTY -wal ($(wc -c < "${TDB_SNAPSHOT}-wal") bytes) and the WAL-merged read failed. An immutable=1 read would IGNORE those frames, so an index living only in the WAL would report as ABSENT on a healthy DB — and one dropped in the WAL would report as present. Index presence NOT verified. Checkpoint (TRUNCATE) and re-run, or point TDB_SNAPSHOT at a checkpointed snapshot."
-      HAVE=""
-    fi
+    report NONE A0 "TDB_SNAPSHOT=$TDB_SNAPSHOT has a NON-EMPTY -wal ($(wc -c < "${TDB_SNAPSHOT}-wal") bytes). An immutable=1 read would IGNORE those frames — an index living only in the WAL would report ABSENT on a healthy DB, and one dropped there would report present. Index presence NOT verified. Point TDB_SNAPSHOT at a CHECKPOINTED snapshot (0-byte -wal); do not aim it at the live serving file."
   else
     HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
              "file:${TDB_SNAPSHOT}?immutable=1" \
              "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
-    [ -n "$HAVE" ] && A_VIEW="main file, immutable=1 (no -wal frames to miss)"
+    if [ -n "$HAVE" ]; then
+      # DECLARE THE INPUT. A snapshot is a photograph of the catalogue, and a check is
+      # only as trustworthy as its knowledge of its own inputs — so the age is printed
+      # rather than left for the reader to wonder about. An index built AFTER this file
+      # was taken (a reindex job, 111's boot repair) is invisible here and would report
+      # as ABSENT; an index dropped since would report as present.
+      a_age="unknown age"
+      a_mtime=$(stat -c %Y "$TDB_SNAPSHOT" 2>/dev/null || stat -f %m "$TDB_SNAPSHOT" 2>/dev/null)
+      if [ -n "$a_mtime" ]; then
+        a_min=$(( ( $(date -u +%s) - a_mtime ) / 60 ))
+        a_age="${a_min} min old"
+      fi
+      A_VIEW="snapshot $TDB_SNAPSHOT, $a_age, checkpointed (0-byte -wal) — NOT the live catalogue; valid only if no reindex has run since"
+    fi
   fi
   if [ -z "$HAVE" ]; then
     [ -s "${TDB_SNAPSHOT}-wal" ] || report NONE A0 "sqlite_master returned nothing — wrong file, or unreadable. NOT verified."
