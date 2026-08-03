@@ -141,8 +141,12 @@ async fn can_a_joined_filter_keep_lots_driving() {
     let (t, n) = time(&conn, UNFILTERED, vec![]).await;
     println!("\n{:<44} {:>10}  {:>5}", "case", "time", "rows");
     println!("{:<44} {t:>9.4}s  {n:>5}", "unfiltered (the target property)");
-    for (label, sql) in [("joined, kind=Lot (dense)", JOINED), ("joined, kind=Part (rare)", JOINED)] {
-        let kind = if label.contains("Lot") { "Lot" } else { "Part" };
+    for (label, kind) in [
+        ("joined, kind=Lot (dense)", "Lot"),
+        ("joined, kind=Part (rare)", "Part"),
+        ("joined, kind=zzz (nothing)", "zzz"),
+    ] {
+        let sql = JOINED;
         let (t, n) = time(&conn, sql, vec![Value::Text(kind.into()), Value::Integer(0)]).await;
         println!("{label:<44} {t:>9.4}s  {n:>5}");
     }
@@ -169,7 +173,11 @@ async fn can_a_joined_filter_keep_lots_driving() {
     .await
     .unwrap();
     println!("\n--- with tender_version_lots(lot_id, kind) ---");
-    for (label, kind) in [("EXISTS, kind=Lot (dense)", "Lot"), ("EXISTS, kind=Part (rare)", "Part")] {
+    for (label, kind) in [
+        ("EXISTS, kind=Lot (dense)", "Lot"),
+        ("EXISTS, kind=Part (rare)", "Part"),
+        ("EXISTS, kind=zzz (nothing)", "zzz"),
+    ] {
         let (t, n) =
             time(&conn, EXISTS_SHAPE, vec![Value::Text(kind.into()), Value::Integer(0)]).await;
         println!("{label:<44} {t:>9.4}s  {n:>5}");
