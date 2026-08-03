@@ -67,6 +67,37 @@ async fn time(conn: &turso::Connection, sql: &str, p: Vec<Value>) -> (f64, usize
     (best, n)
 }
 
+/// Branch A — the PK-correlated probe. Correlating on `l.tender_id` (which `lots`
+/// already carries) hands the probe the PK's LEADING column, so no new index is
+/// needed. But `vl` is probed before `t`, so `t.current_seq` is not yet available and
+/// only that leading column binds — each probe then walks the tender's whole slice.
+const PK_EXISTS: &str = "SELECT l.id FROM lots l
+     WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                    JOIN tenders t ON t.id = l.tender_id
+                    WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
+                      AND vl.lot_id = l.id AND vl.kind = ?)
+       AND l.id > ? ORDER BY l.id LIMIT 50";
+
+/// Branch A' — the same answer with `current_seq` resolved independently, so ALL
+/// THREE primary-key columns bind at once and the probe is a single descent instead
+/// of a slice walk. One clause moved; the amplification is a join-order artifact.
+const PK_EXISTS_SCALAR: &str = "SELECT l.id FROM lots l
+     WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                    WHERE vl.tender_id = l.tender_id
+                      AND vl.seq = (SELECT current_seq FROM tenders WHERE id = l.tender_id)
+                      AND vl.lot_id = l.id AND vl.kind = ?)
+       AND l.id > ? ORDER BY l.id LIMIT 50";
+
+/// The ids a query returns, in order — the unit of the equivalence assertions.
+async fn ids(conn: &turso::Connection, sql: &str, p: Vec<Value>) -> Vec<i64> {
+    let mut rows = conn.query(sql, p).await.unwrap();
+    let mut out = Vec::new();
+    while let Some(r) = rows.next().await.unwrap() {
+        out.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+    }
+    out
+}
+
 #[tokio::test]
 #[ignore = "probe: task 16 driving-table question; run with --ignored"]
 async fn can_a_joined_filter_keep_lots_driving() {
@@ -187,12 +218,6 @@ async fn can_a_joined_filter_keep_lots_driving() {
     // saving a little disk.
     //
     // Measured here BEFORE any index exists, so nothing else can be serving it.
-    const PK_EXISTS: &str = "SELECT l.id FROM lots l
-         WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
-                        JOIN tenders t ON t.id = l.tender_id
-                        WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
-                          AND vl.lot_id = l.id AND vl.kind = ?)
-           AND l.id > ? ORDER BY l.id LIMIT 50";
     println!("\n--- PK-correlated EXISTS, NO new index ---");
     for (label, kind) in [
         ("PK EXISTS, kind=Lot (dense)", "Lot"),
@@ -206,23 +231,33 @@ async fn can_a_joined_filter_keep_lots_driving() {
     plan(&conn, "PK-correlated EXISTS (dense) plan:", PK_EXISTS,
          vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
 
-    // Equivalence, not just speed: a faster shape that answers differently is not a
-    // candidate. Compared against the JOIN it would replace, on the dense value.
-    let mut a = conn.query(JOINED, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
-    let mut b = conn.query(PK_EXISTS, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
-    let (mut ids_a, mut ids_b) = (Vec::new(), Vec::new());
-    while let Some(r) = a.next().await.unwrap() {
-        ids_a.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+    // Equivalence across EVERY class, asserted rather than printed.
+    //
+    // A faster shape that answers differently is not a candidate, and dense alone is
+    // not enough: A' is a scalar-subquery REWRITE, so the risk is not that it is slow
+    // but that it silently changes which rows come back — and the class most likely to
+    // expose that is the one where few rows match, not the one where nearly all do.
+    // Dense passing is close to uninformative here: the first 50 lots match under
+    // almost any correct-ish predicate.
+    //
+    // Compared against `JOINED` — the shape actually in production — rather than
+    // against each other, since agreement between two candidates says nothing about
+    // whether either preserves today's answer.
+    println!("\nequivalence against today's JOIN (all three classes):");
+    for kind in ["Lot", "Part", "zzz"] {
+        let p = vec![Value::Text(kind.into()), Value::Integer(0)];
+        let today = ids(&conn, JOINED, p.clone()).await;
+        let branch_a = ids(&conn, PK_EXISTS, p.clone()).await;
+        let branch_a_prime = ids(&conn, PK_EXISTS_SCALAR, p).await;
+        println!(
+            "    kind={kind:<5} JOIN {:>3} ids · A {:>3} · A' {:>3}",
+            today.len(),
+            branch_a.len(),
+            branch_a_prime.len()
+        );
+        assert_eq!(branch_a, today, "branch A changed the answer for kind={kind}");
+        assert_eq!(branch_a_prime, today, "branch A' changed the answer for kind={kind}");
     }
-    while let Some(r) = b.next().await.unwrap() {
-        ids_b.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
-    }
-    println!(
-        "\nequivalence on kind=Lot: JOIN {} ids, PK-EXISTS {} ids, identical={}",
-        ids_a.len(),
-        ids_b.len(),
-        ids_a == ids_b
-    );
 
     // The index the per-row probe needs: the PK is (tender_id, seq, lot_id), so
     // `lot_id` is its THIRD column and nothing serves a lookup by it alone.
@@ -369,22 +404,29 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
                     (Value::Integer(lot), Value::Integer(tender), Value::Text(format!("LOT-{lot}"))),
                 ).await.unwrap();
                 // Every (seq, lot) pair exists: the slice is LOTS_PER * seqs deep.
+                //
+                // The kind DIFFERS between historical and current versions, and that is
+                // the point. Historical rows say 'Part', the current one says 'Lot'. So
+                // `?kind=Part` must return NOTHING — every Part row sits on a
+                // superseded version.
+                //
+                // This is the discriminating case for A', which rewrites how
+                // `current_seq` is resolved. A shape that matched ANY seq rather than
+                // the current one would return rows here and be silently wrong in
+                // production, while looking correct on a single-version fixture. The
+                // main probe seeds one seq per tender and therefore cannot see it.
                 for seq in 1..=seqs {
+                    let kind = if seq == seqs { "Lot" } else { "Part" };
                     conn.execute(
-                        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, ?, ?, 'Lot')",
-                        (Value::Integer(tender), Value::Integer(seq), Value::Integer(lot)),
+                        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, ?, ?, ?)",
+                        (Value::Integer(tender), Value::Integer(seq), Value::Integer(lot),
+                         Value::Text(kind.to_owned())),
                     ).await.unwrap();
                 }
             }
         }
         conn.execute("COMMIT", ()).await.unwrap();
 
-        const PK_EXISTS: &str = "SELECT l.id FROM lots l
-             WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
-                            JOIN tenders t ON t.id = l.tender_id
-                            WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
-                              AND vl.lot_id = l.id AND vl.kind = ?)
-               AND l.id > ? ORDER BY l.id LIMIT 50";
         // Branch A' — the same answer, with `current_seq` moved into a scalar subquery.
         //
         // A's plan probes `vl` BEFORE `t`, so `t.current_seq` is not yet available and
@@ -392,12 +434,6 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
         // row by row. That makes the amplification a JOIN-ORDER artifact rather than a
         // property of the shape. Resolving `current_seq` independently should let all
         // three PK columns bind at once and collapse the probe to one descent.
-        const PK_EXISTS_SCALAR: &str = "SELECT l.id FROM lots l
-             WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
-                            WHERE vl.tender_id = l.tender_id
-                              AND vl.seq = (SELECT current_seq FROM tenders WHERE id = l.tender_id)
-                              AND vl.lot_id = l.id AND vl.kind = ?)
-               AND l.id > ? ORDER BY l.id LIMIT 50";
 
         let (t, _) = time(&conn, PK_EXISTS, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
         let (t2, _) =
@@ -413,18 +449,35 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
                  vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
             plan(&conn, "branch A' plan (deep slice):", PK_EXISTS_SCALAR,
                  vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
-            // Equivalence: A' must answer identically, on a value that MATCHES.
-            let mut x = conn.query(PK_EXISTS, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
-            let mut y = conn.query(PK_EXISTS_SCALAR, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
-            let (mut xs, mut ys) = (Vec::new(), Vec::new());
-            while let Some(r) = x.next().await.unwrap() {
-                xs.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+            // Equivalence on a MULTI-VERSION fixture, which the main probe cannot
+            // provide. `Part` exists only on superseded versions here, so a correct
+            // shape returns nothing for it — and a shape that resolved `current_seq`
+            // loosely would return every lot.
+            const JOINED: &str = "SELECT l.id FROM lots l
+                  JOIN tenders t ON t.id = l.tender_id
+                  JOIN tender_version_lots vl
+                    ON vl.tender_id = t.id AND vl.seq = t.current_seq AND vl.lot_id = l.id
+                 WHERE vl.kind = ? AND l.id > ? ORDER BY l.id LIMIT 50";
+            println!("\nequivalence at seqs={seqs} (Part exists ONLY on superseded versions):");
+            for kind in ["Lot", "Part", "zzz"] {
+                let p = vec![Value::Text(kind.into()), Value::Integer(0)];
+                let today = ids(&conn, JOINED, p.clone()).await;
+                let a = ids(&conn, PK_EXISTS, p.clone()).await;
+                let a_prime = ids(&conn, PK_EXISTS_SCALAR, p).await;
+                println!("    kind={kind:<5} JOIN {:>3} ids · A {:>3} · A' {:>3}",
+                         today.len(), a.len(), a_prime.len());
+                assert_eq!(a, today, "branch A changed the answer for kind={kind}");
+                assert_eq!(a_prime, today, "branch A' changed the answer for kind={kind}");
             }
-            while let Some(r) = y.next().await.unwrap() {
-                ys.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
-            }
-            println!("\nequivalence on kind=Lot: A {} ids, A' {} ids, identical={}",
-                     xs.len(), ys.len(), xs == ys);
+            // The fixture must actually EXERCISE the discriminator, or the assertions
+            // above pass vacuously: `Part` has to be absent from the answer because it
+            // is superseded, not because it was never seeded.
+            assert!(
+                ids(&conn, JOINED, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.len() == 50
+                    && ids(&conn, JOINED, vec![Value::Text("Part".into()), Value::Integer(0)]).await.is_empty(),
+                "the multi-version fixture must return rows for the current kind and none \
+                 for the superseded one, else the equivalence check proves nothing"
+            );
         }
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
