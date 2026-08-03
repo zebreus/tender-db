@@ -125,10 +125,68 @@ the same way, by the same method, at the same sitting.
 The interim mitigation is that they are now *labelled* as paraphrases in the script.
 That converts a hidden hole into a known one; it does not close it.
 
-Cheap partial check available before the full fix: plan each of B2-B6 against a DB
-where the index it names is ABSENT, and confirm each goes RED. Any that stays green is
-unfalsifiable and is asserting nothing. That is a fraction of the work of part 2 and
-would tell us how much of the gate is real today.
+### The static audit — done 2026-08-03, no box required, and it found worse
+
+Rather than leave B2-B6 as a prior, their paraphrases were compared against the SQL the
+deployed code at `1830d50` actually issues. This needed no turso and no box — just
+reading the builders. Result: **every one of the five differs, and one of them is
+asserting a read that no longer exists.**
+
+**B5 — asserts a query the deployed code NEVER ISSUES. Vacuous.**
+112's table justifies B5 as "the Phase-1 mention resolver … full scan of ~30M per new
+mention". That read was **deleted by issue 19**. `canonical.rs` is explicit about it:
+the old per-mention lookup `WHERE country IS ? AND identifier_kind = ? AND identifier
+= ?` was O(n²) and is gone, replaced by an in-memory `org_of` map. What the deployed
+resolver actually issues, once, at construction:
+
+```sql
+SELECT id, country, identifier_kind, identifier FROM organizations
+ WHERE identifier IS NOT NULL          -- an intentional ONE-TIME FULL SCAN
+```
+
+So B5 plans a synthetic statement, goes green, and that green protects nothing. Note
+also the paraphrase says `country = ?` where the historical query said `country IS ?` —
+different planner behaviour around NULLs, so it was not even a faithful copy of the
+read it was standing in for.
+
+**And the naive fix would make it worse:** point B5 at the real resolver query and it
+goes RED, because a full scan is the *correct* design there — the table is preloaded
+once, not probed per mention. That is the same cry-wolf trap as the SCAN detector.
+B5 should be **deleted, not repaired**, and 112's target table amended: the resolver is
+no longer a hot indexed read.
+
+**B6 — drops a predicate that bears on index usability.**
+```
+real (lib.rs):  … FROM tenders t WHERE t.current_published_at IS NOT NULL
+                  ORDER BY t.current_published_at DESC, t.id DESC LIMIT ?
+                  + a correlated title subquery per row
+B6 plans:       SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
+```
+Missing the `IS NOT NULL` filter and the per-row subquery. B6 also names the wrong home
+for the read — it is in `lib.rs`, not `read.rs`; `read.rs`'s tenders list orders by
+`t.id`, not by `current_published_at` at all.
+
+**B3 / B4 — column list differs, and it is not cosmetic.**
+Real: `SELECT id, source, projection_epoch FROM tenders WHERE procedure_key = ?`.
+B3 plans `SELECT id …`. With only `id`, `tenders_procedure_key` is a **covering** index;
+with the extra columns it is not. Same index, different plan text and different work per
+row — so the check is not planning the read it claims to.
+
+**B2 — drops the JOIN.** Real read joins `organizations` for the party name; B2 plans
+the bare table. The target-table access is probably unchanged, so B2 is the mildest of
+the five, but it is still not the artifact.
+
+**Severity order for the fix: delete B5, correct B6, then B3/B4, then B2.**
+
+This audit cost minutes and found a vacuous check that had been reported as a PASS in a
+canonical run. It is the strongest available argument that part 2 is not hardening: five
+of six hot-read checks were paraphrases, and inspecting them turned up one asserting
+nothing and one pointed at the wrong file.
+
+Still worth doing on the box afterwards, as the independent confirmation: plan each
+surviving B-check against a DB where the index it names is ABSENT and confirm each goes
+RED. Reading the code proves the statement is wrong; only running it proves the check
+can fail.
 
 ## Fix, part 2 — source the SQL from the builder
 
