@@ -1,6 +1,7 @@
 # 112 — no standing gate asserts the hot read paths actually use an index
 
-Status: open — filed 2026-08-03 (sdk-vendor), from the `/v1/tenders/{id}` ~2.2s regression
+Status: DONE — the gate exists, ran on the box, and confirmed the `1830d50` fix
+with a control that held. Filed 2026-08-03 (sdk-vendor), from the `/v1/tenders/{id}` ~2.2s regression
 Kind: verification (missing gate)
 Blocked by: 110 — DONE (section I landed `a2835b5`); this is next
 Relates to: 111 (the app-side detect+repair this gate must verify INDEPENDENTLY), 89, 82/83, 62/60, 107
@@ -408,3 +409,113 @@ has to be proved with a clock. Blocked on the fix landing; nothing to assert aga
 committed suite; the prior session committed the issue and not the code). This is next.
 Then re-run the fixed suite against a snapshot when nothing is serving, as the durable
 record.
+
+## THE CANONICAL POST-DEPLOY RUN — 2026-08-03 (run-driver, on the box)
+
+`TDB_REV` unset and auto-derived as `1830d50c74a…`; 21 declared indexes;
+`TDB_SNAPSHOT=/data/db/tender-db.db` (metadata only, `immutable=1`);
+`TDB_PLAN_BIN=…/turso-bench/target-0.7.0/release/plan` (pinned turso `=0.7.0`);
+`TDB_PLAN_DB=/data/scratch-lots/planschema.db`, a schema-only clone of prod's
+catalogue (62 indexes = prod's 62, zero `sqlite_stat1` rows for the tables under
+test). **28 pass, 1 fail, 0 no-input.**
+
+```
+B1  PASS  lots served by index sqlite_autoindex_lots_1
+B1b PASS  same, on an after=49377 cursor page
+B2-B6 PASS
+C1  PASS  control still RED: SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+```
+
+**This is the result the issue was opened for**, and the shape of it matters more
+than the greens: B1 green *with C1 red*, same probe, same DB, same run, the two
+statements differing only in the cursor predicate. The instrument was shown to
+discriminate at the moment it reported good news. A green without that is what
+this issue spent its whole life arguing against.
+
+The single FAIL was a bug in the gate, not in prod (below). Prod was not mutated.
+
+### The stats precondition held for real
+
+Prod's DB does carry a `sqlite_stat1`, but with exactly **one** row, for
+`plan_notice` — a `plan_*` grouping-scratch table this gate already excludes.
+**Zero** rows for `lots` / `tenders` / `organizations` /
+`tender_version_bid_parties`. So the schema-only planning assumption is
+representative for every table under test, and the precondition passed on
+evidence rather than by default.
+
+### Independent derivation agreement — the strongest provenance result here
+
+run-driver reconstructed the deployed `lots_of` SQL by *reading* `read::lots`,
+`pick()` and `version_predicates()` at `1830d50`. I obtained it by *dumping* the
+builder through the `Query::rows` choke point. The two texts were diffed:
+**byte-identical** (modulo the tender-id literal each of us chose). Two people,
+two methods, one artifact — which is what makes the B1 statement trustworthy in a
+way that no amount of careful retyping could.
+
+## The two gate defects the run exposed — both fixed (`8058657`)
+
+### 1. The SCAN detector never fired against this probe
+
+It anchored `SCAN` to the start of the line. The probe prints EQP's raw columns:
+`1 | 0 | 0 | SCAN lots`. The anchor never matched, so a real scan fell through to
+the index-name branch. Measured against the committed gate: a bare `SCAN lots`
+came back **NO-INPUT** — "not a recognisable scan" — never FAIL.
+
+**The headline check of this file was inoperative.** B6 passed only because its
+scan happens to be the correct plan: right verdict, no working check. Note the
+shape of this — the gate was *built* around distrusting SEARCH-vs-SCAN as a
+correlate, and then shipped with the SCAN half silently disabled.
+
+The fix is **not** "make SCAN fail", and that distinction is the interesting part:
+
+* `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)` is the 13.2M-row **walk**, and it
+  says SEARCH.
+* `SCAN tenders USING COVERING INDEX tenders_current_published` is the **right**
+  plan for `ORDER BY current_published_at DESC, id DESC LIMIT 50` — an ordered
+  traversal that stops after 50 rows.
+
+Failing the second would make the gate cry wolf about correct code, which is how
+gates get switched off — the same reason `plan_*` indexes are excluded from
+section A. So the discriminator is whether the access reaches rows **through an
+index at all**: rowid/IPK on the target is red, a scan naming no index is red, and
+a scan that does name one passes *while the report says it is an ordered full
+traversal and not a seek*, rather than blurring the two into one word.
+
+One parser now handles both the column form and the `|--SEARCH` tree form, and
+section C uses it too — a control scored by different logic could agree with
+section B for the wrong reason, and would not be a control.
+
+### 2. Partial-index predicates were dropped from the expectation
+
+The extractor's `\([^)]*\)` stopped at the first `)`, so `notices_unprojected`
+compared as `notices(id)` while the on-disk DDL kept
+`WHERE parse_state='parsed' AND projected=0`. Guaranteed mismatch.
+
+The visible symptom was a bogus FAIL. **The dangerous half was silent:** with the
+predicate stripped from the expectation, an index rebuilt with the *wrong*
+predicate — `WHERE projected = 1`, serving nothing the read needs — compared equal
+and **PASSED**. A silent no-check hiding behind a visible false alarm, which is
+the worse of the two failure modes wearing the mask of the milder one. Verified
+both ways against purpose-built DBs.
+
+## A false claim in this gate's own header, corrected
+
+The header implied the recorded pre-fix **RED** came from the B1 statement as
+committed. run-driver planned that old text on turso 0.7.0 against two independent
+DBs: it returns `SEARCH l USING INDEX sqlite_autoindex_lots_1` — **green** — with
+or without the fix. The paraphrase had dropped the cursor predicate, and the
+cursor predicate is the entire defect.
+
+So **the gate's own recorded falsifier could not falsify.** The walk was real; the
+attribution was not. Corrected in place rather than deleted — a gate that quietly
+rewrites its history is worse than one carrying a wrong entry, and this is the
+cleanest example in the file of why an artifact must be extracted rather than
+restated. Section C now carries that weight properly, establishing the RED in-run,
+from a statement of known provenance, every time it runs.
+
+## What remains open
+
+* **B2-B6 are still paraphrases** (114's point 1). B1/B1b are extracted; the other
+  five carry exactly the drift risk that just proved fatal for B1's predecessor.
+  This is now a demonstrated failure mode in this file, not a theoretical one.
+* **The gate is structurally blind to issue 115** — see the B7 note above.
