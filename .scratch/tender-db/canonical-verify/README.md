@@ -36,7 +36,15 @@ API surface** (`v1`) and of the job supervisor, while reporting a confident 243/
 missing coverage was not a corner: it was the two subsystems a deploy is most likely to
 break. Same family as B5 and the by-name index parser: a check whose *subject*
 was assembled from what came to mind (packages) rather than derived from what ships
-(packages **and features**).
+(packages **and features**). The unifying form: **derive the check's subject from what
+ships, not from what comes to mind.**
+
+**The other cargo invocation in this suite was checked, not assumed.** The checked-set
+generator and the statement/LIKE probes all run `cargo test -p store …`, and
+`crates/store` has **no `[features]` section at all** and zero `cfg(feature)` in its
+source — so there is no feature under which its code could fail to compile, and those
+probes are not exposed to this defect. Recorded as a verified negative so the next
+person does not have to re-derive it; re-check it if `store` ever grows features.
 
 ## ONE VERIFICATION OWNER PER OBLIGATION
 
