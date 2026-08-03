@@ -1088,6 +1088,15 @@ fi
 # audit is no-input — a fixture describing a build that is not running is exactly the
 # paraphrase problem it was built to solve.
 # ---------------------------------------------------------------------------
+# SECTION E IS A REPO-SIDE CHECK. Its no-input on the box is CORRECT, not a defect.
+# E asks whether the checked SET still matches the CODE — a question about the
+# repository, needing the repo's git history to answer (it diffs read.rs between the
+# fixture's rev and the serving rev). The fixture and triage files therefore live with
+# the repo and are deliberately NOT shipped to the box.
+# Copying them there would make E answerable in the wrong place, from files that could
+# then go stale relative to the repo they describe — a fifth instance of the
+# input-older-than-the-change class, added by the gate to its own list. So: run E from a
+# checkout, expect E0 no-input on the box, and do not "fix" it by deploying the TSVs.
 echo "-- E. the checked SET is derived from the code, not from memory"
 E_DIR=$(dirname "$0")
 E_SET="$E_DIR/checked-set.tsv"
