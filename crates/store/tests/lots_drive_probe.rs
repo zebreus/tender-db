@@ -88,6 +88,54 @@ const PK_EXISTS_SCALAR: &str = "SELECT l.id FROM lots l
                       AND vl.lot_id = l.id AND vl.kind = ?)
        AND l.id > ? ORDER BY l.id LIMIT 50";
 
+
+/// **The shape that actually ships** — today's `read::lots_query` stream form, verbatim
+/// in structure: `vl.kind` and `v.seq` are OUTPUT columns, not just filter terms, and
+/// `seq` is obtained by JOINING `tender_versions`.
+///
+/// This is the arm that matters. The `EXISTS` probes above establish that the *filter*
+/// can be satisfied without driving from `vl` — necessary, but not sufficient for "the
+/// whole row can be produced that way", because production must RETURN data from `vl`.
+const SHIP_TODAY: &str = "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+     FROM lots l
+     JOIN tenders t ON t.id = l.tender_id
+     JOIN tender_versions v ON v.tender_id = t.id
+       AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+     JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+    WHERE vl.kind = ? AND l.id > ? ORDER BY l.id LIMIT 50";
+
+/// The candidate: same output columns, but `seq` resolved by a scalar subquery so all
+/// three primary-key columns bind at once. `vl.seq` then supplies the output column the
+/// `tender_versions` join used to provide, so that join drops out entirely.
+///
+/// Structurally A' with the join RETAINED for output — which is exactly why it needs
+/// its own measurement. A' was an `EXISTS`; this is a JOIN, and the planner may still
+/// choose to drive from `vl`, which is the whole failure mode.
+const SHIP_CANDIDATE: &str = "SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq
+     FROM lots l
+     JOIN tenders t ON t.id = l.tender_id
+     JOIN tender_version_lots vl
+       ON vl.tender_id = l.tender_id
+      AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+      AND vl.lot_id = l.id
+    WHERE vl.kind = ? AND l.id > ? ORDER BY l.id LIMIT 50";
+
+/// Whole rows as text, so equivalence covers the `kind` and `seq` VALUES rather than
+/// ids alone. A shape that returns the right lots with the wrong version's `kind` is
+/// the defect an id-only comparison cannot see.
+async fn full_rows(conn: &turso::Connection, sql: &str, p: Vec<Value>) -> Vec<String> {
+    let mut rows = conn.query(sql, p).await.unwrap();
+    let mut out = Vec::new();
+    while let Some(r) = rows.next().await.unwrap() {
+        let mut cells = Vec::new();
+        for i in 0..5 {
+            cells.push(format!("{:?}", r.get_value(i).unwrap()));
+        }
+        out.push(cells.join("|"));
+    }
+    out
+}
+
 /// The ids a query returns, in order — the unit of the equivalence assertions.
 async fn ids(conn: &turso::Connection, sql: &str, p: Vec<Value>) -> Vec<i64> {
     let mut rows = conn.query(sql, p).await.unwrap();
@@ -365,9 +413,11 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
     const TENDERS: i64 = 2_000;
     const LOTS_PER: i64 = 5;
 
-    println!("\n{:>6}  {:>12}  {:>12}  {:>10}  {:>12}  {:>10}",
-             "seqs", "tvl rows", "A zzz", "A ratio", "A' zzz", "A' ratio");
+    println!("\n{:>6}  {:>12}  {:>12}  {:>10}  {:>12}  {:>10}  {:>12}  {:>10}  {:>12}  {:>10}",
+             "seqs", "tvl rows", "A zzz", "A ratio", "A' zzz", "A' ratio",
+             "SHIP today", "ratio", "SHIP cand", "ratio");
     let (mut baseline, mut baseline2) = (0.0, 0.0);
+    let (mut baseline3, mut baseline4) = (0.0, 0.0);
     for (run, seqs) in [1i64, 8, 32].into_iter().enumerate() {
         let path = format!("/tmp/tender-db-slice-{}-{seqs}.db", std::process::id());
         for s in ["", "-wal", "-shm"] {
@@ -442,11 +492,38 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
             baseline = t;
             baseline2 = t2;
         }
-        println!("{seqs:>6}  {:>12}  {t:>11.4}s  {:>9.2}x  {t2:>11.4}s  {:>9.2}x",
-                 TENDERS * LOTS_PER * seqs, t / baseline, t2 / baseline2);
+        // THE ARM THAT GATES THE CHANGE: the shapes that would actually ship, with
+        // `vl.kind`/`seq` as OUTPUT columns. If SHIP_CANDIDATE scales with slice depth
+        // like SHIP_TODAY does, the planner has driven from `vl` and the design does
+        // not survive contact with the real column list.
+        let (t3, _) = time(&conn, SHIP_TODAY, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        let (t4, _) =
+            time(&conn, SHIP_CANDIDATE, vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+        if run == 0 {
+            baseline3 = t3;
+            baseline4 = t4;
+        }
+        println!("{seqs:>6}  {:>12}  {t:>11.4}s  {:>9.2}x  {t2:>11.4}s  {:>9.2}x  {t3:>11.4}s  {:>9.2}x  {t4:>11.4}s  {:>9.2}x",
+                 TENDERS * LOTS_PER * seqs, t / baseline, t2 / baseline2,
+                 t3 / baseline3, t4 / baseline4);
         if seqs == 32 {
             plan(&conn, "branch A plan (deep slice):", PK_EXISTS,
                  vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
+            plan(&conn, "SHIPPING today plan (deep slice):", SHIP_TODAY,
+                 vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
+            plan(&conn, "SHIPPING candidate plan (deep slice):", SHIP_CANDIDATE,
+                 vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
+            // Equivalence on WHOLE ROWS: the kind and seq values, not just the ids.
+            // A shape returning the right lots with a superseded version's `kind` is
+            // exactly what an id-only comparison cannot see.
+            println!("\nSHIPPING equivalence on whole rows (id|tender|key|kind|seq):");
+            for kind in ["Lot", "Part", "zzz"] {
+                let p = vec![Value::Text(kind.into()), Value::Integer(0)];
+                let today = full_rows(&conn, SHIP_TODAY, p.clone()).await;
+                let cand = full_rows(&conn, SHIP_CANDIDATE, p).await;
+                println!("    kind={kind:<5} today {:>3} rows · candidate {:>3}", today.len(), cand.len());
+                assert_eq!(cand, today, "SHIPPING candidate changed the answer for kind={kind}");
+            }
             plan(&conn, "branch A' plan (deep slice):", PK_EXISTS_SCALAR,
                  vec![Value::Text("zzz".into()), Value::Integer(0)]).await;
             // Equivalence on a MULTI-VERSION fixture, which the main probe cannot
@@ -486,4 +563,122 @@ async fn does_the_pk_probe_seek_within_the_tender_slice() {
     println!("\nlots held constant at {}; only slice depth varies.", TENDERS * LOTS_PER);
     println!("~linear in seqs => probe WALKS the slice (run-driver's 480x stands)");
     println!("flat in seqs    => probe SEEKS within it (the estimate is an overbound)");
+}
+
+/// **Fast shape search.** The shipping-shape gate failed: a JOIN that outputs `vl.kind`
+/// reverts to `SCAN tender_version_lots` + top-level sorter, because once `vl` is a
+/// FROM-clause table the planner drives from it. A' only worked because `lots` was the
+/// ONLY candidate driver — the `EXISTS` is the mechanism, not a detail.
+///
+/// So the question is which *shippable* formulation keeps `lots` the sole driver while
+/// still returning `vl.kind` and the version `seq`. That is a plan question, and plan
+/// questions are answerable in seconds on a tiny fixture — turso has no `sqlite_stat1`
+/// for these tables on either the bed or prod, so the planner chooses structurally and
+/// the choice is largely size-independent. Timing comes after a shape survives this.
+#[tokio::test]
+#[ignore = "probe: fast EQP-only shape search for the shippable form; run with --ignored"]
+async fn which_shippable_shape_keeps_lots_driving() {
+    let path = format!("/tmp/tender-db-shape-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    store::Db::open(&path).await.unwrap();
+    let db = turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = db.connect().unwrap();
+    drain(&conn, "PRAGMA journal_mode = WAL").await;
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+
+    // Tiny: the plan is what is being read, not the clock.
+    conn.execute("BEGIN", ()).await.unwrap();
+    for tender in 1..=500i64 {
+        conn.execute(
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
+             VALUES (?, 'ted', ?, 'procedure', 2, 1700000000, 1700000000)",
+            (Value::Integer(tender), Value::Text(format!("pk-{tender}"))),
+        ).await.unwrap();
+        for seq in 1..=2i64 {
+            conn.execute(
+                "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
+                 VALUES (?, ?, 1700000000, ?, ?)",
+                (Value::Integer(tender), Value::Integer(seq),
+                 Value::Text(format!("p-{tender}-{seq}")), Value::Integer((tender - 1) * 2 + seq)),
+            ).await.unwrap();
+        }
+        for k in 1..=4i64 {
+            let lot = (tender - 1) * 4 + k;
+            conn.execute("INSERT INTO lots (id, tender_id, lot_key) VALUES (?, ?, ?)",
+                (Value::Integer(lot), Value::Integer(tender), Value::Text(format!("L-{lot}")))).await.unwrap();
+            for seq in 1..=2i64 {
+                conn.execute(
+                    "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (?, ?, ?, ?)",
+                    (Value::Integer(tender), Value::Integer(seq), Value::Integer(lot),
+                     Value::Text(if seq == 2 { "Lot" } else { "Part" }.to_owned())),
+                ).await.unwrap();
+            }
+        }
+    }
+    conn.execute("COMMIT", ()).await.unwrap();
+
+    // Candidate shapes. Each must return the SAME five columns as production.
+    let shapes: Vec<(&str, String)> = vec![
+        ("S0 today (baseline)", SHIP_TODAY.to_owned()),
+        ("S1 JOIN + scalar seq (FAILED gate)", SHIP_CANDIDATE.to_owned()),
+        // `lots` alone in FROM; both output columns come from SELECT-list subqueries,
+        // which evaluate per OUTPUT row (~50 per page) rather than per candidate.
+        ("S2 EXISTS + select-list subqueries", "SELECT l.id, l.tender_id, l.lot_key,
+             (SELECT vl.kind FROM tender_version_lots vl
+               WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq AND vl.lot_id = l.id),
+             t.current_seq
+           FROM lots l JOIN tenders t ON t.id = l.tender_id
+          WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                         WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
+                           AND vl.lot_id = l.id AND vl.kind = ?)
+            AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
+        // S2 depends on `tenders.current_seq` being the max seq — true on prod today
+        // (verified: 0 of 4,262,716 tenders diverge) but PROJECTION-MAINTAINED, not
+        // enforced by the schema. This variant recomputes it instead, keeping today's
+        // redundancy rather than converting it into a trust relationship.
+        ("S2b EXISTS + select-list, MAX(seq) not current_seq", "SELECT l.id, l.tender_id, l.lot_key,
+             (SELECT vl.kind FROM tender_version_lots vl
+               WHERE vl.tender_id = l.tender_id
+                 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                 AND vl.lot_id = l.id),
+             (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+           FROM lots l
+          WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                         WHERE vl.tender_id = l.tender_id
+                           AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                           AND vl.lot_id = l.id AND vl.kind = ?)
+            AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
+        // Paginate FIRST, join after: the LIMIT is applied to a `lots`-driven subquery,
+        // so at most 50 rows ever reach the join.
+        ("S3 paginate-then-join", "SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq
+           FROM (SELECT id, tender_id, lot_key FROM lots l2
+                  WHERE l2.id > ?
+                    AND EXISTS (SELECT 1 FROM tender_version_lots vl2
+                                 JOIN tenders t2 ON t2.id = l2.tender_id
+                                WHERE vl2.tender_id = l2.tender_id AND vl2.seq = t2.current_seq
+                                  AND vl2.lot_id = l2.id AND vl2.kind = ?)
+                  ORDER BY l2.id LIMIT 50) l
+           JOIN tenders t ON t.id = l.tender_id
+           JOIN tender_version_lots vl
+             ON vl.tender_id = l.tender_id AND vl.seq = t.current_seq AND vl.lot_id = l.id
+          ORDER BY l.id".to_owned()),
+    ];
+
+    for (label, sql) in &shapes {
+        // S3 binds cursor-then-kind; the others bind kind-then-cursor.
+        let p = if label.starts_with("S3") {
+            vec![Value::Integer(0), Value::Text("Lot".into())]
+        } else {
+            vec![Value::Text("Lot".into()), Value::Integer(0)]
+        };
+        plan(&conn, &format!("--- {label}"), sql, p.clone()).await;
+        let rows = full_rows(&conn, sql, p).await;
+        println!("    rows={} first={}", rows.len(), rows.first().cloned().unwrap_or_default());
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
 }
