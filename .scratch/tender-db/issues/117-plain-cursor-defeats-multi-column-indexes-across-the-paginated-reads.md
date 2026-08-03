@@ -808,3 +808,49 @@ independent list is that its author did not write the code:
 
 Cases 3–6 are where I would expect a divergence if there is one; 7 is the one this
 measurement proves is safe *provided the short-circuit does not do its own folding*.
+## The short-circuit's real scope: matches-nothing **on a ≤4-letter prefix**
+
+`reachable()` (`3c5ae52`) is narrower than "matches-nothing is now fast", and the difference is
+load-bearing for what Class B still owes.
+
+**What it guards.** Only `country`, `cpv`, `buyer` and `winner`. Each arm is `let Some(x) else
+{ continue }`, so a request filtering on anything else — `?source=`, `?kind=`, `?status=`,
+`?min_value=` — issues **no guard SQL at all**. Confirmed by reading the four loops, not inferred:
+`/v1/tenders?source=ted` costs one async call and four `Option` checks, which is why the
+`tenders(source, id)` measurement above is unaffected by the guard in either direction.
+
+**What it costs where it does apply** (measured on the real data, deployed engine for the plan):
+
+| case | seeks | time |
+|---|---|---|
+| present prefix, first variant hits (`DE`) | 1 | 0.00 s |
+| absent prefix, single variant | 1 | 0.02 s |
+| **`MAX_CASE_VARIANTS` ceiling — 16 consecutive miss-seeks** | 16 | **0.00 s** |
+
+The ceiling is the case worth knowing: `prefix_ranges` probes every ASCII case variant and breaks on the
+first hit, so a code stored in the case tried *last* pays for all of them. At the cap that is 16 index
+seeks in **under 10 ms**, against the >380 s walk it prevents. The comment's own justification — "16
+seeks at ~0.01 s is still four orders of magnitude under the walk" — is now measured rather than
+estimated, and it is conservative: sixteen seeks came in below the 0.01 s it assumes for one.
+
+**The boundary, which must not be rounded off.** `prefix_ranges` returns `None` — declining the guard
+entirely — when the prefix carries more than four ASCII letters (`1 << letters > 16`), or contains a
+`LIKE` metacharacter, or is non-ASCII. So:
+
+* `?country=ZZ` (2 letters) — **guarded**, >380 s → ~0;
+* `?country=DE300` (5 letters, a full NUTS-3 code) — **not guarded**, and neither is any other 5+-letter
+  value;
+* **`?country=ZZ999` — a crafted matches-nothing value above the cap — still walks, still >380 s.**
+
+The guard therefore covers the short prefixes a crawler stumbles into and declines exactly the specific
+codes a real user is most likely to type. That is the **right** failure direction — declining is
+correct-but-slow, never wrong — and it is consistent with recording this as a performance fix rather
+than a defence. But it means:
+
+> **The `/v1/tenders?country=` DoS is NOT closed by the short-circuit.** A matches-nothing value above
+> the four-letter cap is still an unauthenticated multi-minute request. Class B's restructure is still
+> required for the actual DoS; the short-circuit removes the naive case and buys nothing against a
+> crafted one.
+
+Stating it this way because "the short-circuit fixes matches-nothing" would read as unconditional, and
+someone would reasonably close Class B on it.
