@@ -839,19 +839,30 @@ entirely — when the prefix carries more than four ASCII letters (`1 << letters
 `LIKE` metacharacter, or is non-ASCII. So:
 
 * `?country=ZZ` (2 letters) — **guarded**, >380 s → ~0;
-* `?country=DE300` (5 letters, a full NUTS-3 code) — **not guarded**, and neither is any other 5+-letter
-  value;
-* **`?country=ZZ999` — a crafted matches-nothing value above the cap — still walks, still >380 s.**
+* `?country=DE300` — **guarded**. The cap counts **ASCII letters, not characters**
+  (`prefix.chars().filter(char::is_ascii_alphabetic).count()`), so a full NUTS-3 code is 2 letters +
+  3 digits = 4 variants, well inside the 16 cap. Same for `?country=ZZ999`.
+* `?country=ABCDE` (5 letters) — **not guarded**, and neither is any other 5+-**letter** value.
 
-The guard therefore covers the short prefixes a crawler stumbles into and declines exactly the specific
-codes a real user is most likely to type. That is the **right** failure direction — declining is
-correct-but-slow, never wrong — and it is consistent with recording this as a performance fix rather
-than a defence. But it means:
+**CORRECTION (2026-08-03).** An earlier revision of this section stated that `DE300` and `ZZ999` decline
+the guard and still walk. **That was wrong** — it read the cap as counting characters when it counts
+alphabetic characters only. Every real NUTS and CPV code is letters-then-digits and therefore *is*
+guarded. The residual matches-nothing gap is only a **5+-ASCII-letter** prefix such as `ABCDE`, which is
+not a shape any real code takes — i.e. adversarial-only rather than reachable by an ordinary user or a
+naive crawler. The error is left visible rather than silently rewritten, because the corrected boundary
+is *narrower* than what was recorded and someone may have planned against the wider claim.
 
-> **The `/v1/tenders?country=` DoS is NOT closed by the short-circuit.** A matches-nothing value above
-> the four-letter cap is still an unauthenticated multi-minute request. Class B's restructure is still
-> required for the actual DoS; the short-circuit removes the naive case and buys nothing against a
-> crafted one.
+The guard therefore covers every real code shape and declines only prefixes that no real code takes.
+That is still the **right** failure direction — declining is correct-but-slow, never wrong — and it is
+still a performance fix rather than a defence, for the reason below, which is unchanged by the
+correction:
+
+> **The `/v1/tenders?country=` DoS is NOT closed by the short-circuit.** The load-bearing reason is
+> **matches-late, not matches-nothing**: a filter value that exists but only on high `tender_id`s makes
+> the guard report "found", the query proceeds, and the walk happens exactly as before. Rare-but-real
+> NUTS codes are ordinary user input, so this is reachable without adversarial intent. (A 5+-letter
+> matches-nothing prefix like `ABCDE` also still walks, but that is adversarial-only.) Class B's
+> restructure is still required for the actual DoS.
 
 Stating it this way because "the short-circuit fixes matches-nothing" would read as unconditional, and
 someone would reasonably close Class B on it.
