@@ -730,8 +730,16 @@ and B7 would have flipped GREEN over a measured **4,209x regression**. Its state
 condition was "an index giving BOTH the seek and `o.id` ordering … with the new index
 named and `organizations_identity` explicitly NOT accepted".
 
+**Attribution, since the commit log gets it wrong:** `cursor-bound` — the field and its
+check — was designed and written by the *second* sdk-vendor session, not by the author of
+the commit that carries it. It reached `main` inside `5e59ee5` ("suspend B7"), whose
+message never mentions it, because `git add <file>` in a shared worktree stages a
+co-worker's uncommitted hunks along with your own. The work is intact and falsified; only
+the provenance is wrong, and this note is the correction. (Rule now in CLAUDE.md: read
+`git diff <file>` immediately before staging.)
+
 **That condition is now expressible as a rule instead of a name.** The `cursor-bound`
-field (landed in the same commit) asserts that the target's seek carries the CURSOR
+field asserts that the target's seek carries the CURSOR
 COLUMN as a bound — `(country=? AND id>?)`, not `(country=?)`. Naming the good index is
 a denylist that has to be maintained; bounding the cursor is the property that makes the
 index good, and it generalises to `notices` and `tenders` without another ruling.
