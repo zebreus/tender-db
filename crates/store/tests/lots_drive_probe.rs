@@ -700,6 +700,49 @@ async fn which_shippable_shape_keeps_lots_driving() {
                            AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
                            AND vl.lot_id = l.id AND vl.kind = ?)
             AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
+        // THE FULL FILTER SURFACE. `version_predicates` references BOTH `t.id` and
+        // `v.seq`, and `?source=` references `t.source` — none of which exist in S2b's
+        // FROM clause. So the shape validated on `kind` alone does not yet cover the
+        // query it has to become. Both predicates are rewritten to correlate on
+        // `l.tender_id` directly; the question is whether adding them lets the planner
+        // pick a different driver.
+        ("S2b+country+source (full surface)", "SELECT l.id, l.tender_id, l.lot_key,
+             (SELECT vl.kind FROM tender_version_lots vl
+               WHERE vl.tender_id = l.tender_id
+                 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                 AND vl.lot_id = l.id),
+             (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+           FROM lots l JOIN tenders t ON t.id = l.tender_id
+          WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                         WHERE vl.tender_id = l.tender_id
+                           AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                           AND vl.lot_id = l.id AND vl.kind = ?)
+            AND t.source = 'ted'
+            AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                         WHERE c.tender_id = l.tender_id
+                           AND c.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                           AND c.scheme = 'nuts' AND c.code LIKE 'DE%')
+            AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
+        // `lots` ALONE in FROM — even `tenders` becomes a scalar subquery. If the rule
+        // is "any second FROM-clause table lets the planner pick a different driver",
+        // then `?source=` must be expressed this way too, not as a join.
+        ("S2c full surface, lots alone in FROM", "SELECT l.id, l.tender_id, l.lot_key,
+             (SELECT vl.kind FROM tender_version_lots vl
+               WHERE vl.tender_id = l.tender_id
+                 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                 AND vl.lot_id = l.id),
+             (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+           FROM lots l
+          WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                         WHERE vl.tender_id = l.tender_id
+                           AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                           AND vl.lot_id = l.id AND vl.kind = ?)
+            AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = 'ted'
+            AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                         WHERE c.tender_id = l.tender_id
+                           AND c.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
+                           AND c.scheme = 'nuts' AND c.code LIKE 'DE%')
+            AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
         // Paginate FIRST, join after: the LIMIT is applied to a `lots`-driven subquery,
         // so at most 50 rows ever reach the join.
         ("S3 paginate-then-join", "SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq
