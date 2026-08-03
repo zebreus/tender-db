@@ -30,6 +30,12 @@ index 0d64f22..cbb13f9 100644
 +
 +/// The statement [`tenders`] builds, without running it — the seam 112's plan gate
 +/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
 +#[cfg(test)]
 +pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
 +    let q = tenders_query(filter, scope);
@@ -88,6 +94,12 @@ index 0d64f22..cbb13f9 100644
 +
 +/// The statement [`organizations`] builds, without running it — the seam 112's plan gate
 +/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
 +#[cfg(test)]
 +pub(crate) fn organizations_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
 +    let q = organizations_query(filter, scope);
@@ -141,6 +153,12 @@ index 0d64f22..cbb13f9 100644
 +
 +/// The statement [`notices`] builds, without running it — the seam 112's plan gate
 +/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
++/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
++/// the cost class: a plan names the access path, never the number of rows on it
++/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
++/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
++/// slice. This seam narrows what the gate can be wrong about; it does not widen
++/// what the gate can see.
 +#[cfg(test)]
 +pub(crate) fn notices_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
 +    let q = notices_query(filter, scope);
