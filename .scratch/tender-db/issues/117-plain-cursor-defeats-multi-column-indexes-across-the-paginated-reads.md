@@ -654,3 +654,38 @@ The B-rows say this in their own output, so nobody chases a phantom.
 
 **A deploy of `8cdc35d` is therefore not complete until a reindex has run.** That is an
 ordering requirement, not a caveat.
+
+### Class B short-circuit: implemented (`8d7afd3`), and the bug it nearly shipped
+
+Generalised to `?country=`, `?cpv=`, `?buyer=`, `?winner=`. `Scope::Page` only — `Scope::At` is a
+point lookup for the SSE diff loop and never walks, so guarding it would cost a seek per event.
+
+**The first version was silently WRONG, and the way it was wrong is worth keeping.** It probed one
+range over the prefix as given. SQLite's `LIKE` folds ASCII case; `>=`/`<` do not. Verified:
+
+```
+stored 'DE300' :: LIKE 'DE%'     -> MATCH
+stored 'DE300' :: LIKE 'de%'     -> MATCH
+stored 'DE300' :: range DE..DF   -> MATCH
+stored 'DE300' :: range de..df   -> no match
+```
+
+So `/v1/tenders?country=de` would have returned an **empty page while the real query returns rows** —
+silently, on a documented filter, and *faster*, which is the shape that survives review. The obvious
+test (present matches, absent empty, both uppercase) would have passed.
+
+Fixed by probing every ASCII-case variant of the prefix; their union is exactly what `LIKE` matches.
+Past a bounded variant count the guard declines to apply and the full query answers — slow, correct.
+
+**The general rule this yields:** a guard that stands in for a predicate must be **no narrower than
+the predicate**. Too generous costs a walk that could have been avoided; too narrow returns wrong rows
+rather than slow ones. The hazard is entirely one-sided, so the design must be too — and every
+`None`/decline path in `prefix_ranges` deliberately falls to the slow-but-correct side.
+
+Mutation-verified: restoring the single-range form fails the test on the lowercase case, naming the
+rows it wrongly dropped.
+
+One correction to the test's own claims: the superseded-version case does NOT falsify a seq-correlated
+guard (mutation shows such a guard passes), because that variant would be equivalent in scope and
+merely costlier. The comment now says so. A test comment claiming coverage it lacks is how a suite
+stops meaning what it says — the same failure as a gate implying coverage it cannot have.
