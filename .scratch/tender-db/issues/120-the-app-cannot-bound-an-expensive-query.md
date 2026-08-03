@@ -120,7 +120,7 @@ threads are named `slow-read-exec` precisely so `/proc/<pid>/task/*/stat` deltas
 ship gate is that measurement on this endpoint, not the code compiling. A doc that says *"this is the
 claim and here is how to falsify it"* is worth more than one asserting a property nobody checked.
 
-### Open: does an abandoned walk terminate? (task 22)
+### RESOLVED: abandoned walks terminate (task 22)
 
 This decides the WORDING, not the design — shed is right either way — but the difference is not
 cosmetic:
@@ -135,3 +135,30 @@ cosmetic:
 The module currently claims the first. If the measurement says the second, the doc gets corrected rather
 than left asserting what the evidence does not support — the same correction the `/v1/sql` timeout claim
 required.
+
+**Answered by measurement on a dedicated bed** (`probe.db`, 13.2M real lots, 100% `kind='lot'` — the
+dense worst case): `/v1/lots?kind=Lot` **completed in 231.6 s**. Finite, O(table). So permits do
+release, the endpoint recovers unaided, and `SLOTS` is a tuning knob rather than a countdown. **The
+expensive branch is closed: no process-level kill, and no separate issue for one.**
+
+The expectation was right; the reasoning behind it was not why to trust it. "A finite scan must
+terminate" is plausible, but the place unboundedness could have hidden was the **top-level sorter over
+the matched set**, not the scan — and prod's residue (~2.6 cores at 50 minutes) was a confounded
+instrument that could not distinguish a slow-draining backlog from genuine non-termination. A
+single-query bed could.
+
+So the module claims **"confines a runaway, with a bounded recovery time"**. Two limits belong with that
+claim rather than after it:
+
+- **Bounded is not small.** Nothing cancels on disconnect, so every abandoned request costs its FULL
+  runtime of executor capacity with nobody waiting for the answer. A retrying client ACCUMULATES load
+  rather than replacing it. Size `SLOTS` against **arrival rate × full query runtime**, never against
+  concurrent clients — an ingress rate limit bounds arrival and does nothing about in-flight
+  accumulation.
+- **231.6 s is a lower bound on prod's per-query cost, not an estimate.** The bed is the dense worst
+  case at smaller scale than prod. The termination conclusion transfers; the number does not, and
+  nothing should be sized off it.
+
+Prod's residue is consistent with this model rather than with non-termination: ~2.6 cores × 50 min ≈
+7,800 core-seconds ≈ 20–30 runs of a 230 s-class query, against more than a dozen heavy uncancelled
+reads fired that day.
