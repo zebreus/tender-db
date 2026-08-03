@@ -392,22 +392,25 @@ mechanical sweep can enumerate the set and produce the plans; only a human (or a
 can say which rowid access is a lookup, which is a walk with a reachable green, and
 which is unservable as the query is shaped today.
 
-#### A second finding, of a different kind: silently ignored filters
+#### A second finding, of a different kind: silently ignored filters — now issue 118
 
-15 of the 88 candidates are a query parameter the API **accepts and then ignores**,
-because `Params::filter` builds one `Filter` for every collection and each builder uses
-only the fields meaningful to it. `/v1/organizations?cpv=`, `?status=`, `?min_value=`,
-`?max_value=`, `?winner=`, `?source=`, `?tender=`, `/v1/notices?buyer=`, `?country=`,
-`?cpv=`, `?winner=`, `?status=`, `?min_value=`, `?max_value=`, `?tender=` and
-`/v1/tenders?tender=` all emit the UNFILTERED statement byte-for-byte.
+**16** (collection, parameter) pairs are a query parameter the API **accepts and then
+ignores**, emitting the unfiltered statement byte-for-byte: 7 on `/v1/organizations`,
+8 on `/v1/notices`, and `/v1/tenders?tender=`. (An earlier note here said 15; the exact
+count from the statement comparison is 16.) `Params::filter` builds one `Filter` for
+every collection and each builder uses only the fields meaningful to it, so anything a
+builder does not read is dropped in silence.
 
 That is a correctness question, not a plan question: a client asking for
 `organizations?cpv=4521` gets every organization and no indication that its filter was
-dropped. It may well be deliberate (`organizations`' doc comment says only `country`
-and `kind` narrow it), but "accepted and silently ignored" and "rejected as a bad
-request" are very different contracts. **Filed here as an observation for triage, not
-asserted as a defect** — and worth noting that it was found by enumerating the set
-mechanically, which is the entire argument of this part.
+dropped. **Filed as issue 118, as an observation for triage rather than an asserted
+defect** — it may be deliberate.
+
+What belongs in THIS issue is how it was found: not by reading the code with a question
+in mind, but as a by-product of DEDUPLICATING the mechanically enumerated set. The 88
+candidates collapsed to 56 distinct statements, and the collapses were precisely the
+parameters that change nothing. Nobody had this on a list to check. That is the whole
+argument of part 2, arriving as evidence rather than as an assertion.
 
 ### Sequencing note (2026-08-03, sdk-vendor)
 
