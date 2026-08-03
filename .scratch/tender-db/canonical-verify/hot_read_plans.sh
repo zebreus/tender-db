@@ -233,12 +233,49 @@ elif [ ! -r "$TDB_SNAPSHOT" ]; then
 elif ! command -v sqlite3 >/dev/null 2>&1; then
   report NONE A0 "sqlite3 not found (nix shell nixpkgs#sqlite) — index presence NOT verified."
 else
-  HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
-           "file:${TDB_SNAPSHOT}?immutable=1" \
-           "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
-  if [ -z "$HAVE" ]; then
-    report NONE A0 "sqlite_master returned nothing — wrong file, or unreadable. NOT verified."
+  # ---- WHICH CATALOGUE AM I ACTUALLY READING? ----------------------------------
+  # `immutable=1` is what makes this section safe against the SERVING DB: no lock,
+  # no contention. But it also makes sqlite IGNORE the `-wal` sibling, and on prod
+  # that WAL is gigabytes and live. So the main file alone is a STALE VIEW of the
+  # catalogue, and the staleness is invisible: an index created recently enough to
+  # live only in WAL frames reads as ABSENT ("the read it serves is scanning") on a
+  # perfectly healthy DB, and an index DROPPED in WAL frames still reads as
+  # present. Both directions wrong, both silent.
+  #
+  # This did not bite the 2026-08-03 run only by timing — job 534 built the
+  # deferred indexes the day before, so they had reached the main file. Hours
+  # later and the gate would have printed a wall of A-FAILs about a healthy DB.
+  #
+  # In WAL mode a read-only connection does NOT block the writer, so the merged
+  # view is available at no cost to live traffic — the no-lock property that
+  # motivated `immutable=1` is not actually needed to stay safe. Prefer the merged
+  # read whenever a non-empty WAL exists; fall back to `immutable=1` only when
+  # there are no frames to miss; and if the merged read cannot be had, say so
+  # rather than quietly reporting a main-file view as the truth.
+  A_VIEW=""
+  if [ -s "${TDB_SNAPSHOT}-wal" ]; then
+    HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
+             "file:${TDB_SNAPSHOT}?mode=ro" \
+             "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
+    if [ -n "$HAVE" ]; then
+      A_VIEW="WAL-merged ($(wc -c < "${TDB_SNAPSHOT}-wal") byte -wal included)"
+    else
+      report NONE A0 "TDB_SNAPSHOT has a NON-EMPTY -wal ($(wc -c < "${TDB_SNAPSHOT}-wal") bytes) and the WAL-merged read failed. An immutable=1 read would IGNORE those frames, so an index living only in the WAL would report as ABSENT on a healthy DB — and one dropped in the WAL would report as present. Index presence NOT verified. Checkpoint (TRUNCATE) and re-run, or point TDB_SNAPSHOT at a checkpointed snapshot."
+      HAVE=""
+    fi
   else
+    HAVE=$(sqlite3 -readonly -noheader -separator "$(printf '\t')" \
+             "file:${TDB_SNAPSHOT}?immutable=1" \
+             "SELECT name, COALESCE(sql,'') FROM sqlite_master WHERE type='index'" 2>/dev/null)
+    [ -n "$HAVE" ] && A_VIEW="main file, immutable=1 (no -wal frames to miss)"
+  fi
+  if [ -z "$HAVE" ]; then
+    [ -s "${TDB_SNAPSHOT}-wal" ] || report NONE A0 "sqlite_master returned nothing — wrong file, or unreadable. NOT verified."
+  else
+    # State the provenance of the observation, not just its verdict. A reader who
+    # cannot tell which catalogue was read cannot tell what a PASS is worth.
+    echo "   catalogue read: $A_VIEW"
+
     while IFS=$'\t' read -r name cols; do
       [ -n "$name" ] || continue
       line=$(printf '%s\n' "$HAVE" | awk -F'\t' -v n="$name" '$1==n{print $2; exit}')
