@@ -59,12 +59,29 @@
 #   TDB_SNAPSHOT=/path/db     read sqlite_master with stock sqlite3 (metadata only)
 #   BASE_URL=http://…:8080    used ONLY to ask the service which build it is
 #   TDB_REV=<sha>             override the build to compare against (else asked)
-#   TDB_PLAN_BIN=/opt/tender-db/turso-bench/plan   run-driver-2's on-box turso
-#   TDB_PLAN_DB=/path/snapshot.db                  probe (pinned turso ="=0.7.0",
-#                             invoked `plan <db> eqp <sqlfile>`). Setting both
-#                             satisfies the plan-source contract — no build needed.
-#                             TDB_PLAN_DB is ALSO the stats precondition's input,
-#                             so it is required even with a custom TDB_PLAN_CMD.
+#   TDB_PLAN_BIN=…/turso-bench/target-0.7.0/release/plan   the on-box turso probe
+#                             (pinned turso ="=0.7.0"), invoked `plan <db> eqp
+#                             <sqlfile>`. NOTE the path is the built BINARY, not
+#                             the crate directory `…/turso-bench/plan` — an earlier
+#                             version of this header named the crate dir, which
+#                             fails as "not executable".
+#   TDB_PLAN_DB=/path/schema.db   the DB whose CATALOGUE the plans are compiled
+#                             against. Setting both satisfies the plan-source
+#                             contract — no build needed. TDB_PLAN_DB is ALSO the
+#                             stats precondition's input, so it is required even
+#                             with a custom TDB_PLAN_CMD.
+#
+#   THE PLAN DB MUST CARRY THE WHOLE CATALOGUE, and this is a real trap:
+#   a partial scratch DB (e.g. one holding only `lots`/`tenders`/`tender_version_*`)
+#   makes B2/B5 no-input and B3/B4/B6 FAIL — from a MISSING FIXTURE, not from a
+#   defect. A gate whose red means "I was pointed at the wrong file" trains its
+#   readers to discount reds. Use a schema-only clone of prod's catalogue.
+#   Building one (run-driver, 2026-08-03): read prod's `sqlite_master` DDL with
+#   `immutable=1` and replay it through TURSO's own exec mode. A sqlite3-built
+#   clone is NOT readable by turso 0.7.0 — it demands its
+#   `__turso_internal_autoincrement_*` shadow tables. Verify the clone by index
+#   count against prod (62 at the time of writing) and by `sqlite_stat1` being
+#   empty for the tables under test.
 #   TDB_PLAN_CMD='…'          alternative plan source: any command reading SQL on
 #                             stdin and writing a turso-produced plan on stdout,
 #                             at the DEPLOYED turso version.
@@ -77,14 +94,31 @@
 #   no-input rather than a verdict if any exist, or if the stats state cannot be
 #   established at all.
 #
-# THE RECORDED PRE-FIX ARTIFACT (run-driver-2, same DB, same run)
+# THE RECORDED PRE-FIX ARTIFACT (run-driver-2) — AND A CORRECTION TO IT
 #   B2 GREEN:  SEARCH tender_version_bid_parties USING INDEX
 #                     tender_version_bid_parties_version
 #   B1 RED:    SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
-#   That pair is the falsifier this gate was built to produce: the index that IS
-#   present passes, and the walk that no presence-check could see fails. After the
-#   `lots_of` fix, B1 must flip to naming a real index (sqlite_autoindex_lots_1,
-#   or a named lots_* index if that route is taken — both are accepted).
+#   The walk was real. But this header used to imply the RED came from the B1
+#   statement as committed, and MEASUREMENT SAYS IT DID NOT: run-driver planned
+#   that old B1 text on turso 0.7.0 against two independent DBs and it comes back
+#   `SEARCH l USING INDEX sqlite_autoindex_lots_1` — GREEN — with or without the
+#   fix. The paraphrase had dropped the cursor predicate, and the cursor predicate
+#   IS the defect, so that B1 could not have produced this RED and could never
+#   have failed. The gate's own recorded falsifier did not falsify.
+#   Left in the record rather than deleted: a gate that quietly rewrites its
+#   history is worse than one with a wrong entry, and this is the cleanest example
+#   in the file of why an artifact must be extracted rather than restated.
+#   Section C now carries this weight properly — it establishes the RED in-run,
+#   from a statement of known provenance, every time.
+#
+# THE POST-FIX RUN (run-driver, 2026-08-03, on-box turso 0.7.0, prod catalogue)
+#   28 pass, 1 fail, 0 no-input — the single fail was the partial-index parse bug
+#   below, since fixed.
+#   B1  GREEN:  lots served by sqlite_autoindex_lots_1
+#   B1b GREEN:  same, on an after=49377 cursor page
+#   C1  RED:    SEARCH l USING INTEGER PRIMARY KEY (rowid=?)   <- control held
+#   B1/B1b green WITH C1 red, same probe and same DB, is the result: the cursor
+#   predicate is the only difference between them.
 #
 #   READ THIS BEFORE TREATING A POST-FIX B1 GREEN AS THE FLIP OF THAT RED.
 #   The B1 statement was REPLACED after that run (see PROVENANCE below): the RED
@@ -170,7 +204,7 @@ EXPECT=$(
       grep -oE '\("[a-z_0-9]+",[[:space:]]*"[^"]+"\)' |
       sed -E "s/\\(\"([a-z_0-9]+)\",[[:space:]]*\"([^\"]+)\"\\)/\\1${TAB}\\2/"
     tr '\n' ' ' < "$SRC" |
-      grep -oE 'CREATE INDEX IF NOT EXISTS [a-z_0-9]+ +ON +[a-z_0-9]+\([^)]*\)' |
+      grep -oE 'CREATE INDEX IF NOT EXISTS [a-z_0-9]+ +ON +[a-z_0-9]+ *\([^)]*\)( +WHERE [^";]*)?' |
       sed -E "s/CREATE INDEX IF NOT EXISTS ([a-z_0-9]+) +ON +/\\1${TAB}/"
   } | grep -v "${TAB}plan_" | sort -u
 )
@@ -213,8 +247,23 @@ else
         continue
       fi
       # Compare declared columns against the stored DDL, whitespace-insensitively.
+      #
+      # The trailing `WHERE …` of a PARTIAL index is part of the definition, not
+      # decoration: `notices(id) WHERE parse_state='parsed' AND projected=0` and
+      # `notices(id) WHERE projected=1` are different indexes serving different
+      # reads. The capture above therefore takes the predicate too. It used to
+      # stop at the first `)`, which broke this comparison BOTH ways: the
+      # expectation lost the predicate while the on-disk DDL kept it, so every
+      # partial index failed with a bogus mismatch (`notices_unprojected` did) —
+      # and, far worse, an index REBUILT WITH THE WRONG PREDICATE would have
+      # compared equal and PASSED. A silent no-check of exactly the kind this
+      # file exists to prevent, hiding behind a visible false alarm.
+      #
+      # Strip the `CREATE … ON ` prefix by consuming only text BEFORE the first
+      # `(`. A greedy `.* ON ` would eat into the predicate the moment one
+      # contains the letters " ON " (a column named `on_hold`, a nested table).
       want=$(printf '%s' "$cols" | tr -d ' ')
-      got=$(printf '%s' "$line" | sed -E 's/.* ON //I' | tr -d ' ')
+      got=$(printf '%s' "$line" | sed -E 's/^[^(]* ON +//I' | tr -d ' ')
       if [ -z "$line" ]; then
         report PASS "A:$name" "present (implicit/auto index — no DDL to compare)"
       elif [ "$want" = "$got" ]; then
@@ -279,6 +328,32 @@ fi
 #   to cover them is issue 114's point 1; until then this comment is the only
 #   thing standing between those five checks and a stale paraphrase.
 # ---------------------------------------------------------------------------
+# ---- reading one access line out of a plan, whatever shape the probe prints ----
+#
+# Plan text is NOT one format. run-driver-2's probe prints EQP's raw columns:
+#     1 | 0 | 0 | SCAN tenders USING COVERING INDEX tenders_current_published
+# while the tree rendering (and the recorded pre-fix artifact) prints:
+#     |--SEARCH l USING INTEGER PRIMARY KEY (rowid=?)
+# The old test anchored SCAN to the START of the line, so against the column form
+# it NEVER MATCHED: a real `SCAN` fell through to the index-name branch and was
+# reported PASS. The gate's headline check — "must not scan" — was inoperative
+# against the very probe this issue standardised on, and B6 passed only because
+# its scan happens to be the correct plan. Right verdict, no working check.
+#
+# So: take the DETAIL as the text after the last `|`, then strip the tree glyphs.
+detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
+
+# ---- SCAN is not the discriminator; NAMING NO INDEX is -------------------------
+# "SCAN = bad" is too crude in both directions, and each error is load-bearing:
+#   * `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)` is the 13.2M-row WALK that
+#     motivated this issue, and it says SEARCH.
+#   * `SCAN tenders USING COVERING INDEX tenders_current_published` (B6) is the
+#     RIGHT plan for `ORDER BY current_published_at DESC, id DESC LIMIT 50` — an
+#     ordered index traversal that stops after 50 rows. Failing it would make the
+#     gate cry wolf about correct code, which is how gates get switched off.
+# The real question is whether the access reaches rows THROUGH AN INDEX at all.
+# A SCAN that names an index is still index-served — but it is a full ordered
+# traversal, not a seek, so the report SAYS SO rather than blurring the two.
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
 # Fields separated by `~` (NOT `|`, which appears inside the expected-index
@@ -368,20 +443,24 @@ else
       report NONE "$id" "no access line for $tbl in the plan — cannot tell how it is read: $(printf '%s' "$plan" | tr '\n' ' ' | cut -c1-160)"
       continue
     fi
-    idx=$(printf '%s' "$line" | sed -nE 's/.*USING (COVERING )?INDEX ([a-z_0-9]+).*/\2/Ip')
-    if printf '%s' "$line" | grep -qiE '^[[:space:]]*[|`-]*[[:space:]]*SCAN'; then
-      report FAIL "$id" "$tbl is SCANNED — $line"
-    elif printf '%s' "$line" | grep -qiE 'INTEGER PRIMARY KEY|rowid='; then
+    det=$(detail_of "$line")
+    idx=$(printf '%s' "$det" | sed -nE 's/.*USING (COVERING )?INDEX ([a-z_0-9]+).*/\2/Ip')
+    mode=$(printf '%s' "$det" | grep -oiE '^(SCAN|SEARCH)' | tr '[:lower:]' '[:upper:]')
+    if printf '%s' "$det" | grep -qiE 'INTEGER PRIMARY KEY|rowid='; then
       # The trap this gate exists to survive: turso prints a full forward walk of
       # `lots` as "SEARCH l USING INTEGER PRIMARY KEY (rowid=?)", which reads like
       # a point lookup. On the target table that is a walk, not an index seek.
       report FAIL "$id" "$tbl is read by ROWID, not by an index — this is a full walk that PRINTS like a seek: $line"
+    elif [ -z "$idx" ] && [ "$mode" = SCAN ]; then
+      report FAIL "$id" "$tbl is SCANNED and the plan names NO index — every row is visited: $line"
     elif [ -z "$idx" ]; then
       report NONE "$id" "$tbl access names no index and is not a recognisable scan — read it by hand: $line"
-    elif [ "$want" = '*' ] || printf '%s' "$idx" | grep -qE "^(${want})\$"; then
-      report PASS "$id" "$tbl served by index $idx"
-    else
+    elif [ "$want" != '*' ] && ! printf '%s' "$idx" | grep -qE "^(${want})\$"; then
       report FAIL "$id" "$tbl is served by index '$idx', not the expected ${want} — a different index can still be the wrong access path for this read: $line"
+    elif [ "$mode" = SCAN ]; then
+      report PASS "$id" "$tbl read by an ordered FULL TRAVERSAL of index $idx (SCAN, not a seek) — correct only while the read's ORDER BY matches that index and a LIMIT stops it early: $line"
+    else
+      report PASS "$id" "$tbl served by index $idx (seek)"
     fi
   done <<< "$READS"
 fi
@@ -424,9 +503,15 @@ CTLSQL
     report NONE C1 "the control statement produced no plan — the probe cannot be shown to discriminate, so section B is UNCONTROLLED."
   else
     cline=$(printf '%s\n' "$cplan" | grep -iE "(SCAN|SEARCH)[[:space:]]+(l|lots)([[:space:]]|\$)" | head -1)
+    cdet=$(detail_of "$cline")
+    # Judged by the SAME parser and the SAME rule as section B. A control scored
+    # by different logic could agree with B for the wrong reason and would not be
+    # a control at all: "still walks" here must mean exactly what "walks" means
+    # there — reaches rows without going through an index.
     if [ -z "$cline" ]; then
       report NONE C1 "no access line for lots in the control plan — cannot establish that the probe discriminates: $(printf '%s' "$cplan" | tr '\n' ' ' | cut -c1-160)"
-    elif printf '%s' "$cline" | grep -qiE '^[[:space:]]*[|`-]*[[:space:]]*SCAN|INTEGER PRIMARY KEY|rowid='; then
+    elif printf '%s' "$cdet" | grep -qiE 'INTEGER PRIMARY KEY|rowid=' ||
+         ! printf '%s' "$cdet" | grep -qiE 'USING (COVERING )?INDEX'; then
       CONTROL=discriminates
       report PASS C1 "control still RED (pre-fix shape walks lots) — the probe discriminates, so B1's verdict is meaningful: $cline"
     else
