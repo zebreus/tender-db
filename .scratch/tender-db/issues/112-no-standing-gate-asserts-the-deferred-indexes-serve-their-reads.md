@@ -76,7 +76,7 @@ Each must show `SEARCH … USING INDEX …` and must not show `SCAN`:
 | `lots_of` / `GET /v1/lots?tender=` | `lots` (13.2M) | the turso `ORDER BY l.id LIMIT` gap — **live defect today** |
 | `tender_detail` satellites | `tender_version_*` by `(tender_id, seq)` | issue 89's shape |
 | the incremental identity probe | `tenders(procedure_key)`, `tenders(source, island_notice_id)` | full scan of 8.1M **per folded Tender** |
-| the Phase-1 mention resolver | `organizations(country, kind, identifier)` | full scan of ~30M per new mention |
+| ~~the Phase-1 mention resolver~~ | ~~`organizations(country, kind, identifier)`~~ | **THIS READ NO LONGER EXISTS** — issue 19 replaced the per-mention probe with an in-memory `org_of` map. Listed here in error; the check that asserted it (B5) was DELETED 2026-08-03. See below. |
 | the newest-Tenders list | `tenders(current_published_at, id)` | issue 25/82 |
 
 The last three matter disproportionately because they are invisible from the outside:
@@ -561,8 +561,23 @@ from a statement of known provenance, every time it runs.
   Detail and severity order in 114.
 
   So the honest scope of this issue's DONE is: **`lots_of` is verified, by an
-  extracted statement against a demonstrated-discriminating control. The other five
-  hot reads are not.** B1's predecessor proved a paraphrase can be unfalsifiable;
+  extracted statement against a demonstrated-discriminating control. The other
+  hot reads are not.**
+
+  **This is a GATE-coverage gap, not a hidden prod defect.** run-driver EQP'd the
+  underlying prod reads directly and separately — the identity probes came back
+  index-served. So there is no reason to think production is scanning anywhere. What
+  is missing is a *standing check* that would notice if it started. Both statements
+  need saying: overstating the gap invents an outage, understating it re-creates the
+  false green.
+
+  **B5 has been DELETED** (not repaired) — it planned the per-mention organizations
+  probe that issue 19 removed, so its green protected nothing, and pointing it at the
+  read that replaced it would fail correct code (that read is an intentional one-time
+  full scan). The `organizations_identity` index is still presence-checked by section
+  A; what is gone is the false claim that a hot indexed read depends on it. Five
+  checks remain: B1, B1b (extracted) and B2, B3, B4, B6 (paraphrases, all four known
+  wrong — see 114). B1's predecessor proved a paraphrase can be unfalsifiable;
   the audit then showed the same construction had produced a check that asserts a
   read which no longer exists. That is not a theoretical failure mode in this file.
 * **The gate is structurally blind to issue 115** — see the B7 note above, now

@@ -406,6 +406,28 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # traversal, not a seek, so the report SAYS SO rather than blurring the two.
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
+# B5 WAS DELETED, NOT FIXED (2026-08-03) — and the reason generalises
+#   B5 planned `SELECT id FROM organizations WHERE country = ? AND identifier_kind
+#   = ? AND identifier = ?`, justified as "the Phase-1 mention resolver". Issue 19
+#   DELETED that read: the per-mention probe was the O(n²) projection bottleneck and
+#   was replaced by an in-memory `org_of` map. The deployed resolver issues, once,
+#   at construction:
+#       SELECT id, country, identifier_kind, identifier FROM organizations
+#        WHERE identifier IS NOT NULL          -- an intentional ONE-TIME FULL SCAN
+#   So B5 planned a statement the application never issues, and went GREEN in a
+#   canonical run while protecting nothing.
+#
+#   It was DELETED rather than repaired because repairing it makes things worse:
+#   pointed at the real resolver query it goes RED, over a full scan that is CORRECT
+#   BY DESIGN — the same cry-wolf trap as failing `SCAN … USING COVERING INDEX`.
+#   The index `organizations_identity` is still declared and still checked for
+#   presence by section A; what is gone is the false claim that a hot indexed read
+#   depends on it.
+#
+#   If `organizations` ever warrants a plan check again (read.rs `organizations()`
+#   does filter by country/kind), it must be EXTRACTED from that builder. Writing
+#   another statement by hand here is how B5 came to exist.
+
 # Fields separated by `~` (NOT `|`, which appears inside the expected-index
 # alternations below). id ~ table ~ alias ~ expected-index-regex ~ SQL
 # The expected-index regex is matched against the index name turso reports; `*`
@@ -416,7 +438,6 @@ B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~SELECT l.id, l.tender_id, l.lot_
 B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
 B3~tenders~tenders~tenders_procedure_key~SELECT id FROM tenders WHERE procedure_key = 'x'
 B4~tenders~tenders~tenders_island~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
-B5~organizations~organizations~organizations_identity~SELECT id FROM organizations WHERE country = 'DE' AND identifier_kind = 'national' AND identifier = 'x'
 B6~tenders~tenders~tenders_current_published~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
 SQLS
 )
