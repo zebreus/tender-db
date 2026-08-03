@@ -487,6 +487,20 @@ None of these were caught by being more careful. (1) was caught by an independen
 (2) by a stop-request that said where to look, (3) by its own author re-implementing it. The catch
 chain for the leak ran through all three people; no one of them would have reached it alone.
 
+**A fourth variant, distinct from the other three: asserting about SOMEONE ELSE'S instrument from
+outside it.** proj-fix warned sdk-vendor that their section-E `git diff --quiet <rev> <tip> -- read.rs`
+stamp check would fail, and named the four commits responsible. It passed. The drift was measured from
+`a39d53a` — the *deployed* rev, the natural reference for the person measuring — while the check reads
+from the *stamped* rev `3c5ae52`, which had already absorbed all four. Acting on the warning would have
+meant regenerating a checked-set against a stale premise, on a check that was already green.
+
+The other three are all someone being wrong about an instrument they built. This one is being wrong
+about an instrument someone else built, by reasoning from one's own reference point and asserting it
+about their mechanism without checking what that mechanism keys on. It is worse in one respect: the
+recipient had no reason to doubt it, and only caught it by verifying rather than trusting. **A warning
+intended to save someone time will cost it unless the sender checks the receiver's frame of reference,
+not their own.**
+
 The cheap practice that would have caught all three: **report what an instrument cannot see alongside
 what it reports.** "Green on `/v1/tenders/{id}` — does not exercise the multi-Tender path" costs one
 clause and converts a false all-clear into a scoped one. Likewise a fixture's doc comment should say
