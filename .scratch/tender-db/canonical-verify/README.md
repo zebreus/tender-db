@@ -39,6 +39,37 @@ was assembled from what came to mind (packages) rather than derived from what sh
 (packages **and features**). The unifying form: **derive the check's subject from what
 ships, not from what comes to mind.**
 
+### Is the corrected command the WHOLE shipped feature set? (checked 2026-08-03, task #19)
+
+Adding `--features tender-db/server` fixed the gap that was *noticed*. The rule says
+derive from what ships, so the fix itself was checked rather than extended from the one
+gap. Result: **closed, with one sized and benign residual.**
+
+The shipped artifact is built **twice** (`nix/package.nix`) — `dx build --platform server`
+for the native binary and `dx build --platform web` for the WASM client — so "the
+artifact" is two compilations, not one, and the corrected command performs only the first.
+What that costs was established exhaustively rather than reasoned about:
+
+* **Exactly one feature gates any first-party code: `server`** (19 `cfg(feature = …)`
+  sites, all of them `server`). **No code anywhere is gated on `web`**, so the web
+  compilation contains no first-party code the server compilation lacks.
+* `model`, `store` and `ingest` declare **no `[features]` at all** — nothing can hide in
+  them under any flag.
+* There is exactly **one** `cfg(not(feature = "server"))` in the workspace,
+  `crates/app/src/main.rs:23`: the three-line WASM entry point
+  (`fn main() { dioxus::launch(App); }`), containing **zero tests**. This is the only
+  shipped code the corrected command does not compile.
+* All five `crates/app` integration targets — `accounts`, `admin`, `api`, `sql`,
+  `webhooks` — compile and enumerate under the corrected command (verified with
+  `cargo test … -- --list`), alongside both `tender_db` lib/bin targets.
+* The workspace has **no doc-tests** (all four `Doc-tests` targets report 0).
+
+**Residual, recorded as out of scope with the reason:** the WASM entry stub. Testing it
+would require a `web`-featured build, which targets wasm and contains no tests, so it
+would add a compilation and zero assertions. Re-open this if first-party code ever
+appears behind `cfg(feature = "web")` or `cfg(not(feature = "server"))` — the greps above
+are the check, and they are one command each.
+
 **The other cargo invocation in this suite was checked, not assumed.** The checked-set
 generator and the statement/LIKE probes all run `cargo test -p store …`, and
 `crates/store` has **no `[features]` section at all** and zero `cfg(feature)` in its
