@@ -28,6 +28,20 @@
 //! that could have hidden unboundedness was the top-level SORTER over the matched set,
 //! not the scan.
 //!
+//! **What that measurement covers, precisely.** It was the emitted SQL run through the
+//! engine directly — no server, no HTTP, no client to disconnect. So what is
+//! established is that **the QUERY is a finite algorithm**. That a server which has
+//! LOST its client still drives the query to completion, rather than parking it, is a
+//! separate property, corroborated (prod's abandoned-work residue drains
+//! `2.66 → 1.16 → 0.86 → 0.59` cores with every client long gone) but not yet directly
+//! measured; the single-request disconnect test is queued on the rig.
+//!
+//! It matters here only because it is where the slot-release argument lands, and that
+//! argument does not actually depend on it: the permit is held by the spawned task, and
+//! an aborted task is still polled to the end of its current poll before being dropped.
+//! Since the query does not yield, that poll IS the whole query — so the permit frees
+//! whether or not anything is still waiting for the answer.
+//!
 //! **But bounded is not small, and that is what [`SLOTS`] must be sized against.**
 //! Nothing cancels on client disconnect, so **every abandoned request costs its FULL
 //! runtime** of executor capacity with nobody waiting for the answer. A client that
