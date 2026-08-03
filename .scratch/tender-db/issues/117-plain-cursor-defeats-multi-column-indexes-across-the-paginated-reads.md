@@ -855,3 +855,69 @@ than a defence. But it means:
 
 Stating it this way because "the short-circuit fixes matches-nothing" would read as unconditional, and
 someone would reasonably close Class B on it.
+
+## `notices(source, id)` — the index that FAILED the gate, and the exception that ships it
+
+This is the one Class A index that did not meet the acceptance criterion. It ships anyway, under a
+**named, bounded exception with the numbers on record** — not by quietly widening the rule.
+
+Measured on 14,237,839 real `notices` rows, query unchanged, deployed engine, best-of-3 per run:
+
+| class | filter | rows | limit | before | after | |
+|---|---|---|---|---|---|---|
+| **dense** | `source=ted` | 13,134,618 (**92.3 %**) | 50 | **0.1 ×5** | **0.2 ×5** | **2× slower** |
+| | | | 1000 | **1.3, 1.3, 1.3, 1.3, 1.3** | **2.1, 2.2, 2.2, 2.1, 2.1** | **~1.65× slower** |
+| matches-late | `source=doe` | 1,103,221 | 50 | 83.8–88.1 ms | **0.1–0.2 ms** | ~500× |
+| | | | 1000 | 87.4–88.7 ms | **2.2–3.2 ms** | ~33× |
+| matches-nothing | `source=zz` | 0 | 50 | 3,893–7,573 ms | **0.0 ms** | >100,000× |
+| | | | 1000 | 3,896–3,975 ms | **0.0–0.1 ms** | ~40,000× |
+
+Plan after: `SEARCH notices USING INDEX notices_source_id (source=? AND id>?)` — parent 0, single line,
+**no sorter** (checked by parent column, not by grepping for the word).
+
+**The regression is real, not noise.** The same drop-remeasure-rebuild protocol that *dissolved* an
+apparent 6 % on `tenders(source, id)` here *confirms* 65 %: before is 1.3 ms five times out of five,
+after 2.1–2.2 ms five times out of five. Zero variance, zero overlap.
+
+### Mechanism — and it generalises
+
+`notices_source_id(source, id)` is **not covering**: the read selects eleven columns, so every row costs
+an index seek *plus* a rowid fetch. The plain cursor walked the table sequentially with no indirection.
+**When a filter matches 92.3 % of rows it buys almost no filtering, and the indirection is pure cost.**
+
+The general statement: **a `(filter, id)` index helps in inverse proportion to the filter's selectivity
+for the value being queried.** It is transformative for absent and late values and can be negative for a
+dominant one. That is the mirror of the row-value trap recorded above — there a plan that looked
+*better* was 4,209× worse; here an index that genuinely helps two classes costs the third, and the third
+carries the traffic.
+
+### The amended criterion (lead decision, 2026-08-03)
+
+Dense-no-slower **remains the default**. An exception requires **all four** of:
+
+1. sub-millisecond absolute regression;
+2. the dense case stays fast in absolute terms;
+3. a >100× win that closes a real DoS;
+4. explicit lead sign-off with the numbers on record.
+
+`notices(source, id)` meets all four: +0.8 ms to 2.1 ms absolute, closing a **≥226 s unauthenticated**
+`?source=zz` walk. **This is a named exception for this index, not a global loosening** — the gate stays
+strong precisely because it caught this rather than rounding it away.
+
+### The clever fix that was considered and REJECTED
+
+A partial index `WHERE source != 'ted'` would avoid the regression entirely by not indexing the dominant
+value. **Rejected**: it hardcodes today's distribution into the schema. If source-dominance ever shifts,
+it silently regresses whichever value becomes dominant — the same stale-judgement failure this issue
+already documents elsewhere. Saving 0.8 ms on a 2.1 ms query is not worth a schema that rots.
+
+### Build cost — and a correction to this issue's own memory constant
+
+**1:05.12, peak RSS 674,524 KB ≈ 659 MiB at 14.24 M rows = ~48 B/row.**
+
+The series across four indexes on four tables is now **41 / 45 / 45 / 48 B/row**. So the 45 B/row figure
+used for the size guard is **central, not conservative**, and the widest key measured **exceeds** it.
+An earlier note in this issue called 45 conservative on the strength of two points that happened to sit
+at or below it; that was wrong, and the guard's constant should be the measured **maximum**, not the
+middle. At 48 B/row a 44 M-row table projects to 2.11 GB, which puts `organization_mentions` (40.9 M)
+at the boundary rather than comfortably inside it.
