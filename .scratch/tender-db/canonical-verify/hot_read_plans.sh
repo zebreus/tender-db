@@ -287,11 +287,11 @@
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
-PASS=0; FAIL=0; NOINPUT=0; NA=0
+PASS=0; FAIL=0; NOINPUT=0; FAILED_IDS=""; NA=0
 report() {
   case "$1" in
     PASS) PASS=$((PASS+1));       printf '  \033[32mPASS\033[0m %-6s %s\n' "$2" "$3";;
-    FAIL) FAIL=$((FAIL+1));       printf '  \033[31mFAIL\033[0m %-6s %s\n' "$2" "$3";;
+    FAIL) FAIL=$((FAIL+1)); FAILED_IDS="$FAILED_IDS $2"; printf '  \033[31mFAIL\033[0m %-6s %s\n' "$2" "$3";;
     NONE) NOINPUT=$((NOINPUT+1)); printf '  \033[33mNO-IN\033[0m %-6s %s\n' "$2" "$3";;
     # n/a is NOT a fourth verdict — it says the row does not describe the build
     # that is serving (see `applies-when`). It is printed and counted rather than
@@ -1051,6 +1051,21 @@ CTLSQL
   fi
 fi
 
+# ---- Is this red NEW, or the red we are already waiting on a fix for? -------------
+# While B7/B8/B9 are legitimately red over the live 117 defect, every run exits non-zero.
+# That is correct — the defect is real — but it makes the gate useless for anything else
+# unless a reader can tell a KNOWN red from a NEW one. So the summary splits them.
+#
+# "Expected" is NOT a second hand-maintained list: an id is expected-red exactly when
+# `note_for` has something to say about it. One source of truth, so the two cannot drift
+# apart — a list of exceptions maintained beside the checks it excepts is how a
+# suppression outlives the thing it was suppressing.
+EXPECTED_RED=""; UNEXPECTED_RED=""
+for fid in $FAILED_IDS; do
+  if [ -n "$(note_for "${fid%%:*}")" ]; then EXPECTED_RED="$EXPECTED_RED ${fid}"
+  else UNEXPECTED_RED="$UNEXPECTED_RED ${fid}"; fi
+done
+
 echo
 echo "== $PASS pass, $FAIL fail, $NOINPUT no-input, $NA n/a (wrong build) =="
 if [ "$CONTROL" = void ]; then
@@ -1061,7 +1076,21 @@ if [ "$CONTROL" = void ]; then
   exit 1
 fi
 if [ "$FAIL" -ne 0 ]; then
-  echo "FAIL — a hot read is scanning, or a declared index is missing/stale."
+  [ -n "$EXPECTED_RED" ] && echo "   expected red (known live defect, see the [known] note):$EXPECTED_RED"
+  if [ -n "$UNEXPECTED_RED" ]; then
+    u_n=$(printf '%s' "$UNEXPECTED_RED" | wc -w)
+    u_show=$(printf '%s' "$UNEXPECTED_RED" | tr ' ' '\n' | grep . | head -6 | tr '\n' ' ')
+    [ "$u_n" -gt 6 ] && u_show="$u_show(+$((u_n-6)) more)"
+    echo "FAIL — $u_n check(s) went red that were NOT expected to: $u_show"
+    echo "A check that was green"
+    echo "has flipped: treat this as a regression in whatever changed, not as the known"
+    echo "117 defect. The expected reds above are unrelated to it."
+  else
+    echo "FAIL — but ONLY the known-expected reds are red, and nothing else regressed."
+    echo "Exit is still non-zero because the defect they name is live in production; the"
+    echo "remedy is landing the fix, not silencing the check. If you are testing an"
+    echo "unrelated change, this run found nothing wrong with it."
+  fi
   exit 1
 fi
 if [ "$NOINPUT" -ne 0 ]; then

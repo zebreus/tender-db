@@ -470,6 +470,13 @@ one answer — which is the only reason either is trustworthy.
 
 The fixture is checked in, so it can go stale. Section E tests for that rather than
 hoping: it records the rev it was generated at and diffs `read.rs` against the serving
-rev. **That check fires today** — the fixture is from `b70971a` and prod runs
-`1830d50` — so section E is no-input on prod until the seams deploy. The audit cannot
-describe a build that is not running, and says so rather than implying coverage.
+rev. **That check fires today** — the fixture is from `b70971a`, which is not deployed —
+so section E is no-input on prod until the seams deploy. The audit cannot describe a
+build that is not running, and says so rather than implying coverage.
+
+(An earlier version of this paragraph named `1830d50` as the serving rev. Wrong: prod
+serves **`a39d53a`**, verified by team-lead on `/health` and by run-driver on loopback,
+public and `deployed-rev`. The conclusion is unchanged — `b70971a` is not deployed at
+either — but the correction is the point: I asserted a serving rev from memory in the
+same document that argues a gate must establish its inputs rather than assume them.
+The gate itself never had this bug; it asks `/api/dashboard` every run.)
