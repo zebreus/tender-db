@@ -81,6 +81,64 @@ exists, so no cursor shape helps. It needs its own answer — an index, or a dif
 tracked separately. Shipping the row-value change and reporting "organizations fixed" would certify a
 half-fix as whole, which is precisely what `1830d50` was careful to avoid.
 
+## The row-value cursor is the WEAKER of the two routes — plan evidence, sdk-vendor 2026-08-03
+
+This issue already names both routes ("Index design and query shape are two routes to the same
+requirement", with `changes_since` as the counter-example). Planned side by side, they are **not
+equivalent**, and the difference matters most exactly where the endpoints are fast today.
+
+Local lab, turso `=0.7.0` (workspace pin, the version the on-box probe pins), `Db::open` catalogue plus
+every deferred index, stats-free — the same basis 112's gate rests on. Statements extracted from the
+builders, not paraphrased.
+
+| statement | today | + row-value cursor | + `(filter, id)` index, cursor left PLAIN |
+|---|---|---|---|
+| `notices?source=` | `SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)` | `SEARCH … sqlite_autoindex_notices_1 (source=?)` **+ USE SORTER** | `SEARCH … notices_source_id (source=? AND id>?)` **no sorter** |
+| `organizations?country=` | rowid walk | `SEARCH o USING INDEX organizations_identity (country=?)` **+ USE SORTER** | `SEARCH o USING INDEX organizations_country_id (country=? AND id>?)` **no sorter** |
+| `tenders?source=` | rowid walk | `SEARCH t USING INDEX tenders_island (source=?)` (sorter already present) | `SEARCH t USING INDEX tenders_source_id (source=? AND id>?)` (sorter still present) |
+
+**Read the third column carefully: the cursor is still the plain `id > ?` there.** With an index whose
+second column is `id`, the plain cursor needs no rewrite at all — turso seeks on `(filter=? AND id>?)`,
+using the filter AND the cursor as index bounds. That is precisely the `changes_entity_cursor` shape
+this issue cites as the counter-example that proves the rule.
+
+### Why the sorter is the point, not a detail
+
+`USE SORTER FOR ORDER BY` means the seek delivers rows in the index's order, not in `id` order, so
+**`LIMIT` cannot truncate early**: every row of the filter partition must be visited on every request,
+whether the engine then sorts all of them or keeps a bounded top-N. Cost becomes O(partition), not
+O(page).
+
+For the **sparse** filters this issue was filed about (`?country=ZZ`, 22 s) that is still an enormous
+win — the partition is empty. But the dense ones are the ones that are **fast today**:
+`?country=DE` is 19 ms because the current walk stops as soon as it has `LIMIT` matches. Under the
+row-value cursor alone, that same request must visit every DE organization, on every page. **The fix as
+scoped could regress the common case while fixing the rare one.** That is a prediction from a plan, not
+a measurement — it needs a clock (see below) — but it is the kind of prediction worth having before
+shipping rather than after.
+
+### An ordering hazard if both land
+
+With `(filter, id)` present, the ROW-VALUE cursor plans as `SEARCH … (source=?)` — it **loses the
+`id>?` bound** that the plain cursor keeps. So row-value + index is *worse* than plain + index for deep
+pages: page N re-enters the partition from its start. If the row-value change lands now and someone adds
+the index later, the combination silently keeps the weaker plan and nothing reports it.
+
+### Recommendation
+
+For the three cases above, prefer **`CREATE INDEX … (filter, id)` with the cursor left alone**. It is
+one DDL statement per read, needs no change to `read.rs`, gives an O(page) plan for sparse *and* dense
+filters, and matches the shape issue 61 already chose for `changes_since`. Where a suitable multi-column
+index already exists and a new one is unwanted, the row-value cursor remains a real improvement over a
+full walk — it is a floor, not the ceiling.
+
+Two caveats stated plainly. These are **plan-level** results: EQP proves the access path and whether an
+ordering sort is required, and this issue's own Verification section is right that it proves nothing
+about elapsed time. The O(partition)-vs-O(page) claim follows structurally from the sorter, but the
+dense-case regression must be **timed** — `?country=DE` before and after, not just `?country=ZZ`. And
+the deferred-index caveat of issue 111 applies to any new index: a `(filter, id)` index needs a
+guaranteed builder, or it is absent exactly when it is needed.
+
 ## Verification
 
 The row-value plans above are necessary but not sufficient: **turso's EQP text lies for exactly this
@@ -103,3 +161,81 @@ A request-duration bound is **not cleanly available** in turso 0.7.0 — see the
 the run log: `turso::Connection` exposes no `interrupt()` (the capability exists one layer down in
 `turso_sdk_kit::rsapi`), and `tokio::time::timeout` cannot abort a step loop that is not yielding.
 The proper fix above is the mitigation.
+
+---
+
+## STOP — the row-value fix above is NET-NEGATIVE for `organizations` and `notices` (proj-fix, measured)
+
+**Do not implement the fix table above.** It repairs the pathological filter and makes the ordinary one
+**4,209× slower**. Measured locally: 400k organizations all `country='DE'`, scattered identifiers,
+against the real `organizations_identity(country, identifier_kind, identifier)`.
+
+| filter | cursor | time | rows |
+|---|---|---|---|
+| dense (`DE`) | plain | **0.0003s** | 1000 |
+| dense (`DE`) | row value | **1.1989s** | 1000 |
+| absent (`ZZ`) | plain | 0.0510s | 0 |
+| absent (`ZZ`) | row value | 0.0000s | 0 |
+
+The plan for the slow one is the **green** one this issue certified:
+
+```
+SEARCH o USING INDEX organizations_identity (country=?)
+USE SORTER FOR ORDER BY
+```
+
+`organizations_identity` does not contain `id`. Seeking `country = ?` yields the slice in
+`(identifier_kind, identifier)` order, so `ORDER BY id` sorts the **whole slice** and `LIMIT` applies
+after it. The plain cursor has the opposite profile — it walks in rowid order and stops at `LIMIT`
+matches, which is instant when the filter is dense and a full walk when it matches nothing.
+
+So the two shapes trade places, and **§Verification above is structurally unable to see it**: it
+specifies timing a nothing-matching filter, which measures only the half that improves. That is the
+same instrument error as the rest of today — an instrument aimed narrower than the claim it carries.
+
+## The fix is the INDEX; then the query needs no change at all
+
+Measured, not assumed. Adding `organizations(country, id)`:
+
+| filter | cursor | time |
+|---|---|---|
+| dense (`DE`) | plain | **0.0007s** |
+| dense (`DE`) | row value | 0.0009s |
+| absent (`ZZ`) | plain | **0.0000s** |
+| absent (`ZZ`) | row value | 0.0000s |
+
+```
+SEARCH o USING INDEX organizations_country_id (country=? AND id>?)
+```
+
+Seek the country, range-scan the id, **no sorter**, `LIMIT` truncates immediately. Both filters fast,
+and `read::organizations` needs **no code change**.
+
+This is this issue's own rule — *the cursor column must participate in the index being sought* —
+reached by the other route. `changes_entity_cursor(entity_kind, cursor)` is named above as the
+counter-example that proves the rule; it is also the **template**. Index design and query shape are
+both routes, and which one applies depends on the trailing column of the index, not on preference.
+
+**Why `1830d50` was nonetheless correct**, and why it must not be transplanted: `UNIQUE(tender_id,
+lot_key)` also lacks a trailing `id`, so the tender-scoped lots read *does* still sort — but a
+Tender's slice is ~2 rows (corpus max 2,604), so the sort is free. Issue 115's page sweep confirms it:
+flat from `LIMIT 125` to `LIMIT 1000`, at ~15ms. **The row value is safe when the slice is small and
+harmful when it is large.** That distinction is the whole finding, and nothing in the original fix
+table records it.
+
+## Revised plan (needs re-costing before anyone writes code)
+
+- `organizations(country, id)` — new index over 25.3M rows.
+- the `notices` equivalent — `sqlite_autoindex_notices_1(source, publication_id, content_hash)` has no
+  trailing `id` either, over 27.35M rows.
+- `tenders`: `tenders_island(source, island_notice_id)` has the same shape, so the same trade is
+  expected — **not measured**, and must be before it is assumed.
+- Both new indexes carry issue 111's deferred-builder obligation. This is materially larger than the
+  original scope: a schema change at prod scale, not a query edit.
+
+**Limits of these numbers:** synthetic 400k table at 100% density — an extreme. Real share is lower so
+the sort is smaller, but at 25.3M rows even a 10% share means sorting ~2.5M rows per request. The
+direction is certain; the magnitude at prod scale is run-driver's to establish. The four numbers that
+settle it: `?country=DE` and `?country=ZZ`, before and after adding the index on a scratch copy.
+
+Probe kept at `crates/store/tests/org_cursor_probe.rs`.
