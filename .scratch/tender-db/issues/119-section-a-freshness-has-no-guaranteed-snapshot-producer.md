@@ -71,3 +71,36 @@ dependency for the specific case where the system has just told us the file is c
 * Point `TDB_SNAPSHOT` at a snapshot older than the change and the gate still says so
   loudly (the age line stays; this issue adds a producer, it does not remove the
   declaration).
+
+
+## The fourth instance: the OBSERVER, not the instrument (run-driver, 2026-08-03)
+
+Three inputs in this suite can be older than the change they verify — section B's plan
+DB, section A's snapshot, section E's fixture. run-driver found a fourth during the 117
+deploy, and it is the one none of us had looked at:
+
+> *"I tracked index arrival with `immutable=1` catalogue reads, which cannot see an index
+> until it checkpoints — so my progress log lagged reality by minutes and I nearly
+> mistook 'not visible' for 'not built'."*
+
+**A stale monitor is worse than a stale gate**, because the monitor is what you consult to
+decide whether the gate can be run at all. A gate reading a stale input gives a wrong
+answer that the age-line can expose; a monitor reading a stale input makes you *choose
+wrongly about when to look*, and nothing downstream can recover it.
+
+### And the same read is correct in one role and a defect in the other
+
+The pre-flight readiness query — poll the main file at `immutable=1` for the four index
+names — uses **exactly the limitation** that made the progress log wrong. It is immune
+because it asks the stale question **deliberately**: main-file visibility is precisely
+the property both consumers (`planschema.db`'s rebuild and section A's snapshot) depend
+on, so "cannot see the WAL" is the specification rather than a flaw.
+
+Which is the general point worth keeping: **an input is not stale or fresh in itself —
+it is stale relative to the question.** `immutable=1` is a defect in a monitor asking
+"has the index been built?" and correct in a readiness check asking "is the index visible
+where my consumers will look?" The same read, the same limitation, opposite verdicts.
+
+So the fix for this issue is not "always read the freshest thing available". It is to
+state, at each consumer, **which question its input is being asked** — which is what
+section A's age line does, and what the progress log did not.
