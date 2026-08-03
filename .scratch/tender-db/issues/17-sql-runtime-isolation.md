@@ -1,10 +1,12 @@
 # 17 — Isolate SQL-endpoint execution on its own runtime
 
-Status: resolved (IMPLEMENTED) — but the isolation itself has NEVER BEEN MEASURED.
-See "What would falsify this" at the end. It protects `/v1/sql` only; it is an assumed
-claim under load, not a verified one. (An earlier version of this line said it was
-load-bearing for the Class B confinement deployed in `223330a`. That was wrong — see the
-correction at the end.)
+Status: resolved, and the isolation is now **MEASURED** (run-driver, task #25,
+2026-08-03) — it **HOLDS at 2x oversubscription**: 4 concurrent pathological queries
+against the 2-thread `sql-exec` pool, main API unaffected. Scope is not arbitrary
+concurrency; see "Measured result" at the end for what the number does and does not
+license. It protects `/v1/sql` only. (An earlier version of this line called it
+load-bearing for the Class B confinement in `223330a`. That was wrong — separate pools;
+see the correction below.)
 Blocked by: 07
 
 Goal: close the residual resource gap in the SQL endpoint: a single
@@ -129,3 +131,39 @@ killed by the 10 s cap before the isolated pool is ever saturated. That measures
 *backstop*, not the isolation, and the two are explicitly different mechanisms in
 `sql.rs`'s own account. If the cap fires first, the isolation is untestable through that
 path and the record should say so rather than record a green.
+
+## Measured result — the assumption HELD (run-driver, task #25, 2026-08-03)
+
+Ran against the falsification design above, all three traps executed:
+
+* **Provable saturation, not one query leaving a thread free.** A *second* rig token was
+  needed to fire **4 concurrent** queries at the **2-thread** pool, because the per-token
+  limit caps a single credential at 2. Without that, the run would have tested a pool with
+  spare capacity and reported a green that meant nothing.
+* **The cap was distinguished from the isolation — and it mattered.** The 10 s cap fires
+  **but does not stop the work.** "Still running" therefore could not be measured by
+  whether requests were outstanding; run-driver measured it by **thread CPU**. That made
+  the *post-cap* window the strongest evidence: **21 s of `sql-exec` burn while the main
+  API stayed at 0.01 s and every request had already returned.**
+* **Verdict:** `/v1/sql` isolation is real. `sql.rs`'s "the backstop bounds the RESPONSE
+  and frees the concurrency slot; issue 17's isolation bounds the BLAST RADIUS" is now a
+  measured statement rather than a design intention — and the two halves were observed
+  doing *different* jobs in the same run, which is what the header claims.
+
+### What the number licenses, and what it does not
+
+**Measured: 2x oversubscription (4 against 2).** It does **not** license arbitrary
+concurrency — a deep queue is a different question, and rule 7 applies: the conclusion is
+licensed for the concurrency actually varied.
+
+The bound is less arbitrary than it looks, though: the **per-token limit caps a single
+credential at 2**, which is why a second token was needed to reach 4. So 2x is roughly the
+worst a single credential can impose, and exceeding it requires multiple credentials —
+worth re-measuring if that limit ever changes, since the licensed scope moves with it.
+
+### Worth recording that it held
+
+Most of today was assumptions failing under measurement. This one held, and that is the
+other half of why the discipline is worth the effort: a check that can only ever confirm
+what you feared teaches you to stop running checks. The value was never in the answer
+being bad — it was in the answer being *known*.
