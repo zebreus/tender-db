@@ -28,7 +28,7 @@
 #   taken is invisible and would report ABSENT, so the reader is told what they are
 #   looking at instead of inferring it.
 #
-# THE FIVE RULES THIS FILE LEARNED THE HARD WAY (2026-08-03)
+# THE RULES THIS FILE LEARNED THE HARD WAY (2026-08-03)
 #   Each was paid for with a real false verdict. Detail lives at the point of use and
 #   in issues 112/114; this is the index, so a future editor meets them before the code.
 #
@@ -66,6 +66,30 @@
 #      whoever wrote it. Every `Scope::Page` read in `read.rs` is a paginated hot read
 #      by construction — the SET is derivable, and until it is derived this gate's
 #      coverage is one person's recall. (114 part 2)
+#
+#   6. A PLAN CANNOT ANSWER A QUESTION ABOUT ROW COUNTS.
+#      A plan names the access path; cost is rows x work-per-row, and the row count is
+#      not in it. Stated in full in its own section below, because it is the boundary
+#      of what this whole file can promise rather than a rule about writing checks.
+#
+#   7. A MEASUREMENT LICENSES A CONCLUSION ONLY ABOUT WHAT WAS VARIED. (proj-fix)
+#      Rule 6 says a plan cannot answer a question about row counts. This is the general
+#      form, and it caught more mistakes here in one day than any other single idea:
+#        * ONE point cannot distinguish bounded from linear, however carefully taken.
+#          111's RSS was read as bounded from a single build; run-driver took a second
+#          point precisely so the SHAPE could be read, and it was O(rows).
+#        * A latency measured at ONE selectivity says nothing about another. 117's
+#          row-value fix is faster on a sparse filter and 151,648x slower on a dense
+#          one; a single value would have licensed either verdict.
+#        * A concurrency measurement over sqlite3-reading-a-sqlite3-WAL says nothing
+#          about sqlite3-reading-a-TURSO-WAL. I varied the load and held the engine
+#          pair fixed, then reported the result as though the pair had been varied too.
+#          The fallback it justified could never work on prod.
+#        * "Same shape, therefore same result" is this rule violated without measuring
+#          at all — it is what produced 117's original fix table, wrong by 151,648x.
+#      Before a number is used as evidence, name the axis it was varied along, and do
+#      not carry the conclusion off that axis. The axes that have bitten this project
+#      are: data distribution, engine and version, concurrency, and scale.
 #
 # WHAT THIS GATE CANNOT DETECT, AT ALL, EVER (rule 6, and the boundary of the file)
 #   A plan says which ACCESS PATH was chosen. It does not say how many rows that path
@@ -583,15 +607,17 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 note_for() {
   case "$1" in
     # ONE ARM PER CHECK, deliberately, even though the text is nearly identical.
-    # 111 may land in two steps, and 117's indexes do not all materialise together —
-    # `notices(source, id)` is in the schema batch and builds itself at first open,
-    # while the other two are deferred and wait for a reindex. So these checks will go
-    # green at DIFFERENT times, and un-suppression has to be per-check: a shared
+    # These four now materialise TOGETHER — all deferred, all built by the background
+    # reindex. `notices(source, id)` was the exception until `c5a28dd` moved it out of
+    # the schema batch (27.4M rows blocked `Db::open` for ~7 minutes). One arm per check
+    # is kept anyway: the arms are removed as each check is CONFIRMED green, which is a
+    # per-check event even when the builds are simultaneous, and the next index added
+    # here will have its own timing again. A shared
     # `B7|B8|B9)` arm would force removing the excuse for checks still legitimately red,
     # or keeping it for one already fixed. Each arm also names the index it waits on, so
     # section A's "DECLARED but ABSENT" can be matched against something specific.
     B7) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on organizations(country, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
-    B8) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on notices(source, id), which is in the SCHEMA BATCH and builds itself at first open — so unlike B7/B9 this one should go green on deploy alone. If it is still red after 117 deploys, that IS worth investigating.";;
+    B8) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on notices(source, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed. (It was in the schema batch until c5a28dd; at 27.4M rows that blocked Db::open for ~7 minutes, so it moved out.)";;
     B10) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. This is the WORST of the set — /v1/organizations?kind= measured at 99.08s. Waits on organizations(identifier_kind, id), which is DEFERRED (issue 111). Note this case was recorded as UNSERVABLE until 2026-08-03: that was reasoning from the index that existed rather than the one the read needs, and it was wrong.";;
     B9) printf '%s' "  [known] live 117 read-path defect, not a regression in what you are testing. Waits on tenders(source, id), which is DEFERRED (issue 111) — it exists only after a rebuild or a Reindex job. Check section A: 'DECLARED but ABSENT' means a reindex is owed, not that the fix regressed.";;
     *) printf '';;
