@@ -2680,6 +2680,47 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// The short-circuit guard's BOUNDARY, asserted on the function itself.
+    ///
+    /// The end-to-end cases in `tenders_shortcircuit.rs` cannot establish this: the
+    /// guard changes SPEED and never RESULTS, so a guarded and a declined query return
+    /// the same rows and no assertion on the answer can tell which path ran. Asserting
+    /// the result and calling it verification of the boundary would be a check that
+    /// cannot fail for the reason it claims to test.
+    ///
+    /// What actually decides the size of issue 117's remaining Class B hole is whether
+    /// the decline counts CHARACTERS or ASCII LETTERS. Digits do not case-fold, so they
+    /// do not branch: a NUTS-shaped prefix (two letters then digits) is guarded at any
+    /// length, and only 5-or-more LETTERS declines — which is not a NUTS shape at all,
+    /// so the hole is adversarial-only rather than reachable by ordinary use.
+    #[test]
+    fn the_guard_declines_on_letter_count_not_length() {
+        use read::prefix_ranges_for_test as ranges;
+
+        // Two letters -> 4 variants, whatever follows them.
+        assert_eq!(ranges("DE").map(|r| r.len()), Some(4));
+        assert_eq!(ranges("DE300").map(|r| r.len()), Some(4), "digits do not branch");
+        assert_eq!(ranges("ZZ999").map(|r| r.len()), Some(4), "a 5-CHAR prefix is still guarded");
+        assert_eq!(ranges("45210000").map(|r| r.len()), Some(1), "an all-digit CPV prefix: one range");
+
+        // Four letters is the last guarded width; five declines.
+        assert_eq!(ranges("ABCD").map(|r| r.len()), Some(16), "16 variants is the cap, inclusive");
+        assert_eq!(ranges("ABCDE"), None, "5 LETTERS = 32 variants, past the cap");
+        assert_eq!(ranges("DE30A").map(|r| r.len()), Some(8), "3 letters among digits -> 8");
+
+        // The declines that exist for correctness rather than cost.
+        assert_eq!(ranges(""), None, "empty binds LIKE '%' — matches everything");
+        assert_eq!(ranges("%"), None, "LIKE metacharacter");
+        assert_eq!(ranges("_E"), None, "LIKE metacharacter");
+        assert_eq!(ranges("d\\"), None, "backslash, declined so a later ESCAPE cannot break it");
+        assert_eq!(ranges("Ä"), None, "non-ASCII: LIKE does not fold it, and we do not guess");
+
+        // The union really is the case-variant set, not just the right count.
+        let mut got: Vec<String> = ranges("de").unwrap().into_iter().map(|(lo, _)| lo).collect();
+        got.sort();
+        assert_eq!(got, ["DE", "De", "dE", "de"]);
+    }
+
     /// The negative control for the test above, and the reason a green there is
     /// attributable to the fix rather than to the statement having been reworded.
     ///

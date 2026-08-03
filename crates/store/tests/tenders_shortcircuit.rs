@@ -238,6 +238,30 @@ async fn the_guard_changes_speed_not_results() {
         );
     }
 
+    // The GUARD'S BOUNDARY, asserted rather than read off the source. `prefix_ranges`
+    // declines past MAX_CASE_VARIANTS, and the count is of ASCII LETTERS, not
+    // characters — digits do not case-fold so they do not branch. So a NUTS-shaped
+    // prefix (two letters then digits) is covered at any length, and only a prefix of
+    // 5+ letters declines. That distinction decides how large the remaining Class B
+    // hole actually is, so it is measured here instead of inferred from the constant.
+    assert!(
+        ids(&conn, &country("ZZ999")).await.is_empty(),
+        "a 5-CHARACTER prefix with 2 letters is still guarded — digits do not fold"
+    );
+    assert_eq!(
+        ids(&conn, &country("DE300")).await,
+        vec![1],
+        "and the same shape matching a stored code must still return it"
+    );
+    // 5 ASCII letters = 32 variants, past the cap: the guard declines and the full
+    // query answers. Correct either way; the point is that it is the LETTER count
+    // that triggers it, which is a much narrower hole than a character count.
+    assert!(
+        ids(&conn, &country("ABCDE")).await.is_empty(),
+        "a 5-LETTER prefix declines the guard and falls through to the full query, \
+         which correctly finds nothing"
+    );
+
     // Absent: the whole point. Empty, and reached without the walk.
     assert!(ids(&conn, &country("ZZ")).await.is_empty(), "absent country -> empty");
     assert!(ids(&conn, &cpv("99")).await.is_empty(), "absent cpv -> empty");

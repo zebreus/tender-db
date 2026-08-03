@@ -563,6 +563,11 @@ async fn exists(conn: &Connection, sql: &str, params: Vec<Value>) -> turso::Resu
 /// and still correct. Every `None` path must stay on that side, because a guard that
 /// matches less than the predicate it stands in for returns wrong rows rather than
 /// slow ones.
+#[cfg(test)]
+pub(crate) fn prefix_ranges_for_test(prefix: &str) -> Option<Vec<(String, String)>> {
+    prefix_ranges(prefix)
+}
+
 fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
     /// 2^4 = 16 seeks at ~0.01s is still four orders of magnitude under the walk it
     /// avoids; beyond that the guard stops paying for itself.
