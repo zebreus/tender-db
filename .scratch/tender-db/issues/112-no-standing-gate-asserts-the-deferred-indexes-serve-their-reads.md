@@ -719,3 +719,47 @@ but **not kind-only** — `identifier_kind` is the second column of
 seek exists for it. B7 (kind-only) will still be RED after a row-value fix. It needs its
 own answer, and B7 should not be added until there is one, or it becomes the standing
 red described above.
+
+
+## SCHEDULED: B1/B1b must be re-baselined the moment 115 deploys
+
+115 changes the tender-scoped read's **driving table** from `lots` to
+`tender_version_lots` (the containment builder). B1/B1b assert:
+
+```
+B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~<SQL extracted from 1830d50>
+      ^tbl ^alias ^expected index
+```
+
+so after 115 deploys **all three of those fields are wrong at once** — the statement,
+the target table, and the expected index. Predicted behaviour: B1/B1b go **FAIL or
+NO-INPUT on a correct fix.**
+
+**That is a false alarm, and it must not be read as a regression.** Note it fails in
+the *safe* direction — the gate says the plan changed rather than silently passing the
+old shape, which is the whole point of asserting a specific index rather than "any
+index". But a red on correct code is still how a gate gets ignored, so this is
+scheduled, not discovered.
+
+**Do NOT pre-widen the expected-index field to accept whatever 115 produces.** That
+would pre-approve a plan nobody has seen and turn a specific assertion into "any index
+will do" — the correlate this gate exists to refuse.
+
+The procedure, same as B1's original sync:
+1. Extract the new statement from 115's containment builder (`Query::rows` dump —
+   ~minutes, see the PROVENANCE block in the script).
+2. Update `tbl`/`alias`/expected index to the new driving table.
+3. **Before** updating, capture the pre-115 plan through the probe. Section C's control
+   is `lots_of`-specific and will also need re-basing, or retiring if the read it
+   controls for no longer exists in that form — a control for a query nobody issues is
+   B5's failure mode, and it would be mine to have left it there.
+
+### And the irony worth keeping
+
+**This gate PASSED that read while it took 248.8s.** B1 was green, every plan line was
+index-served, and the endpoint was one of the slowest things on the site. It is the
+cleanest statement of the EQP asymmetry in this whole issue: a plan gate is a sound
+*regression detector for an access path* and says nothing whatever about *how many
+times* a good access path is taken. The 115 timing instrument — a clock and a scaling
+ratio, with a control that must not improve — is what covers that, and no amount of
+improvement to this file ever will.
