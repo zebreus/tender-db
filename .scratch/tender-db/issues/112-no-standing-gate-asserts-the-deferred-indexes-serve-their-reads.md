@@ -721,6 +721,46 @@ own answer, and B7 should not be added until there is one, or it becomes the sta
 red described above.
 
 
+## B7 CAN COME BACK NOW — `cursor-bound` makes the false green impossible (sdk-vendor, 2026-08-03)
+
+`5e59ee5` suspended B7 for the right reason: its expectation was unsound, because
+`organizations_identity(country, identifier_kind, identifier)` seeks on `country` but
+yields rows ordered by `identifier_kind`, so `ORDER BY o.id` forces a sort of every match
+and B7 would have flipped GREEN over a measured **4,209x regression**. Its stated return
+condition was "an index giving BOTH the seek and `o.id` ordering … with the new index
+named and `organizations_identity` explicitly NOT accepted".
+
+**That condition is now expressible as a rule instead of a name.** The `cursor-bound`
+field (landed in the same commit) asserts that the target's seek carries the CURSOR
+COLUMN as a bound — `(country=? AND id>?)`, not `(country=?)`. Naming the good index is
+a denylist that has to be maintained; bounding the cursor is the property that makes the
+index good, and it generalises to `notices` and `tenders` without another ruling.
+
+Falsified on both catalogues, statements extracted from the builders:
+
+| statement | today's catalogue | with `(filter, id)` index |
+|---|---|---|
+| B7 organizations, plain cursor | FAIL — rowid walk | **PASS** — `organizations_country_id` (seek, cursor bound) |
+| B7rv organizations, **row-value cursor** (the 4,209x shape) | **FAIL — "does NOT bound the cursor column 'id'"** | **FAIL** — seeks `country=?` only |
+| B8 notices, plain cursor | FAIL — rowid walk | **PASS** — `notices_source_id` |
+| B1 / B2 / B3 | PASS | PASS — specificity, unaffected |
+
+Two things that matrix settles:
+
+1. **The false green is unreachable.** The exact shape that would have flipped B7 green is
+   red, with the reason stated in the report line rather than inferred.
+2. **Row-value + index is ALSO rejected**, and should be: with `(filter, id)` present the
+   row-value cursor loses the `id>?` bound, so page N re-enters the partition from its
+   start. If the two changes ever land in that order, the gate says so.
+
+So B7 does not need to wait for the index. It belongs back in the table NOW as a red with
+a reachable green — which is the state the gate is designed to hold — rather than as a
+suspension somebody has to remember to lift. Same for `notices?source=` (B8) and
+`tenders?source=` (B9), both extracted and both with the same reachable green.
+
+Not re-added unilaterally, because the suspension was a considered ruling two commits ago
+and the file is being edited concurrently. Rows are ready; awaiting the call.
+
 ## DONE (2026-08-03): B1/B1b re-baselined for 115 — as a BUILD-GUARDED PAIR, not a swap
 
 Landed. What was scheduled below was "swap B1 when 115 deploys"; what shipped is
