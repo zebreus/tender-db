@@ -101,6 +101,39 @@
 #      by construction — the SET is derivable, and until it is derived this gate's
 #      coverage is one person's recall. (114 part 2)
 #
+# WHAT THIS GATE CANNOT DETECT, AT ALL, EVER (rule 6, and the boundary of the file)
+#   A plan says which ACCESS PATH was chosen. It does not say how many rows that path
+#   touches, and the cost of a read is rows x work-per-row. So an entire class of
+#   regression is invisible here, and it is not a gap to be closed by a better check —
+#   the information is not in the input.
+#
+#   Measured, twice, in one day:
+#     * issue 115 — the tender-scoped lots read planned ENTIRELY index-served, every
+#       line green, while taking 248.8s. Seven correlated subqueries per lot; the plan
+#       shows that each is a seek and not how many run.
+#     * issue 117 — the proposed organizations fix turns
+#           SEARCH o USING INTEGER PRIMARY KEY (rowid=?)     (0.0003s dense)
+#       into
+#           SEARCH o USING INDEX organizations_identity      (1.1989s dense)
+#           USE SORTER FOR ORDER BY
+#       i.e. a walk becomes a seek — the transition this gate REWARDS — while getting
+#       4,209x slower, because the seek's order is not the ORDER BY and everything
+#       matching must be sorted before LIMIT. Which path is faster depends on
+#       SELECTIVITY, which no plan reports.
+#
+#   Consequences, all of them load-bearing:
+#     * A green here means "the access path is X". It NEVER means "this read is
+#       healthy". Every PASS says so in its own text; do not paraphrase it away.
+#     * A plan change in the IMPROVING direction (walk -> seek) is exactly when a
+#       sorter can appear. That is a moment to reach for a CLOCK, not to record a win.
+#     * Do not add a check whose pass condition is "the plan got better". This gate is
+#       sound as a REGRESSION DETECTOR for an access path and unsound as proof of a
+#       speedup — the asymmetry documented below. B7 was added in violation of it and
+#       withdrawn; the note at section B is the worked example.
+#     * Cost-per-row and rows-touched belong to a timing instrument (issue 115's
+#       before/after: a scaling RATIO across a size spread, with a control that must
+#       NOT improve). Nothing in this file substitutes for it.
+#
 # THREE STATES, NEVER TWO
 #   pass     the read is served by an index / the declared index is present
 #   fail     the plan SCANs, or a declared index is missing or has wrong columns

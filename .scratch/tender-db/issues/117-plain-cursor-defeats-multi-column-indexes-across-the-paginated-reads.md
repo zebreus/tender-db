@@ -430,3 +430,66 @@ and is correct, because its partition is ~2 rows. The discriminator is the **siz
 sorted**, and that quantity appears nowhere in EQP output. **This defect class is therefore not
 detectable by any plan assertion**, and 112's B-checks should say so about themselves rather than imply
 a coverage they cannot have.
+
+
+## VERIFICATION BOUNDARY — no plan gate can validate this fix (sdk-vendor)
+
+Issue 112's plan gate **must not be used to sign off 117**, and the reason is not that
+the gate is immature — the information it would need is not in a query plan.
+
+I added a check (112's B7) asserting that `read::organizations` must be index-served
+rather than a rowid walk. proj-fix then measured the row-value fix: on a dense filter
+it is **4,209x slower** (151,648x at prod scale) than the walk B7 called broken.
+
+```
+plain cursor (today)    0.0003s   SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+row value  (proposed)   1.1989s   SEARCH o USING INDEX organizations_identity
+                                  USE SORTER FOR ORDER BY
+```
+
+**B7 would have flipped RED to GREEN over that regression**, because it presents as an
+improved plan. The check was withdrawn.
+
+The mechanism generalises to every read this issue touches. `organizations_identity` is
+`(country, identifier_kind, identifier)`, so a seek on `country` returns rows ordered by
+`identifier_kind`, not by `o.id`. The query asks `ORDER BY o.id`, so every matching row
+must be materialised and sorted before `LIMIT` applies. Therefore:
+
+| filter | plain cursor | index seek |
+|---|---|---|
+| sparse (`?country=ZZ`) | walks 25.3M for nothing — **22.0s** | instant |
+| dense (`?country=DE`) | `LIMIT` stops early — fast | seek + sort **all** matches — slow |
+
+**Which access path is correct depends on selectivity, and selectivity is not in the
+plan.** So for this class the plan is not merely insufficient evidence, it is
+*misleading* evidence: it points the wrong way exactly when the fix is wrong.
+
+### What this fix must be validated by instead
+
+A **clock**, over a **selectivity spread** — at minimum one sparse and one dense value
+of each filter, on prod-scale data — with the pre-fix numbers taken first. A single
+"before/after on one value" cannot distinguish a fix from a swap of which inputs are
+slow, which is precisely what the row-value cursor does.
+
+### And a design note that may remove the tradeoff entirely
+
+The dilemma is an artefact of the available index, not of the query. An index leading
+with the filter column and ending in the cursor column —
+
+```sql
+CREATE INDEX organizations_country_id ON organizations(country, id);
+```
+
+— gives the seek **and** `o.id` ordering, so there is **no sorter** and `LIMIT`
+truncates early. Fast at both densities, with no selectivity tradeoff to measure. It is
+the shape `tenders_current_published(current_published_at, id)` already uses in this
+codebase for exactly this problem.
+
+This also overturns a claim I made earlier in 112 and should be corrected wherever it
+was repeated: I wrote that **no index can serve the kind-only filter**, reasoning from
+the index that exists. `organizations(identifier_kind, id)` would serve it — seek and
+ordered — which makes the 99.08s case fixable rather than a design dead end.
+
+If the fix takes that form, a plan check becomes meaningful again for these reads,
+because "seek on the filter column with no top-level sorter" is then both *achievable*
+and *equivalent* to the property we care about. Until then, timing only.
