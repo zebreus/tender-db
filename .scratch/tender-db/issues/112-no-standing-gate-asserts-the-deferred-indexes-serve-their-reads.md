@@ -749,10 +749,27 @@ The procedure, same as B1's original sync:
 1. Extract the new statement from 115's containment builder (`Query::rows` dump —
    ~minutes, see the PROVENANCE block in the script).
 2. Update `tbl`/`alias`/expected index to the new driving table.
-3. **Before** updating, capture the pre-115 plan through the probe. Section C's control
-   is `lots_of`-specific and will also need re-basing, or retiring if the read it
-   controls for no longer exists in that form — a control for a query nobody issues is
-   B5's failure mode, and it would be mine to have left it there.
+3. **Before** updating, capture the pre-115 plan through the probe.
+
+**Section C: RE-BASE it, and do NOT delete it using the B5 argument.** I first wrote
+that "a control for a query nobody issues is B5's failure mode." That was wrong, and
+the distinction matters enough to correct rather than quietly drop:
+
+* B5 was an **assertion** — it claimed a hot read was index-served. Its value depended
+  entirely on the app issuing that read, and once it didn't, the check asserted nothing.
+* Section C is a **deliberate known-bad**. Its job is to prove the probe can still tell
+  a walk from a seek *in this run*. That job does not require the application to issue
+  the statement — only that the shape is one the planner should still walk.
+
+So the pre-115 `lots_of` walk remains a legitimate control for the 115-era read: paired
+with B1 re-based to the containment shape, it preserves the before/after discrimination
+that is the only reason B1's green means anything. Re-base if the old shape still
+compiles and still walks; retire only if it no longer does.
+
+The real risk with a stale control is **mislabelling**, not invalidity — someone reading
+`C1 PASS` as "the `lots_of` read is fine" rather than "the probe discriminates". The
+report wording already says "control still RED … the probe discriminates"; keep it that
+explicit through any re-base.
 
 ### And the irony worth keeping
 
