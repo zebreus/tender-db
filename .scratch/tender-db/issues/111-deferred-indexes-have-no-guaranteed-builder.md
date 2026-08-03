@@ -462,3 +462,72 @@ key-aware estimate tightens the model instead.
 
 That preserves the separability the constant was designed around: the empirical model gets more
 accurate, the policy margin stays where it is.
+
+## First production run (2026-08-03, deploy of `5c197e7`) — it worked, and it cost something
+
+**The self-enqueue fired.** Verbatim from the boot log at the restart second:
+
+```
+supervisor: 4 deferred index(es) missing
+(tenders_source_id, organizations_country_id, organizations_kind_id, notices_source_id)
+— queueing a background reindex
+```
+
+It **queued rather than blocking boot** — `/health` answered 200 within the same 15 s watchdog window —
+and afterwards `missing_deferred_indexes()` is empty, 4/4 present. The size cap refused nothing, so it
+is not miscalibrated in either direction at this scale.
+
+Worth checking explicitly rather than inferring from the endpoints being fast: had the hook not fired,
+the symptom would have been *"117 deployed but the endpoints are still slow"* — easy to misattribute to
+the index fix being wrong rather than **absent**, which is the exact failure 111 exists to prevent. Here
+both signals agreed; they could have disagreed.
+
+### What it cost — the number only a live run could give
+
+**~27 minutes** end to end for four indexes: `organizations_country_id` 13:37 → `organizations_kind_id`
+13:43 → `tenders_source_id` 13:46 → `notices_source_id` ~13:57.
+
+116 samples across the build: **zero 5xx**, and **five samples over 1 s** —
+
+```
+13:37:52  tender 1.10 s, notices_doe  9.96 s
+13:43:20  notices_doe 10.26 s
+13:43:59  notices_doe  8.79 s
+13:57:30  notices_doe 10.70 s, tender 0.12 s
+```
+
+Each aligns with a **checkpoint** (WAL 789 MB → 0), **not with the build itself**. The cost is flushing
+hundreds of MB into a 453 GB file. Transient, one sample each, always recovered, every response 200.
+
+run-driver has **retracted the earlier "zero serving impact" claim** — that was measured against a
+separate copy which shared disk but not the WAL or the checkpoint path. True, and about a different
+thing.
+
+### Open follow-up: the checkpoint spikes are a cost of the AUTOMATIC path
+
+These builds always produced a large WAL; what is new is that they now happen **unattended at boot after
+a deploy** rather than when an operator chose the moment. So ~10 s latency spikes are now a routine
+post-deploy occurrence rather than something someone scheduled.
+
+Not urgent — one sample each, all 200s, inside a one-time window — but worth deciding rather than
+inheriting. Options: checkpoint more often *during* the builds so each flush is smaller; leave the
+existing single TRUNCATE and accept the spikes; or have the builder pace itself. Whether the spikes
+scale with WAL size or with file size decides which, and that is unmeasured.
+
+### The memory figure, and why it is NOT the build's RSS
+
+```
+MemoryPeak=5267017728   (4.9 GB)
+```
+
+**This is systemd's cgroup figure and includes page cache**, which a build reading 14M rows out of a
+453 GB file fills by design. The cross-check that settles it: the *previous* process, which built no
+indexes at all, logged 4.8 GB peak over its lifetime. So 4.9 GB is this workload's normal cgroup
+footprint and the reindex added roughly 0.1 GB — consistent with the isolated measurements
+(`organizations` 1.07 GB; `notices` ~659 MiB projected).
+
+**There is no clean anonymous-RSS figure for the live build**, because it ran inside the server process.
+The isolated numbers remain the trustworthy ones, and the cap stays calibrated against those.
+
+Same misreading class as `ps %CPU` (a lifetime average read as instantaneous) — flagged here rather than
+quoted as a result, because 4.9 GB against a ~4 GB ceiling would look alarming and would be wrong.
