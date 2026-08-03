@@ -5,6 +5,7 @@
 //! client touches lives here, where we own the URL space, the error contract
 //! and the middleware.
 
+pub mod isolate;
 pub mod auth;
 pub mod docs;
 pub mod health;
@@ -75,6 +76,9 @@ pub struct AppState {
     pub cursor: watch::Receiver<i64>,
     /// The read-only SQL endpoint's dedicated pool and per-token limiters.
     pub sql: Arc<sql::SqlState>,
+    /// Where reads whose filter shape CAN walk are executed, so they cannot starve
+    /// `readers` (issue 120). Routing is [`store::read::walks`].
+    pub isolated: Arc<isolate::IsolatedReads>,
     streams: Arc<Mutex<HashMap<String, usize>>>,
 }
 
@@ -98,7 +102,18 @@ impl AppState {
             db.readers(sql::SQL_READERS).expect("sql reader pool"),
             sql_timeout,
         ));
-        AppState { db, readers, cursor, sql, streams: Arc::new(Mutex::new(HashMap::new())) }
+        // The isolated runtime and pool for reads whose filter shape can walk, so a
+        // walk nobody can cancel never holds one of `readers` (issue 120).
+        let isolated =
+            Arc::new(isolate::IsolatedReads::new(&db).expect("isolated read pool"));
+        AppState {
+            db,
+            readers,
+            cursor,
+            sql,
+            isolated,
+            streams: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 }
 
@@ -406,6 +421,22 @@ pub enum Collection {
     Notices,
 }
 
+impl From<Collection> for store::read::Collection {
+    /// The read layer has its own `Collection` because the isolation routing lives
+    /// next to the predicates it classifies (`store::read`), and `store` cannot depend
+    /// on `app`. Two enums that must agree is a drift hazard, so this match is
+    /// exhaustive: adding a collection here fails to compile until it is classified
+    /// there.
+    fn from(c: Collection) -> Self {
+        match c {
+            Collection::Tenders => store::read::Collection::Tenders,
+            Collection::Lots => store::read::Collection::Lots,
+            Collection::Organizations => store::read::Collection::Organizations,
+            Collection::Notices => store::read::Collection::Notices,
+        }
+    }
+}
+
 impl Collection {
     /// The `changes.entity_kind` this collection's diffs come from. Notices are
     /// the raw import layer and have no canonical change rows, so an SSE
@@ -471,10 +502,25 @@ async fn collection(
         return sse::subscribe(collection, state, headers, params, filter).await;
     }
     let limit = params.limit();
-    let reader = state.readers.get().await?;
     // One extra row answers "is there another page?" without a second query.
     let scope = Scope::Page { after: params.after(), limit: limit + 1 };
-    let mut items = read_items(collection, &reader, &filter, scope).await?;
+    // A filter shape that CAN walk runs on the isolated runtime and pool, so a walk
+    // nobody can cancel cannot hold one of the API's own readers (issue 120). The
+    // routing is derived from the read layer's own predicates, never a list here.
+    let mut items = if store::read::walks(collection.into(), &filter) {
+        match state.isolated.read(collection, filter.clone(), scope).await {
+            Ok(result) => result?,
+            Err(isolate::Shed) => {
+                return Err(ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "too many expensive filtered reads in flight; retry shortly".into(),
+                ));
+            }
+        }
+    } else {
+        let reader = state.readers.get().await?;
+        read_items(collection, &reader, &filter, scope).await?
+    };
     let next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id);
     items.truncate(limit as usize);
     Ok(axum::Json(json::page(items.into_iter().map(|i| i.json).collect(), next)).into_response())
