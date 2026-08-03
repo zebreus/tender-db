@@ -510,3 +510,34 @@ Corollary, in the direction that is easy to get backwards: **a disagreement resu
 scepticism as an agreement result.** The instinct is to audit a green and act on a red, because a red
 confirms the fear that motivated the check — which is precisely how the 119 phantom mismatches would
 have caused a rollback.
+
+
+## Which instrument can verify THIS fix — and which two cannot
+
+115 is a **cost** defect: the rows were always right and the access paths were always
+index-served. That places it on the one axis neither of the project's usual instruments
+can see, and both blindnesses have now been demonstrated on this issue's own evidence.
+
+| property of a read | instrument that sees it | blind to |
+|---|---|---|
+| **ANSWER** — which rows come back | row-count gates, result assertions | the path, and the cost |
+| **PATH** — how they are reached | 112's plan gate | the cost |
+| **COST** — how much work it took | a clock, an execution count | — |
+
+* **A result assertion cannot verify this fix.** The batching returns identical rows by
+  design; a test asserting on the answer passes whether or not the fix is present. This
+  is not hypothetical — proj-fix wrote exactly that test for the 117 short-circuit
+  (`fe2c16b`), found it would have passed with the guard's boundary *anywhere at all*,
+  and replaced it with an assertion on `prefix_ranges` itself.
+* **A plan assertion cannot verify it either.** 112's gate passed this read at **248.8s**
+  with every line index-served (rule 6).
+
+The two are duals — *plan-blind-to-cost* and *result-blind-to-path* — and between them
+they account for every false green this project has chased, including the row-counting
+gates that stayed green through the entire 2.2s `lots_of` outage. Recorded in the gate's
+rule header (`e28928a`).
+
+**So the acceptance criterion is a clock, and specifically a scaling RATIO** across a
+lot-count spread with a control that must NOT improve — not a single before/after number,
+which cannot distinguish "the batching worked" from "the box was quiet". Stated here as
+well as in 112 because this is the issue whose sign-off decision it governs.
