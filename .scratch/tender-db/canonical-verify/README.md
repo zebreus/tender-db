@@ -4,6 +4,33 @@ Read-only checks to run the moment the full canonical rebuild lands, to confirm
 the tender layer is sound. Derived from CONTEXT.md, docs/adr/, and the schema
 (crates/store/src/canonical.rs). **Read-only — nothing here writes or deploys.**
 
+## A TEST RUN IS AN ARTIFACT TOO: BUILD IT THE WAY PRODUCTION IS BUILT
+
+`cargo test --workspace` looked like the widest possible check and was a **proxy for a
+different binary**. `crates/app` declares `default = []`, and its `server` feature is what
+pulls in `store`, `axum`, `tokio/rt-multi-thread` and gates the `v1` and `supervisor`
+modules behind `#[cfg(feature = "server")]`. Production is built by
+`nix/package.nix` with `-p tender-db --features server`. So the workspace run **never
+compiled `v1/` or `supervisor.rs` at all** — the deploy gate blessed a binary that was
+not the one shipping.
+
+Two runs of that command, by two people, agreed exactly — and the agreement was worth
+nothing. **Two instruments agreeing means something only if they COULD have disagreed**,
+and two identical invocations share every blind spot they have.
+
+Use the feature set the release build uses. The project's own workspace incantation is in
+`nix/package.nix` (`cargoClippyExtraArgs`):
+
+```sh
+cargo test --workspace --features tender-db/server
+```
+
+**What the corrected command found immediately:** 290 passed, **5 failed** — five
+`supervisor::tests` queue-recovery tests, invisible to every prior run because the module
+did not compile. Same family as B5 and the by-name index parser: a check whose *subject*
+was assembled from what came to mind (packages) rather than derived from what ships
+(packages **and features**).
+
 ## ONE VERIFICATION OWNER PER OBLIGATION
 
 Learned the expensive way, 2026-08-03. Two branches independently grew a **section I**
