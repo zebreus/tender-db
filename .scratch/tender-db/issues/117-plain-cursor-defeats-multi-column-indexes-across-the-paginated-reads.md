@@ -968,3 +968,50 @@ Deriving the routing predicate from the code found the member *in the course of 
 That is also the first evidence for issue 120's thesis: the isolated pool caught an expensive read
 **nobody had audited**, which is what a backstop is for. The general defence earned its keep before it
 shipped.
+
+
+## Did `tenders_source_id` cause the `/v1/lots?source=ted` regression? NO — plan instrument
+
+Task #18, plan-level determination (sdk-vendor), **independent of the 117 deploy and of
+run-driver's plan DBs**: the schema came from `Db::open()` — the code's own — and the
+counterfactual needed no DDL editing at all, because `tenders_source_id` is a **deferred**
+index and a freshly-opened DB therefore does not have it. The statement was taken from the
+derived checked-set fixture, not retyped.
+
+**The hypothesis was:** adding `t.source = ?` flips the driving table from `lots` to
+`tenders` via 117's index, so `ORDER BY l.id` can no longer be satisfied by the drive and
+`LIMIT 50` cannot stop early.
+
+**Measured on turso 0.7.0:**
+
+```
+WITHOUT tenders_source_id:  1 | 0 | 0 | SCAN tenders AS t
+WITH    tenders_source_id:  1 | 0 | 0 | SEARCH t USING INDEX tenders_source_id (source=?)
+```
+
+**The query drives from `tenders` either way.** Without the index the planner *scans*
+`tenders`; with it, it *seeks*. Both plans then reach `l` by
+`SEARCH l USING INTEGER PRIMARY KEY (rowid=?)` and both end in a top-level
+`USE SORTER FOR ORDER BY`.
+
+So on this evidence **117 did not cause the driving-table change — there was no change.**
+It improved the drive step (scan → seek) on a query whose shape already prevented `LIMIT`
+from stopping early. The sorter, which is the actual reason 50 rows cost a full pass, is
+present with and without the index.
+
+That also means **removing the index cannot fix this endpoint** — it would return the
+drive to a full `tenders` scan while re-breaking the four DoS reads now at milliseconds.
+Consistent with team-lead's not-a-rollback decision, reached independently.
+
+### What this instrument cannot establish, stated rather than glossed
+
+The counterfactual DB is **empty**. Plan choice can depend on table size and statistics,
+and prod has 12.4M notices. The gate's own stats precondition covers the usual form of
+this — schema-only plans are representative *while `sqlite_stat1` is empty*, which is
+prod's state — but "empty vs populated, both without stats" is a further axis this run did
+not vary. A plan is also text about an execution, never a duration (112 rule 6).
+
+**So this settles attribution, not cost, and it needs run-driver's real-scale timing on the
+`tenders.db` fixture to agree before the record calls it closed.** The two instruments can
+genuinely disagree — independent construction and a clock, against a plan on an empty
+schema — which is what would make agreement worth something.
