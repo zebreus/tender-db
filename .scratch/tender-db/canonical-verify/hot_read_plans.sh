@@ -565,17 +565,39 @@ detail_of() { printf '%s' "$1" | sed -E 's/.*\|//; s/^[[:space:]-]+//'; }
 # traversal, not a seek, so the report SAYS SO rather than blurring the two.
 echo "-- B. hot reads must be served by a real index (turso plans only)"
 
-# B7 IS EXPECTED TO BE **RED** UNTIL `read::organizations` IS FIXED — that is the
-# point of it, not a bug in it.
+# B7 WAS ADDED, THEN SUSPENDED (2026-08-03). ITS EXPECTATION WAS UNSOUND.
+#   Kept as the worked example, because the mistake is subtle and mine.
 #   `/v1/organizations?country=` was measured at 22.0s cold on prod (run-driver,
 #   2026-08-03) and `?kind=` at 99.08s, unauthenticated and user-reachable. The cause
 #   is the SAME defect this whole gate was built for: `read::organizations` carries a
 #   plain `o.id > ?` cursor under `ORDER BY o.id`, so the planner drives from the
 #   25.3M-row table in rowid order — exactly as `l.id > ?` did for `lots`.
-#   This statement is EXTRACTED from the deployed builder at 1830d50, not written to
-#   match it. A row-value cursor gives it `SEARCH o USING INDEX organizations_identity
-#   (country=?)`, so the RED here has a reachable GREEN and will flip when the fix
-#   lands.
+#   I added B7 asserting that this read must be INDEX-SERVED rather than a rowid walk.
+#   proj-fix then measured the proposed row-value fix (issue 117): on a dense filter it
+#   is **4,209x SLOWER** than the walk B7 calls broken —
+#       plain cursor (today)   0.0003s   SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+#       row value  (proposed)  1.1989s   SEARCH o USING INDEX organizations_identity
+#                                        USE SORTER FOR ORDER BY
+#   **B7 would have flipped RED -> GREEN over that.** A gate built to catch read
+#   regressions would have certified a three-order-of-magnitude one.
+#
+#   The reason is not a bug in B7's wiring; the EXPECTATION is unsound.
+#   `organizations_identity` is `(country, identifier_kind, identifier)`, so a seek on
+#   `country` yields rows ordered by `identifier_kind`, NOT by `o.id`. The query asks
+#   `ORDER BY o.id`, so every matching row must be materialised and sorted before
+#   `LIMIT` can apply. Which access path is FASTER therefore depends on SELECTIVITY:
+#       ?country=ZZ (sparse)  walk = 25.3M rows for nothing (22.0s) | seek = instant
+#       ?country=DE (dense)   walk = LIMIT stops early (fast)       | seek+sort all DE
+#   Neither plan is right for all inputs, and the thing that decides — how many rows
+#   match — IS NOT IN THE PLAN TEXT. A plan check cannot express this read's health,
+#   so it must not pretend to. Suspended rather than left to go green on the fix.
+#
+#   It becomes assertable again the moment there is an index that gives BOTH the seek
+#   and the `o.id` ordering — `organizations(country, id)`, the same shape as
+#   `tenders_current_published(current_published_at, id)`. Then the plan is a seek with
+#   NO top-level sorter, `LIMIT` truncates early, and both densities are fast. At that
+#   point B7 returns with the new index NAMED, and `organizations_identity` explicitly
+#   NOT accepted — because accepting it is precisely the false green above.
 #
 #   THE KIND-ONLY VARIANT IS DELIBERATELY NOT A CHECK HERE, and the distinction is
 #   not squeamishness about a red report:
@@ -613,7 +635,7 @@ echo "-- B. hot reads must be served by a real index (turso plans only)"
 #   another statement by hand here is how B5 came to exist.
 
 # Fields separated by `~` (NOT `|`, which appears inside the alternations below).
-#   id ~ table ~ alias ~ expected-index-regex ~ drives-before ~ applies-when ~ SQL
+#   id ~ table ~ alias ~ expected-index-regex ~ drives-before ~ cursor-bound ~ applies-when ~ SQL
 # The expected-index regex is matched against the index name turso reports; `*`
 # means "any real index is acceptable", used where more than one would serve.
 #
@@ -645,6 +667,27 @@ echo "-- B. hot reads must be served by a real index (turso plans only)"
 #   The end state remains 114 part 2 — a fixture generated FROM the deployed rev, so
 #   even the pairing is derived — and this is the honest interim, not a substitute.
 #
+# `cursor-bound` (usually empty) names the CURSOR COLUMN, and asserts that the target's
+# index seek carries it as a BOUND — `(country=? AND id>?)`, not `(country=?)`. It is
+# issue 117's rule ("the cursor column must participate in the index being sought"), and
+# it exists because "names a real index" turned out to be a correlate one more time:
+#
+#     SEARCH o USING INDEX organizations_country_id (country=? AND id>?)   <- O(page)
+#     SEARCH o USING INDEX organizations_identity  (country=?)             <- O(partition)
+#
+# Both name a real index; both pass every other check in this file. In the second the
+# seek does not carry the cursor, so rows do not arrive in `id` order, the plan needs a
+# top-level `USE SORTER FOR ORDER BY`, and LIMIT cannot stop early — every row matching
+# the filter is visited on every request, whatever page was asked for. Measured, both
+# shapes on the same catalogue: adding `(filter, id)` removes the sorter and the plain
+# cursor then seeks on both columns; a row-value cursor without that index seeks the
+# filter only and keeps the sorter.
+# Which matters because the two errors point opposite ways: for a filter matching
+# NOTHING the sorter version is still a huge win (`?country=ZZ`, 22.0s of walking), and
+# for a DENSE filter it is a loss — `?country=DE` is 19 ms TODAY precisely because the
+# current walk stops as soon as it has LIMIT matches. A gate that cannot tell the two
+# fixes apart would certify the one that regresses the fast path.
+#
 # `drives-before` (usually empty) is an alias|table alternation that the target must
 # be read BEFORE. It exists because of a trap proj-fix measured on the 115 shape:
 #
@@ -661,15 +704,14 @@ echo "-- B. hot reads must be served by a real index (turso plans only)"
 # from quadratic is which table is the outer loop, and that is what this field
 # asserts. (Same discriminator proj-fix's store-crate tests now use.)
 READS=$(cat <<'SQLS'
-B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 0) ORDER BY l.id LIMIT 1000
-B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 49377) ORDER BY l.id LIMIT 1000
-B1~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 0 ORDER BY l.id LIMIT 1000
-B1b~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 49377 ORDER BY l.id LIMIT 1000
-B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~~~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
-B3~tenders~tenders~tenders_procedure_key~~~SELECT id FROM tenders WHERE procedure_key = 'x'
-B4~tenders~tenders~tenders_island~~~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
-B6~tenders~tenders~tenders_current_published~~~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
-B7~organizations~o~organizations_identity|organizations_[a-z_]+~~~SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id) FROM organizations o WHERE 1 = 1 AND o.country = 'ZZ' AND o.id > 0 ORDER BY o.id LIMIT 1000
+B1~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 0) ORDER BY l.id LIMIT 1000
+B1b~lots~l~sqlite_autoindex_lots_1|lots_[a-z_]+~~~-2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq, (SELECT s.value FROM tender_version_texts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'title' ORDER BY (s.lang = 'ENG') DESC LIMIT 1), (SELECT MAX(a.cents) FROM tender_version_amounts a WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id), (SELECT s.currency FROM tender_version_amounts s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id ORDER BY s.cents DESC LIMIT 1), (SELECT s.utc_seconds FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.offset_minutes FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1), (SELECT s.has_time FROM tender_version_dates s WHERE s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id AND s.field = 'submission_deadline' ORDER BY s.utc_seconds DESC LIMIT 1) FROM lots l JOIN tenders t ON t.id = l.tender_id JOIN tender_versions v ON v.tender_id = t.id AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id) JOIN tender_version_lots vl ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id WHERE 1 = 1 AND l.tender_id = 424242 AND (l.tender_id, l.id) > (424242, 49377) ORDER BY l.id LIMIT 1000
+B1~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 0 ORDER BY l.id LIMIT 1000
+B1b~tender_version_lots~vl~sqlite_autoindex_tender_version_lots_1|tender_version_lots_[a-z_]+~l|lots~~+2751ce3~SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq FROM tender_version_lots vl JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id JOIN tenders t ON t.id = vl.tender_id JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq WHERE vl.tender_id = 424242 AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = 424242) AND l.id > 49377 ORDER BY l.id LIMIT 1000
+B2~tender_version_bid_parties~tender_version_bid_parties~tender_version_bid_parties_version~~~~SELECT * FROM tender_version_bid_parties WHERE tender_id = 1 AND seq = 1
+B3~tenders~tenders~tenders_procedure_key~~~~SELECT id FROM tenders WHERE procedure_key = 'x'
+B4~tenders~tenders~tenders_island~~~~SELECT id FROM tenders WHERE source = 'ted' AND island_notice_id = 1
+B6~tenders~tenders~tenders_current_published~~~~SELECT id FROM tenders ORDER BY current_published_at DESC, id DESC LIMIT 50
 SQLS
 )
 
@@ -730,7 +772,7 @@ if [ -z "${TDB_PLAN_CMD:-}" ]; then
 elif [ "$PLAN_STATS_OK" != yes ]; then
   : # the precondition already reported why
 else
-  while IFS='~' read -r id tbl alias want drives when sql; do
+  while IFS='~' read -r id tbl alias want drives bound when sql; do
     [ -n "$id" ] || continue
     # ---- BUILD GUARD (see `applies-when` above) --------------------------------
     # The correct plan for a read can CHANGE with a deploy (issue 115 moved the
@@ -764,6 +806,16 @@ else
       continue
     fi
     det=$(detail_of "$line")
+    # A TOP-LEVEL sorter after an index seek is the shape that hides a regression:
+    # the seek reorders rows away from the ORDER BY, so everything matching must be
+    # materialised and sorted before LIMIT applies. Whether that is cheap depends on
+    # how many rows match — which is NOT in the plan. Reported, never a verdict:
+    # issue 115's fixed lots read also ends in a sorter and is correct, because its
+    # slices are ~2 rows. Failing on a sorter would fail correct code (rule 3).
+    sorter=""
+    if printf '%s\n' "$plan" | grep -qiE '(^|\|)[[:space:]]*[0-9]+[[:space:]]*\|[[:space:]]*0[[:space:]]*\|.*USE SORTER FOR ORDER BY|^[|`-]*[[:space:]]*USE SORTER FOR ORDER BY'; then
+      sorter="  [!] plan also has a TOP-LEVEL SORTER after the seek — cost depends on how many rows match, which no plan shows. VERIFY BY TIMING before reading this pass as an improvement."
+    fi
     # Position of the target's access line, and of the table it must precede.
     pos_t=$(printf '%s\n' "$plan" | grep -niE "(SCAN|SEARCH)[[:space:]]+(${alias}|${tbl})([[:space:]]|\$)" | head -1 | cut -d: -f1)
     pos_d=""
@@ -781,16 +833,32 @@ else
       report NONE "$id" "$tbl access names no index and is not a recognisable scan — read it by hand: $line"
     elif [ "$want" != '*' ] && ! printf '%s' "$idx" | grep -qE "^(${want})\$"; then
       report FAIL "$id" "$tbl is served by index '$idx', not the expected ${want} — a different index can still be the wrong access path for this read: $line"
+    elif [ -n "$bound" ] && ! printf '%s' "$det" | grep -qE "(^|[^a-z_])${bound}[[:space:]]*>"; then
+      # ---- THE CURSOR COLUMN MUST BE A BOUND OF THE SEEK, NOT JUST THE FILTER ----
+      # Issue 117's rule, and the ONE thing that separates its two candidate fixes.
+      # Both of these name a real index and both would pass every other check here:
+      #   SEARCH o USING INDEX organizations_country_id (country=? AND id>?)   O(page)
+      #   SEARCH o USING INDEX organizations_identity  (country=?)             O(partition)
+      # In the second the seek does not carry the cursor, so the rows do not arrive in
+      # `id` order, the plan needs `USE SORTER FOR ORDER BY`, and LIMIT CANNOT TRUNCATE
+      # EARLY — every row of the filter partition is visited on every request, whatever
+      # page was asked for. That is an enormous win over walking the whole table when the
+      # partition is empty (`?country=ZZ`, 22.0s) and a LOSS when it is large: the dense
+      # filters are the ones that are fast today (`?country=DE`, 19ms) precisely because
+      # the current walk stops at LIMIT matches.
+      # So "names an index" is a CORRELATE again, one level in from where this gate
+      # started, and without this field the weaker fix reports green.
+      report FAIL "$id" "$tbl is served by index $idx but the seek does NOT bound the cursor column '$bound' — so rows do not arrive in cursor order, LIMIT cannot stop early, and every row matching the filter is visited on every request (O(partition), not O(page)): $line"
     elif [ -n "$drives" ] && [ -z "$pos_d" ]; then
       report NONE "$id" "$tbl is served by index $idx, but no access line for '$drives' was found, so the JOIN ORDER could not be established — and join order is what separates a linear read from a quadratic one here. NOT verified."
     elif [ -n "$drives" ] && [ "${pos_t:-0}" -ge "${pos_d:-0}" ]; then
       report FAIL "$id" "JOIN ORDER INVERTED: '$drives' is read FIRST (plan line $pos_d), $tbl only at line $pos_t — $tbl must be the outer loop and drive the join. The index on $tbl is fine; the DRIVING TABLE is wrong, which is the difference between one lookup per row and a full walk: $line"
     elif [ "$mode" = SCAN ]; then
-      report PASS "$id" "$tbl read by an ordered FULL TRAVERSAL of index $idx (SCAN, not a seek) — correct only while the read's ORDER BY matches that index and a LIMIT stops it early: $line"
+      report PASS "$id" "ACCESS PATH ONLY: $tbl read by an ordered FULL TRAVERSAL of index $idx (SCAN, not a seek) — correct only while the read's ORDER BY matches that index and a LIMIT stops it early. Says nothing about rows scanned, rows sorted or latency.$sorter"
     elif [ -n "$drives" ]; then
-      report PASS "$id" "$tbl served by index $idx (seek), and drives the join ahead of '$drives' (line $pos_t before $pos_d)"
+      report PASS "$id" "ACCESS PATH ONLY: $tbl served by index $idx (seek), driving the join ahead of '$drives' (line $pos_t before $pos_d). Says nothing about rows scanned, rows sorted or latency.$sorter"
     else
-      report PASS "$id" "$tbl served by index $idx (seek)"
+      report PASS "$id" "ACCESS PATH ONLY: $tbl served by index $idx (seek). Says nothing about rows scanned, rows sorted or latency.$sorter"
     fi
   done <<< "$READS"
 fi
