@@ -743,6 +743,26 @@ async fn which_shippable_shape_keeps_lots_driving() {
                            AND c.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)
                            AND c.scheme = 'nuts' AND c.code LIKE 'DE%')
             AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
+        // S2d — the combination neither S2 nor S2c offered: `lots` alone in FROM (so the
+        // full filter surface is safe) AND `current_seq` read by a cheap PK subquery
+        // instead of recomputing MAX(seq) 13.2M times. S2's cost with S2c's structure.
+        ("S2d full surface, current_seq by PK subquery", "SELECT l.id, l.tender_id, l.lot_key,
+             (SELECT vl.kind FROM tender_version_lots vl
+               WHERE vl.tender_id = l.tender_id
+                 AND vl.seq = (SELECT tt.current_seq FROM tenders tt WHERE tt.id = l.tender_id)
+                 AND vl.lot_id = l.id),
+             (SELECT tt.current_seq FROM tenders tt WHERE tt.id = l.tender_id)
+           FROM lots l
+          WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                         WHERE vl.tender_id = l.tender_id
+                           AND vl.seq = (SELECT tt.current_seq FROM tenders tt WHERE tt.id = l.tender_id)
+                           AND vl.lot_id = l.id AND vl.kind = ?)
+            AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = 'ted'
+            AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                         WHERE c.tender_id = l.tender_id
+                           AND c.seq = (SELECT tt.current_seq FROM tenders tt WHERE tt.id = l.tender_id)
+                           AND c.scheme = 'nuts' AND c.code LIKE 'DE%')
+            AND l.id > ? ORDER BY l.id LIMIT 50".to_owned()),
         // Paginate FIRST, join after: the LIMIT is applied to a `lots`-driven subquery,
         // so at most 50 rows ever reach the join.
         ("S3 paginate-then-join", "SELECT l.id, l.tender_id, l.lot_key, vl.kind, vl.seq
