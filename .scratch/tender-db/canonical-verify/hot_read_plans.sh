@@ -62,6 +62,45 @@
 #   validated by timing it. Neither position contradicts the other; do not
 #   "simplify" one into the other.
 #
+# THE FIVE RULES THIS FILE LEARNED THE HARD WAY (2026-08-03)
+#   Each was paid for with a real false verdict. Detail lives at the point of use and
+#   in issues 112/114; this is the index, so a future editor meets them before the code.
+#
+#   1. ASSERT THE ARTIFACT, NEVER A PARAPHRASE OF IT.
+#      B1 was hand-written to "match" `read.rs`. Measured later: it returned SEARCH …
+#      USING INDEX — green — with OR without the fix, because the paraphrase had
+#      dropped the cursor predicate and the cursor predicate WAS the defect. It could
+#      never have failed. Extract statements from the builder. (114 part 2)
+#
+#   2. A CHECK THAT HAS NOT BEEN SEEN TO FAIL IS NOT EVIDENCE.
+#      Every check here has been run against a plan DB with its own index removed and
+#      observed to go red — and to stay green when a DIFFERENT index is removed.
+#      Sensitivity without specificity would only report "something changed".
+#      (the can-fail matrix, above)
+#
+#   3. NEVER FAIL CORRECT CODE.
+#      `SCAN … USING COVERING INDEX` is the RIGHT plan for `ORDER BY … LIMIT`; the
+#      13.2M-row walk says SEARCH. `plan_*` indexes are absent by design between
+#      projections. A gate that cries wolf about correct code is switched off within
+#      a week, and then catches nothing at all.
+#
+#   4. A CHECK NEEDS AN ACHIEVABLE PASS STATE.
+#      B7 is red today with a green available (a row-value cursor gives it a seek), so
+#      it belongs here. The kind-only organizations read is slower — 99.08s — and does
+#      NOT belong here yet, because no index on the table can serve it: red with no
+#      reachable green is a permanent alarm, not a test, and could never tell "still
+#      broken" from "broken in a new way". Severity does not decide this; achievability
+#      does.
+#
+#   5. DERIVE WHAT IS CHECKED, NOT ONLY HOW.
+#      The costliest miss of the day was not a wrong check but a MISSING one:
+#      `read::organizations` walked 25.3M rows on a public endpoint (22.0s / 99.08s)
+#      while B5, on the same table, asserted a read that issue 19 had deleted. The
+#      target set was enumerated from memory, so it inherited the blind spots of
+#      whoever wrote it. Every `Scope::Page` read in `read.rs` is a paginated hot read
+#      by construction — the SET is derivable, and until it is derived this gate's
+#      coverage is one person's recall. (114 part 2)
+#
 # THREE STATES, NEVER TWO
 #   pass     the read is served by an index / the declared index is present
 #   fail     the plan SCANs, or a declared index is missing or has wrong columns
