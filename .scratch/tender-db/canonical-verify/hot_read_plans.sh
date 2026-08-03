@@ -654,6 +654,24 @@ fi
 # Note this is NOT a copy of B1 with a predicate edited by hand: both texts came
 # out of the builder at their respective revisions. Do not "tidy" one into the
 # other.
+#
+# AND DO NOT DELETE THIS SECTION WHEN THE APP STOPS ISSUING THIS QUERY.
+#   Rule 5 above, and the B5 deletion, both say "a check for a read nobody issues
+#   asserts nothing". That reasoning does NOT apply here, and it is easy to get
+#   backwards because both sit in this same file.
+#     B5 was an ASSERTION — it claimed a hot read was index-served, so its value
+#     depended on the app issuing that read; once it didn't, it asserted nothing.
+#     THIS is a DELIBERATE KNOWN-BAD, whose only job is to show that the probe can
+#     still tell a walk from a seek IN THIS RUN. That needs the shape to still WALK.
+#     It does not need anyone to run it in production.
+#   When the read it mirrors changes (issue 115 moves the driving table from `lots`
+#   to `tender_version_lots`), RE-BASE this control onto the new shape's known-bad
+#   predecessor. Retire it only if the old shape stops compiling or stops walking —
+#   i.e. only if it has stopped being a known-bad, which is the one thing that would
+#   actually invalidate it.
+#   The real hazard with a stale control is MISLABELLING, not invalidity: someone
+#   reading `C1 PASS` as "the lots_of read is fine" rather than "the probe
+#   discriminates". Keep the report wording that explicit through any re-base.
 # ---------------------------------------------------------------------------
 CONTROL=unknown
 echo "-- C. negative control: the pre-fix shape must still come back RED"
