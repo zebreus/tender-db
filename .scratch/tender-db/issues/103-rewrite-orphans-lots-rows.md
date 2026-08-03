@@ -57,3 +57,44 @@ when nothing shrank.
 Recorded because it is precisely the kind of latent wart that gets discovered as a mysterious count
 discrepancy months later. It costs nothing to know about, and the fix is cheap when it is actually
 needed rather than speculative now.
+
+## The invariant currently HOLDS corpus-wide — measured 2026-08-03
+
+Issue 115's cross-Tender decoration bug (`summarise` keyed on `lot_id` alone rather than
+`(tender_id, seq, lot_id)`) was reachable **only** if some satellite row carried a `lot_id` belonging to
+a different Tender — i.e. only if this issue's orphaned rows actually existed. That made 103 the
+mechanism that would decide whether a shipped defect was live or latent, so it was measured directly
+against the serving database.
+
+Full walks of all three lot-scoped satellites joined to `lots`:
+
+```sql
+SELECT COUNT(*) FROM <satellite> s JOIN lots l ON l.id = s.lot_id
+ WHERE s.lot_id IS NOT NULL AND l.tender_id <> s.tender_id;
+```
+
+| satellite | rows with a foreign `lot_id` |
+|---|---|
+| `tender_version_texts` | **0** |
+| `tender_version_amounts` | **0** |
+| `tender_version_dates` | **0** |
+
+**Not one satellite row anywhere in the corpus references a Lot belonging to another Tender.**
+
+Two consequences worth recording:
+
+1. **This wart is still latent, as the Status line says — now with a corpus-wide measurement behind it
+   rather than an argument.** No shrinking rewrite has yet orphaned a row that another Tender's version
+   then picked up.
+2. **The `a39d53a` fix for 115 is therefore PREVENTIVE, not remedial.** It closed a path that the data
+   could not currently walk. That is the right thing to have shipped — the guard belongs in the code
+   regardless — but the record should not imply production was serving cross-Tender values. It was not.
+   Independently corroborated end-to-end: 1,700 served lots across 11 pages spanning 10–117 distinct
+   Tenders each, recomputed against the pre-fix three-column semantics, showed zero divergence on both
+   the buggy build and the fixed one.
+
+**This is a measurement of today, not a guarantee.** The moment a shrinking rewrite lands without the
+sweep described above, the invariant can break — and 115's decoration is no longer the thing that would
+notice, because it now matches on all three columns. So the value of this number is that it bounds the
+past, not the future: it says the fix was preventive, and it says nothing about whether this wart stays
+harmless.
