@@ -1428,13 +1428,55 @@ impl Db {
         //
         // ISSUE 111 APPLIES: this function runs at a rebuild's end or via the `Reindex`
         // admin job, and at no other time. Deploying the code does not create them.
-        for (name, cols) in [
-            ("organizations_country_id", "organizations(country, id)"),
-            ("organizations_kind_id", "organizations(identifier_kind, id)"),
-        ] {
+        for (name, cols) in Self::DEFERRED_ORG_INDEXES {
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
         }
         Ok(())
+    }
+
+    /// The organization indexes a healthy database always has, as ONE list shared by
+    /// the builder above and [`Db::missing_deferred_indexes`]. Two copies of this
+    /// list would be a detector that can silently stop matching what is built — the
+    /// artifact-versus-proxy failure of issues 110 and 102, in a new place.
+    ///
+    /// `organizations_identity` is deliberately absent: it is built only when the
+    /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
+    /// legitimately lacks the index and must not be reported as missing.
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 3] = [
+        ("organization_mentions_org", "organization_mentions(organization_id)"),
+        ("organizations_country_id", "organizations(country, id)"),
+        ("organizations_kind_id", "organizations(identifier_kind, id)"),
+    ];
+
+    /// Which deferred indexes are absent from this database.
+    ///
+    /// Issue 111: the deferred indexes have no guaranteed builder. They are created at
+    /// a rebuild's end or by the `Reindex` admin job and at no other time, so a deploy
+    /// that ADDS one leaves it uncreated — the read it exists for stays slow until
+    /// somebody notices and fires a job by hand. That is how the issue-117 DoS fix
+    /// would ship without taking effect.
+    ///
+    /// This is the detection half: cheap enough to run at every boot (a scan of
+    /// `sqlite_master`, which holds one row per object, not per row of data), so the
+    /// caller can enqueue the existing `Reindex` job in the BACKGROUND rather than
+    /// building anything inline. Building at boot is what issues 82/83 removed, and
+    /// this must not bring it back.
+    pub async fn missing_deferred_indexes(&self) -> turso::Result<Vec<String>> {
+        let conn = self.conn().await;
+        let mut present = std::collections::HashSet::new();
+        let mut rows = conn
+            .query("SELECT name FROM sqlite_master WHERE type = 'index'", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            present.insert(text(&row, 0));
+        }
+        Ok(Self::DEFERRED_TENDER_INDEXES
+            .iter()
+            .chain(Self::DEFERRED_ORG_INDEXES.iter())
+            .map(|(name, _)| *name)
+            .filter(|name| !present.contains(*name))
+            .map(str::to_owned)
+            .collect())
     }
 
     /// The tender satellite indexes whose keys are RANDOM across the corpus —
@@ -1504,6 +1546,12 @@ impl Db {
         // ISSUE 111 APPLIES TO THIS ONE: it materialises at a rebuild's end or via the
         // `Reindex` admin job, and at no other time. Deploying the code does not create
         // it, so `?source=` stays slow until one of those runs.
+        //
+        // And note there is no partition size at which the rejected row-value cursor is
+        // merely harmless: measured on prod's real slices it costs 71,000x at DE
+        // (3.85M rows) and still 14x at MT (24,911 rows) for a 50-row page. Only a
+        // `lots`-sized partition — single digits — makes its sort free, which is why
+        // `1830d50` got away with it and why nothing else should copy it.
         ("tenders_source_id", "tenders(source, id)"),
     ];
 
