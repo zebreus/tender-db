@@ -390,6 +390,88 @@ fn seq_expr(scope: Scope, alias: &str, params: &mut Vec<Value>) -> String {
 /// The version-scoped predicates, identical for Tenders and Lots — everything
 /// here is evaluated against `(tender_id, seq)`, which is exactly what makes
 /// one filter serve both the list and the diff.
+/// Which collection a [`Filter`] is being applied to.
+///
+/// Isolation routing cannot be a property of the `Filter` alone, because the same
+/// field means different things per collection and whether an index serves it differs
+/// with the meaning: `kind` is `t.kind` for Tenders, `vl.kind` — a JOINED table — for
+/// Lots, `identifier_kind` for Organizations and `profile` for Notices. Three of those
+/// are index-served and one is not.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Collection {
+    Tenders,
+    Lots,
+    Organizations,
+    Notices,
+}
+
+/// Can answering this request WALK — i.e. does it use a predicate no index serves?
+///
+/// Issue 117 established that the reads have no way to predict a query's *cost*: there
+/// are no selectivity statistics, and the one probe available (the existence
+/// short-circuit) answers only the matches-nothing case. But cost is not what routing
+/// needs. **Which query SHAPES are capable of walking is statically decidable**, before
+/// a row is read, from the filter alone — and that is enough to send them somewhere
+/// they cannot starve the main reader pool (issue 120).
+///
+/// The classification is exhaustive BY CONSTRUCTION. `Filter` is destructured field by
+/// field below, so adding a field to it **fails to compile here** until someone
+/// classifies it. That is deliberate and non-negotiable: a hand-maintained list of
+/// "expensive filters" would silently route a newly-added unserved filter to the fast
+/// pool and reintroduce the defect — the same staleness that put `notices(source, id)`
+/// in the schema batch on the strength of a comment written when the table was eight
+/// times smaller.
+pub fn walks(collection: Collection, f: &Filter) -> bool {
+    let Filter {
+        source,
+        country,
+        cpv,
+        buyer,
+        winner,
+        status,
+        min_value,
+        max_value,
+        kind,
+        tender,
+        now: _,
+    } = f;
+
+    // The `version_predicates` set: `EXISTS` subqueries evaluated PER ROW over the
+    // satellites. No cursor shape and no index on the driven table helps, because the
+    // filter is not a column of it — issue 117 Class B. Applied by `tenders` and `lots`
+    // only; the other collections ignore these fields entirely, so passing one there
+    // cannot walk.
+    let version_predicate = country.is_some()
+        || cpv.is_some()
+        || buyer.is_some()
+        || winner.is_some()
+        || status.is_some()
+        || min_value.is_some()
+        || max_value.is_some();
+
+    // `tender` is the containment shape (issue 115): it drives from
+    // `tender_version_lots` and is index-served, so it never routes to isolation.
+    let _ = tender;
+
+    match collection {
+        // `source` is served by `tenders_source_id`. `kind` is `t.kind`, which NO index
+        // covers — `tenders_procedure_key`, `tenders_island`, `tenders_current_published`
+        // and `tenders_source_id` are the whole set — so a value matching nothing walks
+        // 4.26M rows exactly as the filters issue 117 fixed did. It was not in 117's
+        // audit; routing it here is what stops it being a silent survivor.
+        Collection::Tenders => version_predicate || kind.is_some(),
+        // `source` is `t.source` and `kind` is `vl.kind` — both on tables JOINED to the
+        // driven one, so no index on `lots` can serve either.
+        Collection::Lots => version_predicate || source.is_some() || kind.is_some(),
+        // `country` and `identifier_kind` are served by the issue-117 indexes, and
+        // `buyer` is `o.id`, the primary key. Nothing here can walk.
+        Collection::Organizations => false,
+        // `source` is served by `notices_source_id` and `kind` (`profile`) by
+        // `notices_profile`. Nothing here can walk.
+        Collection::Notices => false,
+    }
+}
+
 fn version_predicates(q: &mut Query, f: &Filter) {
     if let Some(country) = &f.country {
         q.push(

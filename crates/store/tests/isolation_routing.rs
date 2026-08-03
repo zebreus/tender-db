@@ -1,0 +1,101 @@
+//! Task 5 / issue 120: which requests must run in the isolated pool.
+//!
+//! `read::walks` answers "can this request walk?" from the filter shape alone — which
+//! is decidable before a row is read, unlike its *cost*, which issue 117 established
+//! we cannot predict at all.
+//!
+//! Two properties matter and only one of them is about any particular filter:
+//!
+//! 1. **Every unserved shape routes to isolation.** A false negative reintroduces the
+//!    defect — an expensive query on the main pool, starving the 8 REST readers.
+//! 2. **The classification stays exhaustive as `Filter` grows.** That is enforced by
+//!    the destructuring in `walks` itself: adding a field fails to compile until it is
+//!    classified. This file cannot test that (a compile error is not observable from a
+//!    test), so it is asserted here in prose and by the one thing a test *can* check —
+//!    that every field currently on `Filter` is reachable in these cases, so a reader
+//!    comparing them against the struct sees nothing missing.
+//!
+//! The asymmetry is the same one-sided hazard as the short-circuit guard: routing a
+//! cheap query to isolation costs it a slot in a rarely-used pool; routing an expensive
+//! one to the main pool is the outage. Every uncertain case must fall to isolation.
+
+use store::read::{Collection, Filter, walks};
+
+fn f() -> Filter {
+    Filter::default()
+}
+
+#[test]
+fn every_version_predicate_isolates_on_the_collections_that_apply_them() {
+    // These are `EXISTS` subqueries evaluated per row. No index on the driven table
+    // helps, because the filter is not a column of it.
+    let cases: Vec<(&str, Filter)> = vec![
+        ("country", Filter { country: Some("DE".into()), ..f() }),
+        ("cpv", Filter { cpv: Some("45".into()), ..f() }),
+        ("buyer", Filter { buyer: Some(7), ..f() }),
+        ("winner", Filter { winner: Some(7), ..f() }),
+        ("status", Filter { status: Some(store::read::Status::Open), ..f() }),
+        ("min_value", Filter { min_value: Some(1), ..f() }),
+        ("max_value", Filter { max_value: Some(1), ..f() }),
+    ];
+    for (name, filter) in &cases {
+        assert!(walks(Collection::Tenders, filter), "tenders?{name}= must isolate");
+        assert!(walks(Collection::Lots, filter), "lots?{name}= must isolate");
+    }
+}
+
+#[test]
+fn the_joined_table_filters_on_lots_isolate() {
+    // `t.source` and `vl.kind` sit on tables JOINED to `lots`, so no index on `lots`
+    // can serve either — the same shape as the version predicates, one join over.
+    assert!(walks(Collection::Lots, &Filter { source: Some("ted".into()), ..f() }));
+    assert!(walks(Collection::Lots, &Filter { kind: Some("Lot".into()), ..f() }));
+}
+
+#[test]
+fn tenders_kind_isolates_because_no_index_covers_it() {
+    // `t.kind` is covered by none of tenders_procedure_key / tenders_island /
+    // tenders_current_published / tenders_source_id, so a value matching nothing walks
+    // 4.26M rows — the same defect issue 117 fixed elsewhere. It was NOT in 117's
+    // audit, which is exactly why the routing predicate is derived from the code
+    // rather than from that audit's list.
+    assert!(walks(Collection::Tenders, &Filter { kind: Some("zzz".into()), ..f() }));
+}
+
+#[test]
+fn the_index_served_shapes_stay_on_the_main_pool() {
+    // Isolating these would push ordinary traffic through a small semaphore for no
+    // benefit — the cost of being wrong in the safe direction, which is why the safe
+    // direction is not the *only* consideration.
+    assert!(!walks(Collection::Tenders, &Filter { source: Some("ted".into()), ..f() }));
+    assert!(!walks(Collection::Notices, &Filter { source: Some("ted".into()), ..f() }));
+    assert!(!walks(Collection::Notices, &Filter { kind: Some("eforms".into()), ..f() }));
+    assert!(!walks(Collection::Organizations, &Filter { country: Some("DE".into()), ..f() }));
+    assert!(!walks(Collection::Organizations, &Filter { kind: Some("vat".into()), ..f() }));
+    assert!(!walks(Collection::Lots, &Filter { tender: Some(1), ..f() }));
+    assert!(!walks(Collection::Tenders, &f()), "an unfiltered page is index-driven");
+}
+
+#[test]
+fn a_served_filter_does_not_rescue_an_unserved_one() {
+    // The combined case, and the reason the predicate is an OR rather than a choice of
+    // driver: `?source=ted&country=MT` seeks `tenders_source_id` to DRIVE the query and
+    // still pays the per-row EXISTS for `country` on everything it drives through. The
+    // index-served leg makes it no cheaper.
+    let both = Filter { source: Some("ted".into()), country: Some("MT".into()), ..f() };
+    assert!(
+        walks(Collection::Tenders, &both),
+        "an index-served driver must not mask an EXISTS-per-row filter"
+    );
+}
+
+#[test]
+fn organizations_and_notices_ignore_the_version_predicates() {
+    // `read::organizations` and `read::notices` never call `version_predicates`, so
+    // these fields are inert there. Routing on them would isolate requests that cannot
+    // walk — conservative, but wrong, and it would put ordinary organization traffic
+    // behind the semaphore the first time someone passed a stray `?cpv=`.
+    let noise = Filter { cpv: Some("45".into()), winner: Some(7), ..f() };
+    assert!(!walks(Collection::Organizations, &noise));
+    assert!(!walks(Collection::Notices, &noise));
+}

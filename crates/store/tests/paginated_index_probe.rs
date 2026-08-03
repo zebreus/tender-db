@@ -270,3 +270,64 @@ async fn a_source_id_index_fixes_the_notices_list_at_both_densities() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Is `/v1/tenders?kind=` actually a walk, or only shaped like one?
+///
+/// It was NOT in issue 117's audit. The routing predicate isolates it because no index
+/// covers `t.kind` — `tenders_procedure_key`, `tenders_island`,
+/// `tenders_current_published` and `tenders_source_id` are the whole set. But that is
+/// reading the schema, and reading is not measuring; a claim that a filter walks needs
+/// a clock like every other one today.
+#[tokio::test]
+#[ignore = "probe: is tenders?kind= an unaudited member of the 117 class?"]
+async fn tenders_kind_is_an_unaudited_walk() {
+    let (path, conn) = open("tenderkind").await;
+    let seeded = Instant::now();
+    conn.execute("BEGIN", ()).await.unwrap();
+    for i in 1..=TENDERS {
+        if i % 100_000 == 0 {
+            conn.execute("COMMIT", ()).await.unwrap();
+            conn.execute("BEGIN", ()).await.unwrap();
+        }
+        conn.execute(
+            "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
+             VALUES (?, 'ted', ?, 'procedure', 1, 1700000000, 1700000000)",
+            (Value::Integer(i), Value::Text(format!("pk-{i}"))),
+        ).await.unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id)
+             VALUES (?, 1, 1700000000, ?, ?)",
+            (Value::Integer(i), Value::Text(format!("pub-{i}")), Value::Integer(i)),
+        ).await.unwrap();
+    }
+    conn.execute("COMMIT", ()).await.unwrap();
+    conn.execute("CREATE INDEX IF NOT EXISTS tenders_source_id ON tenders(source, id)", ())
+        .await
+        .unwrap();
+    println!("\n{TENDERS} tenders ('procedure'), seeded in {:.1}s", seeded.elapsed().as_secs_f64());
+
+    async fn time_kind(conn: &turso::Connection, kind: &str, limit: i64) -> (f64, usize) {
+        let f = Filter { kind: Some(kind.to_owned()), ..Filter::default() };
+        let (mut b, mut n) = (f64::MAX, 0);
+        for i in 0..3 {
+            let t = Instant::now();
+            n = read::tenders(conn, &f, Scope::Page { after: 0, limit }).await.unwrap().len();
+            if i > 0 {
+                b = b.min(t.elapsed().as_secs_f64());
+            }
+        }
+        (b, n)
+    }
+
+    println!("\n{:<28} {:>11}  {:>6}", "case", "time", "rows");
+    for (label, kind) in [("dense (procedure)", "procedure"), ("absent (zzz)", "zzz")] {
+        for limit in [50i64, 1000] {
+            let (t, n) = time_kind(&conn, kind, limit).await;
+            println!("tenders?kind {label:<14} limit {limit:<5} {t:>9.4}s  {n:>6}");
+        }
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
