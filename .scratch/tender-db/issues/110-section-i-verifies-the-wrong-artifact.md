@@ -109,3 +109,69 @@ The stub also returned 500 and logged any `POST`. **Zero POSTs were issued** und
 `TDB_ONLY=I`, so "this mode touches no data" is measured rather than asserted.
 
 Landed `089e715`.
+
+
+## The convergence conflict is THIS ISSUE, arriving from the other branch
+
+Preparing the post-deploy `issue62` → `issue115` merge, the one content conflict is
+`de1x_verify.sh`, and it is not a coincidence: **both branches independently wrote a
+section I for the same obligation.**
+
+```
+issue62  (mine, this issue)      adds I0 I1 I6 I7 I8
+issue115 (issue 98/100 work)     adds I0 I1  + C12 H3 H7
+```
+
+I0 and I1 collide by name. More importantly they disagree about **which artifact
+carries the disclosure** — which is the whole subject of this issue.
+
+`issue115`'s section I does:
+
+```sh
+page=$(curl -sS "$BASE_URL/")
+printf '%s' "$page" | grep -qi "eForms-DE 1" || miss="$miss no-DE-1.x-entry"
+printf '%s' "$page" | grep -qi "winner"     || miss="$miss no-mention-of-winners"
+printf '%s' "$page" | grep -qi "issue 100"  || miss="$miss no-pointer-to-issue-100"
+```
+
+**That is the predecessor gate this issue was filed to replace** — it greps the
+server-rendered HTML for a disclosure that is not in the server-rendered HTML.
+
+Verified on `issue115`'s OWN tip (`5c197e7`), not assumed from this branch, because
+"the disclosure is client-side" is a claim about a build and the axis here is which
+branch:
+
+* `resolved_categories` appears in `crates/app/src/coverage.rs` and
+  `crates/app/src/ui.rs` — `ui.rs` being the Dioxus client component;
+* the `AWARD WINNERS ARE NOT RESOLVED` text lives in
+  `crates/app/data/quarantine-ledger.json`, `include_str!`-compiled;
+* the client fetches it from `#[get("/api/dashboard")]` in `api.rs`.
+
+So on `issue115` too, `GET /` does not contain the disclosure, and that gate reports
+MISSING for a correct deployment. Its false alarm is indistinguishable from the
+ledger genuinely being absent — this issue's opening sentence.
+
+### Resolution (to apply post-deploy, per team-lead's sequencing)
+
+Not symmetric, and not a preference for my own work:
+
+* **Section I — take `issue62`'s.** It asserts the served JSON at the exact path the
+  client reads, which is the artifact the user receives. It also asserts strictly
+  more: the caps sentence, issue 100, the 241 residual, issue 87, and a
+  reconciliation against F1a/F1b. `issue115`'s three greps are a subset of its claims,
+  against the wrong artifact.
+* **C12, H3, H7 — take `issue115`'s.** Different sections, no collision, additive.
+* **Do NOT keep both section I's.** Two gates for one obligation, one of which cannot
+  pass on a healthy deployment, is worse than either alone: the red is
+  uninterpretable and the natural fix is to stop reading the section.
+
+The one thing worth carrying across from `issue115`'s version is its *reason for
+existing* — that a disclosure obligation deserves a standing check at all. That
+intent is preserved; only the artifact it reads changes.
+
+### Why this took a merge to surface
+
+Both gates were written for the same obligation, weeks apart, on branches that never
+met. Neither author could see the other's. The duplicate is not a process failure so
+much as evidence for a single verification owner per obligation — which is what the
+convergence establishes.
