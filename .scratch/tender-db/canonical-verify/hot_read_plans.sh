@@ -68,6 +68,32 @@
 #   Nothing here is a hierarchy — this file is not weaker than a clock, it is blind to a
 #   different axis, and the clock is blind to this one.
 #
+#   READ THIS BEFORE USING THE TABLE ABOVE AS A DECISION PROCEDURE. IT IS NOT ONE.
+#   The table tells you which instrument to reach for ONCE THE PROPERTY IS NAMED. It
+#   gives no help naming it — and misnaming was the actual failure in every case that
+#   produced this file, not choosing wrongly from a correct name:
+#     * B7 was written as a PATH question ("is it index-served?") when the claim being
+#       defended was about COST. It would have gone green over a 151,648x regression.
+#     * proj-fix's short-circuit test was written as an ANSWER question (which rows
+#       come back) for a change that only affects the PATH. It would have passed with
+#       the guard's boundary anywhere at all.
+#   So a taxonomy that looks like it replaces a judgement is itself an instrument
+#   narrower than its apparent claim — the same failure, one level up, and a reader who
+#   treats the table as a procedure will be routed CONFIDENTLY to the wrong instrument.
+#   THE CLASSIFICATION IS DOWNSTREAM OF THE JUDGEMENT IT APPEARS TO REPLACE.
+#
+#   The one thing that helps with the naming (proj-fix, and it is a question rather than
+#   a procedure): ask what the CHANGE DID, not what the check is about. Then —
+#
+#       "What would a CORRECT-BUT-SLOW version of this look like,
+#        and can my check tell it from the fixed one?"
+#
+#   If it cannot, the check is on the wrong axis. B7 fails that question instantly: a
+#   correct-but-slow organizations read is index-served, so an index assertion cannot
+#   see the difference. It is the question actually run in both cases above, and it
+#   works where the table does not, because it forces you to describe the failure you
+#   are trying to exclude before choosing an instrument to exclude it with.
+#
 #   AND IT EXPLAINS THIS WHOLE FILE'S BOUNDARY. A query plan is text about an execution,
 #   not the execution — so rule 6 is not a separate limitation of plans, it is rule 1
 #   applied to the instrument this gate is built on. That is why a plan can be perfect
