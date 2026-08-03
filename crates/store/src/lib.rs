@@ -2395,6 +2395,227 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// A plan is a sound instrument for THIS question (which key drives the read) and
     /// an unsound one for cost — issue 115's quadratic read had a fully optimal plan
     /// while it took 248.8s. Hence the separate timing tests; see `lot_summary_cost`.
+    /// EXTRACTION SEAM for 112's gate — a printer, not an assertion.
+    ///
+    /// Prints the statement the deployed `lots` builder ACTUALLY emits, with each `?`
+    /// replaced by the value the builder ITSELF bound in the same call, so the gate
+    /// plans the artifact rather than a hand-written paraphrase of it (issue 114
+    /// part 2). No token is rewritten: the SQL comes from `lots_statement`, the
+    /// values come from the params it returned alongside it.
+    #[test]
+    fn dump_lots_statement_for_the_plan_gate() {
+        use super::read::{self, Filter, Scope};
+        use turso::Value;
+        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
+        /// carry explanatory comments inside their SQL, and flattening a statement to
+        /// one line turns the first of them into a comment over EVERYTHING after it —
+        /// turso then rejects the result as "incomplete input". A one-line fixture
+        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
+        /// string literal survives.
+        fn decomment(sql: &str) -> String {
+            let mut out = String::new();
+            for line in sql.lines() {
+                let mut qd = false;
+                let b: Vec<char> = line.chars().collect();
+                let mut i = 0;
+                while i < b.len() {
+                    if b[i] == '\'' {
+                        qd = !qd;
+                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
+                        break;
+                    }
+                    out.push(b[i]);
+                    i += 1;
+                }
+                out.push('\n');
+            }
+            out
+        }
+        fn inline(sql: &str, params: &[Value]) -> String {
+            let sql = &decomment(sql);
+            let mut out = String::new();
+            let mut p = params.iter();
+            for ch in sql.chars() {
+                if ch == '?' {
+                    match p.next() {
+                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
+                        Some(Value::Text(t)) => {
+                            out.push('\'');
+                            out.push_str(&t.replace('\'', "''"));
+                            out.push('\'');
+                        }
+                        Some(other) => out.push_str(&format!("{other:?}")),
+                        None => out.push('?'),
+                    }
+                } else if ch == '\n' {
+                    out.push(' ');
+                } else {
+                    out.push(ch);
+                }
+            }
+            // collapse the builder's indentation to one line, as the gate's table needs
+            let mut flat = String::with_capacity(out.len());
+            let mut space = false;
+            for ch in out.chars() {
+                if ch == ' ' {
+                    if !space {
+                        flat.push(ch);
+                    }
+                    space = true;
+                } else {
+                    space = false;
+                    flat.push(ch);
+                }
+            }
+            flat.trim().to_owned()
+        }
+        for (label, after) in [("B1", 0i64), ("B1b", 49_377)] {
+            let filter = Filter { tender: Some(424_242), ..Filter::default() };
+            let (sql, params) = read::lots_statement(&filter, Scope::Page { after, limit: 1000 });
+            println!("GATE-SQL {label}: {}", inline(&sql, &params));
+        }
+    }
+
+    /// 114 PART 2 PROTOTYPE — enumerate the paginated read set MECHANICALLY.
+    ///
+    /// The set is (collection x filter x cursor position), not "the reads someone
+    /// remembered": `read_items`' match on `Collection` is the app's own exhaustive
+    /// statement of which reads paginate, and one builder emits a DIFFERENT statement
+    /// per filter — `organizations` was 22.0s fixable with `country` and 99.08s
+    /// unservable with `kind`, from the same function.
+    #[test]
+    fn enumerate_paginated_read_statements() {
+        use super::read::{self, Filter, Scope, Status};
+        use turso::Value;
+        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
+        /// carry explanatory comments inside their SQL, and flattening a statement to
+        /// one line turns the first of them into a comment over EVERYTHING after it —
+        /// turso then rejects the result as "incomplete input". A one-line fixture
+        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
+        /// string literal survives.
+        fn decomment(sql: &str) -> String {
+            let mut out = String::new();
+            for line in sql.lines() {
+                let mut qd = false;
+                let b: Vec<char> = line.chars().collect();
+                let mut i = 0;
+                while i < b.len() {
+                    if b[i] == '\'' {
+                        qd = !qd;
+                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
+                        break;
+                    }
+                    out.push(b[i]);
+                    i += 1;
+                }
+                out.push('\n');
+            }
+            out
+        }
+        fn inline(sql: &str, params: &[Value]) -> String {
+            let sql = &decomment(sql);
+            let mut out = String::new();
+            let mut p = params.iter();
+            for ch in sql.chars() {
+                match ch {
+                    '?' => match p.next() {
+                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
+                        Some(Value::Text(t)) => out.push_str(&format!("'{}'", t.replace('\'', "''"))),
+                        Some(other) => out.push_str(&format!("{other:?}")),
+                        None => out.push('?'),
+                    },
+                    '\n' => out.push(' '),
+                    c => out.push(c),
+                }
+            }
+            let mut flat = String::new();
+            let mut sp = false;
+            for c in out.chars() {
+                if c == ' ' {
+                    if !sp { flat.push(c) }
+                    sp = true;
+                } else { sp = false; flat.push(c) }
+            }
+            flat.trim().to_owned()
+        }
+        let base = Filter::default();
+        let filters: Vec<(&str, Filter)> = vec![
+            ("none", base.clone()),
+            ("source", Filter { source: Some("ted".into()), ..base.clone() }),
+            ("country", Filter { country: Some("DE".into()), ..base.clone() }),
+            ("cpv", Filter { cpv: Some("4521".into()), ..base.clone() }),
+            ("buyer", Filter { buyer: Some(7), ..base.clone() }),
+            ("winner", Filter { winner: Some(7), ..base.clone() }),
+            ("status", Filter { status: Some(Status::Open), ..base.clone() }),
+            ("min_value", Filter { min_value: Some(1000), ..base.clone() }),
+            ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
+            ("kind", Filter { kind: Some("Lot".into()), ..base.clone() }),
+            ("tender", Filter { tender: Some(424_242), ..base.clone() }),
+        ];
+        for (fname, f) in &filters {
+            for after in [0i64, 49_377] {
+                let scope = Scope::Page { after, limit: 1000 };
+                for (coll, (sql, params)) in [
+                    ("tenders", read::tenders_statement(f, scope)),
+                    ("lots", read::lots_statement(f, scope)),
+                    ("organizations", read::organizations_statement(f, scope)),
+                    ("notices", read::notices_statement(f, scope)),
+                ] {
+                    println!("ENUM\t{coll}\t{fname}\tafter={after}\t{}", inline(&sql, &params));
+                }
+            }
+        }
+    }
+
+    /// LOCAL PLAN PROBE for 112's gate — plans whatever statements `TDB_PLAN_SQL`
+    /// names (one per line), against a schema-only DB built by `Db::open`, through
+    /// the workspace's pinned turso (`=0.7.0`, the same version the on-box probe
+    /// pins). Prints the plan in the on-box probe's column form so the gate's own
+    /// parser can consume it unchanged.
+    #[tokio::test]
+    async fn local_eqp_probe() {
+        let Ok(sqlfile) = std::env::var("TDB_PLAN_SQL") else { return };
+        // Plan against the DB the caller names, so the gate's stats precondition
+        // inspects the SAME file these plans come from.
+        let path = std::env::var("TDB_PLAN_DB")
+            .unwrap_or_else(|_| format!("/tmp/tender-db-eqp-probe-{}.db", std::process::id()));
+        // TDB_PLAN_RAW opens the file AS IT IS, with no migration — the only way to
+        // plan against a deliberately MUTILATED catalogue (an index removed) and see
+        // a check go red. `Db::open` would repair the schema it is meant to be missing.
+        // TDB_PLAN_DDL builds the catalogue from DDL executed BY TURSO, which is how a
+        // deliberately mutilated schema (a PK or index removed) becomes a DB this engine
+        // can actually open — one built by sqlite3 is not loadable here.
+        if let Ok(ddl) = std::env::var("TDB_PLAN_DDL") {
+            let _ = std::fs::remove_file(&path);
+            let db = turso::Builder::new_local(&path).build().await.unwrap();
+            let c = db.connect().unwrap();
+            for stmt in std::fs::read_to_string(&ddl).unwrap().split(";\n") {
+                if !stmt.trim().is_empty() {
+                    c.execute(stmt, ()).await.unwrap();
+                }
+            }
+        }
+        let held;
+        let conn = if std::env::var("TDB_PLAN_RAW").is_ok() {
+            let db = turso::Builder::new_local(&path).build().await.unwrap();
+            db.connect().unwrap()
+        } else {
+            held = Db::open(&path).await.unwrap();
+            (*held.reader().await.unwrap()).clone()
+        };
+        for line in std::fs::read_to_string(&sqlfile).unwrap().lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            println!("PLAN-BEGIN");
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {line}"), ()).await.unwrap();
+            while let Some(row) = rows.next().await.unwrap() {
+                println!("PLAN 1 | 0 | 0 | {}", text(&row, 3));
+            }
+            println!("PLAN-END");
+        }
+    }
+
     #[tokio::test]
     async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_walking_rowids() {
         let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());

@@ -470,6 +470,38 @@ pub async fn tenders(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<TenderRow>> {
+    let q = tenders_query(filter, scope);
+    q.rows(conn, |row| TenderRow {
+        id: int(row, 0),
+        source: text(row, 1),
+        procedure_key: opt_text_of(row, 2),
+        kind: text(row, 3),
+        seq: int(row, 4),
+        published_at: int(row, 5),
+        dispatched_at: opt_int_of(row, 15),
+        publication_id: text(row, 6),
+        notice_subtype: opt_text_of(row, 7),
+        title: opt_text_of(row, 8),
+        value_cents: opt_int_of(row, 9),
+        currency: opt_text_of(row, 10),
+        deadline: stamp(row, 11),
+        lots: int(row, 14),
+        cpv: split_codes(opt_text_of(row, 16)),
+        country: split_codes(opt_text_of(row, 17)),
+    })
+    .await
+}
+
+/// The statement [`tenders`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+#[cfg(test)]
+pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = tenders_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`tenders`], built but not run.
+fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     let title = pick(
         "tender_version_texts",
@@ -534,26 +566,7 @@ pub async fn tenders(
         ),
         Scope::At { id, .. } => q.push(" AND t.id = ?", [Value::Integer(id)]),
     }
-
-    q.rows(conn, |row| TenderRow {
-        id: int(row, 0),
-        source: text(row, 1),
-        procedure_key: opt_text_of(row, 2),
-        kind: text(row, 3),
-        seq: int(row, 4),
-        published_at: int(row, 5),
-        dispatched_at: opt_int_of(row, 15),
-        publication_id: text(row, 6),
-        notice_subtype: opt_text_of(row, 7),
-        title: opt_text_of(row, 8),
-        value_cents: opt_int_of(row, 9),
-        currency: opt_text_of(row, 10),
-        deadline: stamp(row, 11),
-        lots: int(row, 14),
-        cpv: split_codes(opt_text_of(row, 16)),
-        country: split_codes(opt_text_of(row, 17)),
-    })
-    .await
+    q
 }
 
 /// A `group_concat` result — a comma-joined code list, or `None` when the
@@ -1125,6 +1138,29 @@ pub async fn organizations(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<OrganizationRow>> {
+    let q = organizations_query(filter, scope);
+    q.rows(conn, |row| OrganizationRow {
+        id: int(row, 0),
+        name: text(row, 1),
+        country: opt_text_of(row, 2),
+        identifier_kind: opt_text_of(row, 3),
+        identifier: opt_text_of(row, 4),
+        provisional: int(row, 5) != 0,
+        mentions: int(row, 6),
+    })
+    .await
+}
+
+/// The statement [`organizations`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+#[cfg(test)]
+pub(crate) fn organizations_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = organizations_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`organizations`], built but not run.
+fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
@@ -1147,17 +1183,7 @@ pub async fn organizations(
             [Value::Integer(after), Value::Integer(limit)],
         ),
         Scope::At { id, .. } => q.push(" AND o.id = ?", [Value::Integer(id)]),
-    }
-    q.rows(conn, |row| OrganizationRow {
-        id: int(row, 0),
-        name: text(row, 1),
-        country: opt_text_of(row, 2),
-        identifier_kind: opt_text_of(row, 3),
-        identifier: opt_text_of(row, 4),
-        provisional: int(row, 5) != 0,
-        mentions: int(row, 6),
-    })
-    .await
+    }    q
 }
 
 // ------------------------------------------------------------------- notices
@@ -1169,6 +1195,33 @@ pub async fn notices(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<NoticeRow>> {
+    let q = notices_query(filter, scope);
+    q.rows(conn, |row| NoticeRow {
+        id: int(row, 0),
+        source: text(row, 1),
+        publication_id: text(row, 2),
+        content_hash: text(row, 3),
+        profile: text(row, 4),
+        declared_version: opt_text_of(row, 5),
+        member_path: text(row, 6),
+        ingested_at: int(row, 7),
+        parse_state: text(row, 8),
+        published_at: opt_int_of(row, 9),
+        dispatched_at: opt_int_of(row, 10),
+    })
+    .await
+}
+
+/// The statement [`notices`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+#[cfg(test)]
+pub(crate) fn notices_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = notices_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`notices`], built but not run.
+fn notices_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT id, source, publication_id, content_hash, profile, declared_version,
@@ -1188,21 +1241,7 @@ pub async fn notices(
             [Value::Integer(after), Value::Integer(limit)],
         ),
         Scope::At { id, .. } => q.push(" AND id = ?", [Value::Integer(id)]),
-    }
-    q.rows(conn, |row| NoticeRow {
-        id: int(row, 0),
-        source: text(row, 1),
-        publication_id: text(row, 2),
-        content_hash: text(row, 3),
-        profile: text(row, 4),
-        declared_version: opt_text_of(row, 5),
-        member_path: text(row, 6),
-        ingested_at: int(row, 7),
-        parse_state: text(row, 8),
-        published_at: opt_int_of(row, 9),
-        dispatched_at: opt_int_of(row, 10),
-    })
-    .await
+    }    q
 }
 
 // ------------------------------------------------------------------- changes
