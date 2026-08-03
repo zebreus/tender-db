@@ -1,7 +1,10 @@
 # 114 — the plan gate must DERIVE its SQL and its engine from the artifacts, never restate them
 
-Status: open — filed 2026-08-03 (sdk-vendor), scope widened same day. LOW priority, but
-tracked so the lapse is a decision rather than a drift.
+Status: open — filed 2026-08-03 (sdk-vendor), scope widened same day.
+**Part 2 (source the SQL from the builder) raised from LOW to HIGH on 2026-08-03**: it
+stopped being a hardening and became the fix for a DEMONSTRATED hole in 5 of the 6
+hot-read checks. See "Part 2 is no longer hypothetical" below. Part 1 (the engine)
+remains LOW — it fails yellow, not green.
 Kind: verification durability
 Blocked by: — (112 is functional today; this is its durable replacement)
 Relates to: 112 (the gate), 111, 107, 110/102 (the same artifact-vs-proxy error)
@@ -86,6 +89,47 @@ diagnostic must expose which DB it planned against (or the gate must be able to 
 its stats state some other way). If prod is ever `ANALYZE`d, this precondition is what stops
 the plans silently ceasing to describe production — do not drop it in the port.
 
+## Part 2 is NO LONGER HYPOTHETICAL — it has now failed in production use
+
+Everything below was written as a risk. On 2026-08-03 it happened, was measured, and
+was caught only by accident.
+
+112's B1 was a hand-written approximation of the `lots_of` read. run-driver planned
+that exact text on turso 0.7.0 against two independent DBs:
+
+```
+B1 as committed  ->  SEARCH l USING INDEX sqlite_autoindex_lots_1   GREEN
+                     ... with OR without the fix applied
+```
+
+The paraphrase had dropped the **cursor predicate**, and the cursor predicate is the
+entire defect. So:
+
+* **B1 could never have failed.** The gate's headline check was unfalsifiable by
+  construction, for its whole life.
+* **The RED recorded in the gate's own header could not have come from it.** The walk
+  was real; the attribution was fiction. A gate carrying a falsifier artifact it did
+  not produce.
+* It went green over the live 2.2s defect — the **fourth** false green in 112's story,
+  and the only one authored inside the gate itself.
+
+It was not caught by the gate, by review, or by the pre-run discipline. It was caught
+because a fix landed, the SQL had to be re-synced, and someone thought to plan the old
+text as a control.
+
+**B2-B6 are the same construction, unexamined.** Five of six hot-read checks are still
+paraphrases whose ability to fail has never been demonstrated. On the evidence of B1
+the prior should be that at least one of them is also unfalsifiable — they were written
+the same way, by the same method, at the same sitting.
+
+The interim mitigation is that they are now *labelled* as paraphrases in the script.
+That converts a hidden hole into a known one; it does not close it.
+
+Cheap partial check available before the full fix: plan each of B2-B6 against a DB
+where the index it names is ABSENT, and confirm each goes RED. Any that stays green is
+unfalsifiable and is asserting nothing. That is a fraction of the work of part 2 and
+would tell us how much of the gate is real today.
+
 ## Fix, part 2 — source the SQL from the builder
 
 Section B's statements are currently hand-written approximations of what `read.rs`
@@ -98,6 +142,14 @@ builder itself (a dump mode on the query builder, or a test fixture the builder 
 and the gate reads), so a change to `read.rs` either updates what the gate plans or
 makes the gate say it can no longer establish its input. Either is acceptable; silently
 planning the previous query is not.
+
+The extraction method is already proven and cheap — it was used to sync B1 on
+2026-08-03 and took minutes: env-gate a dump of `self.sql`/`self.params` inside
+`read.rs`'s `Query::rows`, the single choke point every read passes through, then call
+the read. Two independent derivations of the resulting SQL (a dump by sdk-vendor, a
+by-hand reconstruction from the builder source by run-driver) came out byte-identical,
+so the method is sound. What is missing is not a technique but a **standing seam**: the
+dump was a temporary patch in a throwaway worktree, so nothing stops the next drift.
 
 Note this composes with part 1: an app-side diagnostic that plans **the real read**
 (rather than a string handed to it) solves both halves at once — the engine is the
@@ -117,6 +169,10 @@ probably the reason to do them together.
 - **Change the `lots` query in `read.rs` and re-run the gate without touching it:** it
   must either plan the NEW query or report no-input. Continuing to report green against
   the old string is the failure this part exists to prevent.
+- **Every B-check can be shown to fail.** For each hot read, planning it against a DB
+  without the index it names must produce RED. B1's predecessor passed review while
+  being incapable of failing; "it goes green on a healthy DB" is not evidence that a
+  check works, and this acceptance line is what distinguishes the two.
 
 ## Note
 
