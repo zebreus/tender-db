@@ -29,7 +29,14 @@
 use std::time::Instant;
 use store::turso::{self, Value};
 
-const LOTS: i64 = 400_000;
+/// Rows to seed. Overridable via `TDB_LOTS` because two DIFFERENT questions are asked
+/// of this fixture and they need different sizes: *is a shape index-served* is
+/// structural and answerable small, while *what does it cost* needs scale and belongs
+/// to the prod-scale clock anyway. Seeding 400k takes ~18 min on a loaded box, which
+/// is a poor price for a structural answer.
+fn lots() -> i64 {
+    std::env::var("TDB_LOTS").ok().and_then(|v| v.parse().ok()).unwrap_or(400_000)
+}
 
 async fn drain(conn: &turso::Connection, sql: &str) {
     let mut rows = conn.query(sql, ()).await.unwrap();
@@ -77,7 +84,8 @@ async fn can_a_joined_filter_keep_lots_driving() {
     // where `Lot` is the overwhelming default and the dense case is the catastrophe.
     let seeded = Instant::now();
     conn.execute("BEGIN", ()).await.unwrap();
-    for i in 1..=(LOTS / 4) {
+    let lots_n = lots();
+    for i in 1..=(lots_n / 4) {
         conn.execute(
             "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at)
              VALUES (?, 'ted', ?, 'procedure', 1, 1700000000, 1700000000)",
@@ -89,7 +97,7 @@ async fn can_a_joined_filter_keep_lots_driving() {
             (Value::Integer(i), Value::Text(format!("pub-{i}")), Value::Integer(i)),
         ).await.unwrap();
     }
-    for i in 1..=LOTS {
+    for i in 1..=lots_n {
         if i % 100_000 == 0 {
             conn.execute("COMMIT", ()).await.unwrap();
             conn.execute("BEGIN", ()).await.unwrap();
@@ -106,7 +114,7 @@ async fn can_a_joined_filter_keep_lots_driving() {
         // property of the corpus nobody can read off the schema.
         let late = std::env::var("TDB_RARE").as_deref() != Ok("scattered");
         let kind = if late {
-            if i > LOTS - 50 { "Part" } else { "Lot" }
+            if i > lots_n - 50 { "Part" } else { "Lot" }
         } else if i % 20 == 0 {
             "Part"
         } else {
@@ -119,7 +127,7 @@ async fn can_a_joined_filter_keep_lots_driving() {
     }
     conn.execute("COMMIT", ()).await.unwrap();
     let placement = std::env::var("TDB_RARE").unwrap_or_else(|_| "late".into());
-    println!("\n{LOTS} lots seeded in {:.1}s ('Lot' dense, 'Part' rare, placement={placement})",
+    println!("\n{lots_n} lots seeded in {:.1}s ('Lot' dense, 'Part' rare, placement={placement})",
              seeded.elapsed().as_secs_f64());
 
     // The target: unfiltered, driving from `lots`, ORDER BY satisfied by the drive.
@@ -163,6 +171,58 @@ async fn can_a_joined_filter_keep_lots_driving() {
     println!("{:<44} {t:>9.4}s  {n:>5}", "EXISTS, kind=Lot (dense), NO index");
 
     plan(&conn, "JOINED (dense) plan:", JOINED, vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
+
+    // ------------------------------------------------- the probe may need NO index
+    //
+    // `EXISTS_SHAPE` correlates the subquery through `vl.tender_id = t.id`, so the
+    // only thing tying `vl` to the outer row is `vl.lot_id = l.id` — and `lot_id` is
+    // the THIRD column of the PK `(tender_id, seq, lot_id)`, hence unserved, hence the
+    // new index looked mandatory.
+    //
+    // But `lots` already carries `tender_id`. Correlating on `l.tender_id` instead
+    // hands the probe ALL THREE primary-key columns, so the PK itself should serve it
+    // and no new index is needed at all. That matters well beyond tidiness: an index
+    // on this table is 40.6M rows against a 41M auto-build cap, with a memory-linear
+    // ~1.82 GB build peak — so "no index" dissolves a feasibility gate rather than
+    // saving a little disk.
+    //
+    // Measured here BEFORE any index exists, so nothing else can be serving it.
+    const PK_EXISTS: &str = "SELECT l.id FROM lots l
+         WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                        JOIN tenders t ON t.id = l.tender_id
+                        WHERE vl.tender_id = l.tender_id AND vl.seq = t.current_seq
+                          AND vl.lot_id = l.id AND vl.kind = ?)
+           AND l.id > ? ORDER BY l.id LIMIT 50";
+    println!("\n--- PK-correlated EXISTS, NO new index ---");
+    for (label, kind) in [
+        ("PK EXISTS, kind=Lot (dense)", "Lot"),
+        ("PK EXISTS, kind=Part (rare)", "Part"),
+        ("PK EXISTS, kind=zzz (nothing)", "zzz"),
+    ] {
+        let (t, n) =
+            time(&conn, PK_EXISTS, vec![Value::Text(kind.into()), Value::Integer(0)]).await;
+        println!("{label:<44} {t:>9.4}s  {n:>5}");
+    }
+    plan(&conn, "PK-correlated EXISTS (dense) plan:", PK_EXISTS,
+         vec![Value::Text("Lot".into()), Value::Integer(0)]).await;
+
+    // Equivalence, not just speed: a faster shape that answers differently is not a
+    // candidate. Compared against the JOIN it would replace, on the dense value.
+    let mut a = conn.query(JOINED, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
+    let mut b = conn.query(PK_EXISTS, vec![Value::Text("Lot".into()), Value::Integer(0)]).await.unwrap();
+    let (mut ids_a, mut ids_b) = (Vec::new(), Vec::new());
+    while let Some(r) = a.next().await.unwrap() {
+        ids_a.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+    }
+    while let Some(r) = b.next().await.unwrap() {
+        ids_b.push(r.get_value(0).unwrap().as_integer().copied().unwrap_or(-1));
+    }
+    println!(
+        "\nequivalence on kind=Lot: JOIN {} ids, PK-EXISTS {} ids, identical={}",
+        ids_a.len(),
+        ids_b.len(),
+        ids_a == ids_b
+    );
 
     // The index the per-row probe needs: the PK is (tender_id, seq, lot_id), so
     // `lot_id` is its THIRD column and nothing serves a lookup by it alone.
