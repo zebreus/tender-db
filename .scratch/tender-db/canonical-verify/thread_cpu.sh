@@ -36,6 +36,13 @@ else PID=$(systemctl show "$TARGET" -p MainPID --value 2>/dev/null); fi
   || { echo "no such process for target '$TARGET'" >&2; exit 2; }
 
 # ticks <statfile> -> utime+stime, parsed robustly.
+# The awk is doing TWO jobs, and the second is invisible: besides handling a comm
+# field containing spaces or parens, it avoids bash positional parsing, where
+# `$12` means `$1` followed by a literal `2` — so `set -- $rest; echo $((\$12+\$13))`
+# silently yields 0 for every thread and any check built on it reports "idle"
+# UNCONDITIONALLY. (`${12}` is the correct bash form; run-driver hit this in an
+# independent implementation of the same parse, 2026-08-04.) Do not "simplify"
+# this into positionals.
 # /proc/<pid>/stat's comm field is parenthesised and MAY CONTAIN SPACES, which
 # breaks the obvious `awk '{print $14+$15}'`. Everything after the LAST ')' is
 # field 3 onward, so utime/stime are fields 12/13 of that remainder.
