@@ -1188,6 +1188,16 @@ impl Db {
                -- (there a missing predicate, here an extra one offering a worse
                -- index).
                AND +n.parse_state = 'parsed'
+               -- `…/115165_2008.fr` -> `115165-2008`. The trailing **3** is
+               -- the length of a `.xx` suffix, correct ONLY because every code
+               -- in this population is two letters — measured, not assumed: section
+               -- A found exactly 23 languages, all 2-letter (bg cs da de el en es
+               -- et fi fr ga hu it lt lv mt nl pl pt ro sk sl sv). It is a property
+               -- of THIS corpus, not a general rule: a 3-letter code would silently
+               -- mis-extract the id, the sibling lookup would miss, and the row
+               -- would simply stay outstanding (fail-safe, but silently). Do not
+               -- lift this expression into a general helper without replacing the
+               -- constant with a real suffix split.
                AND n.publication_id = replace(
                      substr(replace(q.member_path,
                                     rtrim(q.member_path, replace(q.member_path, '/', '')), ''),

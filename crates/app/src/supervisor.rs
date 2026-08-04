@@ -131,6 +131,12 @@ struct Job {
 /// the server for the next issue, DÖE walks calendar days from its last
 /// watermark). `Serialize`/`Deserialize` so a job survives a restart in the
 /// durable queue (issue 21).
+/// Rows marked per transaction by [`Spec::MarkSkippedSiblings`]. Small on
+/// purpose: turso writes a WAL frame per row and cannot checkpoint mid-statement,
+/// so one ~593k-row UPDATE is the shape that produced a 127 GB WAL and an OOM
+/// during the recovery. The job checkpoints between batches.
+const MARK_BATCH: i64 = 5_000;
+
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
@@ -169,6 +175,22 @@ enum Spec {
     /// run aborts BEFORE writing if the cohort is not about that size, which is what
     /// a mistyped profile string looks like.
     Refold { profiles: Vec<String>, expect: Option<u64> },
+    /// Issue 84: mark the 2008 per-language duplicate siblings as
+    /// skipped-by-policy, so the outstanding count stops reporting ~593k rows of
+    /// work that no reprocess can ever do. `dry_run` counts and writes nothing.
+    ///
+    /// `expect` is the abort-before-write guard, and the run is authorised against
+    /// it: the population was verified independently (section B, 5000/5000), so a
+    /// count that disagrees means the predicate and the verified set have diverged
+    /// and the job must stop rather than write a set nobody checked. A SHORTFALL is
+    /// specifically NOT a reason to widen the predicate — a held non-English row
+    /// whose English original did not parse is real data loss, and marking it as a
+    /// duplicate is the one outcome worse than the overstated count.
+    MarkSkippedSiblings {
+        #[serde(default)]
+        dry_run: bool,
+        expect: Option<u64>,
+    },
     /// Clear a STALE `rebuild_in_progress` flag (the issue-85 interlock's escape
     /// hatch). The flag routes any `project` — including the 09:35 daily tick — into
     /// the salvage branch, which `reset_tender_layer()`s a good layer; a rebuild that
@@ -204,6 +226,10 @@ pub struct JobRequest {
     /// narrow it further.
     pub reason: Option<String>,
     pub detail_like: Option<String>,
+    /// `mark-skipped-siblings` only: count without writing. **Defaults to TRUE
+    /// when omitted** — for a job that writes ~593k rows, a forgotten flag must
+    /// mean the harmless thing, not the destructive one.
+    pub dry_run: Option<bool>,
     pub profile: Option<String>,
     /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
     /// notices `projected=0` for one later `rebuild:true` to fold in bulk.
@@ -316,6 +342,23 @@ impl Supervisor {
                     self.push("refold", params, Spec::Refold { profiles, expect: req.expect }).await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
+                ])
+            }
+            // Issue 84: mark the 2008 language siblings skipped-by-policy. NOT
+            // paired with a projection — this touches only quarantine bookkeeping,
+            // no notice enters or leaves the corpus, so there is nothing to fold.
+            // `dry_run` is the default when the caller omits it: the destructive
+            // reading of a missing flag must be the safe one.
+            "mark-skipped-siblings" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "dry-run".to_owned() } else { "execute".to_owned() };
+                Ok(vec![
+                    self.push(
+                        "mark-skipped-siblings",
+                        params,
+                        Spec::MarkSkippedSiblings { dry_run, expect: req.expect },
+                    )
+                    .await,
                 ])
             }
             // Force the full daily reconciliation now (post-downtime catch-up,
@@ -792,6 +835,47 @@ impl Supervisor {
                 let requeued =
                     self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
                 Ok(format!("re-queued {requeued} notices for the incremental fold"))
+            }
+            Spec::MarkSkippedSiblings { dry_run, expect } => {
+                // Count first, always — in dry-run it IS the answer, and in a real
+                // run it is the gate that must agree before anything is written.
+                let found = self.db.count_skipped_siblings().await.map_err(|e| e.to_string())? as u64;
+                if let Some(expect) = expect {
+                    if found != *expect {
+                        return Err(format!(
+                            "mark-skipped-siblings aborted: {found} rows match, expected exactly \
+                             {expect} (nothing was written). A SHORTFALL is a finding, not a \
+                             predicate to widen: the missing rows are held siblings whose English \
+                             original did not parse, i.e. real data loss that must stay outstanding."
+                        ));
+                    }
+                }
+                if *dry_run {
+                    return Ok(format!("dry run: {found} rows would be marked skipped-by-policy"));
+                }
+                let mut marked = 0i64;
+                loop {
+                    let batch = self
+                        .db
+                        .mark_skipped_siblings(MARK_BATCH, store::now_unix(), "internal-ojs-non-english")
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if batch == 0 {
+                        break;
+                    }
+                    marked += batch;
+                    self.update(|p| p.members_done = marked as u64);
+                    // Bound the WAL between batches, exactly as run_process and the
+                    // reclaim do: turso writes a frame per row and cannot checkpoint
+                    // mid-statement.
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after mark batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "marked {marked} rows skipped-by-policy (reversible: skipped_reason = \
+                     'internal-ojs-non-english')"
+                ))
             }
             Spec::ClearRebuildFlag => {
                 let was_set = self.db.rebuild_in_progress().await.map_err(|e| e.to_string())?;
@@ -1437,6 +1521,41 @@ mod tests {
         let q = restarted.queued();
         assert_eq!(q.len(), 1, "the snapshot job is restored");
         assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
+    }
+
+    /// Issue 84: the mark job defaults to DRY RUN when the caller omits the flag.
+    ///
+    /// This is a job that writes ~593k user-facing rows, so the destructive reading
+    /// of a missing field must be the safe one. A `serde` default of `false` would
+    /// have made a forgotten flag mean "execute" — the wrong way round for an
+    /// operation whose whole approval process is built on running the count first.
+    #[tokio::test]
+    async fn the_mark_job_defaults_to_a_dry_run() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        sup.enqueue_request(&req("mark-skipped-siblings")).await.unwrap();
+        assert_eq!(sup.queued()[0].params, "dry-run", "omitted dry_run must mean dry run");
+
+        let explicit = JobRequest {
+            kind: "mark-skipped-siblings".into(),
+            dry_run: Some(false),
+            ..Default::default()
+        };
+        sup.enqueue_request(&explicit).await.unwrap();
+        assert_eq!(
+            sup.queued()[1].params, "execute",
+            "writing requires saying so explicitly"
+        );
+
+        // And it round-trips the durable queue, so a restart mid-run restores the
+        // same mode rather than silently re-reading the default.
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        let q = restarted.queued();
+        assert_eq!(q.len(), 2);
+        assert_eq!(q[0].params, "dry-run");
+        assert_eq!(q[1].params, "execute", "the execute flag survives a restart");
     }
 
     /// Issue 32: the resume skip is the period-ordered prefix at or before the
