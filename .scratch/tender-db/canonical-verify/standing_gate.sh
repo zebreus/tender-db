@@ -22,9 +22,17 @@
 # VACUITY. "Zero rows violate X" is trivially true of an EMPTY table, so a
 # violation-count suite alone reports a nuked layer as green — the exact
 # catastrophe the prenuke backup exists for. Verified, not assumed: on an empty
-# `tenders`, identity_overlap and no_head both return 0. The `*_present` checks
-# close that hole and stay count-free: they assert a threshold of >0, never a
-# pinned total, so they cannot go stale as the corpus grows.
+# `tenders`, identity_overlap and no_head both return 0. The `present_*` checks
+# close that hole and stay count-free: they assert existence, never a pinned
+# total, so they cannot go stale as the corpus grows. They use EXISTS rather than
+# COUNT(*) > 0 — same answer, O(1) instead of a full scan.
+#
+# There is ONE present_* per table any check reads, not one for the spine. A
+# partial set is a partial hole: run-driver's sweep bed had `tenders` populated
+# but every satellite empty, which would sail through orphan_parties,
+# orphan_texts and friends on absence alone. The rule is that no check may
+# depend on a table whose non-emptiness is unasserted — cheap enough (EXISTS)
+# that there is no reason to be selective about it.
 #
 # TIERS bound the daily cost. A = single-table scans. B = joins and grouped
 # anti-joins over the version-keyed tables. C = the ~30M organization_mentions
@@ -57,9 +65,17 @@ SQLITE="${SQLITE:-sqlite3}"
 # Every sql returns ONE integer: the number of violating rows. EXPECT 0.
 checks() {
 cat <<'CHECKS'
-spine_present|A|the canonical spine is non-empty|SELECT CASE WHEN (SELECT COUNT(*) FROM tenders) > 0 AND (SELECT COUNT(*) FROM tender_versions) > 0 AND (SELECT COUNT(*) FROM organizations) > 0 THEN 0 ELSE 1 END|DELETE FROM tenders
-results_present|A|the results layer is non-empty|SELECT CASE WHEN (SELECT COUNT(*) FROM lot_results) > 0 THEN 0 ELSE 1 END|DELETE FROM lot_results
-mentions_present|A|organization mentions are non-empty|SELECT CASE WHEN (SELECT COUNT(*) FROM organization_mentions) > 0 THEN 0 ELSE 1 END|DELETE FROM organization_mentions
+present_tenders|A|tenders non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tenders) THEN 0 ELSE 1 END|DELETE FROM tenders
+present_versions|A|tender_versions non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_versions) THEN 0 ELSE 1 END|DELETE FROM tender_versions
+present_orgs|A|organizations non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM organizations) THEN 0 ELSE 1 END|DELETE FROM organizations
+present_mentions|A|organization_mentions non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM organization_mentions) THEN 0 ELSE 1 END|DELETE FROM organization_mentions
+present_texts|A|tender_version_texts non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts) THEN 0 ELSE 1 END|DELETE FROM tender_version_texts
+present_amounts|A|tender_version_amounts non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_amounts) THEN 0 ELSE 1 END|DELETE FROM tender_version_amounts
+present_parties|A|tender_version_parties non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_parties) THEN 0 ELSE 1 END|DELETE FROM tender_version_parties
+present_winners|A|tender_version_result_winners non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners) THEN 0 ELSE 1 END|DELETE FROM tender_version_result_winners
+present_lots|A|lots non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM lots) THEN 0 ELSE 1 END|DELETE FROM lots
+present_lot_results|A|lot_results non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM lot_results) THEN 0 ELSE 1 END|DELETE FROM lot_results
+present_changes|A|changes non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM changes) THEN 0 ELSE 1 END|DELETE FROM changes
 identity_overlap|A|tender identity is exactly one of keyed or island|SELECT COUNT(*) FROM tenders WHERE (procedure_key IS NULL) = (island_notice_id IS NULL)|INSERT INTO tenders(id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at) VALUES (900,'ted','k900',900,'procedure',1,1,1)
 no_head|A|every tender has a head version pointer|SELECT COUNT(*) FROM tenders WHERE current_seq IS NULL|INSERT INTO tenders(id,source,procedure_key,kind,created_at,current_seq) VALUES (901,'ted','k901','procedure',1,NULL)
 kind_bad|A|tenders.kind within its domain|SELECT COUNT(*) FROM tenders WHERE kind NOT IN ('procedure','registration')|INSERT INTO tenders(id,source,procedure_key,kind,created_at,current_seq) VALUES (902,'ted','k902','zzz',1,1)
@@ -179,8 +195,16 @@ self_test() {
 
 # ---------------------------------------------------------------- real run
 main() {
-  local snap="${SNAPSHOT:-}"
+  # PINNED vs NEWEST. The daily integration must pass SNAPSHOT=<the exact path the
+  # pipeline just wrote>, not rely on "the newest". If the snapshot step FAILS, the
+  # newest file is yesterday's — still inside MAX_AGE_H, so it would verify green
+  # and report success for a cycle that produced nothing (proj-fix's catch). Age
+  # bounds how stale the input can be; it cannot establish that it is THIS cycle's
+  # output. Pinning can, so the mode is carried into the verdict either way and a
+  # green from the guessed path never gets to look like a green from a pinned one.
+  local snap="${SNAPSHOT:-}" mode=pinned
   if [ -z "$snap" ]; then
+    mode=newest
     snap=$(ls -1 "$SNAPSHOT_DIR"/tender-db-*.db 2>/dev/null | sort | tail -1)
   fi
   [ -n "$snap" ] && [ -r "$snap" ] || { echo "$(red FAIL) no readable snapshot in $SNAPSHOT_DIR (set SNAPSHOT=)"; exit 2; }
@@ -191,11 +215,13 @@ main() {
   mtime=$(stat -c %Y "$snap")
   age_h=$(( ( $(date +%s) - mtime ) / 3600 ))
   echo "== standing structural gate  tier=$TIER  $(date -u +%FT%TZ) =="
-  echo "-- input: $snap"
+  echo "-- input: $snap  [$mode]"
   echo "--   size $(stat -c %s "$snap") bytes, mtime $(date -u -d "@$mtime" +%FT%TZ), age ${age_h}h"
+  [ "$mode" = newest ] && echo "--   NOTE resolved by newest-in-dir, NOT pinned: a failed snapshot step would" \
+                       && echo "--        hand this run yesterday's file. Pass SNAPSHOT=<path> from the pipeline."
   if [ "$age_h" -gt "$MAX_AGE_H" ]; then
     echo "$(red FAIL) snapshot is ${age_h}h old (max ${MAX_AGE_H}h) — the daily pipeline is not producing."
-    echo "VERDICT stale_input snapshot=$snap age_h=$age_h"
+    echo "VERDICT stale_input snapshot=$snap age_h=$age_h mode=$mode"
     exit 2
   fi
 
@@ -215,7 +241,7 @@ main() {
   echo
   echo "== $ran checks in tier $TIER: $pass passed, $fail failed, $err errored =="
   # One machine-readable line for the journal / dashboard.
-  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h"
+  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h mode=$mode"
   [ $((fail+err)) -eq 0 ] || exit 1
 }
 
