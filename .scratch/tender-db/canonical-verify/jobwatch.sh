@@ -71,7 +71,19 @@ warned=0
 if [ -n "$recent_fail" ]; then
   while IFS= read -r line; do
     [ -z "$line" ] && continue
-    echo "TENDERDB_JOBWATCH WARNING failed job within ${WINDOW_H}h: $line — the job ROLLED BACK, so the data is safe, but the work did not happen and the next run inherits the gap. Issue 27's head-vs-last-version guard reports this way. Check /admin/jobs and the journal."
+    # CLASSIFY, don't just report. A transient projection failure and a #27
+    # head-assertion rollback are byte-identical from outside — both "job failed,
+    # error text in the row" — but they are opposite findings: one is a retry, the
+    # other is real corruption caught and prevented. A warning that says only "a
+    # job failed" arrives without saying what it means, so the operator has to go
+    # read the row to learn whether it matters. The error text is carried either
+    # way; the classification says which question to ask. (proj-fix, via team-lead.)
+    case "$line" in
+      *"head that is not the last version"*)
+        echo "TENDERDB_JOBWATCH WARNING #27 HEAD-ASSERTION ROLLBACK within ${WINDOW_H}h: $line — this is NOT a transient. The projection-time guard found a Tender whose head is not its last version and refused to commit it, so the data is safe and the rollback worked. Investigate the DATA, not the job: a retry will hit the same violation." ;;
+      *)
+        echo "TENDERDB_JOBWATCH WARNING failed job within ${WINDOW_H}h: $line — the job rolled back, so the data is safe, but the work did not happen and the next run inherits the gap. Read the detail= text above to tell a transient from a real fault." ;;
+    esac
     warned=1
   done <<< "$recent_fail"
 fi
