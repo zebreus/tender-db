@@ -1,8 +1,10 @@
 # 84 — ~593K held 2008 monthly-TED DTD notices; ledger reports the category "resolved" (mis-scoped to the ~28K opoce subset)
 
-Status: open — **the "largest remaining reclaim" framing below is RETRACTED by the author; the Correction
-holds and section A of the falsifier now CONFIRMS its population claim. Verdict still held pending
-section B; nothing written to the ledger yet. See "Falsifier result" at the end.** The held rows are almost certainly the non-English duplicate siblings, i.e. a counting defect, not lost data. Awaiting one read-only falsifier query against a prod snapshot. DISCOVERED 2026-08-01, CORRECTED 2026-08-04 (both proj-fix).
+Status: **SETTLED — counting artifact, not lost data.** Both falsifier arms answered (section A: 7 `.en`
+of 593,017; section B: 5,000/5,000 originals present and parsed, identical on two snapshots 29 h apart).
+The "largest remaining reclaim" framing below is RETRACTED by its author. Ledger card corrected
+(`d2cca0a`); fix BUILT and awaiting deploy → dry-run → go. See "Falsifier result" and "The fix" at the
+end. The held rows are almost certainly the non-English duplicate siblings, i.e. a counting defect, not lost data. Awaiting one read-only falsifier query against a prod snapshot. DISCOVERED 2026-08-01, CORRECTED 2026-08-04 (both proj-fix).
 Kind: completeness / data-quality + ledger correctness
 Blocked by: —
 Relates to: 36 (XXE-safe DTD strip), 41 (internal-ojs parser, the opoce subset), 73 (unparsable-xml sizing — this REVISES it), ADR-0004, ADR-0009, [[resolved-categories-ledger]]
@@ -156,3 +158,37 @@ A is decisive on *shape*, and the 26,948 + 7 = 26,955 bridge is close to B's ans
 that bridge is an **aggregate coincidence**, which is exactly the kind of evidence that made the original
 version of this issue wrong. B checks per-row that the sibling notices exist and parsed. It is now cheap.
 Nothing goes to the ledger until it runs.
+
+
+---
+
+# The fix, as built (2026-08-05)
+
+Authorized by team-lead after Lennart delegated the decision to the team. Three commits, all green:
+
+| commit | what |
+|---|---|
+| `907d830` | **permanent half** — `reclaim_package` flags each declined member at skip-time, naming the policy that declined it. Must be live before the backfill, or a reprocess between the two re-introduces the rows it cleared. |
+| `ba95b60` | **the marker** — `quarantine.skipped_at`/`skipped_reason`, a third state in `quarantine_resolution`, and the dashboard bucket that shows it. |
+| `80e2365`, `a9265fb` | **the supervisor op** — `POST /admin/jobs {"kind":"mark-skipped-siblings"}`, dry-run by default, abort-before-write on `expect`, 5k batches with a checkpoint between. |
+
+**Three states, not two.** Setting `reprocessed_at` would have dropped the 593k out of "outstanding" in
+one statement — and claimed ~593k notices entered the corpus that never did. `quarantine_resolution` now
+returns `(reclaimed, skipped, outstanding)` and the card shows "N duplicates skipped", so a user can see
+that these rows were examined and deliberately not ingested rather than watching a number quietly shrink.
+
+**The guard is the safety.** A row is marked only if its English sibling is present *and parsed*
+(`SKIPPED_SIBLING_GUARD`), which makes the operation self-verifying row by row. A row whose original is
+missing is exactly the row that must never be marked — recording real data loss as a duplicate is the one
+outcome worse than an overstated count. run-driver's scope review: **CLEAR**, term for term against
+section B's population.
+
+**The dry-run reports two numbers**, because the first cannot explain itself: how many would be marked,
+and how many in scope the guard *rejects*. Expected `593,010 / 0`. A shortfall is a **data-loss finding
+to investigate, never a reason to widen the predicate** — encoded in the abort message itself, since that
+is what gets read when the job fails, not this file.
+
+## Remaining
+
+Deploy (routed to run-driver, two-phase under the watchdog; carries two nullable `ADD COLUMN`s) → fire the
+dry-run → `593,010 / 0` → team-lead's go → execute with `expect: 593010`.
