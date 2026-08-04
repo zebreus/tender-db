@@ -30,6 +30,35 @@ From a clean checkout on the dev machine:
 ./deploy.sh <ref>    # deploys any ref
 ```
 
+> **A deploy builds from a COMMITTED SHA in a CLEAN tree — never the shared working
+> tree.** *"From a clean checkout"* above is the rule, not a stylistic preference, and
+> this is what it prevents.
+>
+> Several agents share this worktree. On 2026-08-05 a deploy was authorised at
+> `80e2365`; `HEAD` was `80e2365`, and the tree was **not** — two files carried
+> uncommitted work, and they were the two files the deploy shipped
+> (`crates/app/src/supervisor.rs`, `crates/store/src/lib.rs`). A teammate was mid-edit
+> on the very constant the deploy's review had cleared. Building "what's here" would
+> have put un-committed, un-reviewed code into production, and a deploy is the one
+> action where that is unrecoverable.
+>
+> So, before staging:
+>
+> ```sh
+> git status --short crates/     # MUST be empty
+> git log --oneline -1           # the SHA you are deploying, read from output
+> ```
+>
+> If the tree is dirty, deploy from a fresh checkout of the SHA instead — never
+> `git stash` someone else's work to clear the path.
+>
+> **Two corollaries, both learned the same day.** A pre-deploy test run against a dirty
+> tree certifies a tree nobody will deploy — the green describes the wrong artifact, so
+> run the gate on the committed tip. And **a review clearance is bound to the artifact it
+> was given against**: if the code changes after a review, the clearance does not
+> automatically follow it, and the reviewer has to say so. See
+> [`agents/instrument-discipline.md`](agents/instrument-discipline.md).
+
 The script pushes the ref to the VPS bare repo, builds `#tender-db` **on the
 VPS** (it has the 1 Gb/s uplink and the warm nix store — never build the bundle
 over the dev machine's ~100 kB/s link), atomically switches `/opt/tender-db/app`,
