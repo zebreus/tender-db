@@ -162,18 +162,45 @@ probe "value(amounts)"  "$T" "SELECT COUNT(DISTINCT tender_id) FROM tender_versi
 # LIMIT fills. A rare value sprinkled uniformly terminates early and the pathology
 # VANISHES WHILE THE ROW COUNTS STILL LOOK CORRECT. Matches-late is the property.
 echo
-echo "--- anchor: the rarest kind must sit LATE in id order, not be sprinkled ---"
+echo "--- anchor: matches must RUN OUT with most of the table still ahead ---"
+# CORRECTED 2026-08-04 against prod's measured distribution. This check previously
+# asserted the rarest kind first matches PAST 50% of the id range — "rare and late".
+# That was prose promoted to a gate, and prod disproves it: `registration` is 120
+# rows in ~8.1M, clustered at 14-24% of the id range. So the old check would have
+# REJECTED A PROD-FAITHFUL BED — a gate enforcing an unmeasured belief against the
+# measurement that disproves it, which is worse than no gate.
+#
+# The real property is neither lateness nor scarcity: the paginated read
+# `WHERE id > ? ORDER BY id LIMIT n` can only stop early when LIMIT FILLS. So the
+# expensive page is the first one that CANNOT fill while much of the table is still
+# ahead of the cursor. Late matches cause that; EXHAUSTED matches cause it too, and
+# prod is the second.
+#
+# Two conditions, and the count one is not optional (proj-fix): with 120 matches and
+# LIMIT 50, pages 1 AND 2 fill from the cluster and PAGE 3 is the first unfillable
+# one. A bed with fewer matches than LIMIT never reaches an unfillable page at all —
+# page 1 simply scans to the end, which LOOKS like the pathology but is the page-1
+# case, so a "page 1 vs deep page" comparison comes out flat and proves nothing.
+PAGE_LIMIT="${PAGE_LIMIT:-50}"
 rare=$(Q "SELECT kind FROM tenders GROUP BY kind ORDER BY COUNT(*) ASC LIMIT 1;")
 if [[ -z "$rare" ]]; then
-  report FAIL "anchor:late-in-id" "no kind values at all"
+  report FAIL "anchor:exhaustion" "no kind values at all"
 else
-  # Share of the id range that must be walked before the first match is found.
-  pos=$(Q "SELECT ROUND(100.0 * (SELECT MIN(id) FROM tenders WHERE kind='$rare')
-                        / (SELECT MAX(id) FROM tenders), 2);")
-  if awk -v p="${pos:-0}" 'BEGIN{exit !(p<50)}'; then
-    report FAIL "anchor:late-in-id" "rarest kind '$rare' first matches at ${pos}% of the id range — the walk stops early and the pathology is absent"
+  n=$(Q "SELECT COUNT(*) FROM tenders WHERE kind='$rare';")
+  tail_pct=$(Q "SELECT ROUND(100.0 * (1.0 - CAST((SELECT MAX(id) FROM tenders WHERE kind='$rare') AS REAL)
+                                          / (SELECT MAX(id) FROM tenders)), 2);")
+  # (a) enough matches that pagination REACHES an unfillable page
+  if [[ "${n:-0}" -le "$PAGE_LIMIT" ]]; then
+    report FAIL "anchor:reaches-unfillable" "rarest kind '$rare' has $n rows <= LIMIT $PAGE_LIMIT — page 1 never fills, so the bed tests the page-1 case and can never exhibit exhaustion"
   else
-    report ok "anchor:late-in-id" "rarest kind '$rare' first matches at ${pos}% of the id range"
+    pages=$(( (n + PAGE_LIMIT - 1) / PAGE_LIMIT ))
+    report ok "anchor:reaches-unfillable" "'$rare' has $n rows = $pages pages at LIMIT $PAGE_LIMIT; page $pages is the first that cannot fill"
+  fi
+  # (b) most of the table still ahead once they run out
+  if awk -v t="${tail_pct:-0}" 'BEGIN{exit !(t<50)}'; then
+    report FAIL "anchor:table-ahead" "after '$rare' is exhausted only ${tail_pct}% of the id range remains — too little left to scan, so the unfillable page is cheap and the pathology is absent"
+  else
+    report ok "anchor:table-ahead" "${tail_pct}% of the id range lies beyond the last '$rare' match — that is what the unfillable page must walk"
   fi
 fi
 
