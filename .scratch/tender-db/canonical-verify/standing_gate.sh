@@ -47,6 +47,18 @@
 # assertion cannot have: damage that predates it, and Tenders no projection has
 # touched since. (proj-fix, 2026-08-04 — sharper than the limit I first wrote.)
 #
+# And `repeat=no` proves only that the INPUT IS NEW — never that the cycle did
+# useful work. A do-nothing projection followed by a successful snapshot yields a
+# new file and a correct `repeat=no`. That is not a defect in the check; it is the
+# boundary of what it claims. This gate verifies the artifact it is handed, so a
+# green is never evidence of pipeline health. (proj-fix, 2026-08-04.)
+#
+# All three of the above are the same defect wearing different clothes — a result
+# that reads as stronger than it is, and none of them visible in the number:
+#   vacuity     — 0 because nothing is there
+#   preventer   — 0 because something upstream stopped it
+#   repeat=no   — new input, not a productive cycle
+#
 # TIERS bound the daily cost. A = single-table scans. B = joins and grouped
 # anti-joins over the version-keyed tables. C = the ~30M organization_mentions
 # anti-join. Intended cadence: A daily, B daily once measured, C weekly.
