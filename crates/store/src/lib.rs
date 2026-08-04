@@ -1196,6 +1196,60 @@ impl Db {
                                            rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
                      '_', '-'))";
 
+    /// Record that a held member was RE-EXAMINED and declined by a dispatch
+    /// policy (issue 84) — the permanent half of the fix, which the one-time
+    /// backfill exists to catch up.
+    ///
+    /// A declined member produces no record, so without this its quarantine row is
+    /// indistinguishable from one nobody ever looked at: held forever, counted as
+    /// outstanding work that no reprocess can move. `skipped_reason` carries WHICH
+    /// policy declined it (`internal-ojs-non-english`, …) rather than a generic
+    /// mark, so the row says why and not merely that.
+    ///
+    /// Scoped `AND skipped_at IS NULL` so a re-walk is a no-op, and keyed by
+    /// `(fetch_id, member_path)` — the same identity the profile-level reclaim
+    /// uses, and unique per the table's own constraint.
+    pub async fn flag_skipped_members(
+        &self,
+        fetch_id: i64,
+        members: &[(String, &'static str)],
+        now: i64,
+    ) -> turso::Result<u64> {
+        if members.is_empty() {
+            return Ok(0);
+        }
+        // Grouped by policy so the reason travels with its members without
+        // interpolating paths into SQL: every path is a bound parameter. The
+        // policy set is a handful of `&'static str` labels, so in practice this is
+        // one statement per batch.
+        let mut by_policy: std::collections::BTreeMap<&'static str, Vec<&String>> =
+            std::collections::BTreeMap::new();
+        for (path, policy) in members {
+            by_policy.entry(policy).or_default().push(path);
+        }
+        let conn = self.conn().await;
+        let mut flagged = 0u64;
+        for (policy, paths) in by_policy {
+            let places = vec!["?"; paths.len()].join(",");
+            let sql = format!(
+                "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
+                  WHERE fetch_id = ?
+                    AND skipped_at IS NULL
+                    AND member_path IN ({places})"
+            );
+            let mut params = vec![
+                Value::Integer(now),
+                Value::Text(policy.to_owned()),
+                Value::Integer(fetch_id),
+            ];
+            params.extend(paths.into_iter().map(|p| Value::Text(p.clone())));
+            conn.execute(&sql, params).await?;
+            let mut rows = conn.query("SELECT changes()", ()).await?;
+            flagged += rows.next().await?.map_or(0, |row| int(&row, 0) as u64);
+        }
+        Ok(flagged)
+    }
+
     /// How many rows the marker WOULD flag, without writing anything (issue 84).
     ///
     /// This is the decision input, not a formality: the run is authorised against

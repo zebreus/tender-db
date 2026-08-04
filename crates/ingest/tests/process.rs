@@ -512,9 +512,11 @@ async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
         "every held member ends in exactly one reported outcome"
     );
 
-    // The reclaimed member is whole again; the skipped one is untouched, and no
-    // re-run can move it — its row is stale bookkeeping, not lost data.
+    // The reclaimed member is whole again.
     assert_eq!(count(&db, "notice_sections", id).await, sections);
+
+    // The skipped one is NOT reclaimed — `reprocessed_at` would claim it entered
+    // the corpus, and it did not.
     assert_eq!(
         cell_i64(
             &db,
@@ -522,7 +524,29 @@ async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
         )
         .await,
         None,
-        "a skipped member is never flagged, so it stays in every later work list"
+        "a declined member is never RECLAIMED — it was not ingested"
+    );
+    // But the outcome is now recorded ON THE ROW, naming the policy that declined
+    // it (issue 84's permanent half). Before this, the row was indistinguishable
+    // from one nobody had ever examined, so it stayed on every future work list
+    // and counted as outstanding work no reprocess could move.
+    assert!(
+        cell_i64(
+            &db,
+            "SELECT skipped_at FROM quarantine WHERE member_path = '115165/opoce-input/115165_2008.fr'"
+        )
+        .await
+        .is_some(),
+        "a declined member is flagged skipped, so it leaves the work list"
+    );
+    assert_eq!(
+        db.scalar(
+            "SELECT skipped_reason FROM quarantine WHERE member_path = '115165/opoce-input/115165_2008.fr'"
+        )
+        .await
+        .unwrap(),
+        Some(store::turso::Value::Text("internal-ojs-non-english".into())),
+        "the row says WHICH policy declined it, not merely that one did"
     );
 
     let _ = std::fs::remove_dir_all(&archive);

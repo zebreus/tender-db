@@ -152,7 +152,7 @@ pub async fn process_package_resilient(
 /// to it, and `report` is the running tally — the Supervisor turns this into
 /// the live progress bar (issue 16). It is a pure UI hook; passing
 /// `|_, _, _| {}` is the plain processing path.
-type WalkerHandle = std::thread::JoinHandle<Result<(u64, u64, u64), package::Error>>;
+type WalkerHandle = std::thread::JoinHandle<Result<WalkTally, package::Error>>;
 type RecordRx = std::sync::mpsc::Receiver<(Record, store::Parse)>;
 
 /// Spawn the walker: it reads `archive`, dispatches every member to its profile,
@@ -183,8 +183,14 @@ fn spawn_record_producer(
 
     let (tx, rx) = std::sync::mpsc::sync_channel::<(Record, store::Parse)>(64);
     let archive = archive.to_owned();
-    let walker = std::thread::spawn(move || -> Result<(u64, u64, u64), package::Error> {
+    let walker = std::thread::spawn(move || -> Result<WalkTally, package::Error> {
         let (mut members, mut ingested, mut skipped) = (0u64, 0u64, 0u64);
+        // Which held members a dispatch policy declined, and which policy. Only
+        // collected in reprocess mode (`only` set), where it is bounded by the
+        // held set the caller already holds in RAM; a plain ingest leaves it empty
+        // rather than accumulating every skipped sibling of a whole archive.
+        let mut declined: Vec<(String, &'static str)> = Vec::new();
+        let collect_declined = only.is_some();
         // Set once the receiver is gone (writer failed): keep walking cheaply
         // to finish the archive read, but stop parsing.
         let mut dead = false;
@@ -237,10 +243,15 @@ fn spawn_record_producer(
                         dead = tx.send((record, parse)).is_err();
                     }
                 }
-                Disposition::Skipped(_) => skipped += 1,
+                Disposition::Skipped(policy) => {
+                    skipped += 1;
+                    if collect_declined {
+                        declined.push((path.clone(), policy));
+                    }
+                }
             }
         })?;
-        Ok((members, ingested, skipped))
+        Ok(WalkTally { members, ingested, skipped, declined })
     });
     Ok((rx, walker, estimated))
 }
@@ -337,11 +348,20 @@ pub async fn process_package(
     }
     drop(slot);
 
-    let (members, ingested, skipped) = walker.join().expect("package walker panicked")?;
-    report.members = members;
-    report.ingested = ingested;
-    report.skipped = skipped;
+    let tally = walker.join().expect("package walker panicked")?;
+    report.members = tally.members;
+    report.ingested = tally.ingested;
+    report.skipped = tally.skipped;
     Ok(report)
+}
+
+/// What one archive walk observed. `declined` is populated only in reprocess
+/// mode — see [`spawn_record_producer`].
+struct WalkTally {
+    members: u64,
+    ingested: u64,
+    skipped: u64,
+    declined: Vec<(String, &'static str)>,
 }
 
 /// Per-package outcome of a reprocess pass over a held quarantine bucket.
@@ -368,6 +388,10 @@ pub struct ReclaimReport {
 /// huge package (issue 80). Every N members walked, not reclaimed, so a sparse
 /// bucket still checkpoints on schedule.
 const CHECKPOINT_EVERY: u64 = 5_000;
+
+/// How many declined members are flagged per statement. Bounded for the same
+/// reason the reclaim checkpoints: turso writes a WAL frame per row.
+const FLAG_BATCH: usize = 500;
 
 /// Re-parse a package's HELD members and reclaim every one that now parses,
 /// writing its parsed layer in place ([`store::Db::reclaim_notice`]). `held` is
@@ -416,8 +440,17 @@ pub async fn reclaim_package(
 
     // In reprocess mode the producer dispatches ONLY the held members, so its
     // skipped tally is exactly the held members a dispatch policy declines.
-    let (members, _ingested, skipped) = walker.join().expect("package walker panicked")?;
-    report.members = members;
-    report.skipped_by_policy = skipped;
+    let tally = walker.join().expect("package walker panicked")?;
+    report.members = tally.members;
+    report.skipped_by_policy = tally.skipped;
+    // Record the outcome ON THE ROW, not merely in this report (issue 84). A
+    // declined member yields no record, so without this its quarantine row stays
+    // indistinguishable from one nobody ever examined — held forever, counted as
+    // outstanding work that no reprocess can ever move. Batched: a dense package
+    // can decline tens of thousands of members, and turso writes a WAL frame per
+    // row.
+    for chunk in tally.declined.chunks(FLAG_BATCH) {
+        db.flag_skipped_members(fetch_id, chunk, now).await?;
+    }
     Ok(report)
 }
