@@ -25,3 +25,8 @@ Default vocabulary — the five canonical role names used as-is. See `docs/agent
 ### Domain docs
 
 Single-context: `CONTEXT.md` at the repo root plus `docs/adr/`. See `docs/agents/domain.md`.
+
+### Reading the production box
+
+Metadata **and** bounded ⇒ free. Anything reading data pages gates on the team lead's word and runs
+against a snapshot, never the serving DB. See `docs/agents/prod-box-reads.md`.
