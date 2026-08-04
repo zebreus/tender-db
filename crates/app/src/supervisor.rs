@@ -866,6 +866,28 @@ impl Supervisor {
                          investigate, never a predicate to widen)"
                     ));
                 }
+                // BOTH halves of the go criterion are enforced HERE, not only in the
+                // process that reads the dry-run. `found == expect` and `gaps == 0`
+                // are independent: the scope can hold exactly the expected number of
+                // markable rows AND some data-loss rows beside them, so a matching
+                // count is not evidence of an empty gap set. Leaving this to the
+                // operator would make half the criterion a promise rather than a
+                // guarantee — and the promise would be kept by whoever remembered to
+                // read the second number.
+                //
+                // No override flag on purpose: the remedy for a non-zero gap count is
+                // to investigate those rows, never to proceed past them. If marking
+                // ever has to happen despite known data loss in scope, that should
+                // cost a deliberate code change and a review, which is the right
+                // amount of friction for it.
+                if gaps > 0 {
+                    return Err(format!(
+                        "mark-skipped-siblings aborted: {gaps} rows are in scope but REJECTED by \
+                         the sibling guard — held siblings whose English original is missing or \
+                         unparsed (nothing was written). That is a data-loss finding to \
+                         investigate, not a predicate to widen: those rows must stay outstanding."
+                    ));
+                }
                 let mut marked = 0i64;
                 loop {
                     let batch = self

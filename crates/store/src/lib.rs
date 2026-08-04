@@ -2745,6 +2745,11 @@ mod tests {
             2,
             "the two planted data-loss cases are reported, not silently excluded"
         );
+        // Note the two numbers are INDEPENDENT — 2 markable AND 2 rejected, in the
+        // same population. That is why the execute path must check BOTH: a marked
+        // count matching expectation says nothing about whether data-loss rows sit
+        // beside them, so an operator reading only the first number would proceed
+        // past rows whose originals are not in the corpus.
 
         let marked = db.mark_skipped_siblings(1000, 999, "internal-ojs-non-english").await.unwrap();
         assert_eq!(marked, 2);
@@ -2809,6 +2814,17 @@ mod tests {
         assert!(
             !plan.contains("notices_parse_state") && !plan.contains("SCAN"),
             "the sibling lookup must seek the identity index, not parse_state: {plan}"
+        );
+
+        // After a full run the data-loss rows are STILL THERE and still reported:
+        // marking never consumes them, so they cannot be quietly retired by a
+        // successful pass. The pair (0 markable, 2 rejected) is what a completed
+        // run over a population containing data loss looks like.
+        assert_eq!(db.count_skipped_siblings().await.unwrap(), 0, "work list drained");
+        assert_eq!(
+            db.count_skipped_sibling_gaps().await.unwrap(),
+            2,
+            "the guard-rejected rows survive the run and keep being reported"
         );
 
         // Idempotent: the work list is empty, so a re-run writes nothing.
