@@ -282,12 +282,41 @@ assert_confined() {
   if [ -n "$rt" ] && [ "$rt" != infinity ]; then echo "   ok   RuntimeMaxUSec = $rt (hard bound present)"
   else echo "   FAIL RuntimeMaxUSec is '$rt' — no hard bound on this run"; fail=1; fi
 
-  local stray="" p
-  for p in $(pgrep -f "sqlite3 -readonly file:$SNAP" 2>/dev/null); do
-    grep -qx "$p" "$cg/cgroup.procs" 2>/dev/null || stray="$stray $p"
-  done
-  if [ -z "$stray" ]; then echo "   ok   every sqlite3 on this snapshot is inside the cgroup"
-  else echo "   FAIL sqlite3 OUTSIDE the cgroup:$stray — unconfined read, aborting"; fail=1; fi
+  # THE ONE THAT CATCHES TODAY'S ACCIDENT — and it now asks the KERNEL who holds
+  # the file open, rather than who spelled a command line a particular way.
+  #
+  # This was `pgrep -f "sqlite3 -readonly file:$SNAP"`. run-driver's review: that is
+  # select-by-MATCHING, the antipattern that failed four separate times today
+  # (pkill -f self-match twice, is-active on an evaporating state, --state=active
+  # missing activating). It sees a reader only if that reader spells the path the
+  # way I spelled it — a symlink, a relative path, an extra flag between `sqlite3`
+  # and `-readonly`, or a different tool entirely are all invisible. And since the
+  # other four assertions check a unit the runaway was never IN, the single arm
+  # that can catch a repeat was built on the suite's weakest primitive.
+  #
+  # lsof on the file is the artifact: an entry in the kernel's open-file table
+  # cannot be spelled differently. It is also what actually established the box was
+  # clear this morning, while pgrep was busy matching its own command line.
+  local stray="" p holders rc=1
+  if command -v lsof >/dev/null 2>&1; then
+    holders=$(lsof -t -- "$SNAP" 2>/dev/null); rc=0
+  elif [ -r /proc/self/fd ]; then
+    local canon; canon=$(readlink -f "$SNAP")
+    holders=$(for p in /proc/[0-9]*; do
+                for f in "$p"/fd/*; do
+                  [ "$(readlink -f "$f" 2>/dev/null)" = "$canon" ] && { echo "${p##*/}"; break; }
+                done
+              done 2>/dev/null); rc=0
+  fi
+  if [ "$rc" -ne 0 ]; then
+    echo "   FAIL cannot enumerate holders of the snapshot (no lsof, no /proc) — confinement unprovable"; fail=1
+  else
+    for p in $holders; do
+      grep -qx "$p" "$cg/cgroup.procs" 2>/dev/null || stray="$stray $p"
+    done
+    if [ -z "$stray" ]; then echo "   ok   every process holding this snapshot open is inside the cgroup"
+    else echo "   FAIL holder(s) OUTSIDE the cgroup:$stray — unconfined read, aborting"; fail=1; fi
+  fi
 
   if [ "$fail" -ne 0 ]; then
     echo "   CONFINEMENT NOT PROVEN — stopping the unit and refusing to measure."
