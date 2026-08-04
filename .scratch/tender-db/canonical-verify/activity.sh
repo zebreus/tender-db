@@ -58,13 +58,20 @@ stat_ticks() {
 
 # pid_busy_pct <pid> <interval_s> -> percent of ONE core over the interval.
 # A DELTA over real time — the artifact — never an instantaneous state.
+#
+# FAILS LOUD: prints `ERR` and returns 2 if it could not measure. It must NEVER
+# return 0 on failure — 0 means "idle", which every caller reads as "go", and that
+# is the permissive shape all six of today's instrument bugs shared. "I could not
+# measure" and "there is nothing running" are different answers and callers have
+# to be able to tell them apart. (Spec point from run-driver; this function had
+# exactly the defect it was written to prevent, on four paths.)
 pid_busy_pct() {
   local pid="$1" iv="${2:-3}" a b
-  a=$(stat_ticks "/proc/$pid/stat") || { echo 0; return; }
-  [ -n "$a" ] || { echo 0; return; }
+  a=$(stat_ticks "/proc/$pid/stat") || { echo ERR; return 2; }
+  [ -n "$a" ] || { echo ERR; return 2; }
   sleep "$iv"
-  b=$(stat_ticks "/proc/$pid/stat") || { echo 0; return; }
-  [ -n "$b" ] || { echo 0; return; }
+  b=$(stat_ticks "/proc/$pid/stat") || { echo ERR; return 2; }
+  [ -n "$b" ] || { echo ERR; return 2; }
   echo $(( (b - a) * 100 / (iv * ACTIVITY_TCK) ))
 }
 
@@ -72,8 +79,11 @@ pid_busy_pct() {
 # exceeded <pct> of one core. Counts DISTINCT TIDS: threads routinely share a
 # name (slow-read-exec is four), and keying anything by name inflates by the
 # number of concurrently-busy same-named threads.
+# FAILS LOUD on the same principle: `ERR`/2 if the process vanished mid-measure,
+# rather than reporting the 0 busy threads that a dead process trivially has.
 threads_busy() {
   local pid="$1" want="$2" iv="${3:-3}" min="${4:-5}" t tid n v busy=0
+  [ -d "/proc/$pid" ] || { echo ERR; return 2; }
   declare -A before
   for t in /proc/"$pid"/task/*; do
     tid=${t##*/}
@@ -82,6 +92,7 @@ threads_busy() {
     v=$(stat_ticks "$t/stat"); [ -n "$v" ] && before[$tid]=$v
   done
   sleep "$iv"
+  [ -d "/proc/$pid" ] || { echo ERR; return 2; }
   for t in /proc/"$pid"/task/*; do
     tid=${t##*/}; [ -n "${before[$tid]:-}" ] || continue
     v=$(stat_ticks "$t/stat"); [ -n "$v" ] || continue
@@ -137,6 +148,14 @@ time.sleep(10)' & pid=$!
     echo "  SKIP threads_busy (no python3 to build same-named threads)"; fail=1
   fi
 
+  # ERR arms: "could not measure" must be distinguishable from "idle". A dead pid
+  # is the cheapest way to produce an unmeasurable case.
+  sleep 5 & pid=$!; kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+  pct=$(pid_busy_pct "$pid" 1); if [ "$pct" = ERR ]; then echo "  PASS pid_busy_pct ERR    (dead pid, not reported as 0/idle)"
+  else echo "  FAIL pid_busy_pct returned '$pct' for a dead pid — permissive"; fail=1; fi
+  busy=$(threads_busy "$pid" anything 1); if [ "$busy" = ERR ]; then echo "  PASS threads_busy ERR    (dead pid, not reported as 0 busy)"
+  else echo "  FAIL threads_busy returned '$busy' for a dead pid — permissive"; fail=1; fi
+
   # unit_active both arms — only meaningful where systemd is present
   if command -v systemctl >/dev/null && systemctl show -p ActiveState -- '-.slice' >/dev/null 2>&1; then
     if unit_active "-.slice"; then echo "  PASS unit_active true    (-.slice is always active)"
@@ -145,8 +164,13 @@ time.sleep(10)' & pid=$!
       echo "  FAIL unit_active true for a nonexistent unit"; fail=1
     else echo "  PASS unit_active false   (nonexistent unit)"; fi
     # the oneshot trap itself, if we can run a transient unit
-    if systemd-run --quiet --unit="act-selftest-$$" --service-type=oneshot --collect \
-         /bin/sh -c 'sleep 4' >/dev/null 2>&1; then
+    # --no-block here for the SAME reason the probe needs it: without it
+    # systemd-run waits for the oneshot to finish, the unit is already gone by the
+    # time we look, and this arm reports the trap open when it is closed. This
+    # self-test had that bug and failed on the box because of it, not because
+    # unit_active was wrong.
+    if systemd-run --quiet --no-block --unit="act-selftest-$$" --service-type=oneshot --collect \
+         /bin/sh -c 'sleep 6' >/dev/null 2>&1; then
       sleep 1
       if unit_active "act-selftest-$$.service"; then
         echo "  PASS unit_active true DURING a oneshot (the trap is-active fails)"
