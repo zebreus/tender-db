@@ -179,7 +179,7 @@ CREATE TABLE lot_results (id INTEGER PRIMARY KEY, tender_id INTEGER, notice_id I
 CREATE TABLE changes (cursor INTEGER PRIMARY KEY, entity_kind TEXT, entity_id INTEGER, version_seq INTEGER, op TEXT, changed_at INTEGER);
 -- one keyed tender with two versions, one island tender with one
 INSERT INTO tenders VALUES (1,'ted','k1',NULL,'procedure',1,2,1000000200),(2,'doe',NULL,77,'registration',1,1,1000000000);
-INSERT INTO tender_versions VALUES (1,1,11,1000000100,'p11'),(1,2,12,1000000200,'p12'),(2,1,77,1000000000,'p77');
+INSERT INTO tender_versions VALUES (1,1,11,1000000100,'p11','cn-standard'),(1,2,12,1000000200,'p12','corrigendum'),(2,1,77,1000000000,'p77',NULL);
 INSERT INTO organizations VALUES (1,'DE','vat','DE123','Buyer',0,1),(2,NULL,NULL,NULL,'Prov',1,1);
 INSERT INTO organization_mentions VALUES (11,'ORG-0001',1),(12,'ORG-0001',2);
 INSERT INTO tender_version_texts VALUES (1,1,'title','T'),(1,2,'title','T2');

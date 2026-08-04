@@ -42,6 +42,14 @@ INTERVAL_S="${INTERVAL_S:-2}"
 ABORT_MS="${ABORT_MS:-250}"       # abort if the hot read exceeds this...
 ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichever is larger
 UNIT="${UNIT:-tdb-standing-gate-probe}"
+# HARD REMOTE BOUND on the confined work. run-driver orphaned a snapshot read on
+# prod for 90 minutes today because a LOCAL `timeout` around `ssh` killed the
+# client, not the remote process — the guard bounded their VIEW of the work, not
+# the work. RuntimeMaxSec puts the bound inside systemd, which is the thing
+# actually running it, so the gate dies on schedule whatever happens to my
+# transport, my shell, or me. Tier A measured 28m50s; 1h is a generous backstop
+# that still cannot become an unbounded read.
+MAX_RUN_S="${MAX_RUN_S:-3600}"
 # Resolve the input ONCE, here, and pass it to the gate PINNED. The lead requires
 # SNAPSHOT= rather than "newest" for this run, and the reason is proj-fix's: age
 # bounds how stale an input may be, it cannot establish WHICH run produced it. It
@@ -194,6 +202,7 @@ echo "-- plan: TIER=$TIER under MemoryMax=$MEM_MAX IOWeight=$IO_WEIGHT CPUWeight
 echo "--       baseline ${BASELINE_S}s -> gate -> settle ${SETTLE_S}s, sampling every ${INTERVAL_S}s"
 echo "--       abort if hot read > max(${ABORT_MS}ms, ${ABORT_MULT}x baseline p95) for 3 consecutive samples"
 echo "--       input:  $SNAP  (pinned, not newest-at-launch)"
+echo "--       hard bound: RuntimeMaxSec=${MAX_RUN_S}s enforced by systemd, not by my transport"
 echo "--       output: $OUT.{baseline,during,after}.tsv"
 preconditions || { echo; echo "PRECONDITIONS FAILED — not staged."; exit 2; }
 
@@ -226,6 +235,7 @@ echo "-- gate (confined, Tier $TIER)"
 systemd-run --no-block --unit="$UNIT" --service-type=oneshot --collect \
   -p MemoryMax="$MEM_MAX" -p MemorySwapMax=0 \
   -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
+  -p RuntimeMaxSec="$MAX_RUN_S" \
   --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
   /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
 
