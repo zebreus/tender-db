@@ -103,12 +103,52 @@ produced anything: if the projection did nothing but the snapshot step succeeded
 new file and `repeat=no` is still correct. The gate verifies the artifact it is given; "the cycle did
 useful work" is a different claim and this does not make it.
 
+## Cost: the run is ~an hour, not a few minutes — and that changes four things
+
+Tier A measured at **~55 min** on the 455 GB snapshot (team-lead, 2026-08-04), against a design that
+assumed "a few minutes, A daily, C weekly". sdk-vendor is re-running it clean, so **no cadence is
+hardcoded here until that number lands**. What can be reasoned about now is what a near-hour run changes,
+because these are consequences of the shape rather than of the exact figure:
+
+1. **"Defer until quiet" stops being a plan and becomes a hope.** Dashing through a quiet moment works
+   for a two-minute job. A 55-minute job needs an hour-long quiet window, and this box wobbles rather than
+   drains — there may be no such window on a given day. So the weight shifts off the interlock and onto
+   **confinement**: the run must be survivable *during* contention (`IOWeight`, `CPUWeight`, `MemoryMax`),
+   not merely scheduled around it. The interlock stays as a courtesy; confinement is what makes it safe.
+2. **A cost split implies separate state, or the repeat signal is garbage.** If the presence checks (O(1)
+   `EXISTS`) run daily and the full scans run weekly, they are two units — and sdk-vendor's repeat
+   detection keys on the *input identity of the last run*. Sharing one state file means the weekly reads
+   the daily's input and reports a meaningless `repeat`. **One state file per cadence**, or the mechanism
+   silently reports nonsense while looking healthy. Same family as the unwritable-state failure above.
+3. **A long run holds an unlinked snapshot open.** The ring keeps 2 and the daily prunes. An open fd keeps
+   a pruned file readable to completion (good — the run finishes on the file it started), but the space is
+   not reclaimed until the fd closes. Reflink sharing makes the marginal cost small; on a volume with
+   ~126 GB free it is still worth naming rather than discovering.
+4. **`FAIL_ON_REPEAT` needs its own state per cadence too**, for the same reason as (2): "no new input
+   since the last *weekly*" is a different question from "since the last *daily*", and both are
+   answerable — but only against their own history.
+
+## The verdict is a state, not an event (issue 33)
+
+The gate's first real run was **not** a dry green: it caught `cents < 0` on 17,738 rows in
+`tender_version_amounts` (issue 33) — an invariant agreed as a hard fail ten days earlier that went
+unenforced because its carrier, four pinned totals, had rotted. So build for FAIL as a **normal, expected
+outcome**, not an exception path: no retry loop, no crash, no special-casing.
+
+The consequence that matters for the integration: a real violation will persist across days until someone
+fixes it, so a naive per-run alert fires every morning, gets muted within a week, and the gate is
+decorative again — the same ending as the rotted totals, reached by a different road. So the surface must
+show the **current verdict as state** (this is the standing condition of the layer), not rely on anyone
+noticing a repeated event. New violations should be distinguishable from continuing ones; neither should
+be silenceable by habituation.
+
 ## The interlock: bounded deferral, never a precondition
 
 Load, not correctness — so the interlock must never be able to suppress the verifier indefinitely:
 
 1. Ask the app whether a heavy job is in flight (short timeout).
-2. If yes, defer and re-ask, up to `MAX_DEFER` (proposed 90 min).
+2. If yes, defer and re-ask, up to `MAX_DEFER` (**number deliberately unset** — it depends on the measured
+   run length and on how long a window this box actually offers; see cost, above).
 3. Past the bound, **run anyway** and mark the verdict `contended`.
 4. If the app is **unreachable**, do NOT defer — run immediately. An unreachable app is the wedge case
    the timer exists to survive, and there is no contention to avoid when nothing is running.
