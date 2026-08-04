@@ -275,9 +275,21 @@ learning to ignore a recurring green.
    unit) because more often adds no information, and the issue's claim is restated as *within one snapshot
    cycle* — which is what it already was.
 
-Recommendation: (1) if the carve-out is acceptable, since the catastrophic case is the one the whole gate
-exists for and it is the only option that actually detects it live; otherwise (2), with the promise
-corrected rather than the cadence inflated.
+**Resolved: neither — take (2) now, and put the live detector where it belongs (issue 133).**
+sdk-vendor's third option is better than both of mine: the live-catastrophe detector belongs **in the
+app**, which already holds the layer open and reads these tables constantly. It detects immediately
+rather than on a poll, raises no prod-box read question at all (the app reading its own database
+in-process is what it does anyway), needs no carve-out — and is a **state change rather than a
+heartbeat**, firing when the layer becomes empty instead of reporting 288 times a day that it has not.
+
+That reasoning is issue 119's producer argument again: *the thing that already touches the artifact
+continuously is the right place to notice it changing.* A snapshot-side gate is the right instrument for
+structural verification of a point-in-time artifact and the wrong one for liveness of a running system.
+
+So: **tier 0 stays snapshot-side and runs once per snapshot**, its honest claim being *within one snapshot
+cycle* — which is what it was before the measurement — and it keeps earning its place as a subset
+selector and as the cheap answer to "did the snapshot arrive intact". The live detector is **issue 133**,
+filed separately rather than held as a blocker on this cadence.
 
 ### Two constraints not to optimise away
 
