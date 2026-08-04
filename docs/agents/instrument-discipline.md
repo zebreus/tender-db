@@ -22,7 +22,7 @@ evidence that *supported the hypothesis under investigation* — a sampler whose
 study of unbounded duration, an occupancy count inflated in the direction of the conclusion. **Agreement
 is where nobody looks.**
 
-## The ledger — 2026-08-04, all eight permissive
+## The ledger — 2026-08-04, all nine permissive
 
 The pattern is only believable with the instances.
 
@@ -36,8 +36,20 @@ The pattern is only believable with the instances.
 | 6 | `pid_busy_pct` | returned `0` on four distinct measurement failures | `0` means idle means **go** |
 | 7 | restart watcher | instantaneous `D\|R` run-state | read **clear five seconds before the query stopped**; a thread momentarily in `S` between I/O waits reads idle |
 | 8 | run harness | `timeout N ssh host cmd` | bounded the **client**, not the work — a remote `sqlite3` ran 90 minutes after its parent died |
+| 9 | probe self-test **precondition** | wrapper ignored an argument it did not recognise and ran the payload | executed a **455 GB unconfined scan on prod for ~13 min** — and preconditions run *before* `systemd-run`, so it had no `MemoryMax`, no `IOWeight`, no abort, no `RuntimeMaxSec` |
 
 Not one refused when it should have.
+
+**Number 9 is a different species and worth separating.** The first eight *misreported*. The ninth took
+an **unrequested action**: the check meant to *precede* the protections ran *instead of* them, so every
+guard bypassed itself through the thing that was supposed to gate it. A permissive misreport costs you a
+wrong belief; a permissive *action* costs you the thing the guard was protecting.
+
+Its fix is also the one worth copying, because it is not a check: `"") run;; *) refuse exit 2`. Reaching
+the expensive path requires **saying nothing**, which is deliberate — never **saying anything**, which is
+a typo. Adding a check that *catches* the bad argument would have been one more permissive-failure
+candidate; making the bad argument **unrepresentable** removes the class. Prefer structure over a guard
+wherever the structure exists.
 
 ## The audit question
 
@@ -161,6 +173,32 @@ Beware environments that make the correct and incorrect versions look **equally*
 first tested under `zsh`, which does not word-split, so both forms returned empty and read as "my parsing
 is wrong somewhere" rather than "the wrong form is silently permissive". **A test environment that cannot
 distinguish them is worse than no test, because it produces a confident wrong diagnosis.**
+
+## A classification can fail permissive too
+
+Not only instruments. A **taxonomy** fails permissive when its frame is wrong, and it is harder to see,
+because **every case still lands in some bucket — so nothing looks wrong.**
+
+Issue 117 classified paginated reads by selectivity: *dense*, *matches-late*, *matches-nothing*. All
+three are properties of where matches **start**, so the scheme silently assumed a filter keeps matching
+once it begins. Nothing ever measured that. Prod's `?kind=registration` does not: 120 rows in ~8.1M, all
+inside id deciles 1–2. It was not misclassified — it was **unclassifiable**, and no bucket existed for
+"matches early, then stops". The resolution built on it ("both real values are dense, so only an
+adversarial nothing-match is slow") was sound reasoning *inside a frame nobody was checking*, which is
+why it survived review.
+
+**The tell is not a case the scheme rejects — it is a case it cannot distinguish.** A taxonomy that
+rejects an input is telling you something; one that accepts everything may only be telling you it has a
+bucket for everything. So ask of a classification the same audit question this file asks of a check:
+*what would it look like if the frame were wrong?* If the answer is "the same", the scheme is not
+carrying evidence.
+
+The generalisation: an assumption about the **corpus** wearing the clothes of a property of the
+**schema**. "A two-value column has two dense values" is a claim about data; nothing in the schema said
+it, and nothing re-checked it when the data moved. Same shape as the `notices_fetch_id` comment that was
+true at 3.5M rows and still there at 27.4M.
+
+*(sdk-vendor, 2026-08-05, from issue 117's correction — added to a doc authored by run-driver.)*
 
 ## Related
 
