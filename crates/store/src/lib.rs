@@ -2106,6 +2106,127 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Task #27: the projection may not commit a Tender whose head pointer is not
+    /// its last version.
+    ///
+    /// The reachable way to produce one: a Tender whose chain goes to EMPTY. The
+    /// reconcile deletes the stored versions, then skips the head update because
+    /// there is no last version to point at (`p.versions.last()` is `None`), so
+    /// `current_seq` keeps pointing into versions that no longer exist. Every
+    /// satellite view joins `t.seq = t.current_seq`, so the Tender would serve a
+    /// reading assembled from a version that is gone — no error, no log line.
+    ///
+    /// This drives the real `apply_tenders`, not a hand-written UPDATE: the value
+    /// of the assertion is that it fires on what the code actually does. The first
+    /// apply establishes a two-version chain; the second re-projects the same
+    /// Tender with no versions at all, and must be REFUSED before it commits.
+    #[tokio::test]
+    async fn a_head_that_is_not_the_last_version_is_refused_before_commit() {
+        let path = format!("/tmp/tender-db-headmax-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        let version = |notice_id: i64, published_at: i64| canonical::TenderVersion {
+            caused_by_notice_id: notice_id,
+            published_at,
+            dispatched_at: None,
+            notice_subtype: None,
+            publication_id: format!("{notice_id}-2024"),
+            facts: Default::default(),
+            lots: Vec::new(),
+            rounds: Vec::new(),
+        };
+        let projection = |versions: Vec<canonical::TenderVersion>| canonical::TenderProjection {
+            source: "ted".into(),
+            procedure_key: Some("key:1".into()),
+            island_notice_id: None,
+            kind: "procedure".into(),
+            versions,
+        };
+
+        // A healthy two-version chain commits, and its head points at seq 2.
+        db.apply_tenders(&[projection(vec![version(10, 100), version(11, 200)])], 0, false)
+            .await
+            .expect("a well-formed chain applies");
+        async fn head(db: &Db) -> Option<i64> {
+            match db.scalar("SELECT current_seq FROM tenders WHERE id = 1").await.unwrap() {
+                Some(turso::Value::Integer(n)) => Some(n),
+                _ => None,
+            }
+        }
+        assert_eq!(head(&db).await, Some(2), "the head points at the last version");
+
+        // The poison: the same Tender re-projected with an EMPTY chain. Both
+        // stored versions are deleted and the head update is skipped, so the
+        // pointer would be left at 2 with no version 2 to point at.
+        let err = db
+            .apply_tenders(&[projection(Vec::new())], 0, false)
+            .await
+            .expect_err("a head left pointing at a deleted version must be refused");
+        let message = err.to_string();
+        assert!(
+            message.contains("head") && message.contains("tender 1"),
+            "the error names the invariant and the Tender: {message}"
+        );
+
+        // Refused BEFORE COMMIT, so the batch rolled back whole: the versions the
+        // poisoned apply deleted are still there, and the head still agrees with
+        // them. A check that let the delete land and only complained afterwards
+        // would leave exactly the corruption it was added to prevent.
+        assert_eq!(head(&db).await, Some(2), "the rejected batch rolled back");
+        assert_eq!(
+            db.scalar("SELECT COUNT(*) FROM tender_versions WHERE tender_id = 1").await.unwrap(),
+            Some(turso::Value::Integer(2)),
+            "both versions survive the refused apply"
+        );
+
+        // The scale guarantee, asserted as a PLAN rather than a stopwatch (the
+        // issue-80 lesson: a per-row probe inside a full-corpus loop has to SEEK,
+        // and a laptop-scale clock cannot tell a seek from a scan). This runs once
+        // per write batch on every projection, including the 8.1M-Tender rebuild,
+        // so a full scan of `tender_versions` here would be catastrophic and
+        // invisible. Both sides must seek: `tenders` by primary key, the MAX(seq)
+        // subquery by the (tender_id, seq) primary key.
+        let conn = db.reader().await.unwrap();
+        async fn plan_of(conn: &turso::Connection, sql: &str) -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                if let Ok(turso::Value::Text(detail)) = row.get_value(3) {
+                    plan.push_str(&detail);
+                    plan.push('\n');
+                }
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        }
+        let check = "SELECT t.id, t.current_seq,
+                            (SELECT MAX(v.seq) FROM tender_versions v WHERE v.tender_id = t.id)
+                       FROM tenders t
+                      WHERE t.id IN (1, 2, 3)
+                        AND t.current_seq IS NOT
+                            (SELECT MAX(v.seq) FROM tender_versions v WHERE v.tender_id = t.id)";
+        let plan = plan_of(&conn, check).await;
+        assert!(!plan.contains("SCAN"), "the integrity check must seek both sides: {plan}");
+
+        // And the predicate above must be capable of saying NO — the plan prints
+        // ALIASES (`SCAN t`), so a check written against table NAMES would pass
+        // whatever the planner did. Same statement with the primary-key seek
+        // defeated: if this does not scan, the assertion above proves nothing.
+        let defeated = check.replace("t.id IN (1, 2, 3)", "t.id + 0 IN (1, 2, 3)");
+        assert!(
+            plan_of(&conn, &defeated).await.contains("SCAN"),
+            "the no-SCAN predicate cannot distinguish a seek from a scan"
+        );
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 25, the O(page) guarantee: the newest-Tenders list must read the
     /// `tenders_current_published` index in order and stop at the limit, never
     /// materialise-and-sort every tender. Asserting the query plan proves this at

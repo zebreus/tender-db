@@ -2315,9 +2315,15 @@ impl Db {
             let mut pending = Pending::default();
             let mut applied = Applied::default();
             let mut error = None;
+            // The Tenders whose version chain this batch rewrote — the set whose
+            // head pointer this run is answerable for (see `assert_heads_match`).
+            let mut rewrote = Vec::new();
             for p in chunk {
                 match self.apply_tender_tx(&conn, p, now, rebuild, &mut stmts, &mut pending).await {
-                    Ok(a) => applied.add(a),
+                    Ok((a, head)) => {
+                        applied.add(a);
+                        rewrote.extend(head);
+                    }
                     Err(e) => {
                         error = Some(e);
                         break;
@@ -2327,6 +2333,12 @@ impl Db {
             match error {
                 None => {
                     pending.flush(&conn).await?;
+                    // Integrity gate (task #27), inside the transaction: a head
+                    // that is not the last version never reaches disk.
+                    if let Err(e) = Self::assert_heads_match(&conn, &rewrote).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
                     conn.execute("COMMIT", ()).await?;
                     changed_any |= applied.changes > 0;
                     total.add(applied);
@@ -2363,7 +2375,7 @@ impl Db {
         rebuild: bool,
         stmts: &mut TenderInserts,
         pending: &mut Pending,
-    ) -> turso::Result<Applied> {
+    ) -> turso::Result<(Applied, Option<i64>)> {
         let mut applied = Applied::default();
         let (tender_id, created) = self.tender_identity(conn, p, now, rebuild, stmts).await?;
         applied.tenders_created += u64::from(created);
@@ -2384,7 +2396,7 @@ impl Db {
             .take_while(|(a, b)| **a == b.caused_by_notice_id)
             .count();
         if keep == stored.len() && keep == p.versions.len() {
-            return Ok(applied);
+            return Ok((applied, None));
         }
 
         for seq in (keep + 1..=stored.len()).rev() {
@@ -2417,7 +2429,66 @@ impl Db {
                 ))
                 .await?;
         }
-        Ok(applied)
+        // The chain changed, so this run owns this Tender's head pointer — the
+        // batch checks it before committing (see `assert_heads_match`).
+        Ok((applied, Some(tender_id)))
+    }
+
+    /// Issue 27 / task #27. Every Tender this batch rewrote must leave
+    /// `tenders.current_seq` equal to `MAX(tender_versions.seq)` — the head
+    /// pointer is what `v_tenders` and every satellite view join on
+    /// (`canonical.rs` view definitions), so a head that points at a version
+    /// that is not the last one silently serves a stale or missing reading of
+    /// the Tender, with no error anywhere.
+    ///
+    /// Run INSIDE the batch transaction, before COMMIT, so a violation rolls the
+    /// batch back instead of landing: the projection is re-runnable, a wrong head
+    /// is not self-healing.
+    ///
+    /// **Scoped to the Tenders this run modified**, deliberately. A pre-existing
+    /// violation on a Tender the run never touched is the standing snapshot gate's
+    /// business (task #28's `head_not_max`); failing the projection for it would
+    /// wedge the whole pipeline on damage the projection cannot repair, and a
+    /// verifier that stops the daily cycle over old damage gets turned off.
+    ///
+    /// One statement per batch (~512 Tenders), both sides seeking by
+    /// `tender_id` — bounded by the work actually done, so a small daily pays a
+    /// small price. `IS NOT` rather than `<>` because both sides are nullable and
+    /// the dangerous case is exactly a NULL one: a Tender whose versions were all
+    /// removed keeps its old `current_seq` (the head update is skipped when the
+    /// new chain is empty), leaving a pointer into versions that no longer exist.
+    async fn assert_heads_match(conn: &Connection, ids: &[i64]) -> turso::Result<()> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        let places = vec!["?"; ids.len()].join(",");
+        let sql = format!(
+            "SELECT t.id, t.current_seq,
+                    (SELECT MAX(v.seq) FROM tender_versions v WHERE v.tender_id = t.id)
+               FROM tenders t
+              WHERE t.id IN ({places})
+                AND t.current_seq IS NOT
+                    (SELECT MAX(v.seq) FROM tender_versions v WHERE v.tender_id = t.id)
+              LIMIT 5"
+        );
+        let params: Vec<Value> = ids.iter().map(|id| Value::Integer(*id)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        let mut bad = Vec::new();
+        while let Some(row) = rows.next().await? {
+            bad.push(format!(
+                "tender {} head current_seq={:?} but MAX(seq)={:?}",
+                int(&row, 0),
+                row.get_value(1).ok(),
+                row.get_value(2).ok(),
+            ));
+        }
+        if bad.is_empty() {
+            return Ok(());
+        }
+        Err(turso::Error::Corrupt(format!(
+            "projection would commit a Tender head that is not the last version: {}",
+            bad.join("; ")
+        )))
     }
 
     async fn tender_identity(
