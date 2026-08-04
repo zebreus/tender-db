@@ -1,10 +1,8 @@
 # 132 — the 51 negative `estimated_value` / `framework_maximum` rows the re-spec did NOT explain
 
-Status: **SUPERSEDED by issue 160** (sdk-vendor), which covers the same 51 rows with more evidence —
-magnitudes (EUR 420k and 11.8M scale, unlike the EUR 1-100 mass), the exactly-`-100` sentinel pattern, and
-the within-subset clustering question. We filed the same residual independently within the hour; theirs is
-richer, so this one stands down. **Read 160.** Kept only for the one question of mine it does not carry
-(P4 over the 51), noted below.
+Status: open — **CANONICAL** for this follow-up; issue 160 is a pointer here. The residual left by issue
+33's re-spec. **Not noise, and deliberately not swept under the narrowed invariant.** Small enough to
+inspect row by row.
 Kind: data quality
 Owner: unassigned (proj-fix filed; the parse-vs-fold half of 33 was mine)
 Relates to: 33 (the triage + re-spec), 131 (the parse-vs-fold determination), `run_light` 3.7,
@@ -56,19 +54,34 @@ Question 1 is cheap and decisive about *our* code; 3 is the one that needs a hum
 
 ---
 
-## Superseded — the one thing to carry across to 160
+## Merged from issue 160 (sdk-vendor's triage-side evidence)
 
-sdk-vendor filed issue **160** for these same 51 rows, independently and within the hour, with more
-evidence than this file has. That is the second same-day collision between us (the first was issue 121),
-and it is what a tracker with no allocator and no claim step produces when two people work the same finding
-from different ends.
+We filed this same follow-up within minutes of each other from opposite ends of #33 — I from the fix
+side, sdk-vendor from the triage side — and then each deferred to the other, briefly leaving two issues
+pointing at one another and none canonical. Resolved: **132 is canonical, 160 is the pointer.** Their
+evidence, kept so it is not lost with the number:
 
-The one question here that 160 does not already carry, and the cheapest of the set:
+**Already established, so nobody re-derives it:**
 
-> **Do the 51 satisfy P4?** — for each, does the version chain's parse layer hold an equal-magnitude
-> negative? Issue 33 established this across all 17,738, but that result is dominated by the 17,687
-> `result_value` mass; it does not automatically transfer to a 51-row subset. If any of the 51 fails P4,
-> the fold introduced a sign for them specifically and issue 131's exoneration needs re-opening for this
-> cohort. Decisive about our own code, and nearly free once the query is pointed at the subset.
+- **Not the fold** — P4 = 0 and 17,738/17,738 exact magnitude matches against the chain's parse layer.
+  *But those are whole-set figures*, dominated by the 17,687 `result_value` rows; whether these 51
+  individually satisfy P4 is the open question below, and the aggregate does not answer it. (sdk-vendor
+  caught themselves making that over-read in their own file while deduping.)
+- **Not a parser-version defect** — the full set scatters across 13 SDK versions (1.6→1.14 plus DE) and
+  4 years. A version-specific mapping fault would cluster.
+- **Magnitudes differ from the benign mass** — €420k and €11.8M scale, against a `result_value`
+  population that is 99.6 % between €1 and €100. These do not look like adjustment lines.
 
-Everything else in this file is said better in 160.
+**The open questions, sdk-vendor's third being the one to chase first:**
+
+1. Do the 51 cluster on profile/version/publisher *once isolated from the 17,687*? Whole-set scatter
+   does not rule out a cluster inside the subset, and nobody has looked.
+2. Is a negative `estimated_value` a published **sentinel** rather than a value? The recurring
+   exactly-`-100` (−1.00) pattern across several currencies suggests sentinels exist in this data.
+3. **Is some field whose published semantic is a DELTA being mapped as an absolute ceiling?** Invisible
+   from the sign alone, and the hypothesis that best explains why a *ceiling* — which cannot meaningfully
+   be negative — carries one. My area; this is where I would start after P4.
+
+**Framing worth keeping verbatim** (team-lead): *17,738 unexplained → 51 worth explaining is progress,
+not resolution.* The failure it guards against is using a mostly-benign explanation to wave through the
+part it does not cover.
