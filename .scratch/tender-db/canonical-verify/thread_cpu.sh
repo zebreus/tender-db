@@ -47,7 +47,15 @@ ticks() {
 }
 tname() { local line; line=$(cat "$1" 2>/dev/null) || return 1; line=${line#*(}; echo "${line%%)*}"; }
 
-declare -A occupied total_pct
+# Keyed by TID, not by comm name. Threads routinely SHARE a name — slow-read-exec
+# is four of them — and a name-keyed counter increments once per busy thread per
+# sample, making the numerator thread-samples while the denominator stays samples.
+# That renders impossible rows like "busy in 6/2 samples" and overstates duration
+# by exactly the number of concurrently-busy same-named threads (up to 4x on the
+# one target this tool exists for). The inflation direction happens to support an
+# unbounded-duration conclusion, which is where nobody checks. Found by
+# run-driver's independent calibration against `ps -L`, not by me.
+declare -A occupied total_pct tid_name
 busy_seen=0   # counted separately: ${#assoc[@]} on an empty array trips `set -u`
 echo "== per-thread CPU  pid=$PID  target=$TARGET  ${SAMPLES}x${INTERVAL}s  busy>${BUSY_PCT}% =="
 
@@ -74,9 +82,10 @@ for _ in $(seq 1 "$SAMPLES"); do
     if [ "$pct" -gt "$BUSY_PCT" ]; then
       n=${names[$tid]}
       line+=" ${n}=${pct}%"
-      [ -z "${occupied[$n]:-}" ] && busy_seen=$(( busy_seen + 1 ))
-      occupied[$n]=$(( ${occupied[$n]:-0} + 1 ))
-      total_pct[$n]=$(( ${total_pct[$n]:-0} + pct ))
+      [ -z "${occupied[$tid]:-}" ] && busy_seen=$(( busy_seen + 1 ))
+      occupied[$tid]=$(( ${occupied[$tid]:-0} + 1 ))
+      total_pct[$tid]=$(( ${total_pct[$tid]:-0} + pct ))
+      tid_name[$tid]=$n
     fi
   done
   printf '%s total=%d%%%s\n' "$(date -u +%H:%M:%SZ)" "$proc_total" "${line:-  (no thread above threshold)}"
@@ -88,11 +97,13 @@ if [ "$SAMPLES" -gt 1 ]; then
   if [ "$busy_seen" -eq 0 ]; then
     echo "   no thread was busy in any sample"
   else
-    for n in "${!occupied[@]}"; do
-      printf '   %-22s busy in %d/%d samples (~%ds), mean %d%% of one core while busy\n' \
-        "$n" "${occupied[$n]}" "$SAMPLES" "$(( occupied[$n] * INTERVAL ))" \
-        "$(( total_pct[$n] / occupied[$n] ))"
+    for tid in "${!occupied[@]}"; do
+      printf '   %-18s tid %-8s busy in %d/%d samples (~%ds), mean %d%% of one core while busy\n' \
+        "${tid_name[$tid]}" "$tid" "${occupied[$tid]}" "$SAMPLES" \
+        "$(( occupied[$tid] * INTERVAL ))" "$(( total_pct[$tid] / occupied[$tid] ))"
     done
+    echo "   Rows are PER THREAD. Threads sharing a comm name are separate slots and"
+    echo "   their durations do not sum — read each row as one unit of work."
   fi
   echo "   NOTE occupancy is a LOWER BOUND on duration: work already running when"
   echo "        sampling started, or still running when it stopped, is undercounted."
