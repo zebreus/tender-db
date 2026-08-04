@@ -41,6 +41,22 @@ SETTLE_S="${SETTLE_S:-60}"        # and after, to see recovery
 INTERVAL_S="${INTERVAL_S:-2}"
 ABORT_MS="${ABORT_MS:-250}"       # abort if the hot read exceeds this...
 ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichever is larger
+# REFAULT TRIPWIRE — the abort that watches the right variable.
+#
+# Tier B moved `refault` (239 pages) while latency did not move at all, so the
+# latency abort could only ever have said "fine" about the one effect we now know
+# a heavier tier can produce. Latency stays as the backstop; this is the primary
+# guard for Tier C.
+#
+# Calibrated to SUSTAINED pressure, not Tier B's harmless burst. B's worst single
+# sample was 172 pages over 2s (86/s) and it had at most 3 consecutive non-zero
+# samples, only one of them above 50/s. Requiring 5 CONSECUTIVE samples above 50/s
+# means ~500 pages over 10s sustained — an order above what B did, and a shape B
+# never produced. A threshold that B would have tripped would abort on a known-
+# harmless event; one that nothing could trip would be the permissive pattern on
+# the new guard.
+REFAULT_RATE_MAX="${REFAULT_RATE_MAX:-50}"   # pages/sec
+REFAULT_SUSTAIN="${REFAULT_SUSTAIN:-5}"      # consecutive samples above it
 UNIT="${UNIT:-tdb-standing-gate-probe}"
 # HARD REMOTE BOUND on the confined work. run-driver orphaned a snapshot read on
 # prod for 90 minutes today because a LOCAL `timeout` around `ssh` killed the
@@ -114,6 +130,47 @@ probe() { # -> epoch health_ms hot_ms live_bytes gate_bytes cached_kb file refau
 delta() {
   [ -s "$1" ] || { echo "n/a"; return; }
   awk -v c="$2" 'NR==1{f=$c} {l=$c} END{if(NR==0){print "n/a";exit} print l-f}' "$1"
+}
+
+# refault_verdict <prev_total> <cur_total> <interval_s> <run_length>
+# -> prints the new consecutive-breach count.
+#
+# PURE: no globals, no I/O. That is deliberate — it lets the self-test drive it
+# with a synthetic series instead of trying to provoke real memory pressure on a
+# live box, so both arms can be shown cheaply. A tripwire that has only ever been
+# observed saying "fine" is the permissive pattern on the newest guard, and this
+# one guards the heaviest tier.
+refault_verdict() {
+  local prev="$1" cur="$2" iv="$3" run="$4" rate
+  [ "${iv:-0}" -gt 0 ] 2>/dev/null || { echo "$run"; return; }
+  rate=$(( (cur - prev) / iv ))
+  if [ "$rate" -gt "$REFAULT_RATE_MAX" ]; then echo $(( run + 1 )); else echo 0; fi
+}
+
+# _test_refault_abort — both arms, against series taken from the real Tier B run
+# and a synthetic sustained one. Run with --test-refault-abort.
+_test_refault_abort() {
+  local fail=0 run series label expect got prev
+  echo "== refault tripwire: must fire on sustained pressure, NOT on Tier B's burst =="
+  # Tier B, measured: per-sample refault deltas 5, 45, 172, then zeros, then 17.
+  # Cumulative series at 2s intervals.
+  for spec in "tierB-burst:0 5 50 222 222 222 239:0" \
+              "sustained:0 200 400 600 800 1000 1200:1"; do
+    label=${spec%%:*}; rest=${spec#*:}; series=${rest%:*}; expect=${rest##*:}
+    run=0; prev=""; got=0
+    for v in $series; do
+      [ -n "$prev" ] && run=$(refault_verdict "$prev" "$v" 2 "$run")
+      [ "$run" -ge "$REFAULT_SUSTAIN" ] && got=1
+      prev=$v
+    done
+    if [ "$got" = "$expect" ]; then
+      printf '  PASS %-14s fired=%s (expected %s)\n' "$label" "$got" "$expect"
+    else
+      printf '  FAIL %-14s fired=%s (expected %s)\n' "$label" "$got" "$expect"; fail=1
+    fi
+  done
+  echo "  threshold: >${REFAULT_RATE_MAX} pages/s for ${REFAULT_SUSTAIN} consecutive samples"
+  [ "$fail" -eq 0 ] && echo "== both arms correct ==" || { echo "== TRIPWIRE SELF-TEST FAILED =="; return 1; }
 }
 
 pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
@@ -205,6 +262,12 @@ preconditions() {
     || { echo "  FAIL ${slots} Class B slot(s) still burning — an abandoned scan is churning the page cache this probe measures"; ok=1; }
   return $ok
 }
+
+# The tripwire self-test is pure and touches nothing — dispatch before the plan
+# banner and before preconditions, so it can be run anywhere including off-box.
+case "${1:-}" in
+  --test-refault-abort) _test_refault_abort; exit $?;;
+esac
 
 echo "== #28 phase 1: confined-read impact probe =="
 echo "-- plan: TIER=$TIER under MemoryMax=$MEM_MAX IOWeight=$IO_WEIGHT CPUWeight=$CPU_WEIGHT Nice=$NICE"
@@ -327,16 +390,35 @@ assert_confined() {
   echo "   confinement proven for this run."
 }
 assert_confined
-: > "$OUT.during.tsv"; breaches=0; aborted=no; gate_start=$(date +%s)
+: > "$OUT.during.tsv"; breaches=0; refault_run=0; prev_refault=""; aborted=no; abort_why=""
+gate_start=$(date +%s)
 while unit_running "$UNIT.service"; do
   s=$(probe); echo "$s" >> "$OUT.during.tsv"
   hot=$(echo "$s" | awk '{print $3}')
+  cur_refault=$(echo "$s" | awk '{print $8}')
+
+  # PRIMARY GUARD: sustained refault. Tier B moved refault while latency did not
+  # move at all, so latency alone would have said "fine" about the only effect a
+  # heavier tier is known to produce.
+  if [ -n "$prev_refault" ]; then
+    refault_run=$(refault_verdict "$prev_refault" "$cur_refault" "$INTERVAL_S" "$refault_run")
+    if [ "$refault_run" -gt 0 ]; then
+      echo "   !! refault > ${REFAULT_RATE_MAX}/s (sustained $refault_run/${REFAULT_SUSTAIN})"
+    fi
+    if [ "$refault_run" -ge "$REFAULT_SUSTAIN" ]; then
+      echo "   ABORTING — sustained page-cache eviction of the live service"
+      systemctl stop "$UNIT.service" 2>/dev/null; aborted=yes; abort_why=refault; break
+    fi
+  fi
+  prev_refault=$cur_refault
+
+  # BACKSTOP: latency. Kept, but no longer the only guard.
   if awk -v h="$hot" -v t="$thresh" 'BEGIN{exit !(h>t)}'; then
     breaches=$((breaches+1))
     echo "   !! hot read ${hot}ms > ${thresh}ms (breach $breaches/3)"
     if [ "$breaches" -ge 3 ]; then
       echo "   ABORTING — confinement is not protecting the live service"
-      systemctl stop "$UNIT.service" 2>/dev/null; aborted=yes; break
+      systemctl stop "$UNIT.service" 2>/dev/null; aborted=yes; abort_why=latency; break
     fi
   else breaches=0; fi
   sleep "$INTERVAL_S"
@@ -372,6 +454,6 @@ echo "  live service MemoryCurrent, first->last during: $(head -1 "$OUT.during.t
 echo "    (a large DROP here is the live cache being evicted — the failure mode under test)"
 echo "  raw: $OUT.{baseline,during,after}.tsv"
 echo
-echo "VERDICT_INPUTS aborted=$aborted gate_secs=$gate_secs peak_gate_bytes=$peak_gate"
+echo "VERDICT_INPUTS aborted=$aborted${abort_why:+ abort_why=$abort_why} gate_secs=$gate_secs peak_gate_bytes=$peak_gate refault_guard=>${REFAULT_RATE_MAX}/s x${REFAULT_SUSTAIN}"
 echo "Read the numbers before declaring the confinement sound. A short run that never"
 echo "touched the disk proves nothing about a run that does."
