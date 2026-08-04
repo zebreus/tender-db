@@ -1,6 +1,7 @@
 # 121 — a standing structural gate, the empty-layer hole it closed, and two corrections it forced
 
-Status: phase 0 landed (`8e96b8f`); phase 1 blocked on lead authorization (prod-box read)
+Status: phase 0 landed (`8e96b8f`, hardened `ca1a9b8`); phase 1 AUTHORIZED (two-phase) and STAGED on
+the box — held because preconditions refuse while the live service is under sustained Class B load
 Kind: verification (standing gate) + two corrections to load-bearing beliefs
 Owner: sdk-vendor (gate) + proj-fix (daily-cycle integration)
 Relates to: 107 (freshness witness — partly consumed here), 109 (presence gate — partly consumed here),
@@ -13,7 +14,7 @@ continuously verify the tender layer: a latent salvage re-nuke could corrupt the
 2-deep snapshot ring would faithfully copy the corruption before anyone noticed. The sound fix is to
 verify in the **present**, continuously, rather than resurrect a week-old unreproducible verdict.
 
-`canonical-verify/standing_gate.sh` — 29 count-free structural checks, stock sqlite3, snapshot-side,
+`canonical-verify/standing_gate.sh` — 37 count-free structural checks, stock sqlite3, snapshot-side,
 read-only, in three cost tiers (A single-table, B joins/anti-joins, C the ~30M `organization_mentions`
 anti-join) so the daily prod-box cost is bounded by construction.
 
@@ -28,8 +29,16 @@ reports a **nuked layer as green** — the precise catastrophe the prenuke exist
 
 Verified rather than argued: on an empty `tenders`, both `identity_overlap` and `no_head` return `0`.
 
-Closed with three `*_present` checks that stay count-free — they assert a threshold of `>0`, never a
-pinned total, so they cannot go stale either. This is the same family as **109** (every gate counts rows,
+Closed with `present_*` checks that stay count-free — they assert existence, never a pinned total, so
+they cannot go stale either.
+
+**And closed only PARTLY, at first.** The initial set covered the spine plus `lot_results` and mentions
+— not the satellites the orphan checks read. run-driver's sweep bed is exactly that shape (`tenders`
+populated, every satellite empty), and against it `orphan_texts` / `orphan_amounts` / `orphan_parties` /
+`orphan_winner_orgs` all return 0 and the gate goes green on absence: the same hole, one level down,
+after I had announced it fixed. The rule now enforced is **no check may depend on a table whose
+non-emptiness is unasserted** — one `present_*` per table any check reads (eleven), via `EXISTS` (O(1)),
+so there is no cost argument for a partial set. This is the same family as **109** (every gate counts rows,
 and shells have rows): 109 is "a row exists but is empty of content"; this is "no row exists at all".
 Both are silent-green failure modes of count-based gates. Any future "EXPECT 0 violations" check inherits
 this hole by default and needs a presence counterpart.
@@ -37,7 +46,7 @@ this hole by default and needs a presence counterpart.
 ## Anti-decorative discipline (README rule 2 / commit `0bae958`)
 
 Every check carries its own `poison`: the minimal edit that must make it fire. `--self-test` asserts each
-check reports 0 on a clean fixture and >0 on its own poison — 29 clean + 29 poisoned, all passing. A
+check reports 0 on a clean fixture and >0 on its own poison — 37 clean + 37 poisoned, all passing. A
 check with no poison is reported **UNEXERCISED**, not silently trusted.
 
 The runner's own failure modes are exercised in isolation, because that is where a gate rots quietest:
@@ -46,7 +55,8 @@ The runner's own failure modes are exercised in isolation, because that is where
 |---|---|---|
 | snapshot 40 h old (max 30 h) | refuses, exit 2, `VERDICT stale_input` | verifying a stale snapshot green is the failure (107) |
 | unbound schema (dropped table) | `ERROR`, exit 1 — never a silent `0` | an errored query reading as "0 violations" is how a broken detector hides |
-| clean fresh input | 29/29, exit 0, one `VERDICT` line | machine-readable for journal/dashboard |
+| snapshot resolved by newest, not pinned | runs, but records `mode=newest` | age is a BOUND, not an IDENTITY: a failed snapshot step leaves yesterday's file newest and inside the age bound (proj-fix) |
+| clean fresh input | 37/37, exit 0, one `VERDICT` line | machine-readable for journal/dashboard |
 
 **Stated limit:** the self-test proves detector *logic* against a minimal hand-built schema. It does NOT
 prove the SQL binds to the real schema — only a real run does, and as of phase 0 that has not happened.
@@ -98,3 +108,36 @@ of the memory stands.
 * **Phase 3 / the prenuke:** N consecutive green days makes the gate a sound replacement for the
   *unreproducible 07-28 verdict*, NOT for the *backup*. Deletion stays parked at #20 on its own evidence.
   The gate's greenness must not quietly become a deletion argument.
+
+## A green is not end-to-end verification where a preventer runs upstream
+
+Recorded 2026-08-04 (proj-fix's correction, sharper than the limit I first stated).
+
+I offered `head_not_max` as a detector proj-fix could check their #27 projection-time
+assertion against — "assertion fires ⟺ gate finds violations". I hedged it only with a
+window-overlap caveat. The real limit is stronger and partly dissolves the pairing:
+
+**#27's assertion refuses and rolls back.** A violation therefore never lands, the
+snapshot stays clean, and this gate finds nothing. So once #27 ships, gate-green over
+that invariant is consistent with *both* "no damage" and "damage attempted and
+prevented" — **indistinguishable from here**. The signal that separates them has moved
+somewhere this gate cannot see: a failed projection job carrying the assertion's error
+text.
+
+The honest statement of the relationship is therefore **not** mutual confirmation:
+
+* the **assertion prevents** new violations;
+* the **gate covers what the assertion cannot see** — damage predating it, and Tenders
+  no projection has touched since.
+
+Generalised, because it is not specific to #27: **a check downstream of a guard cannot
+validate that guard.** The guard working and the guard being absent-but-unneeded produce
+the same clean state. Reading gate-green as end-to-end verification of an invariant that
+something upstream enforces is the decorative reading — the check is real, but it is not
+answering the question it appears to answer. Written into `standing_gate.sh`'s header as
+"WHAT A GREEN DOES NOT MEAN" so it cannot be misremembered as confirmation.
+
+This is the same family as the vacuity hole above: in both cases a check returns 0 and
+the 0 means something other than what a reader would assume. Vacuity is "0 because
+nothing is there"; this is "0 because something upstream stopped it". Neither is
+detectable from the number alone.

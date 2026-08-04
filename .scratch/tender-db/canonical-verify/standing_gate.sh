@@ -34,6 +34,19 @@
 # depend on a table whose non-emptiness is unasserted — cheap enough (EXISTS)
 # that there is no reason to be selective about it.
 #
+# WHAT A GREEN DOES NOT MEAN. Several of these invariants are ALSO enforced
+# upstream — `head_not_max` is issue #27's projection-time assertion, which
+# refuses and rolls back rather than writing a violation. Where a preventer runs
+# upstream, a clean snapshot is consistent with BOTH "nothing went wrong" and
+# "something went wrong and was prevented", and this gate cannot tell them apart:
+# the distinguishing signal is a FAILED JOB carrying the assertion's error, not
+# anything visible here. So a green over such an invariant means "no damage
+# present", never "the preventer works" — a gate downstream of a guard cannot
+# validate that guard, because the guard's success and its absence look identical
+# from here. What this gate genuinely adds over the assertion is coverage the
+# assertion cannot have: damage that predates it, and Tenders no projection has
+# touched since. (proj-fix, 2026-08-04 — sharper than the limit I first wrote.)
+#
 # TIERS bound the daily cost. A = single-table scans. B = joins and grouped
 # anti-joins over the version-keyed tables. C = the ~30M organization_mentions
 # anti-join. Intended cadence: A daily, B daily once measured, C weekly.
