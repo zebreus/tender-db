@@ -172,6 +172,48 @@ SELECT n.profile, COUNT(*) AS n
  GROUP BY n.profile ORDER BY n DESC;
 
 .print ''
+.print '== 12-13: THE 51 SPECIFICALLY (proj-fix, issue 132) ======================='
+.print '-- Queries 9/10 answered P4 for the WHOLE set. Those are AGGREGATE figures and'
+.print '-- they do NOT settle the 51 ceiling negatives — an over-read I made in my own'
+.print '-- issue file before catching it. proj-fix leads 132 with this question because'
+.print '-- it is nearly free here and decisive before any distribution work.'
+
+.print ''
+.print '-- 12. of the 51 (negatives NOT on result_value), how many have NO negative'
+.print '--     anywhere in their chain? -> EXPECT 0 if the fold is faithful for them too.'
+.print '--     NONZERO = the fold introduced these specific signs, and 132 becomes a code'
+.print '--     defect rather than a data question.'
+SELECT COUNT(*) AS ceiling_negatives_with_no_negative_in_chain
+  FROM tender_version_amounts a
+ WHERE a.cents < 0 AND a.field <> 'result_value'
+   AND NOT EXISTS (SELECT 1 FROM tender_versions v2
+                     JOIN notice_amounts na ON na.notice_id = v2.caused_by_notice_id
+                    WHERE v2.tender_id = a.tender_id AND v2.seq <= a.seq
+                      AND na.cents < 0);
+
+.print ''
+.print '-- 13. and how many have an EXACT magnitude match in their chain? High = faithful'
+.print '--     copy of a published negative ceiling, which is the interesting case: it'
+.print '--     would mean the SOURCE published a negative ceiling, not that we made one.'
+SELECT COUNT(*) AS ceiling_negatives_with_exact_match_in_chain
+  FROM tender_version_amounts a
+ WHERE a.cents < 0 AND a.field <> 'result_value'
+   AND EXISTS (SELECT 1 FROM tender_versions v2
+                 JOIN notice_amounts na ON na.notice_id = v2.caused_by_notice_id
+                WHERE v2.tender_id = a.tender_id AND v2.seq <= a.seq
+                  AND na.cents = a.cents);
+
+.print ''
+.print '-- 14. do the 51 CLUSTER once isolated from the 17,687? Whole-set scatter does'
+.print '--     not rule out a cluster inside the subset — 132 open question 1.'
+SELECT n.profile, a.field, COUNT(*) AS n
+  FROM tender_version_amounts a
+  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
+  JOIN notices n ON n.id = v.caused_by_notice_id
+ WHERE a.cents < 0 AND a.field <> 'result_value'
+ GROUP BY n.profile, a.field ORDER BY n DESC;
+
+.print ''
 .print '== READING IT: concentration in 3/4 + mirrored positives in 7 => H1, fix the parser.'
 .print '== Spread in 2/3/4 + correction subtypes in 5 + no mirrors => H2, fix the CHECK.'
 .print '== Mixed => say so and do not force a verdict; both can be true of different rows.'
