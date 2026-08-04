@@ -167,18 +167,34 @@ reads fired that day.
 
 ## Observed on prod, 2026-08-04: bounded duration is the claim that does not hold
 
-> **A 14-minute burst produced at least 47 minutes of degradation — a blast radius
-> more than 3x the traffic that caused it, and still open when this was written.**
-> That ratio, not any single slow read, is why this issue is reopened: it is what
-> turns "a slow endpoint" into "a self-sustaining degradation", and it is invisible
-> on a request-rate graph, which shows the 14 minutes and nothing after.
+> **A 14-minute burst produced ~85 minutes of degradation — a blast radius roughly
+> 6x the traffic that caused it.** That ratio, not any single slow read, is why this
+> issue is reopened: it is what turns "a slow endpoint" into "a self-sustaining
+> degradation", and it is invisible on a request-rate graph, which shows the 14
+> minutes and nothing after.
 
-The 47 minutes is a **lower bound, not a measurement**: the burst ended 09:33:44 UTC
-and two `slow-read-exec` threads were still occupied at 10:20:33, when this was
-recorded. The true figure is larger by however long it kept running. Stated as a
-bound rather than rounded up, for the same reason `thread_cpu.sh` reports occupancy
-as a lower bound — an honest floor beats a confident guess, and the floor is already
-enough to carry the argument.
+**The termination was OBSERVED, not interrupted** — which is the strongest form this
+evidence can take. A controlled restart was authorised and armed for 11:10Z; the slot
+released on its own at **10:59:08 UTC**, before the deadline, so the restart premise
+expired and nothing was killed. Had we restarted, this would read "at least 57
+minutes, censored by intervention" — a floor, not a runtime.
+
+    last genuine API request   09:33:44 UTC   (all later traffic is scanner 404s)
+    slot released              10:59:08 UTC
+    abandoned, no client       ~85 minutes, run to completion
+
+Two honesty notes on the figure:
+
+* **It is still a lower bound on the QUERY's runtime**, though not on the abandonment.
+  The clock starts at the last request of the burst, but this query may have begun
+  earlier in it — the `/v1/sql` calls were at 09:31:37 — so the true runtime is ~85
+  minutes *or more*. What is uncensored is the *termination*, not the start.
+* **It is one observation.** The earlier instance in this same incident gives an
+  independent ~26 minutes. Two points, both large, one run to completion.
+
+An earlier draft of this section recorded 47 minutes as a still-open lower bound. That
+was honest when written and is superseded rather than corrected: the phenomenon simply
+kept going for another 38 minutes.
 
 Status: REOPENED (task #31). The section above closed the expensive branch on the
 grounds that a runaway *terminates*. It does. What was never bounded — and what
@@ -264,6 +280,27 @@ about: **measure the artifact, not a correlate.** Load average is a correlate of
 "are the Class B slots occupied". The artifact is the busy-thread count itself, and
 it is directly readable. sdk-vendor's re-armed trigger — *zero busy `slow-read-exec`
 threads for N consecutive samples* — is the right shape; a load threshold is not.
+
+**But there are two grades of "the artifact", and the weaker one nearly misled the
+restart decision.** Two independent watchers ran against this same slot:
+
+    run-driver   sampled INSTANTANEOUS thread state (D|R from /proc), every 45s
+    sdk-vendor   sampled CPU DELTA over an interval, every ~10s
+
+They agreed on the outcome, and the transition times nearly agree — but not quite,
+and the direction matters. run-driver's watcher read `busy=0` at **10:58:52**;
+sdk-vendor's read `busy=1` at **10:58:57**, five seconds later, with the true release
+at 10:59:08. An instantaneous `D|R` check sees a thread that is momentarily in `S`
+between I/O waits and calls it idle. **So the weaker instrument can report a clear
+while the query is still running**, and here it happened to do so within seconds of
+the real clear rather than minutes before it. The restart decision was premise-bound
+on exactly this reading; a momentary `S` sampled at 10:40 would have produced a
+confident "CLEARED-EARLY" with an hour of work still to go.
+
+CPU delta over an interval is the artifact; instantaneous run-state is one more
+correlate, just a much better one than load average. The lesson is not "use /proc"
+but that **"measure the artifact" has grades, and a check can be one level closer to
+the truth and still not close enough.**
 
 **One caveat on the instrument, pending a fix.** `thread_cpu.sh`'s per-sample
 percentages are correct — calibrated against a C pthread spinner with `ps -L` as an
