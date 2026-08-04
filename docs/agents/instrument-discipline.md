@@ -1,7 +1,7 @@
 # Instruments, gates and watchdogs
 
 How to build a check you can believe. This is the team rule, adopted 2026-08-04, after a single day
-produced **eight instrument bugs and every one of them failed permissive**. Companion to
+produced **nine instrument bugs and every one of them failed permissive**. Companion to
 [`prod-box-reads.md`](prod-box-reads.md), which governs *what* you may read; this governs *whether the
 thing reading it can be trusted*.
 
@@ -17,7 +17,7 @@ That is not a bias in the bugs. It is a bias in the *discovery*: permissive fail
 do not generate the evidence of their own existence. So they accumulate, and they accumulate silently,
 and a day's worth of them all point the same way.
 
-**Worse: a permissive bug tends to agree with what you expected.** Three of the eight below produced
+**Worse: a permissive bug tends to agree with what you expected.** Three of the nine below produced
 evidence that *supported the hypothesis under investigation* — a sampler whose numbers climbed during a
 study of unbounded duration, an occupancy count inflated in the direction of the conclusion. **Agreement
 is where nobody looks.**
