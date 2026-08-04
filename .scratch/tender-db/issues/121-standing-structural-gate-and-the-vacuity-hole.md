@@ -31,6 +31,43 @@ evicted", not "the delta never worked".
 
 Tier B/C released on this, with the condition that each re-measures rather than inherits the result —
 they stress the fill harder, so `refault = 0` at their weight has to be shown, not assumed.
+
+### All three tiers measured (2026-08-04/05, same pinned snapshot, same warm 1.72 GB working set)
+
+| tier | checks | wall | refault | majflt | cache_file | gate verdict |
+|---|---|---|---|---|---|---|
+| A | 24 | 2369 s | 0 | 2 | 0 | 23/24 (the 51 negative ceilings) |
+| B | 12 | 3193 s | **239** | 173 | +1,036,288 | 12/12 ok |
+| C | 1 | **361 s** | 0 | 2 | 0 | 1/1 ok |
+
+**The condition earned itself: Tier A's zero did NOT transfer.** Tier B moved `refault` — 239 pages
+across 4 of 1,544 samples, 222 of them in a ~10-second burst, ≈1 MB against a 1.72 GB working set
+(0.05%), while the service's cache *grew* and latency was flat-or-better. Had B inherited A's result
+the report would have said "confinement holds" on the one signal that tests the claim.
+
+**And the tier ORDERING was wrong.** These were split by assumed cost — C, the ~30M
+`organization_mentions` anti-join, was assumed heaviest, which is why the original proposal was "A
+daily, C weekly". Measured, **C is the cheapest tier at 6 minutes and B is the most expensive at 53**:
+one index-assisted anti-join is far cheaper than twelve joins or twenty-four table scans. The tiers
+were classified by *row count of the largest table touched* rather than by work done, and nothing
+checked that.
+
+*This is issue 117's taxonomy defect in a second place, on the same day.* The buckets were fine; what
+they were **ordered by** was never measured, and every tier still landed in a bucket, so nothing looked
+wrong. **A cadence derived from that ordering would have run the cheap tier weekly and the expensive
+one daily.**
+
+Cadence is therefore an open decision to be made from these numbers, not from the original split.
+
+**Mechanism, honestly unsettled.** C's zero shows `refault` does not scale with tier weight — C spans
+the largest table and evicted nothing. But C ran 361 s against B's 3193 s, **nine times less
+exposure**, so it refutes *proportional-to-weight* and does **not** refute *occasional-burst-over-long-
+exposure*. Settling it needs a long run at C's weight or a second long run at B's; neither exists.
+
+**Guard status:** the refault tripwire (>50 pages/s × 5 consecutive samples, calibrated above B's
+observed burst) was armed for C and stayed silent — correctly, since refault never moved. Its firing
+is proven synthetically and by a wiring test, **not** by a real run, and today's silence is not
+evidence it works.
 Kind: verification (standing gate) + two corrections to load-bearing beliefs
 Owner: sdk-vendor (gate) + proj-fix (daily-cycle integration)
 Relates to: 107 (freshness witness — partly consumed here), 109 (presence gate — partly consumed here),
