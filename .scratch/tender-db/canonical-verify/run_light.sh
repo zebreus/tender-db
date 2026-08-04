@@ -97,7 +97,12 @@ echo "-- 3. Weirdness (eyeball) + hard sanity"
 info 3.1 "SELECT (SELECT COUNT(*) FROM tenders WHERE current_seq>50),(SELECT COUNT(*) FROM tenders WHERE current_seq>100),(SELECT COUNT(*) FROM tenders WHERE current_seq>500),(SELECT COUNT(*) FROM tenders WHERE current_seq>1000)" "mega-tail >50/100/500/1000"
 info 3.3 "SELECT (SELECT COUNT(*) FROM tenders WHERE current_seq=1),(SELECT COUNT(*) FROM tenders WHERE current_seq=2),(SELECT COUNT(*) FROM tenders WHERE current_seq BETWEEN 3 AND 5),(SELECT COUNT(*) FROM tenders WHERE current_seq BETWEEN 6 AND 10),(SELECT COUNT(*) FROM tenders WHERE current_seq BETWEEN 11 AND 50),(SELECT COUNT(*) FROM tenders WHERE current_seq>50)" "notices/tender 1/2/3-5/6-10/11-50/>50"
 zero 3.6 "SELECT COUNT(*) FROM tender_versions WHERE published_at < 631152000 OR published_at > 1800000000" hard "no absurd publication dates"
-zero 3.7 "SELECT COUNT(*) FROM tender_version_amounts WHERE cents < 0" hard "no negative amounts"
+# Issue 33: negatives are legitimate on `result_value` (award/result adjustments —
+# 17,687 of 17,738 measured, 99.6% between EUR 1 and 100) and implausible on an
+# estimated value or a framework maximum. Written as an ALLOW-LIST (`<> 'result_value'`)
+# rather than a deny-list of the two forbidden names, so a future fourth amount field
+# is forbidden by default: the check fails closed on a name nobody has thought about yet.
+zero 3.7 "SELECT COUNT(*) FROM tender_version_amounts WHERE cents < 0 AND field <> 'result_value'" hard "no negative amounts outside result_value"
 info 3.8 "SELECT (SELECT COUNT(*) FROM lot_results),(SELECT COUNT(*) FROM bids),(SELECT COUNT(*) FROM contracts)" "results lot_results/bids/contracts (all should be > 0)"
 
 echo "-- 4. changes feed"

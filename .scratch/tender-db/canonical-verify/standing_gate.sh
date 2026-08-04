@@ -122,7 +122,7 @@ islands_multi|A|islands are single-notice tenders|SELECT COUNT(*) FROM tenders W
 provisional_identifier|A|provisional org iff it has no identifier|SELECT COUNT(*) FROM organizations WHERE (provisional = 1) <> (identifier IS NULL)|UPDATE organizations SET provisional=1 WHERE identifier IS NOT NULL
 identifier_kind_bad|A|organizations.identifier_kind within its domain|SELECT COUNT(*) FROM organizations WHERE identifier_kind IS NOT NULL AND identifier_kind NOT IN ('vat','national')|UPDATE organizations SET identifier_kind='zzz' WHERE identifier IS NOT NULL
 absurd_pubdate|A|publication dates inside absolute sane bounds|SELECT COUNT(*) FROM tender_versions WHERE published_at < 631152000 OR published_at > 1800000000|UPDATE tender_versions SET published_at=1 WHERE seq=1
-negative_amount|A|no negative money|SELECT COUNT(*) FROM tender_version_amounts WHERE cents < 0|UPDATE tender_version_amounts SET cents=-1
+negative_amount|A|negative money only where it is meaningful (result_value)|SELECT COUNT(*) FROM tender_version_amounts WHERE cents < 0 AND field <> 'result_value'|UPDATE tender_version_amounts SET cents=-1 WHERE field='estimated_value'
 changes_op_bad|A|changes.op within its domain|SELECT COUNT(*) FROM changes WHERE op NOT IN ('added','changed','removed')|UPDATE changes SET op='zzz'
 changes_kind_bad|A|changes.entity_kind within its domain|SELECT COUNT(*) FROM changes WHERE entity_kind NOT IN ('tender','lot','organization','lot_result','bid','contract')|UPDATE changes SET entity_kind='zzz'
 versions_ge_tenders|A|at least one version per tender|SELECT CASE WHEN (SELECT COUNT(*) FROM tender_versions) >= (SELECT COUNT(*) FROM tenders) THEN 0 ELSE 1 END|DELETE FROM tender_versions
@@ -184,6 +184,16 @@ INSERT INTO organizations VALUES (1,'DE','vat','DE123','Buyer',0,1),(2,NULL,NULL
 INSERT INTO organization_mentions VALUES (11,'ORG-0001',1),(12,'ORG-0001',2);
 INSERT INTO tender_version_texts VALUES (1,1,'title','T'),(1,2,'title','T2');
 INSERT INTO tender_version_amounts VALUES (1,2,'value',5000,'EUR');
+-- The real canonical amount field names (project.rs AMOUNTS maps to exactly
+-- these three), so a FIELD-SENSITIVE check is exercised against the domain the
+-- data actually has rather than against a placeholder. The NEGATIVE result_value
+-- is deliberate and load-bearing: it is the permit arm of `negative_amount`
+-- (issue 33). If that check ever forbids negatives on result_value again, the
+-- CLEAN fixture stops reporting 0 and the self-test fails — so both arms of the
+-- re-spec are proven by the existing machinery, with no extra case needed.
+INSERT INTO tender_version_amounts VALUES (1,2,'estimated_value',5000,'EUR');
+INSERT INTO tender_version_amounts VALUES (1,2,'framework_maximum',9000,'EUR');
+INSERT INTO tender_version_amounts VALUES (1,2,'result_value',-250,'EUR');
 INSERT INTO tender_version_parties VALUES (1,2,1,'buyer');
 INSERT INTO lots VALUES (1,1,'LOT-0001');
 INSERT INTO lot_results VALUES (1,1,12,'RES-0001');
