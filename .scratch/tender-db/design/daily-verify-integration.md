@@ -152,6 +152,55 @@ figure:
    since the last *weekly*" is a different question from "since the last *daily*", and both are
    answerable — but only against their own history.
 
+## Cadence: the measured costs INVERT the proposed split
+
+All three tiers, one pinned snapshot, warm 1.72 GB working set, directly comparable
+(sdk-vendor, `bd95142`):
+
+| tier | checks | wall | refault | verdict |
+|---|---|---|---|---|
+| A | 24 | 2369 s (39 min) | **0** | 23/24 (the 51 negative ceilings, expected) |
+| B | 12 | 3193 s (53 min) | **239** | 12/12 |
+| C | 1 | 361 s (6 min) | **0** | 1/1 |
+
+The proposal was *A daily, C weekly*, on the assumption that C — the ~30 M
+`organization_mentions` anti-join — was the heavyweight. **It is the cheapest tier by
+an order of magnitude**: one index-assisted anti-join beats twelve joins or
+twenty-four table scans. The tiers had been ordered by *row count of the largest
+table touched* rather than by work done, and nothing checked it. (sdk-vendor's own
+diagnosis, and it is issue 117's defect again: the buckets were fine, what they were
+*ordered by* was never measured, and every tier still landed in a bucket so nothing
+looked wrong.)
+
+**Re-derived, cost-first:** C is nearly free and can run daily or more often. A is
+39 min with zero eviction — daily is fine. **B is the hard case**: 53 min, and the
+only tier that moved `refault` at all.
+
+**But cost is not the only axis, and the tension should be stated rather than
+resolved by arithmetic.** B is the referential-integrity tier — the joins and
+grouped anti-joins over the version-keyed tables — which is plausibly the *most*
+valuable thing to run often, since it is what catches fold damage. Putting the most
+valuable tier on the rarest slot because it is the most expensive is a real
+trade-off, not an obvious win.
+
+**So B's cadence is NOT decidable from these numbers**, because they are unconfined.
+`MemoryMax` exists precisely to contain the effect B is the only tier to produce. If
+the cap holds B's refault near zero, B can be daily and the tension dissolves; if it
+does not, B is weekly with a chosen window and the tripwire armed. **That is the
+measurement that decides it, and it has not been taken.** Until then the design
+assumes: **A + C daily, B on a chosen window**, and treats that as provisional.
+
+**Gate on eviction, not latency.** Tier B moved `refault` while latency was *better*
+during the run than at baseline. Any health check the timer grows must watch
+refault/major-fault behaviour; latency alone would report "fine" about the one effect
+a heavy tier is known to produce. sdk-vendor's tripwire (>50 pages/s over 5
+consecutive samples) is armed but — their words — proven only synthetically and by a
+wiring test, never on a real run. Treat a quiet tripwire accordingly.
+
+**`GATE_LABEL` per unit is now load-bearing rather than hypothetical**: A, B and C ran
+with separate labels and separate state files. Sharing one would have had the three
+answering each other's `repeat` question.
+
 ## REQUIREMENT: the verdict is a state, not an event (issue 33)
 
 **Firm requirement, team-lead 2026-08-04 — build it in from the start, not as polish.** The concrete
