@@ -80,12 +80,22 @@
 # An errored query is never counted as 0 violations (see `violations`).
 set -uo pipefail
 
+TIER="${TIER:-A}"
 SNAPSHOT_DIR="${SNAPSHOT_DIR:-/data/db/snapshots}"
 MAX_AGE_H="${MAX_AGE_H:-30}"   # daily pipeline runs 09:35 Europe/Berlin; 30h = one missed run
 # Where the last verified input's identity is recorded, so a repeat can be seen.
-STATE_FILE="${STATE_FILE:-/var/lib/tender-db/standing_gate.last}"
+#
+# ONE STATE FILE PER CADENCE, and the default derives from GATE_LABEL to make
+# accidental sharing hard. Repeat detection keys on "did the input change since
+# MY last run", so two schedules sharing a state file answer each other's
+# question: a weekly reading the daily's bookkeeping reports repeat=no that looks
+# exactly like a correct repeat=no, and FAIL_ON_REPEAT then guards nothing. The
+# broken and working versions produce identically-shaped output — the same family
+# as unwritable state silently reading as repeat=no. (proj-fix, 2026-08-04, before
+# the daily/weekly split gets wired rather than after.)
+GATE_LABEL="${GATE_LABEL:-tier$TIER}"
+STATE_FILE="${STATE_FILE:-/var/lib/tender-db/standing_gate.$GATE_LABEL.last}"
 FAIL_ON_REPEAT="${FAIL_ON_REPEAT:-0}"   # the daily timer sets 1; ad-hoc runs leave 0
-TIER="${TIER:-A}"
 SQLITE="${SQLITE:-sqlite3}"
 
 # ---------------------------------------------------------------- the checks
