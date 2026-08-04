@@ -315,10 +315,22 @@ main() {
   [ $((fail+err)) -eq 0 ] || exit 1
 }
 
+# ARGUMENT CONTRACT — FAIL CLOSED. Running this script with no argument performs a
+# FULL SNAPSHOT SCAN (455 GB on prod, ~29 min). That must require SAYING NOTHING,
+# which is deliberate — never SAYING ANYTHING, which is a typo.
+#
+# The old default arm was `*) main`, so any unrecognised argument ran the scan.
+# That is the exact mechanism of today's incident one level up: a wrapper invoked
+# with `--self-test`, not understanding it, and running the payload UNCONFINED
+# because preconditions execute before systemd-run. ac8ae13 fixed the wrapper;
+# this is the same defect in the file everything delegates TO, which is the more
+# dangerous of the two to leave guessing. (run-driver's review, which held the
+# relaunch — the instance was fixed while the class stayed open.)
 case "${1:-}" in
   --self-test) self_test;;
   # Write a clean minimal fixture — so the runner itself (freshness refusal,
   # error handling, exit codes) can be exercised without touching a real snapshot.
   --fixture)   [ -n "${2:-}" ] || { echo "usage: $0 --fixture <path>"; exit 2; }; fixture "$2";;
-  *) main;;
+  "")          main;;
+  *)           echo "refusing unknown argument '$1' — a bare run of this script is a full snapshot scan and it will not guess" >&2; exit 2;;
 esac

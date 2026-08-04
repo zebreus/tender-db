@@ -159,9 +159,18 @@ preconditions() {
   [ "$age_h" -lt 20 ] && echo "  ok   daily pipeline finished (its last step, the snapshot, is ${age_h}h old)" \
     || { echo "  WARN snapshot ${age_h}h old — the daily may not have completed; check before releasing"; }
   local cpu1 cpu2 busy
-  cpu1=$(awk '{print $14+$15}' /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null || echo 0)
+  # `awk '{print $14+$15}'` is the comm-with-spaces trap rejected in thread_cpu.sh:
+  # /proc/<pid>/stat's comm is parenthesised and MAY contain spaces, which shifts
+  # every positional field. It works here only because this target's comm is
+  # `server` — right by luck, not construction, which is the same thing I flagged
+  # in my own early one-liners. Everything after the LAST ') ' is field 3 onward,
+  # so utime/stime are fields 12/13 of that remainder. (run-driver's review.)
+  local _st
+  _st=$(cat /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null)
+  cpu1=$(awk -v r="${_st##*') '}" 'BEGIN{n=split(r,f," "); print (n<13)?0:f[12]+f[13]}')
   sleep 3
-  cpu2=$(awk '{print $14+$15}' /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null || echo 0)
+  _st=$(cat /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null)
+  cpu2=$(awk -v r="${_st##*') '}" 'BEGIN{n=split(r,f," "); print (n<13)?0:f[12]+f[13]}')
   busy=$(( (cpu2 - cpu1) * 100 / (3 * $(getconf CLK_TCK)) ))
   [ "$busy" -lt 50 ] && echo "  ok   live service near-idle over 3s (${busy}% of one core) — no job mid-flight" \
     || { echo "  FAIL live service busy (${busy}% of one core) — a job is running; do not add a scan"; ok=1; }
