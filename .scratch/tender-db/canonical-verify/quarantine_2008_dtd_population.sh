@@ -50,6 +50,29 @@ fi
 
 # A snapshot is a photograph. Say what is being read and how old it is, so a
 # reader never has to infer which corpus state these numbers describe.
+# --- plan pre-check (2026-08-04) -------------------------------------------
+# Section B's sibling lookup MUST seek the UNIQUE(source, publication_id, …)
+# index. On the first run it did not — the join bound no `source`, so every one
+# of 5,000 probes full-scanned 14.2M `notices`, and B produced nothing for 90
+# minutes before being killed. That is issue 120 in miniature: an expensive read
+# nobody predicted, with nothing bounding it, discovered by running it.
+#
+# So the script now asks the planner BEFORE doing the work, and refuses rather
+# than hangs. Metadata-only (compiles a plan, executes no data query), so it is
+# free under the prod-box read rule.
+PLAN=$(sqlite3 -readonly "file:$DB?immutable=1" \
+  "EXPLAIN QUERY PLAN
+   SELECT n.id FROM notices n
+    WHERE n.source = 'ted' AND n.publication_id = '115165-2008';" 2>&1 || true)
+case "$PLAN" in
+  *"SCAN notices"*|*"SCAN n"*)
+    echo "FAIL: the section-B sibling lookup would SCAN notices, not seek it." >&2
+    echo "      Plan: $PLAN" >&2
+    echo "      Refusing to run — this is the 90-minute hang of 2026-08-04." >&2
+    exit 3
+    ;;
+esac
+
 echo "input:    $DB"
 echo "taken:    $(date -r "$DB" '+%Y-%m-%d %H:%M:%S %Z')"
 echo "age:      $(( ( $(date +%s) - $(date -r "$DB" +%s) ) / 3600 )) h"
@@ -96,13 +119,21 @@ CREATE TEMP VIEW held_sib AS
            '_', '-') AS publication_id
     FROM held WHERE lang <> 'en';
 
+-- The `n.source = 'ted'` is NOT cosmetic and must not be "simplified" away.
+-- The only index covering publication_id is UNIQUE(source, publication_id,
+-- content_hash), whose LEFTMOST column is `source`. Without binding it, this
+-- join cannot use the index and each probe full-scans 14.2M notices — which is
+-- exactly what happened on the first run (2026-08-04): section B produced no
+-- output for 90 minutes and was killed. The plan pre-check below refuses to run
+-- it unindexed rather than letting it hang again.
 SELECT '--- B. sample of 5000 held non-en rows: is the notice already in? ---' AS "";
 WITH s AS (SELECT * FROM held_sib LIMIT 5000)
 SELECT CASE WHEN n.id IS NULL THEN 'NO notice row (would be a real gap)'
             WHEN n.parse_state = 'parsed' THEN 'notice present and parsed'
             ELSE 'notice present, state ' || n.parse_state END AS verdict,
        COUNT(*) AS rows
-  FROM s LEFT JOIN notices n ON n.publication_id = s.publication_id
+  FROM s LEFT JOIN notices n
+       ON n.source = 'ted' AND n.publication_id = s.publication_id
  GROUP BY verdict ORDER BY rows DESC;
 
 SELECT '--- C. control: the reclaimed 2008 rows, same cut (predict: ~all en) ---' AS "";
