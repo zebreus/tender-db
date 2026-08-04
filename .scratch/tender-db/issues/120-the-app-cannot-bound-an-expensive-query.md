@@ -189,8 +189,14 @@ Two honesty notes on the figure:
   The clock starts at the last request of the burst, but this query may have begun
   earlier in it — the `/v1/sql` calls were at 09:31:37 — so the true runtime is ~85
   minutes *or more*. What is uncensored is the *termination*, not the start.
-* **It is one observation.** The earlier instance in this same incident gives an
-  independent ~26 minutes. Two points, both large, one run to completion.
+* **There is exactly ONE termination time, not two.** The earlier ~26-minute figure
+  from this same incident is a **floor, not a runtime**: at 09:58 a `sql-exec` thread
+  was observed *still running* 26 minutes after the 09:31:37 `/v1/sql` calls. Nobody
+  saw it stop. It is a different query from the one timed above — different pool
+  (`sql-exec` is issue 17's SQL-endpoint runtime, `slow-read-exec` is issue 5's Class
+  B pool) — so the two are independent observations, but only one of them is a
+  duration. The honest tally is **one measured termination (~85 min) and one floor
+  (>=26 min)**, and the floor must not be quoted as if it were a second runtime.
 
 An earlier draft of this section recorded 47 minutes as a still-open lower bound. That
 was honest when written and is superseded rather than corrected: the phenomenon simply
