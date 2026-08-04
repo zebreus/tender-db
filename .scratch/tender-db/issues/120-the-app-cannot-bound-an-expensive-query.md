@@ -162,3 +162,69 @@ claim rather than after it:
 Prod's residue is consistent with this model rather than with non-termination: ~2.6 cores × 50 min ≈
 7,800 core-seconds ≈ 20–30 runs of a 230 s-class query, against more than a dozen heavy uncancelled
 reads fired that day.
+
+---
+
+## Observed on prod, 2026-08-04: bounded duration is the claim that does not hold
+
+Status: REOPENED (task #31). The section above closed the expensive branch on the
+grounds that a runaway *terminates*. It does. What was never bounded — and what
+prod demonstrated — is **how long termination takes**, and that is the property the
+`SLOTS` shed does not address.
+
+**The observation.** Lennart's acceptance test ran against the live endpoint from
+09:19:28 to 09:33:44 UTC: 239 requests, including `/v1/tenders?limit=2000`,
+`/v1/tenders?include_data=true` and ten `/v1/sql` calls. Legitimate traffic from the
+owner; nothing here is about the traffic being wrong.
+
+**The finding is what happened after it stopped.** At 09:58 — **twenty-six minutes
+after the last request** — the box was still doing real work, with every other
+explanation eliminated:
+
+    no new API traffic        nginx: only bot noise (GET / 400/404, robots.txt) since 09:33:44
+    no supervisor job         /admin/jobs: {"current": null, "queued": []}
+    not a sort spill          turso temp DB 4,096 bytes, static
+    not an external reader    the reads are attributed to the `server` PID
+    still 26 MB/s             sustained, from the block device (read_bytes, not rchar)
+    sql-exec                  in D
+    slow-read-exec            2 of 4 slots, D and R
+
+So one of the `/v1/sql` calls issued around 09:31:37 was **still executing at 09:58**,
+with the client long gone and nothing able to stop it.
+
+**Load did decay — 4.49 -> ~3.05 — so this is not non-termination.** The prior
+section's conclusion stands. The correction is narrower and sharper:
+
+> **The shed bounds CONCURRENCY (4 slots). Nothing bounds DURATION.**
+> Four unlucky queries can therefore pin the whole pool indefinitely, and the
+> "bounded recovery time" the module claims has no bound anyone has measured.
+
+This is why sizing `SLOTS` against *arrival rate x full query runtime* (already stated
+above) is not merely conservative but load-bearing: the runtime term is unbounded, so
+the product is unbounded, so no finite `SLOTS` makes the pool safe by itself.
+
+**The operational consequence is the part worth carrying.** This was *self-sustaining
+degradation from a burst that had ended half an hour earlier*. Every read arriving
+afterwards competed with it. The incident's blast radius in **time** far exceeded the
+traffic that caused it — a materially different risk from "the API was hammered for
+fourteen minutes", and one that a request-rate graph would not show at all.
+
+**A second, quieter defect: none of this was visible.** The app logged NOTHING between
+08:03:21 and the time of writing. A request logs on completion, so an in-flight
+expensive read appears nowhere — not in the journal, not in `/admin/jobs` (it is not a
+job). The only instruments that identified it were thread names (`slow-read-exec` =
+the issue-5 pool, `sql-exec` = the issue-17 pool), `wchan`, and `/proc/<pid>/io`. A
+runaway read is currently diagnosable only by someone who already knows to look at
+kernel-level process state. That is an observability gap in its own right and belongs
+with this issue rather than in a separate one.
+
+**And the measurement trap it implies, for issue 30b.** `?include_data=true` returned
+63,500 bytes promptly while burning a Class B slot for over ten minutes. **The response
+returning is not the work finishing.** Any sweep that clocks reads from the client side
+will record this entire class as fast. 30b therefore needs a server-side completion
+signal — slot occupancy or thread CPU — not a stopwatch on the response. (sdk-vendor's
+observation; it changes 30b's method, not just its results.)
+
+**Not fixed by a timeout.** turso cannot interrupt a running statement (`fb8c55c`), so
+the remedy is issue 30: make the reads fast enough that none runs away. Until then the
+honest module claim is *"confines a runaway to 4 slots, for an unbounded time"*.
