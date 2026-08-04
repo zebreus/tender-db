@@ -25,6 +25,24 @@ TRIAGE="${TRIAGE:-$HERE/negative_amount_triage.sql}"
 SQLITE="${SQLITE:-sqlite3}"
 TIER="${TIER:-A}"
 
+# ARGUMENT CONTRACT — FAIL CLOSED. Anything pointed at by the probe's GATE= is
+# invoked BOTH as `$GATE --self-test` (a precondition, must be cheap and local)
+# and as `$GATE` (the expensive confined payload). This script originally ignored
+# unknown arguments and ran the full payload regardless — so the *self-test
+# precondition* executed a full 455 GB scan, UNCONFINED, outside the cgroup,
+# because preconditions run before systemd-run. The guard meant to prove the gate
+# was healthy became the largest unauthorised read of the day.
+#
+# So: --self-test delegates to the real self-test, and ANY other argument is
+# refused rather than silently treated as "run everything". A wrapper that ignores
+# an argument it does not understand and then does the expensive thing is the
+# permissive default in its most costly form.
+case "${1:-}" in
+  --self-test) exec "${GATE_SH:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/standing_gate.sh}" --self-test ;;
+  "")          ;;
+  *)           echo "refusing unknown argument '$1' — this script runs a full snapshot scan and will not guess" >&2; exit 2 ;;
+esac
+
 : "${SNAPSHOT:?SNAPSHOT must be pinned by the caller — this run does not resolve 'newest'}"
 [ -r "$SNAPSHOT" ] || { echo "snapshot not readable: $SNAPSHOT" >&2; exit 2; }
 [ -x "$GATE_SH" ]  || { echo "gate not executable: $GATE_SH" >&2; exit 2; }
