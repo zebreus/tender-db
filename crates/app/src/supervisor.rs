@@ -850,8 +850,21 @@ impl Supervisor {
                         ));
                     }
                 }
+                // The dry-run reports BOTH numbers, because the first alone cannot
+                // explain itself. `gaps` is the set the guard declines — held
+                // siblings whose English original is missing or unparsed. Expected
+                // 0; a non-zero answer is a data-loss finding to investigate, and
+                // the run should stop rather than proceed on a population that no
+                // longer matches what was verified.
+                let gaps = self.db.count_skipped_sibling_gaps().await.map_err(|e| e.to_string())?;
                 if *dry_run {
-                    return Ok(format!("dry run: {found} rows would be marked skipped-by-policy"));
+                    return Ok(format!(
+                        "dry run: {found} rows would be marked skipped-by-policy; \
+                         {gaps} in scope REJECTED by the sibling guard \
+                         (expected 0 — any of these are held rows whose English \
+                         original is missing or unparsed, i.e. real data loss to \
+                         investigate, never a predicate to widen)"
+                    ));
                 }
                 let mut marked = 0i64;
                 loop {

@@ -1157,7 +1157,10 @@ impl Db {
     /// `publication_id` is `UNIQUE(source, publication_id, content_hash)`, whose
     /// leftmost column is `source`. Unbound, this lookup scans 14.2M notices PER
     /// ROW — the shape that hung issue 84's own falsifier for 90 minutes.
-    const SKIPPED_SIBLING_PREDICATE: &'static str = "
+    /// Conditions 1-4: which held rows are even CANDIDATES — the stale 2008 bucket,
+    /// still held, not already marked, and not the English member itself. Selecting
+    /// a row here is NOT sufficient to mark it; see [`Self::SKIPPED_SIBLING_GUARD`].
+    const SKIPPED_SIBLING_SCOPE: &'static str = "
           q.reason = 'unparsable-xml'
       AND q.detail = 'XML with DTD detected'
       AND q.reprocessed_at IS NULL
@@ -1167,8 +1170,15 @@ impl Db {
                      AND f.source = 'ted' AND f.kind = 'monthly'
                      AND f.period LIKE '2008%')
       AND lower(replace(q.member_path,
-                        rtrim(q.member_path, replace(q.member_path, '.', '')), '')) <> 'en'
-      AND EXISTS (
+                        rtrim(q.member_path, replace(q.member_path, '.', '')), '')) <> 'en'";
+
+    /// Condition 5, the anti-overreach guard, kept as its own constant so the two
+    /// dry-run numbers are COMPOSED from the same text rather than recovered by
+    /// slicing it. An earlier draft split the combined predicate on a literal
+    /// fragment; a whitespace change there would have silently yielded "no gaps",
+    /// which is precisely the reassuring-but-wrong answer this pair exists to
+    /// prevent.
+    const SKIPPED_SIBLING_GUARD: &'static str = "EXISTS (
             SELECT 1 FROM notices n
              WHERE n.source = 'ted'
                -- The unary `+` makes `parse_state` a non-indexable term, and it
@@ -1205,6 +1215,7 @@ impl Db {
                             length(replace(q.member_path,
                                            rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
                      '_', '-'))";
+
 
     /// Record that a held member was RE-EXAMINED and declined by a dispatch
     /// policy (issue 84) — the permanent half of the fix, which the one-time
@@ -1260,6 +1271,27 @@ impl Db {
         Ok(flagged)
     }
 
+    /// Held 2008 non-English siblings whose English original is **missing or
+    /// unparsed** — i.e. everything the scope selects that the guard then declines.
+    ///
+    /// This is the number that makes a dry-run self-explaining. The marked count
+    /// alone says whether the population matches; this says WHY when it does not.
+    /// Expected 0 against the verified set — and a non-zero answer is a **data-loss
+    /// finding to investigate, never a reason to widen the predicate**: these are
+    /// held rows whose original is not in the corpus, so marking them as duplicates
+    /// would record real loss as a duplicate, the one outcome worse than an
+    /// overstated count.
+    pub async fn count_skipped_sibling_gaps(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let sql = format!(
+            "SELECT COUNT(*) FROM quarantine q WHERE {} AND NOT ({})",
+            Self::SKIPPED_SIBLING_SCOPE,
+            Self::SKIPPED_SIBLING_GUARD
+        );
+        let mut rows = conn.query(&sql, ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
     /// How many rows the marker WOULD flag, without writing anything (issue 84).
     ///
     /// This is the decision input, not a formality: the run is authorised against
@@ -1268,8 +1300,9 @@ impl Db {
     pub async fn count_skipped_siblings(&self) -> turso::Result<i64> {
         let conn = self.reader().await?;
         let sql = format!(
-            "SELECT COUNT(*) FROM quarantine q WHERE {}",
-            Self::SKIPPED_SIBLING_PREDICATE
+            "SELECT COUNT(*) FROM quarantine q WHERE {} AND {}",
+            Self::SKIPPED_SIBLING_SCOPE,
+            Self::SKIPPED_SIBLING_GUARD
         );
         let mut rows = conn.query(&sql, ()).await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
@@ -1287,8 +1320,9 @@ impl Db {
         let conn = self.conn().await;
         let sql = format!(
             "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
-              WHERE id IN (SELECT q.id FROM quarantine q WHERE {} LIMIT ?)",
-            Self::SKIPPED_SIBLING_PREDICATE
+              WHERE id IN (SELECT q.id FROM quarantine q WHERE {} AND {} LIMIT ?)",
+            Self::SKIPPED_SIBLING_SCOPE,
+            Self::SKIPPED_SIBLING_GUARD
         );
         conn.execute(&sql, (Value::Integer(now), reason.to_owned(), Value::Integer(batch))).await?;
         let mut rows = conn.query("SELECT changes()", ()).await?;
@@ -2698,6 +2732,19 @@ mod tests {
 
         // The dry-run count is the decision input, so it must equal the write.
         assert_eq!(db.count_skipped_siblings().await.unwrap(), 2, "only (a): the two real siblings");
+
+        // And the SECOND dry-run number: rows in scope that the guard declines.
+        // These are (c) and (d) — a sibling whose original did not parse, and one
+        // with no original at all. On prod this is expected to be 0; a non-zero
+        // answer is a data-loss FINDING, never a reason to widen the predicate.
+        // Asserted as 2 here precisely so the number is known to COUNT something —
+        // a gap count that could only ever report 0 would be the reassuring-but-
+        // empty answer this pair exists to prevent.
+        assert_eq!(
+            db.count_skipped_sibling_gaps().await.unwrap(),
+            2,
+            "the two planted data-loss cases are reported, not silently excluded"
+        );
 
         let marked = db.mark_skipped_siblings(1000, 999, "internal-ojs-non-english").await.unwrap();
         assert_eq!(marked, 2);
