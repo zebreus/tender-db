@@ -108,6 +108,54 @@ SELECT tender_id, COUNT(*) AS n FROM tender_version_amounts
  WHERE cents < 0 GROUP BY tender_id ORDER BY n DESC LIMIT 15;
 
 .print ''
+.print '== P4 (proj-fix, DECISIVE) — did the FOLD introduce any negative? =========='
+.print '-- proj-fix established on code paths that the fold is a pure copy with no'
+.print '-- arithmetic, and that value::cents deliberately keeps a published minus sign'
+.print '-- (`sign * c`, overflow-guarded). Confirmed independently here by reading'
+.print '-- eforms/value.rs:81-103. If that holds, EVERY folded negative traces to a'
+.print '-- notice that already carried a negative in the PARSE layer.'
+.print '--'
+.print '-- Joined on notice rather than on field name: tender_version_amounts.field is'
+.print '-- the canonical name while notice_amounts.field_id is the SDK id, so a'
+.print '-- name-join would silently under-match and manufacture a false positive for'
+.print '-- "the fold did it". Notice-level is the claim that actually discriminates.'
+
+.print ''
+.print '-- 9. folded negatives whose SOURCE NOTICE has NO negative at all -> EXPECT 0.'
+.print '--    Any nonzero = the fold introduced a sign the parse layer never had, proj-fix''s'
+.print '--    analysis is wrong, and the defect is theirs rather than the invariant''s.'
+SELECT COUNT(*) AS folded_negatives_with_no_negative_in_parse_layer
+  FROM tender_version_amounts a
+  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
+ WHERE a.cents < 0
+   AND NOT EXISTS (SELECT 1 FROM notice_amounts na
+                    WHERE na.notice_id = v.caused_by_notice_id AND na.cents < 0);
+
+.print ''
+.print '-- 10. stronger form: EXACT magnitude present in the parse layer for that notice.'
+.print '--     High share = faithful copy. A large gap between 9 and 10 would mean the'
+.print '--     notice had SOME negative but not THIS value — worth a look, not a verdict.'
+SELECT COUNT(*) AS folded_negatives_with_exact_parse_layer_match
+  FROM tender_version_amounts a
+  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
+ WHERE a.cents < 0
+   AND EXISTS (SELECT 1 FROM notice_amounts na
+                WHERE na.notice_id = v.caused_by_notice_id AND na.cents = a.cents);
+
+.print ''
+.print '-- 11. P1 — the text era emits no Amount variant, so it should contribute NOTHING.'
+.print '--     A text-profile negative means amounts reach this table by a path proj-fix'
+.print '--     has not found, and their code-path argument is incomplete.'
+SELECT n.profile, COUNT(*) AS n
+  FROM tender_version_amounts a
+  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
+  JOIN notices n ON n.id = v.caused_by_notice_id
+ WHERE a.cents < 0 AND n.profile NOT LIKE 'eforms%'
+ GROUP BY n.profile ORDER BY n DESC;
+
+.print ''
 .print '== READING IT: concentration in 3/4 + mirrored positives in 7 => H1, fix the parser.'
 .print '== Spread in 2/3/4 + correction subtypes in 5 + no mirrors => H2, fix the CHECK.'
-.print '== Mixed => say so and do not force a verdict; both can be true of different rows. =='
+.print '== Mixed => say so and do not force a verdict; both can be true of different rows.'
+.print '== AND 9 IS DECISIVE OVER ALL OF IT: nonzero there means the fold introduced the'
+.print '== sign, which is a code defect, and no distribution argument survives it. =='
