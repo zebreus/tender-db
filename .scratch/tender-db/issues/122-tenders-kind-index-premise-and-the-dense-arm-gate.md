@@ -169,6 +169,36 @@ second bed. The existing bed cannot measure it at all — `tenders.kind` is sing
 The fixture is anchored to reproduce the known 18.7 s before its other numbers are trusted. **If it
 cannot reproduce it, this issue waits** rather than measuring against a bed that lacks the phenomenon.
 
+### The anchor is TWO clauses, because one number cannot catch an inverted geometry
+
+run-driver established from issue 117's own wording — *"sent by ordinary clients with no crafted input"*,
+which excludes a hand-built cursor — that the **18.7 s was the FIRST page, `after = 0`**. Phase A's
+geometry corroborates independently: the first match sits at id 1,127,544, so page 1 walks ~1.18 M rows of
+the driven table before `LIMIT` can even begin filling. So **18.7 s is a floor, not the worst case.**
+
+Page by page, with 120 matches and `LIMIT 50` (worked from Phase A's ids):
+
+| page | rows returned | table rows walked | cost |
+|---|---|---|---|
+| 1 | 50 | ~1.18 M (id 1 → 50th match) | the measured 18.7 s |
+| 2 | 50 | the cluster span only | **fast** |
+| 3 | 20 | ~6.2 M — cannot fill, so walks to the end | **worst** |
+| 4+ | 0 | ~6.2 M for nothing | worst, repeatedly |
+
+Note it is **page 3**, not page 2, that first cannot fill — pages 1 and 2 both fill from the 120-row
+cluster. The bed therefore needs enough matches that pagination *reaches* an unfillable page, and the
+clock must sample that page specifically.
+
+So the anchor is:
+
+1. page 1 at `after = 0` reproduces ~18.7 s, **and**
+2. the post-exhaustion page is **strictly worse** than page 1.
+
+Clause 2 is the discriminating one and clause 1 alone is not sufficient: a bed that hits 18.7 s on page 1
+while showing later pages *cheaper* has the geometry inverted and is wrong however well it matches the
+headline. A single-number anchor cannot detect that — which is the same shape as every other check
+corrected today, one level up: the number agreed, and the thing behind it did not.
+
 > **The anchor check itself needed correcting.** As first written it asserted that the rarest kind first
 > matches *past 50 % of the id range* — my "late" prose turned into a gate. Against a prod-faithful bed
 > that check **rejects the correct fixture**, because prod's rare kind matches at ~14 %. run-driver caught
