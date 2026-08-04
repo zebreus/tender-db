@@ -1,6 +1,8 @@
 # 84 — ~593K held 2008 monthly-TED DTD notices; ledger reports the category "resolved" (mis-scoped to the ~28K opoce subset)
 
-Status: open — **the "largest remaining reclaim" framing below is RETRACTED by the author; see the Correction.** The held rows are almost certainly the non-English duplicate siblings, i.e. a counting defect, not lost data. Awaiting one read-only falsifier query against a prod snapshot. DISCOVERED 2026-08-01, CORRECTED 2026-08-04 (both proj-fix).
+Status: open — **the "largest remaining reclaim" framing below is RETRACTED by the author; the Correction
+holds and section A of the falsifier now CONFIRMS its population claim. Verdict still held pending
+section B; nothing written to the ledger yet. See "Falsifier result" at the end.** The held rows are almost certainly the non-English duplicate siblings, i.e. a counting defect, not lost data. Awaiting one read-only falsifier query against a prod snapshot. DISCOVERED 2026-08-01, CORRECTED 2026-08-04 (both proj-fix).
 Kind: completeness / data-quality + ledger correctness
 Blocked by: —
 Relates to: 36 (XXE-safe DTD strip), 41 (internal-ojs parser, the opoce subset), 73 (unparsable-xml sizing — this REVISES it), ADR-0004, ADR-0009, [[resolved-categories-ledger]]
@@ -109,3 +111,48 @@ originally filed. **Do not write either conclusion into the ledger before the qu
 the mistake this correction is fixing, made once already.
 
 The residual genuinely-unparseable set is unchanged either way: 6,341 `unknown token` rows.
+
+---
+
+# Falsifier result — section A CONFIRMS, section B outstanding (2026-08-04)
+
+Run by run-driver on snapshot `/data/db/snapshots/tender-db-1785830601.db` (taken 08:18:22 UTC, 3 h old
+at run, `-wal` 0 bytes so the checkpoint guard passed on the merits). Read-only, low-traffic window.
+
+## A — the population claim, confirmed
+
+| | |
+|---|---|
+| held rows in the 2008-DTD bucket | **593,017** |
+| of which `.en` | **7** (0.0012%) |
+| distinct languages | **23** |
+| per non-EN language | **exactly 26,955**, in each of 22 languages |
+
+26,955 × 22 = 593,010, plus 7 EN = 593,017 exactly.
+
+**My stated falsifier was "a material `.en` share".** It did not occur. And the *structure* is stronger
+evidence than the count: a perfectly even 26,955 across 22 languages, sparing English almost entirely, is
+a mechanism signature. A genuine ingestion failure does not distribute itself evenly across languages and
+then skip one; one notice fanning out to 23 language variants with 22 skipped as duplicates does exactly
+that.
+
+**An arithmetic bridge I did not predict** (visible only in run-driver's numbers): 26,948 EN *reclaimed*
++ 7 EN *still held* = **26,955** — precisely the per-language complement. So English's full complement is
+accounted for as ingested, while each of the other 22 languages' identical complements sits held.
+
+## B — outstanding, because the query was mine and it was broken
+
+Section B ran for 90 minutes without output and was killed. **A defect in my query, not a null result**,
+and run-driver reported it as such rather than letting its silence read as support for my own hypothesis.
+
+Root cause: the only index covering `publication_id` is `UNIQUE(source, publication_id, content_hash)`,
+whose leftmost column is `source`. The join bound `publication_id` alone, so each of 5,000 probes
+full-scanned 14.2M `notices`. Fixed (`e0ad8c3`) by binding `n.source`, plus a plan pre-check that exits 3
+rather than hanging if the lookup would scan.
+
+## Why the verdict is still held
+
+A is decisive on *shape*, and the 26,948 + 7 = 26,955 bridge is close to B's answer by another route. But
+that bridge is an **aggregate coincidence**, which is exactly the kind of evidence that made the original
+version of this issue wrong. B checks per-row that the sibling notices exist and parsed. It is now cheap.
+Nothing goes to the ledger until it runs.
