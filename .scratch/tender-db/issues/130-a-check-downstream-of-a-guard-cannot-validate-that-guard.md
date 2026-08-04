@@ -56,6 +56,34 @@ header). Those help whoever is reading *that* code. The misreading happens somew
 reads a green dashboard, or a verification summary, and concludes an invariant is verified. That reader
 is not looking at either file.
 
+## Sibling hazard: a check exercised both ways can still be blind (2026-08-04)
+
+Same family, different mechanism, recorded here because it was found the same day and would otherwise
+live only inside a SQL file.
+
+Proving a check can answer **both ways** — planting a violation, seeing it fire, removing it, seeing it
+pass — is the discipline this team has applied all day, and it is necessary. It is **not** sufficient.
+There are two independent axes:
+
+1. **Construction** — can the check distinguish, or is it structurally unable to fail? (The alias-blind
+   plan assertion; a `repeat=` grep matching its own fallback note.)
+2. **Coverage** — does the fixture span the states the *real data* actually occupies?
+
+Axis 2 is the one that bites when **the fixture is authored by the check's author**, because the fixture
+then contains exactly the cases its author already had in mind. The instance: sdk-vendor's P4 query was
+exercised both ways against a **single-version** tender, and was correct for that. But the fold carries
+facts forward across versions (`project.rs:1887`/`:1931`), so a carried negative appears at every later
+seq whose causing notice has none — and the query flagged those as fold-introduced. Carry-forward cannot
+appear below two versions, so no amount of both-ways rigour on that fixture could have surfaced it.
+
+sdk-vendor's own note on why they missed it is the useful part: they *had* read the fold code, to answer
+"does it do arithmetic on cents" — which it does not. **The semantics that mattered were invisible from
+the question they were asking.**
+
+Practice: a fixture should be reviewed by whoever owns the semantics under test, not only by whoever owns
+the check. And where a check spans two subsystems, keeping each half with its owner beats one person
+doing both — not for capacity, but because a single author cannot see the state they did not model.
+
 ## The practice this suggests
 
 For each standing check, state which of **prevented** / **detected** it covers, and where the *other*
