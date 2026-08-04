@@ -239,6 +239,56 @@ systemd-run --no-block --unit="$UNIT" --service-type=oneshot --collect \
   --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
   /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
 
+# PROVE THE PAYLOAD IS ACTUALLY CONFINED, from the box, for THIS run — then fail
+# closed. Today I ran a 455GB scan on prod completely outside the cgroup because a
+# PRECONDITION invoked the payload, and preconditions run BEFORE systemd-run, i.e.
+# outside the sandbox BY DEFINITION. The wrapper is fixed, but "I fixed the
+# wrapper" is a claim about code; this is a claim about the running box.
+#
+# The load-bearing assertion is the LAST one: any sqlite3 reading the snapshot
+# that is NOT in this unit's cgroup is an unconfined read, which is exactly what
+# happened. It catches the accident even if every earlier check passes.
+assert_confined() {
+  local cg="/sys/fs/cgroup/system.slice/$UNIT.service" fail=0 procs
+  for _ in $(seq 1 15); do
+    [ -s "$cg/cgroup.procs" ] && break
+    sleep 1
+  done
+  echo "-- confinement proof (this run, from the box)"
+
+  procs=$(tr '\n' ' ' < "$cg/cgroup.procs" 2>/dev/null)
+  if [ -n "${procs// /}" ]; then echo "   ok   cgroup has processes: $procs"
+  else echo "   FAIL cgroup.procs is empty — the payload is not in the unit"; fail=1; fi
+
+  local mm exp; mm=$(cat "$cg/memory.max" 2>/dev/null)
+  exp=$(numfmt --from=iec "$MEM_MAX" 2>/dev/null)
+  if [ -n "$mm" ] && [ "$mm" = "$exp" ]; then echo "   ok   memory.max = $mm ($MEM_MAX)"
+  else echo "   FAIL memory.max is '$mm', expected '$exp' ($MEM_MAX) — cap not applied"; fail=1; fi
+
+  local iow; iow=$(systemctl show -p IOWeight --value -- "$UNIT.service" 2>/dev/null)
+  if [ "$iow" = "$IO_WEIGHT" ]; then echo "   ok   IOWeight = $iow"
+  else echo "   FAIL IOWeight is '$iow', expected $IO_WEIGHT"; fail=1; fi
+
+  local rt; rt=$(systemctl show -p RuntimeMaxUSec --value -- "$UNIT.service" 2>/dev/null)
+  if [ -n "$rt" ] && [ "$rt" != infinity ]; then echo "   ok   RuntimeMaxUSec = $rt (hard bound present)"
+  else echo "   FAIL RuntimeMaxUSec is '$rt' — no hard bound on this run"; fail=1; fi
+
+  local stray="" p
+  for p in $(pgrep -f "sqlite3 -readonly file:$SNAP" 2>/dev/null); do
+    grep -qx "$p" "$cg/cgroup.procs" 2>/dev/null || stray="$stray $p"
+  done
+  if [ -z "$stray" ]; then echo "   ok   every sqlite3 on this snapshot is inside the cgroup"
+  else echo "   FAIL sqlite3 OUTSIDE the cgroup:$stray — unconfined read, aborting"; fail=1; fi
+
+  if [ "$fail" -ne 0 ]; then
+    echo "   CONFINEMENT NOT PROVEN — stopping the unit and refusing to measure."
+    systemctl stop "$UNIT.service" 2>/dev/null
+    echo "VERDICT confinement_unproven tier=$TIER snapshot=$SNAP"
+    exit 2
+  fi
+  echo "   confinement proven for this run."
+}
+assert_confined
 : > "$OUT.during.tsv"; breaches=0; aborted=no; gate_start=$(date +%s)
 while unit_running "$UNIT.service"; do
   s=$(probe); echo "$s" >> "$OUT.during.tsv"
