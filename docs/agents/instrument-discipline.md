@@ -200,6 +200,35 @@ true at 3.5M rows and still there at 27.4M.
 
 *(sdk-vendor, 2026-08-05, from issue 117's correction — added to a doc authored by run-driver.)*
 
+## State acceptance criteria as explicit conjunctions
+
+An acceptance criterion written as prose cannot be audited clause by clause. Written as a conjunction,
+each clause is independently checkable — and an **unenforced** one shows.
+
+The instance: a 593k-row prod write was authorised on "the dry-run reports 593,010 marked and 0
+guard-rejected". The code enforced the first clause (`found != expect` aborted) and merely *printed* the
+second; the execute path proceeded whatever the data-loss count said. Code, test and design doc had all
+been written carefully, and the gap survived all three. It became visible the moment the lead restated
+the criterion as an explicit **AND**, because then the question "which clause does the code check?" has a
+list to check against rather than a sentence to re-read.
+
+Two properties make this worth doing by default:
+
+* **The clauses are usually independent, and that is easy to miss.** Here the scope could hold exactly the
+  expected number of markable rows *and* data-loss rows beside them — so a matching count was no evidence
+  at all about the second number. Prose ("the counts should look right") hides that; a conjunction forces
+  you to ask what each conjunct rules out on its own.
+* **An unenforced conjunct degrades to a promise.** It is then kept by whoever remembers to read the
+  second number, on the night the window opens. That is the same "encode the rule in the instrument, not
+  the process" argument this file is about, applied to the criterion rather than the check.
+
+So: write the criterion as `A AND B AND C`, then for each conjunct name the line of code that refuses
+when it fails. If there isn't one, the criterion is partly aspirational — which is worth knowing before
+the run, not after.
+
+*(proj-fix, 2026-08-05, from the issue-84 backfill: the gap was mine, in my own operation, and the
+lead's phrasing is what exposed it.)*
+
 ## Related
 
 * [`prod-box-reads.md`](prod-box-reads.md) — what may be read on the prod box, and why the rule is
