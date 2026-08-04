@@ -167,6 +167,19 @@ reads fired that day.
 
 ## Observed on prod, 2026-08-04: bounded duration is the claim that does not hold
 
+> **A 14-minute burst produced at least 47 minutes of degradation — a blast radius
+> more than 3x the traffic that caused it, and still open when this was written.**
+> That ratio, not any single slow read, is why this issue is reopened: it is what
+> turns "a slow endpoint" into "a self-sustaining degradation", and it is invisible
+> on a request-rate graph, which shows the 14 minutes and nothing after.
+
+The 47 minutes is a **lower bound, not a measurement**: the burst ended 09:33:44 UTC
+and two `slow-read-exec` threads were still occupied at 10:20:33, when this was
+recorded. The true figure is larger by however long it kept running. Stated as a
+bound rather than rounded up, for the same reason `thread_cpu.sh` reports occupancy
+as a lower bound — an honest floor beats a confident guess, and the floor is already
+enough to carry the argument.
+
 Status: REOPENED (task #31). The section above closed the expensive branch on the
 grounds that a runaway *terminates*. It does. What was never bounded — and what
 prod demonstrated — is **how long termination takes**, and that is the property the
