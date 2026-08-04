@@ -144,11 +144,21 @@ figure:
    a pruned file readable to completion (good — the run finishes on the file it started), but the space is
    not reclaimed until the fd closes. Reflink sharing makes the marginal cost small; on a volume with
    ~126 GB free it is still worth naming rather than discovering.
+   **Ops constraint (team-lead):** run-driver watches `/data` free space *during* gate runs once this is
+   operational, and **maximum hold-time is bounded by reclaim headroom** — the deep health probe trips at
+   ~100 GB free, so the margin is real but not large. A longer tier is not automatically safe just because
+   a shorter one was.
 4. **`FAIL_ON_REPEAT` needs its own state per cadence too**, for the same reason as (2): "no new input
    since the last *weekly*" is a different question from "since the last *daily*", and both are
    answerable — but only against their own history.
 
-## The verdict is a state, not an event (issue 33)
+## REQUIREMENT: the verdict is a state, not an event (issue 33)
+
+**Firm requirement, team-lead 2026-08-04 — build it in from the start, not as polish.** The concrete
+shape: the verdict renders as the **standing condition of the layer** — *"violates X, N rows, unchanged
+since `<date>`"* — on the same user-facing surface as the Resolved-categories ledger, as a condition and
+never as a ping. **New violations must be distinguishable from continuing ones**, so that a first
+occurrence is visible without a persistent one having to re-announce itself daily to stay true.
 
 The gate's first real run was **not** a dry green: it caught `cents < 0` on 17,738 rows in
 `tender_version_amounts` (issue 33) — an invariant agreed as a hard fail ten days earlier that went
