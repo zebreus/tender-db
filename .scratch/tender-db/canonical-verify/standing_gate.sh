@@ -167,7 +167,7 @@ fixture() { # fixture <db> — minimal CLEAN schema+data; every check must repor
   rm -f "$1"
   "$SQLITE" "$1" <<'SQL'
 CREATE TABLE tenders (id INTEGER PRIMARY KEY, source TEXT, procedure_key TEXT, island_notice_id INTEGER, kind TEXT, created_at INTEGER, current_seq INTEGER, current_published_at INTEGER);
-CREATE TABLE tender_versions (tender_id INTEGER, seq INTEGER, caused_by_notice_id INTEGER, published_at INTEGER, publication_id TEXT);
+CREATE TABLE tender_versions (tender_id INTEGER, seq INTEGER, caused_by_notice_id INTEGER, published_at INTEGER, publication_id TEXT, notice_subtype TEXT);
 CREATE TABLE organizations (id INTEGER PRIMARY KEY, country TEXT, identifier_kind TEXT, identifier TEXT, name TEXT, provisional INTEGER, created_at INTEGER);
 CREATE TABLE organization_mentions (notice_id INTEGER, section_id TEXT, organization_id INTEGER);
 CREATE TABLE tender_version_texts (tender_id INTEGER, seq INTEGER, field TEXT, value TEXT);
