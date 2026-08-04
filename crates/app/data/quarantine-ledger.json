@@ -30,8 +30,8 @@
     "category": "2008 OPOCE INTERNAL_OJS (DTD)",
     "reason": "unparsable-xml",
     "detail_like": "XML with DTD detected",
-    "diagnosis": "The 2008 OPOCE export is real S-series notices behind a DTD (INTERNAL_OJS R2.0.5) that roxmltree refused wholesale; the DTD is now safely stripped and the era is reclassified from a misleading parse error to a tracked unmapped-era (its parser is issue 41).",
-    "fix": "issue 36",
+    "diagnosis": "The 2008 OPOCE export is real S-series notices behind a DTD (INTERNAL_OJS R2.0.5) that roxmltree refused wholesale; the DTD is now safely stripped. The era ships each notice ONCE PER LANGUAGE, so the ~593k that remain held are the ~22 non-English duplicate siblings of the ~27k English notices, which are themselves present and parsed — verified row by row, 5,000 of 5,000 sampled, on two snapshots 29h apart. These are duplicates already ingested, NOT missing data, and no reprocess can move them: dispatch skips a non-English sibling by the one-notice-per-language policy, so it yields no record to reclaim. Their outstanding count therefore overstates the remaining work; the rows are stale bookkeeping from before the DTD fix.",
+    "fix": "issue 36 · issue 84",
     "resolved": "2026-07-21"
   },
   {
