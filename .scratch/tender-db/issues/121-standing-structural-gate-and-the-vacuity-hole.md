@@ -34,11 +34,27 @@ they stress the fill harder, so `refault = 0` at their weight has to be shown, n
 
 ### All three tiers measured (2026-08-04/05, same pinned snapshot, same warm 1.72 GB working set)
 
-| tier | checks | wall | refault | majflt | cache_file | gate verdict |
+| tier | checks | gate-only wall | refault | majflt | cache_file | gate verdict |
 |---|---|---|---|---|---|---|
-| A | 24 | 2369 s | 0 | 2 | 0 | 23/24 (the 51 negative ceilings) |
-| B | 12 | 3193 s | **239** | 173 | +1,036,288 | 12/12 ok |
-| C | 1 | **361 s** | 0 | 2 | 0 | 1/1 ok |
+| 0 | 11 | **0.2 s** | 0 | 0 | 0 | 11/11 ok |
+| A | 24 | 1405 s (23 m) | 0 | 2 | 0 | 23/24 (the 51 negative ceilings) |
+| B | 12 | **2013 s (34 m)** | **239** | 173 | +1,036,288 | 12/12 ok |
+| C | 1 | **361 s (6 m)** | 0 | 2 | 0 | 1/1 ok |
+
+**Corrected 2026-08-05 — the first version of this table was inconsistently measured.** It gave A
+as 2369 s and B as 3193 s, which were gate **+ triage**; C was gate-only. The standing timer never
+runs the triage (a one-off for #33), so the gate-only figures above are the ones to schedule
+against. Split from journal timestamps: A gate 1405 s + triage 977 s; B gate 2013 s + triage 1195 s.
+
+Found by proj-fix, who noticed A reported 28m50s in an earlier gate-only run and 39 min here and
+asked which conditions to plan against. **Presenting a comparison where two of four members carried
+a workload the others did not is worse than a wrong number** — it is an unstated difference between
+things being compared, which is the defect this file objects to elsewhere. The ordering survives
+(B > A > C > 0) so the cadence inversion below still holds, but B is a 34-minute job, not 53.
+
+Residual, unexplained: the same Tier A gate measured 1730 s earlier and 1405 s here, ~23 % apart,
+different times of day and host cache states. **Plan against the higher figure** — undersizing a
+window is the expensive direction.
 
 **The condition earned itself: Tier A's zero did NOT transfer.** Tier B moved `refault` — 239 pages
 across 4 of 1,544 samples, 222 of them in a ~10-second burst, ≈1 MB against a 1.72 GB working set
