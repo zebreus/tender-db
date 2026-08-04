@@ -52,15 +52,56 @@ file.
 `<dir>/latest` via write-temp-then-`rename` (atomic; a reader never sees a half-written pointer). The
 timer reads that file and passes it as `SNAPSHOT=`.
 
+> **Correction (sdk-vendor, 2026-08-04): the pointer does NOT close the hole it was proposed for, and I
+> claimed it did.** If today's snapshot step fails, `latest` — written on success only — still names
+> *yesterday's* file. So does "newest". Yesterday's file is ~24 h old, **inside `MAX_AGE_H`**, so the
+> gate verifies it and reports green for a cycle that produced nothing. That is the exact failure I
+> caught, surviving the fix I proposed for it.
+>
+> The pointer is still worth building, for a narrower reason than I gave: it is trustworthy about
+> **what** it names — a verified-complete snapshot rather than whatever file matches a glob, ruling out
+> partial writes and strays. It says nothing about **when**. Pointer answers *what*; the hole is a
+> *when* question, and needs the mechanism below.
+
 Three properties that make this the right shape:
 
-- **Written only after the snapshot succeeds**, so a failed snapshot never advertises a path. The
-  pointer going stale IS the failure signal, and it is the signal the gate already knows how to report.
+- **Written only after the snapshot succeeds**, so a failed snapshot never advertises a path — meaning
+  the pointer never names a partial file. It does *not* follow that a fresh pointer means a fresh
+  snapshot; see freshness, below.
 - **No fallback to "newest" if the pointer is missing or stale.** Falling back is precisely the hole
   sdk-vendor just closed; the verifier reports STALE and stops instead of guessing.
 - **Prune-safe by construction.** The local ring keeps 2. If a prune deletes the pinned file mid-run,
   an already-open fd keeps it readable to completion on Linux — so the run finishes on the file it
   started, and the *pointer*, not the data, is what may have moved.
+
+## Freshness: repeat detection, not an age threshold
+
+sdk-vendor's mechanism (`d22bb6e`), and the right instrument. The gate records its input's identity
+(`name|mtime|size` — no hashing a 455 GB file) and reports `repeat=yes|no|unknown`. On a daily cadence,
+**`repeat=yes` means the pipeline produced nothing this cycle** — issue 119's cadence half, detected at
+the consumer, with no threshold to tune. Tightening `MAX_AGE_H` toward 24 h was considered and rejected:
+it makes correctness depend on tuning against job duration and clock drift, and buys a false negative the
+first time a daily runs long.
+
+**The timer sets `FAIL_ON_REPEAT=1`.** In the daily slot, re-reporting a green for an
+already-verified input is the lie worth refusing.
+
+Two things this integration must get right, both of which fail *silently* if missed:
+
+- **`StateDirectory=` (or equivalent) is mandatory.** State lives at
+  `/var/lib/tender-db/standing_gate.last`. Unwritable state degrades to `repeat=unknown` — correctly, and
+  with a printed note, rather than to a clean-looking `no` — but a unit that cannot write state reports
+  `unknown` on **every** run, and the whole mechanism quietly does nothing while continuing to print
+  verdicts. sdk-vendor names this as the failure they'd most expect us to ship; I agree, so:
+- **`repeat=unknown` is acceptable exactly once.** The first run legitimately has no prior state. From
+  the second run onward, `unknown` means the state path is broken, and the timer must treat it as an
+  alerting condition rather than a benign third value. A mechanism that reports `unknown` forever looks
+  exactly like a mechanism that is running.
+
+**What `repeat=no` does and does not prove.** It proves the *input is new*. It does not prove the fold
+produced anything: if the projection did nothing but the snapshot step succeeded, the snapshot is still a
+new file and `repeat=no` is still correct. The gate verifies the artifact it is given; "the cycle did
+useful work" is a different claim and this does not make it.
 
 ## The interlock: bounded deferral, never a precondition
 
@@ -120,5 +161,9 @@ header):
 
 1. sdk-vendor's confinement measurement (blocks wiring, not design).
 2. The `latest` pointer lands in `snapshot::run` (mine, small, testable: a failed snapshot must leave
-   the pointer untouched — that is the test worth writing first).
-3. Where the dashboard renders the verdict — a surface question for team-lead, not a mechanism one.
+   the pointer untouched — that is the test worth writing first). Demoted from "the fix" to "names the
+   right file"; freshness is repeat detection.
+3. The unit grants a writable state directory, **and the integration proves it** — a first run producing
+   `repeat=unknown` followed by a second producing `repeat=no` is the check that the mechanism is
+   actually armed. Without that, the most likely way this ships is silently inert.
+4. Where the dashboard renders the verdict — a surface question for team-lead, not a mechanism one.
