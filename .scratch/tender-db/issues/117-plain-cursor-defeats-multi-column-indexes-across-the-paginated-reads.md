@@ -554,6 +554,18 @@ Three selectivity classes per filter, because two are not enough to see the shap
 * **dense** — the filter matches early and often. Fast today; the case a fix can *regress*.
 * **matches-late** — the filter matches, but not near the start of the rowid order. Middling today.
 * **matches-nothing** — no rows at all. Pathological today; the case the fix is *for*.
+* **matches-exhausted** — *added 2026-08-05, after prod turned out to be this and not matches-late.*
+  The filter matches EARLY and then runs out, so paging past the cluster leaves fewer than `LIMIT`
+  rows ahead while most of the table still is. Indistinguishable from matches-nothing after the
+  cluster is consumed, and invisible if you only time page 1. The three classes above were chosen by
+  where matches *start*; this one is about where they *stop*, which is why the original set could not
+  express it. See the `?kind=registration` correction below.
+
+**The taxonomy itself was the unstated assumption.** All three original classes are properties of the
+FIRST match's position, so a filter was implicitly assumed to keep matching once it started. Nothing
+measured that, and prod's `registration` does not: 120 rows, all inside deciles 1–2. A classification
+scheme can be the thing that is wrong, not just the classification — and it fails silently, because
+every case still lands in *some* bucket.
 
 | read | filter | class | limit=50 | limit=1000 |
 |---|---|---|---|---|
@@ -973,9 +985,34 @@ two values so both are dense and only an adversarial nothing-match is slow. run-
 `?kind=registration` at **18.7 s on prod** — the second of two *documented* values, sent by ordinary
 clients with no crafted input.
 
-So the assumption was wrong, not the reasoning from it. `registration` is rare enough in the data to be a
-**matches-late** case: it exists, so the short-circuit cannot veto it, and it sits late enough in id order
-that the walk runs nearly to completion before `LIMIT` fills.
+So the assumption was wrong, not the reasoning from it.
+
+> ~~`registration` is rare enough in the data to be a **matches-late** case: it exists, so the
+> short-circuit cannot veto it, and it sits late enough in id order that the walk runs nearly to
+> completion before `LIMIT` fills.~~
+>
+> **RETRACTED 2026-08-05.** The *positional* half of this is measured false. It was proj-fix's
+> inference, not a measurement, and run-driver's Phase A falsifies it: `registration` is rare and
+> **EARLY**, not late. Retracted explicitly rather than quietly replaced — this passage has already
+> been corrected once, and a file corrected once is exactly where a second silent correction gets
+> missed.
+
+**Measured replacement (run-driver, Phase A, 2026-08-04):**
+
+`registration` is rare enough to be a **matches-exhausted** case: 120 rows in ~8.1M, clustered in id
+deciles 1–2 (first match at id 1,127,544, ~14% in). It exists, so the short-circuit cannot veto it —
+but because the read walks `t.id > ? ORDER BY t.id LIMIT 50` and can only stop early when `LIMIT`
+*fills*, the cost falls on the pages *after* the cluster is consumed: page 3 onward walks the
+remaining ~6.2M rows to the end and returns nothing. The general property is **fewer than `LIMIT`
+matching rows remain after the cursor while much of the table is still ahead** — matches-late and
+matches-exhausted are both instances of it, and prod is the second.
+
+**The 18.7 s figure is a FLOOR, not the cost.** It was measured on the *first* page (`after=0`),
+which is the cheapest case: the cluster sits at ~14%, so page 1 fills after walking a fraction of the
+table. The expensive pages are **page 3 onward** — not page 2, which still has cluster matches to
+return — and they are **unmeasured**. Each walks to the end of ~8.1M rows and returns nothing. Any bed
+built to reproduce this (issue 122) must paginate past exhaustion rather than time `after=0`, or it
+will measure the floor and call it the ceiling.
 
 That flips the resolution. `t.kind` is a column of the **driven table**, unlike `country`'s
 `EXISTS`-per-row or `lots`' joined-table filters, so it is the one Class B member that an index can fix.
