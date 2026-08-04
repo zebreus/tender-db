@@ -1,8 +1,36 @@
 # 121 — a standing structural gate, the empty-layer hole it closed, and two corrections it forced
 
-Status: phase 0 landed (`8e96b8f`, hardened `ca1a9b8`, `d22bb6e`, `728d7cf`); phase 1 PRE-AUTHORIZED
-(Tier A, confined arm only) and STAGED — held by the box, not by permission; see Not yet done.
-Companion tooling: `snapwatch.sh` (`b05befc`, live on the box), `thread_cpu.sh` (`6150399`, `18b0e90`)
+Status: phase 0 landed; **phase 1 MEASURED AND PASSED 2026-08-04** — confinement proven, Tier B/C
+released against it. Companion tooling: `snapwatch.sh` (live on the box), `thread_cpu.sh`,
+`activity.sh` (shared sustained-activity primitive), `negative_amount_triage.sql`, `tierA_with_triage.sh`
+
+## Phase 1 result (2026-08-04, pinned snapshot `tender-db-1785830601.db`)
+
+The confinement claim is **measured, not asserted**. 1,145 samples over 2,367 s, t=0 through
+completion, so the fill climb — the interval a spot reading misses and Tier B/C stress hardest — is
+covered.
+
+| window | health p95 | hot read p95 | cache_file_delta | refault_delta | majflt_delta |
+|---|---|---|---|---|---|
+| baseline | 0.6 ms | 22.9 ms | 0 | 0 | 0 |
+| during (39 min) | 0.7 ms | 22.7 ms | 0 | 0 | 2 |
+| after | 0.7 ms | 20.8 ms | 0 | 0 | 0 |
+
+`workingset_refault_file` — pages evicted and read back — **did not move once** while 455 GB went
+through the cache. Gate cgroup peaked at exactly the 512 MiB cap; the live service's `MemoryCurrent`
+*rose*. Through the fill climb (`gate_bytes` 97.6M → 161.3M over six samples) `live_file` and
+`refault` were unchanged at every sample.
+
+**Latency was the correlate, not the claim.** At ~7% CPU duty the interference was never contention;
+it was page-cache eviction, which is what `MemoryMax` exists to prevent. Measuring only p95 would
+have answered an easier question — the same easier question the discarded salvage window answered.
+
+**And the `0` is interpretable because the instrument was proven first**: the delta arithmetic was
+shown to report non-zero on synthetic data before the run, so a flat reading means "nothing was
+evicted", not "the delta never worked".
+
+Tier B/C released on this, with the condition that each re-measures rather than inherits the result —
+they stress the fill harder, so `refault = 0` at their weight has to be shown, not assumed.
 Kind: verification (standing gate) + two corrections to load-bearing beliefs
 Owner: sdk-vendor (gate) + proj-fix (daily-cycle integration)
 Relates to: 107 (freshness witness — partly consumed here), 109 (presence gate — partly consumed here),
