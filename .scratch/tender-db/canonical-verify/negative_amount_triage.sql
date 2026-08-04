@@ -119,28 +119,46 @@ SELECT tender_id, COUNT(*) AS n FROM tender_version_amounts
 .print '-- the canonical name while notice_amounts.field_id is the SDK id, so a'
 .print '-- name-join would silently under-match and manufacture a false positive for'
 .print '-- "the fold did it". Notice-level is the claim that actually discriminates.'
+.print '--'
+.print '-- COMPARED AGAINST THE CHAIN, NOT THE CAUSING NOTICE. The fold CARRIES FACTS'
+.print '-- FORWARD: fold() clones the previous version''s facts and supersede() replaces'
+.print '-- only the fields the new notice republishes (project.rs:1882-1935, read'
+.print '-- directly, not inherited). So a negative published once at seq 1 exists at'
+.print '-- seqs 1..N, and the notices of seqs 2..N carry no negative at all. Comparing'
+.print '-- to the version''s OWN notice would flag every one of those as fold-introduced'
+.print '-- — a false indictment of the fold on any multi-version tender, which is most'
+.print '-- of them. (proj-fix, whose area it is; my both-ways fixture could not have'
+.print '-- caught it because carry-forward needs >=2 versions.)'
+.print '--'
+.print '-- RESIDUAL, so a 0 is not over-read: even corrected, 0 means NO NEGATIVE'
+.print '-- APPEARED FROM NOWHERE. It does not prove the fold correct. A fold that'
+.print '-- flipped a sign on a chain that legitimately carries some other negative'
+.print '-- stays invisible here. Negatives are rare so the residual is probably small,'
+.print '-- but "0" and "the fold is proven right" are different claims.'
 
 .print ''
 .print '-- 9. folded negatives whose SOURCE NOTICE has NO negative at all -> EXPECT 0.'
 .print '--    Any nonzero = the fold introduced a sign the parse layer never had, proj-fix''s'
 .print '--    analysis is wrong, and the defect is theirs rather than the invariant''s.'
-SELECT COUNT(*) AS folded_negatives_with_no_negative_in_parse_layer
+SELECT COUNT(*) AS folded_negatives_with_no_negative_anywhere_in_chain
   FROM tender_version_amounts a
-  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
  WHERE a.cents < 0
-   AND NOT EXISTS (SELECT 1 FROM notice_amounts na
-                    WHERE na.notice_id = v.caused_by_notice_id AND na.cents < 0);
+   AND NOT EXISTS (SELECT 1 FROM tender_versions v2
+                     JOIN notice_amounts na ON na.notice_id = v2.caused_by_notice_id
+                    WHERE v2.tender_id = a.tender_id AND v2.seq <= a.seq
+                      AND na.cents < 0);
 
 .print ''
 .print '-- 10. stronger form: EXACT magnitude present in the parse layer for that notice.'
 .print '--     High share = faithful copy. A large gap between 9 and 10 would mean the'
 .print '--     notice had SOME negative but not THIS value — worth a look, not a verdict.'
-SELECT COUNT(*) AS folded_negatives_with_exact_parse_layer_match
+SELECT COUNT(*) AS folded_negatives_with_exact_match_in_chain
   FROM tender_version_amounts a
-  JOIN tender_versions v ON v.tender_id = a.tender_id AND v.seq = a.seq
  WHERE a.cents < 0
-   AND EXISTS (SELECT 1 FROM notice_amounts na
-                WHERE na.notice_id = v.caused_by_notice_id AND na.cents = a.cents);
+   AND EXISTS (SELECT 1 FROM tender_versions v2
+                 JOIN notice_amounts na ON na.notice_id = v2.caused_by_notice_id
+                WHERE v2.tender_id = a.tender_id AND v2.seq <= a.seq
+                  AND na.cents = a.cents);
 
 .print ''
 .print '-- 11. P1 — the text era emits no Amount variant, so it should contribute NOTHING.'
