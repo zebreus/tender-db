@@ -103,15 +103,35 @@ produced anything: if the projection did nothing but the snapshot step succeeded
 new file and `repeat=no` is still correct. The gate verifies the artifact it is given; "the cycle did
 useful work" is a different claim and this does not make it.
 
-## Cost: the run is ~an hour, not a few minutes — and that changes four things
+## Cost: ~29 minutes, and I/O-bound — which decides more than the duration does
 
-Tier A measured at **~55 min** on the 455 GB snapshot (team-lead, 2026-08-04), against a design that
-assumed "a few minutes, A daily, C weekly". sdk-vendor is re-running it clean, so **no cadence is
-hardcoded here until that number lands**. What can be reasoned about now is what a near-hour run changes,
-because these are consequences of the shape rather than of the exact figure:
+Tier A ran **28m50s** wall on the 455 GB snapshot, of which **2m04s was CPU — a ~7% duty cycle**. The run
+is **I/O-bound**, not CPU-bound.
+
+> First relayed to me as ~55 min; sdk-vendor caught that they had read elapsed time from when they started
+> watching rather than the unit's own `Consumed … wall clock time` accounting, and corrected it before it
+> hardened into this design. Halved — and still not "a few minutes", so the split question below stands,
+> just less sharply than 55 made it look. **No cadence is hardcoded here** until their clean re-run lands.
+
+**The I/O-bound finding is worth more than the duration**, because it decides three things duration alone
+cannot:
+
+- **`IOWeight` is the knob; `CPUWeight` is nearly decorative here.** At 7% duty, throttling CPU constrains
+  almost nothing. The interference is disk bandwidth and **page-cache eviction** — pulling a 455 GB file
+  through the cache is what evicts the live service's working set, which is exactly why `MemoryMax`
+  matters: under it the scan's cache is charged to its own cgroup and reclaimed from there, not from the
+  service.
+- **It decides what may share a window.** A CPU-heavy job can overlap this cheaply. Another **I/O-bound**
+  job cannot — and the daily projection is precisely that (read-bound, issues 62/91). So the rule is not
+  "don't overlap heavy jobs", it is **don't overlap I/O-heavy jobs**: narrower, and actually actionable.
+- **It narrows the interlock's question** to "is a heavy **I/O** job running?" — projection, reclaim,
+  snapshot. Deferring behind a CPU-bound job would be a cost with no benefit.
+
+Four further consequences of the run simply being long (~29 min or more), from the shape rather than the
+figure:
 
 1. **"Defer until quiet" stops being a plan and becomes a hope.** Dashing through a quiet moment works
-   for a two-minute job. A 55-minute job needs an hour-long quiet window, and this box wobbles rather than
+   for a two-minute job. A ~29-minute job needs a half-hour quiet window, and this box wobbles rather than
    drains — there may be no such window on a given day. So the weight shifts off the interlock and onto
    **confinement**: the run must be survivable *during* contention (`IOWeight`, `CPUWeight`, `MemoryMax`),
    not merely scheduled around it. The interlock stays as a courtesy; confinement is what makes it safe.
