@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+# PHASE 1 of task #28: does cgroup confinement actually protect the live service
+# when the standing gate scans a 455 GB snapshot on the prod box?
+#
+# This script exists because the confinement is a CLAIM, not a fact. cgroup v2
+# charges page cache to the cgroup that faults it in, so a `MemoryMax`-limited
+# scan should reclaim ITS OWN cache rather than evict the live service's ~4.8 GB.
+# Should. Issue 17 sat "resolved on construction" and unverified under load for a
+# week; this is the same shape, so it gets measured before it gets believed.
+#
+# TWO-PHASE BY DESIGN. Default is STAGE: preconditions only, no gate, no load —
+# safe to run any time. `--release` runs the confined measurement, and is the
+# authorized action. Staging first means a late hold can physically land
+# (prod-load-safety, the #16 deploy lesson).
+#
+#   ./phase1_confined_probe.sh              # stage: check preconditions, print the plan
+#   ./phase1_confined_probe.sh --release    # the authorized run (Tier A only)
+#
+# RUNS ON THE PROD BOX. That is the whole point — the read cannot leave it (455 GB
+# at ~100 kB/s is ~53 days). A prod-box read gates on HOST, not size, which is why
+# it needs the lead's word and why it is confined and instrumented rather than bare.
+#
+# ONLY THE CONFINED ARM RUNS. The unconfined control is deliberately the harmful
+# case; we judge against the pre-run baseline instead of running it.
+#
+# SELF-ABORTING. If live latency degrades past the threshold for 3 consecutive
+# samples, the gate is killed. Worst case is a few seconds of degradation, not a
+# run we notice afterwards in a graph.
+set -uo pipefail
+
+GATE="${GATE:-/opt/tender-db/canonical-verify/standing_gate.sh}"
+TIER="${TIER:-A}"                 # Tier A only until its measurement gates B and C
+MEM_MAX="${MEM_MAX:-512M}"        # the confinement under test
+IO_WEIGHT="${IO_WEIGHT:-10}"      # default 100
+CPU_WEIGHT="${CPU_WEIGHT:-10}"    # default 100
+NICE="${NICE:-19}"
+BASE_URL="${BASE_URL:-http://127.0.0.1:8080}"
+HOT_READ="${HOT_READ:-/v1/tenders?limit=5}"
+BASELINE_S="${BASELINE_S:-60}"    # measure normal operation before adding any load
+SETTLE_S="${SETTLE_S:-60}"        # and after, to see recovery
+INTERVAL_S="${INTERVAL_S:-2}"
+ABORT_MS="${ABORT_MS:-250}"       # abort if the hot read exceeds this...
+ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichever is larger
+UNIT="tdb-standing-gate-probe"
+OUT="${OUT:-/tmp/phase1-$(date -u +%Y%m%dT%H%M%SZ)}"
+
+ms() { awk -v s="$1" 'BEGIN{printf "%.1f", s*1000}'; }
+
+probe() { # one sample -> "epoch health_ms hot_ms live_bytes gate_bytes cached_kb"
+  local h r
+  h=$(curl -o /dev/null -s -w '%{time_total}' --max-time 10 "$BASE_URL/health" 2>/dev/null || echo 9.999)
+  r=$(curl -o /dev/null -s -w '%{time_total}' --max-time 30 "$BASE_URL$HOT_READ" 2>/dev/null || echo 29.999)
+  local live gate cached
+  live=$(systemctl show tender-db.service -p MemoryCurrent --value 2>/dev/null)
+  gate=$(cat "/sys/fs/cgroup/system.slice/$UNIT.service/memory.current" 2>/dev/null || echo 0)
+  cached=$(awk '/^Cached:/{print $2}' /proc/meminfo)
+  echo "$(date +%s) $(ms "$h") $(ms "$r") ${live:-0} ${gate:-0} $cached"
+}
+
+pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
+  [ -s "$1" ] || { echo "n/a"; return; }
+  sort -k"$2","$2" -g "$1" | awk -v c="$2" -v p="$3" \
+    '{v[NR]=$c} END{if(NR==0){print "n/a";exit} i=int(p/100*NR); if(i<1)i=1; print v[i]}'
+}
+
+preconditions() {
+  local ok=0
+  echo "== preconditions =="
+  [ -x "$GATE" ] && echo "  ok   gate present: $GATE" || { echo "  FAIL gate not executable at $GATE"; ok=1; }
+  # The gate IS sqlite3; without it every check would ERROR and the run would
+  # measure nothing while still reading the disk.
+  command -v "${SQLITE:-sqlite3}" >/dev/null && echo "  ok   sqlite3: $(command -v "${SQLITE:-sqlite3}")" \
+    || { echo "  FAIL no sqlite3 on PATH — the gate would error on every check"; ok=1; }
+  # Self-test needs no snapshot and no box state; if the detectors are broken
+  # here, the measured run would be measuring a broken gate.
+  if "$GATE" --self-test >/dev/null 2>&1; then echo "  ok   gate self-test passes on this host"
+  else echo "  FAIL gate self-test FAILS on this host — fix before measuring anything"; ok=1; fi
+  [ "$(stat -fc %T /sys/fs/cgroup)" = cgroup2fs ] && echo "  ok   cgroup v2 (MemoryMax covers page cache)" \
+    || { echo "  FAIL not cgroup v2 — MemoryMax would not bound page cache, the whole mechanism"; ok=1; }
+  systemctl is-active --quiet tender-db.service && echo "  ok   live service active (there is something to protect)" \
+    || { echo "  FAIL tender-db.service not active"; ok=1; }
+  local snap; snap=$(ls -1 /data/db/snapshots/tender-db-*.db 2>/dev/null | sort | tail -1)
+  [ -n "$snap" ] && echo "  ok   snapshot: $snap ($(( ($(date +%s) - $(stat -c %Y "$snap")) / 3600 ))h old)" \
+    || { echo "  FAIL no snapshot"; ok=1; }
+  systemctl is-active --quiet "$UNIT.service" && { echo "  FAIL $UNIT.service already running"; ok=1; } \
+    || echo "  ok   no stale probe unit"
+  # A gate run must not race the daily pipeline's own writes.
+  local jobs; jobs=$(curl -s --max-time 5 "$BASE_URL/admin/jobs" 2>/dev/null | head -c 200)
+  echo "  note live job state (eyeball, do not run during project/process): ${jobs:-unavailable}"
+  return $ok
+}
+
+echo "== #28 phase 1: confined-read impact probe =="
+echo "-- plan: TIER=$TIER under MemoryMax=$MEM_MAX IOWeight=$IO_WEIGHT CPUWeight=$CPU_WEIGHT Nice=$NICE"
+echo "--       baseline ${BASELINE_S}s -> gate -> settle ${SETTLE_S}s, sampling every ${INTERVAL_S}s"
+echo "--       abort if hot read > max(${ABORT_MS}ms, ${ABORT_MULT}x baseline p95) for 3 consecutive samples"
+echo "--       output: $OUT.{baseline,during,after}.tsv"
+preconditions || { echo; echo "PRECONDITIONS FAILED — not staged."; exit 2; }
+
+if [ "${1:-}" != "--release" ]; then
+  echo
+  echo "STAGED ONLY. Nothing was run and no load was added."
+  echo "Re-run with --release to execute the authorized measurement."
+  exit 0
+fi
+
+mkdir -p "$(dirname "$OUT")"
+echo
+echo "-- baseline (${BASELINE_S}s, live service undisturbed)"
+: > "$OUT.baseline.tsv"
+end=$(( $(date +%s) + BASELINE_S ))
+while [ "$(date +%s)" -lt "$end" ]; do probe >> "$OUT.baseline.tsv"; sleep "$INTERVAL_S"; done
+base_h=$(pct "$OUT.baseline.tsv" 2 95); base_r=$(pct "$OUT.baseline.tsv" 3 95)
+echo "   baseline p95: health ${base_h}ms, hot read ${base_r}ms"
+
+thresh=$(awk -v a="$ABORT_MS" -v b="$base_r" -v m="$ABORT_MULT" 'BEGIN{t=b*m; print (t>a)?t:a}')
+echo "   abort threshold: ${thresh}ms sustained over 3 samples"
+
+echo "-- gate (confined, Tier $TIER)"
+systemd-run --unit="$UNIT" --service-type=oneshot --collect \
+  -p MemoryMax="$MEM_MAX" -p MemorySwapMax=0 \
+  -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
+  --setenv=TIER="$TIER" \
+  /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
+
+: > "$OUT.during.tsv"; breaches=0; aborted=no; gate_start=$(date +%s)
+while systemctl is-active --quiet "$UNIT.service"; do
+  s=$(probe); echo "$s" >> "$OUT.during.tsv"
+  hot=$(echo "$s" | awk '{print $3}')
+  if awk -v h="$hot" -v t="$thresh" 'BEGIN{exit !(h>t)}'; then
+    breaches=$((breaches+1))
+    echo "   !! hot read ${hot}ms > ${thresh}ms (breach $breaches/3)"
+    if [ "$breaches" -ge 3 ]; then
+      echo "   ABORTING — confinement is not protecting the live service"
+      systemctl stop "$UNIT.service" 2>/dev/null; aborted=yes; break
+    fi
+  else breaches=0; fi
+  sleep "$INTERVAL_S"
+done
+gate_secs=$(( $(date +%s) - gate_start ))
+peak_gate=$(awk '{if($5>m)m=$5} END{print m+0}' "$OUT.during.tsv")
+
+echo "-- settle (${SETTLE_S}s)"
+: > "$OUT.after.tsv"
+end=$(( $(date +%s) + SETTLE_S ))
+while [ "$(date +%s)" -lt "$end" ]; do probe >> "$OUT.after.tsv"; sleep "$INTERVAL_S"; done
+
+echo
+echo "== result =="
+printf '  %-10s %-12s %-12s\n' window health_p95 hotread_p95
+for w in baseline during after; do
+  printf '  %-10s %-12s %-12s\n' "$w" "$(pct "$OUT.$w.tsv" 2 95)" "$(pct "$OUT.$w.tsv" 3 95)"
+done
+echo "  gate ran ${gate_secs}s, aborted=$aborted"
+echo "  gate cgroup peak: $peak_gate bytes (MemoryMax=$MEM_MAX) — if this pinned at the"
+echo "    limit and live latency held, the confinement did the work it claims to."
+echo "  live service MemoryCurrent, first->last during: $(head -1 "$OUT.during.tsv" | awk '{print $4}') -> $(tail -1 "$OUT.during.tsv" | awk '{print $4}')"
+echo "    (a large DROP here is the live cache being evicted — the failure mode under test)"
+echo "  raw: $OUT.{baseline,during,after}.tsv"
+echo
+echo "VERDICT_INPUTS aborted=$aborted gate_secs=$gate_secs peak_gate_bytes=$peak_gate"
+echo "Read the numbers before declaring the confinement sound. A short run that never"
+echo "touched the disk proves nothing about a run that does."
