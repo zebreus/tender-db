@@ -132,10 +132,27 @@ second bed. The existing bed cannot measure it at all — `tenders.kind` is sing
    one-liner over `sqlite_stat1` for the read-path tables, expected 0. The real hazard behind my wording
    was a bare `ANALYZE` on the fixture, and that is what must never run. Same species as the
    sqlite3-vs-turso trap `hot_read_plans.sh` was built around, one layer up.
-1. **`registration` rare AND LATE in id order.** Rarity alone does not reproduce 18.7 s. Because the read
-   walks `t.id > ? ORDER BY t.id LIMIT ?`, the pathology is that matches sit late enough that the walk
-   nearly completes before `LIMIT` fills. Sprinkle them uniformly and the row counts still look right
-   while the phenomenon disappears.
+1. ~~**`registration` rare AND LATE in id order.**~~ **WRONG — corrected by measurement, see below.**
+   The property is not lateness. It is: **fewer than `LIMIT` matching rows remain after the cursor, while
+   much of the table is still ahead of it.** The read walks `t.id > ? ORDER BY t.id LIMIT 50` and can only
+   stop early when `LIMIT` fills; if it cannot fill, it walks to the end of the table. Late matches are one
+   way to cause that. **Exhausted matches are another, and that is what prod actually has.**
+
+   > **Correction (run-driver, Phase A measurement 2026-08-04).** Prod's `registration` is **120 rows in
+   > ~8.1M (0.0015 %)**, sitting in id deciles **1–2** — first match at id 1,127,544, about **14 % in**.
+   > Rare, and **early**. My "rare AND late" was an invented positional claim, and I asserted it in the
+   > same list as requirement (2), which says *derive the distribution from the snapshot, do not invent it —
+   > including not by me*. I violated my own requirement one line above writing it.
+   >
+   > The mechanism is therefore **matches-early-then-exhausted**: the first page fills quickly from the
+   > cluster and is *fast*; once the 120 are consumed, every later page walks the remaining ~75–85 % of the
+   > table and returns nothing, and the last pages are full scans for zero rows. That fits an 18.7 s
+   > *ordinary* read better than lateness does, and it predicts something lateness does not — **the cost
+   > depends on cursor position**. Also measured: there is no `contract` kind in prod at all; the dominant
+   > value is `procedure`.
+
+   Consequence for the bed: reproduce the **property**, not the position — a `kind` value whose matches run
+   out with most of the table still ahead of the cursor.
 2. **`kind` distribution derived from the snapshot, not invented** — including by me. A guessed skew is
    the same unstated-assumption-about-the-corpus that made 117's original `?kind=` resolution wrong.
 3. **A selective co-filter independent of `kind`** (cpv / nuts / published window) matching few rows
@@ -143,10 +160,24 @@ second bed. The existing bed cannot measure it at all — `tenders.kind` is sing
    ordinary sweep would not include.
 4. **Non-empty satellites** — the list read joins `tender_versions` and runs correlated subqueries per
    row; empty satellites flatter exactly the plan under suspicion.
-5. **Deep-cursor positions**, not only `after = 0`.
+5. **Deep-cursor positions**, not only `after = 0`. **Promoted from nice-to-have to LOAD-BEARING** by the
+   correction above: with matches clustered early and then exhausted, `after = 0` is the *cheap* page — the
+   pathology is invisible there and only appears past the cluster. A clock that sampled only the first page
+   would have reported this read healthy. The anchor must therefore be clocked at a cursor **past the
+   exhaustion point**, which is where the 18.7 s lives.
 
 The fixture is anchored to reproduce the known 18.7 s before its other numbers are trusted. **If it
 cannot reproduce it, this issue waits** rather than measuring against a bed that lacks the phenomenon.
+
+> **The anchor check itself needed correcting.** As first written it asserted that the rarest kind first
+> matches *past 50 % of the id range* — my "late" prose turned into a gate. Against a prod-faithful bed
+> that check **rejects the correct fixture**, because prod's rare kind matches at ~14 %. run-driver caught
+> it before building to it. Corrected anchor: *the rare kind's matches are exhausted with most of the table
+> still ahead, and the clock samples a cursor past the exhaustion point.*
+>
+> Worth noting what this was: a hypothesis of mine, promoted to an assertion in a gate, which would then
+> have enforced my error against the measurement that disproved it. A gate encoding an unmeasured belief
+> does not just fail to catch the problem — it actively rejects the truth.
 
 ## Note on `#15 ≠ #16`
 
