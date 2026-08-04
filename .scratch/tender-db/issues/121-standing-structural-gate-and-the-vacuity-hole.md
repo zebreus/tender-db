@@ -1,7 +1,8 @@
 # 121 — a standing structural gate, the empty-layer hole it closed, and two corrections it forced
 
-Status: phase 0 landed (`8e96b8f`, hardened `ca1a9b8`); phase 1 AUTHORIZED (two-phase) and STAGED on
-the box — held because preconditions refuse while the live service is under sustained Class B load
+Status: phase 0 landed (`8e96b8f`, hardened `ca1a9b8`, `d22bb6e`, `728d7cf`); phase 1 PRE-AUTHORIZED
+(Tier A, confined arm only) and STAGED — held by the box, not by permission; see Not yet done.
+Companion tooling: `snapwatch.sh` (`b05befc`, live on the box), `thread_cpu.sh` (`6150399`, `18b0e90`)
 Kind: verification (standing gate) + two corrections to load-bearing beliefs
 Owner: sdk-vendor (gate) + proj-fix (daily-cycle integration)
 Relates to: 107 (freshness witness — partly consumed here), 109 (presence gate — partly consumed here),
@@ -97,7 +98,19 @@ of the memory stands.
 
 ## Not yet done
 
-* **Phase 1** (needs lead's word — a prod-box read gates on HOST, not size): one confined, instrumented
+* **Phase 1** — PRE-AUTHORIZED and STAGED (`phase1_confined_probe.sh`), not yet run. Blocked on the box,
+  not on permission: an abandoned Class B read has held a slot since 09:33:44 with no client attached
+  (~66 min at 10:39, non-monotonic). The wait is bounded to ~11:10Z, after which run-driver proposes a
+  controlled restart. Running contended was considered and REJECTED — the residual is non-steady, so it
+  could finish mid-run, latency would improve, and the confinement would be credited for it: a false
+  green on the precise question. Two defects were found in the probe before it was fit to spend the
+  authorization, both of the same shape (`7afac43`, `02b443d`): the input was resolved TWICE (once in
+  preconditions, again in the confined unit at launch) so the verified file and the measured file could
+  differ silently; and the script enforced only ONE of the two gates the authorization named, passing
+  while a scan ran. The rule both produced: **encode the standard, do not hold it in your head** — a
+  precondition that codes fewer gates than the authorization names is a false green waiting for the day
+  nobody checks the other signal by hand. Original text below stands as the design:
+  one confined, instrumented
   run against a real snapshot. Proposed confinement is a systemd unit with `MemoryMax=` (page cache is
   charged to the faulting cgroup, so it reclaims its own rather than evicting the live service's ~2 GB),
   plus low `IOWeight`/`CPUWeight` and `Nice=19`. That mechanism must be **measured, not asserted** — cf.
