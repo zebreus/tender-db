@@ -42,6 +42,13 @@ INTERVAL_S="${INTERVAL_S:-2}"
 ABORT_MS="${ABORT_MS:-250}"       # abort if the hot read exceeds this...
 ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichever is larger
 UNIT="tdb-standing-gate-probe"
+# Resolve the input ONCE, here, and pass it to the gate PINNED. The lead requires
+# SNAPSHOT= rather than "newest" for this run, and the reason is proj-fix's: age
+# bounds how stale an input may be, it cannot establish WHICH run produced it. It
+# also matters for the measurement itself — preconditions must report on exactly
+# the file the confined run will read, or the two could diverge if the daily lands
+# a new snapshot between the check and the launch.
+SNAP="${SNAPSHOT:-$(ls -1 /data/db/snapshots/tender-db-*.db 2>/dev/null | sort | tail -1)}"
 OUT="${OUT:-/tmp/phase1-$(date -u +%Y%m%dT%H%M%SZ)}"
 
 ms() { awk -v s="$1" 'BEGIN{printf "%.1f", s*1000}'; }
@@ -79,9 +86,14 @@ preconditions() {
     || { echo "  FAIL not cgroup v2 — MemoryMax would not bound page cache, the whole mechanism"; ok=1; }
   systemctl is-active --quiet tender-db.service && echo "  ok   live service active (there is something to protect)" \
     || { echo "  FAIL tender-db.service not active"; ok=1; }
-  local snap; snap=$(ls -1 /data/db/snapshots/tender-db-*.db 2>/dev/null | sort | tail -1)
-  [ -n "$snap" ] && echo "  ok   snapshot: $snap ($(( ($(date +%s) - $(stat -c %Y "$snap")) / 3600 ))h old)" \
-    || { echo "  FAIL no snapshot"; ok=1; }
+  local snap="$SNAP" snap_age
+  if [ -n "$snap" ] && [ -r "$snap" ]; then
+    snap_age=$(( ($(date +%s) - $(stat -c %Y "$snap")) / 3600 ))
+    echo "  ok   snapshot PINNED: $snap (${snap_age}h old, $(stat -c %s "$snap") bytes)"
+    [ "$snap_age" -le 30 ] || { echo "  FAIL snapshot is ${snap_age}h old — the gate would refuse it anyway"; ok=1; }
+  else
+    echo "  FAIL no readable snapshot to pin"; ok=1
+  fi
   systemctl is-active --quiet "$UNIT.service" && { echo "  FAIL $UNIT.service already running"; ok=1; } \
     || echo "  ok   no stale probe unit"
   # A gate run must not race the daily pipeline. /admin/jobs needs an operator
@@ -108,6 +120,7 @@ echo "== #28 phase 1: confined-read impact probe =="
 echo "-- plan: TIER=$TIER under MemoryMax=$MEM_MAX IOWeight=$IO_WEIGHT CPUWeight=$CPU_WEIGHT Nice=$NICE"
 echo "--       baseline ${BASELINE_S}s -> gate -> settle ${SETTLE_S}s, sampling every ${INTERVAL_S}s"
 echo "--       abort if hot read > max(${ABORT_MS}ms, ${ABORT_MULT}x baseline p95) for 3 consecutive samples"
+echo "--       input:  $SNAP  (pinned, not newest-at-launch)"
 echo "--       output: $OUT.{baseline,during,after}.tsv"
 preconditions || { echo; echo "PRECONDITIONS FAILED — not staged."; exit 2; }
 
@@ -134,7 +147,7 @@ echo "-- gate (confined, Tier $TIER)"
 systemd-run --unit="$UNIT" --service-type=oneshot --collect \
   -p MemoryMax="$MEM_MAX" -p MemorySwapMax=0 \
   -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
-  --setenv=TIER="$TIER" \
+  --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
   /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
 
 : > "$OUT.during.tsv"; breaches=0; aborted=no; gate_start=$(date +%s)
