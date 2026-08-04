@@ -191,12 +191,19 @@ valuable thing to run often, since it is what catches fold damage. Putting the m
 valuable tier on the rarest slot because it is the most expensive is a real
 trade-off, not an obvious win.
 
-**So B's cadence is NOT decidable from these numbers**, because they are unconfined.
-`MemoryMax` exists precisely to contain the effect B is the only tier to produce. If
-the cap holds B's refault near zero, B can be daily and the tension dissolves; if it
-does not, B is weekly with a chosen window and the tripwire armed. **That is the
-measurement that decides it, and it has not been taken.** Until then the design
-assumes: **A + C daily, B on a chosen window**, and treats that as provisional.
+**On the confined numbers, B is daily-affordable and the tension dissolves.** 34 min,
+eviction contained to ~0.05 % of the working set, latency flat-or-better — that is
+`MemoryMax` doing exactly the job it was added for. So the most valuable tier does
+*not* have to go on the rarest slot, which is the outcome to prefer when the numbers
+allow it. **All four tiers daily**, with B still carrying the tripwire since it is
+the only one that moves the needle at all.
+
+**One consequence of daily-everything worth designing for: run the units in COST
+ORDER — 0, then C, then A, then B.** The daily total is now ~63 min of confined I/O.
+If the window closes early, or the box is too busy and the interlock defers, a
+cost-ordered sequence has already delivered the cheap high-value checks; a
+cost-*descending* one would have spent the window on B and delivered nothing. Partial
+completion should degrade to *less coverage*, never to *no coverage*.
 
 **Gate on eviction, not latency.** Tier B moved `refault` while latency was *better*
 during the run than at baseline. Any health check the timer grows must watch
@@ -216,10 +223,27 @@ against the real 455 GB snapshot, versus 93 s for a single full-scan check. ~2,7
 
 | tier | what | measured | eviction | cadence |
 |---|---|---|---|---|
-| 0 | 11 presence checks | 195 ms | 0 | see the correction below |
-| C | 1 mention anti-join | 361 s | 0 | daily, after the snapshot |
-| A | 24 checks (**including** the 11) | 2369 s | 0 | daily, after C |
-| B | 12 joins / anti-joins | 3193 s | 239 refault | weekly, chosen window, tripwire armed |
+| 0 | 11 presence checks | 0.2 s | 0 | see the correction below |
+| C | 1 mention anti-join | 361 s (6 min) | 0 | daily |
+| A | 24 checks (**including** the 11) | 1405 s (23 min; **plan ~29**) | 0 | daily |
+| B | 12 joins / anti-joins | 2013 s (34 min) | 239 refault | **daily** — see below |
+
+> **Corrected twice, and the second correction is to my reasoning, not their arithmetic.**
+>
+> *(a)* The first figures conflated gate and triage: A and B included a one-off #33 diagnostic the standing
+> timer will never run, C did not. Gate-only: **B is 34 min, not 53; A is 23 min, not 39.** The ordering
+> survives (B > A > C > 0), so the cadence inversion and everything resting on it holds — but a comparison
+> where two of four members carried a workload the others didn't is a worse defect than a wrong number
+> (sdk-vendor's own assessment). A also has an unreconciled 1730 s vs 1405 s spread across runs, cause
+> unestablished; **plan against ~29 min**, since undersizing a window is the expensive direction.
+>
+> *(b)* **I wrote that B's cadence was "not decidable from these numbers, because they are unconfined".
+> That was false, and I never checked it.** All three tiers ran inside the cgroup —
+> `MemoryMax=512M`, `IOWeight=10`, `CPUWeight=10`, `Nice=19`, confinement proof firing on each. So B's 239
+> refaults are the **confined** figure: the cap did not hold eviction to zero, it held it to ~0.05 % of the
+> 1.72 GB working set, with the service's cache growing and latency flat-or-better throughout. The
+> measurement I called missing had been taken; I built an argument on an assumption about someone else's
+> conditions without reading them.
 
 ### The correction: a 5-minute cadence against a daily snapshot buys nothing
 
