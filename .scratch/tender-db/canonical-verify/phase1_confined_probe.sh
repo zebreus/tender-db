@@ -67,15 +67,45 @@ unit_running() {
   esac
 }
 
-probe() { # one sample -> "epoch health_ms hot_ms live_bytes gate_bytes cached_kb"
+# THE EVICTION SIGNAL is the load-bearing measurement, not latency. At ~7% CPU
+# duty the interference was never contention — it is PAGE-CACHE EVICTION: pulling
+# 455 GB through the cache displaces the live service's working set, and MemoryMax
+# is load-bearing precisely because it charges that cache to the gate's cgroup and
+# reclaims it there instead of from the service. So we sample what MemoryMax
+# CLAIMS TO PREVENT, per sample, from the live service's own cgroup:
+#
+#   file                     file-backed cache charged to the service. A DROP is
+#                            its working set being taken.
+#   workingset_refault_file  pages evicted and then READ BACK — the canonical
+#                            eviction counter. A rising delta is the failure, even
+#                            if latency p95 looks fine.
+#   pgmajfault               major faults; the same story from the fault side.
+#
+# A latency p95 can look healthy on average while a brief eviction spike during
+# the fill climb hurts a handful of requests — and that transient is exactly what
+# an aggregate, or peak-equals-cap, cannot see. (team-lead, from proj-fix's
+# I/O-bound analysis, 2026-08-04.)
+LIVE_CG=/sys/fs/cgroup/system.slice/tender-db.service
+
+probe() { # -> epoch health_ms hot_ms live_bytes gate_bytes cached_kb file refault majflt
   local h r
   h=$(curl -o /dev/null -s -w '%{time_total}' --max-time 10 "$BASE_URL/health" 2>/dev/null || echo 9.999)
   r=$(curl -o /dev/null -s -w '%{time_total}' --max-time 30 "$BASE_URL$HOT_READ" 2>/dev/null || echo 29.999)
-  local live gate cached
+  local live gate cached lfile lref lmaj
   live=$(systemctl show tender-db.service -p MemoryCurrent --value 2>/dev/null)
   gate=$(cat "/sys/fs/cgroup/system.slice/$UNIT.service/memory.current" 2>/dev/null || echo 0)
   cached=$(awk '/^Cached:/{print $2}' /proc/meminfo)
-  echo "$(date +%s) $(ms "$h") $(ms "$r") ${live:-0} ${gate:-0} $cached"
+  lfile=$(awk '/^file /{print $2}'                   "$LIVE_CG/memory.stat" 2>/dev/null)
+  lref=$(awk '/^workingset_refault_file /{print $2}' "$LIVE_CG/memory.stat" 2>/dev/null)
+  lmaj=$(awk '/^pgmajfault /{print $2}'              "$LIVE_CG/memory.stat" 2>/dev/null)
+  echo "$(date +%s) $(ms "$h") $(ms "$r") ${live:-0} ${gate:-0} $cached ${lfile:-0} ${lref:-0} ${lmaj:-0}"
+}
+
+# delta <file> <col> -> last minus first. Cumulative counters must be differenced
+# across the window; their absolute values say nothing.
+delta() {
+  [ -s "$1" ] || { echo "n/a"; return; }
+  awk -v c="$2" 'NR==1{f=$c} {l=$c} END{if(NR==0){print "n/a";exit} print l-f}' "$1"
 }
 
 pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
@@ -228,6 +258,16 @@ for w in baseline during after; do
   printf '  %-10s %-12s %-12s\n' "$w" "$(pct "$OUT.$w.tsv" 2 95)" "$(pct "$OUT.$w.tsv" 3 95)"
 done
 echo "  gate ran ${gate_secs}s, aborted=$aborted"
+echo
+echo "  -- EVICTION SIGNAL (what MemoryMax claims to prevent) --"
+printf '  %-10s %-18s %-16s %-14s\n' window cache_file_delta refault_delta majflt_delta
+for w in baseline during after; do
+  printf '  %-10s %-18s %-16s %-14s\n' "$w" "$(delta "$OUT.$w.tsv" 7)" "$(delta "$OUT.$w.tsv" 8)" "$(delta "$OUT.$w.tsv" 9)"
+done
+echo "  cache_file_delta NEGATIVE during = the live service's cache was taken."
+echo "  refault_delta RISING vs baseline = evicted pages being read back — the"
+echo "  failure MemoryMax claims to prevent, and invisible in latency p95."
+echo
 echo "  gate cgroup peak: $peak_gate bytes (MemoryMax=$MEM_MAX) — if this pinned at the"
 echo "    limit and live latency held, the confinement did the work it claims to."
 echo "  live service MemoryCurrent, first->last during: $(head -1 "$OUT.during.tsv" | awk '{print $4}') -> $(tail -1 "$OUT.during.tsv" | awk '{print $4}')"
