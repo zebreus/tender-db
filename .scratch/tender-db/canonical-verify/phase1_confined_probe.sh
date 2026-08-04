@@ -53,6 +53,20 @@ OUT="${OUT:-/tmp/phase1-$(date -u +%Y%m%dT%H%M%SZ)}"
 
 ms() { awk -v s="$1" 'BEGIN{printf "%.1f", s*1000}'; }
 
+# unit_running <unit> — true while the unit exists in ANY live state.
+# NOT `systemctl is-active --quiet`: a --service-type=oneshot unit sits in
+# ActiveState=activating for the WHOLE of its ExecStart and only becomes active
+# once it has EXITED, so is-active is false exactly while the work runs. Using it
+# as a loop condition meant the sampling loop never executed and the auto-abort —
+# which lives inside that loop — never armed. Found by run-driver against a live
+# run of this probe, 2026-08-04; the first of the day's permissive failures to
+# disable a safety mechanism rather than merely misreport.
+unit_running() {
+  case "$(systemctl show "$1" -p ActiveState --value 2>/dev/null)" in
+    activating|active|deactivating|reloading) return 0;; *) return 1;;
+  esac
+}
+
 probe() { # one sample -> "epoch health_ms hot_ms live_bytes gate_bytes cached_kb"
   local h r
   h=$(curl -o /dev/null -s -w '%{time_total}' --max-time 10 "$BASE_URL/health" 2>/dev/null || echo 9.999)
@@ -94,8 +108,8 @@ preconditions() {
   else
     echo "  FAIL no readable snapshot to pin"; ok=1
   fi
-  systemctl is-active --quiet "$UNIT.service" && { echo "  FAIL $UNIT.service already running"; ok=1; } \
-    || echo "  ok   no stale probe unit"
+  unit_running "$UNIT.service" && { echo "  FAIL $UNIT.service already present (running or stale)"; ok=1; } \
+    || echo "  ok   no probe unit present (none stale, none concurrent)"
   # A gate run must not race the daily pipeline. /admin/jobs needs an operator
   # secret we do not hold, and a check that always returns 403 is decorative — it
   # would "pass" identically whether a job were running or not. So use two signals
@@ -180,7 +194,7 @@ systemd-run --unit="$UNIT" --service-type=oneshot --collect \
   /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
 
 : > "$OUT.during.tsv"; breaches=0; aborted=no; gate_start=$(date +%s)
-while systemctl is-active --quiet "$UNIT.service"; do
+while unit_running "$UNIT.service"; do
   s=$(probe); echo "$s" >> "$OUT.during.tsv"
   hot=$(echo "$s" | awk '{print $3}')
   if awk -v h="$hot" -v t="$thresh" 'BEGIN{exit !(h>t)}'; then
