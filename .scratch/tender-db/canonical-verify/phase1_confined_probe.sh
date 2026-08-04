@@ -41,7 +41,7 @@ SETTLE_S="${SETTLE_S:-60}"        # and after, to see recovery
 INTERVAL_S="${INTERVAL_S:-2}"
 ABORT_MS="${ABORT_MS:-250}"       # abort if the hot read exceeds this...
 ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichever is larger
-UNIT="tdb-standing-gate-probe"
+UNIT="${UNIT:-tdb-standing-gate-probe}"
 # Resolve the input ONCE, here, and pass it to the gate PINNED. The lead requires
 # SNAPSHOT= rather than "newest" for this run, and the reason is proj-fix's: age
 # bounds how stale an input may be, it cannot establish WHICH run produced it. It
@@ -187,7 +187,13 @@ thresh=$(awk -v a="$ABORT_MS" -v b="$base_r" -v m="$ABORT_MULT" 'BEGIN{t=b*m; pr
 echo "   abort threshold: ${thresh}ms sustained over 3 samples"
 
 echo "-- gate (confined, Tier $TIER)"
-systemd-run --unit="$UNIT" --service-type=oneshot --collect \
+# --no-block is REQUIRED, not tidiness. Without it systemd-run waits for the
+# START JOB to complete, and a Type=oneshot job completes only when ExecStart
+# EXITS — so systemd-run blocks for the entire gate run, the script never reaches
+# the sampling loop, during.tsv is never created and the abort never arms.
+# Measured on the box: a oneshot sleeping 6s made systemd-run return after 6s;
+# with --no-block it returned in 0s and the unit read `activating`.
+systemd-run --no-block --unit="$UNIT" --service-type=oneshot --collect \
   -p MemoryMax="$MEM_MAX" -p MemorySwapMax=0 \
   -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
   --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
