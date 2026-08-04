@@ -338,6 +338,12 @@ async fn cell_i64(db: &store::Db, sql: &str) -> Option<i64> {
 /// a raw connection to the same file (the store write API is intentionally
 /// narrow); `id` is a trusted i64, inlined.
 async fn make_held(db_path: &Path, id: i64) {
+    make_held_as(db_path, id, "unknown-field-code", "line 1: OC").await
+}
+
+/// [`make_held`] with the bucket's own reason/detail — the reason a member was
+/// held decides which reprocess bucket later picks it up.
+async fn make_held_as(db_path: &Path, id: i64, reason: &str, detail: &str) {
     let raw = store::turso::Builder::new_local(db_path.to_str().unwrap()).build().await.unwrap();
     let conn = raw.connect().unwrap();
     for table in [
@@ -352,10 +358,10 @@ async fn make_held(db_path: &Path, id: i64) {
     conn.execute(
         &format!(
             "INSERT INTO quarantine(notice_id, fetch_id, member_path, content_hash, profile, reason, detail, first_seen)
-             SELECT id, fetch_id, member_path, content_hash, profile, 'unknown-field-code', 'line 1: OC', 0
+             SELECT id, fetch_id, member_path, content_hash, profile, ?, ?, 0
                FROM notices WHERE id = {id}"
         ),
-        (),
+        (reason, detail),
     )
     .await
     .unwrap();
@@ -407,4 +413,131 @@ async fn reclaim_package_reclaims_only_the_held_members() {
     assert!(db.unprojected_parsed_notice_ids().await.unwrap().contains(&id));
 
     let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// A 2008 OPOCE monthly, in miniature: one notice shipped as an English file
+/// plus a French sibling — the shape that carries ~22 language files per notice.
+fn write_internal_ojs_package(path: &Path) {
+    let gz = flate2::write::GzEncoder::new(
+        std::fs::File::create(path).unwrap(),
+        flate2::Compression::fast(),
+    );
+    let mut tar = tar::Builder::new(gz);
+    for lang in ["en", "fr"] {
+        let bytes = std::fs::read(format!("tests/fixtures/internal_ojs/115165_2008.{lang}"))
+            .expect("internal-ojs fixture");
+        let mut header = tar::Header::new_gnu();
+        header.set_size(bytes.len() as u64);
+        header.set_mode(0o644);
+        header.set_cksum();
+        tar.append_data(&mut header, format!("115165/opoce-input/115165_2008.{lang}"), &*bytes)
+            .unwrap();
+    }
+    tar.into_inner().unwrap().finish().unwrap();
+}
+
+/// Issue 84: a reprocess must account for every held member it walks, including
+/// the ones a **dispatch policy declines**.
+///
+/// The 2008 OPOCE export ships each notice once per language; dispatch ingests
+/// the English file and skips the ~21 siblings as documented duplicates. Both
+/// were quarantined together before issue 36 taught the parser to strip a DTD,
+/// so both carry a stale `XML with DTD detected` row — but only the English one
+/// can ever reclaim. A skipped member yields no record at all, so the reclaim
+/// writes nothing for it and its row stays held forever; before this counter
+/// existed the pass walked past it reporting *nothing*, and the outcomes did not
+/// sum to the held set. That silence is why ~593k such rows read as an
+/// outstanding reclaim backlog rather than as duplicates already ingested.
+#[tokio::test]
+async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
+    let archive = temp_dir("reclaim-skipped");
+    std::fs::create_dir_all(archive.join("ted/monthly")).unwrap();
+    let pkg = archive.join("ted/monthly/2008-05.tar.gz");
+    write_internal_ojs_package(&pkg);
+
+    let db = store::Db::open(archive.join("test.db").to_str().unwrap()).await.unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "monthly".into(),
+        period: "2008-05".into(),
+        url: "https://ted.europa.eu/packages/monthly/200805".into(),
+        sha256: "bb".into(),
+        bytes: 1,
+        fetched_at: 1,
+        path: "ted/monthly/2008-05.tar.gz".into(),
+    })
+    .await
+    .unwrap();
+
+    // A fresh ingest of this package today: the English file is a notice, the
+    // French sibling is skipped by policy — neither is a quarantine.
+    let r = process::process(&db, &archive, "ted", "monthly", None, |_, _| {}).await.unwrap();
+    assert_eq!((r.members, r.notices, r.skipped, r.quarantined), (2, 1, 1, 0));
+
+    // Rewind to the pre-issue-36 state both members were in: a stale
+    // `unparsable-xml` row each. The English one sits over a rewound notice
+    // (parse-level); the French one never had a notice row (profile-level),
+    // which is exactly how a member that failed before identity was recorded
+    // looks in prod.
+    let id = cell_i64(&db, "SELECT MIN(id) FROM notices WHERE parse_state = 'parsed'").await.unwrap();
+    let sections = count(&db, "notice_sections", id).await;
+    assert!(sections > 0);
+    make_held_as(&archive.join("test.db"), id, "unparsable-xml", "XML with DTD detected").await;
+    hold_member(
+        &archive.join("test.db"),
+        1,
+        "115165/opoce-input/115165_2008.fr",
+        "unparsable-xml",
+        "XML with DTD detected",
+    )
+    .await;
+
+    let held = db
+        .quarantine_held_member_files(1, "unparsable-xml", Some("XML with DTD detected"), None)
+        .await
+        .unwrap();
+    assert_eq!(held.len(), 2, "both language files are held in this bucket");
+
+    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+
+    // The English member reclaims; the French one is declined by policy and
+    // REPORTED as such — it is not a failure (`still_held` is for members that
+    // were parsed and refused) and not a no-op (`already` is for parsed rows).
+    assert_eq!(report.reclaimed, 1);
+    assert_eq!(report.skipped_by_policy, 1);
+    assert_eq!((report.still_held, report.already), (0, 0));
+    assert_eq!(
+        report.reclaimed + report.still_held + report.already + report.skipped_by_policy,
+        2,
+        "every held member ends in exactly one reported outcome"
+    );
+
+    // The reclaimed member is whole again; the skipped one is untouched, and no
+    // re-run can move it — its row is stale bookkeeping, not lost data.
+    assert_eq!(count(&db, "notice_sections", id).await, sections);
+    assert_eq!(
+        cell_i64(
+            &db,
+            "SELECT reprocessed_at FROM quarantine WHERE member_path = '115165/opoce-input/115165_2008.fr'"
+        )
+        .await,
+        None,
+        "a skipped member is never flagged, so it stays in every later work list"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Insert a profile-level held row: a member quarantined before any notice
+/// identity existed, keyed by `(fetch_id, member_path)` alone.
+async fn hold_member(db_path: &Path, fetch_id: i64, member_path: &str, reason: &str, detail: &str) {
+    let raw = store::turso::Builder::new_local(db_path.to_str().unwrap()).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute(
+        "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen)
+         VALUES (?, ?, 'cc', ?, ?, 0)",
+        (fetch_id, member_path, reason, detail),
+    )
+    .await
+    .unwrap();
 }

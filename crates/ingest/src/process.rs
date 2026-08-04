@@ -355,6 +355,13 @@ pub struct ReclaimReport {
     pub still_held: u64,
     /// Members already parsed (a prior reclaim, or one that never failed).
     pub already: u64,
+    /// Held members a documented dispatch policy skips rather than ingests —
+    /// the per-language duplicate siblings ([`profile::Disposition::Skipped`]).
+    /// They yield no record, so nothing is written and their quarantine row is
+    /// left exactly as it was; without this counter the reprocess walks past
+    /// them reporting nothing, and the four outcomes stop summing to the held
+    /// set (issue 84 — 593k stale 2008 rows that no reclaim can ever move).
+    pub skipped_by_policy: u64,
 }
 
 /// How often the reprocess checkpoints inside one package to bound WAL/RAM on a
@@ -407,7 +414,10 @@ pub async fn reclaim_package(
     }
     drop(slot);
 
-    let (members, _ingested, _skipped) = walker.join().expect("package walker panicked")?;
+    // In reprocess mode the producer dispatches ONLY the held members, so its
+    // skipped tally is exactly the held members a dispatch policy declines.
+    let (members, _ingested, skipped) = walker.join().expect("package walker panicked")?;
     report.members = members;
+    report.skipped_by_policy = skipped;
     Ok(report)
 }

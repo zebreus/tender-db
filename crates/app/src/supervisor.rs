@@ -954,7 +954,7 @@ impl Supervisor {
             return Ok("no held packages to reprocess".into());
         }
 
-        let (mut reclaimed, mut still_held, mut already) = (0u64, 0u64, 0u64);
+        let (mut reclaimed, mut still_held, mut already, mut skipped) = (0u64, 0u64, 0u64, 0u64);
         for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
             self.update(|p| {
                 p.package = Some(format!("fetch {fetch_id}"));
@@ -988,6 +988,7 @@ impl Supervisor {
             reclaimed += report.reclaimed;
             still_held += report.still_held;
             already += report.already;
+            skipped += report.skipped_by_policy;
             self.update(|p| p.packages_done = (i + 1) as u64);
             // Advance the durable resume cursor once the package is fully drained
             // (issue 32 pattern). Best-effort: a failed write only re-walks this
@@ -1001,8 +1002,12 @@ impl Supervisor {
             }
         }
 
+        // Every held member ends in exactly one of the four outcomes, so the
+        // summary sums to the bucket. `skipped` is the one that writes nothing:
+        // a documented duplicate sibling no reclaim can ever move (issue 84).
         Ok(format!(
-            "{} package(s): {reclaimed} reclaimed, {still_held} still held, {already} already parsed",
+            "{} package(s): {reclaimed} reclaimed, {still_held} still held, \
+             {already} already parsed, {skipped} skipped by dispatch policy",
             packages.len()
         ))
     }
