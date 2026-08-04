@@ -1,7 +1,10 @@
 # 132 — the 51 negative `estimated_value` / `framework_maximum` rows the re-spec did NOT explain
 
-Status: open — the residual left by issue 33's re-spec. **Not noise, and deliberately not swept under the
-narrowed invariant.** Needs a look; small enough to inspect individually.
+Status: **SUPERSEDED by issue 160** (sdk-vendor), which covers the same 51 rows with more evidence —
+magnitudes (EUR 420k and 11.8M scale, unlike the EUR 1-100 mass), the exactly-`-100` sentinel pattern, and
+the within-subset clustering question. We filed the same residual independently within the hour; theirs is
+richer, so this one stands down. **Read 160.** Kept only for the one question of mine it does not carry
+(P4 over the 51), noted below.
 Kind: data quality
 Owner: unassigned (proj-fix filed; the parse-vs-fold half of 33 was mine)
 Relates to: 33 (the triage + re-spec), 131 (the parse-vs-fold determination), `run_light` 3.7,
@@ -49,3 +52,23 @@ Small enough to inspect row by row (51 rows), which is the luxury the narrowing 
    else (an unmapped element, a delta mistaken for an absolute)?
 
 Question 1 is cheap and decisive about *our* code; 3 is the one that needs a human reading a notice.
+
+
+---
+
+## Superseded — the one thing to carry across to 160
+
+sdk-vendor filed issue **160** for these same 51 rows, independently and within the hour, with more
+evidence than this file has. That is the second same-day collision between us (the first was issue 121),
+and it is what a tracker with no allocator and no claim step produces when two people work the same finding
+from different ends.
+
+The one question here that 160 does not already carry, and the cheapest of the set:
+
+> **Do the 51 satisfy P4?** — for each, does the version chain's parse layer hold an equal-magnitude
+> negative? Issue 33 established this across all 17,738, but that result is dominated by the 17,687
+> `result_value` mass; it does not automatically transfer to a 51-row subset. If any of the 51 fails P4,
+> the fold introduced a sign for them specifically and issue 131's exoneration needs re-opening for this
+> cohort. Decisive about our own code, and nearly free once the query is pointed at the subset.
+
+Everything else in this file is said better in 160.
