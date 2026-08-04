@@ -2451,6 +2451,16 @@ impl Db {
     /// wedge the whole pipeline on damage the projection cannot repair, and a
     /// verifier that stops the daily cycle over old damage gets turned off.
     ///
+    /// **This check and that gate are NOT independent confirmations of each
+    /// other** (sdk-vendor's observation, sharpened): this one *prevents*, so a
+    /// violation it catches never commits, so the snapshot stays clean and the
+    /// gate sees nothing. Once this is live, `head_not_max` reporting green means
+    /// "no damage **or** damage prevented" — the two are indistinguishable from
+    /// the snapshot side. The signal that a violation actually happened is a
+    /// FAILED PROJECTION JOB carrying the error below, nowhere else. Reading
+    /// gate-green as end-to-end verification of this invariant is the decorative
+    /// reading; the gate's real job here is the damage this check cannot see.
+    ///
     /// One statement per batch (~512 Tenders), both sides seeking by
     /// `tender_id` — bounded by the work actually done, so a small daily pays a
     /// small price. `IS NOT` rather than `<>` because both sides are nullable and
