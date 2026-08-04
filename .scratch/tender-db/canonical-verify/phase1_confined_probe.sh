@@ -84,9 +84,23 @@ preconditions() {
     || { echo "  FAIL no snapshot"; ok=1; }
   systemctl is-active --quiet "$UNIT.service" && { echo "  FAIL $UNIT.service already running"; ok=1; } \
     || echo "  ok   no stale probe unit"
-  # A gate run must not race the daily pipeline's own writes.
-  local jobs; jobs=$(curl -s --max-time 5 "$BASE_URL/admin/jobs" 2>/dev/null | head -c 200)
-  echo "  note live job state (eyeball, do not run during project/process): ${jobs:-unavailable}"
+  # A gate run must not race the daily pipeline. /admin/jobs needs an operator
+  # secret we do not hold, and a check that always returns 403 is decorative — it
+  # would "pass" identically whether a job were running or not. So use two signals
+  # that actually work unauthenticated:
+  #   1. the snapshot's own age. Spec::Snapshot is the LAST step of enqueue_daily,
+  #      so a snapshot from today means the pipeline already finished.
+  #   2. the live service's CPU. A project/process job is a sustained burner.
+  local age_h; age_h=$(( ($(date +%s) - $(stat -c %Y "$snap")) / 3600 ))
+  [ "$age_h" -lt 20 ] && echo "  ok   daily pipeline finished (its last step, the snapshot, is ${age_h}h old)" \
+    || { echo "  WARN snapshot ${age_h}h old — the daily may not have completed; check before releasing"; }
+  local cpu1 cpu2 busy
+  cpu1=$(awk '{print $14+$15}' /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null || echo 0)
+  sleep 3
+  cpu2=$(awk '{print $14+$15}' /proc/"$(systemctl show tender-db.service -p MainPID --value)"/stat 2>/dev/null || echo 0)
+  busy=$(( (cpu2 - cpu1) * 100 / (3 * $(getconf CLK_TCK)) ))
+  [ "$busy" -lt 50 ] && echo "  ok   live service near-idle over 3s (${busy}% of one core) — no job mid-flight" \
+    || { echo "  FAIL live service busy (${busy}% of one core) — a job is running; do not add a scan"; ok=1; }
   return $ok
 }
 
