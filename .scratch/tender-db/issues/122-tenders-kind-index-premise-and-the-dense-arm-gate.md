@@ -21,10 +21,23 @@ documented value, and `t.kind` is a column of the driven table, so it is the one
 can fix. The task was written as "add `tenders(kind, id)`".
 
 The reason given for it being safe was that the planner would decline the index for the dense value on
-density grounds. **That premise is false: prod has no `sqlite_stat1`.** With no statistics the planner
+density grounds. **That premise is false: the planner has no statistics for any read-path table.** It
 cannot know that `procedure` is dense and `registration` is rare — it sees one index on the filtered
 column and uses it for every value. So the risk does not just remain, it **inverts**: the index is
 guaranteed to be used exactly where it is most dangerous.
+
+> **Correction (run-driver, measured 2026-08-04).** I first wrote that "prod has no `sqlite_stat1`".
+> That is **false as stated**. `sqlite_stat1` exists on both the serving DB and the snapshot — it holds
+> exactly **one** row, for `plan_notice` / `plan_notice_fold`, a projection-internal table. No read-path
+> table appears in it: not `tenders`, `tender_versions`, `lots`, `organizations`, `notices`. The
+> operative conclusion is unharmed, but the stated fact was wrong and would have mis-specified the bed
+> (see the requirements below).
+>
+> The property is **maintained by construction**, not merely true today: the only `ANALYZE` anywhere in
+> the codebase is the table-scoped `ANALYZE plan_notice` at `canonical.rs:1956` (added so Phase-2's
+> `next_plan_batch` streams via the fold index instead of sorting the `group_key` tail). It cannot
+> broaden. The named way this breaks is a human running a bare `ANALYZE` on prod — which would populate
+> every read-path table and silently change the planner underneath every measurement in this issue.
 
 ## What the danger actually is (from the statement, not from a hunch)
 
@@ -72,6 +85,14 @@ longer needs it; nothing regresses, and no read gets slower than it is today. Th
 degradation, not a latent trap, and the assumption must be written at the definition rather than left to
 be inferred.
 
+**The correction above strengthens this design rather than weakening it.** The stats state of prod turned
+out not to be what anyone believed — I asserted "no `sqlite_stat1`", it exists, and it took someone
+measuring it to find out. That is the argument for the partial index rather than the plain one: a partial
+index the planner **may not use** for the dense value is safe *regardless of what the planner knows*,
+while the plain index's safety is a claim about planner behaviour under a particular stats state. Only
+one of those two survives being wrong about the stats. Given that we were just wrong about the stats,
+prefer the one that does not depend on them.
+
 Rejected alternative: an app-side short-circuit like `?country=`'s. That one is sound because a filter
 matching ~everything can be *dropped* without changing the result. `kind` has three or more values, so
 dropping the predicate changes the answer. Not available here.
@@ -102,12 +123,15 @@ second bed. The existing bed cannot measure it at all — `tenders.kind` is sing
 (`contract` on all 4.26M rows), so `?kind=registration` returns empty in milliseconds and would
 **false-green the exact read being redesigned**. Requirements sent to run-driver, in priority order:
 
-0. **No `sqlite_stat1`.** Load-bearing above everything else here. Prod has none, and that is the whole
-   premise: with no statistics the planner cannot know which value is dense, so it uses the index for
-   every value. A fixture built with `ANALYZE` has a planner strictly smarter than prod's, every plan
-   measured is one prod will never produce, and a green would license shipping an index whose safety
-   argument was tested against a planner we do not have. Same species as the sqlite3-vs-turso trap
-   `hot_read_plans.sh` was built around, one layer up.
+0. **No *read-path* table has a `sqlite_stat1` row** — run-driver's restatement of my requirement, and
+   correct where mine was not. I asked for "no `sqlite_stat1` at all", which fails in both directions:
+   too strict, because building 30a by running the real projection creates the `plan_notice` row and a
+   prod-faithful bed would then be rejected by a check meant to keep it prod-like; and too loose, because
+   "no stat1 table" is not what prod looks like, so the bed would differ from prod in a stated-but-untested
+   way — the exact class of difference this requirement exists to prevent. The checkable property is a
+   one-liner over `sqlite_stat1` for the read-path tables, expected 0. The real hazard behind my wording
+   was a bare `ANALYZE` on the fixture, and that is what must never run. Same species as the
+   sqlite3-vs-turso trap `hot_read_plans.sh` was built around, one layer up.
 1. **`registration` rare AND LATE in id order.** Rarity alone does not reproduce 18.7 s. Because the read
    walks `t.id > ? ORDER BY t.id LIMIT ?`, the pathology is that matches sit late enough that the walk
    nearly completes before `LIMIT` fills. Sprinkle them uniformly and the row counts still look right
