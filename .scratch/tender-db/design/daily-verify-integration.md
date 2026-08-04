@@ -163,6 +163,14 @@ All three tiers, one pinned snapshot, warm 1.72 GB working set, directly compara
 | B | 12 | 3193 s (53 min) | **239** | 12/12 |
 | C | 1 | 361 s (6 min) | **0** | 1/1 |
 
+> **Two numbers now exist for tier A and they are not reconciled here.** The earlier clean re-run gave
+> **28m50s**; this comparable set gives **2369 s (39 min)** — a ~37 % difference for the same tier on the
+> same snapshot. The comparison set is internally consistent, so the *relative* ordering (C ≪ A < B) is
+> sound whatever the absolute drift; but the absolute number matters for the window B needs, and I have
+> not established which run's conditions to plan against. Raised with sdk-vendor. Recording it rather than
+> quietly carrying the more convenient figure — the whole point of the tier costs is to size a window, and
+> a 10-minute uncertainty on A is a 10-minute uncertainty on the schedule.
+
 The proposal was *A daily, C weekly*, on the assumption that C — the ~30 M
 `organization_mentions` anti-join — was the heavyweight. **It is the cheapest tier by
 an order of magnitude**: one index-assisted anti-join beats twelve joins or
