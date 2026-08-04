@@ -241,3 +241,45 @@ observation; it changes 30b's method, not just its results.)
 **Not fixed by a timeout.** turso cannot interrupt a running statement (`fb8c55c`), so
 the remedy is issue 30: make the reads fast enough that none runs away. Until then the
 honest module claim is *"confines a runaway to 4 slots, for an unbounded time"*.
+
+### Methodology: a decaying aggregate is not evidence of imminent completion
+
+Recorded because it corrects a claim made twice in this investigation, by me.
+
+Watching load average fall, I twice reported the box was "draining" and that the
+walks "terminate, just slowly". sdk-vendor then measured the same drain per-thread
+with `thread_cpu.sh`, and it was **not monotonic**:
+
+    196%  ->  150%  ->  94%  ->  130%  ->  23%
+
+It looked nearly finished several times before it was, and once went back up. Every
+one of those dips is a point where "load is falling, it's almost done" would have
+been asserted and been wrong — and my inference was drawn from an aggregate that
+does exactly this. The conclusion happened to survive; the reasoning did not deserve
+to. **This strengthens rather than weakens the unbounded-duration finding**: work
+whose apparent progress reverses is not work with a predictable end.
+
+The rule this yields, which is the same one this file's ANSWER/PATH/COST table is
+about: **measure the artifact, not a correlate.** Load average is a correlate of
+"are the Class B slots occupied". The artifact is the busy-thread count itself, and
+it is directly readable. sdk-vendor's re-armed trigger — *zero busy `slow-read-exec`
+threads for N consecutive samples* — is the right shape; a load threshold is not.
+
+**One caveat on the instrument, pending a fix.** `thread_cpu.sh`'s per-sample
+percentages are correct — calibrated against a C pthread spinner with `ps -L` as an
+independent ground truth: 3 threads at 99.3% each, tool reported total=300%. Its
+**occupancy summary** is not: `occupied` is keyed by thread NAME rather than tid, so
+concurrently-busy threads sharing a name each increment the same counter per sample,
+and the reported duration inflates by that factor (1 thread -> "2/2 samples (~6s)",
+correct; 3 threads -> "6/2 samples (~18s)", true window 6s). `slow-read-exec` is
+FOUR threads with one name, so any duration taken from the occupancy line for this
+issue can be inflated up to 4x — **in the direction that supports this issue's
+conclusion.** Until it is fixed, duration claims here should be derived from the
+per-sample busy-thread counts and from request timestamps, not from that summary.
+The ~50-minute figure is unaffected: it comes from the last genuine request
+(09:33:44) against samples at 10:21-10:23, and its `12/12` implies a single busy
+thread, where the defect is inert.
+
+That is the third instrument in this investigation whose bug would have produced
+evidence AGREEING with the hypothesis, and the second in this one tool. Agreement is
+where nobody looks.
