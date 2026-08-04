@@ -108,6 +108,12 @@ pub struct ResolvedCategory {
     pub resolved: String,
     /// Matching payloads reprocessed back into the notice layer (live).
     pub reclaimed: i64,
+    /// Matching payloads RE-EXAMINED and correctly not ingested, because the
+    /// original is already in the corpus (live) — the 2008 per-language duplicate
+    /// siblings, issue 84. Shown rather than hidden: folding these into
+    /// `reclaimed` would claim notices entered that never did, and folding them
+    /// into `outstanding` is the overstatement this count exists to end.
+    pub skipped: i64,
     /// Matching payloads still held, awaiting the archive re-walk (live). Falls
     /// to zero as reprocessing catches up; the row stays either way.
     pub outstanding: i64,

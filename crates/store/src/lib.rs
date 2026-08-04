@@ -155,6 +155,14 @@ const SCHEMA: &str = "
         detail         TEXT,
         first_seen     INTEGER NOT NULL, -- unix seconds
         reprocessed_at INTEGER,
+        -- A held member that was RE-EXAMINED and correctly not ingested, because a
+        -- dispatch policy declines it — the 2008 per-language duplicate siblings
+        -- (issue 84). Distinct from `reprocessed_at`, which means RECLAIMED: using
+        -- that column here would claim ~593k notices entered the corpus that never
+        -- did. Three outcomes exist (outstanding / reclaimed / skipped) so the
+        -- schema carries three, rather than hiding one inside another.
+        skipped_at     INTEGER,
+        skipped_reason TEXT,
         UNIQUE(fetch_id, member_path, content_hash)
     ) STRICT;
     -- Every quarantine metric filters or groups by `reason` first — the reason
@@ -427,6 +435,11 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
         )
         .await?;
     }
+    // Issue 84's third quarantine outcome. Nullable and defaulted to absent, so an
+    // existing row is untouched: nothing becomes "skipped" by migrating, only by a
+    // deliberate run of the marker.
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_at INTEGER").await?;
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_reason TEXT").await?;
     // The `notices_unprojected` partial index is built LAZILY at the end of a
     // projection ([`Db::ensure_unprojected_index`]), NOT here: on a large existing
     // DB upgraded to this schema, Phase-2 hasn't marked anything projected yet, so
@@ -1125,17 +1138,134 @@ impl Db {
     /// reason. The ledger's narrative is source-controlled in the app; this is its
     /// live half, and like the rest of the quarantine metrics it scans the table,
     /// so it belongs on the background refresher, never the request path.
+    /// The 2008 per-language duplicate siblings, as ONE self-verifying predicate
+    /// (issue 84). Every clause is load-bearing and the last one is the guard:
+    ///
+    /// - the stale pre-issue-36 bucket (`reason`/`detail`), still held
+    ///   (`reprocessed_at IS NULL`), not already marked (`skipped_at IS NULL`);
+    /// - from a 2008 TED monthly fetch — the only era that fans one notice out
+    ///   across ~23 language files;
+    /// - whose member file is **not** the English one (`… .en`);
+    /// - **and whose English sibling is present and `parsed`.**
+    ///
+    /// That last clause makes the operation self-verifying ROW BY ROW rather than
+    /// trusting the aggregate: a row whose original is missing is precisely the row
+    /// that must NOT be marked, because marking real data loss as a duplicate is
+    /// the one outcome worse than an overstated count. Such rows stay outstanding.
+    ///
+    /// `n.source = 'ted'` is required, not decorative: the only index covering
+    /// `publication_id` is `UNIQUE(source, publication_id, content_hash)`, whose
+    /// leftmost column is `source`. Unbound, this lookup scans 14.2M notices PER
+    /// ROW — the shape that hung issue 84's own falsifier for 90 minutes.
+    const SKIPPED_SIBLING_PREDICATE: &'static str = "
+          q.reason = 'unparsable-xml'
+      AND q.detail = 'XML with DTD detected'
+      AND q.reprocessed_at IS NULL
+      AND q.skipped_at IS NULL
+      AND EXISTS (SELECT 1 FROM fetches f
+                   WHERE f.id = q.fetch_id
+                     AND f.source = 'ted' AND f.kind = 'monthly'
+                     AND f.period LIKE '2008%')
+      AND lower(replace(q.member_path,
+                        rtrim(q.member_path, replace(q.member_path, '.', '')), '')) <> 'en'
+      AND EXISTS (
+            SELECT 1 FROM notices n
+             WHERE n.source = 'ted'
+               -- The unary `+` makes `parse_state` a non-indexable term, and it
+               -- is here for a CROSS-ENGINE reason worth stating exactly, because
+               -- the two engines disagree (measured, 2026-08-05):
+               --   * turso  — seeks `UNIQUE(source, publication_id, …)` with or
+               --              without the `+`. Prod is fine either way.
+               --   * sqlite3 — PREFERS `notices_parse_state`, which means seeking
+               --              to every 'parsed' notice (~14M on prod) for each row
+               --              examined. Without the `+` it is an unbounded probe.
+               -- sqlite3 is not a hypothetical reader: the canonical-verify suite,
+               -- run_light, the standing gate and issue 84's own falsifier all read
+               -- snapshots with stock sqlite3, and reproducing this predicate there
+               -- is the obvious way to check the marker's scope. So the `+` is what
+               -- keeps the verification path from hanging the way section B did —
+               -- same unbounded-probe shape, reached from the opposite direction
+               -- (there a missing predicate, here an extra one offering a worse
+               -- index).
+               AND +n.parse_state = 'parsed'
+               AND n.publication_id = replace(
+                     substr(replace(q.member_path,
+                                    rtrim(q.member_path, replace(q.member_path, '/', '')), ''),
+                            1,
+                            length(replace(q.member_path,
+                                           rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
+                     '_', '-'))";
+
+    /// How many rows the marker WOULD flag, without writing anything (issue 84).
+    ///
+    /// This is the decision input, not a formality: the run is authorised against
+    /// an expected population, and a count that disagrees means the predicate and
+    /// the verified set have diverged — so the caller aborts rather than writes.
+    pub async fn count_skipped_siblings(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let sql = format!(
+            "SELECT COUNT(*) FROM quarantine q WHERE {}",
+            Self::SKIPPED_SIBLING_PREDICATE
+        );
+        let mut rows = conn.query(&sql, ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// Mark one batch of skipped siblings, newest-id-first bounded by `batch`.
+    /// Returns how many rows this call marked; 0 means the work list is empty.
+    ///
+    /// Batched deliberately: turso writes a WAL frame per row and cannot checkpoint
+    /// mid-statement, so a single ~593k-row UPDATE is the mechanism that produced a
+    /// 127 GB WAL and an OOM during the recovery. The caller checkpoints between
+    /// batches. Idempotent — `skipped_at IS NULL` is in the predicate, so a re-run
+    /// does the remainder and a crash costs one batch.
+    pub async fn mark_skipped_siblings(&self, batch: i64, now: i64, reason: &str) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        let sql = format!(
+            "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
+              WHERE id IN (SELECT q.id FROM quarantine q WHERE {} LIMIT ?)",
+            Self::SKIPPED_SIBLING_PREDICATE
+        );
+        conn.execute(&sql, (Value::Integer(now), reason.to_owned(), Value::Integer(batch))).await?;
+        let mut rows = conn.query("SELECT changes()", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// Clear every mark this operation made — the reversal, scoped by the marker's
+    /// own reason so it can never clear a mark something else wrote. Returns the
+    /// number of rows restored to outstanding.
+    pub async fn unmark_skipped_siblings(&self, reason: &str) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE quarantine SET skipped_at = NULL, skipped_reason = NULL
+              WHERE skipped_reason = ?",
+            (reason.to_owned(),),
+        )
+        .await?;
+        let mut rows = conn.query("SELECT changes()", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// A category's three outcomes: `(reclaimed, skipped, outstanding)`.
+    ///
+    /// `skipped` is issue 84's third state — re-examined and correctly not
+    /// ingested, because the original is already in the corpus. It is reported
+    /// separately rather than folded into either neighbour: counting it as
+    /// reclaimed would claim notices entered that never did, and counting it as
+    /// outstanding is the overstatement this exists to end.
     pub async fn quarantine_resolution(
         &self,
         reason: &str,
         profile: Option<&str>,
         detail_like: Option<&str>,
-    ) -> turso::Result<(i64, i64)> {
+    ) -> turso::Result<(i64, i64, i64)> {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),
-                        SUM(CASE WHEN reprocessed_at IS NULL     THEN 1 ELSE 0 END)
+                        SUM(CASE WHEN skipped_at     IS NOT NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NULL
+                                  AND skipped_at     IS NULL     THEN 1 ELSE 0 END)
                    FROM quarantine
                   WHERE reason = ?
                     AND (? IS NULL OR profile = ?)
@@ -1149,12 +1279,17 @@ impl Db {
                 ),
             )
             .await?;
-        // SUM over no matching rows is NULL — an unreprocessed, un-held category
-        // is simply (0, 0).
+        // SUM over no matching rows is NULL — an untouched category is (0, 0, 0).
         let row = rows.next().await?;
         Ok(row
-            .map(|row| (opt_int_of(&row, 0).unwrap_or(0), opt_int_of(&row, 1).unwrap_or(0)))
-            .unwrap_or((0, 0)))
+            .map(|row| {
+                (
+                    opt_int_of(&row, 0).unwrap_or(0),
+                    opt_int_of(&row, 1).unwrap_or(0),
+                    opt_int_of(&row, 2).unwrap_or(0),
+                )
+            })
+            .unwrap_or((0, 0, 0)))
     }
 
     /// The fetch stage per source (issue 33): how many distinct package periods
@@ -2453,9 +2588,143 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 
+    /// Issue 84's marker. The failure to fear is **over-scope**: flagging a row
+    /// whose English original is NOT present would record real data loss as a
+    /// duplicate, which is worse than the overstated count it fixes. So the
+    /// fixture plants one of each trap and asserts the marker declines all of them.
+    #[tokio::test]
+    async fn the_skipped_sibling_marker_flags_only_the_confirmed_set() {
+        let path = format!("/tmp/tender-db-skipmark-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES (1,'ted','monthly','2008-05','u','s',1,0,'p'),
+                          (2,'ted','daily','2019-001','u','s',1,0,'p');
+                 -- the English original, present and parsed
+                 INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                                     member_path, ingested_at, parse_state)
+                   VALUES (1,'ted','115165-2008','h','internal-ojs',1,'m',0,'parsed'),
+                 -- an original that exists but did NOT parse: its siblings are NOT duplicates
+                          (2,'ted','999001-2008','h2','internal-ojs',1,'m2',0,'quarantined');
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen) VALUES
+                   -- (a) the real thing: non-EN sibling of a parsed original
+                   (1,'115165/opoce-input/115165_2008.fr','c1','unparsable-xml','XML with DTD detected',0),
+                   (1,'115165/opoce-input/115165_2008.de','c2','unparsable-xml','XML with DTD detected',0),
+                   -- (b) the ENGLISH member: never a duplicate of itself
+                   (1,'115165/opoce-input/115165_2008.en','c3','unparsable-xml','XML with DTD detected',0),
+                   -- (c) sibling whose original exists but is NOT parsed -> real gap
+                   (1,'999001/opoce-input/999001_2008.fr','c4','unparsable-xml','XML with DTD detected',0),
+                   -- (d) sibling whose original does not exist at all -> real gap
+                   (1,'999999/opoce-input/999999_2008.es','c5','unparsable-xml','XML with DTD detected',0),
+                   -- (e) right shape, WRONG ERA (a 2019 daily) -> out of scope
+                   (2,'115165/opoce-input/115165_2008.it','c6','unparsable-xml','XML with DTD detected',0),
+                   -- (f) right era, WRONG REASON -> out of scope
+                   (1,'115165/opoce-input/115165_2008.nl','c7','unclaimed-content','something else',0);",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        // The dry-run count is the decision input, so it must equal the write.
+        assert_eq!(db.count_skipped_siblings().await.unwrap(), 2, "only (a): the two real siblings");
+
+        let marked = db.mark_skipped_siblings(1000, 999, "internal-ojs-non-english").await.unwrap();
+        assert_eq!(marked, 2);
+
+        let flagged: i64 = match db
+            .scalar("SELECT COUNT(*) FROM quarantine WHERE skipped_at IS NOT NULL")
+            .await
+            .unwrap()
+        {
+            Some(turso::Value::Integer(n)) => n,
+            other => panic!("count: {other:?}"),
+        };
+        assert_eq!(flagged, 2, "no row outside the confirmed set was touched");
+
+        // Named individually, so a future predicate change that sweeps one of these
+        // in fails here rather than in production.
+        for (path, why) in [
+            ("115165/opoce-input/115165_2008.en", "the English member is not its own duplicate"),
+            ("999001/opoce-input/999001_2008.fr", "original exists but is not parsed — a real gap"),
+            ("999999/opoce-input/999999_2008.es", "no original at all — a real gap"),
+            ("115165/opoce-input/115165_2008.it", "wrong era"),
+            ("115165/opoce-input/115165_2008.nl", "wrong reason"),
+        ] {
+            let sql = format!(
+                "SELECT skipped_at FROM quarantine WHERE member_path = '{path}'"
+            );
+            assert!(
+                matches!(db.scalar(&sql).await.unwrap(), None | Some(turso::Value::Null)),
+                "must stay outstanding: {why}"
+            );
+        }
+
+        // The scale guarantee: over ~593k rows the per-row sibling lookup must
+        // SEEK the identity index. Checked as a plan, not timed — a laptop clock
+        // cannot tell a seek from a scan.
+        //
+        // Honest about what this covers: it asserts TURSO's plan, and turso seeks
+        // correctly with or without the unary `+`, so this assertion does NOT
+        // discriminate that. It guards against a future turso regression. The `+`
+        // is there for stock sqlite3, which prefers `notices_parse_state` — and
+        // that is not assertable from here, because this test drives turso. The
+        // engines disagree, so a green here is not a statement about sqlite3.
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT 1 FROM notices n
+                  WHERE n.source = 'ted' AND +n.parse_state = 'parsed'
+                    AND n.publication_id = '115165-2008'",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(turso::Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(!plan.is_empty(), "no plan came back");
+        assert!(
+            !plan.contains("notices_parse_state") && !plan.contains("SCAN"),
+            "the sibling lookup must seek the identity index, not parse_state: {plan}"
+        );
+
+        // Idempotent: the work list is empty, so a re-run writes nothing.
+        assert_eq!(db.count_skipped_siblings().await.unwrap(), 0);
+        assert_eq!(db.mark_skipped_siblings(1000, 999, "internal-ojs-non-english").await.unwrap(), 0);
+
+        // The three buckets are now distinct, and `skipped` is NOT counted as
+        // reclaimed (which would claim notices entered that never did) nor as
+        // outstanding (the overstatement being fixed).
+        assert_eq!(
+            db.quarantine_resolution("unparsable-xml", None, Some("XML with DTD detected")).await.unwrap(),
+            (0, 2, 4),
+            "(reclaimed, skipped, outstanding)"
+        );
+
+        // Reversible, and scoped by the marker's own reason.
+        assert_eq!(db.unmark_skipped_siblings("internal-ojs-non-english").await.unwrap(), 2);
+        assert_eq!(db.count_skipped_siblings().await.unwrap(), 2, "back on the work list");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 40: a resolution-ledger key splits its matching quarantine rows into
-    /// reclaimed (reprocessed) and outstanding, and the profile + detail narrowers
-    /// keep one ledger entry from counting a sibling bucket's rows.
+    /// reclaimed, skipped and outstanding, and the profile + detail narrowers keep
+    /// one ledger entry from counting a sibling bucket's rows.
     #[tokio::test]
     async fn quarantine_resolution_splits_reclaimed_from_outstanding() {
         let path = format!("/tmp/tender-db-qres-{}.db", std::process::id());
@@ -2481,17 +2750,17 @@ mod tests {
         // is excluded by the detail pattern.
         assert_eq!(
             db.quarantine_resolution("unclaimed-content", Some("ted-export-r208"), Some("%@REASON")).await.unwrap(),
-            (1, 1),
+            (1, 0, 1),
         );
         // text RP: reclaimed, with the sibling XY continuation excluded.
         assert_eq!(
             db.quarantine_resolution("unclaimed-content", Some("text"), Some("%scalar field RP")).await.unwrap(),
-            (1, 0),
+            (1, 0, 0),
         );
-        // A key that matches nothing yet is simply (0, 0), never an error.
+        // A key that matches nothing yet is simply (0, 0, 0), never an error.
         assert_eq!(
             db.quarantine_resolution("unknown-field-code", None, None).await.unwrap(),
-            (0, 0),
+            (0, 0, 0),
         );
 
         let _ = std::fs::remove_file(&path);

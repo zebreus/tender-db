@@ -624,6 +624,16 @@ fn QuarantinePanel(
                                 td { class: "path", "{entry.fix}" }
                                 td { class: "num",
                                     "{group(entry.reclaimed)}"
+                                    // Issue 84's third outcome, shown rather than
+                                    // folded into a neighbour: re-examined and
+                                    // correctly not ingested, because the original
+                                    // is already in the corpus. Counting these as
+                                    // reclaimed would claim notices entered that
+                                    // never did; counting them as still-held is the
+                                    // overstatement this ends.
+                                    if entry.skipped > 0 {
+                                        span { class: "muted", " · {group(entry.skipped)} duplicates skipped" }
+                                    }
                                     if entry.outstanding > 0 {
                                         span { class: "muted", " · {group(entry.outstanding)} still held" }
                                     }
