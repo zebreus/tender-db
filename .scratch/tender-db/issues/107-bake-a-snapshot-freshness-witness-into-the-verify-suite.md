@@ -68,3 +68,38 @@ source), the ledger claiming a fold that had not run, and now a verify that cann
 read. The recurring lesson is that **the output of a check is only as trustworthy as the check's
 knowledge of its own inputs** — and inputs are exactly what nobody re-examines when the numbers look
 plausible.
+
+---
+
+## 2026-08-04 — 119 folded in here, and the general form is now built (sdk-vendor)
+
+**Issue 119 belongs under this one.** It was filed as "the snapshot has no producer";
+that premise is false (the producer is the daily supervisor `Spec::Snapshot`, live since
+`83edbea`, five days before 119 was filed). What survives is 119's *other* half, which is
+this issue's sentence exactly: **nothing asserted that the input was the input the check
+thought it was.** 119 is rewritten to the silent-staleness gap and folded here; see it for
+the cadence half, which stays open.
+
+**The general form asked for above — "a `--expect-witness` parameter, or simply recording
+the snapshot's mtime/size and requiring it to be newer than the baseline's source" — is
+built.** `canonical-verify/standing_gate.sh` (task #28) states its input's path, size,
+mtime and age before reporting anything, and **refuses** past `MAX_AGE_H` (default 30h,
+one missed daily): `exit 2`, `VERDICT stale_input`, no check results printed. That is this
+issue's requirement — *"exit non-zero immediately with an unmistakable message, not a FAIL
+line among forty others"* — and it is exercised in isolation (a 40h input is refused, not
+verified).
+
+**One variant this issue did not anticipate, found by proj-fix.** Recording mtime/age
+bounds how stale an input may be but **cannot establish which run produced it**. If the
+daily's snapshot step fails, "the newest snapshot" is yesterday's file — still inside any
+age bound — so the gate would verify it green and report success for a cycle that produced
+nothing. Age is a bound, not an identity. The gate therefore accepts a **pinned**
+`SNAPSHOT=<path>` from the pipeline and carries the resolution mode (`pinned` vs `newest`)
+into its verdict line, so a green from a guessed path can never be read as a green from a
+pinned one. The `projection_epoch` witness this issue proposed is the strongest form of the
+same idea — a value only the intended run could have written; pinning is the cheap form
+available to a check with no epoch to key on.
+
+**Still not generalised to `de1x_verify.sh`.** The witness above is implemented in the
+standing gate only. Carrying it into the de1x suite — the run that motivated this issue —
+remains open work.
