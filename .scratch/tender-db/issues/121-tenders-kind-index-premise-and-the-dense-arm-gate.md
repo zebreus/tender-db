@@ -88,6 +88,35 @@ Local plan-lab, at prod-like row counts and prod-like value skew — no prod con
 Ship only if 1 shows the regression, 2 shows the win, 3 shows no change, and 4 holds. Any other
 combination means the premise moved again and the design should be re-derived rather than patched.
 
+## The bed: run-driver's 30a fixture, and what it must carry
+
+Team-lead's call (2026-08-04): this rides on run-driver's **30a** general read fixture rather than a
+second bed. The existing bed cannot measure it at all — `tenders.kind` is single-valued there
+(`contract` on all 4.26M rows), so `?kind=registration` returns empty in milliseconds and would
+**false-green the exact read being redesigned**. Requirements sent to run-driver, in priority order:
+
+0. **No `sqlite_stat1`.** Load-bearing above everything else here. Prod has none, and that is the whole
+   premise: with no statistics the planner cannot know which value is dense, so it uses the index for
+   every value. A fixture built with `ANALYZE` has a planner strictly smarter than prod's, every plan
+   measured is one prod will never produce, and a green would license shipping an index whose safety
+   argument was tested against a planner we do not have. Same species as the sqlite3-vs-turso trap
+   `hot_read_plans.sh` was built around, one layer up.
+1. **`registration` rare AND LATE in id order.** Rarity alone does not reproduce 18.7 s. Because the read
+   walks `t.id > ? ORDER BY t.id LIMIT ?`, the pathology is that matches sit late enough that the walk
+   nearly completes before `LIMIT` fills. Sprinkle them uniformly and the row counts still look right
+   while the phenomenon disappears.
+2. **`kind` distribution derived from the snapshot, not invented** — including by me. A guessed skew is
+   the same unstated-assumption-about-the-corpus that made 117's original `?kind=` resolution wrong.
+3. **A selective co-filter independent of `kind`** (cpv / nuts / published window) matching few rows
+   scattered across the corpus. This is what makes check 1 of the gate possible and is the part an
+   ordinary sweep would not include.
+4. **Non-empty satellites** — the list read joins `tender_versions` and runs correlated subqueries per
+   row; empty satellites flatter exactly the plan under suspicion.
+5. **Deep-cursor positions**, not only `after = 0`.
+
+The fixture is anchored to reproduce the known 18.7 s before its other numbers are trusted. **If it
+cannot reproduce it, this issue waits** rather than measuring against a bed that lacks the phenomenon.
+
 ## Note on `#15 ≠ #16`
 
 Different columns and different tables: task #16 was `tender_version_lots.kind` (`?kind=Lot`), already
