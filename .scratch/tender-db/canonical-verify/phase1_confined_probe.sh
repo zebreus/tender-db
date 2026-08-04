@@ -113,6 +113,35 @@ preconditions() {
   busy=$(( (cpu2 - cpu1) * 100 / (3 * $(getconf CLK_TCK)) ))
   [ "$busy" -lt 50 ] && echo "  ok   live service near-idle over 3s (${busy}% of one core) — no job mid-flight" \
     || { echo "  FAIL live service busy (${busy}% of one core) — a job is running; do not add a scan"; ok=1; }
+
+  # CLASS B SLOTS — a stricter and more specific gate than aggregate CPU, and the
+  # one that actually matters here. An abandoned Class B read can sit at ~24% of a
+  # core (well under the threshold above) while continuously scanning and evicting
+  # the live service's page cache. Page cache is THE VARIABLE THIS PROBE MEASURES,
+  # so such a read is not background noise, it is an uncontrolled instance of the
+  # thing under test — and worse, it can END mid-run, which would look exactly like
+  # the confinement working. Aggregate CPU cannot see it; the thread can.
+  #
+  # This is the standard run-driver stood their watcher down to give me, so it is
+  # enforced here rather than left to my judgement at the keyboard.
+  local pid tid n v0 v1 slots=0
+  pid=$(systemctl show tender-db.service -p MainPID --value)
+  declare -A before
+  for t in /proc/"$pid"/task/*; do
+    tid=${t##*/}; n=$(sed -n 's/^[0-9]* (\(.*\)) .*/\1/p' "$t/stat" 2>/dev/null)
+    [ "$n" = slow-read-exec ] || continue
+    v0=$(awk '{r=$0; sub(/^.*\) /,"",r); split(r,f," "); print f[12]+f[13]}' "$t/stat" 2>/dev/null)
+    [ -n "$v0" ] && before[$tid]=$v0
+  done
+  sleep 3
+  for t in /proc/"$pid"/task/*; do
+    tid=${t##*/}; [ -n "${before[$tid]:-}" ] || continue
+    v1=$(awk '{r=$0; sub(/^.*\) /,"",r); split(r,f," "); print f[12]+f[13]}' "$t/stat" 2>/dev/null)
+    [ -n "$v1" ] || continue
+    [ $(( (v1 - ${before[$tid]}) * 100 / 300 )) -gt 5 ] && slots=$((slots+1))
+  done
+  [ "$slots" -eq 0 ] && echo "  ok   no Class B slot occupied — page cache is not being churned by a stray scan" \
+    || { echo "  FAIL ${slots} Class B slot(s) still burning — an abandoned scan is churning the page cache this probe measures"; ok=1; }
   return $ok
 }
 
