@@ -70,6 +70,9 @@ set -uo pipefail
 
 SNAPSHOT_DIR="${SNAPSHOT_DIR:-/data/db/snapshots}"
 MAX_AGE_H="${MAX_AGE_H:-30}"   # daily pipeline runs 09:35 Europe/Berlin; 30h = one missed run
+# Where the last verified input's identity is recorded, so a repeat can be seen.
+STATE_FILE="${STATE_FILE:-/var/lib/tender-db/standing_gate.last}"
+FAIL_ON_REPEAT="${FAIL_ON_REPEAT:-0}"   # the daily timer sets 1; ad-hoc runs leave 0
 TIER="${TIER:-A}"
 SQLITE="${SQLITE:-sqlite3}"
 
@@ -238,6 +241,31 @@ main() {
     exit 2
   fi
 
+  # REPEAT DETECTION. Age alone leaves a hole that neither "newest" nor a
+  # written-on-success `latest` pointer closes: if today's snapshot step fails,
+  # yesterday's file is ~24h old — inside MAX_AGE_H — so the gate verifies it and
+  # reports green for a cycle that produced nothing. Both resolutions name the
+  # same stale file; the pointer is more trustworthy about *what* it names, not
+  # about *when* it was made.
+  #
+  # What actually distinguishes them is whether the input CHANGED since last run.
+  # Under a daily cadence, "identical to the snapshot I verified last time" means
+  # the pipeline produced nothing this cycle — which is issue 119's open cadence
+  # half, detected at the consumer without threshold-tuning MAX_AGE_H.
+  local ident prev="" repeat=unknown
+  ident="$(basename "$snap")|$mtime|$(stat -c %s "$snap")"
+  [ -r "$STATE_FILE" ] && prev=$(cat "$STATE_FILE" 2>/dev/null)
+  if [ -n "$prev" ]; then [ "$prev" = "$ident" ] && repeat=yes || repeat=no; fi
+  if [ "$repeat" = yes ]; then
+    echo "-- REPEAT INPUT: byte-identical to the last snapshot this gate verified."
+    echo "--   On a daily cadence that means NO new snapshot was produced this cycle."
+    if [ "$FAIL_ON_REPEAT" = 1 ]; then
+      echo "$(red FAIL) refusing to re-report a green for an input already verified."
+      echo "VERDICT repeat_input snapshot=$snap age_h=$age_h mode=$mode repeat=yes"
+      exit 2
+    fi
+  fi
+
   local pass=0 fail=0 err=0 ran=0
   while IFS='|' read -r id tier label sql poison; do
     [ -z "${id:-}" ] && continue
@@ -254,7 +282,14 @@ main() {
   echo
   echo "== $ran checks in tier $TIER: $pass passed, $fail failed, $err errored =="
   # One machine-readable line for the journal / dashboard.
-  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h mode=$mode"
+  # Record what was verified, so the NEXT run can tell whether the input moved.
+  # Written after the checks ran, and regardless of their verdict: this records
+  # the input, not the outcome.
+  if ! { mkdir -p "$(dirname "$STATE_FILE")" 2>/dev/null && printf '%s\n' "$ident" > "$STATE_FILE" 2>/dev/null; }; then
+    echo "-- note: could not record input identity at $STATE_FILE — next run cannot"
+    echo "--       detect a repeat, so it will report repeat=unknown, not repeat=no."
+  fi
+  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h mode=$mode repeat=$repeat"
   [ $((fail+err)) -eq 0 ] || exit 1
 }
 
