@@ -160,7 +160,25 @@ violations() {
   echo "$out"
 }
 
-in_tier() { case "$TIER" in ALL) return 0;; *) [ "$1" = "$TIER" ];; esac; }
+# TIER=0 selects ONLY the present_* checks — measured at 34ms for all eleven,
+# against 93,040ms for a single full-scan check (identity_overlap over 6.96M
+# tenders). ~2,700x, so they are not "cheap", they are free, and they can run on a
+# cadence the scanning tiers never could.
+#
+# THEY ARE NOT REMOVED FROM A/B/C. Tier 0 is a SUBSET selector, not a partition.
+# Moving them out would reopen the vacuity hole this gate was built to close: a
+# Tier-A-only run would once again pass on an empty table, since "zero rows violate
+# X" is trivially true of nothing. The rule stands — no check may depend on a table
+# whose non-emptiness is unasserted in the same run — and at 34ms there is no cost
+# argument for weakening it.
+# in_tier <tier-of-check> <id-of-check>
+in_tier() {
+  case "$TIER" in
+    ALL) return 0;;
+    0)   case "$2" in present_*) return 0;; *) return 1;; esac;;
+    *)   [ "$1" = "$TIER" ];;
+  esac
+}
 
 # ----------------------------------------------------------------- self-test
 fixture() { # fixture <db> — minimal CLEAN schema+data; every check must report 0
@@ -301,7 +319,7 @@ main() {
   local pass=0 fail=0 err=0 ran=0
   while IFS='|' read -r id tier label sql poison; do
     [ -z "${id:-}" ] && continue
-    in_tier "$tier" || continue
+    in_tier "$tier" "$id" || continue
     ran=$((ran+1))
     local got
     if ! got=$(violations "$snap" "$sql"); then
