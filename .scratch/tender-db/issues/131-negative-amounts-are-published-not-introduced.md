@@ -85,6 +85,19 @@ what the predictions below are for.
   analysis above is wrong, and the defect is mine. This needs the snapshot, so it is sdk-vendor's query
   to run, not mine.
 
+  > **P4 must compare against the version CHAIN, not the version's own causing notice.** The fold carries
+  > facts forward: each version's stored set is `carried ∪ published` (`project.rs:1887`, `supersede()` at
+  > `:1931`), so an amount first published at seq 1 is re-written at every later seq, whose causing
+  > notices contain no such value. Comparing a row against its own seq's notice therefore flags every
+  > carried-forward negative as fold-introduced — a false positive, in the direction that blames the fold,
+  > on any multi-version tender. Compare instead against every notice in the chain with `seq <= a.seq`.
+  > Caught in sdk-vendor's queries 9–11 before their results were read (2026-08-04); their single-notice
+  > fixture could not have surfaced it, since carry-forward needs ≥2 versions.
+  >
+  > And even corrected, **P4 returning 0 does not prove the fold correct** — only that no negative
+  > appeared on a chain carrying none. A sign flip on a tender whose chain legitimately holds another
+  > negative stays invisible.
+
 ## If the predictions hold
 
 The fix is to the invariant, not the data: `run_light` 3.7 should assert what is actually true of
