@@ -459,6 +459,46 @@ async fn add_column(conn: &Connection, statement: &str) -> turso::Result<bool> {
     }
 }
 
+/// The sibling-lookup template halves, split at the one optional clause so
+/// [`Db::sibling_exists`] can compose either variant from a single source.
+const SIBLING_HEAD: &str = "EXISTS (
+            SELECT 1 FROM notices n
+             WHERE n.source = 'ted'
+               -- The unary `+` makes `parse_state` a non-indexable term, and it
+               -- is here for a CROSS-ENGINE reason worth stating exactly, because
+               -- the two engines disagree (measured, 2026-08-05):
+               --   * turso  — seeks `UNIQUE(source, publication_id, …)` with or
+               --              without the `+`. Prod is fine either way.
+               --   * sqlite3 — PREFERS `notices_parse_state`, which means seeking
+               --              to every 'parsed' notice (~14M on prod) for each row
+               --              examined. Without the `+` it is an unbounded probe.
+               -- sqlite3 is not a hypothetical reader: the canonical-verify suite,
+               -- run_light, the standing gate and issue 84's own falsifier all read
+               -- snapshots with stock sqlite3, and reproducing this predicate there
+               -- is the obvious way to check the marker's scope. So the `+` is what
+               -- keeps the verification path from hanging the way section B did —
+               -- same unbounded-probe shape, reached from the opposite direction
+               -- (there a missing predicate, here an extra one offering a worse
+               -- index).
+";
+const SIBLING_TAIL: &str = "               -- `…/115165_2008.fr` -> `115165-2008`. The trailing **3** is
+               -- the length of a `.xx` suffix, correct ONLY because every code
+               -- in this population is two letters — measured, not assumed: section
+               -- A found exactly 23 languages, all 2-letter (bg cs da de el en es
+               -- et fi fr ga hu it lt lv mt nl pl pt ro sk sl sv). It is a property
+               -- of THIS corpus, not a general rule: a 3-letter code would silently
+               -- mis-extract the id, the sibling lookup would miss, and the row
+               -- would simply stay outstanding (fail-safe, but silently). Do not
+               -- lift this expression into a general helper without replacing the
+               -- constant with a real suffix split.
+               AND n.publication_id = replace(
+                     substr(replace(q.member_path,
+                                    rtrim(q.member_path, replace(q.member_path, '/', '')), ''),
+                            1,
+                            length(replace(q.member_path,
+                                           rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
+                     '_', '-'))";
+
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
         Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
@@ -1159,7 +1199,7 @@ impl Db {
     /// ROW — the shape that hung issue 84's own falsifier for 90 minutes.
     /// Conditions 1-4: which held rows are even CANDIDATES — the stale 2008 bucket,
     /// still held, not already marked, and not the English member itself. Selecting
-    /// a row here is NOT sufficient to mark it; see [`Self::SKIPPED_SIBLING_GUARD`].
+    /// a row here is NOT sufficient to mark it; see [`Self::sibling_exists(true)`].
     const SKIPPED_SIBLING_SCOPE: &'static str = "
           q.reason = 'unparsable-xml'
       AND q.detail = 'XML with DTD detected'
@@ -1178,43 +1218,27 @@ impl Db {
     /// fragment; a whitespace change there would have silently yielded "no gaps",
     /// which is precisely the reassuring-but-wrong answer this pair exists to
     /// prevent.
-    const SKIPPED_SIBLING_GUARD: &'static str = "EXISTS (
-            SELECT 1 FROM notices n
-             WHERE n.source = 'ted'
-               -- The unary `+` makes `parse_state` a non-indexable term, and it
-               -- is here for a CROSS-ENGINE reason worth stating exactly, because
-               -- the two engines disagree (measured, 2026-08-05):
-               --   * turso  — seeks `UNIQUE(source, publication_id, …)` with or
-               --              without the `+`. Prod is fine either way.
-               --   * sqlite3 — PREFERS `notices_parse_state`, which means seeking
-               --              to every 'parsed' notice (~14M on prod) for each row
-               --              examined. Without the `+` it is an unbounded probe.
-               -- sqlite3 is not a hypothetical reader: the canonical-verify suite,
-               -- run_light, the standing gate and issue 84's own falsifier all read
-               -- snapshots with stock sqlite3, and reproducing this predicate there
-               -- is the obvious way to check the marker's scope. So the `+` is what
-               -- keeps the verification path from hanging the way section B did —
-               -- same unbounded-probe shape, reached from the opposite direction
-               -- (there a missing predicate, here an extra one offering a worse
-               -- index).
-               AND +n.parse_state = 'parsed'
-               -- `…/115165_2008.fr` -> `115165-2008`. The trailing **3** is
-               -- the length of a `.xx` suffix, correct ONLY because every code
-               -- in this population is two letters — measured, not assumed: section
-               -- A found exactly 23 languages, all 2-letter (bg cs da de el en es
-               -- et fi fr ga hu it lt lv mt nl pl pt ro sk sl sv). It is a property
-               -- of THIS corpus, not a general rule: a 3-letter code would silently
-               -- mis-extract the id, the sibling lookup would miss, and the row
-               -- would simply stay outstanding (fail-safe, but silently). Do not
-               -- lift this expression into a general helper without replacing the
-               -- constant with a real suffix split.
-               AND n.publication_id = replace(
-                     substr(replace(q.member_path,
-                                    rtrim(q.member_path, replace(q.member_path, '/', '')), ''),
-                            1,
-                            length(replace(q.member_path,
-                                           rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
-                     '_', '-'))";
+    /// The sibling lookup, built from ONE template so the two variants cannot
+    /// drift. `require_parsed` is the only difference between them:
+    ///
+    /// - `true`  — [`Self::sibling_exists(true)`]: the original is present AND
+    ///   parsed, i.e. the evidence that earns the duplicate label.
+    /// - `false` — the original merely EXISTS, which separates the two findings a
+    ///   rejected row can represent (run-driver, 2026-08-05): *no original at all*
+    ///   is a fetch/ingest gap; *original present but unparsed* is a parse failure
+    ///   on a notice we hold. Both must stay outstanding, so one number is right
+    ///   for go/no-go — but they are different investigations, and handing the
+    ///   operator an unsplit number costs them the first hour working out which
+    ///   population they are looking at.
+    ///
+    /// Duplicating the publication-id extraction across two constants would be the
+    /// divergence risk that splitting SCOPE/GUARD was meant to remove, so it lives
+    /// here once.
+    fn sibling_exists(require_parsed: bool) -> String {
+        let parsed = if require_parsed { "               AND +n.parse_state = 'parsed'\n" } else { "" };
+        format!("{}{}{}", SIBLING_HEAD, parsed, SIBLING_TAIL)
+    }
+
 
 
     /// Record that a held member was RE-EXAMINED and declined by a dispatch
@@ -1281,15 +1305,25 @@ impl Db {
     /// held rows whose original is not in the corpus, so marking them as duplicates
     /// would record real loss as a duplicate, the one outcome worse than an
     /// overstated count.
-    pub async fn count_skipped_sibling_gaps(&self) -> turso::Result<i64> {
+    pub async fn count_skipped_sibling_gaps(&self) -> turso::Result<(i64, i64)> {
         let conn = self.reader().await?;
+        // Two findings, not one: no original at all (a fetch/ingest gap) versus an
+        // original we hold that did not parse (a parse failure). Both must stay
+        // outstanding — so their SUM is the go/no-go number — but they are
+        // different investigations, and the operator reading an abort at 2am should
+        // not have to run a second query to learn which they are looking at.
         let sql = format!(
-            "SELECT COUNT(*) FROM quarantine q WHERE {} AND NOT ({})",
-            Self::SKIPPED_SIBLING_SCOPE,
-            Self::SKIPPED_SIBLING_GUARD
+            "SELECT SUM(CASE WHEN NOT {any} THEN 1 ELSE 0 END),
+                    SUM(CASE WHEN {any} AND NOT {parsed} THEN 1 ELSE 0 END)
+               FROM quarantine q WHERE {scope}",
+            any = Self::sibling_exists(false),
+            parsed = Self::sibling_exists(true),
+            scope = Self::SKIPPED_SIBLING_SCOPE,
         );
         let mut rows = conn.query(&sql, ()).await?;
-        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+        Ok(rows.next().await?.map_or((0, 0), |row| {
+            (opt_int_of(&row, 0).unwrap_or(0), opt_int_of(&row, 1).unwrap_or(0))
+        }))
     }
 
     /// How many rows the marker WOULD flag, without writing anything (issue 84).
@@ -1302,7 +1336,7 @@ impl Db {
         let sql = format!(
             "SELECT COUNT(*) FROM quarantine q WHERE {} AND {}",
             Self::SKIPPED_SIBLING_SCOPE,
-            Self::SKIPPED_SIBLING_GUARD
+            Self::sibling_exists(true)
         );
         let mut rows = conn.query(&sql, ()).await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
@@ -1322,7 +1356,7 @@ impl Db {
             "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
               WHERE id IN (SELECT q.id FROM quarantine q WHERE {} AND {} LIMIT ?)",
             Self::SKIPPED_SIBLING_SCOPE,
-            Self::SKIPPED_SIBLING_GUARD
+            Self::sibling_exists(true)
         );
         conn.execute(&sql, (Value::Integer(now), reason.to_owned(), Value::Integer(batch))).await?;
         let mut rows = conn.query("SELECT changes()", ()).await?;
@@ -2740,10 +2774,15 @@ mod tests {
         // Asserted as 2 here precisely so the number is known to COUNT something —
         // a gap count that could only ever report 0 would be the reassuring-but-
         // empty answer this pair exists to prevent.
+        // Reported as TWO findings, not one number: the fixture plants exactly one
+        // of each, and they are different investigations. (d) has no original at
+        // all — a fetch/ingest gap. (c) has one we hold that did not parse — a parse
+        // failure. Asserting the split (not just the sum) is what proves the
+        // classification works rather than merely totalling.
         assert_eq!(
             db.count_skipped_sibling_gaps().await.unwrap(),
-            2,
-            "the two planted data-loss cases are reported, not silently excluded"
+            (1, 1),
+            "(no original at all, original held but unparsed)"
         );
         // Note the two numbers are INDEPENDENT — 2 markable AND 2 rejected, in the
         // same population. That is why the execute path must check BOTH: a marked
@@ -2823,8 +2862,8 @@ mod tests {
         assert_eq!(db.count_skipped_siblings().await.unwrap(), 0, "work list drained");
         assert_eq!(
             db.count_skipped_sibling_gaps().await.unwrap(),
-            2,
-            "the guard-rejected rows survive the run and keep being reported"
+            (1, 1),
+            "the guard-rejected rows survive the run and keep being reported, still split"
         );
 
         // Idempotent: the work list is empty, so a re-run writes nothing.

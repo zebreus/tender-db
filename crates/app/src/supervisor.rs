@@ -856,14 +856,17 @@ impl Supervisor {
                 // 0; a non-zero answer is a data-loss finding to investigate, and
                 // the run should stop rather than proceed on a population that no
                 // longer matches what was verified.
-                let gaps = self.db.count_skipped_sibling_gaps().await.map_err(|e| e.to_string())?;
+                let (no_original, unparsed) =
+                    self.db.count_skipped_sibling_gaps().await.map_err(|e| e.to_string())?;
+                let gaps = no_original + unparsed;
                 if *dry_run {
                     return Ok(format!(
                         "dry run: {found} rows would be marked skipped-by-policy; \
                          {gaps} in scope REJECTED by the sibling guard \
-                         (expected 0 — any of these are held rows whose English \
-                         original is missing or unparsed, i.e. real data loss to \
-                         investigate, never a predicate to widen)"
+                         ({no_original} with NO English original at all — a fetch/ingest \
+                         gap; {unparsed} whose original is held but did not parse — a \
+                         parse failure). Expected 0: these are real data loss to \
+                         investigate, never a predicate to widen"
                     ));
                 }
                 // BOTH halves of the go criterion are enforced HERE, not only in the
@@ -883,9 +886,11 @@ impl Supervisor {
                 if gaps > 0 {
                     return Err(format!(
                         "mark-skipped-siblings aborted: {gaps} rows are in scope but REJECTED by \
-                         the sibling guard — held siblings whose English original is missing or \
-                         unparsed (nothing was written). That is a data-loss finding to \
-                         investigate, not a predicate to widen: those rows must stay outstanding."
+                         the sibling guard (nothing was written) — {no_original} have NO English \
+                         original at all (a fetch/ingest gap) and {unparsed} have one that is held \
+                         but did not parse (a parse failure). Two different investigations, both \
+                         real data loss: those rows must stay outstanding, and this is never a \
+                         predicate to widen."
                     ));
                 }
                 let mut marked = 0i64;
