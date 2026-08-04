@@ -1,4 +1,11 @@
-# 121 — `tenders(kind, id)`: the premise for the index is false, and the dense arm is the gate
+# 122 — `tenders(kind, id)`: the premise for the index is false, and the dense arm is the gate
+
+> **Renumbered 121 → 122.** sdk-vendor's standing-gate issue took 121 (`c02fa0d`, 11:29:34); this landed
+> 33 s later (`b82a70d`, 11:30:07) and gives up the number. Commits `b82a70d` and `fc984cb`, and my
+> messages to team-lead and run-driver before this note, all say "issue 121" and mean THIS file — read
+> those as 122. Two issues sharing a number is the kind of quiet ambiguity that costs someone an hour
+> later; the tracker has no allocator, so a collision between agents working in parallel is a
+> when-not-if, and the fix is cheap only while both are fresh.
 
 Status: DESIGN — filed 2026-08-04 (proj-fix) for task #15. **Do not build the index on the stated
 premise.** Needs the dense-arm measurement below before any DDL.
