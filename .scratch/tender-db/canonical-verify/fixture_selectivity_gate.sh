@@ -177,6 +177,41 @@ else
   fi
 fi
 
+# --- 5. referential coverage: how many tenders actually HAVE each satellite ----
+# Added after this gate passed a bed in which only 66,667 of 200,000 tenders had
+# any lots. Non-emptiness and selectivity were both fine — the table had rows and
+# the filters selected sensibly — but two thirds of tenders had no lot, so
+# `?tender=` reads and tender_detail did a fraction of the per-row work they do on
+# prod. "The table is non-empty" and "the relationship is populated" are different
+# properties, and the first was standing in for the second.
+#
+# THE FLOOR IS 1%, NOT A REALISM BAND. A realistic coverage for each satellite is
+# a question about prod, answerable only from the Phase A/B snapshot reads — and a
+# threshold invented here would be exactly the guessed-skew mistake this fixture
+# exists to avoid. So this FAILS only on the unambiguously degenerate case and
+# PRINTS every value, so a human reading 33% asks the question the gate cannot.
+echo
+echo "--- coverage: share of tenders that actually have each satellite ---"
+cover() { # label table
+  local total sel share
+  total=$(Q "SELECT COUNT(*) FROM tenders;")
+  sel=$(Q "SELECT COUNT(DISTINCT tender_id) FROM $2;")
+  [[ -z "$total" || "$total" == "0" || -z "$sel" ]] && { report FAIL "cover:$1" "cannot count"; return; }
+  share=$(Q "SELECT ROUND(100.0 * $sel / $total, 2);")
+  if awk -v s="$share" 'BEGIN{exit !(s<1)}'; then
+    report FAIL "cover:$1" "only ${share}% of tenders have any row here — degenerate; per-row cost will be unrealistically cheap"
+  else
+    report ok "cover:$1" "${share}% of tenders (realism of this figure is a Phase A/B question, not asserted here)"
+  fi
+}
+cover "lots"            "lots"
+cover "classifications" "tender_version_classifications"
+cover "parties"         "tender_version_parties"
+cover "amounts"         "tender_version_amounts"
+cover "dates"           "tender_version_dates"
+cover "texts"           "tender_version_texts"
+cover "winners"         "tender_version_result_winners"
+
 echo
 if [[ "$fails" -gt 0 ]]; then
   echo "VERDICT: NOT FIT TO CLOCK — $fails of $checks checks failed."
