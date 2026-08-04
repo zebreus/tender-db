@@ -160,10 +160,29 @@ violations() {
   echo "$out"
 }
 
-# TIER=0 selects ONLY the present_* checks — measured at 34ms for all eleven,
-# against 93,040ms for a single full-scan check (identity_overlap over 6.96M
-# tenders). ~2,700x, so they are not "cheap", they are free, and they can run on a
-# cadence the scanning tiers never could.
+# TIER=0 selects ONLY the present_* checks — measured at 34ms for all eleven
+# (195ms end-to-end), against 93,040ms for a single full-scan check
+# (identity_overlap over 6.96M tenders). ~2,700x.
+#
+# WHAT THAT DOES *NOT* BUY, because I claimed it did. I argued this moves detection
+# of a nuked layer "from within-a-day to within-minutes". FALSE, and proj-fix
+# caught it: THIS GATE READS THE SNAPSHOT. Running the presence checks every five
+# minutes asks, 288 times a day, whether a photograph taken this morning still has
+# rows in it. A live layer emptied at noon stays invisible until tomorrow's
+# snapshot. **Detection latency for the live catastrophe is bounded by the SNAPSHOT
+# cadence, not the check cadence**, so running the same snapshot-side check more
+# often cannot tighten it by even a second.
+#
+# What a frequent snapshot-side tier 0 *would* catch quickly is a snapshot file
+# that is itself truncated or corrupted — real, worth something, and not the case
+# the claim named.
+#
+# It also produces 288 identical PASSes a day: a stream carrying no information,
+# which trains a reader to ignore a recurring green. That is the failure this suite
+# exists to design out, so frequency here is a cost, not a free win.
+#
+# The honest claim is **within one snapshot cycle** — which is what it already was
+# before the measurement. The 34ms is real; the inference from it was not.
 #
 # THEY ARE NOT REMOVED FROM A/B/C. Tier 0 is a SUBSET selector, not a partition.
 # Moving them out would reopen the vacuity hole this gate was built to close: a
