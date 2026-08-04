@@ -209,6 +209,64 @@ wiring test, never on a real run. Treat a quiet tripwire accordingly.
 with separate labels and separate state files. Sharing one would have had the three
 answering each other's `repeat` question.
 
+## The final split — and one correction to what tier 0 can promise
+
+sdk-vendor measured the presence checks rather than assuming: **11 checks, 34 ms (195 ms with startup)**
+against the real 455 GB snapshot, versus 93 s for a single full-scan check. ~2,700×. They are free.
+
+| tier | what | measured | eviction | cadence |
+|---|---|---|---|---|
+| 0 | 11 presence checks | 195 ms | 0 | see the correction below |
+| C | 1 mention anti-join | 361 s | 0 | daily, after the snapshot |
+| A | 24 checks (**including** the 11) | 2369 s | 0 | daily, after C |
+| B | 12 joins / anti-joins | 3193 s | 239 refault | weekly, chosen window, tripwire armed |
+
+### The correction: a 5-minute cadence against a daily snapshot buys nothing
+
+The proposed reframing is that tier 0 moves catastrophe detection — an emptied or nuked layer, the thing
+the prenuke is insurance against — *from within-a-day to within-minutes*. **It does not, as designed.**
+
+The gate reads the **snapshot**, produced once per day by the pipeline. Running its presence checks every
+5 minutes therefore answers, 288 times a day, whether *a photograph taken this morning* still has rows in
+it. A live layer emptied at noon stays invisible until tomorrow's snapshot. **Detection latency for the
+catastrophic case is bounded by the snapshot cadence, not the check cadence** — so running the same
+snapshot-side check more often cannot tighten it.
+
+What a 5-minute snapshot-side tier 0 *would* catch quickly is a snapshot file that is itself truncated or
+corrupted. Real, but not the prenuke case, and not what the promise says.
+
+Worse, it works against this design's own state-not-event requirement: 288 identical PASSes a day is a
+stream with no information in it, and the failure mode we already committed to avoiding is an operator
+learning to ignore a recurring green.
+
+**Two honest options, and the choice is not mine to make:**
+
+1. **Tier 0 runs against the LIVE database.** Then the within-minutes promise is real. The cost is 11
+   bounded `EXISTS(SELECT 1 FROM …)` probes — roughly one page each, ~34 ms, no scan. But under the
+   adopted prod-box rule that is a *data-page* read and therefore snapshot-only, so this needs an explicit
+   carve-out: **"bounded EXISTS probes, no scan"** as a third category. That is a rule change and belongs
+   to team-lead, not to me — and it is exactly the sort of exception that should be argued once and
+   written down, not taken quietly because the number is small.
+2. **Tier 0 stays snapshot-side**, in which case it runs **once per snapshot** (fold it into the daily
+   unit) because more often adds no information, and the issue's claim is restated as *within one snapshot
+   cycle* — which is what it already was.
+
+Recommendation: (1) if the carve-out is acceptable, since the catastrophic case is the one the whole gate
+exists for and it is the only option that actually detects it live; otherwise (2), with the promise
+corrected rather than the cadence inflated.
+
+### Two constraints not to optimise away
+
+- **`TIER=0` is a subset selector, not a partition.** Tier A must keep running all 24 including the
+  eleven. Splitting them out reopens the vacuity hole — a Tier-A-only run would once again pass over an
+  empty table, since "zero rows violate X" is trivially true of nothing. At 34 ms there is no cost
+  argument for weakening it, and the apparent redundancy in the unit config is what keeps each tier
+  self-sufficient.
+- **`FAIL_ON_REPEAT=1` on the daily and weekly units only; `0` on tier 0.** Repeat detection asks "did the
+  pipeline produce a new input", which is meaningless at a cadence faster than the input changes — on a
+  5-minute unit it would fire constantly and correctly. Tier 0's question is *"is the layer still there
+  right now"*, not *"did a new cycle happen"*. Stated in the config, not discovered.
+
 ## REQUIREMENT: the verdict is a state, not an event (issue 33)
 
 **Firm requirement, team-lead 2026-08-04 — build it in from the start, not as polish.** The concrete
