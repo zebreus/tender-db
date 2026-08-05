@@ -1,0 +1,32 @@
+## tender-db-verify.timer — fires the standing gate once per snapshot (task #28).
+##
+## WHY A FIXED TIME IS SAFE HERE, despite the daily pipeline having no fixed end.
+## The daily fires 09:35 Europe/Berlin and the fold's duration varies by hours, so
+## this cannot be scheduled "after the snapshot" by clock arithmetic. It does not
+## need to be: the gate carries FAIL_ON_REPEAT=1, so if it fires before a new
+## snapshot exists it sees the same input identity as last run and REFUSES rather
+## than re-verifying yesterday's photograph and reporting a fresh green.
+##
+## That makes a too-early firing self-correcting rather than dangerous, which is
+## what lets the schedule be simple. The failure it converts is the important one:
+## a green reported for a cycle that produced nothing.
+##
+## 04:00 is ~18h after the 09:35 tick — comfortably past a long fold, and in the
+## quietest part of the day, which the bounded-deferral interlock then only has to
+## improve on rather than rescue.
+
+[Unit]
+Description=Daily structural verification of the canonical layer
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+## A missed run (box down, deploy) still verifies rather than silently skipping a
+## day. The gate's own repeat detection makes a late run harmless: if the snapshot
+## has not moved it refuses, and if it has, verifying it is exactly the point.
+Persistent=true
+## Nothing else contends for 04:00, but a fixed instant across units is a habit
+## worth not forming.
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

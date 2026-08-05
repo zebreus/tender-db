@@ -1,0 +1,68 @@
+## tender-db-verify.service — the standing structural gate, daily (task #28).
+##
+## ONE unit, not four. `daily_verify.sh` sequences all four tiers internally in
+## cost order (0, C, A, B), which is what makes partial completion degrade to
+## LESS coverage rather than NO coverage: if this unit is killed, or the box goes
+## down, the cheap high-value checks have already run. Four separate units could
+## not guarantee that ordering, and would let a failure in one skip the rest.
+##
+## Confining the RUNNER rather than each gate invocation also sidesteps the
+## env-forwarding trap: env does not cross a `systemd-run` boundary unless
+## explicitly --setenv'd (sdk-vendor, measured — it silently cost them a run where
+## GATE_LABEL evaporated and three tiers shared one state file). Here the runner
+## is inside the cgroup and invokes the gate as an ordinary subprocess, so
+## GATE_LABEL/FAIL_ON_REPEAT inherit normally and there is no boundary to forget.
+##
+## NOT INSTALLED. Authored off-box; installing and verifying against real prod
+## paths needs the on-box window. Everything below marked ⚠ is unverified here.
+
+[Unit]
+Description=tender-db structural verification — FIRST RUN IS AN INVENTORY, not an incident: \
+every violation it reports is a pre-existing condition being counted for the first time
+Documentation=file:///opt/tender-db/.scratch/tender-db/design/daily-verify-integration.md
+After=tender-db.service
+
+[Service]
+Type=oneshot
+
+## The hard bound must be TimeoutStartSec, NOT RuntimeMaxSec: the latter is
+## SILENTLY IGNORED for Type=oneshot (sdk-vendor measured it; they reported the
+## wrong one upward once before catching it). 4h against a ~63 min expected run —
+## generous, because the bound is a runaway backstop, not a schedule.
+TimeoutStartSec=4h
+
+## Confinement is the PRIMARY safety mechanism here, not a backstop. A ~63 min
+## I/O-bound run cannot rely on finding a quiet window on a box that wobbles, so
+## it has to be survivable DURING contention. These four are the set proven to
+## hold at every tier: worst observed eviction 0.05% of the live service's working
+## set, its cache growing, latency flat-or-better.
+##
+## MemoryMax is the load-bearing one — cgroup v2 charges page cache to the cgroup
+## that faults it in, so the scan's cache is reclaimed from ITS OWN cgroup rather
+## than from the service. ⚠ requires cgroup v2; the probe asserts this and the
+## whole mechanism is void without it.
+MemoryMax=512M
+IOWeight=10
+CPUWeight=10
+Nice=19
+
+## Gives /var/lib/tender-db, where per-tier repeat state and the verdict history
+## live. MANDATORY: unwritable state degrades every run to repeat=unknown while
+## still printing verdicts — the mechanism silently does nothing and looks
+## identical to one that works.
+StateDirectory=tender-db
+
+## The snapshot is PINNED, never "newest". A failed snapshot step leaves
+## yesterday's file as newest, still inside MAX_AGE_H, and the gate would verify
+## it green and report success for a cycle that produced nothing. No fallback:
+## if the pointer is absent the run fails loudly rather than guessing.
+## ⚠ the pointer itself is not built yet — `snapshot::run` returns a summary
+## string and nothing durable names the file. It is deferred to this deploy batch;
+## until it lands this unit cannot run, which is the correct failure.
+ExecStart=/bin/sh -c 'p=$$(cat /data/db/snapshots/latest 2>/dev/null) || { echo "no pinned snapshot pointer — refusing to guess"; exit 1; }; exec /opt/tender-db/.scratch/tender-db/canonical-verify/daily_verify.sh --snapshot "$$p"'
+
+## A red tier is a FINDING to report, not a reason to fail the unit — the runner
+## exits 0 and communicates through its verdict lines. The unit failing would
+## conflate "the layer has a standing violation" with "verification did not run",
+## and those need different reactions.
+SuccessExitStatus=0
