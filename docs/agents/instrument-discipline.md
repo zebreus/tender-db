@@ -409,6 +409,35 @@ Test for it the way you test for vacuity — ask what correct states the asserti
 answer is "none I can think of", enumerate the lifecycle instead: first install, first build, restore,
 migration. Absence is usually legitimate somewhere in there.
 
+## A sound argument transmits faster than its own premises
+
+Everything else in this file is about **instruments** that mislead. This one is about **arguments**, and
+it is worth keeping here anyway because it is how a wrong instrument gets built in the first place.
+
+An argument that is internally coherent gets adopted quickly — by a reviewer, a teammate, a lead relaying
+it — and **the more coherent it is, the less anyone asks what it rests on.** The reasoning is what gets
+checked, because reasoning is what is visible; the premise underneath it travels along unexamined, now
+carrying someone else's endorsement.
+
+Two instances in one day, both sdk-vendor's, both propagated by whoever found the reasoning convincing:
+
+- A triage was called *"same envelope and lighter"* from row counts. Team-lead relayed it as established.
+  It ran forty minutes and hit its bound.
+- *"Issue 131's account cannot apply to `awarded_cents`, because it is sometimes a computed sum and 'the
+  source said so' cannot explain a sum."* The reasoning is sound. proj-fix wrote it into issue 131. The
+  **published** arm turned out to dominate at 95.6 %, so 131 applied directly all along.
+
+In both, the argument was valid and the premise was untested — and in both, a second person's agreement
+made it *harder* to see, because now it looked reviewed.
+
+**The check is not "does this follow" but "what is this standing on, and has anyone measured it".** They
+are different questions and only the first is natural to ask. A useful tell: if you can restate someone's
+argument better than they did, you have engaged with its structure and quite possibly not with its
+inputs — which is exactly the moment it feels safest to pass it on.
+
+*(Named by sdk-vendor, 2026-08-05, on catching the second instance in their own work. Recorded here
+rather than left in the message, per the artifact rule below — which they also named.)*
+
 ## A result that was never made an artifact decays to unavailable
 
 The failure modes above are about instruments that mislead. This one is about a **correct** result that
