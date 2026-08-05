@@ -199,6 +199,22 @@ pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
     '{v[NR]=$c} END{if(NR==0){print "n/a";exit} i=int(p/100*NR); if(i<1)i=1; print v[i]}'
 }
 
+# AFTER A SERVICE RESTART, DO NOT MEASURE UNTIL THE CACHE STOPS FILLING — and do
+# not wait a fixed number of minutes for it. There is no measured warm-up curve,
+# and inventing an interval is the guessed-number habit this suite exists to
+# remove. Watch the ARTIFACT: sample the live service's `file` (or MemoryCurrent)
+# and start when it STOPS CLIMBING. A stabilised working set is observable;
+# "twenty minutes should do it" is a belief.
+#
+# The target level is not fixed either — the live service sat at 2.4 GB during one
+# run and 3.24 GB earlier the same day — which is the argument for watching the
+# DERIVATIVE rather than waiting for a number. (run-driver, 2026-08-05. Recorded
+# here because it had lived only in messages, and the next person to measure after
+# a restart is exactly who needs it.)
+#
+# NOT YET A CHECK. Every measurement so far ran against a warm ~1.72 GB cache, so
+# this has never gated anything. It should become a precondition; it is a comment
+# today because adding an untested gate mid-deploy would be worse than the gap.
 preconditions() {
   local ok=0
   echo "== preconditions =="
