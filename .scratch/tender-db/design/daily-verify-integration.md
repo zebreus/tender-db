@@ -298,10 +298,15 @@ filed separately rather than held as a blocker on this cadence.
   empty table, since "zero rows violate X" is trivially true of nothing. At 34 ms there is no cost
   argument for weakening it, and the apparent redundancy in the unit config is what keeps each tier
   self-sufficient.
-- **`FAIL_ON_REPEAT=1` on the daily and weekly units only; `0` on tier 0.** Repeat detection asks "did the
-  pipeline produce a new input", which is meaningless at a cadence faster than the input changes — on a
-  5-minute unit it would fire constantly and correctly. Tier 0's question is *"is the layer still there
-  right now"*, not *"did a new cycle happen"*. Stated in the config, not discovered.
+- ~~**`FAIL_ON_REPEAT=1` on the daily and weekly units only; `0` on tier 0.**~~ **The premise for the
+  tier-0 exception is gone — set it to `1` on all four.** That recommendation was correct *while tier 0
+  ran every 5 minutes*: repeat detection asks "did the pipeline produce a new input", which is
+  meaningless at a cadence faster than the input changes, so a 5-minute unit would have fired constantly
+  and correctly. **Tier 0 now runs once per snapshot** (the live-detection job moved to the app, issue
+  133), so its cadence matches the input's and the question becomes meaningful again.
+  Recorded rather than silently flipped, because the recommendation was right when made and is wrong now
+  for a reason that has nothing to do with it — **a conclusion outliving its premise is harder to spot
+  than a wrong conclusion**, since nothing about it looks incorrect on re-reading.
 
 ## A known-red baseline needs no suppression — that is what state-not-event is FOR
 
