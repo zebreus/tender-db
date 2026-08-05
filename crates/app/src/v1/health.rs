@@ -19,6 +19,7 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use model::ingestion::JobRun;
+use store::{LayerPresence, LayerState};
 use serde_json::{Value, json};
 
 use super::{AppState, rev};
@@ -34,6 +35,14 @@ const INGEST_STALE_SECS: i64 = 26 * 3_600;
 /// DB and raw archive share the 500 GB Hetzner volume; crossing 90% is the cue
 /// to grow it before a write fails mid-ingest.
 const DISK_FULL_FRACTION: f64 = 0.90;
+
+/// A presence observation older than this is treated as no observation at all.
+/// The observer is a supervisor job; if it stops, the stored verdicts freeze at
+/// whatever they last said — and a frozen green is indistinguishable from a
+/// real one. Reporting unhealthy on a stale observation is the honest answer:
+/// we do not currently know whether the layer is intact. Sized well above the
+/// observer's cadence so ordinary jitter never trips it.
+const LAYER_STALE_SECS: i64 = 6 * 3_600;
 
 /// How far back to scan the job log for the newest success. A failure run longer
 /// than this would bury the last success — but that is itself caught by the
@@ -56,7 +65,13 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     // 3. Disk on the volume holding the database file.
     let disk = disk_usage();
 
-    let signals = Signals { now: store::now_unix(), cursor, last_success, last_job, disk };
+    // 4. The canonical layer's presence verdicts (issue 133). READ, never
+    //    observe: observing takes the writer connection, and a probe that
+    //    blocks behind a running projection would report the service unhealthy
+    //    for being busy. The supervisor job does the observing.
+    let layer = state.db.read_layer_presence().await.ok();
+
+    let signals = Signals { now: store::now_unix(), cursor, last_success, last_job, disk, layer };
     let (ok, checks) = assess(&signals);
 
     let body = json!({ "ok": ok, "rev": rev(), "checks": checks });
@@ -77,6 +92,9 @@ struct Signals {
     last_job: Option<JobRun>,
     /// Disk stats for the DB volume, or `None` if they could not be measured.
     disk: Option<Disk>,
+    /// Per-table presence verdicts with the time each was observed, or `None`
+    /// if they could not be read.
+    layer: Option<Vec<(LayerPresence, i64)>>,
 }
 
 struct Disk {
@@ -103,7 +121,25 @@ fn assess(s: &Signals) -> (bool, Value) {
 
     let disk_ok = s.disk.as_ref().is_none_or(|d| d.used_fraction <= DISK_FULL_FRACTION);
 
-    let ok = db_ok && fresh_ok && last_ok && disk_ok;
+    // The canonical layer. Two separate ways to be unhealthy, and conflating
+    // them would hide the worse one:
+    //   * a table that HELD rows and is now empty — the wipe (issue 133);
+    //   * an observation too old to mean anything — we do not know.
+    // An empty verdict set is NOT a failure: a fresh box has never observed,
+    // and alarming over its own absence is the false positive that gets a
+    // check switched off (same rule as every other signal here).
+    let emptied: Vec<&LayerPresence> = s
+        .layer
+        .iter()
+        .flatten()
+        .filter(|(p, _)| matches!(p.state, LayerState::WentEmpty { .. }))
+        .map(|(p, _)| p)
+        .collect();
+    let oldest = s.layer.iter().flatten().map(|(_, at)| *at).min();
+    let layer_stale = oldest.is_some_and(|at| s.now - at > LAYER_STALE_SECS);
+    let layer_ok = emptied.is_empty() && !layer_stale;
+
+    let ok = db_ok && fresh_ok && last_ok && disk_ok && layer_ok;
 
     let checks = json!({
         "database": { "ok": db_ok, "cursor": s.cursor.map(|c| c.to_string()) },
@@ -122,6 +158,16 @@ fn assess(s: &Signals) -> (bool, Value) {
                 "finished_at": r.finished_at,
             }),
             None => json!({ "ok": true, "outcome": Value::Null }),
+        },
+        "canonical_layer": {
+            "ok": layer_ok,
+            // Named, not counted: "3 tables emptied" sends someone hunting for
+            // which, and the names are the whole diagnosis.
+            "emptied": emptied.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
+            "observed_at": oldest,
+            "stale": layer_stale,
+            "stale_threshold_secs": LAYER_STALE_SECS,
+            "measured": s.layer.as_ref().is_some_and(|l| !l.is_empty()),
         },
         "disk": match &s.disk {
             Some(d) => json!({
@@ -188,7 +234,65 @@ mod tests {
                 total_bytes: 200,
                 wal_bytes: Some(3_500_000_000),
             }),
+            layer: Some(vec![(present("tenders", LayerState::Populated), 1_000_000 - 600)]),
         }
+    }
+
+    fn present(name: &str, state: LayerState) -> LayerPresence {
+        LayerPresence { name: name.to_string(), state }
+    }
+
+    /// A table that held rows and is now empty must flip the probe unhealthy —
+    /// this is the 2026-07-30 wipe, and the whole point of issue 133.
+    #[test]
+    fn an_emptied_canonical_table_makes_the_probe_unhealthy() {
+        let mut s = healthy();
+        s.layer = Some(vec![
+            (present("tenders", LayerState::WentEmpty { at: 999_000 }), 1_000_000 - 600),
+            (present("changes", LayerState::Populated), 1_000_000 - 600),
+        ]);
+        let (ok, checks) = assess(&s);
+        assert!(!ok, "an emptied canonical layer must not report healthy");
+        assert_eq!(checks["canonical_layer"]["emptied"][0], "tenders");
+    }
+
+    /// A never-populated table is NOT damage — a fresh box has an empty layer
+    /// legitimately, and alarming there is the false positive that gets the
+    /// check disabled.
+    #[test]
+    fn a_never_populated_layer_is_healthy() {
+        let mut s = healthy();
+        s.layer = Some(vec![(present("tenders", LayerState::NeverPopulated), 1_000_000 - 600)]);
+        let (ok, _) = assess(&s);
+        assert!(ok, "a fresh, never-projected layer must not alarm");
+    }
+
+    /// A stale observation must read unhealthy, NOT green. If the observer job
+    /// dies the stored verdicts freeze, and a frozen green is indistinguishable
+    /// from a real one — a detector that cannot tell you it stopped looking is
+    /// worse than none, because it is trusted.
+    #[test]
+    fn a_stale_presence_observation_is_not_treated_as_green() {
+        let mut s = healthy();
+        s.layer = Some(vec![(
+            present("tenders", LayerState::Populated),
+            1_000_000 - LAYER_STALE_SECS - 1,
+        )]);
+        let (ok, checks) = assess(&s);
+        assert!(!ok, "a presence observation older than the threshold must not read as healthy");
+        assert_eq!(checks["canonical_layer"]["stale"], true);
+    }
+
+    /// But never having observed at all is not staleness — a box that has not
+    /// run the observer yet reports healthy-but-unmeasured, like every other
+    /// missing signal in this probe.
+    #[test]
+    fn no_presence_observations_yet_is_healthy_but_unmeasured() {
+        let mut s = healthy();
+        s.layer = Some(vec![]);
+        let (ok, checks) = assess(&s);
+        assert!(ok, "a box that has never observed must not alarm over its own absence");
+        assert_eq!(checks["canonical_layer"]["measured"], false);
     }
 
     #[test]

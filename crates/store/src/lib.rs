@@ -22,8 +22,9 @@ pub use accounts::{TokenRecord, User};
 pub use backup::{BackupError, SnapshotReport};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
-    Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LotResultState, LotState,
-    Mention, MentionResolver, NoticeRef, PlanGroup, PlanRow, Round, TenderProjection, TenderVersion,
+    Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
+    LotResultState, LotState, Mention, MentionResolver, NoticeRef, PlanGroup, PlanRow, Round,
+    TenderProjection, TenderVersion,
 };
 pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};

@@ -3363,6 +3363,45 @@ impl Db {
         Ok(out)
     }
 
+    /// The stored presence verdicts, WITHOUT observing (issue 133 / task #38).
+    ///
+    /// [`Db::observe_layer_presence`] takes the writer connection, because on a
+    /// transition it has to record one. That makes it wrong for `/health/deep`:
+    /// a probe that wants the writer blocks behind a running projection, times
+    /// out, and reports the service unhealthy for the sin of being busy — an
+    /// alarm caused by the alarm. So observing is a supervisor job, and the
+    /// probe reads what it left, on the reader pool.
+    ///
+    /// The cost is that this answer is only as fresh as the last observation,
+    /// which is why `observed_at` comes back with it and the caller must judge
+    /// staleness. A presence check whose observer has silently stopped reports
+    /// a confident, plausible, permanently-green answer — the exact shape of
+    /// failure this whole layer exists to catch, so it must not be reproduced
+    /// here.
+    pub async fn read_layer_presence(&self) -> turso::Result<Vec<(LayerPresence, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT name, ever_populated, went_empty_at, observed_at FROM layer_presence",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let name = text(&row, 0);
+            let ever = int(&row, 1) != 0;
+            let went_empty_at = opt_int_of(&row, 2);
+            let observed_at = int(&row, 3);
+            let state = match (went_empty_at, ever) {
+                (Some(at), _) => LayerState::WentEmpty { at },
+                (None, true) => LayerState::Populated,
+                (None, false) => LayerState::NeverPopulated,
+            };
+            out.push((LayerPresence { name, state }, observed_at));
+        }
+        Ok(out)
+    }
+
 }
 
 /// The canonical-layer tables whose emptiness means a nuked or externally
