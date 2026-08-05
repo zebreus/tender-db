@@ -317,6 +317,65 @@ main() {
   fi
   [ -n "$snap" ] && [ -r "$snap" ] || { echo "$(red FAIL) no readable snapshot in $SNAPSHOT_DIR (set SNAPSHOT=)"; exit 2; }
 
+  # COMPLETENESS, which is a DIFFERENT question from staleness and was missing.
+  # The age check below bounds how OLD the input may be. Nothing bounded whether it
+  # had finished being WRITTEN. Measured 2026-08-05: a snapshot in progress grew
+  # 16 GB in 8 s, and `ls | sort | tail -1` selects exactly that file — so a gate
+  # firing during the snapshot step reads a half-copied database. `pinned` mode is
+  # not immune either: pinning the path the pipeline is *currently* writing pins an
+  # incomplete file just as effectively.
+  #
+  # WHAT ACTUALLY HAPPENS, tested rather than assumed, and it is milder than I first
+  # claimed: sqlite refuses a truncated database with "database disk image is
+  # malformed", so the observed failure is a loud ERR -- a false RED, not a false
+  # green. I asserted the false-green case before testing it and it did not
+  # reproduce. It remains plausible on a 455 GB file where a query touches only
+  # pages inside the written prefix, but that is UNDEMONSTRATED and is not the
+  # justification for this check.
+  #
+  # The justification is that a timing problem was reporting as a data problem. With
+  # transition alerting, a mid-write run turns every check ERR at once and pages
+  # someone about the layer when nothing is wrong with the layer. Refusing by name
+  # costs O(1) and says the true thing.
+  #
+  # O(1): the sqlite header carries page_size @16 and the in-header database size in
+  # pages @28, authoritative when the change counter @24 equals version-valid-for
+  # @92. A complete file is exactly page_size * pages. Fails CLOSED -- if the header
+  # cannot be read or is non-authoritative, this refuses rather than waving through,
+  # because a check that cannot tell must never answer "fine".
+  local _ps _pages _cc _vv _expect _actual
+  _be()  { od -An -tu4 -j"$1" -N4 -v --endian=big "$snap" 2>/dev/null | tr -d ' '; }
+  _be2() { od -An -tu2 -j"$1" -N2 -v --endian=big "$snap" 2>/dev/null | tr -d ' '; }
+  _ps=$(_be2 16); _pages=$(_be 28); _cc=$(_be 24); _vv=$(_be 92)
+  [ "$_ps" = 1 ] && _ps=65536
+  _actual=$(stat -c %s "$snap" 2>/dev/null)
+  if [ -z "$_ps" ] || [ -z "$_pages" ] || [ -z "$_actual" ] || [ "${_pages:-0}" -eq 0 ] 2>/dev/null; then
+    echo "$(red FAIL) cannot read sqlite header of $snap — refusing rather than guessing it is complete"; exit 2
+  fi
+  # THE AUTHORITATIVE FLAG IS REPORTED, NOT ENFORCED — and that distinction was
+  # found by testing against the real artifact rather than the fixture. sqlite
+  # documents the in-header size as valid only when change_counter ==
+  # version_valid_for, so the first version of this check refused when they differ,
+  # on "fail closed" grounds. Measured on prod: BOTH real snapshots have cc != vv,
+  # including a verifiably complete one. Fail-closed there would have refused every
+  # snapshot forever — a gate that never runs, which is worse than no gate because
+  # it also looks installed. My own fail-closed instinct produced a permanent
+  # false-red, and only the real file showed it; the fixture said cc == vv because
+  # a freshly-created database is not a copy of a live WAL-mode one.
+  #
+  # The size comparison stands on its own evidence: on the same two real files it
+  # discriminated exactly — 209,379,655,680 of a declared 455,205,724,160 while
+  # being written, and byte-exact equality on the finished one. It only ever fires
+  # when the file is SHORTER than its own header declares, which a merely-stale
+  # header does not cause.
+  _expect=$(( _ps * _pages ))
+  if [ "$_cc" != "$_vv" ]; then
+    echo "--   note: in-header size formally non-authoritative (cc=$_cc vv=$_vv) — normal for a snapshot of a live WAL database; size compared anyway, see the comment"
+  fi
+  if [ "$_actual" -lt "$_expect" ]; then
+    echo "$(red FAIL) snapshot INCOMPLETE: $snap is $_actual B, header declares $_expect B ($_pages pages x $_ps) — still being written; this is a TIMING fault, not a layer fault"; exit 2
+  fi
+
   # The input, stated — never assumed. A gate that verifies a stale snapshot
   # green is worse than no gate (issue 107).
   local mtime age_h
