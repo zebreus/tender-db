@@ -86,6 +86,7 @@ pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
             sup.recover().await;
             sup.clone().spawn_worker();
             sup.clone().spawn_scheduler();
+            sup.clone().spawn_presence_observer();
             sup
         })
         .await
@@ -1150,6 +1151,71 @@ impl Supervisor {
                 self.enqueue_daily(weekday).await;
                 // Step past this tick so the next computation lands on tomorrow.
                 tokio::time::sleep(std::time::Duration::from_secs(61)).await;
+            }
+        });
+    }
+
+    /// How often the canonical layer's presence is observed (issue 133 / #38).
+    ///
+    /// Deliberately NOT the daily scheduler and NOT the job queue. The daily
+    /// tick is the cadence that CAUSED the problem this detector exists for:
+    /// a layer emptied at noon stayed invisible until the next day's snapshot,
+    /// so detection latency was bounded by the observation cadence rather than
+    /// by anything about the damage. And the queue runs jobs sequentially, so
+    /// an observer behind a multi-hour projection would not run for those hours
+    /// — the exact window it is supposed to be watching.
+    const PRESENCE_INTERVAL_SECS: u64 = 300;
+
+    /// Observe the canonical layer's presence on a short fixed interval, out of
+    /// band from the job queue (issue 133 / task #38).
+    ///
+    /// Skips while a heavy write is in progress, and this is the load-bearing
+    /// decision in the whole detector. A rebuild empties the layer at its start
+    /// by design (`reset_tender_layer`), so observing during one would record
+    /// `WentEmpty` on every single rebuild and flip `/health/deep` to 503 for
+    /// hours of entirely correct operation. A probe that cries wolf on the
+    /// normal path is a probe someone mutes, and a muted probe is worse than no
+    /// probe because it is still trusted.
+    ///
+    /// `observed_at` is still refreshed while skipping, so a long rebuild does
+    /// not age the observation into the staleness alarm — which would be the
+    /// same false positive wearing a different hat.
+    ///
+    /// What this costs, stated plainly rather than glossed: the detector is
+    /// blind for as long as a projection is running, including a rebuild that
+    /// was killed and re-run at boot (issue 21). It does NOT catch "the layer
+    /// is empty while a rebuild refills it" — that state is expected and
+    /// already visible as a running job. It catches the case that actually hurt
+    /// us: the layer left empty with nothing running to fix it.
+    pub fn spawn_presence_observer(self: Arc<Self>) {
+        tokio::spawn(async move {
+            loop {
+                tokio::time::sleep(std::time::Duration::from_secs(Self::PRESENCE_INTERVAL_SECS)).await;
+                let now = store::now_unix();
+                let result = if self.heavy_write_in_progress() {
+                    self.db.touch_layer_presence(now).await.map(|()| Vec::new())
+                } else {
+                    self.db.observe_layer_presence(now).await
+                };
+                match result {
+                    Ok(verdicts) => {
+                        // Emptied tables are logged individually and by name:
+                        // the journal is what an operator reads after the 503,
+                        // and "which table" is the diagnosis.
+                        for v in verdicts.iter().filter(|v| {
+                            matches!(v.state, store::LayerState::WentEmpty { .. })
+                        }) {
+                            eprintln!(
+                                "supervisor: CANONICAL LAYER EMPTY — `{}` held rows and no longer does ({:?})",
+                                v.name, v.state
+                            );
+                        }
+                    }
+                    // Never fatal: a failed observation must not take down the
+                    // process it is watching. It ages `observed_at`, which the
+                    // staleness clause turns into an unhealthy probe on its own.
+                    Err(e) => eprintln!("supervisor: layer presence observation failed: {e}"),
+                }
             }
         });
     }

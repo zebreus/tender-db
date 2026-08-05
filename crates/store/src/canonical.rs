@@ -3363,6 +3363,29 @@ impl Db {
         Ok(out)
     }
 
+    /// Mark the presence observations as still current WITHOUT re-evaluating
+    /// them (issue 133 / task #38).
+    ///
+    /// Used while a rebuild is in flight. The layer is legitimately empty then,
+    /// so observing would record a wipe that did not happen — but simply not
+    /// observing would let `observed_at` age past the staleness threshold and
+    /// raise the other alarm instead. Both are false positives; this is the
+    /// narrow path between them, and it says exactly what is true: nobody has
+    /// re-checked, and that is on purpose.
+    ///
+    /// Deliberately does NOT create rows. On a box that has never observed
+    /// there is nothing to keep fresh, and inventing `NeverPopulated` rows here
+    /// would manufacture an observation that never happened.
+    pub async fn touch_layer_presence(&self, now: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE layer_presence SET observed_at = ?1",
+            turso::params::Params::Positional(vec![Value::Integer(now)]),
+        )
+        .await?;
+        Ok(())
+    }
+
     /// The stored presence verdicts, WITHOUT observing (issue 133 / task #38).
     ///
     /// [`Db::observe_layer_presence`] takes the writer connection, because on a
@@ -3896,6 +3919,51 @@ mod tests {
         // resurrects an alarm for damage that has been repaired.
         let fifth = db.observe_layer_presence(500).await.expect("observe t5");
         assert_eq!(state_of(&fifth, "tenders"), &LayerState::Populated);
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// While a rebuild runs, the layer is legitimately empty, so the observer
+    /// stops evaluating and only keeps the observation FRESH. That has to
+    /// preserve the verdicts exactly — and it must not invent rows on a box
+    /// that has never observed, which would fabricate an observation that
+    /// never happened (issue 133).
+    #[tokio::test]
+    async fn touching_presence_refreshes_freshness_without_inventing_a_verdict() {
+        let (db, path) = scratch_db("layer-presence-touch").await;
+
+        async fn seed(db: &Db, sql: &str) {
+            let conn = db.conn().await;
+            conn.execute(sql, ()).await.expect("seed");
+        }
+
+        // Nothing observed yet: touching must create nothing at all.
+        db.touch_layer_presence(50).await.expect("touch on a fresh box");
+        assert!(
+            db.read_layer_presence().await.expect("read").is_empty(),
+            "touch fabricated presence rows on a box that has never observed"
+        );
+
+        // Observe for real, then let the layer go empty and observe again so
+        // there is a verdict worth preserving.
+        seed(&db, "INSERT INTO tenders(source, kind, created_at) VALUES('ted','procedure',0)").await;
+        db.observe_layer_presence(100).await.expect("observe");
+        seed(&db, "DELETE FROM tenders").await;
+        db.observe_layer_presence(200).await.expect("observe empty");
+
+        // Touch: freshness moves, the verdict does not.
+        db.touch_layer_presence(900).await.expect("touch");
+        let after = db.read_layer_presence().await.expect("read");
+        let (tenders, observed_at) = after
+            .iter()
+            .find(|(p, _)| p.name == "tenders")
+            .expect("tenders row");
+        assert_eq!(
+            tenders.state,
+            LayerState::WentEmpty { at: 200 },
+            "touch overwrote a real verdict — a rebuild would erase the evidence of a wipe"
+        );
+        assert_eq!(*observed_at, 900, "touch did not refresh freshness, so a long rebuild would age into the staleness alarm");
 
         let _ = std::fs::remove_file(&path);
     }
