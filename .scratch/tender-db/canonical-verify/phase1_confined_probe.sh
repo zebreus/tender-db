@@ -109,7 +109,12 @@ unit_running() {
 # the fill climb hurts a handful of requests — and that transient is exactly what
 # an aggregate, or peak-equals-cap, cannot see. (team-lead, from proj-fix's
 # I/O-bound analysis, 2026-08-04.)
-LIVE_CG=/sys/fs/cgroup/system.slice/tender-db.service
+# Configurable so the refault tripwire can be proven against a REAL cgroup whose
+# refault counter is genuinely rising, on hardware that is not production. The
+# tripwire is the only guard against a worse instance of whatever produced Tier B
+# run 1's 222-refault burst, and it was proven only synthetically — a guard whose
+# firing has never been observed against a real counter is the day's own pattern.
+LIVE_CG="${LIVE_CG:-/sys/fs/cgroup/system.slice/tender-db.service}"
 
 probe() { # -> epoch health_ms hot_ms live_bytes gate_bytes cached_kb file refault majflt
   local h r
