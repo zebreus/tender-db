@@ -55,7 +55,9 @@ ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichev
 # never produced. A threshold that B would have tripped would abort on a known-
 # harmless event; one that nothing could trip would be the permissive pattern on
 # the new guard.
-REFAULT_RATE_MAX="${REFAULT_RATE_MAX:-50}"   # pages/sec
+REFAULT_RATE_MAX="${REFAULT_RATE_MAX:-50}"   # pages/sec — ABSOLUTE FLOOR only
+REFAULT_BASELINE_MULT="${REFAULT_BASELINE_MULT:-3}"  # abort above max(floor, MULT x measured baseline)
+REFAULT_BASELINE_RATE="${REFAULT_BASELINE_RATE:-0}"  # filled in from the baseline window
 REFAULT_SUSTAIN="${REFAULT_SUSTAIN:-5}"      # consecutive samples above it
 UNIT="${UNIT:-tdb-standing-gate-probe}"
 # HARD REMOTE BOUND on the confined work. Applied as TimeoutStartSec, not
@@ -76,9 +78,12 @@ UNIT="${UNIT:-tdb-standing-gate-probe}"
 # Read the unit while it is ALIVE, or read the probe's own assertion, which does. run-driver orphaned a snapshot read on
 # prod for 90 minutes today because a LOCAL `timeout` around `ssh` killed the
 # client, not the remote process — the guard bounded their VIEW of the work, not
-# the work. RuntimeMaxSec puts the bound inside systemd, which is the thing
+# the work. TimeoutStartSec puts the bound inside systemd, which is the thing
 # actually running it, so the gate dies on schedule whatever happens to my
-# transport, my shell, or me. Tier A measured 28m50s; 1h is a generous backstop
+# transport, my shell, or me. NOT RuntimeMaxSec, which this comment used to name:
+# it is silently ignored for Type=oneshot (see the measurement below). Both are
+# set on the unit; only one of them enforces, and naming the wrong one here is how
+# a bound gets believed rather than checked. Tier A measured 28m50s; 1h is a generous backstop
 # that still cannot become an unbounded read.
 MAX_RUN_S="${MAX_RUN_S:-3600}"
 # Resolve the input ONCE, here, and pass it to the gate PINNED. The lead requires
@@ -160,11 +165,28 @@ delta() {
 # live box, so both arms can be shown cheaply. A tripwire that has only ever been
 # observed saying "fine" is the permissive pattern on the newest guard, and this
 # one guards the heaviest tier.
+# THE THRESHOLD IS RELATIVE TO THE MEASURED BASELINE, with an absolute floor —
+# mirroring the latency guard beside it, which has always been max(250ms, 20x
+# baseline p95). This one was a bare constant, and the inconsistency was not
+# harmless: on 2026-08-05 it aborted a run after 10 s while the live service's
+# OWN idle refault rate was 51-121/s, measured with nothing else running. The
+# service was still refilling after a restart 45 min earlier, so the box sat
+# permanently above a 50/s absolute bar and ANY payload would have aborted. The
+# guard was not detecting my payload; it was detecting the weather.
+#
+# REFAULT_BASELINE_RATE is set from the baseline window before the payload starts.
+# Zero/unset falls back to the absolute floor alone, which is the old behaviour and
+# is correct when no baseline was measured.
 refault_verdict() {
-  local prev="$1" cur="$2" iv="$3" run="$4" rate
+  local prev="$1" cur="$2" iv="$3" run="$4" rate limit
   [ "${iv:-0}" -gt 0 ] 2>/dev/null || { echo "$run"; return; }
   rate=$(( (cur - prev) / iv ))
-  if [ "$rate" -gt "$REFAULT_RATE_MAX" ]; then echo $(( run + 1 )); else echo 0; fi
+  limit="$REFAULT_RATE_MAX"
+  if [ "${REFAULT_BASELINE_RATE:-0}" -gt 0 ] 2>/dev/null; then
+    local rel=$(( REFAULT_BASELINE_RATE * REFAULT_BASELINE_MULT ))
+    [ "$rel" -gt "$limit" ] && limit="$rel"
+  fi
+  if [ "$rate" -gt "$limit" ]; then echo $(( run + 1 )); else echo 0; fi
 }
 
 # _test_refault_abort — both arms, against series taken from the real Tier B run
@@ -189,8 +211,35 @@ _test_refault_abort() {
       printf '  FAIL %-14s fired=%s (expected %s)\n' "$label" "$got" "$expect"; fail=1
     fi
   done
-  echo "  threshold: >${REFAULT_RATE_MAX} pages/s for ${REFAULT_SUSTAIN} consecutive samples"
-  [ "$fail" -eq 0 ] && echo "== both arms correct ==" || { echo "== TRIPWIRE SELF-TEST FAILED =="; return 1; }
+  echo "  threshold (no baseline): >${REFAULT_RATE_MAX} pages/s for ${REFAULT_SUSTAIN} consecutive samples"
+
+  # RELATIVE ARMS — the behaviour added 2026-08-05, driven by the real numbers that
+  # exposed the need. On that day the live service idled at 51-121/s while still
+  # refilling after a restart, so an absolute 50/s bar aborted a payload in 10 s for
+  # doing nothing unusual. Both arms use a 57/s baseline (the measured figure) at
+  # 2 s intervals: 114 pages per sample is exactly the idle weather, 400 is real.
+  echo "== relative threshold: must ignore the box's own weather, still catch real pressure =="
+  local saved="${REFAULT_BASELINE_RATE:-0}"
+  REFAULT_BASELINE_RATE=57   # -> limit = max(50, 3x57) = 171/s
+  for spec in "idle-weather-75/s:0 150 300 450 600 750 900:0" \
+              "real-pressure-400/s:0 800 1600 2400 3200 4000 4800:1"; do
+    label=${spec%%:*}; rest=${spec#*:}; series=${rest%:*}; expect=${rest##*:}
+    run=0; prev=""; got=0
+    for v in $series; do
+      [ -n "$prev" ] && run=$(refault_verdict "$prev" "$v" 2 "$run")
+      [ "$run" -ge "$REFAULT_SUSTAIN" ] && got=1
+      prev=$v
+    done
+    if [ "$got" = "$expect" ]; then
+      printf '  PASS %-20s fired=%s (expected %s)\n' "$label" "$got" "$expect"
+    else
+      printf '  FAIL %-20s fired=%s (expected %s)\n' "$label" "$got" "$expect"; fail=1
+    fi
+  done
+  echo "  with baseline 57/s and mult ${REFAULT_BASELINE_MULT} -> abort above $((57*REFAULT_BASELINE_MULT))/s (arms above state what fired)"
+  REFAULT_BASELINE_RATE="$saved"
+
+  [ "$fail" -eq 0 ] && echo "== all four arms correct ==" || { echo "== TRIPWIRE SELF-TEST FAILED =="; return 1; }
 }
 
 pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
@@ -310,7 +359,8 @@ echo "-- plan: TIER=$TIER under MemoryMax=$MEM_MAX IOWeight=$IO_WEIGHT CPUWeight
 echo "--       baseline ${BASELINE_S}s -> gate -> settle ${SETTLE_S}s, sampling every ${INTERVAL_S}s"
 echo "--       abort if hot read > max(${ABORT_MS}ms, ${ABORT_MULT}x baseline p95) for 3 consecutive samples"
 echo "--       input:  $SNAP  (pinned, not newest-at-launch)"
-echo "--       hard bound: RuntimeMaxSec=${MAX_RUN_S}s enforced by systemd, not by my transport"
+echo "--       hard bound: TimeoutStartSec=${MAX_RUN_S}s enforced by systemd, not by my transport"
+echo "--                   (RuntimeMaxSec is also set and is INERT for Type=oneshot — measured)"
 echo "--       output: $OUT.{baseline,during,after}.tsv"
 preconditions || { echo; echo "PRECONDITIONS FAILED — not staged."; exit 2; }
 
@@ -332,6 +382,26 @@ echo "   baseline p95: health ${base_h}ms, hot read ${base_r}ms"
 
 thresh=$(awk -v a="$ABORT_MS" -v b="$base_r" -v m="$ABORT_MULT" 'BEGIN{t=b*m; print (t>a)?t:a}')
 echo "   abort threshold: ${thresh}ms sustained over 3 samples"
+
+# THE REFAULT BASELINE, measured in the same window, so the eviction guard is
+# judged against this box today rather than against a constant chosen on a
+# different day. Column 8 is workingset_refault_file. Without this the guard is
+# absolute and fires on the live service's own weather -- which is exactly what it
+# did on 2026-08-05, aborting after 10 s while the idle rate was already 51-121/s.
+_base_rf=$(delta "$OUT.baseline.tsv" 8)
+case "$_base_rf" in ''|*[!0-9-]*) _base_rf=0;; esac
+[ "$_base_rf" -lt 0 ] 2>/dev/null && _base_rf=0
+REFAULT_BASELINE_RATE=$(( _base_rf / BASELINE_S ))
+_rf_limit=$(( REFAULT_BASELINE_RATE * REFAULT_BASELINE_MULT ))
+[ "$_rf_limit" -lt "$REFAULT_RATE_MAX" ] && _rf_limit="$REFAULT_RATE_MAX"
+echo "   refault: baseline ${REFAULT_BASELINE_RATE}/s -> abort above ${_rf_limit}/s (max of ${REFAULT_RATE_MAX}/s floor, ${REFAULT_BASELINE_MULT}x baseline) sustained over 5"
+if [ "$REFAULT_BASELINE_RATE" -gt "$REFAULT_RATE_MAX" ]; then
+  echo "   NOTE: the live service is ALREADY refaulting above the absolute floor with"
+  echo "         nothing running — its cache is still settling (a restart, or a job that"
+  echo "         just churned it). The relative threshold is what makes this run"
+  echo "         interpretable; a measurement taken now still says less than one taken"
+  echo "         on a settled box. Prefer waiting for the rate to STOP FALLING."
+fi
 
 echo "-- gate (confined, Tier $TIER)"
 # ENV DOES NOT CROSS systemd-run BY DEFAULT. Only what is --setenv'd reaches the
