@@ -27,6 +27,33 @@
 -- Q3 is the decisive one for effort: an unclaimed-content detail names the exact
 -- path that was not claimed, so a small set of distinct paths = a small fix.
 --
+-- WHAT THIS PASS CANNOT ANSWER, and why the byte-length check does not fit here.
+--
+-- The ask was to fold in "is the original's presence VERIFIED by reading the bytes
+-- (present, non-zero, matching recorded length), or only ASSERTED by a held flag?"
+-- That is the right question and it cannot be asked of this database:
+--
+--   `notices` (lib.rs:97): "The payload is NOT stored: (fetch_id, member_path)
+--   locates it inside the immutable raw archive."
+--
+-- So no snapshot query can read a payload byte. The bytes live in the archive
+-- tarballs and reaching them means walking a .tar for 154 members — a different
+-- operation, on the box, not a snapshot read, and heavier than every query here
+-- combined. Writing it as SQL anyway would have produced a query that runs, returns
+-- something, and answers a different question than its name claims.
+--
+-- What IS knowable in-DB, and its limit: every notice row carries a NOT NULL
+-- `content_hash`, recorded at ingest from bytes that were read and hashed. So a row
+-- existing is evidence the payload existed AT INGEST — it is not evidence the
+-- payload exists NOW. `content_hash` presence is therefore vacuous as a check (the
+-- column cannot be null) and is not asked. Q6 asks the one non-vacuous in-DB
+-- version: does the English original's hash DIFFER from its sibling's? If they are
+-- equal, the two files are byte-identical and the "per-language variant" framing is
+-- wrong for that row — a finding in its own right.
+--
+-- The archive-side check remains worth doing and belongs in its own pass, scoped to
+-- whatever subset these results make suspicious.
+--
 -- READ-ONLY, data pages: snapshot only, never the serving DB.
 -- ============================================================================
 
@@ -70,6 +97,17 @@ SELECT '--- Q4. are they clustered in time, or spread across 2008? ---' AS "";
 SELECT f.period, COUNT(*) AS n
   FROM originals o JOIN notices n ON n.id = o.id JOIN fetches f ON f.id = n.fetch_id
  GROUP BY 1 ORDER BY 1;
+
+-- Q6 is what remains of the byte-length check, and the header below says why the
+-- rest of it cannot ride this pass.
+SELECT '--- Q6. is the original distinguishable from its siblings at all? ---' AS "";
+SELECT CASE WHEN n.content_hash = q.content_hash THEN 'EN hash == sibling hash (NOT a per-language variant)'
+            ELSE 'EN hash differs from sibling (a genuine variant)' END AS relation,
+       COUNT(*) AS n
+  FROM residue r
+  JOIN notices n ON n.source='ted' AND n.publication_id = r.pub_id
+  JOIN quarantine q ON q.member_path = r.member_path
+ GROUP BY 1 ORDER BY 2 DESC;
 
 SELECT '--- Q5. reconcile: sibling rows vs distinct originals ---' AS "";
 SELECT (SELECT COUNT(*) FROM residue)   AS sibling_rows_in_scope,
