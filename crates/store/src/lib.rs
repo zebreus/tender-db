@@ -331,6 +331,32 @@ const SCHEMA: &str = "
       LEFT JOIN notice_codes c ON c.notice_id = s.notice_id AND c.section_id = s.section_id
      WHERE s.kind = 'FieldsPrivacy'
      GROUP BY s.notice_id, s.section_id;
+
+    -- The live-layer presence marker (issue 133 / task #38). One row per table
+    -- the standing gate's `present_*` checks cover, carrying the only fact that
+    -- cannot be recovered by looking at the layer itself: whether it was EVER
+    -- populated.
+    --
+    -- Why this has to be stored rather than derived. An empty table is
+    -- ambiguous — a fresh install and a wiped corpus look identical from
+    -- inside the database — and the whole incremental-assertion scheme (#28)
+    -- is blind here: an assertion scoped to the rows a batch writes cannot
+    -- observe that a table has NO rows, and a wipe writes no batch at all.
+    --
+    -- Deliberately NOT derived from `changes` being non-empty, which was the
+    -- tempting shortcut: `clear_changes` (canonical.rs) legitimately empties
+    -- that table as a paired one-time reset, so it is not the never-cleared
+    -- witness it looks like.
+    CREATE TABLE IF NOT EXISTS layer_presence (
+        name           TEXT PRIMARY KEY,
+        -- 1 once this table has been observed non-empty at least once. Never
+        -- returns to 0: it records history, not current state.
+        ever_populated INTEGER NOT NULL DEFAULT 0,
+        -- When it was first observed empty HAVING been populated — the
+        -- transition, and the age of the damage. NULL while populated.
+        went_empty_at  INTEGER,
+        observed_at    INTEGER NOT NULL
+    ) STRICT;
 ";
 
 pub struct Db {

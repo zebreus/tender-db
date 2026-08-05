@@ -3251,6 +3251,163 @@ impl Db {
             .await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
     }
+
+    /// Observe whether each canonical table the standing gate's `present_*`
+    /// checks cover currently holds any rows, and fold that against what was
+    /// observed before (issue 133 / task #38).
+    ///
+    /// ## Why this exists at all
+    ///
+    /// The #28 verification scheme is moving from whole-corpus counting to
+    /// assertions made incrementally, as the projection writes. That covers
+    /// every invariant ABOUT rows, and it is structurally blind to exactly one
+    /// thing: **there being no rows**. An assertion scoped to what a batch
+    /// wrote cannot notice an empty table, and the catastrophic case — a
+    /// rebuild killed after `reset_tender_layer` has already committed its
+    /// DROP, which is what happened on 2026-07-30 — writes no batch at all, so
+    /// no assertion ever runs. Every other check then reports clean over the
+    /// wreckage, because vacuously true is still true.
+    ///
+    /// ## Why the verdict is a transition, not "is it empty"
+    ///
+    /// Asserting non-emptiness outright would fire on states that are correct:
+    /// a fresh install has never had a canonical layer, and a rebuild empties
+    /// the layer at its start by design. A check that cries wolf on a normal
+    /// rebuild is a check someone turns off.
+    ///
+    /// So the question asked is *"was this populated, and is it now empty"* —
+    /// which needs the one fact the database cannot tell you about itself, and
+    /// is why `layer_presence` is stored rather than derived.
+    ///
+    /// ## What this deliberately does NOT decide
+    ///
+    /// It does not decide whether an empty-having-been-populated table is an
+    /// emergency. It cannot: a rebuild in flight produces the identical
+    /// observation, and whether one is in flight is the supervisor's knowledge,
+    /// not the store's. The caller joins this with that (see
+    /// `Supervisor::heavy_write_in_progress`) and classifies. Reporting the
+    /// state and classifying it are kept apart on purpose — a detector that
+    /// suppressed its own signal whenever a projection was running would have
+    /// been silent for the entire hours-long window that mattered on 07-30,
+    /// since a killed job is recovered and re-run at boot (issue 21).
+    ///
+    /// Cost is O(1) per table: `EXISTS` stops at the first row, so this is 13
+    /// index/table seeks and no scan, safe to run against the live database on
+    /// any cadence. It writes only when a table's state actually CHANGES, so
+    /// the steady state is read-only and never queues behind the writer.
+    pub async fn observe_layer_presence(&self, now: i64) -> turso::Result<Vec<LayerPresence>> {
+        let conn = self.conn().await;
+        let mut out = Vec::with_capacity(PRESENCE_TABLES.len());
+        for name in PRESENCE_TABLES {
+            // EXISTS, not COUNT: the point is to stop at the first row rather
+            // than to know how many there are, and on a 12M-row table those are
+            // very different queries.
+            let non_empty = {
+                let mut rows = conn
+                    .query(&format!("SELECT EXISTS(SELECT 1 FROM {name})"), ())
+                    .await?;
+                rows.next().await?.is_some_and(|row| int(&row, 0) != 0)
+            };
+
+            let prior = {
+                let mut rows = conn
+                    .query(
+                        "SELECT ever_populated, went_empty_at FROM layer_presence WHERE name = ?1",
+                        turso::params::Params::Positional(vec![Value::Text(name.to_string())]),
+                    )
+                    .await?;
+                rows.next().await?.map(|row| (int(&row, 0) != 0, opt_int_of(&row, 1)))
+            };
+            let (was_populated, went_empty_at) = prior.unwrap_or((false, None));
+
+            let state = match (non_empty, was_populated) {
+                (true, _) => LayerState::Populated,
+                // Empty and never seen otherwise: a fresh or not-yet-projected
+                // database. Silent by construction — this is the false alarm
+                // the whole design is arranged to avoid.
+                (false, false) => LayerState::NeverPopulated,
+                // The one that matters: it held rows, and now it does not.
+                (false, true) => LayerState::WentEmpty { at: went_empty_at.unwrap_or(now) },
+            };
+
+            // Write only on a real change of state, so a probe running every
+            // minute against a healthy layer performs no writes at all.
+            let next_went_empty = match state {
+                LayerState::WentEmpty { at } => Some(at),
+                _ => None,
+            };
+            let next_ever = was_populated || non_empty;
+            let changed = prior.is_none()
+                || next_ever != was_populated
+                || next_went_empty != went_empty_at;
+            if changed {
+                conn.execute(
+                    "INSERT INTO layer_presence(name, ever_populated, went_empty_at, observed_at)
+                          VALUES (?1, ?2, ?3, ?4)
+                     ON CONFLICT(name) DO UPDATE SET
+                         ever_populated = excluded.ever_populated,
+                         went_empty_at  = excluded.went_empty_at,
+                         observed_at    = excluded.observed_at",
+                    turso::params::Params::Positional(vec![
+                        Value::Text(name.to_string()),
+                        Value::Integer(i64::from(next_ever)),
+                        next_went_empty.map_or(Value::Null, Value::Integer),
+                        Value::Integer(now),
+                    ]),
+                )
+                .await?;
+            }
+
+            out.push(LayerPresence { name: name.to_string(), state });
+        }
+        Ok(out)
+    }
+
+}
+
+/// The canonical-layer tables whose emptiness means a nuked or externally
+/// damaged layer — the standing gate's `present_*` set (issue 133 / task #28).
+/// One per table any check reads, and each is created unconditionally at every
+/// `Db::open` by `SCHEMA` above, so an `EXISTS` against any of them is always a
+/// seek, never a "no such table". Keep this in lockstep with those checks:
+/// `.scratch/tender-db/canonical-verify/standing_gate.sh`.
+const PRESENCE_TABLES: &[&str] = &[
+    "tenders",
+    "tender_versions",
+    "organizations",
+    "organization_mentions",
+    "tender_version_texts",
+    "tender_version_amounts",
+    "tender_version_parties",
+    "tender_version_result_winners",
+    "lots",
+    "lot_results",
+    "tender_version_lot_results",
+    "tender_version_bids",
+    "changes",
+];
+
+/// What `observe_layer_presence` found for one presence table. The verdict is a
+/// transition, not "is it empty": an empty table is only alarming if it was
+/// once populated (a fresh install and a rebuild-in-flight are both legitimately
+/// empty), so the discriminating state is `WentEmpty`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum LayerState {
+    /// Holds rows now.
+    Populated,
+    /// Empty, and never observed otherwise — a fresh or not-yet-projected DB.
+    /// Silent by construction; this is the false alarm the design avoids.
+    NeverPopulated,
+    /// It held rows and now does not. `at` is when that transition was first
+    /// observed — set once and preserved, so it dates the damage.
+    WentEmpty { at: i64 },
+}
+
+/// One presence table and its observed state (issue 133 / task #38).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LayerPresence {
+    pub name: String,
+    pub state: LayerState,
 }
 
 /// One entry of the change log.
@@ -3624,5 +3781,83 @@ mod tests {
                 );
             }
         }
+    }
+
+    use super::{Db, LayerPresence, LayerState};
+
+    async fn scratch_db(name: &str) -> (Db, String) {
+        let path = format!("/tmp/tender-db-{name}-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        (Db::open(&path).await.expect("open scratch db"), path)
+    }
+
+    fn state_of<'a>(presence: &'a [LayerPresence], name: &str) -> &'a LayerState {
+        &presence.iter().find(|p| p.name == name).unwrap_or_else(|| panic!("no presence row for {name}")).state
+    }
+
+    /// The detector's whole point is a TRANSITION, not "is it empty": a table
+    /// still holding rows is `Populated`, one never seen with rows is silent
+    /// (`NeverPopulated`), and only a table that HELD rows and is now empty
+    /// raises `WentEmpty` — dated once at the transition and preserved on every
+    /// later observation so it measures the age of the damage (issue 133).
+    #[tokio::test]
+    async fn observe_layer_presence_flags_only_the_populated_then_emptied_transition() {
+        let (db, path) = scratch_db("layer-presence").await;
+
+        // Every connection handle is SCOPED and dropped before the next
+        // `observe_layer_presence` call. Holding one across it DEADLOCKS: the
+        // observer takes the writer connection itself, and there is one. This
+        // is not hypothetical — the first cut of this test hung here, and so
+        // did an unrelated probe the same day, which is why it is spelled out.
+        async fn seed(db: &Db, sql: &str) {
+            let conn = db.conn().await;
+            conn.execute(sql, ()).await.expect("seed");
+        }
+
+        // `tenders` gets a row; `changes` never does.
+        seed(&db, "INSERT INTO tenders(source, kind, created_at) VALUES('ted','procedure',0)").await;
+
+        // t1: tenders populated, changes never populated.
+        let first = db.observe_layer_presence(100).await.expect("observe t1");
+        assert_eq!(state_of(&first, "tenders"), &LayerState::Populated);
+        assert_eq!(state_of(&first, "changes"), &LayerState::NeverPopulated);
+
+        // The layer is emptied out from under us (a re-nuke), then observed at
+        // t2: this is the one case that must alarm, dated at t2.
+        seed(&db, "DELETE FROM tenders").await;
+        let second = db.observe_layer_presence(200).await.expect("observe t2");
+        assert_eq!(state_of(&second, "tenders"), &LayerState::WentEmpty { at: 200 });
+        // Still-empty-and-never-populated stays silent.
+        assert_eq!(state_of(&second, "changes"), &LayerState::NeverPopulated);
+
+        // t3: still empty. The transition time is preserved, NOT re-stamped to
+        // t3 — the damage keeps its original age.
+        let third = db.observe_layer_presence(300).await.expect("observe t3");
+        assert_eq!(state_of(&third, "tenders"), &LayerState::WentEmpty { at: 200 });
+
+        // t4: REPOPULATED — the alarm must clear itself.
+        //
+        // This is the arm that decides whether the detector is usable rather
+        // than merely correct. A `WentEmpty` that latched forever would pass
+        // every assertion above, keep reporting damage over a layer that has
+        // been rebuilt and is serving fine, and get muted by whoever is on the
+        // other end — at which point the real wipe it exists for goes unread.
+        // A rebuild legitimately empties and then refills the layer, so this is
+        // not an edge case: it is the normal path, and it must end silent.
+        seed(&db, "INSERT INTO tenders(source, kind, created_at) VALUES('ted','procedure',0)").await;
+        let fourth = db.observe_layer_presence(400).await.expect("observe t4");
+        assert_eq!(
+            state_of(&fourth, "tenders"),
+            &LayerState::Populated,
+            "the detector latched: a repopulated table still reports damage, so the alarm never clears"
+        );
+
+        // And the clearing must be DURABLE, not just this call's return value —
+        // the stored `went_empty_at` has to be gone, or the next observation
+        // resurrects an alarm for damage that has been repaired.
+        let fifth = db.observe_layer_presence(500).await.expect("observe t5");
+        assert_eq!(state_of(&fifth, "tenders"), &LayerState::Populated);
+
+        let _ = std::fs::remove_file(&path);
     }
 }
