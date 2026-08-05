@@ -98,7 +98,7 @@ SELECT CASE
            THEN 'english_original'
          ELSE 'in_scope'
        END      AS bucket,
-       COUNT(*) AS rows
+       COUNT(*) AS n_rows
   FROM quarantine q
  WHERE q.reason = 'unparsable-xml'
    AND q.detail LIKE 'XML with DTD detected%'
@@ -112,7 +112,7 @@ SELECT CASE
 -- parser messages then 'XML with DTD detected%' covers more than one failure, and
 -- that must be known before the group is reasoned about as a single population.
 SELECT q.detail AS detail_variant,
-       COUNT(*) AS rows
+       COUNT(*) AS n_rows
   FROM quarantine q
  WHERE q.reason = 'unparsable-xml'
    AND q.detail LIKE 'XML with DTD detected%'
@@ -129,7 +129,7 @@ SELECT q.detail AS detail_variant,
 SELECT f.source,
        f.kind,
        f.period,
-       COUNT(*) AS rows
+       COUNT(*) AS n_rows
   FROM quarantine q
   JOIN v_fetches f ON f.id = q.fetch_id
  WHERE q.reason = 'unparsable-xml'
