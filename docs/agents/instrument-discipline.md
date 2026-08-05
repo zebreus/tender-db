@@ -200,6 +200,25 @@ true at 3.5M rows and still there at 27.4M.
 
 *(sdk-vendor, 2026-08-05, from issue 117's correction — added to a doc authored by run-driver.)*
 
+## Assert the transition, not the state, when absence is sometimes correct
+
+The vacuity hole is *"0 violations is trivially true of an empty table"*. Its inverse is just as easy to
+ship and gets the check disabled faster: **asserting a state that is legitimately absent under some
+correct conditions.**
+
+The instance: a detector for "the canonical layer was emptied" is obvious to write as
+`EXISTS(SELECT 1 FROM tenders)`. But a fresh install has no tenders, and neither does a rebuild before its
+first fold — both correct. An absolute assertion fires on both, and a check that cries wolf on known-good
+states is switched off within a month, at which point it protects nothing.
+
+The fix is to assert the **transition**: *this run must not have emptied a layer that was populated*,
+compared against the state the run itself observed. Same for any "X must be present" check where X is
+built rather than given.
+
+Test for it the way you test for vacuity — ask what correct states the assertion would reject. If the
+answer is "none I can think of", enumerate the lifecycle instead: first install, first build, restore,
+migration. Absence is usually legitimate somewhere in there.
+
 ## State acceptance criteria as explicit conjunctions
 
 An acceptance criterion written as prose cannot be audited clause by clause. Written as a conjunction,

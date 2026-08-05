@@ -16,6 +16,63 @@ latency for the live catastrophe is bounded by the **snapshot cadence**, not the
 
 So the fast detector has to sit where the artifact is actually touched: in the app.
 
+## CORRECTION: my "strongest placement" claim was wrong on coverage
+
+I argued end-of-projection was the stronger placement because the projection is what empties the layer.
+The causation half stands. **The coverage half does not, and it fails on exactly the incident I cited as
+its motivation.**
+
+Verified in the code (sdk-vendor's catch, checked rather than accepted): `reset_tender_layer`
+(`canonical.rs:1446-1461`) is `DROP TABLE IF EXISTS tenders` then `CREATE TABLE …` — **DDL, committed
+immediately, in no enclosing transaction** — called at `project.rs:572`, at the **start** of a rebuild,
+with hours of refill after it.
+
+**So the wipe is durable the instant it happens, whether or not the fold ever finishes.** A killed
+rebuild leaves the layer empty and an end-of-projection assertion **never runs at all**. The 2026-07-30
+case — killed rebuild, wipe committed, unnoticed until `/api/tenders` returned nothing — is precisely the
+one that placement is blind to.
+
+## Coverage, per placement
+
+| placement | killed mid-rebuild | completed-but-destructive run | names a cause |
+|---|---|---|---|
+| end-of-projection | **blind** | catches | **yes** |
+| `/health/deep` | catches | catches | no |
+| next-run precondition | catches | catches | partly |
+
+`/health/deep` is not the weaker sibling — **it is the one that covers the motivating incident**,
+precisely because it depends on no run reaching any particular point. It answers *"is it empty now"*
+continuously, which is what you want when the failure is *a process died holding the layer empty*. And it
+is already wired to a detector, since the VPS monitoring polls health.
+
+The third row is worth having as well: a **next-projection-start precondition** — the layer is empty but
+the recorded state says a build completed — catches the killed case *and* can refuse to compound it.
+
+**Conclusion: not one placement, three, and they are complementary rather than ranked.** The
+end-of-projection assertion earns its place by naming a cause, which no downstream check can do; it does
+not earn the word "stronger".
+
+## Refuse or alarm — and the choice is narrower than it looks
+
+Scoped correctly, this decision applies **only to a run that completes**. For the killed case there is
+nothing to refuse: the wipe committed before anything could object, and the process is gone. That case
+needs *detection*, full stop.
+
+For the completed case, sdk-vendor's framing (from issue 130) decides it:
+
+- **Refuse** → damage never lands → the standing gate sees a clean layer forever → gate-green means *"no
+  damage **or** damage prevented"*, indistinguishable. The **only** witness becomes the failed-job
+  signal, which makes issue 32's jobwatch load-bearing.
+- **Alarm and proceed** → damage lands, the gate catches it within a snapshot cycle, and two independent
+  signals can corroborate.
+
+**Refuse, for a layer wipe** — the asymmetry is enormous and preventing beats detecting. **But that
+choice silently relocates the whole detection burden onto jobwatch**, so it comes with a requirement:
+issue 32's coverage of *this specific failure* must be demonstrated, not assumed. A guard nobody has seen
+fire for the reason you are relying on is the pattern this project has spent a day removing.
+
+## The original argument, kept for the causation half it got right
+
 ## The strongest placement is NOT `/health/deep`
 
 sdk-vendor proposed `/health/deep` or end-of-projection. Both work; they are not equal, and the
