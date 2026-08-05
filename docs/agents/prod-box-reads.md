@@ -15,6 +15,36 @@ When may an agent read something on the prod box without asking first? This is t
 A data-page read runs against a **checkpointed snapshot**, never the live database, because it competes
 for the one disk with the writer.
 
+## The one live-database exception: provably O(1) page count
+
+A read of the **live** database is permitted — despite touching data pages — if and only if its page
+count is **provably O(1) in corpus size**: a b-tree point or first-row probe (`EXISTS(SELECT 1 …)`, an
+indexed equality, `SELECT 1 … LIMIT 1`) whose `EXPLAIN QUERY PLAN` shows a **seek or single-row access,
+never a SCAN**. Such a probe touches roughly tree-depth pages whether the table holds one row or a
+hundred million, so it cannot evict the working set or contend for the disk.
+
+Three conditions, all of them load-bearing:
+
+- **The test is asymptotic, not numeric.** "It only took 34 ms" is the magnitude reasoning this whole
+  document exists to replace. The claim being made is about *growth*, and it has to be verified per probe
+  rather than assumed from a timing.
+- **Plan-verify every probe.** Not the pattern, each probe. An `EXISTS` on an unindexed column is a
+  full scan wearing an `EXISTS`'s clothes.
+- **A SCAN is never admitted, however small its result.** The dangerous case is *matches nothing*: an
+  unindexed `EXISTS` that finds no row has walked the entire table to establish it. Small output is not
+  evidence of small work — that is the same inversion as a fast first page hiding an expensive later one.
+
+Any probe that cannot be shown to seek stays snapshot-side.
+
+*(Ruled by team-lead, 2026-08-05, for issue 28's liveness tier. Argued once, written here, narrow.)*
+
+**Note what this exception does NOT cover, because it is easy to over-apply.** It governs an **agent**
+reading the live database. **The app reading its own database in-process was never governed by this rule
+at all** — that is the service doing its job, not an operator taking a look. So an assertion inside the
+projection or behind `/health` needs no exception; the right question there is a design one (where does
+the check belong) rather than a permissions one. The exception is worth having on its own merits, for the
+agent case; it is not what makes an in-app check legitimate.
+
 ## Why category, and not size
 
 The tempting rule is "small reads are fine". It is wrong, and specifically it is wrong in the way that
