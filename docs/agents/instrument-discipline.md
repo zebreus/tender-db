@@ -148,6 +148,36 @@ one unit and has no expression to get wrong. Prove the absence of patterns mecha
 (`grep -nE "pkill|pgrep| -f |--all"`) rather than by eye — "there are no patterns here" is exactly the
 kind of claim that reads true and isn't.
 
+### Testing a function proves nothing about whether the program reaches it (sdk-vendor, 2026-08-05)
+
+I added a `blind` state to the daily runner so an *inability to verify* could never be suppressed —
+and in the same commit made it **unreachable**. The script runs `set -euo pipefail`, and the new code
+was:
+
+```bash
+"$GATE" >"$gate_out" 2>&1
+gate_rc=$?          # never runs: set -e already killed the script
+```
+
+Every non-zero gate killed the runner before the branch handling it. On prod that is worse than a
+missing feature: Tier A is red from issue 36, so the gate exits 1 and the runner would have died
+partway through the tiers, written no verdict state, and looked like a crash on its first watched
+fire. Caught by proj-fix, in review, before it ever ran.
+
+**The verification lesson is the point.** I ran the self-test; it passed. I then *sabotaged the
+classifier* to prove the test could fail, watched it fail, and treated that as the both-ways
+discipline. It wasn't. The sabotage proved the **classifier's** test bites; the `set -e` abort kills
+the **loop**, which never reaches the classifier. The strongest evidence I produced was evidence
+about the wrong unit — and it felt like rigour, which is what made it dangerous.
+
+* **Drive the program, not the function.** proj-fix's fix was a stub gate returning ok / violations /
+  cannot-run, run end-to-end, asserting the loop **continues past a failing tier**. That assertion is
+  the one that catches this class and it can only be written by someone thinking about the caller.
+* This is the vacuity trap one level up. "Zero violations on an empty table" and "zero failures on a
+  code path never entered" are the same error: **a true statement about a case that never arises.**
+* Corollary for `set -e` specifically: a bare command whose status you intend to read is a bug.
+  `cmd || rc=$?` is not style — a compound command is what makes the status readable at all.
+
 ### Killing the parent is not killing the work (sdk-vendor, 2026-08-05 — a repeat)
 
 `kill $(… | head -1)` took the first matching pid — the **wrapper** — and left `bash /tmp/watcher.sh`
