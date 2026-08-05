@@ -189,6 +189,24 @@ refault_verdict() {
   if [ "$rate" -gt "$limit" ]; then echo $(( run + 1 )); else echo 0; fi
 }
 
+# eviction_verdict <prev_rf> <cur_rf> <prev_file> <cur_file> <interval_s> <run>
+# -> new consecutive-breach count.
+#
+# PURE, and extracted deliberately. The conjunction used to live inline in the
+# sampling loop, where the self-test could not reach it — and I had recorded, four
+# hours earlier the same day, that testing a function proves nothing about whether
+# the program reaches it. Adding an untestable conjunction under that entry would
+# have been the same mistake with the lesson already written down.
+eviction_verdict() {
+  local prf="$1" crf="$2" pf="$3" cf="$4" iv="$5" run="$6"
+  # Not shrinking => not eviction, whatever refault says. Missing file readings are
+  # treated as "cannot show shrinkage", i.e. no abort: this guard exists to catch a
+  # specific harm, and an absent signal is not evidence of it.
+  case "$pf$cf" in ''|*[!0-9]*) echo 0; return;; esac
+  if [ "$cf" -ge "$pf" ]; then echo 0; return; fi
+  refault_verdict "$prf" "$crf" "$iv" "$run"
+}
+
 # _test_refault_abort — both arms, against series taken from the real Tier B run
 # and a synthetic sustained one. Run with --test-refault-abort.
 _test_refault_abort() {
@@ -239,7 +257,24 @@ _test_refault_abort() {
   echo "  with baseline 57/s and mult ${REFAULT_BASELINE_MULT} -> abort above $((57*REFAULT_BASELINE_MULT))/s (arms above state what fired)"
   REFAULT_BASELINE_RATE="$saved"
 
-  [ "$fail" -eq 0 ] && echo "== all four arms correct ==" || { echo "== TRIPWIRE SELF-TEST FAILED =="; return 1; }
+  # CONJUNCTION ARMS — the behaviour added after the 407 run, where refault alone
+  # aborted while the live cache was GROWING. Cache size is the discriminator: a
+  # service being served grows, a service being robbed shrinks.
+  echo "== conjunction: high refault must NOT abort while the live cache is growing =="
+  REFAULT_BASELINE_RATE=0   # floor governs: >50/s
+  local r
+  r=$(eviction_verdict 0 4000 1000 900 2 4)     # 2000/s, cache shrinking -> counts
+  [ "$r" = 5 ] && printf '  PASS %-28s run=%s\n' "shrinking+high -> counts" "$r" || { printf '  FAIL %-28s run=%s (want 5)\n' "shrinking+high" "$r"; fail=1; }
+  r=$(eviction_verdict 0 4000 900 1000 2 4)     # 2000/s, cache GROWING -> reset
+  [ "$r" = 0 ] && printf '  PASS %-28s run=%s\n' "growing+high -> resets" "$r" || { printf '  FAIL %-28s run=%s (want 0)\n' "growing+high" "$r"; fail=1; }
+  r=$(eviction_verdict 0 4000 1000 1000 2 4)    # flat cache -> not shrinking -> reset
+  [ "$r" = 0 ] && printf '  PASS %-28s run=%s\n' "flat+high -> resets" "$r" || { printf '  FAIL %-28s run=%s (want 0)\n' "flat+high" "$r"; fail=1; }
+  r=$(eviction_verdict 0 20 1000 900 2 4)       # cache shrinking but refault low -> reset
+  [ "$r" = 0 ] && printf '  PASS %-28s run=%s\n' "shrinking+low -> resets" "$r" || { printf '  FAIL %-28s run=%s (want 0)\n' "shrinking+low" "$r"; fail=1; }
+  r=$(eviction_verdict 0 4000 "" "" 2 4)        # missing readings -> no abort
+  [ "$r" = 0 ] && printf '  PASS %-28s run=%s\n' "absent signal -> resets" "$r" || { printf '  FAIL %-28s run=%s (want 0)\n' "absent signal" "$r"; fail=1; }
+
+  [ "$fail" -eq 0 ] && echo "== all nine arms correct ==" || { echo "== TRIPWIRE SELF-TEST FAILED =="; return 1; }
 }
 
 pct() { # pct <file> <col> <percentile> — portable (no gawk asort)
@@ -525,21 +560,47 @@ while unit_running "$UNIT.service"; do
   s=$(probe); echo "$s" >> "$OUT.during.tsv"
   hot=$(echo "$s" | awk '{print $3}')
   cur_refault=$(echo "$s" | awk '{print $8}')
+  cur_file=$(echo "$s" | awk '{print $7}')
 
-  # PRIMARY GUARD: sustained refault. Tier B moved refault while latency did not
-  # move at all, so latency alone would have said "fine" about the only effect a
-  # heavier tier is known to produce.
+  # PRIMARY GUARD: sustained refault AND a SHRINKING live cache. Tier B moved
+  # refault while latency did not, so latency alone would have said "fine" about
+  # the only effect a heavier tier is known to produce — that is why refault leads.
+  #
+  # BUT REFAULT ALONE IS NOT SPECIFIC TO THE HARM, and the 2026-08-05 407 run is the
+  # proof. `workingset_refault_file` counts the live service reading back pages that
+  # were evicted AT SOME POINT — including pages IT dropped itself and is now
+  # re-reading as it refills after a restart. During a refill that counter is high by
+  # nature, and cannot distinguish "your scan took my pages" from "I am re-reading
+  # my own working set". That run aborted at 5/5 above a 213/s bar while:
+  #   * the live cache GREW during the payload (+161 MB), not shrank
+  #   * refault was 2.7x HIGHER AFTER the payload stopped (1263/s) than during (468/s)
+  #   * live latency never moved (health p95 0.6ms; hot read 24.3 -> 25.5 -> 25.8ms)
+  # Three independent signals said the service was fine and one guard said it was
+  # being evicted. The guard was wrong, and it was wrong because it measured a
+  # correlate of eviction rather than eviction.
+  #
+  # Eviction of the live service means ITS CACHE GETS SMALLER. So the guard now
+  # requires the conjunction: refault above the relative limit AND `file` falling
+  # over the same interval. A growing cache is a service being served, not robbed.
   if [ -n "$prev_refault" ]; then
-    refault_run=$(refault_verdict "$prev_refault" "$cur_refault" "$INTERVAL_S" "$refault_run")
+    refault_run=$(eviction_verdict "$prev_refault" "$cur_refault" \
+                    "${prev_file:-}" "${cur_file:-}" "$INTERVAL_S" "$refault_run")
     if [ "$refault_run" -gt 0 ]; then
-      echo "   !! refault > ${REFAULT_RATE_MAX}/s (sustained $refault_run/${REFAULT_SUSTAIN})"
+      # Report the EFFECTIVE limit, not the floor. This line said "> 50/s" while the
+      # guard was actually using 213/s (3x a 71/s baseline) — so an operator reading
+      # the live output would have concluded the box was breaching a bar it was
+      # nowhere near, and that the run was in worse trouble than it was. I made the
+      # threshold dynamic an hour earlier and left the message pinned to the static
+      # floor: the same stale-text-beside-a-correction defect this file keeps
+      # catching in other people'"'"'s work.
+      echo "   !! refault > ${_rf_limit:-$REFAULT_RATE_MAX}/s (sustained $refault_run/${REFAULT_SUSTAIN})"
     fi
     if [ "$refault_run" -ge "$REFAULT_SUSTAIN" ]; then
-      echo "   ABORTING — sustained page-cache eviction of the live service"
+      echo "   ABORTING — sustained refault WITH a shrinking live cache (both, not either)"
       systemctl stop "$UNIT.service" 2>/dev/null; aborted=yes; abort_why=refault; break
     fi
   fi
-  prev_refault=$cur_refault
+  prev_refault=$cur_refault; prev_file=$cur_file
 
   # BACKSTOP: latency. Kept, but no longer the only guard.
   if awk -v h="$hot" -v t="$thresh" 'BEGIN{exit !(h>t)}'; then
