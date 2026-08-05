@@ -98,6 +98,9 @@ pub fn DashboardPage() -> Element {
                         Some(q) => rsx! {
                             QuarantinePanel {
                                 total: q.total,
+                                outstanding: q.outstanding,
+                                reclaimed: q.reclaimed,
+                                skipped: q.skipped,
                                 actionable: q.actionable,
                                 suspected: q.suspected,
                                 reasons: q.by_reason.iter().map(|c| (c.label.clone(), c.value)).collect::<Vec<_>>(),
@@ -521,6 +524,9 @@ fn coverage_pct(ratio: Option<f64>, partial: bool) -> String {
 #[component]
 fn QuarantinePanel(
     total: i64,
+    outstanding: i64,
+    reclaimed: i64,
+    skipped: i64,
     actionable: i64,
     suspected: i64,
     reasons: Vec<(String, i64)>,
@@ -528,7 +534,12 @@ fn QuarantinePanel(
     recent: Vec<Quarantined>,
     resolved: Vec<ResolvedCategory>,
 ) -> Element {
-    let benign = total - actionable - suspected;
+    // Benign is the remainder of what is STILL HELD, not of everything ever
+    // held. Subtracting from `total` here would silently reclassify every
+    // reclaimed and skipped row as "benign non-notice member" — turning a fixed
+    // count into a bigger wrong one, which is the defect this panel is being
+    // changed to remove (issue 137).
+    let benign = outstanding - actionable - suspected;
     rsx! {
         section { class: "panel",
             h2 { "Quarantine" }
@@ -550,7 +561,19 @@ fn QuarantinePanel(
                     {field_code_gaps.iter().map(|(code, n)| format!("{code} ({})", group(*n))).collect::<Vec<_>>().join(", ")}
                 }
             }
-            p { class: "muted", "+ {group(benign)} benign (non-notice members) — of {group(total)} total held" }
+            p { class: "muted", "+ {group(benign)} benign (non-notice members) — of {group(outstanding)} still held" }
+            // The three-way split (issue 137 / #29). A held member is in exactly
+            // one of these states, and they sum to every row ever quarantined —
+            // so showing them together cannot hide anything, which is the point.
+            // Presenting the all-time figure alone was the misstatement: most of
+            // it had already been fixed and the dashboard still called it a gap.
+            p { class: "muted",
+                "Of {group(total)} ever held: {group(outstanding)} still held, "
+                "{group(reclaimed)} reclaimed (reprocessed into the corpus), "
+                "{group(skipped)} skipped as duplicates of a sibling already held. "
+                "Reclaimed and skipped are NOT the same claim — a skipped member "
+                "never entered the corpus and was never meant to."
+            }
             if !reasons.is_empty() {
                 table {
                     thead {
@@ -599,7 +622,15 @@ fn QuarantinePanel(
                     }
                 }
             }
-            if !resolved.is_empty() {
+            // Two tables, not one, and the split is the point (issue 84 / #29
+            // criterion 4). Issue 84 produced THREE named populations under a
+            // single quarantine label and only one of them is resolved; the
+            // other two need naming precisely because they are not. Listing
+            // them under a heading that reads "Resolved" would be a worse
+            // misstatement than the overstated total this panel is being
+            // changed to fix — so an entry with no resolution date renders
+            // below, as open work, never above.
+            if resolved.iter().any(|e| e.resolved.is_some()) {
                 h3 { "Resolved categories" }
                 p { class: "muted",
                     "Gaps we diagnosed and fixed. As the archive reprocesses, the held "
@@ -617,7 +648,7 @@ fn QuarantinePanel(
                         }
                     }
                     tbody {
-                        for entry in resolved {
+                        for entry in resolved.iter().filter(|e| e.resolved.is_some()) {
                             tr { key: "{entry.category}",
                                 td { "{entry.category}" }
                                 td { class: "muted", "{entry.diagnosis}" }
@@ -638,7 +669,36 @@ fn QuarantinePanel(
                                         span { class: "muted", " · {group(entry.outstanding)} still held" }
                                     }
                                 }
-                                td { "{entry.resolved}" }
+                                td { "{entry.resolved.clone().unwrap_or_default()}" }
+                            }
+                        }
+                    }
+                }
+            }
+            if resolved.iter().any(|e| e.resolved.is_none()) {
+                h3 { "Known populations, not resolved" }
+                p { class: "muted",
+                    "Categories we have identified and measured but NOT fixed. They are "
+                    "listed for the same reason the resolved ones are: a named population "
+                    "can be investigated, an unnamed remainder cannot. Nothing here is "
+                    "counted as recovered."
+                }
+                table {
+                    thead {
+                        tr {
+                            th { "Category" }
+                            th { "What we know" }
+                            th { "Found by" }
+                            th { class: "num", "Still held" }
+                        }
+                    }
+                    tbody {
+                        for entry in resolved.iter().filter(|e| e.resolved.is_none()) {
+                            tr { key: "{entry.category}",
+                                td { "{entry.category}" }
+                                td { class: "muted", "{entry.diagnosis}" }
+                                td { class: "path", "{entry.fix}" }
+                                td { class: "num", "{group(entry.outstanding)}" }
                             }
                         }
                     }

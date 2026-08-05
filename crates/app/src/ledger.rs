@@ -25,7 +25,22 @@ pub struct LedgerEntry {
     pub detail_like: Option<String>,
     pub diagnosis: String,
     pub fix: String,
-    pub resolved: String,
+    /// The date this category was resolved — `None` while it is still
+    /// OUTSTANDING.
+    ///
+    /// The ledger began as the "Resolved categories" surface, where every entry
+    /// was by definition finished. Issue 84 broke that assumption: it produced
+    /// three named populations under one label, only one of which is resolved,
+    /// and the other two need to be *named* precisely because they are not
+    /// (#29 criterion 4 — a named population is investigable, an unnamed
+    /// remainder is not).
+    ///
+    /// Giving them a resolution date to satisfy the old shape would have put
+    /// unresolved work in a section headed "Resolved" — a worse misstatement
+    /// than the one this change exists to remove. So the absence is modelled
+    /// instead, and the UI renders the two groups apart.
+    #[serde(default)]
+    pub resolved: Option<String>,
 }
 
 /// The resolution ledger, newest fixes as ordered in the file. Panics on a
@@ -49,7 +64,14 @@ mod tests {
             assert!(!entry.category.is_empty(), "a ledger entry names its category");
             assert!(!entry.diagnosis.is_empty(), "a ledger entry states its diagnosis");
             assert!(!entry.fix.is_empty(), "a ledger entry cites its fix");
-            assert!(!entry.resolved.is_empty(), "a ledger entry dates its resolution");
+            // Resolved is OPTIONAL, but not vague: an entry either carries a
+            // real date or is explicitly outstanding. An empty string would be
+            // a third state meaning "nobody said", which is how an unresolved
+            // population quietly reads as a resolved one.
+            assert!(
+                entry.resolved.as_ref().is_none_or(|d| !d.is_empty()),
+                "a ledger entry's resolution date is a real date or absent, never blank"
+            );
         }
         // The issue-31 seeds resolved actionable real-notice loss (later entries
         // resolve other classes — e.g. issue 35's OC/ON is a suspected-gap bucket).

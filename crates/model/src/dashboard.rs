@@ -57,13 +57,27 @@ pub struct Quarantine {
     /// ADR-0004 count. No longer the headline (issue 30): it is dominated by two
     /// suspected parser gaps, so on its own it overstates real coverage loss.
     pub total: i64,
+    /// Of [`Self::total`], how many are STILL HELD — the only number that
+    /// describes the present (issue 137 / #29 criterion 6). Everything below
+    /// (`actionable`, `suspected`, `by_reason`) is computed over this, not over
+    /// `total`, because a reason whose rows were all reclaimed is not a gap and
+    /// must not be presented as one.
+    pub outstanding: i64,
+    /// Reclaimed: reprocessed from the archive and now in the corpus.
+    pub reclaimed: i64,
+    /// Skipped by policy: identified as duplicates of a sibling already held,
+    /// so deliberately never reclaimed. Distinct from `reclaimed` — counting
+    /// these as recovered would claim notices entered the corpus that never did.
+    pub skipped: i64,
     /// The honest headline: members identified as notices whose content we could
-    /// not represent — confirmed real coverage loss. See [`quarantine_class`].
+    /// not represent — confirmed real coverage loss, counted over what is still
+    /// held. See [`quarantine_class`].
     pub actionable: i64,
     /// Large buckets that look like real notices lost to a single parser gap,
     /// pending investigate-then-fix — flagged distinctly, neither counted as
     /// confirmed loss nor dismissed as benign (issues 35/36).
     pub suspected: i64,
+    /// Still-held counts per reason. NOT all-time: see [`Self::outstanding`].
     pub by_reason: Vec<Count>,
     /// The field codes driving the `unknown-field-code` suspected bucket, biggest
     /// first — sampling shows it is ~entirely the one legacy `OC` code.
@@ -105,7 +119,9 @@ pub struct ResolvedCategory {
     /// The issue and revision that fixed it, e.g. "issue 31 · 5858159".
     pub fix: String,
     /// When it was resolved, `YYYY-MM-DD` — a fixed historical date, not an age.
-    pub resolved: String,
+    /// `None` while the category is still OUTSTANDING: named so it can be
+    /// investigated, but never presented as finished (issue 84 / #29).
+    pub resolved: Option<String>,
     /// Matching payloads reprocessed back into the notice layer (live).
     pub reclaimed: i64,
     /// Matching payloads RE-EXAMINED and correctly not ingested, because the

@@ -1,5 +1,27 @@
 [
   {
+    "category": "2008 language siblings (duplicates)",
+    "reason": "unparsable-xml",
+    "detail_like": "XML with DTD detected",
+    "diagnosis": "TED's 2008 monthly packages ship each notice once per language, all with a DTD the parser declines. The non-English members are duplicates of an English original we already hold and parsed, so they are not lost data and were never a coverage gap - they are marked skipped-by-policy rather than reclaimed, because reclaiming them would claim ~593k notices entered the corpus that never did. Measured: 592,856 markable, verified against the English original being present AND parsed for every one.",
+    "fix": "issue 84 / #29",
+    "resolved": "2026-08-05"
+  },
+  {
+    "category": "2008 siblings whose original did not parse",
+    "reason": "unparsable-xml",
+    "detail_like": "XML with DTD detected",
+    "diagnosis": "154 of the 2008 held siblings have an English original that is held but did NOT parse, so the duplicate argument does not apply to them: nothing readable was recovered. They stay OUTSTANDING and are tracked as their own finding rather than swept in with the duplicates. Held-but-unextracted, not lost - we have the bytes and failed to read them, which is a parse defect to fix, not data to mourn. The sibling guard rejects them by construction, so the marker cannot absorb them.",
+    "fix": "issue 84 / #29 (outstanding)"
+  },
+  {
+    "category": "2010-03 DTD failures (not siblings)",
+    "reason": "unparsable-xml",
+    "detail_like": "XML with DTD detected",
+    "diagnosis": "1,898 rows carrying the same DTD label come from a single fetch - TED monthly 2010-03 - and are NOT language siblings at all: their member paths end .xml with no language code, where every 2008 row carries a 2-letter language. The duplicate-sibling reasoning cannot be applied to them, and they are outside the 2008 scope the marker requires, so they stay OUTSTANDING and untouched. Found only by attributing the remainder: every earlier query was scoped to 2008, and that scoping hid them. Needs its own investigation - start by establishing what these files are, not by re-running the sibling test.",
+    "fix": "issue 84 (found) - own issue to follow"
+  },
+  {
     "category": "r208 award @REASON",
     "reason": "unclaimed-content",
     "profile": "ted-export-r208",

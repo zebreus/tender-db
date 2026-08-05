@@ -291,12 +291,19 @@ async fn measure_award_linkage(db: &Db) -> store::turso::Result<Vec<AwardLinkage
 /// and the resolution ledger all filter/group by `reason`, now indexed
 /// (`quarantine_reason`) so each seeks its bucket instead of scanning 1.2M rows.
 async fn measure_quarantine(db: &Db) -> store::turso::Result<Quarantine> {
-    let by_reason: Vec<Count> = db
-        .quarantine_counts_by_reason()
-        .await?
-        .into_iter()
-        .map(|(label, value)| Count { label, value })
+    // Split three ways (issue 137): `by_reason` carries what is STILL HELD, so
+    // every downstream classification describes the present rather than the
+    // union of the present and everything already fixed. A reason whose rows
+    // were all reclaimed now shows 0 instead of its historical size.
+    let split = db.quarantine_counts_by_reason_split().await?;
+    let by_reason: Vec<Count> = split
+        .iter()
+        .filter(|(_, outstanding, _, _)| *outstanding > 0)
+        .map(|(label, outstanding, _, _)| Count { label: label.clone(), value: *outstanding })
         .collect();
+    let outstanding_total: i64 = split.iter().map(|(_, o, _, _)| *o).sum();
+    let reclaimed_total: i64 = split.iter().map(|(_, _, r, _)| *r).sum();
+    let skipped_total: i64 = split.iter().map(|(_, _, _, s)| *s).sum();
     // Split the headline three ways (issue 30): confirmed real-notice loss is the
     // number that matters; the ~1.2M suspected parser gaps are flagged distinctly;
     // the small benign remainder is neither.
@@ -341,7 +348,10 @@ async fn measure_quarantine(db: &Db) -> store::turso::Result<Quarantine> {
         });
     }
     Ok(Quarantine {
-        total: by_reason.iter().map(|c| c.value).sum(),
+        total: outstanding_total + reclaimed_total + skipped_total,
+        outstanding: outstanding_total,
+        reclaimed: reclaimed_total,
+        skipped: skipped_total,
         actionable: class_total(QuarantineClass::Actionable),
         suspected: class_total(QuarantineClass::SuspectedGap),
         by_reason,

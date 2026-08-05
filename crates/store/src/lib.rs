@@ -1164,6 +1164,46 @@ impl Db {
 
     /// Quarantine counts per reason — the headline data-quality metric
     /// (ADR-0004), broken down.
+    /// The reason breakdown split three ways: still-held, reclaimed, and
+    /// skipped-as-duplicate (issue 137 / #29 criterion 6).
+    ///
+    /// [`Self::quarantine_counts_by_reason`] counts every row a reason ever
+    /// held, which was honest when nothing had been reclaimed and became a
+    /// misstatement the moment reprocessing worked: 1,734,594 of 2,419,410 rows
+    /// were already resolved while the dashboard still presented the whole
+    /// figure as "quarantined". `unknown-field-code` showed as a 577K gap with
+    /// 10 rows actually left.
+    ///
+    /// The three states are disjoint and cover the table, so the row sums back
+    /// to the all-time count — nothing is hidden by splitting it, which is the
+    /// property that makes the split safe to show a user.
+    pub async fn quarantine_counts_by_reason_split(
+        &self,
+    ) -> turso::Result<Vec<(String, i64, i64, i64)>> {
+        let conn = self.reader().await?;
+        // `reprocessed_at` wins over `skipped_at` in the CASE so a row that
+        // somehow carried both is counted as RECLAIMED — the stronger claim,
+        // and the one that would be visible as an over-count rather than
+        // hiding rows in the quieter bucket.
+        let mut rows = conn
+            .query(
+                "SELECT reason,
+                        SUM(CASE WHEN reprocessed_at IS NULL AND skipped_at IS NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NULL AND skipped_at IS NOT NULL THEN 1 ELSE 0 END)
+                   FROM quarantine
+                  GROUP BY reason
+                  ORDER BY reason",
+                (),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1), int(&row, 2), int(&row, 3)));
+        }
+        Ok(out)
+    }
+
     pub async fn quarantine_counts_by_reason(&self) -> turso::Result<Vec<(String, i64)>> {
         let conn = self.reader().await?;
         let mut rows = conn
@@ -2715,6 +2755,81 @@ mod tests {
     }
 
     /// Issue 30: the field-code breakdown groups by the code, not the whole
+    /// The reason breakdown splits into still-held / reclaimed / skipped, and the
+    /// three are disjoint and total (issue 137 / #29 criterion 6).
+    ///
+    /// The old count returned every row a reason EVER held, which read as a live
+    /// gap long after the gap was closed — 1,734,594 of 2,419,410 rows were
+    /// already resolved while the dashboard presented the whole figure as
+    /// quarantined. The property that makes the split safe to show a user is
+    /// that nothing disappears in it: the three buckets must sum back to the
+    /// all-time count for every reason.
+    #[tokio::test]
+    async fn the_reason_breakdown_splits_held_from_reclaimed_and_skipped() {
+        let path = format!("/tmp/tender-db-qsplit-{}.db", std::process::id());
+        for x in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{x}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen,
+                                        reprocessed_at, skipped_at) VALUES
+                   (1,'a1','h1','unparsable-xml','XML with DTD detected',0, NULL, NULL),
+                   (1,'a2','h2','unparsable-xml','XML with DTD detected',0, 100,  NULL),
+                   (1,'a3','h3','unparsable-xml','XML with DTD detected',0, NULL, 200),
+                   (1,'a4','h4','unparsable-xml','XML with DTD detected',0, NULL, 200),
+                   -- a row carrying BOTH must count once, as reclaimed: the
+                   -- stronger claim, so a bookkeeping slip shows up as an
+                   -- over-count rather than hiding rows in the quieter bucket.
+                   (1,'a5','h5','unparsable-xml','XML with DTD detected',0, 300,  300),
+                   -- a wholly resolved reason must report 0 still-held, not its
+                   -- historical size: this is the unknown-field-code case.
+                   (1,'b1','h6','unknown-field-code','line 20: OC',0, 400, NULL);",
+            )
+            .await
+            .unwrap();
+        }
+
+        let split = db.quarantine_counts_by_reason_split().await.unwrap();
+        let of = |name: &str| {
+            split.iter().find(|(r, ..)| r == name).map(|(_, o, r, s)| (*o, *r, *s)).unwrap()
+        };
+
+        assert_eq!(of("unparsable-xml"), (1, 2, 2), "held / reclaimed / skipped");
+        assert_eq!(
+            of("unknown-field-code"),
+            (0, 1, 0),
+            "a fully reclaimed reason reports zero still-held, not its historical size"
+        );
+
+        // Disjoint AND total: nothing is double-counted and nothing vanishes.
+        for (reason, held, reclaimed, skipped) in &split {
+            let all_time = {
+                let conn = db.conn().await;
+                let mut rows = conn
+                    .query(
+                        "SELECT COUNT(*) FROM quarantine WHERE reason = ?1",
+                        turso::params::Params::Positional(vec![Value::Text(reason.clone())]),
+                    )
+                    .await
+                    .unwrap();
+                int(&rows.next().await.unwrap().unwrap(), 0)
+            };
+            assert_eq!(
+                held + reclaimed + skipped,
+                all_time,
+                "the split for `{reason}` does not sum to its all-time count — rows are \
+                 being double-counted or dropped, and a user-facing total that does not \
+                 add up is worse than the overstated one it replaced"
+            );
+        }
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// `line <n>: <code>` detail, so one code across different line numbers sums
     /// into a single row — and only the unknown-field-code bucket is counted.
     #[tokio::test]
