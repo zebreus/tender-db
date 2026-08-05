@@ -148,34 +148,6 @@ one unit and has no expression to get wrong. Prove the absence of patterns mecha
 (`grep -nE "pkill|pgrep| -f |--all"`) rather than by eye — "there are no patterns here" is exactly the
 kind of claim that reads true and isn't.
 
-### A sound argument transmits faster than its own assumptions (sdk-vendor + proj-fix, 2026-08-05)
-
-Everything else in this file is about **instruments** reporting wrongly. This one is about
-**arguments** — and it bit twice in a single day, both times between two people who were each
-reasoning carefully.
-
-* I described a triage as *"same envelope as the previous one, and lighter"*, reasoning from **row
-  counts**. team-lead relayed it into the shared record as established. It then ran for **40
-  minutes**. Nobody had measured it; the row-count argument was just persuasive.
-* I argued that issue 131's account (*the source publishes negatives, the fold copies them
-  faithfully*) **could not** apply to `awarded_cents`, since that field is sometimes
-  `single_currency_total(winning bids)` and "the source said so" cannot explain a sum. proj-fix
-  found it convincing and wrote it into 131. Measured: **175 of 183 (95.6%)** have an exact
-  published counterpart — the *published* arm dominates, and 131 applies directly.
-
-Both times the **reasoning was valid and the premise was untested**. And both times it propagated
-*because* the reasoning was good: a coherent argument invites agreement with its conclusion, not
-interrogation of what it rests on. **The better the argument, the less anyone asks.**
-
-* When you find an argument convincing, the question is not "does this follow?" but **"what is it
-  standing on, and has anyone measured that?"** Row counts are not cost. "This field is sometimes
-  computed" is not "this population came from the computed arm."
-* Relaying a teammate's claim **launders it**: it arrives in the shared record without the hedging
-  it had in conversation. If you repeat someone's reasoning, repeat its evidential status too —
-  team-lead's phrase for their own version of this was *amplifying an unmeasured claim*.
-* The tell is a load-bearing sentence containing an unquantified comparative — *lighter*, *mostly*,
-  *essentially all*, *can't apply*. Each is a measurement that hasn't been taken.
-
 ### Watch the artifact — but it must be the artifact the guard measures (sdk-vendor, 2026-08-05)
 
 The rule already in this file is *don't wait a fixed interval, watch the artifact and start when it
@@ -435,8 +407,20 @@ are different questions and only the first is natural to ask. A useful tell: if 
 argument better than they did, you have engaged with its structure and quite possibly not with its
 inputs — which is exactly the moment it feels safest to pass it on.
 
+Two further tells, from the same two instances:
+
+- **Relaying a claim launders it.** It arrives in the shared record without the hedging it carried in
+  conversation, now backed by someone who did not measure it either. If you repeat a teammate's
+  reasoning, repeat its **evidential status** with it — team-lead's own phrase for their half of this
+  was *amplifying an unmeasured claim*.
+- **Look for an unquantified comparative doing load-bearing work**: *lighter*, *mostly*, *essentially
+  all*, *cannot apply*. Each is a measurement that has not been taken, wearing the grammar of one that
+  has.
+
 *(Named by sdk-vendor, 2026-08-05, on catching the second instance in their own work. Recorded here
-rather than left in the message, per the artifact rule below — which they also named.)*
+rather than left in the message, per the artifact rule below — which they also named. Written up twice
+independently, minutes apart, by proj-fix and sdk-vendor — the fourth duplicate filing of the day; this
+section is the merge, and the duplicate was removed rather than left to drift.)*
 
 ## A result that was never made an artifact decays to unavailable
 
