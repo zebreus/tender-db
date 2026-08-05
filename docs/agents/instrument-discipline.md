@@ -381,46 +381,49 @@ Test for it the way you test for vacuity — ask what correct states the asserti
 answer is "none I can think of", enumerate the lifecycle instead: first install, first build, restore,
 migration. Absence is usually legitimate somewhere in there.
 
-## A sound argument transmits faster than its own premises
+## A belief about *which quantity to measure* transmits faster than its evidence
 
-Everything else in this file is about **instruments** that mislead. This one is about **arguments**, and
-it is worth keeping here anyway because it is how a wrong instrument gets built in the first place.
+Most entries in this file are mistakes you could find by reading the code. This one you cannot: the code
+is correct, the reasoning around it is sound, and what is wrong is the **choice of quantity** — and that
+choice travels on the strength of the argument for it, picking up endorsements as it goes.
 
-An argument that is internally coherent gets adopted quickly — by a reviewer, a teammate, a lead relaying
-it — and **the more coherent it is, the less anyone asks what it rests on.** The reasoning is what gets
-checked, because reasoning is what is visible; the premise underneath it travels along unexamined, now
-carrying someone else's endorsement.
+**Scope, narrowly.** Three of the nine ledger entries above are this class, and they are the three where
+careful code review would not have helped:
 
-Two instances in one day, both sdk-vendor's, both propagated by whoever found the reasoning convincing:
+- **#2** — aggregate CPU as the busy signal. Sound argument; an abandoned scan sits at ~24 % of a core.
+- **#5** — `is-active` as the running signal. Sound argument; a `oneshot` unit sits in `activating`.
+- **#7** — instantaneous run-state as the working signal. Sound argument; a thread between I/O waits
+  reads `S`.
 
-- A triage was called *"same envelope and lighter"* from row counts. Team-lead relayed it as established.
-  It ran forty minutes and hit its bound.
-- *"Issue 131's account cannot apply to `awarded_cents`, because it is sometimes a computed sum and 'the
-  source said so' cannot explain a sum."* The reasoning is sound. proj-fix wrote it into issue 131. The
-  **published** arm turned out to dominate at 95.6 %, so 131 applied directly all along.
+The other six (#1, #3, #4, #6, #8, #9) are **mechanical** — an arithmetic-context subscript, a
+name-vs-tid key, `$12` parsing as `$1` then `2`, a `0`-on-failure default, `timeout` wrapping the wrong
+process, a wrapper ignoring an unrecognised argument. **Nobody reasoned their way into `$12`.** There was
+no premise to examine, and reading the line would have found each of them.
 
-In both, the argument was valid and the premise was untested — and in both, a second person's agreement
-made it *harder* to see, because now it looked reviewed.
+Later instances of the class: *"88 GB"* (apparent vs. exclusive extents — which quantity, never stated);
+*"same envelope and lighter"* (row counts as a proxy for work); *"issue 131 cannot apply to
+`awarded_cents`"* (which arm dominates — assumed, and the published arm turned out to be 95.6 %).
 
-**The check is not "does this follow" but "what is this standing on, and has anyone measured it".** They
-are different questions and only the first is natural to ask. A useful tell: if you can restate someone's
-argument better than they did, you have engaged with its structure and quite possibly not with its
-inputs — which is exactly the moment it feels safest to pass it on.
+**Why the narrow scope is the point.** A label that explains every failure discriminates none. This one
+earns its place by picking out exactly the failures where **you had to go and measure the world**, not
+read the code more carefully — and those need a different response.
 
-Two further tells, from the same two instances:
+**The check:** not *"does this follow"* — it does, that is why it spread — but *"which quantity is this
+claim about, and has anyone measured that one?"*
 
-- **Relaying a claim launders it.** It arrives in the shared record without the hedging it carried in
-  conversation, now backed by someone who did not measure it either. If you repeat a teammate's
-  reasoning, repeat its **evidential status** with it — team-lead's own phrase for their half of this
-  was *amplifying an unmeasured claim*.
-- **Look for an unquantified comparative doing load-bearing work**: *lighter*, *mostly*, *essentially
-  all*, *cannot apply*. Each is a measurement that has not been taken, wearing the grammar of one that
-  has.
+**The tell, and it is uncomfortable:** if you can restate someone's argument better than they put it, you
+have engaged with its structure and quite possibly not with its inputs. That is exactly when it feels
+safest to pass on.
 
-*(Named by sdk-vendor, 2026-08-05, on catching the second instance in their own work. Recorded here
-rather than left in the message, per the artifact rule below — which they also named. Written up twice
-independently, minutes apart, by proj-fix and sdk-vendor — the fourth duplicate filing of the day; this
-section is the merge, and the duplicate was removed rather than left to drift.)*
+> **This section is itself an instance, which is how its scope got fixed.** proj-fix first wrote it as
+> *"a sound argument transmits faster than its own premises"* and claimed it was the general form of most
+> of the day's failures. The argument was well-constructed and sdk-vendor found it persuasive on first
+> read — then went and counted the ledger instead of agreeing, and found the premise (*every catalogued
+> failure had an argument in its chain*) false for six of nine. The tell above had been written one
+> message earlier; it took one pass over a table we had both already written.
+>
+> So the defence is not to restate other people's arguments less confidently. It is to **check the inputs
+> at the moment the restatement feels most natural** — which is the moment it feels least necessary.
 
 ## A result that was never made an artifact decays to unavailable
 
