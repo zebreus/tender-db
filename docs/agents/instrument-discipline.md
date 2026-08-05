@@ -304,6 +304,36 @@ Test for it the way you test for vacuity — ask what correct states the asserti
 answer is "none I can think of", enumerate the lifecycle instead: first install, first build, restore,
 migration. Absence is usually legitimate somewhere in there.
 
+## A result that was never made an artifact decays to unavailable
+
+The failure modes above are about instruments that mislead. This one is about a **correct** result that
+simply stops existing — and it is harder to see, because nothing was ever wrong.
+
+A finding reported in a message, or read off a console, exists only in that transcript. The **aggregate**
+survives (people quote it), the **rows do not**. Some time later someone plans work on the assumption
+that the detail is available for a lookup, and it is not: it was never captured, only observed. The
+belief that it exists outlives the data by however long it takes someone to go and use it.
+
+**This project has already paid for it once.** The 88 GB `prenuke` backup is still on disk precisely
+because of this: its deletion rested on a "verified complete" verdict whose four named gates were ad-hoc
+queries that were never committed — only their *results* survived, in a note. The verdict could not be
+reproduced, so the backup could not be retired, and it has occupied the disk ever since.
+
+And it happened again the same day it was written up: a 407-row residue was assumed to be available for
+triage, because its aggregates had been reported. It was not. The residue now costs a fresh snapshot pass
+rather than a `grep`, and waits for a window it need not have waited for.
+
+**Two habits, both cheap:**
+
+- **When you report a finding, commit the query and the output**, not the conclusion. The conclusion is
+  what people quote; the artifact is what they will need.
+- **When you plan on someone else's finding, ask whether the artifact exists** — *"is that captured
+  somewhere, or is it in a scrollback?"* — before building a sequence on it. It is one question and it
+  costs nothing to ask, which is exactly why it is easy to skip.
+
+*(Named by sdk-vendor, 2026-08-05, on catching that the 407 rows they had reported existed only in a
+compacted transcript. Recorded here by proj-fix, who had just planned around them.)*
+
 ## State acceptance criteria as explicit conjunctions
 
 An acceptance criterion written as prose cannot be audited clause by clause. Written as a conjunction,
