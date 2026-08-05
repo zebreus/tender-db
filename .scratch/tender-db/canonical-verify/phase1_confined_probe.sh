@@ -298,6 +298,15 @@ thresh=$(awk -v a="$ABORT_MS" -v b="$base_r" -v m="$ABORT_MULT" 'BEGIN{t=b*m; pr
 echo "   abort threshold: ${thresh}ms sustained over 3 samples"
 
 echo "-- gate (confined, Tier $TIER)"
+# ENV DOES NOT CROSS systemd-run BY DEFAULT. Only what is --setenv'd reaches the
+# unit. This forwarded TIER and SNAPSHOT only, so GATE_LABEL was accepted on the
+# command line, appeared to be in use, and EVAPORATED at the boundary — the gate
+# inside fell back to its tier$TIER default and wrote another tier's state file.
+# Caught by a repeat=yes that should have been repeat=unknown on a fresh label.
+# No error, no warning: the variable is simply not there, which is the silent-drop
+# shape rather than a failure. Forwarded explicitly, and only when set, so an
+# unset variable still takes the gate's own default rather than an empty string.
+#
 # --no-block is REQUIRED, not tidiness. Without it systemd-run waits for the
 # START JOB to complete, and a Type=oneshot job completes only when ExecStart
 # EXITS — so systemd-run blocks for the entire gate run, the script never reaches
@@ -309,6 +318,11 @@ systemd-run --no-block --unit="$UNIT" --service-type=oneshot --collect \
   -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
   -p RuntimeMaxSec="$MAX_RUN_S" \
   --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
+  ${GATE_LABEL:+--setenv=GATE_LABEL="$GATE_LABEL"} \
+  ${STATE_FILE:+--setenv=STATE_FILE="$STATE_FILE"} \
+  ${FAIL_ON_REPEAT:+--setenv=FAIL_ON_REPEAT="$FAIL_ON_REPEAT"} \
+  ${MAX_AGE_H:+--setenv=MAX_AGE_H="$MAX_AGE_H"} \
+  ${SNAPSHOT_DIR:+--setenv=SNAPSHOT_DIR="$SNAPSHOT_DIR"} \
   /bin/bash "$GATE" >/dev/null 2>&1 || { echo "   FAILED to launch confined unit"; exit 2; }
 
 # PROVE THE PAYLOAD IS ACTUALLY CONFINED, from the box, for THIS run — then fail
