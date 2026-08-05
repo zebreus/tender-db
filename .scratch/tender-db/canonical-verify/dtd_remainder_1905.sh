@@ -15,6 +15,22 @@
 # query yields NOTHING rather than a slow answer. Q0 is the cheap COUNT that
 # doubles as a cost probe: if it 408s, the approach needs a different bed and we
 # know that before spending the expensive attribution on the same wall.
+#
+# NEVER RETRY A 408 — and the reason is worse than "it repeats a scan".
+# run-driver measured this on the box (issue 17/120): the 10s cap bounds YOUR
+# WAIT, not the WORK. turso cannot interrupt a running statement, so a 408 means
+# the HTTP request gave up while the scan KEEPS RUNNING to natural completion. A
+# /v1/sql call from a 09:31 burst was still executing at 09:58, and the pool's
+# last slot did not free until 10:59 — ~85 minutes, client long gone.
+#
+# /v1/sql runs on the isolated `sql-exec` runtime, so this cannot starve the
+# browsing path — but that pool has 4 slots. Each retry stacks another
+# uninterruptible full scan onto it while the previous ones are still going, so
+# four unlucky attempts can occupy the whole pool for as long as the slowest
+# takes. Retrying is precisely how a bounded probe becomes an unbounded one.
+#
+# So one 408 IS the answer this script was built to give: the bed is wrong, take
+# it to team-lead. Do not knock again.
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-https://tenders.zebreus.click}"
