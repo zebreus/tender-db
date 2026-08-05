@@ -170,6 +170,20 @@ self_test() {
   done
   [ "$n" -eq 0 ] || { echo "FAIL: 5 runs over a standing red raised $n alerts, must be 0"; exit 1; }
 
+  # The runner must survive a gate that exits non-zero — which is the NORMAL case
+  # on prod, where Tier A is red from issue 36. Driven end-to-end against a stub
+  # gate returning ok / violations / cannot-run, because the `set -e` abort this
+  # guards against is invisible to a unit test of classify() alone: it kills the
+  # LOOP, not the classifier.
+  local g="$d/g.sh"
+  printf '#!/usr/bin/env bash\ncase "$TIER" in 0) echo "VERDICT ok"; exit 0;; C) echo "VERDICT BROKEN"; exit 1;; A) echo "cannot run"; exit 2;; *) echo "VERDICT ok"; exit 0;; esac\n' > "$g"
+  chmod +x "$g"
+  local ran; ran=$(GATE="$g" VERDICT_STATE="$d/v" TIERS="0 C A B" "$0" --snapshot "$d/fake" 2>/dev/null)
+  grep -q 'tier0  *ok'     <<<"$ran" || { echo "FAIL: a passing tier must classify ok"; exit 1; }
+  grep -q 'tierC  *red'    <<<"$ran" || { echo "FAIL: gate exit 1 (violations) must be red"; exit 1; }
+  grep -q 'tierA  *BLIND'  <<<"$ran" || { echo "FAIL: gate exit 2 (cannot run) must be BLIND, never red"; exit 1; }
+  grep -q 'tierB  *ok'     <<<"$ran" || { echo "FAIL: the loop must CONTINUE past a failing tier — set -e aborts it otherwise"; exit 1; }
+
   rm -rf "$d"
   echo "self-test: transition alerting ok (green->red, red->green alert; red->red never does)"
 }
@@ -207,10 +221,22 @@ for tier in $TIERS; do
   # pipeline's exit status is the LAST command's: `"$GATE" | grep -q` reports on
   # grep and discards the gate's status entirely, which is how the distinction got
   # lost in the first place.
+  #
+  # The `|| gate_rc=$?` is REQUIRED, not style. This script runs `set -e`, under
+  # which a bare failing command aborts immediately — so `"$GATE" …` on its own
+  # line followed by `gate_rc=$?` never reaches the assignment. Measured: a plain
+  # `false` then `rc=$?` exits the script without running the echo. The effects
+  # were both silent and severe: the `blind` branch was UNREACHABLE (gate exit 2
+  # killed the runner first), and on prod — where Tier A is red from issue 36's
+  # ~72k rows and the gate exits 1 — the runner would have died after tier 0,
+  # never running C/A/B and never writing verdict state. Cost-ordering would have
+  # saved exactly one tier, and the first watched fire would have shown a partial
+  # run that looked like a crash. A compound command is exempt from `set -e`, which
+  # is what makes the status readable at all.
   gate_out=$(mktemp)
+  gate_rc=0
   TIER="$tier" GATE_LABEL="tier$tier" FAIL_ON_REPEAT=1 SNAPSHOT="$SNAPSHOT" \
-    "$GATE" >"$gate_out" 2>&1
-  gate_rc=$?
+    "$GATE" >"$gate_out" 2>&1 || gate_rc=$?
   cat "$gate_out" >&2
   if [ "$gate_rc" -eq 2 ]; then
     echo "tier$tier|blind" >> "$now"
