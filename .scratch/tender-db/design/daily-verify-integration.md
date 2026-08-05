@@ -366,6 +366,45 @@ show the **current verdict as state** (this is the standing condition of the lay
 noticing a repeated event. New violations should be distinguishable from continuing ones; neither should
 be silenceable by habituation.
 
+## Chunking is NOT a mitigation — ruled out positively, not left unproven
+
+The interlock question was whether splitting Tier B into shorter runs would reduce its eviction. It
+would not, and the data rules it out rather than failing to support it (sdk-vendor, six confined runs):
+
+```
+Tier B run 1   2013 s   222 refaults
+Tier B run 2   2048 s     0 refaults
+```
+
+Same tier, same snapshot, same confinement, **the same duration** — opposite results. Across all six
+(A: 0, 0, 7 · B: 222, 0 · C: 0):
+
+- **not proportional to tier weight** — C spans the largest table and evicted nothing;
+- **not a function of duration** — identical durations, opposite outcomes.
+
+**Chunking changes duration-per-run and work-per-run. The effect scales with neither**, so there is no
+mechanism by which it could help.
+
+**So the interlock is built without it — and that is the finding, not a hedge.** I had offered to build
+the conservative branch and mark it *assumed rather than known*; that would have been the right move
+under ambiguity and it is not what the data says. Worth the distinction, because **building chunking
+would have been worse than omitting it**: an interlock that cannot do the job it exists for still *looks*
+like a mitigation, and would be read as one in a future incident review — the reviewer would see the
+eviction happen anyway and conclude the mitigation failed, rather than that it was never capable.
+
+**Confinement is the whole story**, and it holds at every tier: 0.05 % of the working set at the worst
+observed, cache growing, latency flat-or-better.
+
+**What is NOT known, stated because the design rests on it:** the cause of run 1's burst. sdk-vendor
+placed it (222 of 239 in the *gate* portion, killing their own preferred hypothesis that it was the
+one-off triage) but could not identify a mechanism, and n=2 at this tier makes *stochastic* an honest
+description of a pattern nobody can predict rather than one anybody has explained.
+
+**That raises the value of the tripwire rather than lowering it.** With an unexplained burst, the
+tripwire is the only guard against a worse instance of whatever produced 222 — and it is currently
+*armed but proven only synthetically*. **Proving it can fire on a real run is now the outstanding
+confinement work**, ahead of any further cost measurement.
+
 ## The interlock: bounded deferral, never a precondition
 
 Load, not correctness — so the interlock must never be able to suppress the verifier indefinitely:
