@@ -59,7 +59,21 @@ REFAULT_RATE_MAX="${REFAULT_RATE_MAX:-50}"   # pages/sec
 REFAULT_SUSTAIN="${REFAULT_SUSTAIN:-5}"      # consecutive samples above it
 UNIT="${UNIT:-tdb-standing-gate-probe}"
 # HARD REMOTE BOUND on the confined work. Applied as TimeoutStartSec, not
-# RuntimeMaxSec: the latter is silently ignored for Type=oneshot (measured). run-driver orphaned a snapshot read on
+# RuntimeMaxSec: the latter is silently ignored for Type=oneshot (measured).
+#
+# VERIFIED APPLIED, 2026-08-05: with MAX_RUN_S=20 the probe's own in-flight
+# assertion read `TimeoutStartUSec = 20s` from the live unit. That was the claim
+# outstanding — that the probe applies the bound, not merely that the setting
+# works in isolation.
+#
+# AND THE REASON TWO EARLIER ATTEMPTS "FAILED": I checked the unit with
+# `systemctl show` from OUTSIDE, after `--collect` had already reaped it — and
+# systemd answers for an unknown unit with DEFAULTS (TimeoutStartUSec=1min 30s,
+# MemoryMax=infinity, Type=), not with an error. I read those defaults as the
+# probe's settings and twice concluded the fix had not applied. A query that
+# answers plausibly for a thing that does not exist is the permissive-read shape:
+# the honest answer is "no such unit", and systemd's is a full set of numbers.
+# Read the unit while it is ALIVE, or read the probe's own assertion, which does. run-driver orphaned a snapshot read on
 # prod for 90 minutes today because a LOCAL `timeout` around `ssh` killed the
 # client, not the remote process — the guard bounded their VIEW of the work, not
 # the work. RuntimeMaxSec puts the bound inside systemd, which is the thing
