@@ -185,7 +185,24 @@ self_test() {
   # diagnostic that dies with the thing it diagnoses is not (sdk-vendor).
   local ran rc=0
   ran=$(GATE="$g" VERDICT_STATE="$d/v" TIERS="0 C A B" "$0" --snapshot "$d/fake" 2>/dev/null) || rc=$?
-  [ "$rc" -eq 0 ] || { echo "FAIL: the runner exited $rc — it must survive a gate that returns non-zero"; exit 1; }
+  # rc is 1 here BY DESIGN — this stub includes a blind tier, and blind exits
+  # non-zero (asserted separately below). What matters for THIS arm is that every
+  # tier still ran; a set -e abort would leave the later ones unclassified.
+
+  # BLIND must exit non-zero: its only other channel is a journal line, and the
+  # unit state is what `systemctl is-failed` and issue 32's detector query.
+  printf '#!/usr/bin/env bash\ncase "$TIER" in A) echo "cannot run"; exit 2;; *) echo "VERDICT ok"; exit 0;; esac\n' > "$g"
+  local brc=0
+  GATE="$g" VERDICT_STATE="$d/vb" TIERS="0 A" "$0" --snapshot "$d/fake" >/dev/null 2>&1 || brc=$?
+  [ "$brc" -ne 0 ] || { echo "FAIL: a BLIND tier must exit non-zero — otherwise the unit reports success while verifying nothing"; exit 1; }
+  [ -s "$d/vb" ] || { echo "FAIL: verdict state must still be written before the blind exit — report-then-fail, not abort"; exit 1; }
+
+  # RED must NOT exit non-zero: a finding is not a unit failure (team-lead's
+  # recorded acceptance criterion).
+  printf '#!/usr/bin/env bash\ncase "$TIER" in A) echo "VERDICT BROKEN"; exit 1;; *) echo "VERDICT ok"; exit 0;; esac\n' > "$g"
+  local rrc=0
+  GATE="$g" VERDICT_STATE="$d/vr" TIERS="0 A" "$0" --snapshot "$d/fake" >/dev/null 2>&1 || rrc=$?
+  [ "$rrc" -eq 0 ] || { echo "FAIL: a RED tier must exit 0 — a standing finding is not a unit failure"; exit 1; }
   grep -q 'tier0  *ok'     <<<"$ran" || { echo "FAIL: a passing tier must classify ok"; exit 1; }
   grep -q 'tierC  *red'    <<<"$ran" || { echo "FAIL: gate exit 1 (violations) must be red"; exit 1; }
   grep -q 'tierA  *BLIND'  <<<"$ran" || { echo "FAIL: gate exit 2 (cannot run) must be BLIND, never red"; exit 1; }
@@ -216,6 +233,7 @@ FIRST
 fi
 
 now=$(mktemp); trap 'rm -f "$now"' EXIT
+blind_seen=0
 for tier in $TIERS; do
   echo "-- tier $tier"
   # Each tier gets its own GATE_LABEL, hence its own repeat-detection state: with
@@ -247,6 +265,7 @@ for tier in $TIERS; do
   cat "$gate_out" >&2
   if [ "$gate_rc" -eq 2 ]; then
     echo "tier$tier|blind" >> "$now"
+    blind_seen=1
   elif grep -q '^VERDICT ok' "$gate_out"; then
     echo "tier$tier|ok" >> "$now"
   else
@@ -267,4 +286,21 @@ if [ "$alerts" -eq 0 ]; then
 else
   echo "$alerts transition(s) above"
 fi
-exit 0   # a red tier is a finding to report, not a reason to fail the unit
+
+# RED exits 0 — a finding is not a unit failure, and conflating them would make
+# "the layer has a standing violation" indistinguishable from "verification did
+# not run".
+#
+# BLIND exits non-zero — because those are precisely what must stay
+# distinguishable. `blind` means "I could not verify", and until now its only
+# channel was a journal line: the unit state that `systemctl is-failed` and issue
+# 32's job-failure detector actually query would have read SUCCESS. A gate blind
+# for a week, refusing a corpse every run, would have presented as a cleanly
+# succeeding daily unit — the "looks installed, does nothing" shape at the
+# runner's own boundary, after being fixed inside it (sdk-vendor).
+#
+# AFTER the verdict-state write, deliberately: this is report-then-fail, not an
+# abort. Exiting earlier would lose the state and re-create the set -e bug in a
+# new costume.
+[ "${blind_seen:-0}" = 1 ] && exit 1
+exit 0
