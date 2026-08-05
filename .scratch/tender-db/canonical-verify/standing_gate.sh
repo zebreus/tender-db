@@ -323,13 +323,21 @@ main() {
   mtime=$(stat -c %Y "$snap")
   age_h=$(( ( $(date +%s) - mtime ) / 3600 ))
   echo "== standing structural gate  tier=$TIER  $(date -u +%FT%TZ) =="
+  # DECLARE THE EFFECTIVE CONFIG, not just the input. proj-fix's point: the probe
+  # forwards an ENUMERATED list of variables across the systemd-run boundary, so
+  # the next variable added here will silently not cross — the same defect as
+  # GATE_LABEL, one variable later, failing the same silent way. This cannot
+  # prevent the drop; it makes the drop VISIBLE, by printing what the gate is
+  # actually using rather than what a caller believes it passed. Declare-your-input
+  # discipline applied to the config rather than the snapshot.
+  echo "-- config: label=$GATE_LABEL state=$STATE_FILE max_age=${MAX_AGE_H}h fail_on_repeat=$FAIL_ON_REPEAT"
   echo "-- input: $snap  [$mode]"
   echo "--   size $(stat -c %s "$snap") bytes, mtime $(date -u -d "@$mtime" +%FT%TZ), age ${age_h}h"
   [ "$mode" = newest ] && echo "--   NOTE resolved by newest-in-dir, NOT pinned: a failed snapshot step would" \
                        && echo "--        hand this run yesterday's file. Pass SNAPSHOT=<path> from the pipeline."
   if [ "$age_h" -gt "$MAX_AGE_H" ]; then
     echo "$(red FAIL) snapshot is ${age_h}h old (max ${MAX_AGE_H}h) — the daily pipeline is not producing."
-    echo "VERDICT stale_input snapshot=$snap age_h=$age_h mode=$mode"
+    echo "VERDICT stale_input tier=$TIER label=$GATE_LABEL snapshot=$snap age_h=$age_h mode=$mode"
     exit 2
   fi
 
@@ -353,7 +361,7 @@ main() {
     echo "--   On a daily cadence that means NO new snapshot was produced this cycle."
     if [ "$FAIL_ON_REPEAT" = 1 ]; then
       echo "$(red FAIL) refusing to re-report a green for an input already verified."
-      echo "VERDICT repeat_input snapshot=$snap age_h=$age_h mode=$mode repeat=yes"
+      echo "VERDICT repeat_input tier=$TIER label=$GATE_LABEL snapshot=$snap age_h=$age_h mode=$mode repeat=yes"
       exit 2
     fi
   fi
@@ -381,7 +389,7 @@ main() {
     echo "-- note: could not record input identity at $STATE_FILE — next run cannot"
     echo "--       detect a repeat, so it will report repeat=unknown, not repeat=no."
   fi
-  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h mode=$mode repeat=$repeat"
+  echo "VERDICT $([ $((fail+err)) -eq 0 ] && echo ok || echo BROKEN) tier=$TIER label=$GATE_LABEL ran=$ran pass=$pass fail=$fail err=$err snapshot=$snap age_h=$age_h mode=$mode repeat=$repeat"
   [ $((fail+err)) -eq 0 ] || exit 1
 }
 
