@@ -1,6 +1,7 @@
 # 134 — the negative-amount invariant is a RATIO, not a magnitude
 
-Status: DESIGN — the form of the re-spec for #37 (`bids.cents`, `awarded_cents`) and, on the same
+Status: DESIGN — **the delta hypothesis below is FALSIFIED (issue 136); the ratio form survives.** The
+form of the re-spec for #37 (`bids.cents`, `awarded_cents`) and, on the same
 argument, for #132's 51. **Proposes the shape of the invariant, not the number**: the parameter has to
 come from the row-level data, which sdk-vendor holds.
 Kind: data quality / verification
@@ -67,3 +68,49 @@ I can argue the invariant should be a ratio; only the data can say what ratio, a
 investigation can say whether they are legitimate large corrections or a real defect. **If they turn out
 to be a delta-mapped-as-absolute fault — issue 132's third hypothesis — then the right fix is in the
 mapping and no threshold of any shape should be tuned to admit them.**
+
+
+---
+
+## The delta hypothesis is falsified — for all 183, not weakened (2026-08-05)
+
+sdk-vendor's 407 read (issue 136) settles the sequencing risk I raised, in the direction that removes it:
+
+| | |
+|---|---|
+| negatives whose lot_result has **no earlier value at all** | **92 / 183** |
+| of the 91 with a prior: **plausible deltas** (`prior + neg ≥ 0`) | **0** |
+| of the 91: the negative **exceeds** its prior | **91** |
+
+**Not one row is consistent with a delta mapped as an absolute.** Half have nothing to apply a delta *to*
+— impossible for those rows, not merely unsupported — and the other half would have to revise away more
+than was ever there. 175 of 183 carry an **exact published magnitude** in the chain's parse layer, and
+183/183 co-occur with a negative bid on the same version, so this is **one finding seen twice**: fix the
+source handling for bids and awarded follows.
+
+**So the risk I flagged is gone.** I had argued: investigate before re-speccing, because a threshold tuned
+to admit a mapping fault would be *narrowed rather than flattened* and still stop catching the thing. The
+investigation happened and there is no mapping fault to accidentally admit. **#37 can proceed.**
+
+**But the threshold must still not be derived to admit them**, for a reason I had not separated:
+*source-published* is not *correct*. −€323,093,120.12 is implausible on its face. What the read
+establishes is that it is **faithfully carried** — not our defect — which is the same distinction we held
+to for issue 84's 154 (*held-but-unextracted* ≠ *lost*). A bar tuned to let these through would be
+calibrated to accept **published garbage**: a different error from the one this issue feared, and still an
+error. They stay flagged as a **source-quality** finding, and the ratio's parameter comes from the benign
+mass alone.
+
+### Q5 does not change the ratio's shape — recorded so nobody re-runs it on my account
+
+Q5 (profile/era clustering of the residue) never ran; the pass hit its 2400 s bound. It is worth having
+for the source-quality finding — *is this one publisher's convention or scattered noise* — but it does
+**not** change this design:
+
+- the parameter is set by the **benign** population, not the residue, so how the residue clusters cannot
+  move it;
+- and if the residue *were* one publisher, a global ratio would flag that publisher permanently — which
+  under #28's state-not-event rule is a **standing condition, reported and not alerted**, not the
+  alert-fatigue failure that would otherwise force a profile-scoped rule.
+
+So the answer to "would Q5 change the threshold's shape" is **no**. Run it if the source-quality finding
+needs it; not for this.
