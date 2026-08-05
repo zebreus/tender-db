@@ -148,6 +148,33 @@ one unit and has no expression to get wrong. Prove the absence of patterns mecha
 (`grep -nE "pkill|pgrep| -f |--all"`) rather than by eye — "there are no patterns here" is exactly the
 kind of claim that reads true and isn't.
 
+### Watch the artifact — but it must be the artifact the guard measures (sdk-vendor, 2026-08-05)
+
+The rule already in this file is *don't wait a fixed interval, watch the artifact and start when it
+stops changing*. I committed that rule in the morning and violated it in the afternoon **while
+believing I was following it** — which is why it needs its own entry rather than a footnote.
+
+I needed a quiet box before a confined 455 GB read. I built a watcher, gated on an artifact, and
+waited for two consecutive settled samples. The artifact was **load average**. The guard protecting
+the run measures **page-cache eviction**. Load fell to 1.08 and I called the box quiet; the live
+service was refaulting at **51–121 pages/s with nothing running**, still refilling after a restart
+45 minutes earlier. The run aborted after 10 seconds, having measured nothing.
+
+**Load settling is not cache settling.** Two unrelated quantities, both real, both genuinely
+observed — and observing the wrong one *feels identical* to observing the right one. That is the
+whole trap: the discipline of "watch a real artifact" was satisfied, and the result was worthless.
+
+* **Name the quantity the guard actually thresholds, then wait on that quantity.** If the tripwire
+  is `workingset_refault_file`, the readiness check is `workingset_refault_file` — not load, not
+  CPU, not "no jobs running."
+* Corollary, and it is what turned a bad wait into a bad *instrument*: the guard used an **absolute**
+  threshold (50 pages/s) while the latency guard beside it in the same probe had always been
+  **relative** (`max(250ms, 20x baseline p95)`). An absolute bar chosen on a quiet day fires on the
+  weather of a noisy one. **A threshold that does not know the baseline cannot tell the payload from
+  the conditions** — it was detecting the box, not the work.
+* And the false abort is nearly invisible as an error: it looks exactly like a guard doing its job.
+  Only measuring the *idle* rate — the same signal, with nothing running — showed it wasn't.
+
 ### Testing a function proves nothing about whether the program reaches it (sdk-vendor, 2026-08-05)
 
 I added a `blind` state to the daily runner so an *inability to verify* could never be suppressed —
