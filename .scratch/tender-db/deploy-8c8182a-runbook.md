@@ -85,7 +85,14 @@ ssh root@zebreus.click '
 ```
 
 * `ActiveState=active`, `/health` **200**
-* **`NRestarts` 0 → 1** and **`MainPID` changed** — both expected; that is the restart
+* **`MainPID` changed** — this is the restart proof, and the ONLY one. Record the old
+  and new values.
+* **`NRestarts` stays 0.** It counts *failure* auto-restarts, not a clean
+  `systemctl restart`. An earlier draft of this file said "0 → 1 expected", which is
+  wrong in the dangerous direction: seeing 0 and believing the restart had not
+  happened would prompt a second, unnecessary restart. **0 is correct.** Confirmed on
+  the 2026-08-05 deploy — `MainPID` 3646386 → 4051862, `NRestarts` 0 throughout.
+  Identity, not state — the same rule the abort firing-test uses.
 * `deployed-rev` = `8c8182a…`
 * **The two nullable `ALTER TABLE quarantine ADD COLUMN`** (`skipped_at`,
   `skipped_reason`): must be a **silent no-op-or-add**. O(1) — SQLite/turso
