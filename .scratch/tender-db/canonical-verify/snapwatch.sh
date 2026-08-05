@@ -44,14 +44,56 @@ if [ ! -r "$newest" ]; then
   exit 0
 fi
 
+# RING DEPTH COUNTS COMPLETE SNAPSHOTS, NOT FILES — and the difference is not
+# pedantic. `db.snapshot` writes straight to the final name, so a run that dies
+# mid-copy (OOM, kill, power) leaves a PARTIAL file at a perfectly valid snapshot
+# name, permanently (proj-fix, 2026-08-05). Counting files would score that corpse
+# as ring depth, so a keep=2 ring holding one real snapshot and one corpse reports
+# ring=2 and this watch says "ok" — an instrument actively reassuring about the DR
+# posture at the moment it is half of what it claims. Exactly the shape this suite
+# keeps finding, so the count is of what the ring can actually restore FROM.
+#
+# O(1) per file: the sqlite header carries page_size @16 and the page count @28, so
+# a complete file is at least page_size * pages. Bounded metadata, no data pages.
+ring=0; corpses=""; newest_complete=""
+for _f in $(ls -1 "$SNAPSHOT_DIR"/tender-db-*.db 2>/dev/null | sort); do
+  [ -r "$_f" ] || continue
+  _ps=$(od -An -tu2 -j16 -N2 -v --endian=big "$_f" 2>/dev/null | tr -d ' ')
+  _pg=$(od -An -tu4 -j28 -N4 -v --endian=big "$_f" 2>/dev/null | tr -d ' ')
+  _sz=$(stat -c %s "$_f" 2>/dev/null)
+  [ "$_ps" = 1 ] && _ps=65536
+  if [ -z "$_ps" ] || [ -z "$_pg" ] || [ -z "$_sz" ] || [ "${_pg:-0}" -eq 0 ] 2>/dev/null; then
+    corpses="$corpses ${_f##*/}(unreadable-header)"; continue
+  fi
+  if [ "$_sz" -lt $(( _ps * _pg )) ]; then
+    corpses="$corpses ${_f##*/}($_sz/$(( _ps * _pg )))"
+  else
+    ring=$((ring+1)); newest_complete="$_f"
+  fi
+done
+if [ -n "$corpses" ]; then
+  echo "TENDERDB_SNAPWATCH WARNING $SNAPSHOT_DIR — INCOMPLETE snapshot file(s) present:$corpses. A partial file at a valid snapshot name is never cleaned up and 'newest' selects it forever, so the gate goes permanently blind on it. These are NOT counted in ring depth below."
+fi
+
+# FRESHNESS IS REPORTED FROM THE NEWEST *COMPLETE* SNAPSHOT, not the newest file.
+# Reporting the file would be the reassurance failure in its worst form: a corpse
+# written five minutes ago would make this print "ok age=0h" at the exact moment
+# the ring's newest restorable copy is a day old and the gate is blind.
+if [ -z "$newest_complete" ]; then
+  echo "TENDERDB_SNAPWATCH ERROR $SNAPSHOT_DIR — snapshot files exist but NONE is complete; there is nothing to restore from and nothing to verify against. This watch establishes no freshness."
+  exit 0
+fi
+if [ "$newest_complete" != "$newest" ]; then
+  echo "TENDERDB_SNAPWATCH WARNING newest FILE ${newest##*/} is incomplete; freshness below is reported from the newest COMPLETE snapshot ${newest_complete##*/} instead. Anything resolving by glob will pick the incomplete one."
+fi
+newest="$newest_complete"
+
 mtime=$(stat -c %Y "$newest" 2>/dev/null)
 if [ -z "$mtime" ]; then
   echo "TENDERDB_SNAPWATCH ERROR $newest — stat returned nothing; this watch did NOT run."
   exit 0
 fi
-
 age_h=$(( ( $(date +%s) - mtime ) / 3600 ))
-ring=$(ls -1 "$SNAPSHOT_DIR"/tender-db-*.db 2>/dev/null | wc -l)
 stamp=$(date -u -d "@$mtime" +%FT%TZ)
 
 if [ "$age_h" -gt "$MAX_AGE_H" ]; then

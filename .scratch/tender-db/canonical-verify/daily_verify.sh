@@ -81,14 +81,35 @@ VERDICT_STATE="${VERDICT_STATE:-$STATE_DIR/daily_verify.verdicts}"
 TIERS="${TIERS:-0 C A B}"
 
 # --- alerting -------------------------------------------------------------
-# A check's condition is one of: ok | red. An ALERT is a transition between them.
-# Everything else is state, and state is printed rather than raised.
+# A check's condition is one of: ok | red | blind. An ALERT is a transition between
+# ok and red. Everything else is state, printed rather than raised.
+#
+# BLIND IS NOT A THIRD SHADE OF RED, AND IT IS NEVER SUPPRESSED. It means the gate
+# could not run at all — no snapshot, unreadable, or (proj-fix's case) a snapshot
+# that is INCOMPLETE. Transition alerting is correct for FINDINGS: a check red
+# yesterday and red today is the layer's standing condition, and issue 36's ~72k
+# rows should not page anyone daily. It is WRONG for an inability to verify.
+#
+# The compound failure this closes, which none of the three parts causes alone:
+# `db.snapshot` writes straight to the final name, so a crash mid-copy leaves a
+# partial file at a perfectly valid snapshot name, permanently. `newest` then
+# selects that corpse forever. The gate correctly refuses it — red. Transition
+# alerting sees red, red, red and goes quiet after the first. Net result: the gate
+# verifies NOTHING, every day, in silence, while remaining installed and green in
+# the unit list. Three reasonable designs composing into the exact "looks
+# installed, does nothing" shape this suite exists to prevent.
+#
+# So: suppress standing FINDINGS, never suppress standing BLINDNESS. A finding may
+# legitimately persist; not knowing must stay loud for exactly as long as it lasts.
 classify() {
   local prev_file="$1" now_file="$2" alerts=0 id cond prev
   while IFS='|' read -r id cond; do
     [ -n "$id" ] || continue
     prev=$(grep "^$id|" "$prev_file" 2>/dev/null | head -1 | cut -d'|' -f2 || true)
-    if [ -z "$prev" ]; then
+    if [ "$cond" = "blind" ]; then
+      printf 'ALERT    %-28s BLIND — the gate could not run; this verified NOTHING\n' "$id"
+      alerts=$((alerts+1))
+    elif [ -z "$prev" ]; then
       # First sighting. On a first run this is inventory; on any later run it is a
       # check that did not exist before, which is worth saying either way.
       printf 'NEW      %-28s %s\n' "$id" "$cond"
@@ -122,6 +143,23 @@ self_test() {
   printf 'b|ok\n' > "$d/now2"; printf 'b|red\n' > "$d/prev2"
   out=$(classify "$d/prev2" "$d/now2") || rc=$?
   grep -q 'ALERT    b  *red -> ok' <<<"$out" || { echo "FAIL: red->green must alert"; exit 1; }
+
+  # BLINDNESS ALERTS EVERY RUN, and the blind->blind arm is the one that matters:
+  # it is exactly the case transition-suppression would swallow, leaving the gate
+  # verifying nothing in silence. Tested from all three prior states so the
+  # never-suppressed property is shown, not asserted.
+  local rc2=0
+  printf 'x|blind\ny|blind\nz|blind\n' > "$d/now3"
+  printf 'x|ok\ny|red\nz|blind\n'      > "$d/prev3"
+  out=$(classify "$d/prev3" "$d/now3") || rc2=$?
+  grep -q 'ALERT    x  *BLIND' <<<"$out" || { echo "FAIL: ok->blind must alert"; exit 1; }
+  grep -q 'ALERT    y  *BLIND' <<<"$out" || { echo "FAIL: red->blind must alert"; exit 1; }
+  grep -q 'ALERT    z  *BLIND' <<<"$out" || { echo "FAIL: blind->blind must STILL alert — suppressing it is the silent-blindness bug"; exit 1; }
+  [ "$rc2" -eq 3 ] || { echo "FAIL: expected 3 blind alerts, got $rc2"; exit 1; }
+  # And blindness must not be reachable by accident: a red check stays a plain red.
+  printf 'q|red\n' > "$d/now4"; printf 'q|red\n' > "$d/prev4"
+  out=$(classify "$d/prev4" "$d/now4") || true
+  grep -q 'state    q  *red (unchanged)' <<<"$out" || { echo "FAIL: red->red must remain suppressed"; exit 1; }
 
   # And the failure this whole shape exists to prevent: a permanently-red check
   # must never accumulate alerts, or the operator learns to ignore the stream.
@@ -163,12 +201,25 @@ for tier in $TIERS; do
   # a shared file the tiers answer each other's "did the input change" question.
   # FAIL_ON_REPEAT=1 on all four — every tier now runs once per snapshot, so the
   # question is meaningful for each (it was not while tier 0 ran every 5 minutes).
-  if TIER="$tier" GATE_LABEL="tier$tier" FAIL_ON_REPEAT=1 SNAPSHOT="$SNAPSHOT" \
-       "$GATE" 2>&1 | tee /dev/stderr | grep -q '^VERDICT ok'; then
+  # Three outcomes, not two. The gate exits 2 when it CANNOT RUN (no snapshot,
+  # unreadable, incomplete) and that must not be collapsed into "red" — see the
+  # blindness note on classify(). Captured to a file rather than piped, because a
+  # pipeline's exit status is the LAST command's: `"$GATE" | grep -q` reports on
+  # grep and discards the gate's status entirely, which is how the distinction got
+  # lost in the first place.
+  gate_out=$(mktemp)
+  TIER="$tier" GATE_LABEL="tier$tier" FAIL_ON_REPEAT=1 SNAPSHOT="$SNAPSHOT" \
+    "$GATE" >"$gate_out" 2>&1
+  gate_rc=$?
+  cat "$gate_out" >&2
+  if [ "$gate_rc" -eq 2 ]; then
+    echo "tier$tier|blind" >> "$now"
+  elif grep -q '^VERDICT ok' "$gate_out"; then
     echo "tier$tier|ok" >> "$now"
   else
     echo "tier$tier|red" >> "$now"
   fi
+  rm -f "$gate_out"
 done
 
 echo
