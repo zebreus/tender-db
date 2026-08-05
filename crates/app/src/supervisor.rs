@@ -185,12 +185,24 @@ enum Spec {
     /// count that disagrees means the predicate and the verified set have diverged
     /// and the job must stop rather than write a set nobody checked. A SHORTFALL is
     /// specifically NOT a reason to widen the predicate — a held non-English row
-    /// whose English original did not parse is real data loss, and marking it as a
-    /// duplicate is the one outcome worse than the overstated count.
+    /// whose English original did not parse is HELD-BUT-UNEXTRACTED — we have the
+    /// bytes and failed to read them — and marking it as a duplicate is the one
+    /// outcome worse than the overstated count. Deliberately not "lost": that word
+    /// mis-frames a parse defect as a data defect, and it is the reasoning shape
+    /// that justifies keeping backups forever (team-lead's correction, issue 138
+    /// criterion 3).
     MarkSkippedSiblings {
         #[serde(default)]
         dry_run: bool,
         expect: Option<u64>,
+        /// How many in-scope rows the sibling guard is EXPECTED to reject.
+        ///
+        /// `None` means "none at all" — the original, strictest rule. Supplying a
+        /// number does not loosen the guard, it re-aims it: the run still aborts
+        /// unless the rejected set is exactly this size, so a population that has
+        /// shifted by a single row since it was investigated stops the run.
+        #[serde(default)]
+        expect_gaps: Option<u64>,
     },
     /// Clear a STALE `rebuild_in_progress` flag (the issue-85 interlock's escape
     /// hatch). The flag routes any `project` — including the 09:35 daily tick — into
@@ -243,6 +255,16 @@ pub struct JobRequest {
     /// off by more than a quarter — the shape of a mistyped profile string.
     pub profiles: Option<Vec<String>>,
     pub expect: Option<u64>,
+    /// `mark-skipped-siblings` execute only: the number of in-scope rows the
+    /// sibling guard is EXPECTED to reject (issue 84, the 154).
+    ///
+    /// Omitted, the guard's rejection set must be empty — the original, strictest
+    /// rule. Supplying it does not loosen the guard, it re-aims it: the run still
+    /// aborts unless the rejected set is exactly this size, so a population that
+    /// has shifted by even one row since it was investigated stops the run.
+    /// Naming the number is the whole point — an operator has to state what they
+    /// already know is there, and cannot proceed past a set they have not looked at.
+    pub expect_gaps: Option<u64>,
 }
 
 impl Supervisor {
@@ -357,7 +379,11 @@ impl Supervisor {
                     self.push(
                         "mark-skipped-siblings",
                         params,
-                        Spec::MarkSkippedSiblings { dry_run, expect: req.expect },
+                        Spec::MarkSkippedSiblings {
+                            dry_run,
+                            expect: req.expect,
+                            expect_gaps: req.expect_gaps,
+                        },
                     )
                     .await,
                 ])
@@ -837,7 +863,7 @@ impl Supervisor {
                     self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
                 Ok(format!("re-queued {requeued} notices for the incremental fold"))
             }
-            Spec::MarkSkippedSiblings { dry_run, expect } => {
+            Spec::MarkSkippedSiblings { dry_run, expect, expect_gaps } => {
                 // Count first, always — in dry-run it IS the answer, and in a real
                 // run it is the gate that must agree before anything is written.
                 let found = self.db.count_skipped_siblings().await.map_err(|e| e.to_string())? as u64;
@@ -847,7 +873,8 @@ impl Supervisor {
                             "mark-skipped-siblings aborted: {found} rows match, expected exactly \
                              {expect} (nothing was written). A SHORTFALL is a finding, not a \
                              predicate to widen: the missing rows are held siblings whose English \
-                             original did not parse, i.e. real data loss that must stay outstanding."
+                             original did not parse — held-but-unextracted, and they must stay \
+                             outstanding until something reads them."
                         ));
                     }
                 }
@@ -866,32 +893,57 @@ impl Supervisor {
                          {gaps} in scope REJECTED by the sibling guard \
                          ({no_original} with NO English original at all — a fetch/ingest \
                          gap; {unparsed} whose original is held but did not parse — a \
-                         parse failure). Expected 0: these are real data loss to \
-                         investigate, never a predicate to widen"
+                         parse failure). These are held-but-unextracted, not lost: we \
+                         have the bytes and failed to read them. Two separate \
+                         investigations, and never a predicate to widen — an execute \
+                         must name this count in `expect_gaps` rather than pass it"
                     ));
                 }
                 // BOTH halves of the go criterion are enforced HERE, not only in the
-                // process that reads the dry-run. `found == expect` and `gaps == 0`
-                // are independent: the scope can hold exactly the expected number of
-                // markable rows AND some data-loss rows beside them, so a matching
-                // count is not evidence of an empty gap set. Leaving this to the
+                // process that reads the dry-run. `found == expect` and the gap
+                // check are independent: the scope can hold exactly the expected
+                // number of markable rows AND a rejected set beside them, so a
+                // matching count is not evidence about the gaps. Leaving this to the
                 // operator would make half the criterion a promise rather than a
                 // guarantee — and the promise would be kept by whoever remembered to
                 // read the second number.
                 //
-                // No override flag on purpose: the remedy for a non-zero gap count is
-                // to investigate those rows, never to proceed past them. If marking
-                // ever has to happen despite known data loss in scope, that should
-                // cost a deliberate code change and a review, which is the right
-                // amount of friction for it.
-                if gaps > 0 {
+                // An execute with no `expect` at all is refused outright. `None`
+                // used to mean "skip the count check", which made the strictest
+                // reading of a missing argument the most destructive one — the same
+                // inversion `dry_run` already defends against. A run that writes
+                // ~593k rows must state what it expects to write.
+                if !dry_run && expect.is_none() {
+                    return Err(
+                        "mark-skipped-siblings aborted: an execute requires an explicit `expect` \
+                         (nothing was written). A run that writes hundreds of thousands of rows \
+                         must name the population it believes it is writing, so the count can \
+                         disagree with it."
+                            .to_owned(),
+                    );
+                }
+                // The gap criterion. `expect_gaps` is NOT an override: it re-aims the
+                // guard rather than disarming it. Omitted, the rejected set must be
+                // empty — the original rule, unchanged. Supplied, the set must be
+                // EXACTLY that size, so this still refuses a population that has
+                // shifted by one row since it was investigated.
+                //
+                // The distinction matters because the guard's whole value is that it
+                // rejected 154 and passed 592,856 — discrimination, not mere firing.
+                // A flag that let the run proceed regardless of the gap count would
+                // make the reject arm unreachable, and a guard that cannot fail is
+                // not a guard; the fastest way to turn a red gate green is to move
+                // the bar rather than the data. This keeps the bar, and requires an
+                // operator to state the number they have already looked at.
+                let allowed_gaps = expect_gaps.unwrap_or(0);
+                if gaps != allowed_gaps as i64 {
                     return Err(format!(
-                        "mark-skipped-siblings aborted: {gaps} rows are in scope but REJECTED by \
-                         the sibling guard (nothing was written) — {no_original} have NO English \
-                         original at all (a fetch/ingest gap) and {unparsed} have one that is held \
-                         but did not parse (a parse failure). Two different investigations, both \
-                         real data loss: those rows must stay outstanding, and this is never a \
-                         predicate to widen."
+                        "mark-skipped-siblings aborted: the sibling guard rejects {gaps} in-scope \
+                         rows, expected exactly {allowed_gaps} (nothing was written) — \
+                         {no_original} have NO English original at all (a fetch/ingest gap) and \
+                         {unparsed} have one that is held but did not parse (a parse failure). \
+                         Two different investigations. Both must stay outstanding: they are \
+                         held-but-unextracted, not lost, and this is never a predicate to widen."
                     ));
                 }
                 let mut marked = 0i64;
@@ -1627,6 +1679,69 @@ mod tests {
         let q = restarted.queued();
         assert_eq!(q.len(), 1, "the snapshot job is restored");
         assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
+    }
+
+    /// Wrap a bare Spec in the Job envelope `run_spec` takes. The id/kind/params
+    /// are irrelevant to these refusals — the Spec is what is under test.
+    fn job(spec: Spec) -> Job {
+        Job { id: 1, kind: "mark-skipped-siblings".into(), params: String::new(), spec, resume_after: None }
+    }
+
+    /// An execute with no `expect` is refused outright (issue 138 criterion 1).
+    ///
+    /// `None` used to mean "skip the count check", so the least-specified request
+    /// was also the most destructive — the inversion `dry_run` already defends
+    /// against, reintroduced by a different argument. A dry run still needs no
+    /// `expect`, because it writes nothing.
+    #[tokio::test]
+    async fn an_execute_without_an_expected_count_is_refused() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        let err = sup
+            .run_spec(&job(Spec::MarkSkippedSiblings { dry_run: false, expect: None, expect_gaps: Some(0) }))
+            .await
+            .expect_err("an execute with no expected count must be refused");
+        assert!(
+            err.contains("requires an explicit `expect`"),
+            "the refusal must say what is missing, got: {err}"
+        );
+
+        // The dry run is unaffected: it writes nothing, so it has nothing to assert.
+        sup.run_spec(&job(Spec::MarkSkippedSiblings { dry_run: true, expect: None, expect_gaps: None }))
+            .await
+            .expect("a dry run needs no expectation");
+    }
+
+    /// `expect_gaps` re-aims the guard; it does not disarm it (issue 138 criterion 5).
+    ///
+    /// The guard's value is that it rejected 154 and passed 592,856 — discrimination,
+    /// not mere firing. So naming a gap count must still refuse a set of any OTHER
+    /// size, in both directions. On this empty scratch database the guard rejects 0,
+    /// so expecting any non-zero count must abort: a guard that cannot fail is not a
+    /// guard, and this proves the reject arm is still reachable after the re-spec.
+    #[tokio::test]
+    async fn naming_an_expected_gap_count_still_refuses_a_different_one() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+
+        let err = sup
+            .run_spec(&job(Spec::MarkSkippedSiblings {
+                dry_run: false,
+                expect: Some(0),
+                expect_gaps: Some(154),
+            }))
+            .await
+            .expect_err("a gap count that disagrees with reality must abort the run");
+        assert!(
+            err.contains("expected exactly 154"),
+            "the refusal must name both the found and expected gap counts, got: {err}"
+        );
+        // And it must not have been reworded into a claim of data loss.
+        assert!(
+            !err.contains("data loss") && err.contains("held-but-unextracted"),
+            "the rejected rows are held-but-unextracted, not lost: {err}"
+        );
     }
 
     /// Issue 84: the mark job defaults to DRY RUN when the caller omits the flag.
