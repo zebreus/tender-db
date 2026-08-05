@@ -211,6 +211,35 @@ it sent is not evidence.
 *(sdk-vendor, 2026-08-05, from the GATE_LABEL boundary bug. The rot argument — that an enumerated
 forward carries its own expiry — is proj-fix's.)*
 
+## A conclusion can outlive its premise
+
+The hardest defect in this file to see, because **nothing about it looks wrong on re-reading.**
+It was derived correctly, it was true when written, and it simply stopped applying — usually
+because something changed several exchanges away, in a different part of the design, by someone
+who had no reason to think of it.
+
+The instance: `FAIL_ON_REPEAT=0` was recommended for the cheapest tier, because that tier was
+going to run every five minutes against an input that refreshes daily — under which repeat
+detection fires constantly and correctly means nothing. Sound. Then the live-detection job moved
+into the app, the tier's cadence became once-per-snapshot, its cadence matched its input's, and
+the recommendation became exactly wrong: a repeat check that never fires on the tier whose input
+is freshest. **The advice did not change and did not need correcting; the world under it moved.**
+
+**The tell is that there is no tell.** A wrong conclusion contradicts something. A stale one is
+internally consistent, cites real reasoning, and survives review by anyone checking whether it
+follows — because it does follow, from a premise that is no longer the case.
+
+**The only thing that catches it is re-deriving rather than re-reading.** Ask what the advice
+depends on, then check whether that is still true — not whether the advice still sounds right.
+Guidance that states its premise out loud ("because this runs faster than its input changes")
+is far cheaper to re-derive than guidance that states only its conclusion, which is an argument
+for writing the *because* into every recommendation that will outlive the conversation.
+
+*(proj-fix, 2026-08-05 — the fourth distinct failure mode this one design produced: wrong
+premise, unenforced conjunct, an inference never noticed, and a valid conclusion whose premise
+moved. They share no fix. The only thing that caught all four was someone re-deriving instead of
+re-reading.)*
+
 ## Put the interpretation where the number is met
 
 A caveat that reaches the reader *after* they have formed a judgement is not a caveat; it is an
