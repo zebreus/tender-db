@@ -1,0 +1,95 @@
+tdb-407-triage.service: RuntimeMaxSec= has no effect in combination with Type=oneshot. Ignoring.
+Starting tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh...
+=== 407-residue triage — pinned snapshot, confined ===
+=== snapshot: /data/db/snapshots/tender-db-1785916688.db (455205724160 bytes, header-complete)
+=== triage:   /opt/tender-db/canonical-verify/negative_money_407_triage.sql
+== residue triage — negative money at >= EUR 10k (100,000,000 cents... see Q0) ==
+== threshold: 10000 EUR = 1000000 cents. Stated once, used everywhere below. ==
+-- Q0. THE POPULATION, recomputed. Reconcile against the remembered 407 before
+--     reading anything else. A mismatch means the residue was mis-carried and
+--     every downstream conclusion is about a different set than intended.
+tdb-407-triage.service: Main process exited, code=killed, status=15/TERM
+tdb-407-triage.service: Failed with result 'signal'.
+Stopped tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh.
+tdb-407-triage.service: Consumed 1.782s CPU time over 25.683s wall clock time, 391.3M memory peak.
+tdb-407-triage.service: RuntimeMaxSec= has no effect in combination with Type=oneshot. Ignoring.
+Starting tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh...
+=== 407-residue triage — pinned snapshot, confined ===
+=== snapshot: /data/db/snapshots/tender-db-1785916688.db (455205724160 bytes, header-complete)
+=== triage:   /opt/tender-db/canonical-verify/negative_money_407_triage.sql
+== residue triage — negative money at >= EUR 10k (100,000,000 cents... see Q0) ==
+== threshold: 10000 EUR = 1000000 cents. Stated once, used everywhere below. ==
+-- Q0. THE POPULATION, recomputed. Reconcile against the remembered 407 before
+--     reading anything else. A mismatch means the residue was mis-carried and
+--     every downstream conclusion is about a different set than intended.
+tdb-407-triage.service: Main process exited, code=killed, status=15/TERM
+tdb-407-triage.service: Failed with result 'signal'.
+Stopped tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh.
+tdb-407-triage.service: Consumed 3.159s CPU time over 48.638s wall clock time, 512M memory peak.
+tdb-407-triage.service: RuntimeMaxSec= has no effect in combination with Type=oneshot. Ignoring.
+Starting tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh...
+=== 407-residue triage — pinned snapshot, confined ===
+=== snapshot: /data/db/snapshots/tender-db-1785916688.db (455205724160 bytes, header-complete)
+=== triage:   /opt/tender-db/canonical-verify/negative_money_407_triage.sql
+== residue triage — negative money at >= EUR 10k (100,000,000 cents... see Q0) ==
+== threshold: 10000 EUR = 1000000 cents. Stated once, used everywhere below. ==
+-- Q0. THE POPULATION, recomputed. Reconcile against the remembered 407 before
+--     reading anything else. A mismatch means the residue was mis-carried and
+--     every downstream conclusion is about a different set than intended.
+┌─────────┬─────────────┬───────────────┐
+│ surface │ rows_ge_10k │ most_negative │
+├─────────┼─────────────┼───────────────┤
+│ bids    │ 224         │ -32309312012  │
+│ awarded │ 183         │ -32309312012  │
+└─────────┴─────────────┴───────────────┘
+-- Q1. THE DELTA TEST, opening move: does the negative even HAVE a predecessor?
+--     A delta is meaningless with nothing to apply it to. If a large negative is
+--     the FIRST awarded value ever published for its lot_result, the
+--     delta-mapped-as-absolute story is IMPOSSIBLE for that row, not merely
+--     unsupported. lot_result_id is stable across seqs, so the chain is walkable.
+--     EXPECT, if delta: has_prior = all of them. If sign-fault: many with none.
+┌────────────────────┬──────────────────────────────┬───────┐
+│ with_earlier_value │ first_ever_value_is_negative │ total │
+├────────────────────┼──────────────────────────────┼───────┤
+│ 91                 │ 92                           │ 183   │
+└────────────────────┴──────────────────────────────┴───────┘
+-- Q2. THE DELTA TEST proper. For those WITH a predecessor, take the most recent
+--     earlier non-null value and ask whether the negative behaves like a
+--     revision applied to it. A genuine downward delta satisfies prior+neg >= 0
+--     (you cannot revise away more than was there). A sign-flip or a mis-parse
+--     has no such relation and will scatter across both columns.
+--     A HIGH plausible_delta count is the finding that BLOCKS #37 outright.
+┌─────────────────┬─────────────────────┬──────────────────────────┬────────────┐
+│ plausible_delta │ exceeds_prior_value │ exact_sign_flip_of_prior │ with_prior │
+├─────────────────┼─────────────────────┼──────────────────────────┼────────────┤
+│ 0               │ 91                  │ 0                        │ 91         │
+└─────────────────┴─────────────────────┴──────────────────────────┴────────────┘
+-- Q3. WHICH ARM produced it — published, or computed sum? This decides whether
+--     #131 s account is even a candidate. An exact magnitude match in the
+--     chain s parse layer means a published value was copied (131 applies).
+--     No match points at the summed arm, where 131 CANNOT apply by construction.
+--     Chain-scoped (seq <= a.seq) because the fold carries facts forward.
+┌─────────────────────────┬───────────────────────┬───────────────────────────────┐
+│ ge10k_awarded_negatives │ exact_published_match │ no_negative_anywhere_in_chain │
+├─────────────────────────┼───────────────────────┼───────────────────────────────┤
+│ 183                     │ 175                   │ 0                             │
+└─────────────────────────┴───────────────────────┴───────────────────────────────┘
+-- Q4. PROPAGATION: is the awarded negative just the bid negatives summed? If the
+--     computed arm is responsible, awarded_cents should equal the sum of that
+--     lot s winning bids. Matching rows are ONE defect (in bids) seen twice,
+--     not two — and fixing bids fixes both.
+┌───────────────┬───────────────────────────────┐
+│ ge10k_awarded │ same_version_has_negative_bid │
+├───────────────┼───────────────────────────────┤
+│ 183           │ 183                           │
+└───────────────┴───────────────────────────────┘
+-- Q5. IS THE RESIDUE A DIFFERENT POPULATION, or the tail of the benign mass?
+--     This is issue 134 s question stated as a measurement. If the large ones
+--     cluster on profiles the small ones do not touch, they are a distinct
+--     phenomenon and no single threshold separates signal from noise — which is
+--     precisely the case in which #37 must NOT be calibrated to admit them.
+tdb-407-triage.service: start operation timed out. Terminating.
+tdb-407-triage.service: Main process exited, code=killed, status=15/TERM
+tdb-407-triage.service: Failed with result 'timeout'.
+Failed to start tdb-407-triage.service - [systemd-run] /bin/bash /opt/tender-db/canonical-verify/negative_money_407_payload.sh.
+tdb-407-triage.service: Consumed 2min 51.953s CPU time over 39min 59.998s wall clock time, 512M memory peak.
