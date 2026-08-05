@@ -1,0 +1,76 @@
+-- ============================================================================
+-- The 154 held-but-unparsed English originals (issue 84 residue).
+--
+-- The #29 dry-run refused to execute: 592,856 rows markable, but 154 in scope
+-- whose English original IS in the corpus and did NOT parse. Those are real data
+-- loss, not duplicates — marking them skipped-by-policy would record a parse
+-- failure as a resolved duplicate, the one outcome worse than an overstated count.
+--
+-- This characterises them so the next question is answerable: FIXABLE PARSER GAP,
+-- or genuinely unrecoverable?
+--
+-- PREDICTION, stated before the run so this is a falsification and not a fishing
+-- trip. The internal-ojs parse path can reject with exactly four reasons
+-- (r209/parse.rs + internal_ojs.rs): `unclaimed-content`, `no-original-form`,
+-- `unexpected-root`, `unparsable-xml`, plus `not-utf8` before parsing.
+--
+--   * I expect the bulk to be `unclaimed-content` — an element or attribute no
+--     rule claims. That is the SAME class as issues 31 and 35, both of which were
+--     fixed by adding the missing vocabulary, so it is the FIXABLE arm. 154 out of
+--     ~27k English 2008 notices (0.6%) is exactly the shape of a long-tail
+--     vocabulary gap.
+--   * `unexpected-root` or `not-utf8` would mean something else is in these files
+--     entirely — a different finding, and not a parser gap.
+--   * A spread across all four with no dominant reason would mean these are not
+--     one problem, and the "fixable?" question has to be asked per bucket.
+--
+-- Q3 is the decisive one for effort: an unclaimed-content detail names the exact
+-- path that was not claimed, so a small set of distinct paths = a small fix.
+--
+-- READ-ONLY, data pages: snapshot only, never the serving DB.
+-- ============================================================================
+
+.mode box
+.headers on
+
+-- The 154: in the 2008-DTD scope, non-EN, whose English original exists and is held.
+CREATE TEMP VIEW residue AS
+  SELECT q.member_path,
+         replace(substr(replace(q.member_path, rtrim(q.member_path, replace(q.member_path,'/','')),''),
+                        1,
+                        length(replace(q.member_path, rtrim(q.member_path, replace(q.member_path,'/','')),'')) - 3),
+                 '_','-') AS pub_id
+    FROM quarantine q JOIN fetches f ON f.id = q.fetch_id
+   WHERE q.reason = 'unparsable-xml' AND q.detail = 'XML with DTD detected'
+     AND q.reprocessed_at IS NULL AND q.skipped_at IS NULL
+     AND f.source='ted' AND f.kind='monthly' AND f.period LIKE '2008%'
+     AND lower(replace(q.member_path, rtrim(q.member_path, replace(q.member_path,'.','')),'')) <> 'en';
+
+-- The English originals of those siblings, held rather than parsed.
+CREATE TEMP VIEW originals AS
+  SELECT DISTINCT n.id, n.publication_id, n.parse_state, n.profile
+    FROM residue r JOIN notices n
+      ON n.source='ted' AND n.publication_id = r.pub_id
+   WHERE +n.parse_state <> 'parsed';
+
+SELECT '--- Q1. how many distinct originals, and their state ---' AS "";
+SELECT parse_state, profile, COUNT(*) AS originals FROM originals GROUP BY 1,2 ORDER BY 3 DESC;
+
+SELECT '--- Q2. WHY did they fail? (predict: unclaimed-content dominant) ---' AS "";
+SELECT q.reason, COUNT(*) AS n
+  FROM originals o JOIN quarantine q ON q.notice_id = o.id
+ GROUP BY 1 ORDER BY 2 DESC;
+
+SELECT '--- Q3. DECISIVE: how many DISTINCT unclaimed paths? (few = small fix) ---' AS "";
+SELECT q.detail, COUNT(*) AS n
+  FROM originals o JOIN quarantine q ON q.notice_id = o.id
+ GROUP BY 1 ORDER BY 2 DESC LIMIT 30;
+
+SELECT '--- Q4. are they clustered in time, or spread across 2008? ---' AS "";
+SELECT f.period, COUNT(*) AS n
+  FROM originals o JOIN notices n ON n.id = o.id JOIN fetches f ON f.id = n.fetch_id
+ GROUP BY 1 ORDER BY 1;
+
+SELECT '--- Q5. reconcile: sibling rows vs distinct originals ---' AS "";
+SELECT (SELECT COUNT(*) FROM residue)   AS sibling_rows_in_scope,
+       (SELECT COUNT(*) FROM originals) AS distinct_held_originals;
