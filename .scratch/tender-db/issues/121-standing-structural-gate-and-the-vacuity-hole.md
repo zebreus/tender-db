@@ -177,61 +177,40 @@ frees far less than its apparent size; and "point the check at a fresh snapshot"
 impossible. The memory should be corrected. VACUUM (~2× file) remains genuinely impossible — that half
 of the memory stands.
 
-## Not yet done
+## State at 2026-08-05 — what is done, what is not, and what is unproven
 
-* **Phase 1** — PRE-AUTHORIZED and STAGED (`phase1_confined_probe.sh`), not yet run. Blocked on the box,
-  not on permission: an abandoned Class B read has held a slot since 09:33:44 with no client attached
-  (~66 min at 10:39, non-monotonic). The wait is bounded to ~11:10Z, after which run-driver proposes a
-  controlled restart. Running contended was considered and REJECTED — the residual is non-steady, so it
-  could finish mid-run, latency would improve, and the confinement would be credited for it: a false
-  green on the precise question. Two defects were found in the probe before it was fit to spend the
-  authorization, both of the same shape (`7afac43`, `02b443d`): the input was resolved TWICE (once in
-  preconditions, again in the confined unit at launch) so the verified file and the measured file could
-  differ silently; and the script enforced only ONE of the two gates the authorization named, passing
-  while a scan ran. The rule both produced: **encode the standard, do not hold it in your head** — a
-  precondition that codes fewer gates than the authorization names is a false green waiting for the day
-  nobody checks the other signal by hand. Original text below stands as the design:
-  one confined, instrumented
-  run against a real snapshot. Proposed confinement is a systemd unit with `MemoryMax=` (page cache is
-  charged to the faulting cgroup, so it reclaims its own rather than evicting the live service's ~2 GB),
-  plus low `IOWeight`/`CPUWeight` and `Nice=19`. That mechanism must be **measured, not asserted** — cf.
-  issue 17, "resolved" on construction and unverified under load for a week. Run only the confined arm;
-  the unconfined control is deliberately the harmful case.
-* **Phase 2** (only if phase 1 holds): timer in the low-traffic window, sequenced after the daily
-  pipeline's snapshot step so it never overlaps ingestion/projection. Coordinate with proj-fix.
-* **Phase 3 / the prenuke:** N consecutive green days makes the gate a sound replacement for the
-  *unreproducible 07-28 verdict*, NOT for the *backup*. Deletion stays parked at #20 on its own evidence.
-  The gate's greenness must not quietly become a deletion argument.
+**Done and measured.** 28 checks across four tiers, all run confined against a pinned prod
+snapshot with the eviction signal sampled throughout. Layer verdicts: tier 0 11/11, A 25/28
+(three negative-money findings, all triaged), B 12/12, C 1/1. Every structural and referential
+invariant in the suite is clean on the live layer.
 
-## A green is not end-to-end verification where a preventer runs upstream
+**Guards, and what each is proven by** — listed separately because "proven" did too much work
+during this build:
 
-Recorded 2026-08-04 (proj-fix's correction, sharper than the limit I first stated).
+| guard | proven to fire | proven not to fire spuriously |
+|---|---|---|
+| latency abort | synthetic breach, real unit, killed at 4 s not 40 s | six real runs, never tripped |
+| refault tripwire | rising values at the production threshold, killed at 10 s not 90 s | Tier B's real 222-refault burst series, correctly silent |
+| confinement assertion | stray holder present → refuses, exit 2 | five real runs, all five checks ok |
+| freshness / repeat | 40 h input refused; fresh label → `unknown`, repeat → `yes` | daily runs, correct each time |
 
-I offered `head_not_max` as a detector proj-fix could check their #27 projection-time
-assertion against — "assertion fires ⟺ gate finds violations". I hedged it only with a
-window-overlap caveat. The real limit is stronger and partly dissolves the pairing:
+**Not done, and not mine.** The systemd timer (proj-fix, cost-ordered 0 → C → A → B, all daily,
+`FAIL_ON_REPEAT=1` on all four units, alerting on the *transition* rather than the state). Live
+catastrophe detection moved to the app as issue 133 — this gate reads a snapshot, so its
+detection latency is bounded by the snapshot cadence and no check frequency can tighten it.
 
-**#27's assertion refuses and rolls back.** A violation therefore never lands, the
-snapshot stays clean, and this gate finds nothing. So once #27 ships, gate-green over
-that invariant is consistent with *both* "no damage" and "damage attempted and
-prevented" — **indistinguishable from here**. The signal that separates them has moved
-somewhere this gate cannot see: a failed projection job carrying the assertion's error
-text.
+**Unproven, stated rather than left implied.**
 
-The honest statement of the relationship is therefore **not** mutual confirmation:
+* *The bound kills a long gate at the bound.* `TimeoutStartSec` is proven applied (the probe's
+  own assertion read it from a live unit), and `RuntimeMaxSec` is proven inert on `Type=oneshot`.
+  But one test showed a 6 s exit against a 200 s gate with a 20 s bound, unexplained. Not
+  load-bearing: the remote `timeout` has done this job throughout and is measured.
+* *What caused Tier B run 1's 222-refault burst.* Not proportional to tier weight (C spans the
+  largest table, evicted nothing) and not a function of duration (two B runs, same duration,
+  222 and 0). So it is not deterministic in the workload — which is a description of a pattern,
+  not an identified mechanism, and the distinction is deliberate.
 
-* the **assertion prevents** new violations;
-* the **gate covers what the assertion cannot see** — damage predating it, and Tenders
-  no projection has touched since.
-
-Generalised, because it is not specific to #27: **a check downstream of a guard cannot
-validate that guard.** The guard working and the guard being absent-but-unneeded produce
-the same clean state. Reading gate-green as end-to-end verification of an invariant that
-something upstream enforces is the decorative reading — the check is real, but it is not
-answering the question it appears to answer. Written into `standing_gate.sh`'s header as
-"WHAT A GREEN DOES NOT MEAN" so it cannot be misremembered as confirmation.
-
-This is the same family as the vacuity hole above: in both cases a check returns 0 and
-the 0 means something other than what a reader would assume. Vacuity is "0 because
-nothing is there"; this is "0 because something upstream stopped it". Neither is
-detectable from the number alone.
+**Phase 3 / the prenuke, unchanged.** N consecutive green days makes this gate a sound
+replacement for the *unreproducible 07-28 verdict*, never for the *backup*. Deletion stays parked
+at task #20 on its own evidence, and the gate's greenness must not quietly become a deletion
+argument.
