@@ -335,6 +335,13 @@ until someone finishes triaging what it found** — the detector held hostage by
 That is correct — it is the first time this detector has spoken — and it should be read as an inventory,
 not an incident.
 
+**And that framing has to reach the reader BEFORE the alert does** (sdk-vendor's point, and the right
+one). It goes in the unit's `Description=` and in the first journal line, not in an issue someone finds
+afterwards: whoever opens a red verdict at 07:40 on day one is forming their model of what this thing is
+*in that moment*, and "the detector just inventoried a layer nobody had checked" and "the pipeline broke
+last night" produce very different reactions to the same output. A caveat that arrives after the reader
+has already decided is not a caveat, it is an excuse.
+
 **This is also the first real test of the state-not-event requirement**, which until now was an argument
 about a hypothetical. It arrived within a day of being written and the requirement covered it without
 amendment, which is the outcome that argues for having made it firm rather than optional.
