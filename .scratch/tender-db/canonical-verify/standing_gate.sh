@@ -113,6 +113,8 @@ present_parties|A|tender_version_parties non-empty|SELECT CASE WHEN EXISTS(SELEC
 present_winners|A|tender_version_result_winners non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners) THEN 0 ELSE 1 END|DELETE FROM tender_version_result_winners
 present_lots|A|lots non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM lots) THEN 0 ELSE 1 END|DELETE FROM lots
 present_lot_results|A|lot_results non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM lot_results) THEN 0 ELSE 1 END|DELETE FROM lot_results
+present_lot_result_rows|A|tender_version_lot_results non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_lot_results) THEN 0 ELSE 1 END|DELETE FROM tender_version_lot_results
+present_bid_rows|A|tender_version_bids non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM tender_version_bids) THEN 0 ELSE 1 END|DELETE FROM tender_version_bids
 present_changes|A|changes non-empty|SELECT CASE WHEN EXISTS(SELECT 1 FROM changes) THEN 0 ELSE 1 END|DELETE FROM changes
 identity_overlap|A|tender identity is exactly one of keyed or island|SELECT COUNT(*) FROM tenders WHERE (procedure_key IS NULL) = (island_notice_id IS NULL)|INSERT INTO tenders(id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at) VALUES (900,'ted','k900',900,'procedure',1,1,1)
 no_head|A|every tender has a head version pointer|SELECT COUNT(*) FROM tenders WHERE current_seq IS NULL|INSERT INTO tenders(id,source,procedure_key,kind,created_at,current_seq) VALUES (901,'ted','k901','procedure',1,NULL)
@@ -123,6 +125,8 @@ provisional_identifier|A|provisional org iff it has no identifier|SELECT COUNT(*
 identifier_kind_bad|A|organizations.identifier_kind within its domain|SELECT COUNT(*) FROM organizations WHERE identifier_kind IS NOT NULL AND identifier_kind NOT IN ('vat','national')|UPDATE organizations SET identifier_kind='zzz' WHERE identifier IS NOT NULL
 absurd_pubdate|A|publication dates inside absolute sane bounds|SELECT COUNT(*) FROM tender_versions WHERE published_at < 631152000 OR published_at > 1800000000|UPDATE tender_versions SET published_at=1 WHERE seq=1
 negative_amount|A|negative money only where it is meaningful (result_value)|SELECT COUNT(*) FROM tender_version_amounts WHERE cents < 0 AND field <> 'result_value'|UPDATE tender_version_amounts SET cents=-1 WHERE field='estimated_value'
+negative_awarded|A|no negative awarded money|SELECT COUNT(*) FROM tender_version_lot_results WHERE awarded_cents < 0|UPDATE tender_version_lot_results SET awarded_cents=-1
+negative_bid|A|no negative bid money|SELECT COUNT(*) FROM tender_version_bids WHERE cents < 0|UPDATE tender_version_bids SET cents=-1
 changes_op_bad|A|changes.op within its domain|SELECT COUNT(*) FROM changes WHERE op NOT IN ('added','changed','removed')|UPDATE changes SET op='zzz'
 changes_kind_bad|A|changes.entity_kind within its domain|SELECT COUNT(*) FROM changes WHERE entity_kind NOT IN ('tender','lot','organization','lot_result','bid','contract')|UPDATE changes SET entity_kind='zzz'
 versions_ge_tenders|A|at least one version per tender|SELECT CASE WHEN (SELECT COUNT(*) FROM tender_versions) >= (SELECT COUNT(*) FROM tenders) THEN 0 ELSE 1 END|DELETE FROM tender_versions
@@ -213,6 +217,8 @@ CREATE TABLE tender_version_parties (tender_id INTEGER, seq INTEGER, organizatio
 CREATE TABLE tender_version_result_winners (tender_id INTEGER, seq INTEGER, lot_result_id INTEGER, organization_id INTEGER);
 CREATE TABLE lots (id INTEGER PRIMARY KEY, tender_id INTEGER, lot_key TEXT);
 CREATE TABLE lot_results (id INTEGER PRIMARY KEY, tender_id INTEGER, notice_id INTEGER, result_key TEXT);
+CREATE TABLE tender_version_lot_results (tender_id INTEGER, seq INTEGER, lot_result_id INTEGER, lot_id INTEGER, decision TEXT, reason TEXT, awarded_cents INTEGER, awarded_currency TEXT);
+CREATE TABLE tender_version_bids (tender_id INTEGER, seq INTEGER, bid_id INTEGER, lot_id INTEGER, cents INTEGER, currency TEXT);
 CREATE TABLE changes (cursor INTEGER PRIMARY KEY, entity_kind TEXT, entity_id INTEGER, version_seq INTEGER, op TEXT, changed_at INTEGER);
 -- one keyed tender with two versions, one island tender with one
 INSERT INTO tenders VALUES (1,'ted','k1',NULL,'procedure',1,2,1000000200),(2,'doe',NULL,77,'registration',1,1,1000000000);
@@ -235,6 +241,8 @@ INSERT INTO tender_version_parties VALUES (1,2,1,'buyer');
 INSERT INTO lots VALUES (1,1,'LOT-0001');
 INSERT INTO lot_results VALUES (1,1,12,'RES-0001');
 INSERT INTO tender_version_result_winners VALUES (1,2,1,1);
+INSERT INTO tender_version_lot_results VALUES (1,2,1,1,'selected',NULL,7500,'EUR');
+INSERT INTO tender_version_bids VALUES (1,2,1,1,7200,'EUR');
 INSERT INTO changes VALUES (1,'tender',1,1,'added',1000000100);
 SQL
 }
