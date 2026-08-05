@@ -57,6 +57,13 @@
     "resolved": "2026-07-21"
   },
   {
+    "category": "2008 English originals under the DTD label",
+    "reason": "unparsable-xml",
+    "detail_like": "XML with DTD detected",
+    "diagnosis": "7 rows in the 2008 DTD population are the English originals themselves (member paths carry the .en language code) - the very rows the sibling guard exists to protect from being marked duplicates of themselves. They are excluded from the marker by the language guard by design and stay OUTSTANDING: an English original held under the DTD label is unparsed original content, the same held-but-unextracted class as the 154, at the smallest possible scale. Named as their own line rather than folded into a neighbouring population: a cause is a cause regardless of its size, and 7 silently carried inside another line would be unfindable when someone resolves that line.",
+    "fix": "issue 84 / #29 (outstanding)"
+  },
+  {
     "category": "2008 OPOCE INTERNAL_OJS (parser)",
     "reason": "unmapped-era",
     "profile": "internal-ojs",
