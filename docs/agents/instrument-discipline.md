@@ -174,6 +174,62 @@ first tested under `zsh`, which does not word-split, so both forms returned empt
 is wrong somewhere" rather than "the wrong form is silently permissive". **A test environment that cannot
 distinguish them is worse than no test, because it produces a confident wrong diagnosis.**
 
+## Declare the config, not just the input
+
+The suite already insists a check must prove its **input** is the input it thinks it is —
+snapshot path, size, mtime, age, and how it was resolved. It said nothing about the check's own
+**settings**, and that gap cost a real bug.
+
+`systemd-run` does not pass the environment through: only what is explicitly `--setenv`'d reaches
+the unit. A probe forwarded two variables and not a third, so `GATE_LABEL` was accepted on the
+command line, appeared to be in use, and **evaporated at the boundary** — the gate inside fell back
+to a default and wrote another cadence's state file. No error, no warning; the variable was simply
+absent. It was caught only because the verdict line reported `repeat=yes` under a label with no
+prior state, where `unknown` is the only possible correct answer.
+
+**The rule: an input a check merely BELIEVES it received is not an input it has VERIFIED.** That
+applies to the settings exactly as it applies to the data, and the discipline had been applied to
+one and not the other.
+
+**The fix is not to forward more carefully.** The obvious repair — enumerate the variables and
+`--setenv` each — is correct on the day it is written and rots immediately: the next variable added
+silently fails to cross, the same defect one variable later. So instead, **print the configuration
+actually in effect**:
+
+```
+-- config: label=demo-label state=/var/lib/…/demo.last max_age=30h fail_on_repeat=0
+```
+
+With the variable set, the line names it. With it dropped, the same line names the default. **The
+divergence is on screen, not inferred from a surprising number three messages later.** This does not
+prevent the drop; it makes the drop announce itself, which is the achievable goal.
+
+The generalisation past config: wherever a value crosses a boundary — a process, a unit, an SSH
+transport, a job queue — the receiving side should state what it got. A sender's belief about what
+it sent is not evidence.
+
+*(sdk-vendor, 2026-08-05, from the GATE_LABEL boundary bug. The rot argument — that an enumerated
+forward carries its own expiry — is proj-fix's.)*
+
+## Put the interpretation where the number is met
+
+A caveat that reaches the reader *after* they have formed a judgement is not a caveat; it is an
+excuse. Three times in one day the deciding factor was **where** an interpretation lived, not
+whether it existed:
+
+* the shortfall rule, in the **abort message** rather than the tracker;
+* the resolution mode (`pinned` vs `newest`) and effective config, in the **verdict line** rather
+  than a commit message;
+* "this first red run is an inventory, not an incident", in the unit's **`Description=`** and first
+  journal line rather than an issue filed afterwards.
+
+Whoever opens a red verdict at 07:40 on day one forms their model of what the thing *is* in that
+moment. *"The detector just inventoried a layer nobody had checked"* and *"the pipeline broke last
+night"* produce very different reactions to identical output, and only one of them is available if
+the framing lives somewhere the reader is not.
+
+*(proj-fix, 2026-08-05.)*
+
 ## A classification can fail permissive too
 
 Not only instruments. A **taxonomy** fails permissive when its frame is wrong, and it is harder to see,
