@@ -58,7 +58,8 @@ ABORT_MULT="${ABORT_MULT:-20}"    # ...or this multiple of baseline p95, whichev
 REFAULT_RATE_MAX="${REFAULT_RATE_MAX:-50}"   # pages/sec
 REFAULT_SUSTAIN="${REFAULT_SUSTAIN:-5}"      # consecutive samples above it
 UNIT="${UNIT:-tdb-standing-gate-probe}"
-# HARD REMOTE BOUND on the confined work. run-driver orphaned a snapshot read on
+# HARD REMOTE BOUND on the confined work. Applied as TimeoutStartSec, not
+# RuntimeMaxSec: the latter is silently ignored for Type=oneshot (measured). run-driver orphaned a snapshot read on
 # prod for 90 minutes today because a LOCAL `timeout` around `ssh` killed the
 # client, not the remote process — the guard bounded their VIEW of the work, not
 # the work. RuntimeMaxSec puts the bound inside systemd, which is the thing
@@ -321,7 +322,7 @@ echo "-- gate (confined, Tier $TIER)"
 systemd-run --no-block --unit="$UNIT" --service-type=oneshot --collect \
   -p MemoryMax="$MEM_MAX" -p MemorySwapMax=0 \
   -p IOWeight="$IO_WEIGHT" -p CPUWeight="$CPU_WEIGHT" -p Nice="$NICE" \
-  -p RuntimeMaxSec="$MAX_RUN_S" \
+  -p TimeoutStartSec="$MAX_RUN_S" -p RuntimeMaxSec="$MAX_RUN_S" \
   --setenv=TIER="$TIER" --setenv=SNAPSHOT="$SNAP" \
   ${GATE_LABEL:+--setenv=GATE_LABEL="$GATE_LABEL"} \
   ${STATE_FILE:+--setenv=STATE_FILE="$STATE_FILE"} \
@@ -360,9 +361,18 @@ assert_confined() {
   if [ "$iow" = "$IO_WEIGHT" ]; then echo "   ok   IOWeight = $iow"
   else echo "   FAIL IOWeight is '$iow', expected $IO_WEIGHT"; fail=1; fi
 
-  local rt; rt=$(systemctl show -p RuntimeMaxUSec --value -- "$UNIT.service" 2>/dev/null)
-  if [ -n "$rt" ] && [ "$rt" != infinity ]; then echo "   ok   RuntimeMaxUSec = $rt (hard bound present)"
-  else echo "   FAIL RuntimeMaxUSec is '$rt' — no hard bound on this run"; fail=1; fi
+  # THE BOUND THAT ACTUALLY BINDS. RuntimeMaxSec is IGNORED for Type=oneshot —
+  # systemd says so in the journal ("has no effect in combination with
+  # Type=oneshot") and measurement agrees: RuntimeMaxSec=5 let a 30s sleep run the
+  # full 30s, while TimeoutStartSec=5 killed it at 5. A oneshot is "starting" for
+  # its whole life, so the start timeout is its runtime bound.
+  #
+  # This check previously read RuntimeMaxUSec and passed on it being set — verifying
+  # the PRESENCE of a setting that has no EFFECT. A decorative check on a decorative
+  # setting, inside the confinement proof, reported upward as a hard bound.
+  local ts; ts=$(systemctl show -p TimeoutStartUSec --value -- "$UNIT.service" 2>/dev/null)
+  if [ -n "$ts" ] && [ "$ts" != infinity ]; then echo "   ok   TimeoutStartUSec = $ts (the bound that binds a oneshot)"
+  else echo "   FAIL TimeoutStartUSec is '$ts' — this run has NO effective time bound"; fail=1; fi
 
   # THE ONE THAT CATCHES TODAY'S ACCIDENT — and it now asks the KERNEL who holds
   # the file open, rather than who spelled a command line a particular way.
