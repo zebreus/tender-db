@@ -177,6 +177,34 @@ frees far less than its apparent size; and "point the check at a fresh snapshot"
 impossible. The memory should be corrected. VACUUM (~2× file) remains genuinely impossible — that half
 of the memory stands.
 
+### 2026-08-05 — the prenuke's cost is quoted in two forms and measured in neither
+
+The consequence above was recorded and then not absorbed. Task #20 still described the prenuke as
+**88 GB**; the arithmetic four lines up puts it at **356 GB apparent**. Both figures were in active
+use today, in an argument that turned on the size. They cannot both be right, and — the point of the
+paragraph above — **neither is the reclaimable figure**, because on a reflink filesystem what a
+deletion frees is the file's *exclusive* extents, not its apparent size.
+
+So the standing cost of keeping the prenuke is **unmeasured**, while being quoted confidently in two
+mutually inconsistent forms. It is also cheaply measurable: `filefrag`/fiemap reports a `SHARED` flag
+per extent, which makes exclusive-vs-shared a read-only, metadata-only, bounded question — the free
+category, not the gated one. Nobody should argue from the reclaim, in either direction, until that
+runs. We may be keeping 356 GB apparent to avoid re-deriving a verdict, and freeing very little by
+deleting it; **neither side of that trade has been measured.**
+
+**And #20's blocker has changed shape**, which matters more than the number. "Deletion basis
+unreproducible" was true of the ad-hoc 07-28 verdict — its gates were never committed, so only the
+results survived. But the properties that verdict named are now re-encoded here, count-free and
+committed, and this was checked in the file rather than recalled: `no_head`, `identity_overlap`,
+`kind_bad` (tier A), `orphan_versions` and `junk_hub` (tier B). The blocker is therefore no longer
+"the basis cannot be reproduced" but "the gate must run, standing, and be green" — an install, not a
+research problem. #20 stays parked, deliberately; it should just be parked for the true reason.
+
+Note the shape, because it recurred twice in one day: **a status that mis-describes the shape of the
+remaining work**, while stating nothing false, so the work sits waiting for something it no longer
+needs. #28's unit files were the same — recorded as awaiting an on-box window when they had never
+been written, and authoring never needed a box at all.
+
 ## State at 2026-08-05 — what is done, what is not, and what is unproven
 
 **Done and measured.** 28 checks across four tiers, all run confined against a pinned prod
