@@ -27,6 +27,21 @@
 # total, so they cannot go stale as the corpus grows. They use EXISTS rather than
 # COUNT(*) > 0 — same answer, O(1) instead of a full scan.
 #
+# THEIR OWN ASSUMPTION, stated because proj-fix's inverse-vacuity lesson applies
+# here too: these are ABSOLUTE assertions ("this table has rows"), and absolute
+# assertions cry wolf wherever absence is legitimate. They are correct against a
+# PRODUCTION snapshot — taken at the end of a daily fold, where empty always means
+# something broke. They would fire spuriously on a fresh install, a pre-first-fold
+# instance, or a restore in progress, all of which are legitimately empty.
+#
+# That is acceptable HERE because the gate's input is pinned to the prod snapshot
+# ring and refuses anything stale — but it is an assumption about the deployment,
+# not a property of the check, and anyone pointing this gate at a fresh instance
+# should expect eleven false alarms rather than a bug report. (proj-fix's rule:
+# assert the transition, not the state, when absence is sometimes correct. Here
+# absence is never correct, so the absolute form is right — but only because of
+# where it is pointed.)
+#
 # There is ONE present_* per table any check reads, not one for the spine. A
 # partial set is a partial hole: run-driver's sweep bed had `tenders` populated
 # but every satellite empty, which would sail through orphan_parties,
