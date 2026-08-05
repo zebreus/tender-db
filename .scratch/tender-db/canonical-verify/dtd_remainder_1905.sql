@@ -140,3 +140,48 @@ SELECT f.source,
  GROUP BY 1, 2, 3
  ORDER BY 4 DESC
  LIMIT 25;
+
+-- ============================== RESULTS ==============================
+-- Run 2026-08-05 against the LIVE DB via POST /v1/sql on the box (localhost),
+-- token from /root/tdb-diag-token, team-lead authorized. Q0 5.99s, Q1 5.23s,
+-- Q3 2.49s — all under the 10s cap, none truncated.
+--
+--   Q0  total_outstanding_dtd_like  594,915   <- matches the outstanding measure
+--                                                 EXACTLY, so the two predicates
+--                                                 are over the same population and
+--                                                 the remainder arithmetic holds.
+--   Q1  in_scope                    593,010   <- EXACTLY 592,856 + 154. The
+--                                                 load-bearing bucket passes: my
+--                                                 marker predicate and the dry-run
+--                                                 measure the same set.
+--       outside_2008_ted_monthly      1,898
+--       english_original                  7   <- corroborates the earlier ".en = 7"
+--       detail_has_suffix                 0   <- ZERO. See below.
+--
+--   1,898 + 7 = 1,905. The remainder is fully attributed, with nothing left over.
+--
+-- MY HYPOTHESIS WAS WRONG, and in the unflattering direction. I predicted the
+-- remainder was the benign LIKE-vs-exact difference — rows whose detail carries a
+-- suffix. That bucket is EMPTY. Not "small": zero. The detail string had nothing to
+-- do with it, and had the reading key not been fixed in advance it would have been
+-- very easy to read 1,898 out-of-2008 rows as "roughly the labelling noise I
+-- predicted" and move on. The pre-registration is what stopped a wrong explanation
+-- from being accepted because it was already written down.
+--
+-- WHAT THE 1,898 ACTUALLY ARE (Q3, then a language breakdown):
+--   * ALL of them come from ONE fetch: ted / monthly / 2010-03. A single month,
+--     and not the 2008 corpus at all.
+--   * Their member paths end in `.xml` with NO language code (the suffix extraction
+--     returns 'xml' for all 1,898, where the 2008 corpus returns a 2-letter
+--     language). So they are NOT language siblings.
+--
+-- Therefore the duplicate-sibling argument DOES NOT APPLY to them, and this is a
+-- FOURTH population under the 'XML with DTD detected' label — exactly what the
+-- reading key said would block calling the remainder benign.
+--
+-- It does NOT block the execute's safety: the marker scope requires a 2008 TED
+-- monthly fetch, so these 1,898 are excluded BY CONSTRUCTION and cannot be
+-- mis-marked. They stay outstanding, which is the correct outcome. What it blocks
+-- is the claim that the remainder is explained-and-harmless: it is explained, and
+-- it is a separate unresolved population needing its own investigation.
+-- =====================================================================
