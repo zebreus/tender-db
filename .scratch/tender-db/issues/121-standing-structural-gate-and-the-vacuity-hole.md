@@ -1,8 +1,21 @@
 # 121 — a standing structural gate, the empty-layer hole it closed, and two corrections it forced
 
-Status: phase 0 landed; **phase 1 MEASURED AND PASSED 2026-08-04** — confinement proven, Tier B/C
-released against it. Companion tooling: `snapwatch.sh` (live on the box), `thread_cpu.sh`,
+Status: phase 0 landed; **phase 1 MEASURED AND PASSED 2026-08-04** — confinement proven **for a warm
+cache** (see the scope limit below; the cold/refilling case is unmeasured), Tier B/C released against
+it. Companion tooling: `snapwatch.sh` (live on the box), `thread_cpu.sh`,
 `activity.sh` (shared sustained-activity primitive), `negative_amount_triage.sql`, `tierA_with_triage.sh`
+
+> **SCOPE LIMIT — the confinement result is WARM-ONLY, and this line exists so "proven" cannot
+> quietly widen.** All six confined runs measured a live service holding a *stable* ~1.72 GB working
+> set. A service that is *refilling* after a restart, while a gate pulls 455 GB through the same page
+> cache, is the **more** adversarial case and **has never been measured**. Nothing depends on it and
+> no claim here rests on it — it is recorded as an honest gap, not a caveat to be argued away.
+>
+> A clean cold window needs a *quiet* post-restart box. The 2026-08-05 restart did not offer one: the
+> boot pipeline it re-enqueued was running, so cache pressure could not be attributed to the gate
+> rather than the projection, and team-lead declined the datum rather than log a confounded one.
+> Correct call — a muddied number here would be worse than the gap, because it would read as coverage.
+> Take it on a future quiet restart.
 
 ## Phase 1 result (2026-08-04, pinned snapshot `tender-db-1785830601.db`)
 
