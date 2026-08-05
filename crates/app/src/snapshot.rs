@@ -59,6 +59,20 @@ pub async fn run(db: &Db, config: &Config, now: i64) -> Result<String, String> {
     let report = db.snapshot(&dest).await.map_err(|e| e.to_string())?;
     let pruned =
         prune(&config.dir, config.keep).map_err(|e| format!("snapshot ok but prune failed: {e}"))?;
+    // Publish WHICH file this run wrote, so a consumer can PIN it instead of
+    // guessing "newest" (issue 28). The distinction is load-bearing: a failed
+    // snapshot leaves yesterday's file as newest, still inside any age bound, so a
+    // verifier resolving by glob would check yesterday's photograph and report a
+    // fresh green for a cycle that produced nothing.
+    //
+    // Written LAST and only on success, so the pointer never names a partial file;
+    // temp-then-rename so a reader never sees a half-written one. Best-effort by
+    // design — a snapshot that succeeded must not be reported as failed because a
+    // pointer write did not land, and a stale pointer is exactly the signal the
+    // consumer is built to detect.
+    if let Err(e) = publish_latest(&config.dir, &dest) {
+        eprintln!("snapshot: could not publish latest pointer: {e}");
+    }
     Ok(format!(
         "{:.2} GB, {} notices, integrity ok · frozen {:.0}s, verify {:.0}s · kept {}, pruned {}",
         report.bytes as f64 / 1e9,
@@ -68,6 +82,17 @@ pub async fn run(db: &Db, config: &Config, now: i64) -> Result<String, String> {
         config.keep,
         pruned,
     ))
+}
+
+/// Name the snapshot this run produced, at `<dir>/latest`, via temp-then-rename.
+///
+/// The rename is what makes it safe to read concurrently: a reader either sees the
+/// old pointer or the new one, never a partial write. The temp file lives in the
+/// same directory so the rename cannot cross a filesystem boundary.
+fn publish_latest(dir: &Path, dest: &Path) -> std::io::Result<()> {
+    let tmp = dir.join(".latest.tmp");
+    std::fs::write(&tmp, format!("{}\n", dest.display()))?;
+    std::fs::rename(&tmp, dir.join("latest"))
 }
 
 /// Keep the newest `keep` snapshots in `dir`, delete the rest; returns how many
@@ -95,6 +120,53 @@ fn prune(dir: &Path, keep: usize) -> std::io::Result<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 28: the pointer names the file this run wrote, and a run that does
+    /// NOT write one leaves the previous pointer alone.
+    ///
+    /// That second half is the whole reason the pointer exists. A consumer that
+    /// resolves "newest" cannot tell a fresh snapshot from yesterday's — a failed
+    /// snapshot step leaves yesterday's file newest, inside any age bound, so the
+    /// verifier checks yesterday's photograph and reports a green for a cycle that
+    /// produced nothing. The pointer is only better than the glob if it is written
+    /// on success and ONLY on success, so that is what is asserted here.
+    #[test]
+    fn the_latest_pointer_names_this_runs_file_and_survives_a_failure() {
+        let dir = std::env::temp_dir().join(format!("tender-db-latest-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let first = dir.join(snapshot_name(100));
+        publish_latest(&dir, &first).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dir.join("latest")).unwrap().trim(),
+            first.display().to_string(),
+            "the pointer names the file just written"
+        );
+
+        // A later run that fails writes no pointer — simulated by simply not
+        // calling it, which is exactly what `run` does when `db.snapshot` errors
+        // (the `?` returns before the publish).
+        assert_eq!(
+            std::fs::read_to_string(dir.join("latest")).unwrap().trim(),
+            first.display().to_string(),
+            "a failed run must leave the previous pointer untouched, not clear it"
+        );
+
+        // A later run that succeeds moves it.
+        let second = dir.join(snapshot_name(200));
+        publish_latest(&dir, &second).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(dir.join("latest")).unwrap().trim(),
+            second.display().to_string()
+        );
+
+        // No temp file is left behind — a reader globbing the directory must not
+        // find `.latest.tmp` and mistake it for a snapshot or a pointer.
+        assert!(!dir.join(".latest.tmp").exists(), "the temp file is renamed, not left");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     /// The ring keeps the newest `keep` snapshots and deletes older ones,
     /// leaving unrelated files alone.
