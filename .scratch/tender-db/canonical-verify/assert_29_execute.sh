@@ -33,7 +33,18 @@ TOKEN_FILE=/root/tdb-diag-token
 [ -r "$TOKEN_FILE" ] || { echo "FAIL: no token at $TOKEN_FILE" >&2; exit 2; }
 T=$(cat "$TOKEN_FILE")   # never echoed, never in argv
 
-SQL="SELECT COUNT(*), SUM(skipped_at IS NOT NULL), SUM(reprocessed_at IS NOT NULL), SUM(skipped_at IS NULL AND reprocessed_at IS NULL) FROM quarantine WHERE reason = 'unparsable-xml' AND detail LIKE 'XML with DTD detected%'"
+# SCOPED TO WHAT THIS EXECUTE TOUCHED — corrected 2026-08-06 after the first run
+# raised a false alarm on a clean execute. The original counted every row under the
+# DTD label, so `reprocessed_at IS NOT NULL` swept up 26,948 rows RECLAIMED IN JULY
+# by an unrelated operation, and reported them as "wrongly_reclaimed" — the arm
+# whose whole job is to refute. It also compared a total (621,863 rows under the
+# label) against 594,915, which was the OUTSTANDING figure from issue 137: a number
+# derived from a filtered query, asserted against an unfiltered one.
+#
+# The refuting question is not "does any DTD row carry reprocessed_at" — legitimate
+# history says yes. It is "does any row THIS RUN MARKED also carry reprocessed_at",
+# and that is identified by its own marker, skipped_reason.
+SQL="SELECT (SELECT COUNT(*) FROM quarantine WHERE skipped_reason = 'internal-ojs-non-english'), (SELECT COUNT(*) FROM quarantine WHERE skipped_reason = 'internal-ojs-non-english' AND reprocessed_at IS NOT NULL), (SELECT COUNT(*) FROM quarantine WHERE reason = 'unparsable-xml' AND detail LIKE 'XML with DTD detected%' AND skipped_at IS NULL AND reprocessed_at IS NULL), (SELECT COUNT(*) FROM quarantine WHERE reason = 'unparsable-xml' AND detail LIKE 'XML with DTD detected%')"
 
 # The bearer header goes in on STDIN as a curl config, not as `-H` — an argv
 # header is visible in `ps` to anything that can read /proc. Root-only on a
@@ -53,13 +64,13 @@ if [ "$resp" != "200" ]; then
   head -c 400 /tmp/a29.json >&2; echo; exit 2
 fi
 
-read -r rows skipped reclaimed outstanding < <(
+read -r marked marked_and_reclaimed outstanding dtd_total < <(
   jq -r '.rows[0] | "\(.[0]) \(.[1]) \(.[2]) \(.[3])"' /tmp/a29.json 2>/dev/null)
 rm -f /tmp/a29.json
 
 # An unparseable response must FAIL, never read as zeros — zeros here would
 # silently satisfy `wrongly_reclaimed = 0`, which is the one arm that refutes.
-case "${rows:-}${skipped:-}${reclaimed:-}${outstanding:-}" in
+case "${marked:-}${marked_and_reclaimed:-}${outstanding:-}${dtd_total:-}" in
   ''|*null*) echo "FAIL: could not parse a numeric result — refusing to treat an absent answer as a clean one" >&2; exit 2;;
 esac
 
@@ -70,10 +81,10 @@ check() { # check <label> <got> <want>
 }
 
 echo "== issue 84/#29 post-execute assertion  $(date -u +%FT%TZ) =="
-check "dtd_rows"          "$rows"        594915
-check "marked_skipped"    "$skipped"     592856
-check "wrongly_reclaimed" "$reclaimed"   0
-check "still_outstanding" "$outstanding" 2059
+check "marked_by_this_run"  "$marked"              592856
+check "marked_AND_reclaimed" "$marked_and_reclaimed" 0
+check "still_outstanding"   "$outstanding"          2059
+printf '  ctx   %-22s %s  (621,863 total under the label = 26,948 reclaimed in July + 594,915 that were outstanding)\n' "dtd_label_total" "$dtd_total"
 
 echo
 echo "still_outstanding 2,059 = 154 held-but-unextracted + 1,898 (2010-03) + 7 (language guard)"
@@ -81,7 +92,7 @@ if [ "$fail" -eq 0 ]; then
   echo "VERDICT ok — the execute wrote what it said, and wrote it to the right column."
 else
   echo "VERDICT BROKEN — do NOT record #29 as resolved."
-  echo "wrongly_reclaimed != 0 is the severe case: it means reprocessed_at was written,"
+  echo "marked_AND_reclaimed != 0 is the severe case: this run wrote reprocessed_at,"
   echo "claiming ~593k notices entered the corpus that never did (store/src/lib.rs:158)."
 fi
 exit "$fail"
