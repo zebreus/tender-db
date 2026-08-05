@@ -178,7 +178,14 @@ self_test() {
   local g="$d/g.sh"
   printf '#!/usr/bin/env bash\ncase "$TIER" in 0) echo "VERDICT ok"; exit 0;; C) echo "VERDICT BROKEN"; exit 1;; A) echo "cannot run"; exit 2;; *) echo "VERDICT ok"; exit 0;; esac\n' > "$g"
   chmod +x "$g"
-  local ran; ran=$(GATE="$g" VERDICT_STATE="$d/v" TIERS="0 C A B" "$0" --snapshot "$d/fake" 2>/dev/null)
+  # `|| rc=$?` again, and for the same reason one level up: without it a failing
+  # sub-invocation aborts THIS function before any assertion below runs, so a
+  # future regression shows `exit 1` and silence — no FAIL naming what broke. The
+  # fix for a set -e bug being itself silenced by set -e is funny once; a
+  # diagnostic that dies with the thing it diagnoses is not (sdk-vendor).
+  local ran rc=0
+  ran=$(GATE="$g" VERDICT_STATE="$d/v" TIERS="0 C A B" "$0" --snapshot "$d/fake" 2>/dev/null) || rc=$?
+  [ "$rc" -eq 0 ] || { echo "FAIL: the runner exited $rc — it must survive a gate that returns non-zero"; exit 1; }
   grep -q 'tier0  *ok'     <<<"$ran" || { echo "FAIL: a passing tier must classify ok"; exit 1; }
   grep -q 'tierC  *red'    <<<"$ran" || { echo "FAIL: gate exit 1 (violations) must be red"; exit 1; }
   grep -q 'tierA  *BLIND'  <<<"$ran" || { echo "FAIL: gate exit 2 (cannot run) must be BLIND, never red"; exit 1; }
