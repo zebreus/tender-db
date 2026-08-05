@@ -1,4 +1,15 @@
 #!/usr/bin/env bash
+#
+# SUPERSEDED ENGINE (ruling 2026-08-05): this reads fixtures with STOCK SQLITE3.
+# The owner ruled turso-only, and the ruling is a CORRECTNESS one, not a matter of
+# consistency: issue 112's whole lesson is that stock-sqlite3 plans are not turso
+# plans. A bed characterising READ PERFORMANCE under sqlite3 measures the wrong
+# engine for exactly the questions 30a/30b ask. When this work is picked up it is
+# to be REBUILT ON TURSO from the start. The DESIGN below carries over — the
+# selectivity bounds, the referential-coverage check, and the corrected anchor
+# (matches must RUN OUT with most of the table still ahead, and the count must
+# exceed LIMIT so pagination reaches an unfillable page). The ENGINE does not.
+#
 # ============================================================================
 # fixture_selectivity_gate.sh — issue 30a. Is this bed fit to be CLOCKED on?
 #
