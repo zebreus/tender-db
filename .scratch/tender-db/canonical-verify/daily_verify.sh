@@ -36,7 +36,36 @@
 #
 # The units themselves (paths, MemoryMax/IOWeight, StateDirectory) belong with
 # whoever owns the box; this is the logic they invoke, so it can be read and
-# self-tested without one.
+# self-tested without one. AS OF 2026-08-05 THEY DO NOT EXIST — not written, not
+# merely uninstalled. Do not read this file's existence as implying them.
+#
+# ---------------------------------------------------------------------------
+# TWO MEASURED TRAPS FOR WHOEVER WRITES THOSE UNITS. Both were found the
+# expensive way; both are invisible from reading systemd's documentation; and
+# both had, until this comment, lived only in inter-agent messages — which is how
+# a lesson arrives too late to the one person it was for.
+#
+# TRAP 1 — `RuntimeMaxSec` IS INERT FOR `Type=oneshot`. The whole ExecStart runs
+# with the unit in ActiveState=activating, and RuntimeMaxSec bounds the ACTIVE
+# state, so it never applies. MEASURED: RuntimeMaxSec=5 let a 30s sleep run the
+# full 30s; TimeoutStartSec=5 killed it at 5s. Use TimeoutStartSec (set both if
+# you like, but only one enforces). I reported RuntimeMaxSec upward as "a hard
+# bound enforced by systemd" before measuring it. It was decoration, and an
+# assert that checked the SETTING'S PRESENCE confirmed it happily.
+#
+# TRAP 2 — ENV DOES NOT CROSS THE `systemd-run` BOUNDARY. GATE_LABEL, STATE_FILE,
+# FAIL_ON_REPEAT and MAX_AGE_H are NOT inherited; they need explicit --setenv (or
+# Environment= in the unit). A unit that omits them does not fail — it runs the
+# right checks under the DEFAULT label against the DEFAULT state file, so all
+# four tiers silently share one state and every repeat-detection is nonsense.
+# Caught only because a run under a fresh label reported repeat=yes, which was
+# impossible. This one fails permissive in the suite's own idiom: it reports
+# confidently, and the number it reports is meaningless.
+#
+# Corollary for the unit files: `FAIL_ON_REPEAT=1` on all four is decision (2)'s
+# other half, and it is inert unless each unit ALSO gets its own STATE_FILE.
+# Setting the first without the second yields four units agreeing on one file.
+# ---------------------------------------------------------------------------
 #
 #   daily_verify.sh --snapshot /data/db/snapshots/x.db
 #   daily_verify.sh --self-test        # no snapshot, no box
