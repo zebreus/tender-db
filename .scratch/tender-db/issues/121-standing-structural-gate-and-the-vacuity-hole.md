@@ -198,7 +198,35 @@ use today, in an argument that turned on the size. They cannot both be right, an
 paragraph above — **neither is the reclaimable figure**, because on a reflink filesystem what a
 deletion frees is the file's *exclusive* extents, not its apparent size.
 
-So the standing cost of keeping the prenuke is **unmeasured**, while being quoted confidently in two
+**RESOLVED the same day, by looking** (2026-08-05T08:0xZ, metadata only — `ls`/`find`/`df`, no data
+pages, the free category):
+
+```
+/data/db/tender-db.db.prenuke-20260728   356,205,477,888 B   2026-07-28T11:21:59Z
+/data/db/tender-db.db                    455,205,724,160 B   (live)
+/data/db/baseline-prefold-1785584909.db  442,244,546,560 B
+/data/db/snapshots/  ring=2              453.3 GB + 455.0 GB  (08-03, 08-04)
+/data/archive                            179 GB apparent
+/data                                    1000 GB total, 876 used, 124 free (88%)
+```
+
+**The apparent size is 356 GB. This issue's figure was right; task #20's "88 GB" is wrong by 4×** —
+and the date matches the 07-28 verdict exactly, so it is the right file. Apparent sizes now sum to
+~2.36 TB inside 876 GB used, which is the reflink sharing restated as arithmetic.
+
+One charitable reading is worth keeping open rather than closing: **88 GB may have been an
+*exclusive-extent* estimate** — i.e. the genuinely useful number — recorded without saying so. If
+that is what it was, the two figures were never inconsistent, they measured different things, and the
+defect was purely that the units went unstated. That possibility cannot be settled from here, and it
+is the reason the reclaim still needs measuring rather than assuming 356 GB would be freed.
+
+Note the direction the sharing argument runs, because it is not the obvious one: the prenuke is from
+07-28 and the live DB has been rewritten since (projections, index builds). Copy-on-write **breaks**
+sharing as the live file diverges, so the prenuke's *exclusive* fraction grows over time. The reclaim
+could be far larger now than a naive "it's all shared" intuition suggests — which cuts against the
+assumption that keeping it is nearly free.
+
+So the standing cost of keeping the prenuke was **unmeasured**, while being quoted confidently in two
 mutually inconsistent forms. It is also cheaply measurable: `filefrag`/fiemap reports a `SHARED` flag
 per extent, which makes exclusive-vs-shared a read-only, metadata-only, bounded question — the free
 category, not the gated one. Nobody should argue from the reclaim, in either direction, until that
