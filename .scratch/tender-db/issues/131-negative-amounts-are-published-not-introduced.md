@@ -104,3 +104,31 @@ The fix is to the invariant, not the data: `run_light` 3.7 should assert what is
 published procurement amounts. Worth deciding deliberately rather than by relaxation — "negative amounts
 exist" and "negative amounts are fine anywhere" are different claims, and the second is probably false
 (a negative *estimated total value* is likelier a defect than a negative correction line).
+
+---
+
+## The other two negative-money surfaces are NOT the same question (2026-08-05)
+
+sdk-vendor found that `run_light` 3.7 and the standing gate only ever covered
+`tender_version_amounts.cents`; `tender_version_lot_results.awarded_cents` and
+`tender_version_bids.cents` were never gated anywhere. Both now are, expecting 0. They deliberately did
+**not** extend this issue's "negatives are legitimate on `result_value`" conclusion to `awarded_cents`,
+on the grounds that plausible is not measured. That caution is correct, and the code gives a stronger
+reason than caution:
+
+**`awarded_cents` has two provenances, and only one of them is publication.** At `project.rs:2375-2399`
+it is either `r.direct_cents` — a published value, the same shape as `result_value` — **or**
+`single_currency_total(winning bids)`, a **computed sum** of the winning bids' cents.
+
+That matters twice over:
+
+1. **This issue's conclusion cannot transfer to the derived arm even in principle.** The finding here was
+   that negatives are *published by the source and faithfully copied*. A negative arriving from a **sum**
+   is arithmetic, not publication — a different thing needing a different explanation, and one where "the
+   source said so" is not available as an answer.
+2. **The two new checks are not independent.** A negative `bids.cents` propagates into
+   `awarded_cents` through that sum. So a finding in bids would **mechanically explain** a finding in
+   awarded_cents on the same tenders. **Triage bids first**, or the same root cause gets investigated
+   twice under two names.
+
+Neither observation predicts the counts will be non-zero. They are what to reach for if they are.
