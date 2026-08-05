@@ -65,6 +65,16 @@ pub async fn run(db: &Db, config: &Config, now: i64) -> Result<String, String> {
     // verifier resolving by glob would check yesterday's photograph and report a
     // fresh green for a cycle that produced nothing.
     //
+    // The ORDERING here is load-bearing and must not be "optimised" earlier — e.g.
+    // to advertise a snapshot as in-progress. `db.snapshot` writes to `dest`
+    // DIRECTLY (no temp name), so a mid-write snapshot is already visible at its
+    // final, valid-looking name: anything resolving by glob or `ls | tail -1` can
+    // select the file currently being written. Publishing only after `snapshot`
+    // returns Ok — i.e. after the copy AND `integrity_check` — is what makes a
+    // pinned consumer structurally unable to read a partial file. Move this line
+    // up and that guarantee is gone, silently (sdk-vendor found the glob form of
+    // this hole reading a snapshot growing 16 GB every 8 s).
+    //
     // Written LAST and only on success, so the pointer never names a partial file;
     // temp-then-rename so a reader never sees a half-written one. Best-effort by
     // design — a snapshot that succeeded must not be reported as failed because a
