@@ -148,6 +148,26 @@ one unit and has no expression to get wrong. Prove the absence of patterns mecha
 (`grep -nE "pkill|pgrep| -f |--all"`) rather than by eye — "there are no patterns here" is exactly the
 kind of claim that reads true and isn't.
 
+### Killing the parent is not killing the work (sdk-vendor, 2026-08-05 — a repeat)
+
+`kill $(… | head -1)` took the first matching pid — the **wrapper** — and left `bash /tmp/watcher.sh`
+running as an orphan. The verification printed `remaining: 1`, which I read and did not chase, so a
+watcher with a known defect kept running for four minutes alongside its replacement. It surfaced only
+because the two wrote to the same log and an **old-format line appeared between two new-format ones**.
+
+This is the second time: stopping the unconfined 455 GB scan took four attempts for the same reason —
+pattern-kill matched the launcher, the `sqlite3` child survived, and the orphan was found only by
+checking from a third view. The rule earned twice:
+
+* **Enumerate every match and kill all of them, then re-list and assert zero.** `remaining: 1` is a
+  failed kill, not a rounding error. A non-zero count after a kill is the whole signal.
+* **`&` is not `setsid`.** Backgrounded children stay in the caller's process group and can survive a
+  kill aimed at the parent, or outlive the session. Start anything long-lived so it can be killed as a
+  group, and kill the group.
+* The general form of both instances: **a stop that is not verified from an independent view is a
+  belief about a stop.** Same shape as the checks in this file — the difference between "I sent a
+  signal" and "the work is not running" is exactly the difference between a claim and a measurement.
+
 ## Three operational rules
 
 1. **Bound work where it runs.** `timeout N ssh host cmd` bounds the client; `ssh host 'timeout N cmd'`
