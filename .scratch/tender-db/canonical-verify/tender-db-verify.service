@@ -13,13 +13,17 @@
 ## is inside the cgroup and invokes the gate as an ordinary subprocess, so
 ## GATE_LABEL/FAIL_ON_REPEAT inherit normally and there is no boundary to forget.
 ##
-## NOT INSTALLED. Authored off-box; installing and verifying against real prod
-## paths needs the on-box window. Everything below marked ⚠ is unverified here.
+## NOT INSTALLED. Authored off-box, then corrected against the box:
+##   * paths carry the `src/` component — the checkout is at /opt/tender-db/SRC/,
+##     which I had guessed wrong (team-lead verified, 2026-08-05);
+##   * cgroup v2 CONFIRMED on prod (`cgroup2fs`), so MemoryMax genuinely bounds
+##     page cache and the confinement is not the void-but-reassuring kind.
+## Remaining ⚠ are marked at the line.
 
 [Unit]
 Description=tender-db structural verification — FIRST RUN IS AN INVENTORY, not an incident: \
 every violation it reports is a pre-existing condition being counted for the first time
-Documentation=file:///opt/tender-db/.scratch/tender-db/design/daily-verify-integration.md
+Documentation=file:///opt/tender-db/src/.scratch/tender-db/design/daily-verify-integration.md
 After=tender-db.service
 
 [Service]
@@ -67,7 +71,7 @@ StateDirectory=tender-db
 ## lands, this unit's first fire will fail with "no pinned snapshot pointer". That
 ## is the correct failure and the correct order: install after the deploy, not
 ## before, so the first run you watch is one that can succeed.
-ExecStart=/bin/sh -c 'p=$$(cat /data/db/snapshots/latest 2>/dev/null) || { echo "no pinned snapshot pointer — refusing to guess"; exit 1; }; exec /opt/tender-db/.scratch/tender-db/canonical-verify/daily_verify.sh --snapshot "$$p"'
+ExecStart=/bin/sh -c 'p=$$(cat /data/db/snapshots/latest 2>/dev/null) || { echo "no pinned snapshot pointer — refusing to guess"; exit 1; }; exec /opt/tender-db/src/.scratch/tender-db/canonical-verify/daily_verify.sh --snapshot "$$p"'
 
 ## A red tier is a FINDING to report, not a reason to fail the unit — the runner
 ## exits 0 and communicates through its verdict lines. The unit failing would
