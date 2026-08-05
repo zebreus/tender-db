@@ -246,6 +246,41 @@ remaining work**, while stating nothing false, so the work sits waiting for some
 needs. #28's unit files were the same — recorded as awaiting an on-box window when they had never
 been written, and authoring never needed a box at all.
 
+## Input-trust: what each mechanism covers, and what none of them does
+
+Five mechanisms now stand between the pipeline and a verdict. They are **orthogonal** — each answers
+a question the others cannot, and no one of them substitutes for another. Written down because the
+watch needs to know what "working" looks like, and because a reviewer who thinks two of these
+overlap will be tempted to remove one.
+
+| mechanism | question it answers | what it CANNOT see |
+|---|---|---|
+| snapshot pointer (`publish_latest` after `db.snapshot` returns `Ok`, i.e. after copy **and** `integrity_check`) | **Is this THIS cycle's output?** identity/provenance | a corpse elsewhere in the ring; anything resolving by glob instead of the pointer |
+| age check (`MAX_AGE_H`, default 30h) | **Is the input recent?** staleness | completeness — a corpse written five minutes ago is `age=0h` |
+| header size check (`1b3564c`) | **Is this a whole database?** completeness | staleness — a complete week-old snapshot passes cleanly |
+| `blind` state (`f118b4b`) | **Did the gate verify anything at all?** | nothing about the layer; it is precisely the admission that nothing is known |
+| snapwatch complete-ring count | **Can the ring still restore?** DR depth | whether the newest complete snapshot has correct *contents* |
+
+The division that matters most, since it is the one that looked redundant: **the pointer protects
+pinned consumers, the size check protects anything resolving by glob.** Both are needed while
+`newest` mode exists at all — and it exists because a pinned path is not always available.
+
+**What "working" looks like to the watch**
+
+* snapwatch, hourly: `TENDERDB_SNAPWATCH ok <newest-complete> age=<N>h ring=<K>` and **no WARNING lines**.
+* daily_verify: each tier `ok`, or a *stable* red that matches the known standing condition (issue 36).
+* **Any `BLIND` line means the gate verified nothing** — investigate the *input*, not the layer. It
+  repeats every run by design and will not go quiet on its own.
+* A corpse warning means a snapshot run died mid-copy. Until copy-to-temp-then-rename lands in
+  `db.snapshot`, the partial file must be removed by hand; nothing prunes it and `newest` prefers it.
+
+**The residual gap, stated rather than left to be discovered.** All five mechanisms establish
+properties of the *file*. None establishes that the projection which produced it was correct or
+complete. A snapshot can be fresh, whole, pinned and structurally clean while being a faithful copy
+of a layer that a failed upstream job left half-built — the count-free checks would catch structural
+damage, but not "this ran against 3M notices instead of 12.4M". That is what the pipeline's own job
+accounting is for, and it is outside this gate's remit. Nobody should read a green here as covering it.
+
 ## State at 2026-08-05 — what is done, what is not, and what is unproven
 
 **Done and measured.** 28 checks across four tiers, all run confined against a pinned prod
