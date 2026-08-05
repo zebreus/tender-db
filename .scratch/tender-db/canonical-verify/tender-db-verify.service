@@ -62,9 +62,8 @@ StateDirectory=tender-db
 ## the wrong directory returned a confident, plausible, empty answer rather than an
 ## error, which is the failure shape this whole suite is about. Anyone who sees
 ## /data/db/snapshots and thinks it looks wrong is about to make that mistake.
-## ⚠ the pointer itself is now built — `snapshot::run` returns a summary
-## (`f19cbcb`: snapshot::run publishes it last, on success only, temp-then-rename)
-## but is NOT YET DEPLOYED — the running binary predates it. Until that app deploy
+## ⚠ the pointer itself is now BUILT (`f19cbcb` — `snapshot::run` publishes it
+## last, on success only, temp-then-rename) but NOT YET DEPLOYED — the running binary predates it. Until that app deploy
 ## lands, this unit's first fire will fail with "no pinned snapshot pointer". That
 ## is the correct failure and the correct order: install after the deploy, not
 ## before, so the first run you watch is one that can succeed.
