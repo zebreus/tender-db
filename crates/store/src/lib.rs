@@ -3360,3 +3360,97 @@ mod tests {
         let _ = std::fs::remove_file(&path);
     }
 }
+
+#[cfg(test)]
+mod fk_enforcement {
+    use super::*;
+
+    /// The declared `REFERENCES` on the canonical tables are ENFORCED by turso,
+    /// in both directions — and the whole incremental-verification mapping
+    /// (issue 133 / task #28) rests on that being true.
+    ///
+    /// The `orphan_*` family of standing checks has no incremental assertion
+    /// form of its own outside the projection, because it does not need one:
+    /// with `foreign_keys=ON` an orphan is *unrepresentable*. That argument is
+    /// only worth as much as this test. turso is a young engine and a declared
+    /// constraint it does not enforce reads exactly like one it does — so this
+    /// asserts the enforcement rather than trusting the declaration.
+    ///
+    /// Both arms matter and they fail independently:
+    ///   * child-insert  — the fold's shape (a version for a missing tender);
+    ///   * parent-delete — the LATER breakage sdk-vendor raised, where the rows
+    ///     are written correctly and the invariant is broken afterwards by a
+    ///     delete. An engine could enforce the first and not the second.
+    ///
+    /// This says nothing about the projection itself, which runs
+    /// `set_foreign_keys(false)` deliberately (issue 19) — inside a projection
+    /// run these guarantees are OFF by design, which is precisely why the
+    /// orphan checks still need batch-scoped assertions THERE and only there.
+    #[tokio::test]
+    async fn declared_foreign_keys_are_enforced_on_insert_and_on_delete() {
+        let path = format!("/tmp/tender-db-fkenforce-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+
+        // A child pointing at a parent that does not exist must be refused.
+        let orphan_insert = {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO tender_versions(tender_id,seq,caused_by_notice_id,published_at,publication_id)
+                   VALUES (999,1,1,1,'x');",
+            )
+            .await
+        };
+        assert!(
+            matches!(orphan_insert, Err(turso::Error::Constraint(_))),
+            "turso accepted a tender_versions row for a nonexistent tender — the \
+             orphan_* checks lose their structural guarantee: {orphan_insert:?}"
+        );
+
+        // Build a VALID parent/child pair with enforcement off (the projection's
+        // regime), restore enforcement, then delete the parent.
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO notices(id,source,publication_id,content_hash,parse_state,profile,fetch_id,member_path,ingested_at)
+                   VALUES (1,'ted','p1','h1','parsed','eforms',1,'m',0);
+                 INSERT INTO tenders(id,source,kind,created_at,current_seq,current_published_at)
+                   VALUES (1,'ted','procedure',0,1,1);
+                 INSERT INTO tender_versions(tender_id,seq,caused_by_notice_id,published_at,publication_id)
+                   VALUES (1,1,1,1,'x');",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        let parent_delete = {
+            let conn = db.conn().await;
+            conn.execute("DELETE FROM tenders WHERE id=1", ()).await
+        };
+        assert!(
+            matches!(parent_delete, Err(turso::Error::Constraint(_))),
+            "turso deleted a tender that still has versions — orphans CAN appear \
+             after a correct write, and orphan_versions needs a real detector: {parent_delete:?}"
+        );
+
+        // And the child is still there, with its parent: the delete was refused,
+        // not silently cascaded (which would be a different, also-wrong outcome).
+        let (children, parents) = {
+            let conn = db.conn().await;
+            let mut c = conn
+                .query("SELECT (SELECT COUNT(*) FROM tender_versions WHERE tender_id=1), (SELECT COUNT(*) FROM tenders WHERE id=1)", ())
+                .await
+                .unwrap();
+            let row = c.next().await.unwrap().unwrap();
+            (
+                row.get_value(0).unwrap().as_integer().copied().unwrap_or(-1),
+                row.get_value(1).unwrap().as_integer().copied().unwrap_or(-1),
+            )
+        };
+        assert_eq!((children, parents), (1, 1), "the refused DELETE must leave the pair intact, not cascade");
+    }
+}
