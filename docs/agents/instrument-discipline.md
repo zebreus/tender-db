@@ -314,10 +314,21 @@ survives (people quote it), the **rows do not**. Some time later someone plans w
 that the detail is available for a lookup, and it is not: it was never captured, only observed. The
 belief that it exists outlives the data by however long it takes someone to go and use it.
 
-**This project has already paid for it once.** The 88 GB `prenuke` backup is still on disk precisely
-because of this: its deletion rested on a "verified complete" verdict whose four named gates were ad-hoc
-queries that were never committed — only their *results* survived, in a note. The verdict could not be
+**This project has already paid for it once.** The `prenuke` backup is still on disk precisely because of
+this: its deletion rested on a "verified complete" verdict whose four named gates were ad-hoc queries
+that were never committed — only their *results* survived, in a note. The verdict could not be
 reproduced, so the backup could not be retired, and it has occupied the disk ever since.
+
+> **And the example contains a second instance of its own lesson, which is why it is the right example.**
+> I first wrote "the 88 GB prenuke" here. That number is not verified: the tracker carries **two
+> inconsistent figures** for the same file (88 GB in one place, 356 GB apparent in another), and — since
+> `/data` is XFS with `reflink=1` — **neither is the reclaimable amount.** Deleting a file whose extents
+> are shared with the live database frees far less than its apparent size, possibly almost nothing. So
+> the standing cost of keeping it is **unmeasured while being quoted confidently in two forms**, and I
+> propagated one of them into a document arguing against exactly that. (Caught by sdk-vendor, who went
+> and checked rather than repeating it.) The measurement is cheap and free-category — `filefrag` reports
+> a `SHARED` flag per extent — so nobody should argue the reclaim in either direction until someone
+> takes it.
 
 And it happened again the same day it was written up: a 407-row residue was assumed to be available for
 triage, because its aggregates had been reported. It was not. The residue now costs a fresh snapshot pass
