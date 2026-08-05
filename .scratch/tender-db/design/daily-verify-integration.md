@@ -303,6 +303,42 @@ filed separately rather than held as a blocker on this cadence.
   5-minute unit it would fire constantly and correctly. Tier 0's question is *"is the layer still there
   right now"*, not *"did a new cycle happen"*. Stated in the config, not discovered.
 
+## A known-red baseline needs no suppression — that is what state-not-event is FOR
+
+The two newly-gated negative-money surfaces fired on prod: **35,001 `awarded_cents` + 36,987
+`bids.cents`** (issue 36). So **Tier A is red, and stays red until #36 resolves.** The question put to
+me was: suppress it as a known-red baseline with a hard expiry, or block the timer on #36.
+
+**Neither.** Both are workarounds for a problem this design already solved. The state-not-event
+requirement says the verdict renders as *the standing condition of the layer* with **new violations
+distinguishable from continuing ones**. A red Tier A with 72,000 known rows **is** the standing
+condition — so it is **reported**, not **alerted**, every morning, and nothing needs suppressing.
+
+The alerting unit is therefore a **transition**, not a run:
+
+| event | alert? |
+|---|---|
+| a check goes red that was green | **yes** — a new finding |
+| a check stays red, same condition | no — it is the standing state, visible on the surface |
+| a check goes green that was red | **yes** — resolution is worth knowing |
+
+**Why this is better than suppression, and not merely tidier:** a suppression on
+`negative_amount(awarded_cents)` hides the case where 35,001 becomes 50,000. That is an *escalation on
+a suppressed check* — the single most valuable thing the check could tell us after the initial finding,
+and precisely what a blanket suppression discards. It also needs an expiry someone must remember, which
+is a promise, and this design has already established what happens to those.
+
+And blocking the timer on #36 would mean **the gate that just found 72,000 unchecked rows does not run
+until someone finishes triaging what it found** — the detector held hostage by its own first success.
+
+**Consequence to accept deliberately:** the first wired run alerts on every currently-red check at once.
+That is correct — it is the first time this detector has spoken — and it should be read as an inventory,
+not an incident.
+
+**This is also the first real test of the state-not-event requirement**, which until now was an argument
+about a hypothetical. It arrived within a day of being written and the requirement covered it without
+amendment, which is the outcome that argues for having made it firm rather than optional.
+
 ## REQUIREMENT: the verdict is a state, not an event (issue 33)
 
 **Firm requirement, team-lead 2026-08-04 — build it in from the start, not as polish.** The concrete
