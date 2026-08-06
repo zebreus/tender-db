@@ -10,10 +10,23 @@ When may an agent read something on the prod box without asking first? This is t
 |                | bounded                                                                        | unbounded                                                                                         |
 | -------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
 | **metadata**   | `df`, `stat`, `systemctl`, `xfs_info`, `sqlite_master`, a one-row `sqlite_stat1` read — **free, no permission needed** | `filefrag -v`, `du` over a large tree, unlimited `journalctl`, `ls` on a huge directory — **bound it explicitly, or treat it as a data read** |
-| **data pages** | —                                                                              | table scans, `integrity_check`, `dbstat`, any timing or characterisation run — **gate on the team lead's word; snapshot only, never the serving DB** |
+| **data pages** | indexed seeks / single-table aggregates via `/v1/sql` — **gate on the team lead's word, per read** | table scans of the corpus, `integrity_check`, `dbstat`, any timing or characterisation run — **no on-box path exists; see below** |
 
-A data-page read runs against a **checkpointed snapshot**, never the live database, because it competes
-for the one disk with the writer.
+**Updated 2026-08-06 — the snapshot ring no longer exists** (owner decision: the feature is removed,
+storage). The old prescription "data pages run against a checkpointed snapshot" is unfollowable, and an
+unfollowable rule gets reasoned past under pressure. The replacement, decided rather than left as a gap:
+
+- **Bounded data-page reads** (an indexed seek, a single-table aggregate — the shape the 84-remainder
+  attribution ran) go **through `/v1/sql` against the serving DB**, on the team lead's word per read,
+  in a low-traffic window. The endpoint's own bounds are load-bearing: one bare SELECT, 10 s cap,
+  allow-listed tables, the Class B shed. Never retry a 408 — the cap bounds your wait, not the work;
+  turso cannot interrupt a statement, so each retry stacks another uninterruptible scan.
+- **Heavy/unbounded data-page reads** (corpus-scale scans, characterisation runs) have **no compliant
+  on-box path at all** now. Do not construct one ad hoc. If one is genuinely needed, that is an owner
+  conversation (a purpose-built copy, off-box hardware) — bring the need to the team lead, who brings
+  it to Lennart.
+- The **archives** (immutable tars) are the durable artifact for member-level questions — reading them
+  is a bounded I/O job, gated like any data read.
 
 **Scope: this rule governs an AGENT reading the prod box.** The app reading its own database in-process
 is not covered by it at all — that is the service doing its job, not an operator taking a look. So an
@@ -66,8 +79,9 @@ safety one, and the two must not be conflated in either direction:
 - Free-cell reads: just run them. Inspecting the box must not require a negotiation, or nobody inspects
   the box.
 - Unbounded metadata: bound it, and say how in the write-up.
-- Data pages: ask the team lead, name the snapshot, state its age, and run it in a low-traffic window.
-  Someone with box access runs it; the requester does not need to be that person.
+- Data pages: ask the team lead, state the query and its bound, and run it through `/v1/sql` in a
+  low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
+  requester does not need to be that person.
 
 Both failure directions are real. Being too loose does not announce itself — nobody tells you about the
 read that quietly hurt. Being too strict produces beliefs that survive because nobody was permitted to

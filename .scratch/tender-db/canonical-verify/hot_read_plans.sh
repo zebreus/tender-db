@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================================
+# SUPERSEDED 2026-08-06: section A requires a checkpointed snapshot and the
+# snapshot feature was removed by owner decision (no ring exists — section A is
+# permanently no-input, not broken). Sections that read only the SERVING DB's
+# sqlite_master remain conceptually valid but this script is sqlite3-based and
+# the engine rule is turso-only — do not extend it; see docs/agents/prod-box-reads.md.
+# ============================================================================
 # hot_read_plans.sh — issue 112. Do the hot reads actually USE an index?
 #
 # READ-ONLY and METADATA-ONLY. Reads `sqlite_master` and compiles query plans.
