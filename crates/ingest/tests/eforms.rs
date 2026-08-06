@@ -302,6 +302,78 @@ fn sdk_17_company_size_join_field_is_captured() {
     );
 }
 
+/// Issue 141: TED's publication pipeline stamps the BT-803 transmission
+/// instant onto published notices regardless of the minor they declare —
+/// `efbc:TransmissionTime` is an SDK-1.5.0+ field, yet since ~2023-05 it is
+/// stamped onto notices still declaring eforms-sdk-1.3 (whose inventory only
+/// knows the date half). The stamp is publisher envelope metadata, not buyer
+/// form content, so it must be claimed and stored where BT-803 belongs.
+/// The fragment models the failing members' envelope: the stamp pair first
+/// under `efext:EformsExtension`.
+#[test]
+fn ted_transmission_stamp_is_claimed_on_older_minors() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractAwardNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+    xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1"
+    xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <efext:EformsExtension>
+          <efbc:TransmissionDate>2023-06-01+02:00</efbc:TransmissionDate>
+          <efbc:TransmissionTime>10:30:00+02:00</efbc:TransmissionTime>
+        </efext:EformsExtension>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+</ContractAwardNotice>"#;
+    let parsed = match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("sdk-1.3 notice with a TED transmission stamp must parse, got {other:?}"),
+    };
+    // The date half claims its time counterpart (UBL Date/Time pairing), so
+    // the stamp lands as one instant under BT-803(d)-notice.
+    assert_eq!(
+        *value(&parsed, "PROCEDURE", "BT-803(d)-notice"),
+        NoticeValue::Date { utc_seconds: 1_685_608_200, offset_minutes: 120, has_time: true }
+    );
+}
+
+/// The negative control for the issue-141 carve-out: it claims exactly the
+/// transmission stamp, not arbitrary unknown envelope content — a genuinely
+/// unknown element in the same position still quarantines the notice whole.
+#[test]
+fn unknown_envelope_content_still_quarantines_on_older_minors() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractAwardNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+    xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1"
+    xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <efext:EformsExtension>
+          <efbc:TransmissionDate>2023-06-01+02:00</efbc:TransmissionDate>
+          <efbc:BogusEnvelopeStamp>x</efbc:BogusEnvelopeStamp>
+        </efext:EformsExtension>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+</ContractAwardNotice>"#;
+    match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "unclaimed-content");
+            assert!(detail.unwrap_or_default().contains("BogusEnvelopeStamp"));
+        }
+        other => panic!("unknown envelope content should quarantine, got {other:?}"),
+    }
+}
+
 /// Issue 78: real DÖE `eforms-sdk-1.0` notices parse exhaustively — the DÖE JAXB
 /// serializer's structural quirks (UBO nested under `efac:Organization`, and the
 /// appeal/tender-recipient bodies inlined as full UBL parties) are grafted onto

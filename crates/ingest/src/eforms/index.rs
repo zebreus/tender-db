@@ -693,6 +693,32 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             true,
         )?;
 
+        // BT-803 transmission stamp (issue 141). TED's publication pipeline
+        // stamps the eSender dispatch instant (`efbc:TransmissionDate` +
+        // `efbc:TransmissionTime`) onto published notices since ~2023-05 —
+        // envelope metadata written by the publisher, regardless of the minor
+        // the notice declares. `fields-1.3.0.json` knows only the date half
+        // (BT-803(t) enters the vendored line at 1.5.0) and `fields-1.0.0.json`
+        // knows neither, so 4,827 sdk-1.3 notices quarantined on the stamp
+        // alone. Claim both halves under their proper field ids on every
+        // minor; gap-fill (`true`) keeps the declaration of inventories that
+        // already carry them.
+        for (leaf, id, kind) in [
+            ("efbc:TransmissionDate", "BT-803(d)-notice", "date"),
+            ("efbc:TransmissionTime", "BT-803(t)-notice", "time"),
+        ] {
+            insert_extra(
+                &mut root,
+                &format!(
+                    "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent\
+                     /efext:EformsExtension/{leaf}"
+                ),
+                id,
+                kind,
+                true,
+            )?;
+        }
+
         // Gap-filling aliases, after every declared path is in place.
         for &(source, target) in ALIASES {
             for field in &sdk.fields {
