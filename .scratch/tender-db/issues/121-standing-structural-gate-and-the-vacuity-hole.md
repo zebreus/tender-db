@@ -246,6 +246,33 @@ remaining work**, while stating nothing false, so the work sits waiting for some
 needs. #28's unit files were the same — recorded as awaiting an on-box window when they had never
 been written, and authoring never needed a box at all.
 
+## 2026-08-06 — THE SNAPSHOT FEATURE IS REMOVED. The table below is VOID.
+
+Owner decision (Lennart): snapshots are gone — not enough storage. The ring is deleted, snapwatch
+is disabled, and proj-fix is removing the code. **There are no snapshots any more, ever.**
+
+Four of the five mechanisms in the table below were properties *of a snapshot*: the pointer, the age
+check, the header completeness check, and the corpse-aware ring depth. **All four are void** — not
+wrong when written, but describing an input that no longer exists. `blind` ≠ `red` is the one that
+survives, because it is about the verifier's own state rather than the input's.
+
+Verification inputs are now exactly two:
+
+* **the live DB**, for bounded checks only — via `/v1/sql` or in-app. Proven workable: the issue-137
+  quarantine reads are this shape (single-`reason` aggregate riding `quarantine_reason`).
+* **the archives**, which are now the durable artifact *and* the DR source of truth. Restore means
+  re-ingest. The 154 and 1,898 investigations were already archive-shaped and are unaffected.
+
+**The heavy-triage gap is now PERMANENT, not pending.** It was open awaiting `Spec::Verify{snapshot}`;
+that can never arrive. There is no non-destructive way to run a 40-minute/455 GB read against a
+consistent point-in-time image, because no such image is produced. Anything needing corpus-scale
+verification must be **incremental** (assert at write time) or **archive-based** (re-derive), and
+that is now a constraint rather than a preference — which is the same conclusion the incremental
+mapping reached from the other direction.
+
+Kept below rather than deleted, because the *reasoning* about orthogonal mechanisms and what each
+cannot see is still the right way to think about input trust; only these particular five are gone.
+
 ## Input-trust: what each mechanism covers, and what none of them does
 
 Five mechanisms now stand between the pipeline and a verdict. They are **orthogonal** — each answers
