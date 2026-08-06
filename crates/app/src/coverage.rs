@@ -259,7 +259,6 @@ async fn measure_system(db: &Db, now: i64) -> store::turso::Result<System> {
         service_rev: crate::v1::rev().to_owned(),
         // An age, not an instant — a browser with a wrong clock must not be able
         // to report the import as healthy.
-        snapshot_age: db.last_snapshot_at().await?.map(|at| now - at),
         lag: Lag {
             fetch_age: lag.newest_fetch_at.map(|at| now - at),
             notice_age: lag.newest_notice_at.map(|at| now - at),
@@ -454,7 +453,6 @@ mod tests {
                 measured_at: 0,
                 cursor: 4242,
                 service_rev: "test".into(),
-                snapshot_age: None,
                 lag: Lag::default(),
             }),
             ..Dashboard::default()

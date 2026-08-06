@@ -89,7 +89,7 @@ pub fn DashboardPage() -> Element {
 
                     match &d.system {
                         Some(s) => rsx! {
-                            SystemPanel { rev: s.service_rev.clone(), cursor: s.cursor, lag: s.lag, snapshot_age: s.snapshot_age }
+                            SystemPanel { rev: s.service_rev.clone(), cursor: s.cursor, lag: s.lag }
                         },
                         None => rsx! { Measuring { title: "System" } },
                     }
@@ -152,7 +152,7 @@ fn Measuring(title: &'static str) -> Element {
 /// System status in one compact panel: the running server's revision, the change
 /// cursor, and how stale each end of the import pipeline is.
 #[component]
-fn SystemPanel(rev: String, cursor: i64, lag: Lag, snapshot_age: Option<i64>) -> Element {
+fn SystemPanel(rev: String, cursor: i64, lag: Lag) -> Element {
     rsx! {
         section { class: "panel",
             h2 { "System" }
@@ -168,8 +168,6 @@ fn SystemPanel(rev: String, cursor: i64, lag: Lag, snapshot_age: Option<i64>) ->
                 dd { "{age(lag.fetch_age)}" }
                 dt { "newest ingested notice" }
                 dd { "{age(lag.notice_age)}" }
-                dt { "last DB snapshot" }
-                dd { "{age(snapshot_age)}" }
             }
         }
     }

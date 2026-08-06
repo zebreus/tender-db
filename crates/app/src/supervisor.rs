@@ -21,7 +21,6 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
-use crate::snapshot;
 use ingest::{doe, fetch, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, QueuedJob};
 use serde::{Deserialize, Serialize};
@@ -159,10 +158,6 @@ enum Spec {
         #[serde(default)]
         clear_changes: bool,
     },
-    /// A consistent online snapshot of the store, shipped off-box (issue 23).
-    /// A unit variant, so it serialises into the durable job_queue as `"Snapshot"`
-    /// and survives a restart like any other job.
-    Snapshot,
     /// Rebuild any missing DEFERRED_TENDER_INDEXES / org indexes on the existing
     /// layer WITHOUT re-folding (issues 82/83): `build_tender_indexes` only runs at a
     /// rebuild's end, and a tmpfs-truncated run can leave the tender indexes partial,
@@ -219,7 +214,7 @@ enum Spec {
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct JobRequest {
-    /// `fetch` | `process` | `project` | `backfill` | `snapshot` | `daily`
+    /// `fetch` | `process` | `project` | `backfill` | `daily`
     /// (issue 69 catch-up) | `reprocess` (re-attempt a held quarantine bucket).
     pub kind: String,
     /// `ted` | `doe`.
@@ -342,7 +337,6 @@ impl Supervisor {
                 Ok(vec![self.push("project", params, Spec::Project { rebuild, clear_changes }).await])
             }
             "backfill" => self.enqueue_backfill(req).await,
-            "snapshot" => Ok(vec![self.push("snapshot", "snapshot".into(), Spec::Snapshot).await]),
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
@@ -828,7 +822,6 @@ impl Supervisor {
                     report.applied.versions_written
                 ))
             }
-            Spec::Snapshot => snapshot::run(&self.db, &snapshot::Config::from_env(), store::now_unix()).await,
             Spec::Reindex => {
                 // Both builders are CREATE INDEX IF NOT EXISTS loops — idempotent, so
                 // this rebuilds only the missing deferred indexes without touching the
@@ -1302,10 +1295,6 @@ impl Supervisor {
         );
         // One projection folds whatever the fetch+process just landed.
         ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
-        // Then a consistent snapshot of the day's result, shipped off-box by the
-        // systemd timer (issue 23). Last in the sequence, so it captures the
-        // freshly folded canonical layer.
-        ids.push(self.push("snapshot", "snapshot".into(), Spec::Snapshot).await);
         ids
     }
 }
@@ -1662,24 +1651,6 @@ mod tests {
         assert!(restarted.queued().is_empty(), "a cancelled job is gone from the durable queue too");
     }
 
-    /// Issue 23: a queued `snapshot` job round-trips through the durable queue —
-    /// `Spec::Snapshot` serialises into `job_queue` and deserialises back on
-    /// recovery. This is exactly the daily-pipeline case (the projection is
-    /// followed by a snapshot), so a restart mid-pipeline must bring it back.
-    #[tokio::test]
-    async fn a_snapshot_job_survives_a_restart() {
-        let db = scratch().await;
-        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
-        let id = sup.enqueue_request(&req("snapshot")).await.unwrap();
-        assert_eq!(id.len(), 1);
-        assert_eq!(sup.queued()[0].kind, "snapshot");
-
-        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
-        restarted.recover().await;
-        let q = restarted.queued();
-        assert_eq!(q.len(), 1, "the snapshot job is restored");
-        assert_eq!((q[0].id, q[0].kind.as_str()), (id[0], "snapshot"), "Spec::Snapshot round-trips");
-    }
 
     /// Wrap a bare Spec in the Job envelope `run_spec` takes. The id/kind/params
     /// are irrelevant to these refusals — the Spec is what is under test.

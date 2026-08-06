@@ -42,9 +42,6 @@ pub struct System {
     /// `cargo build`). Measured server-side so the page always shows the rev that
     /// actually served it.
     pub service_rev: String,
-    /// Age in seconds of the most recent successful DB snapshot (issue 23),
-    /// resolved server-side like the import lag; `None` when none has run.
-    pub snapshot_age: Option<i64>,
     pub lag: Lag,
 }
 
