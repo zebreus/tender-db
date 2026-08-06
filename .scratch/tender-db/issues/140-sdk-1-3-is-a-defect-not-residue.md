@@ -69,3 +69,64 @@ table that does not say so is exactly the defect this file exists to prevent els
 sat in a single "71,707 outstanding" number and look identical there. They separate the moment you
 ask for the rate *per member of the population* rather than the total — and the control (peers in the
 same fetches) is what turns "1.3 looks odd" into "1.3 is the only one at zero."
+
+
+---
+
+# Group A (the ~10% tail) — measured 2026-08-06, and it changes #39's premise
+
+The other half of #39's characterization. **Four things established, one left open, and the open one
+matters more than #39's current wording admits.**
+
+## What it is NOT
+
+**Not a scope gap.** 1.7's outstanding rows sit in 22 of the 33 fetches that hold 1.7 at all, and
+those fetches were processed — 95,968 of 109,649 rows reclaimed in the 9 examined closely.
+
+**Not unreachable.** `reclaim_notice` flags by `notice_id`, which is nullable, so rows without one
+would be untouchable by construction. Measured: of 71,707 outstanding rows, **0 have a null
+`notice_id`** (and 0 of the 1,129,367 reclaimed ones do either). **My hypothesis, and it was refuted
+cleanly.** They were reachable.
+
+**Not a stopped or resumed run.** `run_reprocess` takes `resume_after`, which skips packages a prior
+run drained — so an interrupted run would leave *whole fetches* untouched. Instead the shortfall is
+**uniform within every fetch**: 1.7 leaves 8.7–16.5% behind in each of its top ten fetches. A
+mechanical stop cannot produce a consistent within-fetch fraction.
+
+## What it IS, so far
+
+**A per-notice failure whose rate tracks SDK version.** Within the same 9 fetches — same run, same
+mechanism, fetch held constant:
+
+| sdk | % still held |
+|---|---|
+| 1.10 | 0.2% |
+| 1.9 | 0.9% |
+| 1.8 | 2.4% |
+| 1.7 | 9.9% |
+| 1.6 | 16.7% |
+| **1.3** | **100%** |
+
+**Monotone in version across 1.6→1.10**, with 1.3 off the scale (issue 140 above). A scope or
+scheduling artefact has no reason to correlate with SDK version; a *parse* failure does — older
+minors carry constructs the newer inventories dropped or renamed.
+
+## The open question, and why it is load-bearing
+
+**Were these rows attempted and failed, or never attempted?** `run_reprocess` counts `still_held` as
+a distinct outcome, so attempt-and-fail is a recorded possibility in the code — but I could not read
+the historical counts: `job_log` is deliberately **outside `/v1/sql`'s queryable public surface**
+(correct design; the endpoint is a public API, not an admin one), and the outcome string does not
+appear in the journal.
+
+**If attempted-and-failed — which the version gradient argues for — then #39's premise is wrong.**
+The task reads "reprocess the 71,707". Re-running would reproduce 71,707 failures and return no
+information. The work would be *diagnosis*, as with 1.3, not *reprocessing*.
+
+**Cheapest way to settle it:** read `job_log`'s `counts_json` for the July reprocess runs via the
+admin path (not `/v1/sql`), or run the reprocess over **one** fetch's 1.7 rows and see whether
+`still_held` comes back non-zero. The second is a few hundred rows and answers it directly.
+
+**Recorded as inference, not measurement:** the version gradient is strong evidence for
+attempted-and-failed and is not proof of it. #39 should not be re-scoped on this paragraph alone —
+it should be re-scoped after one of those two checks.
