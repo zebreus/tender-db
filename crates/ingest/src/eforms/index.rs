@@ -483,6 +483,35 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "UBL-ContractExecutionDescription",
         "text",
     ),
+    // A Spanish platform emits `cbc:ExecutionRequirementCode` with
+    // listName='permission' — BT-63/BT-769's codelist, which no SDK minor
+    // 1.0–1.15 defines for any contract-execution requirement (issues
+    // 141/143). Same parent-predicate shape as the Description carve-outs
+    // above: the predicated branch only ever joins its own listName, so it
+    // exact-matches ahead of the relaxed by-name fallback (which dies
+    // `ambiguous-field` across BT-736/743/744/764/OPT-060) and leaves that
+    // fallback intact for genuinely unknown listNames.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='permission']/cbc:ExecutionRequirementCode",
+        "UBL-ContractExecutionPermissionCode",
+        "code",
+    ),
+    // Tender validity published as a deadline (issue 143): BT-98 is a
+    // `cbc:DurationMeasure` in every minor, but a French publisher writes the
+    // validity end as a date instead. Same class as
+    // UBL-InvitationSubmissionDeadline above — the SDK enumerates one
+    // temporal shape, publishers send the other — and the same Date/Time
+    // pairing applies.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:TenderValidityPeriod/cbc:EndDate",
+        "UBL-TenderValidityDeadline",
+        "date",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:TenderValidityPeriod/cbc:EndTime",
+        "UBL-TenderValidityDeadline",
+        "time",
+    ),
     // eInvoicing acceptance indicator — the SDK models only the usage indicators
     // (ElectronicInvoiceUsageIndicator etc.), not the accepted one.
     (
@@ -603,6 +632,16 @@ impl Branch {
             branch = branch.child_mut(step);
         }
         branch
+    }
+
+    /// The branch at `steps` if every step is already present — unlike
+    /// [`descend`](Self::descend), never creates one.
+    fn existing(&self, steps: &[Step]) -> Option<&Branch> {
+        let mut branch = self;
+        for step in steps {
+            branch = branch.children.iter().find(|b| b.step.as_ref() == Some(step))?;
+        }
+        Some(branch)
     }
 }
 
@@ -760,6 +799,80 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             "text",
             true,
         )?;
+
+        // Bare Lot-level ProcessJustification description (issue 143, cause C).
+        // French and Italian buyers publish a Lot `cac:ProcessJustification`
+        // holding only free text — the exact shape SDK 1.12.0 itself adopted
+        // when BT-745-Lot's xpath dropped its
+        // `[cbc:ProcessReasonCode/@listName='no-esubmission-justification']`
+        // predicate. On ≤1.11 the bare block exact-matches the predicate-free
+        // PJ branch (planted at Lot level by the UBL-ProcessReason [`EXTRA`]
+        // entry) and its Description dies unclaimed: the procedure-level
+        // carve-out above is a direct call the [`ALIASES`] loop never
+        // replicates onto the Lot — that loop rewrites only `sdk.fields` and
+        // the [`EXTRA`] const. Claim the Lot description under BT-745-Lot,
+        // the field later SDKs declare at this very path; moving the pair
+        // into [`EXTRA`] instead would insert without gap-fill and displace
+        // 1.12+'s (and eforms-de-2.x's) own BT-745-Lot declaration, and at
+        // procedure level SDK-DE 1.x's DE1 field — so both stay direct,
+        // gap-filled calls. The predicated ≤1.11 branch still sorts first
+        // for real no-esubmission justifications.
+        insert_extra(
+            &mut root,
+            "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess\
+             /cac:ProcessJustification/cbc:Description",
+            "BT-745-Lot",
+            "text",
+            true,
+        )?;
+
+        // Subcontracting term code without its discriminator (issue 143,
+        // cause D). A Bulgarian eSender publishes
+        // `efac:SubcontractingTerm/efbc:TermCode` with no `@listName` —
+        // BT-773-Tender requires `[efbc:TermCode/@listName='applicability']`
+        // in every minor 1.7–1.15, and the attr-less element exact-matches
+        // the predicate-FREE ND-SubcontractedActivity branch instead (the
+        // BT-64/65 home), which has no TermCode leaf, so the relaxed
+        // fallback is suppressed and the code dies unclaimed. Claim it as
+        // BT-773-Tender on that predicate-free branch, OPT-060-style: the
+        // predicated ND-SubcontractedContract branch still sorts first and
+        // keeps declared inventories' own leaf exact. Gap-fill (`true`):
+        // SDK-DE 1.x declares its own DE1 field at this exact path and
+        // keeps it.
+        insert_extra(
+            &mut root,
+            "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension\
+             /efac:NoticeResult/efac:LotTender/efac:SubcontractingTerm/efbc:TermCode",
+            "BT-773-Tender",
+            "code",
+            true,
+        )?;
+
+        // Contract-execution description without its code (issue 143, cause
+        // E). A German buyer publishes `cac:ContractExecutionRequirement`
+        // blocks holding only a `cbc:Description` — BT-70's text with its
+        // `conditions` discriminator dropped. On minors 1.0–1.8 the SDK's
+        // own leaf-predicated code fields (BT-736/743/744/764 …) plant a
+        // predicate-free CER branch; the bare block exact-matches it and the
+        // description dies unclaimed. Add a Description leaf to that branch —
+        // but only where the SDK itself already planted it: *creating* a
+        // predicate-free CER step on the 1.9+ minors that define the block
+        // only with parent predicates is the documented ~1.4k-notice
+        // regression (see the UBL-ContractExecutionDescription note on
+        // [`EXTRA`]). Adding a leaf to an existing branch claims only
+        // currently-unclaimed descriptions and cannot change which branches
+        // an element matches.
+        let bare_cer = "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']\
+                        /cac:TenderingTerms/cac:ContractExecutionRequirement";
+        if root.existing(&locate(bare_cer)?.steps).is_some() {
+            insert_extra(
+                &mut root,
+                &format!("{bare_cer}/cbc:Description"),
+                "UBL-ContractExecutionDescription",
+                "text",
+                true,
+            )?;
+        }
 
         // Gap-filling aliases, after every declared path is in place.
         for &(source, target) in ALIASES {
