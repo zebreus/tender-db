@@ -374,6 +374,132 @@ fn unknown_envelope_content_still_quarantines_on_older_minors() {
     }
 }
 
+/// Issue 142, cause B: an Estonian eSender publishes the full BT-70 block —
+/// `cbc:ExecutionRequirementCode[@listName='conditions']` beside the
+/// description — on notices declaring eforms-sdk-1.3, but the code element
+/// (OPT-060-Lot) enters the vendored line only at 1.7.0. The code must be
+/// *claimed*, not stripped: without it the sibling Description loses its
+/// discriminator and dies `unclaimed-content` (proven by minimization).
+#[test]
+fn conditions_execution_requirement_code_is_claimed_on_older_minors() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+  <cac:ProcurementProjectLot>
+    <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+    <cac:TenderingTerms>
+      <cac:ContractExecutionRequirement>
+        <cbc:ExecutionRequirementCode listName="conditions">performance</cbc:ExecutionRequirementCode>
+        <cbc:Description languageID="EST">Juhtimissüsteemi nõuded</cbc:Description>
+      </cac:ContractExecutionRequirement>
+    </cac:TenderingTerms>
+  </cac:ProcurementProjectLot>
+</ContractNotice>"#;
+    let parsed = match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("sdk-1.3 notice with a conditions requirement must parse, got {other:?}"),
+    };
+    // The code lands under its proper later-SDK field id, the description
+    // under the field 1.3 itself declares.
+    assert!(matches!(
+        value(&parsed, "LOT-0001", "OPT-060-Lot"),
+        NoticeValue::Code { code, .. } if code == "performance"
+    ));
+    assert_eq!(text(&parsed, "LOT-0001", "BT-70-Lot"), "Juhtimissüsteemi nõuded");
+}
+
+/// The negative control for the issue-142 OPT-060 carve-out: it claims exactly
+/// the `conditions` code, scoped by its parent predicate — a requirement code
+/// with a genuinely unknown listName still relaxes to the same differing
+/// candidates and quarantines `ambiguous-field`, and OPT-060 is not among them.
+#[test]
+fn unknown_execution_requirement_code_still_quarantines_on_older_minors() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+  <cac:ProcurementProjectLot>
+    <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+    <cac:TenderingTerms>
+      <cac:ContractExecutionRequirement>
+        <cbc:ExecutionRequirementCode listName="quality-target">yes</cbc:ExecutionRequirementCode>
+      </cac:ContractExecutionRequirement>
+    </cac:TenderingTerms>
+  </cac:ProcurementProjectLot>
+</ContractNotice>"#;
+    match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "ambiguous-field");
+            let detail = detail.unwrap_or_default();
+            assert!(detail.contains("ExecutionRequirementCode"), "unexpected detail: {detail}");
+            assert!(!detail.contains("OPT-060"), "unknown listName claimed as OPT-060: {detail}");
+        }
+        other => panic!("unknown requirement listName should quarantine, got {other:?}"),
+    }
+}
+
+/// Issue 142, cause A: the same Estonian eSender emits a procedure-level
+/// `cac:ProcessJustification` with no `cbc:ProcessReasonCode` at all — the
+/// Description merely repeats the notice's own ContractFolderID UUID,
+/// publisher-invalid in every SDK minor. The privacy graft's predicate-free
+/// PJ branch exact-matches the bare block and suppresses the relaxed
+/// fallback, so without the carve-out the Description goes unclaimed.
+#[test]
+fn bare_process_justification_description_is_claimed() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractAwardNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+  <cac:TenderingProcess>
+    <cac:ProcessJustification>
+      <cbc:Description>7fc44e91-6d9e-4a3c-bb2f-08b4e0a34c31</cbc:Description>
+    </cac:ProcessJustification>
+  </cac:TenderingProcess>
+</ContractAwardNotice>"#;
+    let parsed = match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("bare ProcessJustification description must parse, got {other:?}"),
+    };
+    let row = parsed
+        .values
+        .iter()
+        .find(|v| v.field_id == "UBL-ProcessJustificationDescription")
+        .expect("the bare description is stored under its synthetic id");
+    assert!(matches!(
+        &row.value,
+        NoticeValue::Text { value, .. } if value == "7fc44e91-6d9e-4a3c-bb2f-08b4e0a34c31"
+    ));
+}
+
+/// The negative control for the issue-142 ProcessJustification carve-out: it
+/// claims exactly the description leaf — any other unknown child under the
+/// bare justification still quarantines the notice whole.
+#[test]
+fn unknown_process_justification_content_still_quarantines() {
+    let xml = r#"<?xml version="1.0"?>
+<ContractAwardNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+  <cbc:CustomizationID>eforms-sdk-1.3</cbc:CustomizationID>
+  <cac:TenderingProcess>
+    <cac:ProcessJustification>
+      <cbc:Note>not a justification either</cbc:Note>
+    </cac:ProcessJustification>
+  </cac:TenderingProcess>
+</ContractAwardNotice>"#;
+    match eforms::parse_payload("eforms:eforms-sdk-1.3", xml.as_bytes()) {
+        Parse::Quarantined { reason, detail } => {
+            assert_eq!(reason, "unclaimed-content");
+            assert!(detail.unwrap_or_default().contains("Note"));
+        }
+        other => panic!("unknown ProcessJustification content should quarantine, got {other:?}"),
+    }
+}
+
 /// Issue 78: real DÖE `eforms-sdk-1.0` notices parse exhaustively — the DÖE JAXB
 /// serializer's structural quirks (UBO nested under `efac:Organization`, and the
 /// appeal/tender-recipient bodies inlined as full UBL parties) are grafted onto

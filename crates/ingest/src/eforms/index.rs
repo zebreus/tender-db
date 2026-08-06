@@ -719,6 +719,48 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             )?;
         }
 
+        // OPT-060 contract-execution conditions code (issue 142). Estonian
+        // eSender notices declaring eforms-sdk-1.3 publish the full BT-70
+        // block — `cbc:ExecutionRequirementCode[@listName='conditions']`
+        // beside the description — but the code element enters the vendored
+        // line only at 1.7.0. On earlier minors it matches no exact leaf,
+        // relaxes to five differing candidates (BT-736/743/744/764/801) and
+        // the notice dies `ambiguous-field`. Claim it under its SDK-1.9+
+        // shape: the parent's `conditions` predicate means the leaf only ever
+        // joins a genuine BT-70 block (whose branch every minor has, via
+        // BT-70 itself), so the relaxed fallback for unlisted listNames stays
+        // intact — see the UBL-ContractExecutionDescription note on [`EXTRA`].
+        // Gap-fill (`true`): 1.9+ declares this exact leaf and keeps its own.
+        insert_extra(
+            &mut root,
+            "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms\
+             /cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='conditions']\
+             /cbc:ExecutionRequirementCode",
+            "OPT-060-Lot",
+            "code",
+            true,
+        )?;
+
+        // Bare procedure-level ProcessJustification description (issue 142).
+        // The same Estonian eSender emits `cac:ProcessJustification` with no
+        // `cbc:ProcessReasonCode` at all, its Description merely repeating the
+        // notice's own ContractFolderID UUID — publisher-invalid in every SDK
+        // minor (BT-1252 requires the direct-award discriminator in each).
+        // The privacy graft above creates a predicate-free PJ branch, so the
+        // bare block exact-matches it, the relaxed fallback never runs, and
+        // the Description goes unclaimed. Claim it under a synthetic UBL- id
+        // like the other undeclared-but-published leaves; the predicated
+        // direct-award branch still sorts first and keeps BT-1252 for real
+        // justifications. Gap-fill (`true`): SDK-DE 1.x declares its own
+        // field at this very path and keeps it.
+        insert_extra(
+            &mut root,
+            "/*/cac:TenderingProcess/cac:ProcessJustification/cbc:Description",
+            "UBL-ProcessJustificationDescription",
+            "text",
+            true,
+        )?;
+
         // Gap-filling aliases, after every declared path is in place.
         for &(source, target) in ALIASES {
             for field in &sdk.fields {
