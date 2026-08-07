@@ -553,6 +553,39 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "UBL-FrameworkDurationDescription",
         "text",
     ),
+    // BT-531 under a mutated discriminator (issue 144, cause L): Austrian
+    // (vemap) notices write the additional contract nature with
+    // `listName='eforms-contract-nature'` — the TED genericode *file* name —
+    // where every minor's predicate requires `listName='contract-nature'`.
+    // The mutated block exact-matches only the predicate-free branch the
+    // UBL-ProcurementTypeLabel entry above plants, which has no code leaf, so
+    // the code died `unclaimed-content`. The values are legitimate BT-531
+    // codes and no other business term shares this element+listName reading,
+    // so the claim keeps the BT id rather than a synthetic one; the predicated
+    // branch only ever joins the mutated listName and leaves genuinely
+    // unknown listNames quarantining.
+    (
+        "/*/cac:ProcurementProject/cac:ProcurementAdditionalType[cbc:ProcurementTypeCode/@listName='eforms-contract-nature']/cbc:ProcurementTypeCode",
+        "BT-531-Procedure",
+        "code",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:ProcurementProject/cac:ProcurementAdditionalType[cbc:ProcurementTypeCode/@listName='eforms-contract-nature']/cbc:ProcurementTypeCode",
+        "BT-531-Lot",
+        "code",
+    ),
+    // BT-76 legal-form text published in the wrong element (issue 144, cause
+    // M): an Italian notice puts the company-legal-form free text in
+    // `TendererQualificationRequest/cbc:Description` beside its (claimed)
+    // `cbc:CompanyLegalFormCode` — every minor spells that text
+    // `cbc:CompanyLegalForm`. One text leaf on the same predicate-free TQR
+    // branch the UBL-CompanyLegalForm* entries above plant; no SDK version
+    // declares any field at this path.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:TendererQualificationRequest/cbc:Description",
+        "UBL-CompanyLegalFormDescription",
+        "text",
+    ),
 ];
 
 #[derive(Debug, Default)]
@@ -874,6 +907,76 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             )?;
         }
 
+        // Award-criterion parameter code without its discriminator (issue
+        // 144, cause J). Austrian vemap notices publish
+        // `efac:AwardCriterionParameter/efbc:ParameterCode` with no
+        // `@listName` — every minor discriminates BT-5421/5422/5423 by that
+        // attribute, so the bare code relaxes to three differing candidates
+        // and dies `ambiguous-field`. With the discriminator genuinely
+        // dropped, storing any one of the three BT ids would be a guess (the
+        // number-weight/-fixed/-threshold codelists happen to be disjoint,
+        // but a branch cannot see the value), so the code is claimed under a
+        // synthetic UBL- id — code and any @listName stored as published.
+        // Added only where the minor itself plants the predicate-free
+        // parameter branch (1.0–1.7, whose predicate-free BT-541
+        // ParameterNumeric leaf already claims the sibling); never *created*
+        // on 1.8+, whose parameter blocks are parent-predicated only — the
+        // documented predicate-free-branch regression class. On those minors
+        // the proper listName'd codes keep their leaf-predicated BT-542x
+        // branches, which sort first. Gap-fill for form's sake: no inventory
+        // declares this exact leaf.
+        for scheme in ["Lot", "LotsGroup"] {
+            let parameter = format!(
+                "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='{scheme}']/cac:TenderingTerms\
+                 /cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion\
+                 /ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension\
+                 /efac:AwardCriterionParameter"
+            );
+            if root.existing(&locate(&parameter)?.steps).is_some() {
+                insert_extra(
+                    &mut root,
+                    &format!("{parameter}/efbc:ParameterCode"),
+                    "UBL-AwardCriterionParameterCode",
+                    "code",
+                    true,
+                )?;
+            }
+        }
+
+        // Lot-level procurement-legislation reference (issue 144, cause N).
+        // German TED notices declaring plain eforms-sdk-1.10 carry
+        // `cac:TenderingTerms/cac:ProcurementLegislationDocumentReference`
+        // (`vob-a-eu` + optional description) on their lots and parts — a
+        // home no EU minor declares (BT-01 is procedure-level only) but which
+        // the vendored eForms-DE inventory declares verbatim
+        // (DE1-ProcurementProjectLot-TenderingTerms-…-ID/-DocumentDescription):
+        // the national toolchain emits its tailoring onto the EU
+        // customization — the BT-803 "construct from another inventory in the
+        // vendored line" class across *dialects* rather than minors. Claimed
+        // as UBL- leaves mirroring the DE1 fields' xpaths and types, and
+        // skipped wholesale when the inventory itself declares the
+        // predicate-free construct (eforms-de-1.x), so the DE profiles' own
+        // DE1 ids keep every match rather than being displaced by a
+        // predicated twin branch.
+        let plain_pldr = "/*/cac:ProcurementProjectLot/cac:TenderingTerms\
+                          /cac:ProcurementLegislationDocumentReference";
+        if root.existing(&locate(plain_pldr)?.steps).is_none() {
+            for scheme in ["Lot", "Part"] {
+                let pldr = format!(
+                    "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='{scheme}']\
+                     /cac:TenderingTerms/cac:ProcurementLegislationDocumentReference"
+                );
+                insert_extra(&mut root, &format!("{pldr}/cbc:ID"), "UBL-ProcurementLegislationID", "id", true)?;
+                insert_extra(
+                    &mut root,
+                    &format!("{pldr}/cbc:DocumentDescription"),
+                    "UBL-ProcurementLegislationDescription",
+                    "text",
+                    true,
+                )?;
+            }
+        }
+
         // Gap-filling aliases, after every declared path is in place.
         for &(source, target) in ALIASES {
             for field in &sdk.fields {
@@ -947,6 +1050,7 @@ fn insert_extra(
         "indicator" => Decision::Integers,
         "amount" => Decision::Amounts,
         "number" => Decision::Numbers,
+        "id" => Decision::Ids,
         other => return Err(Error(format!("EXTRA field {field_id} has unknown type {other}"))),
     };
     let branch = root.descend(&locate(xpath)?.steps);
