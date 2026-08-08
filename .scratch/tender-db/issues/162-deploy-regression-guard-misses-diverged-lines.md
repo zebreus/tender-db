@@ -1,6 +1,6 @@
 # 162 — deploy.sh's regression guard misses diverged lines (silent feature rollback)
 
-Status: open — fix designed, to land as a follow-up commit (do not edit deploy.sh while a deploy runs)
+Status: resolved (`e4710e9`, 2026-08-08) — deploy.sh refuses targets that do not contain the deployed rev; FORCE_DIVERGENT=1 overrides. Follow-ups (detail-read latency probe) remain open below.
 Role: ops
 
 ## What happened
