@@ -1,6 +1,6 @@
 # 115 — tender_detail's per-lot correlated subqueries blow up on many-lot Tenders
 
-Status: fixed on branch `issue115-set-based-lot-summary` (`2751ce3`, off the deployed `1830d50`) —
+Status: landed on main (merge `3485e3d`, 2026-08-08) — prod verification pending the deploy. Original note: fixed on branch `issue115-set-based-lot-summary` (`2751ce3`, off the deployed `1830d50`) —
 awaiting an on-box timing before it ships. Pre-existing perf defect, surfaced 2026-08-03 during the
 lots-scan latency fix (diagnosed while deploying `1830d50`). NOT caused by that fix; older.
 Kind: performance

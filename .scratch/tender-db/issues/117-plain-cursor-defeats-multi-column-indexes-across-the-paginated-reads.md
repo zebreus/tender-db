@@ -1,6 +1,6 @@
 # 117 — a plain `id > ?` cursor defeats every multi-column index across the paginated reads
 
-Status: open — LIVE defect, measured on prod 2026-08-03 at rev `1830d50`. Pre-existing; not caused by
+Status: landed on main (merge `3485e3d`, 2026-08-08) — indexes rebuild via the issue-111 startup builder; prod verification pending. Originally: open — LIVE defect, measured on prod 2026-08-03 at rev `1830d50`. Pre-existing; not caused by
 `1830d50`, which fixed one instance of this class and left the rest.
 Kind: performance / availability
 Blocked by: —

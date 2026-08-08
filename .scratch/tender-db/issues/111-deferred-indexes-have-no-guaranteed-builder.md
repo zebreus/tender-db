@@ -1,6 +1,6 @@
 # 111 — the deferred indexes have no guaranteed builder: nothing detects or repairs a missing one
 
-Status: open — **LOW / latent risk. NOT an active incident.** Downgraded 2026-08-03 after
+Status: landed on main (merge `3485e3d`, 2026-08-08) — detection + background builder at startup (`d018052` line); prod verification pending. Originally: open — **LOW / latent risk. NOT an active incident.** Downgraded 2026-08-03 after
 the motivating hypothesis was REFUTED empirically (see "Refutation" below). The general
 class is real and worth closing eventually; there is no live defect behind it. Code work
 STOPPED.

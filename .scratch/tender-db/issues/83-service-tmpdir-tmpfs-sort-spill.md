@@ -1,6 +1,6 @@
 # 83 — service TMPDIR is tmpfs (RAM) → large external sorts spill into RAM and fail with ENOSPC
 
-Status: open — ROOT-CAUSED 2026-08-01 (run-driver). PROD PATCHED via machine-local drop-in (`/etc/systemd/system/tender-db.service.d/tmpdir.conf` → `TMPDIR=/data/tmp`, `ReadWritePaths=/data/tmp`). REPO FIX DEFERRED: the source is `nix/module.nix:135 PrivateTmp = true` (puts /tmp on tmpfs); the canonical fix must set `TMPDIR` (+ `ReadWritePaths`) to a disk-backed path matching where the DB lives on the deployment (`/data`) — confirm the `stateDir`↔`/data` mapping first so the nix change doesn't mis-map the spill or break the sandbox. Land with the issue-82 deploy after the recovery verifies.
+Status: resolved (landed on main, merge `3485e3d`, 2026-08-08 — see Comments; box drop-in was already live)
 Kind: reliability / ops-correctness
 Blocked by: —
 Relates to: 82 (the index build that exposed it), 62/63 (large sorts in the projection/index builds), coverage refresher scans
@@ -47,3 +47,13 @@ disk-backed at service start.
 This is a latent trap for ANY large sort on this box, not just the rebuild — the coverage refresher's
 scans and future analytics would hit it too. Worth folding into the standing ops/deploy config, not just a
 one-off drop-in.
+
+## Comments
+
+2026-08-08 (orchestrator): the repo fix landed on main via merge `3485e3d` —
+`nix/module.nix` gained a `spillDir` option (default `${stateDir}/tmp`, wired as
+`TMPDIR`, added to StateDirectory/ReadWritePaths), and `Db::open` now warns when
+the spill mount is RAM while the database is not (`warn_if_spill_dir_is_ram`,
+store/src/lib.rs). The box keeps its machine-local `tmpdir.conf` drop-in
+(`TMPDIR=/data/tmp`), which the warning now stands guard over. Status: resolved
+pending one boot-log check on the next deploy (no warning expected).

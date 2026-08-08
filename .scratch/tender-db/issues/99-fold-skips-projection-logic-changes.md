@@ -1,6 +1,6 @@
 # 99 — the incremental fold SKIPS projection-logic changes: chain identity is not a content key
 
-Status: DESIGN — recommendation ready, awaiting team-lead's go. **Blocks 98, the 2,185 issue-85 shells,
+Status: landed on main (merge `3485e3d`, 2026-08-08) — projection_epoch column + stale-epoch forced rewrite; epoch is lazily upgraded per touched Tender. Originally: DESIGN — recommendation ready, awaiting team-lead's go. **Blocks 98, the 2,185 issue-85 shells,
 and every future projection-logic change (86/48/88).**
 Kind: correctness (fold invalidation)
 Blocked by: —
