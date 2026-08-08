@@ -42,6 +42,15 @@ if [ -f /opt/tender-db/deployed-rev ]; then
     echo "refusing regression: $REV is an ancestor of deployed \$DEPLOYED" >&2
     exit 1
   fi
+  # And refuse a DIVERGED line: the target must CONTAIN what is running, or the
+  # deploy silently rolls features back with no error anywhere (issue 162 — prod
+  # lost the read-path work for four days this way). An unknown deployed rev also
+  # lands here, and refusing is the safe reading. Deliberate divergent deploys
+  # say so: FORCE_DIVERGENT=1 ./deploy.sh <ref>
+  if [ "$REV" != "\$DEPLOYED" ] && ! git -C $SRC merge-base --is-ancestor "\$DEPLOYED" $REV 2>/dev/null && [ "${FORCE_DIVERGENT:-0}" != "1" ]; then
+    echo "refusing divergent deploy: $REV does not contain deployed \$DEPLOYED (FORCE_DIVERGENT=1 overrides)" >&2
+    exit 1
+  fi
 fi
 
 cd $SRC
