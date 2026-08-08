@@ -423,6 +423,15 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // it, the columns are added here and backfilled once from tender_versions;
     // thereafter the projection maintains them, so this is a no-op. `MAX(seq)` and
     // the head's `published_at` come straight off the PK index (tender_id, seq).
+    // The projection-logic epoch (issue 99). Metadata-only on a STRICT table with a
+    // constant default, so O(1) even on the 8.1M-row prod `tenders` — the same shape
+    // `alter_add_column_cost.rs` proved for the issue-58 watermark. Existing rows read
+    // the default 0, i.e. "folded under unknown/older logic", so the first fold that
+    // touches each one rewrites it. That is the intended semantics, not a migration
+    // cost: nothing is rewritten until a refold marks it.
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN projection_epoch INTEGER NOT NULL DEFAULT 0")
+        .await?;
+
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_seq INTEGER").await?;
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_published_at INTEGER").await? || added;
     if added {
@@ -524,6 +533,72 @@ const SIBLING_TAIL: &str = "               -- `…/115165_2008.fr` -> `115165-20
                                            rtrim(q.member_path, replace(q.member_path, '/', '')), '')) - 3),
                      '_', '-'))";
 
+/// The mount point and filesystem type governing `path` — the `/proc/mounts` entry
+/// with the longest matching mount point.
+fn mount_of<'a>(mounts: &'a str, path: &str) -> Option<(&'a str, &'a str)> {
+    let mut best: Option<(&str, &str)> = None;
+    for line in mounts.lines() {
+        let mut f = line.split_whitespace();
+        let (Some(_dev), Some(point), Some(fstype)) = (f.next(), f.next(), f.next()) else {
+            continue;
+        };
+        let covers = path == point
+            || point == "/"
+            || path.starts_with(&format!("{}/", point.trim_end_matches('/')));
+        if covers && best.is_none_or(|(p, _)| point.len() > p.len()) {
+            best = Some((point, fstype));
+        }
+    }
+    best
+}
+
+/// Warn at open when large temporary spill files would land in RAM (issue 83).
+///
+/// turso's external sort spills to `TMPDIR`. A systemd unit with `PrivateTmp` (or
+/// any default `/tmp`) puts that on tmpfs — RAM — which on the production box is
+/// ~3.8 GB against a 450 GB database. A full-corpus `CREATE INDEX` spills many GB,
+/// fills the tmpfs, and dies with `I/O error (pwrite): no storage space` while the
+/// data disk sits at 180 GB free. That killed the recovery rebuild's index build and
+/// left `tenders_current_published` missing (issues 82/83).
+///
+/// The hazard is specifically a **mismatch**: a large database on disk whose spill
+/// goes to RAM. A database that lives on the same RAM filesystem as its spill is a
+/// coherent, deliberately small setup — every scratch and test DB is one — so that
+/// case is silent. Without that distinction this would fire on every `Db::open` in
+/// the test suite on any host whose `/tmp` is tmpfs, and a warning that cries wolf
+/// in CI is a warning nobody reads in production.
+///
+/// A warning, not a hard failure: refusing to open would take the service down for a
+/// condition that is only fatal at scale. The point is that the next occurrence names
+/// itself in the log instead of surfacing hours later as an opaque ENOSPC.
+fn warn_if_spill_dir_is_ram(db_path: &str) {
+    let dir = std::env::var("TMPDIR").unwrap_or_else(|_| "/tmp".into());
+    let Ok(mounts) = std::fs::read_to_string("/proc/mounts") else { return };
+    let Some((spill_point, fstype)) = mount_of(&mounts, &dir) else { return };
+    if !matches!(fstype, "tmpfs" | "ramfs") {
+        return;
+    }
+    // Resolve the database to an absolute path without requiring it to exist yet.
+    let db_abs = if db_path.starts_with('/') {
+        db_path.to_owned()
+    } else {
+        std::env::current_dir()
+            .map(|d| d.join(db_path).to_string_lossy().into_owned())
+            .unwrap_or_else(|_| db_path.to_owned())
+    };
+    if let Some((db_point, _)) = mount_of(&mounts, &db_abs)
+        && db_point == spill_point
+    {
+        return; // database and spill share the RAM filesystem — coherent, stay quiet
+    }
+    eprintln!(
+        "[store] WARNING: TMPDIR={dir} is {fstype} (RAM) but the database {db_abs} is not. \
+         turso spills large external sorts to TMPDIR, so a full-corpus CREATE INDEX or scan \
+         can exhaust it and fail with \"no storage space\" while the data disk is nearly \
+         empty (issue 83). Point TMPDIR at disk-backed storage on the database's filesystem."
+    );
+}
+
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
         Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
@@ -533,6 +608,7 @@ impl Db {
     /// `TENDER_WAL_READ_GATE` in [`open`]. Split out so tests drive the gate
     /// without touching the process environment (a data race under parallel tests).
     async fn open_inner(path: &str, gate_on: bool) -> turso::Result<Db> {
+        warn_if_spill_dir_is_ram(path);
         let database = turso::Builder::new_local(path).build().await?;
         let conn = database.connect()?;
         // Some pragmas report their new value as a row, so go through `query`
@@ -1853,6 +1929,40 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 83: the spill-directory warning must resolve the mount governing a path
+    /// by LONGEST matching mount point, and must distinguish the real hazard (a
+    /// database on disk spilling to RAM) from the coherent case (a small scratch
+    /// database that lives on the same tmpfs as its spill). Without the second half
+    /// this fires on every `Db::open` in the suite on any host whose `/tmp` is
+    /// tmpfs, and a warning that cries wolf in CI is one nobody reads in production.
+    #[test]
+    fn spill_mount_resolution_finds_the_longest_prefix() {
+        use super::mount_of;
+        const MOUNTS: &str = "\
+/dev/root / ext4 rw 0 0
+tmpfs /tmp tmpfs rw 0 0
+/dev/sdb /data ext4 rw 0 0
+tmpfs /data/ramcache tmpfs rw 0 0
+";
+        // Longest prefix wins over `/`, and over a shorter real mount.
+        assert_eq!(mount_of(MOUNTS, "/tmp/sort.tmp"), Some(("/tmp", "tmpfs")));
+        assert_eq!(mount_of(MOUNTS, "/data/db/tender-db.db"), Some(("/data", "ext4")));
+        assert_eq!(mount_of(MOUNTS, "/data/ramcache/x"), Some(("/data/ramcache", "tmpfs")));
+        assert_eq!(mount_of(MOUNTS, "/home/someone/db"), Some(("/", "ext4")));
+        // An exact mount point resolves to itself, not to its parent.
+        assert_eq!(mount_of(MOUNTS, "/data"), Some(("/data", "ext4")));
+
+        // The hazard: spill in RAM, database on disk — different mount points.
+        let spill = mount_of(MOUNTS, "/tmp").expect("spill mount");
+        let prod_db = mount_of(MOUNTS, "/data/db/tender-db.db").expect("db mount");
+        assert_eq!(spill.1, "tmpfs");
+        assert_ne!(spill.0, prod_db.0, "prod shape must be reported as a mismatch");
+
+        // The coherent case: a scratch database on the same tmpfs as the spill.
+        let scratch_db = mount_of(MOUNTS, "/tmp/scratch-1234.db").expect("scratch mount");
+        assert_eq!(spill.0, scratch_db.0, "a tmpfs-resident scratch DB must stay silent");
+    }
+
     use super::*;
 
     /// [`Db::reset_tender_layer`] must leave every tender-side AUTOINCREMENT table's
@@ -2707,6 +2817,461 @@ mod tests {
                 "{view} must not sort/aggregate over versions — plan was:\n{plan}"
             );
         }
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A tender-scoped lots read must be driven by a `tender_id` key, never by a walk
+    /// of `lots` (13.2M rows on prod) or of `tender_version_lots` in rowid order.
+    ///
+    /// This started as the `/v1/tenders/{id}` ~2.2s regression, where `read::lots`
+    /// carried the cursor as a plain `l.id > ?` and turso drove from `lots` to satisfy
+    /// `ORDER BY l.id`, filtering `tender_id` per row. Issue 115 then moved the read
+    /// off `lots` entirely: the containment question is answered by seeking
+    /// `tender_version_lots` on its `(tender_id, seq)` PK prefix.
+    ///
+    /// Covers `after > 0` — a REAL cursor page — not just the first page. A first-page
+    /// -only fix leaves `/v1/lots?tender=&after=N` on the bad plan (measured 2237ms),
+    /// so testing only `after = 0` would certify a half-fix as whole.
+    ///
+    /// Asserting the PLAN, not rows or latency: the rows were correct throughout the
+    /// outage and every functional test passed — what was wrong was how they were
+    /// reached. Note a presence-of-index gate would ALSO have passed here: the index
+    /// existed the whole time. Only the plan shows it.
+    ///
+    /// It plans the statement `read::lots` ACTUALLY builds, via `lots_statement`,
+    /// rather than a restatement of it. The earlier version of this test planned its
+    /// own hand-written `(l.tender_id, l.id) > (?, ?)` string — and went on passing
+    /// after issue 115 removed that cursor form from the builder, certifying SQL no
+    /// code emitted. A plan test decoupled from its artifact is worse than none: it
+    /// reports green about a shape nothing runs.
+    ///
+    /// A plan is a sound instrument for THIS question (which key drives the read) and
+    /// an unsound one for cost — issue 115's quadratic read had a fully optimal plan
+    /// while it took 248.8s. Hence the separate timing tests; see `lot_summary_cost`.
+    /// EXTRACTION SEAM for 112's gate — a printer, not an assertion.
+    ///
+    /// Prints the statement the deployed `lots` builder ACTUALLY emits, with each `?`
+    /// replaced by the value the builder ITSELF bound in the same call, so the gate
+    /// plans the artifact rather than a hand-written paraphrase of it (issue 114
+    /// part 2). No token is rewritten: the SQL comes from `lots_statement`, the
+    /// values come from the params it returned alongside it.
+    #[test]
+    fn dump_lots_statement_for_the_plan_gate() {
+        use super::read::{self, Filter, Scope};
+        use turso::Value;
+        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
+        /// carry explanatory comments inside their SQL, and flattening a statement to
+        /// one line turns the first of them into a comment over EVERYTHING after it —
+        /// turso then rejects the result as "incomplete input". A one-line fixture
+        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
+        /// string literal survives.
+        fn decomment(sql: &str) -> String {
+            let mut out = String::new();
+            for line in sql.lines() {
+                let mut qd = false;
+                let b: Vec<char> = line.chars().collect();
+                let mut i = 0;
+                while i < b.len() {
+                    if b[i] == '\'' {
+                        qd = !qd;
+                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
+                        break;
+                    }
+                    out.push(b[i]);
+                    i += 1;
+                }
+                out.push('\n');
+            }
+            out
+        }
+        fn inline(sql: &str, params: &[Value]) -> String {
+            let sql = &decomment(sql);
+            let mut out = String::new();
+            let mut p = params.iter();
+            for ch in sql.chars() {
+                if ch == '?' {
+                    match p.next() {
+                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
+                        Some(Value::Text(t)) => {
+                            out.push('\'');
+                            out.push_str(&t.replace('\'', "''"));
+                            out.push('\'');
+                        }
+                        Some(other) => out.push_str(&format!("{other:?}")),
+                        None => out.push('?'),
+                    }
+                } else if ch == '\n' {
+                    out.push(' ');
+                } else {
+                    out.push(ch);
+                }
+            }
+            // collapse the builder's indentation to one line, as the gate's table needs
+            let mut flat = String::with_capacity(out.len());
+            let mut space = false;
+            for ch in out.chars() {
+                if ch == ' ' {
+                    if !space {
+                        flat.push(ch);
+                    }
+                    space = true;
+                } else {
+                    space = false;
+                    flat.push(ch);
+                }
+            }
+            flat.trim().to_owned()
+        }
+        for (label, after) in [("B1", 0i64), ("B1b", 49_377)] {
+            let filter = Filter { tender: Some(424_242), ..Filter::default() };
+            let (sql, params) = read::lots_statement(&filter, Scope::Page { after, limit: 1000 });
+            println!("GATE-SQL {label}: {}", inline(&sql, &params));
+        }
+    }
+
+    /// 114 PART 2 PROTOTYPE — enumerate the paginated read set MECHANICALLY.
+    ///
+    /// The set is (collection x filter x cursor position), not "the reads someone
+    /// remembered": `read_items`' match on `Collection` is the app's own exhaustive
+    /// statement of which reads paginate, and one builder emits a DIFFERENT statement
+    /// per filter — `organizations` was 22.0s fixable with `country` and 99.08s
+    /// unservable with `kind`, from the same function.
+    #[test]
+    fn enumerate_paginated_read_statements() {
+        use super::read::{self, Filter, Scope, Status};
+        use turso::Value;
+        /// Strip `-- …` line comments BEFORE any newline is collapsed. The builders
+        /// carry explanatory comments inside their SQL, and flattening a statement to
+        /// one line turns the first of them into a comment over EVERYTHING after it —
+        /// turso then rejects the result as "incomplete input". A one-line fixture
+        /// format makes this mandatory, not optional. Quote-aware, so a `--` inside a
+        /// string literal survives.
+        fn decomment(sql: &str) -> String {
+            let mut out = String::new();
+            for line in sql.lines() {
+                let mut qd = false;
+                let b: Vec<char> = line.chars().collect();
+                let mut i = 0;
+                while i < b.len() {
+                    if b[i] == '\'' {
+                        qd = !qd;
+                    } else if !qd && b[i] == '-' && i + 1 < b.len() && b[i + 1] == '-' {
+                        break;
+                    }
+                    out.push(b[i]);
+                    i += 1;
+                }
+                out.push('\n');
+            }
+            out
+        }
+        fn inline(sql: &str, params: &[Value]) -> String {
+            let sql = &decomment(sql);
+            let mut out = String::new();
+            let mut p = params.iter();
+            for ch in sql.chars() {
+                match ch {
+                    '?' => match p.next() {
+                        Some(Value::Integer(i)) => out.push_str(&i.to_string()),
+                        Some(Value::Text(t)) => out.push_str(&format!("'{}'", t.replace('\'', "''"))),
+                        Some(other) => out.push_str(&format!("{other:?}")),
+                        None => out.push('?'),
+                    },
+                    '\n' => out.push(' '),
+                    c => out.push(c),
+                }
+            }
+            let mut flat = String::new();
+            let mut sp = false;
+            for c in out.chars() {
+                if c == ' ' {
+                    if !sp { flat.push(c) }
+                    sp = true;
+                } else { sp = false; flat.push(c) }
+            }
+            flat.trim().to_owned()
+        }
+        let base = Filter::default();
+        let filters: Vec<(&str, Filter)> = vec![
+            ("none", base.clone()),
+            ("source", Filter { source: Some("ted".into()), ..base.clone() }),
+            ("country", Filter { country: Some("DE".into()), ..base.clone() }),
+            ("cpv", Filter { cpv: Some("4521".into()), ..base.clone() }),
+            ("buyer", Filter { buyer: Some(7), ..base.clone() }),
+            ("winner", Filter { winner: Some(7), ..base.clone() }),
+            ("status", Filter { status: Some(Status::Open), ..base.clone() }),
+            ("min_value", Filter { min_value: Some(1000), ..base.clone() }),
+            ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
+            ("kind", Filter { kind: Some("Lot".into()), ..base.clone() }),
+            ("tender", Filter { tender: Some(424_242), ..base.clone() }),
+        ];
+        for (fname, f) in &filters {
+            for after in [0i64, 49_377] {
+                let scope = Scope::Page { after, limit: 1000 };
+                for (coll, (sql, params)) in [
+                    ("tenders", read::tenders_statement(f, scope)),
+                    ("lots", read::lots_statement(f, scope)),
+                    ("organizations", read::organizations_statement(f, scope)),
+                    ("notices", read::notices_statement(f, scope)),
+                ] {
+                    println!("ENUM\t{coll}\t{fname}\tafter={after}\t{}", inline(&sql, &params));
+                }
+            }
+        }
+    }
+
+    /// LOCAL PLAN PROBE for 112's gate — plans whatever statements `TDB_PLAN_SQL`
+    /// names (one per line), against a schema-only DB built by `Db::open`, through
+    /// the workspace's pinned turso (`=0.7.0`, the same version the on-box probe
+    /// pins). Prints the plan in the on-box probe's column form so the gate's own
+    /// parser can consume it unchanged.
+    #[tokio::test]
+    async fn local_eqp_probe() {
+        let Ok(sqlfile) = std::env::var("TDB_PLAN_SQL") else { return };
+        // Plan against the DB the caller names, so the gate's stats precondition
+        // inspects the SAME file these plans come from.
+        let path = std::env::var("TDB_PLAN_DB")
+            .unwrap_or_else(|_| format!("/tmp/tender-db-eqp-probe-{}.db", std::process::id()));
+        // TDB_PLAN_RAW opens the file AS IT IS, with no migration — the only way to
+        // plan against a deliberately MUTILATED catalogue (an index removed) and see
+        // a check go red. `Db::open` would repair the schema it is meant to be missing.
+        // TDB_PLAN_DDL builds the catalogue from DDL executed BY TURSO, which is how a
+        // deliberately mutilated schema (a PK or index removed) becomes a DB this engine
+        // can actually open — one built by sqlite3 is not loadable here.
+        if let Ok(ddl) = std::env::var("TDB_PLAN_DDL") {
+            let _ = std::fs::remove_file(&path);
+            let db = turso::Builder::new_local(&path).build().await.unwrap();
+            let c = db.connect().unwrap();
+            for stmt in std::fs::read_to_string(&ddl).unwrap().split(";\n") {
+                if !stmt.trim().is_empty() {
+                    c.execute(stmt, ()).await.unwrap();
+                }
+            }
+        }
+        let held;
+        let conn = if std::env::var("TDB_PLAN_RAW").is_ok() {
+            let db = turso::Builder::new_local(&path).build().await.unwrap();
+            db.connect().unwrap()
+        } else {
+            held = Db::open(&path).await.unwrap();
+            (*held.reader().await.unwrap()).clone()
+        };
+        for line in std::fs::read_to_string(&sqlfile).unwrap().lines() {
+            if line.trim().is_empty() {
+                continue;
+            }
+            println!("PLAN-BEGIN");
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {line}"), ()).await.unwrap();
+            while let Some(row) = rows.next().await.unwrap() {
+                println!("PLAN 1 | 0 | 0 | {}", text(&row, 3));
+            }
+            println!("PLAN-END");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_tender_scoped_lots_read_seeks_the_index_instead_of_walking_rowids() {
+        let path = format!("/tmp/tender-db-lots-eqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // Both the first page and a real cursor page must seek a tender_id key.
+        for after in [0i64, 49_377] {
+            let filter = read::Filter { tender: Some(1), ..read::Filter::default() };
+            let (sql, params) =
+                read::lots_statement(&filter, read::Scope::Page { after, limit: 1000 });
+            let mut rows = conn
+                .query(&format!("EXPLAIN QUERY PLAN {sql}"), params)
+                .await
+                .unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(
+                plan.to_uppercase().contains("TENDER_ID="),
+                "after={after}: a tender_id key must drive the read — plan was:\n{plan}"
+            );
+            assert_eq!(
+                driver(&plan),
+                Driver::VersionLots,
+                "after={after}: `tender_version_lots` must be the OUTER loop — plan was:\n{plan}"
+            );
+        }
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Which table a lots plan enters first — the only thing that separates the
+    /// linear read from the quadratic one.
+    ///
+    /// Neither `SCAN`-vs-`SEARCH` nor the presence of `INTEGER PRIMARY KEY` can tell
+    /// them apart, and both mislead in opposite directions. turso renders a full
+    /// rowid traversal as `SEARCH l USING INTEGER PRIMARY KEY (rowid=?)`, which reads
+    /// like a point lookup, so `!contains("SCAN")` passes for the DEFECTIVE shape.
+    /// And the fixed shape contains that same string for a genuine one-row lookup of
+    /// `l.id = vl.lot_id`, so asserting its absence rejects the CORRECT shape. The
+    /// string is identical either way; only its position in the join order differs.
+    #[derive(Debug, PartialEq)]
+    enum Driver {
+        VersionLots,
+        Lots,
+        Other,
+    }
+
+    fn driver(plan: &str) -> Driver {
+        let upper = plan.to_uppercase();
+        // Ignore lines belonging to the uncorrelated MAX(seq) subquery: it is
+        // evaluated once, before the join, and names neither `l` nor `vl`.
+        let order = |needle: &str| upper.find(needle).unwrap_or(usize::MAX);
+        let vl = order("SEARCH VL ");
+        let l = order("SEARCH L ").min(order("SCAN L "));
+        match (vl, l) {
+            (usize::MAX, usize::MAX) => Driver::Other,
+            (vl, l) if vl < l => Driver::VersionLots,
+            _ => Driver::Lots,
+        }
+    }
+
+    /// Every `Filter` field must be explicitly classified as walk-capable or not.
+    ///
+    /// `read::walks` destructures `Filter` field by field, so adding a field is a
+    /// compile error — but the compiler suggests `..` to ignore it, and taking that
+    /// suggestion routes the new filter to the fast pool silently. A compile error
+    /// forces a decision, not a correct one.
+    ///
+    /// So the field names are recovered from `Filter`'s own `Debug` output rather than
+    /// written down twice, and checked against the classification list. A field added
+    /// with `..` compiles and then fails HERE. If the derive's format ever changes this
+    /// test breaks loudly rather than passing vacuously, which is the right direction
+    /// for a check whose whole job is noticing an omission.
+    #[test]
+    fn filter_classification_is_exhaustive() {
+        let debug = format!("{:?}", read::Filter::default());
+        let body = debug
+            .split_once('{')
+            .and_then(|(_, rest)| rest.rsplit_once('}'))
+            .map(|(inner, _)| inner.to_owned())
+            .expect("derived Debug renders as `Filter { field: value, .. }`");
+        let fields: Vec<String> = body
+            .split(',')
+            .filter_map(|part| part.split_once(':'))
+            .map(|(name, _)| name.trim().to_owned())
+            .filter(|name| !name.is_empty())
+            .collect();
+        assert!(
+            fields.len() >= 5,
+            "recovered too few fields from Debug ({fields:?}) — the derive's format \
+             has probably changed and this check has stopped checking"
+        );
+
+        for field in &fields {
+            assert!(
+                read::FILTER_CLASSIFICATION.iter().any(|(name, _)| name == field),
+                "Filter::{field} is not classified in read::FILTER_CLASSIFICATION. \
+                 Every field must be recorded as index-served or walk-capable, because \
+                 `walks` decides from it whether a request may starve the main reader \
+                 pool (issue 120). If it compiled, the destructuring was bypassed with \
+                 `..` — classify it rather than ignoring it."
+            );
+        }
+        for (name, _) in read::FILTER_CLASSIFICATION {
+            assert!(
+                fields.iter().any(|f| f == name),
+                "read::FILTER_CLASSIFICATION lists `{name}`, which is no longer a \
+                 Filter field — a stale entry hides the absence of a real one"
+            );
+        }
+    }
+
+    /// The short-circuit guard's BOUNDARY, asserted on the function itself.
+    ///
+    /// The end-to-end cases in `tenders_shortcircuit.rs` cannot establish this: the
+    /// guard changes SPEED and never RESULTS, so a guarded and a declined query return
+    /// the same rows and no assertion on the answer can tell which path ran. Asserting
+    /// the result and calling it verification of the boundary would be a check that
+    /// cannot fail for the reason it claims to test.
+    ///
+    /// What actually decides the size of issue 117's remaining Class B hole is whether
+    /// the decline counts CHARACTERS or ASCII LETTERS. Digits do not case-fold, so they
+    /// do not branch: a NUTS-shaped prefix (two letters then digits) is guarded at any
+    /// length, and only 5-or-more LETTERS declines — which is not a NUTS shape at all,
+    /// so the hole is adversarial-only rather than reachable by ordinary use.
+    #[test]
+    fn the_guard_declines_on_letter_count_not_length() {
+        use read::prefix_ranges_for_test as ranges;
+
+        // Two letters -> 4 variants, whatever follows them.
+        assert_eq!(ranges("DE").map(|r| r.len()), Some(4));
+        assert_eq!(ranges("DE300").map(|r| r.len()), Some(4), "digits do not branch");
+        assert_eq!(ranges("ZZ999").map(|r| r.len()), Some(4), "a 5-CHAR prefix is still guarded");
+        assert_eq!(ranges("45210000").map(|r| r.len()), Some(1), "an all-digit CPV prefix: one range");
+
+        // Four letters is the last guarded width; five declines.
+        assert_eq!(ranges("ABCD").map(|r| r.len()), Some(16), "16 variants is the cap, inclusive");
+        assert_eq!(ranges("ABCDE"), None, "5 LETTERS = 32 variants, past the cap");
+        assert_eq!(ranges("DE30A").map(|r| r.len()), Some(8), "3 letters among digits -> 8");
+
+        // The declines that exist for correctness rather than cost.
+        assert_eq!(ranges(""), None, "empty binds LIKE '%' — matches everything");
+        assert_eq!(ranges("%"), None, "LIKE metacharacter");
+        assert_eq!(ranges("_E"), None, "LIKE metacharacter");
+        assert_eq!(ranges("d\\"), None, "backslash, declined so a later ESCAPE cannot break it");
+        assert_eq!(ranges("Ä"), None, "non-ASCII: LIKE does not fold it, and we do not guess");
+
+        // The union really is the case-variant set, not just the right count.
+        let mut got: Vec<String> = ranges("de").unwrap().into_iter().map(|(lo, _)| lo).collect();
+        got.sort();
+        assert_eq!(got, ["DE", "De", "dE", "de"]);
+    }
+
+    /// The negative control for the test above, and the reason a green there is
+    /// attributable to the fix rather than to the statement having been reworded.
+    ///
+    /// It plans the PRE-115 shape — `lots` in the outer loop, `tender_version_lots`
+    /// probed per row — through the SAME discriminator, and requires it to still come
+    /// out `Driver::Lots`. That is what makes the pair meaningful: one statement, one
+    /// measure, opposite verdicts. Without it, the test above could go green merely
+    /// because the query was reworded.
+    ///
+    /// If this ever fails, turso has learned to reorder that join itself, and the
+    /// containment/stream split in `read::lots` may have stopped earning its keep.
+    #[tokio::test]
+    async fn the_pre_115_lots_shape_still_plans_as_the_walk_we_left() {
+        let path = format!("/tmp/tender-db-lots-eqp-ctl-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // Verbatim pre-115 identity half: driven from `lots`, vl probed per row.
+        let mut rows = conn
+            .query(
+                "EXPLAIN QUERY PLAN
+                 SELECT l.id, vl.kind, v.seq
+                   FROM lots l
+                   JOIN tenders t ON t.id = l.tender_id
+                   JOIN tender_versions v ON v.tender_id = t.id
+                    AND v.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                                  WHERE x.tender_id = t.id)
+                   JOIN tender_version_lots vl
+                     ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+                  WHERE 1 = 1 AND l.tender_id = ? AND l.id > ?
+                  ORDER BY l.id LIMIT 1000",
+                (Value::Integer(1), Value::Integer(0)),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert_eq!(
+            driver(&plan),
+            Driver::Lots,
+            "the pre-115 shape no longer drives from `lots` — the control has stopped \
+             controlling, so re-check whether read::lots still needs its \
+             containment/stream split. Plan was:\n{plan}"
+        );
         let _ = std::fs::remove_file(&path);
     }
 

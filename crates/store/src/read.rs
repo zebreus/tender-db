@@ -8,6 +8,7 @@
 //! from filtered REST — there is no second copy of the predicate.
 
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::sync::{OwnedRwLockReadGuard, OwnedSemaphorePermit, RwLock, Semaphore};
 use turso::{Connection, Value};
@@ -389,36 +390,166 @@ fn seq_expr(scope: Scope, alias: &str, params: &mut Vec<Value>) -> String {
 /// The version-scoped predicates, identical for Tenders and Lots — everything
 /// here is evaluated against `(tender_id, seq)`, which is exactly what makes
 /// one filter serve both the list and the diff.
-fn version_predicates(q: &mut Query, f: &Filter) {
+/// Which collection a [`Filter`] is being applied to.
+///
+/// Isolation routing cannot be a property of the `Filter` alone, because the same
+/// field means different things per collection and whether an index serves it differs
+/// with the meaning: `kind` is `t.kind` for Tenders, `vl.kind` — a JOINED table — for
+/// Lots, `identifier_kind` for Organizations and `profile` for Notices. Three of those
+/// are index-served and one is not.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Collection {
+    Tenders,
+    Lots,
+    Organizations,
+    Notices,
+}
+
+/// Can answering this request WALK — i.e. does it use a predicate no index serves?
+///
+/// Issue 117 established that the reads have no way to predict a query's *cost*: there
+/// are no selectivity statistics, and the one probe available (the existence
+/// short-circuit) answers only the matches-nothing case. But cost is not what routing
+/// needs. **Which query SHAPES are capable of walking is statically decidable**, before
+/// a row is read, from the filter alone — and that is enough to send them somewhere
+/// they cannot starve the main reader pool (issue 120).
+///
+/// The classification is exhaustive BY CONSTRUCTION. `Filter` is destructured field by
+/// field below, so adding a field to it **fails to compile here** until someone
+/// classifies it. That is deliberate and non-negotiable: a hand-maintained list of
+/// "expensive filters" would silently route a newly-added unserved filter to the fast
+/// pool and reintroduce the defect — the same staleness that put `notices(source, id)`
+/// in the schema batch on the strength of a comment written when the table was eight
+/// times smaller.
+/// Every field of [`Filter`], and why it can or cannot walk — the classification
+/// [`walks`] implements, written out so a test can check none has been missed.
+///
+/// The destructuring in `walks` makes adding a field a COMPILE error, which forces a
+/// decision. It does not force a CORRECT one: the compiler helpfully suggests `..` to
+/// ignore the new field, and taking that suggestion silently routes it to the fast
+/// pool. This list is the belt to that brace — `filter_classification_is_exhaustive`
+/// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
+/// absent here, so a field added with `..` is caught by a test even though it compiled.
+#[cfg(test)]
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 11] = [
+    ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
+    ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
+    ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
+    ("buyer", "EXISTS per row -> isolates. Organizations: o.id, the primary key"),
+    ("winner", "EXISTS per row -> isolates"),
+    ("status", "EXISTS over tender_version_dates per row -> isolates"),
+    ("min_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("max_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
+              Organizations/Notices: index-served"),
+    ("tender", "the containment shape (issue 115), index-served -> never isolates"),
+    ("now", "not a predicate: the reference instant `status` compares against"),
+];
+
+pub fn walks(collection: Collection, f: &Filter) -> bool {
+    let Filter {
+        source,
+        country,
+        cpv,
+        buyer,
+        winner,
+        status,
+        min_value,
+        max_value,
+        kind,
+        tender,
+        now: _,
+    } = f;
+
+    // The `version_predicates` set: `EXISTS` subqueries evaluated PER ROW over the
+    // satellites. No cursor shape and no index on the driven table helps, because the
+    // filter is not a column of it — issue 117 Class B. Applied by `tenders` and `lots`
+    // only; the other collections ignore these fields entirely, so passing one there
+    // cannot walk.
+    let version_predicate = country.is_some()
+        || cpv.is_some()
+        || buyer.is_some()
+        || winner.is_some()
+        || status.is_some()
+        || min_value.is_some()
+        || max_value.is_some();
+
+    // `tender` is the containment shape (issue 115): it drives from
+    // `tender_version_lots` and is index-served, so it never routes to isolation.
+    let _ = tender;
+
+    match collection {
+        // `source` is served by `tenders_source_id`. `kind` is `t.kind`, which NO index
+        // covers — `tenders_procedure_key`, `tenders_island`, `tenders_current_published`
+        // and `tenders_source_id` are the whole set — so a value matching nothing walks
+        // 4.26M rows exactly as the filters issue 117 fixed did. It was not in 117's
+        // audit; routing it here is what stops it being a silent survivor.
+        Collection::Tenders => version_predicate || kind.is_some(),
+        // Isolated because the COST is unbounded for sparse and absent values — NOT
+        // because the filter is unserved. That distinction became load-bearing when
+        // issue 16 restructured this read: `lots` now drives and the probe is a
+        // three-column primary-key seek, so the old justification ("no index on
+        // `lots` can serve either") is simply false.
+        //
+        // The cost argument survives the change and any future index. `?kind=` on a
+        // value with fewer rows than the page limit walks all 13.2M lots to collect a
+        // page it can never fill — 132.1s measured at prod scale — because the work is
+        // bounded by DENSITY, not by the filter being index-served. `?source=` is the
+        // same shape.
+        //
+        // **A fast common case is not grounds for de-isolation.** `?kind=Lot` is now
+        // 0.004s; `?kind=` on a sparse value is unchanged. Deleting this arm because
+        // the default request got quick would return the sparse and absent cases to
+        // the main reader pool, which is what issue 120 exists to prevent.
+        Collection::Lots => version_predicate || source.is_some() || kind.is_some(),
+        // `country` and `identifier_kind` are served by the issue-117 indexes, and
+        // `buyer` is `o.id`, the primary key. Nothing here can walk.
+        Collection::Organizations => false,
+        // `source` is served by `notices_source_id` and `kind` (`profile`) by
+        // `notices_profile`. Nothing here can walk.
+        Collection::Notices => false,
+    }
+}
+
+/// The version-scoped filters, emitted against caller-supplied expressions for the
+/// Tender id and the version `seq`.
+///
+/// Parameterised rather than duplicated because two query shapes need the same
+/// predicates against different scopes: the JOIN form has `t`/`v` in FROM and passes
+/// `"t.id"`/`"v.seq"`, while [`lots_query`] has neither and correlates on
+/// `l.tender_id` with `seq` recomputed. Writing them twice is the paraphrase hazard
+/// that blocked issue 112's B1 — one edit to a predicate would silently apply to one
+/// shape and not the other.
+fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
     if let Some(country) = &f.country {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_classifications c
-                           WHERE c.tender_id = t.id AND c.seq = v.seq
-                             AND c.scheme = 'nuts' AND c.code LIKE ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                           WHERE c.tender_id = {tid} AND c.seq = {seq}
+                             AND c.scheme = 'nuts' AND c.code LIKE ?)"),
             [t(format!("{country}%"))],
         );
     }
     if let Some(cpv) = &f.cpv {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_classifications c
-                           WHERE c.tender_id = t.id AND c.seq = v.seq
-                             AND c.scheme = 'cpv' AND c.code LIKE ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                           WHERE c.tender_id = {tid} AND c.seq = {seq}
+                             AND c.scheme = 'cpv' AND c.code LIKE ?)"),
             [t(format!("{cpv}%"))],
         );
     }
     if let Some(buyer) = f.buyer {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_parties p
-                           WHERE p.tender_id = t.id AND p.seq = v.seq
-                             AND p.organization_id = ? AND p.role LIKE '%Buyer%')",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_parties p
+                           WHERE p.tender_id = {tid} AND p.seq = {seq}
+                             AND p.organization_id = ? AND p.role LIKE '%Buyer%')"),
             [Value::Integer(buyer)],
         );
     }
     if let Some(winner) = f.winner {
         q.push(
-            " AND EXISTS (SELECT 1 FROM tender_version_result_winners w
-                           WHERE w.tender_id = t.id AND w.seq = v.seq
-                             AND w.organization_id = ?)",
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_result_winners w
+                           WHERE w.tender_id = {tid} AND w.seq = {seq}
+                             AND w.organization_id = ?)"),
             [Value::Integer(winner)],
         );
     }
@@ -426,9 +557,9 @@ fn version_predicates(q: &mut Query, f: &Filter) {
         // "Open" is a submission deadline still in the future. A Tender that
         // never published one (award notices) is therefore Closed, which is the
         // useful reading: it cannot be bid on.
-        let exists = "EXISTS (SELECT 1 FROM tender_version_dates d
-                               WHERE d.tender_id = t.id AND d.seq = v.seq
-                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?)";
+        let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
+                               WHERE d.tender_id = {tid} AND d.seq = {seq}
+                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?)");
         match status {
             Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
             Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
@@ -439,7 +570,7 @@ fn version_predicates(q: &mut Query, f: &Filter) {
             q.push(
                 &format!(
                     " AND (SELECT MAX(a.cents) FROM tender_version_amounts a
-                            WHERE a.tender_id = t.id AND a.seq = v.seq) {op} ?"
+                            WHERE a.tender_id = {tid} AND a.seq = {seq}) {op} ?"
                 ),
                 [Value::Integer(cents)],
             );
@@ -464,11 +595,208 @@ fn pick(table: &str, column: &str, field: Option<&str>, order: &str, lot: &str) 
 /// Tenders matching `filter`, in the given scope. `Scope::Page` yields the
 /// current state of every match after a cursor; `Scope::At` answers whether one
 /// specific version matched, which is how the SSE diff loop classifies a change.
+/// Can any Tender satisfy this filter at all?
+///
+/// The value-shaped predicates in [`version_predicates`] are `EXISTS` subqueries
+/// evaluated PER ROW. When the value matches nothing the query still walks every
+/// Tender to discover that — measured on prod at over 380 seconds for
+/// `/v1/tenders?country=ZZ`, unauthenticated, on a documented filter. No cursor
+/// shape helps, because the filter is not a column of the driven table (issue 117
+/// Class B).
+///
+/// But each of those subqueries is satisfiable only if SOME row exists carrying the
+/// value at all, and that is one index seek. If the seek finds nothing, no Tender can
+/// match and the empty page is the CORRECT answer rather than an approximation —
+/// reached without the walk. Same move [`changes_since`] already makes for an
+/// unknown `entity_kind` (issue 61 finding 2): a kind with no rows must never trigger
+/// a table walk to discover it has none.
+///
+/// Deliberately CONSERVATIVE in the safe direction. The probes ignore the
+/// `c.seq = v.seq` correlation and the buyer's `role LIKE '%Buyer%'`, so a value
+/// present only in a superseded version, or an organization present only in a
+/// non-buyer role, fails to short-circuit and falls through to the full query. That
+/// costs a walk we could have avoided; the reverse — short-circuiting something that
+/// does match — would be a wrong answer, so the asymmetry is the right way round.
+///
+/// **This is a performance fix that reduces the DoS surface; it is NOT a defence.**
+/// It answers *matches-nothing* only. A prefix that exists but sits on high
+/// `tender_id`s still walks — measured at 0.5s against 0.4954s for the absent case on
+/// a 200k-Tender fixture, i.e. the guard buys nothing there. `MT` is a real country,
+/// so that case is reachable without adversarial intent. Bounding worst-case work
+/// needs the real fix (restructuring the per-row `EXISTS`), not this.
+async fn reachable(conn: &Connection, filter: &Filter) -> turso::Result<bool> {
+    // A prefix range, NOT `LIKE`. Measured on prod: `code LIKE 'ZZ%'` takes 41.05s
+    // against 0.01s for the range, because turso keeps the index but drops the second
+    // bound — `(scheme=?)` alone — and then filters the whole scheme's partition row
+    // by row. Both forms plan as `SEARCH ... USING INDEX`, so a plan cannot tell them
+    // apart; only the clock can (issue 112 rule 6).
+    for (scheme, prefix) in [("nuts", &filter.country), ("cpv", &filter.cpv)] {
+        let Some(prefix) = prefix else { continue };
+        // `LIKE` is ASCII-case-INSENSITIVE and a range comparison is not, so one range
+        // over the prefix as given is NARROWER than the predicate it stands in for.
+        // Verified: with `DE300` stored, `LIKE 'de%'` matches and `code >= 'de' AND
+        // code < 'df'` does not — so a lowercase `?country=de` would have short-
+        // circuited to an empty page while the real query returns rows. A guard that
+        // is narrower than what it guards does not make the read faster, it makes it
+        // WRONG.
+        //
+        // So probe every case variant of the prefix and treat the value as reachable
+        // if ANY of them hits: their union is exactly the set `LIKE` would match.
+        // `None` means too many variants to be worth it — skip the guard and let the
+        // full query answer, which is slow but correct.
+        let Some(ranges) = prefix_ranges(prefix) else { continue };
+        let mut any = false;
+        for (low, high) in ranges {
+            if exists(
+                conn,
+                "SELECT 1 FROM tender_version_classifications
+                  WHERE scheme = ? AND code >= ? AND code < ? LIMIT 1",
+                vec![t(scheme), t(&low), t(&high)],
+            )
+            .await?
+            {
+                any = true;
+                break;
+            }
+        }
+        if !any {
+            return Ok(false);
+        }
+    }
+    for (org, table) in
+        [(filter.buyer, "tender_version_parties"), (filter.winner, "tender_version_result_winners")]
+    {
+        let Some(org) = org else { continue };
+        // Both seek `..._org(organization_id)`, the indexes issue 62 deferred.
+        let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");
+        if !exists(conn, &sql, vec![Value::Integer(org)]).await? {
+            return Ok(false);
+        }
+    }
+    Ok(true)
+}
+
+async fn exists(conn: &Connection, sql: &str, params: Vec<Value>) -> turso::Result<bool> {
+    Ok(conn.query(sql, params).await?.next().await?.is_some())
+}
+
+/// The index ranges whose union is exactly `code LIKE '<prefix>%'`.
+///
+/// One range per ASCII-case variant of the prefix, because `LIKE` folds ASCII case
+/// and `>=`/`<` do not. `de` yields the four ranges `de..df`, `dE..dF`, `De..Df`,
+/// `DE..DF`; a prefix of digits (CPV) yields one. Non-ASCII bytes are not folded by
+/// `LIKE` either, so they do not branch.
+///
+/// `None` when the guard is not worth applying — an empty prefix, more than
+/// [`MAX_CASE_VARIANTS`] variants, or a prefix with no representable upper bound.
+/// The caller then skips the short-circuit and lets the full query answer: slower,
+/// and still correct. Every `None` path must stay on that side, because a guard that
+/// matches less than the predicate it stands in for returns wrong rows rather than
+/// slow ones.
+#[cfg(test)]
+pub(crate) fn prefix_ranges_for_test(prefix: &str) -> Option<Vec<(String, String)>> {
+    prefix_ranges(prefix)
+}
+
+fn prefix_ranges(prefix: &str) -> Option<Vec<(String, String)>> {
+    /// 2^4 = 16 seeks at ~0.01s is still four orders of magnitude under the walk it
+    /// avoids; beyond that the guard stops paying for itself.
+    const MAX_CASE_VARIANTS: usize = 16;
+
+    // A `LIKE` METACHARACTER makes the prefix a pattern, and a range is not one.
+    // `version_predicates` binds `format!("{prefix}%")`, so `?country=%` becomes
+    // `LIKE '%%'` — which matches EVERY code — while the range `['%', '&')` matches
+    // none, and the guard would return an empty page for a filter that matches
+    // everything. `_` is the same trap one character at a time: `?country=_E` matches
+    // `DE300` and the range does not. Nothing upstream validates these — `Params`
+    // passes `country` and `cpv` through verbatim — so this is the only place it can
+    // be caught, and the answer is to decline the guard rather than to interpret the
+    // pattern. `\` is literal in SQLite's `LIKE` without an `ESCAPE` clause, but it is
+    // declined too so that adding one later cannot silently make this wrong.
+    if prefix.is_empty() || !prefix.is_ascii() || prefix.contains(['%', '_', '\\']) {
+        return None;
+    }
+    let letters = prefix.chars().filter(char::is_ascii_alphabetic).count();
+    if 1usize.checked_shl(letters as u32)? > MAX_CASE_VARIANTS {
+        return None;
+    }
+
+    let mut variants = vec![String::new()];
+    for c in prefix.chars() {
+        variants = variants
+            .into_iter()
+            .flat_map(|v| {
+                if c.is_ascii_alphabetic() {
+                    vec![format!("{v}{}", c.to_ascii_lowercase()), format!("{v}{}", c.to_ascii_uppercase())]
+                } else {
+                    vec![format!("{v}{c}")]
+                }
+            })
+            .collect();
+    }
+    variants.into_iter().map(|v| successor(&v).map(|hi| (v, hi))).collect()
+}
+
+/// The least string greater than every string starting with `prefix`, so
+/// `code >= prefix AND code < successor` is exactly "has this prefix".
+fn successor(prefix: &str) -> Option<String> {
+    let mut bytes = prefix.as_bytes().to_vec();
+    while let Some(last) = bytes.pop() {
+        if last < 0xFF {
+            bytes.push(last + 1);
+            return String::from_utf8(bytes).ok();
+        }
+    }
+    None
+}
+
 pub async fn tenders(
     conn: &Connection,
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<TenderRow>> {
+    if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter).await? {
+        return Ok(Vec::new());
+    }
+    let q = tenders_query(filter, scope);
+    q.rows(conn, |row| TenderRow {
+        id: int(row, 0),
+        source: text(row, 1),
+        procedure_key: opt_text_of(row, 2),
+        kind: text(row, 3),
+        seq: int(row, 4),
+        published_at: int(row, 5),
+        dispatched_at: opt_int_of(row, 15),
+        publication_id: text(row, 6),
+        notice_subtype: opt_text_of(row, 7),
+        title: opt_text_of(row, 8),
+        value_cents: opt_int_of(row, 9),
+        currency: opt_text_of(row, 10),
+        deadline: stamp(row, 11),
+        lots: int(row, 14),
+        cpv: split_codes(opt_text_of(row, 16)),
+        country: split_codes(opt_text_of(row, 17)),
+    })
+    .await
+}
+
+/// The statement [`tenders`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+///
+/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
+/// the cost class: a plan names the access path, never the number of rows on it
+/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
+/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
+/// slice. This seam narrows what the gate can be wrong about; it does not widen
+/// what the gate can see.
+#[cfg(test)]
+pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = tenders_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`tenders`], built but not run.
+fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     let title = pick(
         "tender_version_texts",
@@ -525,7 +853,7 @@ pub async fn tenders(
     if let Some(kind) = &filter.kind {
         q.push(" AND t.kind = ?", [t(kind)]);
     }
-    version_predicates(&mut q, filter);
+    version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -533,26 +861,7 @@ pub async fn tenders(
         ),
         Scope::At { id, .. } => q.push(" AND t.id = ?", [Value::Integer(id)]),
     }
-
-    q.rows(conn, |row| TenderRow {
-        id: int(row, 0),
-        source: text(row, 1),
-        procedure_key: opt_text_of(row, 2),
-        kind: text(row, 3),
-        seq: int(row, 4),
-        published_at: int(row, 5),
-        dispatched_at: opt_int_of(row, 15),
-        publication_id: text(row, 6),
-        notice_subtype: opt_text_of(row, 7),
-        title: opt_text_of(row, 8),
-        value_cents: opt_int_of(row, 9),
-        currency: opt_text_of(row, 10),
-        deadline: stamp(row, 11),
-        lots: int(row, 14),
-        cpv: split_codes(opt_text_of(row, 16)),
-        country: split_codes(opt_text_of(row, 17)),
-    })
-    .await
+    q
 }
 
 /// A `group_concat` result — a comma-joined code list, or `None` when the
@@ -855,70 +1164,188 @@ fn blank() -> FactRow {
 /// parent Tender's version, so `/v1/lots?country=DE` means the same thing it
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
-    let mut q = Query::default();
-    let lot_scope = "s.lot_id = l.id";
-    let deadline = |column| {
-        pick(
-            "tender_version_dates",
-            column,
-            Some("submission_deadline"),
-            "s.utc_seconds DESC",
-            lot_scope,
+    // A `kind` that exists NOWHERE turns the per-lot probe into a full pass over
+    // `lots` to prove a negative: 132.1s at prod scale against 18.6s for today's
+    // shape, the one class where this read is slower than what it replaces.
+    //
+    // The guard is an unindexed scan of `tender_version_lots` and that is deliberate.
+    // It costs 1ms on every kind that exists — prod's first `Lot` row is row 0 of the
+    // table, `LotsGroup` 0.0037% in, `Part` 0.0528% — and ~18.6s to prove absence,
+    // which is the same sequential pass today's shape makes. So the absent case
+    // returns to parity instead of regressing, and the present case pays a millisecond.
+    //
+    // An index on `(kind, lot_id)` would make the absent case ~0 instead of ~18.6s,
+    // and is NOT worth it: 40.6M rows against the 41M auto-build cap, a 1.8GB
+    // memory-linear build, and a shelf life ending at the next corpus growth.
+    //
+    // What it does NOT cover: a kind that EXISTS but has fewer rows than the page
+    // limit. The probe returns true, and the read then walks everything to collect a
+    // page it can never fill — `T(K) = T_full * 50/K`, saturating at K = LIMIT, so a
+    // kind with <=50 lots costs the full 132.1s. No value in the corpus is near that
+    // (smallest is LotsGroup at 12,097) but `kind` is data-driven, so one arriving in
+    // a handful of notices lands there through ordinary ingestion. Latent, confined
+    // by the isolation of issue 120, and recorded rather than fixed.
+    if matches!(scope, Scope::Page { .. })
+        && let Some(kind) = &filter.kind
+        && !exists(
+            conn,
+            "SELECT 1 FROM tender_version_lots WHERE kind = ? LIMIT 1",
+            vec![t(kind)],
         )
+        .await?
+    {
+        return Ok(Vec::new());
+    }
+    let mut rows = lots_query(filter, scope)
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: None,
+            value_cents: None,
+            currency: None,
+            deadline: None,
+        })
+        .await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
+/// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped
+/// read against what it replaced on data where every filter provably discriminates.
+///
+/// Not dead code: it is the oracle. Deleting it would leave the equivalence assertion
+/// with nothing to compare against, and a rewrite of this size wants its predecessor
+/// available to answer "did the answer change" for as long as anyone might ask.
+#[doc(hidden)]
+pub async fn lots_previous_shape(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    let mut rows = lots_query_previous(filter, scope)
+        .rows(conn, |row| LotRow {
+            id: int(row, 0),
+            tender_id: int(row, 1),
+            lot_key: text(row, 2),
+            kind: text(row, 3),
+            seq: int(row, 4),
+            title: None,
+            value_cents: None,
+            currency: None,
+            deadline: None,
+        })
+        .await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
+/// The SQL and bind parameters [`lots`] would run, without running them — the seam
+/// a plan test needs to assert the access path of the statement the builder ACTUALLY
+/// emits.
+///
+/// A plan test that plans its own hand-written string keeps passing while the builder
+/// drifts underneath it: the same artifact-versus-proxy failure as issues 110 and
+/// 102, and one this read has already been bitten by. The test guarding `1830d50`'s
+/// row-value cursor spelled that cursor out in its own SQL, so it went on passing
+/// after issue 115 removed the form from the builder — certifying a statement nothing
+/// emitted.
+///
+/// Test-only, because it is a window onto the builder rather than a way to use it:
+/// nothing in production wants the statement without running it. What it exposes is
+/// [`lots_query`], the same production code [`lots`] itself runs — a view, not a
+/// second path.
+#[doc(hidden)]
+pub fn lots_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = lots_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`lots`], built but not run.
+fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
+    let mut q = Query::default();
+    // Two questions, two driving tables — and that is the point, not an
+    // optimisation. "Which Lots does THIS Tender's current version publish?" is a
+    // containment question, and the set it asks for is literally the rows of
+    // `tender_version_lots` under one `(tender_id, seq)`; it drives from there.
+    // "The next page of the lot stream after this cursor" is a stream question, and
+    // it drives from `lots` in id order. Answering the first with the second's
+    // machinery is what made `/v1/tenders/{id}` cost minutes.
+    //
+    // Only `Scope::Page` splits: `Scope::At` probes one lot by id for the SSE diff
+    // loop, where the id is already the whole answer.
+    let scoped = match scope {
+        Scope::Page { .. } => filter.tender,
+        Scope::At { .. } => None,
     };
-    q.push(
-        &format!(
-            "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq,
-                    {title},
-                    (SELECT MAX(a.cents) FROM tender_version_amounts a
-                      WHERE a.tender_id = t.id AND a.seq = v.seq AND a.lot_id = l.id),
-                    {currency},
-                    {utc}, {offset}, {has_time}
-               FROM lots l
-               JOIN tenders t ON t.id = l.tender_id
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
-            title = pick(
-                "tender_version_texts",
-                "value",
-                Some("title"),
-                "(s.lang = 'ENG') DESC",
-                lot_scope
-            ),
-            currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", lot_scope),
-            utc = deadline("utc_seconds"),
-            offset = deadline("offset_minutes"),
-            has_time = deadline("has_time"),
-        ),
-        [],
-    );
-    let seq = match scope {
-        Scope::Page { .. } => {
-            "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned()
+    match scoped {
+        // The containment shape. `vl.tender_id = ?` seeks the PK's leading column
+        // and the MAX(seq) subquery is uncorrelated, so it is evaluated once.
+        //
+        // Driving this from `lots` instead — a per-lot `vl.lot_id = l.id` probe —
+        // is the second half of issue 115's blow-up. turso resolves that probe by
+        // seeking the `(tender_id, seq)` PK prefix and then WALKING that version's
+        // whole slice: it does not use the third PK column, and adding an explicit
+        // `(tender_id, seq, lot_id)` index does not change that (measured —
+        // identical cost with and without). One walk per lot is quadratic, so the
+        // join alone cost 0.96s at 2,400 lots against 0.005s here (178x).
+        //
+        // `l.tender_id = vl.tender_id` is not redundant: it is the containment
+        // guard the old shape got from driving off `lots`, and it keeps a
+        // cross-Tender `vl.lot_id` (issue 103's orphaned rows) out of the answer.
+        Some(tender) => {
+            q.push(
+                "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+                   FROM tender_version_lots vl
+                   JOIN lots l ON l.id = vl.lot_id AND l.tender_id = vl.tender_id
+                   JOIN tenders t ON t.id = vl.tender_id
+                   JOIN tender_versions v ON v.tender_id = vl.tender_id AND v.seq = vl.seq
+                  WHERE vl.tender_id = ?
+                    AND vl.seq = (SELECT MAX(x.seq) FROM tender_versions x
+                                   WHERE x.tender_id = ?)",
+                [Value::Integer(tender), Value::Integer(tender)],
+            );
         }
-        Scope::At { seq, .. } => {
-            q.params.push(Value::Integer(seq));
-            "?".to_owned()
+        // The stream shape, unchanged: driving from `lots` in rowid order is the
+        // right plan for a global id-ordered page.
+        None => {
+            q.push(
+                "SELECT l.id, l.tender_id, l.lot_key, vl.kind, v.seq
+                   FROM lots l
+                   JOIN tenders t ON t.id = l.tender_id
+                   JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
+                [],
+            );
+            let seq = match scope {
+                Scope::Page { .. } => {
+                    "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned()
+                }
+                Scope::At { seq, .. } => {
+                    q.params.push(Value::Integer(seq));
+                    "?".to_owned()
+                }
+            };
+            q.push(
+                &format!(
+                    "{seq}
+                       JOIN tender_version_lots vl
+                         ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+                      WHERE 1 = 1"
+                ),
+                [],
+            );
         }
-    };
-    q.push(
-        &format!(
-            "{seq}
-               JOIN tender_version_lots vl
-                 ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
-              WHERE 1 = 1"
-        ),
-        [],
-    );
+    }
     if let Some(source) = &filter.source {
         q.push(" AND t.source = ?", [t(source)]);
     }
     if let Some(kind) = &filter.kind {
         q.push(" AND vl.kind = ?", [t(kind)]);
     }
-    if let Some(tender) = filter.tender {
+    if scoped.is_none()
+        && let Some(tender) = filter.tender
+    {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter);
+    version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
@@ -926,19 +1353,200 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
         ),
         Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
     }
+    q
+}
 
-    q.rows(conn, |row| LotRow {
-        id: int(row, 0),
-        tender_id: int(row, 1),
-        lot_key: text(row, 2),
-        kind: text(row, 3),
-        seq: int(row, 4),
-        title: opt_text_of(row, 5),
-        value_cents: opt_int_of(row, 6),
-        currency: opt_text_of(row, 7),
-        deadline: stamp(row, 8),
-    })
-    .await
+/// **Issue 16 candidate — wired to nothing yet.** The stream-shape `lots` query
+/// rebuilt so that `lots` is the ONLY table in the FROM clause.
+///
+/// Today's shape puts `tender_version_lots` in FROM, and the planner therefore drives
+/// from it: `SCAN tender_version_lots` plus a top-level sorter over the whole matched
+/// set, which is why `?kind=Lot` — the DEFAULT value — costs 164.6s at prod scale
+/// against 0.004s here.
+///
+/// **The sufficient condition is being the only candidate driver**, not the index
+/// available. Measured: an `EXISTS` whose FROM holds only `lots` keeps `lots` driving;
+/// the same predicate as a JOIN reverts to the scan even when all three primary-key
+/// columns are bindable. Adding `JOIN tenders t` back for `?source=` reverts it too —
+/// `SCAN tenders AS t` — so **every** other table access here is a correlated
+/// subquery, including the one for `source`.
+///
+/// **Anyone adding a table to this FROM clause silently undoes the fix.** The symptom
+/// is not a wrong answer; it is the old plan returning, which only a plan assertion or
+/// a clock will show.
+///
+/// `seq` is recomputed as `MAX(seq)` rather than read from `tenders.current_seq`.
+/// `current_seq` equals it for all 4,262,716 production Tenders today, but that is a
+/// projection-MAINTAINED property with no schema constraint behind it. Trusting it
+/// would make this read serve a superseded version's `kind` in exactly the state where
+/// the data is already wrong — removing a cross-check at the moment it is most needed.
+/// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
+/// See issue 27 for enforcing the invariant, after which this may be revisited.
+fn lots_query(filter: &Filter, scope: Scope) -> Query {
+    let scoped = match scope {
+        Scope::Page { .. } => filter.tender,
+        Scope::At { .. } => None,
+    };
+    // The containment shape (issue 115) and the single-lot probe already drive from
+    // the right table; only the stream shape is rebuilt here.
+    if scoped.is_some() || matches!(scope, Scope::At { .. }) {
+        return lots_query_previous(filter, scope);
+    }
+
+    // The current version, correlated on the outer lot. Used in the SELECT list, the
+    // EXISTS probe and every version predicate, so they cannot disagree about which
+    // version they are reading.
+    const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
+
+    let mut q = Query::default();
+    q.push(
+        &format!(
+            "SELECT l.id, l.tender_id, l.lot_key,
+                    (SELECT vl.kind FROM tender_version_lots vl
+                      WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
+                        AND vl.lot_id = l.id),
+                    {SEQ}
+               FROM lots l
+              WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
+                             WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
+                               AND vl.lot_id = l.id"
+        ),
+        [],
+    );
+    // `kind` filters INSIDE the existence probe: it is a property of the version's lot
+    // row, so a lot whose current version does not carry the kind must not match.
+    if let Some(kind) = &filter.kind {
+        q.push(" AND vl.kind = ?", [t(kind)]);
+    }
+    q.push(")", []);
+    if let Some(source) = &filter.source {
+        q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
+    }
+    version_predicates(&mut q, filter, "l.tender_id", SEQ);
+    match scope {
+        Scope::Page { after, limit } => q.push(
+            " AND l.id > ? ORDER BY l.id LIMIT ?",
+            [Value::Integer(after), Value::Integer(limit)],
+        ),
+        Scope::At { id, .. } => q.push(" AND l.id = ?", [Value::Integer(id)]),
+    }
+    q
+}
+
+/// Fill in each Lot's summary fields from the version satellites: the title, the
+/// value and its currency, the submission deadline.
+///
+/// These used to be six correlated scalar subqueries on the row query above — one
+/// set per lot. The satellites are indexed on `(tender_id, seq)` and nothing else;
+/// `lot_id` appears in no index. So each subquery seeked the version and then
+/// walked that version's WHOLE satellite slice to find one lot's rows. One walk per
+/// lot per subquery is O(lots × slice), i.e. QUADRATIC in the Tender's lot count —
+/// measured at 16.1× the time for 4× the lots (issue 115). The 4.26M Tenders with a
+/// handful of lots never noticed; the 16 with more than a thousand took minutes per
+/// request.
+///
+/// So read each satellite ONCE per version instead — the same
+/// `WHERE tender_id = ? AND seq = ?` slice `tender_detail` already reads for the
+/// response's own `texts`/`amounts`/`dates` — and do the per-lot pick in memory.
+/// Cost is O(slice) per distinct version, independent of how many lots were asked
+/// for: a whole-Tender read is three queries whether it has 2 lots or 2,604. A page
+/// of the global list, whose lots span many versions, does three queries per version
+/// against the old six per lot, so it gets cheaper too.
+///
+/// The picks are the SQL's, exactly:
+///   * title — `ORDER BY (lang = 'ENG') DESC LIMIT 1`. SQLite sorts NULL below both
+///     0 and 1 under DESC, so the preference is ENG, then any other language, then
+///     an unlabelled row; ties keep the first in scan order.
+///   * value and currency — `MAX(cents)` and `ORDER BY cents DESC LIMIT 1` resolve
+///     to the SAME row, so one max-cents row serves both.
+///   * deadline — the three columns were three subqueries sharing
+///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
+async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> {
+    // Lot ids are unique across the result, so one map resolves a satellite row's
+    // `lot_id` to the row it decorates — and drops any lot outside this page.
+    // Keyed on the WHOLE of what the correlated subquery matched on —
+    // `s.tender_id = t.id AND s.seq = v.seq AND s.lot_id = l.id` — not on `lot_id`
+    // alone. A satellite row belongs to a lot only if it also belongs to that lot's
+    // Tender AND version. Keying on `lot_id` by itself lets one Tender's slice
+    // decorate another Tender's lot whenever a satellite row carries a foreign
+    // `lot_id` (the issue-103 orphan shape, in the satellites rather than in
+    // `tender_version_lots`) — a leak the old per-lot subqueries could not produce,
+    // because their `s.tender_id = t.id` never matched.
+    let at: HashMap<(i64, i64, i64), usize> =
+        rows.iter().enumerate().map(|(i, r)| ((r.tender_id, r.seq, r.id), i)).collect();
+    let mut versions: Vec<(i64, i64)> = rows.iter().map(|r| (r.tender_id, r.seq)).collect();
+    versions.sort_unstable();
+    versions.dedup();
+
+    // Best key seen so far per row, `None` until the first candidate — kept beside
+    // the rows rather than in them because it is the ORDER BY's key, not output.
+    let mut best_title: Vec<Option<u8>> = vec![None; rows.len()];
+    let mut best_value: Vec<Option<i64>> = vec![None; rows.len()];
+    let mut best_deadline: Vec<Option<i64>> = vec![None; rows.len()];
+
+    for (tender_id, seq) in versions {
+        let key = (Value::Integer(tender_id), Value::Integer(seq));
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.lang, s.value FROM tender_version_texts s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'title'
+                    AND s.lot_id IS NOT NULL",
+                key.clone(),
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
+            let rank = match opt_text_of(&row, 1).as_deref() {
+                Some("ENG") => 2,
+                Some(_) => 1,
+                None => 0,
+            };
+            if best_title[i].is_none_or(|best| rank > best) {
+                best_title[i] = Some(rank);
+                rows[i].title = opt_text_of(&row, 2);
+            }
+        }
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.cents, s.currency FROM tender_version_amounts s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.lot_id IS NOT NULL",
+                key.clone(),
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
+            let cents = opt_int_of(&row, 1);
+            // A NULL sorts last under `cents DESC` and is ignored by `MAX`, so it
+            // ranks below every real amount rather than above them.
+            let rank = cents.unwrap_or(i64::MIN);
+            if best_value[i].is_none_or(|best| rank > best) {
+                best_value[i] = Some(rank);
+                rows[i].value_cents = cents;
+                rows[i].currency = opt_text_of(&row, 2);
+            }
+        }
+
+        let mut got = conn
+            .query(
+                "SELECT s.lot_id, s.utc_seconds, s.offset_minutes, s.has_time
+                   FROM tender_version_dates s
+                  WHERE s.tender_id = ? AND s.seq = ? AND s.field = 'submission_deadline'
+                    AND s.lot_id IS NOT NULL",
+                key,
+            )
+            .await?;
+        while let Some(row) = got.next().await? {
+            let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
+            let rank = opt_int_of(&row, 1).unwrap_or(i64::MIN);
+            if best_deadline[i].is_none_or(|best| rank > best) {
+                best_deadline[i] = Some(rank);
+                rows[i].deadline = stamp(&row, 1);
+            }
+        }
+    }
+    Ok(())
 }
 
 async fn lots_of(conn: &Connection, tender_id: i64) -> turso::Result<Vec<LotRow>> {
@@ -959,6 +1567,36 @@ pub async fn organizations(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<OrganizationRow>> {
+    let q = organizations_query(filter, scope);
+    q.rows(conn, |row| OrganizationRow {
+        id: int(row, 0),
+        name: text(row, 1),
+        country: opt_text_of(row, 2),
+        identifier_kind: opt_text_of(row, 3),
+        identifier: opt_text_of(row, 4),
+        provisional: int(row, 5) != 0,
+        mentions: int(row, 6),
+    })
+    .await
+}
+
+/// The statement [`organizations`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+///
+/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
+/// the cost class: a plan names the access path, never the number of rows on it
+/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
+/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
+/// slice. This seam narrows what the gate can be wrong about; it does not widen
+/// what the gate can see.
+#[cfg(test)]
+pub(crate) fn organizations_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = organizations_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`organizations`], built but not run.
+fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
@@ -981,17 +1619,7 @@ pub async fn organizations(
             [Value::Integer(after), Value::Integer(limit)],
         ),
         Scope::At { id, .. } => q.push(" AND o.id = ?", [Value::Integer(id)]),
-    }
-    q.rows(conn, |row| OrganizationRow {
-        id: int(row, 0),
-        name: text(row, 1),
-        country: opt_text_of(row, 2),
-        identifier_kind: opt_text_of(row, 3),
-        identifier: opt_text_of(row, 4),
-        provisional: int(row, 5) != 0,
-        mentions: int(row, 6),
-    })
-    .await
+    }    q
 }
 
 // ------------------------------------------------------------------- notices
@@ -1003,6 +1631,40 @@ pub async fn notices(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<NoticeRow>> {
+    let q = notices_query(filter, scope);
+    q.rows(conn, |row| NoticeRow {
+        id: int(row, 0),
+        source: text(row, 1),
+        publication_id: text(row, 2),
+        content_hash: text(row, 3),
+        profile: text(row, 4),
+        declared_version: opt_text_of(row, 5),
+        member_path: text(row, 6),
+        ingested_at: int(row, 7),
+        parse_state: text(row, 8),
+        published_at: opt_int_of(row, 9),
+        dispatched_at: opt_int_of(row, 10),
+    })
+    .await
+}
+
+/// The statement [`notices`] builds, without running it — the seam 112's plan gate
+/// reads so it asserts the artifact rather than a paraphrase of it (issue 114).
+///
+/// That closes the DRIFT gap only. Asserting the artifact's PLAN still cannot see
+/// the cost class: a plan names the access path, never the number of rows on it
+/// (112 rule 6). Measured — 117's row-value fix turns a walk into a seek, the
+/// transition a plan gate rewards, while getting 151,648x slower on prod's DE
+/// slice. This seam narrows what the gate can be wrong about; it does not widen
+/// what the gate can see.
+#[cfg(test)]
+pub(crate) fn notices_statement(filter: &Filter, scope: Scope) -> (String, Vec<Value>) {
+    let q = notices_query(filter, scope);
+    (q.sql, q.params)
+}
+
+/// The identity half of [`notices`], built but not run.
+fn notices_query(filter: &Filter, scope: Scope) -> Query {
     let mut q = Query::default();
     q.push(
         "SELECT id, source, publication_id, content_hash, profile, declared_version,
@@ -1022,21 +1684,7 @@ pub async fn notices(
             [Value::Integer(after), Value::Integer(limit)],
         ),
         Scope::At { id, .. } => q.push(" AND id = ?", [Value::Integer(id)]),
-    }
-    q.rows(conn, |row| NoticeRow {
-        id: int(row, 0),
-        source: text(row, 1),
-        publication_id: text(row, 2),
-        content_hash: text(row, 3),
-        profile: text(row, 4),
-        declared_version: opt_text_of(row, 5),
-        member_path: text(row, 6),
-        ingested_at: int(row, 7),
-        parse_state: text(row, 8),
-        published_at: opt_int_of(row, 9),
-        dispatched_at: opt_int_of(row, 10),
-    })
-    .await
+    }    q
 }
 
 // ------------------------------------------------------------------- changes

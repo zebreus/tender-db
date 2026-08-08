@@ -316,8 +316,38 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
     ("DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode", ORG_COUNTRY_FIELD),
     // Organization role references (eForms' OPT-300/301 pattern).
     ("DE1-ContractingParty-Party-PartyIdentification-ID", "OPT-300-Procedure-Buyer"),
+    ("DE1-ContractingParty-Party-ServiceProviderParty-Party-PartyIdentification-ID", "OPT-300-Procedure-SProvider"),
     ("DE1-NoticeResult-TenderingParty-Tenderer-ID", "OPT-300-Tenderer"),
     ("DE1-NoticeResult-TenderingParty-SubContractor-ID", "OPT-301-Tenderer-SubCont"),
+    ("DE1-NoticeResult-TenderingParty-SubContractor-MainContractor-ID", "OPT-301-Tenderer-MainCont"),
+    ("DE1-NoticeResult-SettledContract-SignatoryParty-PartyIdentification-ID", "OPT-300-Contract-Signatory"),
+    ("DE1-NoticeResult-LotResult-FinancingParty-PartyIdentification-ID", "OPT-301-LotResult-Financing"),
+    ("DE1-NoticeResult-LotResult-PayerParty-PartyIdentification-ID", "OPT-301-LotResult-Paying"),
+    // The lot-level role parties (issue 98). eForms splits each of these into a
+    // `Lot-`/`Part-` pair by the `schemeName` predicate DE-1.x does not carry
+    // (issue 75), and the DE dialect publishes some at procedure scope and some
+    // under the lot — both fold onto the `Lot-` id, because `role_name` uses the
+    // suffix verbatim as the role string and the projection resolves the scope
+    // separately. That yields exactly the role names TED twins already carry
+    // onto these same Tenders (`Lot-ReviewOrg`, `Lot-AddInfo`, …), which is what
+    // makes a DE version and its TED twin agree instead of inventing a dialect.
+    ("DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "OPT-301-Lot-ReviewOrg"),
+    ("DE1-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealInformationParty-PartyIdentification-ID", "OPT-301-Lot-ReviewInfo"),
+    ("DE1-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyIdentification-ID", "OPT-301-Lot-Mediator"),
+    ("DE1-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-TenderRecipientParty-PartyIdentification-ID", "OPT-301-Lot-TenderReceipt"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "OPT-301-Lot-AddInfo"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-DocumentProviderParty-PartyIdentification-ID", "OPT-301-Lot-DocProvider"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-TenderEvaluationParty-PartyIdentification-ID", "OPT-301-Lot-TenderEval"),
+    ("DE1-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-FiscalLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-FiscalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-FiscalLegis"),
+    ("DE1-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EmployLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-EmploymentLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EmployLegis"),
+    ("DE1-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EnvironLegis"),
+    ("DE1-ProcurementProjectLot-TenderingTerms-EnvironmentalLegislationDocumentReference-IssuerParty-PartyIdentification-ID", "OPT-301-Lot-EnvironLegis"),
     // The results graph: award decision, its lot, and the bid/contract edges that
     // resolve a winner.
     ("DE1-NoticeResult-LotResult-TenderResultCode", "BT-142-LotResult"),
@@ -443,8 +473,17 @@ pub enum Progress {
     /// Phase 1 → 2 transition: the plan grouped into `tenders` (`islands` of them
     /// single-notice).
     Grouped { tenders: u64, islands: u64 },
-    /// Phase 2: `tenders` of `total` folded and applied so far.
-    Applying { tenders: u64, total: u64 },
+    /// Phase 2: `tenders` of `total` folded so far, and `versions` version rows
+    /// actually WRITTEN.
+    ///
+    /// The two are deliberately separate. `tenders` counts groups the fold has
+    /// processed, which climbs to completion even when every single one hits
+    /// `apply_tender_tx`'s unchanged-chain early return and writes nothing — so a
+    /// fold that is a total no-op looks identical to a healthy one on that counter
+    /// alone. `versions` is what distinguishes them, and it is the first-heartbeat
+    /// signal that a projection-logic re-fold (issue 99's epoch) is really
+    /// rewriting rather than silently skipping.
+    Applying { tenders: u64, total: u64, versions: u64 },
 }
 
 /// Which Phase-2 fold the projection runs. Byte-identical either way — both build
@@ -488,8 +527,8 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
         Progress::Grouped { tenders, islands } => {
             eprintln!("[project] phase 2: folding {tenders} tenders ({islands} islands)");
         }
-        Progress::Applying { tenders, total } => {
-            eprintln!("[project] phase 2: {tenders}/{total} tenders applied");
+        Progress::Applying { tenders, total, versions } => {
+            eprintln!("[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written");
         }
     })
     .await
@@ -639,7 +678,11 @@ pub async fn project_with_progress_phase2(
                 tenders_done += groups.len() as u64;
                 report.applied.add(apply_plan_batch(db, &groups, now, rebuild).await?);
                 // Heartbeat per batch so Phase 2 reports how far along it is (issue 59).
-                on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+                on_progress(Progress::Applying {
+                    tenders: tenders_done,
+                    total: report.tenders,
+                    versions: report.applied.versions_written,
+                });
                 batches_done += 1;
                 if batches_done.is_multiple_of(CHECKPOINT_EVERY_BATCHES)
                     && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
@@ -1007,13 +1050,22 @@ pub async fn project_incremental_chunked_phase2(
                 report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
                 // Heartbeat per batch: without it a wedged fold is indistinguishable
                 // from a slow one (issue 90).
-                eprintln!("[project] incremental fold: {tenders_done}/{tenders} Tenders applied");
+                eprintln!(
+                    "[project] incremental fold: {tenders_done}/{tenders} Tenders folded, \
+                     {} versions written",
+                    report.applied.versions_written
+                );
             }
         }
         Phase2::Buckets { shards } => {
             bucketed_fold(db, APPLY_NOTICE_BATCH, shards, now, false, &mut report, |p| {
-                if let Progress::Applying { tenders, total } = p {
-                    eprintln!("[project] incremental fold: {tenders}/{total} Tenders applied");
+                if let Progress::Applying { tenders, total, versions } = p {
+                    // `versions` is the load-bearing number: `tenders` climbs to
+                    // completion even if every fold early-returns (issue 99).
+                    eprintln!(
+                        "[project] incremental fold: {tenders}/{total} Tenders folded, \
+                         {versions} versions written"
+                    );
                 }
             })
             .await?;
@@ -1136,8 +1188,13 @@ async fn bucketed_fold(
     // same `b`; the fold re-concatenates and sorts them. All workers must finish
     // before the fold — a group can span any stripe (barrier is the `join` inside).
     let fd_budget = raise_fd_limit();
-    let k = worker_count(shards, boundaries.len(), fd_budget);
-    write_buckets_sharded(db, &boundaries, &dir, k).await?;
+    let k = write_buckets_sharded(
+        db,
+        &boundaries,
+        &dir,
+        worker_count(shards, boundaries.len(), fd_budget),
+    )
+    .await?;
 
     // Fold pass: each bucket in order, its K shard files concatenated then sorted in
     // RAM by the fold key, then applied. Serial — `apply_tenders` assigns surrogate
@@ -1149,7 +1206,11 @@ async fn bucketed_fold(
         let (applied, groups) = fold_bucket(db, &rows, now, rebuild).await?;
         report.applied.add(applied);
         tenders_done += groups;
-        on_progress(Progress::Applying { tenders: tenders_done, total: report.tenders });
+        on_progress(Progress::Applying {
+            tenders: tenders_done,
+            total: report.tenders,
+            versions: report.applied.versions_written,
+        });
         if (b + 1).is_multiple_of(CHECKPOINT_EVERY_BATCHES)
             && let Err(e) = db.checkpoint(store::CheckpointMode::Truncate).await
         {
@@ -1217,10 +1278,32 @@ fn worker_count(shards: Option<usize>, n_buckets: usize, fd_budget: usize) -> us
     if let Some(k) = shards {
         return k.max(1);
     }
-    let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
     let fd_cap = (fd_budget.saturating_sub(FD_MARGIN) / n_buckets.max(1)).max(1);
-    cores.saturating_sub(1).clamp(1, fd_cap)
+    // Ops valve — the right number is a property of the DEVICE, not the build, and
+    // this is the one knob worth turning without a redeploy while a many-hour sweep
+    // is the critical path.
+    if let Some(k) = std::env::var("TENDER_PREPASS_SHARDS").ok().and_then(|v| v.parse::<usize>().ok())
+    {
+        return k.clamp(1, fd_cap);
+    }
+    let cores = std::thread::available_parallelism().map_or(1, |c| c.get());
+    cores.saturating_sub(1).max(PREPASS_MIN_WORKERS).clamp(1, fd_cap)
 }
+
+/// Floor on the pre-pass worker count, independent of core count (issue 94).
+///
+/// `cores − 1` sizes for a CPU-bound sweep. This one is not: a pre-pass worker sits
+/// in uninterruptible disk wait with one read outstanding, and on prod the box was
+/// measured 75% idle with 17.5% iowait while a single worker held ~16 MB/s. What
+/// buys throughput here is DEVICE QUEUE DEPTH — more readers in flight — not more
+/// cores, and the per-worker read chunk shrinks as workers are added
+/// ([`PREPASS_CHUNK_BUDGET`]) so the memory bill does not follow.
+///
+/// 8 is deliberately conservative rather than optimal: it is a solid multiple of the
+/// 3 the 4-core prod box was getting, stays sane on small dev machines, and the real
+/// optimum is a device property — measure it with `TENDER_PREPASS_SHARDS` rather
+/// than guess it here.
+const PREPASS_MIN_WORKERS: usize = 8;
 
 /// Pre-pass (issue 66): shard the parsed read into `k` contiguous notice-id stripes,
 /// each swept by its own worker on its own reader connection, spilling resolved
@@ -1233,25 +1316,51 @@ async fn write_buckets_sharded(
     boundaries: &[String],
     dir: &Path,
     k: usize,
-) -> turso::Result<()> {
+) -> turso::Result<usize> {
     std::fs::create_dir_all(dir).expect("create bucket dir");
-    // Partition (0, max_id] into k contiguous stripes; the last runs to infinity so
-    // it always reaches the true maximum. Gaps (unparsed ids) are harmless — a stripe
-    // just reads fewer notices.
+
+    // Bound the sweep to the id range the PLAN covers (issue 94). `write_shard`
+    // already skips notices absent from the plan, so ids outside this range can
+    // never produce a bucket row — reading them is pure waste. On a rebuild the plan
+    // covers the corpus and this degenerates to the whole id space; on a scoped
+    // re-fold whose cohort is clustered (a late bulk reclaim is, by construction) it
+    // removes most of the sweep. It can never change the OUTPUT, only which ids are
+    // visited, so byte-identity is untouched.
     let max_id = db.max_parsed_notice_id().await?;
-    let width = ((max_id + k as i64 - 1) / k as i64).max(1);
+    let (lo, hi) = match db.plan_notice_id_range().await? {
+        // `id > lo` is exclusive, so step one below the first planned notice.
+        Some((plan_lo, plan_hi)) => (plan_lo - 1, plan_hi.min(max_id)),
+        None => (0, max_id),
+    };
+
+    // Partition the swept range into contiguous stripes holding equally many PARSED
+    // notices (issue 94) — NOT equal id widths, which put ~all the work in one
+    // worker whenever the id space is unevenly dense (which it is: reclaims append
+    // late). Falls back to one stripe when the range is too small to split.
+    let stripes = db.parsed_id_stripes(lo, hi, k).await?;
+    let k = stripes.len();
+    eprintln!(
+        "[project] phase 2 pre-pass: {k} shard(s) over notice ids ({lo}, {hi}] \
+         ({} of the id space)",
+        if max_id > 0 { format!("{}%", (hi - lo) * 100 / max_id.max(1)) } else { "100%".into() }
+    );
     let readers = db.readers(k)?;
 
     // Each worker drives its stripe on its own thread (the decode/fold/encode is
     // CPU-bound, so real threads — not tokio tasks on the CLI's current-thread
     // runtime — are what parallelises it) with its own current-thread runtime and its
     // own reader connection. Scoped threads let the workers borrow `boundaries`/`dir`.
+    // Keep peak RAM flat as `k` rises: each worker holds one read chunk of resolved
+    // notices, so the per-worker chunk shrinks as workers are added (issue 94 /
+    // the bounded-memory principle). Concurrency goes up, the working set does not.
+    let chunk = (PREPASS_CHUNK_BUDGET / k).clamp(PREPASS_CHUNK_MIN, PREPASS_CHUNK_MAX) as i64;
     std::thread::scope(|scope| -> turso::Result<()> {
-        let handles: Vec<_> = (0..k)
-            .map(|s| {
+        let handles: Vec<_> = stripes
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(s, (lo, hi))| {
                 let readers = readers.clone();
-                let lo = s as i64 * width;
-                let hi = if s + 1 == k { i64::MAX } else { (s as i64 + 1) * width };
                 scope.spawn(move || -> turso::Result<()> {
                     let rt = tokio::runtime::Builder::new_current_thread()
                         .enable_all()
@@ -1259,7 +1368,7 @@ async fn write_buckets_sharded(
                         .expect("build worker runtime");
                     rt.block_on(async move {
                         let conn = readers.get().await?;
-                        write_shard(&conn, boundaries, dir, s, lo, hi).await
+                        write_shard(&conn, boundaries, dir, s, lo, hi, chunk).await
                     })
                 })
             })
@@ -1268,8 +1377,27 @@ async fn write_buckets_sharded(
             h.join().expect("shard worker panicked")?;
         }
         Ok(())
-    })
+    })?;
+    Ok(k)
 }
+
+/// Total notices a sharded pre-pass holds in RAM at once, across ALL workers. Each
+/// worker reads `PREPASS_CHUNK_BUDGET / k` notices per chunk, so raising the worker
+/// count buys I/O concurrency without raising peak memory (issue 94). Clamped at
+/// both ends: too small a chunk pays per-query overhead on every satellite scan, too
+/// large a one puts the old un-sharded working set back on a single worker.
+const PREPASS_CHUNK_BUDGET: usize = 30_000;
+const PREPASS_CHUNK_MIN: usize = 1_000;
+const PREPASS_CHUNK_MAX: usize = 10_000;
+
+/// How many notices a pre-pass worker sweeps between heartbeats (issue 94). The
+/// pre-pass used to print NOTHING for hours, and its one external proxy — the bucket
+/// files — is actively misleading, because they are `BufWriter`-wrapped and flushed
+/// only at the end, so their on-disk size stays near zero however far along the
+/// sweep is. Diagnosing a live sweep meant reconstructing worker positions from
+/// `/proc/<pid>/task/*/io`. Per shard, so with `k` workers the line rate is `k` per
+/// this many notices swept.
+const PREPASS_HEARTBEAT: u64 = 250_000;
 
 /// One pre-pass worker: sweep notice ids in `(lo, hi]` on `conn`, resolve each
 /// notice's [`NoticeState`] (binding the Organizations Phase-1 recorded), and append
@@ -1283,6 +1411,7 @@ async fn write_shard(
     shard: usize,
     lo: i64,
     hi: i64,
+    read_chunk: i64,
 ) -> turso::Result<()> {
     // Every bucket file is created (even if it stays empty) so the fold's
     // `read_bucket_shards` can open `shard{s}_bucket{b}.bin` for every (s, b).
@@ -1292,11 +1421,12 @@ async fn write_shard(
             BufWriter::new(File::create(&p).expect("create shard bucket file"))
         })
         .collect();
-    const READ_CHUNK: i64 = 10_000;
     let empty = HashMap::new();
     let mut after_id = lo;
+    let t0 = std::time::Instant::now();
+    let (mut swept, mut spilled, mut last_beat) = (0u64, 0u64, 0u64);
     loop {
-        let mut chunk = Db::parsed_chunk_on(conn, after_id, hi, READ_CHUNK).await?;
+        let mut chunk = Db::parsed_chunk_on(conn, after_id, hi, read_chunk).await?;
         normalise_de1(&mut chunk);
         let Some((last, _)) = chunk.last() else { break };
         let (clo, chi) = (chunk[0].0.id, last.id);
@@ -1319,8 +1449,25 @@ async fn write_shard(
             w.write_all(&u32::try_from(bytes.len()).expect("bucket row < 4GB").to_le_bytes())
                 .expect("write bucket frame length");
             w.write_all(&bytes).expect("write bucket frame");
+            spilled += 1;
+        }
+        // Heartbeat (issue 94): position and rate, per shard. `at` is how far the
+        // stripe has been consumed, which is what makes an unbalanced partition or a
+        // slow stripe visible while it is happening rather than afterwards.
+        swept += chunk.len() as u64;
+        if swept - last_beat >= PREPASS_HEARTBEAT {
+            last_beat = swept;
+            eprintln!(
+                "[project] pre-pass shard {shard}: {swept} swept, {spilled} spilled, \
+                 at id {after_id} of ({lo}, {hi}], {:.0} notices/s",
+                swept as f64 / t0.elapsed().as_secs_f64().max(1e-9)
+            );
         }
     }
+    eprintln!(
+        "[project] pre-pass shard {shard} DONE: {swept} swept, {spilled} spilled from ({lo}, {hi}] in {:.1}s",
+        t0.elapsed().as_secs_f64()
+    );
     for w in &mut writers {
         w.flush().expect("flush shard bucket");
     }
@@ -2524,8 +2671,46 @@ fn normalise_de1(chunk: &mut [(store::NoticeRef, Parsed)]) {
         for value in &mut parsed.values {
             if let Some((_, eforms)) = DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == value.field_id) {
                 value.field_id = (*eforms).to_owned();
+                de1_mark_reference(value);
             }
         }
+    }
+}
+
+/// Flag an aliased organization-role reference as a reference (issue 98).
+///
+/// The vendored DE-1.x inventory is empirical (issue 75) and types every
+/// identifier `id`, never `id-ref` — a reference and an identifier are
+/// indistinguishable by their lexical form, so the generator could not tell them
+/// apart. `value::convert` derives `is_ref` from exactly that type
+/// (`is_ref: field.kind == "id-ref"`), so every DE-1.x id reaches the projection
+/// with `is_ref = false`, and the role arm — which matches only
+/// `NoticeValue::Id { is_ref: true, .. }` — never sees one. The whole
+/// organization layer of the cohort was therefore empty: no buyer, no review
+/// body, no tenderer, and so no award winner (issue 98; measured at 0% of
+/// 218,635 notices, the visible ~35% being parties carried forward from merged
+/// TED twins, never DE's own).
+///
+/// The flag is set HERE rather than by fixing only the vendored json because
+/// `is_ref` is written at parse time: correcting the metadata alone would
+/// require re-parsing all 218,635 notices from the archive, where doing it in the
+/// projection's existing in-memory pass keeps this a projection-only fix and a
+/// scoped re-fold. The json is corrected too, so future ingests are right at the
+/// source — the two are idempotent, since a value that already arrives `is_ref`
+/// is simply set `is_ref` again.
+///
+/// Scoped to the `OPT-300-`/`OPT-301-` families deliberately, NOT to every id:
+/// those two prefixes are exactly what [`role_name`] recognises, so this marks
+/// the ids that become party roles and nothing else. A blanket flip would also
+/// flag identifiers (`DE1-ProcurementProjectLot-ID`, the folder id, document
+/// reference ids), and an identifier read as a reference emits a party pointing
+/// at whatever section happens to share its value.
+fn de1_mark_reference(value: &mut store::ValueRow) {
+    if !(value.field_id.starts_with("OPT-300-") || value.field_id.starts_with("OPT-301-")) {
+        return;
+    }
+    if let store::NoticeValue::Id { is_ref, .. } = &mut value.value {
+        *is_ref = true;
     }
 }
 
@@ -2800,6 +2985,59 @@ mod tests {
 
     /// One source id must not map two ways — a duplicate would make the fold
     /// depend on table order.
+    /// Issues 94/98: an alias may never move a value INTO a field that decides the
+    /// Tender key, its kind, or the fold order — the second lever, distinct from
+    /// `is_ref`, by which a "mapping-only" change can silently re-group the corpus.
+    ///
+    /// `normalise_de1` rewrites `field_id`, so an alias targeting one of these
+    /// injects a value the grouping reads. The worst case is `BT-04-notice`:
+    /// `procedure_key` returns it **unchecked** (on TED it is a spec-guaranteed
+    /// uuid), so an alias pointing there would key Tenders on a raw portal string
+    /// with no gate at all — the issue-34 collapse, reached around the `is_uuid`
+    /// guard that exists to prevent it. `published_at` is the subtler one: it
+    /// orders versions inside a Tender via `plan_notice_fold`, so perturbing it
+    /// renumbers every `seq`.
+    ///
+    /// An allowlist rather than a ban, because five identity aliases legitimately
+    /// target this set and produced the current fold. Anything else must be a
+    /// deliberate edit here, with a fold-impact review attached.
+    #[test]
+    fn no_de1_alias_reaches_the_grouping_or_the_fold_order() {
+        let mut decides_the_fold: Vec<&str> = vec![
+            PROCEDURE_KEY_FIELD,  // the Tender key, read UNCHECKED
+            DE1_FOLDER_FIELD,     // the gated key fallback
+            SUBTYPE_FIELD,        // tenders.kind + the plan group's first_subtype
+            LOGICAL_NOTICE_FIELD, // correction dedup — moves results, not grouping
+        ];
+        decides_the_fold.extend(PUBLICATION_DATE_FIELDS); // published_at = fold order
+        decides_the_fold.extend(DISPATCH_DATE_FIELDS); // dispatched_at, and published_at by fallback
+        decides_the_fold.extend(LEGACY_OWN_NUMBER_FIELDS); // legacy OJS identity
+
+        // The identity aliases that deliberately target it (issue 85's DE-1.x line).
+        const IDENTITY: &[(&str, &str)] = &[
+            ("DE1-ID", LOGICAL_NOTICE_FIELD),
+            ("DE1-NoticeSubType-SubTypeCode", SUBTYPE_FIELD),
+            ("DE1-Publication-PublicationDate", "OPP-012-notice"),
+            ("DE1-RequestedPublicationDate", "BT-738-notice"),
+            ("DE1-IssueDate", "BT-05(a)-notice"),
+        ];
+
+        for (de1, target) in DE1_FIELD_ALIASES {
+            if decides_the_fold.contains(target) {
+                assert!(
+                    IDENTITY.contains(&(de1, target)),
+                    "alias {de1} → {target} moves a value into the grouping/fold-order set. \
+                     That re-groups or re-orders the corpus and needs a fold-impact review, \
+                     not a mapping review — add it to IDENTITY here only once that is done."
+                );
+            }
+            assert_ne!(
+                *de1, DE1_FOLDER_FIELD,
+                "aliasing the folder id AWAY would destroy the DE-1.x Tender key"
+            );
+        }
+    }
+
     #[test]
     fn de1_aliases_are_unique() {
         let mut seen: Vec<&str> = DE1_FIELD_ALIASES.iter().map(|(de1, _)| *de1).collect();

@@ -33,6 +33,55 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use turso::{Connection, Statement, Value};
 
+/// Peak RSS of a bulk `CREATE INDEX`, per row of the table being indexed — the
+/// LARGEST measured, not the typical one.
+///
+/// Four points on the deployed turso 0.7.0, from run-driver:
+///
+/// | rows | index | B/row |
+/// |---|---|---|
+/// | 8,132,478 | `organizations(country, id)` | 45 |
+/// | 25,289,344 | `organizations(country, id)` | 45 |
+/// | (tenders) | `tenders(source, id)` | 41 |
+/// | 14,240,000 | `notices(source, id)` | **48** |
+///
+/// This constant was first set to 45, which two consecutive measurements agreed on —
+/// and 45 turned out to be CENTRAL rather than an upper bound. Taking a
+/// repeated sample for a bound is the same error as taking a measurement to license a
+/// conclusion about something it did not vary; the fourth point exceeded it and would
+/// have made every cap derived from it optimistic by 7%.
+///
+/// So it is now the measured maximum, and it must be RAISED — never averaged — the
+/// moment a wider key measures above it. The margin deliberately lives in
+/// [`AUTO_INDEX_MEMORY_BUDGET`] (half the ceiling) rather than being padded into this
+/// number, so the two stay separable: this is an empirical fact about turso, that is
+/// a policy choice about how much of the box a build may use.
+const INDEX_BUILD_BYTES_PER_ROW: i64 = 48;
+
+/// What one auto-triggered index build may consume. Half the project's ~4 GB
+/// bounded-memory ceiling, leaving the other half for the rest of the process on a
+/// box still carrying issue 57's swap band-aid.
+const AUTO_INDEX_MEMORY_BUDGET: i64 = 2_000_000_000;
+
+// The one part of the size cap that IS a compile-time fact, and so is checked as one.
+//
+// The cap itself must stay a RUNTIME check: the hazard is a row count, and row counts
+// are not known at compile time — a static allowlist of "small" tables would encode
+// today's judgement and go stale the moment one grew, which is exactly how
+// `notices(source, id)` ended up in the schema batch on the strength of a comment
+// written when that table was 8x smaller.
+//
+// But the cap's DERIVATION is static: raising `MAX_AUTO_INDEX_ROWS` without
+// re-deriving it against the measured bytes-per-row is a compile error, not a
+// production discovery. That is the half that never leaves the branch.
+const _: () = assert!(
+    Db::MAX_AUTO_INDEX_ROWS * INDEX_BUILD_BYTES_PER_ROW <= AUTO_INDEX_MEMORY_BUDGET,
+    "MAX_AUTO_INDEX_ROWS exceeds the auto-build memory budget at the measured \
+     bytes-per-row: a build at that size would sort past the bounded-memory ceiling. \
+     Re-derive the cap against INDEX_BUILD_BYTES_PER_ROW, or raise the budget only \
+     with a new measurement behind it."
+);
+
 pub(crate) const SCHEMA: &str = "
     -- A Tender: one procurement opportunity, independent of how many Notices
     -- documented it. `procedure_key` is the source's procedure identity (BT-04
@@ -59,7 +108,15 @@ pub(crate) const SCHEMA: &str = "
         -- tender_versions stays fully append-only -- this is a derived head pointer
         -- (ADR-0001 allows validity-range writes on the canonical layer).
         current_seq          INTEGER,
-        current_published_at INTEGER
+        current_published_at INTEGER,
+        -- Which PROJECTION LOGIC this Tender's content was last folded under
+        -- (issue 99). The fold's early-return keys on the chain of causing
+        -- notices, which is a state key only while the logic is fixed: a mapping
+        -- change makes the same chain yield different content, and the unchanged
+        -- chain then skips it. Issue 85 left 2,185 factless shells that way and
+        -- issue 98 would have written zero parties. Stamped on every rewrite; a
+        -- mismatch forces one.
+        projection_epoch     INTEGER NOT NULL DEFAULT 0
         -- A procedure key is globally unique across Sources: a TED eForms
         -- procedure and its DÖE twin share one BT-04 UUID and must collapse into
         -- one Tender (ADR-0003), and legacy `ojs:` keys are TED-only, so the key
@@ -563,6 +620,41 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// Legacy `plan_ojs_node` rows written per transaction when materialising the
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
+/// The version of the projection LOGIC that produced a Tender's stored content
+/// (issue 99).
+///
+/// `apply_tender_tx` skips a Tender whose chain of causing notices is unchanged,
+/// on the stated assumption that "the projection is deterministic, so the sequence
+/// of causing notices is the state key". That holds only while the logic is fixed.
+/// A mapping change makes the SAME chain yield different content, so the chain
+/// stops being a state key and the new content is silently discarded — issue 85
+/// left 2,185 factless shells exactly that way, and issue 98 would have written
+/// zero party rows at all. Every rewrite stamps this; a stored value that differs
+/// forces a rewrite the chain alone would have skipped.
+///
+/// **Bump this on any change to the projection's mapping or fold logic** — the
+/// alias tables, `canonical_name`, `NoticeState::read`, `read_results`, `fold`.
+/// Not for changes that only affect grouping (those change the chain, which the
+/// existing check already catches) and not for read-path or performance work.
+///
+/// **A bump MUST be paired with a SCOPED refold.** The rewrite set is the
+/// `projected = 0` marking, never the epoch, so a profile-scoped `refold` rewrites
+/// only that cohort. A bump plus a whole-corpus refold would re-emit version change
+/// events for all ~8.1M Tenders — the feed is append-only, so that noise is
+/// permanent. Scope the refold to the profiles the logic change actually touched.
+///
+/// Bumping is human discipline, and the coupling that partly guards it has a known
+/// hole: `project_golden` turns red when fold output moves, but its corpus contains
+/// no eForms-DE 1.x notice, so a DE-only change — issue 98 exactly — would not have
+/// tripped it. Closing that needs a DE-1.x golden fixture (see the issue-99
+/// follow-up), which is also what would give the DE path multi-notice fold-order
+/// coverage.
+///
+/// | epoch | change |
+/// |---|---|
+/// | 1 | issue 98 — DE-1.x organization references (`is_ref` + 25 role aliases) |
+pub const PROJECTION_EPOCH: i64 = 1;
+
 const NODE_WRITE_BATCH: usize = 20_000;
 
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
@@ -1236,6 +1328,18 @@ impl Db {
     /// Batched by id range with a TRUNCATE between, like [`Db::clear_canonical`]: a
     /// single cohort-wide UPDATE writes a WAL frame per row and balloons the in-RAM
     /// WAL-index (issue 63). Returns the number of notices re-queued.
+    /// Age every Tender's stored projection epoch — **tests only** (issue 99).
+    ///
+    /// Production never needs this: bumping [`PROJECTION_EPOCH`] in code makes every
+    /// stored value stale by definition. The epoch-invariance gates need to drive the
+    /// branch directly, and forcing them through a runtime-injectable epoch would
+    /// mean making a compile-time constant configurable in production purely to be
+    /// testable — a worse trade than one narrow, clearly-labelled writer.
+    pub async fn set_projection_epoch_for_test(&self, epoch: i64) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("UPDATE tenders SET projection_epoch = ?", (Value::Integer(epoch),)).await
+    }
+
     pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
         let requeued = self.projected_notice_count_for_profiles(profiles).await?;
         if requeued == 0 {
@@ -1357,7 +1461,173 @@ impl Db {
             (),
         )
         .await?;
+        // Issue 117: `(filter, id)` indexes for the paginated `/v1/organizations`
+        // reads, so `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` uses BOTH the
+        // filter and the cursor as index bounds and no sorter runs.
+        //
+        // `organizations_identity(country, identifier_kind, identifier)` cannot serve
+        // either read: its trailing column is not `id`, so seeking `country` yields the
+        // slice in identifier order and `ORDER BY id` must sort all of it before
+        // `LIMIT` — measured at 15.16s against 0.0001s for `?country=DE&limit=50` over
+        // prod's 3.85M-row DE slice. And `identifier_kind` is its SECOND column, so a
+        // kind-only listing cannot seek it at all (the 99.08s case). Both are fixed by
+        // an index that leads with the filter and ends with `id`; the reads are
+        // unchanged. Measured in `crates/store/tests/paginated_index_probe.rs`: the
+        // dense case is unchanged and the absent case collapses to nothing.
+        //
+        // ISSUE 111 APPLIES: this function runs at a rebuild's end or via the `Reindex`
+        // admin job, and at no other time. Deploying the code does not create them.
+        for (name, cols) in Self::DEFERRED_ORG_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
+            conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
         Ok(())
+    }
+
+    /// The organization indexes a healthy database always has, as ONE list shared by
+    /// the builder above and [`Db::missing_deferred_indexes`]. Two copies of this
+    /// list would be a detector that can silently stop matching what is built — the
+    /// artifact-versus-proxy failure of issues 110 and 102, in a new place.
+    ///
+    /// `organizations_identity` is deliberately absent: it is built only when the
+    /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
+    /// legitimately lacks the index and must not be reported as missing.
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 3] = [
+        ("organization_mentions_org", "organization_mentions(organization_id)"),
+        ("organizations_country_id", "organizations(country, id)"),
+        ("organizations_kind_id", "organizations(identifier_kind, id)"),
+    ];
+
+    /// The notice indexes that are deferred rather than schema-batch.
+    ///
+    /// `notices(source, id)` (issue 117) started in the schema batch, next to
+    /// `notices_fetch_id`, because `notices` is never dropped by a rebuild so a
+    /// schema-batch index is durable and needs no operator step. Moved here once the
+    /// build was measured: run-driver clocked `CREATE INDEX` at **413 s over 25.3M
+    /// rows on the real 441 GB file**, so ~27.4M notices is ~7 minutes — and the
+    /// schema batch runs inside `Db::open`, which would make that a SEVEN-MINUTE
+    /// BLOCKING BOOT on the deploy restart. That is precisely the start-up regression
+    /// issues 82/83 removed, and `IF NOT EXISTS` only makes it once rather than never.
+    ///
+    /// `notices_fetch_id`'s comment estimates "tens of seconds" for its own build on
+    /// 3.5M rows, which is where the schema-batch placement was reasonable; at 27.4M
+    /// it no longer is. The estimate did not scale, and nobody re-checked it — the
+    /// reason this one was measured instead of reasoned by analogy.
+    const DEFERRED_NOTICE_INDEXES: [(&'static str, &'static str); 1] =
+        [("notices_source_id", "notices(source, id)")];
+
+    /// Build the deferred notice indexes. Separate from the org and tender builders
+    /// because `notices` has neither's lifecycle: it is never dropped by a rebuild, so
+    /// these are build-once rather than rebuild-after-fold.
+    pub async fn build_notice_indexes(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        for (name, cols) in Self::DEFERRED_NOTICE_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the                      {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111).                      Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
+            conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
+        }
+        Ok(())
+    }
+
+    /// The largest table an index may be auto-built over, in rows.
+    ///
+    /// A bulk `CREATE INDEX` over a populated table sorts the whole table and its peak
+    /// RSS is LINEAR in row count — run-driver measured ~45 bytes/row on the deployed
+    /// turso 0.7.0 (366 MiB at 8.13M rows, 1.07 GB at 25.3M, no spill threshold
+    /// between them). It cannot be batched: `CREATE INDEX` has no range knob, and N
+    /// partial indexes over disjoint id ranges do not compose into one usable index
+    /// (a partial index serves only queries whose `WHERE` implies its predicate, so a
+    /// filter with no id bound would use none of them).
+    ///
+    /// So the only protection is not to start a build that will not fit. At ~45 B/row
+    /// this cap is ~2 GB of peak RSS — half the project's ~4 GB bounded-memory ceiling,
+    /// leaving room for the rest of the process on a box still carrying issue 57's
+    /// swap band-aid. Today's largest member, `organization_mentions` at 40.9M rows,
+    /// passes; `changes` at 93.6M (~4 GB alone) would not, and is deliberately in
+    /// neither deferred list — its indexes are built index-first in the schema DDL or
+    /// at projection end, which is bounded (24 MiB measured) because maintaining an
+    /// index during insert never sorts the whole table.
+    ///
+    /// Enforced at build time rather than as a compile-time assertion because the
+    /// hazard is a ROW COUNT, and row counts are not compile-time facts. A static
+    /// allowlist of table names would encode today's judgement about which tables are
+    /// small, and go stale silently the moment one grows — which is precisely the
+    /// mistake that put `notices(source, id)` in the schema batch on the strength of a
+    /// comment written when the table was 8x smaller.
+    /// 41M x 48 B/row = 1.97 GB, just inside the budget. Lowered from 44M when the
+    /// bytes-per-row constant rose from 45 to the measured maximum of 48 — at 48 the
+    /// old cap implied 2.11 GB and no longer fit. The compile-time assertion below is
+    /// what forces that recalculation instead of leaving the two numbers to drift.
+    ///
+    /// WATCH ITEM, and it is now urgent rather than distant: `organization_mentions`
+    /// at 40.9M rows is **99.8% of this cap** — it needs 1.963 GB against a 1.968 GB
+    /// allowance. Any growth at all trips it, and then its index refuses to auto-build
+    /// and must come from an index-first rebuild. That is the guard working as
+    /// designed, but it is a decision someone should make deliberately rather than
+    /// discover from a stderr line during a rebuild.
+    const MAX_AUTO_INDEX_ROWS: i64 = 41_000_000;
+
+    /// Refuse to bulk-build an index over a table too large to sort within the memory
+    /// budget. Returns the offending row estimate, or `None` if the build may proceed.
+    ///
+    /// Uses `MAX(rowid)`, which is an O(1) index seek to the end rather than a
+    /// `COUNT(*)` scan — and an OVER-estimate once rows have been deleted, so it errs
+    /// toward refusing. Erring toward refusing is right: a refused index leaves a read
+    /// slow and says so, while an accepted one that does not fit takes the process
+    /// down mid-build, and turso has no way to interrupt a running statement.
+    async fn too_large_to_build(conn: &Connection, cols: &str) -> turso::Result<Option<i64>> {
+        let Some(table) = cols.split('(').next().map(str::trim) else { return Ok(None) };
+        let mut rows = conn.query(&format!("SELECT MAX(rowid) FROM {table}"), ()).await?;
+        let estimate = match rows.next().await? {
+            Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+            None => 0,
+        };
+        Ok((estimate > Self::MAX_AUTO_INDEX_ROWS).then_some(estimate))
+    }
+
+    /// Which deferred indexes are absent from this database.
+    ///
+    /// Issue 111: the deferred indexes have no guaranteed builder. They are created at
+    /// a rebuild's end or by the `Reindex` admin job and at no other time, so a deploy
+    /// that ADDS one leaves it uncreated — the read it exists for stays slow until
+    /// somebody notices and fires a job by hand. That is how the issue-117 DoS fix
+    /// would ship without taking effect.
+    ///
+    /// This is the detection half: cheap enough to run at every boot (a scan of
+    /// `sqlite_master`, which holds one row per object, not per row of data), so the
+    /// caller can enqueue the existing `Reindex` job in the BACKGROUND rather than
+    /// building anything inline. Building at boot is what issues 82/83 removed, and
+    /// this must not bring it back.
+    pub async fn missing_deferred_indexes(&self) -> turso::Result<Vec<String>> {
+        let conn = self.conn().await;
+        let mut present = std::collections::HashSet::new();
+        let mut rows = conn
+            .query("SELECT name FROM sqlite_master WHERE type = 'index'", ())
+            .await?;
+        while let Some(row) = rows.next().await? {
+            present.insert(text(&row, 0));
+        }
+        Ok(Self::DEFERRED_TENDER_INDEXES
+            .iter()
+            .chain(Self::DEFERRED_ORG_INDEXES.iter())
+            .chain(Self::DEFERRED_NOTICE_INDEXES.iter())
+            .map(|(name, _)| *name)
+            .filter(|name| !present.contains(*name))
+            .map(str::to_owned)
+            .collect())
     }
 
     /// The tender satellite indexes whose keys are RANDOM across the corpus —
@@ -1373,7 +1643,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 10] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 11] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
@@ -1398,6 +1668,42 @@ impl Db {
         // the next boot rebuilds it. `current_published_at` is random in fold order, so it
         // belongs here — dropped before the fold, rebuilt once sorted at the end.
         ("tenders_current_published", "tenders(current_published_at, id)"),
+        // Issue 117: the paginated reads' `(filter, id)` indexes. Each one exists so
+        // that `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` can use BOTH the
+        // filter and the cursor as index bounds — the shape `tenders_current_published`
+        // above and `changes_entity_cursor` (issue 61) already have.
+        //
+        // Without them the read has no good plan for both densities, only a choice of
+        // which density to be bad at. The plain cursor walks in rowid order and stops
+        // at `LIMIT` matches: fast when the filter is dense, a full table walk when it
+        // matches nothing or only late — measured on prod at 22.0s (`?country=ZZ`),
+        // 99.08s (`?kind=`) and 226s+ (`?source=`), unauthenticated. Rewriting the
+        // cursor as a row value inverts it: turso then seeks the EXISTING index, whose
+        // trailing column is not `id`, so `ORDER BY id` sorts the whole matched slice
+        // before `LIMIT` — measured at 15.16s against 0.0001s for `?country=DE&limit=50`
+        // over prod's 3.85M-row DE slice, a 151,648x regression on the ORDINARY query.
+        // These indexes end in `id`, so the seek yields id order, `LIMIT` truncates
+        // immediately, and no sorter runs. Measured: the dense case is unchanged and
+        // the absent case collapses to nothing (crates/store/tests/paginated_index_probe.rs,
+        // org_cursor_probe.rs). The reads themselves are NOT changed — that is the point.
+        //
+        // Only the `tenders` one lives here, because only `tenders` is dropped and
+        // refolded: `reset_tender_layer` DROPs the table, so a schema-batch index would
+        // be lost by a rebuild and not return until the next process open. The
+        // `organizations` pair belongs to [`Db::build_organization_indexes`] and the
+        // `notices` one to the schema batch, each for the same reason — the builder
+        // that owns the table's lifecycle owns its indexes.
+        //
+        // ISSUE 111 APPLIES TO THIS ONE: it materialises at a rebuild's end or via the
+        // `Reindex` admin job, and at no other time. Deploying the code does not create
+        // it, so `?source=` stays slow until one of those runs.
+        //
+        // And note there is no partition size at which the rejected row-value cursor is
+        // merely harmless: measured on prod's real slices it costs 71,000x at DE
+        // (3.85M rows) and still 14x at MT (24,911 rows) for a 50-row page. Only a
+        // `lots`-sized partition — single digits — makes its sort free, which is why
+        // `1830d50` got away with it and why nothing else should copy it.
+        ("tenders_source_id", "tenders(source, id)"),
     ];
 
     /// DROP+recreate `table` from its own captured DDL (table + any named indexes),
@@ -1454,7 +1760,8 @@ impl Db {
                  id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
                  procedure_key TEXT, island_notice_id INTEGER REFERENCES notices(id),
                  kind TEXT NOT NULL, created_at INTEGER NOT NULL,
-                 current_seq INTEGER, current_published_at INTEGER
+                 current_seq INTEGER, current_published_at INTEGER,
+                 projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
         )
@@ -1555,6 +1862,16 @@ impl Db {
     pub async fn build_tender_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
         for (name, cols) in Self::DEFERRED_TENDER_INDEXES {
+            if let Some(rows) = Self::too_large_to_build(&conn, cols).await? {
+                eprintln!(
+                    "store: REFUSING to auto-build {name}: {cols} has ~{rows} rows, over the \
+                     {} row cap — a bulk CREATE INDEX there would sort ~{} GB (issue 111). \
+                     Build it index-first at a rebuild, or in a maintenance window.",
+                    Self::MAX_AUTO_INDEX_ROWS,
+                    rows * 45 / 1_000_000_000,
+                );
+                continue;
+            }
             conn.execute(&format!("CREATE INDEX IF NOT EXISTS {name} ON {cols}"), ()).await?;
         }
         Ok(())
@@ -2377,7 +2694,8 @@ impl Db {
         pending: &mut Pending,
     ) -> turso::Result<(Applied, Option<i64>)> {
         let mut applied = Applied::default();
-        let (tender_id, created) = self.tender_identity(conn, p, now, rebuild, stmts).await?;
+        let (tender_id, created, stored_epoch) =
+            self.tender_identity(conn, p, now, rebuild, stmts).await?;
         applied.tenders_created += u64::from(created);
 
         // The projection is deterministic, so the sequence of causing notices
@@ -2390,15 +2708,48 @@ impl Db {
         // SELECT (issue 67, ~one per tender). keep stays 0 and every version is
         // written: byte-identical to today's empty-`stored` path.
         let stored = if rebuild { Vec::new() } else { self.stored_chain(conn, tender_id).await? };
-        let keep = stored
-            .iter()
-            .zip(&p.versions)
-            .take_while(|(a, b)| **a == b.caused_by_notice_id)
-            .count();
-        if keep == stored.len() && keep == p.versions.len() {
+        // A stored epoch from older projection LOGIC makes the chain meaningless as a
+        // state key: the same notices now fold to different content (issue 99). Force
+        // a full rewrite by keeping nothing — which re-uses the repair path below
+        // unchanged, so there is no second write mechanism to keep correct. Merely
+        // skipping the early return would do NOTHING: with the chain unchanged,
+        // `keep == stored.len() == p.versions.len()`, so both loops are no-ops.
+        let stale = stored_epoch != PROJECTION_EPOCH;
+        let keep = if stale {
+            0
+        } else {
+            stored
+                .iter()
+                .zip(&p.versions)
+                .take_while(|(a, b)| **a == b.caused_by_notice_id)
+                .count()
+        };
+        if !stale && keep == stored.len() && keep == p.versions.len() {
             return Ok((applied, None));
         }
 
+        // A note for whoever reconciles a re-fold's numbers, because the obvious
+        // reading is wrong and it reconciles anyway.
+        //
+        // `applied.versions_written` below counts WRITE OPERATIONS, not rows in
+        // `tender_versions`. A forced rewrite (`keep = 0`) deletes and re-writes the
+        // SAME versions, so it inflates `versions_written` while leaving the net row
+        // count untouched. Comparing `versions_written` against the planned-notice
+        // count therefore yields a "shortfall" that is really the set of Tenders that
+        // early-returned — and after an epoch bump that shortfall collapses, which
+        // looks exactly like the version count having GROWN. It has not.
+        //
+        // The net count cannot grow through this path: the early return above
+        // requires `stored.len() == p.versions.len()`, so a Tender with a SHORT
+        // stored chain could never have been skipped — it falls through here and the
+        // write loop appends the missing versions on the spot. Chains are repaired by
+        // the ordinary path, never left truncated for an epoch bump to find.
+        //
+        // If a re-fold really does change the net `COUNT(*) FROM tender_versions`,
+        // the cause is upstream of this function — a notice planned but absent from
+        // the fold chain (`parse_state` no longer 'parsed', so the pre-pass never
+        // spilled it; see issue 105) — and it means the grouping moved. Treat it as a
+        // stop, not as expected growth.
         for seq in (keep + 1..=stored.len()).rev() {
             self.delete_version(conn, tender_id, seq as i64).await?;
             applied.versions_removed += 1;
@@ -2425,6 +2776,7 @@ impl Db {
                 .execute((
                     Value::Integer(p.versions.len() as i64),
                     Value::Integer(head.published_at),
+                    Value::Integer(PROJECTION_EPOCH),
                     Value::Integer(tender_id),
                 ))
                 .await?;
@@ -2508,7 +2860,7 @@ impl Db {
         now: i64,
         rebuild: bool,
         stmts: &mut TenderInserts,
-    ) -> turso::Result<(i64, bool)> {
+    ) -> turso::Result<(i64, bool, i64)> {
         // On a rebuild the tender-content layer was just emptied by
         // [`Db::reset_tender_layer`] and every group_key is distinct, so identity is
         // ALWAYS a fresh insert — skip the random-position probe into the (now
@@ -2524,11 +2876,16 @@ impl Db {
             // Islands stay per-notice.
             let mut rows = match (&p.procedure_key, p.island_notice_id) {
                 (Some(key), _) => {
-                    conn.query("SELECT id, source FROM tenders WHERE procedure_key = ?", (t(key),)).await?
+                    conn.query(
+                        "SELECT id, source, projection_epoch FROM tenders WHERE procedure_key = ?",
+                        (t(key),),
+                    )
+                    .await?
                 }
                 (None, Some(notice_id)) => {
                     conn.query(
-                        "SELECT id, source FROM tenders WHERE source = ? AND island_notice_id = ?",
+                        "SELECT id, source, projection_epoch FROM tenders
+                          WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
                     .await?
@@ -2543,7 +2900,7 @@ impl Db {
                     conn.execute("UPDATE tenders SET source = ? WHERE id = ?", (t(&p.source), Value::Integer(id)))
                         .await?;
                 }
-                return Ok((id, false));
+                return Ok((id, false, int(&row, 2)));
             }
         }
         stmts
@@ -2556,7 +2913,7 @@ impl Db {
                 Value::Integer(now),
             ))
             .await?;
-        Ok((last_insert_rowid(conn).await?, true))
+        Ok((last_insert_rowid(conn).await?, true, PROJECTION_EPOCH))
     }
 
     async fn stored_chain(&self, conn: &Connection, tender_id: i64) -> turso::Result<Vec<i64>> {
@@ -2970,66 +3327,123 @@ impl Db {
             return Ok(0);
         }
 
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let mut result = Ok(());
-        for id in &absorbed {
-            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
-                result = Err(e);
-                break;
-            }
-        }
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                self.publish_cursor(&conn).await?;
-                Ok(absorbed.len() as u64)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        self.retire_tenders_chunked(&conn, &absorbed, now, NODE_WRITE_BATCH, "absorbed legacy").await?;
+        self.publish_cursor(&conn).await?;
+        Ok(absorbed.len() as u64)
     }
 
-    async fn retire_tender_tx(&self, conn: &Connection, tender_id: i64, now: i64) -> turso::Result<()> {
-        let id = Value::Integer(tender_id);
-        append_change(conn, "tender", tender_id, None, "removed", now).await?;
-        for (kind, table) in
-            [("lot", "lots"), ("lot_result", "lot_results"), ("bid", "bids"), ("contract", "contracts")]
-        {
-            let mut rows =
-                conn.query(&format!("SELECT id FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
-            let mut ids = Vec::new();
-            while let Some(row) = rows.next().await? {
-                ids.push(int(&row, 0));
-            }
-            drop(rows);
-            for entity in ids {
-                append_change(conn, kind, entity, None, "removed", now).await?;
+    /// Every content table a retired Tender's rows must be deleted from, in
+    /// dependency order (satellites before the entities they reference).
+    const RETIRE_TABLES: [&'static str; 17] = [
+        "tender_version_result_winners",
+        "tender_version_result_stats",
+        "tender_version_lot_results",
+        "tender_version_bid_parties",
+        "tender_version_bids",
+        "tender_version_contracts",
+        "tender_version_parties",
+        "tender_version_texts",
+        "tender_version_dates",
+        "tender_version_amounts",
+        "tender_version_classifications",
+        "tender_version_lots",
+        "tender_versions",
+        "lot_results",
+        "bids",
+        "contracts",
+        "lots",
+    ];
+
+    /// Retire `ids` in BOUNDED chunks — the shared body of both retirement paths
+    /// (issue 93).
+    ///
+    /// Retirement used to run as one unbounded `BEGIN IMMEDIATE`, ~23 statements per
+    /// Tender, with no checkpoint and no output. On the eForms-DE 1.x re-fold that
+    /// was 216,450 Tenders → ~5M statements in a single transaction taking 5m45s,
+    /// which read as a wedge and came within minutes of being killed. It is the one
+    /// bulk writer here that issue 63 never chunked; every other one already commits
+    /// and TRUNCATE-checkpoints in batches.
+    ///
+    /// Each chunk is independently consistent — a retirement is a whole Tender's
+    /// removal plus its `removed` events, and a chunk never splits one — so an
+    /// interruption leaves earlier chunks retired and later ones simply still
+    /// orphaned, which the next run re-derives and finishes. That is strictly better
+    /// than the previous all-or-nothing transaction, whose failure mode at scale was
+    /// a WAL/RAM balloon and then losing every retirement to the rollback.
+    async fn retire_tenders_chunked(
+        &self,
+        conn: &Connection,
+        ids: &[i64],
+        now: i64,
+        batch: usize,
+        what: &str,
+    ) -> turso::Result<()> {
+        let total = ids.len();
+        let mut done = 0usize;
+        for chunk in ids.chunks(batch.max(1)) {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            match self.retire_chunk_tx(conn, chunk, now).await {
+                Ok(()) => conn.execute("COMMIT", ()).await?,
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            };
+            let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            done += chunk.len();
+            eprintln!("[project] retire {what}: {done}/{total} Tenders retired");
+        }
+        Ok(())
+    }
+
+    /// One chunk's retirement, inside the caller's transaction.
+    ///
+    /// The `removed` change events are emitted **per Tender, in the caller's id
+    /// order**, and within a Tender in the same kind order as before — the `changes`
+    /// feed is ordered by its autoincrement cursor and is part of the projection's
+    /// byte-identity surface, so that sequence is not free to change. Only the
+    /// DELETEs are batched: they are ~88% of the per-Tender cost (17 statements at
+    /// ~0.09 ms against 4 entity reads at ~0.013 ms), and batching them is invisible
+    /// to the feed because a DELETE writes no change row. Doing all reads before any
+    /// delete is equivalent — a Tender's deletes never touch another Tender's rows.
+    async fn retire_chunk_tx(&self, conn: &Connection, ids: &[i64], now: i64) -> turso::Result<()> {
+        for &tender_id in ids {
+            append_change(conn, "tender", tender_id, None, "removed", now).await?;
+            for (kind, table) in [
+                ("lot", "lots"),
+                ("lot_result", "lot_results"),
+                ("bid", "bids"),
+                ("contract", "contracts"),
+            ] {
+                let mut rows = conn
+                    .query(
+                        &format!("SELECT id FROM {table} WHERE tender_id = ?"),
+                        (Value::Integer(tender_id),),
+                    )
+                    .await?;
+                let mut entities = Vec::new();
+                while let Some(row) = rows.next().await? {
+                    entities.push(int(&row, 0));
+                }
+                drop(rows);
+                for entity in entities {
+                    append_change(conn, kind, entity, None, "removed", now).await?;
+                }
             }
         }
-        for table in [
-            "tender_version_result_winners",
-            "tender_version_result_stats",
-            "tender_version_lot_results",
-            "tender_version_bid_parties",
-            "tender_version_bids",
-            "tender_version_contracts",
-            "tender_version_parties",
-            "tender_version_texts",
-            "tender_version_dates",
-            "tender_version_amounts",
-            "tender_version_classifications",
-            "tender_version_lots",
-            "tender_versions",
-            "lot_results",
-            "bids",
-            "contracts",
-            "lots",
-        ] {
-            conn.execute(&format!("DELETE FROM {table} WHERE tender_id = ?"), (id.clone(),)).await?;
+        for table in Self::RETIRE_TABLES {
+            for part in ids.chunks(IN_CHUNK) {
+                let sql =
+                    format!("DELETE FROM {table} WHERE tender_id IN ({})", placeholders(part.len()));
+                let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+                conn.execute(&sql, params).await?;
+            }
         }
-        conn.execute("DELETE FROM tenders WHERE id = ?", (id,)).await?;
+        for part in ids.chunks(IN_CHUNK) {
+            let sql = format!("DELETE FROM tenders WHERE id IN ({})", placeholders(part.len()));
+            let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
+            conn.execute(&sql, params).await?;
+        }
         Ok(())
     }
 
@@ -3101,10 +3515,20 @@ impl Db {
     /// touched Tender absent from it has no notices left and gets `removed` change
     /// events, exactly like [`Db::retire_absorbed_legacy_tenders`] but scoped to
     /// the touched set instead of the whole corpus. Returns the count retired.
-    pub async fn retire_regrouped_tenders(
+    pub async fn retire_regrouped_tenders(&self, touched: &[i64], now: i64) -> turso::Result<u64> {
+        self.retire_regrouped_tenders_chunked(touched, now, NODE_WRITE_BATCH).await
+    }
+
+    /// As [`Db::retire_regrouped_tenders`], with an explicit retirement chunk size.
+    /// Exposed so the chunk-invariance test can drive a tiny chunk and prove the
+    /// canonical layer — the cursor-ordered `changes` feed included — is identical
+    /// however the retirement is split (issue 93); production uses
+    /// [`NODE_WRITE_BATCH`].
+    pub async fn retire_regrouped_tenders_chunked(
         &self,
         touched: &[i64],
         now: i64,
+        chunk: usize,
     ) -> turso::Result<u64> {
         if touched.is_empty() {
             return Ok(0);
@@ -3131,25 +3555,9 @@ impl Db {
         if orphaned.is_empty() {
             return Ok(0);
         }
-        conn.execute("BEGIN IMMEDIATE", ()).await?;
-        let mut result = Ok(());
-        for id in &orphaned {
-            if let Err(e) = self.retire_tender_tx(&conn, *id, now).await {
-                result = Err(e);
-                break;
-            }
-        }
-        match result {
-            Ok(()) => {
-                conn.execute("COMMIT", ()).await?;
-                self.publish_cursor(&conn).await?;
-                Ok(orphaned.len() as u64)
-            }
-            Err(e) => {
-                let _ = conn.execute("ROLLBACK", ()).await;
-                Err(e)
-            }
-        }
+        self.retire_tenders_chunked(&conn, &orphaned, now, chunk, "regrouped").await?;
+        self.publish_cursor(&conn).await?;
+        Ok(orphaned.len() as u64)
     }
 
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the
@@ -3440,6 +3848,121 @@ impl Db {
         Ok(out)
     }
 
+
+    /// The `(min, max)` notice id the current grouping plan covers, or `None` when
+    /// the plan is empty. The Phase-2 pre-pass sweeps notice ids in order and skips
+    /// anything absent from the plan, so ids outside this range are pure waste —
+    /// this is what bounds the sweep to the part of the id space that can produce a
+    /// row (issue 94). On a full rebuild the plan covers the whole corpus and the
+    /// range degenerates to the whole id space, which is exactly right.
+    pub async fn plan_notice_id_range(&self) -> turso::Result<Option<(i64, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT MIN(notice_id), MAX(notice_id) FROM plan_notice", ()).await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        Ok(match (opt_int_of(&row, 0), opt_int_of(&row, 1)) {
+            (Some(lo), Some(hi)) => Some((lo, hi)),
+            _ => None,
+        })
+    }
+
+    /// Split `(lo, hi]` into at most `k` contiguous notice-id stripes holding ~the
+    /// same number of PARSED notices each — the Phase-2 pre-pass's work partition
+    /// (issue 94).
+    ///
+    /// The pre-pass used to stripe by equal id WIDTH, which silently assumes notices
+    /// are uniformly dense across id space. They are not: `MAX(id)` sits far above
+    /// the dense region and bulk reclaims append late, so equal-width stripes put
+    /// nearly all the work in one worker while the others finish instantly on empty
+    /// id space — the sharded sweep then runs at ~1× however many workers it has.
+    /// Striping by parsed-notice COUNT makes every worker's stripe genuinely
+    /// equal-cost whatever the id distribution.
+    ///
+    /// **Streams; never sorts.** `notices.id` is `INTEGER PRIMARY KEY`, i.e. the
+    /// rowid, so `ORDER BY id` is free — the scan is already in that order and no
+    /// sort is materialised. Verified against turso rather than assumed, because a
+    /// filesort here would buffer ~14.2M ids (~100 MB+) and quietly break the
+    /// bounded-memory guarantee this whole path exists to keep:
+    ///
+    /// ```text
+    /// EXPLAIN QUERY PLAN → SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)
+    /// 800k rows: time-to-first-row 0.0000s, time-to-last-row 0.272s
+    /// ```
+    ///
+    /// The first-row latency is the load-bearing half: a sort cannot emit row 1
+    /// until it has consumed every row, so a ratio of 0.00015 is proof of streaming
+    /// independent of how the plan text is worded.
+    ///
+    /// Note the planner picks the **rowid range seek**, not `notices_parse_state`,
+    /// and that is the better plan here: it seeks straight to `id > lo` and stops at
+    /// `id <= hi`, whereas forcing `INDEXED BY notices_parse_state` walks every
+    /// `parsed` entry and filters (measured: `SEARCH … USING INDEX
+    /// notices_parse_state (parse_state=?)`, no id range applied). Since this is
+    /// normally called over a SCOPED range, forcing the compact index would be a
+    /// pessimisation. It reads table rows rather than index entries, so the two
+    /// scans (count, then split points) are not free — but they are one bounded pass
+    /// over a range the sweep is about to read anyway, and they warm it.
+    ///
+    /// Returns `(lo, hi]`-style half-open-below stripes covering exactly `(lo, hi]`,
+    /// in ascending order, with no gaps; a single stripe when the range holds fewer
+    /// parsed notices than `k`. The last stripe always ends at `hi`.
+    pub async fn parsed_id_stripes(
+        &self,
+        lo: i64,
+        hi: i64,
+        k: usize,
+    ) -> turso::Result<Vec<(i64, i64)>> {
+        let one = vec![(lo, hi)];
+        if k <= 1 || lo >= hi {
+            return Ok(one);
+        }
+        let conn = self.reader().await?;
+        let total = {
+            let mut r = conn
+                .query(
+                    "SELECT COUNT(*) FROM notices
+                      WHERE parse_state = 'parsed' AND id > ? AND id <= ?",
+                    (Value::Integer(lo), Value::Integer(hi)),
+                )
+                .await?;
+            r.next().await?.map_or(0, |row| int(&row, 0))
+        };
+        let per = total / k as i64;
+        if per == 0 {
+            return Ok(one);
+        }
+        // One index-only pass, taking every `per`-th id as a split point. Splitting
+        // AFTER the n-th row (not at it) keeps the stripes half-open-below, matching
+        // the `id > lo AND id <= hi` window the pre-pass reads with.
+        let mut splits: Vec<i64> = Vec::with_capacity(k - 1);
+        let mut seen = 0i64;
+        let mut rows = conn
+            .query(
+                "SELECT id FROM notices
+                  WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id",
+                (Value::Integer(lo), Value::Integer(hi)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            seen += 1;
+            if seen % per == 0 && splits.len() < k - 1 {
+                let id = int(&row, 0);
+                if id < hi {
+                    splits.push(id);
+                }
+            }
+        }
+        drop(rows);
+        splits.dedup();
+        let mut stripes = Vec::with_capacity(splits.len() + 1);
+        let mut start = lo;
+        for s in splits {
+            stripes.push((start, s));
+            start = s;
+        }
+        stripes.push((start, hi));
+        Ok(stripes)
+    }
+
 }
 
 /// The canonical-layer tables whose emptiness means a nuked or externally
@@ -3596,7 +4119,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")

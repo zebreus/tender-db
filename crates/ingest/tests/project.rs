@@ -1565,6 +1565,9 @@ fn de1_notice_keyed(fetch_id: i64, pub_id: &str, profile: &str, folder: &str) ->
             sec("ORG-0001", "Organization", Some("PROCEDURE")),
             sec("ND-PartyName#0", "PartyName", Some("ORG-0001")),
             sec("ND-ContractingParty#0", "ContractingParty", Some("PROCEDURE")),
+            sec("ORG-0002", "Organization", Some("PROCEDURE")),
+            sec("ND-PartyName#1", "PartyName", Some("ORG-0002")),
+            sec("ND-AppealTerms#0", "AppealTerms", Some("PROCEDURE")),
         ],
         values: vec![
             de1_value(
@@ -1638,10 +1641,37 @@ fn de1_notice_keyed(fetch_id: i64, pub_id: &str, profile: &str, folder: &str) ->
                 "DE1-Organizations-Organization-Company-PostalAddress-Country-IdentificationCode",
                 NoticeValue::Code { list: Some("country".into()), code: "DEU".into() },
             ),
+            // `is_ref: FALSE` — and that is not an oversight, it is the whole point
+            // of issue 98. The vendored DE-1.x inventory types every identifier
+            // `id`, never `id-ref` (a reference is lexically indistinguishable from
+            // an identifier, so the empirical generator could not tell them apart),
+            // and `value::convert` derives `is_ref` from exactly that type. So no
+            // DE-1.x reference ever reaches the projection flagged, and this fixture
+            // must reproduce that or it tests a parse layer that does not exist.
+            //
+            // It previously said `true`, which is why this test passed green while
+            // the cohort projected 0% buyers in production: the fixture asserted the
+            // behaviour we wished the parse layer had.
             de1_value(
                 "ND-ContractingParty#0",
                 "DE1-ContractingParty-Party-PartyIdentification-ID",
-                NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: true },
+                NoticeValue::Id { scheme: None, value: "ORG-0001".into(), is_ref: false },
+            ),
+            // A second role from the class the alias table did not cover at all
+            // (issue 98): the review body, the single most frequent reference in
+            // the real cohort at 693 values per 400 notices.
+            de1_value(
+                "ND-AppealTerms#0",
+                "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID",
+                NoticeValue::Id { scheme: None, value: "ORG-0002".into(), is_ref: false },
+            ),
+            de1_value(
+                "ND-PartyName#1",
+                "DE1-Organizations-Organization-Company-PartyName-Name",
+                NoticeValue::Text {
+                    lang: Some("DEU".into()),
+                    value: "Vergabekammer Hamburg".into(),
+                },
             ),
         ],
     };
@@ -1716,6 +1746,43 @@ async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
         "the ContractingParty reference must resolve to the buyer organization"
     );
 
+    // Issue 98. The reference arrives `is_ref: false`, as the real parse layer
+    // delivers it, so these two assertions FAIL on the pre-98 projection: without
+    // `de1_mark_reference` the role arm never sees the reference and no party row
+    // is written at all. This is the regression gate for the whole organization
+    // class — the class that was 0% in production while this test was green.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_parties").await,
+        2,
+        "both organization references must become parties (issue 98)"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id
+              WHERE p.role = 'Lot-ReviewOrg'"
+        )
+        .await
+        .as_deref(),
+        Some("Vergabekammer Hamburg"),
+        "the review body — a role the alias table did not cover before issue 98"
+    );
+    // Provenance, not presence: a party must be evidenced by THIS notice's own
+    // mention. In production the cohort showed a 35% buyer rate that was entirely
+    // carried forward from merged TED twins (`mention_notice_id` pointing at the
+    // twin), which is what made 0% look like success.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_parties p
+              JOIN tender_versions v ON v.tender_id = p.tender_id AND v.seq = p.seq
+             WHERE p.mention_notice_id = v.caused_by_notice_id"
+        )
+        .await,
+        2,
+        "every party must be evidenced by the DE-1.x notice itself, not inherited"
+    );
+
     // Identity: the folder id keys the Tender (so a TED twin can merge onto it),
     // and the subtype is read for fold order.
     assert_eq!(
@@ -1734,6 +1801,100 @@ async fn eforms_de_1x_path_shaped_fields_land_as_canonical_facts() {
     );
 
     let _ = std::fs::remove_file(&path);
+}
+
+/// The aspects of the canonical layer this fix must NOT move. Same shape as
+/// `project_incremental.rs::snapshot` — grouping identity, the version chain, and
+/// every fact satellite — minus `tender_version_parties`, which is the one table
+/// issue 98 is allowed to change. Keep the two in sync if either grows a table.
+const LAYER_DIGESTS: &[(&str, &str)] = &[
+    ("tenders", "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||coalesce(procedure_key,'')||'|'||coalesce(island_notice_id,-1)||'|'||kind||'|'||source AS r FROM tenders ORDER BY id)"),
+    ("versions", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||caused_by_notice_id||'|'||published_at AS r FROM tender_versions ORDER BY tender_id, seq)"),
+    ("texts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||coalesce(lang,'')||'|'||value||'|'||coalesce(lot_id,-1) AS r FROM tender_version_texts ORDER BY tender_id, seq, field, lang, value, lot_id)"),
+    ("classifications", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||scheme||'|'||code||'|'||coalesce(lot_id,-1) AS r FROM tender_version_classifications ORDER BY tender_id, seq, field, scheme, code, lot_id)"),
+    ("amounts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||cents||'|'||currency||'|'||coalesce(lot_id,-1) AS r FROM tender_version_amounts ORDER BY tender_id, seq, field, cents, lot_id)"),
+    ("dates", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||field||'|'||utc_seconds||'|'||coalesce(lot_id,-1) AS r FROM tender_version_dates ORDER BY tender_id, seq, field, utc_seconds, lot_id)"),
+    ("lots", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||lot_key AS r FROM lots ORDER BY tender_id, lot_key)"),
+    ("version_lots", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_id||'|'||kind AS r FROM tender_version_lots ORDER BY tender_id, seq, lot_id)"),
+    ("lot_results", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||lot_result_id||'|'||coalesce(decision,'') AS r FROM tender_version_lot_results ORDER BY tender_id, seq, lot_result_id)"),
+    ("organizations", "SELECT group_concat(r, x'0a') FROM (SELECT id||'|'||coalesce(country,'')||'|'||coalesce(identifier,'')||'|'||name||'|'||provisional AS r FROM organizations ORDER BY id)"),
+    ("mentions", "SELECT group_concat(r, x'0a') FROM (SELECT notice_id||'|'||section_id||'|'||organization_id AS r FROM organization_mentions ORDER BY notice_id, section_id)"),
+];
+
+/// Issue 98 must be **surgical**: it may add party rows and move nothing else.
+///
+/// A gate asserting only "parties are now non-zero" would pass a fix that also
+/// perturbed the fact layer or the grouping — and grouping is what a re-fold
+/// renumbers, so a silent perturbation there is the expensive kind of wrong.
+///
+/// The two inputs differ in exactly one respect: whether the notice carries its
+/// organization-role references at all. That isolates the fix, because a
+/// reference the pre-98 projection could not see is *behaviourally identical to
+/// an absent one*: `is_ref` gates only the role arm, and both the role arm and
+/// the fall-through produce no `Fact`. `first_id` — which resolves the procedure
+/// key, and so the grouping — matches `Id { value, .. }` and never reads
+/// `is_ref`, so identity cannot move either.
+///
+/// So: every digest identical, parties the sole difference. That is the same
+/// invariant the post-re-fold verification must see against production — same
+/// tender, version, fact, lot and result counts, only party rows appearing. A
+/// tender or version count that MOVES is a stop-and-investigate signal, not a
+/// proceed.
+#[tokio::test]
+async fn the_de1_reference_flag_adds_parties_and_moves_nothing_else() {
+    let (with_refs, f1, p1) = scratch("de1x-refs-on").await;
+    let (without_refs, f2, p2) = scratch("de1x-refs-off").await;
+
+    let (notice, parse) = de1_notice(f1, "de1-000001", "eforms:eforms-de-1.1");
+    with_refs.record_notice(&notice, &parse).await.expect("with refs");
+
+    // The same notice with only the organization-role references removed.
+    let (notice, mut parse) = de1_notice(f2, "de1-000001", "eforms:eforms-de-1.1");
+    if let store::Parse::Parsed(parsed) = &mut parse {
+        parsed.values.retain(|v| {
+            !v.field_id.ends_with("PartyIdentification-ID") && !v.field_id.ends_with("Tenderer-ID")
+        });
+    }
+    without_refs.record_notice(&notice, &parse).await.expect("without refs");
+
+    project::project(&with_refs, false).await.expect("project with refs");
+    project::project(&without_refs, false).await.expect("project without refs");
+
+    // The references are the only source of parties, and they do produce them.
+    assert_eq!(
+        scalar(&without_refs, "SELECT COUNT(*) FROM tender_version_parties").await,
+        0,
+        "without the references there are no parties — so parties below are attributable to them"
+    );
+    assert_eq!(
+        scalar(&with_refs, "SELECT COUNT(*) FROM tender_version_parties").await,
+        2,
+        "the buyer and the review body both land (issue 98)"
+    );
+
+    // And nothing else moved — grouping, chain, and every fact satellite.
+    //
+    // Each digest is checked non-empty first. Comparing two NULLs is a gate that
+    // passes because it measured nothing, which is the failure mode that let the
+    // org class ship: `lot_results` is legitimately empty for a contract notice,
+    // so it is named as the one permitted exception rather than silently allowed.
+    for (label, sql) in LAYER_DIGESTS {
+        let left = query_text(&with_refs, sql).await;
+        let right = query_text(&without_refs, sql).await;
+        if *label != "lot_results" {
+            assert!(
+                left.as_deref().is_some_and(|d| !d.is_empty()),
+                "digest `{label}` is empty — it would compare equal without measuring anything"
+            );
+        }
+        assert_eq!(
+            left, right,
+            "issue 98 must not move `{label}`: the fix may add parties and nothing else"
+        );
+    }
+
+    let _ = std::fs::remove_file(&p1);
+    let _ = std::fs::remove_file(&p2);
 }
 
 /// eForms-DE **2.x** is a real SDK fork emitting ordinary `BT-*` ids, so the
