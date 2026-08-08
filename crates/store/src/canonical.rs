@@ -3293,8 +3293,13 @@ impl Db {
     ///
     /// Cost is O(1) per table: `EXISTS` stops at the first row, so this is 13
     /// index/table seeks and no scan, safe to run against the live database on
-    /// any cadence. It writes only when a table's state actually CHANGES, so
-    /// the steady state is read-only and never queues behind the writer.
+    /// any cadence. Verdict rows are rewritten only when a table's state
+    /// actually CHANGES, but every observation stamps `observed_at`: the
+    /// staleness clause in `/health/deep` reads that stamp as "somebody is
+    /// still looking", so an observation that leaves no trace is
+    /// indistinguishable from an observer that has died. The first cut wrote
+    /// only on transitions — a quiet box froze at the last heavy-write touch
+    /// and tripped the staleness alarm six hours later, every day (issue 161).
     pub async fn observe_layer_presence(&self, now: i64) -> turso::Result<Vec<LayerPresence>> {
         let conn = self.conn().await;
         let mut out = Vec::with_capacity(PRESENCE_TABLES.len());
@@ -3360,6 +3365,16 @@ impl Db {
 
             out.push(LayerPresence { name: name.to_string(), state });
         }
+
+        // The observation IS the heartbeat. Rows exist for every table after
+        // the loop above (a first observation inserts them), so this blanket
+        // stamp is what keeps a healthy quiet box out of the staleness alarm.
+        conn.execute(
+            "UPDATE layer_presence SET observed_at = ?1",
+            turso::params::Params::Positional(vec![Value::Integer(now)]),
+        )
+        .await?;
+
         Ok(out)
     }
 
@@ -3964,6 +3979,42 @@ mod tests {
             "touch overwrote a real verdict — a rebuild would erase the evidence of a wipe"
         );
         assert_eq!(*observed_at, 900, "touch did not refresh freshness, so a long rebuild would age into the staleness alarm");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A steady-state observation must refresh `observed_at` even though it
+    /// changes no verdict. `/health/deep` reads staleness off that stamp, so
+    /// an observation that leaves no trace is indistinguishable from an
+    /// observer that has died — and a quiet box would freeze at the last
+    /// heavy-write touch and trip the staleness alarm six hours later, every
+    /// day (issue 161).
+    #[tokio::test]
+    async fn a_steady_state_observation_refreshes_observed_at() {
+        let (db, path) = scratch_db("layer-presence-steady").await;
+
+        async fn seed(db: &Db, sql: &str) {
+            let conn = db.conn().await;
+            conn.execute(sql, ()).await.expect("seed");
+        }
+
+        seed(&db, "INSERT INTO tenders(source, kind, created_at) VALUES('ted','procedure',0)").await;
+        db.observe_layer_presence(100).await.expect("observe t1");
+
+        // Nothing changes between the observations — the pure steady state.
+        db.observe_layer_presence(200).await.expect("observe t2");
+
+        let after = db.read_layer_presence().await.expect("read");
+        assert!(!after.is_empty(), "first observation created no presence rows");
+        for (p, observed_at) in &after {
+            assert_eq!(
+                *observed_at, 200,
+                "`{}` still carries the previous observation's timestamp: a steady-state \
+                 observation left no heartbeat, so a healthy quiet box ages into the \
+                 staleness alarm",
+                p.name
+            );
+        }
 
         let _ = std::fs::remove_file(&path);
     }
