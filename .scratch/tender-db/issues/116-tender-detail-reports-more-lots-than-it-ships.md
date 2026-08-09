@@ -1,9 +1,17 @@
 # 116 — tender detail reports more lots than it ships
 
-Status: open — correctness/honesty defect, filed 2026-08-03 alongside the lots-scan latency fix.
+Status: fix landed on main (2026-08-09, orchestrator) — awaiting deploy + the prod verification
+below. Exactly the post-115 shrunken form this issue prescribed: `lots_of` now passes
+`TENDER_LOTS_CAP` (20,000 — 549f8f5's constant and doc reasoning) instead of `MAX_PAGE`; the
+in-memory retain/truncate from 549f8f5 was NOT taken (dead weight post-115 — the containment
+shape serves `l.id > ?` from the Tender's own slice in SQL). Test
+`a_tender_scoped_lots_read_is_complete_and_still_honours_the_cursor` red-checked against the
+unfixed code (failed 1000 vs 1200 at the truncation assertion), completeness asserted through
+the real `tender_detail` path. Store suite 66 green, app suites green.
+Remaining: on the next deploy, run the prod verification (`GET /v1/tenders/7161565` →
+len(lot_details) == lots == 2604, cursor equivalence, warm timing).
 Kind: correctness (API honesty)
-Blocked by: 115 — the per-lot correlated-subquery blow-up. Sequenced after it because the honest answer
-is only affordable once that read is cheap. (NOT because the cap is protective — it is not; see below.)
+Blocked by: — (115 landed on main `3485e3d`, deployed b56ce13 2026-08-09)
 Blocks: —
 
 ## Observation

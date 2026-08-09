@@ -3132,6 +3132,73 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
+    /// A tender-scoped lots read returns the Tender's COMPLETE set, and still honours
+    /// the cursor (issue 116).
+    ///
+    /// The truncation lived in `lots_of`'s limit: it asked for `MAX_PAGE` (1000), so
+    /// the 16 Tenders (of 4.26M) carrying more than 1,000 lots shipped a detail
+    /// response that contradicted itself — `"lots": 2604` beside 1,000 `lot_details`,
+    /// with no marker that the array was cut and no cursor to reach the rest.
+    ///
+    /// The completeness half runs through the REAL detail path (`tender_detail` →
+    /// `lots_of`): asking `lots()` directly with a big limit would pass against the
+    /// unfixed code and prove nothing.
+    #[tokio::test]
+    async fn a_tender_scoped_lots_read_is_complete_and_still_honours_the_cursor() {
+        use turso::Value;
+        let path = format!("/tmp/tender-db-lots-bounded-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        // Seed the canonical layer directly, as the projection does (FK off).
+        db.set_foreign_keys(false).await.unwrap();
+        let w = db.conn().await;
+        w.execute("INSERT INTO tenders (id, source, kind, created_at) VALUES (1,'ted','procedure',0)", ())
+            .await
+            .unwrap();
+        w.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (1, 1, 1, 0, 'p')",
+            (),
+        )
+        .await
+        .unwrap();
+        // More lots than MAX_PAGE, so a page-sized read would truncate.
+        for i in 1..=1200i64 {
+            w.execute(
+                "INSERT INTO lots (id, tender_id, lot_key) VALUES (?, 1, ?)",
+                (Value::Integer(i), Value::Text(format!("LOT-{i:05}"))),
+            )
+            .await
+            .unwrap();
+            w.execute(
+                "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (1, 1, ?, 'Lot')",
+                (Value::Integer(i),),
+            )
+            .await
+            .unwrap();
+        }
+        drop(w);
+        let conn = db.reader().await.unwrap();
+
+        let detail = read::tender_detail(&conn, 1).await.unwrap().expect("tender 1");
+        assert_eq!(
+            detail.lots.len(),
+            1200,
+            "the detail response must carry EVERY lot — it reported a count of 1200 while \
+             shipping only MAX_PAGE of them"
+        );
+
+        // The cursor still selects strictly-later ids: post-115 the containment shape
+        // serves `l.id > ?` from the Tender's own slice, so it stays in SQL.
+        let f = read::Filter { tender: Some(1), ..read::Filter::default() };
+        let after = read::lots(&conn, &f, read::Scope::Page { after: 1000, limit: 20_000 })
+            .await
+            .unwrap();
+        assert_eq!(after.len(), 200, "after=1000 must skip the first 1000 lots");
+        assert!(after.iter().all(|r| r.id > 1000), "no row at or before the cursor may be re-served");
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Which table a lots plan enters first — the only thing that separates the
     /// linear read from the quadratic one.
     ///

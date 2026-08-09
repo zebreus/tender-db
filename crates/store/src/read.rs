@@ -1551,13 +1551,28 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
     Ok(())
 }
 
+/// Every Lot of one Tender. A Tender's lots are a BOUNDED set, so this asks for the
+/// whole of it rather than a page: at `MAX_PAGE` the detail response silently
+/// truncated the 16 Tenders (of 4.26M) that carry more than 1,000 lots — reporting
+/// `"lots": 2604` while shipping 1,000 `lot_details`, a response that contradicted
+/// itself about its own data (issue 116).
 async fn lots_of(conn: &Connection, tender_id: i64) -> turso::Result<Vec<LotRow>> {
     let filter = Filter { tender: Some(tender_id), ..Filter::default() };
-    lots(conn, &filter, Scope::Page { after: 0, limit: MAX_PAGE }).await
+    lots(conn, &filter, Scope::Page { after: 0, limit: TENDER_LOTS_CAP }).await
 }
 
 /// The hard ceiling on any one page — a client asking for more gets this.
 pub const MAX_PAGE: i64 = 1000;
+
+/// The ceiling on a tender-scoped lots read. Not a page size: a Tender's lot count
+/// is a bounded real-world quantity (whole-corpus maximum 2,604, measured on the
+/// post-refold snapshot), so this is a sanity bound that must sit comfortably above
+/// the true maximum — never a value the data is expected to reach. It exists so a
+/// corrupt `tender_id` cannot turn one read into an unbounded scan, not to paginate.
+/// Serving the whole set costs 0.4% more than serving a truncated page (issue 116's
+/// measurement): the containment shape reads only the Tender's own slice, so the
+/// limit bounds nothing on the happy path.
+const TENDER_LOTS_CAP: i64 = 20_000;
 
 // ------------------------------------------------------------- organizations
 
