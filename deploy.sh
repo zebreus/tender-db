@@ -35,10 +35,13 @@ exec 9>/opt/tender-db/deploy.lock
 flock -n 9 || { echo "another deploy holds /opt/tender-db/deploy.lock — aborting" >&2; exit 1; }
 
 # Refuse to move production backwards: if the target rev is an ancestor of the
-# currently deployed rev, this deploy would regress.
+# currently deployed rev, this deploy would regress. Both ancestry checks run
+# against the bare repo — it received the push already, whereas \$SRC has not
+# fetched yet at this point, and an unknown rev would make the (negated)
+# divergence check refuse a perfectly linear deploy.
 if [ -f /opt/tender-db/deployed-rev ]; then
   DEPLOYED=\$(cat /opt/tender-db/deployed-rev)
-  if git -C $SRC merge-base --is-ancestor $REV "\$DEPLOYED" 2>/dev/null && [ "$REV" != "\$DEPLOYED" ]; then
+  if git -C $REMOTE_REPO merge-base --is-ancestor $REV "\$DEPLOYED" 2>/dev/null && [ "$REV" != "\$DEPLOYED" ]; then
     echo "refusing regression: $REV is an ancestor of deployed \$DEPLOYED" >&2
     exit 1
   fi
@@ -47,7 +50,7 @@ if [ -f /opt/tender-db/deployed-rev ]; then
   # lost the read-path work for four days this way). An unknown deployed rev also
   # lands here, and refusing is the safe reading. Deliberate divergent deploys
   # say so: FORCE_DIVERGENT=1 ./deploy.sh <ref>
-  if [ "$REV" != "\$DEPLOYED" ] && ! git -C $SRC merge-base --is-ancestor "\$DEPLOYED" $REV 2>/dev/null && [ "${FORCE_DIVERGENT:-0}" != "1" ]; then
+  if [ "$REV" != "\$DEPLOYED" ] && ! git -C $REMOTE_REPO merge-base --is-ancestor "\$DEPLOYED" $REV 2>/dev/null && [ "${FORCE_DIVERGENT:-0}" != "1" ]; then
     echo "refusing divergent deploy: $REV does not contain deployed \$DEPLOYED (FORCE_DIVERGENT=1 overrides)" >&2
     exit 1
   fi
