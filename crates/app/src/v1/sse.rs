@@ -4,18 +4,28 @@
 //!
 //! 1. **Subscribe first** — take the doorbell receiver before reading anything,
 //!    so a change committed during the snapshot cannot be missed.
-//! 2. **Snapshot** in one read transaction, capturing `N = MAX(cursor)` *inside*
-//!    it; stream the matching set as `added` events, then a `live` marker.
+//! 2. **Snapshot**: capture `N = MAX(cursor)` first, then stream the matching
+//!    set as `added` events in keyset pages — a pooled reader per page, never
+//!    a transaction held across pages — then a `live` marker. Pages read after
+//!    a concurrent commit may already contain its rows, whose change rows are
+//!    `> N` and so are emitted again by step 3: the snapshot is at-least-once
+//!    per entity under concurrent writes, and the diff stream is what makes
+//!    the client's final state exact. Paging instead of accumulating is
+//!    deliberate (issue 55): a whole-collection snapshot held one reader for
+//!    minutes and buffered millions of events in memory, which let a handful
+//!    of anonymous subscriptions take the box down (incident 2026-08-09); now
+//!    memory is bounded by one page and every yield is a cancellation point,
+//!    so a vanished client stops costing anything at the next page.
 //! 3. **Diff** on `cursor > N`, forever. Because the cursor is strictly
-//!    monotonic and the query is strictly `>`, nothing can be emitted twice or
-//!    skipped — no locking required.
+//!    monotonic and the query is strictly `>`, nothing past `live` can be
+//!    emitted twice or skipped — no locking required.
 //!
 //! A resuming client (`Last-Event-ID`, or `?cursor=` for curl) skips step 2 and
 //! gets exactly what it missed. A cursor below the log's horizon cannot be
 //! served that way and gets a `reset` event instead, which means "re-snapshot"
 //! (Firestore's expired-token semantics).
 
-use super::{ApiError, ApiResult, AppState, Collection, Item, Params, StreamSlot, json, read_items};
+use super::{ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::response::sse::{Event, KeepAlive, Sse};
@@ -35,8 +45,10 @@ const KEEP_ALIVE: Duration = Duration::from_secs(15);
 /// reads bigger batches later — the log is the buffer, so it cannot lose data.
 const DIFF_BATCH: i64 = 500;
 
-/// Rows per snapshot page, inside the snapshot's read transaction.
-const SNAPSHOT_PAGE: i64 = 500;
+/// Rows per snapshot page — also the memory bound: this many items is all a
+/// subscription ever buffers. `AppState.snapshot_page` carries it so tests can
+/// shrink it to exercise multi-page snapshots on small fixtures.
+pub(crate) const SNAPSHOT_PAGE: i64 = 500;
 
 pub async fn subscribe(
     collection: Collection,
@@ -58,8 +70,16 @@ pub async fn subscribe(
     // no committed change can slip past the snapshot unnoticed.
     let mut doorbell = state.cursor.clone();
     doorbell.mark_unchanged();
-    let stream =
-        events(collection, state.readers.clone(), filter, resume, include_data, slot, doorbell);
+    let stream = events(
+        collection,
+        state.readers.clone(),
+        filter,
+        resume,
+        include_data,
+        state.snapshot_page,
+        slot,
+        doorbell,
+    );
 
     Ok((
         [
@@ -91,6 +111,7 @@ fn events(
     filter: Filter,
     resume: Option<i64>,
     include_data: bool,
+    snapshot_page: i64,
     slot: StreamSlot,
     mut doorbell: watch::Receiver<i64>,
 ) -> impl Stream<Item = Result<Event, Infallible>> {
@@ -99,17 +120,65 @@ fn events(
         // away, this generator is dropped and the budget is released.
         let _slot = slot;
 
-        let started = match start(collection, &readers, &filter, resume).await {
+        let started = match start(&readers, resume).await {
             Ok(started) => started,
             Err(e) => {
                 yield Ok(error_event(&e));
                 return;
             }
         };
-        for event in started.initial {
-            yield Ok(event);
-        }
-        let mut cursor = started.cursor;
+        let mut cursor = match started {
+            Started::Resume { initial, cursor } => {
+                for event in initial {
+                    yield Ok(event);
+                }
+                cursor
+            }
+            // The snapshot streams here, in the generator, so the client's
+            // disconnect drops it at the next yield and each page's reader
+            // goes back to the pool before anything is sent.
+            Started::Snapshot { cursor } => {
+                let mut after = 0;
+                loop {
+                    let page = {
+                        let reader = match readers.get().await {
+                            Ok(reader) => reader,
+                            Err(e) => {
+                                yield Ok(error_event(&e));
+                                return;
+                            }
+                        };
+                        let scope = Scope::Page { after, limit: snapshot_page };
+                        match read_items(collection, &reader, &filter, scope).await {
+                            Ok(page) => page,
+                            Err(e) => {
+                                yield Ok(error_event(&e));
+                                return;
+                            }
+                        }
+                    };
+                    let Some(last) = page.last() else { break };
+                    after = last.id;
+                    let full = page.len() as i64 == snapshot_page;
+                    for item in &page {
+                        yield Ok(entity_event(
+                            collection,
+                            cursor,
+                            "added",
+                            item.id,
+                            None,
+                            Some(&item.json),
+                            true,
+                        ));
+                    }
+                    if !full {
+                        break;
+                    }
+                }
+                yield Ok(live_event(cursor));
+                cursor
+            }
+        };
         loop {
             // Drain first, wait second. A resuming client's backlog was
             // committed before it connected, so no doorbell will ever ring for
@@ -142,18 +211,21 @@ fn events(
     }
 }
 
-struct Started {
-    initial: Vec<Event>,
-    cursor: i64,
+enum Started {
+    /// A resuming client: replay `initial` (a `reset`, or nothing) and diff
+    /// from `cursor`.
+    Resume { initial: Vec<Event>, cursor: i64 },
+    /// A fresh client: stream the snapshot (in the generator, page by page),
+    /// then diff from `cursor` — the log position captured *before* the first
+    /// page, so a change landing mid-snapshot is re-delivered by the diff
+    /// rather than lost.
+    Snapshot { cursor: i64 },
 }
 
-/// Step 2: the snapshot, or — for a resuming client — the decision to skip it.
-async fn start(
-    collection: Collection,
-    readers: &Arc<Readers>,
-    filter: &Filter,
-    resume: Option<i64>,
-) -> Result<Started, store::turso::Error> {
+/// Step 2's decision: where this subscription starts. One pooled read, no
+/// transaction — the heavy part (the snapshot itself) happens lazily in the
+/// stream so it can be cancelled and never buffers more than a page.
+async fn start(readers: &Arc<Readers>, resume: Option<i64>) -> Result<Started, store::turso::Error> {
     let reader = readers.get().await?;
 
     if let Some(from) = resume {
@@ -166,58 +238,21 @@ async fn start(
                 .event("reset")
                 .json_data(serde_json::json!({ "reason": "cursor_expired" }))
                 .expect("a literal object always serialises");
-            return Ok(Started { initial: vec![event], cursor: 0 });
+            return Ok(Started::Resume { initial: vec![event], cursor: 0 });
         }
-        return Ok(Started { initial: Vec::new(), cursor: from });
+        return Ok(Started::Resume { initial: Vec::new(), cursor: from });
     }
 
-    // One read transaction: the cursor and the rows come from the same
-    // consistent snapshot of the database (WAL readers see a stable view). If this
-    // future is cancelled (client disconnects) between BEGIN and COMMIT — likely,
-    // since `collect_snapshot` paginates a whole collection — the reader is dropped
-    // mid-transaction; the pool discards such a connection rather than returning it
-    // with an open snapshot that would pin the WAL forever (store::read Drop, issue 53).
-    reader.execute("BEGIN", ()).await?;
-    let snapshot = collect_snapshot(collection, &reader, filter).await;
-    let _ = reader.execute("COMMIT", ()).await;
-    let (cursor, items) = snapshot?;
-
-    let mut initial: Vec<Event> = items
-        .iter()
-        .map(|item| {
-            entity_event(collection, cursor, "added", item.id, None, Some(&item.json), true)
-        })
-        .collect();
-    initial.push(
-        Event::default()
-            .event("live")
-            .id(cursor.to_string())
-            .json_data(serde_json::json!({ "cursor": cursor.to_string() }))
-            .expect("a literal object always serialises"),
-    );
-    Ok(Started { initial, cursor })
+    Ok(Started::Snapshot { cursor: read::latest_cursor(&reader).await? })
 }
 
-async fn collect_snapshot(
-    collection: Collection,
-    reader: &store::Reader,
-    filter: &Filter,
-) -> Result<(i64, Vec<Item>), store::turso::Error> {
-    let cursor = read::latest_cursor(reader).await?;
-    let mut items = Vec::new();
-    let mut after = 0;
-    loop {
-        let scope = Scope::Page { after, limit: SNAPSHOT_PAGE };
-        let page = read_items(collection, reader, filter, scope).await?;
-        let Some(last) = page.last() else { break };
-        after = last.id;
-        let full = page.len() as i64 == SNAPSHOT_PAGE;
-        items.extend(page);
-        if !full {
-            break;
-        }
-    }
-    Ok((cursor, items))
+/// The end-of-snapshot marker: "you are caught up to `cursor`".
+fn live_event(cursor: i64) -> Event {
+    Event::default()
+        .event("live")
+        .id(cursor.to_string())
+        .json_data(serde_json::json!({ "cursor": cursor.to_string() }))
+        .expect("a literal object always serialises")
 }
 
 struct Batch {

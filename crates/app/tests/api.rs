@@ -53,6 +53,12 @@ impl Server {
     /// test can ingest *while the server is serving it* — same file, same
     /// writer, same doorbell, which is exactly the production arrangement.
     async fn start(name: &str) -> Server {
+        Server::boot(name, None).await
+    }
+
+    /// As [`start`](Server::start), with the SSE snapshot page size shrunk so a
+    /// handful of fixture rows spans several pages (issue 55's paged snapshot).
+    async fn boot(name: &str, snapshot_page: Option<i64>) -> Server {
         let path = format!("/tmp/tender-db-api-{name}-{}.db", std::process::id());
         let _ = std::fs::remove_file(&path);
         let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
@@ -70,7 +76,10 @@ impl Server {
         .expect("record fetch");
         let fetch_id = db.current_packages(SOURCE, "daily", None).await.expect("packages")[0].fetch_id;
 
-        let state = v1::AppState::new(db.clone(), db.readers(4).expect("readers"));
+        let mut state = v1::AppState::new(db.clone(), db.readers(4).expect("readers"));
+        if let Some(page) = snapshot_page {
+            state.snapshot_page = page;
+        }
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
@@ -725,6 +734,27 @@ async fn a_subscription_snapshots_then_streams_diffs() {
     let diff_cursor: i64 = diff.data["cursor"].as_str().expect("cursor").parse().expect("number");
     assert!(diff_cursor > boundary.parse::<i64>().expect("number"), "diffs are past the boundary");
     assert_eq!(diff.id.as_deref(), Some(diff.data["cursor"].as_str().expect("cursor")));
+}
+
+#[tokio::test]
+async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
+    // Page size 1 forces the snapshot through the keyset-paging path (issue
+    // 55): each page takes its own pooled reader and yields before the next,
+    // so nothing here may be lost, duplicated, or reordered by the paging.
+    let server = Server::boot("sse-paged", Some(1)).await;
+    server.ingest_chain().await;
+    server.ingest(LATE).await;
+
+    let mut tape = Tape::open(&server, "/v1/tenders", None).await;
+    let (snapshot, live) = tape.until_live().await;
+    assert_eq!(snapshot.len(), 2, "both Tenders arrive even though each page holds one");
+    let ids: Vec<i64> =
+        snapshot.iter().map(|e| e.data["id"].as_i64().expect("snapshot events carry ids")).collect();
+    assert!(ids.windows(2).all(|w| w[0] < w[1]), "keyset pages walk ids strictly upward: {ids:?}");
+    let boundary: i64 =
+        live.data["cursor"].as_str().expect("live carries the cursor").parse().expect("number");
+    assert!(boundary > 0, "the boundary is the log position captured before page one");
+    assert!(tape.quiet().await, "a paged snapshot ends at live, not with re-emissions");
 }
 
 #[tokio::test]

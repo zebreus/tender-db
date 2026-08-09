@@ -79,6 +79,10 @@ pub struct AppState {
     /// Where reads whose filter shape CAN walk are executed, so they cannot starve
     /// `readers` (issue 120). Routing is [`store::read::walks`].
     pub isolated: Arc<isolate::IsolatedReads>,
+    /// Rows per SSE snapshot page — the per-subscription memory bound and the
+    /// spacing of its cancellation points (issue 55). Production keeps the
+    /// default; tests shrink it to exercise multi-page snapshots.
+    pub snapshot_page: i64,
     streams: Arc<Mutex<HashMap<String, usize>>>,
 }
 
@@ -112,6 +116,7 @@ impl AppState {
             cursor,
             sql,
             isolated,
+            snapshot_page: sse::SNAPSHOT_PAGE,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
     }
