@@ -36,3 +36,15 @@ only — the coded TED-DT_DATE_FOR_SUBMISSION stays unprojected in BOTH
 eras, mirroring r209's existing form-wins convention and avoiding
 divergent duplicate facts (facts dedupe by identical value only; no
 uniqueness on (tender,seq,field)).
+
+2026-08-09 ~10:30 Berlin (orchestrator): the "why didn't the checklist catch
+it" question is answered — every_r208_fixture_is_consumed_exhaustively and
+the era checklists gate PARSE coverage (nothing dropped reading the XML);
+nothing gates PROJECTION coverage (parsed field id -> canonical field). The
+parse->projection seam is structurally unguarded, so any era whose element
+NAMES differ from the era the DATES/TEXTS/AMOUNTS tables were written
+against can silently lose canonical fields. Follow-up worth its own issue
+after this fix: a per-era "headline fields project" matrix test (each era
+fixture asserts title/deadline/value/cpv reach the canonical layer when the
+fixture demonstrably carries them) — the new r208 deadline test is the
+first instance of the class.
