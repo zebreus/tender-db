@@ -1,6 +1,6 @@
 # 55 — SSE initial snapshot holds a minutes-long read transaction
 
-Status: ready-for-agent — SEVERITY UPGRADED to HIGH (launch-blocking): proven DoS in prod 2026-08-09 (see incident note below)
+Status: resolved (`cb93bc5` + `07d6cbf`, deployed `0bac0e6` 2026-08-09, verified against the incident reproduction — see Comments)
 Severity: MEDIUM (scaling wart on the live-subscription request path)
 
 De-link note (2026-07-23): this is NOT a cause of the multi-day WAL runaway.
@@ -57,3 +57,18 @@ Consequences for the fix, beyond the original options list:
 
 Reproduction is now precise: `curl -N -H "Accept: text/event-stream"
 "…/v1/tenders?limit=1"` ×5, abort after a few seconds, watch load and /health.
+
+2026-08-09 ~03:20 Berlin (orchestrator): FIXED and verified on prod. The
+snapshot now streams keyset pages from inside the generator — a pooled reader
+per page, returned before the page's events yield; memory bounded by one page;
+latest_cursor captured before page one and the diff phase re-delivers anything
+that lands mid-snapshot (at-least-once, documented in the module protocol).
+The adversarial review caught that snapshot events carried the boundary cursor
+as their SSE id, which would have turned every mid-snapshot disconnect into a
+silent permanent truncation via Last-Event-ID auto-resume — snapshot events
+are now id-less and `live` is the first resumable position. Verified live on
+rev 0bac0e6: first bytes in <1s (1.8MB streamed in a 6s sample vs 0 bytes in
+20s before), and the exact incident reproduction — five aborted subscriptions —
+left /health at 0.5ms, list reads at 19ms, and the server at 0.0% CPU 45s
+later. Spun off: issue 163 (SSE pages bypass isolation routing), issue 164
+(retirement removals invisible to subscribers).
