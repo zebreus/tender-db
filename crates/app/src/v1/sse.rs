@@ -320,6 +320,16 @@ async fn diff(
             (false, true) => "added",
             (true, true) => "changed",
             (true, false) => "removed",
+            // Both probes can miss legitimately (the entity never matched the
+            // filter on either side of the change) — but retirement also lands
+            // here, because `retire_chunk_tx` hard-deletes the versions before
+            // this loop ever probes them (`version_seq` NULL → seq 0 → both
+            // scopes empty). The rows are gone, so the filter cannot be
+            // evaluated against what the subscriber saw; the log row's own op
+            // is the only witness. Over-deliver `removed` — clients treat it
+            // as an idempotent delete — rather than let a subscriber keep a
+            // ghost of a retired Tender forever (issue 164).
+            (false, false) if change.op == "removed" => "removed",
             (false, false) => continue,
         };
         events.push(

@@ -1,6 +1,6 @@
 # 164 — retirement `removed` change rows are invisible to SSE subscribers
 
-Status: open
+Status: resolved (2026-08-09) — diff loop relays the log's own `removed` op when both probes miss; over-delivery to filtered subscribers is the documented contract. Test: a_retirement_reaches_the_stream_as_removed (red-checked). Webhooks unaffected (raw change_event already carries op).
 Severity: MEDIUM (correctness of the live feed's "final state exact" promise)
 Role: run-driver
 

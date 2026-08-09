@@ -98,3 +98,9 @@ sweep described above, the invariant can break — and 115's decoration is no lo
 notice, because it now matches on all three columns. So the value of this number is that it bounds the
 past, not the future: it says the fix was preventive, and it says nothing about whether this wart stays
 harmless.
+
+2026-08-09 (orchestrator): re-checked reachability under the issue-174
+epoch-2 refold now running against the whole r208 era — still NOT
+reachable. The mapping change is additive (one date fact); lots/bids/
+contracts structure is identical, so every rewrite is a superset. The
+"first removed/narrowed mapping" tripwire stands.

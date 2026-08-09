@@ -827,6 +827,47 @@ async fn a_filtered_subscription_only_snapshots_its_own_matches() {
     assert!(empty.quiet().await, "a non-matching change is not this subscription's business");
 }
 
+/// Issue 164: retirement hard-deletes a Tender's versions before the diff loop
+/// can probe them, so its `removed` change row used to fall into the
+/// (None, None) arm and vanish — a subscriber that snapshotted the Tender kept
+/// a ghost forever. The log row's own op is the only remaining witness, and
+/// the feed must relay it.
+#[tokio::test]
+async fn a_retirement_reaches_the_stream_as_removed() {
+    let server = Server::start("retire").await;
+    server.ingest_chain().await;
+
+    let mut tape = Tape::open(&server, "/v1/tenders", None).await;
+    let (snapshot, _) = tape.until_live().await;
+    assert_eq!(snapshot.len(), 1, "one Tender snapshotted");
+    let id = snapshot[0].data["id"].as_i64().expect("entity id");
+
+    // A second subscriber whose filter never matched the Tender. Its versions
+    // are gone by diff time, so the filter cannot be evaluated against what
+    // this client saw; the feed deliberately over-delivers the removal
+    // (clients treat `removed` as an idempotent delete).
+    let mut unmatched = Tape::open(&server, "/v1/tenders?source=doe", None).await;
+    let (none, _) = unmatched.until_live().await;
+    assert!(none.is_empty(), "the doe filter matches nothing here");
+
+    // Retire through the real path: an empty plan reproduces no touched
+    // Tender's key → orphaned → retired (the issue-93 test's recipe).
+    server.db.reset_plan().await.expect("reset plan");
+    let ids: Vec<i64> = (1..=20).collect();
+    let retired = server.db.retire_regrouped_tenders(&ids, 1_000_000).await.expect("retire");
+    assert!(retired >= 1, "the retirement must actually happen");
+
+    let ev = tape.next().await.expect("the removal must reach the stream, not silence");
+    assert_eq!(ev.name, "change");
+    assert_eq!(ev.data["op"], "removed", "a retired Tender is a removal to its subscriber");
+    assert_eq!(ev.data["id"].as_i64(), Some(id));
+    assert!(ev.data["version"].is_null(), "retirement rows carry no version");
+    assert!(ev.id.is_some(), "diff events are resume points");
+
+    let ev = unmatched.next().await.expect("over-delivery is the documented contract");
+    assert_eq!(ev.data["op"], "removed");
+}
+
 #[tokio::test]
 async fn a_client_may_hold_five_streams_and_no_more() {
     let server = Server::start("cap").await;
