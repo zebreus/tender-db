@@ -21,8 +21,12 @@
 //!    emitted twice or skipped — no locking required.
 //!
 //! A resuming client (`Last-Event-ID`, or `?cursor=` for curl) skips step 2 and
-//! gets exactly what it missed. A cursor below the log's horizon cannot be
-//! served that way and gets a `reset` event instead, which means "re-snapshot"
+//! gets exactly what it missed. That promise is only sound because snapshot
+//! events carry NO SSE id: the first resumable position a client can ever hold
+//! is the `live` marker, so a stream that dies mid-snapshot reconnects with no
+//! `Last-Event-ID` and re-snapshots, rather than "resuming" past the snapshot's
+//! own undelivered remainder. A cursor below the log's horizon cannot be
+//! served either and gets a `reset` event instead, which means "re-snapshot"
 //! (Firestore's expired-token semantics).
 
 use super::{ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items};
@@ -76,7 +80,10 @@ pub async fn subscribe(
         filter,
         resume,
         include_data,
-        state.snapshot_page,
+        // Clamped: 0 would snapshot nothing, and a negative LIMIT means
+        // UNLIMITED in SQLite — one page holding the whole collection, the
+        // exact incident this page size exists to prevent.
+        state.snapshot_page.max(1),
         slot,
         doorbell,
     );
@@ -161,6 +168,13 @@ fn events(
                     after = last.id;
                     let full = page.len() as i64 == snapshot_page;
                     for item in &page {
+                        // Deliberately NO SSE id on snapshot events: an
+                        // EventSource that loses the stream mid-snapshot must
+                        // reconnect with no Last-Event-ID and re-snapshot.
+                        // Stamping these with the boundary cursor would make
+                        // that reconnect a "resume from N" that silently skips
+                        // the rest of the snapshot — entities the client would
+                        // then never see. `live` is the first resumable point.
                         yield Ok(entity_event(
                             collection,
                             cursor,
@@ -308,15 +322,22 @@ async fn diff(
             (true, false) => "removed",
             (false, false) => continue,
         };
-        events.push(entity_event(
-            collection,
-            change.cursor,
-            op,
-            change.entity_id,
-            change.version_seq,
-            new.as_ref().map(|i| &i.json),
-            include_data,
-        ));
+        events.push(
+            entity_event(
+                collection,
+                change.cursor,
+                op,
+                change.entity_id,
+                change.version_seq,
+                new.as_ref().map(|i| &i.json),
+                include_data,
+            )
+            // The cursor as the SSE id is what makes Last-Event-ID resume
+            // exact — for DIFF events only. Snapshot events stay id-less so an
+            // interrupted snapshot re-snapshots instead of "resuming" past its
+            // own missing remainder.
+            .id(change.cursor.to_string()),
+        );
     }
     Ok(Batch { events, last_cursor, more })
 }
@@ -343,11 +364,11 @@ fn entity_event(
         let map = body.as_object_mut().expect("just built as an object");
         map.insert("data".into(), data.cloned().unwrap_or(serde_json::Value::Null));
     }
+    // No `.id()` here: whether an event is a resume point is the caller's
+    // call. Diff events get the cursor as their SSE id; snapshot events must
+    // not carry one (see the snapshot loop).
     Event::default()
         .event("change")
-        // The cursor is the SSE id, which is what makes Last-Event-ID resume
-        // exact rather than approximate.
-        .id(cursor.to_string())
         .json_data(body)
         .expect("a literal object always serialises")
 }

@@ -718,6 +718,11 @@ async fn a_subscription_snapshots_then_streams_diffs() {
     assert_eq!(snapshot[0].data["op"], "added");
     assert_eq!(snapshot[0].data["entity"], "tender");
     assert!(snapshot[0].data["data"]["title"].is_string(), "include_data embeds the state");
+    assert!(
+        snapshot[0].id.is_none(),
+        "snapshot events must not be resume points: a stream that dies mid-snapshot \
+         has to re-snapshot, not resume past its own missing remainder"
+    );
     let boundary = live.data["cursor"].as_str().expect("live carries the cursor").to_owned();
     assert_eq!(live.id.as_deref(), Some(boundary.as_str()), "the marker's id is the boundary");
 
@@ -748,6 +753,10 @@ async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
     let mut tape = Tape::open(&server, "/v1/tenders", None).await;
     let (snapshot, live) = tape.until_live().await;
     assert_eq!(snapshot.len(), 2, "both Tenders arrive even though each page holds one");
+    assert!(
+        snapshot.iter().all(|e| e.id.is_none()),
+        "no snapshot event is a resume point, on any page"
+    );
     let ids: Vec<i64> =
         snapshot.iter().map(|e| e.data["id"].as_i64().expect("snapshot events carry ids")).collect();
     assert!(ids.windows(2).all(|w| w[0] < w[1]), "keyset pages walk ids strictly upward: {ids:?}");

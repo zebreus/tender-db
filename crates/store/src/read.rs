@@ -103,10 +103,12 @@ impl Drop for Reader {
             // A connection returned mid-transaction must NOT re-enter the pool: an
             // open read transaction freezes a WAL snapshot that blocks every
             // checkpoint, so the WAL grows without bound (issue 53, reproduced in
-            // store::checkpoint). This happens when a multi-statement snapshot
-            // future — the SSE initial read's `BEGIN … COMMIT` — is cancelled
-            // (client disconnects) before its `COMMIT`: the future unwinds and
-            // drops this Reader with the transaction still open. Discard such a
+            // store::checkpoint). This happens when a future holding an explicit
+            // `BEGIN … COMMIT` is cancelled before its `COMMIT`: the future
+            // unwinds and drops this Reader with the transaction still open. (The
+            // original offender, the SSE snapshot's whole-collection read, is gone
+            // — issue 55 made it autocommit pages — but the net stays: any future
+            // multi-statement read that is cancelled lands here.) Discard such a
             // connection — dropping it releases the snapshot at once — and let the
             // pool open a fresh one on the next `get`. On the (unexpected) error
             // path, discard too, conservatively. A drained autocommit read holds
