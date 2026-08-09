@@ -332,6 +332,27 @@ async fn cell_i64(db: &store::Db, sql: &str) -> Option<i64> {
     }
 }
 
+async fn cell_text(db: &store::Db, sql: &str) -> Option<String> {
+    match db.scalar(sql).await.unwrap() {
+        Some(store::turso::Value::Text(s)) => Some(s),
+        _ => None,
+    }
+}
+
+/// Overwrite a held row's reason/detail in place — the stale-label state issue 87
+/// is about: a row quarantined under a since-fixed defect's label, which a failed
+/// re-parse then used to leave untouched.
+async fn relabel(db_path: &Path, member_path: &str, reason: &str, detail: &str) {
+    let raw = store::turso::Builder::new_local(db_path.to_str().unwrap()).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute(
+        "UPDATE quarantine SET reason = ?, detail = ? WHERE member_path = ?",
+        (reason, detail, member_path),
+    )
+    .await
+    .unwrap();
+}
+
 /// Rewind a parsed notice to the pre-fix state a stale quarantine row records:
 /// empty parsed layer, `quarantined`, projected, plus a held quarantine row —
 /// exactly what OC/SDK members looked like before their fix shipped. Writes over
@@ -548,6 +569,92 @@ async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
         Some(store::turso::Value::Text("internal-ojs-non-english".into())),
         "the row says WHICH policy declined it, not merely that one did"
     );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 87: a reclaim that FAILS AGAIN records the current failure on the row.
+///
+/// Two members, two failure shapes:
+/// * an eForms stub — identity parses, content does not (`Parse::Quarantined`):
+///   the notice-level `StillHeld` exit;
+/// * `garbage.xml` — no identity at all (`Record::Quarantine`): the profile-level
+///   member the reclaim used to walk past silently, uncounted and unwritten.
+///
+/// Both rows are first relabeled with a STALE reason, exactly the state the
+/// DE-1.x residuals were in (241 rows still claiming "no vendored SDK metadata"
+/// after the metadata WAS vendored). Before this fix a failed re-parse left that
+/// label in place and wrote the real cause nowhere, so a "did any new reason
+/// bucket appear for this cohort?" check was structurally unable to fail.
+#[tokio::test]
+async fn a_failed_reclaim_records_the_current_failure_on_the_row() {
+    let (archive, db) = fixture("reclaim-stillheld").await;
+    run(&db, &archive).await;
+    let pkg = archive.join("ted/daily/2026-00137.tar.gz");
+    let garbage = "20240102_1/garbage.xml";
+
+    // What a re-parse of each member ACTUALLY produces today is what the fresh
+    // ingest just recorded — capture it, so the test asserts "the row reflects
+    // the current failure" without hard-coding parser messages.
+    let stub = cell_text(
+        &db,
+        "SELECT member_path FROM quarantine WHERE notice_id IS NOT NULL ORDER BY id LIMIT 1",
+    )
+    .await
+    .expect("a parse-level quarantine row from the fixture's eForms stubs");
+    let stub_reason =
+        cell_text(&db, &format!("SELECT reason FROM quarantine WHERE member_path = '{stub}'"))
+            .await
+            .unwrap();
+    let garbage_reason =
+        cell_text(&db, &format!("SELECT reason FROM quarantine WHERE member_path = '{garbage}'"))
+            .await
+            .unwrap();
+
+    relabel(&archive.join("test.db"), &stub, "stale-reason", "written at first ingest").await;
+    relabel(&archive.join("test.db"), garbage, "stale-reason", "written at first ingest").await;
+
+    let held: std::collections::HashSet<String> = [stub.clone(), garbage.to_owned()].into();
+    let report =
+        process::reclaim_package(&db, &pkg, "ted", 1, held.clone(), |_, _, _| {}).await.unwrap();
+
+    // Both failures are REPORTED — including the profile-level one, which used to
+    // vanish from the outcome sum entirely — and the residual's shape rides along.
+    assert_eq!((report.reclaimed, report.already, report.skipped_by_policy), (0, 0, 0));
+    assert_eq!(report.still_held, 2, "both failure shapes count as still held");
+    assert_eq!(report.still_held_reasons.get(&stub_reason), Some(&1));
+    assert_eq!(report.still_held_reasons.get(&garbage_reason), Some(&1));
+
+    for (path, current) in [(&stub, &stub_reason), (&garbage.to_owned(), &garbage_reason)] {
+        let row = |col: &str| format!("SELECT {col} FROM quarantine WHERE member_path = '{path}'");
+        // The row now names the CURRENT failure, with first-ingest provenance kept.
+        assert_eq!(cell_text(&db, &row("reason")).await.as_ref(), Some(current));
+        assert_eq!(cell_text(&db, &row("first_reason")).await.as_deref(), Some("stale-reason"));
+        assert_eq!(
+            cell_text(&db, &row("first_detail")).await.as_deref(),
+            Some("written at first ingest")
+        );
+        // Attempted-and-failed is distinguishable from never-reached…
+        assert_eq!(cell_i64(&db, &row("attempts")).await, Some(1));
+        assert!(cell_i64(&db, &row("last_attempt_at")).await.is_some());
+        // …and the member stays in the backlog: not reclaimed, not skipped, and
+        // findable by its CURRENT reason on the next run.
+        assert_eq!(cell_i64(&db, &row("reprocessed_at")).await, None);
+        assert_eq!(cell_i64(&db, &row("skipped_at")).await, None);
+    }
+    assert!(
+        db.quarantine_held_member_files(1, &stub_reason, None, None).await.unwrap().contains(&stub),
+        "the failed member belongs to its new reason's bucket now"
+    );
+
+    // A second failed attempt counts, and first-ingest provenance is written ONCE.
+    let again = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+    assert_eq!(again.still_held, 2);
+    for path in [&stub, &garbage.to_owned()] {
+        let row = |col: &str| format!("SELECT {col} FROM quarantine WHERE member_path = '{path}'");
+        assert_eq!(cell_i64(&db, &row("attempts")).await, Some(2));
+        assert_eq!(cell_text(&db, &row("first_reason")).await.as_deref(), Some("stale-reason"));
+    }
 
     let _ = std::fs::remove_dir_all(&archive);
 }

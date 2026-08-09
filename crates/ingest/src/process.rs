@@ -382,6 +382,25 @@ pub struct ReclaimReport {
     /// them reporting nothing, and the four outcomes stop summing to the held
     /// set (issue 84 — 593k stale 2008 rows that no reclaim can ever move).
     pub skipped_by_policy: u64,
+    /// The CURRENT still-held reasons seen this pass, with counts — the bounded
+    /// sample the job result surfaces so an operator sees the shape of the
+    /// residual without querying (issue 87). At most [`REASON_SAMPLE_CAP`]
+    /// distinct reasons; later arrivals fold into `(other)` so the counts stay
+    /// honest without the map growing with the data.
+    pub still_held_reasons: std::collections::BTreeMap<String, u64>,
+}
+
+/// The bound on distinct reasons in [`ReclaimReport::still_held_reasons`].
+const REASON_SAMPLE_CAP: usize = 8;
+
+/// Count `reason` in the bounded sample: an already-seen reason always counts,
+/// a novel one takes a free slot or folds into `(other)`.
+fn sample_reason(map: &mut std::collections::BTreeMap<String, u64>, reason: &str) {
+    if map.contains_key(reason) || map.len() < REASON_SAMPLE_CAP {
+        *map.entry(reason.to_owned()).or_insert(0) += 1;
+    } else {
+        *map.entry("(other)".to_owned()).or_insert(0) += 1;
+    }
 }
 
 /// How often the reprocess checkpoints inside one package to bound WAL/RAM on a
@@ -416,14 +435,33 @@ pub async fn reclaim_package(
     let mut done = 0u64;
     let mut slot = Some(rx);
     while let Some((record, parse)) = recv_next(&mut slot).await {
-        // Only Notice records can reclaim; a still-failing profile-level
-        // Quarantine (or corruption) needs no write — its INSERT OR IGNORE row is
-        // untouched and stays held.
-        if let Record::Notice(n) = record {
-            match db.reclaim_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await? {
-                store::Reclaim::Reclaimed => report.reclaimed += 1,
-                store::Reclaim::StillHeld => report.still_held += 1,
-                store::Reclaim::AlreadyParsed => report.already += 1,
+        match record {
+            Record::Notice(n) => {
+                match db.reclaim_notice(&resolved_notice(source, fetch_id, now, n, &parse), &parse).await? {
+                    store::Reclaim::Reclaimed => report.reclaimed += 1,
+                    store::Reclaim::StillHeld => {
+                        report.still_held += 1;
+                        match &parse {
+                            store::Parse::Quarantined { reason, .. } => {
+                                sample_reason(&mut report.still_held_reasons, reason)
+                            }
+                            _ => sample_reason(&mut report.still_held_reasons, "pending"),
+                        }
+                    }
+                    store::Reclaim::AlreadyParsed => report.already += 1,
+                }
+            }
+            // A held member that STILL fails before an identity exists (an
+            // unrecognised profile, or corruption) re-arrives as a quarantine
+            // record, never reaching `reclaim_notice`. It is still-held work all
+            // the same: count it, and record the attempt ON the row (issue 87) —
+            // before this it was walked past silently, its row keeping a stale
+            // first-ingest reason and the outcomes not summing to the held set.
+            Record::Quarantine(q) => {
+                db.record_reclaim_attempt(fetch_id, &q.member_path, &q.reason, q.detail.as_deref(), now)
+                    .await?;
+                report.still_held += 1;
+                sample_reason(&mut report.still_held_reasons, &q.reason);
             }
         }
         done += 1;

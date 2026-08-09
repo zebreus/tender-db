@@ -1,6 +1,24 @@
 # 87 — a failed reclaim leaves a stale quarantine reason, so the real failure cause is never recorded
 
-Status: ready-for-agent
+Status: fix landed on main (2026-08-09, orchestrator) — awaiting deploy; then re-examine the
+241 DE-1.x residuals (last acceptance item). What landed, per the design notes below:
+- Both `StillHeld` exits of `reclaim_notice_tx` now write the row inside the existing tx: a
+  `Parse::Quarantined` re-parse rewrites `reason`/`detail` to the CURRENT failure and preserves
+  the first-ingest pair ONCE in new nullable `first_reason`/`first_detail`; a `Parse::Pending`
+  re-parse stamps only. `last_attempt_at` + `attempts` (nullable, additive migration) make
+  attempted-and-failing distinguishable from never-reached. `reprocessed_at` untouched, exactly
+  as the design note demands — the member stays in the backlog, now under its TRUE reason (a
+  re-run of the ORIGINAL bucket no longer finds it, by design: it belongs to the new reason's
+  bucket, which is the honest work list).
+- The profile-level population the issue's mechanism section could not see: a held member that
+  STILL yields no identity arrives as `Record::Quarantine` and was walked past silently —
+  uncounted and unwritten. It now counts as `still_held` and records its attempt via
+  `Db::record_reclaim_attempt` keyed (fetch_id, member_path).
+- The job result now carries `still held by current reason: …` — a bounded (top-8 + other)
+  sample, so a residual that failed for a NEW cause is visible in the job log without querying.
+- Test: a_failed_reclaim_records_the_current_failure_on_the_row (ingest/tests/process.rs) —
+  both branches, relabeled-stale-reason staging, attempt counting across two runs, backlog
+  membership under the new reason.
 Kind: observability / data quality
 Blocked by: —
 Relates to: 76 (the reprocess mechanism), 85 (found here), ADR-0009 (bulk reclaim), 40 (the resolution ledger)

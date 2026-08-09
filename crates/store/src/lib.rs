@@ -174,6 +174,19 @@ const SCHEMA: &str = "
         -- schema carries three, rather than hiding one inside another.
         skipped_at     INTEGER,
         skipped_reason TEXT,
+        -- A re-parse that FAILS AGAIN records its outcome here (issue 87):
+        -- `reason`/`detail` above mean the member's CURRENT hold cause, and the
+        -- first-ingest pair moves to `first_reason`/`first_detail` on the first
+        -- overwrite. `last_attempt_at`/`attempts` make attempted-and-still-
+        -- failing distinguishable from never-reached without the job logs.
+        -- Deliberately separate from `reprocessed_at`: that column means
+        -- RECLAIMED and the reprocess resume predicate keys on it, so a failed
+        -- member must never set it — it stays in the backlog under its new,
+        -- true reason.
+        last_attempt_at INTEGER,
+        attempts        INTEGER,
+        first_reason    TEXT,
+        first_detail    TEXT,
         UNIQUE(fetch_id, member_path, content_hash)
     ) STRICT;
     -- Every quarantine metric filters or groups by `reason` first — the reason
@@ -486,6 +499,16 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // deliberate run of the marker.
     add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_at INTEGER").await?;
     add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_reason TEXT").await?;
+    // Issue 87: a failed re-parse stamps its attempt and rewrites the row's
+    // reason/detail to the CURRENT failure (the first-ingest pair is preserved
+    // once in first_reason/first_detail). Nullable and absent by default, so
+    // nothing becomes "attempted" by migrating — and deliberately NOT
+    // reprocessed_at, which the reclaim resume predicate keys on: overloading it
+    // would silently drop a failed member from the next run's backlog.
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN last_attempt_at INTEGER").await?;
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN attempts INTEGER").await?;
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN first_reason TEXT").await?;
+    add_column(conn, "ALTER TABLE quarantine ADD COLUMN first_detail TEXT").await?;
     // The `notices_unprojected` partial index is built LAZILY at the end of a
     // projection ([`Db::ensure_unprojected_index`]), NOT here: on a large existing
     // DB upgraded to this schema, Phase-2 hasn't marked anything projected yet, so
@@ -984,7 +1007,11 @@ impl Db {
                     .await?;
                     Ok(Reclaim::Reclaimed)
                 }
-                _ => Ok(Reclaim::StillHeld),
+                _ => {
+                    self.stamp_still_held(conn, parse, n.ingested_at, "notice_id = ?", vec![Value::Integer(id)])
+                        .await?;
+                    Ok(Reclaim::StillHeld)
+                }
             },
             // No notice row — a profile-level quarantine (failed before an identity
             // existed). The ordinary ingest write now records it; flag the held
@@ -1003,10 +1030,89 @@ impl Db {
                     .await?;
                     Ok(Reclaim::Reclaimed)
                 } else {
+                    self.stamp_still_held(
+                        conn,
+                        parse,
+                        n.ingested_at,
+                        "fetch_id = ? AND member_path = ?",
+                        vec![Value::Integer(n.fetch_id), t(&n.member_path)],
+                    )
+                    .await?;
                     Ok(Reclaim::StillHeld)
                 }
             }
         }
+    }
+
+    /// Record a re-parse attempt that left the member held (issue 87). A
+    /// [`Parse::Quarantined`] re-parse rewrites the row's `reason`/`detail` to the
+    /// CURRENT failure — before this, a failed reclaim left the first-ingest pair
+    /// in place, so the 241 DE-1.x residuals still claimed "no vendored SDK
+    /// metadata" AFTER the metadata was vendored, and the real cause was written
+    /// nowhere. The first-ingest pair is preserved once in `first_reason` /
+    /// `first_detail`: `first_reason IS NULL` marks a row never overwritten, and
+    /// every SET expression reads the pre-update row, so both move together on the
+    /// first overwrite and never again. A [`Parse::Pending`] re-parse has no
+    /// failure payload — the member is still unrecognised for the same recorded
+    /// reason — so only the attempt is stamped.
+    ///
+    /// Resolved rows (`reprocessed_at`/`skipped_at`) are terminal ledger outcomes
+    /// and are never rewritten. `reprocessed_at` itself is never set here: a
+    /// failed member must stay in the reclaim backlog, now under its true reason.
+    async fn stamp_still_held(
+        &self,
+        conn: &Connection,
+        parse: &Parse,
+        now: i64,
+        where_sql: &str,
+        params: Vec<Value>,
+    ) -> turso::Result<()> {
+        let (set, mut bound) = match parse {
+            Parse::Quarantined { reason, detail } => (
+                "first_reason = CASE WHEN first_reason IS NULL THEN reason ELSE first_reason END,
+                 first_detail = CASE WHEN first_reason IS NULL THEN detail ELSE first_detail END,
+                 reason = ?, detail = ?,
+                 last_attempt_at = ?, attempts = COALESCE(attempts, 0) + 1",
+                vec![t(reason), opt_text(detail.as_deref()), Value::Integer(now)],
+            ),
+            _ => (
+                "last_attempt_at = ?, attempts = COALESCE(attempts, 0) + 1",
+                vec![Value::Integer(now)],
+            ),
+        };
+        bound.extend(params);
+        conn.execute(
+            &format!(
+                "UPDATE quarantine SET {set}
+                  WHERE {where_sql} AND reprocessed_at IS NULL AND skipped_at IS NULL"
+            ),
+            bound,
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// The profile-level half of issue 87: a held member that STILL cannot
+    /// produce an identity re-arrives from the walker as a fresh quarantine
+    /// record, not a notice, so [`Db::reclaim_notice`] never sees it. The
+    /// reprocess records the attempt on the held row through here instead.
+    pub async fn record_reclaim_attempt(
+        &self,
+        fetch_id: i64,
+        member_path: &str,
+        reason: &str,
+        detail: Option<&str>,
+        now: i64,
+    ) -> turso::Result<()> {
+        let conn = self.conn().await;
+        self.stamp_still_held(
+            &conn,
+            &Parse::Quarantined { reason: reason.to_owned(), detail: detail.map(str::to_owned) },
+            now,
+            "fetch_id = ? AND member_path = ?",
+            vec![Value::Integer(fetch_id), t(member_path)],
+        )
+        .await
     }
 
     /// Set a notice's parse state. A transition to 'parsed' also clears the

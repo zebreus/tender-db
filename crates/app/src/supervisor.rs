@@ -1194,6 +1194,7 @@ impl Supervisor {
         }
 
         let (mut reclaimed, mut still_held, mut already, mut skipped) = (0u64, 0u64, 0u64, 0u64);
+        let mut reasons: std::collections::BTreeMap<String, u64> = Default::default();
         for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
             self.update(|p| {
                 p.package = Some(format!("fetch {fetch_id}"));
@@ -1228,6 +1229,9 @@ impl Supervisor {
             still_held += report.still_held;
             already += report.already;
             skipped += report.skipped_by_policy;
+            for (reason, count) in &report.still_held_reasons {
+                *reasons.entry(reason.clone()).or_insert(0) += count;
+            }
             self.update(|p| p.packages_done = (i + 1) as u64);
             // Advance the durable resume cursor once the package is fully drained
             // (issue 32 pattern). Best-effort: a failed write only re-walks this
@@ -1244,9 +1248,31 @@ impl Supervisor {
         // Every held member ends in exactly one of the four outcomes, so the
         // summary sums to the bucket. `skipped` is the one that writes nothing:
         // a documented duplicate sibling no reclaim can ever move (issue 84).
+        //
+        // The residual's shape rides along (issue 87): the reasons are the
+        // CURRENT re-parse failures, so a bucket that failed for a NEW cause is
+        // visible right here — a reason-bucket delta check cannot see it, because
+        // a StillHeld member used to keep its stale first-ingest reason. Bounded
+        // to the top entries so a pathological residual cannot bloat the row.
+        let residual = {
+            let mut by_count: Vec<(&String, &u64)> = reasons.iter().collect();
+            by_count.sort_by(|a, b| b.1.cmp(a.1).then(a.0.cmp(b.0)));
+            let (head, tail) = by_count.split_at(by_count.len().min(8));
+            let mut sample: Vec<String> =
+                head.iter().map(|(reason, count)| format!("{reason} {count}")).collect();
+            let rest: u64 = tail.iter().map(|(_, count)| **count).sum();
+            if rest > 0 {
+                sample.push(format!("(other) {rest}"));
+            }
+            if sample.is_empty() {
+                String::new()
+            } else {
+                format!("; still held by current reason: {}", sample.join(", "))
+            }
+        };
         Ok(format!(
             "{} package(s): {reclaimed} reclaimed, {still_held} still held, \
-             {already} already parsed, {skipped} skipped by dispatch policy",
+             {already} already parsed, {skipped} skipped by dispatch policy{residual}",
             packages.len()
         ))
     }
