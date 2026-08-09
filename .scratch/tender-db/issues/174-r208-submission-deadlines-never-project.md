@@ -48,3 +48,23 @@ after this fix: a per-era "headline fields project" matrix test (each era
 fixture asserts title/deadline/value/cpv reach the canonical layer when the
 fixture demonstrably carries them) — the new r208 deadline test is the
 first instance of the class.
+
+2026-08-09 14:25 Berlin (orchestrator): scheduled verification check-in fired,
+but the box was deliberately stopped ~13:37 Berlin for a machine migration
+(Lennart is moving prod to bigger hardware). State at stop:
+
+- Refold mapping pass (job 592, "refold ted-export-r208"): FINISHED OK at
+  ~13:12 Berlin — re-queued 2,694,814 notices for the incremental projection.
+- Follow-up projection (job 2, project rebuild=false): INTERRUPTED mid-run by
+  the planned stop, ~85 min in. Not a failure: chunk commits are durable, the
+  durable job row survives, and supervisor recovery resumes it automatically
+  on first startup on the new machine.
+- WAL was checkpoint-TRUNCATEd to zero and folded into the main file post-stop
+  (460,357,677,056 bytes, self-contained) for the transfer; service+timers
+  stopped and disabled on the old box.
+
+Verification checklist (deadline density per era, r208 spot-check via
+/v1/tenders/{id}, /health/deep) is DEFERRED until the new machine is up and
+the resumed projection completes. Issue stays open at resolved-pending-
+verification: the mapping fix and its fixture test are merged; only the prod
+refold verification remains.
