@@ -13,9 +13,19 @@ Everything marked **[verified]** was tested live with curl on 2026-07-19;
 
 - TED offers four practical channels: **bulk tar.gz packages** (daily +
   monthly, 1993→today, anonymous), the **Search API v3** (anonymous, but only
-  indexes notices from **July 2016**), **per-notice direct URLs**
-  (XML/PDF/HTML, work back to 2011), and derived open-data channels
-  (CSV on data.europa.eu, SPARQL) we don't need.
+  indexes a **rolling `today − 10 years` window** — see the correction below),
+  **per-notice direct URLs** (XML/PDF/HTML, work back to 2011), and derived
+  open-data channels (CSV on data.europa.eu, SPARQL) we don't need.
+
+  > **Correction (2026-08-09 drift audit).** This doc originally said the API
+  > "only indexes notices from July 2016" — measured 2026-07-19, that was the
+  > rolling edge, not a fixed floor. Re-probed 2026-08-09: the boundary sits at
+  > exactly 2016-08-09 (2016-08-08 → 0 results, 2016-08-09 → 1,575, scope ALL),
+  > i.e. **the floor advances one day per day**, confirmed by TED's own Q&A
+  > ("the last 10 years from today"). Consequences: gap-fill/cross-check logic
+  > must compute the floor as `today − 10y`, never hard-code a date; and
+  > archive data older than the window can only ever be verified against bulk
+  > packages, not the API. See docs/research/upstream-drift-2026-08.md.
 - The archive spans **three fundamentally different format eras**: tagged
   plain text (1993–2010), legacy TED XML `TED_EXPORT` R2.0.8/R2.0.9
   (2011–2024), and eForms UBL (late 2023→). "All business terms" can only
@@ -44,8 +54,11 @@ Everything marked **[verified]** was tested live with curl on 2026-07-19;
   Developers' Corner page returns **404** — only `/packages/daily/` works.
   The URL scheme has therefore changed at least once already; treat it as
   medium-stability. [verified]
-- Real filename comes in `Content-Disposition` (e.g.
-  `attachment; filename=20260717_136.tar.gz`).
+- Real filename comes in `Content-Disposition`. Format drifted once already
+  (2026-08 audit): originally `20260717_136.tar.gz`, now
+  `{yyyymmdd}_{yyyy}{nnn}.tar.gz` (e.g. `20260717_2026136.tar.gz`) —
+  retroactively, with package bytes unregenerated. We key blobs by our own
+  scheme, so this is cosmetic; do not key anything off that header.
 - Coverage: **1993-01 through today**, both daily and monthly, no gaps found
   in a full HEAD sweep of all 402 monthly packages (a handful of first-sweep
   misses re-probed fine — they were transient timeouts). [verified]

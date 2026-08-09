@@ -136,7 +136,20 @@ etc.; `cbc:CustomizationID eforms-de-2.1`; `cbc:ProfileID eforms-sdk-1.14`
 (or 1.13); the `defext` namespace (`xmlns:defext="german-eforms-extension"`)
 is declared in headers but **no notice in any sampled month contains a
 `GermanEformsExtension` element — DEX fields are spec-only as of 2026-07**
-(consistent with the VergStatVO go-live in H2 2026). German quirks inside
+(consistent with the VergStatVO go-live in H2 2026).
+
+> **Superseded (2026-08-09 drift audit): DEX is live.** First wild
+> `defext:GermanEformsExtension/defext:ProcurementStatistics/defext:ReportingUnitId`
+> observed in the DÖE 2026-08-07 daily export (CAN, subtype 30, eforms-de-2.1,
+> notice 74d0a833-27db-4ac1-9158-20845d3a21e0-01); days 07-22/07-29/08-03/08-05
+> had zero. DÖE's SVS (Service Vergabestatistik) went operational and the
+> extension is NOT stripped from the public export — resolving this doc's open
+> question the observable way. Our importer already persists these fields (the
+> SDK-DE 1.14 inventory carries them; decisions are kind-derived), verified by
+> the 2026-08-08 pipeline run ingesting that notice with zero new quarantine.
+> See docs/research/upstream-drift-2026-08.md.
+
+German quirks inside
 otherwise-EU content: national codes from the added codelists (e.g.
 legal-basis `vob-a-eu`, buyer-legal-type `omu-bbeh`, exclusion-ground
 `nati-ground`), `unused-id` placeholder IDs in

@@ -474,3 +474,19 @@ All §2.C user decisions are now resolved:
 
 Open action items for Lennart: order/attach the 500 GB volume (or provide a
 Hetzner API token). Everything else is planning-phase material (§2.B).
+
+---
+
+## 6. Post-launch: periodic drift audits (D8)
+
+The D8 watch duty is discharged by dated audit docs, each re-checking the
+claims above against upstream and correcting the research docs in place:
+
+- **upstream-drift-2026-08.md** (2026-08-09) — first audit. Headlines: TED
+  Search-API floor is a rolling `today − 10y` (July's "fixed July 2016" was
+  the rolling edge, corrected in ted-access-channels.md); German DEX
+  statistics fields went LIVE in the DÖE feed ~2026-08-06 and are already
+  persisted by the importer (eforms-de-profile.md superseded note); EU SDK
+  1.15.1 is a no-op for us; eForms-DE 2.1 acceptance ends 2026-12-02 →
+  issue 165; turso 0.7.2 hygiene bump → issue 166 (corruption-fix exposure
+  audited: none). Next audit ~2026-09.
