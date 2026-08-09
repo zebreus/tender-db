@@ -33,3 +33,10 @@ identifier; a spot-check of other German orgs with register ids shows no `HR`/re
 
 Low severity relative to issue 85, but it's a correctness bug in the org register (buyer/supplier identity)
 and the mis-country would corrupt any country-based filter/aggregation over German orgs.
+
+2026-08-09 (data-profile study): this is a CLASS, measured at >=50,700 org
+rows across >=15 register-prefix families (HRB/HRA/NIP/REGON/UST/FN/KRS/
+SIRET/CVR/CIF/NIF/OIB/CUI/ICO/DIC...) — see
+docs/research/data-profile-2026-08.md §1.5(a) and the register-prefix
+normalization rule (§3 rule 1). 96.6% of stored (HR, vat) orgs are German
+HRB/HRA companies.

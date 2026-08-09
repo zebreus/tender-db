@@ -85,3 +85,10 @@ evidence, kept so it is not lost with the number:
 **Framing worth keeping verbatim** (team-lead): *17,738 unexplained → 51 worth explaining is progress,
 not resolution.* The failure it guards against is using a mostly-benign explanation to wave through the
 part it does not cover.
+
+2026-08-09 (data-profile study, docs/research/data-profile-2026-08.md
+§2.1): sample evidence for Q2 — in the 2024 eForms window ALL 99 negative
+notice_amounts rows are exactly -100 cents across BT-720/710/711/161 etc.:
+-1.00 is a publisher sentinel, not a value. Proposed rule 8 (§3): store as
+published, flag sentinel, exclude from canonical value columns. The
+larger negatives (eur 420k / 11.8M) remain real suspects.
