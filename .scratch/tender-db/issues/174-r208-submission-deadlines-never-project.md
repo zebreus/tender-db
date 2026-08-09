@@ -19,3 +19,20 @@ field ids to the DATES mapping and refold the affected era (issue-91 scoped
 refold machinery exists). The era-profile checklists (ted-legacy-mapping
 §8.3) should have caught this — worth asking why the r208 checklist marked
 deadline as mapped.
+
+2026-08-09 ~10:15 Berlin (orchestrator): verification path changed. The
+bounded canonical-side prod check was ABANDONED after it stacked five 408s
+— even index-driven shapes (tender_versions.published_at BETWEEN one-day
+window + per-row EXISTS) blow the 10s cap; the planner evidently doesn't
+serve them the way the schema suggests, and learning planner behavior
+against the serving box is issue-167's rig work, not this issue's. (One of
+the five was my own carelessness: a quoting probe with the window dropped
+— full scan. Budget lesson from the data-profile study re-confirmed the
+hard way.) The proof is instead the house-standard failing fixture test:
+r208/f02-000333-2014.xml carries RECEIPT_LIMIT_DATE 07/02/2014 17:00; new
+test an_r208_contract_notice_projects_its_submission_deadline asserts it
+projects. Decision on scope: map TED-RECEIPT_LIMIT_DATE (form section)
+only — the coded TED-DT_DATE_FOR_SUBMISSION stays unprojected in BOTH
+eras, mirroring r209's existing form-wins convention and avoiding
+divergent duplicate facts (facts dedupe by identical value only; no
+uniqueness on (tender,seq,field)).
