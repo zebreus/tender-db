@@ -160,10 +160,11 @@ Two ways jobs start:
 - **Scheduler** — at 09:35 Europe/Berlin it enqueues the daily pipeline: on
   Mon–Fri a TED probe forward + re-fetch of the current day (the 09:30 CET
   finality window) and a `process`; every day a DÖE completed-day fetch (T+1,
-  yesterday's date) + `process`; then one `project` that folds whatever landed,
-  and finally one `snapshot` of the freshly folded result. No operator action
-  needed. Confirm a run fired by looking for a `probe` job (and the trailing
-  `fetch`/`process`/`project`/`snapshot`) with that morning's `started_at` in
+  yesterday's date) + `process`; then one `project` that folds whatever landed.
+  (The trailing `snapshot` job was removed with the backup feature,
+  2026-08-06.) No operator action needed. Confirm a run fired by looking for a
+  `probe` job (and the trailing
+  `fetch`/`process`/`project`) with that morning's `started_at` in
   `GET /admin/jobs` → `recent[]`, or on the dashboard's Ingestion panel. The
   scheduler is a plain in-process timer (no cron/systemd timer), so it only runs
   while the service is up — a box that was down at 09:35 simply misses that tick;
@@ -243,8 +244,10 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
 ```
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
-fetch|process|project|backfill|snapshot, source?, package_kind?, period?, range?,
-rebuild?, refetch?}`. Defaults: `source` `ted`, `package_kind` `daily`.
+fetch|process|project|backfill|daily|reprocess|reindex|refold|
+mark-skipped-siblings|clear-rebuild-flag, source?, package_kind?, period?,
+range?, rebuild?, refetch?}` (the `snapshot` kind was removed 2026-08-06).
+Defaults: `source` `ted`, `package_kind` `daily`.
 `process`/`project` accept no period to run the whole source (`process` with no
 `period` re-parses every archived package of that source). `refetch:true`
 re-downloads a known package (finality re-check). `project` with `rebuild:true`
@@ -480,135 +483,47 @@ single-process, so the running server holds the database open exclusively (see
 the Ingestion rule above). A scratch `*.db` may appear here from earlier
 dev/verification work — harmless, but never point a CLI at the production file.
 
-## Backups
+## Disaster recovery (there are no backups)
 
-The DB is worth backing up (weeks of processing to rebuild); the raw archive is
-**not** (re-fetchable from TED/DÖE, ~178 GB — never back it up). Issue 23 wires
-a consistent online snapshot of the DB, staged in a small **local ring** on the
-volume. There is **no off-box destination for now** (a deliberate decision — see
-[No off-box destination](#no-off-box-destination-local-ring-only) below).
+**The snapshot feature and its local ring were removed on 2026-08-06** (owner
+decision under storage pressure; commits 39c0e08/aa9f2a1/1faf9d9). Since then
+there is **no copy of the DB anywhere**, on-box or off. DR = re-ingest from
+sources. The full scenario analysis, measured stage rates, and the
+recommendation menu for re-introducing a minimal backup live in
+`docs/research/dr-premise-2026-08.md` (2026-08-09); the honest numbers:
 
-### How a snapshot is taken (the mechanism)
+- **Canonical layer damaged** (bad projection, layer wipe; DB file healthy):
+  `project rebuild=true` + verify ≈ **1–1.5 days**. The public instance serves
+  an empty/partial tender layer the whole time (ADR-0009).
+- **DB file lost** (archive intact): ≈ **4–6 days** — and today that includes a
+  forced full ~180 GB re-download, because the `fetches` registry (which
+  `process` walks) is itself DB-resident; there is no register-existing-files
+  path yet (dr-premise §2 — a cheap planned fix).
+- **Box lost, volume survives**: ≈ **0.5–1 day** (re-provision per this doc;
+  everything on the root disk is regenerable).
+- **NOT recoverable at any cost**: `users`, `api_tokens`, `webhook_endpoints`,
+  and change-cursor/epoch continuity (< 1 MB today). No email exists on
+  accounts by design, so account loss is permanent per user. An off-box copy
+  of exactly this state is the standing pre-launch recommendation
+  (dr-premise §7(b)), pending the owner's re-decision.
 
-Turso has no online-backup API, and `VACUUM INTO` OOM-kills the box at this
-scale (`docs/research/turso-scale.md` §1). The only workable mechanism is
-`wal_checkpoint(TRUNCATE)` + a file copy — and it is made **consistent under
-concurrent writes** by taking the store's single writer for the length of the
-copy (`crates/store/src/backup.rs`, `Db::snapshot`):
-
-1. Acquire the single writer connection (all writes funnel through it; turso is
-   single-process, so this is every writer there is).
-2. `PRAGMA wal_checkpoint(TRUNCATE)` — fold the WAL into the main file and
-   truncate the `-wal` to zero. The main `.db` is now self-contained.
-3. Copy the `.db` to the staging dir on a blocking thread, **with the writer
-   still held**, so no write and no auto-checkpoint can touch the bytes
-   mid-copy. This is why it is *not* "a file copy of a live DB": the DB is
-   momentarily frozen and checkpointed. Readers keep serving over WAL
-   throughout — a snapshot has zero read downtime.
-4. Release the writer, then **verify the copy offline**: open it independently,
-   `PRAGMA integrity_check`, and compare `COUNT(*)` of `notices` against the
-   source. A copy that does not match is deleted and the run fails (a killed
-   copy can pass integrity_check alone — turso-scale.md §1 — so the row-count
-   comparison is load-bearing).
-
-The snapshot is a **Supervisor job** (`kind: snapshot`), so it serialises with
-ingestion — it never runs concurrently with a fetch/process/project — and lands
-in `job_log`, visible in `GET /admin/jobs` → `recent[]` and on the dashboard.
-Its log line carries the real numbers (size, notice count, seconds the writer was
-frozen, seconds spent verifying), so per-run timings are recorded automatically.
-The dashboard's **System** panel shows *last DB snapshot* age.
-
-Triggers:
-
-- **Scheduled** — the daily pipeline (09:35 Europe/Berlin) ends with a snapshot,
-  right after the projection folds the day's data.
-- **On demand** — `POST /admin/jobs {"kind":"snapshot"}` (for the restore drill
-  or an ad-hoc backup):
-
-  ```sh
-  curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
-    -d '{"kind":"snapshot"}' $BASE/admin/jobs
-  ```
-
-Config (env, set in the systemd unit): `TENDER_SNAPSHOT_DIR` (default
-`/data/snapshots` in prod), `TENDER_SNAPSHOT_KEEP` (local ring size, default 2).
-Snapshots are named `tender-db-<unix>.db`.
-
-> ⚠️ **Unit change required before deploy.** `ProtectSystem=strict` with
-> `ReadWritePaths=/data/db /data/archive` means the service cannot write
-> `/data/snapshots` until it is added. On the box:
->
-> ```sh
-> mkdir -p /data/snapshots && chown tenderdb:tenderdb /data/snapshots
-> # add /data/snapshots to ReadWritePaths= in the unit (or a drop-in), then:
-> systemctl daemon-reload && systemctl restart tender-db
-> ```
+Mechanism knowledge worth keeping (if a backup path returns): turso has no
+online-backup API and `VACUUM INTO` OOMs at scale (turso-scale.md §1); the
+workable mechanism is writer-held `wal_checkpoint(TRUNCATE)` + file copy +
+offline verify by `integrity_check` **plus row-count comparison** (a killed
+copy can pass integrity_check alone). Measured at 455 GB on this box:
+**941 s writer freeze + 606 s verify** (job 570, 2026-08-06 — the last
+snapshot ever taken). Restore was a plain file copy: stop service, swap
+`.db`, delete `-wal`/`-shm`, chown, start, `/health`.
 
 ### Disk headroom
 
-`/data` (500 GB) must hold **archive + DB + one snapshot in flight**. At DB
-size *D*, staging one snapshot needs another *D* free; the local ring keeps
-`TENDER_SNAPSHOT_KEEP` of them, so budget `archive + (KEEP+1)·D`. With the
-archive at ~178 GB and *D* heading toward ~100 GB, keep `KEEP` small (2). `df -h
-/data` before enabling the daily snapshot; a snapshot job that runs out of space
-fails cleanly (the copy errors, no partial file is kept) without touching the
-live DB.
+`/data` (1 TB since 2026-07-22) holds archive (~180 GB) + DB (560 GB and
+growing; it can never shrink — VACUUM is impossible). 219 GB free as of
+2026-08-09; a plain on-box DB copy no longer fits (XFS reflink copies do).
+Growth model and volume-full forecast: `docs/research/` storage-lifecycle
+study (issue 169).
 
-### No off-box destination (local ring only)
-
-Snapshots live **only in the local ring** on `/data` — there is deliberately no
-off-box copy. The earlier plan (a Hetzner Storage Box, an rsync `backup-ship.sh`
-timer, a 7-daily-+-4-weekly remote ring) was **dropped** together with the
-external pinger and a public GitHub repo (no external resources, 2026-07-21). The
-accepted risk is explicit and matches CONTEXT.md: **everything is rebuildable** —
-the canonical layer re-derives from the archive, the archive re-fetches from
-TED/DÖE — at a cost of roughly a day of processing, so a lost `/data` volume is
-recoverable without an off-box backup. The local ring exists to make the *common*
-recovery (a bad projection, an accidental drop) a fast file-copy rather than a
-full rebuild; it is **not** disaster recovery, because it shares the volume's
-failure domain. Revisit if the dataset ever stops being cheaply rebuildable.
-
-### Restore procedure (TESTED)
-
-Restoring is a plain file copy — **no turso tooling, no app** — because a
-snapshot is an ordinary SQLite file. Drill it into a scratch dir and open it;
-never overwrite the live DB in place.
-
-```sh
-# 1. Pick a snapshot from the local ring.
-ls -lh /data/snapshots/                      # newest is the freshest
-SNAP=/data/snapshots/tender-db-<unix>.db
-
-# 2. Restore into a scratch dir (NOT /data/db).
-mkdir -p /data/restore && cp "$SNAP" /data/restore/tender-db.db
-
-# 3. Verify it offline — integrity + a row count sanity check.
-sqlite3 /data/restore/tender-db.db 'PRAGMA integrity_check;'      # expect: ok
-sqlite3 /data/restore/tender-db.db 'SELECT COUNT(*) FROM notices;'
-
-# 4. (Full recovery) stop the service, swap the file in, restart.
-systemctl stop tender-db
-mv /data/db/tender-db.db /data/db/tender-db.db.bak    # keep the old one aside
-cp /data/restore/tender-db.db /data/db/tender-db.db
-rm -f /data/db/tender-db.db-wal /data/db/tender-db.db-shm   # snapshot is self-contained
-chown tenderdb:tenderdb /data/db/tender-db.db
-systemctl start tender-db
-curl -s https://tenders.zebreus.click/health   # expect {"ok":true,…}
-```
-
-Steps 1–3 are the **read-only drill** (the issue's acceptance test) and are safe
-to run anytime against production snapshots; step 4 is the real recovery.
-
-**Measured durations** (from `docs/research/turso-scale.md`, 10 GB DB on this
-VPS; scale ~linearly): checkpoint+copy **~18 s / 10 GB**; offline
-`integrity_check` **~7 min / 10 GB** (cold, IO-bound); `COUNT(*)` ~2 s. The
-restore copy is the same order as the snapshot copy. Each snapshot job already
-records its own **frozen** and **verify** seconds in its `job_log` line
-(`GET /admin/jobs` → `recent[]`), so the real per-run numbers accrue there. *A
-full end-to-end restore drill on production-scale data is still pending (issue 23
-verification step) — record the measured restore timings here once run.*
-
-`VACUUM INTO` is forbidden at scale (OOM — turso-scale.md §1).
 
 ## Verification
 
