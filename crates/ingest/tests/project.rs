@@ -5,7 +5,7 @@
 //! It must collapse into exactly one Tender with four versions, the corrigendum
 //! must supersede the field it actually moved, and the change log must say so.
 
-use ingest::{eforms, profile, project};
+use ingest::{process, profile, project};
 use store::{Db, Notice, NoticeValue, Parse, Parsed, Section, ValueRow};
 
 /// The change log via the production reader path (`read::changes_since`) — the
@@ -61,7 +61,9 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, byte
     let [profile::Record::Notice(n)] = &records[..] else {
         panic!("{relative}: expected one notice record");
     };
-    let parse = eforms::parse_payload(&n.profile, bytes);
+    // Route by profile exactly as `process` does — eForms, TED_EXPORT
+    // (r208/r209) and internal-OJS fixtures all ingest through here.
+    let parse = process::parse_payload(&n.profile, bytes);
     assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
     let (published_at, dispatched_at) = match &parse {
         Parse::Parsed(parsed) => {
@@ -178,6 +180,28 @@ async fn the_real_procedure_chain_becomes_one_tender_with_four_versions() {
         0,
         "published_at is monotonic across the chain"
     );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 174: the r208 era names its form-section submission deadline
+/// `RECEIPT_LIMIT_DATE` (r209 renamed the element `DATE_RECEIPT_TENDERS`), and
+/// the date mapping only knew the r209 name — so every 2011–2016 Tender
+/// projected without a deadline while the parsed layer held it all along. The
+/// coded section's `DT_DATE_FOR_SUBMISSION` stays unprojected in BOTH eras by
+/// the same rule: the form value is the published instant, the coded one a
+/// derived copy that can disagree with it.
+#[tokio::test]
+async fn an_r208_contract_notice_projects_its_submission_deadline() {
+    let (db, fetch_id, path) = scratch("r208-deadline").await;
+    ingest(&db, fetch_id, "r208/f02-000333-2014.xml").await;
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+    assert_eq!(report.tenders, 1);
+
+    // RECEIPT_LIMIT_DATE 07/02/2014 + TIME 17:00 — the F02's IV.3.4 deadline.
+    assert_eq!(deadline(&db, 1).await, 1_391_792_400, "2014-02-07 17:00 UTC");
 
     let _ = std::fs::remove_file(&path);
 }

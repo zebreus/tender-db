@@ -135,8 +135,15 @@ const DATES: &[(&str, &str)] = &[
     ("BT-13(d)", "additional_information_deadline"),
     ("BT-536", "duration_start"),
     ("BT-537", "duration_end"),
-    // legacy: the submission deadline (100% fill on F02) and its openings
+    // legacy: the submission deadline (100% fill on F02) and its openings.
+    // r209 names the form element DATE_RECEIPT_TENDERS; r208 called the same
+    // IV.3.4 field RECEIPT_LIMIT_DATE — both map, or the whole 2011–2016 era
+    // projects deadline-less (issue 174). The coded section's
+    // DT_DATE_FOR_SUBMISSION stays unprojected in BOTH eras: the form value
+    // is the published instant, the coded one a derived copy that can
+    // disagree with it, and facts only dedupe when byte-identical.
     ("TED-DATE_RECEIPT_TENDERS", "submission_deadline"),
+    ("TED-RECEIPT_LIMIT_DATE", "submission_deadline"),
     ("TED-DATE_OPENING_TENDERS", "opening_date"),
     ("TED-DATE_START", "duration_start"),
     ("TED-DATE_END", "duration_end"),

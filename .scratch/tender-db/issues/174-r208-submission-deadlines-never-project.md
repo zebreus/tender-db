@@ -1,6 +1,6 @@
 # 174 — r208-era submission deadlines are parsed but may never project
 
-Status: open — needs one bounded canonical-side check, then a mapper fix + refold
+Status: fix landed on main — red->green demonstrated (test failed with no-deadline-row, passes with the mapping); PROJECTION_EPOCH bumped to 2 per the issue-99 ledger. Remaining: deploy + scoped refold of ted-export-r208 + data_quality verification of per-era deadline fill.
 Role: run-driver
 Severity: MEDIUM (silent per-era data gap on a headline canonical field)
 

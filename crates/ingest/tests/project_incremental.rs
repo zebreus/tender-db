@@ -575,7 +575,14 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
         "a forced rewrite under UNCHANGED logic must reproduce byte-identical content"
     );
     assert_eq!(
-        count(&db, "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> 1").await,
+        count(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}",
+                store::canonical::PROJECTION_EPOCH
+            ),
+        )
+        .await,
         0,
         "every rewritten Tender must be stamped with the current epoch"
     );
