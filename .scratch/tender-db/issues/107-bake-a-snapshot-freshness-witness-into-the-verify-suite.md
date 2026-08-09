@@ -103,3 +103,10 @@ available to a check with no epoch to key on.
 **Still not generalised to `de1x_verify.sh`.** The witness above is implemented in the
 standing gate only. Carrying it into the de1x suite — the run that motivated this issue —
 remains open work.
+
+2026-08-09 (orchestrator): premise check needed post-39c0e08 — the snapshot
+feature (ring, pointer, snapwatch) was removed on 2026-08-06 by owner
+decision; issue 135 died with it. If de1x_verify.sh's input was the deleted
+ring, this issue is void the same way; if verification snapshots are now
+created ad hoc, the freshness witness matters MORE, not less. Whoever grabs
+this: establish which, first.

@@ -1,7 +1,10 @@
 # 135 — a snapshot that crashes mid-copy leaves a partial file in the ring, permanently
 
-Status: open — latent, found while checking the pointer against sdk-vendor's half-written-snapshot
-finding (`1b3564c`). Not observed in the wild; the mechanism is in the code.
+Status: closed-obsolete (2026-08-09, orchestrator) — voided by `39c0e08` (owner decision, 2026-08-06):
+the snapshot feature is removed, ring deleted, `backup.rs` gone. The copy-then-rename mechanism this
+asked for has no code to land in. If snapshots ever return, the fix direction below stands.
+Originally: latent, found while checking the pointer against sdk-vendor's half-written-snapshot
+finding (`1b3564c`). Not observed in the wild; the mechanism was in the code.
 Kind: data integrity / ops
 Owner: proj-fix (store code)
 Relates to: 23 (snapshots), 28 (the gate that would read it), 107, 119
