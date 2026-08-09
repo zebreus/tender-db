@@ -42,3 +42,12 @@ Fix (design decision needed — don't rush):
 Acceptance: a rebuild is detectable by a live/poll client (epoch or
 documented reset), so snapshot+diff coherence is restorable; documented
 in the API docs.
+
+2026-08-09 (completeness critique, research gap #5): the premise that "the
+initial backfill runs before subscribers exist" died with ADR-0009 routine
+rebuilds; SUMMARY §4 still calls B1 resolved. The genuine residue beyond this
+issue's fix: settle the epoch/reset semantics ONCE as a documented protocol
+(SSE + poll + webhooks), write it into the API docs, add a replaying-client
+conformance test. This issue's own recommendation (one clean rebuild/epoch
+start before launch) has a use-by date. See
+docs/research/research-gaps-2026-08.md gap 5; siblings: 163, 164.

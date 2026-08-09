@@ -490,3 +490,21 @@ claims above against upstream and correcting the research docs in place:
   1.15.1 is a no-op for us; eForms-DE 2.1 acceptance ends 2026-12-02 →
   issue 165; turso 0.7.2 hygiene bump → issue 166 (corruption-fix exposure
   audited: none). Next audit ~2026-09.
+
+---
+
+## 7. Completeness critique (2026-08-09) — corrections to this file
+
+**research-gaps-2026-08.md** holds the full internal gap analysis (8 ranked
+gaps: capacity/abuse model, organization identifiers, storage lifecycle at
+0.5 TB, DR premise + unrebuildable user state, change-feed contract across
+rebuilds, value-domain profile, classification/currency drift, redaction
+path + the deleted GDPR record's scope). Board issues 167–173 track them.
+Two corrections it makes to THIS file, recorded rather than rewritten so §5
+stays an honest minute of the 2026-07-19 session:
+
+- §5's "All §2.C user decisions are now resolved" **overclaims**: C10
+  (currency normalization), C14 (FTS strategy) and C15 (SQL dialect promise)
+  were never decided anywhere — they are open again, queued for Lennart.
+- §1's index is missing **data-quality.md** (the per-era field-presence
+  measurement tool and findings; it postdates the index).
