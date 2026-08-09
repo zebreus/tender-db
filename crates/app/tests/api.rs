@@ -40,6 +40,7 @@ struct Server {
     http: reqwest::Client,
     fetch_id: i64,
     path: String,
+    isolated: Arc<v1::isolate::IsolatedReads>,
 }
 
 impl Drop for Server {
@@ -80,6 +81,7 @@ impl Server {
         if let Some(page) = snapshot_page {
             state.snapshot_page = page;
         }
+        let isolated = state.isolated.clone();
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
         let port = listener.local_addr().expect("addr").port();
         tokio::spawn(async move {
@@ -92,6 +94,7 @@ impl Server {
             http: reqwest::Client::new(),
             fetch_id,
             path,
+            isolated,
         }
     }
 
@@ -866,6 +869,43 @@ async fn a_retirement_reaches_the_stream_as_removed() {
 
     let ev = unmatched.next().await.expect("over-delivery is the documented contract");
     assert_eq!(ev.data["op"], "removed");
+}
+
+/// Issue 163: snapshot pages carry the same unauthenticated filters as the
+/// list endpoint, so a walk-shaped filter must page on the isolated pool
+/// (issue 120's routing) instead of pinning a main-pool reader page after
+/// page for as long as the client stays connected. Saturating the isolated
+/// pool proves where each shape runs: the walk-shaped subscription is shed,
+/// the unfiltered one — main pool, untouched — still snapshots.
+#[tokio::test]
+async fn a_walk_shaped_snapshot_pages_on_the_isolated_pool() {
+    let server = Server::start("walk-routing").await;
+    server.ingest_chain().await;
+
+    let held = server.isolated.hold_slots_for_test(server.isolated.available());
+
+    // `country=` is a version predicate — an EXISTS probed per row, no index
+    // serves it (store::read::walks). With the pool saturated the page read
+    // is refused, and the stream says so rather than touching main readers.
+    let mut walker = Tape::open(&server, "/v1/tenders?country=DE", None).await;
+    let ev = walker.next().await.expect("the stream answers before ending");
+    assert_eq!(ev.name, "error", "a saturated isolated pool sheds the walk-shaped snapshot");
+    assert!(
+        ev.data["message"].as_str().unwrap_or_default().contains("expensive"),
+        "the shed names its reason: {}",
+        ev.data
+    );
+
+    // The main pool is unaffected: an unfiltered snapshot completes.
+    let mut plain = Tape::open(&server, "/v1/tenders", None).await;
+    let (snapshot, _) = plain.until_live().await;
+    assert_eq!(snapshot.len(), 1, "non-walk snapshots still run on the main pool");
+
+    // Freed slots admit the same subscription again — shed is load, not a ban.
+    drop(held);
+    let mut walker = Tape::open(&server, "/v1/tenders?country=DE", None).await;
+    let (_, live) = walker.until_live().await;
+    assert!(live.data["cursor"].is_string(), "released slots admit the walk-shaped snapshot");
 }
 
 #[tokio::test]

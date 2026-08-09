@@ -77,6 +77,7 @@ pub async fn subscribe(
     let stream = events(
         collection,
         state.readers.clone(),
+        state.isolated.clone(),
         filter,
         resume,
         include_data,
@@ -115,6 +116,7 @@ fn resume_cursor(headers: &HeaderMap, params: &Params) -> Option<i64> {
 fn events(
     collection: Collection,
     readers: Arc<Readers>,
+    isolated: Arc<super::isolate::IsolatedReads>,
     filter: Filter,
     resume: Option<i64>,
     include_data: bool,
@@ -147,21 +149,34 @@ fn events(
             Started::Snapshot { cursor } => {
                 let mut after = 0;
                 loop {
-                    let page = {
-                        let reader = match readers.get().await {
-                            Ok(reader) => reader,
-                            Err(e) => {
-                                yield Ok(error_event(&e));
+                    let scope = Scope::Page { after, limit: snapshot_page };
+                    // A filter shape that CAN walk pages on the isolated
+                    // runtime and pool, exactly as the list endpoint routes it
+                    // (issue 120) — a connected subscriber paging a walk-shaped
+                    // snapshot must never pin main-pool readers page after page
+                    // (issue 163). `Shed` ends the stream like any other
+                    // snapshot failure: the client re-subscribes and
+                    // re-snapshots under the isolated pool's own admission.
+                    let result = if store::read::walks(collection.into(), &filter) {
+                        match isolated.read(collection, filter.clone(), scope).await {
+                            Ok(result) => result,
+                            Err(super::isolate::Shed) => {
+                                let shed = "too many expensive filtered reads in flight; retry shortly";
+                                yield Ok(error_event(&shed));
                                 return;
                             }
-                        };
-                        let scope = Scope::Page { after, limit: snapshot_page };
-                        match read_items(collection, &reader, &filter, scope).await {
-                            Ok(page) => page,
-                            Err(e) => {
-                                yield Ok(error_event(&e));
-                                return;
-                            }
+                        }
+                    } else {
+                        match readers.get().await {
+                            Ok(reader) => read_items(collection, &reader, &filter, scope).await,
+                            Err(e) => Err(e),
+                        }
+                    };
+                    let page = match result {
+                        Ok(page) => page,
+                        Err(e) => {
+                            yield Ok(error_event(&e));
+                            return;
                         }
                     };
                     let Some(last) = page.last() else { break };
@@ -395,7 +410,7 @@ pub fn change_event(change: &Change) -> serde_json::Value {
     })
 }
 
-fn error_event(e: &store::turso::Error) -> Event {
+fn error_event(e: &dyn std::fmt::Display) -> Event {
     Event::default()
         .event("error")
         .json_data(serde_json::json!({ "message": e.to_string() }))

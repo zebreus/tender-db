@@ -161,6 +161,14 @@ impl IsolatedReads {
         self.slots.available_permits()
     }
 
+    /// Take and hold `n` slots — how a test saturates the pool to prove routing
+    /// and admission control without needing a genuinely slow read.
+    pub fn hold_slots_for_test(&self, n: usize) -> Vec<OwnedSemaphorePermit> {
+        (0..n)
+            .map(|_| self.slots.clone().try_acquire_owned().expect("a free slot to hold"))
+            .collect()
+    }
+
     /// Run a walk-capable read on the isolated runtime, or shed.
     ///
     /// `try_acquire` rather than `acquire`: queueing behind a walk that cannot be

@@ -1,6 +1,6 @@
 # 163 — SSE snapshot pages bypass the issue-120 isolation routing
 
-Status: open
+Status: resolved (2026-08-09) — snapshot page reads route through store::read::walks to the isolated pool, exactly as the list endpoint (issue-120 routing); Shed ends the stream with a named error and the client re-subscribes under the pool's own admission. Diff probes stay on main readers deliberately: Scope::At is id-anchored and cheap under any filter shape. Test: a_walk_shaped_snapshot_pages_on_the_isolated_pool (red-checked).
 Severity: MEDIUM (availability hardening on the public API)
 Role: run-driver
 
