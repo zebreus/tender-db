@@ -88,6 +88,12 @@ ausschreibungen-deutschland.de), and none offers a documented open bulk API.
 They also increasingly *feed* the DÖE anyway (moderate confidence; connection
 rollout per platform is ongoing). None beats the federal options.
 
+> **Upgraded (2026-08-09, service-bund-de.md §4):** "feed the DÖE" is now
+> empirically verified from the other side — sampled notices originating on
+> cosinex, subreport, Vergabe24, bi-medien, aumass, RIB, evergabe.de and
+> e-Vergabe all appear in DÖE (mostly via the `eforms-sdk-0.1` numeric
+> channel we already parse), same-day or earlier.
+
 ---
 
 ## 2. Primary candidate: oeffentlichevergabe.de (Bekanntmachungsservice)
@@ -245,9 +251,16 @@ Contact for feedback: support@datenservice-oeffentlicher-einkauf.de.
   detail URLs under `/IMPORTE/Ausschreibungen/…`; no structured-data API — the
   payload is HTML with a link back to the origin platform.
 - **History**: fails hard — notices are delisted after expiry; no archive
-  (sub-survey finding, high confidence).
+  (sub-survey finding, high confidence). *Refined 2026-08-09
+  (service-bund-de.md §6): delisting is origin-driven (404 at the supplied
+  Veröffentlichungsende) and enforcement is origin-dependent — verified
+  zombies back to 2016 remain live; the site's own Impressum states the
+  no-archive design ("analog einer Litfaßsäule").*
 - **Terms**: standard federal imprint terms; no open-data grant comparable to
-  DÖE's CC0 (sub-survey finding: weak/unclear reuse terms).
+  DÖE's CC0 (sub-survey finding: weak/unclear reuse terms). *Confirmed
+  2026-08-09 with the exact Impressum quote (service-bund-de.md §7):
+  reproduction/distribution of protected content requires BVA consent — no
+  affirmative reuse grant exists.*
 - **Value if added**: purely as a *live* discovery feed for notices from
   platforms not yet connected to the DÖE. Metadata quality (HTML) is far below
   eForms. Not recommended for v1.

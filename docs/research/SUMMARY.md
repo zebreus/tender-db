@@ -508,3 +508,16 @@ stays an honest minute of the 2026-07-19 session:
   were never decided anywhere — they are open again, queued for Lennart.
 - §1's index is missing **data-quality.md** (the per-era field-presence
   measurement tool and findings; it postdates the index).
+
+**service-bund-de.md** (2026-08-09) discharges the deferred C22 research:
+full source evaluation of service.bund.de as a third source. Verdict:
+do not ingest — near-total overlap with DÖE verified notice-by-notice
+(11/12 sampled tenders already in DÖE, remainder EU→TED), zero shared
+identifiers (any merge would be the heuristic kind ADR-0003 forbids),
+restrictive Impressum with no reuse grant, no history by design. The
+July survey's "platforms feed DÖE" upgrades from moderate confidence to
+empirically verified (8 platforms). Bonus: DÖE has an anonymous search API
+(`POST /bkmk/searches`) — useful for importer QA, noted for the runbook.
+**C22 closure recommendation queued for Lennart**: close as won't-do; if a
+stress source is ever wanted, replay captured fixtures instead of live
+ingestion.
