@@ -795,7 +795,8 @@ pub async fn project_with_progress_phase2(
 /// canonical Organization identity is exactly what the whole-RAM projection
 /// produced) and append its compact grouping *identity* to the on-disk plan.
 /// Nothing per-notice heavy (facts, lots, results) is retained and the plan is on
-/// disk (issue 59), so peak RAM is one read chunk, independent of corpus. Returns
+/// disk (issue 59), so peak RAM is two read chunks — the one being swept and the
+/// one being written (issue 175's pipeline) — independent of corpus. Returns
 /// `(notices, mentions)`. Shared by the full projection and [`project_plan_only`].
 ///
 /// Mentions are resolved BEFORE the chunk's plan rows are appended, so a full
@@ -811,24 +812,93 @@ async fn build_plan(
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
     let mut resolver = db.mention_resolver().await?;
+    // The SWEEP half — the sequential parsed-layer read plus the pure-CPU
+    // identity/mention extraction — runs on a prepare thread one chunk ahead of
+    // the WRITER half (issue 175: phase 1 was measured pinned on one core while
+    // the reader and writer each idled inside the same serial loop). The order
+    // invariant lives in the writer half: `resolve_mentions` must see chunks in
+    // notice-id order so canonical Organization identity is exactly what the
+    // serial sweep produced — one producer + an in-order channel preserves that,
+    // and the rendezvous handoff (capacity 0) bounds RAM at two chunks. Reading
+    // one chunk ahead of the writes is safe: the sweep reads the notices/parsed
+    // tables, the writer writes organizations/mentions/plan rows — disjoint.
+    struct PlanChunk {
+        rows: Vec<store::PlanRow>,
+        mentions: Vec<Mention>,
+    }
+    let (tx, rx) = std::sync::mpsc::sync_channel::<turso::Result<PlanChunk>>(0);
+    let readers = db.readers(1)?;
+    let producer = {
+        std::thread::spawn(move || {
+            // Its own current-thread runtime and its own reader connection, the
+            // pre-pass workers' pattern: the decode is CPU-bound, so a real
+            // thread is what parallelises it. Between chunk queries the reader
+            // holds no snapshot, so it never pins the WAL (the checkpoint.rs
+            // idle-reader property).
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .expect("build plan-sweep runtime");
+            rt.block_on(async move {
+                let conn = match readers.get().await {
+                    Ok(conn) => conn,
+                    Err(e) => {
+                        let _ = tx.send(Err(e));
+                        return;
+                    }
+                };
+                let mut after_id = 0i64;
+                loop {
+                    let mut chunk =
+                        match Db::parsed_chunk_on(&conn, after_id, i64::MAX, READ_CHUNK).await {
+                            Ok(chunk) => chunk,
+                            Err(e) => {
+                                let _ = tx.send(Err(e));
+                                return;
+                            }
+                        };
+                    normalise_de1(&mut chunk);
+                    let Some((last, _)) = chunk.last() else { break };
+                    after_id = last.id;
+                    let mut mentions: Vec<Mention> = Vec::new();
+                    let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
+                    for (notice, parsed) in &chunk {
+                        let ident = Ident::read(notice, parsed);
+                        mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
+                        rows.push(ident.into_plan_row());
+                    }
+                    if tx.send(Ok(PlanChunk { rows, mentions })).is_err() {
+                        return; // the writer half bailed on an error
+                    }
+                }
+            });
+        })
+    };
+
     let (mut notices, mut mentions_total) = (0u64, 0u64);
-    let mut after_id = 0i64;
     let mut chunks = 0usize;
-    loop {
-        let mut chunk = db.parsed_chunk(after_id, READ_CHUNK).await?;
-        normalise_de1(&mut chunk);
-        let Some((last, _)) = chunk.last() else { break };
-        after_id = last.id;
-        let mut mentions: Vec<Mention> = Vec::new();
-        let mut rows: Vec<store::PlanRow> = Vec::with_capacity(chunk.len());
-        for (notice, parsed) in &chunk {
-            let ident = Ident::read(notice, parsed);
-            mentions.extend(NoticeState::mentions(ident.sdk01, notice.id, parsed));
-            rows.push(ident.into_plan_row());
+    let mut plan_err: Option<turso::Error> = None;
+    while let Ok(sent) = rx.recv() {
+        let chunk = match sent {
+            Ok(chunk) => chunk,
+            Err(e) => {
+                plan_err = Some(e);
+                break;
+            }
+        };
+        notices += chunk.rows.len() as u64;
+        let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
+            Ok(resolved) => resolved,
+            Err(e) => {
+                plan_err = Some(e);
+                break;
+            }
+        };
+        mentions_total += resolved.len() as u64;
+        if let Err(e) = db.insert_plan(&chunk.rows).await {
+            plan_err = Some(e);
+            break;
         }
-        notices += rows.len() as u64;
-        mentions_total += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
-        db.insert_plan(&rows).await?;
         // Heartbeat so a many-minute plan build is visibly alive (issue 59).
         on_progress(Progress::Planning { notices, total });
         // Keep the WAL bounded through the plan build too (issue 42/59): the
@@ -871,6 +941,16 @@ async fn build_plan(
                 }
             }
         }
+    }
+    // Dropping the receiver unblocks a producer parked in `send` on the error
+    // path; joining surfaces a producer panic instead of letting it read as a
+    // short (silently truncated) plan.
+    drop(rx);
+    if let Err(panic) = producer.join() {
+        std::panic::resume_unwind(panic);
+    }
+    if let Some(e) = plan_err {
+        return Err(e);
     }
     db.finish_mention_resolver(resolver).await?;
     eprintln!(
@@ -1211,11 +1291,13 @@ async fn apply_plan_batch(
 // folds each bucket sorted in RAM. The buckets partition the plan by contiguous
 // group_key ranges (whole groups, never split), taken in fold order — so the global
 // fold order, and thus every surrogate id, is identical to [`Phase2::ParsedFold`].
-// Peak RAM is one bucket.
+// Peak RAM is two buckets: the one the writer is applying plus the one the prepare
+// thread is folding (issue 175's pipeline; the rendezvous handoff stops it there).
 
 /// Orchestrate the bucketed Phase-2 fold: compute the fold-order bucket boundaries,
-/// stream the parsed layer once into buckets, then fold each bucket in order. See
-/// the module note above.
+/// stream the parsed layer once into buckets, then fold each bucket in order —
+/// preparation pipelined one bucket ahead of the single-writer apply. See the
+/// module note above.
 async fn bucketed_fold(
     db: &Db,
     notice_batch: usize,
@@ -1251,14 +1333,48 @@ async fn bucketed_fold(
     )
     .await?;
 
-    // Fold pass: each bucket in order, its K shard files concatenated then sorted in
-    // RAM by the fold key, then applied. Serial — `apply_tenders` assigns surrogate
-    // ids in global fold order through the single writer (byte-identity, ADR-0001).
+    // Fold pass: each bucket in order. The APPLY stays serial — `apply_tenders`
+    // assigns surrogate ids in global fold order through the single writer
+    // (byte-identity, ADR-0001) — but a bucket's PREPARATION (shard-file read +
+    // sort + the pure-CPU fold, none of which touches the DB) overlaps it from a
+    // prepare thread (issue 175): on the 12h prod fold the writer and the fold
+    // CPU each idled while the other ran. The rendezvous channel (capacity 0)
+    // hands bucket N+1 over exactly as the writer finishes N, so at most two
+    // buckets are in RAM — the prepare thread cannot run ahead of the writer.
+    let n_buckets = boundaries.len();
+    let (tx, rx) = std::sync::mpsc::sync_channel::<Prepared>(0);
+    let producer = {
+        let dir = dir.clone();
+        std::thread::spawn(move || {
+            for b in 0..n_buckets {
+                let mut rows = read_bucket_shards(&dir, b, k);
+                rows.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
+                if tx.send(fold_rows(&rows)).is_err() {
+                    return; // the apply side bailed on an error — stop preparing
+                }
+            }
+        })
+    };
+
     let mut tenders_done = 0u64;
-    for b in 0..boundaries.len() {
-        let mut rows = read_bucket_shards(&dir, b, k);
-        rows.sort_by(|a, b| a.sort_key().cmp(&b.sort_key()));
-        let (applied, groups) = fold_bucket(db, &rows, now, rebuild).await?;
+    let mut fold_err: Option<turso::Error> = None;
+    for b in 0..n_buckets {
+        // A recv error means the producer died mid-run; its panic is surfaced by
+        // the join below rather than being swallowed into a short row count.
+        let Ok(prepared) = rx.recv() else { break };
+        let groups = prepared.projections.len() as u64;
+        let applied = match db.apply_tenders(&prepared.projections, now, rebuild).await {
+            Ok(applied) => applied,
+            Err(e) => {
+                fold_err = Some(e);
+                break;
+            }
+        };
+        // Mark every folded notice projected (issue 58), exactly as apply_plan_batch does.
+        if let Err(e) = db.mark_projected(&prepared.applied_ids).await {
+            fold_err = Some(e);
+            break;
+        }
         report.applied.add(applied);
         tenders_done += groups;
         on_progress(Progress::Applying {
@@ -1271,6 +1387,16 @@ async fn bucketed_fold(
         {
             eprintln!("[project] checkpoint after bucket {b}: {e}");
         }
+    }
+    // Dropping the receiver unblocks a producer parked in `send` on the error
+    // path; joining surfaces a producer panic (corrupt bucket file) instead of
+    // letting it read as a silently short fold.
+    drop(rx);
+    if let Err(panic) = producer.join() {
+        std::panic::resume_unwind(panic);
+    }
+    if let Some(e) = fold_err {
+        return Err(e);
     }
     // The buckets are transient scratch — never leave them behind (issue 59 spirit).
     let _ = std::fs::remove_dir_all(&dir);
@@ -1562,17 +1688,23 @@ fn read_bucket(path: &Path) -> Vec<BucketRow> {
     rows
 }
 
-/// Fold one bucket — already sorted by the fold key — into Tenders and apply them.
-/// Walks adjacent equal-group_key runs (each a whole Tender, since a group never
+/// One bucket folded and ready for the single-writer apply: the pipeline's unit
+/// of handoff from the prepare thread to the writer (issue 175). Plain data, so
+/// it crosses the thread boundary; the projections are in fold order.
+struct Prepared {
+    projections: Vec<TenderProjection>,
+    applied_ids: Vec<i64>,
+}
+
+/// Fold one bucket — already sorted by the fold key — into Tenders. Walks
+/// adjacent equal-group_key runs (each a whole Tender, since a group never
 /// spans a bucket and the bucket is sorted by `(group_key, …)`), rebuilds each
-/// group's [`NoticeState`] chain, and folds it EXACTLY as [`apply_plan_batch`] does.
-/// Returns the batch's [`store::Applied`] tally and the number of Tenders folded.
-async fn fold_bucket(
-    db: &Db,
-    rows: &[BucketRow],
-    now: i64,
-    rebuild: bool,
-) -> turso::Result<(store::Applied, u64)> {
+/// group's [`NoticeState`] chain, and folds it EXACTLY as [`apply_plan_batch`]
+/// does. Pure CPU — no DB access — so the pipeline runs it on the prepare
+/// thread while the writer applies the previous bucket; the caller feeds the
+/// result to `apply_tenders` + `mark_projected` in bucket order, which is what
+/// keeps every surrogate id byte-identical to the serial fold.
+fn fold_rows(rows: &[BucketRow]) -> Prepared {
     let mut projections: Vec<TenderProjection> = Vec::new();
     let mut applied_ids: Vec<i64> = Vec::new();
     let mut i = 0;
@@ -1596,11 +1728,7 @@ async fn fold_bucket(
         applied_ids.extend(group.iter().map(|r| r.notice_id));
         i = j;
     }
-    let groups = projections.len() as u64;
-    let applied = db.apply_tenders(&projections, now, rebuild).await?;
-    // Mark every folded notice projected (issue 58), exactly as apply_plan_batch does.
-    db.mark_projected(&applied_ids).await?;
-    Ok((applied, groups))
+    Prepared { projections, applied_ids }
 }
 
 /// One resolved notice spilled to an on-disk fold bucket (issue 62). Carries the

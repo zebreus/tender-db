@@ -1,7 +1,36 @@
 # The projection's serial stages idle a big box (phase-1 plan build, fold+apply)
 
-Status: open — filed by orchestrator, 2026-08-09, from live measurement on the new 32-core prod box.
-Blocked by: nothing. Grabbable after the issue-174 refold verification closes.
+Status: in progress — filed AND both pipeline stages implemented by orchestrator, 2026-08-09
+evening (Lennart asked for the redesign while the issue-174 fold ran). Remaining: deploy with
+the morning batch, then measure the next era refold against the numbers below.
+Blocked by: nothing.
+
+## Implemented (evening of 2026-08-09)
+
+Both stages use the same shape: a prepare thread does everything that never
+touches the writer, a rendezvous channel (`sync_channel(0)`) hands work to the
+writer side in order, RAM stays bounded at two units in flight, producer
+panics resume_unwind on the consumer so they can't read as a short run.
+
+- **Stage A (`build_plan`)**: the parsed-layer sweep + JSON decode +
+  `Ident::read`/mention extraction moved to the prepare thread (own
+  current-thread runtime + own reader connection, the pre-pass workers'
+  pattern). The id-order invariant stays on the writer side: one producer, an
+  order-preserving channel, `resolve_mentions` + `insert_plan` sequential as
+  before. Reading a chunk ahead of the writes is safe — sweep reads
+  notices/parsed, writer writes organizations/mentions/plan (disjoint tables).
+- **Stage B (`bucketed_fold`)**: shard-file read + sort + the pure-CPU fold
+  (`fold_rows`, extracted from the old `fold_bucket`) runs one bucket ahead of
+  `apply_tenders`/`mark_projected`. Apply order is untouched, so surrogate-id
+  byte-identity holds structurally — and every existing gate now runs THROUGH
+  the pipeline (project_equivalence, fold_source incl. 1-vs-3-vs-8-shard
+  identity, golden, incremental, resume: 46 tests green).
+
+Expected effect: phase 1 ≈ max(decode CPU, writer) instead of their sum;
+fold+apply ≈ max(fold CPU, writer I/O) instead of their sum. Measure on the
+next refold; if the writer is then the wall on both stages, the remaining
+lever is the TENDER_CACHE_KIB bump (already staged) + issue-68's targeted
+cache split.
 
 ## The measurement (2026-08-09, first fold on the new machine)
 
