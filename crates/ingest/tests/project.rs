@@ -54,6 +54,15 @@ async fn ingest_from(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     ingest_bytes(db, fetch_id, source, relative, &bytes).await;
 }
 
+/// Ingest a fixture whose DISPATCH name differs from its path under
+/// `tests/fixtures/` — text-era bundle members and OPOCE monthly members carry
+/// package-shaped names the fixture tree does not mirror.
+async fn ingest_as(db: &Db, fetch_id: i64, source: &str, relative: &str, member_path: &str) {
+    let path = format!("tests/fixtures/{relative}");
+    let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    ingest_bytes(db, fetch_id, source, member_path, &bytes).await;
+}
+
 async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, bytes: &[u8]) {
     let profile::Disposition::Records(records) = profile::dispatch(relative, bytes) else {
         panic!("{relative}: dispatch skipped a fixture");
@@ -62,8 +71,13 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, byte
         panic!("{relative}: expected one notice record");
     };
     // Route by profile exactly as `process` does — eForms, TED_EXPORT
-    // (r208/r209) and internal-OJS fixtures all ingest through here.
-    let parse = process::parse_payload(&n.profile, bytes);
+    // (r208/r209) and internal-OJS fixtures all ingest through here, and a
+    // span record (text era) goes through the text parser with its member
+    // name, which carries the declared encoding.
+    let parse = match n.span {
+        Some((start, end)) => ingest::text::parse_payload(&n.member_path, &bytes[start..end]),
+        None => process::parse_payload(&n.profile, bytes),
+    };
     assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
     let (published_at, dispatched_at) = match &parse {
         Parse::Parsed(parsed) => {
@@ -1438,6 +1452,67 @@ async fn sdk01_projects_title_buyer_and_winner() {
     );
 
     let _ = std::fs::remove_file(&path);
+}
+
+// --------------------------- issue 176: per-era headline-field projection matrix
+
+/// Issue 176 (the issue-174 follow-up): parse coverage is gated exhaustively per
+/// era (the ADR-0002/0004 harnesses), but projection coverage was gated NOWHERE —
+/// a parsed field becomes canonical only if the mapping tables know its era's
+/// element name, and the r208 era lost `submission_deadline` for 2.7M notices
+/// that way. One real CN-family notice per era; every headline field whose
+/// carrier element the fixture DEMONSTRABLY holds (named per row, verified
+/// against the raw bytes) must reach the canonical layer.
+///
+/// Values are deliberately NOT a column yet: r208's estimated values are a live
+/// loss of this same class, with a genuinely ambiguous mapping (`VALUE_COST` is
+/// three facts depending on container and form) — issue 177 carries the
+/// analysis, and its fix adds the column here.
+#[tokio::test]
+async fn every_era_projects_its_headline_fields() {
+    // (era, source, fixture path, dispatch member path, title, deadline, cpv)
+    let matrix: &[(&str, &str, &str, &str, bool, bool, bool)] = &[
+        // cbc:Name / TenderSubmissionDeadlinePeriod/EndDate / ItemClassificationCode
+        ("eforms-eu", "ted", "eforms/cn-16-00494343-2026.xml", "eforms/cn-16-00494343-2026.xml", true, true, true),
+        // the same UBL carriers under the eforms-de-1.1 customization (empirical inventory)
+        ("eforms-de-1x", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml", true, true, true),
+        // SDK01-ProcurementProject-Name + the lot's TenderSubmissionDeadlinePeriod;
+        // the dialect's committed CN carries no CPV
+        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml", true, true, false),
+        // TITLE / DATE_RECEIPT_TENDERS / CPV_CODE
+        ("r209", "ted", "r209/f02-000245-2019.xml", "r209/f02-000245-2019.xml", true, true, true),
+        // TITLE_CONTRACT / RECEIPT_LIMIT_DATE (issue 174's loss) / CPV_CODE
+        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", true, true, true),
+        // OPOCE 2008 full CONTRACT notice: TITLE_CONTRACT / RECEIPT_LIMIT_DATE / CPV_CODE
+        ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true),
+        // TI / DT (deadline with clock) / PC
+        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true),
+    ];
+    for &(era, source, fixture, member, title, deadline, cpv) in matrix {
+        let (db, fetch_id, path) = scratch(&format!("matrix-{era}")).await;
+        ingest_as(&db, fetch_id, source, fixture, member).await;
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.notices, 1, "{era}: one notice folds");
+        let checks: &[(&str, bool, &str)] = &[
+            ("title", title, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title'"),
+            (
+                "deadline",
+                deadline,
+                "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'",
+            ),
+            ("cpv", cpv, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'cpv'"),
+        ];
+        for &(name, carried, sql) in checks {
+            if carried {
+                assert!(
+                    scalar(&db, sql).await > 0,
+                    "{era}: the fixture carries a {name} and the canonical layer lost it — \
+                     the parse->projection seam struck again (issue 174's class)"
+                );
+            }
+        }
+        let _ = std::fs::remove_file(&path);
+    }
 }
 
 // ---------------------------------- issue 34: sdk-0.1 ContractFolderID as a key
