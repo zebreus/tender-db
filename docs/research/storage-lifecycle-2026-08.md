@@ -286,8 +286,15 @@ be decided *before* the watermark, not at it.
 ## Open questions
 
 **Needs research**
-- Does a service restart reclaim the 141.5 GB COW fossil? (One quiet-window
-  restart + `stat`; also re-check monthly that no new staging accumulates.)
+- Does a service restart reclaim the 141.5 GB COW fossil? **ANSWERED
+  2026-08-09, same session: NO.** A quiet-window restart left the block
+  count byte-identical (1,174,244,712 blocks before and after). Either the
+  XFS blockgc worker needs more than inode eviction (candidates:
+  `xfs_spaceman -c 'prealloc -s'` against the file, a umount cycle), or the
+  fossil is not reclaimable staging at all. The §5 table's optimistic last
+  row does NOT currently apply; treat the 601 GB allocated size as the
+  planning number. Still worth a monthly `stat` to confirm no NEW staging
+  accumulates.
 - Actual `changes` bytes/row incl. index — needs `dbstat` or an off-box
   copy; the 65–95 B band brackets the C17 arithmetic but was not measured.
 - The 62 KB/notice all-in eForms cost is inferred from one corpus-level

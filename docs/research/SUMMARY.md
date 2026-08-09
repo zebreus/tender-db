@@ -509,6 +509,24 @@ stays an honest minute of the 2026-07-19 session:
 - §1's index is missing **data-quality.md** (the per-era field-presence
   measurement tool and findings; it postdates the index).
 
+The gap register's executable studies ran the same session; each doc marks
+what its bounded first pass established and what needs the snapshot rig:
+
+- **capacity-model-v0.md** — gap 1's research half: known numbers assembled,
+  measurement campaign designed; execution gated on the rig authorization.
+- **dr-premise-2026-08.md** — gap 4 closed + gap 8b: honest RTO 1–1.5d/4–6d,
+  <1 MB of unrebuildable user state with zero copies, D4/D5 probes never
+  implemented, re-decision menu for Lennart.
+- **storage-lifecycle-2026-08.md** — gap 3 closed: 78.1 % /data, growth
+  50–75 GB/yr, ~87 M-row rebuild change-generations, C17 retention trigger,
+  earliest 90 % breach late 2027; the 141.5 GB COW fossil is real but a
+  restart does NOT reclaim it (experiment run same session, negative).
+- **data-profile-2026-08.md** — gaps 2+6 first halves: merge-key failure
+  classes measured (≥50.7 k fake-country rows, placeholder-id mega-merges),
+  value shape catalogue (−1.00 sentinel, zero-as-no-value, placeholder
+  instants), 17-rule validation catalog seed; corpus totals need the rig.
+  Spun off issue 174 (r208 deadlines parsed but never projected).
+
 **service-bund-de.md** (2026-08-09) discharges the deferred C22 research:
 full source evaluation of service.bund.de as a third source. Verdict:
 do not ingest — near-total overlap with DÖE verified notice-by-notice
