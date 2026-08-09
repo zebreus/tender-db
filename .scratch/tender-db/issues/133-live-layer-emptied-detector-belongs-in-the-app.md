@@ -1,7 +1,18 @@
 # 133 — detecting an emptied canonical layer belongs in the app, not in the snapshot gate
 
-Status: open — proposed by sdk-vendor, filed by proj-fix (the app/supervisor/health surface is mine).
-Not urgent; #28 proceeds with its own corrected claim meanwhile.
+Status: resolved (2026-08-09, orchestrator). All three placements now exist:
+`/health/deep` + `layer_presence` witness shipped earlier (issues 109/161 line); this change adds the
+projection-side pair — `wipe_guard_pre` (an incremental fold onto a WentEmpty layer refuses, naming
+rebuild as the repair path; rebuild passes) and `wipe_guard_post` (a run that began populated and ends
+empty refuses to report success, so the wipe surfaces as a FAILED project job — the issue-32 signal).
+On refuse-vs-alarm: the chunked commits are already durable, so true prevention was never on the table
+for the completed case; what the guards prevent is *recording success* and *compounding at the next
+run*. Test: an_incremental_fold_refuses_a_wiped_layer_a_rebuild_repairs_it (the 07-30 shape end-to-end).
+NOTE post-39c0e08: the snapshot gate (#28) is GONE with the snapshot feature, so these app-side
+detectors are no longer complementary to it — they are the only line. The issue-32 jobwatch-coverage
+requirement below therefore stands with more weight, still demonstrated only as far as job outcomes
+being recorded and dashboards reading them.
+Originally: proposed by sdk-vendor, filed by proj-fix.
 Kind: monitoring / data integrity
 Relates to: 28 (the standing gate), 27 (the projection-time head assertion), 32 (job-failure detector),
 119, 130 (a check downstream of a guard), the 2026-07-30 wipe incident

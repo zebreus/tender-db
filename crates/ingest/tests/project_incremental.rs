@@ -591,3 +591,67 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 133: the 2026-07-30 shape. A killed rebuild's `reset_tender_layer` is
+/// DDL — durable the instant it runs — so the layer sits empty with every
+/// later signal green. The next incremental fold must REFUSE to compound that
+/// (folding a daily delta onto a wiped corpus and calling it success), while a
+/// rebuild — the repair path — must pass. The witness is `layer_presence`,
+/// which survives the wipe in its own table; a box that never observed has no
+/// witness and the guard stays silent (fresh installs fold from empty
+/// legitimately).
+#[tokio::test]
+async fn an_incremental_fold_refuses_a_wiped_layer_a_rebuild_repairs_it() {
+    let (db, fetch, path) = scratch("wipe-guard").await;
+
+    // A fresh box folds from empty without complaint: no witness, no guard.
+    establish(&db, fetch).await;
+    assert!(count(&db, "SELECT COUNT(*) FROM tenders").await >= 3, "established");
+
+    // The supervisor's observer records the populated state...
+    db.observe_layer_presence(1_000_000).await.expect("observe populated");
+
+    // ...then the killed rebuild's committed wipe — FKs off around the DROP,
+    // exactly as the real rebuild runs it (issue 19).
+    db.set_foreign_keys(false).await.expect("fk off");
+    db.reset_tender_layer().await.expect("the 07-30 wipe");
+    db.set_foreign_keys(true).await.expect("fk on");
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders").await, 0, "layer wiped");
+
+    let refused = project::project_incremental(&db).await;
+    let msg = match refused {
+        Err(e) => e.to_string(),
+        Ok(report) => panic!("an incremental fold onto a wiped layer must refuse, got {report:?}"),
+    };
+    assert!(
+        msg.contains("rebuild") && msg.contains("133"),
+        "the refusal names the repair path and its issue: {msg}"
+    );
+
+    // The same guard passes the repair path, and the repair makes the layer
+    // whole again — after which incremental folds are welcome back.
+    project::project(&db, true).await.expect("a rebuild is the repair path");
+    assert!(count(&db, "SELECT COUNT(*) FROM tenders").await >= 3, "repaired");
+    project::project_incremental(&db).await.expect("incremental folds resume after repair");
+
+    // The end assertion (wired at the tail of both entry points): a run that
+    // began populated and ends empty must refuse to report success. Driven
+    // directly — no real fold empties a layer on purpose — against the state a
+    // mid-run wipe would leave.
+    db.set_foreign_keys(false).await.expect("fk off");
+    db.reset_tender_layer().await.expect("wipe again");
+    db.set_foreign_keys(true).await.expect("fk on");
+    let post = project::wipe_guard_post(&db, true).await;
+    let msg = match post {
+        Err(e) => e.to_string(),
+        Ok(()) => panic!("a run that emptied a populated layer must not report success"),
+    };
+    assert!(msg.contains("failed job") && msg.contains("133"), "names the signal and issue: {msg}");
+    // Relative, not absolute: a run that began empty and ends empty is a
+    // legitimate first fold, not a wipe.
+    project::wipe_guard_post(&db, false).await.expect("began-empty is not a wipe");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

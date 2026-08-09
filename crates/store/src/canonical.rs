@@ -3810,6 +3810,26 @@ impl Db {
         Ok(())
     }
 
+    /// The two facts the projection's wipe guards need (issue 133): does
+    /// `tenders` hold rows NOW, and has it ever held rows. The witness lives in
+    /// `layer_presence`, its own table, so it survives `reset_tender_layer`'s
+    /// DROP — which is the point: empty-but-ever-populated is the wipe
+    /// signature. Absent witness row means never observed, and reads as
+    /// never-populated: the guards stay silent on a box nobody watches rather
+    /// than inventing an observation (same doctrine as
+    /// [`Db::touch_layer_presence`]).
+    pub async fn tender_layer_state(&self) -> turso::Result<(bool, bool)> {
+        let conn = self.conn().await;
+        let mut rows = conn.query("SELECT EXISTS(SELECT 1 FROM tenders)", ()).await?;
+        let populated = rows.next().await?.is_some_and(|row| int(&row, 0) != 0);
+        drop(rows);
+        let mut rows = conn
+            .query("SELECT ever_populated FROM layer_presence WHERE name = 'tenders'", ())
+            .await?;
+        let ever = rows.next().await?.is_some_and(|row| int(&row, 0) != 0);
+        Ok((populated, ever))
+    }
+
     /// The stored presence verdicts, WITHOUT observing (issue 133 / task #38).
     ///
     /// [`Db::observe_layer_presence`] takes the writer connection, because on a

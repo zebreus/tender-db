@@ -415,6 +415,7 @@ const REGISTRATION_SUBTYPE: &str = "X01";
 /// layer's content is dropped first and re-derived from scratch — the change
 /// log is kept and appended to, never renumbered.
 pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
+    let pre_populated = wipe_guard_pre(db, rebuild).await?;
     // The projection writes a self-consistent graph by construction, so it runs
     // with FK enforcement off (issue 19) — the per-row FK check on millions of
     // satellite inserts is the projection's super-linear cost at scale — and
@@ -424,7 +425,52 @@ pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
+    wipe_guard_post(db, pre_populated).await?;
     Ok(report)
+}
+
+/// Issue 133, the projection-side placements (the continuous one lives in
+/// `/health/deep`). The 2026-07-30 incident: a killed rebuild's
+/// `reset_tender_layer` is DDL, durable the instant it runs, so the layer sat
+/// empty for hours while every later signal stayed green.
+///
+/// Start precondition — RELATIVE to the `layer_presence` witness, which
+/// survives the wipe in its own table: an incremental fold onto a layer that
+/// was populated once and is empty now would fold one day's delta onto a wiped
+/// corpus and record success. Refuse, naming the repair path. A rebuild IS the
+/// repair path, so it passes unconditionally.
+pub async fn wipe_guard_pre(db: &Db, rebuild: bool) -> turso::Result<bool> {
+    let (populated, ever_populated) = db.tender_layer_state().await?;
+    if !rebuild && !populated && ever_populated {
+        return Err(turso::Error::Corrupt(
+            "the canonical layer was populated once and is empty now — an incremental fold \
+             would compound the wipe and record it as success; run a rebuild (issue 133)"
+                .into(),
+        ));
+    }
+    Ok(populated)
+}
+
+/// End assertion — RELATIVE to what this run itself observed at entry, never
+/// absolute (a first fold legitimately starts and can end empty): a run that
+/// began with a populated layer and ends with an empty one emptied it,
+/// whatever its own report claims. The chunked commits are already durable, so
+/// this cannot un-wipe; what it refuses is *reporting success*, which turns
+/// the wipe into a failed `project` job — the signal issue 32's jobwatch
+/// surfaces — instead of a green run nobody questions.
+pub async fn wipe_guard_post(db: &Db, pre_populated: bool) -> turso::Result<()> {
+    if !pre_populated {
+        return Ok(());
+    }
+    let (populated, _) = db.tender_layer_state().await?;
+    if !populated {
+        return Err(turso::Error::Corrupt(
+            "this projection run emptied a populated canonical layer — refusing to report \
+             success so the wipe surfaces as a failed job (issue 133)"
+                .into(),
+        ));
+    }
+    Ok(())
 }
 
 async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
@@ -876,11 +922,13 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
 /// daily). It logs loudly, so if legacy ever starts arriving incrementally we
 /// notice and build the durable-adjacency path (issue 58 v2).
 pub async fn project_incremental(db: &Db) -> turso::Result<Report> {
+    let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
     let result = project_incremental_inner(db).await;
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
+    wipe_guard_post(db, pre_populated).await?;
     Ok(report)
 }
 
