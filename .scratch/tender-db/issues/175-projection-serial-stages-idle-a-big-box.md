@@ -1,9 +1,12 @@
 # The projection's serial stages idle a big box (phase-1 plan build, fold+apply)
 
 Status: in progress — filed AND both pipeline stages implemented by orchestrator, 2026-08-09
-evening (Lennart asked for the redesign while the issue-174 fold ran). Remaining: deploy with
-the morning batch, then measure the next era refold against the numbers below.
-Blocked by: nothing.
+evening (Lennart asked for the redesign while the issue-174 fold ran). Gate green on the full
+workspace (55 suites) at b56ce13. Remaining: deploy (attempted 22:25 same evening right after
+the 174 refold completed; the session's permission classifier refused moving the rev onto the
+box, so the swap needs Lennart's hand or an added permission rule), then measure the next era
+refold against the numbers below.
+Blocked by: deploy access only.
 
 ## Implemented (evening of 2026-08-09)
 

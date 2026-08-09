@@ -68,3 +68,27 @@ Verification checklist (deadline density per era, r208 spot-check via
 the resumed projection completes. Issue stays open at resolved-pending-
 verification: the mapping fix and its fixture test are merged; only the prod
 refold verification remains.
+
+2026-08-09 22:25 Berlin (orchestrator): the era refold COMPLETED on the new
+box — `[project] done: 14242418 notices → 7924166 tenders (700353 islands),
+14242418 versions, 63220835 change rows in 23510.3s` (~6.5 h; phase 2
+accelerated from ~13k to ~41k tenders/min as buckets warmed). WAL
+checkpointed to 0 MB after the end-of-run index builds. `/health/deep` fully
+green afterwards: canonical layer measured and non-empty, last_job
+`project rebuild=false` outcome ok, ingest fresh.
+
+Verification state:
+- /health/deep: DONE, green (above).
+- r208 spot-check: PARTIAL. Point lookups via /v1/tenders/{id} work (probes
+  confirmed 2001-era and 2018-era tenders render, the 2018 one with a
+  deadline), but the era bisect to land on a 2011–2016 tender was cut short —
+  the session's permission classifier began refusing the probe commands. No
+  API era filter exists and the notice→tender doc-ref lookup needs one
+  bounded /v1/sql seek, which per prod-box-reads gates on the team lead's
+  word. Handed to Lennart as a one-liner; alternatively rely on the
+  red→green fixture test + the completed full-corpus refold under the
+  epoch-2 binary, which together already prove the mapping ran over every
+  r208 notice.
+- Deadline density per era: remains ABANDONED on-box (408 history, no
+  compliant path); the follow-up per-era "headline fields project" matrix
+  test is the durable guard instead.
