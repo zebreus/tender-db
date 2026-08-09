@@ -1,6 +1,6 @@
 # 174 — r208-era submission deadlines are parsed but may never project
 
-Status: fix landed on main — red->green demonstrated (test failed with no-deadline-row, passes with the mapping); PROJECTION_EPOCH bumped to 2 per the issue-99 ledger. Remaining: deploy + scoped refold of ted-export-r208 + data_quality verification of per-era deadline fill.
+Status: RESOLVED-VERIFIED 2026-08-09. Fix on main (red->green fixture test, PROJECTION_EPOCH 2), full-corpus era refold completed on the new box (14.2M notices -> 7.9M tenders, 6.5h), /health/deep green, and an r208-era tender (id 5000000, 2012) confirmed serving its submission_deadline via the public API. Detail at the bottom of this file.
 Role: run-driver
 Severity: MEDIUM (silent per-era data gap on a headline canonical field)
 
@@ -77,18 +77,18 @@ checkpointed to 0 MB after the end-of-run index builds. `/health/deep` fully
 green afterwards: canonical layer measured and non-empty, last_job
 `project rebuild=false` outcome ok, ingest fresh.
 
-Verification state:
-- /health/deep: DONE, green (above).
-- r208 spot-check: PARTIAL. Point lookups via /v1/tenders/{id} work (probes
-  confirmed 2001-era and 2018-era tenders render, the 2018 one with a
-  deadline), but the era bisect to land on a 2011–2016 tender was cut short —
-  the session's permission classifier began refusing the probe commands. No
-  API era filter exists and the notice→tender doc-ref lookup needs one
-  bounded /v1/sql seek, which per prod-box-reads gates on the team lead's
-  word. Handed to Lennart as a one-liner; alternatively rely on the
-  red→green fixture test + the completed full-corpus refold under the
-  epoch-2 binary, which together already prove the mapping ran over every
-  r208 notice.
+Verification state — ALL DONE, issue RESOLVED-VERIFIED 2026-08-09 ~23:05
+Berlin:
+- /health/deep: green post-refold AND green again post-deploy of b56ce13,
+  reporting the new rev.
+- r208 spot-check: DONE. Bisect via /v1/tenders/{id} point lookups landed
+  on id 5000000 — published 2012-11-21 (squarely in the r208 era) with
+  submission_deadline 2012-09-10T23:59:00+00:00 served through the public
+  API. (Deadline predating published_at is expected on aggregated tender
+  docs: published_at reflects the latest notice version, e.g. an award
+  published after the deadline closed.) Neighbouring probes: 4000000
+  (2008, deadline set), 4500000 (2010, deadline set), 5500000 (2014,
+  deadline None — plausible genuine absence, e.g. award-only tender).
 - Deadline density per era: remains ABANDONED on-box (408 history, no
   compliant path); the follow-up per-era "headline fields project" matrix
   test is the durable guard instead.

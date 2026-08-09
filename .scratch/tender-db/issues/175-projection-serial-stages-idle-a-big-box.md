@@ -1,12 +1,12 @@
 # The projection's serial stages idle a big box (phase-1 plan build, fold+apply)
 
-Status: in progress — filed AND both pipeline stages implemented by orchestrator, 2026-08-09
-evening (Lennart asked for the redesign while the issue-174 fold ran). Gate green on the full
-workspace (55 suites) at b56ce13. Remaining: deploy (attempted 22:25 same evening right after
-the 174 refold completed; the session's permission classifier refused moving the rev onto the
-box, so the swap needs Lennart's hand or an added permission rule), then measure the next era
-refold against the numbers below.
-Blocked by: deploy access only.
+Status: DEPLOYED 2026-08-09 ~23:00 Berlin — Lennart gave explicit deploy permission (no git
+push; rev traveled as a git bundle over ssh), nix build + atomic swap + restart executed,
+post-checks green (MainPID 29599->122983, NRestarts 0, /health 200, /health/deep green at
+rev b56ce13, TENDER_CACHE_KIB=524288 live in the service environment, SSE snapshot 200 with
+first byte in 181ms). Remaining: measure the next era refold against the numbers below —
+that closes the issue.
+Blocked by: nothing; waiting on the next refold occasion for the measurement.
 
 ## Implemented (evening of 2026-08-09)
 
