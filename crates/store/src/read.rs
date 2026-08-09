@@ -67,8 +67,8 @@ impl Readers {
             Some(conn) => conn,
             None => {
                 let conn = self.database.connect()?;
-                for pragma in crate::PRAGMAS {
-                    let mut rows = conn.query(pragma, ()).await?;
+                for pragma in crate::PRAGMAS.iter().map(|p| p.to_string()).chain([crate::cache_pragma()]) {
+                    let mut rows = conn.query(&pragma, ()).await?;
                     while rows.next().await?.is_some() {}
                 }
                 conn

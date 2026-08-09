@@ -47,11 +47,33 @@ single writer — inherently serial, keep). A two-stage pipeline (fold bucket
 N+1 while applying N) overlaps the CPU with the writer without touching the
 single-writer invariant or fold order. Same byte-identity gate applies.
 
+## Memory (SHIPPED 2026-08-09): the page-cache valve
+
+Lennart pointed out the new box has 64 GB vs the old 8. The store's
+`cache_size = -131072` (128 MiB/connection) was the issue-61 swap-incident
+remedy for the 8 GB box, and its own comment (issue-68 caveat) names Phase-1's
+~11 indexed range scans per chunk as the pass that measurably benefited from a
+bigger cache — exactly the pass measured pinned here. OS page cache does NOT
+substitute: the pinned core is partly Turso re-pulling+re-decoding pages
+through a 128 MiB window while sweeping a 460 GB file.
+
+Shipped as `TENDER_CACHE_KIB` (positive KiB, clamp [1 MiB, 4 GiB], default
+unchanged 128 MiB — the same ops-valve pattern as TENDER_PREPASS_SHARDS):
+applied to the writer open and every pooled reader. Prod's unit carries a
+drop-in (`tender-db.service.d/cache.conf`) with 524288 (512 MiB): fold-active
+set ≈ writer + 31 pre-pass readers ≈ 16 GiB, ceiling ≈ 27 GiB — sized for 62 GB
+with OS cache headroom. Effective from the next deploy restart; the currently
+running fold still runs the old binary+default. Unit test: the valve parses,
+clamps, and degrades to default on garbage. The turso-honors-cache_size proof
+already existed (`store/tests/cache_size.rs`, issue 60).
+
 ## Explicitly NOT in scope
 
 - Parallelizing the WRITER — one writer is a Turso/store invariant.
 - `TENDER_PREPASS_SHARDS` tuning — it's an env valve already; measure per
   device when a sweep is on the critical path (the 8-floor comment says why).
+- Raising `TENDER_CACHE_KIB` further (1 GiB+) — measure the 512 MiB fold first;
+  the active-set arithmetic above shows where 62 GB starts to bind.
 - The API `READERS: usize = 8` const (app/main.rs) — separate, minor: worth an
   env override on a 32-core box, but it does not touch projection throughput.
 

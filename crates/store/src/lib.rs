@@ -38,32 +38,44 @@ use turso::{Connection, Value};
 /// SQLITE_BUSY, WAL for concurrent reads during writes, and NORMAL sync (safe
 /// under WAL, much faster than FULL).
 ///
-/// `cache_size = -131072` is 128 MiB of page cache per connection (negative =
-/// KiB), up from turso's ~2 MB default (issue 60). It is a per-connection *cap*
-/// that fills lazily, but it is charged PER CONNECTION, and the process opens
-/// many: the writer + the store read pool (8) + the API/SQL/webhook pools (~14) +
-/// the Phase-2 parallel pre-pass's K shard readers. At the old 512 MiB the
-/// aggregate CEILING was ~11.5 GiB on the 8 GB box, and during a full-corpus
-/// rebuild the ACTIVE fillers (writer + K pre-pass readers, each sweeping the
-/// corpus) grew toward 512 MiB apiece and tipped the box into swap-thrash
-/// (issue 61 incident: RSS 4.1 G + 4.2 G swapped). 128 MiB drops the aggregate
-/// CEILING to ~23 conns × 128 MiB ≈ 2.9 GiB and bounds the ACTIVE set well under
-/// ~2 GB (writer + K≈3 ≈ ~0.5 GB) while still dwarfing turso's default, so point
-/// queries and the sequential scans (which ride the kernel's per-fd readahead, not
-/// this cache) are unaffected on our hot paths — the resume and the incremental
-/// both SKIP Phase-1, the only pass the larger cache measurably helped. CAVEAT
-/// (not blocking, tracked in issue 68): a from-scratch rebuild's Phase-1 does ~11
-/// indexed range scans per chunk and benefited from the bigger cache; if a fresh
-/// rebuild's Phase-1 regresses, promote to the targeted split (projection writer +
-/// pre-pass readers → 256 MiB, API/SQL/webhook pools → 64 MiB) rather than raising
-/// this shared default back up.
-pub(crate) const PRAGMAS: [&str; 5] = [
+pub(crate) const PRAGMAS: [&str; 4] = [
     "PRAGMA foreign_keys = ON",
     "PRAGMA busy_timeout = 5000",
     "PRAGMA journal_mode = WAL",
     "PRAGMA synchronous = NORMAL",
-    "PRAGMA cache_size = -131072",
 ];
+
+/// Default per-connection page cache: 128 MiB (the pragma value is negative KiB),
+/// up from turso's ~2 MB default (issue 60). It is a per-connection *cap* that
+/// fills lazily, but it is charged PER CONNECTION, and the process opens many:
+/// the writer + the store read pool (8) + the API/SQL/webhook pools (~14) + the
+/// Phase-2 parallel pre-pass's K shard readers. At the old 512 MiB the aggregate
+/// CEILING was ~11.5 GiB on the 8 GB box, and during a full-corpus rebuild the
+/// ACTIVE fillers (writer + K pre-pass readers, each sweeping the corpus) grew
+/// toward 512 MiB apiece and tipped the box into swap-thrash (issue 61 incident:
+/// RSS 4.1 G + 4.2 G swapped). 128 MiB bounds that while still dwarfing turso's
+/// default: point queries and sequential scans (which ride the kernel's per-fd
+/// readahead, not this cache) are unaffected on our hot paths. The pass that DOES
+/// measurably want more is a projection Phase-1/pre-pass (~11 indexed range
+/// scans per chunk, issue 68) — which is why the value is an ops valve now.
+const CACHE_KIB_DEFAULT: u64 = 131_072;
+
+/// The page-cache pragma, sized by the `TENDER_CACHE_KIB` env valve (issue 175):
+/// the right cache is a property of the BOX, not the build — 128 MiB per
+/// connection protects an 8 GB machine, and starves a 64 GB one. Positive KiB,
+/// clamped to [1 MiB, 4 GiB]; unset/unparseable → the 128 MiB default. Sizing
+/// rule: ceiling ≈ (23 + pre-pass workers) × value; the ACTIVE set during a fold
+/// is writer + K pre-pass readers. On the 64 GB / 32-core prod, 524288 (512 MiB)
+/// gives the fold ~16 GiB of active cache with ample headroom.
+pub(crate) fn cache_pragma() -> String {
+    format!("PRAGMA cache_size = -{}", cache_kib(std::env::var("TENDER_CACHE_KIB").ok().as_deref()))
+}
+
+/// Parse + clamp the valve (pure, so it is testable without process-global env).
+fn cache_kib(env: Option<&str>) -> u64 {
+    env.and_then(|v| v.trim().parse::<u64>().ok())
+        .map_or(CACHE_KIB_DEFAULT, |k| k.clamp(1_024, 4_194_304))
+}
 
 /// Reader connections backing `Db`'s own read-only accessors — the dashboard,
 /// admin, auth, webhook and projection reads. Kept apart from the public API's
@@ -613,8 +625,8 @@ impl Db {
         let conn = database.connect()?;
         // Some pragmas report their new value as a row, so go through `query`
         // (execute rejects statements that return rows) and drain the result.
-        for pragma in PRAGMAS {
-            let mut rows = conn.query(pragma, ()).await?;
+        for pragma in PRAGMAS.iter().map(|p| p.to_string()).chain([cache_pragma()]) {
+            let mut rows = conn.query(&pragma, ()).await?;
             while rows.next().await?.is_some() {}
         }
         conn.execute_batch(SCHEMA).await?;
@@ -1929,6 +1941,24 @@ pub(crate) async fn max_cursor(conn: &Connection) -> turso::Result<i64> {
 
 #[cfg(test)]
 mod tests {
+    /// Issue 175: the page-cache valve parses positive KiB, clamps the absurd at
+    /// both ends (a 100 KiB cache thrashes, an unbounded one re-creates the
+    /// issue-61 swap incident as a typo), and falls back to the 128 MiB default
+    /// on anything unparseable — a bad valve value must degrade to the safe
+    /// default, never fail an open.
+    #[test]
+    fn the_cache_valve_parses_clamps_and_defaults() {
+        use super::{cache_kib, CACHE_KIB_DEFAULT};
+        assert_eq!(cache_kib(None), CACHE_KIB_DEFAULT);
+        assert_eq!(cache_kib(Some("garbage")), CACHE_KIB_DEFAULT);
+        assert_eq!(cache_kib(Some("-524288")), CACHE_KIB_DEFAULT, "negative is unparseable as u64");
+        assert_eq!(cache_kib(Some("")), CACHE_KIB_DEFAULT);
+        assert_eq!(cache_kib(Some("524288")), 524_288, "512 MiB — the 64 GB prod setting");
+        assert_eq!(cache_kib(Some(" 524288 ")), 524_288, "whitespace tolerated");
+        assert_eq!(cache_kib(Some("100")), 1_024, "clamped up to 1 MiB");
+        assert_eq!(cache_kib(Some("99999999999")), 4_194_304, "clamped down to 4 GiB");
+    }
+
     /// Issue 83: the spill-directory warning must resolve the mount governing a path
     /// by LONGEST matching mount point, and must distinguish the real hazard (a
     /// database on disk spilling to RAM) from the coherent case (a small scratch
