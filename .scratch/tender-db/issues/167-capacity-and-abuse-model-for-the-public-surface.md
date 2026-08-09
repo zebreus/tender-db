@@ -12,3 +12,12 @@ prod-shaped copy, yielding a written capacity budget the rate-limit numbers
 derive from. Context: queries cannot be interrupted once started (issue 120
 measured it); 8 readers are the whole budget; the monolith cannot grow a
 second reader process (ADR-0005 + turso single-process).
+
+2026-08-09 (orchestrator): the research half is done —
+docs/research/capacity-model-v0.md assembles every existing measurement
+(issue 120's cancellation reality, tonight's per-endpoint numbers, the SSE
+cost shape, the structural single-process ceiling) and specifies the
+measurement campaign (rig, 4 experiments, deliverable, ~2 days). What
+remains is EXECUTION, gated on Lennart: authorization for a prod-shaped
+copy per docs/agents/prod-box-reads.md, plus the scratch-hardware cost
+call. Queued as a bulk question.
