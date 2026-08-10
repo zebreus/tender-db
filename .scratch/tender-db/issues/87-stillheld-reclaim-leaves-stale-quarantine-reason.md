@@ -1,7 +1,16 @@
 # 87 — a failed reclaim leaves a stale quarantine reason, so the real failure cause is never recorded
 
-Status: fix landed on main (2026-08-09, orchestrator) — awaiting deploy; then re-examine the
-241 DE-1.x residuals (last acceptance item). What landed, per the design notes below:
+Status: RESOLVED-VERIFIED on prod (2026-08-10, orchestrator). Deployed in 6ed1b0f; the
+residual re-examination ran as job 599: `reprocess unknown-customization LIKE %eforms-de-1%`
+→ "18 package(s): 0 reclaimed, 238 still held, 0 already parsed, 0 skipped by dispatch
+policy; still held by current reason: unrepresentable-value 238". The last acceptance item
+is met exactly as designed: the residuals no longer claim 'no vendored SDK metadata' — they
+are truthfully labeled `unrepresentable-value` (the predicted malformed-money cohort; the
+class issue 144 already analyzes, ADR-0004 holds by design). Reason freshness is now a
+falsifiable check, and attempts/last_attempt_at stamp on every pass. (238 vs the earlier
+"241": the count was approximate across sources; the LIKE-scoped bucket held 238.)
+
+What landed, per the design notes below:
 - Both `StillHeld` exits of `reclaim_notice_tx` now write the row inside the existing tx: a
   `Parse::Quarantined` re-parse rewrites `reason`/`detail` to the CURRENT failure and preserves
   the first-ingest pair ONCE in new nullable `first_reason`/`first_detail`; a `Parse::Pending`

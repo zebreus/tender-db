@@ -1,5 +1,10 @@
 # 116 — tender detail reports more lots than it ships
 
+RESOLVED-VERIFIED on prod (2026-08-10, orchestrator, deployed in 6ed1b0f):
+GET /v1/tenders/7161565 now serves lots=2604 with 2,604 unique lot_details
+(was 1,000), 2.0MB in 153ms warm. The completeness cap and cursor behavior
+are gate-tested; prod confirms at the tender that exposed the bug.
+
 Status: fix landed on main (2026-08-09, orchestrator) — awaiting deploy + the prod verification
 below. Exactly the post-115 shrunken form this issue prescribed: `lots_of` now passes
 `TENDER_LOTS_CAP` (20,000 — 549f8f5's constant and doc reasoning) instead of `MAX_PAGE`; the
