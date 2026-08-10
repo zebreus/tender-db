@@ -101,6 +101,13 @@ const AMOUNTS: &[(&str, &str)] = &[
     // legacy
     ("TED-VAL_ESTIMATED_TOTAL", "estimated_value"),
     ("TED-VAL_TOTAL", "result_value"),
+    // r208's plain `VALUE_COST` is deliberately NOT here: it is three facts in
+    // one field id, routed by context in [`amount_target`] (issue 177). The
+    // framework block's estimate (F02 II.1.4, `F02_FRAMEWORK/TOTAL_ESTIMATED`)
+    // IS mapped: for a framework CN it is the notice's headline estimate, not a
+    // restated copy — many carry no QUANTITY_SCOPE value at all (the committed
+    // 2014 F02 is one).
+    ("TED-TOTAL_ESTIMATED.VALUE_COST", "estimated_value"),
 ];
 const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("BT-262", "main"),
@@ -1861,6 +1868,11 @@ impl NoticeState {
 
         let legacy = is_legacy_profile(&notice.profile);
         let sdk01 = is_sdk01_profile(&notice.profile);
+        // Award-family marker for `amount_target` (issue 177): only award forms
+        // carry result sections, and only award forms publish `TOTAL_FINAL_VALUE`
+        // — a result total — at object scope.
+        let has_results =
+            parsed.sections.iter().any(|s| RESULT_KINDS.contains(&s.kind.as_str()));
         let mut facts = BTreeSet::new();
         let mut raw_roles = Vec::new();
         // sdk-0.1 names its buyer by the `ContractingParty` section itself, with
@@ -1878,8 +1890,10 @@ impl NoticeState {
             let fact = match &value.value {
                 NoticeValue::Text { lang, value: v } => canonical_name(TEXTS, field_id)
                     .map(|field| Fact::Text { field, lang: lang.clone(), value: v.clone() }),
-                NoticeValue::Amount { cents, currency } => canonical_name(AMOUNTS, field_id)
-                    .map(|field| Fact::Amount { field, cents: *cents, currency: currency.clone() }),
+                NoticeValue::Amount { cents, currency } => {
+                    amount_target(field_id, &sections, &value.section_id, has_results)
+                        .map(|field| Fact::Amount { field, cents: *cents, currency: currency.clone() })
+                }
                 NoticeValue::Classification { scheme, code } => canonical_name(CLASSIFICATIONS, field_id)
                     .map(|field| Fact::Classification {
                         field,
@@ -2791,6 +2805,39 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
         .iter()
         .find(|(source, _)| *source == field_id || *source == stem(field_id))
         .map(|(_, name)| (*name).to_owned())
+}
+
+/// The canonical target of one parsed amount. Everything except r208's plain
+/// `VALUE_COST` maps by field id alone ([`AMOUNTS`]). `VALUE_COST` is three
+/// facts in one field id (issue 177), told apart only by context:
+///
+/// - inside an award block it is the awarded value, and the results binder owns
+///   it — mapping it here would re-file every award value as a tender estimate;
+/// - at object scope on an award-family notice it is the II.2 TOTAL FINAL value
+///   (`TOTAL_FINAL_VALUE`), the r208 spelling of r209's `VAL_TOTAL`;
+/// - at object scope on a contract notice it is the II.2.1 estimate
+///   (`COSTS_RANGE_AND_CURRENCY`), the r208 spelling of `VAL_ESTIMATED_TOTAL`.
+///
+/// The prefixed variants fall through to the table:
+/// `TED-TOTAL_ESTIMATED.VALUE_COST` (the framework block's estimate, a headline
+/// value in its own right) maps there; the award block's
+/// `TED-INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT.VALUE_COST` matches nothing and
+/// stays unprojected — a restated copy loses to the form value, the issue-174
+/// precedent. `RANGE_VALUE_COST` (low/high ranges) also stays unprojected: a
+/// range is not one estimate (decision recorded on issue 177).
+fn amount_target(
+    field_id: &str,
+    sections: &HashMap<&str, &store::Section>,
+    section_id: &str,
+    has_results: bool,
+) -> Option<String> {
+    if field_id != "TED-VALUE_COST" {
+        return canonical_name(AMOUNTS, field_id);
+    }
+    if enclosing(sections, section_id, RESULT_KINDS).is_some() {
+        return None;
+    }
+    Some(if has_results { "result_value" } else { "estimated_value" }.to_owned())
 }
 
 /// The role an id-ref names. The OPT-300/301 families are eForms' organization

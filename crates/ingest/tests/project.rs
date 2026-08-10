@@ -220,6 +220,76 @@ async fn an_r208_contract_notice_projects_its_submission_deadline() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 177: the r208 era publishes its II.2.1 estimated value as a plain
+/// `VALUE_COST` inside `COSTS_RANGE_AND_CURRENCY` (r209 renamed the element
+/// `VAL_ESTIMATED_TOTAL`), and the amount mapping only knew the r209 name — so
+/// every 2011–2016 contract notice projected without its estimate while the
+/// parsed layer held it all along. Same class as issue 174, one column over.
+#[tokio::test]
+async fn an_r208_contract_notice_projects_its_estimated_value() {
+    let (db, fetch_id, path) = scratch("r208-value").await;
+    ingest(&db, fetch_id, "r208/f02-000333-2014.xml").await;
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+
+    // VALUE_COST FMTVAL="900000.00" CURRENCY="GBP" — the F02's II.2.1 estimate.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT cents FROM tender_version_amounts
+              WHERE field = 'estimated_value' AND currency = 'GBP'"
+        )
+        .await,
+        90_000_000,
+        "the estimate must project as one estimated_value fact"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The other two readings of the SAME field id, on the committed defence award
+/// (which carries all three shapes at once — issue 177's ambiguity in one
+/// notice): the award block's plain `VALUE_COST` belongs to the results binder
+/// and must NOT become a tender estimate; the object-level `TOTAL_FINAL_VALUE`
+/// is a result total (`result_value`, r209's `VAL_TOTAL` equivalent); the
+/// prefixed initial-estimate variant stays unprojected (form-value-wins, the
+/// 174 precedent).
+#[tokio::test]
+async fn an_award_notice_files_its_values_as_results_not_estimates() {
+    let (db, fetch_id, path) = scratch("r208-award-value").await;
+    ingest(&db, fetch_id, "r209/f18-defence-001420-2019.xml").await;
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts WHERE field = 'estimated_value'")
+            .await,
+        0,
+        "an award's values must not be re-filed as tender estimates"
+    );
+    // TOTAL_FINAL_VALUE: VALUE_COST FMTVAL="1681100" RON, object scope.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT cents FROM tender_version_amounts
+              WHERE field = 'result_value' AND currency = 'RON'"
+        )
+        .await,
+        168_110_000,
+        "the object-level TOTAL FINAL value is a result_value fact"
+    );
+    // The award block's own value reaches the bound results through the binder.
+    assert_eq!(
+        scalar(&db, "SELECT awarded_cents FROM tender_version_lot_results").await,
+        168_110_000,
+        "the awarded value stays with the results binder"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// The corrigendum moved the submission deadline from 2026-01-21 to 2026-01-27
 /// and changed nothing else. The projection must carry that through — and carry
 /// everything the corrigendum was silent about forward unchanged.
@@ -1464,31 +1534,31 @@ async fn sdk01_projects_title_buyer_and_winner() {
 /// carrier element the fixture DEMONSTRABLY holds (named per row, verified
 /// against the raw bytes) must reach the canonical layer.
 ///
-/// Values are deliberately NOT a column yet: r208's estimated values are a live
-/// loss of this same class, with a genuinely ambiguous mapping (`VALUE_COST` is
-/// three facts depending on container and form) — issue 177 carries the
-/// analysis, and its fix adds the column here.
+/// The value column landed with issue 177's fix (r208's estimated values were a
+/// live loss of this same class — `VALUE_COST` is three facts depending on
+/// container and form; `amount_target` routes them).
 #[tokio::test]
 async fn every_era_projects_its_headline_fields() {
-    // (era, source, fixture path, dispatch member path, title, deadline, cpv)
-    let matrix: &[(&str, &str, &str, &str, bool, bool, bool)] = &[
+    // (era, source, fixture path, dispatch member path, title, deadline, cpv, value)
+    let matrix: &[(&str, &str, &str, &str, bool, bool, bool, bool)] = &[
         // cbc:Name / TenderSubmissionDeadlinePeriod/EndDate / ItemClassificationCode
-        ("eforms-eu", "ted", "eforms/cn-16-00494343-2026.xml", "eforms/cn-16-00494343-2026.xml", true, true, true),
+        ("eforms-eu", "ted", "eforms/cn-16-00494343-2026.xml", "eforms/cn-16-00494343-2026.xml", true, true, true, false),
         // the same UBL carriers under the eforms-de-1.1 customization (empirical inventory)
-        ("eforms-de-1x", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml", true, true, true),
+        ("eforms-de-1x", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml", true, true, true, false),
         // SDK01-ProcurementProject-Name + the lot's TenderSubmissionDeadlinePeriod;
         // the dialect's committed CN carries no CPV
-        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml", true, true, false),
+        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml", true, true, false, false),
         // TITLE / DATE_RECEIPT_TENDERS / CPV_CODE
-        ("r209", "ted", "r209/f02-000245-2019.xml", "r209/f02-000245-2019.xml", true, true, true),
-        // TITLE_CONTRACT / RECEIPT_LIMIT_DATE (issue 174's loss) / CPV_CODE
-        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", true, true, true),
+        ("r209", "ted", "r209/f02-000245-2019.xml", "r209/f02-000245-2019.xml", true, true, true, false),
+        // TITLE_CONTRACT / RECEIPT_LIMIT_DATE (issue 174's loss) / CPV_CODE /
+        // F02_FRAMEWORK TOTAL_ESTIMATED VALUE_COST (issue 177's loss)
+        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", true, true, true, true),
         // OPOCE 2008 full CONTRACT notice: TITLE_CONTRACT / RECEIPT_LIMIT_DATE / CPV_CODE
-        ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true),
+        ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true, false),
         // TI / DT (deadline with clock) / PC
-        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true),
+        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true, false),
     ];
-    for &(era, source, fixture, member, title, deadline, cpv) in matrix {
+    for &(era, source, fixture, member, title, deadline, cpv, value) in matrix {
         let (db, fetch_id, path) = scratch(&format!("matrix-{era}")).await;
         ingest_as(&db, fetch_id, source, fixture, member).await;
         let report = project::project(&db, false).await.expect("project");
@@ -1501,6 +1571,11 @@ async fn every_era_projects_its_headline_fields() {
                 "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'",
             ),
             ("cpv", cpv, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'cpv'"),
+            (
+                "value",
+                value,
+                "SELECT COUNT(*) FROM tender_version_amounts WHERE field = 'estimated_value'",
+            ),
         ];
         for &(name, carried, sql) in checks {
             if carried {

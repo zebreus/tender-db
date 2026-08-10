@@ -654,7 +654,8 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// |---|---|
 /// | 1 | issue 98 — DE-1.x organization references (`is_ref` + 25 role aliases) |
 /// | 2 | issue 174 — r208 `RECEIPT_LIMIT_DATE` maps to `submission_deadline`, so the 2011–2016 era re-folds with deadlines |
-pub const PROJECTION_EPOCH: i64 = 2;
+/// | 3 | issue 177 — r208 `VALUE_COST` routes by context (CN estimate / award value / CAN final total), so the era re-folds with `estimated_value`/`result_value` |
+pub const PROJECTION_EPOCH: i64 = 3;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 

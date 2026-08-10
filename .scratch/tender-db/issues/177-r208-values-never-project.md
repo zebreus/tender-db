@@ -1,7 +1,27 @@
 # 177 — r208-era tender values never project (and `VALUE_COST` is three different facts)
 
-Status: filed 2026-08-09 (orchestrator) — DESIGN NOTES COMPLETE, ready for
-implementation as its own unit. Found while building issue 176's matrix.
+Status: fix implemented 2026-08-10 (orchestrator) — red→green tests + epoch 3;
+awaiting deploy + r208 refold (which doubles as issue 175's first pipelined-fold
+measurement). Implementation notes on top of the design below:
+- `amount_target` in project.rs routes plain `TED-VALUE_COST` structurally: inside
+  RESULT_KINDS → the binder owns it (no fact); object scope on a notice CARRYING
+  result sections (award-family marker) → `result_value`; else `estimated_value`.
+  Form codes were not needed — result-section presence is the era-honest signal.
+- SEMANTIC FINDING the design notes missed: many r208 F02s publish their ONLY
+  estimate in the framework block (`F02_FRAMEWORK/TOTAL_ESTIMATED/…VALUE_COST`,
+  II.1.4) — the committed 2014 fixture is one; "restated copies lose" would have
+  left them valueless. `TED-TOTAL_ESTIMATED.VALUE_COST` therefore maps to
+  `estimated_value` in AMOUNTS (a framework CN's headline estimate), while the
+  award-block `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` prefix stays unprojected.
+- `RANGE_VALUE_COST` decision recorded: stays unprojected (a range is not one
+  estimate).
+- Tests: an_r208_contract_notice_projects_its_estimated_value (red-checked: None
+  before the fix), an_award_notice_files_its_values_as_results_not_estimates (the
+  F18 carries all three shapes at once: no estimate fact, TOTAL_FINAL_VALUE →
+  result_value 168_110_000 RON, binder keeps awarded_cents), and the 176 matrix
+  gained its value column.
+
+Filed 2026-08-09 (orchestrator) — found while building issue 176's matrix.
 Kind: correctness (silent per-era data gap on a headline canonical field)
 Severity: MEDIUM — same class and era as issue 174, headline field `estimated_value`
 Blocked by: —
