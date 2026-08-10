@@ -327,15 +327,19 @@ impl Sweeper {
     /// One pass over every due endpoint.
     pub async fn sweep(&self) -> Result<(), String> {
         let due = self.db.due_webhooks(store::now_unix()).await.map_err(|e| e.to_string())?;
+        let generation = {
+            let reader = self.readers.get().await.map_err(|e| e.to_string())?;
+            read::feed_generation(&reader).await.map_err(|e| e.to_string())?
+        };
         for endpoint in due {
-            self.deliver(endpoint).await;
+            self.deliver(endpoint, generation).await;
         }
         Ok(())
     }
 
     /// Push an endpoint's backlog in batches until it is drained, a batch fails,
     /// or the per-sweep cap is hit.
-    async fn deliver(&self, mut endpoint: Endpoint) {
+    async fn deliver(&self, mut endpoint: Endpoint, generation: i64) {
         for _ in 0..MAX_BATCHES_PER_SWEEP {
             let from = endpoint.last_delivered_cursor;
             let changes = match self.read_batch(from).await {
@@ -349,7 +353,7 @@ impl Sweeper {
                 return; // caught up
             }
             let to = changes.last().map(|c| c.cursor).unwrap_or(from);
-            let outcome = self.post(&endpoint, from, to, &changes).await;
+            let outcome = self.post(&endpoint, from, to, generation, &changes).await;
             self.record(&endpoint, from, to, changes.len() as i64, &outcome).await;
             match outcome {
                 Outcome::Ok => {
@@ -370,11 +374,23 @@ impl Sweeper {
     }
 
     /// Build, sign and POST one batch; classify the result.
-    async fn post(&self, endpoint: &Endpoint, from: i64, to: i64, changes: &[store::Change]) -> Outcome {
+    async fn post(
+        &self,
+        endpoint: &Endpoint,
+        from: i64,
+        to: i64,
+        generation: i64,
+        changes: &[store::Change],
+    ) -> Outcome {
         let events: Vec<serde_json::Value> = changes.iter().map(crate::v1::sse::change_event).collect();
         let body = serde_json::json!({
             "cursor_from": from.to_string(),
             "cursor": to.to_string(),
+            // The feed generation (issue 46): when this moves between batches,
+            // the consumer's mirrored state is from a world that was rebuilt —
+            // drop it and re-fetch the collections. Same contract as the poll
+            // envelope's `generation`.
+            "generation": generation,
             "events": events,
         })
         .to_string();

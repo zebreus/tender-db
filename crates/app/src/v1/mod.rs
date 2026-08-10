@@ -637,6 +637,11 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
         "events": events,
         "last_cursor": json::cursor(last),
         "more": more,
+        // The feed's generation (issue 46). A poll client must store this with
+        // its cursor: when it moves, the stored cursor and every entity id it
+        // has are from a world that no longer exists — drop state, re-snapshot
+        // the collections, and continue from this response's last_cursor.
+        "generation": read::feed_generation(&reader).await?,
     }))
     .into_response())
 }
@@ -662,6 +667,10 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "license": "AGPL-3.0-or-later",
         "docs": "/docs",
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
+        // Bumped by every rebuild that wipes the canonical layer or the change
+        // log (issue 46): cursors and entity ids from different generations do
+        // not compose — on a change, drop state and re-snapshot.
+        "generation": read::feed_generation(&reader).await?,
         "endpoints": [
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
             "/v1/organizations/{id}", "/v1/notices", "/v1/notices/{id}",

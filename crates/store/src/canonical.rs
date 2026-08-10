@@ -461,6 +461,17 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 
+    -- The change feed's generation (issue 46). Bumped whenever the canonical
+    -- layer or the change log is wiped for a rebuild: events across a bump do
+    -- not compose into one coherent state (entity ids are reissued, `added`
+    -- rows for dead ids linger with no `removed`), so a client that sees the
+    -- generation move must drop its state and re-snapshot. Single row, id 0.
+    CREATE TABLE IF NOT EXISTS feed_generation (
+        id         INTEGER PRIMARY KEY CHECK (id = 0),
+        generation INTEGER NOT NULL DEFAULT 1
+    ) STRICT;
+    INSERT OR IGNORE INTO feed_generation(id, generation) VALUES (0, 1);
+
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
@@ -1214,6 +1225,12 @@ impl Db {
                 None => (None, None),
             }
         };
+        // The wipe makes every previously-issued entity id and change event
+        // incomposable with what the rebuild will emit — new generation
+        // (issue 46). Bumped BEFORE the re-derivation starts, so a client that
+        // polls mid-rebuild already sees the move.
+        conn.execute("UPDATE feed_generation SET generation = generation + 1 WHERE id = 0", ())
+            .await?;
         if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
             let mut lo = min_id;
             while lo <= max_id {
@@ -1843,6 +1860,10 @@ impl Db {
             (),
         )
         .await?;
+        // A dropped feed re-issues cursors from 1 — an old cursor would "resume"
+        // inside the new feed and silently merge two generations (issue 46).
+        conn.execute("UPDATE feed_generation SET generation = generation + 1 WHERE id = 0", ())
+            .await?;
         // The watch was seeded from the OLD high-water; reset it to the new empty
         // table's max (0) so /health and the coverage refresher see the reset at once.
         self.publish_cursor(&conn).await?;

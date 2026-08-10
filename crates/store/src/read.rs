@@ -1791,6 +1791,19 @@ pub async fn latest_cursor(conn: &Connection) -> turso::Result<i64> {
     max_cursor(conn).await
 }
 
+/// The change feed's generation (issue 46): bumped by every wipe of the
+/// canonical layer or the change log. Events from different generations do not
+/// compose — a client that sees this move must drop state and re-snapshot.
+/// A database created before the table existed reads as generation 1, the
+/// schema's seed value.
+pub async fn feed_generation(conn: &Connection) -> turso::Result<i64> {
+    let mut rows = conn.query("SELECT generation FROM feed_generation WHERE id = 0", ()).await?;
+    Ok(match rows.next().await? {
+        Some(row) => int(&row, 0),
+        None => 1,
+    })
+}
+
 fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
     Some(Stamp {
         utc_seconds: opt_int_of(row, idx)?,

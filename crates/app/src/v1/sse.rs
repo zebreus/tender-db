@@ -101,15 +101,35 @@ pub async fn subscribe(
         .into_response())
 }
 
+/// A resume token: the feed generation the client last saw (if its token
+/// carried one) and the cursor. Diff/live event ids are `<generation>:<cursor>`
+/// (issue 46), so an `EventSource` reconnect proves which generation its state
+/// belongs to; a bare integer (legacy id, or a hand-built `?cursor=`) proves
+/// nothing and is treated as the current generation — the documented resume
+/// token is the event id, verbatim.
+#[derive(Clone, Copy)]
+struct Resume {
+    generation: Option<i64>,
+    cursor: i64,
+}
+
 /// Where a reconnecting client left off. `EventSource` replays the last `id:`
 /// it saw in `Last-Event-ID`; `?cursor=` is the same thing for clients that are
 /// not `EventSource` (curl, scripts).
-fn resume_cursor(headers: &HeaderMap, params: &Params) -> Option<i64> {
-    headers
+fn resume_cursor(headers: &HeaderMap, params: &Params) -> Option<Resume> {
+    let token = headers
         .get("last-event-id")
         .and_then(|v| v.to_str().ok())
-        .and_then(|s| s.trim().parse().ok())
-        .or_else(|| params.cursor.as_deref().and_then(|c| c.parse().ok()))
+        .map(str::to_owned)
+        .or_else(|| params.cursor.clone())?;
+    let token = token.trim();
+    match token.split_once(':') {
+        Some((generation, cursor)) => Some(Resume {
+            generation: Some(generation.parse().ok()?),
+            cursor: cursor.parse().ok()?,
+        }),
+        None => Some(Resume { generation: None, cursor: token.parse().ok()? }),
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,7 +138,7 @@ fn events(
     readers: Arc<Readers>,
     isolated: Arc<super::isolate::IsolatedReads>,
     filter: Filter,
-    resume: Option<i64>,
+    resume: Option<Resume>,
     include_data: bool,
     snapshot_page: i64,
     slot: StreamSlot,
@@ -136,17 +156,17 @@ fn events(
                 return;
             }
         };
-        let mut cursor = match started {
-            Started::Resume { initial, cursor } => {
+        let (mut cursor, generation) = match started {
+            Started::Resume { initial, cursor, generation } => {
                 for event in initial {
                     yield Ok(event);
                 }
-                cursor
+                (cursor, generation)
             }
             // The snapshot streams here, in the generator, so the client's
             // disconnect drops it at the next yield and each page's reader
             // goes back to the pool before anything is sent.
-            Started::Snapshot { cursor } => {
+            Started::Snapshot { cursor, generation } => {
                 let mut after = 0;
                 loop {
                     let scope = Scope::Page { after, limit: snapshot_page };
@@ -204,8 +224,8 @@ fn events(
                         break;
                     }
                 }
-                yield Ok(live_event(cursor));
-                cursor
+                yield Ok(live_event(cursor, generation));
+                (cursor, generation)
             }
         };
         loop {
@@ -215,7 +235,7 @@ fn events(
             // After a fresh snapshot the drain finds nothing, which is correct
             // and costs one indexed query.
             loop {
-                let batch = match diff(collection, &readers, &filter, cursor, include_data).await {
+                let batch = match diff(collection, &readers, &filter, cursor, generation, include_data).await {
                     Ok(batch) => batch,
                     Err(e) => {
                         yield Ok(error_event(&e));
@@ -243,45 +263,84 @@ fn events(
 enum Started {
     /// A resuming client: replay `initial` (a `reset`, or nothing) and diff
     /// from `cursor`.
-    Resume { initial: Vec<Event>, cursor: i64 },
+    Resume { initial: Vec<Event>, cursor: i64, generation: i64 },
     /// A fresh client: stream the snapshot (in the generator, page by page),
     /// then diff from `cursor` — the log position captured *before* the first
     /// page, so a change landing mid-snapshot is re-delivered by the diff
     /// rather than lost.
-    Snapshot { cursor: i64 },
+    Snapshot { cursor: i64, generation: i64 },
 }
 
 /// Step 2's decision: where this subscription starts. One pooled read, no
 /// transaction — the heavy part (the snapshot itself) happens lazily in the
 /// stream so it can be cancelled and never buffers more than a page.
-async fn start(readers: &Arc<Readers>, resume: Option<i64>) -> Result<Started, store::turso::Error> {
+async fn start(readers: &Arc<Readers>, resume: Option<Resume>) -> Result<Started, store::turso::Error> {
     let reader = readers.get().await?;
+    let generation = read::feed_generation(&reader).await?;
 
-    if let Some(from) = resume {
+    if let Some(Resume { generation: from_generation, cursor: from }) = resume {
+        // A cursor from another generation resumes NOTHING: the feed it indexed
+        // was wiped, its entity ids were reissued, and an in-range replay would
+        // silently merge two worlds (issue 46). The reset means "drop state and
+        // re-subscribe fresh".
+        if from_generation.is_some_and(|g| g != generation) {
+            return Ok(Started::Resume {
+                initial: vec![reset_event("feed_rebuilt", generation)],
+                cursor: 0,
+                generation,
+            });
+        }
         let oldest = read::oldest_cursor(&reader).await?;
         // The log is append-only and never renumbered, so "below the horizon"
         // can only happen if it was pruned — but the path exists either way,
         // and a client that invents a cursor gets an honest answer.
         if oldest > 0 && from < oldest - 1 {
-            let event = Event::default()
-                .event("reset")
-                .json_data(serde_json::json!({ "reason": "cursor_expired" }))
-                .expect("a literal object always serialises");
-            return Ok(Started::Resume { initial: vec![event], cursor: 0 });
+            return Ok(Started::Resume {
+                initial: vec![reset_event("cursor_expired", generation)],
+                cursor: 0,
+                generation,
+            });
         }
-        return Ok(Started::Resume { initial: Vec::new(), cursor: from });
+        // Ahead of the head: only a stale cursor carried across an unsignalled
+        // wipe can produce this (a bare-integer token from a pre-rebuild feed).
+        // Same answer as any other incomposable resume.
+        if from > read::latest_cursor(&reader).await? {
+            return Ok(Started::Resume {
+                initial: vec![reset_event("cursor_ahead", generation)],
+                cursor: 0,
+                generation,
+            });
+        }
+        return Ok(Started::Resume { initial: Vec::new(), cursor: from, generation });
     }
 
-    Ok(Started::Snapshot { cursor: read::latest_cursor(&reader).await? })
+    Ok(Started::Snapshot { cursor: read::latest_cursor(&reader).await?, generation })
+}
+
+/// "Your state does not compose with this feed — drop it and re-subscribe."
+fn reset_event(reason: &str, generation: i64) -> Event {
+    Event::default()
+        .event("reset")
+        .json_data(serde_json::json!({ "reason": reason, "generation": generation }))
+        .expect("a literal object always serialises")
 }
 
 /// The end-of-snapshot marker: "you are caught up to `cursor`".
-fn live_event(cursor: i64) -> Event {
+fn live_event(cursor: i64, generation: i64) -> Event {
     Event::default()
         .event("live")
-        .id(cursor.to_string())
-        .json_data(serde_json::json!({ "cursor": cursor.to_string() }))
+        .id(resume_token(generation, cursor))
+        .json_data(serde_json::json!({
+            "cursor": cursor.to_string(),
+            "generation": generation,
+        }))
         .expect("a literal object always serialises")
+}
+
+/// The resume token diff/live events carry as their SSE id (issue 46):
+/// generation-qualified, so a reconnect proves which feed the cursor indexes.
+fn resume_token(generation: i64, cursor: i64) -> String {
+    format!("{generation}:{cursor}")
 }
 
 struct Batch {
@@ -299,6 +358,7 @@ async fn diff(
     readers: &Arc<Readers>,
     filter: &Filter,
     cursor: i64,
+    generation: i64,
     include_data: bool,
 ) -> Result<Batch, store::turso::Error> {
     let reader = readers.get().await?;
@@ -357,11 +417,11 @@ async fn diff(
                 new.as_ref().map(|i| &i.json),
                 include_data,
             )
-            // The cursor as the SSE id is what makes Last-Event-ID resume
-            // exact — for DIFF events only. Snapshot events stay id-less so an
-            // interrupted snapshot re-snapshots instead of "resuming" past its
-            // own missing remainder.
-            .id(change.cursor.to_string()),
+            // The generation-qualified cursor as the SSE id is what makes
+            // Last-Event-ID resume exact — for DIFF events only. Snapshot
+            // events stay id-less so an interrupted snapshot re-snapshots
+            // instead of "resuming" past its own missing remainder.
+            .id(resume_token(generation, change.cursor)),
         );
     }
     Ok(Batch { events, last_cursor, more })

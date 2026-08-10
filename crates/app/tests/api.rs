@@ -727,7 +727,9 @@ async fn a_subscription_snapshots_then_streams_diffs() {
          has to re-snapshot, not resume past its own missing remainder"
     );
     let boundary = live.data["cursor"].as_str().expect("live carries the cursor").to_owned();
-    assert_eq!(live.id.as_deref(), Some(boundary.as_str()), "the marker's id is the boundary");
+    // The marker's id is the generation-qualified boundary (issue 46).
+    let generation = live.data["generation"].as_i64().expect("live names its generation");
+    assert_eq!(live.id.as_deref(), Some(format!("{generation}:{boundary}").as_str()));
 
     // A live stream with nothing happening stays quiet (keep-alives aside).
     assert!(tape.quiet().await, "no diffs before anything changes");
@@ -741,7 +743,11 @@ async fn a_subscription_snapshots_then_streams_diffs() {
     assert_eq!(diff.data["entity"], "tender");
     let diff_cursor: i64 = diff.data["cursor"].as_str().expect("cursor").parse().expect("number");
     assert!(diff_cursor > boundary.parse::<i64>().expect("number"), "diffs are past the boundary");
-    assert_eq!(diff.id.as_deref(), Some(diff.data["cursor"].as_str().expect("cursor")));
+    assert_eq!(
+        diff.id.as_deref(),
+        Some(format!("{generation}:{diff_cursor}").as_str()),
+        "diff ids are generation-qualified resume tokens"
+    );
 }
 
 #[tokio::test]
@@ -788,9 +794,12 @@ async fn a_resumed_subscription_gets_exactly_what_it_missed() {
     let event = resumed.next().await.expect("the missed change must be replayed");
     assert_eq!(event.name, "change", "a resume skips the snapshot entirely");
     assert_eq!(event.data["op"], "added");
+    // The boundary is a `generation:cursor` token (issue 46); compare cursors.
+    let boundary_cursor: i64 =
+        boundary.split(':').next_back().expect("token").parse().expect("number");
     assert!(
         event.data["cursor"].as_str().expect("cursor").parse::<i64>().expect("number")
-            > boundary.parse::<i64>().expect("number")
+            > boundary_cursor
     );
     assert!(resumed.quiet().await, "and nothing else — the resume is exact, not approximate");
 }
@@ -808,6 +817,59 @@ async fn resuming_from_the_start_of_the_log_replays_it_rather_than_resetting() {
     let first = tape.next().await.expect("the replay must start");
     assert_eq!(first.name, "change", "a resume replays changes, it does not resnapshot");
     assert_ne!(first.name, "reset");
+}
+
+/// Issue 46: a rebuild wipes the canonical layer (and, with `clear_changes`,
+/// the log); entity ids are reissued, so state from before the wipe composes
+/// with nothing after it — and before this fix the feed never said so. The
+/// generation is the signal: poll clients read it in every envelope, SSE
+/// clients hold generation-qualified resume tokens and get a `reset` on any
+/// cross-generation resume.
+#[tokio::test]
+async fn a_rebuild_moves_the_generation_and_resets_stale_resumes() {
+    let server = Server::start("generation").await;
+    server.ingest_chain().await;
+
+    let root = server.get("/v1").await;
+    assert_eq!(root["generation"].as_i64(), Some(1), "a fresh database is generation 1");
+    let poll = server.get("/v1/changes?since=0&limit=1000").await;
+    assert_eq!(poll["generation"].as_i64(), Some(1));
+    assert!(poll["events"].as_array().is_some_and(|e| !e.is_empty()));
+
+    // A live client establishes a resume position under generation 1.
+    let token = {
+        let mut tape = Tape::open(&server, "/v1/tenders", None).await;
+        let (_, live) = tape.until_live().await;
+        assert_eq!(live.data["generation"].as_i64(), Some(1));
+        let id = live.id.expect("live is a resume point");
+        assert!(id.starts_with("1:"), "resume tokens are generation-qualified: {id}");
+        id
+    };
+
+    // The operator rebuilds from scratch: layer wiped, feed dropped — the
+    // exact sequence `project rebuild=true clear_changes=true` runs.
+    server.db.clear_canonical().await.expect("clear canonical");
+    server.db.clear_changes().await.expect("clear changes");
+
+    let root = server.get("/v1").await;
+    assert_eq!(root["generation"].as_i64(), Some(3), "each wipe moves the generation");
+    let poll = server.get("/v1/changes?since=0&limit=1000").await;
+    assert_eq!(poll["generation"].as_i64(), Some(3), "poll clients see the move in the envelope");
+
+    // The stale token resumes nothing: an explicit reset, not a silent merge
+    // of two worlds.
+    let mut resumed = Tape::open(&server, "/v1/tenders", Some(&token)).await;
+    let first = resumed.next().await.expect("an answer, not silence");
+    assert_eq!(first.name, "reset");
+    assert_eq!(first.data["reason"], "feed_rebuilt");
+    assert_eq!(first.data["generation"].as_i64(), Some(3));
+
+    // A bare pre-rebuild cursor (no generation to check) that points past the
+    // dropped feed's head is caught by the ahead-of-head guard.
+    let mut bare = Tape::open(&server, "/v1/tenders?cursor=999999", None).await;
+    let first = bare.next().await.expect("an answer, not silence");
+    assert_eq!(first.name, "reset");
+    assert_eq!(first.data["reason"], "cursor_ahead");
 }
 
 #[tokio::test]

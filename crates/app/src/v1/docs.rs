@@ -171,13 +171,22 @@ canonical layer learned after <code>since</code> (start at <code>0</code>). Same
 events as SSE, without holding a connection open. Optional
 <code>entity=tender|lot|organization</code> narrows the stream.</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/changes?since=0&amp;limit=100"</code></pre>
-<p>Response: <code>{"events": [ … ], "last_cursor": "193055", "more": false}</code>.
+<p>Response: <code>{"events": [ … ], "last_cursor": "193055", "more": false,
+"generation": 3}</code>.
 Loop, passing <code>last_cursor</code> as the next <code>since</code>, until
 <code>more</code> is false; then poll periodically for new ones. The cursor is
 <em>learn order</em> (ingestion), independent of a notice's publication date —
 historical backfill and live updates share one monotonic sequence, which is what
 makes out-of-order ingestion harmless. Sort by <code>published_at</code> if you
 want domain-time order.</p>
+<p><strong>Store <code>generation</code> beside your cursor.</strong> It moves
+only when the dataset is rebuilt from scratch (rare, operator-initiated). Events
+across a rebuild do not compose: entity ids are reissued and your cursor indexes
+a feed that no longer exists. When the generation you read differs from the one
+you stored, drop your local state, re-fetch the collections you mirror, store the
+new generation, and continue polling from that response's
+<code>last_cursor</code>. <code>GET /v1</code> also reports the current
+generation.</p>
 
 <h2 id="sse">Live feed — Server-Sent Events</h2>
 <p>Send <code>Accept: text/event-stream</code> to any collection endpoint (with
@@ -187,19 +196,23 @@ any filters). The protocol:</p>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
   <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>.</li>
 </ol>
-<p>Each event's SSE <code>id</code> is the change cursor. On reconnect the browser
-<code>EventSource</code> replays it as <code>Last-Event-ID</code>; for curl and
-scripts pass it as that header or as <code>?cursor=</code>. Resuming skips the
-snapshot and delivers exactly what you missed. A cursor below the log's retained
-horizon gets a <code>reset</code> event (<code>{"reason":"cursor_expired"}</code>)
-meaning "re-snapshot". Add <code>?include_data=true</code> to embed each entity's
-current JSON in its event.</p>
+<p>Each event's SSE <code>id</code> is an opaque resume token
+(generation-qualified cursor, e.g. <code>3:193055</code>). On reconnect the
+browser <code>EventSource</code> replays it as <code>Last-Event-ID</code>; for
+curl and scripts pass it as that header or as <code>?cursor=</code>, verbatim.
+Resuming skips the snapshot and delivers exactly what you missed. A
+<code>reset</code> event means your token cannot resume and you must drop local
+state and re-subscribe fresh: <code>{"reason":"cursor_expired"}</code> (the log's
+retained horizon passed your token) or <code>{"reason":"feed_rebuilt"}</code>
+(the dataset was rebuilt — same event a poll client detects as a
+<code>generation</code> change). Add <code>?include_data=true</code> to embed
+each entity's current JSON in its event.</p>
 <pre><code># -N disables curl's buffering so events arrive as they happen
 curl -N -H "Accept: text/event-stream" \
   "https://tenders.zebreus.click/v1/tenders?country=DEU"
 
-# resume from the last cursor you processed
-curl -N -H "Accept: text/event-stream" -H "Last-Event-ID: 193000" \
+# resume from the last event id you processed, verbatim
+curl -N -H "Accept: text/event-stream" -H "Last-Event-ID: 3:193000" \
   https://tenders.zebreus.click/v1/tenders</code></pre>
 <p class="muted">Streams are capped at 5 per client. Notices have no live diffs
 (snapshot then silence). A 15 s keep-alive comment holds the connection open.</p>

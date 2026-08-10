@@ -1,6 +1,27 @@
 # 46 — A full rebuild orphans the change log (no `removed`, no epoch signal)
 
-Status: ready-for-agent
+Status: fix landed on main (2026-08-10, orchestrator) — the epoch/reset protocol,
+settled once across all three transports exactly as the 2026-08-09 note asked:
+- `feed_generation` (single-row table, seeded 1) bumped by BOTH wipes:
+  `clear_canonical` (before re-derivation starts, so mid-rebuild polls already
+  see it) and `clear_changes` (whose cursor re-issue would otherwise let an old
+  cursor "resume" inside the new feed).
+- Poll: `/v1/changes` envelope and `/v1` root carry `generation`; contract
+  documented in /docs (store it beside the cursor; on a move: drop state,
+  re-fetch collections, continue from the new last_cursor).
+- SSE: diff/live event ids are now generation-qualified resume tokens
+  (`<gen>:<cursor>`, opaque per the docs); a cross-generation resume gets
+  `reset {"reason":"feed_rebuilt"}`, a beyond-head bare cursor gets
+  `reset {"reason":"cursor_ahead"}`, pruning keeps `cursor_expired`. `live` and
+  `reset` carry the generation.
+- Webhooks: every delivery body carries `generation` (detection); the SLOT
+  semantics (stranded-slot reset) split to issue 178 with a design sketch —
+  the sweeper's stored cursor needs its own generation-aware reset.
+- Conformance: `a_rebuild_moves_the_generation_and_resets_stale_resumes`
+  (app/tests/api.rs) — generation 1 → wipe → 3 visible at root/poll, stale SSE
+  token → feed_rebuilt reset, bare ahead-of-head cursor → cursor_ahead reset.
+The "one clean rebuild before launch" recommendation stands and is now safe to
+execute at any time: the rebuild IS the signal.
 Severity: MEDIUM (live-subscription coherence across a rebuild; not
 imminent — see scoping)
 
