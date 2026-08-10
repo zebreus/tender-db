@@ -334,7 +334,13 @@ async fn measure_quarantine(db: &Db) -> store::turso::Result<Quarantine> {
     let mut resolved_categories = Vec::new();
     for entry in resolution_ledger() {
         let (reclaimed, skipped, outstanding) = db
-            .quarantine_resolution(&entry.reason, entry.profile.as_deref(), entry.detail_like.as_deref())
+            .quarantine_resolution(
+                &entry.reason,
+                entry.profile.as_deref(),
+                entry.detail_like.as_deref(),
+                entry.member_path_like.as_deref(),
+                entry.member_path_unlike.as_deref(),
+            )
             .await?;
         resolved_categories.push(ResolvedCategory {
             category: entry.category,

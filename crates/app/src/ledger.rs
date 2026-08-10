@@ -17,12 +17,22 @@ const LEDGER: &str = include_str!("../data/quarantine-ledger.json");
 /// One curated entry: the narrative, plus the key that selects its quarantine
 /// rows. `profile` and `detail_like` are optional narrowers — `detail_like` is a
 /// SQL `LIKE` pattern pinning a sub-bucket within a reason (e.g. `%@REASON`).
+/// `member_path_like`/`member_path_unlike` (issue 186) narrow further by the
+/// member's path shape, for populations that share one (reason, detail) and
+/// differ only in what file they came from — the 2008 DTD rows end in a
+/// 2-letter language code, the 2010-03 non-siblings in `.xml`. Without them,
+/// every row sharing a key displays the same blended live counts and the
+/// narrative's split exists only in prose.
 #[derive(Clone, Debug, Deserialize)]
 pub struct LedgerEntry {
     pub category: String,
     pub reason: String,
     pub profile: Option<String>,
     pub detail_like: Option<String>,
+    #[serde(default)]
+    pub member_path_like: Option<String>,
+    #[serde(default)]
+    pub member_path_unlike: Option<String>,
     pub diagnosis: String,
     pub fix: String,
     /// The date this category was resolved — `None` while it is still

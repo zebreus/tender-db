@@ -77,7 +77,9 @@ pub struct Quarantine {
     /// Still-held counts per reason. NOT all-time: see [`Self::outstanding`].
     pub by_reason: Vec<Count>,
     /// The field codes driving the `unknown-field-code` suspected bucket, biggest
-    /// first — sampling shows it is ~entirely the one legacy `OC` code.
+    /// first, counted over STILL-HELD rows only (issue 185) — like `by_reason`, a
+    /// code whose rows were all reclaimed is history, not a gap. (All-time, the
+    /// bucket was ~entirely the one legacy `OC` code, reclaimed 2026-07-29.)
     pub field_code_gaps: Vec<Count>,
     pub recent: Vec<Quarantined>,
     /// Quarantine categories we have diagnosed and fixed — a persistent audit
@@ -180,17 +182,19 @@ pub enum QuarantineClass {
 }
 
 /// Classify a quarantine `reason`. Evidence-based (issue 30): nothing is called
-/// benign without the reason itself proving non-notice. The two big buckets are
-/// `SuspectedGap`, not benign — `unknown-field-code` (577k) is ~entirely the
-/// legacy `OC` field (1995–98), `unparsable-xml` (628k) ~entirely "XML with DTD
-/// detected" (2008). Per-year coverage (2026-07-21) shows those years hold ~92%
-/// vs TED ground truth, so both buckets are *mostly duplicate representations* of
-/// notices already held via another member — real loss is bounded ~47k + ~27k,
-/// not the raw ~1.2M. But 92% still fails the verify ±2% tolerance, so they are a
-/// genuine (bounded) gap under investigate-then-fix, filed as issues 35/36 — hence
-/// `SuspectedGap`, neither confirmed-loss nor benign. The small uncertain reasons
-/// (`not-utf8`, `unknown-customization`) are flagged too rather than assumed
-/// benign.
+/// benign without the reason itself proving non-notice. When this split was
+/// introduced (2026-07-21) the two big buckets were `SuspectedGap`, not benign —
+/// `unknown-field-code` (then 577k) was ~entirely the legacy `OC` field
+/// (1995–98), `unparsable-xml` (then 628k) ~entirely "XML with DTD detected"
+/// (2008). Per-year coverage showed those years held ~92% vs TED ground truth,
+/// so both buckets were *mostly duplicate representations* of notices already
+/// held via another member — bounded gaps under investigate-then-fix, filed as
+/// issues 35/36 and since largely reclaimed or marked skipped-by-policy (issues
+/// 72/73/84); the counts shown are always the still-held remainder. The
+/// classification stays: a reason in these families that is held today is
+/// suspected until diagnosed (issues 180–182 own the remaining tails). The small
+/// uncertain reasons (`not-utf8`, `unknown-customization`) are flagged too
+/// rather than assumed benign.
 pub fn quarantine_class(reason: &str) -> QuarantineClass {
     // A corrupt archive entry is never a notice, whatever its trailing detail.
     if reason.starts_with("unreadable zip") {

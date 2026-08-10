@@ -1411,13 +1411,18 @@ impl Db {
     /// The field codes behind the `unknown-field-code` bucket, biggest first
     /// (issue 30). Each detail is `line <n>: <code>`; grouping by the code (not
     /// the whole detail, which carries the line number) shows whether one legacy
-    /// code drives the bucket — it does: `OC` on the ISO-era text records.
+    /// code drives the bucket — it did: `OC` on the ISO-era text records.
+    /// STILL-HELD rows only (issue 185): a quarantine row is retained as a
+    /// historical record after reclaim, so counting all rows counts work that is
+    /// already done — the OC bucket read as a 577K gap while 10 rows were held
+    /// (#29 criterion 6, the same rule `by_reason` follows).
     pub async fn quarantine_field_code_gaps(&self, limit: i64) -> turso::Result<Vec<(String, i64)>> {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT substr(detail, instr(detail, ': ') + 2) AS code, COUNT(*) c
                    FROM quarantine WHERE reason = 'unknown-field-code'
+                    AND reprocessed_at IS NULL AND skipped_at IS NULL
                   GROUP BY code ORDER BY c DESC LIMIT ?",
                 (Value::Integer(limit),),
             )
@@ -1644,11 +1649,19 @@ impl Db {
     /// separately rather than folded into either neighbour: counting it as
     /// reclaimed would claim notices entered that never did, and counting it as
     /// outstanding is the overstatement this exists to end.
+    /// `member_path_like`/`member_path_unlike` (issue 186) narrow by the member's
+    /// path shape — the only column that separates populations sharing one
+    /// (reason, detail): the 2008 language siblings end in a 2-letter code
+    /// (`%.__` minus `%.en`), the English originals in `.en`, the 2010-03
+    /// non-siblings in `.xml`. The negative form exists because "2-letter suffix
+    /// that is not `.en`" has no single positive LIKE.
     pub async fn quarantine_resolution(
         &self,
         reason: &str,
         profile: Option<&str>,
         detail_like: Option<&str>,
+        member_path_like: Option<&str>,
+        member_path_unlike: Option<&str>,
     ) -> turso::Result<(i64, i64, i64)> {
         let conn = self.reader().await?;
         let mut rows = conn
@@ -1660,13 +1673,19 @@ impl Db {
                    FROM quarantine
                   WHERE reason = ?
                     AND (? IS NULL OR profile = ?)
-                    AND (? IS NULL OR detail LIKE ?)",
+                    AND (? IS NULL OR detail LIKE ?)
+                    AND (? IS NULL OR member_path LIKE ?)
+                    AND (? IS NULL OR member_path NOT LIKE ?)",
                 (
                     reason.to_owned(),
                     opt_text(profile),
                     opt_text(profile),
                     opt_text(detail_like),
                     opt_text(detail_like),
+                    opt_text(member_path_like),
+                    opt_text(member_path_like),
+                    opt_text(member_path_unlike),
+                    opt_text(member_path_unlike),
                 ),
             )
             .await?;
@@ -3496,13 +3515,19 @@ tmpfs /data/ramcache tmpfs rw 0 0
                    FROM quarantine
                   WHERE reason = ?
                     AND (? IS NULL OR profile = ?)
-                    AND (? IS NULL OR detail LIKE ?)",
+                    AND (? IS NULL OR detail LIKE ?)
+                    AND (? IS NULL OR member_path LIKE ?)
+                    AND (? IS NULL OR member_path NOT LIKE ?)",
                 (
                     "unclaimed-content".to_owned(),
                     opt_text(Some("text")),
                     opt_text(Some("text")),
                     opt_text(Some("%scalar field RP")),
                     opt_text(Some("%scalar field RP")),
+                    opt_text(Some("%.__")),
+                    opt_text(Some("%.__")),
+                    opt_text(Some("%.en")),
+                    opt_text(Some("%.en")),
                 ),
             )
             .await
@@ -3597,7 +3622,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
     }
 
     /// `line <n>: <code>` detail, so one code across different line numbers sums
-    /// into a single row — and only the unknown-field-code bucket is counted.
+    /// into a single row — and only the unknown-field-code bucket is counted,
+    /// over STILL-HELD rows only (issue 185): a reclaimed or skipped row is a
+    /// historical record, not a gap.
     #[tokio::test]
     async fn field_code_gaps_group_by_code_across_line_numbers() {
         let path = format!("/tmp/tender-db-fcgaps-{}.db", std::process::id());
@@ -3611,7 +3638,12 @@ tmpfs /data/ramcache tmpfs rw 0 0
                    (1,'m1','h1','unknown-field-code','line 20: OC',0),
                    (1,'m2','h2','unknown-field-code','line 25: OC',0),
                    (1,'m3','h3','unknown-field-code','line 9: XY',0),
-                   (1,'m4','h4','unclaimed-content','line 5: whatever',0);",
+                   (1,'m4','h4','unclaimed-content','line 5: whatever',0);
+                 -- reclaimed and skipped OC rows: history, not gaps (issue 185)
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at) VALUES
+                   (1,'m5','h5','unknown-field-code','line 3: OC',0,7);
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, skipped_at) VALUES
+                   (1,'m6','h6','unknown-field-code','line 4: OC',0,7);",
             )
             .await
             .unwrap();
@@ -3622,7 +3654,8 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(
             gaps,
             vec![("OC".to_owned(), 2), ("XY".to_owned(), 1)],
-            "OC sums across its two line numbers; unclaimed-content is excluded",
+            "OC sums across its two line numbers and counts only still-held rows; \
+             unclaimed-content and the reclaimed/skipped rows are excluded",
         );
 
         let _ = std::fs::remove_file(&path);
@@ -3782,7 +3815,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // reclaimed (which would claim notices entered that never did) nor as
         // outstanding (the overstatement being fixed).
         assert_eq!(
-            db.quarantine_resolution("unparsable-xml", None, Some("XML with DTD detected")).await.unwrap(),
+            db.quarantine_resolution("unparsable-xml", None, Some("XML with DTD detected"), None, None)
+                .await
+                .unwrap(),
             (0, 2, 4),
             "(reclaimed, skipped, outstanding)"
         );
@@ -3813,7 +3848,16 @@ tmpfs /data/ramcache tmpfs rw 0 0
                    (1,'m2','h2','ted-export-r208','unclaimed-content','unclaimed attribute at /TED_EXPORT/.../PROCEDURE/@REASON',0,NULL),
                    (1,'m3','h3','ted-export-r208','unclaimed-content','unclaimed attribute at /TED_EXPORT/.../OBJECT/@CATEGORY',0,NULL),
                    (1,'m4','h4','text','unclaimed-content','line 5: continuation under scalar field RP',0,100),
-                   (1,'m5','h5','text','unclaimed-content','line 8: continuation under scalar field XY',0,NULL);",
+                   (1,'m5','h5','text','unclaimed-content','line 8: continuation under scalar field XY',0,NULL);
+                 -- the DTD populations of issue 186, distinguishable only by path
+                 -- shape: an .en original (reclaimed), a non-English sibling
+                 -- (skipped), a sibling whose original never parsed (held), and a
+                 -- 2010-03 non-sibling ending .xml (held).
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at, skipped_at) VALUES
+                   (1,'115165/opoce-input/115165_2008.en','d1','unparsable-xml','XML with DTD detected',0,100,NULL),
+                   (1,'115165/opoce-input/115165_2008.fr','d2','unparsable-xml','XML with DTD detected',0,NULL,100),
+                   (1,'999001/opoce-input/999001_2008.de','d3','unparsable-xml','XML with DTD detected',0,NULL,NULL),
+                   (1,'201003/member-4711.xml','d4','unparsable-xml','XML with DTD detected',0,NULL,NULL);",
             )
             .await
             .unwrap();
@@ -3823,18 +3867,49 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // r208 @REASON: one reprocessed, one still held; the sibling @CATEGORY row
         // is excluded by the detail pattern.
         assert_eq!(
-            db.quarantine_resolution("unclaimed-content", Some("ted-export-r208"), Some("%@REASON")).await.unwrap(),
+            db.quarantine_resolution("unclaimed-content", Some("ted-export-r208"), Some("%@REASON"), None, None)
+                .await
+                .unwrap(),
             (1, 0, 1),
         );
         // text RP: reclaimed, with the sibling XY continuation excluded.
         assert_eq!(
-            db.quarantine_resolution("unclaimed-content", Some("text"), Some("%scalar field RP")).await.unwrap(),
+            db.quarantine_resolution("unclaimed-content", Some("text"), Some("%scalar field RP"), None, None)
+                .await
+                .unwrap(),
             (1, 0, 0),
         );
         // A key that matches nothing yet is simply (0, 0, 0), never an error.
         assert_eq!(
-            db.quarantine_resolution("unknown-field-code", None, None).await.unwrap(),
+            db.quarantine_resolution("unknown-field-code", None, None, None, None).await.unwrap(),
             (0, 0, 0),
+        );
+
+        // Issue 186: the member-path narrowers split populations one (reason,
+        // detail) key blends. Unkeyed, the DTD bucket shows everything at once…
+        let dtd = Some("XML with DTD detected");
+        assert_eq!(
+            db.quarantine_resolution("unparsable-xml", None, dtd, None, None).await.unwrap(),
+            (1, 1, 2),
+            "the blended key: every population in one row"
+        );
+        // …the English originals key shows the reclaim story (and its 0 held)…
+        assert_eq!(
+            db.quarantine_resolution("unparsable-xml", None, dtd, Some("%.en"), None).await.unwrap(),
+            (1, 0, 0),
+        );
+        // …the non-English siblings key shows the skip + the unparsed-original
+        // holdout, with .en and .xml rows excluded…
+        assert_eq!(
+            db.quarantine_resolution("unparsable-xml", None, dtd, Some("%.__"), Some("%.en"))
+                .await
+                .unwrap(),
+            (0, 1, 1),
+        );
+        // …and the 2010-03 non-siblings key isolates the .xml population.
+        assert_eq!(
+            db.quarantine_resolution("unparsable-xml", None, dtd, Some("%.xml"), None).await.unwrap(),
+            (0, 0, 1),
         );
 
         let _ = std::fs::remove_file(&path);
