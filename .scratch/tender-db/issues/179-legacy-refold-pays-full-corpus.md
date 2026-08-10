@@ -61,3 +61,11 @@ not delayed by more than the fold of the actual cohort.
 - fold: full-corpus fallback, 674,798/7,925,880 tenders and 1,500,104
   versions written at t+170min. Final wall-clock: see issue 175/177 notes
   once complete.
+
+## Comments
+
+**2026-08-10 20:46 CEST (orchestrator) — final fold numbers.** The epoch 2→3 full-corpus
+rewrite completed 18:46:46Z: `done: 14,246,456 notices → 7,925,880 tenders (700,425 islands),
+14,246,456 versions, 63,284,607 change rows in 21,745.1s` (~6h02m; apply phase 16,304.9s);
+`WAL after end-of-run index builds: 0 MB`. Caveat stands: this is the issue-58-v1 legacy-fallback
+full-rewrite path (issue 179), NOT a clean issue-175 pipeline measurement.

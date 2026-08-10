@@ -115,3 +115,11 @@ The plan build runs at FULL corpus scale on every projection, incremental or
 not — it is a fixed ~1¾ h serial tax per fold on hardware that could plausibly
 do it in ~20–30 min. Era refolds (174's follow-ups: r207, r2.0.8 …) each pay it
 twice over the queue+fold cycle.
+
+## Comments
+
+**2026-08-10 20:46 CEST (orchestrator) — final fold numbers.** The epoch 2→3 full-corpus
+rewrite completed 18:46:46Z: `done: 14,246,456 notices → 7,925,880 tenders (700,425 islands),
+14,246,456 versions, 63,284,607 change rows in 21,745.1s` (~6h02m; apply phase 16,304.9s);
+`WAL after end-of-run index builds: 0 MB`. Caveat stands: this is the issue-58-v1 legacy-fallback
+full-rewrite path (issue 179), NOT a clean issue-175 pipeline measurement.

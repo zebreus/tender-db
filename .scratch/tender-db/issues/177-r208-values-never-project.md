@@ -1,6 +1,6 @@
 # 177 — r208-era tender values never project (and `VALUE_COST` is three different facts)
 
-Status: fix implemented 2026-08-10 (orchestrator) — red→green tests + epoch 3;
+Status: RESOLVED-VERIFIED on prod (2026-08-10 20:5x CEST, orchestrator) — see Comments
 awaiting deploy + r208 refold (which doubles as issue 175's first pipelined-fold
 measurement). Implementation notes on top of the design below:
 - `amount_target` in project.rs routes plain `TED-VALUE_COST` structurally: inside
@@ -115,3 +115,16 @@ issue 179 — this refold's wall-clock is the baseline there, NOT a clean
 pipelined-fold measurement for issue 175 (the fallback path dominates).
 Era verification (2011-2016 tenders serving estimated_value via API)
 pending fold completion.
+
+**2026-08-10 20:46 CEST (orchestrator) — final fold numbers.** The epoch 2→3 full-corpus
+rewrite completed 18:46:46Z: `done: 14,246,456 notices → 7,925,880 tenders (700,425 islands),
+14,246,456 versions, 63,284,607 change rows in 21,745.1s` (~6h02m; apply phase 16,304.9s);
+`WAL after end-of-run index builds: 0 MB`. Caveat stands: this is the issue-58-v1 legacy-fallback
+full-rewrite path (issue 179), NOT a clean issue-175 pipeline measurement.
+
+**Verification on prod (public API, post-fold):** r208-era tenders serve values. Page at
+cursor=5000000 (published 2012-2013): 7 of 25 tenders carry `value` — e.g. id 5000001
+(published 2013-05-15) value {cents: 160,000,000, EUR}, id 5000005 {cents: 106,931,795, PLN} —
+and submission_deadline is populated on the same rows (issue 174 held through the rewrite).
+Before e5dfac2 the era's VALUE_COST never routed, so any r208 value proves the fix; 7/25 is
+era-plausible density. Task #14 closed.
