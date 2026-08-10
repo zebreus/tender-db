@@ -1,6 +1,6 @@
 # 46 — A full rebuild orphans the change log (no `removed`, no epoch signal)
 
-Status: fix landed on main (2026-08-10, orchestrator) — the epoch/reset protocol,
+Status: RESOLVED-VERIFIED on prod (2026-08-11 00:3x CEST, deploy e66967c) — /v1 root serves generation:1, /v1/changes envelope carries it
 settled once across all three transports exactly as the 2026-08-09 note asked:
 - `feed_generation` (single-row table, seeded 1) bumped by BOTH wipes:
   `clear_canonical` (before re-derivation starts, so mid-rebuild polls already

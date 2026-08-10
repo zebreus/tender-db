@@ -1,6 +1,6 @@
 # 185 — the field-code gap panel counts all-time rows, so a 99.998%-reclaimed bucket still reads as a 577K gap
 
-Status: resolved — landed 2026-08-10 (still-held predicate + dated doc comments + test); shows on prod after the next deploy
+Status: RESOLVED-VERIFIED on prod (2026-08-11 00:3x CEST, deploy e66967c) — field_code_gaps shows OC=10, not 577K
 Kind: dashboard correctness (small code fix)
 Blocked by: —
 Relates to: 137 (#29 criterion 6 — outstanding-only presentation), 30 (introduced the panel), 35/72 (the OC reclaim that exposed it)

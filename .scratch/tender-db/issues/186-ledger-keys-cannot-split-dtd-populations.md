@@ -1,6 +1,6 @@
 # 186 — the ledger join key is too coarse: four DTD rows display one blended count instead of their 1,898/154/7 split
 
-Status: resolved — landed 2026-08-10 (member_path_like/unlike narrowers, five DTD rows keyed, tests); shows on prod after the next deploy
+Status: RESOLVED-VERIFIED on prod (2026-08-11 00:3x CEST, deploy e66967c) — DTD rows split: siblings 592,856 skipped + 154 held; 2010-03 1,898; English originals 26,948 reclaimed + 7 held
 Kind: dashboard correctness (ledger join granularity)
 Blocked by: —
 Relates to: 40 (ledger design), 84 (named the three populations), 139 (owns the 1,898)
