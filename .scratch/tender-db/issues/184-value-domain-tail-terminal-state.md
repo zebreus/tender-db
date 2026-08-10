@@ -1,6 +1,6 @@
 # 184 — declare the reclaim campaign's terminal state: the value-domain tail needs a policy, a final pass, and a disclosure
 
-Status: needs-triage (the sub-cent policy is an owner/team-lead decision; the pass and disclosure are mechanical after it)
+Status: ready-for-agent (policy DECIDED 2026-08-10, ADR-0010 — cents stands, cause F is a documented keep; steps 2 and 3 are mechanical)
 Kind: policy decision + reclaim completion + dashboard disclosure
 Blocked by: —
 Relates to: 144 (diagnosed the nine causes and defined this end-state), 132 (the 51 negative amounts, canonical), 87 (relabel-on-failed-reclaim, deployed), 40 (ledger)
@@ -36,3 +36,14 @@ and the dashboard currently presents the tail dishonestly in both directions
 
 Order matters: 2 before 3, so the disclosure documents the terminal composition, not a snapshot
 mid-drain.
+
+## Comments
+
+**2026-08-10 (orchestrator)** — Lennart delegated the policy call; decided and recorded as
+**ADR-0010**: integer cents stands, sub-cent amounts are unrepresentable by policy, cause F rows
+are a documented keep (rounding rejected per the issue-131 published-not-introduced line; a finer
+unit rejected on issue-179's full-corpus epoch cost for ~0.02% of notices; claim-and-store noted
+as the alternative to reopen first if F ever grows). Remaining work is steps 2 and 3 unchanged:
+run the relabel pass over the 1,907 once the overnight epoch-3 rebuild completes (do NOT queue it
+against the running fold), then write the disclosure ledger row from the terminal composition and
+ship it with the next deploy. Sequenced into the evening check-in.

@@ -238,3 +238,9 @@ share explicitly owned by the amounts-as-cents decision.
 - Mixed provenance note: the doe members come from a zip (bare UUID member
   names), the TED members from nested monthly→daily tars; both were fed to
   the harness as raw bytes exactly as the reprocess would read them.
+
+## Comments
+
+**2026-08-10 (orchestrator)** — the cause-F policy question this diagnosis left open is decided:
+ADR-0010 confirms integer cents; F is a documented keep. Terminal relabel pass + dashboard
+disclosure are owned by issue 184.

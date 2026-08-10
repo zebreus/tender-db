@@ -1,6 +1,6 @@
 # 189 — text-era coverage residual: 1993 and 1995–1999 miss ground truth by 7–22%, and the loss is upstream of quarantine
 
-Status: needs-triage
+Status: ready-for-agent (stance DECIDED 2026-08-10 — see Comments; investigation fully specified)
 Kind: coverage investigation
 Blocked by: —
 Relates to: 35 (OC reclaim — landed, did not close this), 72 (measured ~92% and predicted bounded real loss), 27/30 (the coverage grid and its ±2% tolerance), 15 (backfill)
@@ -45,3 +45,17 @@ Three facts make this an unowned gap rather than a known one:
    honesty rule, applied to coverage).
 3. If we missed packages: backfill them (issue 15 machinery) and re-measure.
 1999 first — it is the outlier and the cheapest to falsify against.
+
+## Comments
+
+**2026-08-10 (orchestrator)** — Lennart delegated the ground-truth stance; decided: **the vendored
+ground truth is a claim to verify, not a fact** — but the dashboard changes only on evidence, not
+suspicion. Concretely: (a) investigate 1999 first (the outlier, cheapest to falsify) by diffing
+the fetch registry against what TED's archive channel actually offers for 1999 vs the clean 2000;
+(b) if we missed packages, backfill them (issue 15 machinery) and re-measure — the ratio is ours
+to fix; (c) if the archive cannot substantiate the ground-truth figure, the coverage panel gets a
+per-year ground-truth caveat (a published count the source cannot substantiate must not read as
+our gap), and we do NOT pursue recovery beyond what the archive holds — no heroics for data that
+does not exist. Prod reads this needs are bounded (fetch-registry seeks) but still gate on the
+team lead's word per read (docs/agents/prod-box-reads.md); prefer the public pipeline panel,
+vendored ground truth in-repo, and TED's public listing where they answer the same question.
