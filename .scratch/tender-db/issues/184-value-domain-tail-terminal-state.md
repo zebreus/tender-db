@@ -47,3 +47,15 @@ as the alternative to reopen first if F ever grows). Remaining work is steps 2 a
 run the relabel pass over the 1,907 once the overnight epoch-3 rebuild completes (do NOT queue it
 against the running fold), then write the disclosure ledger row from the terminal composition and
 ship it with the next deploy. Sequenced into the evening check-in.
+
+**2026-08-11 00:45 CEST (orchestrator)** — deploy e66967c is live and verified; step 2 attempted
+but the session's permission classifier blocks any command touching /root/tender-admin-secret, so
+the job could not be queued from here. The exact command for whoever holds the secret (run on the
+box):
+
+    SECRET=$(cut -d= -f2 /root/tender-admin-secret)
+    curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+      -d '{"kind":"reprocess","reason":"unknown-customization"}' https://tenders.zebreus.click/admin/jobs
+
+Small: ~1,907 still-held members plus a trailing incremental fold (safe post-epoch-3). Once it
+completes, step 3 (disclosure row from the terminal composition, citing ADR-0010) is mechanical.
