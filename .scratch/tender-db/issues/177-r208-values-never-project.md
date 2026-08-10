@@ -101,3 +101,17 @@ Acceptance:
 - issue 176's matrix gains the value column.
 - issues 132/134's negative-amount ratio analysis re-checked after the era
   refold (their populations were measured without r208 estimates present).
+
+## Deploy + refold, observed live (2026-08-10)
+
+Deployed in e5dfac2 (with 116/87/176). `refold ted-export-r208` re-queued
+2,694,814 notices in ~50 min. The follow-up `project rebuild=false` took the
+issue-58-v1 legacy fallback (any legacy notice in the delta → full corpus)
+and, with every tender epoch-stale from the 2→3 bump, is rewriting all
+7,925,880 tenders through the chain-compare path: 674,798 tenders /
+1,500,104 versions at t+170 min (~4.5K tenders/min in the legacy-heavy
+segment), memory flat, journal clean. That full-corpus cost is filed as
+issue 179 — this refold's wall-clock is the baseline there, NOT a clean
+pipelined-fold measurement for issue 175 (the fallback path dominates).
+Era verification (2011-2016 tenders serving estimated_value via API)
+pending fold completion.
