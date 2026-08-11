@@ -71,3 +71,11 @@ The reclaim campaign is COMPLETE in issue 144's sense. Caveat recorded: quaranti
 counts these keeps in the actionable headline (class is keyed by reason alone); if that misread
 ever matters, a per-detail class or a KeptByPolicy class is the follow-up — deliberately not filed
 now, the ledger row is the agreed disclosure.
+
+**2026-08-11 11:4x CEST (orchestrator)** — deployed (6f26c5f) and VERIFIED on the live panel: the
+"sub-cent amounts (kept by policy)" row shows outstanding **3,212** — the 1,661 relabeled rows plus
+~1,551 pre-existing unrepresentable-value rows carrying the same sub-cent detail, i.e. the key
+discloses the WHOLE population, not just the relabel. by_reason: unknown-customization 3,
+unrepresentable-value 5,156, unclaimed-content 6,173, duplicate-section-id 23, ambiguous-field 14.
+The 5,156 − 3,212 = 1,944 other unrepresentable-value details (incl. the 51 negative amounts,
+issue 132) remain the only unattributed value slice. RESOLVED-VERIFIED.
