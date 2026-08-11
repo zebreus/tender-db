@@ -244,3 +244,9 @@ share explicitly owned by the amounts-as-cents decision.
 **2026-08-10 (orchestrator)** — the cause-F policy question this diagnosis left open is decided:
 ADR-0010 confirms integer cents; F is a documented keep. Terminal relabel pass + dashboard
 disclosure are owned by issue 184.
+
+**2026-08-11 (orchestrator)** — the end-state this diagnosis defined is reached: after the six
+mechanical fixes (825dd64) and the terminal relabel pass (job 608), the tail is F-dominated
+(1,661 sub-cent keeps, owned by ADR-0010 and disclosed on the ledger) plus named small residues
+(206 unclaimed-content, 23 duplicate-section-id, 14 ambiguous-field, 3 sdk-1.2 unknown).
+The reclaim campaign is declared complete. Issue 184 has the close-out numbers.

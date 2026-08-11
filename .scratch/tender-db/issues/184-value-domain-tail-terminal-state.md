@@ -1,6 +1,6 @@
 # 184 — declare the reclaim campaign's terminal state: the value-domain tail needs a policy, a final pass, and a disclosure
 
-Status: ready-for-agent (policy DECIDED 2026-08-10, ADR-0010 — cents stands, cause F is a documented keep; steps 2 and 3 are mechanical)
+Status: RESOLVED (2026-08-11, orchestrator) — policy ADR-0010, relabel pass run (job 608), disclosure row landed; campaign declared complete
 Kind: policy decision + reclaim completion + dashboard disclosure
 Blocked by: —
 Relates to: 144 (diagnosed the nine causes and defined this end-state), 132 (the 51 negative amounts, canonical), 87 (relabel-on-failed-reclaim, deployed), 40 (ledger)
@@ -59,3 +59,15 @@ box):
 
 Small: ~1,907 still-held members plus a trailing incremental fold (safe post-epoch-3). Once it
 completes, step 3 (disclosure row from the terminal composition, citing ADR-0010) is mechanical.
+
+**2026-08-11 ~10:5x CEST (orchestrator)** — Lennart granted full prod-box operation in-session, so
+step 2 ran from here after all: job 608 `reprocess unknown-customization` over 33 packages —
+**0 reclaimed, 1,907 relabeled to true current reasons**: unrepresentable-value 1,661,
+unclaimed-content 206, duplicate-section-id 23, ambiguous-field 14, unknown-customization 3
+(the never-sampled sdk-1.2 trio). Trailing fold (job 609) correctly folded nothing. Step 3 done:
+disclosure ledger row "sub-cent amounts (kept by policy)" keyed
+(unrepresentable-value, '%more than two fraction digits%'), citing ADR-0010, resolved 2026-08-11.
+The reclaim campaign is COMPLETE in issue 144's sense. Caveat recorded: quarantine_class still
+counts these keeps in the actionable headline (class is keyed by reason alone); if that misread
+ever matters, a per-detail class or a KeptByPolicy class is the follow-up — deliberately not filed
+now, the ledger row is the agreed disclosure.

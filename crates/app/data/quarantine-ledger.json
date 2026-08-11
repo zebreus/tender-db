@@ -88,6 +88,14 @@
     "resolved": "2026-07-29"
   },
   {
+    "category": "sub-cent amounts (kept by policy)",
+    "reason": "unrepresentable-value",
+    "detail_like": "%more than two fraction digits%",
+    "diagnosis": "Notices whose published amounts carry more than two fraction digits - sub-cent precision the integer-cents representation cannot hold exactly (ADR-0010 confirmed the representation against exactly this population; rounding was rejected because it would introduce values the source never published, issue 131's line). These are real notices deliberately kept in quarantine: coverage loss by decision, not by defect. They are the dominant share of the reclaim campaign's terminal tail - the 2026-08-11 relabel pass (issues 87/184) drained the stale unknown-customization labels into true current reasons: 1,661 of 1,907 landed here, alongside 206 unclaimed-content, 23 duplicate-section-id, 14 ambiguous-field and 3 genuinely-unknown sdk-1.2 rows. With that pass the campaign is complete in issue 144's sense: everything structural is fixed and reclaimed, and what remains is either owned by this policy or small, precisely named residues. Reopen via claim-and-store (ADR-0010's named alternative) if this population ever grows past a nuisance.",
+    "fix": "ADR-0010 · issues 144/184",
+    "resolved": "2026-08-11"
+  },
+  {
     "category": "eForms-DE 1.x (German dialect)",
     "reason": "unknown-customization",
     "detail_like": "%eforms-de-1.%",
