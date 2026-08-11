@@ -69,3 +69,8 @@ rewrite completed 18:46:46Z: `done: 14,246,456 notices → 7,925,880 tenders (70
 14,246,456 versions, 63,284,607 change rows in 21,745.1s` (~6h02m; apply phase 16,304.9s);
 `WAL after end-of-run index builds: 0 MB`. Caveat stands: this is the issue-58-v1 legacy-fallback
 full-rewrite path (issue 179), NOT a clean issue-175 pipeline measurement.
+
+**2026-08-11 10:05 CEST (orchestrator)** — first steady-state incremental tick on epoch 3 (09:36):
+3,250 changed notices → 3,132 Tenders folded in 117.3s, `group step legacy-update: 0.0s (0 legacy)`.
+The issue-58-v1 legacy fallback does NOT fire once epochs match — this issue's cost is confined to
+epoch-bumping deploys, as filed. Daily-delta baseline for comparison with any future epoch bump.
