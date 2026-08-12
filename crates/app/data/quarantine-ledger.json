@@ -15,16 +15,17 @@
     "detail_like": "XML with DTD detected",
     "member_path_like": "%.__",
     "member_path_unlike": "%.en",
-    "diagnosis": "154 of the 2008 held siblings have an English original that is held but did NOT parse, so the duplicate argument does not apply to them: nothing readable was recovered. They stay OUTSTANDING and are tracked as their own finding rather than swept in with the duplicates. Held-but-unextracted, not lost - we have the bytes and failed to read them, which is a parse defect to fix, not data to mourn. The sibling guard rejects them by construction, so the marker cannot absorb them.",
-    "fix": "issue 84 / #29 (outstanding)"
+    "diagnosis": "154 of the 2008 held siblings have an English original that is held but did NOT parse, so the duplicate argument does not apply to them: nothing readable was recovered. Issue 84's marker excluded them by its parsed-original guard and they were tracked as their own OUTSTANDING finding. CAVEAT (2026-08-12): the reprocess-time skip flagger lacks that guard and swept these 154 into skipped-by-policy during the issue-139 reclaim runs, so this row currently reads outstanding 0 without the underlying fact changing - their 7 English originals are still held, now truthfully labeled unclaimed-content. Issue 190 owns the guard and the repair; if the originals are ever reclaimed, skipped-by-policy becomes the truthful terminal state and this caveat retires.",
+    "fix": "issue 84 / #29 · flag guard + repair: issue 190"
   },
   {
     "category": "2010-03 DTD failures (not siblings)",
     "reason": "unparsable-xml",
     "detail_like": "XML with DTD detected",
     "member_path_like": "%.xml",
-    "diagnosis": "1,898 rows carrying the same DTD label come from a single fetch - TED monthly 2010-03 - and are NOT language siblings at all: their member paths end .xml with no language code, where every 2008 row carries a 2-letter language. The duplicate-sibling reasoning cannot be applied to them, and they are outside the 2008 scope the marker requires, so they stay OUTSTANDING and untouched. Found only by attributing the remainder: every earlier query was scoped to 2008, and that scoping hid them. Needs its own investigation - start by establishing what these files are, not by re-running the sibling test.",
-    "fix": "issue 84 (found) · issue 139 (owns)"
+    "diagnosis": "1,898 rows from a single fetch - TED monthly 2010-03 - that are not language siblings at all: one daily (2010-03-10, OJS edition 048) was converted by TED to per-notice TED_EXPORT XML behind an inline DOCTYPE, the only such day in the text era. The dispatcher's XXE-safe DTD strip let them dispatch as notices, but the deep parse fed raw bytes to the parser and re-quarantined every one - the strip is now applied on the deep-parse path too, and the whole day is reclaimed into the tender layer. These were real notices held whole, though never a coverage hole: 2010 is a text-era year the text profile already covers at ~99.5%, so the reclaim is largely language-twin content and honest bookkeeping. Found only by attributing the remainder: every earlier query was scoped to 2008, and that scoping hid them.",
+    "fix": "issue 84 (found) · issue 139 (resolved: r209 deep-parse DTD strip, 145277a)",
+    "resolved": "2026-08-12"
   },
   {
     "category": "r208 award @REASON",

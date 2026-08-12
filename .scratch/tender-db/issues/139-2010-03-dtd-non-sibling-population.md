@@ -1,6 +1,6 @@
 # 139 — The 1,898 "XML with DTD detected" rows from ted/monthly/2010-03: a non-sibling population needing its own investigation
 
-Status: FIX LANDED (2026-08-12) — deep-parse DTD strip + reclaim dual-addressing, tests green; awaiting deploy + reprocess to drain
+Status: RESOLVED-VERIFIED (2026-08-12) — 1,898 reclaimed into the tender layer, 7 relabeled unclaimed-content, ledger row outstanding 0 / reclaimed 1,898 on the live panel
 Filed: 2026-08-05 (team-lead, from proj-fix's 9fe744c + sdk-vendor's d294901/137)
 Blocked by: nothing (independent of #29's execute — excluded from it by construction)
 
@@ -120,3 +120,23 @@ on the fresh-record path. Next: after the fold completes, deploy, re-run the buc
 journal line for one member, fix the real addressing mismatch, drain. (Row-level DB access
 remains unavailable: /v1/sql token minting is classifier-blocked, no snapshot exists, and the
 serving DB is never queried directly per prod-box policy.)
+
+**2026-08-12 ~11:3x CEST (orchestrator) — CLOSED. There was no third defect: job 612's stamps
+had landed all along, and the "unchanged" panel was a stale read snapshot.** The verification
+re-run (job 619, rev 53d4b06) listed only fetch 217 in the bucket — fetch 195's 1,898 rows no
+longer match (unparsable-xml, DTD, unreclaimed) — walked 593,010 sibling declines and found
+0 reclaimable, 0 still held, with ZERO zero-stamp journal lines. The panel I had read at 09:37
+served numbers matching the DB at exactly 08:55 (post-610-flags, pre-612): `measured_at` was
+fresh while the data was pinned — the dashboard's reader held a read snapshot from the 08:55
+service restart, the same pinned reader that kept the fold's WAL checkpoints `busy=true` for
+two hours. Filed as issue 191. After today's restart the panel converged precisely:
+unparsable-xml 8,400 → 6,341 (−1,898 reclaimed, −7 relabeled, −154 skipped/issue 190),
+unclaimed-content 6,173 → 6,180, the 2010-03 ledger row outstanding 0 / reclaimed 1,898. The
+fold (job 613) carried the reclaims into the tender layer: 7,927,854 tenders (+1,974 over the
+epoch-3 baseline), 5,920 versions. Final accounting for the bucket: 1,898 real 2010 notices
+reclaimed (language-twin content of a year text already covers at 99.5% — never a coverage
+hole, now honest bookkeeping); 7 `.en` originals truthfully relabeled unclaimed-content (issue
+183's population); 154 protected siblings swept to skipped-by-policy by the unguarded flag pass
+(issue 190 owns the guard + repair). The observability (zero-stamp journal lines) and the
+already-parsed-arm ledger stamping stay — they turn any future recurrence of this shape into a
+one-journal-line diagnosis.
