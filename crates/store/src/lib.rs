@@ -990,6 +990,9 @@ impl Db {
             // missed (issue 139's second act) could never converge, because every
             // re-run would stop here and stamp nothing.
             Some((id, state)) if state == "parsed" => {
+                // Opportunistic: resolves a stranded ledger row when one exists
+                // (issue 139's convergence path); zero stamped is the ordinary
+                // case here — most already-parsed records were never quarantined.
                 self.stamp_reclaimed(conn, n, id).await?;
                 Ok(Reclaim::AlreadyParsed)
             }
@@ -1017,7 +1020,17 @@ impl Db {
                         (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
                     )
                     .await?;
-                    self.stamp_reclaimed(conn, n, id).await?;
+                    // Zero here IS anomalous — the member came off the held
+                    // list, so a ledger row must exist (issue 139's exact
+                    // failure shape) — and must be loud in the journal.
+                    if self.stamp_reclaimed(conn, n, id).await? == 0 {
+                        eprintln!(
+                            "[store] reclaim stamped NO ledger rows for notice {id} \
+                             (fetch {} member {:?}) — parsed, but no quarantine row \
+                             matched either address (issue 139)",
+                            n.fetch_id, n.member_path
+                        );
+                    }
                     Ok(Reclaim::Reclaimed)
                 }
                 _ => {
@@ -1077,11 +1090,13 @@ impl Db {
     /// Flag a member's held ledger rows reclaimed, under BOTH addresses a row can
     /// live at: parse-level (`notice_id = ?`) and profile-level
     /// (`fetch_id`/`member_path` with `notice_id IS NULL`) — disjoint by
-    /// construction, so no row is stamped twice. Logs when a reclaim resolves NO
-    /// ledger row: that is issue 139's exact failure shape (the notice reclaimed,
-    /// the panel forever claiming the member outstanding), and it must be loud in
-    /// the journal rather than silent in a report that only counts notices.
-    async fn stamp_reclaimed(&self, conn: &Connection, n: &Notice, id: i64) -> turso::Result<()> {
+    /// construction, so no row is stamped twice. Returns rows stamped: on the
+    /// RECLAIMED path zero is issue 139's failure shape (the member came off the
+    /// held list, so a row must exist) and the caller logs it loudly; on the
+    /// ALREADY-PARSED path zero is the ordinary case (a text member's co-resident
+    /// records were never quarantined — 1.06M of them in issue 183's pass — so
+    /// logging there would bury the signal under half a million lines).
+    async fn stamp_reclaimed(&self, conn: &Connection, n: &Notice, id: i64) -> turso::Result<u64> {
         let by_notice = conn
             .execute(
                 "UPDATE quarantine SET reprocessed_at = ?
@@ -1097,15 +1112,7 @@ impl Db {
                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
             )
             .await?;
-        if by_notice == 0 && by_member == 0 {
-            eprintln!(
-                "[store] reclaim stamped NO ledger rows for notice {id} \
-                 (fetch {} member {:?}) — parsed, but no quarantine row matched \
-                 either address (issue 139)",
-                n.fetch_id, n.member_path
-            );
-        }
-        Ok(())
+        Ok(by_notice + by_member)
     }
 
     /// Record a re-parse attempt that left the member held (issue 87). A
