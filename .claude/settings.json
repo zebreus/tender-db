@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh root@zebreus.click *)",
+      "Bash(ssh root@zebreus.click*)",
+      "Bash(./deploy.sh*)",
+      "Bash(./deploy.sh *)"
+    ]
+  }
+}
