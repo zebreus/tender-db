@@ -111,6 +111,14 @@ pub struct Supervisor {
     wake: Notify,
     next_id: AtomicU64,
     current: RwLock<Option<JobProgress>>,
+    /// Monotonic count of CONCLUDED jobs (ok or error). The dashboard's
+    /// change-gate folds this into its watermark: a reprocess stamps quarantine
+    /// rows and flips parse states IN PLACE — no new notice id, no fetch row, no
+    /// change-log cursor movement — so the (cursor, newest-fetch, newest-notice)
+    /// key alone reads "nothing happened" and the heavy sections are never
+    /// re-measured. That served an hours-stale quarantine panel under a fresh
+    /// `measured_at` and cost issue 139 a diagnosis morning (issue 191).
+    jobs_completed: AtomicU64,
     /// The isolated runtime a job's heavy body runs on (issue 61), kept off the
     /// main API/SSE/dashboard runtime so blocking turso preads never starve it.
     worker_runtime: tokio::runtime::Handle,
@@ -277,8 +285,16 @@ impl Supervisor {
             wake: Notify::new(),
             next_id: AtomicU64::new(1),
             current: RwLock::new(None),
+            jobs_completed: AtomicU64::new(0),
             worker_runtime: spawn_worker_runtime(),
         }
+    }
+
+    /// How many jobs have concluded since boot — the dashboard change-gate's
+    /// signal that job-shaped writes (which move no cursor and add no rows) may
+    /// have changed what the heavy sections display. See the field doc.
+    pub fn jobs_completed(&self) -> u64 {
+        self.jobs_completed.load(Ordering::Relaxed)
     }
 
     // ---------------------------------------------------------------- queueing
@@ -742,6 +758,7 @@ impl Supervisor {
 
         let result = self.run_spec(&job).await;
         self.set_current(None);
+        self.jobs_completed.fetch_add(1, Ordering::Relaxed);
 
         let (outcome, counts) = match result {
             Ok(summary) => ("ok", summary),

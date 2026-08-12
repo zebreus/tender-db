@@ -117,9 +117,14 @@ pub fn init(db: Arc<Db>) {
                     // Skip the heavy coverage scan while a write-heavy job holds the
                     // WAL (issue 53) — see `refresh_into`. The supervisor may not
                     // exist yet in a unit-test server, in which case nothing writes.
-                    let heavy_write =
-                        crate::supervisor::get().is_some_and(|s| s.heavy_write_in_progress());
-                    refresh_into(&db, cell(), heavy_write, &mut last_heavy_key).await;
+                    let sup = crate::supervisor::get();
+                    let heavy_write = sup.as_ref().is_some_and(|s| s.heavy_write_in_progress());
+                    // Concluded-job count in the watermark (issue 191): a job's
+                    // in-place writes (reclaim stamps, skip flags, parse-state
+                    // flips) move no cursor and add no rows, so without this a
+                    // finished reprocess never triggered a heavy re-measure.
+                    let jobs_completed = sup.map_or(0, |s| s.jobs_completed());
+                    refresh_into(&db, cell(), heavy_write, jobs_completed, &mut last_heavy_key).await;
                     tokio::time::sleep(REFRESH).await;
                 }
             });
@@ -139,18 +144,24 @@ struct HeavyKey {
     cursor: i64,
     newest_fetch_at: Option<i64>,
     newest_notice_at: Option<i64>,
+    /// Concluded-job count (issue 191). A reprocess stamps quarantine rows and
+    /// flips parse states IN PLACE — none of the three fields above move — so
+    /// without this the heavy sections were never re-measured after a reclaim
+    /// and the panel served hours-stale numbers under a fresh `measured_at`.
+    jobs_completed: u64,
 }
 
 /// Read the current [`HeavyKey`] — O(1): the cursor from the in-memory doorbell (no
 /// DB), the fetch/notice instants from `import_lag` (small-table MAX + an id-PK
 /// read). `None` only if the watermark read itself errors, in which case the caller
 /// measures (never skips on an error).
-async fn current_heavy_key(db: &Db) -> Option<HeavyKey> {
+async fn current_heavy_key(db: &Db, jobs_completed: u64) -> Option<HeavyKey> {
     let lag = db.import_lag().await.ok()?;
     Some(HeavyKey {
         cursor: db.current_cursor(),
         newest_fetch_at: lag.newest_fetch_at,
         newest_notice_at: lag.newest_notice_at,
+        jobs_completed,
     })
 }
 
@@ -164,6 +175,7 @@ async fn refresh_into(
     db: &Db,
     cell: &RwLock<Dashboard>,
     heavy_write_active: bool,
+    jobs_completed: u64,
     last_heavy_key: &mut Option<HeavyKey>,
 ) {
     let now = store::now_unix();
@@ -204,7 +216,7 @@ async fn refresh_into(
     // cold-scan I/O competes with ingestion). The watermark is O(1). A fully-
     // quarantined package with no new notice is the only residual staleness, tolerable
     // on a dashboard; during an active job the `heavy_write` gate above already skips.
-    let key = current_heavy_key(db).await;
+    let key = current_heavy_key(db, jobs_completed).await;
     if let (Some(k), Some(last)) = (key.as_ref(), last_heavy_key.as_ref())
         && k == last
     {
@@ -231,7 +243,7 @@ pub async fn measure(db: &Db) -> Dashboard {
     let cell = RwLock::new(Dashboard::default());
     // One-shot: measure every section, including the heavy coverage scan. A fresh
     // `None` watermark forces the measure (never skips).
-    refresh_into(db, &cell, false, &mut None).await;
+    refresh_into(db, &cell, false, 0, &mut None).await;
     cell.into_inner().expect("snapshot")
 }
 
@@ -501,7 +513,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, &mut None).await;
+        refresh_into(&db, &cell, false, 0, &mut None).await;
         let d = cell.read().unwrap();
         assert!(d.system.is_some(), "system");
         assert!(d.counts.is_some(), "counts");
@@ -528,7 +540,7 @@ mod tests {
 
         // A prior idle pass measured coverage.
         let cell = RwLock::new(Dashboard::default());
-        refresh_into(&db, &cell, false, &mut None).await;
+        refresh_into(&db, &cell, false, 0, &mut None).await;
         assert!(cell.read().unwrap().coverage.is_some(), "an idle pass measures coverage");
 
         // Now a write-heavy job is active: only the cheap `system` point-read
@@ -536,7 +548,7 @@ mod tests {
         // counts, coverage) is skipped and its last value preserved — no new
         // WAL-pinning reader snapshot is opened. (Each guard is scoped so it is
         // never held across the next await.)
-        refresh_into(&db, &cell, true, &mut None).await;
+        refresh_into(&db, &cell, true, 0, &mut None).await;
         {
             let d = cell.read().unwrap();
             assert!(d.system.is_some(), "system (cheap point read) still refreshes while a job runs");
@@ -552,7 +564,7 @@ mod tests {
         // WAL-pinning snapshot. This is the airtight property: during ingestion
         // the refresher holds no long-lived reader at all (issue 53).
         let fresh = RwLock::new(Dashboard::default());
-        refresh_into(&db, &fresh, true, &mut None).await;
+        refresh_into(&db, &fresh, true, 0, &mut None).await;
         {
             let f = fresh.read().unwrap();
             assert!(f.system.is_some(), "the cheap point-read section lands");
@@ -582,13 +594,13 @@ mod tests {
         let mut key = None;
 
         // First pass measures the heavy sections and records the watermark.
-        refresh_into(&db, &cell, false, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key).await;
         assert!(key.is_some(), "the first pass records the heavy-measure watermark");
         assert!(cell.read().unwrap().counts.is_some(), "the first pass measures counts");
 
         // (A) UNCHANGED → SKIP. Poison `counts`; an unchanged pass must leave it.
         cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
-        refresh_into(&db, &cell, false, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key).await;
         assert_eq!(
             cell.read().unwrap().counts.as_ref().unwrap()[0].label,
             "SENTINEL",
@@ -608,7 +620,7 @@ mod tests {
         })
         .await
         .unwrap();
-        refresh_into(&db, &cell, false, &mut key).await;
+        refresh_into(&db, &cell, false, 0, &mut key).await;
         let d = cell.read().unwrap();
         assert_ne!(
             d.counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
@@ -616,6 +628,24 @@ mod tests {
             "a write that advances the watermark forces a re-measure (poison overwritten)"
         );
         assert!(d.system.is_some(), "system refreshes every pass regardless of the gate");
+        drop(d);
+
+        // (C) A CONCLUDED JOB forces a re-measure even when nothing else moved
+        // (issue 191): a reprocess stamps quarantine rows in place — no cursor
+        // movement, no new fetch or notice — and the panel must still refresh.
+        cell.write().unwrap().counts = Some(vec![Count { label: "SENTINEL".into(), value: -1 }]);
+        refresh_into(&db, &cell, false, 0, &mut key).await;
+        assert_eq!(
+            cell.read().unwrap().counts.as_ref().unwrap()[0].label,
+            "SENTINEL",
+            "still-unchanged DB and job count: the gate skips"
+        );
+        refresh_into(&db, &cell, false, 1, &mut key).await;
+        assert_ne!(
+            cell.read().unwrap().counts.as_ref().unwrap().first().map(|c| c.label.as_str()),
+            Some("SENTINEL"),
+            "a concluded job alone forces the heavy re-measure (issue 191)"
+        );
 
         let _ = std::fs::remove_file(&path);
     }
