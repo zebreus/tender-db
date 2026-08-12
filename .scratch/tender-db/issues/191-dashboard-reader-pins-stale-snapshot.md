@@ -1,6 +1,6 @@
 # 191 — the dashboard change-gate is blind to in-place job writes: fresh `measured_at`, hours-old heavy sections
 
-Status: RESOLVED (2026-08-12, orchestrator) — concluded-job count folded into the change-gate watermark; regression test in the gate suite
+Status: RESOLVED-VERIFIED (2026-08-12) — verified live: the repair job concluded and the panel re-measured within the 60s tick, no restart
 Kind: correctness (observability surface)
 Relates to: 139 (cost a morning: a completed reclaim read as a failed one), 61 (the change-gate this extends), 53 (the heavy-write gate, still correct)
 

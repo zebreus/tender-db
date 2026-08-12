@@ -15,8 +15,8 @@
     "detail_like": "XML with DTD detected",
     "member_path_like": "%.__",
     "member_path_unlike": "%.en",
-    "diagnosis": "154 of the 2008 held siblings have an English original that is held but did NOT parse, so the duplicate argument does not apply to them: nothing readable was recovered. Issue 84's marker excluded them by its parsed-original guard and they were tracked as their own OUTSTANDING finding. CAVEAT (2026-08-12): the reprocess-time skip flagger lacks that guard and swept these 154 into skipped-by-policy during the issue-139 reclaim runs, so this row currently reads outstanding 0 without the underlying fact changing - their 7 English originals are still held, now truthfully labeled unclaimed-content. Issue 190 owns the guard and the repair; if the originals are ever reclaimed, skipped-by-policy becomes the truthful terminal state and this caveat retires.",
-    "fix": "issue 84 / #29 · flag guard + repair: issue 190"
+    "diagnosis": "154 of the 2008 held siblings have an English original that is held but did NOT parse, so the duplicate argument does not apply to them: nothing readable was recovered. They stay OUTSTANDING and are tracked as their own finding rather than swept in with the duplicates. Held-but-unextracted, not lost - we have the bytes and failed to read them, which is a parse defect to fix, not data to mourn. Both skip paths now enforce the parsed-original guard: the one-time marker always did, and the reprocess-time flag pass gained it in issue 190 after a guard-free walk briefly swept these rows (repaired same day, restored to outstanding). If their 7 English originals - held under unclaimed-content - are ever reclaimed, the guard accepts the siblings and skipped-by-policy becomes their truthful terminal state.",
+    "fix": "issue 84 / #29 (outstanding) · guard + repair: issue 190"
   },
   {
     "category": "2010-03 DTD failures (not siblings)",

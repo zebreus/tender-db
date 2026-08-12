@@ -1,6 +1,6 @@
 # 190 — the reprocess-time skip flag has no parsed-original guard: it swept the 154 protected siblings into skipped-by-policy
 
-Status: needs-triage
+Status: RESOLVED-VERIFIED (2026-08-12) — guard landed in flag_skipped_members, repair job restored all 154 on prod, panel reads outstanding 154 again
 Kind: data-quality regression (bookkeeping, not data loss)
 Blocked by: —
 Relates to: 84 (defined the guard and the 154's protected-outstanding status), 139 (the reprocess runs that did the sweeping)
