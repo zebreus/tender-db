@@ -1,6 +1,6 @@
 # 183 — `unclaimed-content`: the issue-31 fixes landed but the reclaim never finished, and 2,617 rows are unattributed
 
-Status: ready-for-agent
+Status: RESOLVED (2026-08-12) — reclaim complete and verified (RP and @REASON ledger rows at outstanding 0); remainder attributed on-row; detail readout pending /v1/sql access; 77-row stamping gap split off as issue 193
 Kind: reclaim completion + attribution
 Blocked by: —
 Relates to: 31 (the parser fixes), 40 (ledger), 76 (reprocess mechanism), 137 (measured the bucket unchanged since 2026-08-05)
@@ -32,3 +32,24 @@ table shows the bucket byte-identical on 2026-08-05: nothing is draining it.
    appear get their rows.
 
 Bounded: the bucket is 5,967 members — a small job by the standards of the 1.1M eForms pass.
+
+## Comments
+
+**2026-08-12 afternoon (orchestrator) — the pass ran (job 623, 157 packages, rev a953188) and
+the reclaim half is DONE.** Results, verified on the live panel after the trailing fold
+(job 624: 3,553 versions; tender layer at 7,932,822):
+
+- **3,352 reclaimed** — the whole fixed backlog: text RP co-financing (ledger row now
+  outstanding 0, reclaimed 4,861 lifetime) and r208 award @REASON (outstanding 0,
+  reclaimed 24), plus their long tail.
+- **unclaimed-content 6,180 → 2,829.** The remainder re-recorded its CURRENT failure on-row
+  (issue 87's contract): still-genuinely-unclaimed content under today's parsers. Reading the
+  detail-level split of the 2,829 (step 2's attribution table) needs row access — blocked on
+  the /v1/sql token with issues 180–182; the reasons are on the rows, waiting.
+- **77 records now fail as missing-publication-id but their rows did not relabel** —
+  `record_reclaim_attempt`'s member-path addressing misses identity-less text records (same
+  family as 139's second act, fail-safe direction). Split off as issue 193 (77 rows, bounded).
+- 1,062,584 co-resident text records hit the already-parsed arm (one held record puts its whole
+  member file on the walk list); harmless, but it exposed that the new zero-stamp journal line
+  fired for every one of them — fixed same day (1761e2a): the warning now fires only on the
+  reclaimed path, where a silent zero is issue 139's failure shape.
