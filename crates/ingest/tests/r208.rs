@@ -232,3 +232,37 @@ fn oth_not_yields_chain_edge_and_prose_body() {
     assert!(matches!(value(&f, "PROCEDURE", "TED-CPV_CODE"),
         NoticeValue::Classification { scheme, code } if scheme == "cpv" && code == "45000000"));
 }
+
+/// Issue 139: the 2010-03-10 converted daily ships its 1,898 TED_EXPORT
+/// members behind an inline `<!DOCTYPE TED_EXPORT SYSTEM "TED_EXPORT.dtd">`.
+/// The dispatcher strips it to reach the root, so the member passes dispatch
+/// as a notice — the deep parse must strip the same way, or the member
+/// re-quarantines as unparsable-xml for a declaration the parser never
+/// needed. Prepending the era's exact DOCTYPE to a committed fixture must
+/// change nothing about its parse.
+#[test]
+fn notice_behind_a_doctype_parses_identically() {
+    let relative = "r208/f02-000333-2014.xml";
+    let path = format!("tests/fixtures/{relative}");
+    let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    let xml = std::str::from_utf8(&bytes).unwrap();
+    let at = xml.find("?>").map(|i| i + 2).unwrap_or(0);
+    let doctyped =
+        format!("{}<!DOCTYPE TED_EXPORT SYSTEM \"TED_EXPORT.dtd\">{}", &xml[..at], &xml[at..]);
+
+    let Disposition::Records(records) = profile::dispatch(relative, doctyped.as_bytes()) else {
+        panic!("doctyped member skipped at dispatch");
+    };
+    let [Record::Notice(notice)] = &records[..] else {
+        panic!("doctyped member did not dispatch as one notice");
+    };
+
+    let Parse::Parsed(with_dtd) = parse_payload(&notice.profile, doctyped.as_bytes()) else {
+        panic!("doctyped member failed the deep parse (issue 139 regression)");
+    };
+    let Parse::Parsed(plain) = parse_payload(&notice.profile, &bytes) else {
+        panic!("fixture must parse without the DOCTYPE");
+    };
+    assert_eq!(with_dtd.values, plain.values, "the strip must be lossless");
+    assert_eq!(with_dtd.sections.len(), plain.sections.len());
+}

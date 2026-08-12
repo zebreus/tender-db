@@ -15,10 +15,23 @@ fn main() {
         Disposition::Records(records) => {
             for r in records {
                 match r {
-                    Record::Notice(n) => println!(
-                        "NOTICE: publication_id={} profile={} declared_version={:?}",
-                        n.publication_id, n.profile, n.declared_version
-                    ),
+                    Record::Notice(n) => {
+                        println!(
+                            "NOTICE: publication_id={} profile={} declared_version={:?}",
+                            n.publication_id, n.profile, n.declared_version
+                        );
+                        match ingest::process::parse_payload(&n.profile, &bytes) {
+                            store::Parse::Parsed(p) => println!(
+                                "PARSED: {} sections, {} values",
+                                p.sections.len(),
+                                p.values.len()
+                            ),
+                            store::Parse::Quarantined { reason, detail } => {
+                                println!("DEEP-PARSE QUARANTINE: reason={reason} detail={detail:?}")
+                            }
+                            store::Parse::Pending => println!("DEEP-PARSE PENDING"),
+                        }
+                    }
                     Record::Quarantine(q) => println!(
                         "QUARANTINE: reason={} detail={:?} profile={:?}",
                         q.reason, q.detail, q.profile

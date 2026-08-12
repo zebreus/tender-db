@@ -44,7 +44,12 @@ pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
     let Ok(xml) = std::str::from_utf8(bytes) else {
         return store::Parse::Quarantined { reason: "not-utf8".into(), detail: None };
     };
-    match parse(xml) {
+    // A converted-era daily (2010-03-10, issue 139) ships TED_EXPORT members
+    // behind an inline DOCTYPE. The dispatcher already strips it to reach the
+    // root; the deep parse must strip the same way or those members pass
+    // dispatch and then re-quarantine here. Same XXE-safe strip as internal-ojs.
+    let stripped = crate::profile::strip_doctype(xml);
+    match parse(&stripped) {
         Ok(parsed) => store::Parse::Parsed(parsed),
         Err(Rejected { reason, detail }) => {
             store::Parse::Quarantined { reason: reason.into(), detail: Some(detail) }

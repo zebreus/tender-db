@@ -990,6 +990,16 @@ impl Db {
             // parsed layer in place when it now parses. This is the case a plain
             // re-run of `process` can never reach (its `INSERT OR IGNORE` short-
             // circuits) — OC (issue 72) and the SDK cohort (issue 71).
+            // Either way the member's held rows may live under TWO addresses: a
+            // parse-level quarantine carries this notice_id, while a profile-level
+            // one (quarantined at dispatch, before an identity existed) has
+            // notice_id NULL and is only reachable by (fetch_id, member_path) —
+            // and a prior failed reclaim creates exactly that split, because its
+            // record_notice_tx inserts the notice row while the original
+            // profile-level quarantine row keeps its NULL notice_id (issue 139:
+            // 1,905 members stamped "notice_id = ?" that matched nothing). Both
+            // UPDATEs run, disjoint by construction (`notice_id = ?` vs
+            // `notice_id IS NULL`), so no row is ever stamped twice.
             Some((id, _)) => match parse {
                 Parse::Parsed(parsed) => {
                     self.insert_parsed(conn, id, parsed).await?;
@@ -1005,11 +1015,26 @@ impl Db {
                         (Value::Integer(n.ingested_at), Value::Integer(id)),
                     )
                     .await?;
+                    conn.execute(
+                        "UPDATE quarantine SET reprocessed_at = ?
+                          WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                            AND reprocessed_at IS NULL",
+                        (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
+                    )
+                    .await?;
                     Ok(Reclaim::Reclaimed)
                 }
                 _ => {
                     self.stamp_still_held(conn, parse, n.ingested_at, "notice_id = ?", vec![Value::Integer(id)])
                         .await?;
+                    self.stamp_still_held(
+                        conn,
+                        parse,
+                        n.ingested_at,
+                        "fetch_id = ? AND member_path = ? AND notice_id IS NULL",
+                        vec![Value::Integer(n.fetch_id), t(&n.member_path)],
+                    )
+                    .await?;
                     Ok(Reclaim::StillHeld)
                 }
             },
@@ -4189,6 +4214,85 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, "SELECT parse_state FROM notices WHERE publication_id='123-2001'").await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path='pkg/m1'").await, Some(999));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 139: a FAILED reclaim of a profile-level member splits its state —
+    /// `record_notice_tx` inserts the notice row (state quarantined) while the
+    /// original quarantine row keeps its NULL `notice_id` (the dispatch hash and
+    /// the raw-bytes hash are the same, so the parse-level insert is ignored by
+    /// UNIQUE(fetch_id, member_path, content_hash)). Every LATER reclaim then
+    /// takes the notice-exists branch, whose `notice_id = ?` addressing alone
+    /// matches nothing: 1,905 members were stamped into the void, and even a
+    /// successful re-parse would have left their ledger rows outstanding
+    /// forever. Both branch paths must also reach the
+    /// (fetch_id, member_path, notice_id IS NULL) address.
+    #[tokio::test]
+    async fn reclaim_reaches_profile_level_rows_after_a_failed_attempt_created_the_notice() {
+        let path = format!("/tmp/tender-db-reclaim-split-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // Original ingest: profile-level quarantine, no notice row. The hash is
+        // the raw member bytes' — the same one dispatch later gives the notice.
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "pkg/m1".into(),
+                content_hash: "hash1".into(),
+                profile: None,
+                reason: "unparsable-xml".into(),
+                detail: Some("XML with DTD detected".into()),
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+
+        // First reprocess: dispatch now yields an identity but the deep parse
+        // still fails. The no-notice branch records the notice row and stamps
+        // the held row by (fetch_id, member_path).
+        assert_eq!(
+            db.reclaim_notice(
+                &held_notice(),
+                &Parse::Quarantined { reason: "unparsable-xml".into(), detail: Some("XML with DTD detected".into()) },
+            )
+            .await
+            .unwrap(),
+            Reclaim::StillHeld
+        );
+        let id = int_of(&db, "SELECT id FROM notices WHERE publication_id='123-2001'").await.expect("failed attempt records the notice row");
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM quarantine").await, Some(1), "same-hash insert is ignored: one ledger row");
+        assert_eq!(int_of(&db, "SELECT attempts FROM quarantine WHERE notice_id IS NULL").await, Some(1));
+
+        // Second reprocess, STILL failing: the notice row exists now, so the
+        // notice-exists branch runs — it must stamp the NULL-notice_id row too,
+        // recording the CURRENT failure (issue 87's contract).
+        let mut again = held_notice();
+        again.ingested_at = 200;
+        assert_eq!(
+            db.reclaim_notice(&again, &Parse::Quarantined { reason: "unclaimed-content".into(), detail: Some("7 rows".into()) })
+                .await
+                .unwrap(),
+            Reclaim::StillHeld
+        );
+        assert_eq!(
+            text_of(&db, "SELECT reason FROM quarantine WHERE notice_id IS NULL").await.as_deref(),
+            Some("unclaimed-content"),
+            "held profile-level row carries the current failure"
+        );
+        assert_eq!(int_of(&db, "SELECT attempts FROM quarantine WHERE notice_id IS NULL").await, Some(2), "exactly one stamp per attempt — the two addresses are disjoint");
+        assert_eq!(text_of(&db, "SELECT first_reason FROM quarantine WHERE notice_id IS NULL").await.as_deref(), Some("unparsable-xml"));
+
+        // Third reprocess, now parsing: the success path must flag the
+        // NULL-notice_id ledger row reclaimed, or it reads outstanding forever.
+        let mut fresh = held_notice();
+        fresh.ingested_at = 999;
+        fresh.published_at = Some(1_000_000);
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        assert_eq!(text_of(&db, &format!("SELECT parse_state FROM notices WHERE id={id}")).await.as_deref(), Some("parsed"));
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id IS NULL").await, Some(999));
 
         let _ = std::fs::remove_file(&path);
     }
