@@ -1,6 +1,6 @@
 # 189 — text-era coverage residual: 1993 and 1995–1999 miss ground truth by 7–22%, and the loss is upstream of quarantine
 
-Status: RESOLVED (2026-08-12) — all seven years swept, assigned-counter theory confirmed on every one; ground truth re-vendored as distributed distinct-ND counts; grid verification after deploy
+Status: RESOLVED-VERIFIED (2026-08-12) — re-vendored distributed counts live; grid reads 1.00–1.02 across 1993–1999 (was 0.78–0.93)
 Kind: coverage investigation
 Blocked by: —
 Relates to: 35 (OC reclaim — landed, did not close this), 72 (measured ~92% and predicted bounded real loss), 27/30 (the coverage grid and its ±2% tolerance), 15 (backfill)
