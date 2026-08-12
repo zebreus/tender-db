@@ -983,8 +983,16 @@ impl Db {
     async fn reclaim_notice_tx(&self, conn: &Connection, n: &Notice, parse: &Parse) -> turso::Result<Reclaim> {
         match self.notice_state(conn, n).await? {
             // Already good — never re-touch a parsed notice (guards double-writes
-            // and makes a re-run a no-op).
-            Some((_, state)) if state == "parsed" => Ok(Reclaim::AlreadyParsed),
+            // and makes a re-run a no-op). The MEMBER's ledger rows are still
+            // resolved: this very member produced an identity that is parsed, so
+            // its held rows document content the corpus already carries — without
+            // this stamp a member whose reclaim succeeded but whose ledger write
+            // missed (issue 139's second act) could never converge, because every
+            // re-run would stop here and stamp nothing.
+            Some((id, state)) if state == "parsed" => {
+                self.stamp_reclaimed(conn, n, id).await?;
+                Ok(Reclaim::AlreadyParsed)
+            }
             // A held parse-level quarantine: the notice row exists (empty of parsed
             // values — it was quarantined before `insert_parsed` ran), so write the
             // parsed layer in place when it now parses. This is the case a plain
@@ -1009,19 +1017,7 @@ impl Db {
                         (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
                     )
                     .await?;
-                    conn.execute(
-                        "UPDATE quarantine SET reprocessed_at = ?
-                          WHERE notice_id = ? AND reprocessed_at IS NULL",
-                        (Value::Integer(n.ingested_at), Value::Integer(id)),
-                    )
-                    .await?;
-                    conn.execute(
-                        "UPDATE quarantine SET reprocessed_at = ?
-                          WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
-                            AND reprocessed_at IS NULL",
-                        (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
-                    )
-                    .await?;
+                    self.stamp_reclaimed(conn, n, id).await?;
                     Ok(Reclaim::Reclaimed)
                 }
                 _ => {
@@ -1047,12 +1043,21 @@ impl Db {
                     return Ok(Reclaim::AlreadyParsed);
                 }
                 if matches!(parse, Parse::Parsed(_)) {
-                    conn.execute(
-                        "UPDATE quarantine SET reprocessed_at = ?
-                          WHERE fetch_id = ? AND member_path = ? AND reprocessed_at IS NULL",
-                        (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
-                    )
-                    .await?;
+                    let stamped = conn
+                        .execute(
+                            "UPDATE quarantine SET reprocessed_at = ?
+                              WHERE fetch_id = ? AND member_path = ? AND reprocessed_at IS NULL",
+                            (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
+                        )
+                        .await?;
+                    if stamped == 0 {
+                        eprintln!(
+                            "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
+                             (fresh record path) — the member reclaimed but its quarantine rows \
+                             were not addressable (issue 139)",
+                            n.fetch_id, n.member_path
+                        );
+                    }
                     Ok(Reclaim::Reclaimed)
                 } else {
                     self.stamp_still_held(
@@ -1067,6 +1072,40 @@ impl Db {
                 }
             }
         }
+    }
+
+    /// Flag a member's held ledger rows reclaimed, under BOTH addresses a row can
+    /// live at: parse-level (`notice_id = ?`) and profile-level
+    /// (`fetch_id`/`member_path` with `notice_id IS NULL`) — disjoint by
+    /// construction, so no row is stamped twice. Logs when a reclaim resolves NO
+    /// ledger row: that is issue 139's exact failure shape (the notice reclaimed,
+    /// the panel forever claiming the member outstanding), and it must be loud in
+    /// the journal rather than silent in a report that only counts notices.
+    async fn stamp_reclaimed(&self, conn: &Connection, n: &Notice, id: i64) -> turso::Result<()> {
+        let by_notice = conn
+            .execute(
+                "UPDATE quarantine SET reprocessed_at = ?
+                  WHERE notice_id = ? AND reprocessed_at IS NULL",
+                (Value::Integer(n.ingested_at), Value::Integer(id)),
+            )
+            .await?;
+        let by_member = conn
+            .execute(
+                "UPDATE quarantine SET reprocessed_at = ?
+                  WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                    AND reprocessed_at IS NULL",
+                (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
+            )
+            .await?;
+        if by_notice == 0 && by_member == 0 {
+            eprintln!(
+                "[store] reclaim stamped NO ledger rows for notice {id} \
+                 (fetch {} member {:?}) — parsed, but no quarantine row matched \
+                 either address (issue 139)",
+                n.fetch_id, n.member_path
+            );
+        }
+        Ok(())
     }
 
     /// Record a re-parse attempt that left the member held (issue 87). A
@@ -4293,6 +4332,48 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, &format!("SELECT parse_state FROM notices WHERE id={id}")).await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id IS NULL").await, Some(999));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 139's second act: the notice reclaimed but the run that reclaimed it
+    /// failed to stamp its ledger row (whatever the cause), leaving a parsed
+    /// notice with an outstanding quarantine row. Every later reprocess hits the
+    /// already-parsed guard — which used to stamp nothing, so the panel claimed
+    /// the member outstanding forever and NO re-run could converge it. The guard
+    /// now resolves the member's ledger rows too, and stays idempotent: a
+    /// stamped row is terminal and is never re-stamped with a later wall-clock.
+    #[tokio::test]
+    async fn already_parsed_reclaim_still_resolves_the_ledger_row() {
+        let path = format!("/tmp/tender-db-reclaim-already-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+
+        // The stranded shape: a parse-level quarantine whose notice was later
+        // parsed without the ledger stamp landing.
+        assert!(db
+            .record_notice(
+                &held_notice(),
+                &Parse::Quarantined { reason: "unparsable-xml".into(), detail: Some("XML with DTD detected".into()) },
+            )
+            .await
+            .unwrap());
+        db.conn().await.execute("UPDATE notices SET parse_state = 'parsed' WHERE id = 1", ()).await.unwrap();
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id = 1").await, None);
+
+        // The re-run: already parsed — and the ledger row resolves now.
+        let mut fresh = held_notice();
+        fresh.ingested_at = 500;
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::AlreadyParsed);
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id = 1").await, Some(500));
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts WHERE notice_id = 1").await, Some(0), "already-parsed never rewrites the parsed layer");
+
+        // Terminal: a later pass never moves the stamp.
+        let mut later = held_notice();
+        later.ingested_at = 900;
+        assert_eq!(db.reclaim_notice(&later, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::AlreadyParsed);
+        assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id = 1").await, Some(500));
 
         let _ = std::fs::remove_file(&path);
     }

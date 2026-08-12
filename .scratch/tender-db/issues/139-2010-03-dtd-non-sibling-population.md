@@ -93,3 +93,30 @@ After deploy + reprocess they either reclaim (strip fixes them too) or relabel t
 Remaining: deploy, re-run the DTD-bucket reprocess, verify the panel (1,898 → reclaimed;
 the 154 sibling rows stay correctly outstanding per issue 84's parsed-original guard unless
 their originals now parse), then close.
+
+**2026-08-12 mid-morning (orchestrator) — the reprocess with both fixes (145277a) RECLAIMED the
+notices but STILL didn't stamp the ledger rows; third defect isolated to the addressing, loud
+diagnostics added.** Job 612 (deployed rev 145277a): "1898 reclaimed, 7 still held
+(unclaimed-content)". Notices verifiably flipped: the trailing fold picked up a change set, and
+no new notice ids were inserted (REST id-tip check) — so the 1,898 went through the
+notice-exists reclaim arm against notice rows that have existed since JULY. That rewrites the
+issue's own history: the coverage grid's "1,898 held r208/2010" were notice rows all along —
+the July monthly ingest already dispatched these members (the dispatch strip predates the
+backfill), so the quarantine rows are PARSE-level (notice_id set), not profile-level as the
+2008 analogy suggested. And 2010 is a text-era year (text/2010 = 389,496/391,397 ≈ 99.5%), so
+the 1,898 r208 notices are largely language-twin content of text notices — the coverage panel
+never showed a 2010 hole.
+
+Yet the panel still reads outstanding 1,898 / by_reason unparsable-xml 8,246 (only the
+flag-pass's 154-sibling sweep moved — see issue 190, filed): every quarantine UPDATE in the
+reclaim (by notice_id AND by member address) matched zero rows, on both fetches, while
+`flag_skipped_members`' member IN-list matched fine. Static analysis exhausted: each branch
+that could have run implies a stamp that didn't happen. Rather than guess a fourth time, landed:
+(a) `stamp_reclaimed` helper — both addresses, `eprintln` to the journal whenever a reclaimed
+member resolves ZERO ledger rows (names notice id, fetch, member — the datum this hunt lacked);
+(b) the already-parsed reclaim arm now resolves the member's ledger rows too (it used to stamp
+nothing, so after job 612 NO re-run could ever converge the ledger); (c) same zero-stamp logging
+on the fresh-record path. Next: after the fold completes, deploy, re-run the bucket, read the
+journal line for one member, fix the real addressing mismatch, drain. (Row-level DB access
+remains unavailable: /v1/sql token minting is classifier-blocked, no snapshot exists, and the
+serving DB is never queried directly per prod-box policy.)
