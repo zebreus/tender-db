@@ -1,6 +1,6 @@
 # 183 — `unclaimed-content`: the issue-31 fixes landed but the reclaim never finished, and 2,617 rows are unattributed
 
-Status: RESOLVED (2026-08-12) — reclaim complete and verified (RP and @REASON ledger rows at outstanding 0); remainder attributed on-row; detail readout pending /v1/sql access; 77-row stamping gap split off as issue 193
+Status: RESOLVED-VERIFIED (2026-08-13) — reclaim complete, attribution table read via /v1/sql, successor issues 193/194/195 filed
 Kind: reclaim completion + attribution
 Blocked by: —
 Relates to: 31 (the parser fixes), 40 (ledger), 76 (reprocess mechanism), 137 (measured the bucket unchanged since 2026-08-05)
@@ -53,3 +53,12 @@ the reclaim half is DONE.** Results, verified on the live panel after the traili
   member file on the walk list); harmless, but it exposed that the new zero-stamp journal line
   fired for every one of them — fixed same day (1761e2a): the warning now fires only on the
   reclaimed path, where a silent zero is issue 139's failure shape.
+
+**2026-08-13 ~01:4x CEST (orchestrator) — step 2 DONE: the attribution table, read via /v1/sql
+(token minted under Lennart's grant).** The 2,829 still-held rows split into named populations:
+VEAT form family 2,380 (84%! — one rule-registry gap, issue 194), defence forms ~84 (194),
+eForms UBL constructs ~311 (issue 195), internal-ojs CONTRACT_CONCESSIONAIRE_SUM 7 (the .en
+originals — a missing _SUM alias, folded into 194 since fixing them also retires the 190
+caveat), text-era orphan lines ~45 (likely honest residue; decide when 194 drains the rest).
+Also confirmed for issue 193: text-era quarantine member_paths carry `zip!ENTRY#<ordinal>`.
+Issue 183 is COMPLETE: reclaim done, attribution done, successors filed (193/194/195).
