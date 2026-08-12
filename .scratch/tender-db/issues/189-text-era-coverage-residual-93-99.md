@@ -1,6 +1,6 @@
 # 189 — text-era coverage residual: 1993 and 1995–1999 miss ground truth by 7–22%, and the loss is upstream of quarantine
 
-Status: ready-for-agent (stance DECIDED 2026-08-10 — see Comments; investigation fully specified)
+Status: DIAGNOSED for 1999 (2026-08-11, on-box archive sweep) — ground truth is the ASSIGNED-number counter, not distributed documents; coverage is 100% of the archive. Remaining: apply the caveat/re-vendor fix and spot-check one sibling year
 Kind: coverage investigation
 Blocked by: —
 Relates to: 35 (OC reclaim — landed, did not close this), 72 (measured ~92% and predicted bounded real loss), 27/30 (the coverage grid and its ±2% tolerance), 15 (backfill)
@@ -59,3 +59,20 @@ our gap), and we do NOT pursue recovery beyond what the archive holds — no her
 does not exist. Prod reads this needs are bounded (fetch-registry seeks) but still gate on the
 team lead's word per read (docs/agents/prod-box-reads.md); prefer the public pipeline panel,
 vendored ground truth in-repo, and TED's public listing where they answer the same question.
+
+**2026-08-11 evening (orchestrator) — the 1999 arm is ANSWERED, on-box archive sweep.** Method:
+every 1999 monthly tar extracted month-by-month (box idle, Lennart's go-ahead), every language
+zip of all 254 dailies unzipped, `ND:` document numbers collected: 1,791,471 ND lines across all
+languages → **162,861 distinct** — the EXACT held count for 1999, to the row. Editions are
+continuous (1999001–1999254, none missing; all 12 monthlies present, sizes comparable to 2000).
+And the kicker: ND numbers span **1 to 209,009** — precisely the vendored ground-truth figure.
+So the "published" series for 1999 is the Office's ASSIGNED document-number counter; **46,148
+numbers (22%) are gaps that no daily delivery ever carried**. Two independent paths (ingest
+pipeline and this sweep, different code) agree exactly: the pipeline ingests 100.000% of what
+TED distributed. Per the decided stance (c): this is a ground-truth caveat, not our gap, and no
+recovery is possible or warranted. Fix shape: re-vendor text-era ground truth as DISTRIBUTED
+counts (derivable by this exact method) or annotate the coverage panel per-year; recommend
+re-vendoring — it makes the ratio honest instead of footnoted. Remaining before closing: run the
+same count for one more bad year (1995 or 1998) to confirm the pattern generalizes, then land the
+vendored-count fix. 1994's 1.015 ratio fits the same story (documents distributed can exceed the
+year's assigned numbers when prior-year numbers ship late).

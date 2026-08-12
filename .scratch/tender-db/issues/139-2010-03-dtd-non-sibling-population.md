@@ -1,6 +1,6 @@
 # 139 — The 1,898 "XML with DTD detected" rows from ted/monthly/2010-03: a non-sibling population needing its own investigation
 
-Status: open
+Status: DIAGNOSED (2026-08-11, on-box archive read) — real TED_EXPORT notices behind an inline DTD; fix = DTD-strip on the ted-export dispatch path + reprocess
 Filed: 2026-08-05 (team-lead, from proj-fix's 9fe744c + sdk-vendor's d294901/137)
 Blocked by: nothing (independent of #29's execute — excluded from it by construction)
 
@@ -48,3 +48,20 @@ unresolved work under "Resolved").
 ~1,898 rows / one fetch period. Small, bounded, not urgent. The right shape is
 one bounded characterization read (archive members, immutable source) when
 someone has context for it.
+
+## Comments
+
+**2026-08-11 evening (orchestrator) — DIAGNOSED from the archive (no DB needed).** The 1,898
+`.xml` members all live in ONE daily: `03/20100310_2010048.tar.gz` (2010-03-10, OJS edition
+048/2010) — the only daily in the month NOT shipped as per-language text zips. It contains
+exactly 1,898 per-notice XML files (`00070853_2010.xml`, publication-id names). Each is a genuine
+`TED_EXPORT` document (DOC_ID/EDITION attributes, `<COMMENTS>From Convertor</COMMENTS>` — TED
+converted this day to XML) carrying `<!DOCTYPE TED_EXPORT SYSTEM "TED_EXPORT.dtd">`, which
+roxmltree refuses wholesale — the same defect class as 2008/issue 36. These are REAL notices held
+whole; the era's r208 walker should read them once the DTD line is stripped. Fix: extend the
+issue-36 DTD strip to the ted-export dispatch path (verify why job [5]'s reclaim didn't already
+recover them — the strip may be scoped to internal-ojs), add a fixture from this edition, then
+reprocess the bucket: +1,898 notices for 2010. Open question, one bounded DB read when a token
+exists: the coverage grid shows exactly 1,898 held r208/2010 notices — same number; establish
+whether that population is this edition already recovered via another path (then the quarantine
+rows are stale bookkeeping, the 2008 pattern) or a coincidence.

@@ -24,3 +24,13 @@ Sample the bucket (bounded `/v1/sql` + archive bytes, the issue-141 method) and 
 
 Either way the outcome gets a ledger row; a bucket this old should not be answerable only by
 re-deriving it.
+
+## Comments
+
+**2026-08-11 (orchestrator) — strong lead from the 189 sweep**: the whole 1993–2000 text era
+ships as `*_ISO_ORG` zips — ISO-8859 encoded by naming convention, confirmed by inspection
+(byte 0xE4-style umlauts in the SV file). The text profile evidently decodes these fine in bulk
+(1999 ingests 100%), so the 1,700 `not-utf8` rows are the residue where decoding still fails —
+plausibly odd single bytes or a different legacy codepage. Sampling needs row-level member paths
+(/v1/sql token still pending), but the era context makes fix-and-reclaim (transcode) the likely
+outcome rather than benign-by-evidence.
