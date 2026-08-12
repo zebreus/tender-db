@@ -1604,11 +1604,25 @@ impl Db {
         let mut flagged = 0u64;
         for (policy, paths) in by_policy {
             let places = vec!["?"; paths.len()].join(",");
+            // The 2008 sibling decline carries issue 84's parsed-original guard
+            // here too (issue 190): a sibling whose English original is held but
+            // UNPARSED is potentially the only readable copy, so the policy alone
+            // must not resolve it — the one-time marker refused these rows by
+            // construction, and without the same guard this reprocess-time path
+            // swept the 154 protected rows into skipped-by-policy. The text-era
+            // selection policies stay unguarded: their chosen twin is selected on
+            // byte-level equality of the SAME member, not a different document.
+            let guard = if policy == "internal-ojs-non-english" {
+                format!(" AND {}", Self::sibling_exists(true))
+            } else {
+                String::new()
+            };
             let sql = format!(
                 "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
-                  WHERE fetch_id = ?
-                    AND skipped_at IS NULL
-                    AND member_path IN ({places})"
+                  WHERE id IN (SELECT q.id FROM quarantine q
+                                WHERE q.fetch_id = ?
+                                  AND q.skipped_at IS NULL
+                                  AND q.member_path IN ({places}){guard})"
             );
             let mut params = vec![
                 Value::Integer(now),
@@ -1687,6 +1701,50 @@ impl Db {
             Self::sibling_exists(true)
         );
         conn.execute(&sql, (Value::Integer(now), reason.to_owned(), Value::Integer(batch))).await?;
+        let mut rows = conn.query("SELECT changes()", ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// The sibling-scope predicate with its skipped-state condition FLIPPED: rows
+    /// already marked skipped. Built from the one constant so the repair can never
+    /// drift from the marker's own scope; the assert guards against the constant
+    /// being reworded in a way that silently makes the flip a no-op.
+    fn swept_sibling_scope() -> String {
+        let flipped =
+            Self::SKIPPED_SIBLING_SCOPE.replace("q.skipped_at IS NULL", "q.skipped_at IS NOT NULL");
+        assert_ne!(flipped, Self::SKIPPED_SIBLING_SCOPE, "the skipped-state flip must apply");
+        flipped
+    }
+
+    /// How many sibling rows are marked skipped although the parsed-original
+    /// guard REJECTS them — i.e. rows a guard-free pass swept (issue 190). The
+    /// dry-run number for [`Self::repair_swept_siblings`].
+    pub async fn count_swept_siblings(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let sql = format!(
+            "SELECT COUNT(*) FROM quarantine q WHERE {} AND NOT {}",
+            Self::swept_sibling_scope(),
+            Self::sibling_exists(true)
+        );
+        let mut rows = conn.query(&sql, ()).await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// Restore to OUTSTANDING every sibling row that is marked skipped but whose
+    /// English original is missing or unparsed (issue 190): the duplicate argument
+    /// does not hold for them, so skipped-by-policy overstates what was resolved.
+    /// Idempotent, and self-limiting: once the originals parse, the guard accepts
+    /// the rows and this predicate matches nothing. Returns rows restored.
+    pub async fn repair_swept_siblings(&self) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        let sql = format!(
+            "UPDATE quarantine SET skipped_at = NULL, skipped_reason = NULL
+              WHERE id IN (SELECT q.id FROM quarantine q
+                            WHERE {} AND NOT {})",
+            Self::swept_sibling_scope(),
+            Self::sibling_exists(true)
+        );
+        conn.execute(&sql, ()).await?;
         let mut rows = conn.query("SELECT changes()", ()).await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
     }
@@ -3889,6 +3947,112 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // Reversible, and scoped by the marker's own reason.
         assert_eq!(db.unmark_skipped_siblings("internal-ojs-non-english").await.unwrap(), 2);
         assert_eq!(db.count_skipped_siblings().await.unwrap(), 2, "back on the work list");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 190: the REPROCESS-TIME flag pass carries issue 84's parsed-original
+    /// guard (it swept the 154 protected siblings without it), and the repair
+    /// restores exactly the guard-rejected rows a guard-free pass marked.
+    #[tokio::test]
+    async fn the_reprocess_flag_pass_is_guarded_and_the_repair_restores_swept_rows() {
+        let path = format!("/tmp/tender-db-sweptfix-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES (1,'ted','monthly','2008-05','u','s',1,0,'p');
+                 INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                                     member_path, ingested_at, parse_state)
+                   VALUES (1,'ted','115165-2008','h','internal-ojs',1,'m',0,'parsed'),
+                          (2,'ted','999001-2008','h2','internal-ojs',1,'m2',0,'quarantined');
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen) VALUES
+                   -- sibling of a PARSED original: the guard accepts it
+                   (1,'115165/opoce-input/115165_2008.fr','c1','unparsable-xml','XML with DTD detected',0),
+                   -- sibling of an UNPARSED original: protected, must stay outstanding
+                   (1,'999001/opoce-input/999001_2008.fr','c4','unparsable-xml','XML with DTD detected',0),
+                   -- a text-era member declined by a policy the guard does not gate
+                   -- (its own failure detail — it is not part of the sibling scope)
+                   (1,'EN_19990601_104_ISO_ORG.zip','c8','unparsable-xml','unreadable member',0);",
+            )
+            .await
+            .unwrap();
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        // The reprocess walk declines both siblings; the guard admits only the
+        // one whose English original is parsed.
+        let flagged = db
+            .flag_skipped_members(
+                1,
+                &[
+                    ("115165/opoce-input/115165_2008.fr".to_string(), "internal-ojs-non-english"),
+                    ("999001/opoce-input/999001_2008.fr".to_string(), "internal-ojs-non-english"),
+                ],
+                999,
+            )
+            .await
+            .unwrap();
+        assert_eq!(flagged, 1, "the guard admits only the parsed-original sibling");
+        assert!(
+            matches!(
+                db.scalar("SELECT skipped_at FROM quarantine WHERE member_path = '999001/opoce-input/999001_2008.fr'")
+                    .await
+                    .unwrap(),
+                None | Some(turso::Value::Null)
+            ),
+            "the protected sibling stays outstanding"
+        );
+
+        // Non-sibling policies stay unguarded: their decline defers to the SAME
+        // member's chosen twin, not a different document.
+        let flagged = db
+            .flag_skipped_members(1, &[("EN_19990601_104_ISO_ORG.zip".to_string(), "text-era-iso-superseded-by-utf8")], 999)
+            .await
+            .unwrap();
+        assert_eq!(flagged, 1);
+
+        // The repair: simulate the pre-guard sweep on the protected row, then
+        // restore it — and ONLY it.
+        db.conn()
+            .await
+            .execute(
+                "UPDATE quarantine SET skipped_at = 5, skipped_reason = 'internal-ojs-non-english'
+                  WHERE member_path = '999001/opoce-input/999001_2008.fr'",
+                (),
+            )
+            .await
+            .unwrap();
+        assert_eq!(db.count_swept_siblings().await.unwrap(), 1, "the dry-run count sees the swept row");
+        assert_eq!(db.repair_swept_siblings().await.unwrap(), 1);
+        assert!(
+            matches!(
+                db.scalar("SELECT skipped_at FROM quarantine WHERE member_path = '999001/opoce-input/999001_2008.fr'")
+                    .await
+                    .unwrap(),
+                None | Some(turso::Value::Null)
+            ),
+            "the swept row is outstanding again"
+        );
+        assert!(
+            matches!(
+                db.scalar("SELECT skipped_at FROM quarantine WHERE member_path = '115165/opoce-input/115165_2008.fr'")
+                    .await
+                    .unwrap(),
+                Some(turso::Value::Integer(999))
+            ),
+            "the legitimately flagged sibling keeps its mark"
+        );
+
+        // Self-limiting: nothing left to repair.
+        assert_eq!(db.repair_swept_siblings().await.unwrap(), 0);
 
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));

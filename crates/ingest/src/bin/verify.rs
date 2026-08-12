@@ -740,7 +740,9 @@ mod tests {
         let ground = parse_ground_truth(GROUND_TRUTH);
         // 1993 through 2026 inclusive.
         assert_eq!(ground.len(), 2026 - 1993 + 1);
-        assert_eq!(ground.first().copied(), Some(GroundYear { year: 1993, expected: 74433, partial: false }));
+        // 1993 carries the distributed distinct-ND count (issue 189), not the
+        // Office's assigned-number counter the table originally quoted.
+        assert_eq!(ground.first().copied(), Some(GroundYear { year: 1993, expected: 66521, partial: false }));
         let last = ground.last().copied().unwrap();
         assert_eq!(last, GroundYear { year: 2026, expected: 497791, partial: true });
         // Exactly one partial year (the current one).

@@ -210,6 +210,16 @@ enum Spec {
         #[serde(default)]
         expect_gaps: Option<u64>,
     },
+    /// Issue 190: restore to OUTSTANDING the sibling rows a guard-free flag pass
+    /// swept into skipped-by-policy — rows in the 2008 sibling scope, marked
+    /// skipped, whose English original is missing or unparsed. The inverse repair
+    /// of [`Spec::MarkSkippedSiblings`]'s guard, and self-limiting: once the
+    /// originals parse, the guard accepts these rows and the repair matches
+    /// nothing. `dry_run` counts and writes nothing.
+    RepairSweptSiblings {
+        #[serde(default)]
+        dry_run: bool,
+    },
     /// Clear a STALE `rebuild_in_progress` flag (the issue-85 interlock's escape
     /// hatch). The flag routes any `project` — including the 09:35 daily tick — into
     /// the salvage branch, which `reset_tender_layer()`s a good layer; a rebuild that
@@ -399,6 +409,17 @@ impl Supervisor {
                         },
                     )
                     .await,
+                ])
+            }
+            // Issue 190: clear the skipped marks a guard-free flag pass swept onto
+            // protected siblings. Quarantine bookkeeping only — nothing to fold.
+            // Same safe default as the marker: a missing flag means dry-run.
+            "repair-swept-siblings" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "dry-run".to_owned() } else { "execute".to_owned() };
+                Ok(vec![
+                    self.push("repair-swept-siblings", params, Spec::RepairSweptSiblings { dry_run })
+                        .await,
                 ])
             }
             // Force the full daily reconciliation now (post-downtime catch-up,
@@ -1047,6 +1068,20 @@ impl Supervisor {
                 Ok(format!(
                     "marked {marked} rows skipped-by-policy (reversible: skipped_reason = \
                      'internal-ojs-non-english')"
+                ))
+            }
+            Spec::RepairSweptSiblings { dry_run } => {
+                let swept = self.db.count_swept_siblings().await.map_err(|e| e.to_string())?;
+                if *dry_run {
+                    return Ok(format!(
+                        "dry run: {swept} skipped sibling row(s) are REJECTED by the \
+                         parsed-original guard and would be restored to outstanding"
+                    ));
+                }
+                let restored = self.db.repair_swept_siblings().await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "restored {restored} guard-rejected sibling row(s) to outstanding \
+                     (found {swept} before the write)"
                 ))
             }
             Spec::ClearRebuildFlag => {
