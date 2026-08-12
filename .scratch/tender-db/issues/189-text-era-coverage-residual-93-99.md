@@ -76,3 +76,12 @@ re-vendoring — it makes the ratio honest instead of footnoted. Remaining befor
 same count for one more bad year (1995 or 1998) to confirm the pattern generalizes, then land the
 vendored-count fix. 1994's 1.015 ratio fits the same story (documents distributed can exceed the
 year's assigned numbers when prior-year numbers ship late).
+
+**2026-08-12 morning (orchestrator) — 1995 confirms the pattern.** Same sweep over all 12 1995
+monthlies: **max ND = 138,824 — the vendored ground-truth figure exactly**, assigned-counter
+theory confirmed on a second year. (The sweep's distinct count under-read at 120,588 vs 127,770
+held because plain grep treated 32 record files as binary and swallowed their lines — use
+`grep -a` in any rerun; ALSO a lead for issue 181: 1995-era record files contain bytes that make
+grep call them binary.) The generalization holds; remaining work is only the fix: re-vendor
+text-era published counts as DISTRIBUTED documents (per-year distinct-ND by this method, grep -a)
+and re-measure the coverage grid — 1993–1999 should all go green at ~1.00.
