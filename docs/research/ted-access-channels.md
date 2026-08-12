@@ -357,27 +357,46 @@ Full HEAD sweep of all monthly packages (Content-Length,
   a real data-fidelity decision, see open questions).
 
 Notice counts per year (ground truth for the dashboard coverage metric;
-1993–2016 = highest publication number in the year's last daily package,
+1993–1999 = distinct distributed document numbers, see the correction below;
+2000–2016 = highest publication number in the year's last daily package,
 `samples/yearly-counts.csv`; 2017+ = Search API `totalNoticeCount`):
 
 | Year | Notices | Year | Notices | Year | Notices |
 |---|---|---|---|---|---|
-| 1993 | 74 433 | 2005 | 249 437 | 2017 | 528 975 |
-| 1994 | 94 954 | 2006 | 268 060 | 2018 | 578 501 |
-| 1995 | 138 824 | 2007 | 307 255 | 2019 | 622 786 |
-| 1996 | 151 945 | 2008 | 339 534 | 2020 | 643 552 |
-| 1997 | 166 394 | 2009 | 363 230 | 2021 | 676 734 |
-| 1998 | 177 012 | 2010 | 391 397 | 2022 | 735 067 |
-| 1999 | 209 009 | 2011 | 411 850 | 2023 | 795 680 |
+| 1993 | 66 521 | 2005 | 249 437 | 2017 | 528 975 |
+| 1994 | 94 457 | 2006 | 268 060 | 2018 | 578 501 |
+| 1995 | 126 385 | 2007 | 307 255 | 2019 | 622 786 |
+| 1996 | 138 533 | 2008 | 339 534 | 2020 | 643 552 |
+| 1997 | 152 339 | 2009 | 363 230 | 2021 | 676 734 |
+| 1998 | 160 892 | 2010 | 391 397 | 2022 | 735 067 |
+| 1999 | 162 861 | 2011 | 411 850 | 2023 | 795 680 |
 | 2000 | 161 228 | 2012 | 414 837 | 2024 | 801 444 |
 | 2001 | 172 194 | 2013 | 443 079 | 2025 | 871 149 |
 | 2002 | 202 684 | 2014 | 446 419 | 2026→07-17 | 497 791 |
 | 2003 | 224 144 | 2015 | 463 821 | | |
 | 2004 | 221 786 | 2016 | 466 898 | | |
 
-Total ≈ **12.9 M notices** 1993–mid-2026; ~9.0 M in the XML era (2011+).
+Total ≈ **13.2 M notices** 1993–mid-2026 (the table's rows sum to
+13,201,520); ~9.0 M in the XML era (2011+).
 (Max-publication-number slightly overcounts if numbers were skipped;
 API-vs-filename comparison for 2026 differed by 0.13 %.)
+
+**Correction (2026-08-11/12, issue 189): the 1993–1999 counter figures were
+the Office's ASSIGNED document-number counter, not documents distributed.**
+Full-archive sweeps (every language zip of every daily in the year's
+monthlies, `ND:` records collected with `grep -a` — some record files trip
+grep's binary heuristic) showed the year-end max ND matches the old vendored
+figure exactly on every year checked (1993, 1995–1999; 1994's last daily did
+not even carry the year's max, hence its impossible 1.015 coverage ratio),
+while whole number ranges were never distributed in any daily — 22 % of the
+counter in 1999. The table now carries distinct distributed NDs for
+1993–1999, previously 74 433 / 94 954 / 138 824 / 151 945 / 166 394 /
+177 012 / 209 009. Distinct-ND slightly understates distributed *records*
+where TED reused a number within a year (~1–2 %; the ingest rightly holds
+reused numbers as separate records), so coverage ratios marginally above 1.0
+are expected for these years. From 2000 the counter agrees with distribution
+(ratio 1.000 against held), so the max-publication-number series stands
+there.
 
 ## 7. Legal terms of reuse
 

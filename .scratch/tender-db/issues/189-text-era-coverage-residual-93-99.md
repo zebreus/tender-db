@@ -1,6 +1,6 @@
 # 189 — text-era coverage residual: 1993 and 1995–1999 miss ground truth by 7–22%, and the loss is upstream of quarantine
 
-Status: DIAGNOSED for 1999 (2026-08-11, on-box archive sweep) — ground truth is the ASSIGNED-number counter, not distributed documents; coverage is 100% of the archive. Remaining: apply the caveat/re-vendor fix and spot-check one sibling year
+Status: RESOLVED (2026-08-12) — all seven years swept, assigned-counter theory confirmed on every one; ground truth re-vendored as distributed distinct-ND counts; grid verification after deploy
 Kind: coverage investigation
 Blocked by: —
 Relates to: 35 (OC reclaim — landed, did not close this), 72 (measured ~92% and predicted bounded real loss), 27/30 (the coverage grid and its ±2% tolerance), 15 (backfill)
@@ -85,3 +85,22 @@ held because plain grep treated 32 record files as binary and swallowed their li
 grep call them binary.) The generalization holds; remaining work is only the fix: re-vendor
 text-era published counts as DISTRIBUTED documents (per-year distinct-ND by this method, grep -a)
 and re-measure the coverage grid — 1993–1999 should all go green at ~1.00.
+
+**2026-08-12 midday (orchestrator) — RESOLVED: all seven years swept, fix landed.** Full sweep
+of 1993–1998 (all languages, grep -a, widened case-insensitive zip matching), plus 1999 from the
+11th. max ND == the old vendored figure EXACTLY on 1993/1995/1996/1997/1998/1999; 1994's max
+(97,362) even exceeds its vendored 94,954 — the old method sampled the year's LAST daily, which
+didn't carry the year's max, which is exactly why 1994 read an impossible 1.015. Distributed
+distinct-ND per year: 66,521 / 94,457 / 126,385 / 138,533 / 152,339 / 160,892 / 162,861. Fix:
+`ted-notice-counts.csv` re-vendored for 1993–1999 with the method documented in the header, and
+the research doc (§6) carries a correction note preserving the superseded counter series. New
+held/published ratios: 1.010 / 1.020 / 1.011 / 1.015 / 1.019 / 1.016 / 1.000 — all inside the
+±2% verify band, all marginally ABOVE 1.0 because TED reused ~1–2% of document numbers within a
+year and the pipeline rightly holds each reused number as its own record (1993/94 are
+single-language years: their line counts equal held almost exactly, confirming the reuse
+reading). CAVEAT recorded: 1994 passes the +2% side by only 6 notices, and future text-era
+reclaims (e.g. the RP co-financing 3,326) will push held UP against these denominators — if
+verify ever flags text-era years Over, that is this known reuse effect, and the refinement is
+counting reused numbers into the denominator, not a duplicate-ingestion hunt. Distributed-count
+sweep method preserved in this issue + the CSV header; sweep artifacts in /root/sweep189 on the
+box (summary.txt).

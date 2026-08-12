@@ -433,15 +433,15 @@ mod tests {
         let truth = ground_truth();
         assert_eq!(truth.first().map(|p| p.year.as_str()), Some("1993"));
         assert_eq!(truth.len(), 2026 - 1993 + 1, "one row per year 1993–2026");
-        // Spot-check the transcription against the research table.
-        assert_eq!(truth.iter().find(|p| p.year == "1993").map(|p| p.notices), Some(74_433));
+        // Spot-check the transcription against the research table. 1993–1999
+        // carry distributed distinct-ND counts (issue 189), not the Office's
+        // assigned-number counter the table originally quoted.
+        assert_eq!(truth.iter().find(|p| p.year == "1993").map(|p| p.notices), Some(66_521));
+        assert_eq!(truth.iter().find(|p| p.year == "1999").map(|p| p.notices), Some(162_861));
         assert_eq!(truth.iter().find(|p| p.year == "2011").map(|p| p.notices), Some(411_850));
         assert_eq!(truth.iter().find(|p| p.year == "2025").map(|p| p.notices), Some(871_149));
-        // The rows sum to 13.31 M. Note that ted-access-channels.md §6 quotes
-        // "≈12.9 M" beneath the same table — its headline is a stale rounding of
-        // its own rows, and the rows are the numbers we transcribed.
         let total: i64 = truth.iter().map(|p| p.notices).sum();
-        assert_eq!(total, 13_312_103);
+        assert_eq!(total, 13_201_520);
         // Only the current year is partial.
         assert_eq!(truth.iter().filter(|p| p.partial).count(), 1);
     }
