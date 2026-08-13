@@ -102,3 +102,17 @@ already exists — these rows may simply drain on this reprocess; verify), 6× s
 eforms-contract-nature carve-out may not cover it), 5× sdk-1.7 lot
 `ContractExtension/cbc:RenewalsIndicator`. Next firing: read the reclaim counts, then take
 the 84-row FrameworkMaximumAmount class.
+
+**2026-08-14 ~03:5x CEST (orchestrator) — reclaim complete: 156/310 drained, exactly the two
+implemented classes.** Job 649: 68 packages, 156 reclaimed, 0 skipped; trailing fold (job
+650) projected 156 notices → 132 tenders, 287 versions. Zero "stamped NO ledger rows"
+journal warnings; /health/deep green. unclaimed-content now 206, fully mapped: 84× sdk-1.7
+root `efbc:FrameworkMaximumAmount` (NEXT SLICE — check no minor declares a root-level field
+there, then likely one EXTRA entry), 11× shortlist PreSelectedParty (1.7), 10× sdk-0.1
+SubcontractTerms/Amount, 9× sdk-1.0 procedure AppealTerms/UBLExtensions, 7× sdk-1.7 lot
+RealizedLocation/Address/Description (did NOT drain — the issue-18 EXTRA + procedure→lot
+alias evidently doesn't reach sdk-1.7; investigate why), 6+3× ProcurementAdditionalType/
+ProcurementTypeCode (1.8 procedure / 1.10 lot — pin the listName), 5× sdk-1.7 lot
+ContractExtension/RenewalsIndicator, 4× sdk-1.9 root FieldsPrivacy, 2× sdk-1.12
+StrategicProcurement under *AwardingCriterion* extension (a third mount), 2× sdk-1.12
+doubly-nested ServiceProviderParty, plus 2× text and 2× r208 rows tracked elsewhere.
