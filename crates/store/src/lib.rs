@@ -1056,13 +1056,27 @@ impl Db {
                     return Ok(Reclaim::AlreadyParsed);
                 }
                 if matches!(parse, Parse::Parsed(_)) {
-                    let stamped = conn
+                    let mut stamped = conn
                         .execute(
                             "UPDATE quarantine SET reprocessed_at = ?
                               WHERE fetch_id = ? AND member_path = ? AND reprocessed_at IS NULL",
                             (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
                         )
                         .await?;
+                    // The member FILE's whole-file rejection row, when this is a
+                    // `#<ordinal>` text record — see stamp_reclaimed's third
+                    // address (issue 181).
+                    let file = member_file(n.member_path.clone());
+                    if file != n.member_path {
+                        stamped += conn
+                            .execute(
+                                "UPDATE quarantine SET reprocessed_at = ?
+                                  WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                                    AND reprocessed_at IS NULL",
+                                (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&file)),
+                            )
+                            .await?;
+                    }
                     if stamped == 0 {
                         eprintln!(
                             "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
@@ -1112,7 +1126,25 @@ impl Db {
                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
             )
             .await?;
-        Ok(by_notice + by_member)
+        // Third address (issue 181's CF drain, caught by the zero-stamp journal
+        // line): a text RECORD's path carries `#<ordinal>` while the member
+        // FILE's quarantine row does not — a whole-file rejection (not-utf8,
+        // unparsable-xml) holds ONE row for a file of ~1,000 records. The first
+        // record reclaimed from that file resolves the file row: its content is
+        // demonstrably readable and in the corpus.
+        let file = member_file(n.member_path.clone());
+        let by_file = if file != n.member_path {
+            conn.execute(
+                "UPDATE quarantine SET reprocessed_at = ?
+                  WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                    AND reprocessed_at IS NULL",
+                (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&file)),
+            )
+            .await?
+        } else {
+            0
+        };
+        Ok(by_notice + by_member + by_file)
     }
 
     /// Record a re-parse attempt that left the member held (issue 87). A
@@ -4537,6 +4569,58 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, &format!("SELECT parse_state FROM notices WHERE id={id}")).await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id IS NULL").await, Some(999));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 181's stamping act: a whole-FILE rejection (not-utf8 on a CF
+    /// member) holds one row for a file of ~1,000 `#<ordinal>` records. The
+    /// first record reclaimed from the file must resolve the file row — on both
+    /// the fresh-record path and the already-parsed arm (a re-run after the
+    /// records entered the corpus).
+    #[tokio::test]
+    async fn reclaiming_a_record_resolves_its_files_whole_file_rejection_row() {
+        let path = format!("/tmp/tender-db-filestamp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "pkg/EN_CF1.ZIP!EN_CF1".into(),
+                content_hash: "file-hash".into(),
+                profile: None,
+                reason: "not-utf8".into(),
+                detail: None,
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+
+        // A record from inside the file reclaims (fresh path): the file row resolves.
+        let mut n = held_notice();
+        n.member_path = "pkg/EN_CF1.ZIP!EN_CF1#7".into();
+        n.ingested_at = 500;
+        assert_eq!(db.reclaim_notice(&n, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        assert_eq!(
+            int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = 'pkg/EN_CF1.ZIP!EN_CF1'").await,
+            Some(500),
+            "the whole-file rejection row is resolved by its first reclaimed record"
+        );
+
+        // And the already-parsed arm does the same for a row left behind.
+        db.conn()
+            .await
+            .execute("UPDATE quarantine SET reprocessed_at = NULL WHERE member_path = 'pkg/EN_CF1.ZIP!EN_CF1'", ())
+            .await
+            .unwrap();
+        let mut again = n.clone();
+        again.ingested_at = 900;
+        assert_eq!(db.reclaim_notice(&again, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::AlreadyParsed);
+        assert_eq!(
+            int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = 'pkg/EN_CF1.ZIP!EN_CF1'").await,
+            Some(900)
+        );
 
         let _ = std::fs::remove_file(&path);
     }
