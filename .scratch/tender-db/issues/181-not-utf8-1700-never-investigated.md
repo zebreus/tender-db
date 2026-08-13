@@ -1,6 +1,6 @@
 # 181 — the 1,700 `not-utf8` rows were flagged suspected and never investigated
 
-Status: DIAGNOSED (2026-08-13) — ~1,500 of 1,700 are text-era _CF companion files holding REAL notice records; fix = teach the text dispatcher the CF name variant, reclaim dedups against ORG
+Status: FIX LANDED (2026-08-13) — CF companion delivery recognised by the text dispatcher (class-aware supersedence); real member verifies 1,008 records; CF also accounts for unknown-root 753 and unparsable-xml 1,900 — ~4.1k rows total; drain pending deploy
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 30 (classified it SuspectedGap rather than assumed-benign), 137 (measured: 1,700 rows, 0 reclaimed)
@@ -48,3 +48,15 @@ as reclaimed/known-duplicate rather than suspected loss. Fix shape: accept the C
 `text_era_member` (keeping the EN-only language policy and ISO/UTF8 variant selection),
 dispatch through the text-record parser, reprocess the bucket; the 187 early-1999 rows need
 the same look with the early naming. Next firing implements.
+
+**2026-08-13 ~15:1x CEST (orchestrator) — scope tripled, fix landed.** The CF story covers not
+just this bucket: CF-path rows are ALL 753 unknown-root rows (meta_cf members, XML-ish `part`
+root → now the meta-variant policy skip) and 1,900 of unparsable-xml (UTF8 CF members: valid
+UTF-8 plain text fed to roxmltree) — ~4,112 rows across three reasons from ONE dispatcher gap.
+Fix: `text_era_member` accepts the `CF<n>` delivery class; `PackageContext` tracks the EN-UTF8
+twin PER CLASS so an ISO companion is only superseded by a UTF8 companion; all text policies
+(EN-only, meta skip) apply unchanged. Tests cover the name shapes and class-aware supersedence;
+the real 2003 member dispatches into 1,008 records with zero quarantines. Drain sequence once
+the queue frees: deploy → reprocess not-utf8 + unknown-root (reclaim_only) → reprocess
+unparsable-xml with one trailing fold. Expect mostly already-parsed dedup (CF republishes ORG)
+with any genuinely-new records reclaimed; non-EN CF rows go skipped-by-policy.

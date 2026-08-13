@@ -74,21 +74,35 @@ pub struct PackageContext {
     /// `_ISO_` and `_UTF8_`; the ISO rendering is lossy (non-Latin-1 scripts
     /// mangled — measured on the 2005 daily), so UTF8 supersedes it.
     pub en_utf8_text: bool,
+    /// Same fact for the `_CF<n>` companion delivery (issue 181): the
+    /// supersedence decision is PER DELIVERY CLASS, because a package can
+    /// carry a UTF8 main delivery without a UTF8 companion — one flag for
+    /// both would silently drop the companion's ISO rendering with nothing
+    /// superseding it.
+    pub en_utf8_cf: bool,
 }
 
 impl PackageContext {
     pub fn from_entry_names<S: AsRef<str>>(names: &[S]) -> Self {
-        let en_utf8_text = names.iter().any(|n| {
+        let (mut en_utf8_text, mut en_utf8_cf) = (false, false);
+        for n in names {
             let stem = n.as_ref().rsplit('/').next().unwrap_or(n.as_ref());
             let stem = stem
                 .strip_suffix(".zip")
                 .or_else(|| stem.strip_suffix(".ZIP"))
                 .unwrap_or(stem);
-            text_era_member(stem).is_some_and(|m| {
-                m.language.eq_ignore_ascii_case("en") && m.variant.eq_ignore_ascii_case("utf8")
-            })
-        });
-        Self { en_utf8_text }
+            if let Some(m) = text_era_member(stem)
+                && m.language.eq_ignore_ascii_case("en")
+                && m.variant.eq_ignore_ascii_case("utf8")
+            {
+                if m.companion {
+                    en_utf8_cf = true;
+                } else {
+                    en_utf8_text = true;
+                }
+            }
+        }
+        Self { en_utf8_text, en_utf8_cf }
     }
 }
 
@@ -311,8 +325,10 @@ fn dispatch_text(
     }
     // Mid-era dailies ship the English delivery in both encodings; ingesting
     // both would also double every notice, and the ISO rendering is the lossy
-    // one (see [`PackageContext::en_utf8_text`]).
-    if name.variant.eq_ignore_ascii_case("iso") && ctx.en_utf8_text {
+    // one (see [`PackageContext::en_utf8_text`]). Judged per delivery class:
+    // an ISO companion is only superseded by a UTF8 COMPANION (issue 181).
+    let utf8_twin = if name.companion { ctx.en_utf8_cf } else { ctx.en_utf8_text };
+    if name.variant.eq_ignore_ascii_case("iso") && utf8_twin {
         return Disposition::Skipped("text-era-iso-superseded-by-utf8");
     }
 
@@ -342,24 +358,34 @@ fn dispatch_text(
 }
 
 /// Text-era member naming, e.g. `EN_19930102_1993001_ISO_ORG.zip!EN_19930102_1993001_ISO_ORG`
-/// or `en_20100102_001_utf8_org.zip!EN_20100102_2010001_UTF8_ORG`.
+/// or `en_20100102_001_utf8_org.zip!EN_20100102_2010001_UTF8_ORG`. The last
+/// part is the delivery class: `ORG` is the main daily delivery, `CF<n>` its
+/// companion files (issue 181) — the SAME record format carrying additional or
+/// republished notices, shipped per language/variant exactly like ORG. Before
+/// they were recognised here, every companion member fell through to the XML
+/// path and quarantined whole (~4.1k rows as not-utf8 / unknown-root /
+/// unparsable-xml, depending on variant).
 struct TextEraName {
     language: String,
     variant: String,
+    /// A `CF<n>` companion member rather than the main `ORG` delivery.
+    companion: bool,
 }
 
 fn text_era_member(member_path: &str) -> Option<TextEraName> {
     let name = member_path.rsplit(['!', '/']).next()?;
     let parts: Vec<&str> = name.split('_').collect();
-    // <lg>_<date>_<issue>_<variant>_ORG
-    let [language, date, _issue, variant, org] = parts[..] else { return None };
+    // <lg>_<date>_<issue>_<variant>_<ORG|CFn>
+    let [language, date, _issue, variant, class] = parts[..] else { return None };
+    let companion = (class.len() > 2 && class[..2].eq_ignore_ascii_case("cf"))
+        && class[2..].bytes().all(|b| b.is_ascii_digit());
     let ok = language.len() == 2
         && language.chars().all(|c| c.is_ascii_alphabetic())
         && date.len() == 8
         && date.chars().all(|c| c.is_ascii_digit())
-        && org.eq_ignore_ascii_case("org")
+        && (class.eq_ignore_ascii_case("org") || companion)
         && ["iso", "utf8", "meta"].iter().any(|v| v.eq_ignore_ascii_case(variant));
-    ok.then(|| TextEraName { language: language.into(), variant: variant.into() })
+    ok.then(|| TextEraName { language: language.into(), variant: variant.into(), companion })
 }
 
 /// Byte offsets of each `1.00/067192`-style record marker line.
@@ -486,11 +512,72 @@ mod tests {
     #[test]
     fn text_era_names_carry_language_and_variant() {
         let n = text_era_member("EN_19930102_1993001_ISO_ORG.zip!EN_19930102_1993001_ISO_ORG").unwrap();
-        assert_eq!((n.language.as_str(), n.variant.as_str()), ("EN", "ISO"));
+        assert_eq!((n.language.as_str(), n.variant.as_str(), n.companion), ("EN", "ISO", false));
         let n = text_era_member("en_20100102_001_utf8_org.zip!EN_20100102_2010001_UTF8_ORG").unwrap();
-        assert_eq!((n.language.as_str(), n.variant.as_str()), ("EN", "UTF8"));
+        assert_eq!((n.language.as_str(), n.variant.as_str(), n.companion), ("EN", "UTF8", false));
         // XML-era members must not be mistaken for text-era ones.
         assert!(text_era_member("20110104_001/000036_2011.xml").is_none());
+    }
+
+    /// Issue 181: the `CF<n>` companion delivery is the text era too — the same
+    /// record format per language/variant. Before it was recognised, every
+    /// companion member quarantined whole via the XML path.
+    #[test]
+    fn text_era_names_recognise_companion_files() {
+        let n = text_era_member("EN_20030124_017_ISO_CF1.ZIP!EN_20030124_2003017_ISO_CF1").unwrap();
+        assert_eq!((n.language.as_str(), n.variant.as_str(), n.companion), ("EN", "ISO", true));
+        let n = text_era_member("bg_20070905_170_meta_cf1.zip!BG_20070905_2007170_META_CF1").unwrap();
+        assert_eq!((n.variant.as_str(), n.companion), ("META", true));
+        let n = text_era_member("DA_20030124_017_ISO_CF3.ZIP!DA_20030124_2003017_ISO_CF3").unwrap();
+        assert!(n.companion);
+        // 'CF' with no ordinal, or non-digits after it, is not the pattern.
+        assert!(text_era_member("EN_20030124_017_ISO_CF.ZIP!EN_20030124_2003017_ISO_CF").is_none());
+        assert!(text_era_member("EN_20030124_017_ISO_CFX.ZIP!EN_20030124_2003017_ISO_CFX").is_none());
+    }
+
+    /// Issue 181: companion dispatch inherits the text policies — meta and
+    /// non-English skip; ISO is superseded only by a UTF8 COMPANION, never by
+    /// the main delivery's UTF8 twin.
+    #[test]
+    fn companion_members_dispatch_with_class_aware_policies() {
+        let rec = b"1.0/000001\nTI: X\nND: 99999-2003\n";
+        // Meta companion: the documented duplicate-representation skip (the
+        // language policy fires first, so this is the ENGLISH meta member).
+        assert!(matches!(
+            dispatch("en_20070905_170_meta_cf1.zip!EN_20070905_2007170_META_CF1", rec),
+            Disposition::Skipped("text-era-meta-variant")
+        ));
+        // Non-English companion: the language policy.
+        assert!(matches!(
+            dispatch("FR_20030124_017_ISO_CF1.ZIP!FR_20030124_2003017_ISO_CF1", rec),
+            Disposition::Skipped("text-era-non-english")
+        ));
+        // English ISO companion in a package whose MAIN delivery has UTF8 but
+        // whose companion does not: NOT superseded — it dispatches as records.
+        let ctx = PackageContext::from_entry_names(&[
+            "EN_20040603_107_UTF8_ORG.ZIP",
+            "EN_20040603_107_ISO_CF1.ZIP",
+        ]);
+        assert!(ctx.en_utf8_text && !ctx.en_utf8_cf);
+        assert!(matches!(
+            dispatch_with("EN_20040603_107_ISO_CF1.ZIP!EN_20040603_2004107_ISO_CF1", rec, &ctx),
+            Disposition::Records(_)
+        ));
+        // With a UTF8 companion present, the ISO companion IS superseded.
+        let ctx = PackageContext::from_entry_names(&[
+            "EN_20040603_107_UTF8_CF1.ZIP",
+            "EN_20040603_107_ISO_CF1.ZIP",
+        ]);
+        assert!(ctx.en_utf8_cf);
+        assert!(matches!(
+            dispatch_with("EN_20040603_107_ISO_CF1.ZIP!EN_20040603_2004107_ISO_CF1", rec, &ctx),
+            Disposition::Skipped("text-era-iso-superseded-by-utf8")
+        ));
+        // And the English UTF8 companion itself yields records.
+        assert!(matches!(
+            dispatch("EN_20040603_107_UTF8_CF1.ZIP!EN_20040603_2004107_UTF8_CF1", rec),
+            Disposition::Records(_)
+        ));
     }
 
     #[test]
