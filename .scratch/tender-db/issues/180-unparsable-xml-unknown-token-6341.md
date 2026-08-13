@@ -1,6 +1,6 @@
 # 180 — the 6,341 unknown-token `unparsable-xml` rows have a stated hypothesis and no owner
 
-Status: DIAGNOSED
+Status: in-progress
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 73 (stated the hypothesis, then closed as duplicate of 36+41), 137 (measured the split), 30 (classification)
@@ -55,3 +55,17 @@ in `text_era_member` and skip it under a named dispatch policy
 correction CONTENT out of scope: a corrections side-table applying FLD updates to stored
 text-era notices would be its own feature; file it separately if wanted — the records stay
 reachable in the archive.
+
+**2026-08-14 ~05:4x CEST (orchestrator) — implemented, deployed; plus a COR twist.** The
+`CS<n>` class is recognised across both naming eras (4-token no-variant 2000-shape and
+5-token 2009-shape, extension-stripped) and skipped as `text-era-correction-sheet` ahead of
+the language policy; correction members are excluded from the UTF8-supersedence package
+flags so a `utf8_cs1` sibling can never sweep an ISO main delivery. Ledger row added
+(reason unparsable-xml, detail "unknown token at 1:1"). While attributing the not-utf8
+remainder (43 rows) two more populations fell out: (a) 22× 1999-07-10 `_ISO_COR.ZIP` —
+NOT correction sheets but a corrected re-issue of the whole day's delivery (623 records,
+identical ND set to ORG, 3 records byte-differing = the actual corrections); COR now
+dispatches as a companion-style class so the 3 corrections become notice versions and the
+620 dedupe as already-parsed. (b) 21× whole inner dailies of the monthly 2026-06 fetch
+held as raw members — filed as issue 196 (not a coverage gap; the days are ingested via
+daily fetches). Reprocess of unparsable-xml + not-utf8 queued after the COR deploy.
