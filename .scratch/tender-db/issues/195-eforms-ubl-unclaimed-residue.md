@@ -42,3 +42,20 @@ sdk-1.10 fields.json for these xpaths — if present, the walker's extension des
 (fix-and-reclaim for ~165+ rows across the classes sharing the mechanism); if absent from the
 vendored inventory, decide claim-vs-keep per the 143/144 pattern. The sdk-1.12 EformsExtension
 class (89 rows) and AppealTerms/UBLExtensions (9, sdk-1.0) likely share the same mechanism.
+
+**2026-08-14 ~01:4x CEST (orchestrator) — both sdk-1.10 classes pinned to exact xpaths;
+implementation spec.** (a) 81 rows: `…/TenderingTerms/…/EformsExtension/StrategicProcurement/
+StrategicProcurementInformation/ProcurementDetails` — the CVD statistics block
+(AssetCategoryCode, StrategicProcurementStatistics/StatisticsCode+Numeric). sdk-1.10 declares
+these fields ONLY at LotResult (BT-723/OPT-155/OPT-156-LotResult); the 2025 dailies also
+publish them forward-looking at the Lot. (b) 75 rows: `…/TenderingProcess/…/EformsExtension/
+SelectionCriteria` — the SDK and the index declare lot SelectionCriteria under TenderingTerms;
+these publishers put the identical block under TenderingProcess. Both are the
+published-beyond-the-SDK class: claim the alternate locations empirically (map onto the same
+BT/OPT ids — the notice-parsed layer stores the source's own terms), mirroring how
+crates/ingest/src/eforms/index.rs already declares extension nodes (lot StrategicProcurement is
+at index.rs:145; SelectionCriteria/TenderingTerms entries at :290+). Add fixtures from members
+00054478_2025 (extracted, in scratchpad) and one TenderingProcess/SelectionCriteria member;
+verify with diag139; reprocess drains ~156 of the 310. The remaining classes (sdk-1.12
+EformsExtension 89, sdk-0.1 SubcontractTerms 10, shortlist 11, RealizedLocation 7,
+ProcurementAdditionalType 6, AppealTerms 9) each need the same one-query pinning first.
