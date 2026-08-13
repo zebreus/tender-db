@@ -71,3 +71,11 @@ at …AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE/AWARD_CRITERIA_DETAIL" 
 concession members; a text-fallback gap on AWARD_CRITERIA_DETAIL, not a spelling twin) — decide
 with the final residue. Next: deploy + final reprocess; expected residue ≈ eForms 310 (issue
 195) + text-era orphan lines ~45 + the 2 text-fallback rows.
+
+**2026-08-13 ~09:0x CEST (orchestrator) — DRAINED.** Final pass (job 631, rev 1b4ee0f): 191
+reclaimed; cumulative for this issue 7 + 2,266 + 191 = 2,464 notices, zero stamping anomalies
+across all passes. unclaimed-content terminal residue 365: ~310 eForms (issue 195), ~45
+text-era orphan lines, 2 concession text-fallback rows (AWARD_CRITERIA_DETAIL bare text —
+documented here, too small to own separately unless the class grows). Public ledger row
+"2011 US-spelled defence forms (VEAT et al.)" added, resolved 2026-08-13; rides the next
+deploy. Panel verification (unclaimed-content 365, row reclaimed ≈2,457) after fold 632.
