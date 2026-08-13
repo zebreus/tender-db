@@ -1827,6 +1827,13 @@
 },
 {
 "attributes": [],
+"name": "CONTRACT_LIKELY_SUB_CONTRACTED_WITH_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "CONTRACT_LOCATION_TYPE",
 "sources": [
 "r208"
@@ -6084,6 +6091,15 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [
+"VALUE"
+],
+"name": "NOTICE_INVOLVES_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {

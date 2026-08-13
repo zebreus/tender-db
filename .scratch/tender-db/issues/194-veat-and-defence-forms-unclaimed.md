@@ -61,3 +61,13 @@ VEAT fixture committed (veat-294050-2011.xml). Also: the SUM-alias pinning test 
 77 (my earlier awk-summarized gate masked it — deploy 69d869f carried the red pin; harmless,
 fixed to 85 with the count documented). Remaining: deploy + reprocess unclaimed-content, expect
 2,822 → ~350 (eForms 311 + text-era orphans ~45), then issue 195 owns the eForms residue.
+
+**2026-08-13 ~04:0x CEST (orchestrator) — first drain pass + layer 2.** Deploy b97decb; job 629
+reclaimed 2,266 (72 packages), journal clean. Layer 2 surfaced two more S-spellings the samples
+lacked (CONTRACT_LIKELY_SUB_CONTRACTED_WITH_DEFENSE in 179 VEAT rows,
+NOTICE_INVOLVES_DEFENSE in 17 CONTRACT_DEFENSE rows) — added the twins, both sample members
+parse (296139: 7/109, 304253: 22/235). Also isolated a DIFFERENT 2-row class: "unclaimed TEXT
+at …AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE/AWARD_CRITERIA_DETAIL" (UK-spelled 2012
+concession members; a text-fallback gap on AWARD_CRITERIA_DETAIL, not a spelling twin) — decide
+with the final residue. Next: deploy + final reprocess; expected residue ≈ eForms 310 (issue
+195) + text-era orphan lines ~45 + the 2 text-fallback rows.
