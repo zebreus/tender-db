@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 32 notice files, 914 KB.
+Total: 33 notice files, 950 KB.
 
 ## Selection policy
 
@@ -29,12 +29,12 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED), 10 files, 179 KB
+## `eforms/` — eForms (TED), 11 files, 215 KB
 
-All but the last two from TED daily package **`daily-202600136`** (`20260717_136`,
+All but the last three from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
 (`eforms-sdk-1.12` ×448, `1.13` ×2202, `1.14` ×1027), so the set below is a
-live multi-version sample, not a single-SDK snapshot. The two issue-195
+live multi-version sample, not a single-SDK snapshot. The three issue-195
 fixtures come from earlier dailies (noted per entry) because the quirk they
 exercise is specific to those vintages.
 
@@ -49,6 +49,7 @@ exercise is specific to those vintages.
 | `can-withheld-29-00495618-2026.xml` | 14 970 | 29 | 1.13 | NL | **Withheld fields (BT-195).** Contains `efac:FieldsPrivacy` blocks with `non-publication-identifier` codes `awa-cri-nam`, `awa-cri-num`, `awa-cri-typ`, `rec-sub-cou`, `rec-sub-typ` and reason codes `oth-int`, `chan-need`. Drives the withheld-field satellite table from issue 03. |
 | `can-fa-29-00495185-2026.xml` | 11 036 | 29 | 1.13 | NL | **Framework agreement CAN** — `ContractingSystemTypeCode` = `fa-wo-rc` (framework without reopening competition). Exercises the FA/DPS lot-relabelling concern called out in docs/architecture.md ("FA/DPS rounds relabel them"). |
 | `can-cvd-lot-00054478-2025.xml` | 57 870 | 29 | 1.10 | HR | **Issue 195: lot-mounted CVD statistics.** From daily `20250127_2025018`. The Clean Vehicles Directive block (`AssetCategoryCode`, `StrategicProcurementStatistics`) published forward-looking under the *Lot's* TenderingTerms extension, where sdk-1.10 anchors `efac:ProcurementDetails` only at LotResult. Exercises the LotResult→Lot `ALIASES` graft. |
+| `cn-fma-root-00660539-2023.xml` | 35 816 | 16 | 1.7 | DE | **Issue 195: root-level framework maximum.** From daily `20231030_2023209`. `efbc:FrameworkMaximumAmount` published directly under the root EformsExtension — the eForms-DE tailoring emitted onto a plain EU customization (the vendored eforms-de-1.x inventory declares this exact path as DE1-FrameworkMaximumAmount). Exercises the gap-filled root claim as `UBL-FrameworkMaximumAmount`. |
 | `cn-selc-tp-00157944-2024.xml` | 24 303 | 16 | 1.8 | BE | **Issue 195: selection criteria under TenderingProcess.** From daily `20240315_2024054`. Each lot repeats the identical `efac:SelectionCriteria` block under both TenderingTerms (the SDK mount) and TenderingProcess (unenumerated). Exercises the TenderingTerms→TenderingProcess `ALIASES` graft. Non-EN (NLD): the quirk class is Belgian-platform specific. |
 
 ### On BT-195 naming

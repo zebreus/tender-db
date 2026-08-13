@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 17, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 18, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1371,6 +1371,21 @@ fn sibling_mounted_extension_blocks_are_claimed() {
             && v.section_id.starts_with("ND-SelectionCriteria")),
         "the TenderingTerms-mounted copies keep their own criterion sections"
     );
+
+    // Root-level framework maximum (sdk-1.7 DE CN): the eForms-DE tailoring
+    // emitted onto a plain EU customization — `efbc:FrameworkMaximumAmount`
+    // directly under the root EformsExtension, claimed under the same
+    // synthetic id as its lot-TenderingTerms mount.
+    let fma = parse_fixture("eforms/cn-fma-root-00660539-2023.xml");
+    let max = fma
+        .values
+        .iter()
+        .find(|v| v.field_id == "UBL-FrameworkMaximumAmount")
+        .expect("root-mounted framework maximum is claimed");
+    assert!(matches!(
+        &max.value,
+        NoticeValue::Amount { cents: 40_000_000, currency } if currency == "EUR"
+    ));
 }
 
 // -------------------------------------------------------------- completeness

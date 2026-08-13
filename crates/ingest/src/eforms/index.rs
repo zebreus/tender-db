@@ -810,6 +810,27 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             )?;
         }
 
+        // Root-level framework maximum (issue 195). German eSender notices
+        // declaring plain EU minors (84× eforms-sdk-1.7, 2023-10 dailies)
+        // publish `efbc:FrameworkMaximumAmount` directly under the root
+        // EformsExtension — the eForms-DE tailoring emitted onto the EU
+        // customization, the PLDR cross-dialect class below: the vendored
+        // eforms-de-1.x inventory declares exactly this path as
+        // DE1-FrameworkMaximumAmount. Claimed under the same synthetic id
+        // this element already gets at its lot-TenderingTerms mount (the
+        // [`EXTRA`] entry); BT-271's element name is unique, but the id stays
+        // UBL- because the SDK anchors BT-271 under RequestedTenderTotal and
+        // the German field is the national notice-level variant. Gap-fill
+        // (`true`): eforms-de-1.x keeps its own DE1 field id.
+        insert_extra(
+            &mut root,
+            "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension\
+             /efbc:FrameworkMaximumAmount",
+            "UBL-FrameworkMaximumAmount",
+            "amount",
+            true,
+        )?;
+
         // OPT-060 contract-execution conditions code (issue 142). Estonian
         // eSender notices declaring eforms-sdk-1.3 publish the full BT-70
         // block — `cbc:ExecutionRequirementCode[@listName='conditions']`
