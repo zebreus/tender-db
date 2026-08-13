@@ -37,3 +37,13 @@ siblings become guard-accepted duplicates and skipped-by-policy turns truthful.
 3. Gate, deploy, `reprocess unclaimed-content`, verify: bucket 2,829 → ~45 + eForms 311
    (issue 195); then run the sibling marker path for the newly-parsed originals' 154 siblings
    (or verify the reprocess flag pass now marks them via the guard).
+
+## Comments
+
+**2026-08-13 ~02:0x CEST (orchestrator) — the internal-ojs slice is VERIFIED on prod and the
+whole 2008 DTD story is terminally closed.** Deploy 69d869f; reprocess job 625 reclaimed the 7
+concession summaries (fold 626: 7 tenders); the guarded marker (jobs 627/628: dry-run 154/0
+gaps, execute with expect=154) recorded the 154 siblings skipped-by-policy WITH the guard
+satisfied. Panel: unparsable-xml 6,495 → 6,341, all four 2008/2010 DTD ledger rows at
+outstanding 0, ledger texts updated to the final story. Remaining in this issue: the VEAT
+family (2,380) and defence-form (~84) rule mining.

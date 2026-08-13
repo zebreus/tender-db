@@ -1,6 +1,6 @@
 # 193 — record_reclaim_attempt misses the rows of identity-less text records: 77 relabels stamped nowhere
 
-Status: RESOLVED (2026-08-13) — content-hash fallback landed with test; verify on the next unclaimed-content reprocess (77 relabels should land)
+Status: RESOLVED-VERIFIED (2026-08-13) — fallback deployed and exercised (job 625); the 108-count prediction corrected in the comment
 Kind: bookkeeping defect (small, no false resolution)
 Blocked by: —
 Relates to: 87 (the relabel contract), 139 (the same address-mismatch family, at scale), 183 (the pass that measured it)
@@ -37,3 +37,13 @@ OUTSTANDING under their stale reason — nothing is falsely resolved — but the
 77 rows; bounded; not urgent. The 2,829 remaining unclaimed-content rows DID relabel correctly
 (their current details are on the rows) — this class only covers records that lose their
 identity entirely under the current dispatcher.
+
+## Comments
+
+**2026-08-13 (orchestrator) — landed and deployed (69d869f); prediction in this issue corrected.**
+The fix (content-hash fallback + zero-stamp logging) is in with a regression test. The original
+"expect missing-publication-id 108→185" prediction was wrong: the 77 identity-less records'
+rows were already labeled missing-publication-id from first ingest (they are part of the 108) —
+only their ATTEMPT stamps (attempts/last_attempt_at) were missing, which the panel does not
+show. Job 625 (73 packages, post-fix) surfaced 2 such records in the still-walked packages and
+stamped them via the fallback; zero journal lines. by_reason unchanged by design. RESOLVED.
