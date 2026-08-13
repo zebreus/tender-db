@@ -116,3 +116,19 @@ ProcurementTypeCode (1.8 procedure / 1.10 lot — pin the listName), 5× sdk-1.7
 ContractExtension/RenewalsIndicator, 4× sdk-1.9 root FieldsPrivacy, 2× sdk-1.12
 StrategicProcurement under *AwardingCriterion* extension (a third mount), 2× sdk-1.12
 doubly-nested ServiceProviderParty, plus 2× text and 2× r208 rows tracked elsewhere.
+
+**2026-08-14 ~04:5x CEST (orchestrator) — slice 2 shipped: root-level FrameworkMaximumAmount
+drained 84/84.** The class is the eForms-DE cross-dialect pattern: German eSenders declaring
+plain EU minors publish `efbc:FrameworkMaximumAmount` directly under the root EformsExtension;
+the vendored eforms-de-1.x inventory declares exactly this path (DE1-FrameworkMaximumAmount).
+Claimed via gap-filled `insert_extra` in `build()` as UBL-FrameworkMaximumAmount (the id the
+element already gets at its lot-TenderingTerms mount); eforms-de-1.x keeps its DE1 id. Fixture
+`cn-fma-root-00660539-2023.xml` (sdk-1.7 DE CN, EUR 400000.00), corpus 17→18, assertion added
+to `sibling_mounted_extension_blocks_are_claimed`. Deployed rev a12422f; reprocess job 651: 84
+reclaimed, 0 still held; fold job 652: 84 notices → 75 tenders, 198 versions; journal clean.
+unclaimed-content now ~122. Remaining classes: 11× shortlist PreSelectedParty (1.7), 10×
+sdk-0.1 SubcontractTerms/Amount, 9× sdk-1.0 AppealTerms/UBLExtensions, 7× sdk-1.7 lot
+RealizedLocation/Address/Description (why doesn't the issue-18 EXTRA+alias reach 1.7?), 6+3×
+ProcurementAdditionalType/ProcurementTypeCode, 5× ContractExtension/RenewalsIndicator, 4×
+root FieldsPrivacy (1.9), 2× StrategicProcurement under AwardingCriterion (1.12), 2× nested
+ServiceProviderParty (1.12), + small text/r208 rows tracked elsewhere.
