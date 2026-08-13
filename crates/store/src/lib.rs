@@ -1022,8 +1022,14 @@ impl Db {
                     .await?;
                     // Zero here IS anomalous — the member came off the held
                     // list, so a ledger row must exist (issue 139's exact
-                    // failure shape) — and must be loud in the journal.
-                    if self.stamp_reclaimed(conn, n, id).await? == 0 {
+                    // failure shape) — and must be loud in the journal. One
+                    // benign zero exists: a multi-record FILE whose row was
+                    // already resolved by an earlier record of the same run
+                    // (the C01 drain fired 17 such lines), so a zero is only
+                    // reported when the file has no resolved row either.
+                    if self.stamp_reclaimed(conn, n, id).await? == 0
+                        && !self.member_file_resolved(conn, n).await?
+                    {
                         eprintln!(
                             "[store] reclaim stamped NO ledger rows for notice {id} \
                              (fetch {} member {:?}) — parsed, but no quarantine row \
@@ -1099,6 +1105,24 @@ impl Db {
                 }
             }
         }
+    }
+
+    /// Whether the member's FILE-level ledger row is already resolved
+    /// (reclaimed or skipped) — the benign explanation for a zero-stamp
+    /// reclaim in a multi-record file, where an earlier record of the same
+    /// run resolved the row.
+    async fn member_file_resolved(&self, conn: &Connection, n: &Notice) -> turso::Result<bool> {
+        let file = member_file(n.member_path.clone());
+        let mut rows = conn
+            .query(
+                "SELECT 1 FROM quarantine
+                  WHERE fetch_id = ? AND member_path = ?
+                    AND (reprocessed_at IS NOT NULL OR skipped_at IS NOT NULL)
+                  LIMIT 1",
+                (Value::Integer(n.fetch_id), t(&file)),
+            )
+            .await?;
+        Ok(rows.next().await?.is_some())
     }
 
     /// Flag a member's held ledger rows reclaimed, under BOTH addresses a row can
