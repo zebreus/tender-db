@@ -235,7 +235,9 @@ mod tests {
     /// misspelled entry is a visible failing line, not a silent normalisation.
     #[test]
     fn sum_alias_table_pins_every_base_to_an_r209_element() {
-        assert_eq!(SUM_ALIASES.len(), 77, "alias count changed; re-sweep and update the table");
+        // 77 from the issue-41 sweep + 8 mined from the 2008 concession
+        // summaries (issue 194).
+        assert_eq!(SUM_ALIASES.len(), 85, "alias count changed; re-sweep and update the table");
         for &(alias, base) in SUM_ALIASES {
             assert_eq!(
                 alias.strip_suffix("_SUM"),

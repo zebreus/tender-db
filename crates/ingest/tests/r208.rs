@@ -68,7 +68,7 @@ fn every_r208_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 4, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 5, "corpus changed; update the expectation");
 
     for relative in names {
         let parsed = parse_fixture(&relative);

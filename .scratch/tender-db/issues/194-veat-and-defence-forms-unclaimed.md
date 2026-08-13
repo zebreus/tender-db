@@ -47,3 +47,17 @@ gaps, execute with expect=154) recorded the 154 siblings skipped-by-policy WITH 
 satisfied. Panel: unparsable-xml 6,495 → 6,341, all four 2008/2010 DTD ledger rows at
 outstanding 0, ledger texts updated to the final story. Remaining in this issue: the VEAT
 family (2,380) and defence-form (~84) rule mining.
+
+**2026-08-13 ~03:0x CEST (orchestrator) — root cause of the VEAT + defence populations: a
+SPELLING fork.** The mirrored XSDs (and the whole rule registry) write the defence-form family
+with UK spelling (…_DEFENCE); the 2011 dailies (Sept–Dec 2011, R2.0.8.S01 era) publish the SAME
+forms with US spelling (…_DEFENSE). All 2,380 VEAT rows fail on AWARD_OF_CONTRACT_DEFENSE inside
+an already-claimed VEAT form; the ~84 defence rows are the same fork at their form roots. Fix:
+23 S-spelled twins added beside their DEFENCE twins — 4 form-root/section names + 19 mined
+mechanically by diffing all element names of four real members against the inventory
+(r208-observed entries, same rule kinds as the twins). All four sampled members
+(VEAT 294050, CONTRACT_AWARD 297630, CONTRACT 299577, PRIOR_INFORMATION 362041) now parse;
+VEAT fixture committed (veat-294050-2011.xml). Also: the SUM-alias pinning test was stale at
+77 (my earlier awk-summarized gate masked it — deploy 69d869f carried the red pin; harmless,
+fixed to 85 with the count documented). Remaining: deploy + reprocess unclaimed-content, expect
+2,822 → ~350 (eForms 311 + text-era orphans ~45), then issue 195 owns the eForms residue.

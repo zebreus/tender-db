@@ -354,6 +354,13 @@
 },
 {
 "attributes": [],
+"name": "ADMINISTRATIVE_INFORMATION_CONTRACT_AWARD_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "ADMINISTRATIVE_INFORMATION_CONTRACT_CONCESSIONAIRE",
 "sources": [
 "r208"
@@ -372,6 +379,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "ADMINISTRATIVE_INFORMATION_CONTRACT_NOTICE_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -644,6 +658,13 @@
 },
 {
 "attributes": [],
+"name": "AUTHORITY_PRIOR_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "AUTH_ENTITY_ICAR",
 "sources": [
 "r208"
@@ -749,6 +770,13 @@
 },
 {
 "attributes": [],
+"name": "AWARD_CRITERIA_CONTRACT_AWARD_NOTICE_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "AWARD_CRITERIA_CONTRACT_CONCESSIONAIRE",
 "sources": [
 "r208"
@@ -845,6 +873,15 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [
+"ITEM"
+],
+"name": "AWARD_OF_CONTRACT_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -1411,6 +1448,13 @@
 },
 {
 "attributes": [],
+"name": "CONTACTING_AUTHORITY_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "CONTACTING_AUTHORITY_VEAT",
 "sources": [
 "r208-observed"
@@ -1564,6 +1608,13 @@
 },
 {
 "attributes": [],
+"name": "CONTRACTING_AUTHORITY_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "CONTRACTING_AUTHORITY_VEAT",
 "sources": [
 "r208"
@@ -1674,6 +1725,18 @@
 "LG",
 "VERSION"
 ],
+"name": "CONTRACT_AWARD_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [
+"CATEGORY",
+"FORM",
+"LG",
+"VERSION"
+],
 "name": "CONTRACT_AWARD_UTILITIES",
 "sources": [
 "r208"
@@ -1726,6 +1789,18 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [
+"CATEGORY",
+"FORM",
+"LG",
+"VERSION"
+],
+"name": "CONTRACT_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -2404,6 +2479,13 @@
 },
 {
 "attributes": [],
+"name": "DESCRIPTION_AWARD_NOTICE_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "DESCRIPTION_CONCESSION",
 "sources": [
 "r208"
@@ -2429,6 +2511,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "DESCRIPTION_CONTRACT_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -3937,6 +4026,15 @@
 ]
 },
 {
+"attributes": [
+"CTYPE"
+],
+"name": "FD_CONTRACT_AWARD_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
 "attributes": [],
 "name": "FD_CONTRACT_AWARD_UTILITIES",
 "sources": [
@@ -3968,6 +4066,15 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [
+"CTYPE"
+],
+"name": "FD_CONTRACT_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -4033,6 +4140,15 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [
+"CTYPE"
+],
+"name": "FD_PRIOR_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -4859,6 +4975,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "LEFTI_CONTRACT_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -6721,6 +6844,13 @@
 },
 {
 "attributes": [],
+"name": "OBJECT_CONTRACT_INFORMATION_CONTRACT_AWARD_NOTICE_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "OBJECT_CONTRACT_INFORMATION_CONTRACT_UTILITIES",
 "sources": [
 "r208"
@@ -6732,6 +6862,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "OBJECT_CONTRACT_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -7794,6 +7931,18 @@
 "LG",
 "VERSION"
 ],
+"name": "PRIOR_INFORMATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [
+"CATEGORY",
+"FORM",
+"LG",
+"VERSION"
+],
 "name": "PRIOR_INFORMATION_MOVE",
 "sources": [
 "r208"
@@ -7953,6 +8102,13 @@
 },
 {
 "attributes": [],
+"name": "PROCEDURE_DEFINITION_CONTRACT_AWARD_NOTICE_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "PROCEDURE_DEFINITION_CONTRACT_NOTICE",
 "sources": [
 "r208"
@@ -7964,6 +8120,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "PROCEDURE_DEFINITION_CONTRACT_NOTICE_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -8456,6 +8619,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "QUANTITY_SCOPE_WORKS_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -9799,6 +9969,13 @@
 ]
 },
 {
+"attributes": [],
+"name": "TYPE_CONTRACT_LOCATION_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
 "attributes": [
 "CONTRACT_TYPE",
 "SERVICES_CATEGORY"
@@ -9836,6 +10013,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "TYPE_CONTRACT_PLACE_DELIVERY_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -9912,6 +10096,13 @@
 },
 {
 "attributes": [],
+"name": "TYPE_OF_PROCEDURE_CONTRACT_AWARD_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "TYPE_OF_PROCEDURE_CORRIGENDUM",
 "sources": [
 "r208"
@@ -9930,6 +10121,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "TYPE_OF_PROCEDURE_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
@@ -9961,6 +10159,13 @@
 "sources": [
 "defence",
 "r208"
+]
+},
+{
+"attributes": [],
+"name": "TYPE_OF_PROCEDURE_DETAIL_FOR_CONTRACT_NOTICE_DEFENSE",
+"sources": [
+"r208-observed"
 ]
 },
 {
