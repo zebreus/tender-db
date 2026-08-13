@@ -132,3 +132,19 @@ RealizedLocation/Address/Description (why doesn't the issue-18 EXTRA+alias reach
 ProcurementAdditionalType/ProcurementTypeCode, 5× ContractExtension/RenewalsIndicator, 4×
 root FieldsPrivacy (1.9), 2× StrategicProcurement under AwardingCriterion (1.12), 2× nested
 ServiceProviderParty (1.12), + small text/r208 rows tracked elsewhere.
+
+**2026-08-14 ~06:5x CEST (orchestrator) — three more classes implemented (not yet
+deployed).** (1) Lot `ContractExtension/cbc:RenewalsIndicator` (5 rows, sdk-1.7 DE) — the
+eForms-DE cross-dialect class again, claimed as UBL-RenewalsIndicator behind the
+PLDR-style predicate-free-construct guard. (2) `RealizedLocation/Address/cbc:Description`
+on *Parts* (7 rows, sdk-1.7 LV PINs) — root cause: ALIASES do not compose, so the
+procedure-level UBL-AddressDescription EXTRA never reached Part via procedure→Lot→Part;
+the entry is now also written at Lot level, which the Lot→Part/LotsGroup aliases mirror.
+(3) Design-contest shortlist merged under TenderingProcess (11 rows, sdk-1.7 FR — the
+publisher abuses BT-47 PreSelectedParty names to carry criteria text; stored as published
+under BT-47-Lot): new ALIASES graft TenderingTerms→TenderingProcess EconomicOperatorShortList.
+Fixtures ×3, corpus 18→21, gate green, pushed (commit "three more sibling-mount classes").
+Deploy + reclaim next firing when the queue idles. Remaining after that: 10× sdk-0.1
+SubcontractTerms/Amount, 9× sdk-1.0 AppealTerms/UBLExtensions, 6+3×
+ProcurementAdditionalType listName, 4× root FieldsPrivacy (1.9), 2× AwardingCriterion
+StrategicProcurement (1.12), 2× nested ServiceProviderParty (1.12), 1× SubTypeDescription.

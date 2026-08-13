@@ -1,6 +1,6 @@
 # 180 — the 6,341 unknown-token `unparsable-xml` rows have a stated hypothesis and no owner
 
-Status: in-progress
+Status: resolved (2026-08-14)
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 73 (stated the hypothesis, then closed as duplicate of 36+41), 137 (measured the split), 30 (classification)
@@ -69,3 +69,11 @@ dispatches as a companion-style class so the 3 corrections become notice version
 620 dedupe as already-parsed. (b) 21× whole inner dailies of the monthly 2026-06 fetch
 held as raw members — filed as issue 196 (not a coverage gap; the days are ingested via
 daily fetches). Reprocess of unparsable-xml + not-utf8 queued after the COR deploy.
+
+**2026-08-14 ~06:4x CEST (orchestrator) — RESOLVED.** Reprocess job 653 (unparsable-xml):
+79 packages, 0 still held — all 4,441 CS rows terminal as skipped-by-policy
+(text-era-correction-sheet). Job 654 (not-utf8): 64 packages, 4 reclaimed (the 1999-07-10
+COR re-issue's corrected records, now notice versions), 0 still held — the COR class and
+the residual not-utf8 rows are drained; only issue 196's 21 whole-package rows remain under
+not-utf8, tracked there. Ledger row "Text-era correction sheets (CS files)" live. The
+unparsable-xml reason is now EMPTY.
