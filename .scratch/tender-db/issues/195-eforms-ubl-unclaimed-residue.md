@@ -81,3 +81,24 @@ sdk-1.10/1.8 classes; the 2-row `…EformsExtension/StrategicProcurement` class 
 minors may also drain if those minors declare the lot StrategicProcurementInformation).
 Then pin the remaining classes (sdk-1.12 EformsExtension 89, SubcontractTerms 10,
 shortlist 11, RealizedLocation 7, ProcurementAdditionalType 6, AppealTerms 9).
+
+**2026-08-14 ~03:1x CEST (orchestrator) — deployed (rev 342f11e), reclaim running; full-width
+readout corrects the class attribution.** Grouping without the 80-char truncation shows the
+two implemented classes span minors (the grafts are version-agnostic, so all should drain):
+CVD ProcurementDetails = 43 sdk-1.12 + 32 sdk-1.13 + 6 sdk-1.10 (=81); TenderingProcess
+SelectionCriteria = 37 sdk-1.10 + 27 sdk-1.8 + 11 sdk-1.13 (=75). The "sdk-1.12
+EformsExtension 89" class dissolves into three now fully-named root-extension classes:
+**84× sdk-1.7 `efbc:FrameworkMaximumAmount` directly under the root EformsExtension** (the
+EXTRA table claims it only at the lot TenderingTerms extension — likely one EXTRA entry, but
+check no minor declares a field at the root path first), 4× sdk-1.9 root-level
+`efac:FieldsPrivacy` (withheld-field block at an unanchored position), 1× sdk-1.12
+`NoticeSubType/efbc:SubTypeDescription`. Also newly visible below the old cut: 11× sdk-1.7
+`TenderingProcess/EconomicOperatorShortList/cac:PreSelectedParty` (plain UBL), 10× sdk-0.1
+`TenderResult/SubcontractTerms/cbc:Amount` (patch tables stay off 0.1 — inventory addition or
+documented keep), 9× sdk-1.0 procedure-level `TenderingTerms/AppealTerms/ext:UBLExtensions`,
+7× sdk-1.7 lot `RealizedLocation/Address/cbc:Description` (an EXTRA + procedure→lot alias
+already exists — these rows may simply drain on this reprocess; verify), 6× sdk-1.8
+`ProcurementAdditionalType/cbc:ProcurementTypeCode` (need the listName — the
+eforms-contract-nature carve-out may not cover it), 5× sdk-1.7 lot
+`ContractExtension/cbc:RenewalsIndicator`. Next firing: read the reclaim counts, then take
+the 84-row FrameworkMaximumAmount class.
