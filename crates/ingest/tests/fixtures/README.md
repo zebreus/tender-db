@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 33 notice files, 950 KB.
+Total: 36 notice files, 1.0 MB.
 
 ## Selection policy
 
@@ -29,12 +29,12 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED), 11 files, 215 KB
+## `eforms/` — eForms (TED), 14 files, 266 KB
 
-All but the last three from TED daily package **`daily-202600136`** (`20260717_136`,
+All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
 (`eforms-sdk-1.12` ×448, `1.13` ×2202, `1.14` ×1027), so the set below is a
-live multi-version sample, not a single-SDK snapshot. The three issue-195
+live multi-version sample, not a single-SDK snapshot. The six issue-195/180-adjacent
 fixtures come from earlier dailies (noted per entry) because the quirk they
 exercise is specific to those vintages.
 
@@ -50,6 +50,9 @@ exercise is specific to those vintages.
 | `can-fa-29-00495185-2026.xml` | 11 036 | 29 | 1.13 | NL | **Framework agreement CAN** — `ContractingSystemTypeCode` = `fa-wo-rc` (framework without reopening competition). Exercises the FA/DPS lot-relabelling concern called out in docs/architecture.md ("FA/DPS rounds relabel them"). |
 | `can-cvd-lot-00054478-2025.xml` | 57 870 | 29 | 1.10 | HR | **Issue 195: lot-mounted CVD statistics.** From daily `20250127_2025018`. The Clean Vehicles Directive block (`AssetCategoryCode`, `StrategicProcurementStatistics`) published forward-looking under the *Lot's* TenderingTerms extension, where sdk-1.10 anchors `efac:ProcurementDetails` only at LotResult. Exercises the LotResult→Lot `ALIASES` graft. |
 | `cn-fma-root-00660539-2023.xml` | 35 816 | 16 | 1.7 | DE | **Issue 195: root-level framework maximum.** From daily `20231030_2023209`. `efbc:FrameworkMaximumAmount` published directly under the root EformsExtension — the eForms-DE tailoring emitted onto a plain EU customization (the vendored eforms-de-1.x inventory declares this exact path as DE1-FrameworkMaximumAmount). Exercises the gap-filled root claim as `UBL-FrameworkMaximumAmount`. |
+| `cn-renewals-00660164-2023.xml` | 23 064 | 17 | 1.7 | DE | **Issue 195: lot renewals indicator.** From monthly `2023-10`. `cbc:RenewalsIndicator` beside BT-58 in the lot's ContractExtension — eForms-DE tailoring on a plain EU customization (declared verbatim by eforms-de-1.x); claimed as `UBL-RenewalsIndicator` behind the predicate-free-construct guard. |
+| `pin-part-rl-00679774-2023.xml` | 7 669 | 4 | 1.7 | LV | **Issue 195: address description on a Part.** From monthly `2023-11`. `RealizedLocation/Address/cbc:Description` on a PIN whose lots are Parts — outside the procedure→Lot alias, and aliases do not compose, so `UBL-AddressDescription` is also written at Lot level for the Lot→Part alias to mirror. |
+| `cn-shortlist-tp-00047617-2024.xml` | 20 323 | 23 | 1.7 | FR | **Issue 195: design-contest shortlist under TenderingProcess.** From monthly `2024-01`. The publisher merges the pre-selected participants (BT-47, declared under TenderingTerms) into the TenderingProcess shortlist block beside the BT-51/BT-50 quantities. Exercises the EconomicOperatorShortList `ALIASES` graft. |
 | `cn-selc-tp-00157944-2024.xml` | 24 303 | 16 | 1.8 | BE | **Issue 195: selection criteria under TenderingProcess.** From daily `20240315_2024054`. Each lot repeats the identical `efac:SelectionCriteria` block under both TenderingTerms (the SDK mount) and TenderingProcess (unenumerated). Exercises the TenderingTerms→TenderingProcess `ALIASES` graft. Non-EN (NLD): the quirk class is Belgian-platform specific. |
 
 ### On BT-195 naming

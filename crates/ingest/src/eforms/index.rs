@@ -164,6 +164,16 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
     ),
+    // ...and the same publisher class for the design-contest shortlist (issue
+    // 195): the SDK declares the pre-selected participants (BT-47) under the
+    // lot's TenderingTerms shortlist, but the shortlist *quantities* under
+    // TenderingProcess — a French 2024 eSender publishes one merged block
+    // under TenderingProcess, participants included. Gap-fill claims the
+    // participant names there; the quantities keep their own declared leaves.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:EconomicOperatorShortList",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:EconomicOperatorShortList",
+    ),
     // Publishers restate award-criterion fields (type code, weight) on the
     // parent `cac:AwardingCriterion`, which the SDK models only under
     // `cac:SubordinateAwardingCriterion` (107 notices in the TED monthly
@@ -444,6 +454,15 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
     // procedure→lot alias mirrors it onto the lot's ProcurementProject too).
     (
         "/*/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:Description",
+        "UBL-AddressDescription",
+        "text",
+    ),
+    // ...written at Lot level as well (issue 195): aliases do not compose, so
+    // the procedure→Lot copy above is invisible to the Lot→Part/LotsGroup
+    // aliases — and Latvian sdk-1.7 PINs publish this description on *Parts*.
+    // A written Lot entry is what those aliases mirror.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:ProcurementProject/cac:RealizedLocation/cac:Address/cbc:Description",
         "UBL-AddressDescription",
         "text",
     ),
@@ -1015,6 +1034,28 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
                     true,
                 )?;
             }
+        }
+
+        // Lot renewals indicator (issue 195). The same German toolchain also
+        // stamps `cbc:RenewalsIndicator` beside BT-58's MaximumNumberNumeric
+        // in the lot's ContractExtension — declared verbatim by the vendored
+        // eForms-DE 1.x inventory (DE1-…-ContractExtension-RenewalsIndicator)
+        // and by no EU minor. Same cross-dialect class and the same guard as
+        // the legislation reference above: skipped wholesale when the
+        // inventory declares the predicate-free construct itself, so the DE
+        // profiles' DE1 id keeps every match instead of losing them to a
+        // predicated twin branch that would sort first.
+        let plain_renewals = "/*/cac:ProcurementProjectLot/cac:ProcurementProject\
+                              /cac:ContractExtension/cbc:RenewalsIndicator";
+        if root.existing(&locate(plain_renewals)?.steps).is_none() {
+            insert_extra(
+                &mut root,
+                "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:ProcurementProject\
+                 /cac:ContractExtension/cbc:RenewalsIndicator",
+                "UBL-RenewalsIndicator",
+                "indicator",
+                true,
+            )?;
         }
 
         // Gap-filling aliases, after every declared path is in place.

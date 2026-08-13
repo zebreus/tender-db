@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 18, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 21, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1386,6 +1386,33 @@ fn sibling_mounted_extension_blocks_are_claimed() {
         &max.value,
         NoticeValue::Amount { cents: 40_000_000, currency } if currency == "EUR"
     ));
+
+    // Lot renewals indicator (sdk-1.7 DE CN): `cbc:RenewalsIndicator` beside
+    // BT-58 in the lot's ContractExtension — eForms-DE tailoring again,
+    // guarded so eforms-de-1.x keeps its own DE1 field.
+    let ren = parse_fixture("eforms/cn-renewals-00660164-2023.xml");
+    assert!(
+        ren.values.iter().any(|v| v.field_id == "UBL-RenewalsIndicator"),
+        "the lot renewals indicator is claimed"
+    );
+
+    // Place-of-performance description on a *Part* (sdk-1.7 LV PIN): aliases
+    // do not compose, so the UBL-AddressDescription entry is written at Lot
+    // level for the Lot→Part alias to mirror.
+    let part = parse_fixture("eforms/pin-part-rl-00679774-2023.xml");
+    assert!(
+        part.values.iter().any(|v| v.field_id == "UBL-AddressDescription"),
+        "a Part's address description is claimed"
+    );
+
+    // Design-contest shortlist merged under TenderingProcess (sdk-1.7 FR):
+    // the participants (BT-47) are grafted onto the TenderingProcess mount
+    // where the SDK declares only the shortlist quantities.
+    let sl = parse_fixture("eforms/cn-shortlist-tp-00047617-2024.xml");
+    assert!(
+        sl.values.iter().filter(|v| v.field_id == "BT-47-Lot").count() >= 3,
+        "pre-selected participants are claimed at the TenderingProcess mount"
+    );
 }
 
 // -------------------------------------------------------------- completeness
