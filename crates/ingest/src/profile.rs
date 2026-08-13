@@ -375,10 +375,18 @@ struct TextEraName {
 fn text_era_member(member_path: &str) -> Option<TextEraName> {
     let name = member_path.rsplit(['!', '/']).next()?;
     let parts: Vec<&str> = name.split('_').collect();
-    // <lg>_<date>_<issue>_<variant>_<ORG|CFn>
+    // <lg>_<date>_<issue>_<variant>_<ORG|CFn|Cnn>: `CF<n>` is the 2000+
+    // companion naming, `C<nn>` its 1999 predecessor (same record format,
+    // measured on the 1999-09 daily).
     let [language, date, _issue, variant, class] = parts[..] else { return None };
-    let companion = (class.len() > 2 && class[..2].eq_ignore_ascii_case("cf"))
-        && class[2..].bytes().all(|b| b.is_ascii_digit());
+    let digits = if class.len() > 2 && class[..2].eq_ignore_ascii_case("cf") {
+        &class[2..]
+    } else if class.len() > 1 && class[..1].eq_ignore_ascii_case("c") {
+        &class[1..]
+    } else {
+        ""
+    };
+    let companion = !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit());
     let ok = language.len() == 2
         && language.chars().all(|c| c.is_ascii_alphabetic())
         && date.len() == 8
@@ -529,6 +537,9 @@ mod tests {
         let n = text_era_member("bg_20070905_170_meta_cf1.zip!BG_20070905_2007170_META_CF1").unwrap();
         assert_eq!((n.variant.as_str(), n.companion), ("META", true));
         let n = text_era_member("DA_20030124_017_ISO_CF3.ZIP!DA_20030124_2003017_ISO_CF3").unwrap();
+        assert!(n.companion);
+        // The 1999 predecessor naming: C<nn> rather than CF<n>.
+        let n = text_era_member("EN_19990901_169_ISO_C01.ZIP!EN_19990901_1999169_ISO_C01").unwrap();
         assert!(n.companion);
         // 'CF' with no ordinal, or non-digits after it, is not the pattern.
         assert!(text_era_member("EN_20030124_017_ISO_CF.ZIP!EN_20030124_2003017_ISO_CF").is_none());
