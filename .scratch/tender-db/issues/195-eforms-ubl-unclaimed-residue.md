@@ -1,6 +1,6 @@
 # 195 — eForms UBL unclaimed residue: ~311 rows on CommonAggregate/CommonExtension paths
 
-Status: needs-triage
+Status: in-progress
 Kind: parser gap investigation (eForms side of the 183 attribution)
 Blocked by: —
 Relates to: 183 (attribution pass), 144 (the value-era waves that drained the previous eForms tail), 188 (eforms-sdk-0.1 linkage, possibly same vintage)
@@ -59,3 +59,25 @@ at index.rs:145; SelectionCriteria/TenderingTerms entries at :290+). Add fixture
 verify with diag139; reprocess drains ~156 of the 310. The remaining classes (sdk-1.12
 EformsExtension 89, sdk-0.1 SubcontractTerms 10, shortlist 11, RealizedLocation 7,
 ProcurementAdditionalType 6, AppealTerms 9) each need the same one-query pinning first.
+
+**2026-08-14 ~02:2x CEST (orchestrator) — both sdk-1.10 classes implemented as ALIASES
+grafts.** Two new entries in `crates/ingest/src/eforms/index.rs`: LotResult
+`efac:StrategicProcurement` → lot TenderingTerms `efac:StrategicProcurement` (the CVD
+statistics: BT-723 AssetCategoryCode + OPT-155/OPT-156 pairs now claimed at the lot,
+gap-fill keeps BT-717/BT-735 exact — the mirror of the pre-existing Lot→LotResult graft),
+and lot TenderingTerms `efac:SelectionCriteria` → lot TenderingProcess
+`efac:SelectionCriteria` (BT-40/747/748/749/750/752/7531/7532 + the UBL- extras claimed at
+the unenumerated mount; note the sampled publisher duplicates the block at BOTH mounts, so
+the stored duplication is source content). Verified with diag139 on both members:
+00054478_2025 (sdk-1.10 CAN, was `unclaimed …ProcurementDetails`) → 68 sections/354 values
+with the vehicle statistics under ND-StrategicProcurementInformationLot sections;
+00157944_2024 (sdk-1.8 CN, was `unclaimed …SelectionCriteria`) → 37 sections/170 values,
+grafted copies hang off their LOT sections (no node graft — the alias loop rewrites fields
+only, same semantic as the nested-LotTender graft). Fixtures committed
+(`can-cvd-lot-00054478-2025.xml`, `cn-selc-tp-00157944-2024.xml`), corpus 15→17, test
+`sibling_mounted_extension_blocks_are_claimed`. Ingest gate fully green. Next: deploy when
+queue idle, reprocess reason=unclaimed-content (expect ~156 of 310 to drain — the 81+75
+sdk-1.10/1.8 classes; the 2-row `…EformsExtension/StrategicProcurement` class on other
+minors may also drain if those minors declare the lot StrategicProcurementInformation).
+Then pin the remaining classes (sdk-1.12 EformsExtension 89, SubcontractTerms 10,
+shortlist 11, RealizedLocation 7, ProcurementAdditionalType 6, AppealTerms 9).

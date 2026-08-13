@@ -145,6 +145,25 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/efac:StrategicProcurement",
     ),
+    // ...and the mirror case (issue 195): 2025 competition notices publish the
+    // full Clean Vehicles Directive statistics block — AssetCategoryCode
+    // (BT-723) and the StrategicProcurementStatistics pairs (OPT-155/OPT-156)
+    // — forward-looking on the *Lot*, where the SDK enumerates only
+    // ApplicableLegalBasis (BT-717) and ProcurementCategoryCode (BT-735) and
+    // anchors the details at LotResult. Gap-fill keeps the lot's own BT-717/
+    // BT-735 exact.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult/efac:StrategicProcurement",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
+    ),
+    // Lot selection criteria mounted under TenderingProcess (issue 195):
+    // every SDK minor anchors efac:SelectionCriteria under the lot's
+    // TenderingTerms extension, but some 2023–2024 eSenders publish the
+    // identical block under the lot's TenderingProcess extension instead.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
+    ),
     // Publishers restate award-criterion fields (type code, weight) on the
     // parent `cac:AwardingCriterion`, which the SDK models only under
     // `cac:SubordinateAwardingCriterion` (107 notices in the TED monthly

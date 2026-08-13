@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 15, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 17, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1325,6 +1325,52 @@ fn doe_sdk10_serializer_quirks_are_consumed() {
     // Inlined tender-recipient party under a Lot's TenderingTerms.
     let tr = parse_fixture("eforms/doe-sdk10-tenderrecipient.xml");
     assert!(!tr.values.is_empty(), "the tender-recipient notice parses to fields");
+}
+
+/// Issue 195: publishers mount SDK subtrees at sibling positions the inventory
+/// does not enumerate — the Clean Vehicles Directive statistics block
+/// forward-looking on a *Lot* (the SDK anchors `efac:ProcurementDetails` only
+/// at LotResult), and lot selection criteria under `cac:TenderingProcess` (the
+/// SDK anchors them under TenderingTerms). Both are grafted gap-fill in
+/// `index::ALIASES`; before the grafts each notice quarantined whole.
+#[test]
+fn sibling_mounted_extension_blocks_are_claimed() {
+    // CVD statistics on the lot (sdk-1.10 CAN): AssetCategoryCode and the
+    // StrategicProcurementStatistics pairs are claimed under their LotResult
+    // field ids, sectioned under the lot's own StrategicProcurementInformation
+    // (which sdk-1.10 itself declares at the lot, for BT-735).
+    let cvd = parse_fixture("eforms/can-cvd-lot-00054478-2025.xml");
+    let assets: Vec<_> = cvd.values.iter().filter(|v| v.field_id == "BT-723-LotResult").collect();
+    assert!(!assets.is_empty(), "lot-mounted AssetCategoryCode is claimed");
+    assert!(
+        assets.iter().all(|v| v.section_id.starts_with("ND-StrategicProcurementInformationLot")),
+        "CVD assets belong to the lot-level strategic-procurement sections"
+    );
+    assert!(matches!(
+        &assets[0].value,
+        NoticeValue::Code { code, list, .. } if code == "m3" && list.as_deref() == Some("vehicle-category")
+    ));
+    let codes = cvd.values.iter().filter(|v| v.field_id == "OPT-155-LotResult").count();
+    let numbers = cvd.values.iter().filter(|v| v.field_id == "OPT-156-LotResult").count();
+    assert_eq!(codes, numbers, "every StatisticsCode has its StatisticsNumeric");
+    assert!(codes >= 3, "the vehicles/zero-emission/clean triple is claimed");
+
+    // Selection criteria under TenderingProcess (sdk-1.8 CN): this publisher
+    // repeats the identical block at both mounts — the TenderingTerms copies
+    // open their own ND-SelectionCriteria sections, the TenderingProcess
+    // copies hang off the lot they belong to. Both are source content.
+    let selc = parse_fixture("eforms/cn-selc-tp-00157944-2024.xml");
+    assert_eq!(
+        values(&selc, "LOT-0001", "BT-747-Lot").len(),
+        4,
+        "the TenderingProcess-mounted criterion types land on their lot"
+    );
+    assert_eq!(values(&selc, "LOT-0001", "BT-750-Lot").len(), 4);
+    assert!(
+        selc.values.iter().any(|v| v.field_id == "BT-747-Lot"
+            && v.section_id.starts_with("ND-SelectionCriteria")),
+        "the TenderingTerms-mounted copies keep their own criterion sections"
+    );
 }
 
 // -------------------------------------------------------------- completeness

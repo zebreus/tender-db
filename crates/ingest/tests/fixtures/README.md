@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 30 notice files, 832 KB.
+Total: 32 notice files, 914 KB.
 
 ## Selection policy
 
@@ -29,12 +29,14 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED), 8 files, 99 KB
+## `eforms/` — eForms (TED), 10 files, 179 KB
 
-All from TED daily package **`daily-202600136`** (`20260717_136`, published
-2026-07-17, 3722 notices). That day spans three SDK customizations
+All but the last two from TED daily package **`daily-202600136`** (`20260717_136`,
+published 2026-07-17, 3722 notices). That day spans three SDK customizations
 (`eforms-sdk-1.12` ×448, `1.13` ×2202, `1.14` ×1027), so the set below is a
-live multi-version sample, not a single-SDK snapshot.
+live multi-version sample, not a single-SDK snapshot. The two issue-195
+fixtures come from earlier dailies (noted per entry) because the quirk they
+exercise is specific to those vintages.
 
 | File | Bytes | Subtype | SDK | Country | Why / what it exercises |
 |---|---|---|---|---|---|
@@ -46,6 +48,8 @@ live multi-version sample, not a single-SDK snapshot.
 | `brin-x01-00497689-2026.xml` | 3 613 | X01 | 1.14 | DE | Business Registration Information Notice — **a different root element entirely** (`<BusinessRegistrationInformationNotice>` in the `…/p27/eforms-business-registration-information-notice/1` namespace), not a UBL ContractNotice/ContractAwardNotice. Verifies root-element dispatch rather than assuming UBL. Zero lots, carries a company register id (`HRA 133853`). Smallest file in the corpus and the only X01 in that day. |
 | `can-withheld-29-00495618-2026.xml` | 14 970 | 29 | 1.13 | NL | **Withheld fields (BT-195).** Contains `efac:FieldsPrivacy` blocks with `non-publication-identifier` codes `awa-cri-nam`, `awa-cri-num`, `awa-cri-typ`, `rec-sub-cou`, `rec-sub-typ` and reason codes `oth-int`, `chan-need`. Drives the withheld-field satellite table from issue 03. |
 | `can-fa-29-00495185-2026.xml` | 11 036 | 29 | 1.13 | NL | **Framework agreement CAN** — `ContractingSystemTypeCode` = `fa-wo-rc` (framework without reopening competition). Exercises the FA/DPS lot-relabelling concern called out in docs/architecture.md ("FA/DPS rounds relabel them"). |
+| `can-cvd-lot-00054478-2025.xml` | 57 870 | 29 | 1.10 | HR | **Issue 195: lot-mounted CVD statistics.** From daily `20250127_2025018`. The Clean Vehicles Directive block (`AssetCategoryCode`, `StrategicProcurementStatistics`) published forward-looking under the *Lot's* TenderingTerms extension, where sdk-1.10 anchors `efac:ProcurementDetails` only at LotResult. Exercises the LotResult→Lot `ALIASES` graft. |
+| `cn-selc-tp-00157944-2024.xml` | 24 303 | 16 | 1.8 | BE | **Issue 195: selection criteria under TenderingProcess.** From daily `20240315_2024054`. Each lot repeats the identical `efac:SelectionCriteria` block under both TenderingTerms (the SDK mount) and TenderingProcess (unenumerated). Exercises the TenderingTerms→TenderingProcess `ALIASES` graft. Non-EN (NLD): the quirk class is Belgian-platform specific. |
 
 ### On BT-195 naming
 
