@@ -458,8 +458,15 @@ pub async fn reclaim_package(
             // before this it was walked past silently, its row keeping a stale
             // first-ingest reason and the outcomes not summing to the held set.
             Record::Quarantine(q) => {
-                db.record_reclaim_attempt(fetch_id, &q.member_path, &q.reason, q.detail.as_deref(), now)
-                    .await?;
+                db.record_reclaim_attempt(
+                    fetch_id,
+                    &q.member_path,
+                    &q.content_hash,
+                    &q.reason,
+                    q.detail.as_deref(),
+                    now,
+                )
+                .await?;
                 report.still_held += 1;
                 sample_reason(&mut report.still_held_reasons, &q.reason);
             }

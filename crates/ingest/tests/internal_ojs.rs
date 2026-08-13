@@ -64,11 +64,12 @@ fn text(parsed: &Parsed, section: &str, field: &str) -> String {
     }
 }
 
-const FIXTURES: [&str; 4] = [
+const FIXTURES: [&str; 5] = [
     "internal_ojs/114238_2008.en", // EEIG (heading 02A0), the minimal committed fixture
     "internal_ojs/115165_2008.en", // CONTRACT_SUM contract notice (heading 2110), orig FR
     "internal_ojs/114382_2008.en", // CONTRACT_AWARD_SUM award (heading 1180), orig PL
     "internal_ojs/115908_2008.en", // full CONTRACT notice (heading 3310), orig EN
+    "internal_ojs/116870_2008.en", // CONTRACT_CONCESSIONAIRE_SUM works concession (issue 194)
 ];
 
 // ------------------------------------------------------------ exhaustiveness

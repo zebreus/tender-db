@@ -1,6 +1,6 @@
 # 194 — the VEAT form family is unclaimed: 2,380 notices held on VOLUNTARY_EX_ANTE_TRANSPARENCY_NOTICE, plus the defence-form and internal-ojs residues
 
-Status: ready-for-agent
+Status: IN PROGRESS (2026-08-13) — the internal-ojs slice is DONE (6 _SUM aliases, all 7 members verified parsing, fixture 116870 committed); VEAT + defence-form rule mining remains
 Kind: parser gap, fix-and-reclaim
 Blocked by: —
 Relates to: 183 (the attribution pass that named these), 31 (the same class: whole form sections unclaimed), 41/issue-36 (internal-ojs `_SUM` alias shim)

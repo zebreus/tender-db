@@ -1,6 +1,6 @@
 # 193 — record_reclaim_attempt misses the rows of identity-less text records: 77 relabels stamped nowhere
 
-Status: needs-triage
+Status: RESOLVED (2026-08-13) — content-hash fallback landed with test; verify on the next unclaimed-content reprocess (77 relabels should land)
 Kind: bookkeeping defect (small, no false resolution)
 Blocked by: —
 Relates to: 87 (the relabel contract), 139 (the same address-mismatch family, at scale), 183 (the pass that measured it)

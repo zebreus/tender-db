@@ -1137,7 +1137,7 @@ impl Db {
         now: i64,
         where_sql: &str,
         params: Vec<Value>,
-    ) -> turso::Result<()> {
+    ) -> turso::Result<u64> {
         let (set, mut bound) = match parse {
             Parse::Quarantined { reason, detail } => (
                 "first_reason = CASE WHEN first_reason IS NULL THEN reason ELSE first_reason END,
@@ -1159,31 +1159,65 @@ impl Db {
             ),
             bound,
         )
-        .await?;
-        Ok(())
+        .await
     }
 
     /// The profile-level half of issue 87: a held member that STILL cannot
     /// produce an identity re-arrives from the walker as a fresh quarantine
     /// record, not a notice, so [`Db::reclaim_notice`] never sees it. The
     /// reprocess records the attempt on the held row through here instead.
+    ///
+    /// Addressed by exact `(fetch_id, member_path)` first, then by
+    /// `(fetch_id, content_hash)` when that matches nothing (issue 193): a
+    /// text-era record's path carries a `#<ordinal>` that is its index in
+    /// TODAY'S segmentation — a parser change since the original ingest shifts
+    /// later ordinals, so the exact path misses rows whose bytes are unchanged.
+    /// The record's own hash still identifies them precisely; identical bytes
+    /// appearing under several rows get the same (true) current failure. A
+    /// record whose bytes ALSO changed is unreachable by construction and stays
+    /// under its stale reason — logged, because silently it looks like issue
+    /// 87 working when it is not.
     pub async fn record_reclaim_attempt(
         &self,
         fetch_id: i64,
         member_path: &str,
+        content_hash: &str,
         reason: &str,
         detail: Option<&str>,
         now: i64,
     ) -> turso::Result<()> {
         let conn = self.conn().await;
-        self.stamp_still_held(
-            &conn,
-            &Parse::Quarantined { reason: reason.to_owned(), detail: detail.map(str::to_owned) },
-            now,
-            "fetch_id = ? AND member_path = ?",
-            vec![Value::Integer(fetch_id), t(member_path)],
-        )
-        .await
+        let parse =
+            Parse::Quarantined { reason: reason.to_owned(), detail: detail.map(str::to_owned) };
+        let by_path = self
+            .stamp_still_held(
+                &conn,
+                &parse,
+                now,
+                "fetch_id = ? AND member_path = ?",
+                vec![Value::Integer(fetch_id), t(member_path)],
+            )
+            .await?;
+        if by_path > 0 {
+            return Ok(());
+        }
+        let by_hash = self
+            .stamp_still_held(
+                &conn,
+                &parse,
+                now,
+                "fetch_id = ? AND content_hash = ?",
+                vec![Value::Integer(fetch_id), t(content_hash)],
+            )
+            .await?;
+        if by_hash == 0 {
+            eprintln!(
+                "[store] reclaim attempt stamped NO ledger rows for fetch {fetch_id} \
+                 member {member_path:?} — record bytes and path both drifted from the \
+                 held row (issue 193)"
+            );
+        }
+        Ok(())
     }
 
     /// Set a notice's parse state. A transition to 'parsed' also clears the
@@ -4503,6 +4537,65 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
         assert_eq!(text_of(&db, &format!("SELECT parse_state FROM notices WHERE id={id}")).await.as_deref(), Some("parsed"));
         assert_eq!(int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE notice_id IS NULL").await, Some(999));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 193: a text-era record's `#<ordinal>` is its index in TODAY'S
+    /// segmentation, so a parser change shifts it and the reclaim attempt's
+    /// exact-path stamp misses rows whose bytes never changed. The attempt must
+    /// fall back to the record's content hash — and prefer the exact path when
+    /// it does match, so a hash-twin row elsewhere in the fetch is not touched
+    /// when the path already identifies the row.
+    #[tokio::test]
+    async fn reclaim_attempt_reaches_rows_whose_ordinal_drifted() {
+        let path = format!("/tmp/tender-db-attempt-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        for (m, h) in [("z.zip!E#95", "rec-hash"), ("z.zip!E#12", "other-hash")] {
+            assert!(db
+                .insert_quarantine(&Quarantined {
+                    fetch_id: 1,
+                    member_path: m.into(),
+                    content_hash: h.into(),
+                    profile: Some("text".into()),
+                    reason: "unclaimed-content".into(),
+                    detail: Some("line 3: )".into()),
+                    first_seen: 0,
+                })
+                .await
+                .unwrap());
+        }
+
+        // Ordinal drifted (#95 → #93), bytes unchanged: the hash fallback stamps.
+        db.record_reclaim_attempt(1, "z.zip!E#93", "rec-hash", "missing-publication-id", None, 500)
+            .await
+            .unwrap();
+        assert_eq!(
+            text_of(&db, "SELECT reason FROM quarantine WHERE member_path = 'z.zip!E#95'").await.as_deref(),
+            Some("missing-publication-id"),
+            "hash fallback reaches the drifted row"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT reason FROM quarantine WHERE member_path = 'z.zip!E#12'").await.as_deref(),
+            Some("unclaimed-content"),
+            "the other row is untouched"
+        );
+
+        // Exact path match wins: no hash spillover onto the already-stamped row.
+        db.record_reclaim_attempt(1, "z.zip!E#12", "other-hash", "text-no-records", None, 600)
+            .await
+            .unwrap();
+        assert_eq!(
+            text_of(&db, "SELECT reason FROM quarantine WHERE member_path = 'z.zip!E#12'").await.as_deref(),
+            Some("text-no-records")
+        );
+        assert_eq!(
+            int_of(&db, "SELECT attempts FROM quarantine WHERE member_path = 'z.zip!E#95'").await,
+            Some(1),
+            "exact-path success never re-stamps via the hash"
+        );
 
         let _ = std::fs::remove_file(&path);
     }
