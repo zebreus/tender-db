@@ -29,3 +29,16 @@ UBLExtensions` (9, sdk-1.0); `TenderingProcess/EconomicOperatorShortList/…` (1
 sdk-1.8). Each class needs a claim-vs-documented-keep decision against its SDK's field
 inventory (the 143/144 pattern); lot-level nested UBLExtensions look like one mechanism
 covering ~165 rows.
+
+**2026-08-14 ~00:3x CEST (orchestrator) — the big class is the Clean Vehicles Directive
+block.** Extracted member 00054478_2025 (sdk-1.10, 2025-01 daily): the lot-level
+`TenderingTerms/UBLExtensions/UBLExtension/ExtensionContent/EformsExtension/StrategicProcurement`
+block carries `ApplicableLegalBasis listName="cvd-scope"`, `ProcurementCategoryCode
+listName="cvd-contract-type"`, `AssetCategoryCode listName="vehicle-category"` — the strategic
+procurement / CVD family (BT-717/BT-735/vehicle-category terms). These are REAL SDK fields; the
+eForms walker evidently claims the ROOT-level EformsExtension but not lot-level extension blocks
+under TenderingTerms/TenderingProcess. Next (implementation firing): check the vendored
+sdk-1.10 fields.json for these xpaths — if present, the walker's extension descent is the gap
+(fix-and-reclaim for ~165+ rows across the classes sharing the mechanism); if absent from the
+vendored inventory, decide claim-vs-keep per the 143/144 pattern. The sdk-1.12 EformsExtension
+class (89 rows) and AppealTerms/UBLExtensions (9, sdk-1.0) likely share the same mechanism.
