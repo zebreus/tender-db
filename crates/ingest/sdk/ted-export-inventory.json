@@ -9398,6 +9398,13 @@
 },
 {
 "attributes": [],
+"name": "SUBCONTRACT_DEFENSE",
+"sources": [
+"r208-observed"
+]
+},
+{
+"attributes": [],
 "name": "SUBCONTRACT_SHARE",
 "sources": [
 "defence",

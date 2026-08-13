@@ -79,3 +79,9 @@ text-era orphan lines, 2 concession text-fallback rows (AWARD_CRITERIA_DETAIL ba
 documented here, too small to own separately unless the class grows). Public ledger row
 "2011 US-spelled defence forms (VEAT et al.)" added, resolved 2026-08-13; rides the next
 deploy. Panel verification (unclaimed-content 365, row reclaimed ≈2,457) after fold 632.
+
+**2026-08-13 ~13:0x CEST (orchestrator) — layer 3, the last twin.** Panel verified the close
+(unclaimed-content 365, ledger row reclaimed 2,457) but the key showed outstanding 5: VEAT
+members whose subcontracting block nests one level deeper than every earlier sample —
+SUBCONTRACT_DEFENSE. Twin added (26 total now), member 300858 parses (7/118), gate clean.
+Final mini-drain queued; the row should read outstanding 0 after it.
