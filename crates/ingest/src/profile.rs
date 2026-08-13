@@ -412,7 +412,13 @@ fn text_era_member(member_path: &str) -> Option<TextEraName> {
             && class[prefix.len()..].bytes().all(|b| b.is_ascii_digit())
     };
     let correction = classified("cs");
-    let companion = !correction && (classified("cf") || classified("c"));
+    // `COR` (no ordinal, 1999) is a corrected re-issue of the whole day's
+    // delivery: the same record set as ORG with a handful of records fixed
+    // (measured on 1999-07-10: 623 records, 3 differing). It dispatches like
+    // a companion — the unchanged records dedupe by content hash, the
+    // corrected ones become new versions of their notices.
+    let companion =
+        !correction && (classified("cf") || classified("c") || class.eq_ignore_ascii_case("cor"));
     let ok = language.len() == 2
         && language.chars().all(|c| c.is_ascii_alphabetic())
         && date.len() == 8
@@ -576,6 +582,10 @@ mod tests {
         // The 1999 predecessor naming: C<nn> rather than CF<n>.
         let n = text_era_member("EN_19990901_169_ISO_C01.ZIP!EN_19990901_1999169_ISO_C01").unwrap();
         assert!(n.companion);
+        // The 1999 corrected re-issue of a whole day (issue 180): same record
+        // set as ORG with a few records fixed — a companion-style delivery.
+        let n = text_era_member("EN_19990710_132_ISO_COR.ZIP!EN_19990710_1999132_ISO_COR").unwrap();
+        assert!(n.companion && !n.correction);
         // 'CF' with no ordinal, or non-digits after it, is not the pattern.
         assert!(text_era_member("EN_20030124_017_ISO_CF.ZIP!EN_20030124_2003017_ISO_CF").is_none());
         assert!(text_era_member("EN_20030124_017_ISO_CFX.ZIP!EN_20030124_2003017_ISO_CFX").is_none());
