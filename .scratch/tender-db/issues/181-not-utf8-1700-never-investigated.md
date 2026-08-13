@@ -1,6 +1,6 @@
 # 181 — the 1,700 `not-utf8` rows were flagged suspected and never investigated
 
-Status: needs-triage
+Status: DIAGNOSED (2026-08-13) — ~1,500 of 1,700 are text-era _CF companion files holding REAL notice records; fix = teach the text dispatcher the CF name variant, reclaim dedups against ORG
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 30 (classified it SuspectedGap rather than assumed-benign), 137 (measured: 1,700 rows, 0 reclaimed)
@@ -34,3 +34,17 @@ ships as `*_ISO_ORG` zips — ISO-8859 encoded by naming convention, confirmed b
 plausibly odd single bytes or a different legacy codepage. Sampling needs row-level member paths
 (/v1/sql token still pending), but the era context makes fix-and-reclaim (transcode) the likely
 outcome rather than benign-by-evidence.
+
+**2026-08-13 ~14:0x CEST (orchestrator) — DIAGNOSED via /v1/sql + archive read.** The bucket
+splits: ~1,492 rows are `_CF1` members (1999–2007, every language, e.g.
+`EN_20030124_017_ISO_CF1.ZIP`), 187 are early-1999 full-edition-named members, ~20 stragglers.
+A CF member's content is the ORDINARY text-record format (TI/PD/ND tagged records) — REAL
+notices, not metadata. Mechanism: `text_era_member` requires the 5th name part to be `ORG`, so
+CF members fall past the text dispatcher into the XML path, whose UTF-8 check rejects their
+ISO-8859 bytes wholesale → profile-level not-utf8. Spot check: CF record ND 12572-2003 is
+already held and parsed via the SAME daily's ORG file (`…ISO_ORG#0`) — CF appears to republish
+the ORG delivery, so the reclaim should be mostly already-parsed dedup with the rows resolving
+as reclaimed/known-duplicate rather than suspected loss. Fix shape: accept the CF variant in
+`text_era_member` (keeping the EN-only language policy and ISO/UTF8 variant selection),
+dispatch through the text-record parser, reprocess the bucket; the 187 early-1999 rows need
+the same look with the early naming. Next firing implements.
