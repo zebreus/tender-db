@@ -85,3 +85,8 @@ deploy. Panel verification (unclaimed-content 365, row reclaimed ≈2,457) after
 members whose subcontracting block nests one level deeper than every earlier sample —
 SUBCONTRACT_DEFENSE. Twin added (26 total now), member 300858 parses (7/118), gate clean.
 Final mini-drain queued; the row should read outstanding 0 after it.
+
+**2026-08-13 (orchestrator) — mini-drain complete: 5 reclaimed, 0 still held (job 633, rev
+16185ea).** Cumulative for this issue: 2,469 notices (7 internal-ojs + 2,266 + 191 + 5).
+The DEFENSE ledger key reads outstanding 0 once the trailing fold's panel measure lands —
+next firing verifies and flips this to RESOLVED-VERIFIED.
