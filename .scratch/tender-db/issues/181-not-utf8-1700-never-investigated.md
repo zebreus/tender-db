@@ -1,6 +1,6 @@
 # 181 — the 1,700 `not-utf8` rows were flagged suspected and never investigated
 
-Status: FIX LANDED (2026-08-13) — CF companion delivery recognised by the text dispatcher (class-aware supersedence); real member verifies 1,008 records; CF also accounts for unknown-root 753 and unparsable-xml 1,900 — ~4.1k rows total; drain pending deploy
+Status: RESOLVED-VERIFIED (2026-08-13) — CF delivery drained across three buckets: 1,417 new notices reclaimed, ~135k records deduped, 2,206 non-EN/meta files policy-skipped; not-utf8 terminal at 208 (early-1999 members + ~21 rows to name), unknown-root 0, unparsable-xml 4,441 non-CF residue
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 30 (classified it SuspectedGap rather than assumed-benign), 137 (measured: 1,700 rows, 0 reclaimed)
@@ -60,3 +60,14 @@ the real 2003 member dispatches into 1,008 records with zero quarantines. Drain 
 the queue frees: deploy → reprocess not-utf8 + unknown-root (reclaim_only) → reprocess
 unparsable-xml with one trailing fold. Expect mostly already-parsed dedup (CF republishes ORG)
 with any genuinely-new records reclaimed; non-EN CF rows go skipped-by-policy.
+
+**2026-08-13 late (orchestrator) — VERIFIED terminal.** Post-fix re-walks (jobs 644/645, rev
+6f86b6b): zero zero-stamp journal lines; the already-parsed arm resolved every CF file row via
+the new ordinal-stripped address. Panel: not-utf8 1,700 → 208, unknown-root 753 → 0,
+unparsable-xml 6,341 → 4,441 (non-CF residue); overall outstanding 22,288 → 10,440 since the
+campaign started. The CF drain's totals: 1,417 genuinely-new notices reclaimed (records the
+companion files carried beyond ORG), ~135k records confirmed already-held, 2,206 non-EN/meta
+files skipped by policy. Residue here: 187 early-1999-named members (record-tally) vs 208 rows
+— the ~21-row delta needs one naming query (next audit slot); the early-1999 members themselves
+are the remaining sub-population (different name shape, same record format — a candidate
+follow-up fix if their content proves recoverable the same way).
