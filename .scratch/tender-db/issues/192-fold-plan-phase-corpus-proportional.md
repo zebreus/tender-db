@@ -35,3 +35,9 @@ reclaim campaigns interleave — an operations pattern, not a user-facing one.
    and close this as by-design with the cost stated.
 3. Cheap interim: after a deploy restart, a page-cache warmup read of the notices table before
    the first fold would turn the 2h cold case back into the 2-minute warm case.
+
+**2026-08-13 data point (orchestrator):** job 630 — 2,266 reclaimed notices, fold running ~3h
+(plan walk cold after the b97decb deploy restart, write phase reached ~06:5x CEST). Every
+reclaim round in a campaign now pays a multi-hour fold; with issue 194's two-pass drain that is
+two fold-hours for ~2.5k notices. Raises the priority of measuring option 1 (change-set-bounded
+planning) or at least option 3 (post-deploy cache warmup).
