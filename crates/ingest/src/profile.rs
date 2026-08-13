@@ -92,6 +92,10 @@ impl PackageContext {
                 .or_else(|| stem.strip_suffix(".ZIP"))
                 .unwrap_or(stem);
             if let Some(m) = text_era_member(stem)
+                // A `CS<n>` correction sheet is neither delivery class: a
+                // `en_…_utf8_cs1.txt` must not count as the UTF8 main
+                // delivery and sweep the ISO ORG member (issue 180).
+                && !m.correction
                 && m.language.eq_ignore_ascii_case("en")
                 && m.variant.eq_ignore_ascii_case("utf8")
             {
@@ -313,6 +317,15 @@ fn dispatch_text(
     bytes: &[u8],
     ctx: &PackageContext,
 ) -> Disposition {
+    // `CS<n>` correction sheets (issue 180): per-language duplicates of tiny
+    // `ND:/FLD:/OLD:/NEW:` field-correction records — provably non-notice
+    // (no notice bodies; measured across the 2000–2009 span). Skipped by
+    // class, before the language policy, so the EN sheets resolve under the
+    // same name as the rest. The correction content stays in the raw archive;
+    // applying it to stored notices would be its own feature (issue 180).
+    if name.correction {
+        return Disposition::Skipped("text-era-correction-sheet");
+    }
     // CONTEXT.md: the text era is English-only for now (the model stays
     // multilingual; the raw archive keeps every language).
     if !name.language.eq_ignore_ascii_case("en") {
@@ -370,6 +383,9 @@ struct TextEraName {
     variant: String,
     /// A `CF<n>` companion member rather than the main `ORG` delivery.
     companion: bool,
+    /// A `CS<n>` correction sheet (issue 180): plain-text `ND:/FLD:/OLD:/NEW:`
+    /// field-correction records referencing earlier notices — no notice bodies.
+    correction: bool,
 }
 
 fn text_era_member(member_path: &str) -> Option<TextEraName> {
@@ -377,23 +393,42 @@ fn text_era_member(member_path: &str) -> Option<TextEraName> {
     let parts: Vec<&str> = name.split('_').collect();
     // <lg>_<date>_<issue>_<variant>_<ORG|CFn|Cnn>: `CF<n>` is the 2000+
     // companion naming, `C<nn>` its 1999 predecessor (same record format,
-    // measured on the 1999-09 daily).
-    let [language, date, _issue, variant, class] = parts[..] else { return None };
-    let digits = if class.len() > 2 && class[..2].eq_ignore_ascii_case("cf") {
-        &class[2..]
-    } else if class.len() > 1 && class[..1].eq_ignore_ascii_case("c") {
-        &class[1..]
-    } else {
-        ""
+    // measured on the 1999-09 daily). The `CS<n>` correction sheets ship
+    // unzipped with the extension in the member name, and before ~2004 with
+    // no variant token at all (`DA_20000112_007_CS1.TXT`), so the class token
+    // is extension-stripped and the variant is optional for that class only.
+    let (language, date, variant, class) = match parts[..] {
+        [language, date, _issue, variant, class] => (language, date, Some(variant), class),
+        [language, date, _issue, class] => (language, date, None, class),
+        _ => return None,
     };
-    let companion = !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit());
+    let class = class
+        .strip_suffix(".TXT")
+        .or_else(|| class.strip_suffix(".txt"))
+        .unwrap_or(class);
+    let classified = |prefix: &str| {
+        class.len() > prefix.len()
+            && class[..prefix.len()].eq_ignore_ascii_case(prefix)
+            && class[prefix.len()..].bytes().all(|b| b.is_ascii_digit())
+    };
+    let correction = classified("cs");
+    let companion = !correction && (classified("cf") || classified("c"));
     let ok = language.len() == 2
         && language.chars().all(|c| c.is_ascii_alphabetic())
         && date.len() == 8
         && date.chars().all(|c| c.is_ascii_digit())
-        && (class.eq_ignore_ascii_case("org") || companion)
-        && ["iso", "utf8", "meta"].iter().any(|v| v.eq_ignore_ascii_case(variant));
-    ok.then(|| TextEraName { language: language.into(), variant: variant.into(), companion })
+        && match variant {
+            Some(v) => (class.eq_ignore_ascii_case("org") || companion || correction)
+                && ["iso", "utf8", "meta"].iter().any(|x| x.eq_ignore_ascii_case(v)),
+            // Only the correction sheets ever ship without a variant token.
+            None => correction,
+        };
+    ok.then(|| TextEraName {
+        language: language.into(),
+        variant: variant.unwrap_or_default().into(),
+        companion,
+        correction,
+    })
 }
 
 /// Byte offsets of each `1.00/067192`-style record marker line.
@@ -589,6 +624,44 @@ mod tests {
             dispatch("EN_20040603_107_UTF8_CF1.ZIP!EN_20040603_2004107_UTF8_CF1", rec),
             Disposition::Records(_)
         ));
+    }
+
+    /// Issue 180: `CS<n>` correction sheets — tiny per-language
+    /// `ND:/FLD:/OLD:/NEW:` field-correction files, no notice bodies. They are
+    /// recognised across both naming eras and skipped by class; before this,
+    /// all 4,441 of them quarantined as `unparsable-xml: unknown token at 1:1`.
+    #[test]
+    fn correction_sheets_are_skipped_by_class() {
+        // 2000-era shape: no variant token, uppercase, extension in the name.
+        let n = text_era_member("DA_20000112_007_CS1.TXT").unwrap();
+        assert!(n.correction && !n.companion);
+        assert_eq!((n.language.as_str(), n.variant.as_str()), ("DA", ""));
+        // 2009-era shape: variant token, lowercase.
+        let n = text_era_member("sv_20090820_159_utf8_cs1.txt").unwrap();
+        assert!(n.correction && !n.companion);
+        // Higher ordinals are the same class.
+        assert!(text_era_member("EN_20030124_017_CS3.TXT").unwrap().correction);
+        // The class is CS + ordinal; a bare CS or non-digits are not it, and a
+        // variant-less name is ONLY ever a correction sheet.
+        assert!(text_era_member("EN_20030124_017_CS.TXT").is_none());
+        assert!(text_era_member("EN_20030124_017_ORG.TXT").is_none());
+
+        // Skipped by class — before the language policy, English included.
+        let sheet = b"ND: 3261-2000\nFLD: RN\nOLD: 99-010933-002\nNEW: \n";
+        assert!(matches!(
+            dispatch("EN_20000112_007_CS1.TXT", sheet),
+            Disposition::Skipped("text-era-correction-sheet")
+        ));
+        assert!(matches!(
+            dispatch("DA_20000112_007_CS1.TXT", sheet),
+            Disposition::Skipped("text-era-correction-sheet")
+        ));
+
+        // A correction sheet never counts as the UTF8 delivery: the ISO main
+        // member must not be swept by a `en_…_utf8_cs1.txt` sibling.
+        let ctx =
+            PackageContext::from_entry_names(&["en_20090820_159_utf8_cs1.txt", "EN_20090820_159_ISO_ORG.ZIP"]);
+        assert!(!ctx.en_utf8_text && !ctx.en_utf8_cf);
     }
 
     #[test]

@@ -114,5 +114,13 @@
     "diagnosis": "The Sept-Dec 2011 dailies publish the defence-form family with US spelling (AWARD_OF_CONTRACT_DEFENSE, CONTRACT_DEFENSE, FD_ wrappers, and 21 descendants) while the mirrored XSDs - and the rule registry built from them - write DEFENCE. Every such notice was held whole as unclaimed-content: 2,380 VEAT (voluntary ex-ante transparency) notices plus ~84 contract/award/prior-information defence forms. 25 S-spelled twins now sit beside their DEFENCE twins in the registry (r208-observed inventory entries, mined from real members), and the population is reclaimed into the tender layer.",
     "fix": "issue 194 (b97decb + 31c4318)",
     "resolved": "2026-08-13"
+  },
+  {
+    "category": "Text-era correction sheets (CS files)",
+    "reason": "unparsable-xml",
+    "detail_like": "unknown token at 1:1",
+    "diagnosis": "The 2000-2009 dailies ship per-language CS<n>.TXT members (4,386 CS1 + 44 CS2 + 11 CS3) holding plain-text ND:/FLD:/OLD:/NEW: records - field-level corrections to earlier notices (reference-number renumberings, country fixes, deadline moves), one tiny file duplicated across every language edition, never a notice body. Unrecognised by the text-era naming (no variant token before ~2004, .TXT extension in the member name), every one fell through to the XML path and quarantined as unparsable-xml. Now recognised as a text-era class and skipped by policy (text-era-correction-sheet); the correction content stays reachable in the raw archive - applying it to stored notices would be its own feature.",
+    "fix": "issue 180",
+    "resolved": "2026-08-14"
   }
 ]
