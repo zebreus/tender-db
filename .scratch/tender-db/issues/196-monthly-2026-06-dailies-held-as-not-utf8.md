@@ -1,6 +1,6 @@
 # 196 — monthly 2026-06 fetch: 21 inner dailies held whole as not-utf8 members
 
-Status: in-progress (fix deployed, reclaim running)
+Status: resolved (2026-08-14)
 Kind: bookkeeping / walker attribution
 Blocked by: —
 Relates to: 180 (found while attributing the not-utf8 remainder)
@@ -51,3 +51,11 @@ it as a benign zero for the thousands of dedup siblings. Tests: member_container
 store container-stamp round trip, ingest end-to-end (synthetic monthly + stale container
 row → 4 dedup + row resolved). Reprocess reason=not-utf8 enqueued (jobs 660/661); expect
 the 21 rows to drain via ~85k already-parsed dedups against the daily fetches.
+
+**2026-08-14 ~06:4x CEST (orchestrator) — RESOLVED.** Job 660 (rev fe8979a): 1 package,
+78,313 already parsed, **3 reclaimed — the monthly carried 3 notices the daily fetches
+never had**, so this was a (tiny) coverage gap after all; they are in the corpus now
+(fold 661: 3 tenders). 164 records re-held under their precise reason (unrepresentable-
+value sub-cent — joins the existing kept class and its ledger key automatically). All 21
+container rows verified reprocessed_at-stamped, not-utf8 outstanding is now 0. Ledger
+entry flipped to resolved (rides the next deploy).

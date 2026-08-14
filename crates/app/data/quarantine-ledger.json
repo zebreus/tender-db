@@ -92,9 +92,9 @@
     "category": "Monthly 2026-06 inner dailies recorded whole",
     "reason": "not-utf8",
     "member_path_unlike": "%!%",
-    "diagnosis": "Fetch 2 (ted monthly 2026-06) recorded its 21 nested daily tarballs as raw binary MEMBERS instead of recursing into them - each row is a whole 06/<day>.tar.gz path with no inner member. NOT a coverage gap: the same days are fully ingested via the daily fetches and the coverage grid is green. Why this monthly missed the nested-daily recursion that 2024/2025 monthlies get is the open question; the rows are also invisible to the reprocess member loader, so the fix must address both.",
-    "fix": "issue 196 - open, walker recursion fix pending",
-    "resolved": null
+    "diagnosis": "Fetch 2 (ted monthly 2026-06) was processed 2026-07-19 with the day-one walker, one day before nested-monthly descent landed (1e4df1c) - its 21 inner daily tarballs were recorded as raw binary MEMBERS, one not-utf8 row per whole 06/<day>.tar.gz. Once the walker descended containers those paths never surfaced as members again, so the rows were unreachable by any reprocess. Fixed by dispatching members INSIDE a held container and stamping through a container address: 78,313 records deduped against the daily fetches, 3 notices the dailies never carried were recovered into the corpus, and 164 sub-cent records joined the unrepresentable-value kept class under their own precise rows.",
+    "fix": "issue 196 (fe8979a)",
+    "resolved": "2026-08-14"
   },
   {
     "category": "2012 concession award-criteria free text",
