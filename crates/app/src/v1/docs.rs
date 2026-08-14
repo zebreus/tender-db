@@ -79,6 +79,7 @@ const PAGE: &str = r####"<!doctype html>
     <a href="/">Dashboard</a>
     <a href="/v1">Service info</a>
     <a href="/v1/sql/schema">SQL schema</a>
+    <a href="/v1/openapi.json">OpenAPI</a>
     <a href="/_source">Source</a>
   </nav>
 </header>
@@ -294,9 +295,15 @@ reset — lose the password and you lose the account and its tokens. API tokens
 <h2 id="meta">Service &amp; licence</h2>
 <table>
   <tr><td class="ep"><span class="method">GET</span>/v1</td><td>Service info: version, revision, current cursor, endpoint list, source offer.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/openapi.json</td><td>This API as an <a href="/v1/openapi.json">OpenAPI 3.0 document</a> — machine-readable, CORS-enabled, for client generators and API tooling.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/health</td><td>Readiness probe (process up, database answers).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/_source</td><td>AGPL §13 corresponding-source offer for the running revision.</td></tr>
 </table>
+<p>Browse and try the API interactively in
+<a href="https://petstore.swagger.io/?url=https%3A%2F%2Ftenders.zebreus.click%2Fv1%2Fopenapi.json">Swagger UI</a>
+or <a href="https://redocly.github.io/redoc/?url=https%3A%2F%2Ftenders.zebreus.click%2Fv1%2Fopenapi.json">Redoc</a>
+— both are the projects' hosted viewers, loading the spec straight from this
+server.</p>
 <p>tender-db is free software under <strong>AGPL-3.0-or-later</strong>. The
 running server offers the source of its exact revision at
 <a href="/_source">/_source</a>.</p>

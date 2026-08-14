@@ -10,6 +10,7 @@ pub mod auth;
 pub mod docs;
 pub mod health;
 pub mod json;
+pub mod openapi;
 pub mod sql;
 pub mod sse;
 pub mod webhooks;
@@ -164,6 +165,11 @@ pub fn router(state: AppState) -> Router {
         // `/_source`): reading the docs is not a service call and must not spend
         // a caller's API budget.
         .route("/docs", get(docs::page))
+        // Its machine-readable twin — also documentation, also outside the
+        // limiter. (Registered after the governor layer like `/docs`, but the
+        // static path still wins over the `/v1/{*rest}` catch-all: axum routes
+        // by specificity, not registration order.)
+        .route("/v1/openapi.json", get(openapi::spec))
         .with_state(state)
 }
 
@@ -666,6 +672,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
         "source_offer": SOURCE_OFFER,
         "license": "AGPL-3.0-or-later",
         "docs": "/docs",
+        "openapi": "/v1/openapi.json",
         "cursor": json::cursor(read::latest_cursor(&reader).await?),
         // Bumped by every rebuild that wipes the canonical layer or the change
         // log (issue 46): cursors and entity ids from different generations do
@@ -675,6 +682,7 @@ async fn root(State(state): State<AppState>) -> ApiResult {
             "/v1/tenders", "/v1/tenders/{id}", "/v1/lots", "/v1/organizations",
             "/v1/organizations/{id}", "/v1/notices", "/v1/notices/{id}",
             "/v1/changes", "/v1/me", "/v1/sql", "/v1/sql/schema", "/v1/webhooks",
+            "/v1/openapi.json",
         ],
         "live": "send Accept: text/event-stream to any collection endpoint",
     }))

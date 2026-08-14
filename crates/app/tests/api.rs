@@ -1000,3 +1000,74 @@ async fn a_client_may_hold_five_streams_and_no_more() {
     tokio::time::sleep(Duration::from_millis(200)).await;
     assert!(open(6).await.status().is_success(), "a released slot is reusable");
 }
+
+// ------------------------------------------------------------------- openapi
+
+/// The vendored OpenAPI document and the router describe the same surface.
+///
+/// One direction is enforced live: every path+method the spec declares is
+/// fired at the real router, and any answer of `no such endpoint` (the
+/// `/v1/{*rest}` catch-all) or a 405 fails the test — the spec may not
+/// describe routes nobody serves. The reverse direction rides the service
+/// info: every endpoint `GET /v1` advertises must appear in the spec, so the
+/// two public inventories cannot drift apart silently.
+#[tokio::test]
+async fn the_openapi_spec_matches_the_served_surface() {
+    let server = Server::start("openapi").await;
+
+    // The document itself: JSON, CORS-enabled for browser-based viewers.
+    let response = server
+        .http
+        .get(format!("{}/v1/openapi.json", server.base))
+        .send()
+        .await
+        .expect("request");
+    assert!(response.status().is_success());
+    assert_eq!(
+        response
+            .headers()
+            .get("access-control-allow-origin")
+            .and_then(|v| v.to_str().ok()),
+        Some("*"),
+        "hosted Swagger UI / Redoc need CORS to load the spec"
+    );
+    let spec: Value = response.json().await.expect("openapi.json parses");
+
+    // Spec → router: every declared operation reaches a real handler.
+    for (path, item) in spec["paths"].as_object().expect("paths") {
+        let concrete = path.replace("{id}", "1");
+        for method in item.as_object().expect("path item").keys() {
+            let request = match method.as_str() {
+                "get" => server.http.get(format!("{}{concrete}", server.base)),
+                "post" => server.http.post(format!("{}{concrete}", server.base)),
+                "delete" => server.http.delete(format!("{}{concrete}", server.base)),
+                other => panic!("{path}: unexpected method {other} in the spec"),
+            };
+            let response = request.send().await.expect("request");
+            let status = response.status().as_u16();
+            assert_ne!(status, 405, "{method} {path}: served path, undeclared method");
+            // 401/400/404-entity are fine (no token, no body, empty db) — only
+            // the catch-all's `no such endpoint` proves the route missing.
+            if status == 404 {
+                let body: Value = response.json().await.expect("a JSON 404");
+                assert_ne!(
+                    body["error"]["message"].as_str().unwrap_or_default(),
+                    "no such endpoint",
+                    "{method} {path} is in the spec but not in the router"
+                );
+            }
+        }
+    }
+
+    // Router → spec: the service info's advertised endpoints all appear.
+    let root = server.get("/v1").await;
+    let spec_paths = spec["paths"].as_object().expect("paths");
+    for endpoint in root["endpoints"].as_array().expect("endpoints") {
+        let endpoint = endpoint.as_str().expect("endpoint strings");
+        assert!(
+            spec_paths.contains_key(endpoint),
+            "{endpoint} is advertised by GET /v1 but missing from the OpenAPI spec"
+        );
+    }
+    assert_eq!(root["openapi"], "/v1/openapi.json", "the service info links the spec");
+}

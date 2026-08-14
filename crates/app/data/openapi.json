@@ -1,0 +1,877 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "tender-db API",
+    "description": "Public procurement data — REST, live feeds (SSE), read-only SQL and webhooks. The historical backfill is ongoing, so collection counts grow over time. Money is integer minor units (`{\"cents\": 1234, \"currency\": \"EUR\"}`), never a float. Change cursors are opaque strings: compare for equality and pass back verbatim. The human-readable reference lives at /docs.",
+    "version": "0.1.0",
+    "license": {
+      "name": "AGPL-3.0-or-later",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+    },
+    "contact": {
+      "name": "tender-db",
+      "url": "https://tenders.zebreus.click/_source"
+    }
+  },
+  "servers": [
+    { "url": "https://tenders.zebreus.click" }
+  ],
+  "tags": [
+    { "name": "collections", "description": "Paged reads over the canonical layer. Send `Accept: text/event-stream` to any collection endpoint to turn the same query into a live subscription (snapshot, then diffs)." },
+    { "name": "changes", "description": "The change feed — everything the canonical layer learned, in learn order, resumable by cursor." },
+    { "name": "sql", "description": "One read-only SELECT per request against the public schema." },
+    { "name": "webhooks", "description": "Account-scoped endpoints receiving signed change batches (Standard Webhooks)." },
+    { "name": "account", "description": "Token identity." },
+    { "name": "service", "description": "Service info, health and the AGPL source offer." }
+  ],
+  "paths": {
+    "/v1": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Service info",
+        "description": "Version, deployed revision, current change cursor, feed generation, endpoint list and the AGPL source offer.",
+        "operationId": "serviceInfo",
+        "responses": {
+          "200": {
+            "description": "Service description.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "service": { "type": "string", "example": "tender-db" },
+                    "version": { "type": "string" },
+                    "source": { "type": "string", "description": "Deployed git revision." },
+                    "source_offer": { "type": "string" },
+                    "license": { "type": "string", "example": "AGPL-3.0-or-later" },
+                    "docs": { "type": "string", "example": "/docs" },
+                    "openapi": { "type": "string", "example": "/v1/openapi.json" },
+                    "cursor": { "$ref": "#/components/schemas/Cursor" },
+                    "generation": { "type": "integer", "description": "Feed generation — moves only on an operator-initiated rebuild. Cursors and entity ids from different generations do not compose." },
+                    "endpoints": { "type": "array", "items": { "type": "string" } },
+                    "live": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenders": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Tenders",
+        "description": "The current version of each Tender, newest matching first. With `Accept: text/event-stream` this becomes a live subscription with the same filters.",
+        "operationId": "listTenders",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/cpv" },
+          { "$ref": "#/components/parameters/buyer" },
+          { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/status" },
+          { "$ref": "#/components/parameters/min_value" },
+          { "$ref": "#/components/parameters/max_value" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Tenders, or a live event stream when `Accept: text/event-stream` was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Tender" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/EventStream" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/tenders/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Tender in full",
+        "description": "The current version plus its satellites: lot details, texts, amounts, dates, classifications, parties, lot results (award decisions), bids, contracts, and the version history — each version naming the `caused_by_notice_id` that produced it.",
+        "operationId": "getTender",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The Tender detail.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TenderDetail" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/lots": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Lots",
+        "description": "Lots — subdivisions of Tenders. Same filters as every collection; `tender` restricts to one Tender's Lots. SSE-capable.",
+        "operationId": "listLots",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/cpv" },
+          { "$ref": "#/components/parameters/buyer" },
+          { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/status" },
+          { "$ref": "#/components/parameters/min_value" },
+          { "$ref": "#/components/parameters/max_value" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/tender" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Lots, or a live event stream.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Lot" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/organizations": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Organizations",
+        "description": "Canonical Organizations — buyers, bidders, winners. SSE-capable.",
+        "operationId": "listOrganizations",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Organizations, or a live event stream.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Organization" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/organizations/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Organization",
+        "description": "The counterpart of a Tender detail's `parties[].organization_id`.",
+        "operationId": "getOrganization",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The Organization.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Organization" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/notices": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Notices",
+        "description": "Raw import records. `tender` lists the Notices that caused that Tender's versions. Notices produce no canonical change rows, so an SSE subscription here is a snapshot then silence.",
+        "operationId": "listNotices",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/tender" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Notices.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Notice" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/notices/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Notice",
+        "description": "The counterpart of a version's `caused_by_notice_id`.",
+        "operationId": "getNotice",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The Notice.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Notice" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/changes": {
+      "get": {
+        "tags": ["changes"],
+        "summary": "Change feed (poll)",
+        "description": "Everything the canonical layer learned after `since` (start at 0). Same events as SSE without holding a connection. Loop, passing `last_cursor` as the next `since`, until `more` is false. The cursor is learn order (ingestion), independent of publication date. Store `generation` beside your cursor: when it moves, drop local state, re-snapshot, and continue from that response's `last_cursor`.",
+        "operationId": "pollChanges",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "The cursor to read after — `0` or a previous response's `last_cursor`, verbatim.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "entity",
+            "in": "query",
+            "description": "Narrow to one entity kind.",
+            "schema": { "type": "string", "enum": ["tender", "lot", "organization"] }
+          },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A batch of change events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": { "type": "array", "items": { "$ref": "#/components/schemas/ChangeEvent" } },
+                    "last_cursor": { "$ref": "#/components/schemas/Cursor" },
+                    "more": { "type": "boolean" },
+                    "generation": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "tags": ["account"],
+        "summary": "Who the presented token belongs to",
+        "operationId": "me",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "The token's account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "username": { "type": "string" },
+                        "created_at": { "type": "integer", "description": "Epoch seconds." }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/sql": {
+      "post": {
+        "tags": ["sql"],
+        "summary": "Run one read-only SELECT",
+        "description": "The SQL travels as the raw request body (never in the URL). Exactly one statement, a bare SELECT — no writes, PRAGMA, ATTACH, EXPLAIN or multi-statement bodies. The queryable surface is a positive allow-list (see GET /v1/sql/schema). Time columns are epoch seconds here, unlike REST's ISO 8601. Caps: 10 000 rows / 10 MB per result (`truncated: true` when hit); per token 2 concurrent, 300/hour, 10 s per query (408 when exceeded).",
+        "operationId": "runSql",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": { "type": "string", "example": "SELECT source, count(*) FROM v_tenders GROUP BY source" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The result set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "columns": { "type": "array", "items": { "type": "string" } },
+                    "rows": { "type": "array", "items": { "type": "array", "items": {} } },
+                    "row_count": { "type": "integer" },
+                    "truncated": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "408": { "description": "The query exceeded the per-query time limit; its server-side work was abandoned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/sql/schema": {
+      "get": {
+        "tags": ["sql"],
+        "summary": "The queryable schema",
+        "description": "Public, no token. Every allow-listed table and view with per-column notes, timestamp flags, enum vocabularies and worked examples. The main entry points are the current-state views v_tenders, v_lots, v_lot_results and v_organizations.",
+        "operationId": "sqlSchema",
+        "responses": {
+          "200": {
+            "description": "Tables and views with their columns and notes.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": ["webhooks"],
+        "summary": "List your endpoints",
+        "description": "No secrets in the response.",
+        "operationId": "listWebhooks",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Your registered endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "webhooks": { "type": "array", "items": { "$ref": "#/components/schemas/Webhook" } } }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Register an endpoint",
+        "description": "Only https URLs resolving to publicly-routable addresses are accepted (SSRF guard). The response carries the signing secret ONCE — it is never returned again. Deliveries are signed Standard Webhooks POSTs; delivery is at-least-once and advances only on a 2xx.",
+        "operationId": "createWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": { "url": { "type": "string", "format": "uri", "example": "https://example.com/hooks/tenders" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered. Copy `secret` now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": { "type": "string", "description": "The whsec_… signing secret, shown once." },
+                    "webhook": { "$ref": "#/components/schemas/Webhook" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "get": {
+        "tags": ["webhooks"],
+        "summary": "One endpoint with recent deliveries",
+        "operationId": "getWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The endpoint and its recent delivery attempts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "webhook": { "$ref": "#/components/schemas/Webhook" },
+                    "deliveries": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookDelivery" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "delete": {
+        "tags": ["webhooks"],
+        "summary": "Remove an endpoint",
+        "operationId": "deleteWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "204": { "description": "Removed." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/enable": {
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Resume delivery",
+        "description": "Default replays what was missed (the change log is the queue). Body `{\"from_now\": true}` drops the backlog and resumes at the head.",
+        "operationId": "enableWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "from_now": { "type": "boolean", "default": false } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enabled.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "enabled": { "type": "integer" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/disable": {
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Pause delivery",
+        "operationId": "disableWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "Disabled.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "disabled": { "type": "integer" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "tags": ["service"],
+        "summary": "This document",
+        "description": "The machine-readable description of this API, served with CORS enabled so browser-based viewers (Swagger UI, Redoc) can load it directly.",
+        "operationId": "openapi",
+        "responses": {
+          "200": {
+            "description": "The OpenAPI document.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Readiness probe",
+        "description": "Process up and database answering. Outside the rate limiter.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "rev": { "type": "string" },
+                    "database": { "type": "string" },
+                    "cursor": { "$ref": "#/components/schemas/Cursor" }
+                  }
+                }
+              }
+            }
+          },
+          "503": { "description": "Unavailable." }
+        }
+      }
+    },
+    "/health/deep": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Deep operational probe",
+        "description": "Liveness plus ingest freshness, job failures and disk — the endpoint an external pinger watches. Outside the rate limiter.",
+        "operationId": "healthDeep",
+        "responses": {
+          "200": { "description": "All checks green.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+          "503": { "description": "At least one check failing; the body names it.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/_source": {
+      "get": {
+        "tags": ["service"],
+        "summary": "AGPL §13 corresponding-source offer",
+        "description": "Names the running revision and how to obtain its source.",
+        "operationId": "sourceOffer",
+        "responses": {
+          "200": { "description": "The source offer.", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Human-readable API reference",
+        "operationId": "docs",
+        "responses": {
+          "200": { "description": "The reference page.", "content": { "text/html": { "schema": { "type": "string" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "tdb_… API token",
+        "description": "Create tokens on the dashboard (/account). Shown once at creation."
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Entity id.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "source": {
+        "name": "source",
+        "in": "query",
+        "description": "Source key, e.g. `ted`.",
+        "schema": { "type": "string" }
+      },
+      "country": {
+        "name": "country",
+        "in": "query",
+        "description": "ISO-3166 alpha-3 country, e.g. `DEU`.",
+        "schema": { "type": "string" }
+      },
+      "cpv": {
+        "name": "cpv",
+        "in": "query",
+        "description": "CPV code prefix, e.g. `45` (construction).",
+        "schema": { "type": "string" }
+      },
+      "buyer": {
+        "name": "buyer",
+        "in": "query",
+        "description": "Organization id that is the buyer.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "winner": {
+        "name": "winner",
+        "in": "query",
+        "description": "Organization id that won at least one Lot.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "status": {
+        "name": "status",
+        "in": "query",
+        "description": "By submission deadline.",
+        "schema": { "type": "string", "enum": ["open", "closed"] }
+      },
+      "min_value": {
+        "name": "min_value",
+        "in": "query",
+        "description": "Minimum value in cents.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "max_value": {
+        "name": "max_value",
+        "in": "query",
+        "description": "Maximum value in cents.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "kind": {
+        "name": "kind",
+        "in": "query",
+        "description": "Tender/Lot kind flag.",
+        "schema": { "type": "string" }
+      },
+      "tender": {
+        "name": "tender",
+        "in": "query",
+        "description": "Restrict Lots to one Tender id; on /v1/notices, list the Notices that caused that Tender's versions.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Page size.",
+        "schema": { "type": "integer", "default": 100, "maximum": 500, "minimum": 1 }
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Opaque page position — pass back the previous page's `next_cursor` verbatim. On an SSE request, an event id to resume from (equivalent to Last-Event-ID).",
+        "schema": { "type": "string" }
+      },
+      "include_data": {
+        "name": "include_data",
+        "in": "query",
+        "description": "SSE only: embed the entity's current JSON in each event.",
+        "schema": { "type": "boolean" }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid input — an unknown or misspelled query parameter is rejected rather than silently ignored.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid bearer token.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "No such entity.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded (~10 req/s per client, burst 50, across /v1). Carries Retry-After.",
+        "headers": { "Retry-After": { "description": "Seconds to wait.", "schema": { "type": "string" } } },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "The one error shape, matching the HTTP status.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "integer", "example": 404 },
+              "message": { "type": "string", "example": "no such tender" }
+            }
+          }
+        }
+      },
+      "Cursor": {
+        "type": "string",
+        "nullable": true,
+        "description": "Opaque change/page cursor. Compare for equality and pass back verbatim; never parse or do arithmetic on it."
+      },
+      "Money": {
+        "type": "object",
+        "description": "Integer minor units — never a float.",
+        "properties": {
+          "cents": { "type": "integer", "format": "int64", "example": 1234 },
+          "currency": { "type": "string", "example": "EUR" }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "description": "The collection envelope. Paginate by following next_cursor until more is false.",
+        "properties": {
+          "items": { "type": "array", "items": {} },
+          "next_cursor": { "$ref": "#/components/schemas/Cursor" },
+          "more": { "type": "boolean" }
+        }
+      },
+      "Tender": {
+        "type": "object",
+        "description": "A Tender row — the current version of one procedure. Rows echo the cpv and country codes they carry so a filter match is explainable. Fields beyond these evolve with the backfill; unknown fields must be tolerated.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "source": { "type": "string" },
+          "title": { "type": "string", "nullable": true },
+          "cpv": { "type": "array", "items": { "type": "string" } },
+          "country": { "type": "array", "items": { "type": "string" }, "description": "NUTS place codes." },
+          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601; a source that published a date only yields a date only." }
+        },
+        "additionalProperties": true
+      },
+      "TenderDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Tender" },
+          {
+            "type": "object",
+            "description": "The Tender plus its satellites.",
+            "properties": {
+              "lots": { "type": "integer", "description": "Lot count." },
+              "lot_details": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "texts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "amounts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "dates": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "classifications": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "parties": { "type": "array", "items": { "type": "object", "properties": { "organization_id": { "type": "integer", "format": "int64" } }, "additionalProperties": true } },
+              "lot_results": { "type": "array", "description": "Award decisions, accumulating across framework/DPS rounds.", "items": { "type": "object", "additionalProperties": true } },
+              "bids": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "contracts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "versions": { "type": "array", "items": { "type": "object", "properties": { "caused_by_notice_id": { "type": "integer", "format": "int64" } }, "additionalProperties": true } }
+            }
+          }
+        ]
+      },
+      "Lot": {
+        "type": "object",
+        "description": "A subdivision of a Tender.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "tender_id": { "type": "integer", "format": "int64" }
+        },
+        "additionalProperties": true
+      },
+      "Organization": {
+        "type": "object",
+        "description": "A canonical Organization — buyer, bidder or winner.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string", "nullable": true }
+        },
+        "additionalProperties": true
+      },
+      "Notice": {
+        "type": "object",
+        "description": "A raw import record — the traceability anchor of every canonical version (ADR-0001).",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "source": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "ChangeEvent": {
+        "type": "object",
+        "description": "One shape across SSE change events, poll items and webhook batches.",
+        "properties": {
+          "cursor": { "$ref": "#/components/schemas/Cursor" },
+          "op": { "type": "string", "enum": ["added", "changed", "removed"] },
+          "entity": { "type": "string", "enum": ["tender", "lot", "organization"] },
+          "id": { "type": "integer", "format": "int64" },
+          "version": { "type": "integer", "nullable": true, "description": "Canonical version seq (null for notices)." },
+          "changed_at": { "type": "string", "description": "ISO 8601. Poll only." },
+          "data": { "type": "object", "additionalProperties": true, "description": "Only with ?include_data=true on SSE." }
+        }
+      },
+      "EventStream": {
+        "type": "string",
+        "description": "Server-Sent Events: one `added` event per row currently matching the filter (the snapshot, read in a single consistent transaction), a `live` marker carrying the snapshot's cursor, then `change` events forever. Each event's SSE id is an opaque, generation-qualified resume token (e.g. `3:193055`); pass it back as Last-Event-ID or ?cursor= to skip the snapshot and receive exactly what was missed. A `reset` event ({\"reason\":\"cursor_expired\"|\"feed_rebuilt\"}) means the token cannot resume: drop local state and re-subscribe fresh. Streams are capped at 5 per client; a 15 s keep-alive comment holds the connection open."
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "A registered endpoint (no secret). Deliveries are Standard Webhooks POSTs: webhook-id, webhook-timestamp and webhook-signature headers, the signature `v1,<base64 HMAC-SHA256>` over `{id}.{timestamp}.{body}` keyed by your secret. Retries back off 30 s → 2 m → 10 m → 1 h → 4 h → 12 h → daily; after ~3 days of continuous failure the endpoint auto-disables.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "url": { "type": "string", "format": "uri" },
+          "created_at": { "type": "integer", "description": "Epoch seconds." },
+          "disabled_at": { "type": "integer", "nullable": true, "description": "Set when disabled (by the owner or after sustained failure); null means active." },
+          "last_delivered_cursor": { "type": "integer", "description": "Newest change cursor this endpoint has a 2xx for." },
+          "failing_since": { "type": "integer", "nullable": true, "description": "First failure of the current streak, if currently failing." },
+          "consecutive_failures": { "type": "integer" }
+        }
+      },
+      "WebhookDelivery": {
+        "type": "object",
+        "description": "One recent delivery attempt.",
+        "properties": {
+          "attempted_at": { "type": "integer", "description": "Epoch seconds." },
+          "cursor_from": { "type": "integer" },
+          "cursor_to": { "type": "integer" },
+          "events": { "type": "integer" },
+          "status": { "type": "integer", "nullable": true, "description": "HTTP status, when the endpoint answered." },
+          "duration_ms": { "type": "integer" },
+          "ok": { "type": "boolean" },
+          "error": { "type": "string", "nullable": true }
+        }
+      }
+    }
+  }
+}
