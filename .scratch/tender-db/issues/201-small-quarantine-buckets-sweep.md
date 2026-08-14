@@ -69,3 +69,13 @@ co-original mechanism (bilingual buyers' F14s enumerating changes per original) 
 re-hold with fresh details; counts decide. Also: disk filled again mid-build (debug tree
 regrew to 27G); pruned artifacts >40MB, 22G free — recurring nuisance, consider a
 tmpfiles.d-style prune or cargo sweep in the worktree if it keeps biting.
+
+**2026-08-14 ~13:3x CEST box time (orchestrator) — translation-structure-mismatch reclaim:
+92/94.** The CHG/F14 and LOT-2 families were the same co-original mechanism — all drained
+by adoption. 2 members re-held under the same reason, now from genuine TRANSLATION copies
+(an EN translation carrying an extra RES-2 / CHG-1 block the original lacks — the guard
+working as intended): 045641_2014 (r208 award) and 275223_2021 (F14). Next: extract both,
+decide adopt-vs-keep for translation-borne extra sections — likely a documented keep or a
+scoped adoption if the content is a real translated block TED's pipeline added. Remaining
+201 buckets after this pair: duplicate-section-id 23, ambiguous-field 14,
+unknown-field-code 9, unreadable-zip 8.
