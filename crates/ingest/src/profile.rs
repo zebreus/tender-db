@@ -450,9 +450,16 @@ fn record_starts(bytes: &[u8]) -> Vec<usize> {
     starts
 }
 
-/// `<digits>.<digits>/<digits>` alone on its line.
+/// `<digits>.<digits>/<digits>` alone on its line, AT COLUMN 0 — the
+/// delivery's sequence stamp. Body text is indented, and the 2010-era
+/// structured forms quote buyer file references ("3.131/2010", "331.08/01"
+/// under "IV.3.1) reference number…") that match the shape on their own
+/// indented line — before the column-0 anchor, each such line split a real
+/// notice mid-body and the tail fragment held as missing-publication-id
+/// (issue 200: 110 rows, all 2010). Measured on a full 2010 daily: 1,488
+/// real markers at column 0, the only 2 indented matches both false.
 fn is_record_marker(line: &[u8]) -> bool {
-    let line = line.trim_ascii();
+    let line = line.trim_ascii_end();
     let Some((version, number)) = split_once(line, b'/') else { return false };
     let Some((major, minor)) = split_once(version, b'.') else { return false };
     [major, minor, number].iter().all(|p| !p.is_empty() && p.iter().all(u8::is_ascii_digit))
@@ -680,6 +687,24 @@ mod tests {
         assert!(is_record_marker(b"1.0/000006\r\n"));
         assert!(!is_record_marker(b"ND: 52472-1992\n"));
         assert!(!is_record_marker(b"  ***  T E D  ***\n"));
+        // Issue 200: a buyer file reference quoted in a structured-form body
+        // matches the marker SHAPE but sits on an indented line — only a
+        // column-0 stamp delimits a record.
+        assert!(!is_record_marker(b"    3.131/2010\n"));
+        assert!(!is_record_marker(b"\t331.08/01\n"));
+    }
+
+    /// Issue 200 end to end: an indented reference number inside a record's
+    /// body must not split it — the whole notice stays ONE record with its ND.
+    #[test]
+    fn indented_reference_numbers_do_not_split_records() {
+        let bytes: &[u8] = b"1.0/000001\nND: 100-2010\nTI: One\n\
+                             \x20   IV.3.1)  Reference number\n    3.131/2010\n    more body\n\
+                             1.0/000002\nND: 101-2010\nTI: Two\n";
+        let starts = record_starts(bytes);
+        assert_eq!(starts.len(), 2, "the indented reference is body, not a marker");
+        let second = &bytes[starts[1]..];
+        assert!(second.starts_with(b"1.0/000002"));
     }
 
     #[test]
