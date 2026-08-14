@@ -219,3 +219,12 @@ which unknown-customization gates. Fixtures ×2, corpus 26→28, ingest gate 216
 Expect 10 rows to drain; residue after: FieldsPrivacy 4, StrategicProcurement 2,
 ExpectedOperatorQuantity 2, ServiceProviderParty 2, RegistrationName 1, SubTypeDescription 1,
 WebsiteURI 1 (=13 eForms) + 2 missing-publication-id + text orphans.
+
+**2026-08-14 ~07:3x CEST (orchestrator) — slice-5 reclaim complete: 10/10.** Job (rev
+be4fcb1): 51 packages, 10 reclaimed, 68 still held (66 unclaimed-content + 2
+missing-publication-id), 0 skipped. eForms residue now 13 rows: FieldsPrivacy 4 (root,
+sdk-1.9), StrategicProcurement 2 (sdk-1.12), ExpectedOperatorQuantity 2 (sdk-1.10),
+ServiceProviderParty 2 (nested, sdk-1.12), RegistrationName 1, SubTypeDescription 1,
+WebsiteURI 1 — plus the 2 missing-publication-id rows and the text-era orphan lines
+(the 66 minus 13 eForms = ~53 text-era rows, next readout will name them). Next slice:
+the 4-row FieldsPrivacy class + pin the text-era orphan split.
