@@ -1160,6 +1160,37 @@ mod tests {
     }
 
     #[test]
+    fn denied_tables_stay_denied_through_every_reference_shape() {
+        // Issue 204 pass 2: the walk must reach a credential table in every
+        // position an attacker can put one — a compound (UNION/EXCEPT/INTERSECT)
+        // arm, a case-varied name, a schema qualifier, or a system catalog under
+        // any schema. Each of these was probed live and held; this pins it.
+        for sql in [
+            // Set-op arms — the compound walk must visit every branch.
+            "SELECT id FROM v_tenders UNION SELECT id FROM users",
+            "SELECT id FROM v_tenders EXCEPT SELECT id FROM sessions",
+            "SELECT id FROM v_tenders INTERSECT SELECT rowid FROM api_tokens",
+            // Case is folded before the allow-list check.
+            "SELECT * FROM USERS",
+            "SELECT * FROM UsErS",
+            // A schema qualifier does not launder the object name.
+            "SELECT * FROM main.users",
+            "SELECT * FROM temp.sqlite_master",
+            // The SQLite system catalogs, bare and temp-qualified, are not public.
+            "SELECT * FROM sqlite_master",
+            "SELECT * FROM sqlite_temp_master",
+            "SELECT * FROM sqlite_temp_schema",
+            // json_each/json_tree are table-valued functions — deny-by-default
+            // now (not in ALLOWED_TVF), so a subquery hidden in one cannot even
+            // reach execution.
+            "SELECT * FROM json_each('[1]')",
+            "SELECT value FROM json_each((SELECT password_hash FROM users))",
+        ] {
+            assert!(classify(sql).is_err(), "must stay denied: {sql:?}");
+        }
+    }
+
+    #[test]
     fn cells_map_to_json() {
         use store::turso::Value;
         assert_eq!(cell(Value::Null).0, Json_::Null);
