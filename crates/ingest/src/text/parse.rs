@@ -71,6 +71,22 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
                 Some(field) => field.lines.push(dedent(line).to_owned()),
                 None => return Err(unclaimed(n, line)),
             }
+        } else if is_terminal_echo(line) {
+            // The era's production system echoed its own search command into
+            // the file (`.S F=ALL;R=…;SORT=PD;ND;HC`) — measured 4 members,
+            // all 1994, each after the record's last header field. Production
+            // residue, never notice content: consumed like a blank line.
+        } else if let Some(field) = &mut open {
+            // A column-0 continuation (issue 199): TED's own line-wrapper
+            // emits a wrapped tail flush-left — after a `!` in the text, a
+            // closing quote/paren, or a fixed-width mid-word sever — and the
+            // correction margin marker `!` occupies column 0 the same way.
+            // All 54 measured members were wrapped content inside an open
+            // field, never structure; under a prose field the line joins the
+            // body, under a per-line field it is its own value (the measured
+            // RC/RG rows are real codes), and under a scalar the flush guard
+            // still rejects it as unconsumed structure.
+            field.lines.push(strip_margin(line).to_owned());
         } else {
             return Err(unclaimed(n, line));
         }
@@ -232,6 +248,22 @@ fn dedent(line: &str) -> &str {
     line.strip_prefix("    ").unwrap_or_else(|| line.trim_start_matches([' ', '\t']))
 }
 
+/// The correction margin marker: `!` at column 0 followed by the layout
+/// indent. Presentation (TED flags corrected lines in the margin), not
+/// content — stripped so the line aligns with its dedented siblings.
+fn strip_margin(line: &str) -> &str {
+    match line.strip_prefix('!') {
+        Some(rest) if rest.starts_with(' ') || rest.starts_with('\t') => dedent(rest),
+        _ => line,
+    }
+}
+
+/// The mainframe search-command echo (`.S F=ALL;R=19212 TO 1;SORT=PD;ND;HC`)
+/// the era's production left between records.
+fn is_terminal_echo(line: &str) -> bool {
+    line.starts_with(".S ") && line.contains(";SORT=")
+}
+
 /// `<digits>.<digits>/<digits>` alone on its line — the splitter's marker.
 fn is_marker(line: &str) -> bool {
     let line = line.trim();
@@ -256,12 +288,70 @@ mod tests {
         let r = parse("1.0/000001\nND: 1-1993\nZZ: boom\n").unwrap_err();
         assert_eq!(r.reason, "unknown-field-code");
 
+        // A column-0 line under a SCALAR field is still unconsumed structure
+        // (the flush guard), and one before any field opens has nothing to
+        // continue — the issue-199 loosening reaches neither.
         let r = parse("1.0/000001\nND: 1-1993\nstray column-0 prose\n").unwrap_err();
+        assert_eq!(r.reason, "unclaimed-content");
+        assert!(r.detail.contains("scalar field ND"), "{}", r.detail);
+        let r = parse("1.0/000001\nno field open yet\nND: 1-1993\n").unwrap_err();
         assert_eq!(r.reason, "unclaimed-content");
 
         // A wrapped value under a scalar field is unconsumed structure.
         let r = parse("1.0/000001\nCY: FR\n    extra\n").unwrap_err();
         assert_eq!(r.reason, "unclaimed-content");
+    }
+
+    /// Issue 199: TED's own line-wrapper emits a wrapped tail flush-left (after
+    /// a `!` in the text, a closing quote/paren, a fixed-width sever), and the
+    /// correction margin marker `!` occupies column 0 the same way. All 54
+    /// measured members were wrapped CONTENT inside an open field — so a
+    /// column-0 non-tag line continues that field instead of holding the
+    /// record.
+    #[test]
+    fn column0_continuations_join_their_open_field() {
+        // Prose: the wrapped tail joins the body as its own line (the 1997 US
+        // notice's sentence-final '.', the Belgian ') voegen…' family).
+        let p = parse("1.0/000001\nND: 1-1993\nTX: body (with a phone\n) and more.\n").unwrap();
+        let tx = p.values.iter().find(|v| v.field_id == "TXT-TX").expect("TX emitted");
+        assert_eq!(
+            *value_text(&tx.value),
+            "body (with a phone\n) and more.",
+            "the flush-left tail stays in the body"
+        );
+
+        // The correction margin marker is presentation, not content: stripped,
+        // and the line aligns with its dedented siblings (the 1999 German
+        // 'Schlußtermin' family).
+        let p = parse("1.0/000001\nND: 1-1993\nTX: 5. b)  Zahlung: 40 DEM.\n!    6. a)  Schlußtermin: 2. 11. 1999.\n").unwrap();
+        let tx = p.values.iter().find(|v| v.field_id == "TXT-TX").expect("TX emitted");
+        assert_eq!(*value_text(&tx.value), "5. b)  Zahlung: 40 DEM.\n6. a)  Schlußtermin: 2. 11. 1999.");
+
+        // Per-line: a flush-left line is its own value — the 1999 C01 record's
+        // second NUTS code and second region name are real values.
+        let p = parse("1.0/000001\nND: 1-1993\nRC: ES511\nES512\n").unwrap();
+        let codes: Vec<_> = p.values.iter().filter(|v| v.field_id == "TXT-RC").collect();
+        assert_eq!(codes.len(), 2, "both NUTS codes are claimed");
+        assert_eq!(
+            codes[1].value,
+            NoticeValue::Classification { scheme: "nuts".into(), code: "ES512".into() }
+        );
+
+        // The 1994 mainframe search-command echo is production residue between
+        // fields — consumed like layout, even where a continuation could not
+        // attach (an open scalar field).
+        let p = parse(
+            "1.0/000001\nND: 1-1993\nTD: 7 - Something\n.S F=ALL;R=19212 TO 1;SORT=PD;ND;HC   \n",
+        )
+        .unwrap();
+        assert!(p.values.iter().any(|v| v.field_id == "TXT-TD"), "the record parses whole");
+    }
+
+    fn value_text(value: &NoticeValue) -> &String {
+        match value {
+            NoticeValue::Text { value, .. } => value,
+            other => panic!("expected text, got {other:?}"),
+        }
     }
 
     #[test]
