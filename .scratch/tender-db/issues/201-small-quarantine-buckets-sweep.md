@@ -45,3 +45,15 @@ guard, SDK 1.2) + the 3-row 1.2 reclaim also pending queue-idle.
 16e81a8 (ledger 42, sibling guard, SDK 1.2); reclaim 3/3, incremental fold (2s — the
 full-sweep trigger is text-era-specific, consistent with 192's data points). Bucket empty;
 next: translation-structure-mismatch members.
+
+**2026-08-14 ~12:2x CEST box time (orchestrator) — translation-structure-mismatch
+DIAGNOSED (ORG family).** Member 160877_2015 (r208 F02, BE): TWO sections both marked
+CATEGORY="ORIGINAL" — DE with 2 ORGANISATION blocks, FR with 3. Belgium publishes
+co-originals, and the second original can carry MORE content (the extra FR-side org);
+the overlay's structural-replication guard treats every subsequent section as a
+translation copy and rejects the member whole. Fix direction: read CATEGORY — only
+translation copies keep the strict must-exist guard; a co-ORIGINAL section may open new
+sections (its content is first-class published data). The CHG-N/F14 family (~38 rows)
+needs its own member look — change notices may genuinely enumerate changes differently
+per language. Implementation next firing: r209/parse.rs overlay mode + fixture from this
+member + the r208 twin path.
