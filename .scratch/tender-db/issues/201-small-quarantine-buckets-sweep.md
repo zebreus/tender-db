@@ -79,3 +79,14 @@ decide adopt-vs-keep for translation-borne extra sections — likely a documente
 scoped adoption if the content is a real translated block TED's pipeline added. Remaining
 201 buckets after this pair: duplicate-section-id 23, ambiguous-field 14,
 unknown-field-code 9, unreadable-zip 8.
+
+**2026-08-14 ~14:1x CEST box time (orchestrator) — translation adoption extended, pending
+deploy.** Extracted both holdouts: 045641_2014's ES ORIGINAL carries 1 award where all 23
+TRANSLATIONS carry 3 (real award data lost by TED's pipeline in the original); 275223_2021's
+LV original has NO CHANGE block where the translations carry one. Every firing of the strict
+guard in 30 years of corpus was recoverable content, so walked secondaries (translations
+included) now ADOPT missing sections and the translation-structure-mismatch reason RETIRES
+(ledger entry added; relabel test flipped to pin adoption; gates 220 green, pushed). Deploy
++ the final 2-row reclaim next firing — the mismatch reclaim's trailing fold is still in
+its issue-192 full-sweep (old-era members), don't restart it. After that: duplicate-
+section-id (23), ambiguous-field (14), unknown-field-code (9), unreadable-zip (8).
