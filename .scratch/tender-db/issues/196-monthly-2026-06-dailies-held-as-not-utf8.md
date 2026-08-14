@@ -32,3 +32,8 @@ to the reprocess pass's member loader. Whatever resolves them must handle that.
    the rows another sanctioned way (they are duplicates of daily-fetch content).
 3. If layout: fix the recursion and reprocess; verify no notice from the monthly is
    actually missing vs the daily fetches (spot ND diff for one day).
+
+**2026-08-14 ~04:0x CEST (orchestrator).** Named on the public ledger as an OUTSTANDING
+entry ("Monthly 2026-06 inner dailies recorded whole", key not-utf8 + member_path_unlike
+'%!%', 21 rows) so the dashboard carries the population until this is fixed. Rides the
+next deploy.

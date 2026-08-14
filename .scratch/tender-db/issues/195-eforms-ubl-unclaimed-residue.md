@@ -167,3 +167,14 @@ needs a look). Trailing incremental project running. Next slice: pin the remaini
 ProcurementAdditionalType listName, 4× root FieldsPrivacy, 2× AwardingCriterion
 StrategicProcurement, 2× nested ServiceProviderParty, 1× SubTypeDescription, + the tail
 below the old readout cut) and the 2 missing-publication-id rows.
+
+**2026-08-14 ~04:0x CEST (orchestrator) — ledger audit: all six drained classes now have
+dashboard entries.** Prompted by Lennart's check-in question, audited every resolved
+quarantine population against the vendored ledger keys: the 195 waves had NO dashboard
+rows. Added six entries (CVD 81, SelC 75 — its prose also carries the 2 AwardingCriterion-
+TypeCode + 1 nested-UBLExtensions side-drains, whose suffixes collide with still-open
+classes — root FMA 84, shortlist 11, Part address descriptions 7, DE RenewalsIndicator 5),
+plus entries for 194's internal-ojs summaries, 181's CF trio, 180's COR class and the
+1999 not-utf8 drain, and outstanding namings for 196 + the parked concession pair
+(commit "ledger: document the missing resolution decisions"). Keys verified disjoint and
+exact against the live DB. Renders after the next deploy.
