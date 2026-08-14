@@ -70,7 +70,7 @@ fn every_r209_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 6, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 7, "corpus changed; update the expectation");
 
     for relative in names {
         let (profile, parse) = ingest_fixture(&relative);
@@ -384,4 +384,39 @@ fn inventory() -> Vec<InventoryElement> {
                 .collect(),
         })
         .collect()
+}
+
+/// Issue 201: a bilingual buyer's SECOND ORIGINAL (Belgian F02, DE + FR both
+/// CATEGORY="ORIGINAL") carries a third ORGANISATION the primary lacks. A
+/// co-original is not a translation: the extra section is opened, ADOPTED,
+/// and fully emitted — while genuine translation copies keep the strict
+/// structure guard.
+#[test]
+fn co_original_extra_sections_are_adopted() {
+    let parsed = parse_fixture("r209/f02-co-original-160877-2015.xml");
+    let org3 = parsed.sections.iter().find(|s| s.id == "ORG-3").expect("the co-original's extra organisation is opened");
+    assert_eq!(org3.kind, "Organization");
+    let in_org3: Vec<_> = parsed.values.iter().filter(|v| v.section_id == "ORG-3").collect();
+    assert!(!in_org3.is_empty(), "the adopted section carries its content");
+    assert!(
+        in_org3.iter().any(|v| !matches!(v.value, NoticeValue::Text { .. })),
+        "adoption lifts the text-only suppression inside the new section"
+    );
+
+    // The strict guard survives for genuine translations: the same bytes with
+    // the second ORIGINAL relabelled TRANSLATION must still reject.
+    let bytes = std::fs::read("tests/fixtures/r209/f02-co-original-160877-2015.xml").unwrap();
+    let xml = String::from_utf8(bytes).unwrap();
+    // ...as an ENGLISH translation: non-EN translation copies are never
+    // walked at all, so only the EN relabel exercises the guard.
+    let mutated = xml.replacen(
+        r#"CATEGORY="ORIGINAL" FORM="2" LG="FR""#,
+        r#"CATEGORY="TRANSLATION" FORM="2" LG="EN""#,
+        1,
+    );
+    assert_ne!(xml, mutated, "the FR co-original was found and relabelled");
+    match parse_payload("ted-export-r208", mutated.as_bytes()) {
+        Parse::Quarantined { reason, .. } => assert_eq!(reason, "translation-structure-mismatch"),
+        other => panic!("a diverging TRANSLATION must still reject, got {other:?}"),
+    }
 }

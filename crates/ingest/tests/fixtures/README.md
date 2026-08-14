@@ -113,7 +113,7 @@ the default namespace naively can trip here. Retained deliberately.
 
 ---
 
-## `r209/` — TED_EXPORT R2.0.9, 6 files, 59 KB
+## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 7 files, 80 KB
 
 From TED daily package **`daily-201900001`** (`20190102_001`, published
 2019-01-02, 1529 notices). That package is itself a useful artefact: it is
@@ -132,6 +132,8 @@ because that is where it is actually found in the wild.
 | `f18-defence-001420-2019.xml` | 10 913 | 18 (defence) | **R2.0.8.S04.E01** | **RO** | RO | **Defence form**, `DIRECTIVE VALUE="2009/81/EC"`. Note it is R2.0.8 inside a 2019 package — defence notices did not migrate to R2.0.9. **No EN defence notice exists in this package** (all 2009/81 instances are RO/IT/ES/DE); this is the smallest. |
 
 ---
+
+- `f02-co-original-160877-2015.xml` (21,117 B): **issue 201** — Belgian-style bilingual F02 with TWO CATEGORY="ORIGINAL" sections (DE primary, FR co-original carrying a third ORGANISATION). Pins co-original section ADOPTION: the extra org is opened and fully emitted, while a relabelled EN TRANSLATION with the same extra section still rejects.
 
 ## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 3 files, 65 KB
 
