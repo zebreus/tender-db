@@ -178,3 +178,20 @@ plus entries for 194's internal-ojs summaries, 181's CF trio, 180's COR class an
 1999 not-utf8 drain, and outstanding namings for 196 + the parked concession pair
 (commit "ledger: document the missing resolution decisions"). Keys verified disjoint and
 exact against the live DB. Renders after the next deploy.
+
+**2026-08-14 ~04:5x CEST (orchestrator) — slice 4 implemented + deployed (rev 2d3202f),
+reclaim running.** Two mechanisms, 23 rows: (a) sdk-0.1 is the EMPIRICAL inventory (patch
+tables stay off it), so its residue is inventory additions — five new SDK01- entries:
+TenderResult/SubcontractTerms cbc:Amount (10 rows, BT-553 shape) + cbc:Rate (2, BT-555
+shape), and PartyLegalEntity/cbc:CompanyID under lot AppealReceiverParty + MediationParty
++ AdditionalInformationParty (2 rows; the MediationParty mount only surfaced when diag139
+showed member 3e5ce20f advancing past the AppealReceiverParty fix — budget for one more
+advance per member on 0.1). (b) sdk-1.0 (9 rows): a 2022 DÖE tool mounts the
+SelectionCriteria extension inside procedure TenderingTerms/cac:AppealTerms; new ALIASES
+graft from the lot TenderingTerms anchor (member a40868e4 verified: BT-747/750-Lot claimed).
+Five fixtures (all extracted from DÖE monthlies on the box), corpus 21→26, ingest gate 214
+green. Expected drain: 23 of the 46 eForms rows. Remaining after: ProcurementTypeCode 7+3
+(need listName readout), FieldsPrivacy 4 (root, sdk-1.9), StrategicProcurement 2 (sdk-1.12),
+ExpectedOperatorQuantity 2 (sdk-1.10), ServiceProviderParty 2 (sdk-1.12), RegistrationName 1,
+SubTypeDescription 1, WebsiteURI 1 — plus the 2 missing-publication-id rows (separate reason
+now) and the ~13 text-era orphan-line rows (not eForms; decide keep-vs-fix separately).
