@@ -252,3 +252,19 @@ missing-publication-id), no member advanced. eForms residue is now exactly the f
 classes (RegistrationName 1.8, CallForTendersDocumentReference/DocumentTypeCode 1.6,
 ContractingParty/Party/PartyName 1.7, SubTypeDescription 1.12, DÖE MediationParty/WebsiteURI
 1.0); the rest of the 56 is the parked r208 concession pair + text-era orphan lines.
+
+**2026-08-14 ~08:3x CEST box time (orchestrator) — slice 7 deployed (rev cd0fb1c), reclaim
+running; this should EMPTY the eForms residue.** The five 1-row classes closed, three of
+which advanced through multiple details before their members parsed clean (whack-a-mole
+budgeted this time): (1) sdk-1.8 BRIN registering with schemeName='EU' — BT-500-Business-
+European and OPP-124-Business enter the SDK later; both claimed gap-filled on early minors;
+(2) sdk-1.6 publishing BT-707's 1.7 shape — gap-filled; (3) the sdk-1.7 NO eSender that
+inlines its whole organisation: Company graft onto ContractingParty/Party, UBL-Person*
+leaves, and the forced UBL TenderResult block filled with REAL data (count, low/high
+amounts, zoneless StartDate, winner ref) — claimed as published under UBL- ids; (4)
+UBL-SubTypeDescription (sdk-1.12 IT); (5) DÖE Company graft gains MediationParty at both
+levels (sdk-1.0 uuid). Five fixtures, corpus 33→38, ingest 218 green. Remaining
+unclaimed-content after this drains: the parked r208 concession pair + text orphan lines
+(~40, next diagnosis) — plus the 2 missing-publication-id rows and the 108-row old mpi
+bucket under their own reason. Also filed issue 198 (per-BT coverage panel, backlog, per
+Lennart's nod).
