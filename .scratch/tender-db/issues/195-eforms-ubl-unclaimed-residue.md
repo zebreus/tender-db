@@ -245,3 +245,10 @@ advanced to exactly that failure after the graft. Five fixtures, corpus 28→33,
 ContractingParty/Party/PartyName 1.7, SubTypeDescription 1.12, DÖE MediationParty/
 WebsiteURI 1.0) + 2 missing-publication-id + ~40 text orphan lines + the 108-row old
 missing-publication-id bucket (own diagnosis needed).
+
+**2026-08-14 ~09:2x CEST (orchestrator) — slice-6 reclaim complete: 10/10, clean.** Job 664
+(rev 8a82813): 47 packages, 10 reclaimed, 58 still held (56 unclaimed-content + 2
+missing-publication-id), no member advanced. eForms residue is now exactly the five 1-row
+classes (RegistrationName 1.8, CallForTendersDocumentReference/DocumentTypeCode 1.6,
+ContractingParty/Party/PartyName 1.7, SubTypeDescription 1.12, DÖE MediationParty/WebsiteURI
+1.0); the rest of the 56 is the parked r208 concession pair + text-era orphan lines.
