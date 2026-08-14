@@ -1,6 +1,6 @@
 # 195 — eForms UBL unclaimed residue: ~311 rows on CommonAggregate/CommonExtension paths
 
-Status: in-progress
+Status: RESOLVED (2026-08-14) — eForms unclaimed-content residue drained to ZERO: ~311 rows → 0 across 7 slices, ~20 publisher-quirk classes claimed, 20 fixtures, 13+6 ledger entries
 Kind: parser gap investigation (eForms side of the 183 attribution)
 Blocked by: —
 Relates to: 183 (attribution pass), 144 (the value-era waves that drained the previous eForms tail), 188 (eforms-sdk-0.1 linkage, possibly same vintage)
@@ -268,3 +268,10 @@ unclaimed-content after this drains: the parked r208 concession pair + text orph
 (~40, next diagnosis) — plus the 2 missing-publication-id rows and the 108-row old mpi
 bucket under their own reason. Also filed issue 198 (per-BT coverage panel, backlog, per
 Lennart's nod).
+
+**2026-08-14 ~09:0x CEST box time (orchestrator) — RESOLVED.** Job 666 (rev cd0fb1c): 5/5
+reclaimed; verified via /v1/sql that unclaimed-content now holds ZERO eForms rows — only
+49 text-era orphan lines (spun off as issue 199) and the 2 parked r208 concession rows.
+Campaign total: ~311 rows → 0 across 7 slices; every drained class has a resolved ledger
+entry (13 added at close for slices 4–7, keys verified to hit their exact populations).
+The 2 new + 108 old missing-publication-id rows are spun off as issue 200.

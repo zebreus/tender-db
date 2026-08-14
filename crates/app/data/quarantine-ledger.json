@@ -1,5 +1,111 @@
 [
   {
+    "category": "eForms selection criteria inside AppealTerms",
+    "reason": "unclaimed-content",
+    "detail_like": "%AppealTerms/%UBLExtensions",
+    "diagnosis": "A 2022 DOE tool on eforms-sdk-1.0 (9 PINs) writes the SelectionCriteria extension block inside the procedure TenderingTerms' cac:AppealTerms - one mount deeper than any SDK declares. Grafted from the lot TenderingTerms anchor, the same family as the TenderingProcess mount.",
+    "fix": "issue 195 (2d3202f)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "DOE 0.1 subcontracting value leaves",
+    "reason": "unclaimed-content",
+    "profile": "eforms:eforms-sdk-0.1",
+    "detail_like": "%SubcontractTerms%",
+    "diagnosis": "The pre-release result model publishes cac:TenderResult/cac:SubcontractTerms with cbc:Amount (10 members, the BT-553 shape) or cbc:Rate (2, the BT-555 share) beside the conditions code the empirical inventory already knew. Inventory additions - sdk-0.1 has no SDK artifact, so observed paths ARE its inventory.",
+    "fix": "issue 195 (2d3202f)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "DOE 0.1 party registration ids",
+    "reason": "unclaimed-content",
+    "profile": "eforms:eforms-sdk-0.1",
+    "detail_like": "%PartyLegalEntity",
+    "diagnosis": "PartyLegalEntity/cbc:CompanyID under three party mounts the empirical inventory lacked (lot AppealReceiverParty, MediationParty, AdditionalInformationParty) - one member advanced from mount to mount across re-parses, the issue-87 rewrite naming each precisely. Inventory additions.",
+    "fix": "issue 195 (2d3202f)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Additional procurement types under unlisted lists",
+    "reason": "unclaimed-content",
+    "detail_like": "%ProcurementAdditionalType/%ProcurementTypeCode",
+    "diagnosis": "The SDK enumerates ProcurementAdditionalType per listName, so a code under any other list matched no branch and held the member whole: a 2023 eSender's listName=\"supplies\" carrying a contract-nature value (7, sdk-1.8) and BT-775's dead SDK-1.0 social-procurement shape still published in 2024 (3, sdk-1.10). A predicate-free gap-filled branch claims them as published; declared lists keep their BT ids. Deliberately reverses the issue-144 negative control - publisher noise on old minors is not a mapping-decision signal.",
+    "fix": "issue 195 (be4fcb1)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "FieldsPrivacy hoisted to the root extension",
+    "reason": "unclaimed-content",
+    "detail_like": "unclaimed element at /{urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2}UBLExtensions%FieldsPrivacy",
+    "diagnosis": "Four sdk-1.9 members write withheld-field blocks (pro-fea BT-88, pro-typ BT-105, awa-cri-typ BT-539) directly under the root EformsExtension instead of beside the element each suppresses. Grafted from the two anchored families; the published FieldIdentifierCode predicate keeps BT-195..198 ids exact.",
+    "fix": "issue 195 (8a82813)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Framework expected-participant count",
+    "reason": "unclaimed-content",
+    "detail_like": "%ExpectedOperatorQuantity",
+    "diagnosis": "Two sdk-1.10 members publish cbc:ExpectedOperatorQuantity beside the declared BT-113 maximum - no SDK minor or dialect declares the element. Claimed as published (UBL-ExpectedOperatorQuantity); BT-113 keeps its id.",
+    "fix": "issue 195 (8a82813)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "A service provider's own service provider",
+    "reason": "unclaimed-content",
+    "detail_like": "%}ServiceProviderParty",
+    "diagnosis": "Two sdk-1.12 members nest a second, self-referential ServiceProviderParty level under the contracting party (the eSender registering itself as its own provider); the SDK models one level. The declared level grafts onto the nested mount.",
+    "fix": "issue 195 (8a82813)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "CVD flag on an award criterion",
+    "reason": "unclaimed-content",
+    "detail_like": "%AwardingCriterion/%StrategicProcurement",
+    "diagnosis": "Two sdk-1.12 members mount efac:StrategicProcurement (ApplicableLegalBasis, BT-717's leaf) inside the AwardingCriterion extension beside the declared parameter blocks. Grafted from the lot TenderingTerms anchor. Rider: OPT-999 - UBL 2.3's forced DUMMY TenderResult/AwardDate - joined the zoneless-reads-as-UTC relaxation, which one of these members advanced into.",
+    "fix": "issue 195 (8a82813)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "EU-scheme business registration on 1.8",
+    "reason": "unclaimed-content",
+    "detail_like": "%BusinessParty/%RegistrationName",
+    "diagnosis": "An sdk-1.8 BRIN registers its PartyLegalEntity with schemeName='EU' - SDK <=1.8 declares only the 'national' BT-500 branch (the -European twin enters at 1.9), and the AdditionalDocumentReference block without its cbc:ID (OPP-124 enters later). Both later-SDK shapes claimed gap-filled on the early minors.",
+    "fix": "issue 195 (cd0fb1c)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "BT-707 published before its SDK",
+    "reason": "unclaimed-content",
+    "detail_like": "%CallForTendersDocumentReference/%DocumentTypeCode",
+    "diagnosis": "A Romanian sdk-1.6 eSender publishes the lot documents-justification code that enters the vendored line at 1.7.0. Claimed gap-filled with the declared 1.7+ shape.",
+    "fix": "issue 195 (cd0fb1c)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "The organisation inlined under ContractingParty",
+    "reason": "unclaimed-content",
+    "detail_like": "%ContractingParty/%PartyName",
+    "diagnosis": "A Norwegian sdk-1.7 eSender inlines the contracting organisation in full - name, address, website, contact person - under cac:ContractingParty/cac:Party, where the SDK models only the register reference, and fills UBL 2.3's forced TenderResult block with real data (tender count, low/high amounts, zoneless start date, winner reference). Company graft plus UBL- claims, all as published.",
+    "fix": "issue 195 (cd0fb1c)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Notice-subtype free text",
+    "reason": "unclaimed-content",
+    "detail_like": "%SubTypeDescription",
+    "diagnosis": "An Italian sdk-1.12 eSender writes efbc:SubTypeDescription beside the subtype code - declared by no minor or dialect. Claimed as UBL-SubTypeDescription.",
+    "fix": "issue 195 (cd0fb1c)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Inline mediation body (DOE uuid channel)",
+    "reason": "unclaimed-content",
+    "detail_like": "%MediationParty/%WebsiteURI",
+    "diagnosis": "An sdk-1.0 uuid-channel member inlines the mediation body as a full party at BOTH procedure and lot level; the Company graft gains both targets.",
+    "fix": "issue 195 (cd0fb1c)",
+    "resolved": "2026-08-14"
+  },
+  {
     "category": "eForms CVD statistics at the Lot",
     "reason": "unclaimed-content",
     "detail_like": "%eforms-ubl-extension-aggregate-components/1}ProcurementDetails",
