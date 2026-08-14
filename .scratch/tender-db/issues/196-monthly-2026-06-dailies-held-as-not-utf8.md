@@ -1,6 +1,6 @@
 # 196 — monthly 2026-06 fetch: 21 inner dailies held whole as not-utf8 members
 
-Status: needs-triage
+Status: in-progress (fix deployed, reclaim running)
 Kind: bookkeeping / walker attribution
 Blocked by: —
 Relates to: 180 (found while attributing the not-utf8 remainder)
@@ -37,3 +37,17 @@ to the reprocess pass's member loader. Whatever resolves them must handle that.
 entry ("Monthly 2026-06 inner dailies recorded whole", key not-utf8 + member_path_unlike
 '%!%', 21 rows) so the dashboard carries the population until this is fixed. Rides the
 next deploy.
+
+**2026-08-14 ~06:2x CEST (orchestrator) — root cause pinned, fix deployed (rev fe8979a),
+reclaim running.** Hypothesis (a) confirmed by git history: nested-monthly walking landed
+1e4df1c (2026-07-20); fetch 2 was processed 2026-07-19 with the day-one walker — the 21
+rows are stale artifacts, and once the walker descends containers those paths never
+surface as members again, so no reprocess could address them. Fix (commit "reclaim: held
+whole-container rows dispatch and resolve"): (1) reprocess mode treats a member INSIDE a
+held container (held path with an archive extension, no '!') as held and dispatches it;
+(2) a fourth stamp address — member_container, the deepest nested archive on the member's
+path — resolves the container row on both reclaim arms, with member_file_resolved reading
+it as a benign zero for the thousands of dedup siblings. Tests: member_container shapes,
+store container-stamp round trip, ingest end-to-end (synthetic monthly + stale container
+row → 4 dedup + row resolved). Reprocess reason=not-utf8 enqueued (jobs 660/661); expect
+the 21 rows to drain via ~85k already-parsed dedups against the daily fetches.
