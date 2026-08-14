@@ -90,3 +90,10 @@ Final mini-drain queued; the row should read outstanding 0 after it.
 16185ea).** Cumulative for this issue: 2,469 notices (7 internal-ojs + 2,266 + 191 + 5).
 The DEFENSE ledger key reads outstanding 0 once the trailing fold's panel measure lands —
 next firing verifies and flips this to RESOLVED-VERIFIED.
+
+**2026-08-14 ~21:5x CEST box time (orchestrator) — the 2-row AWARD_CRITERIA_DETAIL
+residue is claimed (23507fb).** The F19 sub-contract concession form writes the
+award-criteria sentence as AWARD_CRITERIA_DETAIL's bare text where every other form
+nests children; Group → TextGroup consumes both shapes, fixture vendored from member
+281627-2012, r209 corpus 8. Reclaims with the issue-199 unclaimed-content pass once
+the current fold drains — after it, unclaimed-content should read 0 outstanding.
