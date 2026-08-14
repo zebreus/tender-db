@@ -1,5 +1,12 @@
 [
   {
+    "category": "2010 records split by quoted reference numbers",
+    "reason": "missing-publication-id",
+    "diagnosis": "The 2010-era structured forms quote the buyer's file reference under 'IV.3.1) reference number' - '3.131/2010', '331.08/01' - alone on an INDENTED line, which matched the <digits>.<digits>/<digits> record-marker shape: each such line split a real notice mid-body and the ND-less tail held as missing-publication-id (110 rows, every one a 2010 member; the bucket was never anything else). Anchoring the marker at column 0 (1,488/1,488 real markers are column-0 in a full 2010 daily; the only 2 indented matches were both false) merges the tails back: the fuller records entered as versions of their publication ids, and the reason is now empty.",
+    "fix": "issue 200 (ac484f5)",
+    "resolved": "2026-08-14"
+  },
+  {
     "category": "eForms selection criteria inside AppealTerms",
     "reason": "unclaimed-content",
     "detail_like": "%AppealTerms/%UBLExtensions",

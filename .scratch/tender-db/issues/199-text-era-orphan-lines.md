@@ -17,3 +17,7 @@ documented-keep candidate; the deadline/no-tenders lines may deserve a continuat
 ## Next
 
 One query grouping by line-content shape, then extract 2-3 members per family.
+
+**2026-08-14 (orchestrator).** +1 row: the issue-200 reprocess re-held one merged 2010
+record under its true reason — an in-record line the parser can't attach. Population now
+~50.

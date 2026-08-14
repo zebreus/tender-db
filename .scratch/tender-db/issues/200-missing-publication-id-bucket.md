@@ -1,6 +1,6 @@
 # 200 — missing-publication-id: 108 old text-era rows + 2 new eForms-adjacent rows
 
-Status: in-progress (fix deployed, reclaim running)
+Status: RESOLVED (2026-08-14) — bucket emptied: 108 reclaimed, 1 re-held under its true reason, 0 remain
 Kind: quarantine bucket diagnosis
 Relates to: 195 (the 2 new rows surfaced in its reclaims via the issue-87 rewrite)
 
@@ -31,3 +31,10 @@ Reprocess reason=missing-publication-id enqueued — the merged fuller records e
 versions of their publication ids; ordinals after each merge shift down one, so most old
 #N rows resolve via the by_member address coincidence; any stranded tail-position rows
 stay visible in this bucket for a follow-up sweep. Ledger entry after the drain verifies.
+
+**2026-08-14 ~09:5x CEST box time (orchestrator) — RESOLVED.** Reprocess (rev ac484f5): 15
+packages, 108 reclaimed (merged fuller records entered as versions), 123,569 already-parsed
+dedups, 1 member re-held under unclaimed-content (an in-record orphan line — issue 199's
+family, tracked there). The missing-publication-id reason is now EMPTY — verified via the
+outstanding-by-reason readout. Ledger entry "2010 records split by quoted reference
+numbers" added.
