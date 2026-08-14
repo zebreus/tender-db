@@ -115,3 +115,12 @@ German national stift-oer-kommun buyer-legal-type on plain EU (1). Fixtures ×3,
 ingest 222 green, pushed. unknown-field-code readout: the 9 rows are 'line 2x: OC' text
 stragglers of the already-ledgered OC class — need one member look (next). Deploy + reclaims
 (ambiguous-field 14, duplicate-section-id still queued behind the fold chain) when idle.
+
+**2026-08-14 ~18:2x CEST box time (orchestrator) — unknown-field-code + unreadable-zip
+attributed.** The 9 OC rows are 1997–98 records never re-attempted since the OC rule
+landed (attempts NULL) — reprocess enqueued behind the chain, no code needed. The 8
+unreadable-zip rows: 7 are non-EN siblings / a cf companion of COVERED days (documented-
+keep candidates), but the 8th exposed a real coverage gap — the corrupt EN UTF8 of
+2005-04-09 suppressed its READABLE ISO twin via the name-based supersedence, losing the
+whole day (~900+ notices, archive has the data). Spun off as issue 202 (DIAGNOSED, fix
+design in file). Queue currently: fold → dup-section reclaim → fold → OC reprocess → fold.
