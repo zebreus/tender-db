@@ -106,3 +106,12 @@ translation adoption).** Its trailing fold is the old-era full sweep again (~2h)
 duplicate-section-id reclaim (23 rows) queued behind it — counts next firing. Dashboard
 dual-tender-count observation parked until the queue idles (the coverage measure skips
 during write jobs by design; if the two numbers still diverge at idle, file it).
+
+**2026-08-14 ~17:1x CEST box time (orchestrator) — ambiguous-field fixed (pending deploy).**
+Three discriminator failures, all claimed as published: the misspelled reserved-executionn
+list (13, leaf-predicated carve-out à la 'permission'), the attrless SelectionCriteria
+ParameterCode (selection-side twin of cause J, same predicate-free-branch guard), and the
+German national stift-oer-kommun buyer-legal-type on plain EU (1). Fixtures ×3, corpus 43,
+ingest 222 green, pushed. unknown-field-code readout: the 9 rows are 'line 2x: OC' text
+stragglers of the already-ledgered OC class — need one member look (next). Deploy + reclaims
+(ambiguous-field 14, duplicate-section-id still queued behind the fold chain) when idle.
