@@ -19,3 +19,14 @@ Kind: quarantine composition sweep (the issue-30 discipline applied to the resid
 Each bucket: one grouping query, member extraction where needed, then fix / documented
 keep / ledger naming per the 143/144 pattern. The unknown-customization 3 first — that
 gate should be empty.
+
+**2026-08-14 ~10:3x CEST box time (orchestrator) — unknown-customization bucket: SDK 1.2
+vendored.** The 3 rows are the only eforms-sdk-1.2 notices TED ever carried (one eSender,
+the 2022-11-11 daily) — which is exactly why 1.2 was never vendored: it looked unpublished.
+Vendored verbatim from the OP-TED 1.2.0 tag (730 fields; upstream ships the tag with a
+stale 1.1.0 sdkVersion stamp, normalized with a $comment), completeness harnesses green
+over the new inventory, negative test moved to the genuinely-unpublished 1.4. Corrects my
+answer to Lennart's coverage question ("1.1/1.2/1.4 never published" — 1.2 was, thrice).
+Deploy + 3-row reclaim next firing (daily occupying the queue). Remaining buckets:
+translation-structure-mismatch 94, duplicate-section-id 23, ambiguous-field 14,
+unknown-field-code 9, unreadable-zip 8.
