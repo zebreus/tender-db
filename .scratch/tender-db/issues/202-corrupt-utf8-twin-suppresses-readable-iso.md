@@ -26,3 +26,12 @@ unchanged (single-pass walk cannot know a later member is corrupt); the reclaim 
 where recovery happens, which is exactly the reclaim program's job. Test: synthetic
 package with a corrupt UTF8 EN and a readable ISO EN — plain process quarantines the
 UTF8 whole; a reprocess of the bucket ingests the day from ISO.
+
+**2026-08-14 ~19:2x CEST box time (orchestrator) — fix deployed (rev b4a38c5), recovery
+running.** The dispatch context now excludes ledger-held 'unreadable …' whole bundles from
+the supersedence decision, on plain ingest AND reclaim (store.unreadable_bundle_members;
+whole-bundle paths only, record/file-level holds never match). End-to-end test: first walk
+loses the day + holds the bundle, second walk ingests from ISO. Recovery = process ted
+monthly 2005-04 (running, job 1) + fold (queued); expect ~900 notices for 2005-04-09.
+After it verifies: ledger entry for the unreadable-zip class (1 recovered day + 7 sibling
+duplicates, documented keep).

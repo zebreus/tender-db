@@ -124,3 +124,9 @@ keep candidates), but the 8th exposed a real coverage gap — the corrupt EN UTF
 2005-04-09 suppressed its READABLE ISO twin via the name-based supersedence, losing the
 whole day (~900+ notices, archive has the data). Spun off as issue 202 (DIAGNOSED, fix
 design in file). Queue currently: fold → dup-section reclaim → fold → OC reprocess → fold.
+
+**2026-08-14 ~19:2x CEST box time (orchestrator) — sweep nearly closed.** duplicate-
+section-id drained 23/23 (job 681/682); ambiguous-field drained 14/14 (deploy 6c64061,
+job 685/686 — bucket empty); unknown-field-code emptied (the 9 OC records claim their OC
+line now and re-held under unclaimed-content with fresh orphan-line details — moved to
+issue 199's population). Filed 203 (stale dashboard count).
