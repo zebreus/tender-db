@@ -38,3 +38,11 @@ dedups, 1 member re-held under unclaimed-content (an in-record orphan line — i
 family, tracked there). The missing-publication-id reason is now EMPTY — verified via the
 outstanding-by-reason readout. Ledger entry "2010 records split by quoted reference
 numbers" added.
+
+**2026-08-14 ~10:1x CEST box time (orchestrator) — rider: the drain fired 106 benign
+fresh-record alarms** (old rows resolved under coincidental ordinals; every row terminal,
+bucket verified 0). member_file_resolved now reads a resolved record-SIBLING of the same
+file as benign-zero evidence (store commit "resolved record siblings are a benign
+zero-stamp"); a file with no resolved row anywhere still alarms. Deploys with the pending
+ledger entry once the queue idles (mpi trailing fold in the issue-192 slow-plan phase with
+the daily queued behind it).
