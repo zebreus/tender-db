@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED and DÖE quirk members), 26 files, 561 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 31 files, 656 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -66,6 +66,11 @@ exercise is specific to those vintages.
 | `cn-fa-expected-00586487-2024.xml` | 73,183 | 16 | 1.10 | FR | **Issue 195: ExpectedOperatorQuantity.** From monthly `2024-09`. The framework's expected participant count beside the declared BT-113 maximum — no SDK minor declares the element; claimed as `UBL-ExpectedOperatorQuantity`, BT-113 keeps its id. |
 | `cn-spp-nested-00232905-2025.xml` | 19,054 | 16 | 1.12 | SK | **Issue 195: a provider's provider.** From monthly `2025-04`. ServiceProviderParty/Party/ServiceProviderParty (self-referential, the outer level an empty shell); the declared level grafts onto the nested mount. |
 | `can-sp-awcrit-00344162-2025.xml` | 12,840 | 29 | 1.12 | IT | **Issue 195: CVD flag on an award criterion + zoneless OPT-999.** From monthly `2025-05`. efac:StrategicProcurement (ApplicableLegalBasis) inside the AwardingCriterion extension, grafted from the lot TenderingTerms anchor; also pins the dummy TenderResult AwardDate reading zoneless as UTC. |
+| `brin-eu-00568126-2023.xml` | 3,082 | X01 | 1.8 | — | **Issue 195: EU-scheme BRIN on 1.8.** From monthly `2023-09` (a sandbox-grade notice TED published for real). PartyLegalEntity with schemeName='EU' — SDK ≤1.8 declares only the 'national' BT-500 branch, and the AdditionalDocumentReference block without its cbc:ID (OPP-124 enters later). Both later-SDK shapes claimed gap-filled. |
+| `cn-bt707-16-00042304-2024.xml` | 30,874 | 16 | 1.6 | RO | **Issue 195: BT-707 published before its SDK.** From monthly `2024-01`. The lot CallForTendersDocumentReference/DocumentTypeCode enters the vendored line at 1.7.0; claimed gap-filled with the declared shape. |
+| `can-inline-org-00530983-2024.xml` | 18,960 | 29 | 1.7 | NO | **Issue 195: the whole org inlined + a real TenderResult.** From monthly `2024-09`. Contracting party inlined in full under cac:Party (Company graft, the DÖE issue-78 shape on TED), a cac:Person contact, and UBL 2.3's forced TenderResult filled in for real (count, low/high amounts, zoneless StartDate, winner reference) — all claimed as published. |
+| `can-subdesc-00570953-2025.xml` | 21,034 | 32 | 1.12 | IT | **Issue 195: SubTypeDescription.** From monthly `2025-09`. Free text beside the notice-subtype code, declared by no minor or dialect; claimed as `UBL-SubTypeDescription`. |
+| `doe-sdk10-mediation.xml` | 18,602 | 4 | 1.0 | DE (DÖE) | **Issue 195: inline mediation body.** From DÖE monthly `2023-05` (uuid channel). cac:MediationParty inlined at BOTH procedure and lot level; the Company graft gains both targets. |
 
 ### On BT-195 naming
 

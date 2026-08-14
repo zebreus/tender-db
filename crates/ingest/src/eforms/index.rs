@@ -132,6 +132,25 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AppealTerms/cac:AppealInformationParty",
     ),
+    // ...the mediation body at both levels, same inline-party shape (issue
+    // 195, sdk-1.0 uuid channel — the sampled member carries both).
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty",
+    ),
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty",
+    ),
+    // ...and a 2024 TED eSender (issue 195, sdk-1.7) inlining the CONTRACTING
+    // party itself — name, address, website, contact — under
+    // cac:ContractingParty/cac:Party, where the SDK models only the register
+    // reference. Gap-fill keeps the declared reference (OPT-300) and provider
+    // block exact.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:Organizations/efac:Organization/efac:Company",
+        "/*/cac:ContractingParty/cac:Party",
+    ),
     // Result-layer blocks nested one level deeper than the SDK models them.
     (
         "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotTender",
@@ -391,6 +410,31 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
     // its dummy AwardDate (OPT-999). Some eSenders fill the block in for
     // real — the result code beside the dummy date.
     ("/*/cac:TenderResult/cbc:TenderResultCode", "UBL-TenderResultCode", "code"),
+    // ...and the rest of the same forced block, filled in for real by an
+    // sdk-1.7 eSender (issue 195): tender count, low/high amounts, a zoneless
+    // start date (the UBL- prefix rides the reads-as-UTC relaxation), and the
+    // winner's register reference.
+    ("/*/cac:TenderResult/cbc:ReceivedTenderQuantity", "UBL-ReceivedTenderQuantity", "integer"),
+    ("/*/cac:TenderResult/cbc:LowerTenderAmount", "UBL-LowerTenderAmount", "amount"),
+    ("/*/cac:TenderResult/cbc:HigherTenderAmount", "UBL-HigherTenderAmount", "amount"),
+    ("/*/cac:TenderResult/cbc:StartDate", "UBL-TenderResultStartDate", "date"),
+    (
+        "/*/cac:TenderResult/cac:WinningParty/cac:Party/cac:PartyIdentification/cbc:ID",
+        "UBL-WinningPartyReference",
+        "id",
+    ),
+    // A free-text description beside the notice-subtype code (issue 195, an
+    // Italian sdk-1.12 eSender): no minor or dialect declares the element.
+    (
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeSubType/efbc:SubTypeDescription",
+        "UBL-SubTypeDescription",
+        "text",
+    ),
+    // A contact person inlined under the contracting party (issue 195, the
+    // same sdk-1.7 eSender that inlines the whole organisation there): no
+    // minor or dialect declares cac:Person at any mount.
+    ("/*/cac:ContractingParty/cac:Party/cac:Person/cbc:FirstName", "UBL-PersonFirstName", "text"),
+    ("/*/cac:ContractingParty/cac:Party/cac:Person/cbc:FamilyName", "UBL-PersonFamilyName", "text"),
     // DÖE eforms-de publishers restate the selection-criterion type in a
     // `cbc:CriterionTypeCode` the SDK's inventory does not model (it models
     // only `cbc:TendererRequirementTypeCode` there).
@@ -973,6 +1017,47 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
                 true,
             )?;
         }
+
+        // BT-500 for EU-registered businesses on pre-1.9 minors (issue 195).
+        // SDK ≤1.8 declares BT-500-Business only for the 'national' CompanyID
+        // scheme (1.0–1.7: not-EU); the -European twin enters at 1.9 — so an
+        // sdk-1.8 BRIN whose PartyLegalEntity carries schemeName='EU' matched
+        // no branch and held whole. Claim the 1.9 shape everywhere; gap-fill
+        // (`true`) keeps 1.9+'s (and the DE bases') own declaration.
+        insert_extra(
+            &mut root,
+            "/*/cac:BusinessParty/cac:PartyLegalEntity[cbc:CompanyID/@schemeName='EU']/cbc:RegistrationName",
+            "BT-500-Business-European",
+            "text",
+            true,
+        )?;
+
+        // BT-707 (procurement-documents justification) on pre-1.7 minors
+        // (issue 195): the DocumentTypeCode under the lot's
+        // CallForTendersDocumentReference enters the vendored line at 1.7.0,
+        // but a Romanian sdk-1.6 eSender already publishes it. Claim the
+        // declared 1.7+ shape; gap-fill (`true`) keeps 1.7+ and eforms-de-1.x
+        // (which declares the predicate-free path as DE1) exact.
+        insert_extra(
+            &mut root,
+            "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms\
+             /cac:CallForTendersDocumentReference/cbc:DocumentTypeCode",
+            "BT-707-Lot",
+            "code",
+            true,
+        )?;
+
+        // OPP-124 (business-registration reference id) on pre-1.9 minors
+        // (issue 195): SDK ≤1.8 declares the BRIN root's
+        // AdditionalDocumentReference block WITHOUT its cbc:ID leaf — the id
+        // enters the vendored line later. Same one-leaf-late shape as BT-707.
+        insert_extra(
+            &mut root,
+            "/*/cac:AdditionalDocumentReference/cbc:ID",
+            "OPP-124-Business",
+            "id",
+            true,
+        )?;
 
         // Bare Lot-level ProcessJustification description (issue 143, cause C).
         // French and Italian buyers publish a Lot `cac:ProcessJustification`

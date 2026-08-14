@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 33, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 38, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1232,6 +1232,54 @@ fn residue_batch_sibling_mounts_are_claimed() {
     assert!(
         sp.values.iter().any(|v| v.field_id == "OPT-999"),
         "the zoneless dummy award date reads as UTC instead of failing the member"
+    );
+}
+
+/// The five 1-row tail classes that close the eForms unclaimed residue
+/// (issue 195): late-SDK shapes on early minors (BT-500-Business-European on
+/// 1.8, BT-707 on 1.6, OPP-124 on 1.8), undeclared plain-UBL leaves claimed
+/// as published (SubTypeDescription, the filled-in TenderResult block, the
+/// inline contact person), and the Company graft reaching the mediation body.
+#[test]
+fn one_row_tail_classes_are_claimed() {
+    // sdk-1.8 BRIN with an EU-scheme registration: the 1.9 shape claims it.
+    let brin = parse_fixture("eforms/brin-eu-00568126-2023.xml");
+    assert!(
+        brin.values.iter().any(|v| v.field_id == "BT-500-Business-European"),
+        "the EU-registered business name claims under the 1.9 shape"
+    );
+    assert!(
+        brin.values.iter().any(|v| v.field_id == "OPP-124-Business"),
+        "the registration reference id claims under the later-SDK field"
+    );
+
+    // sdk-1.6 lot publishing BT-707's 1.7 shape.
+    let cn = parse_fixture("eforms/cn-bt707-16-00042304-2024.xml");
+    assert!(
+        cn.values.iter().any(|v| v.field_id == "BT-707-Lot"),
+        "the early-published documents-justification code claims as BT-707"
+    );
+
+    // sdk-1.7 eSender inlining the org, a contact person, and a fully filled
+    // forced TenderResult block.
+    let org = parse_fixture("eforms/can-inline-org-00530983-2024.xml");
+    for id in ["UBL-PersonFirstName", "UBL-LowerTenderAmount", "UBL-ReceivedTenderQuantity"] {
+        assert!(org.values.iter().any(|v| v.field_id == id), "{id} is claimed");
+    }
+
+    // sdk-1.12 free-text beside the subtype code.
+    let sub = parse_fixture("eforms/can-subdesc-00570953-2025.xml");
+    assert!(
+        sub.values.iter().any(|v| v.field_id == "UBL-SubTypeDescription"),
+        "the notice-subtype description is claimed"
+    );
+
+    // sdk-1.0 DOE uuid channel: the mediation body's inline party lands via
+    // the Company graft at both levels.
+    let med = parse_fixture("eforms/doe-sdk10-mediation.xml");
+    assert!(
+        med.values.iter().any(|v| v.field_id == "BT-505-Organization-Company"),
+        "the mediation body's website lands via the Company graft"
     );
 }
 
