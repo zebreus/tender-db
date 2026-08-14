@@ -90,3 +90,12 @@ included) now ADOPT missing sections and the translation-structure-mismatch reas
 + the final 2-row reclaim next firing — the mismatch reclaim's trailing fold is still in
 its issue-192 full-sweep (old-era members), don't restart it. After that: duplicate-
 section-id (23), ambiguous-field (14), unknown-field-code (9), unreadable-zip (8).
+
+**2026-08-14 ~15:2x CEST box time (orchestrator) — duplicate-section-id fixed (pending
+deploy).** Both shapes are one entity republished: DÖE sdk-1.0 emits the Organization
+block once per UBO (4× ORG-0010 differing only in the UBO ref, 19 members), a 2024
+eSender registers the same org full-then-sparse (4 members). Re-published ids now MERGE
+(same id + same kind = same entity, values append); cross-kind collisions still
+quarantine. Fixtures ×2, corpus 40, ingest 221 green, pushed. Deploy stack now: adoption
+extension + this merge + ledger 43; then reprocess translation-structure-mismatch (2) and
+duplicate-section-id (23). Still gated on the long fold.
