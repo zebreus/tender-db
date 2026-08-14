@@ -186,7 +186,8 @@ pub fn router(state: AppState) -> Router {
 /// cookie-credentialed, so opening them would not be unsafe — but the public
 /// grant is scoped to what needs no credential at all.
 fn is_public_surface(method: &axum::http::Method, path: &str) -> bool {
-    if method != axum::http::Method::GET {
+    // HEAD rides along: axum's `get()` routes serve it, so the grant matches.
+    if method != axum::http::Method::GET && method != axum::http::Method::HEAD {
         return false;
     }
     match path {
@@ -256,7 +257,8 @@ mod cors_tests {
         ] {
             assert!(!is_public_surface(&Method::GET, path), "{path} is not public");
         }
-        assert!(!is_public_surface(&Method::POST, "/v1/tenders"), "only GET is granted");
+        assert!(!is_public_surface(&Method::POST, "/v1/tenders"), "only GET/HEAD are granted");
+        assert!(is_public_surface(&Method::HEAD, "/v1/tenders"), "HEAD rides along with GET");
     }
 }
 
