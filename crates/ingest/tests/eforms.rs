@@ -253,16 +253,16 @@ fn framework_award_and_business_registration_notices_parse() {
 /// A `CustomizationID` outside the vendored range quarantines rather than
 /// being parsed against a neighbouring version's metadata. (Vendored: the DÖE
 /// profiles — eforms-de-2.x, eforms-de-1.x, sdk-0.1 — and EU SDK 1.0/1.3/1.5/1.6/1.7
-/// (issue 74) + 1.8–1.15. EU minors with no notices in the corpus — e.g. 1.2 —
+/// (issue 74) + 1.8–1.15. EU minors with no notices in the corpus — e.g. 1.4 (1.2 turned out to have exactly three, issue 201) —
 /// are deliberately not vendored, so they still quarantine.)
 #[test]
 fn customizations_outside_the_vendored_range_quarantine() {
     let xml = r#"<?xml version="1.0"?>
 <ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
     xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
-  <cbc:CustomizationID>eforms-sdk-1.2</cbc:CustomizationID>
+  <cbc:CustomizationID>eforms-sdk-1.4</cbc:CustomizationID>
 </ContractNotice>"#;
-    match eforms::parse_payload("eforms:eforms-sdk-1.2", xml.as_bytes()) {
+    match eforms::parse_payload("eforms:eforms-sdk-1.4", xml.as_bytes()) {
         Parse::Quarantined { reason, detail } => {
             assert_eq!(reason, "unknown-customization");
             assert!(detail.unwrap_or_default().contains("no vendored SDK metadata"));
@@ -1661,6 +1661,7 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
         versions,
         [
             "eforms-sdk-1.0",
+            "eforms-sdk-1.2",
             "eforms-sdk-1.3",
             "eforms-sdk-1.5",
             "eforms-sdk-1.6",

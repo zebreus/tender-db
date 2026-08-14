@@ -44,6 +44,10 @@ pub const ACCEPTED: &[(&str, &str)] = &[
     // models (issue 74) and the EU SDK dropped at 1.8. Vendored at each minor's
     // `.0` tag, verbatim, like the 1.8–1.15 line.
     ("eforms-sdk-1.0", include_str!("../../sdk/fields-1.0.0.json")),
+    // 1.2: three notices total ever reached TED on this minor (one eSender, one
+    // 2022-11-11 daily — issue 201). Upstream's 1.2.0 tag ships fields.json
+    // with a stale 1.1.0 sdkVersion stamp, normalized in the vendored copy.
+    ("eforms-sdk-1.2", include_str!("../../sdk/fields-1.2.0.json")),
     ("eforms-sdk-1.3", include_str!("../../sdk/fields-1.3.0.json")),
     ("eforms-sdk-1.5", include_str!("../../sdk/fields-1.5.0.json")),
     ("eforms-sdk-1.6", include_str!("../../sdk/fields-1.6.0.json")),
