@@ -203,3 +203,19 @@ missing-publication-id), 0 policy-skipped — no sdk-0.1 member advanced to a fu
 rows across the small classes listed above + the 2 missing-publication-id rows + the
 text-era orphan lines. Also visible: the issue-197 fix live — the work list dropped 60→58
 packages (resolved-only packages fell off).
+
+**2026-08-14 ~07:1x CEST (orchestrator) — slice 5 deployed (rev be4fcb1), reclaim running.**
+The 10-row ProcurementTypeCode class split in two on member extraction: 7× sdk-1.8 with
+listName="supplies" carrying a contract-nature value (publisher swapped list and value
+semantics), 3× sdk-1.10 publishing BT-775's dead SDK-1.0 shape listName="social-procurement"
+(the field moved into the StrategicProcurement extension after 1.0). One predicate-free
+gap-filled branch at both observed ProcurementAdditionalType mounts claims them as published
+(UBL-ProcurementAdditionalTypeCode, @listName on the value); declared listNames keep their
+BT ids by sort order — pinned in the sdk-1.10 fixture, which carries claimed BT-754/BT-774
+beside the dead shape. NOTE: this deliberately REVERSES the issue-144 negative control
+(unknown_procurement_type_listname_still_quarantines → …_claims_as_published): held-whole
+members are publisher noise, not a mapping-decision signal — new lists ship with new minors,
+which unknown-customization gates. Fixtures ×2, corpus 26→28, ingest gate 216 green.
+Expect 10 rows to drain; residue after: FieldsPrivacy 4, StrategicProcurement 2,
+ExpectedOperatorQuantity 2, ServiceProviderParty 2, RegistrationName 1, SubTypeDescription 1,
+WebsiteURI 1 (=13 eForms) + 2 missing-publication-id + text orphans.
