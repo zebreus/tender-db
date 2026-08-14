@@ -1447,11 +1447,15 @@ impl Db {
 
     /// The archived packages still holding quarantined members of a bucket —
     /// `reason`, plus an optional `detail LIKE` pattern and exact `profile` — that
-    /// a prior reprocess has not yet reclaimed (`reprocessed_at IS NULL`), whose
-    /// `fetch_id` exceeds `after`. The reprocess job's resumable work list: it
-    /// returns distinct packages (not rows), so the result is bounded by package
-    /// count regardless of how large the bucket is, and reclaimed packages fall
-    /// out of a re-query automatically.
+    /// no prior pass has resolved, whose `fetch_id` exceeds `after`. The reprocess
+    /// job's resumable work list: it returns distinct packages (not rows), so the
+    /// result is bounded by package count regardless of how large the bucket is,
+    /// and resolved packages fall out of a re-query automatically. BOTH terminal
+    /// stamps disqualify a row: `reprocessed_at` (reclaimed) and `skipped_at`
+    /// (documented policy skip, issue 84) — before the latter was filtered, the
+    /// 2008 monthlies sat on every unparsable-xml work list forever, their 593k
+    /// already-skipped DTD siblings re-walked and re-declined each run (job 653's
+    /// "599262 skipped by dispatch policy" over a 4,441-row bucket, issue 197).
     pub async fn quarantine_reclaim_packages(
         &self,
         reason: &str,
@@ -1464,7 +1468,7 @@ impl Db {
             .query(
                 "SELECT DISTINCT q.fetch_id, f.source, f.path
                    FROM quarantine q JOIN fetches f ON f.id = q.fetch_id
-                  WHERE q.reason = ?1 AND q.reprocessed_at IS NULL
+                  WHERE q.reason = ?1 AND q.reprocessed_at IS NULL AND q.skipped_at IS NULL
                     AND (?2 IS NULL OR q.detail LIKE ?2)
                     AND (?3 IS NULL OR q.profile = ?3)
                     AND q.fetch_id > ?4
@@ -1482,7 +1486,8 @@ impl Db {
     /// The still-held member FILES of one package for a bucket (issue 77): the
     /// distinct `member_path`s (text-era `#<ordinal>` suffix stripped to the
     /// member file the walker yields) matching the bucket in `fetch_id`, not yet
-    /// reclaimed. Lets the reprocess parse ONLY these members and skip the rest —
+    /// resolved (neither reclaimed nor policy-skipped — both stamps are terminal,
+    /// issue 197). Lets the reprocess parse ONLY these members and skip the rest —
     /// a sparse bucket re-parses `held/total` of the package instead of all of it.
     /// Seeks by `fetch_id` (the leading column of the quarantine unique index), so
     /// it is a bounded per-package lookup.
@@ -1497,7 +1502,8 @@ impl Db {
         let mut rows = conn
             .query(
                 "SELECT DISTINCT member_path FROM quarantine
-                  WHERE fetch_id = ?1 AND reason = ?2 AND reprocessed_at IS NULL
+                  WHERE fetch_id = ?1 AND reason = ?2
+                    AND reprocessed_at IS NULL AND skipped_at IS NULL
                     AND (?3 IS NULL OR detail LIKE ?3)
                     AND (?4 IS NULL OR profile = ?4)",
                 (Value::Integer(fetch_id), t(reason), opt_text(detail_like), opt_text(profile)),
@@ -4817,7 +4823,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
     /// The work list is package-granular, held-only, and resumable: it returns the
     /// distinct packages of a bucket whose `fetch_id` exceeds the cursor, and
-    /// reclaimed rows (`reprocessed_at` set) fall out.
+    /// resolved rows fall out — reclaimed (`reprocessed_at`) and policy-skipped
+    /// (`skipped_at`, issue 197) alike, or a package whose bucket is all skipped
+    /// sits on every work list forever and gets re-walked for nothing.
     #[tokio::test]
     async fn reclaim_packages_lists_held_buckets_resumably() {
         let path = format!("/tmp/tender-db-reclaim-list-{}.db", std::process::id());
@@ -4828,20 +4836,23 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .await
             .execute_batch(
                 "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path) VALUES
-                   (1,'ted','daily','a','u','h',1,0,'p1'),(2,'ted','daily','b','u','h',1,0,'p2'),(3,'doe','daily','c','u','h',1,0,'p3');
-                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at) VALUES
-                   (1,'m1','h1','unknown-field-code','line 3: OC',0,NULL),
-                   (1,'m2','h2','unknown-field-code','line 9: OC',0,NULL),
-                   (2,'m3','h3','unknown-field-code','line 3: OC',0,NULL),
-                   (3,'m4','h4','unknown-field-code','line 3: OC',0,123),
-                   (2,'m5','h5','unparsable-xml','other',0,NULL);",
+                   (1,'ted','daily','a','u','h',1,0,'p1'),(2,'ted','daily','b','u','h',1,0,'p2'),(3,'doe','daily','c','u','h',1,0,'p3'),(4,'ted','monthly','d','u','h',1,0,'p4');
+                 INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at, skipped_at) VALUES
+                   (1,'m1','h1','unknown-field-code','line 3: OC',0,NULL,NULL),
+                   (1,'m2','h2','unknown-field-code','line 9: OC',0,NULL,NULL),
+                   (2,'m3','h3','unknown-field-code','line 3: OC',0,NULL,NULL),
+                   (3,'m4','h4','unknown-field-code','line 3: OC',0,123,NULL),
+                   (4,'m6','h6','unknown-field-code','line 3: OC',0,NULL,456),
+                   (2,'m5','h5','unparsable-xml','other',0,NULL,NULL);",
             )
             .await
             .unwrap();
         db.set_foreign_keys(true).await.unwrap();
 
         // The OC bucket: two held packages (1 and 2), deduped; pkg 3 is already
-        // reclaimed (reprocessed_at set) and pkg 2's row m5 is a different reason.
+        // reclaimed (reprocessed_at set), pkg 4's only row is policy-skipped
+        // (skipped_at set — the 2008-monthly shape of issue 197), and pkg 2's
+        // row m5 is a different reason.
         let all = db.quarantine_reclaim_packages("unknown-field-code", Some("%: OC"), None, 0).await.unwrap();
         assert_eq!(all.iter().map(|(id, ..)| *id).collect::<Vec<_>>(), vec![1, 2]);
         assert_eq!(all[0].2, "p1");
@@ -4855,7 +4866,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
     /// The per-package held-member work list (issue 77): distinct member FILES of
     /// the bucket for one package, text-era `#<ordinal>` stripped, excluding other
-    /// reasons and already-reclaimed rows.
+    /// reasons and resolved rows — reclaimed and policy-skipped alike (issue 197:
+    /// before `skipped_at` was filtered, 593k skipped DTD siblings were re-walked
+    /// and re-declined on every unparsable-xml reprocess).
     #[tokio::test]
     async fn held_member_files_are_the_bucket_of_one_package() {
         let path = format!("/tmp/tender-db-held-files-{}.db", std::process::id());
@@ -4865,13 +4878,14 @@ tmpfs /data/ramcache tmpfs rw 0 0
         db.conn()
             .await
             .execute_batch(
-                "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at) VALUES
-                   (1,'pkg/a.xml','h1','unknown-field-code','line 3: OC',0,NULL),
-                   (1,'pkg/bundle.zip#0','h2','unknown-field-code','line 3: OC',0,NULL),
-                   (1,'pkg/bundle.zip#1','h3','unknown-field-code','line 9: OC',0,NULL),
-                   (1,'pkg/done.xml','h4','unknown-field-code','line 3: OC',0,555),
-                   (1,'pkg/other.xml','h5','unclaimed-content','x',0,NULL),
-                   (2,'pkg2/z.xml','h6','unknown-field-code','line 3: OC',0,NULL);",
+                "INSERT INTO quarantine(fetch_id, member_path, content_hash, reason, detail, first_seen, reprocessed_at, skipped_at) VALUES
+                   (1,'pkg/a.xml','h1','unknown-field-code','line 3: OC',0,NULL,NULL),
+                   (1,'pkg/bundle.zip#0','h2','unknown-field-code','line 3: OC',0,NULL,NULL),
+                   (1,'pkg/bundle.zip#1','h3','unknown-field-code','line 9: OC',0,NULL,NULL),
+                   (1,'pkg/done.xml','h4','unknown-field-code','line 3: OC',0,555,NULL),
+                   (1,'pkg/dupe.xml','h7','unknown-field-code','line 3: OC',0,NULL,777),
+                   (1,'pkg/other.xml','h5','unclaimed-content','x',0,NULL,NULL),
+                   (2,'pkg2/z.xml','h6','unknown-field-code','line 3: OC',0,NULL,NULL);",
             )
             .await
             .unwrap();
@@ -4879,7 +4893,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
         let held = db.quarantine_held_member_files(1, "unknown-field-code", Some("%: OC"), None).await.unwrap();
         // a.xml + the two bundle records collapsed to the one member file; NOT the
-        // reclaimed done.xml, the other-reason row, or fetch 2.
+        // reclaimed done.xml, the skipped dupe.xml, the other-reason row, or fetch 2.
         let mut got: Vec<_> = held.into_iter().collect();
         got.sort();
         assert_eq!(got, vec!["pkg/a.xml".to_string(), "pkg/bundle.zip".to_string()]);
