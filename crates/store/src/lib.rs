@@ -1138,13 +1138,22 @@ impl Db {
         // out of a whole-container rejection resolves the container row, its
         // thousands of sibling records must read as benign zeros, not alarms.
         let container = member_container(&n.member_path).unwrap_or_else(|| file.clone());
+        // And the file's RESOLVED record-level siblings (issue 200's drain): a
+        // text record's `#<ordinal>` names TODAY'S segmentation, so after a
+        // segmentation change the file's old rows resolve under ordinals that
+        // no longer align with the records stamping them — 106 false alarms in
+        // the 2010 merge pass, every row of the bucket in fact resolved. A
+        // resolved sibling is evidence the file's bookkeeping is live; a truly
+        // stranded file (no row resolved anywhere) still alarms.
+        let siblings = format!("{}#%", like_escape(&file));
         let mut rows = conn
             .query(
                 "SELECT 1 FROM quarantine
-                  WHERE fetch_id = ? AND member_path IN (?, ?)
+                  WHERE fetch_id = ?
+                    AND (member_path IN (?, ?) OR member_path LIKE ? ESCAPE '\\')
                     AND (reprocessed_at IS NOT NULL OR skipped_at IS NOT NULL)
                   LIMIT 1",
-                (Value::Integer(n.fetch_id), t(&file), t(&container)),
+                (Value::Integer(n.fetch_id), t(&file), t(&container), t(&siblings)),
             )
             .await?;
         Ok(rows.next().await?.is_some())
@@ -2300,6 +2309,11 @@ fn member_file(member_path: String) -> String {
 /// holds ONE row at the container path, which no record- or file-level address
 /// can ever reach; the first record reclaimed from inside the container
 /// resolves it, exactly as [`member_file`] does for `#<ordinal>` rows.
+/// Escape `%`/`_`/`\` for a literal prefix inside a `LIKE … ESCAPE '\'`.
+fn like_escape(text: &str) -> String {
+    text.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_")
+}
+
 fn member_container(member_path: &str) -> Option<String> {
     let file = member_file(member_path.to_owned());
     if let Some((bundle, _)) = file.rsplit_once('!') {
@@ -4770,6 +4784,52 @@ tmpfs /data/ramcache tmpfs rw 0 0
             "the file row keeps its first resolution instant — later records never re-stamp it"
         );
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM quarantine").await, Some(1), "no new ledger rows appear");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 200's drain shape: after a segmentation change, a file's old
+    /// record-level rows resolve under ordinals that no longer align with the
+    /// records stamping them. A fresh record whose own ordinal has no row must
+    /// read the file's RESOLVED SIBLING as a benign zero, not an alarm.
+    #[tokio::test]
+    async fn resolved_record_siblings_are_a_benign_zero_stamp() {
+        let path = format!("/tmp/tender-db-siblingstamp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "pkg/EN_ORG.ZIP!EN_ORG#5".into(),
+                content_hash: "old-tail-hash".into(),
+                profile: Some("text".into()),
+                reason: "missing-publication-id".into(),
+                detail: None,
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+        // Some record's stamp resolved the old row (the by_member coincidence).
+        db.conn()
+            .await
+            .execute("UPDATE quarantine SET reprocessed_at = 400 WHERE member_path = 'pkg/EN_ORG.ZIP!EN_ORG#5'", ())
+            .await
+            .unwrap();
+
+        // A fresh merged record at a different ordinal: zero rows to stamp,
+        // but the file's bookkeeping is demonstrably live.
+        let mut merged = held_notice();
+        merged.publication_id = "777-2010".into();
+        merged.content_hash = "merged-hash".into();
+        merged.member_path = "pkg/EN_ORG.ZIP!EN_ORG#7".into();
+        merged.ingested_at = 500;
+        assert_eq!(db.reclaim_notice(&merged, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        let conn = db.conn().await;
+        assert!(
+            db.member_file_resolved(&conn, &merged).await.unwrap(),
+            "a resolved record sibling reads as benign"
+        );
 
         let _ = std::fs::remove_file(&path);
     }
