@@ -41,3 +41,11 @@ reclaim campaigns interleave — an operations pattern, not a user-facing one.
 reclaim round in a campaign now pays a multi-hour fold; with issue 194's two-pass drain that is
 two fold-hours for ~2.5k notices. Raises the priority of measuring option 1 (change-set-bounded
 planning) or at least option 3 (post-deploy cache warmup).
+
+**2026-08-14 (orchestrator) — data point.** The 108-notice issue-200 reclaim (2010-era
+records) triggered the full Buckets sweep again: plan-checkpoint chunks ~75 min, then the
+sharded pre-pass at ~250 notices/s/shard (100% spill — by design for the full strategy),
+daily queued behind it, ~2h+ total. Same shape as the 4-notice 1999 COR wave (job 655,
+2h03). Old-era reclaims reliably fall back to the full sweep while recent-era reclaims fold
+in seconds — when this issue is picked up, that watermark/fallback is the lever. Frequency
+argument for leaving it: the old-era waves are one-offs and now largely done.

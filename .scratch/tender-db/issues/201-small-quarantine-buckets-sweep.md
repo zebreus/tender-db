@@ -30,3 +30,13 @@ answer to Lennart's coverage question ("1.1/1.2/1.4 never published" — 1.2 was
 Deploy + 3-row reclaim next firing (daily occupying the queue). Remaining buckets:
 translation-structure-mismatch 94, duplicate-section-id 23, ambiguous-field 14,
 unknown-field-code 9, unreadable-zip 8.
+
+**2026-08-14 ~11:0x CEST box time (orchestrator) — translation-structure-mismatch read
+(code side).** The r209 parser overlays translation copies onto the original-language
+structure; a translation OPENING a section the original never had (r209/parse.rs
+open_section, `translating` guard) rejects the member whole. The 94 rows are ~15 shapes:
+F14 CHG-N blocks (translations enumerating changes differently, ~38), extra review-body/
+authority ORG-N sections (~26), LOT-2 on F03, r208 twins. Next: extract 2-3 members (after
+the fold frees the disk) and decide per family — tolerate (open the translation-only
+section; it is published content) vs documented keep. Deploy stack (ledger entry, sibling
+guard, SDK 1.2) + the 3-row 1.2 reclaim also pending queue-idle.
