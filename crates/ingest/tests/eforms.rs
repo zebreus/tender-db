@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 38, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 40, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1281,6 +1281,33 @@ fn one_row_tail_classes_are_claimed() {
         med.values.iter().any(|v| v.field_id == "BT-505-Organization-Company"),
         "the mediation body's website lands via the Company graft"
     );
+}
+
+/// Re-published section ids merge (issue 201): the DÖE sdk-1.0 serializer
+/// repeats the whole Organization block once per beneficial owner, and a 2024
+/// eSender registers the same org twice (full, then sparse). Same id + same
+/// kind is the same entity — one section, values from every copy.
+#[test]
+fn republished_section_ids_merge_into_one_section() {
+    let doe = parse_fixture("eforms/doe-sdk10-dup-org.xml");
+    assert_eq!(
+        doe.sections.iter().filter(|s| s.id == "ORG-0010").count(),
+        1,
+        "the four ORG-0010 copies collapse into one section"
+    );
+    let ubos: std::collections::HashSet<_> = doe
+        .values
+        .iter()
+        .filter(|v| v.section_id == "ORG-0010")
+        .filter_map(|v| match &v.value {
+            NoticeValue::Id { value, .. } if value.starts_with("UBO-") => Some(value.clone()),
+            _ => None,
+        })
+        .collect();
+    assert!(ubos.len() >= 2, "each copy's beneficial-owner reference is kept: {ubos:?}");
+
+    let ted = parse_fixture("eforms/can-dup-org-00305298-2024.xml");
+    assert_eq!(ted.sections.iter().filter(|s| s.id == "ORG-0000").count(), 1);
 }
 
 /// Issue 144, cause M: an Italian notice puts the BT-76 company-legal-form

@@ -161,17 +161,29 @@ impl Walk {
         let section = match branches.iter().find_map(|b| b.node.as_ref()) {
             Some(node) => {
                 let id = self.section_id(element, node);
-                if self.parsed.sections.iter().any(|s| s.id == id) {
-                    return Err(Rejected {
-                        reason: "duplicate-section-id",
-                        detail: format!("{id} is published twice, at {path}"),
-                    });
+                match self.parsed.sections.iter().find(|s| s.id == id) {
+                    // Publishers re-publish a section id (issue 201, 23
+                    // members): the DÖE sdk-1.0 serializer repeats the whole
+                    // Organization block once per beneficial owner, and a 2024
+                    // eSender registers the same org twice, full then sparse.
+                    // Same id + same kind is the same entity, so the repeat
+                    // MERGES — its values append to the existing section.
+                    Some(existing) if existing.kind == node.kind => {}
+                    // A colliding id of a DIFFERENT kind is a real anomaly:
+                    // merging would file one entity's values under another's
+                    // label, so the member still quarantines loudly.
+                    Some(_) => {
+                        return Err(Rejected {
+                            reason: "duplicate-section-id",
+                            detail: format!("{id} is published twice, at {path}"),
+                        });
+                    }
+                    None => self.parsed.sections.push(Section {
+                        id: id.clone(),
+                        kind: node.kind.clone(),
+                        parent: Some(section.to_owned()),
+                    }),
                 }
-                self.parsed.sections.push(Section {
-                    id: id.clone(),
-                    kind: node.kind.clone(),
-                    parent: Some(section.to_owned()),
-                });
                 id
             }
             None => section.to_owned(),

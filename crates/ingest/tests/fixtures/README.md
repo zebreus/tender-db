@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED and DÖE quirk members), 31 files, 656 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 33 files, 706 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -71,6 +71,8 @@ exercise is specific to those vintages.
 | `can-inline-org-00530983-2024.xml` | 18,960 | 29 | 1.7 | NO | **Issue 195: the whole org inlined + a real TenderResult.** From monthly `2024-09`. Contracting party inlined in full under cac:Party (Company graft, the DÖE issue-78 shape on TED), a cac:Person contact, and UBL 2.3's forced TenderResult filled in for real (count, low/high amounts, zoneless StartDate, winner reference) — all claimed as published. |
 | `can-subdesc-00570953-2025.xml` | 21,034 | 32 | 1.12 | IT | **Issue 195: SubTypeDescription.** From monthly `2025-09`. Free text beside the notice-subtype code, declared by no minor or dialect; claimed as `UBL-SubTypeDescription`. |
 | `doe-sdk10-mediation.xml` | 18,602 | 4 | 1.0 | DE (DÖE) | **Issue 195: inline mediation body.** From DÖE monthly `2023-05` (uuid channel). cac:MediationParty inlined at BOTH procedure and lot level; the Company graft gains both targets. |
+| `doe-sdk10-dup-org.xml` | 38,106 | 29 | 1.0 | DE (DÖE) | **Issue 201: org republished per UBO.** From DÖE monthly `2022-12`. The serializer emits the whole Organization block once per ultimate beneficial owner — four ORG-0010 copies differing only in their UBO reference. Pins section-id MERGING. |
+| `can-dup-org-00305298-2024.xml` | 30,551 | 29 | 1.11 | — | **Issue 201: org registered twice.** From monthly `2024-05`. The same ORG-0000 published full then sparse; merges into one section. |
 
 ### On BT-195 naming
 
