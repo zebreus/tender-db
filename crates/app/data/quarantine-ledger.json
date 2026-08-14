@@ -1,5 +1,111 @@
 [
   {
+    "category": "eForms CVD statistics at the Lot",
+    "reason": "unclaimed-content",
+    "detail_like": "%eforms-ubl-extension-aggregate-components/1}ProcurementDetails",
+    "diagnosis": "2025 dailies (sdk 1.10-1.13) publish the Clean Vehicles Directive statistics block - BT-723 AssetCategoryCode plus the OPT-155/OPT-156 StatisticsCode/Numeric pairs under StrategicProcurementInformation/ProcurementDetails - inside the LOT's TenderingTerms extension, forward-looking at notice time, while the SDK declares that block only at LotResult. 81 contract-award notices were held whole for the unclaimed lot-level block. An ALIASES graft mirrors the LotResult declarations onto the lot TenderingTerms mount (the mirror of the pre-existing Lot-to-LotResult graft), and the population reclaimed.",
+    "fix": "issue 195 (342f11e)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "eForms selection criteria under TenderingProcess",
+    "reason": "unclaimed-content",
+    "detail_like": "%eforms-ubl-extension-aggregate-components/1}SelectionCriteria",
+    "diagnosis": "Publishers on sdk 1.8-1.13 mount the lot SelectionCriteria extension block (BT-40/747/748/749/750/752 family) under TenderingProcess where the SDK mounts it under TenderingTerms; the sampled publisher duplicates the identical block at BOTH mounts, so the stored duplication is source content, kept as published. 75 members reclaimed via a TenderingTerms-to-TenderingProcess alias; the same graft drained 2 sibling rows held on the nested AwardingCriterionTypeCode and 1 on the nested UBLExtensions wrapper (their keys are not separable from still-open classes, so they ride this entry's story).",
+    "fix": "issue 195 (342f11e)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "eForms framework maximum at the root",
+    "reason": "unclaimed-content",
+    "detail_like": "%eforms-ubl-extension-basic-components/1}FrameworkMaximumAmount",
+    "diagnosis": "84 sdk-1.7 members publish efbc:FrameworkMaximumAmount (BT-271, the framework's ceiling value) directly under the ROOT UBLExtensions/EformsExtension, a mount no SDK minor declares - the field belongs in the lot TenderingTerms extension. Claimed at the root position as published; the tender layer's value routing already prefers the declared positions when both exist.",
+    "fix": "issue 195 (a12422f)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Design-contest shortlist under TenderingProcess",
+    "reason": "unclaimed-content",
+    "detail_like": "%CommonAggregateComponents-2}PreSelectedParty",
+    "diagnosis": "11 sdk-1.7 French design-contest notices publish the EconomicOperatorShortList (BT-47 pre-selected participants) under TenderingProcess, beside the declared shortlist quantities, instead of under TenderingTerms; this publisher also fills the party NAMES with selection-criteria prose. Both quirks are stored as published (the notice-parsed layer keeps the source's own terms): a TenderingTerms-to-TenderingProcess graft claims the block at the sibling mount.",
+    "fix": "issue 195 (c5351fc)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Part-level realized-location descriptions",
+    "reason": "unclaimed-content",
+    "detail_like": "%Address/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Description",
+    "diagnosis": "7 sdk-1.7 Latvian PINs describe the delivery location (RealizedLocation/Address/Description) on planned PARTS. A procedure-level claim for the element existed, and procedure fields alias onto Lots, and Lot fields alias onto Parts - but aliases do not COMPOSE, so the procedure entry never reached Part depth and the members held. The entry is now also written at Lot level, which the existing Lot-to-Part/LotsGroup aliases mirror.",
+    "fix": "issue 195 (c5351fc)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Lot renewals flag from the DE dialect",
+    "reason": "unclaimed-content",
+    "detail_like": "%CommonBasicComponents-2}RenewalsIndicator",
+    "diagnosis": "5 sdk-1.7 German members declare the plain EU customization but carry eForms-DE tailoring: ContractExtension/RenewalsIndicator on the lot (the dialect's BT-58 shape). Claimed as UBL-RenewalsIndicator behind the predicate-free-construct guard, so members declaring a DE customization keep their own DE field ids and only the cross-dialect strays land here.",
+    "fix": "issue 195 (c5351fc)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "2008 concession summaries (INTERNAL_OJS)",
+    "reason": "unclaimed-content",
+    "detail_like": "%INTERNAL_OJS/CONTRACT_CONCESSION%",
+    "diagnosis": "7 INTERNAL_OJS R2.0.5 members publish concession awards under CONTRACT_CONCESSIONAIRE_SUM element names the internal-ojs rule registry lacked (the summary twin of the concessionaire family it already knew). Aliases added from the mined member shapes; the population reclaimed with the 194 defence-form waves.",
+    "fix": "issue 194 (69d869f)",
+    "resolved": "2026-08-13"
+  },
+  {
+    "category": "Text-era CF companions (UTF-8)",
+    "reason": "unparsable-xml",
+    "detail_like": "unknown token at 1:3",
+    "diagnosis": "The text era ships CF<n> companion files republishing the day's ORG records (plus stragglers the ORG missed). Unrecognised by the member naming, CF fell through to the XML path; the UTF-8-encoded CF members died there on the first text token. 1,900 held members - all real notice records. Recognising the CF delivery class (and the 1999 C<nn> spelling) sent them through the text parser: genuinely-new records reclaimed, the rest confirmed already held via the same day's ORG.",
+    "fix": "issue 181 (9772c3c, 8dd7ebb)",
+    "resolved": "2026-08-13"
+  },
+  {
+    "category": "Text-era CF meta files ('part' root)",
+    "reason": "unknown-root",
+    "detail_like": "{}part%",
+    "diagnosis": "753 meta_cf members wrap CF bookkeeping in an XML-ish document whose root element is a bare 'part' - no notice content. Held as unknown-root since ingestion; now recognised as part of the CF delivery class and skipped under the meta-variant policy, the same disposition as the other text-era meta members.",
+    "fix": "issue 181 (9772c3c)",
+    "resolved": "2026-08-13"
+  },
+  {
+    "category": "1999/text-era ISO members held as not-utf8",
+    "reason": "not-utf8",
+    "member_path_like": "%!%",
+    "member_path_unlike": "%ISO_COR%",
+    "diagnosis": "ISO-8859 members (CF companions and early-1999 deliveries) fell past the text dispatcher into the XML path, whose UTF-8 check rejects their bytes wholesale - a profile-level hold with no detail. 1,657 members: English mains and companions reclaimed (the CF drain alone recovered 1,417 notices the ORG files never carried and confirmed ~135k records already held), non-English language siblings skipped by policy as duplicates of the reclaimed English originals.",
+    "fix": "issues 181 + 180 (9772c3c, 8dd7ebb)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "1999 COR corrected re-issues",
+    "reason": "not-utf8",
+    "member_path_like": "%ISO_COR%",
+    "diagnosis": "The 1999-07-10 and 1999-07-22 dailies were re-delivered whole as ISO_COR members - each a corrected re-issue of the day's ORG delivery (623 records with an identical ND set, of which 4 records byte-differ: the actual corrections). Held as not-utf8 like their era-mates. Dispatched as a companion-style class: the 4 corrected records entered as notice VERSIONS of their originals, the ~620 unchanged records deduped as already parsed; English rows reclaimed, sibling languages skipped.",
+    "fix": "issue 180 (bd7eda5)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "Monthly 2026-06 inner dailies recorded whole",
+    "reason": "not-utf8",
+    "member_path_unlike": "%!%",
+    "diagnosis": "Fetch 2 (ted monthly 2026-06) recorded its 21 nested daily tarballs as raw binary MEMBERS instead of recursing into them - each row is a whole 06/<day>.tar.gz path with no inner member. NOT a coverage gap: the same days are fully ingested via the daily fetches and the coverage grid is green. Why this monthly missed the nested-daily recursion that 2024/2025 monthlies get is the open question; the rows are also invisible to the reprocess member loader, so the fix must address both.",
+    "fix": "issue 196 - open, walker recursion fix pending",
+    "resolved": null
+  },
+  {
+    "category": "2012 concession award-criteria free text",
+    "reason": "unclaimed-content",
+    "profile": "ted-export-r208",
+    "detail_like": "%AWARD_CRITERIA_DETAIL%",
+    "diagnosis": "2 UK-spelled concession members (AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE) carry bare prose directly in AWARD_CRITERIA_DETAIL, a text-fallback position the r208 walker does not claim. Not a spelling twin of the 2011 DEFENSE family - a genuine text-fallback gap, parked at the issue-194 close as too small to own separately unless the class grows.",
+    "fix": "issue 194 close - parked",
+    "resolved": null
+  },
+  {
     "category": "2008 language siblings (duplicates)",
     "reason": "unparsable-xml",
     "detail_like": "XML with DTD detected",
