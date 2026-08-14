@@ -118,7 +118,7 @@ the default namespace naively can trip here. Retained deliberately.
 
 ---
 
-## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 7 files, 80 KB
+## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 8 files, 92 KB
 
 From TED daily package **`daily-201900001`** (`20190102_001`, published
 2019-01-02, 1529 notices). That package is itself a useful artefact: it is
@@ -139,6 +139,7 @@ because that is where it is actually found in the wild.
 ---
 
 - `f02-co-original-160877-2015.xml` (21,117 B): **issue 201** — Belgian-style bilingual F02 with TWO CATEGORY="ORIGINAL" sections (DE primary, FR co-original carrying a third ORGANISATION). Pins co-original section ADOPTION: the extra org is opened and fully emitted, while a relabelled EN TRANSLATION with the same extra section still rejects.
+- `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
 
 ## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 3 files, 65 KB
 

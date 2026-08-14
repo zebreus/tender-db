@@ -70,7 +70,7 @@ fn every_r209_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 7, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 8, "corpus changed; update the expectation");
 
     for relative in names {
         let (profile, parse) = ingest_fixture(&relative);
@@ -422,5 +422,30 @@ fn co_original_extra_sections_are_adopted() {
             assert!(p.sections.iter().any(|s| s.id == "ORG-3"), "the translation's extra organisation is adopted");
         }
         other => panic!("a translation with an extra section adopts it, got {other:?}"),
+    }
+}
+
+/// The F19 sub-contract concession form (issue 194's last residue) writes the
+/// award-criteria sentence as AWARD_CRITERIA_DETAIL's BARE TEXT, where every
+/// other form nests children there — both shapes are consumed (TextGroup).
+#[test]
+fn f19_award_criteria_sentence_is_claimed_as_text() {
+    let (profile, parse) =
+        ingest_fixture("r209/f19-concession-award-criteria-281627-2012.xml");
+    assert_eq!(profile, "ted-export-r208");
+    let parsed = match parse {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("F19 concession: {other:?}"),
+    };
+    let detail = parsed
+        .values
+        .iter()
+        .find(|v| v.field_id == "TED-AWARD_CRITERIA_DETAIL")
+        .expect("the criteria sentence is claimed");
+    match &detail.value {
+        NoticeValue::Text { value, .. } => {
+            assert!(value.starts_with("The most economically advantageous tender"), "{value}");
+        }
+        other => panic!("criteria detail is not text: {other:?}"),
     }
 }

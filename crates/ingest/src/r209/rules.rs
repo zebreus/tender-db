@@ -426,7 +426,7 @@ static GROUPED: &[(Rule, &[&str])] = &[
         "APPEAL_PROCEDURE_BODY_RESPONSIBLE", "AUTHORITY_PRIOR_INFORMATION_DEFENCE", "AUTHORITY_PRIOR_INFORMATION_DEFENSE",
         "AWARDED_PRIZE", "AWARD_CRITERIA_CONTRACT_AWARD_NOTICE_INFORMATION_DEFENCE", "AWARD_CRITERIA_CONTRACT_AWARD_NOTICE_INFORMATION_DEFENSE",
         "AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION",
-        "AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE", "AWARD_CRITERIA_DETAIL",
+        "AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE",
         "AWARD_CRITERIA_DETAIL_F18", "CHANGES", "CNT_NOTICE_INFORMATION_F18", "CODED_DATA_SECTION",
         "CODIF_DATA", "COMPLEMENTARY_INFO", "COMPLEMENTARY_INFORMATION_CONTRACT_AWARD",
         "COMPLEMENTARY_INFORMATION_CONTRACT_NOTICE",
@@ -506,7 +506,11 @@ static GROUPED: &[(Rule, &[&str])] = &[
     // FMTVAL machine values, IDEM markers. OTH_NOT and EEIG bodies are
     // declared prose (btx vocabulary → Text; ted-legacy-mapping.md §4).
     // ======================================================================
-    (Rule::TextGroup, &["ORGANISATION"]),
+    // AWARD_CRITERIA_DETAIL is a container in most forms (CRITERIA/WEIGHTING
+    // children) but the F19 sub-contract concession form writes the criteria
+    // sentence as its bare text (2 members, 2012 — the issue-194 residue), so
+    // both shapes are consumed.
+    (Rule::TextGroup, &["AWARD_CRITERIA_DETAIL", "ORGANISATION"]),
     (Rule::FormRoot, &[
         "ADDITIONAL_INFORMATION_CORRIGENDUM", "BUYER_PROFILE", "CONCESSION", "CONTRACT",
         "CONTRACT_AWARD", "CONTRACT_AWARD_UTILITIES", "CONTRACT_CONCESSIONAIRE", "CONTRACT_MOVE",
