@@ -1083,7 +1083,16 @@ impl Db {
                             )
                             .await?;
                     }
-                    if stamped == 0 {
+                    // Zero is benign when the file's row is ALREADY resolved —
+                    // the same guard the parsed arm applies above. The 1999 COR
+                    // drain hit exactly this shape: a correction file's records
+                    // mostly duplicate an earlier daily, so the first duplicate
+                    // resolves the whole-file rejection row through the
+                    // already-parsed arm, and the few genuinely-corrected
+                    // records that follow (fresh identities, this path) find
+                    // nothing left to stamp — four false alarms over a fully
+                    // consistent ledger.
+                    if stamped == 0 && !self.member_file_resolved(conn, n).await? {
                         eprintln!(
                             "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
                              (fresh record path) — the member reclaimed but its quarantine rows \
@@ -4645,6 +4654,62 @@ tmpfs /data/ramcache tmpfs rw 0 0
             int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = 'pkg/EN_CF1.ZIP!EN_CF1'").await,
             Some(900)
         );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The 1999 COR shape (four false issue-139 alarms in the job-654 drain): a
+    /// correction FILE's records mostly duplicate an earlier daily, so the first
+    /// record to come off the file resolves the whole-file rejection row — and
+    /// the genuinely-corrected records that follow are FRESH identities whose
+    /// stamps then find nothing left. That zero is benign, and the fresh-record
+    /// path must see it as such via `member_file_resolved` (the guard the parsed
+    /// arm already had) instead of sounding the stranded-ledger alarm.
+    #[tokio::test]
+    async fn corrected_records_after_a_resolved_file_row_are_a_benign_zero_stamp() {
+        let path = format!("/tmp/tender-db-corstamp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "pkg/EN_COR.ZIP!EN_COR".into(),
+                content_hash: "file-hash".into(),
+                profile: None,
+                reason: "not-utf8".into(),
+                detail: None,
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+
+        // The first record off the file resolves the file row (issue 181).
+        let mut dup = held_notice();
+        dup.member_path = "pkg/EN_COR.ZIP!EN_COR#3".into();
+        dup.ingested_at = 500;
+        assert_eq!(db.reclaim_notice(&dup, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+
+        // A LATER record of the same file carries a fresh identity — the
+        // corrected re-issue. Its reclaim stamps zero rows, and the guard must
+        // read that as resolved-already, not as issue 139's stranded ledger.
+        let mut corrected = held_notice();
+        corrected.publication_id = "999-2001".into();
+        corrected.content_hash = "hash-corrected".into();
+        corrected.member_path = "pkg/EN_COR.ZIP!EN_COR#7".into();
+        corrected.ingested_at = 800;
+        assert_eq!(db.reclaim_notice(&corrected, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        let conn = db.conn().await;
+        assert!(
+            db.member_file_resolved(&conn, &corrected).await.unwrap(),
+            "the corrected record's zero-stamp is benign: its file row is already resolved"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = 'pkg/EN_COR.ZIP!EN_COR'").await,
+            Some(500),
+            "the file row keeps its first resolution instant — later records never re-stamp it"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM quarantine").await, Some(1), "no new ledger rows appear");
 
         let _ = std::fs::remove_file(&path);
     }
