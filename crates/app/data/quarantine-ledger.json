@@ -355,5 +355,23 @@
     "diagnosis": "Eight daily-delivery zip bundles across 1996-2009 are truncated in the archived TED distribution - the end-of-central-directory record is missing, so the bundle cannot be opened at all and is held whole. Seven are non-English deliveries (SV 1996-02-08, CS 2005-02-01 + 2005-04-01, ET 2005-06-22, NL 2005-10-06 + 2005-10-08, and the LV companion 2009-06-04) whose records the English-only ingestion policy takes from the English edition of the same days - their content is represented, nothing is lost. The eighth was the English UTF8 MAIN delivery for 2005-04-09, and its mere presence by name made the readable ISO twin skip itself as superseded - losing the whole day. Ledger-held unreadable bundles are now excluded from the supersedence decision, judged per publication day (a monthly carries many days, and one day's corrupt UTF8 must not sweep another day's ISO), and the day's 932 notices are ingested from the ISO copy. The eight rows stay held: they record the unreadable bytes themselves, whose content is covered elsewhere.",
     "fix": "issue 202 (b4a38c5 + b3f67b6)",
     "resolved": "2026-08-14"
+  },
+  {
+    "category": "Text-era column-0 wrap artifacts",
+    "reason": "unclaimed-content",
+    "profile": "text",
+    "detail_like": "line %",
+    "diagnosis": "58 records across 1993-2010 held on a line at column 0 the parser could not attach. Extraction of every family showed TED's own line-wrapper emitting a wrapped tail flush-left - after a '!' inside the text ('nicht offnen ! ' then '\" zu versehen...'), a closing parenthesis ('(EXCLUDING FOOTWEAR... OF WOOD' then ')'), a fixed-width mid-word sever ('TELECOMMUNICATI' / 'ON'), or an indent defect on per-line fields (RC: ES511 then 'ES512', RG: BARCELONA then 'GIRONA' - real second values) - plus the correction margin marker '!' and 2010 column-0 boilerplate and award justifications. All wrapped CONTENT, never structure, so a column-0 non-tag line now continues its open field (margin marker stripped; per-line lines are their own values; a scalar still rejects, and a line before any field still holds). The four 1994 mainframe search-command echoes ('.S F=ALL;R=NNNN TO 1;SORT=PD;ND;HC', between fields) are production residue, consumed as layout. All 58 reclaimed.",
+    "fix": "issue 199 (bd6a5bf)",
+    "resolved": "2026-08-14"
+  },
+  {
+    "category": "F19 concession award-criteria sentence",
+    "reason": "unclaimed-content",
+    "profile": "ted-export-r208",
+    "detail_like": "%AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE/AWARD_CRITERIA_DETAIL",
+    "diagnosis": "The F19 sub-contract concession form (defence, 2012) writes the award-criteria sentence as AWARD_CRITERIA_DETAIL's bare text where every other form nests CRITERIA/WEIGHTING children there - exactly 2 members in 30 years of corpus, the last unclaimed TED_EXPORT rows (issue 194's residue). The rule moved from Group to TextGroup so both shapes are consumed; both members reclaimed.",
+    "fix": "issue 194 (23507fb)",
+    "resolved": "2026-08-14"
   }
 ]

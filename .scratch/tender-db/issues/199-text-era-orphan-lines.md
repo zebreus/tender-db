@@ -1,6 +1,6 @@
 # 199 — text-era orphan lines: 49 unclaimed-content rows of stray record text
 
-Status: needs-triage
+Status: RESOLVED (2026-08-15 — see bottom)
 Kind: text-era parser decision (keep vs fix)
 Relates to: 195 (spun off at its close), 144 (text-era waves), 183 (attribution)
 
@@ -37,3 +37,10 @@ value; scalar still rejects via the flush guard; no-field-open still holds); the
 shape is consumed as layout. Tests pin all families. Next: deploy + reprocess
 unclaimed-content (expect 58 text rows reclaimed; the 2 parked r208 rows re-hold), then
 ledger entry naming the wrap-artifact class.
+
+**2026-08-15 ~00:1x CEST box time (orchestrator) — RESOLVED.** Deploy a9c042f; reprocess
+job 691: 41 packages, 60 reclaimed, 0 still held (the 58 text rows AND issue-194's 2 F19
+rows in one pass), zero stamp anomalies. unclaimed-content outstanding is now 0 — the
+reason is EMPTY for the first time. Ledger entries "Text-era column-0 wrap artifacts"
+(profile text, line %) and "F19 concession award-criteria sentence" added (45 total,
+render on next deploy). Trailing old-era fold running; panel verification next firing.
