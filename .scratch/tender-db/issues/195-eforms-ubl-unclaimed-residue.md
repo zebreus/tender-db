@@ -148,3 +148,10 @@ Deploy + reclaim next firing when the queue idles. Remaining after that: 10× sd
 SubcontractTerms/Amount, 9× sdk-1.0 AppealTerms/UBLExtensions, 6+3×
 ProcurementAdditionalType listName, 4× root FieldsPrivacy (1.9), 2× AwardingCriterion
 StrategicProcurement (1.12), 2× nested ServiceProviderParty (1.12), 1× SubTypeDescription.
+
+**2026-08-14 ~03:1x CEST (orchestrator) — three-class slice deployed (rev 0a2acc7),
+reclaim running.** Deploy also carries the store fresh-record-path benign-zero guard (see
+issue 139 thread). Reprocess reason=unclaimed-content enqueued (job 1 of the new process,
+60 packages) with trailing incremental project (job 2). Expected drain: ~23 rows (5×
+RenewalsIndicator DE, 7× Part RealizedLocation Description, 11× shortlist TenderingProcess).
+Counts next poll.

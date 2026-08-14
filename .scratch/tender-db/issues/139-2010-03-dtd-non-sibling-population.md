@@ -140,3 +140,16 @@ hole, now honest bookkeeping); 7 `.en` originals truthfully relabeled unclaimed-
 (issue 190 owns the guard + repair). The observability (zero-stamp journal lines) and the
 already-parsed-arm ledger stamping stay — they turn any future recurrence of this shape into a
 one-journal-line diagnosis.
+
+**2026-08-14 ~03:1x CEST (orchestrator) — four false alarms from job 654 diagnosed; guard
+landed (rev 0a2acc7).** The COR drain fired 4× "[store] reclaim stamped NO ledger rows
+(fresh record path)" over a fully consistent ledger. Shape: a correction file's records
+mostly duplicate the earlier daily (job 654: 1,234 already-parsed), so the FIRST duplicate
+resolves the whole-file rejection row via the already-parsed arm's opportunistic stamp;
+the 4 genuinely-corrected records that follow are fresh identities whose stamps then find
+nothing — zero-stamp, alarm. Verified on the box: all 22 not-utf8 ISO_COR rows terminal
+with job-654's timestamp (2× EN reclaimed, 20× sibling-language skipped). Fix: the fresh
+record path now applies the parsed arm's member_file_resolved benign-zero guard before
+warning (store commit "benign-zero guard for the fresh-record reclaim stamp"); a true
+stranded ledger still alarms. Regression test
+corrected_records_after_a_resolved_file_row_are_a_benign_zero_stamp.
