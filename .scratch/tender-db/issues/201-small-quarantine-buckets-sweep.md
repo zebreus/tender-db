@@ -40,3 +40,8 @@ authority ORG-N sections (~26), LOT-2 on F03, r208 twins. Next: extract 2-3 memb
 the fold frees the disk) and decide per family — tolerate (open the translation-only
 section; it is published content) vs documented keep. Deploy stack (ledger entry, sibling
 guard, SDK 1.2) + the 3-row 1.2 reclaim also pending queue-idle.
+
+**2026-08-14 ~12:0x CEST box time (orchestrator) — unknown-customization: 0.** Deploy
+16e81a8 (ledger 42, sibling guard, SDK 1.2); reclaim 3/3, incremental fold (2s — the
+full-sweep trigger is text-era-specific, consistent with 192's data points). Bucket empty;
+next: translation-structure-mismatch members.
