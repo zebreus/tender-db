@@ -1,6 +1,6 @@
 # 201 — small outstanding quarantine buckets: name and decide the tail
 
-Status: needs-triage
+Status: RESOLVED (2026-08-14/15 — every bucket named, drained, or ledgered; see bottom)
 Kind: quarantine composition sweep (the issue-30 discipline applied to the residue)
 
 ## What (outstanding-by-reason readout, 2026-08-14, post-200)

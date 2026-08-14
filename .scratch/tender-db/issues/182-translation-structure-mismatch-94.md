@@ -1,6 +1,6 @@
 # 182 — the 94 `translation-structure-mismatch` rows have no diagnosis
 
-Status: needs-triage
+Status: RESOLVED-SUPERSEDED (2026-08-14 — the 201 sweep retired the reason entirely: 94 co-original/defective-original members reclaimed via section adoption, ledger "Form copies diverging from their original")
 Kind: data-quality investigation (suspected-gap bucket)
 Blocked by: —
 Relates to: 30 (classification), 137 (measured: 94 rows, 0 reclaimed), 180/181 (same sweep can cover all three)

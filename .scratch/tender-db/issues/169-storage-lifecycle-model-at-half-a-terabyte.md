@@ -1,6 +1,6 @@
 # 169 — storage lifecycle model at 0.5 TB and beyond
 
-Status: open — research gap #3 (docs/research/research-gaps-2026-08.md), NOW (/data ~87% full)
+Status: open — research gap #3; urgency DOWNGRADED 2026-08-15 (measured: /data at 39%, 1.1T free — the "~87% full" premise no longer holds; lifecycle model still worth writing before the corpus doubles)
 Role: run-driver
 
 The disk arithmetic ended at "buy a 500 GB volume" (pilot-sizing); reality:
