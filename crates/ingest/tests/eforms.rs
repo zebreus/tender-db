@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 40, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 43, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1308,6 +1308,38 @@ fn republished_section_ids_merge_into_one_section() {
 
     let ted = parse_fixture("eforms/can-dup-org-00305298-2024.xml");
     assert_eq!(ted.sections.iter().filter(|s| s.id == "ORG-0000").count(), 1);
+}
+
+/// The ambiguous-field tail (issue 201): three discriminator failures, each
+/// claimed as published under a synthetic id while the relaxed fallback stays
+/// intact for genuinely unknown shapes.
+#[test]
+fn discriminator_failures_claim_as_published() {
+    // A misspelled BT-736 list: listName="reserved-executionn".
+    let typo = parse_fixture("eforms/cn-cer-typo-00081074-2024.xml");
+    assert!(
+        typo.values.iter().any(|v| v.field_id == "UBL-ContractExecutionReservedCode"
+            && matches!(&v.value, NoticeValue::Code { list, code, .. }
+                if list.as_deref() == Some("reserved-executionn") && code == "no")),
+        "the typo'd list claims with its spelling preserved"
+    );
+
+    // The selection-side attrless ParameterCode (per-exa, no listName).
+    let selc = parse_fixture("eforms/cn-selc-param-00228777-2024.xml");
+    assert!(
+        selc.values.iter().any(|v| v.field_id == "UBL-SelectionCriterionParameterCode"
+            && matches!(&v.value, NoticeValue::Code { code, .. } if code == "per-exa")),
+        "the attrless selection parameter code is claimed"
+    );
+
+    // A German national buyer-legal-type list on a plain EU customization.
+    let pt = parse_fixture("eforms/cn-pt-national-00245088-2024.xml");
+    assert!(
+        pt.values.iter().any(|v| v.field_id == "UBL-ContractingPartyTypeCode"
+            && matches!(&v.value, NoticeValue::Code { list, .. }
+                if list.as_deref() == Some("stift-oer-kommun"))),
+        "the national legal-type list claims as published"
+    );
 }
 
 /// Issue 144, cause M: an Italian notice puts the BT-76 company-legal-form

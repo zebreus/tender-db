@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?><PriorInformationNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:PriorInformationNotice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
+  <ext:UBLExtensions>
+    <ext:UBLExtension>
+      <ext:ExtensionContent>
+        <efext:EformsExtension>
+          <efac:NoticeSubType>
+            <cbc:SubTypeCode listName="notice-subtype">4</cbc:SubTypeCode>
+          </efac:NoticeSubType>
+          <efac:Organizations>
+            <efac:Organization>
+              <efbc:GroupLeadIndicator>true</efbc:GroupLeadIndicator>
+              <efac:Company>
+                <cbc:WebsiteURI>https://www.crnomelj.si/sl/uradne-objave/razpisi-in-pozivi/</cbc:WebsiteURI>
+                <cac:PartyIdentification>
+                  <cbc:ID schemeName="organization">ORG-0001</cbc:ID>
+                </cac:PartyIdentification>
+                <cac:PartyName>
+                  <cbc:Name languageID="SLV">OBČINA ČRNOMELJ</cbc:Name>
+                </cac:PartyName>
+                <cac:PostalAddress>
+                  <cbc:StreetName>Trg svobode   3</cbc:StreetName>
+                  <cbc:CityName>Črnomelj</cbc:CityName>
+                  <cbc:PostalZone>8340</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">SI037</cbc:CountrySubentityCode>
+                  <cac:Country>
+                    <cbc:IdentificationCode listName="country">SVN</cbc:IdentificationCode>
+                  </cac:Country>
+                </cac:PostalAddress>
+                <cac:PartyLegalEntity>
+                  <cbc:CompanyID>5880254000</cbc:CompanyID>
+                </cac:PartyLegalEntity>
+                <cac:Contact>
+                  <cbc:Telephone>073061100</cbc:Telephone>
+                  <cbc:ElectronicMail>obcina@crnomelj.si</cbc:ElectronicMail>
+                </cac:Contact>
+              </efac:Company>
+            </efac:Organization>
+            <efac:Organization>
+              <efac:Company>
+                <cbc:WebsiteURI>https://www.dkom.si/</cbc:WebsiteURI>
+                <cac:PartyIdentification>
+                  <cbc:ID schemeName="organization">ORG-0002</cbc:ID>
+                </cac:PartyIdentification>
+                <cac:PartyName>
+                  <cbc:Name languageID="SLV">DRŽAVNA REVIZIJSKA KOMISIJA ZA REVIZIJO POSTOPKOV ODDDAJE JAVNIH NAROČIL</cbc:Name>
+                </cac:PartyName>
+                <cac:PostalAddress>
+                  <cbc:StreetName>Slovenska cesta 54</cbc:StreetName>
+                  <cbc:CityName>Ljubljana</cbc:CityName>
+                  <cbc:PostalZone>1000</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">SI041</cbc:CountrySubentityCode>
+                  <cac:Country>
+                    <cbc:IdentificationCode listName="country">SVN</cbc:IdentificationCode>
+                  </cac:Country>
+                </cac:PostalAddress>
+                <cac:PartyLegalEntity>
+                  <cbc:CompanyID>1332716000</cbc:CompanyID>
+                </cac:PartyLegalEntity>
+                <cac:Contact>
+                  <cbc:Telephone>+38612342800</cbc:Telephone>
+                  <cbc:ElectronicMail>dkom@dkom.si</cbc:ElectronicMail>
+                </cac:Contact>
+              </efac:Company>
+            </efac:Organization>
+          </efac:Organizations>
+        <efac:Publication><efbc:NoticePublicationID schemeName="ojs-notice-id">00081074-2024</efbc:NoticePublicationID><efbc:GazetteID schemeName="ojs-id">27/2024</efbc:GazetteID><efbc:PublicationDate>2024-02-07Z</efbc:PublicationDate></efac:Publication></efext:EformsExtension>
+      </ext:ExtensionContent>
+    </ext:UBLExtension>
+  </ext:UBLExtensions>
+  <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+  <cbc:CustomizationID>eforms-sdk-1.6</cbc:CustomizationID>
+  <cbc:ID schemeName="notice-id">d997abe9-96df-4f9c-b035-1fa6d95a5a54</cbc:ID>
+  <cbc:IssueDate>2024-02-06+01:00</cbc:IssueDate>
+  <cbc:IssueTime>12:12:20.4119262+01:00</cbc:IssueTime>
+  <cbc:VersionID>01</cbc:VersionID>
+  <cbc:PlannedDate>2024-05-06+02:00</cbc:PlannedDate>
+  <cbc:RegulatoryDomain>32014L0024</cbc:RegulatoryDomain>
+  <cbc:NoticeTypeCode listName="planning">pin-only</cbc:NoticeTypeCode>
+  <cbc:NoticeLanguageCode>SLV</cbc:NoticeLanguageCode>
+  <cac:ContractingParty>
+    <cac:ContractingPartyType>
+      <cbc:PartyTypeCode listName="buyer-legal-type">la</cbc:PartyTypeCode>
+    </cac:ContractingPartyType>
+    <cac:ContractingActivity>
+      <cbc:ActivityTypeCode listName="authority-activity">gen-pub</cbc:ActivityTypeCode>
+    </cac:ContractingActivity>
+    <cac:Party>
+      <cac:PartyIdentification>
+        <cbc:ID schemeName="organization">ORG-0001</cbc:ID>
+      </cac:PartyIdentification>
+    </cac:Party>
+  </cac:ContractingParty>
+  <cac:ProcurementProject>
+    <cbc:ID>360-4/2024</cbc:ID>
+    <cbc:Name languageID="SLV">Javni poziv promotorjem k oddaji vloge o zainteresiranosti za izvedbo projekta ”Javno-zasebno partnerstvo za proizvodnjo električne energije iz obnovljivega vira energije (sončni fotovoltaični vir) na javnih površinah in objektih”</cbc:Name>
+    <cbc:Description languageID="SLV">Predmet projekta je vzpostavitev javno-zasebnega partnerstva za postavitev proizvodnih naprav, ki proizvajajo električno energijo iz obnovljivega vira energije (sončni fotovoltaični vir) na površinah in objektih Občine Črnomelj. </cbc:Description>
+    <cbc:ProcurementTypeCode listName="contract-nature">works</cbc:ProcurementTypeCode>
+    <cac:MainCommodityClassification>
+      <cbc:ItemClassificationCode listName="cpv">45100000</cbc:ItemClassificationCode>
+    </cac:MainCommodityClassification>
+    <cac:AdditionalCommodityClassification>
+      <cbc:ItemClassificationCode listName="cpv">45200000</cbc:ItemClassificationCode>
+    </cac:AdditionalCommodityClassification>
+    <cac:RealizedLocation>
+      <cac:Address>
+        <cbc:CountrySubentityCode listName="nuts">SI037</cbc:CountrySubentityCode>
+        <cac:Country>
+          <cbc:IdentificationCode listName="country">SVN</cbc:IdentificationCode>
+        </cac:Country>
+      </cac:Address>
+    </cac:RealizedLocation>
+  </cac:ProcurementProject>
+  <cac:ProcurementProjectLot>
+    <cbc:ID schemeName="Part">PAR-0000</cbc:ID>
+    <cac:TenderingTerms>
+      <cac:CallForTendersDocumentReference>
+        <cbc:ID>DocLot0</cbc:ID>
+        <cbc:DocumentType>non-restricted-document</cbc:DocumentType>
+        <cac:Attachment>
+          <cac:ExternalReference>
+            <cbc:URI>https://www.enarocanje.si/api/datoteka/get?id=MjY0NTU1O1JEX2phdm5pIHBveml2LnppcA</cbc:URI>
+          </cac:ExternalReference>
+        </cac:Attachment>
+      </cac:CallForTendersDocumentReference>
+      <cac:TendererQualificationRequest>
+        <cac:SpecificTendererRequirement>
+          <cbc:TendererRequirementTypeCode listName="reserved-procurement">none</cbc:TendererRequirementTypeCode>
+        </cac:SpecificTendererRequirement>
+      </cac:TendererQualificationRequest>
+      <cac:ContractExecutionRequirement>
+        <cbc:ExecutionRequirementCode listName="reserved-executionn">no</cbc:ExecutionRequirementCode>
+      </cac:ContractExecutionRequirement>
+      <cac:AppealTerms>
+        <cac:AppealReceiverParty>
+          <cac:PartyIdentification>
+            <cbc:ID schemeName="organization">ORG-0002</cbc:ID>
+          </cac:PartyIdentification>
+        </cac:AppealReceiverParty>
+      </cac:AppealTerms>
+    </cac:TenderingTerms>
+    <cac:TenderingProcess>
+      <cbc:GovernmentAgreementConstraintIndicator>false</cbc:GovernmentAgreementConstraintIndicator>
+      <cac:ContractingSystem>
+        <cbc:ContractingSystemTypeCode listName="framework-agreement">none</cbc:ContractingSystemTypeCode>
+      </cac:ContractingSystem>
+    </cac:TenderingProcess>
+    <cac:ProcurementProject>
+      <cbc:Name languageID="SLV">Javni poziv promotorjem k oddaji vloge o zainteresiranosti za izvedbo projekta ”Javno-zasebno partnerstvo za proizvodnjo električne energije iz obnovljivega vira energije (sončni fotovoltaični vir) na javnih površinah in objektih”
+</cbc:Name>
+      <cbc:Description languageID="SLV">Predmet projekta je vzpostavitev javno-zasebnega partnerstva za postavitev proizvodnih naprav, ki proizvajajo električno energijo iz obnovljivega vira energije (sončni fotovoltaični vir) na površinah in objektih Občine Črnomelj. </cbc:Description>
+      <cbc:ProcurementTypeCode listName="contract-nature">works</cbc:ProcurementTypeCode>
+      <cbc:SMESuitableIndicator>true</cbc:SMESuitableIndicator>
+      <cac:MainCommodityClassification>
+        <cbc:ItemClassificationCode listName="cpv">45100000</cbc:ItemClassificationCode>
+      </cac:MainCommodityClassification>
+      <cac:AdditionalCommodityClassification>
+        <cbc:ItemClassificationCode listName="cpv">45200000</cbc:ItemClassificationCode>
+      </cac:AdditionalCommodityClassification>
+      <cac:RealizedLocation>
+        <cac:Address>
+          <cbc:CountrySubentityCode listName="nuts">SI037</cbc:CountrySubentityCode>
+          <cac:Country>
+            <cbc:IdentificationCode listName="country">SVN</cbc:IdentificationCode>
+          </cac:Country>
+        </cac:Address>
+      </cac:RealizedLocation>
+      <cac:PlannedPeriod>
+        <cbc:StartDate>2024-02-06+01:00</cbc:StartDate>
+        <cbc:EndDate>2024-10-31+01:00</cbc:EndDate>
+      </cac:PlannedPeriod>
+    </cac:ProcurementProject>
+  </cac:ProcurementProjectLot>
+</PriorInformationNotice>

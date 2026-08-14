@@ -632,6 +632,25 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "UBL-ContractExecutionPermissionCode",
         "code",
     ),
+    // A Nordic platform misspells BT-736's list — listName="reserved-executionn"
+    // (double n), value yes/no (issue 201, 13 members on sdk-1.6/1.7). Same
+    // leaf-predicated carve-out as 'permission' above: exact-matches ahead of
+    // the relaxed fallback, which stays intact for genuinely unknown lists.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:ContractExecutionRequirement[cbc:ExecutionRequirementCode/@listName='reserved-executionn']/cbc:ExecutionRequirementCode",
+        "UBL-ContractExecutionReservedCode",
+        "code",
+    ),
+    // A German buyer-legal-type from the national codelist on a plain EU
+    // customization (issue 201, sdk-1.10): listName="stift-oer-kommun"
+    // (Stiftung öffentlichen Rechts, kommunal) — the eForms-DE tailoring
+    // class again. BT-11/BT-740 discriminate by listName, so the national
+    // list relaxed to both and died ambiguous-field.
+    (
+        "/*/cac:ContractingParty/cac:ContractingPartyType[cbc:PartyTypeCode/@listName='stift-oer-kommun']/cbc:PartyTypeCode",
+        "UBL-ContractingPartyTypeCode",
+        "code",
+    ),
     // Tender validity published as a deadline (issue 143): BT-98 is a
     // `cbc:DurationMeasure` in every minor, but a French publisher writes the
     // validity end as a date instead. Same class as
@@ -1163,6 +1182,28 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
                     &mut root,
                     &format!("{parameter}/efbc:ParameterCode"),
                     "UBL-AwardCriterionParameterCode",
+                    "code",
+                    true,
+                )?;
+            }
+        }
+
+        // ...and the SELECTION-criteria twin (issue 201): the same attrless
+        // `efbc:ParameterCode` (per-exa, no @listName) inside
+        // `efac:SelectionCriteria/efac:CriterionParameter`, where BT-7531/7532
+        // discriminate by that attribute. Same guard: added only where the
+        // minor itself plants the predicate-free CriterionParameter branch.
+        for scheme in ["Lot", "LotsGroup"] {
+            let parameter = format!(
+                "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='{scheme}']/cac:TenderingTerms\
+                 /ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension\
+                 /efac:SelectionCriteria/efac:CriterionParameter"
+            );
+            if root.existing(&locate(&parameter)?.steps).is_some() {
+                insert_extra(
+                    &mut root,
+                    &format!("{parameter}/efbc:ParameterCode"),
+                    "UBL-SelectionCriterionParameterCode",
                     "code",
                     true,
                 )?;
