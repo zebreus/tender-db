@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED and DÖE quirk members), 19 files, 392 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 21 files, 420 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -59,6 +59,8 @@ exercise is specific to those vintages.
 | `doe-sdk01-subcontract-rate.xml` | 60,053 | 29 | 0.1 | DE (DÖE) | **Issue 195: subcontracted share.** Same block, `cbc:Rate` variant (the BT-555 percentage shape). Pins `SDK01-TenderResult-SubcontractTerms-Rate`. |
 | `doe-sdk01-ple-mounts.xml` | 21,805 | 29 | 0.1 | DE (DÖE) | **Issue 195: PartyLegalEntity under the lot appeal parties.** From DÖE monthly `2023-08`. `cac:PartyLegalEntity/cbc:CompanyID` under the lot's AppealReceiverParty AND MediationParty — two mounts the empirical inventory lacked (the member advanced from one to the other across re-parses, the issue-87 rewrite in action). |
 | `doe-sdk01-ple-addinfo.xml` | 30,461 | 29 | 0.1 | DE (DÖE) | **Issue 195: PartyLegalEntity under AdditionalInformationParty.** From DÖE monthly `2023-09`. The third missing CompanyID mount. |
+| `pin-pat-supplies-00660476-2023.xml` | 8,271 | 4 | 1.8 | DE | **Issue 195: unlisted ProcurementTypeCode listName.** From monthly `2023-10`. The eSender writes `listName="supplies"` carrying a contract-nature value — no SDK predicate matches; claimed as published under `UBL-ProcurementAdditionalTypeCode` (policy reversal of the issue-144 negative control). |
+| `can-pat-social-00250633-2024.xml` | 19,706 | 29 | 1.10 | FR | **Issue 195: BT-775's SDK-1.0 shape.** From monthly `2024-04`. `listName="social-procurement"` (the field moved into the StrategicProcurement extension after 1.0) beside DECLARED accessibility/environmental-impact codes — pins that BT-754/BT-774 keep their exact ids while the dead shape claims relaxed. |
 
 ### On BT-195 naming
 

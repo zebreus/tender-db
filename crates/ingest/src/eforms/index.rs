@@ -902,6 +902,34 @@ pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
             true,
         )?;
 
+        // Additional procurement-type codes under unlisted listNames (issue
+        // 195). The SDK enumerates ProcurementAdditionalType per listName —
+        // contract-nature (BT-531), accessibility (BT-754), environmental-
+        // impact (BT-774), strategic-procurement (BT-06) — so a code under any
+        // OTHER list matches no predicated branch and the member holds whole.
+        // Two real classes: a 2023 eSender writes listName="supplies" with a
+        // contract-nature value (7 members, sdk-1.8), and a 2024 eSender still
+        // publishes BT-775's SDK-1.0 shape listName="social-procurement" (3
+        // members, sdk-1.10 — the field moved into the StrategicProcurement
+        // extension after 1.0). A predicate-free branch catches them exactly
+        // as published (the stored list rides the element's own @listName);
+        // declared listNames keep their BT ids because exact predicated
+        // branches sort first. Direct gap-filled calls at both observed
+        // mounts, NOT [`EXTRA`]: eforms-de-1.x declares these very
+        // predicate-free paths as DE1 fields and must keep them.
+        for mount in [
+            "/*/cac:ProcurementProject",
+            "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:ProcurementProject",
+        ] {
+            insert_extra(
+                &mut root,
+                &format!("{mount}/cac:ProcurementAdditionalType/cbc:ProcurementTypeCode"),
+                "UBL-ProcurementAdditionalTypeCode",
+                "code",
+                true,
+            )?;
+        }
+
         // Bare Lot-level ProcessJustification description (issue 143, cause C).
         // French and Italian buyers publish a Lot `cac:ProcessJustification`
         // holding only free text — the exact shape SDK 1.12.0 itself adopted

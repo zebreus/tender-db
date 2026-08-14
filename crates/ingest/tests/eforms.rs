@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 26, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 28, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1151,11 +1151,16 @@ fn file_id_contract_nature_code_is_claimed_as_bt531() {
     ));
 }
 
-/// The negative control for the issue-144 contract-nature carve-out: it claims
-/// exactly the `eforms-contract-nature` listName — a genuinely unknown
-/// listName on the same element still quarantines the notice whole.
+/// POLICY REVERSAL (issue 195, was the issue-144 negative control): an unknown
+/// ProcurementTypeCode listName used to quarantine the notice whole, keeping
+/// the carve-out narrow. Two real classes later — a 2023 eSender's
+/// listName="supplies" and BT-775's dead SDK-1.0 "social-procurement" shape —
+/// the held-whole cost is publisher noise, not a mapping-decision signal (a
+/// genuinely NEW list ships with a new minor, which unknown-customization
+/// already gates). The element now claims as published under the synthetic id,
+/// the odd list preserved on the value.
 #[test]
-fn unknown_procurement_type_listname_still_quarantines() {
+fn unknown_procurement_type_listname_claims_as_published() {
     let xml = r#"<?xml version="1.0"?>
 <ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
     xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
@@ -1167,13 +1172,14 @@ fn unknown_procurement_type_listname_still_quarantines() {
     </cac:ProcurementAdditionalType>
   </cac:ProcurementProject>
 </ContractNotice>"#;
-    match eforms::parse_payload("eforms:eforms-sdk-1.8", xml.as_bytes()) {
-        Parse::Quarantined { reason, detail } => {
-            assert_eq!(reason, "unclaimed-content");
-            assert!(detail.unwrap_or_default().contains("ProcurementTypeCode"));
-        }
-        other => panic!("an unknown ProcurementTypeCode listName should quarantine, got {other:?}"),
-    }
+    let parsed = match eforms::parse_payload("eforms:eforms-sdk-1.8", xml.as_bytes()) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("an unknown ProcurementTypeCode listName claims as published, got {other:?}"),
+    };
+    assert!(matches!(
+        value(&parsed, "PROCEDURE", "UBL-ProcurementAdditionalTypeCode"),
+        NoticeValue::Code { code, list, .. } if code == "supplies" && list.as_deref() == Some("bogus-nature")
+    ));
 }
 
 /// Issue 144, cause M: an Italian notice puts the BT-76 company-legal-form
@@ -1466,6 +1472,44 @@ fn doe_sdk01_inventory_additions_are_claimed() {
         ai.values.iter().any(|v| v.field_id
             == "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyLegalEntity-CompanyID"),
         "the additional-information party's registration id is claimed"
+    );
+}
+
+/// Additional procurement-type codes under unlisted listNames (issue 195): the
+/// SDK enumerates ProcurementAdditionalType per listName, so a code under any
+/// other list matched no branch and held the member whole. The predicate-free
+/// gap-filled branch claims them as published — while declared listNames keep
+/// their exact BT ids in the very same member.
+#[test]
+fn unlisted_procurement_additional_type_codes_are_claimed() {
+    // sdk-1.8 PIN: listName="supplies" carrying a contract-nature value.
+    let pin = parse_fixture("eforms/pin-pat-supplies-00660476-2023.xml");
+    let odd = pin
+        .values
+        .iter()
+        .find(|v| v.field_id == "UBL-ProcurementAdditionalTypeCode")
+        .expect("the unlisted-listName code is claimed");
+    assert!(matches!(
+        &odd.value,
+        NoticeValue::Code { code, list, .. } if code == "services" && list.as_deref() == Some("supplies")
+    ));
+
+    // sdk-1.10 CAN: BT-775's SDK-1.0 shape (social-procurement) beside two
+    // DECLARED lists — accessibility (BT-754) and environmental-impact
+    // (BT-774) must keep their exact ids, not fall into the relaxed branch.
+    let can = parse_fixture("eforms/can-pat-social-00250633-2024.xml");
+    assert!(
+        can.values.iter().any(|v| v.field_id == "UBL-ProcurementAdditionalTypeCode"
+            && matches!(&v.value, NoticeValue::Code { list, .. } if list.as_deref() == Some("social-procurement"))),
+        "the SDK-1.0-shaped social-procurement code is claimed"
+    );
+    assert!(
+        can.values.iter().any(|v| v.field_id == "BT-754-Lot"),
+        "the declared accessibility code keeps its BT id"
+    );
+    assert!(
+        can.values.iter().any(|v| v.field_id == "BT-774-Lot"),
+        "the declared environmental-impact code keeps its BT id"
     );
 }
 
