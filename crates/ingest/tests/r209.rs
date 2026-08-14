@@ -403,12 +403,14 @@ fn co_original_extra_sections_are_adopted() {
         "adoption lifts the text-only suppression inside the new section"
     );
 
-    // The strict guard survives for genuine translations: the same bytes with
-    // the second ORIGINAL relabelled TRANSLATION must still reject.
+    // TRANSLATION copies adopt too (issue 201's second act): the only two
+    // members whose translations ever diverged had DEFECTIVE originals — one
+    // award where 23 translations carry three, an F14 original with no CHANGE
+    // block — so divergence is recovered content, not a rejection. The same
+    // bytes with the FR co-original relabelled as the EN translation must
+    // parse identically, extra organisation included.
     let bytes = std::fs::read("tests/fixtures/r209/f02-co-original-160877-2015.xml").unwrap();
     let xml = String::from_utf8(bytes).unwrap();
-    // ...as an ENGLISH translation: non-EN translation copies are never
-    // walked at all, so only the EN relabel exercises the guard.
     let mutated = xml.replacen(
         r#"CATEGORY="ORIGINAL" FORM="2" LG="FR""#,
         r#"CATEGORY="TRANSLATION" FORM="2" LG="EN""#,
@@ -416,7 +418,9 @@ fn co_original_extra_sections_are_adopted() {
     );
     assert_ne!(xml, mutated, "the FR co-original was found and relabelled");
     match parse_payload("ted-export-r208", mutated.as_bytes()) {
-        Parse::Quarantined { reason, .. } => assert_eq!(reason, "translation-structure-mismatch"),
-        other => panic!("a diverging TRANSLATION must still reject, got {other:?}"),
+        Parse::Parsed(p) => {
+            assert!(p.sections.iter().any(|s| s.id == "ORG-3"), "the translation's extra organisation is adopted");
+        }
+        other => panic!("a translation with an extra section adopts it, got {other:?}"),
     }
 }

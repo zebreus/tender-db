@@ -107,7 +107,6 @@ pub fn parse(xml: &str) -> Result<Parsed, Rejected> {
         counters: HashMap::new(),
         keep_langs: kept_languages(&doc),
         translating: false,
-        co_original: false,
         adopted: Default::default(),
         alias: no_alias,
         overlay: no_overlay,
@@ -163,7 +162,6 @@ pub fn parse_internal_ojs(
         counters: HashMap::new(),
         keep_langs: kept_languages(&doc),
         translating: false,
-        co_original: false,
         adopted: Default::default(),
         alias,
         overlay,
@@ -239,15 +237,11 @@ struct Walk {
     /// Translation mode: sections are matched positionally (not created) and
     /// only text values are emitted, in the copy's language.
     translating: bool,
-    /// The current secondary copy is itself CATEGORY="ORIGINAL" (a bilingual
-    /// buyer's co-original, not a translation). Structure it carries beyond
-    /// the primary is first-class published content, not drift: it may OPEN
-    /// missing sections, which are then ADOPTED (see `adopted`).
-    co_original: bool,
-    /// Sections a co-original opened that the primary never had (issue 201:
-    /// the Belgian FR co-original carrying a third ORGANISATION). Inside them
-    /// nothing is shared with the primary, so full emission applies — the
-    /// text-only suppression would silently drop their codes and dates.
+    /// Sections a secondary copy opened that the primary never had (issue
+    /// 201: the Belgian FR co-original carrying a third ORGANISATION, the EN
+    /// translations carrying awards the defective ES original lost). Inside
+    /// them nothing is shared with the primary, so full emission applies —
+    /// the text-only suppression would silently drop their codes and dates.
     adopted: std::collections::HashSet<String>,
     /// Element-name normalisation applied before rule lookup and field-id
     /// synthesis. The `ted-export` profiles use identity; the INTERNAL_OJS
@@ -623,15 +617,13 @@ impl Walk {
             .iter()
             .enumerate()
             .filter(|&(i, _)| i != primary)
-            .map(|(_, form)| (*form, true))
-            .chain(english.filter(|_| !primary_lang.eq_ignore_ascii_case("EN")).map(|f| (f, false)));
-        for (form, is_original) in secondaries {
+            .map(|(_, form)| *form)
+            .chain(english.filter(|_| !primary_lang.eq_ignore_ascii_case("EN")));
+        for form in secondaries {
             self.counters = snapshot.clone();
             self.translating = true;
-            self.co_original = is_original;
             let result = self.form_copy(form, "/TED_EXPORT/FORM_SECTION");
             self.translating = false;
-            self.co_original = false;
             result?;
         }
         Ok(())
@@ -722,25 +714,23 @@ impl Walk {
         *n += 1;
         let id = format!("{prefix}-{n}");
         if self.translating {
-            // The translation copy replicates the original's structure; a
-            // section it computes must already exist or the copies diverge.
-            // A CO-ORIGINAL copy is different (issue 201): a bilingual buyer's
-            // second original can carry MORE than the primary — the extra
-            // section is published content, so open and ADOPT it.
+            // A secondary copy carrying a section the primary lacks: published
+            // content, not drift — open and ADOPT it (issue 201). Bilingual
+            // co-originals carry extra organisations and change blocks; and in
+            // the two members where a TRANSLATION diverged (045641_2014,
+            // 275223_2021), the ORIGINAL was the defective copy — one award
+            // where 23 translations carry three, an F14 whose original has no
+            // CHANGE at all — so rejecting on divergence lost real content
+            // every time it fired. Adopted sections are trailing extras in
+            // every observed member; a mid-sequence extra would shift the
+            // positional text merge, which the corpus has never shown.
             if !self.parsed.sections.iter().any(|s| s.id == id) {
-                if self.co_original {
-                    self.parsed.sections.push(Section {
-                        id: id.clone(),
-                        kind: kind.to_owned(),
-                        parent: Some(parent.to_owned()),
-                    });
-                    self.adopted.insert(id.clone());
-                } else {
-                    return Err(Rejected {
-                        reason: "translation-structure-mismatch",
-                        detail: format!("{id} at {path}"),
-                    });
-                }
+                self.parsed.sections.push(Section {
+                    id: id.clone(),
+                    kind: kind.to_owned(),
+                    parent: Some(parent.to_owned()),
+                });
+                self.adopted.insert(id.clone());
             }
         } else {
             self.parsed.sections.push(Section {
@@ -757,9 +747,9 @@ impl Walk {
     }
 
     /// Emit a non-text value — suppressed in translation mode, where only the
-    /// copy's language-bearing text differs from the original. Sections a
-    /// co-original ADOPTED are the exception: nothing in them is shared with
-    /// the primary, so suppression would silently drop their codes and dates.
+    /// copy's language-bearing text differs from the original. ADOPTED
+    /// sections are the exception: nothing in them is shared with the
+    /// primary, so suppression would silently drop their codes and dates.
     fn emit(&mut self, section: &str, field: &str, value: NoticeValue) {
         if self.translating && !self.adopted.contains(section) {
             return;

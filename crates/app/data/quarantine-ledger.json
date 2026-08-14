@@ -1,5 +1,12 @@
 [
   {
+    "category": "Form copies diverging from their original",
+    "reason": "translation-structure-mismatch",
+    "diagnosis": "The r209/r208 overlay walked secondary form copies as translations that must replicate the primary original's structure, rejecting the member whole on any divergence - 94 members. 92 were bilingual buyers' CO-ORIGINALS (Belgian/Bolzano style) whose second original legitimately carries more: extra organisations, F14 change blocks, lots. The last 2 were TED pipeline defects where the ORIGINAL was the impoverished copy - an ES award notice carrying one award where all 23 translations carry three, an F14 whose original has no CHANGE block at all. Every firing of the guard was recoverable content, so secondary copies now ADOPT missing sections (fully emitted - nothing in them is shared with the primary) and the rejection reason is retired.",
+    "fix": "issue 201 (eb05139 + follow-up)",
+    "resolved": "2026-08-14"
+  },
+  {
     "category": "2010 records split by quoted reference numbers",
     "reason": "missing-publication-id",
     "diagnosis": "The 2010-era structured forms quote the buyer's file reference under 'IV.3.1) reference number' - '3.131/2010', '331.08/01' - alone on an INDENTED line, which matched the <digits>.<digits>/<digits> record-marker shape: each such line split a real notice mid-body and the ND-less tail held as missing-publication-id (110 rows, every one a 2010 member; the bucket was never anything else). Anchoring the marker at column 0 (1,488/1,488 real markers are column-0 in a full 2010 daily; the only 2 indented matches were both false) merges the tails back: the fuller records entered as versions of their publication ids, and the reason is now empty.",
