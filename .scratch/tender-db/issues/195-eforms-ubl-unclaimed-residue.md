@@ -228,3 +228,20 @@ ServiceProviderParty 2 (nested, sdk-1.12), RegistrationName 1, SubTypeDescriptio
 WebsiteURI 1 — plus the 2 missing-publication-id rows and the text-era orphan lines
 (the 66 minus 13 eForms = ~53 text-era rows, next readout will name them). Next slice:
 the 4-row FieldsPrivacy class + pin the text-era orphan split.
+
+**2026-08-14 ~08:5x CEST (orchestrator) — slice 6 deployed (rev 8a82813), reclaim running.**
+Four mechanisms, 10 rows: (1) FieldsPrivacy hoisted to the ROOT extension (4× sdk-1.9,
+codes pro-fea/pro-typ/awa-cri-typ) — two ALIASES grafts from the anchored families, the
+published FieldIdentifierCode predicate keeps BT-195…198 ids exact; (2)
+ExpectedOperatorQuantity (2× sdk-1.10) — no minor/dialect declares it beside BT-113;
+EXTRA claim as UBL-ExpectedOperatorQuantity (new 'integer' kind mapping); (3) nested
+self-referential ServiceProviderParty (2× sdk-1.12) — declared level grafted onto the
+nested mount; (4) CVD flag inside an AwardingCriterion extension (2× sdk-1.12) — grafted
+from the lot TenderingTerms StrategicProcurement anchor. Rider: OPT-999 (UBL 2.3's forced
+DUMMY TenderResult/AwardDate) joins the zoneless-reads-as-UTC relaxation — member 00344162
+advanced to exactly that failure after the graft. Five fixtures, corpus 28→33, ingest 217
++ store 74 green. Expect 10 rows to drain; eForms residue after: the five 1-row classes
+(RegistrationName 1.8, CallForTendersDocumentReference/DocumentTypeCode 1.6,
+ContractingParty/Party/PartyName 1.7, SubTypeDescription 1.12, DÖE MediationParty/
+WebsiteURI 1.0) + 2 missing-publication-id + ~40 text orphan lines + the 108-row old
+missing-publication-id bucket (own diagnosis needed).
