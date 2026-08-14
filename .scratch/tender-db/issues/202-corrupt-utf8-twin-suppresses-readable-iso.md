@@ -1,6 +1,6 @@
 # 202 — a corrupt UTF8 twin suppresses its readable ISO: 2005-04-09 lost whole
 
-Status: DIAGNOSED (fix design below)
+Status: RESOLVED (2026-08-14, two rounds — see bottom)
 Kind: coverage gap, ~900–1,000 notices, fully recoverable from the archive
 Relates to: 201 (found attributing the unreadable-zip bucket), 181 (the supersedence policy)
 
@@ -35,3 +35,17 @@ loses the day + holds the bundle, second walk ingests from ISO. Recovery = proce
 monthly 2005-04 (running, job 1) + fold (queued); expect ~900 notices for 2005-04-09.
 After it verifies: ledger entry for the unreadable-zip class (1 recovered day + 7 sibling
 duplicates, documented keep).
+
+**2026-08-14 ~19:5x CEST — round 1 recovery FAILED, round 2 deployed and VERIFIED.**
+Round 1 (b4a38c5) recovered 0 notices: the en_utf8_text/en_utf8_cf flags were
+package-global, and in the 2005-04 MONTHLY every other day's readable UTF8 kept the flag
+true — the excluded day's ISO stayed suppressed. (The synthetic test used a single-day
+daily, where the flag flips; it could not see this.) Round 2 (b3f67b6): supersedence is
+keyed PER PUBLICATION DAY — PackageContext holds HashSets of YYYYMMDD tokens, an ISO is
+superseded only when ITS day ships a non-held UTF8 twin of the same delivery class. The
+end-to-end test now carries a second day with a readable UTF8 (the monthly shape).
+Recovery verified on the box: job 689 `process ted monthly 2005-04` → 932 parsed,
+0 quarantined; `member_path LIKE '%20050409%'` → 932 notices. Ledger entry
+"Corrupt zip bundles in the TED archive (EOCD missing)" added (8 rows stay held as the
+record of the corrupt bytes; content covered — EN day via ISO twin, 7 non-EN siblings
+via the language policy).

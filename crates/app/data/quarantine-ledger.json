@@ -348,5 +348,12 @@
     "diagnosis": "The 2000-2009 dailies ship per-language CS<n>.TXT members (4,386 CS1 + 44 CS2 + 11 CS3) holding plain-text ND:/FLD:/OLD:/NEW: records - field-level corrections to earlier notices (reference-number renumberings, country fixes, deadline moves), one tiny file duplicated across every language edition, never a notice body. Unrecognised by the text-era naming (no variant token before ~2004, .TXT extension in the member name), every one fell through to the XML path and quarantined as unparsable-xml. Now recognised as a text-era class and skipped by policy (text-era-correction-sheet); the correction content stays reachable in the raw archive - applying it to stored notices would be its own feature.",
     "fix": "issue 180",
     "resolved": "2026-08-14"
+  },
+  {
+    "category": "Corrupt zip bundles in the TED archive (EOCD missing)",
+    "reason": "unreadable zip bundle: invalid Zip archive: Could not find EOCD",
+    "diagnosis": "Eight daily-delivery zip bundles across 1996-2009 are truncated in the archived TED distribution - the end-of-central-directory record is missing, so the bundle cannot be opened at all and is held whole. Seven are non-English deliveries (SV 1996-02-08, CS 2005-02-01 + 2005-04-01, ET 2005-06-22, NL 2005-10-06 + 2005-10-08, and the LV companion 2009-06-04) whose records the English-only ingestion policy takes from the English edition of the same days - their content is represented, nothing is lost. The eighth was the English UTF8 MAIN delivery for 2005-04-09, and its mere presence by name made the readable ISO twin skip itself as superseded - losing the whole day. Ledger-held unreadable bundles are now excluded from the supersedence decision, judged per publication day (a monthly carries many days, and one day's corrupt UTF8 must not sweep another day's ISO), and the day's 932 notices are ingested from the ISO copy. The eight rows stay held: they record the unreadable bytes themselves, whose content is covered elsewhere.",
+    "fix": "issue 202 (b4a38c5 + b3f67b6)",
+    "resolved": "2026-08-14"
   }
 ]

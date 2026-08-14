@@ -130,3 +130,15 @@ section-id drained 23/23 (job 681/682); ambiguous-field drained 14/14 (deploy 6c
 job 685/686 — bucket empty); unknown-field-code emptied (the 9 OC records claim their OC
 line now and re-held under unclaimed-content with fresh orphan-line details — moved to
 issue 199's population). Filed 203 (stale dashboard count).
+
+**2026-08-14 ~20:0x CEST box time (orchestrator) — SWEEP CLOSED.** Final bucket done:
+unreadable-zip attributed and ledgered ("Corrupt zip bundles in the TED archive (EOCD
+missing)", entry 43) — the 2005-04-09 day recovered via issue 202's per-day supersedence
+(932 notices, verified), the 7 non-EN siblings documented keep, all 8 rows stay held as
+the record of the corrupt bytes. Every bucket this sweep named is now empty, ledgered,
+or moved: translation-structure-mismatch retired (0), duplicate-section-id 0,
+ambiguous-field 0, unknown-field-code 0 (→ issue 199's orphan-line population),
+unknown-customization 0, unreadable-zip 8 documented-keep. Issue 203 resolved as
+not-a-bug (fold history rows, not a stale gauge). Outstanding quarantine is now:
+unrepresentable-value 5,169 (kept by policy), unclaimed-content ~60 (issue 199 + the
+parked r208 pair).
