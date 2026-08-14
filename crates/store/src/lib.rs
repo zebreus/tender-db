@@ -1529,6 +1529,31 @@ impl Db {
     /// a sparse bucket re-parses `held/total` of the package instead of all of it.
     /// Seeks by `fetch_id` (the leading column of the quarantine unique index), so
     /// it is a bounded per-package lookup.
+    /// The fetch's held WHOLE-BUNDLE rows under an unreadable-at-source reason
+    /// (issue 202): paths with no record (`#`) or inner-file (`!`) component,
+    /// reason `unreadable …`. These members never yielded records, so the
+    /// dispatch policy must not let them supersede a readable twin.
+    pub async fn unreadable_bundle_members(
+        &self,
+        fetch_id: i64,
+    ) -> turso::Result<std::collections::HashSet<String>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT member_path FROM quarantine
+                  WHERE fetch_id = ?1 AND reason LIKE 'unreadable %'
+                    AND reprocessed_at IS NULL AND skipped_at IS NULL
+                    AND member_path NOT LIKE '%!%' AND member_path NOT LIKE '%#%'",
+                (Value::Integer(fetch_id),),
+            )
+            .await?;
+        let mut out = std::collections::HashSet::new();
+        while let Some(row) = rows.next().await? {
+            out.insert(text(&row, 0));
+        }
+        Ok(out)
+    }
+
     pub async fn quarantine_held_member_files(
         &self,
         fetch_id: i64,

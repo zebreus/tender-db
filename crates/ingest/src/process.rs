@@ -173,13 +173,18 @@ type RecordRx = std::sync::mpsc::Receiver<(Record, store::Parse)>;
 fn spawn_record_producer(
     archive: &Path,
     only: Option<std::collections::HashSet<String>>,
+    unreadable: &std::collections::HashSet<String>,
 ) -> Result<(RecordRx, WalkerHandle, u64), Error> {
     // Cheap name-only pre-scan: dispatch policy that spans members (the text
     // era's ISO-vs-UTF8 variant selection) needs the package's shape up front;
     // the entry count doubles as the progress total.
     let names = package::entry_names(archive)?;
     let estimated = names.len() as u64;
-    let ctx = profile::PackageContext::from_entry_names(&names);
+    // A bundle the ledger holds as UNREADABLE never yielded records, so it
+    // must not supersede its readable twin (issue 202: the corrupt 2005-04-09
+    // EN UTF8 suppressed a good ISO and lost the whole day). Both the plain
+    // ingest and the reclaim consult the same ledger-derived set.
+    let ctx = profile::PackageContext::from_entry_names_excluding(&names, unreadable);
 
     let (tx, rx) = std::sync::mpsc::sync_channel::<(Record, store::Parse)>(64);
     let archive = archive.to_owned();
@@ -329,7 +334,7 @@ pub async fn process_package(
     fetch_id: i64,
     mut on_progress: impl FnMut(u64, u64, &Report),
 ) -> Result<Report, Error> {
-    let (rx, walker, estimated) = spawn_record_producer(archive, None)?;
+    let (rx, walker, estimated) = spawn_record_producer(archive, None, &db.unreadable_bundle_members(fetch_id).await?)?;
     let mut report = Report::default();
     let now = store::now_unix();
     let mut done = 0u64;
@@ -450,7 +455,8 @@ pub async fn reclaim_package(
     held: std::collections::HashSet<String>,
     mut on_progress: impl FnMut(u64, u64, &ReclaimReport),
 ) -> Result<ReclaimReport, Error> {
-    let (rx, walker, estimated) = spawn_record_producer(archive, Some(held))?;
+    let (rx, walker, estimated) =
+        spawn_record_producer(archive, Some(held), &db.unreadable_bundle_members(fetch_id).await?)?;
     let mut report = ReclaimReport::default();
     let now = store::now_unix();
     let mut done = 0u64;

@@ -84,8 +84,32 @@ pub struct PackageContext {
 
 impl PackageContext {
     pub fn from_entry_names<S: AsRef<str>>(names: &[S]) -> Self {
+        Self::from_entry_names_excluding(names, &Default::default())
+    }
+
+    /// [`Self::from_entry_names`], not counting members the reclaim HOLDS as
+    /// whole bundles (issue 202): a bundle-level held row means the member
+    /// never yielded records — the 2005-04-09 EN UTF8 bundle is corrupt at
+    /// source — so it cannot supersede its readable ISO twin; counting it
+    /// lost that whole day. `failed` carries the walker's full nested paths
+    /// while entry names are package-relative, so a failed path counts only
+    /// when it IS the entry or ends at it across a nesting boundary — a
+    /// record- or file-level hold (`…!file`, `…#7`) never matches a bundle
+    /// name and never suppresses supersedence.
+    pub fn from_entry_names_excluding<S: AsRef<str>>(
+        names: &[S],
+        failed: &std::collections::HashSet<String>,
+    ) -> Self {
+        let held_whole = |n: &str| {
+            failed
+                .iter()
+                .any(|f| f == n || f.ends_with(&format!("/{n}")) || f.ends_with(&format!("!{n}")))
+        };
         let (mut en_utf8_text, mut en_utf8_cf) = (false, false);
         for n in names {
+            if held_whole(n.as_ref()) {
+                continue;
+            }
             let stem = n.as_ref().rsplit('/').next().unwrap_or(n.as_ref());
             let stem = stem
                 .strip_suffix(".zip")

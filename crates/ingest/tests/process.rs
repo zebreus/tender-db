@@ -732,3 +732,66 @@ async fn hold_member(db_path: &Path, fetch_id: i64, member_path: &str, reason: &
     .await
     .unwrap();
 }
+
+/// Issue 202: a corrupt UTF8 bundle must not supersede its readable ISO twin.
+/// The first walk cannot know (single pass, names-only pre-scan): the UTF8
+/// member quarantines whole and the ISO is skipped as superseded — but once
+/// the ledger HOLDS the bundle as unreadable, the next walk excludes it from
+/// the supersedence decision and the day ingests from the ISO copy.
+#[tokio::test]
+async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
+    let dir = temp_dir("iso-fallback");
+    let archive = dir.as_path();
+    std::fs::create_dir_all(archive.join("ted/daily")).unwrap();
+    let pkg_path = archive.join("ted/daily/2005-00070.tar.gz");
+    {
+        let gz = flate2::write::GzEncoder::new(
+            std::fs::File::create(&pkg_path).unwrap(),
+            flate2::Compression::fast(),
+        );
+        let mut tar = tar::Builder::new(gz);
+        let mut add = |name: &str, bytes: &[u8]| {
+            let mut header = tar::Header::new_gnu();
+            header.set_size(bytes.len() as u64);
+            header.set_mode(0o644);
+            header.set_cksum();
+            tar.append_data(&mut header, name, bytes).unwrap();
+        };
+        add(
+            "EN_20050409_070_ISO_ORG.zip",
+            &zip_of("EN_20050409_2005070_ISO_ORG", TEXT_DOC),
+        );
+        add("EN_20050409_070_UTF8_ORG.ZIP", b"PK\x03\x04 truncated, no central directory");
+        tar.into_inner().unwrap().finish().unwrap();
+    }
+    let db = store::Db::open(dir.join("test.db").to_str().unwrap()).await.unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "daily".into(),
+        period: "2005-00070".into(),
+        url: "u".into(),
+        sha256: "h".into(),
+        bytes: 1,
+        fetched_at: 1,
+        path: "ted/daily/2005-00070.tar.gz".into(),
+    })
+    .await
+    .unwrap();
+
+    // First walk: the UTF8 twin exists by NAME, so the ISO is skipped as
+    // superseded — and the UTF8 bundle dies unreadable. Nothing ingests.
+    let first = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+    assert_eq!(first.notices, 0, "the day is lost on the first walk");
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM quarantine WHERE reason LIKE 'unreadable zip%'").await,
+        Some(1),
+        "the corrupt bundle is held"
+    );
+
+    // Second walk: the held unreadable bundle no longer supersedes — the
+    // readable ISO dispatches and the day's records ingest.
+    let second = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
+    assert!(second.notices > 0, "the day ingests from the ISO copy: {second:?}");
+
+    let _ = std::fs::remove_dir_all(&dir);
+}
