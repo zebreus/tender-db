@@ -223,6 +223,41 @@ async fn credential_tables_are_invisible() {
     assert_eq!(ok.status(), 200);
 }
 
+/// Issue 204: a pragma table-valued function returns a table's SCHEMA — column
+/// names, default values — without a base-table reference, so before the TVF
+/// allow-list `SELECT * FROM pragma_table_info('users')` returned 200 and
+/// disclosed the credential tables' columns. Every such probe must 400, and the
+/// credential column names must never appear in a response body.
+#[tokio::test(flavor = "multi_thread")]
+async fn pragma_table_functions_cannot_disclose_credential_schema() {
+    let server = Server::start("pragma-leak").await;
+    server.ingest_chain().await;
+
+    for query in [
+        "SELECT * FROM pragma_table_info('users')",
+        "SELECT * FROM pragma_table_xinfo('users')",
+        "SELECT * FROM pragma_table_info('api_tokens')",
+        "SELECT name FROM pragma_table_list",
+        "WITH x AS (SELECT * FROM pragma_table_info('users')) SELECT * FROM x",
+        "SELECT * FROM v_tenders WHERE 1 IN pragma_table_info('users')",
+    ] {
+        let resp = server.sql(query).await;
+        let status = resp.status().as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        assert_eq!(status, 400, "must deny the pragma TVF: {query:?} (body {body})");
+        // The credential column names must not surface even in the schema.
+        for secret_col in ["password_hash", "token_hash", "id_hash"] {
+            assert!(
+                !body.contains(secret_col),
+                "{query:?} leaked the {secret_col} column: {body}"
+            );
+        }
+    }
+
+    // The one allow-listed TVF still works — the fix is a scalpel, not a ban.
+    assert_eq!(server.sql("SELECT * FROM generate_series(1, 3)").await.status(), 200);
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn the_endpoint_is_account_gated() {
     let server = Server::start("gated").await;

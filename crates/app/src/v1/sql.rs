@@ -588,6 +588,17 @@ fn classify(sql: &str) -> Result<(), ApiError> {
     Ok(())
 }
 
+/// Table-valued functions allowed as a `FROM` source. Deny-by-default, the same
+/// posture as [`ALLOWED`]: a TVF is a callable that materialises rows, and some
+/// of them (`pragma_table_info('users')`, `pragma_table_xinfo(…)`) reach a
+/// table's schema WITHOUT a base-table reference — so they slip past the
+/// allow-list walk and disclose the columns of the credential tables that are
+/// deliberately absent from [`ALLOWED`] (issue 204). Only functions that read no
+/// schema object are listed. `generate_series` is the one analysts actually use
+/// (date spines, gap-filling); everything else — every `pragma_*`, any future
+/// TVF — is denied until proven safe and added here.
+const ALLOWED_TVF: [&str; 1] = ["generate_series"];
+
 /// The base tables an executed SELECT would read, plus the CTE names in scope.
 /// CTE names are held apart: they name derived queries, not base tables, and
 /// any base table a CTE wraps is itself collected from the CTE's own body — so
@@ -598,17 +609,24 @@ struct Tables {
     refs: Vec<String>,
     /// CTE names defined anywhere in the query, lowercased.
     ctes: std::collections::HashSet<String>,
+    /// Table-valued function names used as a FROM source, lowercased — checked
+    /// against [`ALLOWED_TVF`], never against the CTE set (a CTE cannot define
+    /// a callable, so a TVF name can never resolve to one).
+    tvfs: Vec<String>,
 }
 
-/// The first referenced base table that is neither a CTE nor allow-listed, if
-/// any — the reason the query is denied.
+/// The first referenced table or table-valued function the query is not allowed
+/// to read, if any — the reason it is denied. A base table must be a CTE or in
+/// [`ALLOWED`]; a TVF must be in [`ALLOWED_TVF`].
 fn disallowed_table(select: &turso_parser::ast::Select) -> Option<String> {
     let mut tables = Tables::default();
     walk_select(select, &mut tables);
     tables
         .refs
-        .into_iter()
-        .find(|name| !tables.ctes.contains(name) && !ALLOWED.contains(&name.as_str()))
+        .iter()
+        .find(|name| !tables.ctes.contains(*name) && !ALLOWED.contains(&name.as_str()))
+        .or_else(|| tables.tvfs.iter().find(|name| !ALLOWED_TVF.contains(&name.as_str())))
+        .cloned()
 }
 
 fn norm(name: &turso_parser::ast::Name) -> String {
@@ -692,10 +710,14 @@ fn walk_table(st: &turso_parser::ast::SelectTable, t: &mut Tables) {
     match st {
         // A bare table name — the one place a base table is read.
         SelectTable::Table(name, _, _) => t.refs.push(norm(&name.name)),
-        // A table-valued function (`generate_series(…)`): a function call, not a
-        // base-table read — turso cannot call a table as a function — so its name
-        // is not allow-list-checked, but its arguments may hide subqueries.
-        SelectTable::TableCall(_, args, _) => {
+        // A table-valued function (`generate_series(…)`, `pragma_table_info(…)`):
+        // a callable FROM source. Its name IS checked (against ALLOWED_TVF, not
+        // ALLOWED) — a `pragma_*` TVF reaches a denied table's schema without a
+        // base-table reference, so leaving it unchecked disclosed the credential
+        // tables' columns (issue 204). Arguments are still walked for hidden
+        // subqueries.
+        SelectTable::TableCall(name, args, _) => {
+            t.tvfs.push(norm(&name.name));
             for a in args {
                 walk_expr(a, t);
             }
@@ -794,7 +816,11 @@ fn walk_expr(e: &turso_parser::ast::Expr, t: &mut Tables) {
                 // `x IN some_table` reads some_table's first column.
                 t.refs.push(norm(&rhs.name));
             } else {
-                // `x IN tvf(args)` — a table-valued function, not a base table.
+                // `x IN tvf(args)` — a table-valued function; its name is checked
+                // against ALLOWED_TVF exactly as in `walk_table` (a pragma TVF
+                // here would leak a denied table's schema just the same, issue
+                // 204).
+                t.tvfs.push(norm(&rhs.name));
                 for a in args {
                     walk_expr(a, t);
                 }
@@ -1092,13 +1118,44 @@ mod tests {
     }
 
     #[test]
-    fn table_valued_functions_are_not_table_reads() {
-        // `generate_series(…)` is a function call, not a base table, so it is not
-        // allow-list-checked — but a private table hidden in its arguments is.
+    fn table_valued_functions_are_deny_by_default() {
+        // The allow-listed TVF works, including a private table hidden in its
+        // arguments still being caught.
         assert!(classify("SELECT * FROM generate_series(1, 5)").is_ok());
         assert!(classify("SELECT value FROM generate_series(1, 5) WHERE value > 2").is_ok());
         assert!(
             classify("SELECT * FROM generate_series(1, (SELECT count(*) FROM sessions))").is_err()
+        );
+    }
+
+    #[test]
+    fn pragma_table_valued_functions_cannot_disclose_a_denied_table(
+    ) {
+        // Issue 204: `pragma_table_info('users')` is a table-valued function that
+        // returns the SCHEMA of its argument — column names (`password_hash`) and
+        // default values — WITHOUT a base-table reference, so before the TVF
+        // allow-list it slipped past the walk and disclosed the credential
+        // tables' shape. Every pragma TVF, in every FROM/IN position, is denied.
+        for sql in [
+            "SELECT * FROM pragma_table_info('users')",
+            "SELECT * FROM pragma_table_xinfo('api_tokens')",
+            "SELECT name FROM pragma_table_list",
+            "SELECT dflt_value FROM pragma_table_info('sessions')",
+            // Laundered through a CTE, a subquery, an IN-table, a join.
+            "WITH x AS (SELECT * FROM pragma_table_info('users')) SELECT * FROM x",
+            "SELECT * FROM v_tenders WHERE id IN (SELECT cid FROM pragma_table_info('users'))",
+            "SELECT * FROM v_tenders WHERE 1 IN pragma_table_info('users')",
+            "SELECT * FROM v_tenders, pragma_table_info('users')",
+            "SELECT (SELECT count(*) FROM pragma_table_info('users'))",
+            // A future/unknown TVF is denied too — deny by default.
+            "SELECT * FROM some_new_tvf('users')",
+        ] {
+            assert!(classify(sql).is_err(), "pragma/unknown TVF must be denied: {sql:?}");
+        }
+        // The denied name is reported, so the 400 says which TVF was refused.
+        assert_eq!(
+            denied_table("SELECT * FROM pragma_table_info('users')").as_deref(),
+            Some("pragma_table_info"),
         );
     }
 
