@@ -195,3 +195,11 @@ green. Expected drain: 23 of the 46 eForms rows. Remaining after: ProcurementTyp
 ExpectedOperatorQuantity 2 (sdk-1.10), ServiceProviderParty 2 (sdk-1.12), RegistrationName 1,
 SubTypeDescription 1, WebsiteURI 1 — plus the 2 missing-publication-id rows (separate reason
 now) and the ~13 text-era orphan-line rows (not eForms; decide keep-vs-fix separately).
+
+**2026-08-14 ~05:0x CEST (orchestrator) — slice-4 reclaim complete: 23/23 drained, clean.**
+Job 658 (rev 2d3202f): 58 packages, 23 reclaimed, 78 still held (76 unclaimed-content + 2
+missing-publication-id), 0 policy-skipped — no sdk-0.1 member advanced to a further detail
+(the MediationParty pre-fix covered the only multi-mount member). eForms residue now 23
+rows across the small classes listed above + the 2 missing-publication-id rows + the
+text-era orphan lines. Also visible: the issue-197 fix live — the work list dropped 60→58
+packages (resolved-only packages fell off).
