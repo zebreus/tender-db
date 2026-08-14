@@ -1,0 +1,403 @@
+<pin:PriorInformationNotice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:pin="urn:oasis:names:specification:ubl:schema:xsd:PriorInformationNotice-2" xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2">
+   <ext:UBLExtensions>
+      <ext:UBLExtension>
+         <ext:ExtensionContent>
+            <efext:EformsExtension>
+               <efac:Change>
+                  <efbc:ChangedNoticeIdentifier>1</efbc:ChangedNoticeIdentifier>
+                  <efac:ChangedElement>
+                     <efbc:ChangedSectionIdentifier>I.1)</efbc:ChangedSectionIdentifier>
+                     <efbc:ChangeDescription languageID="DEU">Nationale Identifikationsnummer, Haupt-Kontaktstelle</efbc:ChangeDescription>
+                     <efbc:ElementNewValue>2023-00-001</efbc:ElementNewValue>
+                  </efac:ChangedElement>
+                  <efac:ChangeReason>
+                     <efbc:ReasonCode listName="change-corrig-justification">update-add</efbc:ReasonCode>
+                     <efbc:ReasonDescription languageID="DEU">Korrektur der Angaben.</efbc:ReasonDescription>
+                  </efac:ChangeReason>
+               </efac:Change>
+               <efac:Change>
+                  <efbc:ChangedNoticeIdentifier>1</efbc:ChangedNoticeIdentifier>
+                  <efac:ChangedElement>
+                     <efbc:ChangedSectionIdentifier>II.3)</efbc:ChangedSectionIdentifier>
+                     <efbc:ChangeDescription languageID="DEU">Voraussichtlicher Tag der Veröffentlichung der Auftragsbekanntmachung</efbc:ChangeDescription>
+                     <efbc:ElementOldValue>2023-07-31</efbc:ElementOldValue>
+                     <efbc:ElementNewValue>2023-08-02</efbc:ElementNewValue>
+                  </efac:ChangedElement>
+                  <efac:ChangeReason>
+                     <efbc:ReasonCode listName="change-corrig-justification">update-add</efbc:ReasonCode>
+                     <efbc:ReasonDescription languageID="DEU">Korrektur der Angaben.</efbc:ReasonDescription>
+                  </efac:ChangeReason>
+               </efac:Change>
+            </efext:EformsExtension>
+         </ext:ExtensionContent>
+      </ext:UBLExtension>
+   </ext:UBLExtensions>
+   <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+   <cbc:CustomizationID>eforms-sdk-0.1</cbc:CustomizationID>
+   <cbc:ID>3e5ce20f-3f3e-4c9d-adad-abcc431581db</cbc:ID>
+   <cbc:IssueDate>2023-08-03+02:00</cbc:IssueDate>
+   <cbc:IssueTime>16:45:53+02:00</cbc:IssueTime>
+   <cbc:VersionID>2</cbc:VersionID>
+   <cbc:RequestedPublicationDate>2023-08-04</cbc:RequestedPublicationDate>
+   <cbc:PlannedDate>2023-08-02</cbc:PlannedDate>
+   <cbc:RegulatoryDomain>32014L0024</cbc:RegulatoryDomain>
+   <cbc:NoticeTypeCode listName="change">pin-only</cbc:NoticeTypeCode>
+   <cbc:NoticeLanguageCode>DEU</cbc:NoticeLanguageCode>
+   <cac:ContractingParty>
+      <cac:ContractingPartyType>
+         <cbc:PartyTypeCode listName="buyer-legal-type">ra</cbc:PartyTypeCode>
+      </cac:ContractingPartyType>
+      <cac:ContractingActivity>
+         <cbc:ActivityTypeCode listName="authority-activity">gen-pub</cbc:ActivityTypeCode>
+      </cac:ContractingActivity>
+      <cac:Party>
+         <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+         <cac:PartyName>
+            <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+         </cac:PartyName>
+         <cac:PostalAddress>
+            <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+            <cbc:CityName>Helbra</cbc:CityName>
+            <cbc:PostalZone>06311</cbc:PostalZone>
+            <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+            <cac:Country>
+               <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+            </cac:Country>
+         </cac:PostalAddress>
+         <cac:PartyLegalEntity>
+            <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+         </cac:PartyLegalEntity>
+         <cac:Contact>
+            <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+            <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+            <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+            <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+         </cac:Contact>
+         <cac:ServiceProviderParty>
+            <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+            <cac:Party>
+               <cac:PartyName>
+                  <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                  <cbc:CityName>Bonn</cbc:CityName>
+                  <cbc:PostalZone>53119</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                  <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:Party>
+         </cac:ServiceProviderParty>
+      </cac:Party>
+   </cac:ContractingParty>
+   <cac:TenderingTerms>
+      <cac:LotDistribution>
+         <cbc:MaximumLotsAwardedNumeric>3</cbc:MaximumLotsAwardedNumeric>
+      </cac:LotDistribution>
+   </cac:TenderingTerms>
+   <cac:ProcurementProject>
+      <cbc:ID schemeName="InternalID">2023-00-001</cbc:ID>
+      <cbc:Name languageID="DEU">Unterhalts-, Grund- und Glasreinigung sowie Personalübernahme in verschiedenen Objekten der Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+      <cbc:Description languageID="DEU">Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekten der Verbandsgemeinde Mansfelder Grund-Helbra</cbc:Description>
+      <cbc:ProcurementTypeCode listName="contract-nature">services</cbc:ProcurementTypeCode>
+      <cac:MainCommodityClassification>
+         <cbc:ItemClassificationCode listName="cpv">90911200</cbc:ItemClassificationCode>
+      </cac:MainCommodityClassification>
+   </cac:ProcurementProject>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Part">PAR-0001</cbc:ID>
+      <cac:TenderingTerms>
+         <cac:TendererQualificationRequest>
+            <cac:SpecificTendererRequirement>
+               <cbc:TendererRequirementTypeCode listName="reserved-procurement">none</cbc:TendererRequirementTypeCode>
+            </cac:SpecificTendererRequirement>
+         </cac:TendererQualificationRequest>
+         <cac:ContractExecutionRequirement>
+            <cbc:ExecutionRequirementCode listName="reserved-execution">no</cbc:ExecutionRequirementCode>
+         </cac:ContractExecutionRequirement>
+         <cac:AppealTerms>
+            <cac:AppealReceiverParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+            <cac:MediationParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:MediationParty>
+         </cac:AppealTerms>
+         <cac:LotDistribution>
+            <cbc:MaximumLotsAwardedNumeric>3</cbc:MaximumLotsAwardedNumeric>
+         </cac:LotDistribution>
+      </cac:TenderingTerms>
+      <cac:TenderingProcess>
+         <cbc:CandidateReductionConstraintIndicator>false</cbc:CandidateReductionConstraintIndicator>
+         <cbc:GovernmentAgreementConstraintIndicator>false</cbc:GovernmentAgreementConstraintIndicator>
+         <cac:ContractingSystem>
+            <cbc:ContractingSystemTypeCode listName="framework-agreement">none</cbc:ContractingSystemTypeCode>
+         </cac:ContractingSystem>
+      </cac:TenderingProcess>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">1</cbc:ID>
+         <cbc:Name languageID="DEU">Los 1 - Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekte der Gemeinden Helbra und Klostermansfeld</cbc:Name>
+         <cbc:Description languageID="DEU">Los 1 - Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekten
+- Freiwillige Feuerwehr Helbra
+- Freiwillige Feuerwehr Klostermansfeld
+- Grundschule Helbra
+- Turnhalle Grundschule Helbra
+- Grundschule Klostermansfeld
+- Turnhalle Grundschule Klostermansfeld</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">90911200</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">06311 Helbra
+06308 Klostermansfeld</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Part">PAR-0002</cbc:ID>
+      <cac:TenderingTerms>
+         <cac:TendererQualificationRequest>
+            <cac:SpecificTendererRequirement>
+               <cbc:TendererRequirementTypeCode listName="reserved-procurement">none</cbc:TendererRequirementTypeCode>
+            </cac:SpecificTendererRequirement>
+         </cac:TendererQualificationRequest>
+         <cac:ContractExecutionRequirement>
+            <cbc:ExecutionRequirementCode listName="reserved-execution">no</cbc:ExecutionRequirementCode>
+         </cac:ContractExecutionRequirement>
+         <cac:AppealTerms>
+            <cac:AppealReceiverParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+            <cac:MediationParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:MediationParty>
+         </cac:AppealTerms>
+         <cac:LotDistribution>
+            <cbc:MaximumLotsAwardedNumeric>3</cbc:MaximumLotsAwardedNumeric>
+         </cac:LotDistribution>
+      </cac:TenderingTerms>
+      <cac:TenderingProcess>
+         <cbc:CandidateReductionConstraintIndicator>false</cbc:CandidateReductionConstraintIndicator>
+         <cbc:GovernmentAgreementConstraintIndicator>false</cbc:GovernmentAgreementConstraintIndicator>
+         <cac:ContractingSystem>
+            <cbc:ContractingSystemTypeCode listName="framework-agreement">none</cbc:ContractingSystemTypeCode>
+         </cac:ContractingSystem>
+      </cac:TenderingProcess>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">2</cbc:ID>
+         <cbc:Name languageID="DEU">Los 2 - Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekten der Gemeinden Ahlsdorf, Hergisdorf, Wimmelburg</cbc:Name>
+         <cbc:Description languageID="DEU">Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekten
+- Freiwillige Feuerwehr Ahlsdorf
+- Freiwillige Feuerwehr Hergisdorf
+- Freiwillige Feuerwehr Wimmelburg
+- Grundschule Ahlsdorf
+- Turnhalle Grundschule Ahlsdorf
+- KITA Ahlsdorf</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">90911200</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">- 06313 Ahlsdorf
+- 06313 Hergisdorf
+- 06313 Wimmelburg</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Part">PAR-0003</cbc:ID>
+      <cac:TenderingTerms>
+         <cac:TendererQualificationRequest>
+            <cac:SpecificTendererRequirement>
+               <cbc:TendererRequirementTypeCode listName="reserved-procurement">none</cbc:TendererRequirementTypeCode>
+            </cac:SpecificTendererRequirement>
+         </cac:TendererQualificationRequest>
+         <cac:ContractExecutionRequirement>
+            <cbc:ExecutionRequirementCode listName="reserved-execution">no</cbc:ExecutionRequirementCode>
+         </cac:ContractExecutionRequirement>
+         <cac:AppealTerms>
+            <cac:AppealReceiverParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+            <cac:MediationParty>
+               <cbc:WebsiteURI>http://www.verwaltungsamt-helbra.de</cbc:WebsiteURI>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Verbandsgemeinde Mansfelder Grund - Helbra</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>An der Hütte 1</cbc:StreetName>
+                  <cbc:CityName>Helbra</cbc:CityName>
+                  <cbc:PostalZone>06311</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>2023-00-001</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Name languageID="DEU">Vergabestelle</cbc:Name>
+                  <cbc:Telephone>+49 34772-50205</cbc:Telephone>
+                  <cbc:Telefax>+49 34772-27231</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabestelle@verwaltungsamt-helbra.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:MediationParty>
+         </cac:AppealTerms>
+         <cac:LotDistribution>
+            <cbc:MaximumLotsAwardedNumeric>3</cbc:MaximumLotsAwardedNumeric>
+         </cac:LotDistribution>
+      </cac:TenderingTerms>
+      <cac:TenderingProcess>
+         <cbc:CandidateReductionConstraintIndicator>false</cbc:CandidateReductionConstraintIndicator>
+         <cbc:GovernmentAgreementConstraintIndicator>false</cbc:GovernmentAgreementConstraintIndicator>
+         <cac:ContractingSystem>
+            <cbc:ContractingSystemTypeCode listName="framework-agreement">none</cbc:ContractingSystemTypeCode>
+         </cac:ContractingSystem>
+      </cac:TenderingProcess>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">3</cbc:ID>
+         <cbc:Name languageID="DEU">Los 3 - Unterhalts-, Grund- und Glasreinigung in verschiedenen Objekten der Gemeinden Bornstedt und Blankenheim</cbc:Name>
+         <cbc:Description languageID="DEU">- Freiwillige Feuerwehr Bornstedt
+- Freiwillige Feuerwehr Blankenheim
+- KITA Blankenheim
+- KITA Bornstedt
+- Turnhalle Blankenheim</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">90911200</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">06295 Bornstedt
+06528 Blankenheim</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEE0A</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+</pin:PriorInformationNotice>

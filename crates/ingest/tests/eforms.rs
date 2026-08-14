@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 21, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 26, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1412,6 +1412,60 @@ fn sibling_mounted_extension_blocks_are_claimed() {
     assert!(
         sl.values.iter().filter(|v| v.field_id == "BT-47-Lot").count() >= 3,
         "pre-selected participants are claimed at the TenderingProcess mount"
+    );
+
+    // Selection criteria inside AppealTerms (sdk-1.0 DÖE PIN, issue 195): a
+    // 2022 tool writes the SelectionCriteria extension under the procedure
+    // TenderingTerms' cac:AppealTerms — grafted from the lot TenderingTerms
+    // anchor, so the criteria claim under their lot field ids.
+    let ap = parse_fixture("eforms/doe-sdk10-selc-appealterms.xml");
+    assert!(
+        ap.values.iter().filter(|v| v.field_id == "BT-747-Lot").count() >= 2,
+        "AppealTerms-mounted criterion type codes are claimed"
+    );
+    assert!(
+        ap.values.iter().any(|v| v.field_id == "BT-750-Lot"),
+        "AppealTerms-mounted criterion descriptions are claimed"
+    );
+}
+
+/// The eforms-sdk-0.1 inventory is empirical (every observed path IS the
+/// inventory), so unclaimed 0.1 content is fixed by inventory additions, not
+/// patch tables. These pin the 2026-08 residue additions (issue 195): the
+/// TenderResult subcontracting value leaves and the PartyLegalEntity/CompanyID
+/// party mounts the serializer writes but no earlier member had shown.
+#[test]
+fn doe_sdk01_inventory_additions_are_claimed() {
+    let sub = parse_fixture("eforms/doe-sdk01-subcontract.xml");
+    let amount = sub
+        .values
+        .iter()
+        .find(|v| v.field_id == "SDK01-TenderResult-SubcontractTerms-Amount")
+        .expect("subcontracted amount is claimed");
+    assert!(matches!(
+        &amount.value,
+        NoticeValue::Amount { cents: 536_664_300, currency } if currency == "EUR"
+    ));
+
+    let rate = parse_fixture("eforms/doe-sdk01-subcontract-rate.xml");
+    assert!(
+        rate.values.iter().any(|v| v.field_id == "SDK01-TenderResult-SubcontractTerms-Rate"),
+        "subcontracted share is claimed"
+    );
+
+    let ple = parse_fixture("eforms/doe-sdk01-ple-mounts.xml");
+    for id in [
+        "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyLegalEntity-CompanyID",
+        "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyLegalEntity-CompanyID",
+    ] {
+        assert!(ple.values.iter().any(|v| v.field_id == id), "{id} is claimed");
+    }
+
+    let ai = parse_fixture("eforms/doe-sdk01-ple-addinfo.xml");
+    assert!(
+        ai.values.iter().any(|v| v.field_id
+            == "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyLegalEntity-CompanyID"),
+        "the additional-information party's registration id is claimed"
     );
 }
 

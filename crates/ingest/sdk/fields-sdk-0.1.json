@@ -623,6 +623,11 @@
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PartyName/cbc:Name"
   },
   {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
    "id": "SDK01-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PostalAddress-Country-IdentificationCode",
    "type": "code",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AdditionalInformationParty/cac:PostalAddress/cac:Country/cbc:IdentificationCode"
@@ -736,6 +741,16 @@
    "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-Contact-Telephone",
    "type": "text",
    "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:Contact/cbc:Telephone"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:AppealReceiverParty/cac:PartyLegalEntity/cbc:CompanyID"
+  },
+  {
+   "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-MediationParty-PartyLegalEntity-CompanyID",
+   "type": "id",
+   "xpathAbsolute": "/*/cac:ProcurementProjectLot/cac:TenderingTerms/cac:AppealTerms/cac:MediationParty/cac:PartyLegalEntity/cbc:CompanyID"
   },
   {
    "id": "SDK01-ProcurementProjectLot-TenderingTerms-AppealTerms-AppealReceiverParty-PartyName-Name",
@@ -1326,6 +1341,16 @@
    "id": "SDK01-TenderResult-Contract-ContractModification-ChangedNoticeIdentifier",
    "type": "text",
    "xpathAbsolute": "/*/cac:TenderResult/cac:Contract/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:ContractModification/efbc:ChangedNoticeIdentifier"
+  },
+  {
+   "id": "SDK01-TenderResult-SubcontractTerms-Amount",
+   "type": "amount",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:SubcontractTerms/cbc:Amount"
+  },
+  {
+   "id": "SDK01-TenderResult-SubcontractTerms-Rate",
+   "type": "number",
+   "xpathAbsolute": "/*/cac:TenderResult/cac:SubcontractTerms/cbc:Rate"
   },
   {
    "id": "SDK01-TenderResult-SubcontractTerms-Description",

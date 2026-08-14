@@ -1,0 +1,1014 @@
+<can:ContractAwardNotice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:can="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:nuts2021="http://publications.europa.eu/resource/schema/ted/2021/nuts" xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2">
+   <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+   <cbc:CustomizationID>eforms-sdk-0.1</cbc:CustomizationID>
+   <cbc:ID>ab0fb1f3-8c31-4c0c-92ee-875e10e33fe3</cbc:ID>
+   <cbc:ContractFolderID>0668eb8f-60e5-4f47-93b9-709f1c5622dc</cbc:ContractFolderID>
+   <cbc:IssueDate>2023-02-09+01:00</cbc:IssueDate>
+   <cbc:IssueTime>15:45:29+01:00</cbc:IssueTime>
+   <cbc:VersionID>1</cbc:VersionID>
+   <cbc:RequestedPublicationDate>2023-02-10</cbc:RequestedPublicationDate>
+   <cbc:RegulatoryDomain>32014L0024</cbc:RegulatoryDomain>
+   <cbc:NoticeTypeCode listName="result">can-standard</cbc:NoticeTypeCode>
+   <cbc:NoticeLanguageCode>DEU</cbc:NoticeLanguageCode>
+   <cac:ContractingParty>
+      <cac:ContractingPartyType>
+         <cbc:PartyTypeCode listName="buyer-legal-type">body-pl</cbc:PartyTypeCode>
+      </cac:ContractingPartyType>
+      <cac:ContractingActivity>
+         <cbc:ActivityTypeCode listName="authority-activity">gen-pub</cbc:ActivityTypeCode>
+      </cac:ContractingActivity>
+      <cac:Party>
+         <cbc:WebsiteURI>http://www.thueringenforst.de</cbc:WebsiteURI>
+         <cac:PartyName>
+            <cbc:Name languageID="DEU">ThüringenForst - Anstalt öffentlichen Rechts</cbc:Name>
+         </cac:PartyName>
+         <cac:PostalAddress>
+            <cbc:StreetName>Hallesche Straße 20</cbc:StreetName>
+            <cbc:CityName>Erfurt</cbc:CityName>
+            <cbc:PostalZone>99085</cbc:PostalZone>
+            <cbc:CountrySubentityCode listName="nuts">DEG01</cbc:CountrySubentityCode>
+            <cac:Country>
+               <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+            </cac:Country>
+         </cac:PostalAddress>
+         <cac:Contact>
+            <cbc:ElectronicMail>zentralevergabestelle@forst.thueringen.de</cbc:ElectronicMail>
+         </cac:Contact>
+         <cac:ServiceProviderParty>
+            <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+            <cac:Party>
+               <cac:PartyName>
+                  <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                  <cbc:CityName>Bonn</cbc:CityName>
+                  <cbc:PostalZone>53119</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                  <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:Party>
+         </cac:ServiceProviderParty>
+      </cac:Party>
+   </cac:ContractingParty>
+   <cac:TenderingTerms/>
+   <cac:TenderingProcess>
+      <cbc:ProcedureCode listName="procurement-procedure-type">open</cbc:ProcedureCode>
+   </cac:TenderingProcess>
+   <cac:ProcurementProject>
+      <cbc:ID schemeName="InternalID">8012-D-400-2022-0027</cbc:ID>
+      <cbc:Name languageID="DEU">Holzernte im Seilkrangelände in den Thüringer Forstämtern Frauenwald, Neuhaus, Oberhof und Schönbrunn</cbc:Name>
+      <cbc:Description languageID="DEU">ThüringenForst - Anstalt öffentlichen Rechts, vertreten durch die Thüringer Forstämter Finsterbergen und Frauenwald, beabsichtigt die Beauftragung von Unternehmen mit der Ernte von Käfer- und/oder Frischholz in Steilhanglagen des Thüringer Waldes.
+Die Maßnahmen, verteilt auf 7 Lose, sind im Zeitraum vom 01.06.2023 bis zum 30.09.2023 zu erbringen.</cbc:Description>
+      <cbc:ProcurementTypeCode listName="contract-nature">services</cbc:ProcurementTypeCode>
+      <cbc:Note languageID="DEU">Zusätzliche Angaben: Frist für Bieterfragen: 04.01.2023, 09:00 Uhr</cbc:Note>
+      <cac:RequestedTenderTotal>
+         <cbc:TotalAmount currencyID="EUR">1307200.00</cbc:TotalAmount>
+      </cac:RequestedTenderTotal>
+      <cac:MainCommodityClassification>
+         <cbc:ItemClassificationCode listName="cpv">77230000</cbc:ItemClassificationCode>
+      </cac:MainCommodityClassification>
+   </cac:ProcurementProject>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">1</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Frauenwald</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 4500 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamtsbereich Frauenwald
+Reviere Tannengrund und Kickelhahn</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0F</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0002</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">2</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Oberhof</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit selbstabstützendem Seilkran bzw. Baggerseilkran einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+Hinweis: Keine/nicht ausreichend Ankerbäume zum Abspannen vorhanden. Geländegängigkeit der Seilkraneinheit zwingend erforderlich, da Befahrung von Maschinenwegen/unbefestigten Bereichen mit beengten Platzverhältnissen
+geplante Menge: 6000 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamtsbereich Oberhof
+Reviere Goldlauter und Dietzhausen</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0B</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0003</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">3</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Neuhaus I</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 2500 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamtsbereicht Neuhaus
+Reviere Siegmundsburg und Steinheid</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0H</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0004</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">4</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Neuhaus II</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 2500 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamtsbereicht Neuhaus
+Reviere Reichmannsdorf und Schmiedefeld</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0H</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0005</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">5</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Schönbrunn I</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 3000 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamt Schönbrunn
+Reviere Nahetal und Schleusingerneundorf</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0E</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0006</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">6</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Schönbrunn II</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 5000 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamt Schönbrunn
+Reviere Sachsenbrunn und Schnett</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0E</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0007</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Ein Nachprüfungsantrag ist gemäß § 160 Abs. 3 GWB unzulässig, wenn:
+1) der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrages und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach §134 Abs. 2 GWB bleibt unberührt,
+2) Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+3) Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Angebotsabgabe oder zur Bewerbung gegenüber dem Auftraggeber gerügt werden,
+4) mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.
+Die Unwirksamkeit eines öfffentlichen Auftrags gem. § 135 Abs. 1 GWB kann nur festgestellt werden, wenn sie im Nachprüfungsverfahren innerhalb von 30 Kalendertagen nach der Information der betroffenen Bieter und Bewerber durch den öffentlichen Auftraggeber über den Abschluss des Vertrags, jedoch nicht später als sechs Monate nach Vertragsschluss geltend gemacht worden ist.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Vergabekammer des Freistaates Thüringen</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Jorge-Semprún-Platz 4</cbc:StreetName>
+                  <cbc:CityName>Weimar</cbc:CityName>
+                  <cbc:PostalZone>99423</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 361-573321254</cbc:Telephone>
+                  <cbc:Telefax>+49 361-573321059</cbc:Telefax>
+                  <cbc:ElectronicMail>vergabekammer@tlvwa.thueringen.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:ID schemeName="InternalID">7</cbc:ID>
+         <cbc:Name languageID="DEU">Forstamt Schönbrunn III</cbc:Name>
+         <cbc:Description languageID="DEU">Holzeinschlag motor-manuell/Rückung mit Kurz- und Mittelstreckenseilkran oder Gebirgsharvester einschl. Prozessieren &amp; Ausformen/Zusammen-fahren und Poltern am nächsten LKW-Abfuhrweg
+geplante Menge: 5000 Efm</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77200000</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77210000</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211100</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:AdditionalCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">77211200</cbc:ItemClassificationCode>
+         </cac:AdditionalCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">Forstamt Schönbrunn
+Reviere Sachsenbrunn und Schnett</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DEG0E</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Frauenwald</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">198000.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Forstunternehmenn Tim Pohlmann</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Ilmenau</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">DEG0F</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Oberhof</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0002</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">268200.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Holz Klade GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Wolfsberg</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">AT213</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>AUT</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Neuhaus I</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0003</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">120000.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Hohe Tanne - Holz GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Großbreitenbach</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">DEG0F</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Neuhaus II</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0004</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">127500.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:Rate>100</cbc:Rate>
+         <cbc:SubcontractingConditionsCode listName="applicability">yes</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Forstmanagement Jürgen Nick</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Gemünden</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">DE26A</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Schönbrunn I</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0005</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">156000.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Hohe Tanne - Holz GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Großbreitenbach</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">DEG0F</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Schönbrunn II</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0006</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">219000.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Holz Klade GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Wolfsberg</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">AT213</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>AUT</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-02-05</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>8012-D-400-2022-0027</cbc:ID>
+         <cbc:IssueDate>2023-02-06</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Forstamt Schönbrunn III</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0007</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">218500.00</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:SubcontractingConditionsCode listName="applicability">no</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">non-sme</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Holz Klade GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:CityName>Wolfsberg</cbc:CityName>
+               <cbc:CountrySubentityCode listName="nuts">AT213</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>AUT</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+</can:ContractAwardNotice>

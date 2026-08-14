@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED), 14 files, 266 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 19 files, 392 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -54,6 +54,11 @@ exercise is specific to those vintages.
 | `pin-part-rl-00679774-2023.xml` | 7 669 | 4 | 1.7 | LV | **Issue 195: address description on a Part.** From monthly `2023-11`. `RealizedLocation/Address/cbc:Description` on a PIN whose lots are Parts — outside the procedure→Lot alias, and aliases do not compose, so `UBL-AddressDescription` is also written at Lot level for the Lot→Part alias to mirror. |
 | `cn-shortlist-tp-00047617-2024.xml` | 20 323 | 23 | 1.7 | FR | **Issue 195: design-contest shortlist under TenderingProcess.** From monthly `2024-01`. The publisher merges the pre-selected participants (BT-47, declared under TenderingTerms) into the TenderingProcess shortlist block beside the BT-51/BT-50 quantities. Exercises the EconomicOperatorShortList `ALIASES` graft. |
 | `cn-selc-tp-00157944-2024.xml` | 24 303 | 16 | 1.8 | BE | **Issue 195: selection criteria under TenderingProcess.** From daily `20240315_2024054`. Each lot repeats the identical `efac:SelectionCriteria` block under both TenderingTerms (the SDK mount) and TenderingProcess (unenumerated). Exercises the TenderingTerms→TenderingProcess `ALIASES` graft. Non-EN (NLD): the quirk class is Belgian-platform specific. |
+| `doe-sdk10-selc-appealterms.xml` | 14,968 | 4 | 1.0 | DE (DÖE) | **Issue 195: selection criteria inside AppealTerms.** From DÖE monthly `2022-12`. A 2022 tool writes the `efac:SelectionCriteria` extension under the procedure TenderingTerms' `cac:AppealTerms` — one mount deeper than any SDK declares. Exercises the AppealTerms `ALIASES` graft. |
+| `doe-sdk01-subcontract.xml` | 17,207 | 29 | 0.1 | DE (DÖE) | **Issue 195: TenderResult subcontracting value.** From DÖE monthly `2023-02`. Plain-UBL pre-release result model: `cac:TenderResult/cac:SubcontractTerms` with `cbc:Amount` (BT-553 shape) beside the conditions code the empirical inventory already knew. Pins `SDK01-TenderResult-SubcontractTerms-Amount`. |
+| `doe-sdk01-subcontract-rate.xml` | 60,053 | 29 | 0.1 | DE (DÖE) | **Issue 195: subcontracted share.** Same block, `cbc:Rate` variant (the BT-555 percentage shape). Pins `SDK01-TenderResult-SubcontractTerms-Rate`. |
+| `doe-sdk01-ple-mounts.xml` | 21,805 | 29 | 0.1 | DE (DÖE) | **Issue 195: PartyLegalEntity under the lot appeal parties.** From DÖE monthly `2023-08`. `cac:PartyLegalEntity/cbc:CompanyID` under the lot's AppealReceiverParty AND MediationParty — two mounts the empirical inventory lacked (the member advanced from one to the other across re-parses, the issue-87 rewrite in action). |
+| `doe-sdk01-ple-addinfo.xml` | 30,461 | 29 | 0.1 | DE (DÖE) | **Issue 195: PartyLegalEntity under AdditionalInformationParty.** From DÖE monthly `2023-09`. The third missing CompanyID mount. |
 
 ### On BT-195 naming
 

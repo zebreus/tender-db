@@ -1,0 +1,282 @@
+<can:ContractAwardNotice xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:can="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:nuts2021="http://publications.europa.eu/resource/schema/ted/2021/nuts" xmlns:sig="urn:oasis:names:specification:ubl:schema:xsd:SignatureBasicComponents-2">
+   <cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+   <cbc:CustomizationID>eforms-sdk-0.1</cbc:CustomizationID>
+   <cbc:ID>ee0ac39a-e9a7-4e1a-8bd6-794423b0e7dc</cbc:ID>
+   <cbc:ContractFolderID>7269534e-06d8-4f63-a5e2-b393df4d1a30</cbc:ContractFolderID>
+   <cbc:IssueDate>2023-02-09+01:00</cbc:IssueDate>
+   <cbc:IssueTime>15:45:28+01:00</cbc:IssueTime>
+   <cbc:VersionID>1</cbc:VersionID>
+   <cbc:RequestedPublicationDate>2023-02-10</cbc:RequestedPublicationDate>
+   <cbc:RegulatoryDomain>32014L0024</cbc:RegulatoryDomain>
+   <cbc:NoticeTypeCode listName="result">can-standard</cbc:NoticeTypeCode>
+   <cbc:NoticeLanguageCode>DEU</cbc:NoticeLanguageCode>
+   <cac:ContractingParty>
+      <cac:ContractingPartyType>
+         <cbc:PartyTypeCode listName="buyer-legal-type">cga</cbc:PartyTypeCode>
+      </cac:ContractingPartyType>
+      <cac:ContractingActivity>
+         <cbc:ActivityType languageID="DEU">Bau von Wasserstraßen</cbc:ActivityType>
+      </cac:ContractingActivity>
+      <cac:Party>
+         <cbc:WebsiteURI>https://www.vergabe.bayern.de</cbc:WebsiteURI>
+         <cac:PartyName>
+            <cbc:Name languageID="DEU">Bundesrepublik Deutschland und Freistaat Bayern, letztlich vertreten durch die WIGES Wasserbauliche Infrastrukturgesellschaft mbH</cbc:Name>
+         </cac:PartyName>
+         <cac:PostalAddress>
+            <cbc:StreetName>Blutenburgstraße 20</cbc:StreetName>
+            <cbc:CityName>München</cbc:CityName>
+            <cbc:PostalZone>80636</cbc:PostalZone>
+            <cbc:CountrySubentityCode listName="nuts">DE212</cbc:CountrySubentityCode>
+            <cac:Country>
+               <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+            </cac:Country>
+         </cac:PostalAddress>
+         <cac:Contact>
+            <cbc:Telephone>+49 89-99222281</cbc:Telephone>
+            <cbc:Telefax>+49 89-99222299</cbc:Telefax>
+            <cbc:ElectronicMail>evergabe@wiges-gmbh.de</cbc:ElectronicMail>
+         </cac:Contact>
+         <cac:ServiceProviderParty>
+            <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+            <cac:Party>
+               <cac:PartyName>
+                  <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                  <cbc:CityName>Bonn</cbc:CityName>
+                  <cbc:PostalZone>53119</cbc:PostalZone>
+                  <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:PartyLegalEntity>
+                  <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+               </cac:PartyLegalEntity>
+               <cac:Contact>
+                  <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                  <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:Party>
+         </cac:ServiceProviderParty>
+      </cac:Party>
+   </cac:ContractingParty>
+   <cac:TenderingProcess>
+      <cbc:ProcedureCode listName="procurement-procedure-type">open</cbc:ProcedureCode>
+   </cac:TenderingProcess>
+   <cac:ProcurementProject>
+      <cbc:ID schemeName="InternalID">M-095-22</cbc:ID>
+      <cbc:Name languageID="DEU">Donauausbau Straubing - Vilshofen, Hochwasserschutz Niederalteich, VE18 - Erd-/Tiefbau - Deiche NiDo, SEEB, SCEI, Rückbau Donaudeich, HWS Wände, Betonbauwerke</cbc:Name>
+      <cbc:Description languageID="DEU">Gegenstand der Vergabe sind Bauleistungen an der bestehenden Hochwasserschutzanlage um die Ortschaft Niederalteich. Bei den Hochwasserschutzanlagen handelt es sich um Massivbauwerke und Deiche entlang der Donau und des rechten Ufers der Hengersberger Ohe.</cbc:Description>
+      <cbc:ProcurementTypeCode listName="contract-nature">works</cbc:ProcurementTypeCode>
+      <cbc:Note languageID="DEU">Zusätzliche Angaben: Die Vergabeunterlagen stehen kostenfrei und unmittelbar zugänglich auf www.vergabe.bayern.de unter der Vergabe Nr. M-095-22 zur Verfügung.
+Angebote oder Bewerbungen dürfen elektronisch nur über die Vergabeplattform des Freistaates Bayern www.vergabe.bayern.de abgegeben werden.
+Angebote oder Bewerbungen, die auf anderen Vergabeplattformen, z. B. www.evergabe.online.de abgeben werden, können nicht gewertet werden.
+Wir weisen darauf hin, dass ein eventueller Bieterdialog (Fragen und Antworten) nur über die Plattform www.vergabe.bayern.de abgewickelt wird.
+Von einer möglichen Nachforderung von Unterlagen ist das Formblatt 225a ausgenommen!</cbc:Note>
+      <cac:RequestedTenderTotal>
+         <cbc:TotalAmount currencyID="EUR">87000000.00</cbc:TotalAmount>
+      </cac:RequestedTenderTotal>
+      <cac:MainCommodityClassification>
+         <cbc:ItemClassificationCode listName="cpv">45246400</cbc:ItemClassificationCode>
+      </cac:MainCommodityClassification>
+   </cac:ProcurementProject>
+   <cac:ProcurementProjectLot>
+      <cbc:ID schemeName="Lot">LOT-0000</cbc:ID>
+      <cac:TenderingTerms>
+         <cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+         <cac:AwardingTerms>
+            <cac:AwardingCriterion>
+               <cac:SubordinateAwardingCriterion>
+                  <cbc:AwardingCriterionTypeCode listName="award-criterion-type">price</cbc:AwardingCriterionTypeCode>
+               </cac:SubordinateAwardingCriterion>
+            </cac:AwardingCriterion>
+         </cac:AwardingTerms>
+         <cac:AppealTerms>
+            <cac:PresentationPeriod>
+               <cbc:Description languageID="DEU">Der Nachprüfungsantrag ist nach § 160 Abs. 3 GWB unzulässig, soweit der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrags erkannt und gegenüber dem Auftraggeber nicht innerhalb einer Frist von zehn Kalendertagen gerügt hat; Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, müssen spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Bewerbung oder zur Angebotsabgabe gegenüber dem Auftraggeber gerügt werden, Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, spätestens bis zum Ablauf der Frist zur Bewerbung oder zur Angebotsabgabe. Der Nachprüfungsantrag ist ebenfalls unzulässig, wenn mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind.</cbc:Description>
+            </cac:PresentationPeriod>
+            <cac:AppealInformationParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">WIGES Wasserbauliche Infrastrukturgesellschaft mbH</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Blutenburgstraße 20</cbc:StreetName>
+                  <cbc:CityName>München</cbc:CityName>
+                  <cbc:PostalZone>80636</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 89-99222281</cbc:Telephone>
+                  <cbc:Telefax>+49 89-99222299</cbc:Telefax>
+                  <cbc:ElectronicMail>evergabe@wiges-gmbh.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealInformationParty>
+            <cac:AppealReceiverParty>
+               <cac:PartyName>
+                  <cbc:Name languageID="DEU">Regierung von Oberbayern, Vergabekammer Südbayern</cbc:Name>
+               </cac:PartyName>
+               <cac:PostalAddress>
+                  <cbc:StreetName>Maximilianstraße 39</cbc:StreetName>
+                  <cbc:CityName>München</cbc:CityName>
+                  <cbc:PostalZone>80534</cbc:PostalZone>
+                  <cac:Country>
+                     <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                  </cac:Country>
+               </cac:PostalAddress>
+               <cac:Contact>
+                  <cbc:Telephone>+49 89-21762411</cbc:Telephone>
+                  <cbc:Telefax>+49 89-21762847</cbc:Telefax>
+                  <cbc:ElectronicMail>poststelle@reg-ob.bayern.de</cbc:ElectronicMail>
+               </cac:Contact>
+            </cac:AppealReceiverParty>
+         </cac:AppealTerms>
+      </cac:TenderingTerms>
+      <cac:ProcurementProject>
+         <cbc:Name languageID="DEU">Donauausbau Straubing - Vilshofen, Hochwasserschutz Niederalteich, VE18 - Erd-/Tiefbau - Deiche NiDo, SEEB, SCEI, Rückbau Donaudeich, HWS Wände, Betonbauwerke</cbc:Name>
+         <cbc:Description languageID="DEU">Die hier in der Vergabeeinheit 18 (VE18) ausgeschriebenen Maßnahmen beinhalten im Wesentlichen die nachfolgend aufgeführten Bauwerke (BW):
+- Hochwasserschutzdeich Seebach SEEB 0+000 bis 1+340 (BW1, 2, 3), teilweise mit HWS Stahlbeton- (StB) Wänden
+- Hochwasserschutzdeich Scheibe SCEI 2+300 bis 2+559,6 (BW9)
+- Hochwasserschutzdeich Niederalteich-Donau NIDO 0+000 bis 0+345; NIDO 0+352 bis 1+528 (BW10, 11, 12, 13, 14,15), teilweise mit HWS StB Wänden
+- Bauwerk Stemmtor - Zufahrt Fähre NIDO 0+345 (BW27)
+- Bauwerk Abwasserleitung DN 600 Kläranlage Niederalteich NIDO 1+379 (BW79)
+- Deichabtrag (Donaudeich)
+-- Fluss-km ca. 2279,352 bis 2278,835 und Fluss-km ca. 2278,136 bis 2277,095 (BW95) Fluss-km ca. 2277,095 bis 2276,790 (BW97)
+- Deichabtrag (landseitig Donaudeich)
+-- Fluss-km ca. 2278,800 und ca. 2278,150 (BW96)
+Erdbau:
+- Erdabtrag/-aushub (ca. 57.000 m³)
+- Bauwerkshinterfüllung (ca. 1.300 m³)
+- Deichschüttung (ca. 59.000 m³)
+- Mineralische Innendichtung in Deichachse (ca. 2.500 m³)
+- Filtermaterial Deich (ca. 6.500 m³)
+Spundwandarbeiten:
+- Baugrubenspundwand mit Gurtung / Aussteifung (ca. 1.600 m²)
+- Bauseitige Stahlspundwände kürzen (ca. 200 m)
+- Ziehen von bauseitigen Spundwänden (ca. 550 m²)
+- Spundwand für Deichinnendichtung und Tiefgründung HWS-Wand (ca. 4.300 m²)
+Wasserhaltung:
+-Offene Wasserhaltungsanlage (2 St.)
+Beton- und Stahlbetonarbeiten:
+- Sauberkeitsschicht C12/15 (ca. 150 m3)
+- Unbewehrten Beton Kolkschutz mit C12/15 X0 (ca. 220 m³)
+- Bewehrten Beton (Bodenplatte, Wand, Decke, Lastverteilungsplatte, Kopfbalken) (ca. 1.830 m³)
+- Unbewehrten Beton mit C20/25 XC2 WF (ca. 14 m³)
+- Betonstahl (ca. 190 t)
+- Ortbetonschächte Kläranlage herstellen (ca. 2 St.)
+Treppen:
+- Treppen herstellen (ca. 12 Blockstufen)
+- Treppen ausbauen und wiedereinbauen (ca. 49 Blockstufen)
+Straßen- und Wegebauarbeiten:
+- Asphaltarbeiten (ca. 6.100 m²)
+- Schottertragschichten 0/32 mm (Asphalt, Schotterrasen, wassergebundene Decke) (ca. 4.600 m3)
+- Schottertragschichten 0/56 mm (Schotterrasen, wassergebundene Decke) (ca. 1.900 m3)
+- Deckschicht Brechsand (ca. 6.400 m²)
+- Schotterrasen (ca. 4.800 m²)
+- Hochbord aus Beton C12/15 (ca. 100 m)
+Rohr- und Leitungsbauarbeiten:
+- Gussrohre Auslauf Kläranlage inkl. Formstücke verlegen (ca. 35 m)
+- Stahlschutzrohr Kläranlage (ca. 21 m)
+Abbruch- und Rückbauarbeiten:
+- Rückbau und Abbruch von Treppen (ca. 4,1 t)
+- Rückbau und Abbruch von Stahlbetonbauwerken (ca. 32 m3)
+- Rückbau und Abbruch von Asphaltflächen (Asphaltdeck- und Asphalttragschichten) (ca. 1.245 m3)
+- Rückbau und Abbruch von Asphalttragschicht schadstoffbelastet (ca. 145 t)
+- Rückbau und Abbruch von Abwasserrohrleitungen GGG (ca. 40 m)
+- Rückbau und Abbruch von Abwasserrohrleitung Asbestzement (AZ) (ca. 36 m)
+- Rückbau und Abbruch von Schmalwand Deichinnendichtung im Bereich der Kläranlage (ca. 12 m3)
+- Rückbau und Abbruch von wassergebundener Wegedecke (ca. 1.695 m²)
+Technische Bearbeitung
+- Baustelleneinrichtungsplan bzw. -pläne erstellen
+- Bauablaufplan erstellen
+- Hochwasserschutzkonzept erstellen
+- Qualitätssicherungskonzept Erd- und Betonbau erstellen
+- Planungen zum Spundwandeinbringen (z. B. Rammplanungen) erstellen
+- Planung Traggerüste Klasse B
+- Abschlussvermessung und Dokumentation</cbc:Description>
+         <cac:MainCommodityClassification>
+            <cbc:ItemClassificationCode listName="cpv">45246400</cbc:ItemClassificationCode>
+         </cac:MainCommodityClassification>
+         <cac:RealizedLocation>
+            <cbc:Description languageID="DEU">94557 Niederalteich, Landkreis Deggendorf, Regierungsbezirk Niederbayern.
+Die Maßnahmen befinden sich im Landkreis Deggendorf am linken Ufer der Donau bei ca. Fluss-km 2280,8 bis ca. 2274,0 und liegen im Bereich der Gemeinde Niederalteich Gemarkung Niederalteich.</cbc:Description>
+         </cac:RealizedLocation>
+         <cac:RealizedLocation>
+            <cac:Address>
+               <cbc:CountrySubentityCode listName="nuts">DE224</cbc:CountrySubentityCode>
+            </cac:Address>
+         </cac:RealizedLocation>
+      </cac:ProcurementProject>
+   </cac:ProcurementProjectLot>
+   <cac:TenderResult>
+      <cbc:TenderResultCode listName="winner-selection-status">selec-w</cbc:TenderResultCode>
+      <cbc:AwardDate>2023-01-26</cbc:AwardDate>
+      <cac:Contract>
+         <cbc:ID>M-095-22</cbc:ID>
+         <cbc:IssueDate>2023-01-27</cbc:IssueDate>
+         <cbc:Description languageID="DEU">Donauausbau Straubing - Vilshofen, Hochwasserschutz Niederalteich, VE18 - Erd-/Tiefbau - Deiche NiDo, SEEB, SCEI, Rückbau Donaudeich, HWS Wände, Betonbauwerke</cbc:Description>
+      </cac:Contract>
+      <cac:AwardedTenderedProject>
+         <cac:AdditionalFee>
+            <cbc:FeeTypeCode>concession-revenue-user</cbc:FeeTypeCode>
+         </cac:AdditionalFee>
+         <cac:ProcurementProjectLot>
+            <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+            <cac:TenderingProcess>
+               <cbc:TerminatedIndicator>false</cbc:TerminatedIndicator>
+            </cac:TenderingProcess>
+         </cac:ProcurementProjectLot>
+         <cac:LegalMonetaryTotal>
+            <cbc:PayableAmount currencyID="EUR">9305935.21</cbc:PayableAmount>
+         </cac:LegalMonetaryTotal>
+      </cac:AwardedTenderedProject>
+      <cac:SubcontractTerms>
+         <cbc:Amount currencyID="EUR">5366643.00</cbc:Amount>
+         <cbc:SubcontractingConditionsCode listName="applicability">yes</cbc:SubcontractingConditionsCode>
+      </cac:SubcontractTerms>
+      <cac:WinningParty>
+         <cac:Party>
+            <cbc:IndustryClassificationCode listName="economic-operator-size">small</cbc:IndustryClassificationCode>
+            <cac:PartyName>
+               <cbc:Name languageID="DEU">Mayerhofer Hoch-, Tief- und Ingenieurbau GmbH</cbc:Name>
+            </cac:PartyName>
+            <cac:PostalAddress>
+               <cbc:StreetName>Simon-Breu-Str. 8</cbc:StreetName>
+               <cbc:CityName>Simbach</cbc:CityName>
+               <cbc:PostalZone>84359</cbc:PostalZone>
+               <cbc:CountrySubentityCode listName="nuts">DE22A</cbc:CountrySubentityCode>
+               <cac:Country>
+                  <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+               </cac:Country>
+            </cac:PostalAddress>
+            <cac:ServiceProviderParty>
+               <cbc:ServiceTypeCode listName="organisation-role">ted-esen</cbc:ServiceTypeCode>
+               <cac:Party>
+                  <cac:PartyName>
+                     <cbc:Name>Beschaffungsamt des BMI</cbc:Name>
+                  </cac:PartyName>
+                  <cac:PostalAddress>
+                     <cbc:StreetName>Brühler Str. 3</cbc:StreetName>
+                     <cbc:CityName>Bonn</cbc:CityName>
+                     <cbc:PostalZone>53119</cbc:PostalZone>
+                     <cbc:CountrySubentityCode listName="nuts">DEA22</cbc:CountrySubentityCode>
+                     <cac:Country>
+                        <cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+                     </cac:Country>
+                  </cac:PostalAddress>
+                  <cac:PartyLegalEntity>
+                     <cbc:CompanyID>0204: 991-1405-10</cbc:CompanyID>
+                  </cac:PartyLegalEntity>
+                  <cac:Contact>
+                     <cbc:Telephone>0228 99 610 1234</cbc:Telephone>
+                     <cbc:ElectronicMail>ticket@bescha.bund.de</cbc:ElectronicMail>
+                  </cac:Contact>
+               </cac:Party>
+            </cac:ServiceProviderParty>
+         </cac:Party>
+      </cac:WinningParty>
+   </cac:TenderResult>
+</can:ContractAwardNotice>

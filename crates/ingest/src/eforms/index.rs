@@ -174,6 +174,16 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:EconomicOperatorShortList",
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:EconomicOperatorShortList",
     ),
+    // Selection criteria mounted inside AppealTerms (issue 195): a 2022 DÖE
+    // tool on eforms-sdk-1.0 (9 PINs) writes the SelectionCriteria extension
+    // block one level too deep — under the procedure TenderingTerms'
+    // cac:AppealTerms instead of the lot TenderingTerms extension where every
+    // SDK anchors it. Same graft family as the TenderingProcess mount above;
+    // the criteria text lands in its section as published.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
+        "/*/cac:TenderingTerms/cac:AppealTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria",
+    ),
     // Publishers restate award-criterion fields (type code, weight) on the
     // parent `cac:AwardingCriterion`, which the SDK models only under
     // `cac:SubordinateAwardingCriterion` (107 notices in the TED monthly
