@@ -10,22 +10,27 @@ The CS drain's job history line reads:
 
 > 79 package(s): 0 reclaimed, 0 still held, 0 already parsed, **599262 skipped by dispatch policy**
 
-The unparsable-xml bucket held **4,441 rows** (one per CS member FILE). 599,262/4,441 ≈ 135:
-`tally.skipped` counts text-era **records** the dispatch policy declined, while
-`flag_skipped_members` stamps (correctly — verified on the box) the 4,441 member-FILE rows.
-The job summary's "outcomes sum to the bucket" contract (issue 87) silently breaks for
-text-era packages: the line mixes units, and a reader comparing the summary to the bucket
-size concludes the run walked 135× more held work than existed.
+Issue 180 recorded the bucket as **4,441 CS rows**; 599,262/4,441 ≈ 135 ≈ records-per-CS-file.
+But the obvious "tally counts records" explanation does NOT survive the code: the walker's
+`skipped` increments once per DECLINED MEMBER (`Disposition::Skipped`, process.rs:246-251),
+and only members present in the held set reach dispatch at all (the issue-77 early-return),
+while `quarantine_held_member_files` DISTINCTs on `member_file()` — so a 599,262 tally
+implies ~599k distinct held member paths across those 79 packages, i.e. the bucket may have
+really held ~600k per-record rows ("unknown token" is a parse-level, per-record failure)
+and issue 180's 4,441 was the FILE count, not the row count. The two readouts cannot both
+be right — and whichever is wrong, the job summary and the issue ledger disagree with each
+other today.
 
-Job 654 has the milder twin: "4 reclaimed" counts records; the ledger stamped 2 member rows
-(+20 skipped siblings). Both are record counts over a member-row ledger.
+Job 654's milder twin: "4 reclaimed" counts records; the quarantine ledger stamped 2 member
+rows (+20 skipped siblings).
 
-## Fix directions (pick one)
+## Next (one bounded query each)
 
-- Count declines at the member-FILE level in the walker's tally (dedupe by `member_file()`
-  before counting, or count only paths that matched a quarantine row when flagging), or
-- Keep record counts but label them: "599262 record(s) of 4441 held member(s) skipped".
+- `SELECT count(*), count(DISTINCT member_path) FROM quarantine WHERE reason='unparsable-xml'
+  AND skipped_at BETWEEN 1786656055 AND 1786657368` — pins rows-vs-files for job 653.
+- Same split for the historical bucket definition used in issue 180's 4,441 figure.
+- Then decide: fix the tally's unit, fix the summary label, or fix issue 180's record —
+  and make the summary line state its unit either way.
 
-Bounded: reporting only — the row stamps themselves are correct (issue-180 verification).
-Check `reclaim_package`'s report fields and the `run_reprocess` summary formatting; a unit
-test on a two-record declined file should pin members=1 (or the labeled form).
+Row stamps themselves verified correct on the box (issue-180 pass: bucket empty, 0 still
+held). Reporting/records only.

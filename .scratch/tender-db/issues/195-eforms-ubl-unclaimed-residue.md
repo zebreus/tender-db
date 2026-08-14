@@ -155,3 +155,15 @@ issue 139 thread). Reprocess reason=unclaimed-content enqueued (job 1 of the new
 60 packages) with trailing incremental project (job 2). Expected drain: ~23 rows (5×
 RenewalsIndicator DE, 7× Part RealizedLocation Description, 11× shortlist TenderingProcess).
 Counts next poll.
+
+**2026-08-14 ~03:3x CEST (orchestrator) — three-class reclaim complete: 23/23 drained.**
+Job "reprocess unclaimed-content" (rev 0a2acc7): 60 packages, 23 reclaimed, 101 still held,
+34,543 already parsed, 0 policy-skipped. The 23 = exactly the three implemented classes
+(5× lot RenewalsIndicator DE, 7× Part RealizedLocation Address Description, 11× design-
+contest shortlist TenderingProcess). Residue now 101: 99 unclaimed-content + 2 rows whose
+re-parse fails as missing-publication-id (issue-87 current-reason rewrite — new class,
+needs a look). Trailing incremental project running. Next slice: pin the remaining classes
+(10× sdk-0.1 SubcontractTerms/Amount, 9× sdk-1.0 AppealTerms/UBLExtensions, 6+3×
+ProcurementAdditionalType listName, 4× root FieldsPrivacy, 2× AwardingCriterion
+StrategicProcurement, 2× nested ServiceProviderParty, 1× SubTypeDescription, + the tail
+below the old readout cut) and the 2 missing-publication-id rows.
