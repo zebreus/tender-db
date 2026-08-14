@@ -120,17 +120,24 @@ pub fn cents(text: &str) -> Result<i64, String> {
 /// insisting on the SDK's offset discipline for it is inconsistent — the
 /// publishers who put a deadline in an undeclared element also omit the
 /// offset (`2025-09-09` in UBL-TenderValidityDeadline). Every SDK-declared
-/// field stays strict: an offsetless date is malformed and quarantines.
+/// field stays strict — an offsetless date is malformed and quarantines —
+/// with ONE exception: `OPT-999`, the DUMMY `cac:TenderResult/cbc:AwardDate`
+/// that UBL 2.3 forces onto every CAN and the SDK models only to swallow.
+/// It is not award data (the real award date is `efbc:AwardDate` in the
+/// result extension), so a zoneless dummy must not fail the member
+/// (issue 195: a 2025 eSender writes `2025-05-21` there).
 pub fn timestamp_for(field: &FieldInfo, date: &str, time: Option<&str>) -> Result<Value, String> {
     let date = offset_or_utc(field, date);
     let time = time.map(|t| offset_or_utc(field, t));
     timestamp(&date, time.as_deref())
 }
 
-/// Append `Z` for `SDK01-` and `UBL-` fields whose lexical value carries no
-/// offset.
+/// Append `Z` for `SDK01-`, `UBL-` and dummy-`OPT-999` fields whose lexical
+/// value carries no offset.
 fn offset_or_utc<'a>(field: &FieldInfo, text: &'a str) -> std::borrow::Cow<'a, str> {
-    if (field.id.starts_with("SDK01-") || field.id.starts_with("UBL-")) && split_offset(text).is_err() {
+    if (field.id.starts_with("SDK01-") || field.id.starts_with("UBL-") || field.id == "OPT-999")
+        && split_offset(text).is_err()
+    {
         return format!("{text}Z").into();
     }
     text.into()

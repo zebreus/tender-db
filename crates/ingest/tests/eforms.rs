@@ -87,7 +87,7 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
     let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 28, "corpus changed; update the expectation");
+    assert_eq!(corpus.len(), 33, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -1180,6 +1180,59 @@ fn unknown_procurement_type_listname_claims_as_published() {
         value(&parsed, "PROCEDURE", "UBL-ProcurementAdditionalTypeCode"),
         NoticeValue::Code { code, list, .. } if code == "supplies" && list.as_deref() == Some("bogus-nature")
     ));
+}
+
+/// The 2026-08 four-class residue batch (issue 195): FieldsPrivacy hoisted to
+/// the root extension, the undeclared ExpectedOperatorQuantity, a service
+/// provider's own service provider, and the CVD flag on an award criterion —
+/// plus OPT-999's zoneless dummy AwardDate reading as UTC instead of failing
+/// the member.
+#[test]
+fn residue_batch_sibling_mounts_are_claimed() {
+    // Root-mounted FieldsPrivacy: the published FieldIdentifierCode predicate
+    // keeps the exact BT-195 ids of the anchored families.
+    let fp = parse_fixture("eforms/can-fp-root-profea-00462901-2024.xml");
+    assert!(
+        fp.values.iter().any(|v| v.field_id.starts_with("BT-195(BT-88)")),
+        "root-mounted pro-fea privacy block claims under BT-195(BT-88)"
+    );
+    let fp2 = parse_fixture("eforms/cn-fp-root-awacrityp-00004191-2025.xml");
+    assert!(
+        fp2.values.iter().any(|v| v.field_id.starts_with("BT-195(BT-539)")),
+        "root-mounted awa-cri-typ privacy block claims under BT-195(BT-539)"
+    );
+
+    // ExpectedOperatorQuantity beside the declared maximum: both claimed.
+    let fa = parse_fixture("eforms/cn-fa-expected-00586487-2024.xml");
+    assert!(
+        fa.values.iter().any(|v| v.field_id == "UBL-ExpectedOperatorQuantity"),
+        "the undeclared expected participant count is claimed"
+    );
+    assert!(
+        fa.values.iter().any(|v| v.field_id == "BT-113-Lot"),
+        "the declared maximum keeps its BT id"
+    );
+
+    // Self-referential nested service provider: the outer level is an empty
+    // shell (its Party holds only the nested provider), so the one reference
+    // that exists — the nested one — is what must claim.
+    let spp = parse_fixture("eforms/cn-spp-nested-00232905-2025.xml");
+    assert_eq!(
+        spp.values.iter().filter(|v| v.field_id == "OPT-300-Procedure-SProvider").count(),
+        1,
+        "the nested service-provider reference is claimed"
+    );
+
+    // CVD flag on an award criterion + the zoneless OPT-999 dummy.
+    let sp = parse_fixture("eforms/can-sp-awcrit-00344162-2025.xml");
+    assert!(
+        sp.values.iter().any(|v| v.field_id == "BT-717-Lot"),
+        "the criterion-mounted CVD flag claims under BT-717"
+    );
+    assert!(
+        sp.values.iter().any(|v| v.field_id == "OPT-999"),
+        "the zoneless dummy award date reads as UTC instead of failing the member"
+    );
 }
 
 /// Issue 144, cause M: an Italian notice puts the BT-76 company-legal-form

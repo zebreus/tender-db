@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED and DÖE quirk members), 21 files, 420 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 26 files, 561 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -61,6 +61,11 @@ exercise is specific to those vintages.
 | `doe-sdk01-ple-addinfo.xml` | 30,461 | 29 | 0.1 | DE (DÖE) | **Issue 195: PartyLegalEntity under AdditionalInformationParty.** From DÖE monthly `2023-09`. The third missing CompanyID mount. |
 | `pin-pat-supplies-00660476-2023.xml` | 8,271 | 4 | 1.8 | DE | **Issue 195: unlisted ProcurementTypeCode listName.** From monthly `2023-10`. The eSender writes `listName="supplies"` carrying a contract-nature value — no SDK predicate matches; claimed as published under `UBL-ProcurementAdditionalTypeCode` (policy reversal of the issue-144 negative control). |
 | `can-pat-social-00250633-2024.xml` | 19,706 | 29 | 1.10 | FR | **Issue 195: BT-775's SDK-1.0 shape.** From monthly `2024-04`. `listName="social-procurement"` (the field moved into the StrategicProcurement extension after 1.0) beside DECLARED accessibility/environmental-impact codes — pins that BT-754/BT-774 keep their exact ids while the dead shape claims relaxed. |
+| `can-fp-root-profea-00462901-2024.xml` | 14,182 | 29 | 1.9 | PL | **Issue 195: FieldsPrivacy at the root.** From monthly `2024-08`. The pro-fea (BT-88) withheld block hoisted to the root EformsExtension; grafted from the procedure TenderingProcess anchor — the published FieldIdentifierCode predicate keeps BT-195(BT-88) exact. |
+| `cn-fp-root-awacrityp-00004191-2025.xml` | 13,713 | 16 | 1.9 | PL | **Issue 195: FieldsPrivacy at the root, award-criterion family.** From monthly `2025-01`. awa-cri-typ (BT-539) blocks at the root; pins the second graft source (lot SubordinateAwardingCriterion anchor). |
+| `cn-fa-expected-00586487-2024.xml` | 73,183 | 16 | 1.10 | FR | **Issue 195: ExpectedOperatorQuantity.** From monthly `2024-09`. The framework's expected participant count beside the declared BT-113 maximum — no SDK minor declares the element; claimed as `UBL-ExpectedOperatorQuantity`, BT-113 keeps its id. |
+| `cn-spp-nested-00232905-2025.xml` | 19,054 | 16 | 1.12 | SK | **Issue 195: a provider's provider.** From monthly `2025-04`. ServiceProviderParty/Party/ServiceProviderParty (self-referential, the outer level an empty shell); the declared level grafts onto the nested mount. |
+| `can-sp-awcrit-00344162-2025.xml` | 12,840 | 29 | 1.12 | IT | **Issue 195: CVD flag on an award criterion + zoneless OPT-999.** From monthly `2025-05`. efac:StrategicProcurement (ApplicableLegalBasis) inside the AwardingCriterion extension, grafted from the lot TenderingTerms anchor; also pins the dummy TenderResult AwardDate reading zoneless as UTC. |
 
 ### On BT-195 naming
 

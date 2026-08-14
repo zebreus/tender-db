@@ -242,6 +242,41 @@ pub const ALIASES: &[(&str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/ext:UBLExtensions",
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/ext:UBLExtensions",
     ),
+    // FieldsPrivacy hoisted to the ROOT extension (issue 195, 4× sdk-1.9):
+    // the SDK anchors each withheld-field block beside the element it
+    // suppresses, but these publishers write the block directly under the
+    // root EformsExtension. Graft the two anchored families seen in the wild
+    // — the procedure TenderingProcess blocks (pro-fea BT-88, pro-typ BT-105)
+    // and the lot award-criterion blocks (awa-cri-typ BT-539) — onto the root
+    // mount; the FieldsPrivacy step's own published FieldIdentifierCode
+    // predicate keeps the BT-195…BT-198 ids exact, exactly as in the DÖE
+    // withheld-discriminator grafts above.
+    (
+        "/*/cac:TenderingProcess/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:FieldsPrivacy",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:FieldsPrivacy",
+    ),
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/cac:SubordinateAwardingCriterion/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:FieldsPrivacy",
+        "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:FieldsPrivacy",
+    ),
+    // A service provider's own service provider (issue 195, 2× sdk-1.12): the
+    // SDK models ONE ServiceProviderParty level under the contracting party;
+    // these notices nest a second, self-referential level (the eSender
+    // registering itself as its own provider). Graft the declared level onto
+    // the nested position, stored as published.
+    (
+        "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty",
+        "/*/cac:ContractingParty/cac:Party/cac:ServiceProviderParty/cac:Party/cac:ServiceProviderParty",
+    ),
+    // The CVD flag on an award criterion (issue 195, 2× sdk-1.12): an eSender
+    // mounts efac:StrategicProcurement (just ApplicableLegalBasis, BT-717's
+    // leaf) inside the AwardingCriterion's extension, beside the declared
+    // AwardCriterionParameter blocks — the SDK anchors the block at the lot's
+    // TenderingTerms extension.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:AwardingTerms/cac:AwardingCriterion/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:StrategicProcurement",
+    ),
 ];
 
 pub const EXTRA: &[(&str, &str, &str)] = &[
@@ -249,6 +284,15 @@ pub const EXTRA: &[(&str, &str, &str)] = &[
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicCatalogueUsageIndicator",
         "UBL-ElectronicCatalogueUsage",
         "indicator",
+    ),
+    // The framework's EXPECTED participant count beside the declared maximum
+    // (issue 195, 2× sdk-1.10): no SDK minor and no dialect declares
+    // cbc:ExpectedOperatorQuantity — BT-113 is the maximum — but the element
+    // is plain UBL and these notices publish both. Claimed as published.
+    (
+        "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingProcess/cac:FrameworkAgreement/cbc:ExpectedOperatorQuantity",
+        "UBL-ExpectedOperatorQuantity",
+        "integer",
     ),
     (
         "/*/cac:ProcurementProjectLot[cbc:ID/@schemeName='Lot']/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicOrderUsageIndicator",
@@ -1166,7 +1210,7 @@ fn insert_extra(
         "text" => Decision::Texts,
         "code" => Decision::Codes,
         "date" | "time" => Decision::Dates,
-        "indicator" => Decision::Integers,
+        "indicator" | "integer" => Decision::Integers,
         "amount" => Decision::Amounts,
         "number" => Decision::Numbers,
         "id" => Decision::Ids,
