@@ -57,3 +57,15 @@ sections (its content is first-class published data). The CHG-N/F14 family (~38 
 needs its own member look — change notices may genuinely enumerate changes differently
 per language. Implementation next firing: r209/parse.rs overlay mode + fixture from this
 member + the r208 twin path.
+
+**2026-08-14 ~13:1x CEST box time (orchestrator) — co-original adoption implemented +
+deployed (rev eb05139), reclaim running.** r209/parse.rs: a co-ORIGINAL secondary may OPEN
+a missing section, which is ADOPTED — inside it the text-only suppression lifts (nothing
+there is shared with the primary), so its codes/dates emit too; genuine TRANSLATION copies
+keep the strict guard (pinned by an EN-relabel negative on the new fixture
+f02-co-original-160877-2015.xml, corpus 6→7). Reprocess reason=translation-structure-
+mismatch running over all 94 rows — the CHG/F14 and LOT-2 families may be the same
+co-original mechanism (bilingual buyers' F14s enumerating changes per original) or may
+re-hold with fresh details; counts decide. Also: disk filled again mid-build (debug tree
+regrew to 27G); pruned artifacts >40MB, 22G free — recurring nuisance, consider a
+tmpfiles.d-style prune or cargo sweep in the worktree if it keeps biting.
