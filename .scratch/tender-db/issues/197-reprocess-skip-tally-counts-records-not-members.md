@@ -1,6 +1,6 @@
 # 197 — reprocess skip tally counts records, not members: "599262 skipped" for a 4,441-row bucket
 
-Status: needs-triage
+Status: resolved (2026-08-14)
 Kind: observability wart (job counts / ledger provenance)
 Relates to: 180 (the run that surfaced it), 84 (skip-by-policy provenance), 87 (outcomes must sum to the held set)
 
@@ -34,3 +34,16 @@ rows (+20 skipped siblings).
 
 Row stamps themselves verified correct on the box (issue-180 pass: bucket empty, 0 still
 held). Reporting/records only.
+
+**2026-08-14 ~04:2x CEST (orchestrator) — RESOLVED: root cause was terminality, not units.**
+The pin query: job 653 stamped exactly 4,441 rows = 4,441 distinct file paths (issue 180's
+figure was right). The 599,262 was the walker re-declining the 2008 monthlies' ~593k
+ALREADY-SKIPPED DTD sibling rows: quarantine_reclaim_packages and
+quarantine_held_member_files filtered only reprocessed_at, so skipped_at-terminal rows kept
+their packages on every unparsable-xml work list forever (~20 min of wasted walk per run,
+and summaries that no longer summed to the outstanding bucket, breaking issue 87's
+contract). Fix: both queries now require reprocessed_at IS NULL AND skipped_at IS NULL
+(store commit "policy-skipped rows fall off the reprocess work list"); both work-list tests
+extended with skipped rows. Deployed rev 77efcdb. Job 654's "4 reclaimed vs 2 member rows"
+remains the record/member unit split, now documented on the ledger's COR entry — no code
+change needed there.
