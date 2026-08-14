@@ -99,3 +99,10 @@ eSender registers the same org full-then-sparse (4 members). Re-published ids no
 quarantine. Fixtures ×2, corpus 40, ingest 221 green, pushed. Deploy stack now: adoption
 extension + this merge + ledger 43; then reprocess translation-structure-mismatch (2) and
 duplicate-section-id (23). Still gated on the long fold.
+
+**2026-08-14 ~16:1x CEST box time (orchestrator) — deploy 3f4457b; translation-structure-
+mismatch EXTINCT (2/2 reclaimed, job 679: the defective-original pair recovered via
+translation adoption).** Its trailing fold is the old-era full sweep again (~2h), with the
+duplicate-section-id reclaim (23 rows) queued behind it — counts next firing. Dashboard
+dual-tender-count observation parked until the queue idles (the coverage measure skips
+during write jobs by design; if the two numbers still diverge at idle, file it).
