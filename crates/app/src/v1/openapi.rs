@@ -7,10 +7,9 @@
 //! `tests/api.rs`, which fires a request at every path the spec declares and
 //! rejects any that the router does not actually serve.
 //!
-//! Served with `Access-Control-Allow-Origin: *` — deliberately, and safely: the
-//! document is public, static and secret-free, and the header is what lets
-//! browser-based viewers (the hosted Swagger UI, Redoc) load it straight from
-//! this origin. No other `/v1` response carries CORS headers.
+//! CORS comes from the shared unauthenticated-surface middleware
+//! (`super::public_cors`), which is what lets browser-based viewers (the
+//! hosted Swagger UI, Redoc) load the document straight from this origin.
 
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
@@ -20,14 +19,7 @@ pub const SPEC: &str = include_str!("../../data/openapi.json");
 
 /// Serve the spec. No state, no arguments: the content is a constant.
 pub async fn spec() -> Response {
-    (
-        [
-            (header::CONTENT_TYPE, "application/json; charset=utf-8"),
-            (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
-        ],
-        SPEC,
-    )
-        .into_response()
+    ([(header::CONTENT_TYPE, "application/json; charset=utf-8")], SPEC).into_response()
 }
 
 #[cfg(test)]

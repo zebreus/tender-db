@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "tender-db API",
-    "description": "Public procurement data — REST, live feeds (SSE), read-only SQL and webhooks. The historical backfill is ongoing, so collection counts grow over time. Money is integer minor units (`{\"cents\": 1234, \"currency\": \"EUR\"}`), never a float. Change cursors are opaque strings: compare for equality and pass back verbatim. The human-readable reference lives at /docs.",
+    "description": "Public procurement data — REST, live feeds (SSE), read-only SQL and webhooks. The historical backfill is ongoing, so collection counts grow over time. Money is integer minor units (`{\"cents\": 1234, \"currency\": \"EUR\"}`), never a float. Change cursors are opaque strings: compare for equality and pass back verbatim. Every endpoint that needs no token is CORS-open to any origin (browser JavaScript can call it directly, SSE resume included); the token-gated endpoints are not — call those server-side. The human-readable reference lives at /docs.",
     "version": "0.1.0",
     "license": {
       "name": "AGPL-3.0-or-later",

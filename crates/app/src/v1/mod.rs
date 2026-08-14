@@ -170,7 +170,94 @@ pub fn router(state: AppState) -> Router {
         // static path still wins over the `/v1/{*rest}` catch-all: axum routes
         // by specificity, not registration order.)
         .route("/v1/openapi.json", get(openapi::spec))
+        // Outermost, so every response — the governor's 429s included — passes
+        // through it: the unauthenticated surface is CORS-open to any origin.
+        .layer(axum::middleware::from_fn(public_cors))
         .with_state(state)
+}
+
+// --------------------------------------------------------------------- cors
+
+/// The unauthenticated read surface — what browser JavaScript on ANY origin
+/// may call. Method + path, mirroring the router's credential-free routes;
+/// the completeness test below and the e2e CORS test in `tests/api.rs` keep
+/// the mirror honest. Token-gated endpoints (`/v1/me`, `/v1/sql`,
+/// `/v1/webhooks…`) are deliberately absent: nothing here is
+/// cookie-credentialed, so opening them would not be unsafe — but the public
+/// grant is scoped to what needs no credential at all.
+fn is_public_surface(method: &axum::http::Method, path: &str) -> bool {
+    if method != axum::http::Method::GET {
+        return false;
+    }
+    match path {
+        "/v1" | "/v1/tenders" | "/v1/lots" | "/v1/organizations" | "/v1/notices"
+        | "/v1/changes" | "/v1/sql/schema" | "/v1/openapi.json" | "/health" | "/health/deep"
+        | "/_source" | "/docs" => true,
+        // The id-detail forms: exactly one extra segment, nothing deeper.
+        _ => ["/v1/tenders/", "/v1/organizations/", "/v1/notices/"].iter().any(|prefix| {
+            path.strip_prefix(prefix).is_some_and(|rest| !rest.is_empty() && !rest.contains('/'))
+        }),
+    }
+}
+
+/// CORS for [`is_public_surface`]: `Access-Control-Allow-Origin: *` on every
+/// response, and the OPTIONS preflight answered here — a reconnecting
+/// `EventSource` sends `Last-Event-ID`, which is not CORS-safelisted, so SSE
+/// resume from a browser needs the preflight to succeed.
+async fn public_cors(
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    use axum::http::{HeaderValue, Method};
+    if req.method() == Method::OPTIONS && is_public_surface(&Method::GET, req.uri().path()) {
+        return (
+            StatusCode::NO_CONTENT,
+            [
+                (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
+                (header::ACCESS_CONTROL_ALLOW_METHODS, "GET, OPTIONS"),
+                (header::ACCESS_CONTROL_ALLOW_HEADERS, "Accept, Content-Type, Last-Event-ID"),
+                (header::ACCESS_CONTROL_MAX_AGE, "86400"),
+            ],
+        )
+            .into_response();
+    }
+    let public = is_public_surface(req.method(), req.uri().path());
+    let mut response = next.run(req).await;
+    if public {
+        let headers = response.headers_mut();
+        headers.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_static("*"));
+        // Retry-After is not a CORS-safelisted response header; a browser
+        // client backing off from a 429 must be able to read it.
+        headers.insert(
+            header::ACCESS_CONTROL_EXPOSE_HEADERS,
+            HeaderValue::from_static("Retry-After"),
+        );
+    }
+    response
+}
+
+#[cfg(test)]
+mod cors_tests {
+    use super::is_public_surface;
+    use axum::http::Method;
+
+    #[test]
+    fn the_public_surface_is_exactly_the_credential_free_routes() {
+        for path in [
+            "/v1", "/v1/tenders", "/v1/tenders/14327", "/v1/lots", "/v1/organizations",
+            "/v1/organizations/9", "/v1/notices", "/v1/notices/12", "/v1/changes",
+            "/v1/sql/schema", "/v1/openapi.json", "/health", "/health/deep", "/_source", "/docs",
+        ] {
+            assert!(is_public_surface(&Method::GET, path), "{path} is public");
+        }
+        // Token-gated, unknown, and deeper paths are not in the grant.
+        for path in [
+            "/v1/me", "/v1/sql", "/v1/webhooks", "/v1/webhooks/3", "/v1/tenders/1/x", "/v1/x", "/",
+        ] {
+            assert!(!is_public_surface(&Method::GET, path), "{path} is not public");
+        }
+        assert!(!is_public_surface(&Method::POST, "/v1/tenders"), "only GET is granted");
+    }
 }
 
 // --------------------------------------------------------------- client keys

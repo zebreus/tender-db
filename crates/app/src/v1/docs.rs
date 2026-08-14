@@ -110,6 +110,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <li><strong>Auth</strong> (SQL + webhooks): <code>Authorization: Bearer tdb_…</code>. Create tokens on the <a href="/account">dashboard</a>.</li>
   <li><strong>Errors</strong> share one shape: <code>{"error": {"status": 404, "message": "no such tender"}}</code> with the matching HTTP status.</li>
   <li><strong>Rate limits</strong>: ~10 req/s per client (burst 50) across <code>/v1</code>; live streams capped at 5 per client; SQL has its own limits (below). Behind the proxy the client is keyed by <code>X-Forwarded-For</code>.</li>
+  <li><strong>CORS</strong>: every endpoint that needs no token is callable from browser JavaScript on any origin (<code>Access-Control-Allow-Origin: *</code>), SSE resume preflights included — build a client-side app directly against the API. The token-gated endpoints (SQL, webhooks, <code>/v1/me</code>) are not CORS-open; call them server-side.</li>
 </ul>
 
 <h2 id="collections">Collections</h2>

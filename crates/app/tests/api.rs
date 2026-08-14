@@ -1071,3 +1071,68 @@ async fn the_openapi_spec_matches_the_served_surface() {
     }
     assert_eq!(root["openapi"], "/v1/openapi.json", "the service info links the spec");
 }
+
+/// The unauthenticated surface is CORS-open to any origin; the token-gated
+/// surface is not. Also the SSE-resume preflight: a reconnecting EventSource
+/// sends Last-Event-ID, which is not CORS-safelisted, so OPTIONS must answer
+/// with it allowed or browser resume dies on the second connection.
+#[tokio::test]
+async fn the_unauthenticated_surface_is_cors_open() {
+    let server = Server::start("cors").await;
+
+    for path in
+        ["/v1", "/v1/tenders", "/v1/changes?since=0", "/v1/sql/schema", "/v1/openapi.json", "/health"]
+    {
+        let response = server
+            .http
+            .get(format!("{}{path}", server.base))
+            .header("origin", "https://example.com")
+            .send()
+            .await
+            .expect("request");
+        assert_eq!(
+            response.headers().get("access-control-allow-origin").and_then(|v| v.to_str().ok()),
+            Some("*"),
+            "{path} is CORS-open"
+        );
+    }
+
+    // The SSE resume preflight.
+    let preflight = server
+        .http
+        .request(reqwest::Method::OPTIONS, format!("{}/v1/tenders", server.base))
+        .header("origin", "https://example.com")
+        .header("access-control-request-method", "GET")
+        .header("access-control-request-headers", "last-event-id")
+        .send()
+        .await
+        .expect("preflight");
+    assert_eq!(preflight.status().as_u16(), 204);
+    let allowed = preflight
+        .headers()
+        .get("access-control-allow-headers")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    assert!(allowed.contains("last-event-id"), "SSE resume needs Last-Event-ID allowed: {allowed}");
+
+    // Token-gated endpoints carry no CORS grant — call them server-side.
+    for (method, path) in [
+        (reqwest::Method::GET, "/v1/me"),
+        (reqwest::Method::GET, "/v1/webhooks"),
+        (reqwest::Method::POST, "/v1/sql"),
+    ] {
+        let response = server
+            .http
+            .request(method.clone(), format!("{}{path}", server.base))
+            .header("origin", "https://example.com")
+            .send()
+            .await
+            .expect("request");
+        assert_eq!(
+            response.headers().get("access-control-allow-origin"),
+            None,
+            "{method} {path} stays CORS-closed"
+        );
+    }
+}
