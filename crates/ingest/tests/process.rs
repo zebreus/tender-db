@@ -738,12 +738,23 @@ async fn hold_member(db_path: &Path, fetch_id: i64, member_path: &str, reason: &
 /// member quarantines whole and the ISO is skipped as superseded — but once
 /// the ledger HOLDS the bundle as unreadable, the next walk excludes it from
 /// the supersedence decision and the day ingests from the ISO copy.
+///
+/// The package is MONTHLY-shaped: a second day ships a READABLE UTF8 bundle.
+/// Supersedence is judged per publication day, so that other day must not
+/// keep the corrupt day's ISO suppressed (the first, package-global fix
+/// passed a single-day fixture and then recovered 0 notices in production).
 #[tokio::test]
 async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
     let dir = temp_dir("iso-fallback");
     let archive = dir.as_path();
     std::fs::create_dir_all(archive.join("ted/daily")).unwrap();
     let pkg_path = archive.join("ted/daily/2005-00070.tar.gz");
+    const OTHER_DAY: &str = "1.00/000001\n\
+        TI: D-Bonn: bridges\n\
+        PD: 20050410\n\
+        ND: 100-2005\n\
+        OJ: 71/2005\n\
+        TX:  1.  Awarding authority: Stadt Bonn.\n";
     {
         let gz = flate2::write::GzEncoder::new(
             std::fs::File::create(&pkg_path).unwrap(),
@@ -762,6 +773,10 @@ async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
             &zip_of("EN_20050409_2005070_ISO_ORG", TEXT_DOC),
         );
         add("EN_20050409_070_UTF8_ORG.ZIP", b"PK\x03\x04 truncated, no central directory");
+        add(
+            "EN_20050410_071_UTF8_ORG.ZIP",
+            &zip_of("EN_20050410_2005071_UTF8_ORG", OTHER_DAY),
+        );
         tar.into_inner().unwrap().finish().unwrap();
     }
     let db = store::Db::open(dir.join("test.db").to_str().unwrap()).await.unwrap();
@@ -779,19 +794,31 @@ async fn corrupt_utf8_bundle_stops_superseding_its_readable_iso() {
     .unwrap();
 
     // First walk: the UTF8 twin exists by NAME, so the ISO is skipped as
-    // superseded — and the UTF8 bundle dies unreadable. Nothing ingests.
+    // superseded — and the UTF8 bundle dies unreadable. Only the OTHER day's
+    // readable UTF8 ingests; the corrupt day is lost.
     let first = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
-    assert_eq!(first.notices, 0, "the day is lost on the first walk");
+    assert_eq!(first.notices, 1, "only the other day's record ingests: {first:?}");
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE member_path LIKE '%20050409%'").await,
+        Some(0),
+        "the corrupt day is lost on the first walk"
+    );
     assert_eq!(
         cell_i64(&db, "SELECT COUNT(*) FROM quarantine WHERE reason LIKE 'unreadable zip%'").await,
         Some(1),
         "the corrupt bundle is held"
     );
 
-    // Second walk: the held unreadable bundle no longer supersedes — the
-    // readable ISO dispatches and the day's records ingest.
+    // Second walk: the held unreadable bundle no longer supersedes ITS day —
+    // the other day's intact UTF8 must not veto this — so the readable ISO
+    // dispatches and the day's records ingest.
     let second = process::process(&db, archive, "ted", "daily", None, |_, _| {}).await.unwrap();
-    assert!(second.notices > 0, "the day ingests from the ISO copy: {second:?}");
+    assert_eq!(second.notices, 2, "the day ingests from the ISO copy: {second:?}");
+    assert_eq!(
+        cell_i64(&db, "SELECT COUNT(*) FROM notices WHERE member_path LIKE '%20050409%'").await,
+        Some(2),
+        "the corrupt day's records come back through the ISO twin"
+    );
 
     let _ = std::fs::remove_dir_all(&dir);
 }

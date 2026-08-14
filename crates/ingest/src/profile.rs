@@ -69,17 +69,20 @@ const EFORMS_ROOT_NS: [&str; 2] =
 /// (`package::entry_names`).
 #[derive(Default)]
 pub struct PackageContext {
-    /// The package also ships the English UTF8 text-era variant. Mid-era
-    /// dailies (~2004–2007) carry the same English delivery twice, as
-    /// `_ISO_` and `_UTF8_`; the ISO rendering is lossy (non-Latin-1 scripts
-    /// mangled — measured on the 2005 daily), so UTF8 supersedes it.
-    pub en_utf8_text: bool,
+    /// The DAYS (`YYYYMMDD`) whose English UTF8 text-era main delivery ships
+    /// in this package. Mid-era dailies (~2004–2007) carry the same English
+    /// delivery twice, as `_ISO_` and `_UTF8_`; the ISO rendering is lossy
+    /// (non-Latin-1 scripts mangled — measured on the 2005 daily), so UTF8
+    /// supersedes it. Keyed PER DAY (issue 202): a monthly carries many
+    /// days, and one day's corrupt UTF8 must not sweep another day's ISO —
+    /// a package-global flag lost 2005-04-09 whole.
+    pub en_utf8_text: std::collections::HashSet<String>,
     /// Same fact for the `_CF<n>` companion delivery (issue 181): the
     /// supersedence decision is PER DELIVERY CLASS, because a package can
     /// carry a UTF8 main delivery without a UTF8 companion — one flag for
     /// both would silently drop the companion's ISO rendering with nothing
     /// superseding it.
-    pub en_utf8_cf: bool,
+    pub en_utf8_cf: std::collections::HashSet<String>,
 }
 
 impl PackageContext {
@@ -105,7 +108,8 @@ impl PackageContext {
                 .iter()
                 .any(|f| f == n || f.ends_with(&format!("/{n}")) || f.ends_with(&format!("!{n}")))
         };
-        let (mut en_utf8_text, mut en_utf8_cf) = (false, false);
+        let (mut en_utf8_text, mut en_utf8_cf) =
+            (std::collections::HashSet::new(), std::collections::HashSet::new());
         for n in names {
             if held_whole(n.as_ref()) {
                 continue;
@@ -124,9 +128,9 @@ impl PackageContext {
                 && m.variant.eq_ignore_ascii_case("utf8")
             {
                 if m.companion {
-                    en_utf8_cf = true;
+                    en_utf8_cf.insert(m.date);
                 } else {
-                    en_utf8_text = true;
+                    en_utf8_text.insert(m.date);
                 }
             }
         }
@@ -364,7 +368,11 @@ fn dispatch_text(
     // both would also double every notice, and the ISO rendering is the lossy
     // one (see [`PackageContext::en_utf8_text`]). Judged per delivery class:
     // an ISO companion is only superseded by a UTF8 COMPANION (issue 181).
-    let utf8_twin = if name.companion { ctx.en_utf8_cf } else { ctx.en_utf8_text };
+    let utf8_twin = if name.companion {
+        ctx.en_utf8_cf.contains(&name.date)
+    } else {
+        ctx.en_utf8_text.contains(&name.date)
+    };
     if name.variant.eq_ignore_ascii_case("iso") && utf8_twin {
         return Disposition::Skipped("text-era-iso-superseded-by-utf8");
     }
@@ -404,6 +412,10 @@ fn dispatch_text(
 /// unparsable-xml, depending on variant).
 struct TextEraName {
     language: String,
+    /// The `YYYYMMDD` publication-day token — the supersedence unit (issue
+    /// 202): a monthly package carries many days, and one day's corrupt UTF8
+    /// must not decide another day's ISO.
+    date: String,
     variant: String,
     /// A `CF<n>` companion member rather than the main `ORG` delivery.
     companion: bool,
@@ -455,6 +467,7 @@ fn text_era_member(member_path: &str) -> Option<TextEraName> {
         };
     ok.then(|| TextEraName {
         language: language.into(),
+        date: date.into(),
         variant: variant.unwrap_or_default().into(),
         companion,
         correction,
@@ -645,7 +658,7 @@ mod tests {
             "EN_20040603_107_UTF8_ORG.ZIP",
             "EN_20040603_107_ISO_CF1.ZIP",
         ]);
-        assert!(ctx.en_utf8_text && !ctx.en_utf8_cf);
+        assert!(!ctx.en_utf8_text.is_empty() && ctx.en_utf8_cf.is_empty());
         assert!(matches!(
             dispatch_with("EN_20040603_107_ISO_CF1.ZIP!EN_20040603_2004107_ISO_CF1", rec, &ctx),
             Disposition::Records(_)
@@ -655,7 +668,7 @@ mod tests {
             "EN_20040603_107_UTF8_CF1.ZIP",
             "EN_20040603_107_ISO_CF1.ZIP",
         ]);
-        assert!(ctx.en_utf8_cf);
+        assert!(ctx.en_utf8_cf.contains("20040603"));
         assert!(matches!(
             dispatch_with("EN_20040603_107_ISO_CF1.ZIP!EN_20040603_2004107_ISO_CF1", rec, &ctx),
             Disposition::Skipped("text-era-iso-superseded-by-utf8")
@@ -702,7 +715,7 @@ mod tests {
         // member must not be swept by a `en_…_utf8_cs1.txt` sibling.
         let ctx =
             PackageContext::from_entry_names(&["en_20090820_159_utf8_cs1.txt", "EN_20090820_159_ISO_ORG.ZIP"]);
-        assert!(!ctx.en_utf8_text && !ctx.en_utf8_cf);
+        assert!(ctx.en_utf8_text.is_empty() && ctx.en_utf8_cf.is_empty());
     }
 
     #[test]

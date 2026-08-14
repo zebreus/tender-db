@@ -294,7 +294,7 @@ fn iso_variant_is_superseded_when_the_package_ships_utf8() {
         "EN_20050101_001_UTF8_ORG.ZIP",
         "FR_20050101_001_ISO_ORG.ZIP",
     ]);
-    assert!(ctx.en_utf8_text);
+    assert!(ctx.en_utf8_text.contains("20050101"));
 
     let bytes = std::fs::read("tests/fixtures/text/2005-can-154-2005.txt").unwrap();
     let iso = "EN_20050101_001_ISO_ORG.ZIP!EN_20050101_2005001_ISO_ORG";
@@ -304,7 +304,7 @@ fn iso_variant_is_superseded_when_the_package_ships_utf8() {
     }
     // Without a UTF8 twin (1993–2004), the ISO delivery is the one ingested.
     let alone = PackageContext::from_entry_names(&["EN_19930102_1993001_ISO_ORG.zip"]);
-    assert!(!alone.en_utf8_text);
+    assert!(alone.en_utf8_text.is_empty());
     assert!(matches!(profile::dispatch_with(iso, &bytes, &alone), Disposition::Records(_)));
 }
 
