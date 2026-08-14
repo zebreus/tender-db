@@ -255,6 +255,66 @@ async fn monthly_of_nested_dailies_dedupes_against_the_daily() {
     let _ = std::fs::remove_dir_all(&archive);
 }
 
+/// Issue 196: the pre-recursion walker (before 1e4df1c) recorded a monthly's
+/// inner dailies as raw binary MEMBERS — one not-utf8 row per whole
+/// `<daily>.tar.gz`, a path the walker never yields again once it descends
+/// containers, so no reprocess could dispatch or resolve those rows. A held
+/// CONTAINER now dispatches the members inside it, and the first record out of
+/// it resolves the container row via the container stamp address.
+#[tokio::test]
+async fn reclaiming_a_held_container_resolves_its_whole_container_row() {
+    let (archive, db) = fixture("reclaim-container").await;
+    let daily = run(&db, &archive).await;
+
+    // The monthly carrying the same daily, exactly as the walker sees prod's
+    // 2026-06 — but with a stale whole-container row recorded under its fetch.
+    std::fs::create_dir_all(archive.join("ted/monthly")).unwrap();
+    let monthly_path = archive.join("ted/monthly/2026-06.tar");
+    let daily_bytes = std::fs::read(archive.join("ted/daily/2026-00137.tar.gz")).unwrap();
+    let mut tar = tar::Builder::new(std::fs::File::create(&monthly_path).unwrap());
+    let mut header = tar::Header::new_gnu();
+    header.set_size(daily_bytes.len() as u64);
+    header.set_mode(0o644);
+    header.set_cksum();
+    tar.append_data(&mut header, "20260601_2026137.tar.gz", &daily_bytes[..]).unwrap();
+    tar.into_inner().unwrap();
+    db.record_fetch(&store::Fetch {
+        source: "ted".into(),
+        kind: "monthly".into(),
+        period: "2026-06".into(),
+        url: "https://ted.europa.eu/packages/monthly/2026-06".into(),
+        sha256: "bb".into(),
+        bytes: 1,
+        fetched_at: 2,
+        path: "ted/monthly/2026-06.tar".into(),
+    })
+    .await
+    .unwrap();
+    hold_member(&archive.join("test.db"), 2, "20260601_2026137.tar.gz", "not-utf8", "").await;
+
+    // The bucket's work list carries the container path itself...
+    let held = db.quarantine_held_member_files(2, "not-utf8", None, None).await.unwrap();
+    assert_eq!(held.len(), 1, "the whole-container row is the bucket");
+
+    // ...and reprocessing dispatches the members INSIDE it: the known
+    // identities dedup as already-parsed, and the first of them resolves the
+    // container row.
+    let report =
+        process::reclaim_package(&db, &monthly_path, "ted", 2, held, |_, _, _| {}).await.unwrap();
+    // The container's members all dispatch: the 4 genuinely-parsed notices
+    // dedup as already-parsed (resolving the row), and the 3 stub notices plus
+    // the 1 garbage member re-fail exactly as they would in their own daily.
+    assert_eq!((report.already, report.still_held), (4, 4));
+    assert!(
+        cell_i64(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = '20260601_2026137.tar.gz'")
+            .await
+            .is_some(),
+        "the whole-container rejection row is resolved"
+    );
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
 #[tokio::test]
 async fn reprocessing_is_idempotent() {
     let (archive, db) = fixture("process-idem").await;

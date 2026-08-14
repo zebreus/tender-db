@@ -1083,6 +1083,18 @@ impl Db {
                             )
                             .await?;
                     }
+                    // And the whole-CONTAINER rejection row — stamp_reclaimed's
+                    // fourth address (issue 196).
+                    if let Some(container) = member_container(&n.member_path) {
+                        stamped += conn
+                            .execute(
+                                "UPDATE quarantine SET reprocessed_at = ?
+                                  WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                                    AND reprocessed_at IS NULL",
+                                (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&container)),
+                            )
+                            .await?;
+                    }
                     // Zero is benign when the file's row is ALREADY resolved —
                     // the same guard the parsed arm applies above. The 1999 COR
                     // drain hit exactly this shape: a correction file's records
@@ -1122,13 +1134,17 @@ impl Db {
     /// run resolved the row.
     async fn member_file_resolved(&self, conn: &Connection, n: &Notice) -> turso::Result<bool> {
         let file = member_file(n.member_path.clone());
+        // The container address rides along (issue 196): once the first record
+        // out of a whole-container rejection resolves the container row, its
+        // thousands of sibling records must read as benign zeros, not alarms.
+        let container = member_container(&n.member_path).unwrap_or_else(|| file.clone());
         let mut rows = conn
             .query(
                 "SELECT 1 FROM quarantine
-                  WHERE fetch_id = ? AND member_path = ?
+                  WHERE fetch_id = ? AND member_path IN (?, ?)
                     AND (reprocessed_at IS NOT NULL OR skipped_at IS NOT NULL)
                   LIMIT 1",
-                (Value::Integer(n.fetch_id), t(&file)),
+                (Value::Integer(n.fetch_id), t(&file), t(&container)),
             )
             .await?;
         Ok(rows.next().await?.is_some())
@@ -1177,7 +1193,20 @@ impl Db {
         } else {
             0
         };
-        Ok(by_notice + by_member + by_file)
+        // Fourth address (issue 196): the member's whole-CONTAINER rejection
+        // row, when its path shows a nested archive. See [`member_container`].
+        let by_container = if let Some(container) = member_container(&n.member_path) {
+            conn.execute(
+                "UPDATE quarantine SET reprocessed_at = ?
+                  WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
+                    AND reprocessed_at IS NULL",
+                (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&container)),
+            )
+            .await?
+        } else {
+            0
+        };
+        Ok(by_notice + by_member + by_file + by_container)
     }
 
     /// Record a re-parse attempt that left the member held (issue 87). A
@@ -2262,6 +2291,31 @@ fn member_file(member_path: String) -> String {
         }
         _ => member_path,
     }
+}
+
+/// The nested ARCHIVE a member came out of, when its path shows one: the
+/// `!`-separated bundle for `outer.zip!inner`, or the `.tar.gz` prefix for
+/// `daily.tar.gz/inner`. A whole-container rejection — issue 196: the
+/// pre-recursion walker recorded a monthly's 21 inner dailies as raw members —
+/// holds ONE row at the container path, which no record- or file-level address
+/// can ever reach; the first record reclaimed from inside the container
+/// resolves it, exactly as [`member_file`] does for `#<ordinal>` rows.
+fn member_container(member_path: &str) -> Option<String> {
+    let file = member_file(member_path.to_owned());
+    if let Some((bundle, _)) = file.rsplit_once('!') {
+        return Some(bundle.to_owned());
+    }
+    // The deepest `.tar.gz` prefix at a `/` boundary — a daily may nest
+    // subdirectories below the container, so the container is not always the
+    // member's immediate dirname.
+    let lower = file.to_ascii_lowercase();
+    let mut best = None;
+    for (i, _) in lower.match_indices('/') {
+        if lower[..i].ends_with(".tar.gz") {
+            best = Some(i);
+        }
+    }
+    best.map(|i| file[..i].to_owned())
 }
 
 pub(crate) fn opt_text_of(row: &turso::Row, idx: usize) -> Option<String> {
@@ -4716,6 +4770,74 @@ tmpfs /data/ramcache tmpfs rw 0 0
             "the file row keeps its first resolution instant — later records never re-stamp it"
         );
         assert_eq!(int_of(&db, "SELECT COUNT(*) FROM quarantine").await, Some(1), "no new ledger rows appear");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn member_container_names_the_nested_archive() {
+        assert_eq!(member_container("06/20260601_2026103.tar.gz/00364561_2026.xml").as_deref(), Some("06/20260601_2026103.tar.gz"));
+        assert_eq!(
+            member_container("20260601.tar.gz/20240102_1/notice.xml").as_deref(),
+            Some("20260601.tar.gz"),
+            "a subdirectory below the container does not hide it"
+        );
+        assert_eq!(member_container("pkg.tar.gz/EN_CF1.ZIP!EN_CF1#7").as_deref(), Some("pkg.tar.gz/EN_CF1.ZIP"));
+        assert_eq!(member_container("pkg/EN_X.ZIP!EN_X").as_deref(), Some("pkg/EN_X.ZIP"));
+        assert_eq!(member_container("pkg/m1"), None, "a plain directory prefix is not a container");
+        assert_eq!(member_container("m1.xml"), None);
+    }
+
+    /// Issue 196: the pre-recursion walker recorded a monthly's inner dailies
+    /// as raw members — ONE row at the container path (`06/<daily>.tar.gz`)
+    /// that no record- or file-level address reaches. The first record
+    /// reclaimed from inside the container resolves the row (the fourth stamp
+    /// address), and the records that follow are benign zeros, not alarms.
+    #[tokio::test]
+    async fn reclaiming_a_record_resolves_its_containers_rejection_row() {
+        let path = format!("/tmp/tender-db-containerstamp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        assert!(db
+            .insert_quarantine(&Quarantined {
+                fetch_id: 1,
+                member_path: "06/20260601_2026103.tar.gz".into(),
+                content_hash: "container-hash".into(),
+                profile: None,
+                reason: "not-utf8".into(),
+                detail: None,
+                first_seen: 0,
+            })
+            .await
+            .unwrap());
+
+        let mut n = held_notice();
+        n.member_path = "06/20260601_2026103.tar.gz/00364561_2026.xml".into();
+        n.ingested_at = 600;
+        assert_eq!(db.reclaim_notice(&n, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        assert_eq!(
+            int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = '06/20260601_2026103.tar.gz'").await,
+            Some(600),
+            "the whole-container rejection row is resolved by its first reclaimed record"
+        );
+
+        // A later record out of the same container: benign zero, first stamp kept.
+        let mut sibling = held_notice();
+        sibling.publication_id = "888-2026".into();
+        sibling.content_hash = "hash-sibling".into();
+        sibling.member_path = "06/20260601_2026103.tar.gz/00364777_2026.xml".into();
+        sibling.ingested_at = 700;
+        assert_eq!(db.reclaim_notice(&sibling, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+        let conn = db.conn().await;
+        assert!(
+            db.member_file_resolved(&conn, &sibling).await.unwrap(),
+            "sibling records read the resolved container, not a stranded ledger"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT reprocessed_at FROM quarantine WHERE member_path = '06/20260601_2026103.tar.gz'").await,
+            Some(600)
+        );
 
         let _ = std::fs::remove_file(&path);
     }

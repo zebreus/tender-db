@@ -183,6 +183,25 @@ fn spawn_record_producer(
 
     let (tx, rx) = std::sync::mpsc::sync_channel::<(Record, store::Parse)>(64);
     let archive = archive.to_owned();
+    // Held CONTAINERS (issue 196): a row whose member_path is a nested archive
+    // the walker descends — a monthly's inner `<daily>.tar.gz`, recorded whole
+    // by the pre-recursion walker — never arrives as a member itself, so the
+    // exact-path check below can never dispatch it and the row is unreachable
+    // by any reprocess. A member INSIDE a held container counts as held; its
+    // records resolve the container row via the container stamp address.
+    let containers: Vec<String> = only
+        .as_ref()
+        .map(|set| {
+            set.iter()
+                .filter(|p| !p.contains('!') && !p.contains('#'))
+                .filter(|p| {
+                    let lower = p.to_ascii_lowercase();
+                    lower.ends_with(".tar.gz") || lower.ends_with(".zip")
+                })
+                .map(|p| format!("{p}/"))
+                .collect()
+        })
+        .unwrap_or_default();
     let walker = std::thread::spawn(move || -> Result<WalkTally, package::Error> {
         let (mut members, mut ingested, mut skipped) = (0u64, 0u64, 0u64);
         // Which held members a dispatch policy declined, and which policy. Only
@@ -199,7 +218,9 @@ fn spawn_record_producer(
             // Issue 77: in a targeted reprocess, only the bucket's held members
             // are worth parsing — every other member would just no-op. Skip them
             // before the expensive dispatch+parse (the tar is still read).
-            if only.as_ref().is_some_and(|set| !set.contains(&path)) {
+            if only.as_ref().is_some_and(|set| !set.contains(&path))
+                && !containers.iter().any(|c| path.starts_with(c.as_str()))
+            {
                 return;
             }
             // A member the walker recovered from archive corruption (a
