@@ -2046,6 +2046,10 @@ impl NoticeState {
         mentions
             .into_values()
             .map(|mut m| {
+                // Canonicalise the country to alpha-2 (issue 48) before it is
+                // stored AND before it scopes a national id, so both agree and a
+                // country filter no longer splits `DEU`/`DE`/`UK` apart.
+                m.country = m.country.map(|c| canonical_country(&c));
                 m.identifier = m
                     .raw_identifier
                     .as_deref()
@@ -3061,6 +3065,46 @@ const VAT_COUNTRIES: &[&str] = &[
     "SI", "SK", "GB", "UK", "XI", "CH", "IS", "LI", "NO",
 ];
 
+/// ISO-3166 alpha-3 → alpha-2 for the countries that appear in the corpus
+/// (issue 48, data-profile §3 rule 2). The organizations table stores country in
+/// three vocabularies — alpha-2, alpha-3 (`DEU` ≥150k, `FRA` ≥150k, `ESP` 69k,
+/// `ROU` 10k, `GBR` 3k), and TED's non-ISO `UK`/`EL` — so a country filter or
+/// aggregation splits the same country across codings. Canonicalising to alpha-2
+/// on write converges them.
+const ALPHA3_TO_ALPHA2: &[(&str, &str)] = &[
+    // EU-27
+    ("AUT", "AT"), ("BEL", "BE"), ("BGR", "BG"), ("HRV", "HR"), ("CYP", "CY"),
+    ("CZE", "CZ"), ("DNK", "DK"), ("EST", "EE"), ("FIN", "FI"), ("FRA", "FR"),
+    ("DEU", "DE"), ("GRC", "GR"), ("HUN", "HU"), ("IRL", "IE"), ("ITA", "IT"),
+    ("LVA", "LV"), ("LTU", "LT"), ("LUX", "LU"), ("MLT", "MT"), ("NLD", "NL"),
+    ("POL", "PL"), ("PRT", "PT"), ("ROU", "RO"), ("SVK", "SK"), ("SVN", "SI"),
+    ("ESP", "ES"), ("SWE", "SE"),
+    // EEA / near-Europe
+    ("GBR", "GB"), ("NOR", "NO"), ("ISL", "IS"), ("LIE", "LI"), ("CHE", "CH"),
+    ("ALB", "AL"), ("SRB", "RS"), ("MKD", "MK"), ("MNE", "ME"), ("BIH", "BA"),
+    ("TUR", "TR"), ("UKR", "UA"), ("MDA", "MD"), ("XKX", "XK"),
+    // common third countries seen in TED supplier data
+    ("USA", "US"), ("CHN", "CN"), ("JPN", "JP"), ("CAN", "CA"), ("AUS", "AU"),
+    ("IND", "IN"), ("BRA", "BR"), ("RUS", "RU"), ("KOR", "KR"), ("ISR", "IL"),
+];
+
+/// Canonicalise a country code to ISO-3166 alpha-2 (issue 48). Alpha-3 maps to
+/// its alpha-2; TED's non-ISO `UK` becomes `GB` and eurostat's `EL` (Greece)
+/// becomes `GR`; a value already alpha-2 (or one we do not recognise) passes
+/// through unchanged, so an unmapped code is preserved rather than dropped.
+pub fn canonical_country(raw: &str) -> String {
+    let up = raw.trim().to_ascii_uppercase();
+    match up.as_str() {
+        "UK" => return "GB".into(), // TED writes UK, ISO is GB
+        "EL" => return "GR".into(), // eurostat/NUTS Greece is EL, ISO is GR
+        _ => {}
+    }
+    if let Some((_, a2)) = ALPHA3_TO_ALPHA2.iter().find(|(a3, _)| *a3 == up) {
+        return (*a2).to_owned();
+    }
+    up
+}
+
 /// A VAT id carries its country in its own prefix and is scoped by it; a
 /// national registry number is only unique inside its country, so it is scoped
 /// by the mention's country and stays separate when that is unknown.
@@ -3500,6 +3544,26 @@ mod tests {
         let zz = normalise_identifier("ZZ998877", Some("DEU")).expect("an id");
         assert_eq!(zz.kind, "national");
         assert_eq!(zz.country.as_deref(), Some("DEU"), "ZZ is not a VAT country");
+    }
+
+    /// Issue 48: country codes converge to one canonical alpha-2 vocabulary, so a
+    /// filter or aggregation no longer splits the same country across codings.
+    #[test]
+    fn country_codes_canonicalise_to_alpha2() {
+        // The dominant alpha-3 class folds to alpha-2.
+        for (raw, want) in
+            [("DEU", "DE"), ("FRA", "FR"), ("ESP", "ES"), ("ROU", "RO"), ("GBR", "GB"), ("USA", "US")]
+        {
+            assert_eq!(canonical_country(raw), want, "{raw} → {want}");
+        }
+        // TED's non-ISO forms.
+        assert_eq!(canonical_country("UK"), "GB", "TED UK is ISO GB");
+        assert_eq!(canonical_country("EL"), "GR", "eurostat EL is ISO GR");
+        // Already alpha-2, and case/whitespace tolerance.
+        assert_eq!(canonical_country("DE"), "DE");
+        assert_eq!(canonical_country(" fr "), "FR");
+        // An unrecognised code is preserved, not dropped.
+        assert_eq!(canonical_country("ZZ"), "ZZ");
     }
 
     #[test]
