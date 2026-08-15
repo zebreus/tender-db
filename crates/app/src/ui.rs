@@ -315,6 +315,12 @@ fn AwardLinkagePanel(rows: Vec<AwardLinkage>) -> Element {
                 "Legacy Tenders chain by transitive OJS references; a missed link strands an award "
                 "as a single-notice Tender. Research predicts ≈17% unchained for the R2.0.9 era."
             }
+            p { class: "muted",
+                "A high rate is only a defect where the source publishes a cross-reference to chain on. "
+                "The German platform (eforms-sdk-0.1) reads near-100% because ~85% of its award notices "
+                "publish an empty procedure identifier and carry no prior-notice reference at all — those "
+                "awards are genuinely standalone records, so their rate is the honest number, not a lost link."
+            }
             if rows.is_empty() {
                 p { class: "muted", "No award Tenders yet." }
             } else {
