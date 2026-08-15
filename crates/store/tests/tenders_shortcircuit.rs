@@ -74,6 +74,16 @@ async fn ids(conn: &turso::Connection, f: &Filter) -> Vec<i64> {
         .collect()
 }
 
+/// The `/v1/lots` analogue: the parent-tender id of each lot the guard lets through.
+async fn lot_tids(conn: &turso::Connection, f: &Filter) -> Vec<i64> {
+    read::lots(conn, f, Scope::Page { after: 0, limit: 100 })
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|l| l.tender_id)
+        .collect()
+}
+
 /// The invariant the guard rests on, asserted against TURSO rather than remembered
 /// from a scratch run against another engine.
 ///
@@ -309,6 +319,103 @@ async fn the_guard_changes_speed_not_results() {
         .await
         .is_empty(),
         "a present country must not rescue an absent cpv"
+    );
+
+    // ISSUE 219: `t.kind` has NO index, so an absent value walked all 4.26M Tenders
+    // inside the isolated reader pool — on the unauthenticated list surface, a trivial
+    // saturation DoS. `reachable()` now probes `kind` too (last, after the cheaper
+    // legs), so `tenders()` short-circuits it exactly like the others. The seed's
+    // Tender has `kind = 'procedure'`.
+    let kind = |k: &str| Filter { kind: Some(k.to_owned()), ..Filter::default() };
+    assert_eq!(ids(&conn, &kind("procedure")).await, vec![1], "the stored tender kind must match");
+    assert!(
+        ids(&conn, &kind("zzz")).await.is_empty(),
+        "an absent tender kind must return an empty page, not walk 4.26M Tenders (issue 219)"
+    );
+    // A present kind must not rescue an absent country, and vice versa: the legs are a
+    // conjunction, so any one absent empties the page.
+    assert!(
+        ids(&conn, &Filter { kind: Some("procedure".into()), country: Some("ZZ".into()), ..Filter::default() })
+            .await
+            .is_empty(),
+        "a present kind must not rescue an absent country"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// ISSUE 219 / 215-D: `lots()` must run the SAME absent-value guard `tenders()` does.
+/// Before the fix it guarded only `kind` and never called `reachable()`, so an absent
+/// `country`/`buyer` on the unauthenticated `/v1/lots` surface walked the isolated
+/// pool to prove a negative. Every isolation-routed leg — tender-level `country` and
+/// `buyer`, lot-level `kind` — must now short-circuit to an empty page, while every
+/// present value still returns the lot.
+#[tokio::test]
+async fn lots_run_the_full_reachable_guard() {
+    let path = format!("/tmp/tender-db-lotsguard-{}.db", std::process::id());
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    store::Db::open(&path).await.unwrap();
+    let db = turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = db.connect().unwrap();
+    drain(&conn, "PRAGMA journal_mode = WAL").await;
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    seed(&conn).await;
+    // One lot on the seeded Tender's current version (seq 2), so the tender-level
+    // predicates that match the Tender also surface its lot. The lots query drives
+    // from the `lots` table and joins `tender_version_lots` on `lot_id`, so both rows
+    // are needed; `lots.id` is set explicitly to line up with `vl.lot_id`.
+    conn.execute("INSERT INTO lots (id, tender_id, lot_key) VALUES (1, 1, 'LOT-1')", ())
+        .await
+        .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (1, 2, 1, 'Lot')",
+        (),
+    )
+    .await
+    .unwrap();
+
+    // Present legs each return the lot.
+    assert_eq!(
+        lot_tids(&conn, &Filter { country: Some("DE".into()), ..Filter::default() }).await,
+        vec![1],
+        "a present country returns the lot"
+    );
+    assert_eq!(
+        lot_tids(&conn, &Filter { buyer: Some(7), ..Filter::default() }).await,
+        vec![1],
+        "a present buyer returns the lot"
+    );
+    assert_eq!(
+        lot_tids(&conn, &Filter { kind: Some("Lot".into()), ..Filter::default() }).await,
+        vec![1],
+        "a present lot kind returns the lot"
+    );
+
+    // THE ISSUE-219 CASES. Before the fix, `country`/`buyer` here ran the full lots
+    // walk (only `kind` was guarded); now every leg short-circuits to an empty page.
+    assert!(
+        lot_tids(&conn, &Filter { country: Some("ZZ".into()), ..Filter::default() }).await.is_empty(),
+        "an absent country must empty the lots page without the isolated walk (215-D)"
+    );
+    assert!(
+        lot_tids(&conn, &Filter { buyer: Some(4242), ..Filter::default() }).await.is_empty(),
+        "an absent buyer must empty the lots page without the isolated walk (215-D)"
+    );
+    assert!(
+        lot_tids(&conn, &Filter { kind: Some("zzz".into()), ..Filter::default() }).await.is_empty(),
+        "an absent lot kind must empty the page (guard preserved through the fold into reachable())"
+    );
+
+    // Conjunction: one absent leg empties the page even alongside a present one.
+    assert!(
+        lot_tids(&conn, &Filter { country: Some("DE".into()), kind: Some("zzz".into()), ..Filter::default() })
+            .await
+            .is_empty(),
+        "a present country must not rescue an absent lot kind"
     );
 
     for s in ["", "-wal", "-shm"] {

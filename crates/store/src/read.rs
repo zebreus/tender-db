@@ -642,10 +642,11 @@ fn pick(table: &str, column: &str, field: Option<&str>, order: &str, lot: &str) 
 
 // ------------------------------------------------------------------- tenders
 
-/// Tenders matching `filter`, in the given scope. `Scope::Page` yields the
-/// current state of every match after a cursor; `Scope::At` answers whether one
-/// specific version matched, which is how the SSE diff loop classifies a change.
-/// Can any Tender satisfy this filter at all?
+/// Can any row satisfy `filter` at all? The absent-value short-circuit that both
+/// [`tenders`] and [`lots`] run before their `Scope::Page` walk. The tender-level
+/// value predicates mean the same thing on both endpoints (`/v1/lots?country=DE` is
+/// `/v1/tenders?country=DE` scoped to lots), so a single existence probe serves both;
+/// `collection` only selects which table the `kind` leg probes.
 ///
 /// The value-shaped predicates in [`version_predicates`] are `EXISTS` subqueries
 /// evaluated PER ROW. When the value matches nothing the query still walks every
@@ -674,7 +675,7 @@ fn pick(table: &str, column: &str, field: Option<&str>, order: &str, lot: &str) 
 /// a 200k-Tender fixture, i.e. the guard buys nothing there. `MT` is a real country,
 /// so that case is reachable without adversarial intent. Bounding worst-case work
 /// needs the real fix (restructuring the per-row `EXISTS`), not this.
-async fn reachable(conn: &Connection, filter: &Filter) -> turso::Result<bool> {
+async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -> turso::Result<bool> {
     // A prefix range, NOT `LIKE`. Measured on prod: `code LIKE 'ZZ%'` takes 41.05s
     // against 0.01s for the range, because turso keeps the index but drops the second
     // bound — `(scheme=?)` alone — and then filters the whole scheme's partition row
@@ -720,6 +721,44 @@ async fn reachable(conn: &Connection, filter: &Filter) -> turso::Result<bool> {
         // Both seek `..._org(organization_id)`, the indexes issue 62 deferred.
         let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");
         if !exists(conn, &sql, vec![Value::Integer(org)]).await? {
+            return Ok(false);
+        }
+    }
+    // `kind` is `t.kind` (tenders) / `vl.kind` (lots), and NO index covers either — it
+    // is precisely why `walks()` routes it to the isolated pool. So an absent value
+    // walks the whole driven table INSIDE that pool, holding a reader slot for the
+    // duration: issue 219's unauthenticated saturation hole. The other legs above
+    // cover `country`/`cpv`/`buyer`/`winner`; `kind` was the survivor, guarded on
+    // `lots` but not `tenders`, so a handful of `?kind=<absent>` requests wedged the
+    // pool while every legitimate filtered read shed 503.
+    //
+    // Probe the single driven table with a bare `WHERE kind = ? LIMIT 1`. This is NOT
+    // free for an absent value — no index, so it scans the table — but it is a
+    // single-column scan with no joins, `EXISTS` subqueries or sort, orders of
+    // magnitude short of the full filtered-and-ordered walk it stands in for
+    // (`/v1/tenders?kind=` measured at 130-230s; the bare scan is a table pass), and
+    // ~1ms when the value is present (prod's first `Lot`/`procedure` row sits at the
+    // head of its table). Same one-sided hazard as the prefix probes: it answers
+    // *matches-nothing* only, so it can cost a walk it need not have but never drops a
+    // row that matches. Runs LAST so a cheaper absent country/cpv/buyer/winner leg
+    // short-circuits before this scan is paid for.
+    //
+    // What it still does NOT cover: a `kind` that EXISTS but has fewer rows than the
+    // page limit walks everything to fill a page it never can (`T(K) = T_full*50/K`).
+    // No corpus value is near that today; latent, confined by the isolation of issue
+    // 120, and recorded rather than fixed — as it was on `lots` before this moved here.
+    if let Some(kind) = &filter.kind {
+        let kind_table = match collection {
+            Collection::Tenders => "tenders",
+            Collection::Lots => "tender_version_lots",
+            // Unreachable: `walks()` isolates no other collection and `reachable()` is
+            // called from nowhere else. Decline to short-circuit rather than probe a
+            // table whose `kind` column means something different (`profile`,
+            // `identifier_kind`).
+            Collection::Organizations | Collection::Notices => return Ok(true),
+        };
+        let sql = format!("SELECT 1 FROM {kind_table} WHERE kind = ? LIMIT 1");
+        if !exists(conn, &sql, vec![t(kind)]).await? {
             return Ok(false);
         }
     }
@@ -805,7 +844,7 @@ pub async fn tenders(
     filter: &Filter,
     scope: Scope,
 ) -> turso::Result<Vec<TenderRow>> {
-    if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter).await? {
+    if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Vec::new());
     }
     let q = tenders_query(filter, scope);
@@ -1214,36 +1253,15 @@ fn blank() -> FactRow {
 /// parent Tender's version, so `/v1/lots?country=DE` means the same thing it
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
-    // A `kind` that exists NOWHERE turns the per-lot probe into a full pass over
-    // `lots` to prove a negative: 132.1s at prod scale against 18.6s for today's
-    // shape, the one class where this read is slower than what it replaces.
-    //
-    // The guard is an unindexed scan of `tender_version_lots` and that is deliberate.
-    // It costs 1ms on every kind that exists — prod's first `Lot` row is row 0 of the
-    // table, `LotsGroup` 0.0037% in, `Part` 0.0528% — and ~18.6s to prove absence,
-    // which is the same sequential pass today's shape makes. So the absent case
-    // returns to parity instead of regressing, and the present case pays a millisecond.
-    //
-    // An index on `(kind, lot_id)` would make the absent case ~0 instead of ~18.6s,
-    // and is NOT worth it: 40.6M rows against the 41M auto-build cap, a 1.8GB
-    // memory-linear build, and a shelf life ending at the next corpus growth.
-    //
-    // What it does NOT cover: a kind that EXISTS but has fewer rows than the page
-    // limit. The probe returns true, and the read then walks everything to collect a
-    // page it can never fill — `T(K) = T_full * 50/K`, saturating at K = LIMIT, so a
-    // kind with <=50 lots costs the full 132.1s. No value in the corpus is near that
-    // (smallest is LotsGroup at 12,097) but `kind` is data-driven, so one arriving in
-    // a handful of notices lands there through ordinary ingestion. Latent, confined
-    // by the isolation of issue 120, and recorded rather than fixed.
-    if matches!(scope, Scope::Page { .. })
-        && let Some(kind) = &filter.kind
-        && !exists(
-            conn,
-            "SELECT 1 FROM tender_version_lots WHERE kind = ? LIMIT 1",
-            vec![t(kind)],
-        )
-        .await?
-    {
+    // Same absent-value short-circuit `tenders()` runs, and for the same reason: every
+    // isolation-routed filter on this endpoint (`country`/`cpv`/`buyer`/`winner` via
+    // the tender's version, and `kind` as `vl.kind`) walks the isolated pool when its
+    // value matches nothing. Before issue 219 `lots` guarded only `kind` and skipped
+    // `reachable()` entirely, so `?country=<absent>`/`?buyer=<absent>` were the lots
+    // half of the saturation hole (215-D). Folding both entry points through the one
+    // probe keeps the guard set and the `walks()` set from drifting apart again — the
+    // per-collection `kind` table lives inside `reachable()` now.
+    if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Lots).await? {
         return Ok(Vec::new());
     }
     let mut rows = lots_query(filter, scope)
