@@ -217,15 +217,6 @@
     "resolved": "2026-08-14"
   },
   {
-    "category": "2012 concession award-criteria free text",
-    "reason": "unclaimed-content",
-    "profile": "ted-export-r208",
-    "detail_like": "%AWARD_CRITERIA_DETAIL%",
-    "diagnosis": "2 UK-spelled concession members (AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE) carry bare prose directly in AWARD_CRITERIA_DETAIL, a text-fallback position the r208 walker does not claim. Not a spelling twin of the 2011 DEFENSE family - a genuine text-fallback gap, parked at the issue-194 close as too small to own separately unless the class grows.",
-    "fix": "issue 194 close - parked",
-    "resolved": null
-  },
-  {
     "category": "2008 language siblings (duplicates)",
     "reason": "unparsable-xml",
     "detail_like": "XML with DTD detected",
