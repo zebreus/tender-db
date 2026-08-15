@@ -480,6 +480,30 @@ pub async fn wipe_guard_post(db: &Db, pre_populated: bool) -> turso::Result<()> 
     Ok(())
 }
 
+/// The process's peak resident set so far, in MB, from `/proc/self/status` `VmHWM`
+/// (a monotonic high-water mark — so probing it at each stage boundary reports the
+/// run's TRUE peak, not the instantaneous RSS). This is the number issue 57's
+/// acceptance wants ("peak RSS well under the box"); it was never logged, so a
+/// rebuild's real anonymous memory cost had to be inferred from cgroup peaks that
+/// include reclaimable page cache. 0 when unreadable (non-Linux / sandboxed) — a
+/// projection must never fail over a diagnostic.
+fn peak_rss_mb() -> u64 {
+    std::fs::read_to_string("/proc/self/status").map(|s| parse_vm_hwm_mb(&s)).unwrap_or(0)
+}
+
+/// Parse the `VmHWM:` line (`VmHWM:\t   12345 kB`) out of `/proc/self/status` and
+/// return it in MB. Split out from the read so it is unit-testable without a live
+/// `/proc`. Returns 0 when the line is absent or malformed.
+fn parse_vm_hwm_mb(status: &str) -> u64 {
+    status
+        .lines()
+        .find_map(|l| l.strip_prefix("VmHWM:"))
+        .and_then(|v| v.split_whitespace().next())
+        .and_then(|kb| kb.parse::<u64>().ok())
+        .map(|kb| kb / 1024)
+        .unwrap_or(0)
+}
+
 async fn project_inner(db: &Db, rebuild: bool) -> turso::Result<Report> {
     project_with_batch(db, rebuild, APPLY_NOTICE_BATCH).await
 }
@@ -680,8 +704,9 @@ pub async fn project_with_progress_phase2(
     // channel we can actually read (`cat {db}.diag.log`).
     let probe = |db: &Db, stage: &str| {
         let mb = db.wal_bytes().unwrap_or(0) / 1_048_576;
-        db.log_diag(&format!("WAL after {stage}: {mb} MB"));
-        eprintln!("[project] WAL after {stage}: {mb} MB");
+        let rss = peak_rss_mb();
+        db.log_diag(&format!("WAL after {stage}: {mb} MB (peak RSS {rss} MB)"));
+        eprintln!("[project] WAL after {stage}: {mb} MB (peak RSS {rss} MB)");
     };
     if rebuild {
         probe(db, "teardown (clear/strip/reset)");
@@ -3201,6 +3226,18 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn vm_hwm_is_parsed_from_a_proc_status_block() {
+        // A realistic /proc/self/status excerpt — VmHWM is tab-padded and in kB.
+        let status = "Name:\tserver\nVmPeak:\t 8000000 kB\nVmHWM:\t 6291456 kB\nVmRSS:\t 4000000 kB\n";
+        assert_eq!(parse_vm_hwm_mb(status), 6144, "6291456 kB / 1024 = 6144 MB");
+        // Absent or malformed lines yield 0, never a panic — a diagnostic must not
+        // fail a projection.
+        assert_eq!(parse_vm_hwm_mb("VmRSS:\t 100 kB\n"), 0, "no VmHWM line");
+        assert_eq!(parse_vm_hwm_mb("VmHWM:\tnonsense kB\n"), 0, "unparseable value");
+        assert_eq!(parse_vm_hwm_mb(""), 0, "empty");
+    }
 
     /// The Phase-2 bucket codec must be lossless: a [`BucketRow`] carrying every
     /// fold-relevant shape (all Fact variants, a lot with facts, a full results
