@@ -1,6 +1,23 @@
 # 210 — /v1/sql sandbox escape: a same-named CTE in an inner scope whitelists a base-table read of a credential table
 
-Status: needs-triage — **SECURITY / HIGH**, CONFIRMED EXPLOITABLE IN PROD 2026-08-15 (bounded count-only probe).
+Status: RESOLVED — FIXED & VERIFIED IN PROD 2026-08-15. Fix in `8938e02` ("sql: scope-track CTE names
+so an inner shadow can't launder a private read"), deployed (serving rev `8938e02`, health 200). The
+classifier now resolves each table reference against the CTE names visible at its own lexical position (a
+cons-list `Scope` threaded through the walk; each CTE body sees earlier siblings + itself when RECURSIVE,
+the primary sees all siblings) instead of one global CTE set. Regression test
+`cte_scope_does_not_launder_a_private_table_read` covers the confirmed exploit + later-sibling +
+subquery-shadow variants and the legitimate CTE shapes; full `v1::sql` suite green (13 passed).
+
+**Prod re-probe after deploy (bounded, count-only):**
+- `SELECT COUNT(id) FROM job_queue WHERE 1 = (WITH job_queue AS (SELECT 1) SELECT 1)` → **400** "not in
+  the queryable public surface" (was **200** pre-fix).
+- `SELECT COUNT(*) FROM api_tokens WHERE 1 = (WITH api_tokens AS (SELECT 1) SELECT 1)` → **400**.
+- `WITH t AS (SELECT 1 FROM users), users AS (SELECT 1) SELECT * FROM t` (later-sibling shadow) → **400**.
+- Legit same-scope `WITH x AS (SELECT id FROM v_tenders LIMIT 1) SELECT id FROM x` → **200** with data.
+- Legit nested/enclosing CTE → reached execution (408 on the heavy `v_lots` view, i.e. accepted by the
+  classifier, not denied) — confirms legitimate CTEs still pass.
+
+Was: needs-triage — **SECURITY / HIGH**, CONFIRMED EXPLOITABLE IN PROD 2026-08-15 (bounded count-only probe).
 Filed from the API review (subagent, 2026-08-15).
 Kind: security / correctness (the /v1/sql allow-list)
 Blocked by: —
