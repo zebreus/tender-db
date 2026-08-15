@@ -1,6 +1,20 @@
 # 82 — rebuild drops `tenders_current_published` and never rebuilds it → unindexed list + failing ~49min boot
 
-Status: open — ROOT-CAUSED 2026-08-01 (run-driver, strace-level). Deployed rev 4272266. Workaround applied (boot rebuilds it once, after issue 83's TMPDIR fix); needs the permanent code fix below.
+Status: RESOLVED-VERIFIED (2026-08-15). The preferred permanent fix (Option 1) landed:
+`tenders_current_published` is in `DEFERRED_TENDER_INDEXES` (canonical.rs:1689, comment cites this
+issue), so `build_tender_indexes` OWNS it and a completed rebuild leaves it present — the next boot has
+nothing to build. VERIFIED on prod: after the 2026-08-15 full rebuild the newest-first list
+`/v1/tenders?limit=50` returns in **0.028 s** (0.019 s on a cursor page) — indexed, not the 40s+ full
+scan — and the two deploys that followed booted in seconds, not the ~49-min stripped-index boot.
+Regression guard ADDED: `the_newest_list_covering_index_survives_a_rebuild_via_the_builder`
+(deferred_index_detection.rs) drives strip → assert-missing → build → assert-present, so removing it
+from the deferred set fails the test before it ships (the drift that caused this issue in the first
+place). SECONDARY hardening (uncancelled list-query leak) is addressed by issue 120's isolation
+routing: a walking `/v1/tenders` read now runs on the bounded isolated pool with `Shed` at capacity and
+`AbortOnDrop` on disconnect, so it can no longer accumulate on the main pool or starve the service; the
+residual (turso cannot interrupt a running scan, so an abandoned query completes on its isolated
+thread) is the documented turso limitation the isolate module is built around — same honest caveat as
+issue 51. Was: open, ROOT-CAUSED.
 Kind: correctness / performance
 Blocked by: —
 Relates to: 63 (drop_and_recreate teardown, commit 1f6ab90), 62 (bucketed fold / end index builds), 66

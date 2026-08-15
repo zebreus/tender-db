@@ -113,6 +113,46 @@ async fn dropping_one_index_is_noticed() {
     clean(&path);
 }
 
+/// Issue 82: `tenders_current_published` (the newest-first list's covering index) was
+/// created ONLY by `migrate()`, not by the projection's builder. A rebuild drops the
+/// `tenders` table bare, so the index vanished and nothing rebuilt it until the next
+/// boot — a ~49-minute stripped-index boot, and a full-scanning `/v1/tenders` list
+/// until then. The fix put it in `DEFERRED_TENDER_INDEXES` so `build_tender_indexes`
+/// OWNS it. This pins that ownership across the rebuild cycle: the strip removes it,
+/// and the END-OF-FOLD builder — not the next boot — brings it back. If someone drops
+/// it from the deferred set, this fails and issue 82 is caught before it ships.
+#[tokio::test]
+async fn the_newest_list_covering_index_survives_a_rebuild_via_the_builder() {
+    let (path, db) = open("list_index_82").await;
+    let missing = || async { db.missing_deferred_indexes().await.unwrap() };
+
+    // migrate() built it at open over the empty table; the builder keeps it present.
+    db.build_tender_indexes().await.unwrap();
+    assert!(
+        !missing().await.contains(&"tenders_current_published".to_owned()),
+        "precondition: the covering index exists after open + build"
+    );
+
+    // A rebuild strips the tender indexes before the fold.
+    db.strip_tender_indexes().await.unwrap();
+    assert!(
+        missing().await.contains(&"tenders_current_published".to_owned()),
+        "the pre-fold strip must remove it — otherwise this test proves nothing"
+    );
+
+    // The end-of-fold builder must bring it back, so a COMPLETED rebuild leaves the
+    // list indexed and the next boot has nothing to build (issue 82).
+    db.build_tender_indexes().await.unwrap();
+    assert!(
+        !missing().await.contains(&"tenders_current_published".to_owned()),
+        "build_tender_indexes must own tenders_current_published — if it is removed \
+         from DEFERRED_TENDER_INDEXES, issue 82 (unindexed newest-first list + a \
+         ~49-min stripped-index boot) returns"
+    );
+
+    clean(&path);
+}
+
 /// The size cap must actually refuse, not merely exist.
 ///
 /// A bulk `CREATE INDEX` sorts the whole table and its peak RSS is linear in row
