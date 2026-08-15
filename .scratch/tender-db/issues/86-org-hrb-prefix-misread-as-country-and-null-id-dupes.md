@@ -1,6 +1,6 @@
 # 86 — org identity: German "HRB" register prefix mis-read as country code; NULL-identifier duplicate org rows
 
-Status: open — DISCOVERED 2026-08-01 (sdk-vendor). Data-quality, low severity. Surfaced on DE data but likely general.
+Status: FIXED-IN-CODE, PENDING-REFOLD (2026-08-15 — false-country minting fixed; finding #2 dedup deferred)
 Kind: data-quality / correctness (organization canonicalization)
 Blocked by: —
 Relates to: 85 (DE-1.x, where it was noticed), organization identity/merge
@@ -40,3 +40,26 @@ SIRET/CVR/CIF/NIF/OIB/CUI/ICO/DIC...) — see
 docs/research/data-profile-2026-08.md §1.5(a) and the register-prefix
 normalization rule (§3 rule 1). 96.6% of stored (HR, vat) orgs are German
 HRB/HRA companies.
+
+## Fix (2026-08-15, orchestrator) — finding #1 (false country)
+
+`normalise_identifier` (crates/ingest/src/project.rs) minted a country from any
+2-letter alphabetic id prefix; `HRB 22388` → country `HR`. Per data-profile §3 rule 1:
+- A **register-prefix table** (HRB, HRA, VR, GNR, PR, FN, KRS, NIP, REGON, CUI, CIF,
+  NIF, OIB, CVR, ICO, DIC, SIREN, SIRET, UST) is classified national BEFORE VAT
+  sniffing, so the scheme tag never mints a country. 3+-letter tags match on the
+  prefix alone (handles `HRBDRESDEN4115`, court name inline); 2-letter tags (FN/VR/PR)
+  also require a following digit.
+- A VAT prefix must now be an actual European VAT country (`VAT_COUNTRIES`: EU-27 with
+  EL, EEA, GB/UK/XI, CH). A two-letter prefix outside the set is national. Austrian
+  `ATU…` (3rd char a letter) and Greek `EL…` still parse as VAT.
+Tests: `register_prefixes_are_national_not_a_minted_country`,
+`real_vat_ids_keep_their_country_prefix`, plus the existing merge-plausibility test.
+Deployed the code; **materialises on the next reprojection** — batches with issue 187
+(internal-ojs chaining) and issue 48-residual (org country normalization). One rebuild
+now clears three org/chaining defects at once.
+
+## Residual (finding #2, still open)
+NULL-identifier duplicate org rows fragmenting the same entity — a dedup-key decision
+(normalised name + NUTS?) per data-profile §3 rules 4–5. Separate from the false-country
+fix; not addressed here.
