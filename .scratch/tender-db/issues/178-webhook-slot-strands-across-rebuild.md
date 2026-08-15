@@ -1,6 +1,6 @@
 # 178 — a webhook slot strands silently across a feed rebuild
 
-Status: ready-for-agent
+Status: FIXED (2026-08-15 — reset notice implemented, tested, deployed)
 Severity: MEDIUM now, HIGH once external webhook consumers exist
 Found: 2026-08-10 (orchestrator), while closing issue 46 — webhooks are the
 third transport of the same protocol and got only the detection half.
@@ -46,3 +46,19 @@ Acceptance: red test first — endpoint delivered under generation 1, rebuild
 reset notice and then the new change; a stranded endpoint (no new changes at
 all) still receives the reset notice on the next sweep. Document the reset
 body in /docs webhooks section.
+
+## Fix (2026-08-15, orchestrator)
+
+Implemented the design sketch. `webhook_endpoints.last_generation` added (additive
+migration; NULL on a pre-upgrade row → treated as a mismatch and reset, the
+conservative choice). The sweeper reads `feed_generation` once per pass; in `deliver`,
+a slot whose stamped generation != current triggers `deliver_reset`: POST a signed,
+batch-shaped `{"reset":"feed_rebuilt","generation":N,"events":[]}` and, on 2xx, jump the
+slot to the current head under the new generation (reusing `record`/`webhook_delivered`,
+which now stamps generation). Fresh endpoints stamp the current generation at creation,
+so they never fire a spurious reset. The reset fires even with no events flowing, so the
+stranded-slot case (cursor beyond the new head after clear_changes) is covered — the
+generation gate runs before any batch read. `/docs` webhooks section documents the reset
+body. Acceptance test `a_rebuild_sends_a_reset_notice_and_the_slot_resumes` (delivered
+under gen 1 → full rebuild → signed reset received → slot at head/gen N → no re-send).
+Full app + store gates green.
