@@ -599,117 +599,174 @@ fn classify(sql: &str) -> Result<(), ApiError> {
 /// TVF — is denied until proven safe and added here.
 const ALLOWED_TVF: [&str; 1] = ["generate_series"];
 
-/// The base tables an executed SELECT would read, plus the CTE names in scope.
-/// CTE names are held apart: they name derived queries, not base tables, and
-/// any base table a CTE wraps is itself collected from the CTE's own body — so
-/// a reference resolving to a CTE can never launder a private-table read.
+/// The base tables an executed SELECT would read, each tagged with whether a CTE
+/// of that name was visible where it appeared, plus the table-valued functions.
+///
+/// A base-table reference covered by a *visible* CTE resolves to that derived
+/// query, not a base table, so it is not checked against [`ALLOWED`]. Coverage is
+/// decided at the reference's own lexical position (see [`Scope`]), never from a
+/// global name set: CTE visibility is scoped, and a CTE buried in an inner
+/// subquery must not launder an outer reference to a credential table (issue 210).
 #[derive(Default)]
 struct Tables {
-    /// Base-table references (FROM/JOIN entries and `x IN table`), lowercased.
-    refs: Vec<String>,
-    /// CTE names defined anywhere in the query, lowercased.
-    ctes: std::collections::HashSet<String>,
+    /// Base-table references (FROM/JOIN entries and `x IN table`), lowercased,
+    /// each paired with `covered` — whether a CTE of that name was in scope at
+    /// the reference. A `covered` ref is a derived-query read, not a base table.
+    refs: Vec<(String, bool)>,
     /// Table-valued function names used as a FROM source, lowercased — checked
-    /// against [`ALLOWED_TVF`], never against the CTE set (a CTE cannot define
-    /// a callable, so a TVF name can never resolve to one).
+    /// against [`ALLOWED_TVF`]. A CTE cannot define a callable, so a TVF name can
+    /// never resolve to one, and scope does not enter into it.
     tvfs: Vec<String>,
 }
 
+/// The CTE names visible at one point in the walk — a stack of `WITH` frames,
+/// innermost first, held as a cons-list so a descent borrows its parent instead
+/// of cloning the whole stack.
+///
+/// This is the heart of the issue-210 fix. SQL binds a `FROM x` to a CTE only
+/// when a CTE named `x` is lexically in scope there; otherwise `x` is the base
+/// table. Resolving each reference against the CTE names visible *from its own
+/// position* is what stops an inner-scope CTE from whitelisting an outer read of
+/// a table deliberately absent from [`ALLOWED`] (`SELECT * FROM api_tokens WHERE
+/// 1 = (WITH api_tokens AS (SELECT 1) SELECT 1)` — the outer `api_tokens` cannot
+/// see the subquery's CTE, so it is the credential table and must be denied).
+struct Scope<'a> {
+    names: &'a std::collections::HashSet<String>,
+    parent: Option<&'a Scope<'a>>,
+}
+
+impl Scope<'_> {
+    /// Is `name` bound to a CTE visible here? Walks outward through the enclosing
+    /// `WITH` frames.
+    fn covers(&self, name: &str) -> bool {
+        self.names.contains(name) || self.parent.is_some_and(|p| p.covers(name))
+    }
+}
+
 /// The first referenced table or table-valued function the query is not allowed
-/// to read, if any — the reason it is denied. A base table must be a CTE or in
-/// [`ALLOWED`]; a TVF must be in [`ALLOWED_TVF`].
+/// to read, if any — the reason it is denied. A base table must be covered by a
+/// visible CTE or be in [`ALLOWED`]; a TVF must be in [`ALLOWED_TVF`].
 fn disallowed_table(select: &turso_parser::ast::Select) -> Option<String> {
     let mut tables = Tables::default();
-    walk_select(select, &mut tables);
+    let empty = std::collections::HashSet::new();
+    walk_select(select, &Scope { names: &empty, parent: None }, &mut tables);
     tables
         .refs
         .iter()
-        .find(|name| !tables.ctes.contains(*name) && !ALLOWED.contains(&name.as_str()))
-        .or_else(|| tables.tvfs.iter().find(|name| !ALLOWED_TVF.contains(&name.as_str())))
-        .cloned()
+        .find(|(name, covered)| !covered && !ALLOWED.contains(&name.as_str()))
+        .map(|(name, _)| name.clone())
+        .or_else(|| tables.tvfs.iter().find(|name| !ALLOWED_TVF.contains(&name.as_str())).cloned())
 }
 
 fn norm(name: &turso_parser::ast::Name) -> String {
     name.as_str().to_ascii_lowercase()
 }
 
-fn walk_select(s: &turso_parser::ast::Select, t: &mut Tables) {
-    if let Some(with) = &s.with {
-        for cte in &with.ctes {
-            t.ctes.insert(norm(&cte.tbl_name));
-            walk_select(&cte.select, t);
+/// Walk a SELECT, resolving CTE scope. Each CTE body sees the enclosing scope
+/// plus the siblings declared *before* it (plus itself, when the `WITH` is
+/// `RECURSIVE`); the primary query, its compound arms, ORDER BY and LIMIT see the
+/// enclosing scope plus *all* siblings — exactly SQL's ordered CTE visibility.
+/// Anything this under-approximates (mutual recursion, forward references) is
+/// rejected, which is the safe direction for an allow-list.
+fn walk_select(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
+    let Some(with) = &s.with else {
+        walk_select_parts(s, scope, t);
+        return;
+    };
+    let mut siblings: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for cte in &with.ctes {
+        let name = norm(&cte.tbl_name);
+        // The body sees earlier siblings, and itself only if the WITH is RECURSIVE.
+        let mut visible = siblings.clone();
+        if with.recursive {
+            visible.insert(name.clone());
         }
+        walk_select(&cte.select, &Scope { names: &visible, parent: Some(scope) }, t);
+        siblings.insert(name);
     }
-    walk_one_select(&s.body.select, t);
+    // The primary query and its tails see every sibling.
+    walk_select_parts(s, &Scope { names: &siblings, parent: Some(scope) }, t);
+}
+
+/// The parts of a SELECT other than its `WITH`: the body, its compound arms, and
+/// the ORDER BY / LIMIT expressions — all walked under `scope`.
+fn walk_select_parts(s: &turso_parser::ast::Select, scope: &Scope, t: &mut Tables) {
+    walk_one_select(&s.body.select, scope, t);
     for compound in &s.body.compounds {
-        walk_one_select(&compound.select, t);
+        walk_one_select(&compound.select, scope, t);
     }
     for sc in &s.order_by {
-        walk_expr(&sc.expr, t);
+        walk_expr(&sc.expr, scope, t);
     }
     if let Some(limit) = &s.limit {
-        walk_expr(&limit.expr, t);
+        walk_expr(&limit.expr, scope, t);
         if let Some(offset) = &limit.offset {
-            walk_expr(offset, t);
+            walk_expr(offset, scope, t);
         }
     }
 }
 
-fn walk_one_select(o: &turso_parser::ast::OneSelect, t: &mut Tables) {
+fn walk_one_select(o: &turso_parser::ast::OneSelect, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::{OneSelect, ResultColumn};
     match o {
         OneSelect::Select { columns, from, where_clause, group_by, window_clause, .. } => {
             for col in columns {
                 match col {
-                    ResultColumn::Expr(e, _) => walk_expr(e, t),
+                    ResultColumn::Expr(e, _) => walk_expr(e, scope, t),
                     ResultColumn::Star | ResultColumn::TableStar(_) => {}
                 }
             }
             if let Some(from) = from {
-                walk_from(from, t);
+                walk_from(from, scope, t);
             }
             if let Some(w) = where_clause {
-                walk_expr(w, t);
+                walk_expr(w, scope, t);
             }
             if let Some(group) = group_by {
                 for e in &group.exprs {
-                    walk_expr(e, t);
+                    walk_expr(e, scope, t);
                 }
                 if let Some(having) = &group.having {
-                    walk_expr(having, t);
+                    walk_expr(having, scope, t);
                 }
             }
             for def in window_clause {
-                walk_window(&def.window, t);
+                walk_window(&def.window, scope, t);
             }
         }
         OneSelect::Values(rows) => {
             for row in rows {
                 for e in row {
-                    walk_expr(e, t);
+                    walk_expr(e, scope, t);
                 }
             }
         }
     }
 }
 
-fn walk_from(f: &turso_parser::ast::FromClause, t: &mut Tables) {
+fn walk_from(f: &turso_parser::ast::FromClause, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::JoinConstraint;
-    walk_table(&f.select, t);
+    walk_table(&f.select, scope, t);
     for join in &f.joins {
-        walk_table(&join.table, t);
+        walk_table(&join.table, scope, t);
         if let Some(JoinConstraint::On(e)) = &join.constraint {
-            walk_expr(e, t);
+            walk_expr(e, scope, t);
         }
         // `USING (col, …)` names columns only, never a table.
     }
 }
 
-fn walk_table(st: &turso_parser::ast::SelectTable, t: &mut Tables) {
+fn walk_table(st: &turso_parser::ast::SelectTable, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::SelectTable;
     match st {
-        // A bare table name — the one place a base table is read.
-        SelectTable::Table(name, _, _) => t.refs.push(norm(&name.name)),
+        // A bare table name — the one place a base table is read. Tag it with
+        // whether a CTE of that name is visible *here*: if so it resolves to the
+        // CTE, not the base table (issue 210).
+        SelectTable::Table(name, _, _) => {
+            let name = norm(&name.name);
+            let covered = scope.covers(&name);
+            t.refs.push((name, covered));
+        }
         // A table-valued function (`generate_series(…)`, `pragma_table_info(…)`):
         // a callable FROM source. Its name IS checked (against ALLOWED_TVF, not
         // ALLOWED) — a `pragma_*` TVF reaches a denied table's schema without a
@@ -719,26 +776,26 @@ fn walk_table(st: &turso_parser::ast::SelectTable, t: &mut Tables) {
         SelectTable::TableCall(name, args, _) => {
             t.tvfs.push(norm(&name.name));
             for a in args {
-                walk_expr(a, t);
+                walk_expr(a, scope, t);
             }
         }
-        SelectTable::Select(s, _) => walk_select(s, t),
-        SelectTable::Sub(f, _) => walk_from(f, t),
+        SelectTable::Select(s, _) => walk_select(s, scope, t),
+        SelectTable::Sub(f, _) => walk_from(f, scope, t),
     }
 }
 
-fn walk_window(w: &turso_parser::ast::Window, t: &mut Tables) {
+fn walk_window(w: &turso_parser::ast::Window, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::FrameBound;
     for e in &w.partition_by {
-        walk_expr(e, t);
+        walk_expr(e, scope, t);
     }
     for sc in &w.order_by {
-        walk_expr(&sc.expr, t);
+        walk_expr(&sc.expr, scope, t);
     }
     if let Some(frame) = &w.frame_clause {
         for bound in [Some(&frame.start), frame.end.as_ref()].into_iter().flatten() {
             match bound {
-                FrameBound::Following(e) | FrameBound::Preceding(e) => walk_expr(e, t),
+                FrameBound::Following(e) | FrameBound::Preceding(e) => walk_expr(e, scope, t),
                 FrameBound::CurrentRow
                 | FrameBound::UnboundedFollowing
                 | FrameBound::UnboundedPreceding => {}
@@ -747,13 +804,13 @@ fn walk_window(w: &turso_parser::ast::Window, t: &mut Tables) {
     }
 }
 
-fn walk_function_tail(ft: &turso_parser::ast::FunctionTail, t: &mut Tables) {
+fn walk_function_tail(ft: &turso_parser::ast::FunctionTail, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::Over;
     if let Some(e) = &ft.filter_clause {
-        walk_expr(e, t);
+        walk_expr(e, scope, t);
     }
     match &ft.over_clause {
-        Some(Over::Window(w)) => walk_window(w, t),
+        Some(Over::Window(w)) => walk_window(w, scope, t),
         Some(Over::Name(_)) | None => {}
     }
 }
@@ -762,59 +819,62 @@ fn walk_function_tail(ft: &turso_parser::ast::FunctionTail, t: &mut Tables) {
 /// exhaustive with no wildcard on purpose: a `turso_parser` upgrade that adds an
 /// `Expr` variant carrying a table reference then fails to compile here rather
 /// than silently opening a hole (issue 45's whole point).
-fn walk_expr(e: &turso_parser::ast::Expr, t: &mut Tables) {
+fn walk_expr(e: &turso_parser::ast::Expr, scope: &Scope, t: &mut Tables) {
     use turso_parser::ast::Expr::*;
     match e {
         Between { lhs, start, end, .. } => {
-            walk_expr(lhs, t);
-            walk_expr(start, t);
-            walk_expr(end, t);
+            walk_expr(lhs, scope, t);
+            walk_expr(start, scope, t);
+            walk_expr(end, scope, t);
         }
         Binary(a, _, b) => {
-            walk_expr(a, t);
-            walk_expr(b, t);
+            walk_expr(a, scope, t);
+            walk_expr(b, scope, t);
         }
         Case { base, when_then_pairs, else_expr } => {
             if let Some(b) = base {
-                walk_expr(b, t);
+                walk_expr(b, scope, t);
             }
             for (when, then) in when_then_pairs {
-                walk_expr(when, t);
-                walk_expr(then, t);
+                walk_expr(when, scope, t);
+                walk_expr(then, scope, t);
             }
             if let Some(el) = else_expr {
-                walk_expr(el, t);
+                walk_expr(el, scope, t);
             }
         }
-        Cast { expr, .. } => walk_expr(expr, t),
-        Collate(x, _) => walk_expr(x, t),
-        Exists(s) => walk_select(s, t),
-        FieldAccess { base, .. } => walk_expr(base, t),
+        Cast { expr, .. } => walk_expr(expr, scope, t),
+        Collate(x, _) => walk_expr(x, scope, t),
+        Exists(s) => walk_select(s, scope, t),
+        FieldAccess { base, .. } => walk_expr(base, scope, t),
         FunctionCall { args, order_by, within_group, filter_over, .. } => {
             for a in args {
-                walk_expr(a, t);
+                walk_expr(a, scope, t);
             }
             for sc in order_by.iter().chain(within_group) {
-                walk_expr(&sc.expr, t);
+                walk_expr(&sc.expr, scope, t);
             }
-            walk_function_tail(filter_over, t);
+            walk_function_tail(filter_over, scope, t);
         }
-        FunctionCallStar { filter_over, .. } => walk_function_tail(filter_over, t),
+        FunctionCallStar { filter_over, .. } => walk_function_tail(filter_over, scope, t),
         InList { lhs, rhs, .. } => {
-            walk_expr(lhs, t);
+            walk_expr(lhs, scope, t);
             for e in rhs {
-                walk_expr(e, t);
+                walk_expr(e, scope, t);
             }
         }
         InSelect { lhs, rhs, .. } => {
-            walk_expr(lhs, t);
-            walk_select(rhs, t);
+            walk_expr(lhs, scope, t);
+            walk_select(rhs, scope, t);
         }
         InTable { lhs, rhs, args, .. } => {
-            walk_expr(lhs, t);
+            walk_expr(lhs, scope, t);
             if args.is_empty() {
-                // `x IN some_table` reads some_table's first column.
-                t.refs.push(norm(&rhs.name));
+                // `x IN some_table` reads some_table's first column — tagged with
+                // CTE coverage at this position exactly like a FROM ref (issue 210).
+                let name = norm(&rhs.name);
+                let covered = scope.covers(&name);
+                t.refs.push((name, covered));
             } else {
                 // `x IN tvf(args)` — a table-valued function; its name is checked
                 // against ALLOWED_TVF exactly as in `walk_table` (a pragma TVF
@@ -822,42 +882,42 @@ fn walk_expr(e: &turso_parser::ast::Expr, t: &mut Tables) {
                 // 204).
                 t.tvfs.push(norm(&rhs.name));
                 for a in args {
-                    walk_expr(a, t);
+                    walk_expr(a, scope, t);
                 }
             }
         }
-        IsNull(x) | NotNull(x) => walk_expr(x, t),
+        IsNull(x) | NotNull(x) => walk_expr(x, scope, t),
         Like { lhs, rhs, escape, .. } => {
-            walk_expr(lhs, t);
-            walk_expr(rhs, t);
+            walk_expr(lhs, scope, t);
+            walk_expr(rhs, scope, t);
             if let Some(e) = escape {
-                walk_expr(e, t);
+                walk_expr(e, scope, t);
             }
         }
         Parenthesized(xs) => {
             for x in xs {
-                walk_expr(x, t);
+                walk_expr(x, scope, t);
             }
         }
         Raise(_, x) => {
             if let Some(x) = x {
-                walk_expr(x, t);
+                walk_expr(x, scope, t);
             }
         }
-        Subquery(s) => walk_select(s, t),
-        Unary(_, x) => walk_expr(x, t),
+        Subquery(s) => walk_select(s, scope, t),
+        Unary(_, x) => walk_expr(x, scope, t),
         Subscript { base, index } => {
-            walk_expr(base, t);
-            walk_expr(index, t);
+            walk_expr(base, scope, t);
+            walk_expr(index, scope, t);
         }
         Array { elements } => {
             for e in elements {
-                walk_expr(e, t);
+                walk_expr(e, scope, t);
             }
         }
         SubqueryResult { lhs, .. } => {
             if let Some(x) = lhs {
-                walk_expr(x, t);
+                walk_expr(x, scope, t);
             }
         }
         // Leaves: identifiers, literals, columns and parameters — no nested
@@ -1104,6 +1164,53 @@ mod tests {
             "SELECT * FROM v_tenders ORDER BY (SELECT max(id) FROM password_resets)",
         ] {
             assert!(classify(sql).is_err(), "a non-allowlisted table must be denied: {sql:?}");
+        }
+    }
+
+    #[test]
+    fn cte_scope_does_not_launder_a_private_table_read() {
+        // Issue 210: a CTE only covers a base-table reference where the CTE is
+        // lexically in scope. A same-named CTE in an inner or later scope must NOT
+        // whitelist a reference that turso resolves to the real credential table.
+        for sql in [
+            // The confirmed exploit: the outer `api_tokens` is an ANCESTOR of the
+            // subquery's `WITH api_tokens`, cannot see it, and is the base table.
+            "SELECT * FROM api_tokens WHERE 1 = (WITH api_tokens AS (SELECT 1) SELECT 1)",
+            "SELECT COUNT(id) FROM job_queue WHERE 1 = (WITH job_queue AS (SELECT 1) SELECT 1)",
+            // A LATER sibling cannot be seen by an earlier CTE's body, so the body's
+            // `api_tokens` is the base table.
+            "WITH t AS (SELECT * FROM api_tokens), api_tokens AS (SELECT 1) SELECT * FROM t",
+            // The shadow CTE sits in a sibling subquery in the FROM, not enclosing
+            // the outer reference.
+            "SELECT * FROM users, (WITH users AS (SELECT 1) SELECT 1) AS shadow",
+            // Shadow defined only in an ORDER BY subquery.
+            "SELECT * FROM sessions ORDER BY (WITH sessions AS (SELECT 1) SELECT 1)",
+        ] {
+            assert!(classify(sql).is_err(), "CTE scope must not launder: {sql:?}");
+        }
+        // The escape names the real table it resolves to.
+        assert_eq!(
+            denied_table("SELECT * FROM api_tokens WHERE 1 = (WITH api_tokens AS (SELECT 1) SELECT 1)")
+                .as_deref(),
+            Some("api_tokens"),
+        );
+
+        // The legitimate CTE shapes the fix must keep working.
+        for sql in [
+            // Same-scope: the reference is in the WITH's own primary query.
+            "WITH x AS (SELECT 1 AS n) SELECT n FROM x",
+            // Earlier sibling: `b`'s body may see `a`.
+            "WITH a AS (SELECT id FROM v_tenders), b AS (SELECT id FROM a) SELECT id FROM b",
+            // An enclosing CTE is visible inside a nested WITH's body and primary.
+            "WITH a AS (SELECT id FROM v_lots) \
+             SELECT id FROM a WHERE id IN (WITH b AS (SELECT id FROM a) SELECT id FROM b)",
+            // Recursive self-reference is legal and reads no base table.
+            "WITH RECURSIVE c(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM c WHERE n < 5) SELECT n FROM c",
+            // A CTE named after a credential table is fine when it fully shadows it
+            // in every position the name is used (turso reads the CTE, not the table).
+            "WITH api_tokens AS (SELECT 1 AS n) SELECT n FROM api_tokens",
+        ] {
+            assert!(classify(sql).is_ok(), "a legitimate CTE query must classify OK: {sql:?}");
         }
     }
 
