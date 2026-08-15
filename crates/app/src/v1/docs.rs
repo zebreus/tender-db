@@ -100,6 +100,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <a href="#sql">SQL endpoint</a><br>
   <a href="#webhooks">Webhooks</a><br>
   <a href="#accounts">Accounts &amp; tokens</a><br>
+  <a href="#performance">Performance</a><br>
   <a href="#meta">Service &amp; licence</a><br>
 </nav></div>
 
@@ -314,6 +315,99 @@ POSTs. Manage them on the <a href="/account">dashboard</a> or over the API
 reset — lose the password and you lose the account and its tokens. API tokens
 (<code>tdb_…</code>) are shown once at creation. Check a token with:</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/me -H "Authorization: Bearer tdb_…"</code></pre>
+
+<h2 id="performance">Performance</h2>
+<p>How the API responds by <strong>query shape</strong>. The rule of thumb: anything
+reachable by id or a small page is index-served and returns in single-digit to tens of
+milliseconds; a filter on a <em>selective</em> value is the only thing that can be slow,
+and it is deliberately kept from affecting anything else.</p>
+<p class="muted">Median of 5 warm server-side samples, measured 2026-08-15 against the
+live corpus (≈7.9M tenders / 14.3M notices). Absolute numbers drift as the corpus grows
+and the hardware changes — the <em>shape</em> is the durable part, not the exact
+milliseconds.</p>
+
+<div class="card" style="padding:1rem 1rem .5rem;">
+<svg viewBox="0 0 620 288" style="width:100%;height:auto;" role="img"
+     aria-label="Median response time by query type, in milliseconds">
+  <!-- gridlines + axis -->
+  <g stroke="var(--line)" stroke-width="1">
+    <line x1="210" y1="15" x2="210" y2="250"/>
+    <line x1="321" y1="15" x2="321" y2="250"/>
+    <line x1="432" y1="15" x2="432" y2="250"/>
+    <line x1="544" y1="15" x2="544" y2="250"/>
+  </g>
+  <g fill="var(--muted)" font-size="11" text-anchor="middle" font-family="system-ui,sans-serif">
+    <text x="210" y="264">0</text>
+    <text x="321" y="264">20</text>
+    <text x="432" y="264">40</text>
+    <text x="544" y="264">60</text>
+    <text x="415" y="277" fill="var(--muted)">median response time (ms)</text>
+  </g>
+  <!-- bars -->
+  <g font-family="ui-monospace,Menlo,monospace" font-size="11.5">
+    <g fill="var(--muted)" text-anchor="end">
+      <text x="203" y="34">metadata (/health, /docs)</text>
+      <text x="203" y="64">SQL &mdash; bounded SELECT</text>
+      <text x="203" y="94">list /v1/notices</text>
+      <text x="203" y="124">point /v1/&hellip;/{id}</text>
+      <text x="203" y="154">list /v1/tenders</text>
+      <text x="203" y="184">filter ?country=DE</text>
+      <text x="203" y="214">filter ?cpv=45</text>
+      <text x="203" y="244">list /v1/organizations</text>
+    </g>
+    <g>
+      <rect x="210" y="22" width="3"   height="15" rx="2" fill="var(--accent)"/>
+      <rect x="210" y="52" width="6"   height="15" rx="2" fill="var(--accent)"/>
+      <rect x="210" y="82" width="6"   height="15" rx="2" fill="var(--accent)"/>
+      <rect x="210" y="112" width="11"  height="15" rx="2" fill="var(--accent)"/>
+      <rect x="210" y="142" width="106" height="15" rx="2" fill="var(--accent)"/>
+      <rect x="210" y="172" width="217" height="15" rx="2" fill="#d98a2b"/>
+      <rect x="210" y="202" width="262" height="15" rx="2" fill="#d98a2b"/>
+      <rect x="210" y="232" width="362" height="15" rx="2" fill="var(--accent)"/>
+    </g>
+    <g fill="var(--fg)" text-anchor="start">
+      <text x="219"  y="34">0.5</text>
+      <text x="222"  y="64">1.0</text>
+      <text x="222"  y="94">1.1</text>
+      <text x="227"  y="124">1.9</text>
+      <text x="322"  y="154">19</text>
+      <text x="433"  y="184">39</text>
+      <text x="478"  y="214">47</text>
+      <text x="578"  y="244">65</text>
+    </g>
+  </g>
+</svg>
+<p class="muted" style="margin:.2rem 0 .4rem;font-size:.82rem;">
+  <span style="color:var(--accent);">&#9632;</span> main reader pool &nbsp;
+  <span style="color:#d98a2b;">&#9632;</span> isolated pool (filterable reads that can walk) &mdash;
+  a sparse filter (e.g. <code>?buyer=&lt;rare org&gt;</code>) can walk the whole corpus and is
+  <strong>off-scale</strong>: it returns slowly or <code>503</code> under load, never blocking the bars above.
+</p>
+</div>
+
+<table>
+  <tr><th>Query shape</th><th>Example</th><th>Median</th><th>Pool</th></tr>
+  <tr><td>Point lookup</td><td class="ep">GET /v1/{collection}/{id}</td><td>&lt;1&ndash;2 ms</td><td>main</td></tr>
+  <tr><td>Small list</td><td class="ep">GET /v1/notices, /v1/lots</td><td>~1 ms</td><td>main</td></tr>
+  <tr><td>Tender list (page)</td><td class="ep">GET /v1/tenders?limit=50</td><td>~19 ms</td><td>main</td></tr>
+  <tr><td>Organization list</td><td class="ep">GET /v1/organizations?limit=50</td><td>~65 ms</td><td>main</td></tr>
+  <tr><td>Filter, common value</td><td class="ep">?country=DE, ?cpv=45</td><td>~40 ms</td><td>isolated</td></tr>
+  <tr><td>Filter, absent value</td><td class="ep">?country=ZZ</td><td>&lt;1 ms*</td><td>main</td></tr>
+  <tr><td>Filter, sparse value</td><td class="ep">?buyer=&lt;rare&gt;, ?winner=&lt;rare&gt;</td><td>walks &rarr; up to a full scan; 503 under load</td><td>isolated</td></tr>
+  <tr><td>Change feed</td><td class="ep">GET /v1/changes?since=0</td><td>&lt;1 ms</td><td>main</td></tr>
+  <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>
+  <tr><td>Metadata</td><td class="ep">/v1, /docs, /v1/openapi.json, /health</td><td>&lt;1 ms</td><td>&mdash;</td></tr>
+</table>
+<p class="muted" style="font-size:.85rem;">* an absent filter value short-circuits to an empty page.</p>
+
+<h3>Why the shape looks like this</h3>
+<ul>
+  <li>Everything reachable by id or a small page is <strong>index-served</strong>, so it is sub-millisecond to tens of milliseconds regardless of corpus size. The organization list is the heaviest &ldquo;fast&rdquo; read because it counts each row's mentions.</li>
+  <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. (Measured: main-pool reads stayed under 18 ms while a walking filter ran.)</li>
+  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Sort order is fixed (newest-first for tenders, id for the rest).</li>
+  <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
+  <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
+</ul>
 
 <h2 id="meta">Service &amp; licence</h2>
 <table>
