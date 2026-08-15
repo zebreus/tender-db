@@ -32,16 +32,21 @@ routing the last item touches)
   costing the client one extra empty poll. No data loss; the cursor round-trips correctly.
 - Fix: fetch `limit+1`, set `more` from the overflow, truncate to `limit` — mirror the list handler.
 
-## D. Absent-value short-circuit is tenders-only; `/v1/lots` absent-value does a full isolated walk
+## D. Absent-value short-circuit is inconsistent across collections → SUPERSEDED BY 219
+
+> **Folded into issue 219** (2026-08-15). The performance review found the same absent-value-guard
+> inconsistency has a second, worse hole — `/v1/tenders?kind=<absent>` also skips the short-circuit and
+> is an *unauthenticated* isolated-pool saturation vector — so the whole guard-consistency problem is now
+> tracked canonically in 219 (which absorbs this lots half). Left here as a pointer; fix in 219. The
+> `/docs` performance-table pool-column drift noted below stays a 215 doc nit.
 
 - `reachable()` short-circuits an absent filter value to an empty page in `tenders()`
   (`read.rs:808`) but is not applied in `lots()` (which only guards absent `kind`,
   `read.rs:1238-1248`). So `/v1/lots?buyer=<absent>` / `?country=<absent>` run a full isolated walk.
 - Docs claim the short-circuit generically ("an absent filter value short-circuits to an empty page",
   `docs.rs:395,401`) and label absent-value filters as "main" pool — but on tenders, country/buyer route
-  to the **isolated** pool (`walks` is true), so the docs' pool column is also off for that row.
-- Fix: extend the absent-value short-circuit to the lots read (and/or correct the `/docs` performance
-  table's pool column). Low urgency — absent values are rare — but it is a real, if edge, isolated-walk.
+  to the **isolated** pool (`walks` is true), so the docs' pool column is also off for that row. *(This
+  doc-column drift remains a 215 item; the routing/guard fix moves to 219.)*
 
 ## Verification
 

@@ -58,3 +58,19 @@ Decide which is the intended contract (are result-graph changes a public feed co
   documented kinds (option 1), OR the OpenAPI enum validates every emitted kind (option 2).
 - `GET /v1/changes?entity=lot_result` returns 400 (option 1) or is documented (option 2), never an
   undocumented 200.
+
+## Note — the emitted ids are also unresolvable (completeness review, 2026-08-15)
+
+Beyond the undocumented *kind*, the emitted `{entity:"lot_result"|"bid"|"contract", id:N}` events carry an
+id that resolves to **no** REST endpoint: there is no `/v1/lot_results/{id}`, `/v1/bids/{id}`, or
+`/v1/contracts/{id}` (router mod.rs:143-161), and `Collection::entity_kind` maps only
+tender/lot/organization/notice (mod.rs:595-603). So even a client that tolerates the extra kinds cannot
+fetch the referenced entity — the change event is a dead reference. This sharpens the fork above:
+
+- **Option 1 (filter the feed to the three snapshot-backed kinds)** also fixes this — no unresolvable id
+  is ever emitted. Recommended.
+- **Option 2 (document the kinds)** is incomplete on its own: it would additionally require adding
+  `/v1/lot_results/{id}` (+ bids/contracts) resolvable endpoints, or the ids stay dead.
+
+The underlying data is reachable today via the parent tender's detail (`lot_results`/`bids`/`contracts`
+are embedded there), so no data is lost — only the change feed's own ids are unfetchable.
