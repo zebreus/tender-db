@@ -1,9 +1,17 @@
 # 205 — the 41M index-build cap traps two read-path indexes: a permanent one (slow tender detail) and a boot one (~22-min outage after a rebuild)
 
-Status: needs-triage — filed 2026-08-15 (owner), REWRITTEN same day after tracing the mechanism to
-ground truth. HIGH. Two distinct problems share one root (the cap has no build path for an over-cap
-index): **P1 is live now — `/v1/tenders/{id}` measures ~4 s**; P2 is a ~22-min unserved boot that
-recurs on every restart after a full rebuild.
+Status: RESOLVED (2026-08-15, rev 434620d). Root cause was the stale 2 GB `AUTO_INDEX_MEMORY_BUDGET`
+(→ 41M cap) — a relic of the old ~4 GB box; the box is now 62 GB with disk-backed spill and no swap
+band-aid. Raised the budget to 12 GB / cap to 240M so every read-path satellite (largest 138.9M)
+builds. **P1 VERIFIED FIXED**: deployed (fast boot — the schema indexes were present, so `Db::open`
+was a no-op), the supervisor auto-queued a reindex that BUILT `tender_version_bid_parties_version`
+(66.8M, ~110 s, health stayed 200 throughout), and `/v1/tenders/{id}` dropped from **4.00 s to
+0.011 s**. **P2 fixed-for-future-rebuilds**: with the cap raised, a rebuild's end-of-fold builder now
+builds all six previously-refused indexes (a sequential background job) instead of leaving five for
+the schema batch to rebuild BLOCKING at the next open — so the ~22-min unserved boot cannot recur.
+Confirm on the next full rebuild (expected: end-of-fold index phase longer by the six big builds,
+then a fast boot after). The "serve /health before heavy startup work" hardening (below) is no longer
+urgent now the trigger is gone, but remains sound defense-in-depth. Was: HIGH, two live problems.
 Kind: performance / availability
 Blocked by: —
 Relates to: 111 (the auto-build row cap), 62/60 (deferred-index strip/rebuild for fold speed),
