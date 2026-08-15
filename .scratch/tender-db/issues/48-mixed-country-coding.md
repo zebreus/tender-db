@@ -1,6 +1,6 @@
 # 48 — Country codes stored mixed alpha-2 / alpha-3; documented filter hangs
 
-Status: PARTIALLY FIXED (2026-08-15 — hang gone, docs corrected; org.country normalization is the residual)
+Status: FIXED-IN-CODE, PENDING-REFOLD (2026-08-15 — hang gone, docs corrected, org country now canonicalised; materialises on the batched refold)
 Severity: MEDIUM (data quality + a hanging documented filter)
 
 Found by usability audit, owner-confirmed via SQL (2026-07-21):
@@ -49,3 +49,18 @@ same country), separate from the REST country filter (which is NUTS, now correct
 documented). Normalizing it to one canonical form is a parse/projection-boundary change
 plus a reprojection — batch it with the other pending-refold work (issues 187, 179).
 Scoped down to this one item.
+
+## 2026-08-15 (orchestrator) — org.country normalization (defect 1) fixed in code
+
+`canonical_country()` (crates/ingest/src/project.rs) folds the org country to one
+alpha-2 vocabulary at the mention-finalize point: alpha-3 → alpha-2 (DEU→DE, FRA→FR,
+… + EEA + common third countries), TED's non-ISO UK→GB, eurostat EL→GR; an unrecognised
+code passes through unchanged. Applied before the country is stored AND before it scopes
+a national id, so both agree. Test `country_codes_canonicalise_to_alpha2`. Deployed the
+code; existing rows converge on the next reprojection.
+
+**All three of issue 48's sub-problems are now closed in code:** the 30s hang (fixed
+upstream by issue-115/117/120), the documented-filter defect (docs corrected, commit
+4cc6d3e), and the org.country mixed coding (this commit). The refold to materialise the
+org rewrite batches with issues 187 (internal-ojs chaining) and 86 (register false
+country) — one rebuild clears all three org/chaining defects.
