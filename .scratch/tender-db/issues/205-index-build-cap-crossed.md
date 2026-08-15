@@ -1,119 +1,85 @@
-# 205 — the 41M index-build cap has been crossed: two read-path indexes go unbuilt after a rebuild
+# 205 — the 41M index-build cap traps two read-path indexes: a permanent one (slow tender detail) and a boot one (~22-min outage after a rebuild)
 
-Status: needs-triage — filed 2026-08-15 (owner), observed live at the end of the full `rebuild=true`
-(job 1) that materialised 187/86/48. **UPGRADED same day to HIGH after the deploy that followed
-exposed a ~22-minute unserved boot — see "SEVERE: the first post-rebuild boot blocks /health for ~22
-minutes" below. That is the priority; the missing indexes are its cause.**
-Kind: performance / availability (latent under-indexing → a startup outage on every restart)
-
-## SEVERE: the first post-rebuild boot blocks /health for ~22 minutes (2026-08-15)
-
-Deploying d93fadf right after the rebuild (a routine app-only change) restarted the service at
-16:08:07 CEST. The new server bound `:8080` immediately but **did not answer `/health` until
-16:30:17** — ~22 minutes — during which the public backend was down and `deploy.sh`'s own
-health-check (120×~11s ≈ 22 min of patience) exhausted and reported a false `health check FAILED:
-returned 000`, even though the switch had already happened and the server came up seconds later.
-
-What it was doing: strace showed a pure `pread64` read scan (zero writes), ~72% CPU, RSS steady —
-an active, bounded, CPU-bound scan, not a hang. It ended exactly when the six over-cap index
-refusals logged (16:30:17), and the server served immediately after. So the ~22 min is the
-end-of-boot index-handling path doing heavy READ work over the now-huge tables before `/health` is
-allowed to answer. The refusal *decision* itself is cheap — `too_large_to_build` is
-`SELECT MAX(rowid)` (O(1)) — so the scan is the surrounding boot index work (building the sub-cap
-deferred indexes at startup, and/or a first-open WAL checkpoint of the freshly-rebuilt DB), not the
-size check. Exact culprit still to pin (next step: instrument the boot ordering).
-
-Why it is HIGH, not a one-off: this is the first re-open of the DB after a rebuild (the rebuilding
-process never re-opened it), and it will recur on **every** restart that follows a rebuild — every
-deploy, every crash-restart, every reboot — each a ~22-min outage, and each a false `deploy.sh`
-failure. It is issue 61's "slow boot" regressed for the post-rebuild case.
-
-**Fix (the robust one, independent of the index cap): serve `/health` BEFORE any heavy startup DB
-work.** Open the listener, answer `/health` 200 (process up, DB answers a trivial ping), and run
-index detection / builds / checkpoints in a BACKGROUND task. That is the issue-61 principle; the
-post-rebuild path violates it. With that, a restart is never an outage regardless of index state.
-Building the indexes index-first (below) removes the underlying work too, but serving-before-work is
-the guarantee.
-
----
-
-
+Status: needs-triage — filed 2026-08-15 (owner), REWRITTEN same day after tracing the mechanism to
+ground truth. HIGH. Two distinct problems share one root (the cap has no build path for an over-cap
+index): **P1 is live now — `/v1/tenders/{id}` measures ~4 s**; P2 is a ~22-min unserved boot that
+recurs on every restart after a full rebuild.
+Kind: performance / availability
 Blocked by: —
-Relates to: 111 (the deferred-index builder + its row cap), 62 (deferring org indexes on the rebuild),
-117 (the org read is already the slow one), 120 (isolation routing contains, but does not cure, the
-org-list walk)
+Relates to: 111 (the auto-build row cap), 62/60 (deferred-index strip/rebuild for fold speed),
+82/83 (the multi-hour-boot regression this re-introduces), 61 (serve-before-heavy-work), 57 (the ~4 GB
+bounded-memory ceiling the cap protects), 117/120 (the read paths + isolation).
 
-## What was observed
+## Correction to the first draft
 
-The index builder (issue 111) **refused SIX indexes** — at the rebuild's finalization AND again on
-the next boot — because their tables exceed the 41,000,000-row cap. All six are therefore **absent**,
-and several sit on hot read paths:
+The first draft claimed all six refused indexes were absent and that country/cpv/buyer/winner reads
+were degraded. **That was wrong.** Traced to the code + verified on prod: five of the six are in
+`canonical::SCHEMA` as `CREATE INDEX IF NOT EXISTS`, so the first `Db::open` after the rebuild
+**rebuilds them** (that is what the ~22 min was) and they end up **present**. Only one is genuinely,
+permanently missing. The country=DE read measured 0.023 s (its index is present); the damage is
+narrower but sharper than first written.
 
-| index | table(cols) | ~rows | serves (read path) |
-|---|---|---|---|
-| `tender_version_classifications_code` | tender_version_classifications(scheme, code) | 138.9M | **country + cpv filters** (the `reachable()` prefix probe + `version_predicates` EXISTS) on /v1/tenders and /v1/lots |
-| `tender_version_result_winners_org` | tender_version_result_winners(organization_id) | 127.8M | **winner filter** |
-| `tender_version_parties_org` | tender_version_parties(organization_id) | 77.3M | **buyer filter** |
-| `tender_version_bid_parties_org` | tender_version_bid_parties(organization_id) | 66.8M | org→bids reverse lookups |
-| `tender_version_bid_parties_version` | tender_version_bid_parties(tender_id, seq) | 66.8M | tender-detail **bids** section (`/v1/tenders/{id}`) |
-| `organization_mentions_org` | organization_mentions(organization_id) | 41.3M | /v1/organizations **mentions count** + buyer/winner org joins (JUST crossed the cap — new this rebuild) |
+## The mechanism (verified)
 
-So the country/cpv/buyer/winner filters on the collection endpoints, the org list's mentions count,
-and the tender-detail bids section all now run without their index. Isolation routing (120) keeps the
-collection walks off the main pool, but tender detail runs on the MAIN pool — measure that one first
-(112 rule 6). `tender_version_classifications_code` at 138.9M is the widest exposure: country and cpv
-are the headline filters.
+A full `rebuild=true` calls `strip_tender_indexes()` (DROP INDEX for `DEFERRED_TENDER_INDEXES`) before
+the fold — dropping the indexes makes the random-key fold fast (issue 60/62) — then
+`build_tender_indexes()` after. That builder calls `too_large_to_build` (which is O(1):
+`SELECT MAX(rowid)`) and **refuses** any table over `MAX_AUTO_INDEX_ROWS` (41M). Six indexes are over
+the cap, so all six are left unbuilt at the rebuild's end. Then two things diverge:
 
-## Why it matters
+- **Five are ALSO in `canonical::SCHEMA`** (`tender_version_classifications_code`,
+  `tender_version_parties_org`, `tender_version_result_winners_org`, `tender_version_bid_parties_org`,
+  `organization_mentions_org`). The next `Db::open` runs the schema batch, whose
+  `CREATE INDEX IF NOT EXISTS` finds them dropped and **rebuilds all five, blocking, before the HTTP
+  listener serves** — ~450M rows of sorted index build = the **~22-minute unserved boot** (16:08→16:30
+  on 2026-08-15; `deploy.sh`'s ~22-min health-check patience was exhausted and it reported a false
+  `returned 000`). This is exactly the multi-hour-boot trap issues 82/83 removed, re-introduced because
+  these five sit in BOTH the schema batch and the deferred-strip set.
+- **One is deferred-ONLY** — `tender_version_bid_parties_version` on `tender_version_bid_parties(tender_id, seq)`.
+  Its own code comment (canonical.rs:1672) deliberately keeps it out of the schema batch precisely to
+  avoid the blocking-boot rebuild. Consequence: nothing ever rebuilds it — the capped builder refuses
+  it every time (the supervisor's boot check queued reindex job 698 for it, which refused it and
+  reported "ok" having built nothing). So it is **permanently missing**, and
+  `tender_detail` reads `tender_version_bid_parties` by `(tender_id, seq)` (read.rs:794) with no index
+  and no PK → a full scan of 66.8M rows per detail. **Measured: `/v1/tenders/1` = 4.00 s** (healthy is
+  <0.1 s).
 
-- **`organization_mentions_org(organization_id)` — the sharper, NEW regression.** The table is
-  41.27M rows, just 0.6% over the cap, so it crossed only recently: prior rebuilds (table < 41M) had
-  the auto-builder BUILD it; this one refused. `/v1/organizations` computes a per-row
-  `(SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id)` for its `mentions`
-  column (read.rs `organizations_query`); without the index each org's count scans 41M rows, so a
-  page of 100 orgs is 100 such scans. Issue 120's isolation routing keeps this off the main reader
-  pool (it will shed, not wedge), so it is a degradation of a headline endpoint, not an outage — but
-  it is a regression this rebuild introduced and it will not self-heal on the next rebuild either.
+So the cap's intent (never block on a giant CREATE INDEX) is defeated two ways: the schema batch
+bypasses the cap and blocks at open (P2), while the one index that respects the cap can never be built
+at all (P1).
 
-- **`tender_version_bid_parties_version(tender_id, seq)` — long-standing, verify the path.** At
-  66.8M rows it has been over the cap for several rebuilds, so its absence is not new. Whether it
-  actually sits on a hot read path needs confirming before prioritising: the tender-detail bids
-  section (`/v1/tenders/{id}`) reads bid parties, and tender detail runs on the MAIN reader pool
-  (not isolated), so if this index is the one that path needs, a 66.8M-row scan there is the worse
-  exposure. **Measure which index the bids query actually plans against at prod scale first**
-  (112 rule 6 — a plan names the path, only the clock names the cost).
+## Current prod state (2026-08-15, rev d93fadf, post-16:08 boot)
 
-## Root cause
-
-Issue 111's cap deliberately blocks an end-of-run *bulk* `CREATE INDEX` (a ~1–3 GB sort would
-re-introduce the multi-minute slow boot 61 removed). The cap was safe when these tables were
-smaller; organic corpus growth has now pushed both past it. The auto-builder's own message names the
-correct fix: **build the index INDEX-FIRST at a rebuild** — create it empty, before the fold
-populates its table, so it is maintained incrementally and never needs the giant end sort, whatever
-the final size. These two indexes are evidently NOT in the rebuild's index-first set (other large
-indexes must be, or the rebuild could never finish under the cap), so they fall through to the
-end-of-run auto-builder, which correctly refuses.
+- Present (rebuilt at the 16:08 open): the five schema-batch indexes. Reads using them are fast.
+- Missing: `tender_version_bid_parties_version`. `/v1/tenders/{id}` ≈ 4 s.
+- A **plain deploy now boots fast**: the five are present, so the schema `IF NOT EXISTS` is a no-op,
+  and the deferred-only missing one is not in the schema batch. The ~22-min boot only recurs after the
+  NEXT full rebuild (which strips the five again).
 
 ## Fix
 
-- **Durable:** add `organization_mentions_org` and `tender_version_bid_parties_version` (after
-  confirming the latter is load-bearing) to the rebuild's index-first creation set, alongside
-  whatever large indexes already build that way. Then the cap never applies to them and they exist
-  after every rebuild regardless of table size. Materialises on the next full rebuild.
-- **Consider** a guard: if a *known-needed* index is missing AND its table is over the cap at
-  end-of-run, that is a louder signal than a log line — it means a read path silently lost its index
-  and only the next rebuild can restore it. A `/health/deep` check or a coverage cell would surface
-  it instead of leaving it in journald.
+**P1 — build `tender_version_bid_parties_version`.** There is no path to build an over-cap index today;
+every builder refuses unconditionally. Needs a deliberate maintenance/force build. Memory is the reason
+for the cap (issue 57: CREATE INDEX peak RSS ≈ 45 B/row against a ~4 GB ceiling): this index is
+66.8M × 45 B ≈ **3.0 GB peak**, under the ceiling but tight — feasible **alone, in isolation**, in a
+low-traffic window, NOT concurrently with another build. Options: (a) a `Reindex{force}` /
+admin-named-index build that bypasses the cap for one explicitly-chosen index; (b) build it index-first
+at the rebuild (it is append-mostly `(tender_id, seq)`, so index-first is cheap and the fold barely
+slows) — this is the clean durable answer for this one.
 
-## Immediate remediation (optional, this does not need the durable fix first)
+**P2 — stop the schema batch rebuilding the five blocking at open.** Give the five the same treatment
+the author gave `bid_parties_version`: **remove them from `canonical::SCHEMA`** so `Db::open` never
+rebuilds them. But then they must be built somewhere — so pair it with either index-first-at-rebuild
+(create empty before the fold; the random-key ones cost fold time, measure the trade) or the robust
+guarantee below.
 
-The queue is idle post-rebuild — a maintenance window. A one-off `CREATE INDEX` for
-`organization_mentions_org` (~1 GB sort, minutes) would restore the org-list read now rather than
-waiting for the next rebuild. Do it deliberately, off-peak, and only after deciding it is worth the
-one-time sort; the isolation routing means the degradation is contained in the meantime.
+**The robust guarantee (covers P2 regardless): serve `/health` before any heavy startup index work.**
+Open the listener and answer `/health` (process up + trivial DB ping) FIRST, then run schema-batch
+index creation / deferred builds in a BACKGROUND task. Then a restart is never an outage whatever the
+index state; reads needing a still-building index are briefly slow (isolation-contained) instead of the
+whole service being down. This is issue 61's principle; the post-rebuild path violates it.
 
 ## Acceptance
 
-Both indexes exist after a full rebuild (built index-first, not end-of-run); the org-list `mentions`
-count seeks its index rather than scanning; a known-needed index that goes missing is surfaced louder
-than a journald line.
+`/v1/tenders/{id}` seeks its bids index (<0.1 s); a full rebuild followed by a restart serves `/health`
+in seconds, not ~22 minutes; no read-path index is left permanently unbuildable by the cap.
