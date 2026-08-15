@@ -72,6 +72,11 @@ pub struct Endpoint {
     pub failing_since: Option<i64>,
     pub next_attempt_at: i64,
     pub consecutive_failures: i64,
+    /// The feed generation this slot was last stamped at (issue 178). `None`
+    /// means "unknown" — an endpoint older than the column, or never yet swept
+    /// — which the sweeper treats as a generation mismatch and resets. Moves to
+    /// the current generation on every successful delivery or reset.
+    pub last_generation: Option<i64>,
 }
 
 /// One row of the delivery log.
@@ -88,7 +93,7 @@ pub struct Delivery {
 }
 
 const COLUMNS: &str = "id, user_id, url, secret, created_at, disabled_at,
-    last_delivered_cursor, failing_since, next_attempt_at, consecutive_failures";
+    last_delivered_cursor, failing_since, next_attempt_at, consecutive_failures, last_generation";
 
 fn endpoint(row: &turso::Row) -> Endpoint {
     Endpoint {
@@ -102,6 +107,7 @@ fn endpoint(row: &turso::Row) -> Endpoint {
         failing_since: opt_int_of(row, 7),
         next_attempt_at: int(row, 8),
         consecutive_failures: int(row, 9),
+        last_generation: opt_int_of(row, 10),
     }
 }
 
@@ -115,19 +121,24 @@ impl Db {
         url: &str,
         secret: &str,
         start_cursor: i64,
+        generation: i64,
         now: i64,
     ) -> turso::Result<Endpoint> {
         let conn = self.conn().await;
+        // Stamp the current generation at creation (issue 178): a fresh endpoint's
+        // slot is already at head under this generation, so it must NOT read as a
+        // mismatch on its first sweep and fire a spurious reset.
         conn.execute(
             "INSERT INTO webhook_endpoints(user_id, url, secret, created_at, last_delivered_cursor,
-                 next_attempt_at)
-             VALUES(?, ?, ?, ?, ?, 0)",
+                 last_generation, next_attempt_at)
+             VALUES(?, ?, ?, ?, ?, ?, 0)",
             (
                 Value::Integer(user_id),
                 t(url),
                 t(secret),
                 Value::Integer(now),
                 Value::Integer(start_cursor),
+                Value::Integer(generation),
             ),
         )
         .await?;
@@ -243,15 +254,22 @@ impl Db {
         collect(&mut rows).await
     }
 
-    /// Record a delivered batch: advance the slot and clear the failure streak.
-    pub async fn webhook_delivered(&self, id: i64, cursor_to: i64) -> turso::Result<()> {
+    /// Record a delivered batch: advance the slot, clear the failure streak, and
+    /// stamp the generation it was delivered under (issue 178), so a later
+    /// rebuild that bumps the generation is detectable at the slot.
+    pub async fn webhook_delivered(
+        &self,
+        id: i64,
+        cursor_to: i64,
+        generation: i64,
+    ) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute(
             "UPDATE webhook_endpoints
-                SET last_delivered_cursor = ?, failing_since = NULL,
+                SET last_delivered_cursor = ?, last_generation = ?, failing_since = NULL,
                     consecutive_failures = 0, next_attempt_at = 0
               WHERE id = ?",
-            (Value::Integer(cursor_to), Value::Integer(id)),
+            (Value::Integer(cursor_to), Value::Integer(generation), Value::Integer(id)),
         )
         .await?;
         Ok(())
@@ -376,7 +394,7 @@ mod tests {
     async fn endpoints_round_trip_and_scope_to_owner() {
         let (db, user, path) = db_with_user("crud").await;
 
-        let ep = db.create_webhook(user, "https://example.com/hook", "whsec_x", 5, 100).await.unwrap();
+        let ep = db.create_webhook(user, "https://example.com/hook", "whsec_x", 5, 1, 100).await.unwrap();
         assert_eq!(ep.url, "https://example.com/hook");
         assert_eq!(ep.last_delivered_cursor, 5, "starts at the log head");
         assert_eq!(ep.consecutive_failures, 0);
@@ -397,7 +415,7 @@ mod tests {
     #[tokio::test]
     async fn success_advances_the_slot_and_clears_failures() {
         let (db, user, path) = db_with_user("advance").await;
-        let ep = db.create_webhook(user, "https://e/h", generate_token().as_str(), 0, 0).await.unwrap();
+        let ep = db.create_webhook(user, "https://e/h", generate_token().as_str(), 0, 1, 0).await.unwrap();
 
         // A failure sets the backoff and starts the failure clock.
         db.webhook_failed(ep.id, 100, 130, false).await.unwrap();
@@ -412,7 +430,7 @@ mod tests {
         assert_eq!(db.due_webhooks(130).await.unwrap().len(), 1);
 
         // Success advances the slot and wipes the streak.
-        db.webhook_delivered(ep.id, 42).await.unwrap();
+        db.webhook_delivered(ep.id, 42, 1).await.unwrap();
         let healed = db.webhook(user, ep.id).await.unwrap().unwrap();
         assert_eq!(healed.last_delivered_cursor, 42);
         assert_eq!(healed.consecutive_failures, 0);
@@ -424,7 +442,7 @@ mod tests {
     #[tokio::test]
     async fn disable_hides_from_the_sweeper_and_enable_restores() {
         let (db, user, path) = db_with_user("disable").await;
-        let ep = db.create_webhook(user, "https://e/h", "whsec_x", 0, 0).await.unwrap();
+        let ep = db.create_webhook(user, "https://e/h", "whsec_x", 0, 1, 0).await.unwrap();
 
         // Auto-disable via a failure with the disable flag set.
         db.webhook_failed(ep.id, 200, 200, true).await.unwrap();
@@ -448,7 +466,7 @@ mod tests {
     #[tokio::test]
     async fn delivery_log_is_a_bounded_ring() {
         let (db, user, path) = db_with_user("log").await;
-        let ep = db.create_webhook(user, "https://e/h", "whsec_x", 0, 0).await.unwrap();
+        let ep = db.create_webhook(user, "https://e/h", "whsec_x", 0, 1, 0).await.unwrap();
         for i in 0..5 {
             let d = Delivery {
                 attempted_at: i,

@@ -424,7 +424,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 4] = [
+const MIGRATIONS: [&str; 5] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -433,6 +433,11 @@ const MIGRATIONS: [&str; 4] = [
     // it, and recover()'s `SELECT … progress` would fail on the first boot of the
     // new binary. NULL for every existing row, which is correct (a fresh cursor).
     "ALTER TABLE job_queue ADD COLUMN progress TEXT",
+    // The webhook slot's feed generation (issue 178). NULL for an endpoint that
+    // predates this column, which the sweeper treats as "unknown generation" and
+    // resets on first contact — the conservative choice, since a rebuild may have
+    // stranded its cursor beyond the new head with no batch to carry the signal.
+    "ALTER TABLE webhook_endpoints ADD COLUMN last_generation INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
@@ -725,6 +730,14 @@ impl Db {
     pub async fn latest_cursor(&self) -> turso::Result<i64> {
         let conn = self.reader().await?;
         max_cursor(&conn).await
+    }
+
+    /// The feed generation — bumped by every rebuild that reissues entity ids
+    /// (issue 46). A `Db` wrapper over [`crate::read::feed_generation`] for the
+    /// callers that hold a `Db`, not a `Connection` (webhook registration).
+    pub async fn feed_generation(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        crate::read::feed_generation(&conn).await
     }
 
     /// The newest committed cursor from the IN-MEMORY doorbell — no DB access at all

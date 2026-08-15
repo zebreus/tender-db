@@ -284,6 +284,7 @@ POSTs. Manage them on the <a href="/account">dashboard</a> or over the API
   <li>Delivery is <strong>at-least-once</strong> and advances only on a <code>2xx</code>; the change log is the queue, so a recovered endpoint automatically catches up — there is no separate outbox.</li>
   <li>Retries back off 30 s → 2 m → 10 m → 1 h → 4 h → 12 h → daily. After ~3 days of continuous failure the endpoint auto-disables; re-enable it from the dashboard or the API.</li>
   <li>Only https URLs resolving to publicly-routable addresses are accepted (SSRF guard).</li>
+  <li><strong>Feed rebuild.</strong> Every body carries <code>generation</code> (see the <a href="#changes">change feed</a>). When the dataset is rebuilt, the next delivery to each endpoint is a reset notice — an empty batch marked <code>{"reset": "feed_rebuilt", "generation": N, "events": []}</code>, signed like any other — telling you your mirrored state no longer composes: drop it, re-fetch the collections you mirror, and resume from the <code>cursor</code> it carries. You receive this even if no events are flowing, so a rebuild is never silent.</li>
 </ul>
 
 <h2 id="accounts">Accounts &amp; tokens</h2>

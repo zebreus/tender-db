@@ -180,7 +180,7 @@ async fn a_batch_is_delivered_signed_and_the_slot_advances() {
     let secret = webhooks::generate_secret();
     // Register directly (the SSRF guard would reject a loopback URL), starting
     // at 0 so the whole backlog is due.
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, 1, store::now_unix()).await.unwrap();
 
     let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new());
     sweeper.sweep().await.expect("sweep");
@@ -215,7 +215,7 @@ async fn a_failure_holds_the_cursor_then_a_recovery_delivers_the_backlog() {
     let (recv, url) = Receiver::start().await;
     recv.set_status(500);
     let secret = webhooks::generate_secret();
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, 1, store::now_unix()).await.unwrap();
 
     let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new());
     sweeper.sweep().await.unwrap();
@@ -250,6 +250,52 @@ async fn a_failure_holds_the_cursor_then_a_recovery_delivers_the_backlog() {
     assert!(signature_valid(&secret, recv.hits().last().unwrap()));
 }
 
+/// Issue 178: a feed rebuild bumps the generation, so an endpoint whose slot
+/// was stamped under the old one must receive a `feed_rebuilt` reset notice —
+/// even when its cursor is now stranded beyond the new head and no ordinary
+/// batch would ever arrive to carry the signal. After the reset its slot sits
+/// at the new head and normal delivery resumes.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rebuild_sends_a_reset_notice_and_the_slot_resumes() {
+    let fx = Fixture::start("rebuild-reset").await;
+    fx.ingest_chain().await;
+
+    let (recv, url) = Receiver::start().await;
+    let secret = webhooks::generate_secret();
+    // Registered at generation 1, slot at 0 so the backlog delivers first.
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, 1, store::now_unix()).await.unwrap();
+    let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new());
+    sweeper.sweep().await.unwrap();
+    let delivered = fx.db.webhook(fx.user_id, ep.id).await.unwrap().unwrap();
+    assert_eq!(delivered.last_generation, Some(1), "delivered under generation 1");
+    let hits_before = recv.hits().len();
+
+    // A full rebuild re-derives the canonical layer and bumps the generation —
+    // every prior entity id and cursor is now incomposable (issue 46).
+    project::project(&fx.db, true).await.expect("rebuild");
+    let generation = fx.db.feed_generation().await.unwrap();
+    assert!(generation > 1, "the rebuild bumped the generation: {generation}");
+
+    // The next sweep sees the slot's stale generation and sends the reset.
+    sweeper.sweep().await.unwrap();
+    let hits = recv.hits();
+    assert!(hits.len() > hits_before, "the endpoint received the reset notice");
+    let reset: Value = serde_json::from_str(&hits.last().unwrap().body).unwrap();
+    assert_eq!(reset["reset"], "feed_rebuilt", "the body marks the rebuilt feed");
+    assert_eq!(reset["generation"], generation);
+    assert_eq!(reset["events"].as_array().map(|e| e.len()), Some(0), "a reset carries no events");
+    assert!(signature_valid(&secret, hits.last().unwrap()), "the reset notice is signed");
+
+    // The slot is stamped to the current generation and head, so it is coherent
+    // again and a following sweep does not re-send the reset.
+    let after = fx.db.webhook(fx.user_id, ep.id).await.unwrap().unwrap();
+    assert_eq!(after.last_generation, Some(generation), "slot now on the current generation");
+    assert_eq!(after.last_delivered_cursor, fx.db.latest_cursor().await.unwrap(), "slot at head");
+    let n = recv.hits().len();
+    sweeper.sweep().await.unwrap();
+    assert_eq!(recv.hits().len(), n, "no second reset once the generation matches");
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn sustained_failure_disables_the_endpoint() {
     let fx = Fixture::start("disable").await;
@@ -258,7 +304,7 @@ async fn sustained_failure_disables_the_endpoint() {
     let (recv, url) = Receiver::start().await;
     recv.set_status(503);
     let secret = webhooks::generate_secret();
-    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, store::now_unix()).await.unwrap();
+    let ep = fx.db.create_webhook(fx.user_id, &url, &secret, 0, 1, store::now_unix()).await.unwrap();
 
     // Pre-age the failure streak to just over the auto-disable window, so the
     // next failed delivery crosses it — the real clock does the rest.

@@ -182,8 +182,9 @@ pub async fn register(db: &Db, user_id: i64, url: &str) -> Result<NewWebhook, St
     vet_url(url).await?;
     let secret = generate_secret();
     let head = db.latest_cursor().await.map_err(|e| e.to_string())?;
+    let generation = db.feed_generation().await.map_err(|e| e.to_string())?;
     let endpoint = db
-        .create_webhook(user_id, url, &secret, head, store::now_unix())
+        .create_webhook(user_id, url, &secret, head, generation, store::now_unix())
         .await
         .map_err(|e| e.to_string())?;
     Ok(NewWebhook { secret, webhook: view(&endpoint) })
@@ -340,6 +341,18 @@ impl Sweeper {
     /// Push an endpoint's backlog in batches until it is drained, a batch fails,
     /// or the per-sweep cap is hit.
     async fn deliver(&self, mut endpoint: Endpoint, generation: i64) {
+        // Generation gate (issue 178): if the slot's stamped generation is not the
+        // current one — a rebuild re-issued the feed, or this is the first sweep of
+        // a pre-upgrade endpoint (NULL) — the endpoint's mirrored state is from a
+        // world that no longer exists. Its cursor may even sit BEYOND the new head
+        // (clear_changes restarted the log), so no ordinary batch would ever arrive
+        // to carry the signal. Send a reset notice and jump the slot to head; normal
+        // delivery resumes next sweep. This is the webhook transport's counterpart
+        // to the SSE `reset`/poll `generation` signal issue 46 gave the other two.
+        if endpoint.last_generation != Some(generation) {
+            self.deliver_reset(&mut endpoint, generation).await;
+            return;
+        }
         for _ in 0..MAX_BATCHES_PER_SWEEP {
             let from = endpoint.last_delivered_cursor;
             let changes = match self.read_batch(from).await {
@@ -354,7 +367,7 @@ impl Sweeper {
             }
             let to = changes.last().map(|c| c.cursor).unwrap_or(from);
             let outcome = self.post(&endpoint, from, to, generation, &changes).await;
-            self.record(&endpoint, from, to, changes.len() as i64, &outcome).await;
+            self.record(&endpoint, from, to, changes.len() as i64, generation, &outcome).await;
             match outcome {
                 Outcome::Ok => {
                     endpoint.last_delivered_cursor = to;
@@ -366,6 +379,27 @@ impl Sweeper {
                 Outcome::Failed { .. } => return,
             }
         }
+    }
+
+    /// Deliver the feed-rebuilt reset notice (issue 178): a batch-shaped body
+    /// carrying `{"reset":"feed_rebuilt", "generation":N, "events":[]}` so the
+    /// consumer hears the rebuild even when no events are flowing, then jump the
+    /// slot to the current head under the new generation. On failure the endpoint
+    /// backs off and retries the reset — the slot is never advanced past a
+    /// rebuild the consumer has not acknowledged.
+    async fn deliver_reset(&self, endpoint: &Endpoint, generation: i64) {
+        let head = match self.db.latest_cursor().await {
+            Ok(head) => head,
+            Err(e) => {
+                eprintln!("webhooks: read head for reset of endpoint {}: {e}", endpoint.id);
+                return;
+            }
+        };
+        let outcome = self.post_reset(endpoint, head, generation).await;
+        // Reuse the normal accounting: on 2xx `record` advances the slot to head
+        // AND stamps the new generation (`webhook_delivered`), which IS the reset;
+        // on failure it backs off, leaving the stranded slot to retry the reset.
+        self.record(endpoint, endpoint.last_delivered_cursor, head, 0, generation, &outcome).await;
     }
 
     async fn read_batch(&self, from: i64) -> Result<Vec<store::Change>, String> {
@@ -394,7 +428,30 @@ impl Sweeper {
             "events": events,
         })
         .to_string();
+        self.sign_and_send(endpoint, from, to, body).await
+    }
 
+    /// Build, sign and POST the feed-rebuilt reset notice (issue 178) — the same
+    /// batch envelope and signing as a normal delivery, with an empty `events`
+    /// and a `reset` marker, so a consumer verifies and routes it identically.
+    async fn post_reset(&self, endpoint: &Endpoint, head: i64, generation: i64) -> Outcome {
+        let body = serde_json::json!({
+            "cursor_from": endpoint.last_delivered_cursor.to_string(),
+            "cursor": head.to_string(),
+            "generation": generation,
+            // The consumer's mirrored state predates a rebuild and does not
+            // compose — drop it and re-snapshot the collections via REST, then
+            // resume from this cursor. Same reasons as SSE's `reset` event.
+            "reset": "feed_rebuilt",
+            "events": [],
+        })
+        .to_string();
+        self.sign_and_send(endpoint, endpoint.last_delivered_cursor, head, body).await
+    }
+
+    /// Sign a prepared body with the Standard-Webhooks HMAC and POST it, classifying
+    /// the HTTP result — the tail shared by a normal batch and a reset notice.
+    async fn sign_and_send(&self, endpoint: &Endpoint, from: i64, to: i64, body: String) -> Outcome {
         let msg_id = format!("evt_{}_{}_{}", endpoint.id, from, to);
         let timestamp = store::now_unix();
         let signature = sign(&endpoint.secret, &msg_id, timestamp, &body);
@@ -425,9 +482,18 @@ impl Sweeper {
         }
     }
 
-    /// Persist the outcome: advance and clear on success, or set the backoff and
-    /// maybe disable on failure, and append the log row either way.
-    async fn record(&self, endpoint: &Endpoint, from: i64, to: i64, events: i64, outcome: &Outcome) {
+    /// Persist the outcome: advance and clear on success (stamping the delivered
+    /// generation, issue 178), or set the backoff and maybe disable on failure,
+    /// and append the log row either way.
+    async fn record(
+        &self,
+        endpoint: &Endpoint,
+        from: i64,
+        to: i64,
+        events: i64,
+        generation: i64,
+        outcome: &Outcome,
+    ) {
         let now = store::now_unix();
         let (ok, status, error, duration_ms) = match outcome {
             Outcome::Ok => (true, None, None, 0),
@@ -438,7 +504,7 @@ impl Sweeper {
 
         let write = async {
             match outcome {
-                Outcome::Ok => self.db.webhook_delivered(endpoint.id, to).await,
+                Outcome::Ok => self.db.webhook_delivered(endpoint.id, to, generation).await,
                 Outcome::Failed { .. } => {
                     let next_failures = endpoint.consecutive_failures + 1;
                     let next_attempt_at = now + backoff_seconds(next_failures);
