@@ -1,6 +1,21 @@
 # 192 — the incremental fold's plan phase is corpus-proportional, not change-proportional
 
-Status: needs-triage
+Status: TRIAGED → LOW / parked by-design (2026-08-15). Measured the split the observation missed: the
+cost tracks the UNPROJECTED-set size, not always the whole corpus. Small deltas are already fast —
+`/admin/jobs` durations on the current box: job 696 (943 notices) 24s, job 686 (14) 10s, job 682 (23)
+14s, empty runs <1s. The ~2h folds (jobs 680/690/692, ~7300s) each RE-PROJECTED the full corpus
+(14.27M notices → 7.9M tenders, 700K islands) — the plan reasons globally because a reclaimed notice
+can extend a chain anywhere (issue 46 / ADR-0009), so a large unprojected set (reclaim campaign, epoch
+bump) pays the full walk. Those are one-off operations and the reclaim campaigns are now largely done
+(the issue's own frequency argument). The 62 GB box's ~52 GB page cache keeps the daily's small
+footprint warm (the old cold-2h was an 8 GB-box artifact; the DB is 446 GB so a FULL walk still can't
+stay fully resident, but full walks are the rare case). So: the global plan walk is load-bearing
+by-design for cross-corpus island merges, the daily is effectively change-proportional and fast, and
+the acute cost is gated to rare full re-projections. Option 3 (post-restart cache warmup) is
+unnecessary on this box. The real optimization (option 1: bound planning to `projected = 0` + island-
+local expansion) is worth building ONLY if large re-projections become frequent again (corpus doubling,
+renewed reclaim campaigns) — parked until then, cost documented. Reads `build_plan`'s exact scope
+before any option-1 work. Was: needs-triage.
 Kind: performance observation (projection)
 Blocked by: —
 Relates to: 46/ADR-0009 (the plan/fold design this measures), 179 (epoch cost accounting), 61 (cold-scan I/O competes with ingestion)
