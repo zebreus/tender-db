@@ -64,3 +64,12 @@ upstream by issue-115/117/120), the documented-filter defect (docs corrected, co
 4cc6d3e), and the org.country mixed coding (this commit). The refold to materialise the
 org rewrite batches with issues 187 (internal-ojs chaining) and 86 (register false
 country) — one rebuild clears all three org/chaining defects.
+
+**2026-08-15 ~08:xx UTC (orchestrator) — BATCHED REBUILD RUNNING.** Triggered the full
+`project rebuild=true` (job 1) on the Saturday low-traffic window to materialise the
+three deployed org/chaining fixes together (187 internal-ojs chaining, 86 register
+false-country, 48 country canonicalisation). Reissues all tender/org ids + bumps feed
+generation (webhooks handle it via issue 178's reset; poll/SSE re-snapshot). ~6-10h wall.
+Health stays green through clear_canonical (issue-133 presence detector skips heavy
+writes). Verify on completion: internal-ojs award-unchained ratio drops from 1.000;
+German HRB orgs read country DE not HR; DEU/DE/UK country codes converged to alpha-2.

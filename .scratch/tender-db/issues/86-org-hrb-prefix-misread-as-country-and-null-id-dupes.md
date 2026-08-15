@@ -63,3 +63,12 @@ now clears three org/chaining defects at once.
 NULL-identifier duplicate org rows fragmenting the same entity — a dedup-key decision
 (normalised name + NUTS?) per data-profile §3 rules 4–5. Separate from the false-country
 fix; not addressed here.
+
+**2026-08-15 ~08:xx UTC (orchestrator) — BATCHED REBUILD RUNNING.** Triggered the full
+`project rebuild=true` (job 1) on the Saturday low-traffic window to materialise the
+three deployed org/chaining fixes together (187 internal-ojs chaining, 86 register
+false-country, 48 country canonicalisation). Reissues all tender/org ids + bumps feed
+generation (webhooks handle it via issue 178's reset; poll/SSE re-snapshot). ~6-10h wall.
+Health stays green through clear_canonical (issue-133 presence detector skips heavy
+writes). Verify on completion: internal-ojs award-unchained ratio drops from 1.000;
+German HRB orgs read country DE not HR; DEU/DE/UK country codes converged to alpha-2.
