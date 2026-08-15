@@ -128,7 +128,13 @@ impl AppState {
 /// obligation, not a service.
 pub fn router(state: AppState) -> Router {
     let limits = GovernorConfigBuilder::default()
-        .per_second(RATE_PER_SECOND)
+        // tower_governor's `per_second(n)` sets the REPLENISH PERIOD — n seconds per
+        // cell — so `per_second(10)` is one request every 10 s (0.1 rps), NOT 10 rps.
+        // That silently throttled the public surface ~100x below the "~10 rps
+        // sustained" posture (CONTEXT.md): a client paging results got the 50-cell
+        // burst and then one request per 10 s (measured 2026-08-15). Express the rate
+        // as a period instead: 1000/10 = 100 ms per cell = 10 rps.
+        .per_millisecond(1000 / RATE_PER_SECOND)
         .burst_size(RATE_BURST)
         .key_extractor(ClientKey)
         .finish()
