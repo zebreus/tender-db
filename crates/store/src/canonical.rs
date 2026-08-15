@@ -58,10 +58,22 @@ use turso::{Connection, Statement, Value};
 /// a policy choice about how much of the box a build may use.
 const INDEX_BUILD_BYTES_PER_ROW: i64 = 48;
 
-/// What one auto-triggered index build may consume. Half the project's ~4 GB
-/// bounded-memory ceiling, leaving the other half for the rest of the process on a
-/// box still carrying issue 57's swap band-aid.
-const AUTO_INDEX_MEMORY_BUDGET: i64 = 2_000_000_000;
+/// What one auto-triggered index build may consume. This is the POLICY half of the
+/// cap (how much of the box a build may use); [`INDEX_BUILD_BYTES_PER_ROW`] is the
+/// empirical half and never moves without a turso measurement.
+///
+/// Raised 2026-08-15 from 2 GB to 12 GB after the box was measured at **62 GB RAM,
+/// no cgroup limit, `TMPDIR=/data/tmp` on a 1.7 TB disk** (issue 205). The old 2 GB
+/// was "half the project's ~4 GB ceiling on a box carrying issue 57's swap
+/// band-aid" — a relic of the smaller box (that box is gone; this one has 59 GB free
+/// and no swap band-aid, and the external-sort spill lands on disk, not tmpfs). At
+/// 12 GB the cap covers the corpus's largest satellite (`tender_version_classifications`,
+/// 138.9M rows → 6.67 GB at 48 B/row) with headroom, while a single build stays under
+/// ~19% of the box — builds are sequential (see the `Reindex` job), so peaks never sum.
+/// This is the flag that was silently dropping six read-path indexes at the 41M cap
+/// and, worse, forcing the schema batch to rebuild five of them blocking at the next
+/// `Db::open` — a ~22-minute unserved boot after every rebuild (issue 205 P1/P2).
+const AUTO_INDEX_MEMORY_BUDGET: i64 = 12_000_000_000;
 
 // The one part of the size cap that IS a compile-time fact, and so is checked as one.
 //
@@ -1586,18 +1598,24 @@ impl Db {
     /// small, and go stale silently the moment one grows — which is precisely the
     /// mistake that put `notices(source, id)` in the schema batch on the strength of a
     /// comment written when the table was 8x smaller.
-    /// 41M x 48 B/row = 1.97 GB, just inside the budget. Lowered from 44M when the
-    /// bytes-per-row constant rose from 45 to the measured maximum of 48 — at 48 the
-    /// old cap implied 2.11 GB and no longer fit. The compile-time assertion below is
-    /// what forces that recalculation instead of leaving the two numbers to drift.
+    /// 240M x 48 B/row = 11.52 GB, inside the 12 GB budget. The compile-time assertion
+    /// below forces this recalculation whenever either number moves, instead of leaving
+    /// the two to drift.
     ///
-    /// WATCH ITEM, and it is now urgent rather than distant: `organization_mentions`
-    /// at 40.9M rows is **99.8% of this cap** — it needs 1.963 GB against a 1.968 GB
-    /// allowance. Any growth at all trips it, and then its index refuses to auto-build
-    /// and must come from an index-first rebuild. That is the guard working as
-    /// designed, but it is a decision someone should make deliberately rather than
-    /// discover from a stderr line during a rebuild.
-    const MAX_AUTO_INDEX_ROWS: i64 = 41_000_000;
+    /// Raised 2026-08-15 from 41M (issue 205). The old 41M cap's own WATCH ITEM had
+    /// called this: `organization_mentions` was at 40.9M — 99.8% of the cap — and "any
+    /// growth trips it, and then its index refuses to auto-build ... a decision someone
+    /// should make deliberately rather than discover from a stderr line during a
+    /// rebuild." It grew to 41.27M and did exactly that, and it dragged FIVE more
+    /// satellites over with it (classifications 138.9M, result_winners 127.8M, parties
+    /// 77.3M, bid_parties 66.8M ×2). Five of those are also in the schema batch, so the
+    /// next `Db::open` rebuilt them BLOCKING — a ~22-minute unserved boot. Raising the
+    /// budget to match the real 62 GB box (see [`AUTO_INDEX_MEMORY_BUDGET`]) lets the
+    /// rebuild's own end-of-fold builder build them all instead — a sequential
+    /// background job, memory-safe — so nothing is left for the boot to rebuild and no
+    /// read-path index is left permanently unbuildable. 240M covers today's largest
+    /// (138.9M) with 1.7x headroom.
+    const MAX_AUTO_INDEX_ROWS: i64 = 240_000_000;
 
     /// Refuse to bulk-build an index over a table too large to sort within the memory
     /// budget. Returns the offending row estimate, or `None` if the build may proceed.

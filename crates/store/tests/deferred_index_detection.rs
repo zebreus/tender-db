@@ -120,19 +120,19 @@ async fn dropping_one_index_is_noticed() {
 /// only protection against a future `changes`-sized index entering a deferred set is
 /// to decline the build — and a cap nobody has watched refuse is a cap that might not.
 ///
-/// Driven by `rowid`, not by inserting 45M rows: `too_large_to_build` estimates with
-/// `MAX(rowid)` precisely so it costs an index seek instead of a scan, which also
-/// makes it testable with two rows.
+/// Driven by `rowid`, not by inserting hundreds of millions of rows:
+/// `too_large_to_build` estimates with `MAX(rowid)` precisely so it costs an index
+/// seek instead of a scan, which also makes it testable with one row above the cap.
 #[tokio::test]
 async fn an_oversized_table_is_refused_not_built() {
     let (path, db) = open("oversize").await;
     let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
 
-    // One organization at a rowid above the cap. MAX(rowid) is the estimate, so this
-    // is a 45-million-row table as far as the guard is concerned.
+    // One organization at a rowid above the cap (MAX_AUTO_INDEX_ROWS = 240M). MAX(rowid)
+    // is the estimate, so this is a 250-million-row table as far as the guard is concerned.
     conn.execute(
         "INSERT INTO organizations (id, country, identifier_kind, identifier, name, provisional, created_at)
-         VALUES (46000000, 'DE', 'vat', 'X', 'Org', 0, 1700000000)",
+         VALUES (250000000, 'DE', 'vat', 'X', 'Org', 0, 1700000000)",
         (),
     )
     .await
