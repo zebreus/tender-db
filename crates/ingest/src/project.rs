@@ -2870,7 +2870,16 @@ fn legacy_role(element: &str) -> String {
 /// The legacy TED profiles (text / ted-export-r208 / ted-export-r209) chain by
 /// transitive OJS-number closure; eForms and DÖE key on their own identifiers.
 fn is_legacy_profile(profile: &str) -> bool {
-    profile == "text" || profile.starts_with("ted-export")
+    // `internal-ojs` (the 2008 OPOCE export, issue 41) is parsed by the r209
+    // legacy machinery and chains by OJS number exactly like the TED forms —
+    // it publishes no BT-04 key, only `NO_DOC_OJS` self-numbers and `REF_NOTICE`
+    // chain edges. Classifying it legacy is what gives it an `ojs_self` node and
+    // marks its plan row so its edges enter the OJS union-find (canonical.rs's
+    // `ojs_self.filter(|_| legacy)` gate); without it every 2008 award was an
+    // island — 100% unchained (issue 187). Its award sections are the same
+    // `LotResult` kind, so `read_legacy_results` reads them like every other
+    // r209 profile.
+    profile == "text" || profile == "internal-ojs" || profile.starts_with("ted-export")
 }
 
 /// The DÖE sdk-0.1 dialect (issue 29): a permanent ~40%-of-German-volume channel
@@ -3181,6 +3190,26 @@ mod tests {
         assert_eq!(stem("BT-131(d)-Lot"), "BT-131(d)");
         assert_eq!(stem("OPP-070-notice"), "OPP-070");
         assert_eq!(stem("BT-04"), "BT-04");
+    }
+
+    /// Issue 187: the `internal-ojs` 2008 export chains by OJS number like the
+    /// TED legacy forms, so it must classify legacy — otherwise its notices get
+    /// no `ojs_self` node and the plan-row `legacy` gate keeps their `REF_NOTICE`
+    /// edges out of the union-find, leaving every 2008 award a 100%-unchained
+    /// island. Its `publication_id` (`<number>-2008`) must also parse as an OJS
+    /// key, or the node would still be absent.
+    #[test]
+    fn internal_ojs_chains_by_ojs_like_the_legacy_forms() {
+        assert!(is_legacy_profile("internal-ojs"), "internal-ojs chains by OJS");
+        // The families it must not disturb.
+        assert!(is_legacy_profile("text"));
+        assert!(is_legacy_profile("ted-export-r208"));
+        assert!(is_legacy_profile("ted-export-r209"));
+        assert!(!is_legacy_profile("eforms:eforms-sdk-1.0"));
+        assert!(!is_legacy_profile("eforms:eforms-sdk-0.1"));
+        // Its publication_id shape is `<number>-<year>` — the DOC/text-era form
+        // ojs_key parses, so ojs_self populates once the profile is legacy.
+        assert_eq!(ojs_key("115165-2008"), Some((2008, 115165)));
     }
 
     /// The DE-1.x fold is only correct if every alias target is an id the
