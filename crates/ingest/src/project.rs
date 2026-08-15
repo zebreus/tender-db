@@ -3035,6 +3035,32 @@ fn split_ci<'a>(s: &'a str, delim: &str) -> Option<(&'a str, &'a str)> {
 /// it merge two mentions into one Organization
 /// (docs/research/ted-legacy-mapping.md §6: 16% of real ids are junk).
 ///
+/// National company-register prefixes (issue 86, data-profile §3 rule 1). A
+/// register number like the German `HRB 22388` begins with an alphabetic scheme
+/// tag whose first two letters coincide with an ISO country code — `HR` reads as
+/// Croatia — so the naive VAT sniffer minted ~50,700 German companies as
+/// Croatian. These are classified as national register ids BEFORE VAT sniffing,
+/// so their prefix never mints a country. Longest-first is unnecessary (each is
+/// matched with a following digit), but the list is the documented family:
+/// German (HRB/HRA/VR/GNR/PR), Austrian (FN), Polish (KRS/NIP/REGON), Romanian
+/// (CUI), Spanish (CIF/NIF), Croatian (OIB), Danish (CVR), Czech (ICO/DIC),
+/// French (SIREN/SIRET), and the German VAT-word tag (UST).
+const REGISTER_PREFIXES: &[&str] = &[
+    "HRB", "HRA", "GNR", "VR", "PR", "FN", "KRS", "NIP", "REGON", "CUI", "CIF",
+    "NIF", "OIB", "CVR", "ICO", "DIC", "SIRET", "SIREN", "UST",
+];
+
+/// The country prefixes a VAT id may legitimately carry — the EU-27 (with `EL`
+/// for Greece), the EEA and the near-European VAT jurisdictions, plus the two
+/// non-ISO forms TED emits (`UK`, and `XI` for Northern Ireland). A two-letter
+/// prefix outside this set must never mint a country (data-profile §3 rule 1):
+/// it is a national id whose country comes from the mention, not the string.
+const VAT_COUNTRIES: &[&str] = &[
+    "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "GR",
+    "HR", "HU", "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE",
+    "SI", "SK", "GB", "UK", "XI", "CH", "IS", "LI", "NO",
+];
+
 /// A VAT id carries its country in its own prefix and is scoped by it; a
 /// national registry number is only unique inside its country, so it is scoped
 /// by the mention's country and stays separate when that is unknown.
@@ -3057,17 +3083,36 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         return None;
     }
 
+    let national = || Identifier {
+        country: country.map(str::to_owned),
+        kind: "national".into(),
+        value: value.clone(),
+    };
+
+    // A known register scheme is national — its prefix is a scheme tag, not a
+    // country, so it must not reach the VAT sniffer (issue 86). `HRB22388` and
+    // `HRBDRESDEN4115` (court name inline) both start with `HRB`, not the country
+    // `HR`. A 3+-letter tag (HRB, KRS, REGON…) is specific enough to match on the
+    // prefix alone; a 2-letter tag (FN, VR, PR) also requires a following digit,
+    // so it cannot swallow an unrelated word that merely begins with its letters.
+    let starts_register = REGISTER_PREFIXES.iter().any(|p| match value.strip_prefix(p) {
+        Some(rest) => p.len() >= 3 || rest.starts_with(|c: char| c.is_ascii_digit()),
+        None => false,
+    });
+    if starts_register {
+        return Some(national());
+    }
+
+    // Otherwise a leading two-letter VAT country (Austrian `ATU…` keeps its `U`)
+    // followed by any digit is a VAT id scoped by that country; a two-letter
+    // prefix outside the VAT set never mints a country.
     let vat_prefix: String = value.chars().take(2).collect();
-    let is_vat = vat_prefix.chars().all(|c| c.is_ascii_alphabetic())
+    let is_vat = VAT_COUNTRIES.contains(&vat_prefix.as_str())
         && value[2..].chars().any(|c| c.is_ascii_digit());
     if is_vat {
         Some(Identifier { country: Some(vat_prefix), kind: "vat".into(), value })
     } else {
-        Some(Identifier {
-            country: country.map(str::to_owned),
-            kind: "national".into(),
-            value,
-        })
+        Some(national())
     }
 }
 
@@ -3411,6 +3456,50 @@ mod tests {
         assert_eq!(normalise_identifier("000000", None), None); // all zeros
         assert_eq!(normalise_identifier("111111", None), None); // filler
         assert_eq!(normalise_identifier("12", None), None); // too short
+    }
+
+    /// Issue 86: a national register prefix must NOT mint a country. The German
+    /// `HRB`/`HRA` numbers begin with letters that spell the ISO code `HR`
+    /// (Croatia), so the naive sniffer flagged ~50,700 German companies Croatian.
+    #[test]
+    fn register_prefixes_are_national_not_a_minted_country() {
+        // The canonical bug: a German Handelsregister number under a DE mention.
+        let hrb = normalise_identifier("HRB Dresden 4115", Some("DEU")).expect("a register id");
+        assert_eq!(hrb.kind, "national");
+        assert_eq!(hrb.country.as_deref(), Some("DEU"), "the mention's country, not 'HR'");
+        // The whole documented register family stays national, never VAT.
+        for (raw, note) in [
+            ("HRB 22388", "German HRB"),
+            ("HRA2104", "German HRA"),
+            ("FN 123456 a", "Austrian Firmenbuch — FN is not a country"),
+            ("KRS 0000123456", "Polish KRS"),
+            ("NIP 1234567890", "Polish NIP"),
+            ("REGON 12345678", "Polish REGON"),
+            ("OIB 12345678901", "Croatian OIB — starts with 'OI', not a country"),
+        ] {
+            let id = normalise_identifier(raw, Some("XX")).unwrap_or_else(|| panic!("{note}: {raw}"));
+            assert_eq!(id.kind, "national", "{note} ({raw}) must be national");
+            assert_eq!(id.country.as_deref(), Some("XX"), "{note}: no minted country");
+        }
+    }
+
+    /// Issue 86: real VAT ids still parse — including Austrian `ATU…`, whose
+    /// third character is a letter, and Greek `EL…`. A two-letter prefix outside
+    /// the VAT-country set never mints a country.
+    #[test]
+    fn real_vat_ids_keep_their_country_prefix() {
+        for (raw, country) in
+            [("ATU12345678", "AT"), ("DE254473301", "DE"), ("EL123456789", "EL"), ("FR12345678901", "FR")]
+        {
+            let id = normalise_identifier(raw, Some("ignored")).expect("a VAT id");
+            assert_eq!(id.kind, "vat", "{raw} is a VAT id");
+            assert_eq!(id.country.as_deref(), Some(country), "{raw} scoped by its prefix");
+        }
+        // A two-letter prefix that is not a VAT country does not mint one — it is
+        // a national id scoped by the mention.
+        let zz = normalise_identifier("ZZ998877", Some("DEU")).expect("an id");
+        assert_eq!(zz.kind, "national");
+        assert_eq!(zz.country.as_deref(), Some("DEU"), "ZZ is not a VAT country");
     }
 
     #[test]
