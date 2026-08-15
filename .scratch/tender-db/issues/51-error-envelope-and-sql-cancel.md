@@ -1,6 +1,11 @@
 # 51 — Uniform JSON error envelope; 408 + cancel-on-disconnect for SQL
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-15) — both parts' acceptance criteria pass in tests run this
+date: part 1 via `malformed_inputs_return_the_json_error_envelope` + `unknown_v1_paths_are_json_404`
++ `the_rate_limit_429_is_our_json_envelope` (full `api.rs` suite green, 26/26), part 2 via
+`a_non_yielding_aggregate_is_capped` (sql.rs, green). The honest limitation in Progress below stands
+(turso exposes no `interrupt()`; slot-hold is bounded to the cap, not zero) — that is the delivered
+contract, not an open gap. Was: needs-verification.
 Severity: MEDIUM (robustness; one part has a real resource-leak edge)
 
 Found by usability audit (2026-07-21). Two related robustness gaps:
