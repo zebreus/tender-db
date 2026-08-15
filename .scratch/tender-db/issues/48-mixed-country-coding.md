@@ -1,6 +1,12 @@
 # 48 — Country codes stored mixed alpha-2 / alpha-3; documented filter hangs
 
-Status: FIXED-IN-CODE, PENDING-REFOLD (2026-08-15 — hang gone, docs corrected, org country now canonicalised; materialises on the batched refold)
+Status: MOSTLY-RESOLVED, RESIDUAL OPEN (2026-08-15 — materialised by the full rebuild: 22,518,877 org
+countries now alpha-2 (length 2), i.e. the EU/EEA corpus converged (DEU→DE, UK→GB, EL→GR all gone).
+RESIDUAL: 2,168 length-3 + 151 length-10 org countries survive — non-EU alpha-3 codes (EGY, TUN, GEO,
+JOR, ARE, MCO, ARM, MAR, SGP, ZAF, KEN, AGO, ZMB…) and full names (LUXEMBOURG). `canonical_country`'s
+ALPHA3_TO_ALPHA2 map only covers EU/EEA, so non-EU alpha-3 passes through, and full names are not
+handled at all. 0.01% of orgs, all foreign entities — low value but real. See "Residual" below.)
+Was: FIXED-IN-CODE, PENDING-REFOLD.
 Severity: MEDIUM (data quality + a hanging documented filter)
 
 Found by usability audit, owner-confirmed via SQL (2026-07-21):

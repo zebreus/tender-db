@@ -1,6 +1,10 @@
 # 86 — org identity: German "HRB" register prefix mis-read as country code; NULL-identifier duplicate org rows
 
-Status: FIXED-IN-CODE, PENDING-REFOLD (2026-08-15 — false-country minting fixed; finding #2 dedup deferred)
+Status: RESOLVED-VERIFIED (2026-08-15 — materialised by the full rebuild and confirmed on prod: HRB
+(Handelsregister-B) orgs now carry country DE (11,263), with AT/SE/NL/GE/CH… as the small legitimate
+remainder and NO false "HR" (Croatia) bucket anywhere in the distribution — the prefix→country
+minting is gone). Finding #2 (NULL-identifier org dedup) remains deferred — see below. Was:
+FIXED-IN-CODE, PENDING-REFOLD.
 Kind: data-quality / correctness (organization canonicalization)
 Blocked by: —
 Relates to: 85 (DE-1.x, where it was noticed), organization identity/merge

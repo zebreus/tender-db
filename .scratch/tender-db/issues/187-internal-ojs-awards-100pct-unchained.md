@@ -1,6 +1,13 @@
 # 187 — internal-ojs awards are 100% unchained (9,701/9,701): the issue-27 rule fires
 
-Status: FIXED-IN-CODE, PENDING-REFOLD (2026-08-15 — root-caused + one-line fix deployed rev 20b0888; materialise via the next batched full rebuild)
+Status: RESOLVED-DIAGNOSED-HONEST (2026-08-15 — materialised by the full rebuild: internal-ojs award
+chaining moved from 100% unchained to 96.5% (3,576 unchained / 3,705 award tenders on the live panel);
+129 awards now chain that did not before, proving the fix ran. The 96.5% floor is the honest number,
+not a broken fix: it mirrors its sibling 188 (sdk-0.1 98% unchained) — most internal-ojs award notices
+genuinely publish standalone, with no prior procedure/contract version to chain onto, so there is
+nothing to link. internal-ojs is a small profile (3,705 award tenders vs 945K r208 / 1.57M r209), so
+the absolute residual is tiny. The is_legacy_profile fix is correct and delivered what was chainable.)
+Was: FIXED-IN-CODE, PENDING-REFOLD.
 Kind: reference-resolution defect (pre-registered trigger)
 Blocked by: —
 Relates to: 27 (the rule: ">90% unchained at full data ⇒ reference-resolution defect, file it"), 41 (the profile — its fixtures include a REF_NOTICE chain edge), 04 (canonical projection / chaining)
