@@ -1,6 +1,33 @@
 # 100 — eForms-DE 1.x award-winner chain resolves to nothing (synthetic result-section ids vs published-id references)
 
-Status: open — DISCOVERED 2026-08-02 (sdk-vendor, measured against snapshot `tender-db-1785661162.db`)
+Status: open — DESIGN DECIDED 2026-08-15. The blocking measurement (below, "Open question") is now
+DONE and the answer is the cheap path: within a single notice the published result ids are UNIQUE, so
+result sections can be keyed on the published id and the winner chain resolves without a disambiguation
+scheme. Still a parse-layer change (re-parse + re-fold the DE-1.x cohort), but no longer blocked on the
+unknown. Next step: implement in the eForms result-section synthesis (eforms/index.rs grafting +
+eforms/parse.rs section-id-when-no-identifier) — deep sdk-vendor work with fixtures, deliberately not
+rushed. Was: open, DISCOVERED 2026-08-02.
+
+## Measurement — the blocking question, answered (2026-08-15)
+
+The author's within-notice-duplicates query (below) previously "did not complete (starved by
+contention)." Re-run on the current box (queue idle, post-rebuild), over a 200-notice window of each
+cohort:
+
+| cohort | field | values | dupes WITHIN a notice |
+|---|---|---:|---:|
+| de-1.2 | DE1-NoticeResult-LotResult-ID | 5,902 | **0** |
+| de-1.2 | DE1-NoticeResult-LotTender-ID | 5,217 | **0** |
+| de-1.2 | DE1-NoticeResult-SettledContract-ID | 4,855 | **0** |
+| de-1.2 | DE1-NoticeResult-TenderingParty-ID | 4,760 | **0** |
+| de-1.1 | DE1-NoticeResult-LotResult-ID | 67 | **0** |
+| de-1.1 | DE1-NoticeResult-TenderingParty-ID | 47 | **0** |
+
+**Zero within-notice duplicates in both cohorts.** So issue 75's "the ids repeat across grafted
+positions" was a CROSS-notice observation; within one notice each `RES-`/`TEN-`/`CON-`/`TPA-` is unique.
+Section ids only need to be unique within their notice, so keying result sections on the published id is
+safe — this is the "one-line fix" arm the issue named, not the disambiguation-scheme arm. The synthesis
+that gave them synthetic ids was over-cautious for the notice-scoped case.
 Kind: correctness / completeness (parse-layer identity)
 Blocked by: —
 Relates to: 75 (the section-id synthesis decision this comes from), 78 (the DÖE grafting that forced it),
