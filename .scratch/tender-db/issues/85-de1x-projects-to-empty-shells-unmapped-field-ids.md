@@ -1,6 +1,17 @@
 # 85 — eForms-DE 1.x reclaim projects to EMPTY tender shells (unmapped DE1-* field ids)
 
-Status: open — DISCOVERED 2026-08-01 (sdk-vendor, from snapshot 531). ~218K German tenders have zero facts. Parse layer is correct; projection-only fix + re-fold.
+Status: RESOLVED-VERIFIED (2026-08-15). The `normalise_de1` fix (commits 43d36dd + 029d2a7 — the
+dialect folded onto the eForms vocabulary once at each chunk-load site, 51 full-id aliases, lot kind
+read from the `LOT-`/`GLO-`/`PAR-` section prefix, and the BT-04 uuid gate) shipped and was
+MATERIALISED by the 2026-08-15 full rebuild (job 697, 14.27M notices re-folded with the current code).
+Verified on prod via /v1/sql: the cohort is `eforms:eforms-de-1.1` (145,859) + `de-1.2` (72,986) +
+`de-1.0` (31) ≈ 218,876 notices — matching the ~218K estimate — and a random sample now has FULL
+content where the original diagnosis found 0/110: DE-1.1 tenders 20/20 with texts (4–8),
+classifications (4–10) and lots (1–3); DE-1.2 tenders 15/15 with texts and resolved parties (buyer).
+The empty-shell problem is gone; the largest cohort renders fully. Regression coverage is in place and
+is stronger than the single-fixture test the validation asked for: `every_de1_alias_target_is_a_field_
+the_projection_reads` guards all 51 aliases against drift, plus `de1_lot_kind`, `is_de1_profile` and
+`no_de1_alias_reaches_the_grouping_or_the_fold_order`. Was: open, fix-implemented-not-deployed.
 Kind: correctness / completeness (projection mapping)
 Blocked by: —
 Relates to: 75 (DE-1.x empirical inventory), 78 (DÖE grafts), the SDK01/sdk-0.1 projection-mapping precedent (project.rs:2232), ADR-0009
