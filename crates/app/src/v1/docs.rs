@@ -138,7 +138,7 @@ collection query plus its filters:</p>
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>ISO-3166 alpha-3 country, e.g. <code>DEU</code>.</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place).</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
@@ -153,8 +153,8 @@ collection query plus its filters:</p>
 rather than silently ignored, so a typo (<code>cvp</code> for <code>cpv</code>)
 never reads as "everything matched".</p>
 <p>Paginate by following <code>next_cursor</code> until <code>more</code> is false:</p>
-<pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DEU&amp;status=open&amp;limit=50"
-curl -s "https://tenders.zebreus.click/v1/tenders?country=DEU&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
+<pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50"
+curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
 
 <h2 id="detail">Tender detail</h2>
 <p><code class="ep">GET /v1/tenders/{id}</code> returns the current version of a
@@ -211,7 +211,7 @@ retained horizon passed your token) or <code>{"reason":"feed_rebuilt"}</code>
 each entity's current JSON in its event.</p>
 <pre><code># -N disables curl's buffering so events arrive as they happen
 curl -N -H "Accept: text/event-stream" \
-  "https://tenders.zebreus.click/v1/tenders?country=DEU"
+  "https://tenders.zebreus.click/v1/tenders?country=DE"
 
 # resume from the last event id you processed, verbatim
 curl -N -H "Accept: text/event-stream" -H "Last-Event-ID: 3:193000" \
