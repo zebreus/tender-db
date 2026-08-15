@@ -1,10 +1,32 @@
 # 98 — eForms-DE 1.x organization-reference class is dead: `id` vs `id-ref` typing + missing role aliases
 
-Status: open — DISCOVERED 2026-08-02 (sdk-vendor, from the post-refold snapshot `tender-db-1785661162.db`)
+Status: RESOLVED — VERIFIED IN PROD 2026-08-15. All three fix parts landed in `a50ad0d`
+("issue 98: DE-1.x organization references — flag them, alias them, gate them", 2026-08-02) and are
+deployed (ancestor of the serving rev `9bdfe80`): `de1_mark_reference` flags the `OPT-300-`/`OPT-301-`
+families `is_ref=true` in `normalise_de1`, `DE1_FIELD_ALIASES` carries all 20 reference fields, and the
+vendored `fields-de-1.x.json` now types 28 fields `id-ref`. The fix materialised in the full rebuild and
+is now measured live on the box.
+
+**Provenance measured (not presence), the gate this issue demanded.** Bounded `/v1/sql` over a recent
+de-1.x window (`notices.id BETWEEN 26717000 AND 26722031`, queue idle):
+
+- 651 party rows across 71 DE-1.x notices; **525 (80.6%) carry `mention_notice_id = n.id`** — they
+  originate from the DE notice itself. **Pre-fix this number was 0** (the visible ~35% was all TED-twin
+  carry-forward). The remaining ~19% are legitimate carry-forwards from merged twins, exactly as designed.
+- The role class recovered is precisely this issue's table, every role DE-origin: **Procedure-Buyer 71
+  rows across 71 notices (100% of projecting notices — the C6 gate that read a false 35%)**, Lot-ReviewOrg
+  157, Lot-AddInfo 156, Lot-TenderReceipt 62, Lot-ReviewInfo 41, Tenderer 35, Lot-Mediator 2,
+  Procedure-SProvider 1. Role strings are the eForms suffix verbatim (`Procedure-Buyer`, `Lot-ReviewOrg`,
+  …), matching what TED twins already publish onto these same Tenders.
+
+Award **winners** are deliberately NOT part of this resolution — they are issue 100 (a parse-layer
+section-id defect, design decided, deferred), and `read_results` never gates on `is_ref`, so 98 cannot
+and does not touch them. Winners staying near 0% from DE after this fix is expected and tracked there.
+Was: open — DISCOVERED 2026-08-02 (sdk-vendor, from the post-refold snapshot `tender-db-1785661162.db`).
 Kind: correctness / completeness (projection mapping — the org layer)
 Blocked by: —
 Relates to: 75 (the empirical DE-1.x inventory — this is its defect), 85 (the fact-layer fix this sits on top of),
-88, 86/48 (the Group-2 org-projection batch this joins)
+88, 86/48 (the Group-2 org-projection batch this joins), 100 (winners — the sibling defect this does NOT fix)
 
 ## Symptom
 
