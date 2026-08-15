@@ -79,6 +79,15 @@ safety one, and the two must not be conflated in either direction:
 - Free-cell reads: just run them. Inspecting the box must not require a negotiation, or nobody inspects
   the box.
 - Unbounded metadata: bound it, and say how in the write-up.
+- **`journalctl -b` is not "since this server started" — it is since the machine booted**, and the
+  service restarts on every deploy without the machine rebooting. So `journalctl -b | grep '[store]
+  reclaim stamped NO ledger'` returns the *accumulated* count across every instance since the last
+  machine boot — 516,144 lines on 2026-08-15, all from the Aug 12–14 reclaim-all campaign (issue 139's
+  log signature), none from the running server. A raw count there both false-alarms and can bury a
+  genuinely new line. For the OPERATE reclaim check, scope to the current instance:
+  `journalctl -u tender-db _PID=$(systemctl show tender-db -p ExecMainPID --value)` or
+  `--since "$(systemctl show tender-db -p ActiveEnterTimestamp --value)"`. A non-zero count *there* is
+  the real finding.
 - Data pages: ask the team lead, state the query and its bound, and run it through `/v1/sql` in a
   low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
   requester does not need to be that person.
