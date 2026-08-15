@@ -407,6 +407,54 @@ pub enum Collection {
     Notices,
 }
 
+impl Collection {
+    /// The query parameters this collection's list read actually applies to the rows
+    /// it returns.
+    ///
+    /// The filter vocabulary is shared across all four collections by design (a
+    /// subscription is a collection query plus its filters), so `Params` accepts every
+    /// parameter on every path. But each builder reads only the fields meaningful to
+    /// it: `organizations_query` has no CPV to match against, `notices_query` narrows
+    /// only by source and profile. A parameter outside this set is accepted and then
+    /// changes nothing — an unfiltered answer that looks filtered, the "confidently
+    /// wrong count" this project cares about most. The list handler diffs the request's
+    /// parameters against this set and echoes the leftovers as `ignored_filters` so the
+    /// response says what it did (issue 118).
+    ///
+    /// This is the ONE authoritative list. `honoured_params_match_the_emitted_sql`
+    /// checks it against the SQL each builder actually emits — byte-comparing the
+    /// statement with each parameter set against the statement without it — so if a
+    /// builder starts or stops reading a field this set is wrong until it is updated,
+    /// and `ignored_filters` cannot drift into lying about what applied. The names are
+    /// the client-facing spelling (`min_value`, not the `Filter` field), because they
+    /// are echoed to the client verbatim.
+    pub fn honoured_params(self) -> &'static [&'static str] {
+        match self {
+            // `tenders_query` reads `source` and `kind` directly and the rest through
+            // `version_predicates`; only the Lot-containment `tender` has no meaning.
+            Collection::Tenders => &[
+                "source", "country", "cpv", "buyer", "winner", "status", "min_value",
+                "max_value", "kind",
+            ],
+            // `lots_query` adds the `tender` containment shape (issue 115) to the same
+            // version predicates, so the whole vocabulary applies here.
+            Collection::Lots => &[
+                "source", "country", "cpv", "buyer", "winner", "status", "min_value",
+                "max_value", "kind", "tender",
+            ],
+            // `organizations_query`: only the three identity-shaped predicates. The
+            // value/CPV/status filters are Tender-shaped and have no meaning here.
+            Collection::Organizations => &["country", "kind", "buyer"],
+            // `notices_query` narrows by the notice layer's own vocabulary — `source`
+            // and `kind` (the mapping profile) — and nothing else. `tender` is honoured
+            // on `/v1/notices` too, but by an app-layer dispatch (the store has no
+            // notice->tender predicate) that intercepts it before this read path is
+            // reached, so it is not part of this set.
+            Collection::Notices => &["source", "kind"],
+        }
+    }
+}
+
 /// Can answering this request WALK — i.e. does it use a predicate no index serves?
 ///
 /// Issue 117 established that the reads have no way to predict a query's *cost*: there

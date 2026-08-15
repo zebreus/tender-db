@@ -587,6 +587,62 @@ async fn unknown_query_params_are_rejected() {
     assert_eq!(server.status("/v1/tenders?cpv=45").await, 200);
 }
 
+/// Issue 118: a filter a collection accepts but does not apply is named in the
+/// envelope's `ignored_filters`, so an unfiltered page can never be mistaken for a
+/// filtered one. The field is always present; empty means every filter applied.
+#[tokio::test]
+async fn list_endpoints_name_the_filters_they_ignore() {
+    let server = Server::start("ignored_filters").await;
+    server.ingest_chain().await;
+
+    // The dropped-filter names, in the fixed vocabulary order the envelope lists them.
+    fn ignored(page: &Value) -> Vec<String> {
+        page["ignored_filters"]
+            .as_array()
+            .expect("ignored_filters is always present")
+            .iter()
+            .map(|v| v.as_str().expect("a filter name").to_owned())
+            .collect()
+    }
+
+    // No filters: the field is present and empty, never absent.
+    assert!(ignored(&server.get("/v1/tenders").await).is_empty());
+    // A filter the collection applies is never named.
+    assert!(ignored(&server.get("/v1/tenders?source=ted").await).is_empty());
+    // `tender` is meaningless on the Tenders collection — accepted, ignored, named.
+    assert_eq!(ignored(&server.get("/v1/tenders?tender=5").await), ["tender"]);
+
+    // Organizations carry no CPV or status, so those are named — and, the actual
+    // failure mode, the page is NOT narrowed: it is the whole unfiltered set.
+    let all_orgs = items(&server.get("/v1/organizations").await).len();
+    let cpv_page = server.get("/v1/organizations?cpv=45&status=open").await;
+    assert_eq!(ignored(&cpv_page), ["cpv", "status"], "named in vocabulary order");
+    assert_eq!(items(&cpv_page).len(), all_orgs, "cpv did not narrow — it was ignored");
+    // Organizations DO apply country and kind, so neither is named.
+    assert!(ignored(&server.get("/v1/organizations?country=DE").await).is_empty());
+
+    // Notices apply only source/kind through the collection read path.
+    assert_eq!(ignored(&server.get("/v1/notices?country=DE").await), ["country"]);
+    assert!(ignored(&server.get("/v1/notices?source=ted").await).is_empty());
+
+    // `?tender=` on notices IS honoured — by the app-layer dispatch to the notices
+    // behind a tender's versions — so it is not named; but any other filter sent
+    // alongside it is still dropped, and still named.
+    let tender_id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+    assert!(
+        ignored(&server.get(&format!("/v1/notices?tender={tender_id}")).await).is_empty(),
+        "the tender dispatch applies `tender`"
+    );
+    assert_eq!(
+        ignored(&server.get(&format!("/v1/notices?tender={tender_id}&country=DE")).await),
+        ["country"],
+        "the dispatch applies `tender` only; the rest is dropped and named",
+    );
+
+    // Lots apply the whole vocabulary, so nothing is ever ignored there.
+    assert!(ignored(&server.get("/v1/lots?source=ted&status=open").await).is_empty());
+}
+
 /// Issue 51: an unknown `/v1/*` path is our JSON 404, never a fall-through to
 /// the dashboard's HTML router that would leak its route names.
 #[tokio::test]

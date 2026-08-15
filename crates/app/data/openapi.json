@@ -166,8 +166,9 @@
         "description": "Canonical Organizations — buyers, bidders, winners. SSE-capable.",
         "operationId": "listOrganizations",
         "parameters": [
-          { "$ref": "#/components/parameters/source" },
           { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/buyer" },
           { "$ref": "#/components/parameters/limit" },
           { "$ref": "#/components/parameters/cursor" },
           { "$ref": "#/components/parameters/include_data" }
@@ -218,6 +219,7 @@
         "operationId": "listNotices",
         "parameters": [
           { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/kind" },
           { "$ref": "#/components/parameters/tender" },
           { "$ref": "#/components/parameters/limit" },
           { "$ref": "#/components/parameters/cursor" }
@@ -641,7 +643,7 @@
       "country": {
         "name": "country",
         "in": "query",
-        "description": "A NUTS place-code prefix matched against the tender's places. At the country level NUTS is ISO-3166 alpha-2, so Germany is `DE` (not `DEU`); a longer prefix narrows to a region, e.g. `DE1` or `DEB35`.",
+        "description": "On Tenders and Lots, a NUTS place-code prefix matched against the notice's places: at the country level NUTS is ISO-3166 alpha-2, so Germany is `DE` (not `DEU`), and a longer prefix narrows to a region, e.g. `DE1` or `DEB35`. On Organizations, an exact match on the Organization's own (alpha-2) country. Not applied by Notices.",
         "schema": { "type": "string" }
       },
       "cpv": {
@@ -653,7 +655,7 @@
       "buyer": {
         "name": "buyer",
         "in": "query",
-        "description": "Organization id that is the buyer.",
+        "description": "On Tenders and Lots, the Organization id in a buyer role. On Organizations, selects that one Organization by id. Not applied by Notices.",
         "schema": { "type": "integer", "format": "int64" }
       },
       "winner": {
@@ -683,7 +685,7 @@
       "kind": {
         "name": "kind",
         "in": "query",
-        "description": "Tender/Lot kind flag.",
+        "description": "A kind flag whose meaning is collection-specific: `procedure`/`registration` for Tenders, the lot kind (`Lot`/`LotsGroup`/`Part`) for Lots, the identifier kind for Organizations, and the mapping profile for Notices.",
         "schema": { "type": "string" }
       },
       "tender": {
@@ -763,7 +765,12 @@
         "properties": {
           "items": { "type": "array", "items": {} },
           "next_cursor": { "$ref": "#/components/schemas/Cursor" },
-          "more": { "type": "boolean" }
+          "more": { "type": "boolean" },
+          "ignored_filters": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Filter parameters the client sent that this collection does not apply — every collection accepts the shared filter vocabulary but honours only the subset meaningful to it, so a dropped filter is named here rather than silently returning an unfiltered page. Empty when every filter applied."
+          }
         }
       },
       "Tender": {

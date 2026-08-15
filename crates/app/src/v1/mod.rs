@@ -506,6 +506,51 @@ impl Params {
     fn since(&self) -> i64 {
         self.since.as_deref().and_then(|c| c.parse().ok()).unwrap_or(0)
     }
+
+    /// The filter parameters the client actually set, by their client-facing name.
+    ///
+    /// The list handler diffs this against the collection's
+    /// [`store::read::Collection::honoured_params`] to name the filters that were
+    /// accepted but changed nothing (issue 118). The order here is fixed — the filter
+    /// vocabulary in declaration order — so the echoed `ignored_filters` is
+    /// deterministic regardless of query-string order. Pagination and streaming
+    /// controls (`cursor`, `limit`, `since`, `entity`, `include_data`) are not filters
+    /// and never appear here; the names must match `honoured_params`' spelling exactly,
+    /// since a mismatch would silently report a honoured filter as ignored.
+    fn provided_filters(&self) -> Vec<&'static str> {
+        let mut out = Vec::new();
+        if self.source.is_some() {
+            out.push("source");
+        }
+        if self.country.is_some() {
+            out.push("country");
+        }
+        if self.cpv.is_some() {
+            out.push("cpv");
+        }
+        if self.buyer.is_some() {
+            out.push("buyer");
+        }
+        if self.winner.is_some() {
+            out.push("winner");
+        }
+        if self.status.is_some() {
+            out.push("status");
+        }
+        if self.min_value.is_some() {
+            out.push("min_value");
+        }
+        if self.max_value.is_some() {
+            out.push("max_value");
+        }
+        if self.kind.is_some() {
+            out.push("kind");
+        }
+        if self.tender.is_some() {
+            out.push("tender");
+        }
+        out
+    }
 }
 
 // -------------------------------------------------------------- collections
@@ -623,7 +668,14 @@ async fn collection(
     };
     let next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id);
     items.truncate(limit as usize);
-    Ok(axum::Json(json::page(items.into_iter().map(|i| i.json).collect(), next)).into_response())
+    // Name any filter the client sent that this collection does not apply, so an
+    // unfiltered page never masquerades as a filtered one (issue 118). The honoured
+    // set lives in the read layer next to the builders it describes.
+    let honoured = store::read::Collection::from(collection).honoured_params();
+    let ignored: Vec<&str> =
+        params.provided_filters().into_iter().filter(|p| !honoured.contains(p)).collect();
+    Ok(axum::Json(json::page(items.into_iter().map(|i| i.json).collect(), next, &ignored))
+        .into_response())
 }
 
 fn wants_events(headers: &HeaderMap) -> bool {
@@ -658,7 +710,11 @@ async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
     // tender detail rather than silently ignored (issue 49). A lookup, not a
     // subscription, so it is JSON regardless of Accept.
     if let Some(tender_id) = p.tender {
-        return tender_notices(&s, tender_id).await;
+        // This path applies `tender` and nothing else, so any other filter the
+        // client sent is dropped — name it, exactly as the collection path does.
+        let ignored: Vec<&str> =
+            p.provided_filters().into_iter().filter(|f| *f != "tender").collect();
+        return tender_notices(&s, tender_id, &ignored).await;
     }
     collection(Collection::Notices, s, h, p).await
 }
@@ -698,7 +754,7 @@ async fn organization(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) 
 
 /// The Notices behind a Tender's version chain, in id order. `404` if the
 /// Tender itself is unknown, so `?tender=` never masks a bad id as "no notices".
-async fn tender_notices(state: &AppState, tender_id: i64) -> ApiResult {
+async fn tender_notices(state: &AppState, tender_id: i64, ignored: &[&str]) -> ApiResult {
     let reader = state.readers.get().await?;
     let Some(detail) = read::tender_detail(&reader, tender_id).await? else {
         return Err(ApiError::not_found("tender"));
@@ -714,7 +770,9 @@ async fn tender_notices(state: &AppState, tender_id: i64) -> ApiResult {
             items.push(json::notice(&row));
         }
     }
-    Ok(axum::Json(json::page(items, None)).into_response())
+    // A fixed sub-resource — the notices this tender's versions cite. It applies
+    // `tender` only; any other filter the caller sent is named as ignored.
+    Ok(axum::Json(json::page(items, None, ignored)).into_response())
 }
 
 /// The poll half of the change feed. Same events, same cursor and same

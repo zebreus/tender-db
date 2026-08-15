@@ -3515,6 +3515,71 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// `Collection::honoured_params` is the list handler's source of truth for which
+    /// filters actually applied — the set it diffs a request against to build the
+    /// `ignored_filters` it echoes back (issue 118). It is a hand-written list, so it
+    /// can lie. This is the belt to that brace, in the spirit of
+    /// `filter_classification_is_exhaustive`: for every (collection × parameter) pair it
+    /// compares the statement the builder emits with only that parameter set against the
+    /// statement with none — the parameter is honoured IFF the SQL changes — and asserts
+    /// that mechanical split equals what `honoured_params` claims. A builder that starts
+    /// or stops reading a field fails this test until the set is corrected, so
+    /// `ignored_filters` can never certify a filter that changed nothing.
+    #[test]
+    fn honoured_params_match_the_emitted_sql() {
+        use super::read::{self, Collection, Filter, Scope, Status};
+
+        // The client-facing parameter name paired with a Filter that sets ONLY it, to a
+        // non-default value. `now` is the reference instant, not a filter; `cursor` and
+        // `limit` are pagination — none is in the shared filter vocabulary this echoes.
+        let one = |p: &str| -> Filter {
+            let base = Filter::default();
+            match p {
+                "source" => Filter { source: Some("ted".into()), ..base },
+                "country" => Filter { country: Some("DE".into()), ..base },
+                "cpv" => Filter { cpv: Some("4521".into()), ..base },
+                "buyer" => Filter { buyer: Some(7), ..base },
+                "winner" => Filter { winner: Some(7), ..base },
+                "status" => Filter { status: Some(Status::Open), ..base },
+                "min_value" => Filter { min_value: Some(1000), ..base },
+                "max_value" => Filter { max_value: Some(9000), ..base },
+                "kind" => Filter { kind: Some("Lot".into()), ..base },
+                "tender" => Filter { tender: Some(424_242), ..base },
+                other => panic!("unknown parameter {other}"),
+            }
+        };
+        let sql_of = |c: Collection, f: &Filter| -> String {
+            let scope = Scope::Page { after: 0, limit: 1000 };
+            match c {
+                Collection::Tenders => read::tenders_statement(f, scope),
+                Collection::Lots => read::lots_statement(f, scope),
+                Collection::Organizations => read::organizations_statement(f, scope),
+                Collection::Notices => read::notices_statement(f, scope),
+            }
+            .0
+        };
+
+        const ALL: [&str; 10] = [
+            "source", "country", "cpv", "buyer", "winner", "status", "min_value",
+            "max_value", "kind", "tender",
+        ];
+        for c in
+            [Collection::Tenders, Collection::Lots, Collection::Organizations, Collection::Notices]
+        {
+            let base = sql_of(c, &Filter::default());
+            for p in ALL {
+                let changed = sql_of(c, &one(p)) != base;
+                let claimed = c.honoured_params().contains(&p);
+                assert_eq!(
+                    changed, claimed,
+                    "{c:?}: parameter `{p}` changes the emitted SQL = {changed}, but \
+                     honoured_params() says {claimed}. Update Collection::honoured_params \
+                     (crates/store/src/read.rs) so ignored_filters stays honest."
+                );
+            }
+        }
+    }
+
     /// LOCAL PLAN PROBE for 112's gate — plans whatever statements `TDB_PLAN_SQL`
     /// names (one per line), against a schema-only DB built by `Db::open`, through
     /// the workspace's pinned turso (`=0.7.0`, the same version the on-box probe

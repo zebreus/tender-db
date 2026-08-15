@@ -228,10 +228,17 @@ pub fn detail(d: &TenderDetail) -> Value {
 
 /// The list envelope. `next_cursor` is null exactly when `more` is false, so a
 /// client can loop on either one.
-pub fn page(items: Vec<Value>, next: Option<i64>) -> Value {
+///
+/// `ignored_filters` names any query parameter the client sent that this collection
+/// does not apply — the shared filter vocabulary is accepted on every path, but each
+/// collection honours only the subset meaningful to it, and a dropped filter would
+/// otherwise return an unfiltered page that looks filtered (issue 118). The field is
+/// always present: an empty array is the honest "every filter you sent applied".
+pub fn page(items: Vec<Value>, next: Option<i64>, ignored: &[&str]) -> Value {
     json!({
         "items": items,
         "next_cursor": next.map(|n| n.to_string()),
         "more": next.is_some(),
+        "ignored_filters": ignored,
     })
 }

@@ -127,14 +127,17 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}</td><td>One Notice by id — the counterpart of a version's <code>caused_by_notice_id</code>.</td></tr>
 </table>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?limit=2"</code></pre>
-<p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false}</code>.</p>
+<p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false, "ignored_filters": []}</code>.
+<code>ignored_filters</code> names any filter you sent that this collection does not
+apply (see below) — an empty array means every filter applied.</p>
 <p>Tender rows echo the <code>cpv</code> (CPV codes) and <code>country</code>
 (NUTS place codes) they carry, so you can see why a row matched a
 <code>cpv</code>/<code>country</code> filter.</p>
 
 <h2 id="filters">Filters &amp; pagination</h2>
-<p>All collections accept the same filter parameters — a subscription is a
-collection query plus its filters:</p>
+<p>Every collection accepts the same filter vocabulary — a subscription is a
+collection query plus its filters — but each applies only the subset that is
+meaningful to it (see <a href="#applies">which filters apply where</a> below):</p>
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
@@ -152,6 +155,24 @@ collection query plus its filters:</p>
 <p>An unknown or misspelled query parameter is rejected with <code>400</code>
 rather than silently ignored, so a typo (<code>cvp</code> for <code>cpv</code>)
 never reads as "everything matched".</p>
+
+<h3 id="applies">Which filters apply where</h3>
+<p>A filter that has no meaning for a collection is <em>accepted but not applied</em>
+— <code>cpv</code> on <code>/v1/organizations</code>, say, does not narrow anything,
+because an Organization carries no CPV. So that an unfiltered page can never look
+filtered, every list response names the filters it dropped in
+<code>ignored_filters</code>; an empty array means all of them applied. The full map:</p>
+<table>
+  <tr><th>Collection</th><th>Applies</th><th>Accepted but ignored</th></tr>
+  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, status, min_value, max_value, kind</td><td>tender</td></tr>
+  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, status, min_value, max_value, kind, tender</td><td>—</td></tr>
+  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer</td><td>cpv, source, status, winner, min_value, max_value, tender</td></tr>
+  <tr><td class="ep">/v1/notices</td><td>source, kind</td><td>country, cpv, buyer, winner, status, min_value, max_value, tender</td></tr>
+</table>
+<p>So <code>GET /v1/notices?country=DE</code> returns
+<em>every</em> notice with <code>"ignored_filters": ["country"]</code> in the
+envelope — not the German ones, and the field says so.</p>
+
 <p>Paginate by following <code>next_cursor</code> until <code>more</code> is false:</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50"
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
