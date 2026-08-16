@@ -725,22 +725,30 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
 /// which is small (an org appears on a bounded slice of the corpus).
 ///
 /// So the caller seeds the FROM clause with
-/// `(SELECT DISTINCT tender_id FROM <table> WHERE organization_id = ?)` and joins
-/// the driven table to it. The seed is a SUPERSET of the true matches — it ignores
-/// the role narrowing (`buyer`'s `%Buyer%`, `bidder`'s `tenderer`) and the
-/// current-version constraint, both of which the untouched `EXISTS` predicates
-/// still enforce — so the result is byte-identical to the walk, only bounded by the
-/// org's participation count instead of the corpus. Precedence is by expected
-/// selectivity (winner rows ⊆ bidder rows ⊆ a frequent buyer's), but any present
-/// filter is a correct seed because the `EXISTS` set, not the seed, decides
+/// `(SELECT DISTINCT tender_id FROM <table> WHERE organization_id = ?<extra>)` and
+/// joins the driven table to it. The seed is a SUPERSET of the true matches — the
+/// untouched `EXISTS` predicates still enforce the role narrowing and the
+/// current-version constraint — so the result is byte-identical to the walk, only
+/// bounded by the org's participation count instead of the corpus. Precedence is by
+/// expected selectivity (winner rows ⊆ bidder rows ⊆ a frequent buyer's), but any
+/// present filter is a correct seed because the `EXISTS` set, not the seed, decides
 /// membership.
-fn participation_seed(f: &Filter) -> Option<(&'static str, i64)> {
+///
+/// The `buyer` seed ALSO narrows by role (issue 225): `tender_version_parties`
+/// holds every party role, and a ubiquitous NON-buyer org (org 3: 1.79M
+/// review-body rows, 3 actual buyer rows — measured on prod) made the role-blind
+/// seed haul millions of candidates the `EXISTS` then discarded (~17-19 s). The
+/// role clause mirrors the EXISTS's own `%Buyer%` match, so the superset property
+/// is preserved exactly; `tender_version_parties_org_role (organization_id, role,
+/// tender_id)` serves the narrowed seed index-only. `winner`/`bidder` seeds need
+/// no extra clause — their tables are participation-bounded already.
+fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
     if let Some(org) = f.winner {
-        Some(("tender_version_result_winners", org))
+        Some(("tender_version_result_winners", "", org))
     } else if let Some(org) = f.bidder {
-        Some(("tender_version_bid_parties", org))
+        Some(("tender_version_bid_parties", "", org))
     } else if let Some(org) = f.buyer {
-        Some(("tender_version_parties", org))
+        Some(("tender_version_parties", " AND role LIKE '%Buyer%'", org))
     } else {
         None
     }
@@ -1031,9 +1039,9 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // `EXISTS` predicates below still decide membership, so the result is identical.
     let seed = participation_seed(filter);
     let (from, seed_param): (String, Vec<Value>) = match seed {
-        Some((table, org)) => (
+        Some((table, extra, org)) => (
             format!(
-                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?) hits
+                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
                    JOIN tenders t ON t.id = hits.tender_id"
             ),
             vec![Value::Integer(org)],
@@ -1646,9 +1654,9 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     // predicates still decide membership, so the result matches the walk exactly.
     let seed = participation_seed(filter);
     let (from, seed_param): (String, Vec<Value>) = match seed {
-        Some((table, org)) => (
+        Some((table, extra, org)) => (
             format!(
-                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?) hits
+                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
                    JOIN lots l ON l.tender_id = hits.tender_id"
             ),
             vec![Value::Integer(org)],

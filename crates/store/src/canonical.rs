@@ -1698,11 +1698,20 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 11] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 12] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
         ("tender_version_parties_org", "tender_version_parties(organization_id)"),
+        // Issue 225: the buyer reverse-lookup's covering index. The seed
+        // (`participation_seed`) narrows `tender_version_parties` by organization AND
+        // buyer role; this index serves that whole shape index-only, so a ubiquitous
+        // NON-buyer party (org 2: 112k service-provider rows; org 3: 1.79M review-body
+        // rows, 3 actual buyer rows — measured) collapses to its buyer slice instead of
+        // hauling every mention through per-row table lookups (~17-19 s, measured).
+        // `role` is mid-index so the org's slice scans index-only even though the
+        // `%Buyer%` match is not a prefix; `tender_id` last makes the seed covered.
+        ("tender_version_parties_org_role", "tender_version_parties(organization_id, role, tender_id)"),
         ("tender_version_result_winners_org", "tender_version_result_winners(organization_id)"),
         ("tender_version_bid_parties_org", "tender_version_bid_parties(organization_id)"),
         // The by-version index every other satellite carries — bid_parties was the

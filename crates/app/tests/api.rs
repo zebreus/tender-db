@@ -739,6 +739,70 @@ async fn organizations_can_be_looked_up_by_identifier() {
     assert!(ig.iter().any(|f| f == "identifier"), "identifier is named ignored on /v1/tenders");
 }
 
+/// Issue 225: the buyer seed narrows by role in SQL (`role LIKE '%Buyer%'`),
+/// mirroring the EXISTS's own match — a vocabulary drift between the two would
+/// silently drop legitimate buyers, so this pins the round trip on a REAL buyer
+/// party from the fixture: the org must be reachable through `?buyer=` exactly as
+/// recorded, and a non-buyer party org must NOT be (the seed's whole point).
+#[tokio::test]
+async fn tenders_reverse_lookup_by_buyer_matches_the_recorded_role() {
+    let server = Server::start("buyer_role_seed").await;
+    server.ingest_chain().await;
+
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    // A buyer-role party on a current version, straight from the canonical layer.
+    let mut rows = reader
+        .query(
+            "SELECT p.organization_id, p.tender_id FROM tender_version_parties p
+              WHERE p.role LIKE '%Buyer%'
+                AND p.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = p.tender_id)
+              LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query buyer parties");
+    let buyer = rows.next().await.expect("row").map(|r| {
+        (
+            r.get_value(0).unwrap().as_integer().copied().unwrap(),
+            r.get_value(1).unwrap().as_integer().copied().unwrap(),
+        )
+    });
+    drop(rows);
+    // An org that appears ONLY in non-buyer roles, if the fixture has one.
+    let mut rows = reader
+        .query(
+            "SELECT p.organization_id FROM tender_version_parties p
+              WHERE p.organization_id NOT IN
+                    (SELECT organization_id FROM tender_version_parties WHERE role LIKE '%Buyer%')
+              LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query non-buyer parties");
+    let non_buyer =
+        rows.next().await.expect("row").map(|r| r.get_value(0).unwrap().as_integer().copied().unwrap());
+    drop(rows);
+    drop(reader);
+
+    if let Some((org, tender_id)) = buyer {
+        let page = server.get(&format!("/v1/tenders?buyer={org}")).await;
+        assert!(
+            items(&page).iter().any(|t| t["id"].as_i64() == Some(tender_id)),
+            "a recorded buyer role must be reachable through ?buyer="
+        );
+    }
+    if let Some(org) = non_buyer {
+        let page = server.get(&format!("/v1/tenders?buyer={org}")).await;
+        assert!(
+            items(&page).is_empty(),
+            "an org with only non-buyer roles must not match ?buyer= (org {org})"
+        );
+    }
+
+    // Absent org: the reachable() short-circuit still answers fast and empty.
+    assert!(items(&server.get("/v1/tenders?buyer=999999999").await).is_empty());
+}
+
 /// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a held notice
 /// explains why it is absent from the canonical layer instead of returning a bare
 /// `parse_state` stub. A cleanly-parsed notice reports `null`; the list rows stay
