@@ -1,6 +1,46 @@
 # 132 — the 51 negative `estimated_value` / `framework_maximum` rows the re-spec did NOT explain
 
-Status: open — **CANONICAL** for this follow-up; issue 160 is a pointer here. The residual left by issue
+Status: RESOLVED-DIAGNOSED (2026-08-16, owner) — row-by-row inspection done; **source-published, both
+layers faithful, no defect in our code**. Determination below; issue 160 stays a pointer here.
+
+## Determination (2026-08-16, owner — the row-by-row pass the narrowing bought)
+
+Method: enumerated the negative `estimated_value`/`framework_maximum` rows over the 2026-forward slice
+via bounded `/v1/sql` chunks (22 view-rows, 16 distinct tenders), then walked every one of the 16 through
+the public API — `/v1/tenders/{id}` (canonical), `/v1/notices?tender=` (chain), `/v1/notices/{id}/content`
+(parse layer, the 218-B endpoint) — and read two RAW ARCHIVE DOCUMENTS at the extremes of era and SDK.
+
+**Q1 — P4 holds for every row checked.** All 16 tenders carry equal-magnitude negatives in their chains'
+parse layers (BT-27 / BT-271 / DE1-…-EstimatedOverallContractAmount / …-FrameworkMaximumAmount). The fold
+copies faithfully; issue 131 stays closed. (Issue 33's 17,738/17,738 exact-magnitude match already
+included these rows; this confirms it per-row for the suspect subset.)
+
+**Q2 — two clean strata, all eForms-era (sdk-1.7→1.13, eforms-de-1.1→2.1):**
+- *Sentinels* (7/16 tenders): exactly −100 cents (−€1.00), plus one −300 (−€3.00) pair — German
+  eforms-de publishers stamp −1.00 on `BT-27-Procedure` across entire chains (tender 858517: twelve
+  notices, every one −1.00). This is the data-profile study's §2.1 sentinel pattern, now seen at the
+  canonical layer: **−1.00 is a publisher "no value" marker, not a value.**
+- *Real-magnitude negatives* (9/16): −€30k to −€11.8M plus −6M DKK, EUR/DKK, scattered across sdk-1.7,
+  1.9, 1.10, 1.13 and four years — no version cluster, so no mapping fault to point at.
+
+**Q3 — the minus is in the published document.** Two raw XMLs read from the archive:
+- 2026, sdk-1.13, notice `00149565-2026` (tender 152904): literal
+  `<cbc:EstimatedOverallContractAmount currencyID="EUR">-420000.00</…>` — and the canonical detail shows
+  it as LOT-0006's estimate among positive sibling lots (€0.68M–€6.94M), i.e. a publisher data-entry
+  artifact, published verbatim by TED, copied verbatim by us.
+- 2024, sdk-1.7, notice `00243502-2024` (tender 98871): literal `-6000000` DKK in BOTH
+  `EstimatedOverallContractAmount` and `TotalAmount`.
+The delta-mapped-as-absolute hypothesis (Q3's motivation) is dead: nothing is being transformed — the
+sign arrives on the wire, in both eras, in both fields.
+
+**Outcome:** no code change. "Store as published" is the correct behavior and is what happens. The one
+remaining decision is the data-profile study's proposed **rule 8** (§3): flag exactly-−1.00 amounts as
+`sentinel` and exclude them from canonical value columns — a canonical-semantics change, to be decided
+deliberately, not slipped in here. Until then the standing gate keeps pointing at these rows by design.
+Scope note: the per-row pass covered the 2026-forward slice (16 tenders); the historical slice is covered
+by the global 17,738/17,738 P4 and the same-era document checks above.
+
+Was: open — **CANONICAL** for this follow-up; issue 160 is a pointer here. The residual left by issue
 33's re-spec. **Not noise, and deliberately not swept under the narrowed invariant.** Small enough to
 inspect row by row.
 Kind: data quality
