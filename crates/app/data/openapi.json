@@ -75,6 +75,7 @@
           { "$ref": "#/components/parameters/min_value" },
           { "$ref": "#/components/parameters/max_value" },
           { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/publication_id" },
           { "$ref": "#/components/parameters/published_after" },
           { "$ref": "#/components/parameters/published_before" },
           { "$ref": "#/components/parameters/deadline_after" },
@@ -731,7 +732,7 @@
       "publication_id": {
         "name": "publication_id",
         "in": "query",
-        "description": "Exact-match a Notice's official publication number (the OJ S / TED notice id) on /v1/notices. Index-served (notices_publication_id_id), so present and absent values are both fast; combining with source/kind narrows the same fast result.",
+        "description": "Exact-match an official publication number (the OJ S / TED notice id). On /v1/notices it matches the notice carrying that number; on /v1/tenders it resolves the tender whose versions that number caused — current or superseded. Index-served, so present and absent values are both fast; companions (source/kind, or any tender filter) narrow the same fast result.",
         "schema": { "type": "string" }
       },
       "published_after": {

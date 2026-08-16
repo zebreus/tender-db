@@ -484,13 +484,14 @@ impl Collection {
     /// are echoed to the client verbatim.
     pub fn honoured_params(self) -> &'static [&'static str] {
         match self {
-            // `tenders_query` reads `source`, `kind` and the published bounds directly
-            // and the rest through `version_predicates`; only the Lot-containment
-            // `tender` has no meaning.
+            // `tenders_query` reads `source`, `kind` and the published bounds directly,
+            // `publication_id` as the seeded FROM (issue 217-A, `tender_from`) and the
+            // rest through `version_predicates`; only the Lot-containment `tender` has
+            // no meaning.
             Collection::Tenders => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "kind", "published_after", "published_before",
-                "deadline_after", "deadline_before",
+                "min_value", "max_value", "kind", "publication_id", "published_after",
+                "published_before", "deadline_after", "deadline_before",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
@@ -556,7 +557,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 19] = [
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
     ("publication_id", "Notices: index-served by notices_publication_id_id (publication_id, id); \
                         companions post-filter in Rust so the planner cannot flatten onto the wrong \
-                        index (issue 217-A, measured). Ignored by Tenders/Lots/Organizations"),
+                        index (issue 217-A, measured). Tenders: seeds the FROM off \
+                        tender_versions_publication — isolates until prod-measured (88d876a rule). \
+                        Ignored by Lots/Organizations"),
     ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
                     (issue 217). Ignored by Tenders/Lots/Notices"),
     ("published_after", "Tenders, id-ordered shape: a narrow range filters the PK walk -> isolates. \
@@ -614,9 +617,9 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     // like `country`/`kind` do — and the other collections ignore it. It therefore
     // isolates nowhere; bound here only so adding the field forced this decision.
     let _ = identifier;
-    // `publication_id` (issue 217-A) likewise: served by `notices_publication_id_id`
-    // on Notices (see that arm's comment for the measurement), ignored elsewhere.
-    let _ = publication_id;
+    // `publication_id` (issue 217-A) is served by `notices_publication_id_id` on
+    // Notices (de-isolated on measurement, see that arm) and consulted in the
+    // Tenders arm below.
 
     // `tender` is the containment shape (issues 115/116): a `tender=X` read drives
     // from that one Tender's `tender_version_lots` slice (whole-corpus max ~2,604
@@ -645,6 +648,12 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
                 || published_before.is_some()
                 || deadline_after.is_some()
                 || deadline_before.is_some()
+                // issue 217-A: seeded from `tender_versions_publication`, so the
+                // read SHOULD be a bounded seek — but the 88d876a rule says
+                // de-isolation is bought with a prod measurement, not an
+                // expectation, and until the deferred index is built the seed
+                // scans all of `tender_versions`. Isolated until measured.
+                || publication_id.is_some()
         }
         // Isolated because the COST is unbounded for sparse and absent values — NOT
         // because the filter is unserved. That distinction became load-bearing when
@@ -1259,9 +1268,25 @@ fn tender_select_head(from: &str) -> String {
     )
 }
 
-/// The participation-seeded FROM clause both tender list shapes share (issue 223):
-/// either the plain driven table or the org seed joined to it.
+/// The seeded FROM clause both tender list shapes share (issue 223): the plain
+/// driven table, or the most selective present seed joined to it.
 fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
+    // issue 217-A: the official notice number drives from `tender_versions.
+    // publication_id` (the deferred `tender_versions_publication` index). Unlike
+    // the participation seeds this one is EXACT, not a superset — `hits` is
+    // precisely "tenders one of whose versions the number caused" — so it doubles
+    // as the predicate and no companion EXISTS is emitted for it. That is why it
+    // MUST take precedence here: seeded any other way, publication_id would
+    // silently stop filtering. A companion winner/bidder/buyer keeps its own
+    // EXISTS predicate and narrows as usual.
+    if let Some(pub_id) = &filter.publication_id {
+        return (
+            "(SELECT DISTINCT tender_id FROM tender_versions WHERE publication_id = ?) hits
+               JOIN tenders t ON t.id = hits.tender_id"
+                .to_owned(),
+            vec![t(pub_id)],
+        );
+    }
     match participation_seed(filter) {
         Some((table, extra, org)) => (
             format!(

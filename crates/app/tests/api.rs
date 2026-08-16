@@ -674,8 +674,8 @@ async fn notices_can_be_looked_up_by_publication_id() {
     assert!(items(&miss).is_empty(), "an unknown publication_id returns an empty page");
 
     // On a collection that does not apply it, it is named ignored, not silently dropped.
-    let on_tenders = server.get(&format!("/v1/tenders?publication_id={pubid}")).await;
-    let ignored: Vec<String> = on_tenders["ignored_filters"]
+    let on_lots = server.get(&format!("/v1/lots?publication_id={pubid}")).await;
+    let ignored: Vec<String> = on_lots["ignored_filters"]
         .as_array()
         .expect("ignored_filters is always present")
         .iter()
@@ -683,7 +683,45 @@ async fn notices_can_be_looked_up_by_publication_id() {
         .collect();
     assert!(
         ignored.iter().any(|f| f == "publication_id"),
-        "publication_id must be named ignored on /v1/tenders, got {ignored:?}"
+        "publication_id must be named ignored on /v1/lots, got {ignored:?}"
+    );
+}
+
+/// Issue 217-A, tenders half: the same official number resolves the TENDER it
+/// caused — seeded from `tender_versions.publication_id` (`tender_from`), so it
+/// works through any version, composes with the other filters, and is honoured
+/// (absent from `ignored_filters`) rather than named ignored as before.
+#[tokio::test]
+async fn tenders_can_be_looked_up_by_publication_id() {
+    let server = Server::start("pubid_tender").await;
+    server.ingest_chain().await;
+
+    // The fixture's one tender; its versions' numbers come from the notices that
+    // caused them, so walk the detail chain for a real one.
+    let tenders = items(&server.get("/v1/tenders").await).clone();
+    let tender_id = tenders[0]["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{tender_id}")).await;
+    let versions = detail["versions"].as_array().expect("versions");
+    assert!(!versions.is_empty(), "the fixture tender has a version chain");
+
+    for v in versions {
+        let pubid = v["publication_id"].as_str().expect("version publication_id");
+        let page = server.get(&format!("/v1/tenders?publication_id={pubid}")).await;
+        let got: Vec<i64> = items(&page).iter().map(|t| t["id"].as_i64().unwrap()).collect();
+        assert_eq!(got, vec![tender_id], "version number {pubid} resolves its tender");
+        assert!(
+            page["ignored_filters"].as_array().expect("ignored_filters").is_empty(),
+            "publication_id is honoured on /v1/tenders now"
+        );
+    }
+
+    // Unknown number → empty page; a wrong-source companion excludes.
+    assert!(items(&server.get("/v1/tenders?publication_id=nonesuch-9999").await).is_empty());
+    let pubid = versions[0]["publication_id"].as_str().unwrap();
+    assert!(
+        items(&server.get(&format!("/v1/tenders?publication_id={pubid}&source=doe")).await)
+            .is_empty(),
+        "a non-matching companion filter still excludes"
     );
 }
 

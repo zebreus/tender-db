@@ -121,6 +121,11 @@ pub(crate) const SCHEMA: &str = "
         -- (ADR-0001 allows validity-range writes on the canonical layer).
         current_seq          INTEGER,
         current_published_at INTEGER,
+        -- The head version's submission deadline (issue 216, deadline half) —
+        -- fold-maintained like the published pointer above, backfilled once
+        -- (job 706). Also ALTERed in by migrate() for pre-216 files; it lives
+        -- here too so a fresh file and reset_tender_layer's recreate agree.
+        current_deadline     INTEGER,
         -- Which PROJECTION LOGIC this Tender's content was last folded under
         -- (issue 99). The fold's early-return keys on the chain of causing
         -- notices, which is a state key only while the logic is fixed: a mapping
@@ -1730,9 +1735,13 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 13] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 14] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
+        // Issue 217-A: `/v1/tenders?publication_id=` seeds its FROM with "the
+        // tenders whose versions this number caused" (`tender_from`); this makes
+        // that seed an index-only seek. `tender_id` last covers the seed's SELECT.
+        ("tender_versions_publication", "tender_versions(publication_id, tender_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
         ("tender_version_parties_org", "tender_version_parties(organization_id)"),
         // Issue 225: the buyer reverse-lookup's covering index. The seed
@@ -1857,11 +1866,18 @@ impl Db {
         // deferred plain named indexes instead.
         conn.execute("DROP TABLE IF EXISTS tenders", ()).await?;
         conn.execute(
+            // Must carry EVERY column the fold and the deferred indexes touch:
+            // `migrate()`'s ALTERs run at process open only, so a column missing
+            // here is missing for the whole rebuild — the head UPDATE errors on
+            // its first write and `build_tender_indexes` on its CREATE. That is
+            // how `current_deadline` (issue 216) broke this path when it landed
+            // via ALTER alone.
             "CREATE TABLE tenders (
                  id INTEGER PRIMARY KEY AUTOINCREMENT, source TEXT NOT NULL,
                  procedure_key TEXT, island_notice_id INTEGER REFERENCES notices(id),
                  kind TEXT NOT NULL, created_at INTEGER NOT NULL,
                  current_seq INTEGER, current_published_at INTEGER,
+                 current_deadline INTEGER,
                  projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),

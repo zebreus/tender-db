@@ -155,7 +155,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>cents</strong>.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag; on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
-  <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match, on <code>/v1/notices</code>. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds or RFC 3339; a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
@@ -177,7 +177,7 @@ filtered, every list response names the filters it dropped in
 <code>ignored_filters</code>; an empty array means all of them applied. The full map:</p>
 <table>
   <tr><th>Collection</th><th>Applies</th><th>Accepted but ignored</th></tr>
-  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, publication_id, identifier, name_prefix</td></tr>
+  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, publication_id, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, identifier, name_prefix</td></tr>
   <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
   <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, tender, publication_id, the date bounds</td></tr>
   <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, identifier, name_prefix, the date bounds</td></tr>
@@ -231,7 +231,7 @@ a company name — resolve directly, without knowing any internal id:</p>
   <tr><td>An organization's name</td><td class="ep">GET /v1/organizations?name_prefix=müller</td></tr>
 </table>
 <ul>
-  <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
+  <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
   <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the VAT to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it.</li>
   <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
