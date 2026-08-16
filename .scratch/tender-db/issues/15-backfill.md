@@ -1,6 +1,6 @@
 # 15 — Full backfill + continuous operation + verification
 
-Status: ready-for-agent
+Status: RESOLVED (verified 2026-08-16, owner sweep). The full backfill is done and continuous mode is live: 14,274,014 notices / 7,921,795 tenders (job 697's full rebuild + the daily 09:35 pipeline, green in /health/deep's ingest_freshness ever since). Verification machinery ran throughout (verify/data-quality, the dashboard funnel, the quarantine ledger).
 Blocked by: 09, 10, 11, 12, 13, 14
 
 Goal: the full dataset per spec: TED 1993→ + DÖE 2022-12→, live updates on

@@ -1,6 +1,6 @@
 # 44 — Rate-limit / SSE-cap key trusts spoofable X-Forwarded-For (MEDIUM)
 
-Status: needs-verification (fix landed)
+Status: RESOLVED (verified 2026-08-16, owner sweep). client_key (crates/app/src/v1/mod.rs:281) prefers nginx's X-Real-IP ($remote_addr — a single trusted value) and documents exactly the spoof this issue found; X-Forwarded-For is only a fallback for direct/dev serving.
 Severity: MEDIUM (defeats the only DoS control on the unauthenticated surface)
 
 Found by the security review, code + deployment verified by the owner

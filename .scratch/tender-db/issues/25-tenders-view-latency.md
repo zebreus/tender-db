@@ -1,7 +1,6 @@
 # 25 — /api/tenders cold read is ~3s (v_tenders MAX-seq view)
 
-Status: needs-verification
-
+Status: RESOLVED (verified 2026-08-16, owner sweep). This issue is the origin of the current_seq/current_published_at head pointer + tenders_current_published index, which shipped long since; the newest-tenders read is an index range scan. Measured today: /v1/tenders?sort=published_at&limit=200 in 0.083 s against the 7.9M-tender corpus (and 2.4 ms for a 5-row page).
 Observed post-bad8dda deploy (2026-07-21): `/api/tenders` (list_tenders,
 200 rows over the `v_tenders` MAX(seq)-per-tender view) took 2.9s on a
 cold read at 3.5M notices; warm reads are fast. The dashboard hides it

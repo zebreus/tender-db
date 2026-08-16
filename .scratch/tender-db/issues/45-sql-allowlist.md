@@ -1,6 +1,6 @@
 # 45 — Flip the SQL gate from deny-list to positive allow-list
 
-Status: needs-verification
+Status: RESOLVED (verified 2026-08-16, owner sweep). The positive allow-list is live: sql.rs walks the AST and rejects any base table not in ALLOWED (45 entries), denied by default. Prod-verified today as a side effect of other work: SELECT over sqlite_schema is refused with 'not in the queryable public surface'. Issue 43's interim deny-list is subsumed by this.
 Blocked by: 43 (immediate deny-list fix ships first)
 
 The /v1/sql credential gate is a deny-list (FORBIDDEN). Issue 43 showed

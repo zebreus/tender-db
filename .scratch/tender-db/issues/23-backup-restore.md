@@ -1,7 +1,6 @@
 # 23 — Backup & restore for the production DB
 
-Status: needs-verification
-
+Status: PARTIALLY RESOLVED / DECISION PENDING (verified 2026-08-16, owner sweep). The snapshot feature was deliberately REMOVED 2026-08-06 under storage pressure (commits 39c0e08/aa9f2a1/1faf9d9); there is NO copy of the DB anywhere by design — DR = re-ingest (docs/operations.md, dr-premise-2026-08.md). Verified today: /data/snapshots empty, no ship timer, no snapshot job kind. Two changes since the removal decision: the volume grew to 1.78 TB (38% used — the storage pressure is gone), and the DR analysis's unconditional no-regret item is now SHIPPED: the register-archive job (rev bbf763f, smoke-run on prod: 493 periods recognised) rebuilds the fetches registry from the intact archive, cutting ~1-1.5 days off the likely scenario. REMAINING DECISION (menu in dr-premise-2026-08.md par.7): option (b), the tiny off-box user-state copy (accounts/tokens/webhooks, <100 KB — the only permanently-unrecoverable state), needs an off-box destination (Storage Box ~4 euro/mo, or scope-extend the private mirror, or pull-based) — an account/purchase action only Lennart can take. Flag it when he next surfaces; not an hourly-firing blocker.
 Everything lives on one Hetzner VPS volume: the raw archive (~200 GB,
 re-fetchable from TED/DÖE so NOT worth backing up) and the canonical DB
 (weeks of processing time to rebuild — worth backing up). Today a volume

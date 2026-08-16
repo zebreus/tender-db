@@ -1,6 +1,6 @@
 # 52 — Server RSS grows monotonically across the backfill (possible leak)
 
-Status: ready-for-agent
+Status: DORMANT (verified 2026-08-16, owner sweep). The backfill is done; steady-state RSS today is 0.6 GB (measured /proc, after a day that included a 7.9M-row backfill job and three index builds) — no leak in steady state. The growth pattern only ever manifested during multi-day bulk loads, so this bites again only if issue 28's full reprocess is scheduled; re-open then and profile first (issue 19's lesson).
 Severity: LOW (no OOM risk for job 1; investigate)
 
 Observed during the 2026-07-21 backfill (rev 62f7255): the server RSS
