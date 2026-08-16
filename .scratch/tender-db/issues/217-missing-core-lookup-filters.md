@@ -44,9 +44,15 @@ in Rust over a near-unique key is the deterministic fix.
 **Open follow-ups (split out):**
 - **A-tenders** — `/v1/tenders?publication_id=` (an EXISTS over `tender_versions.publication_id`, also
   un-indexed-alone; same walk shape).
-- **B-name** — `/v1/organizations?name=` prefix/contains search. Deferred: a `(name, id)` prefix index has
-  the common-prefix sort cost, and a contains search needs FTS/trigram — its own design + index, unlike
-  the clean exact-match `identifier` shipped here.
+- **B-name** — `/v1/organizations?name_prefix=` search. DESIGN SETTLED BY MEASUREMENT 2026-08-16
+  (`crates/store/tests/name_prefix_probe.rs`, kept as the record): turso 0.7 ACCEPTS
+  `COLLATE NOCASE` index DDL but the planner only ever SCANS it (covering scan, 0.32-0.63 s at 200k
+  rows — a walk at 30M orgs), for both NOCASE ranges and `LIKE 'prefix%'`; a PLAIN `(name, id)` index
+  SEEKS (3.3 ms) but case-sensitively. So the implementation is the current_deadline playbook: a
+  normalised `name_norm` column (Rust `to_lowercase`, Unicode-correct where ASCII case-variant
+  expansion is not), written by the org bulk-load path, backfilled batched over ~30M orgs, indexed
+  `(name_norm, id)` deferred, then `name_prefix=` lowercases input and range-scans. Contains-search
+  (FTS/trigram) stays out of scope. NEXT FIRING'S work item.
 - **C** (`bidder`/`tenderer`) — DONE (issue 217-C, serving rev `00f2f48`; see above).
 
 Was: needs-triage — HIGH, CONFIRMED (code) 2026-08-15. Filed from the API completeness review (subagent).

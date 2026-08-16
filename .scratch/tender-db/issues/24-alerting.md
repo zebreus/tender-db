@@ -1,7 +1,6 @@
 # 24 — Alerting: know when production breaks without looking
 
-Status: needs-verification
-
+Status: PARTIALLY RESOLVED / EXTERNAL HALF NEEDS LENNART (verified 2026-08-16, owner sweep). On-box detection is in place: /health/deep (real DB check 213, ingest-kind freshness 226, disk, canonical-layer presence 133) plus the restored hourly disk/job watchdogs (224, repo-durable). The EXTERNAL half is verifiably absent: nginx access logs show the only /health callers are the deploy script's own curls — no uptime-service UA, no regular cadence. A box-side watchdog cannot report its own box's death, so an external pinger (UptimeRobot-class, hitting /health/deep, notifying Lennart's phone/email) is the missing piece — an account action only Lennart can take, same class as issue 23's backup destination. Flag both together when he surfaces.
 Current monitoring is tmux loggers writing files on the box — nobody is
 notified if the service dies, /health goes red, disk fills, or the daily
 continuous-mode jobs stop landing. The /v1 view-staleness 500s went
