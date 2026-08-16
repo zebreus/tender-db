@@ -558,8 +558,10 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 19] = [
     ("publication_id", "Notices: index-served by notices_publication_id_id (publication_id, id); \
                         companions post-filter in Rust so the planner cannot flatten onto the wrong \
                         index (issue 217-A, measured). Tenders: seeds the FROM off \
-                        tender_versions_publication — isolates until prod-measured (88d876a rule). \
-                        Ignored by Lots/Organizations"),
+                        tender_versions_publication and SUPPRESSES isolation (issue-212 pattern) — \
+                        every companion is bounded by the seed; de-isolated on prod measurement \
+                        (bare 3.4 ms, companioned 1.5-1.9 ms, rev 3a658ec). Ignored by \
+                        Lots/Organizations"),
     ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
                     (issue 217). Ignored by Tenders/Lots/Notices"),
     ("published_after", "Tenders, id-ordered shape: a narrow range filters the PK walk -> isolates. \
@@ -619,7 +621,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     let _ = identifier;
     // `publication_id` (issue 217-A) is served by `notices_publication_id_id` on
     // Notices (de-isolated on measurement, see that arm) and consulted in the
-    // Tenders arm below.
+    // Tenders arm below, where its seed suppresses isolation.
 
     // `tender` is the containment shape (issues 115/116): a `tender=X` read drives
     // from that one Tender's `tender_version_lots` slice (whole-corpus max ~2,604
@@ -641,19 +643,25 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // this arm for the range — `tenders_by_published` rides the
         // `tenders_current_published` index by construction, and the handler strips
         // the range before asking `walks()` about the REMAINING filters.
+        // issue 217-A: `publication_id` is seeded from `tender_versions_publication`
+        // and is the ONLY `t.`-column predicate in its SQL (companions post-filter
+        // in Rust — the flatten measured 35 s before that). De-isolated on
+        // MEASUREMENT (88d876a rule), rev 3a658ec: bare 3.4 ms, source-paired
+        // 1.5 ms, kind/bound/sorted 1.5-1.6 ms, absent 0.9 ms, main pool at
+        // 14-20 ms throughout. And like `tender` on Lots (issue 212) the seed
+        // SUPPRESSES isolation, not merely abstains: every companion runs over
+        // the seed's ≤handful of rows — post-filtered or EXISTS-probed — so no
+        // predicate can walk while the number is present. Same accepted window
+        // as notices: a box whose index is not yet built walks until the boot
+        // detector's reindex lands.
         Collection::Tenders => {
-            version_predicate
-                || kind.is_some()
-                || published_after.is_some()
-                || published_before.is_some()
-                || deadline_after.is_some()
-                || deadline_before.is_some()
-                // issue 217-A: seeded from `tender_versions_publication`, so the
-                // read SHOULD be a bounded seek — but the 88d876a rule says
-                // de-isolation is bought with a prod measurement, not an
-                // expectation, and until the deferred index is built the seed
-                // scans all of `tender_versions`. Isolated until measured.
-                || publication_id.is_some()
+            publication_id.is_none()
+                && (version_predicate
+                    || kind.is_some()
+                    || published_after.is_some()
+                    || published_before.is_some()
+                    || deadline_after.is_some()
+                    || deadline_before.is_some())
         }
         // Isolated because the COST is unbounded for sparse and absent values — NOT
         // because the filter is unserved. That distinction became load-bearing when
