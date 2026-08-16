@@ -1,6 +1,21 @@
 # 214 — webhook target is vetted only at registration; delivery re-resolves the host with no IP pin (DNS-rebinding SSRF to the Hetzner metadata endpoint)
 
-Status: needs-triage — SECURITY / MEDIUM, CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
+Status: PRIMARY ATTACK CLOSED ON MAIN, DEPLOY BLOCKED 2026-08-16 — pin follow-up open. Fix in `ec0038f`
+("webhooks: re-vet the endpoint host at delivery, not just registration"), pushed to `origin/main` + the
+handover branch. The sweeper now re-runs the public-IP guard (`vet_url`) on **every** delivery and refuses a
+host that resolves non-public before any bytes are sent — closing the **persistent rebind** (register public,
+repoint DNS to `169.254.169.254`, every sweep then POSTs there). Enforcement is a `Sweeper` field: on in
+prod (`init`), off in the `Sweeper::new` test constructor (its receivers are on `127.0.0.1`), opt-in via
+`recheck_ssrf_on_send`. Test `a_rebound_endpoint_is_refused_at_delivery` asserts the slot holds and the log
+names the SSRF re-check; the four existing delivery tests stay green (5/5).
+
+**Still open — the connection pin.** The residual sub-millisecond TOCTOU between this delivery-time resolve
+and reqwest's own resolution is closed only by pinning the POST to the vetted `SocketAddr` (e.g.
+`ClientBuilder::resolve_to_addrs`). Deliberately deferred: pinning changes the live network path (per-
+delivery client, TLS SNI vs. IP) and must be verified against a real delivery, which the deploy/ssh gate
+blocks this session. Prod still serves `8938e02`, so neither this nor the pin is live yet.
+
+Was: needs-triage — SECURITY / MEDIUM, CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
 Note: the gap is **acknowledged in-code** as a v1 limitation (`webhooks.rs:98-106`); this issue argues the
 accepted-risk rationale underweights the reachable cloud-metadata endpoint and should be revisited.
 Kind: security (SSRF via the webhook delivery sweeper)
