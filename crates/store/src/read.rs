@@ -282,6 +282,29 @@ pub struct NoticeRow {
     pub parse_state: String,
 }
 
+/// Why a notice's payload is held out of the canonical layer (issue 218). A
+/// quarantined notice has NO parsed satellites — unrecognised content is held
+/// whole, never partially imported — so the quarantine row IS its only content,
+/// reachable until now only through `/v1/sql`. `reason`/`detail` are the CURRENT
+/// hold cause; `first_reason`/`first_detail` the original, preserved when a failed
+/// re-attempt overwrites the pair (issue 87). The terminal stamps distinguish the
+/// three outcomes a held member can reach: still outstanding, reclaimed, or
+/// skipped-by-policy (issue 84).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct QuarantineRow {
+    pub reason: String,
+    pub detail: Option<String>,
+    pub profile: Option<String>,
+    pub first_seen: i64,
+    pub attempts: Option<i64>,
+    pub last_attempt_at: Option<i64>,
+    pub reprocessed_at: Option<i64>,
+    pub skipped_at: Option<i64>,
+    pub skipped_reason: Option<String>,
+    pub first_reason: Option<String>,
+    pub first_detail: Option<String>,
+}
+
 /// One satellite value of a Tender version, flattened for the detail endpoint.
 /// `lot_key` is `None` when the value is the Tender's own.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -1905,6 +1928,38 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
         ),
         Scope::At { id, .. } => q.push(" AND id = ?", [Value::Integer(id)]),
     }    q
+}
+
+/// The quarantine row for one notice, if it is held (issue 218). Seeks
+/// `quarantine_notice_id` — a bounded `(notice_id)` lookup, never a scan. A notice
+/// maps to at most one member, so at most one held row; the newest by `first_seen`
+/// wins if a re-ingest ever produced more. `None` means the notice is not held.
+pub async fn notice_quarantine(
+    conn: &Connection,
+    notice_id: i64,
+) -> turso::Result<Option<QuarantineRow>> {
+    let mut rows = conn
+        .query(
+            "SELECT reason, detail, profile, first_seen, attempts, last_attempt_at,
+                    reprocessed_at, skipped_at, skipped_reason, first_reason, first_detail
+               FROM quarantine WHERE notice_id = ? ORDER BY first_seen DESC LIMIT 1",
+            [Value::Integer(notice_id)],
+        )
+        .await?;
+    let Some(row) = rows.next().await? else { return Ok(None) };
+    Ok(Some(QuarantineRow {
+        reason: text(&row, 0),
+        detail: opt_text_of(&row, 1),
+        profile: opt_text_of(&row, 2),
+        first_seen: int(&row, 3),
+        attempts: opt_int_of(&row, 4),
+        last_attempt_at: opt_int_of(&row, 5),
+        reprocessed_at: opt_int_of(&row, 6),
+        skipped_at: opt_int_of(&row, 7),
+        skipped_reason: opt_text_of(&row, 8),
+        first_reason: opt_text_of(&row, 9),
+        first_detail: opt_text_of(&row, 10),
+    }))
 }
 
 // ------------------------------------------------------------------- changes

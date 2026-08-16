@@ -751,7 +751,13 @@ async fn notice(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> Api
     let reader = state.readers.get().await?;
     match read::notices(&reader, &Filter::default(), Scope::At { id, seq: 0 }).await?.into_iter().next()
     {
-        Some(row) => Ok(axum::Json(json::notice(&row)).into_response()),
+        // issue 218: a held notice has no parsed satellites and no tender, so the
+        // quarantine row is its only content — surface it here instead of the bare
+        // metadata stub. One bounded `(notice_id)` lookup, only on the by-id path.
+        Some(row) => {
+            let quarantine = read::notice_quarantine(&reader, id).await?;
+            Ok(axum::Json(json::notice_detail(&row, quarantine.as_ref())).into_response())
+        }
         None => Err(ApiError::not_found("notice")),
     }
 }

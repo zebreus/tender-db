@@ -11,7 +11,7 @@ use chrono::{DateTime, FixedOffset, SecondsFormat, TimeZone};
 use serde_json::{Value, json};
 use store::read::{
     BidRow, ContractRow, FactRow, LotResultRow, LotRow, NoticeRow, OrganizationRow, PartyRow,
-    ResultOrgRow, Stamp, TenderDetail, TenderRow, VersionRow,
+    QuarantineRow, ResultOrgRow, Stamp, TenderDetail, TenderRow, VersionRow,
 };
 
 /// A UTC instant as ISO 8601, e.g. `2026-07-19T09:30:00Z`.
@@ -117,6 +117,39 @@ pub fn notice(n: &NoticeRow) -> Value {
         "published_at": n.published_at.map(instant).unwrap_or(Value::Null),
         "dispatched_at": n.dispatched_at.map(instant).unwrap_or(Value::Null),
         "parse_state": n.parse_state,
+    })
+}
+
+/// The single-notice detail: the identity [`notice`] returns, plus `quarantine`
+/// (issue 218). For a held notice this is its ONLY content — a quarantined notice
+/// has no parsed satellites and no canonical tender — so a consumer learns why it
+/// is absent from the data instead of receiving a bare `parse_state` stub. `null`
+/// when the notice parsed. The list endpoint keeps the lean [`notice`] shape; only
+/// this by-id path pays the extra `(notice_id)` lookup.
+pub fn notice_detail(n: &NoticeRow, q: Option<&QuarantineRow>) -> Value {
+    let mut base = notice(n);
+    base["quarantine"] = q.map(quarantine).unwrap_or(Value::Null);
+    base
+}
+
+/// The quarantine hold, as a client sees it. Timestamps are ISO 8601 like every
+/// other instant in the contract; `first_reason`/`first_detail` appear only when a
+/// re-attempt overwrote the original cause (issue 87), and the terminal stamps say
+/// which of the three outcomes the member reached (outstanding / reclaimed /
+/// skipped-by-policy, issue 84).
+pub fn quarantine(q: &QuarantineRow) -> Value {
+    json!({
+        "reason": q.reason,
+        "detail": q.detail,
+        "profile": q.profile,
+        "first_seen": instant(q.first_seen),
+        "attempts": q.attempts,
+        "last_attempt_at": q.last_attempt_at.map(instant).unwrap_or(Value::Null),
+        "reprocessed_at": q.reprocessed_at.map(instant).unwrap_or(Value::Null),
+        "skipped_at": q.skipped_at.map(instant).unwrap_or(Value::Null),
+        "skipped_reason": q.skipped_reason,
+        "first_reason": q.first_reason,
+        "first_detail": q.first_detail,
     })
 }
 

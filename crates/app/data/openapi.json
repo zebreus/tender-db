@@ -258,7 +258,7 @@
         "responses": {
           "200": {
             "description": "The Notice.",
-            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Notice" } } }
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoticeDetail" } } }
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "404": { "$ref": "#/components/responses/NotFound" },
@@ -848,6 +848,39 @@
           "source": { "type": "string" }
         },
         "additionalProperties": true
+      },
+      "NoticeDetail": {
+        "description": "One Notice by id: the list-row identity plus `quarantine`. A held notice has no parsed satellites and no canonical tender, so its quarantine row is the only content it carries.",
+        "allOf": [
+          { "$ref": "#/components/schemas/Notice" },
+          {
+            "type": "object",
+            "properties": {
+              "quarantine": {
+                "nullable": true,
+                "description": "Why the notice is held out of the canonical layer, or null when it parsed.",
+                "allOf": [{ "$ref": "#/components/schemas/Quarantine" }]
+              }
+            }
+          }
+        ]
+      },
+      "Quarantine": {
+        "type": "object",
+        "description": "A held notice's quarantine record. `reason`/`detail` are the current hold cause; `first_reason`/`first_detail` the original when a re-attempt overwrote it. The terminal stamps say which outcome the member reached: outstanding (both null), reclaimed (`reprocessed_at` set), or skipped-by-policy (`skipped_at` set).",
+        "properties": {
+          "reason": { "type": "string" },
+          "detail": { "type": "string", "nullable": true },
+          "profile": { "type": "string", "nullable": true },
+          "first_seen": { "type": "string", "description": "ISO 8601." },
+          "attempts": { "type": "integer", "nullable": true },
+          "last_attempt_at": { "type": "string", "nullable": true, "description": "ISO 8601." },
+          "reprocessed_at": { "type": "string", "nullable": true, "description": "ISO 8601; set when the member was reclaimed into the corpus." },
+          "skipped_at": { "type": "string", "nullable": true, "description": "ISO 8601; set when a dispatch policy declines the member (e.g. duplicate siblings)." },
+          "skipped_reason": { "type": "string", "nullable": true },
+          "first_reason": { "type": "string", "nullable": true },
+          "first_detail": { "type": "string", "nullable": true }
+        }
       },
       "ChangeEvent": {
         "type": "object",

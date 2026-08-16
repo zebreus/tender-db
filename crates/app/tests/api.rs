@@ -687,6 +687,36 @@ async fn notices_can_be_looked_up_by_publication_id() {
     );
 }
 
+/// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a held notice
+/// explains why it is absent from the canonical layer instead of returning a bare
+/// `parse_state` stub. A cleanly-parsed notice reports `null`; the list rows stay
+/// lean (no per-item quarantine lookup). The positive, held-notice case is covered
+/// at the store layer (`tests/notice_quarantine.rs`), because the fixtures ingest
+/// only clean notices and a held row cannot be minted through the public API.
+#[tokio::test]
+async fn notice_detail_carries_the_quarantine_field() {
+    let server = Server::start("notice_quarantine").await;
+    server.ingest_chain().await;
+
+    let notices = items(&server.get("/v1/notices").await).clone();
+    let id = notices[0]["id"].as_i64().expect("notice id");
+
+    let detail = server.get(&format!("/v1/notices/{id}")).await;
+    // The identity the list row carries is still present on the detail...
+    assert_eq!(detail["id"].as_i64(), Some(id));
+    assert!(detail["publication_id"].is_string(), "detail keeps the notice identity");
+    // ...plus the quarantine field, which is null for a cleanly-parsed notice — the
+    // field is ALWAYS present, so absent (parsed) is never confused with absent (bug).
+    assert!(detail.get("quarantine").is_some(), "the quarantine field is always present");
+    assert!(detail["quarantine"].is_null(), "a parsed notice is not held → quarantine null");
+
+    // The lean list shape does NOT carry the field (it pays no per-item lookup).
+    assert!(
+        notices[0].get("quarantine").is_none(),
+        "the list row stays lean; quarantine is a by-id detail concern only"
+    );
+}
+
 /// Issue 217-C: a Tender is reachable by an org that SUBMITTED a bid on it (a
 /// tenderer), won or not — the competitor-history reverse-lookup, a superset of
 /// `winner`. Honoured on tenders/lots, named ignored elsewhere (issue 118), and an
