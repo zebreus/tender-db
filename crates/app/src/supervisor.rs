@@ -1333,18 +1333,70 @@ impl Supervisor {
 
     /// Spawn the daily scheduler: at 09:35 Europe/Berlin it enqueues the TED
     /// probe (Mon–Fri) and DÖE completed-day fetch, then process + project.
+    /// The morning window the weekday catch-up polls over after the 09:35 tick
+    /// (issue 222): 09:35 → ~12:35. TED's daily package is "final by 09:30 CET" and
+    /// always up well before noon, so three hours covers a slipped publication
+    /// without ever polling into the afternoon.
+    const CATCHUP_WINDOW_SECS: i64 = 3 * 3_600;
+
+    /// How often the weekday catch-up re-checks for TED's package. A few minutes:
+    /// fine enough to fetch a late package promptly, coarse enough that a late
+    /// morning is a handful of cheap no-op probes, not a busy loop.
+    const CATCHUP_POLL_SECS: u64 = 300;
+
     pub fn spawn_scheduler(self: Arc<Self>) {
         tokio::spawn(async move {
             loop {
                 let now = store::now_unix();
                 let (tick, weekday) = next_berlin_tick(now, 9, 35);
-                let wait = (tick - now).max(0) as u64;
-                tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
+                tokio::time::sleep(std::time::Duration::from_secs((tick - now).max(0) as u64)).await;
+
+                // TED's watermark before today's run, so the weekday catch-up can tell
+                // whether today's issue actually landed at the tick.
+                let ted_before = if weekday { self.latest_ted_issue_now().await } else { None };
+
                 self.enqueue_daily(weekday).await;
+
+                // Weekday morning catch-up (issue 222). TED's daily package is "final by
+                // 09:30 CET" but the exact moment slips; the lone 09:35 tick would then
+                // miss the day until tomorrow's walk-forward. Give the tick's probe time
+                // to land the package on a normal day, and if it has NOT, keep re-probing
+                // on a short interval until it does (or the morning window closes), then
+                // process+project the late package the SAME morning. On a normal day the
+                // watermark has already advanced, so no catch-up runs at all; the retries
+                // are cheap no-op probes, and DÖE (T+1) gains nothing here so it is left
+                // on the tick.
+                if weekday {
+                    let deadline = tick + Self::CATCHUP_WINDOW_SECS;
+                    tokio::time::sleep(std::time::Duration::from_secs(Self::CATCHUP_POLL_SECS)).await;
+                    let mut caught_up = false;
+                    while self.latest_ted_issue_now().await <= ted_before
+                        && store::now_unix() < deadline
+                    {
+                        self.push("probe", "ted daily (catch-up)".into(), Spec::ProbeTed { refetch: true })
+                            .await;
+                        caught_up = true;
+                        tokio::time::sleep(std::time::Duration::from_secs(Self::CATCHUP_POLL_SECS)).await;
+                    }
+                    // A package that landed DURING catch-up was fetched by the probes
+                    // above but not folded (the tick's project ran before it existed).
+                    if caught_up && self.latest_ted_issue_now().await > ted_before {
+                        self.enqueue_daily(weekday).await;
+                    }
+                }
+
                 // Step past this tick so the next computation lands on tomorrow.
                 tokio::time::sleep(std::time::Duration::from_secs(61)).await;
             }
         });
+    }
+
+    /// TED's newest registered daily issue for the current UTC year, or `None`
+    /// (including on a read error — the catch-up then simply keeps polling, which is
+    /// harmless). The weekday catch-up watches this for the day's package landing.
+    async fn latest_ted_issue_now(&self) -> Option<u32> {
+        let (year, _, _) = fetch::civil_date(store::now_unix());
+        fetch::latest_ted_issue(&self.db, year).await.unwrap_or(None)
     }
 
     /// How often the canonical layer's presence is observed (issue 133 / #38).
@@ -2018,6 +2070,37 @@ mod tests {
         .await
         .unwrap();
         db.current_packages("ted", "daily", None).await.unwrap()[0].fetch_id
+    }
+
+    /// Issue 222: the weekday catch-up watches `latest_ted_issue_now` for the day's
+    /// package landing, so it must reflect the newest registered TED daily. `None`
+    /// on a fresh box (so a first-issue `Some(_) > None` reads as "landed").
+    #[tokio::test]
+    async fn latest_ted_issue_now_reflects_the_newest_registered_daily() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        assert_eq!(sup.latest_ted_issue_now().await, None, "no TED daily registered yet");
+
+        let (year, _, _) = fetch::civil_date(store::now_unix());
+        for issue in ["00137", "00138"] {
+            db.record_fetch(&store::Fetch {
+                source: "ted".into(),
+                kind: "daily".into(),
+                period: format!("{year}-{issue}"),
+                url: "u".into(),
+                sha256: "aa".into(),
+                bytes: 1,
+                fetched_at: 0,
+                path: "p".into(),
+            })
+            .await
+            .unwrap();
+        }
+        assert_eq!(
+            sup.latest_ted_issue_now().await,
+            Some(138),
+            "the catch-up must see the newest TED daily issue"
+        );
     }
 
     /// One minimal single-notice keyed Tender.
