@@ -1391,6 +1391,23 @@ fn blank() -> FactRow {
 /// parent Tender's version, so `/v1/lots?country=DE` means the same thing it
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
+    let mut rows = lots_identity(conn, filter, scope).await?;
+    summarise(conn, &mut rows).await?;
+    Ok(rows)
+}
+
+/// The identity half of [`lots`] — the same matching rows, WITHOUT the per-row
+/// summary decoration (title/value/deadline). The SSE diff classifies a change by
+/// whether a matching row exists on each side of it and only ever emits the display
+/// fields under `?include_data=true` (issue 221), so running [`summarise`] there —
+/// which reads the version's WHOLE lot-satellite slice to pick one lot — is pure
+/// waste, and quadratic on a fat tender's version bump (one such read per lot
+/// change × the whole slice each). This is that classification read.
+pub async fn lots_identity(
+    conn: &Connection,
+    filter: &Filter,
+    scope: Scope,
+) -> turso::Result<Vec<LotRow>> {
     // Same absent-value short-circuit `tenders()` runs, and for the same reason: every
     // isolation-routed filter on this endpoint (`country`/`cpv`/`buyer`/`winner` via
     // the tender's version, and `kind` as `vl.kind`) walks the isolated pool when its
@@ -1402,7 +1419,7 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
     if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Lots).await? {
         return Ok(Vec::new());
     }
-    let mut rows = lots_query(filter, scope)
+    lots_query(filter, scope)
         .rows(conn, |row| LotRow {
             id: int(row, 0),
             tender_id: int(row, 1),
@@ -1414,9 +1431,7 @@ pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Re
             currency: None,
             deadline: None,
         })
-        .await?;
-    summarise(conn, &mut rows).await?;
-    Ok(rows)
+        .await
 }
 
 /// The PREVIOUS stream shape, kept so the equivalence test can compare the shipped

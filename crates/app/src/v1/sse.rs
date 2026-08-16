@@ -29,7 +29,9 @@
 //! served either and gets a `reset` event instead, which means "re-snapshot"
 //! (Firestore's expired-token semantics).
 
-use super::{ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items};
+use super::{
+    ApiError, ApiResult, AppState, Collection, Params, StreamSlot, json, read_items, read_matches,
+};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::response::sse::{Event, KeepAlive, Sse};
@@ -374,24 +376,29 @@ async fn diff(
     let mut events = Vec::new();
     for change in &rows {
         let seq = change.version_seq.unwrap_or(0);
-        let new = read_items(collection, &reader, filter, Scope::At { id: change.entity_id, seq })
-            .await?
-            .pop();
-        let old = match seq > 1 {
-            true => read_items(
-                collection,
-                &reader,
-                filter,
-                Scope::At { id: change.entity_id, seq: seq - 1 },
-            )
-            .await?
-            .pop(),
-            false => None,
+        // Classify by PRESENCE on each side, not by the decorated row: the diff
+        // only needs whether a matching entity exists at each seq, and the `old`
+        // side's display fields were never emitted at all. Decorating either side
+        // here read the version's whole lot-satellite slice per lot change —
+        // quadratic on a fat tender's version bump (issue 221). `read_matches`
+        // skips that for lots; the payload below is decorated once, and only when
+        // it will actually be sent.
+        let new_matches =
+            read_matches(collection, &reader, filter, Scope::At { id: change.entity_id, seq }).await?;
+        let old_matches = match seq > 1 {
+            true => {
+                read_matches(collection, &reader, filter, Scope::At {
+                    id: change.entity_id,
+                    seq: seq - 1,
+                })
+                .await?
+            }
+            false => false,
         };
         // The subscription's own view of what happened, which is not always the
         // log's: a Tender that changed *out of* the filtered set is a removal
         // for this client, and one that changed *into* it is an addition.
-        let op = match (old.is_some(), new.is_some()) {
+        let op = match (old_matches, new_matches) {
             (false, true) => "added",
             (true, true) => "changed",
             (true, false) => "removed",
@@ -407,6 +414,17 @@ async fn diff(
             (false, false) if change.op == "removed" => "removed",
             (false, false) => continue,
         };
+        // Decorate ONLY the payload actually delivered: the new side, only when the
+        // client asked for data and the entity matches there (a `removed` carries
+        // no data). This is the one `summarise` a lot change can still cost, down
+        // from up to four (new+old × decorate) it paid before.
+        let data = match include_data && new_matches {
+            true => read_items(collection, &reader, filter, Scope::At { id: change.entity_id, seq })
+                .await?
+                .pop()
+                .map(|i| i.json),
+            false => None,
+        };
         events.push(
             entity_event(
                 collection,
@@ -414,7 +432,7 @@ async fn diff(
                 op,
                 change.entity_id,
                 change.version_seq,
-                new.as_ref().map(|i| &i.json),
+                data.as_ref(),
                 include_data,
             )
             // The generation-qualified cursor as the SSE id is what makes

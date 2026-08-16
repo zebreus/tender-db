@@ -137,6 +137,24 @@ async fn agree(
         );
     }
     assert_eq!(expected.len(), got.len(), "{label}: row count differs from the pre-fix SQL");
+
+    // Issue 221: `lots_identity` is `lots` WITHOUT the summary decoration — the same
+    // match set, same order, just no title/value/deadline. `read_matches` (the SSE
+    // diff classifier) leans on exactly that equivalence to skip the whole-slice
+    // `summarise` per lot change, so pin it here where a fixture already drives every
+    // filter/scope shape through the query.
+    let ident = read::lots_identity(conn, filter, scope).await.unwrap();
+    let full = read::lots(conn, filter, scope).await.unwrap();
+    let key = |r: &read::LotRow| (r.id, r.tender_id, r.lot_key.clone(), r.kind.clone(), r.seq);
+    assert_eq!(
+        ident.iter().map(key).collect::<Vec<_>>(),
+        full.iter().map(key).collect::<Vec<_>>(),
+        "{label}: lots_identity must match lots on the identity columns"
+    );
+    assert!(
+        ident.iter().all(|r| r.title.is_none() && r.value_cents.is_none() && r.deadline.is_none()),
+        "{label}: lots_identity carries no summary decoration"
+    );
     expected
 }
 

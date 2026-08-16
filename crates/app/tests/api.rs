@@ -1068,6 +1068,10 @@ async fn a_subscription_snapshots_then_streams_diffs() {
     assert_eq!(diff.name, "change");
     assert_eq!(diff.data["op"], "added");
     assert_eq!(diff.data["entity"], "tender");
+    // The diff decorates its payload only when the client asked for it and the entity
+    // matches on the new side (issue 221) — so an `added` under include_data still
+    // carries the new state, not just its identity.
+    assert!(diff.data["data"]["title"].is_string(), "an include_data diff embeds the new state");
     let diff_cursor: i64 = diff.data["cursor"].as_str().expect("cursor").parse().expect("number");
     assert!(diff_cursor > boundary.parse::<i64>().expect("number"), "diffs are past the boundary");
     assert_eq!(

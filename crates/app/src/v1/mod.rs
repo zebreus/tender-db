@@ -654,6 +654,24 @@ pub async fn read_items(
     })
 }
 
+/// Whether a matching entity exists at `scope` — the SSE diff's classification need
+/// (added/changed/removed is decided by presence on each side of a change), WITHOUT
+/// the display decoration the diff throws away unless `?include_data=true` (issue
+/// 221). Only `Lots` has a separable, whole-slice `summarise`, so only it takes the
+/// identity-only path; every other collection's identity query already IS its
+/// cheapest read, so an existence check over `read_items` is as cheap as it gets.
+pub async fn read_matches(
+    collection: Collection,
+    conn: &store::turso::Connection,
+    filter: &Filter,
+    scope: Scope,
+) -> store::turso::Result<bool> {
+    Ok(match collection {
+        Collection::Lots => !read::lots_identity(conn, filter, scope).await?.is_empty(),
+        _ => !read_items(collection, conn, filter, scope).await?.is_empty(),
+    })
+}
+
 async fn collection(
     collection: Collection,
     state: AppState,
