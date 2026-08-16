@@ -60,6 +60,32 @@ fn the_joined_table_filters_on_lots_isolate() {
 }
 
 #[test]
+fn a_tender_containment_bound_suppresses_isolation_even_with_a_companion_filter() {
+    // Issue 212: `tender=X` makes the whole read a bounded containment lookup over one
+    // Tender's lot slice (whole-corpus max ~2,604 lots), so no companion predicate can
+    // walk — it must run on the main pool, not the shed-only isolated pool. Before the
+    // fix, `walks` dropped the bound (`let _ = tender`) and a companion `kind`/`source`
+    // isolated the always-cheap read, which then 503'd under isolated-pool saturation.
+    for (name, filter) in [
+        ("kind=Lot", Filter { tender: Some(1), kind: Some("Lot".into()), ..f() }),
+        ("kind=<sparse>", Filter { tender: Some(1), kind: Some("zzz".into()), ..f() }),
+        ("source", Filter { tender: Some(1), source: Some("ted".into()), ..f() }),
+        ("country", Filter { tender: Some(1), country: Some("DE".into()), ..f() }),
+    ] {
+        assert!(
+            !walks(Collection::Lots, &filter),
+            "lots?tender=X&{name} is a bounded containment read — it must stay on the main pool"
+        );
+    }
+
+    // The fix must NOT de-isolate the density-bounded cases when there is NO `tender`
+    // bound — exactly the sparse/absent shapes issue 120 protects.
+    assert!(walks(Collection::Lots, &Filter { kind: Some("zzz".into()), ..f() }));
+    assert!(walks(Collection::Lots, &Filter { source: Some("ted".into()), ..f() }));
+    assert!(walks(Collection::Lots, &Filter { country: Some("DE".into()), ..f() }));
+}
+
+#[test]
 fn tenders_kind_isolates_because_no_index_covers_it() {
     // `t.kind` is covered by none of tenders_procedure_key / tenders_island /
     // tenders_current_published / tenders_source_id, so a value matching nothing walks

@@ -524,9 +524,12 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         || min_value.is_some()
         || max_value.is_some();
 
-    // `tender` is the containment shape (issue 115): it drives from
-    // `tender_version_lots` and is index-served, so it never routes to isolation.
-    let _ = tender;
+    // `tender` is the containment shape (issues 115/116): a `tender=X` read drives
+    // from that one Tender's `tender_version_lots` slice (whole-corpus max ~2,604
+    // lots) and is index-served, so it bounds every companion predicate and cannot
+    // walk. It therefore SUPPRESSES isolation, not merely abstains — consulted in the
+    // Lots arm below (issue 212). Before, this line dropped it (`let _ = tender`), so
+    // a companion `kind`/`source` still isolated the bounded read and it could 503.
 
     match collection {
         // `source` is served by `tenders_source_id`. `kind` is `t.kind`, which NO index
@@ -551,7 +554,12 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // 0.004s; `?kind=` on a sparse value is unchanged. Deleting this arm because
         // the default request got quick would return the sparse and absent cases to
         // the main reader pool, which is what issue 120 exists to prevent.
-        Collection::Lots => version_predicate || source.is_some() || kind.is_some(),
+        //
+        // But a `tender=X` bound makes the WHOLE read a containment lookup over one
+        // Tender's lot slice, so no companion predicate can walk — `tender.is_none()`
+        // gates the decision (issue 212). Without `tender`, the sparse/absent-density
+        // cases above still isolate.
+        Collection::Lots => tender.is_none() && (version_predicate || source.is_some() || kind.is_some()),
         // `country` and `identifier_kind` are served by the issue-117 indexes, and
         // `buyer` is `o.id`, the primary key. Nothing here can walk.
         Collection::Organizations => false,
