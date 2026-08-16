@@ -697,7 +697,7 @@
       "publication_id": {
         "name": "publication_id",
         "in": "query",
-        "description": "Exact-match a Notice's official publication number (the OJ S / TED notice id) on /v1/notices. Pair with `source` for an indexed lookup; on its own it runs on the isolated pool.",
+        "description": "Exact-match a Notice's official publication number (the OJ S / TED notice id) on /v1/notices. Runs on the isolated reader pool (a bounded scan), so it may be slower than an indexed filter and can shed 503 under heavy isolated-pool load.",
         "schema": { "type": "string" }
       },
       "limit": {

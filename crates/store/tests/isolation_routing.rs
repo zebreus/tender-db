@@ -96,16 +96,19 @@ fn tenders_kind_isolates_because_no_index_covers_it() {
 }
 
 #[test]
-fn notices_publication_id_isolates_only_without_source() {
-    // Issue 217: `publication_id` seeks the `UNIQUE(source, publication_id, …)` index
-    // only when `source` pins its leading column; alone it scans, so isolate that
-    // case (issue 120) while a source-paired lookup stays on the main pool.
+fn notices_publication_id_always_isolates() {
+    // Issue 217: `publication_id` was expected to seek the source-leading
+    // `UNIQUE(source, publication_id, …)` index, but the `ORDER BY id LIMIT`
+    // pagination makes the planner drive off the id PK / `notices_source_id` and
+    // FILTER — a sparse value (≤1 match) then walks the table to fill the page
+    // (~10 s measured in prod, WITH or without `source`). Cost decides routing
+    // (issue 120), so every `publication_id` lookup isolates.
     assert!(
         walks(Collection::Notices, &Filter { publication_id: Some("00018218-2024".into()), ..f() }),
-        "publication_id alone cannot seek the source-leading index — isolate it"
+        "publication_id alone walks — isolate it"
     );
     assert!(
-        !walks(
+        walks(
             Collection::Notices,
             &Filter {
                 publication_id: Some("00018218-2024".into()),
@@ -113,11 +116,11 @@ fn notices_publication_id_isolates_only_without_source() {
                 ..f()
             }
         ),
-        "source + publication_id seeks the composite index — main pool"
+        "source + publication_id still walks (ORDER BY id defeats the composite index) — isolate it"
     );
     assert!(
         !walks(Collection::Notices, &Filter { source: Some("ted".into()), ..f() }),
-        "source alone is index-served and stays on the main pool"
+        "source alone is index-served (notices_source_id) and stays on the main pool"
     );
 }
 

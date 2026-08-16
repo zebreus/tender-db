@@ -571,13 +571,15 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // `buyer` is `o.id`, the primary key. Nothing here can walk.
         Collection::Organizations => false,
         // `source` is served by `notices_source_id` and `kind` (`profile`) by
-        // `notices_profile`. `publication_id` (issue 217) seeks the
-        // `UNIQUE(source, publication_id, content_hash)` index only when `source`
-        // pins its leading column; `publication_id` alone cannot seek that composite
-        // and scans it (~14M rows), so isolate exactly that case (issue 120) — a
-        // source-paired lookup (a TED number implies its source) stays on the main
-        // pool. Everything else here is index-served or inert.
-        Collection::Notices => publication_id.is_some() && source.is_none(),
+        // `notices_profile`. `publication_id` (issue 217) ISOLATES whenever present:
+        // it was expected to seek `UNIQUE(source, publication_id, content_hash)`, but
+        // the `ORDER BY id LIMIT` pagination makes the planner drive off the id PK
+        // (or `notices_source_id`) and FILTER by publication_id instead — a sparse
+        // value (≤1 match) then walks the whole table to fill the page (~10 s
+        // measured in prod, both with and without `source` — issue 117 class, tracked
+        // for a fast path on issue 217). Cost, not servedness, decides routing (issue
+        // 120), so it goes to the isolated pool in every case.
+        Collection::Notices => publication_id.is_some(),
     }
 }
 
@@ -1804,8 +1806,9 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
     if let Some(kind) = &filter.kind {
         q.push(" AND profile = ?", [t(kind)]);
     }
-    // The official notice number (issue 217). Exact match; `walks()` isolates the
-    // source-less case, which cannot seek the source-leading unique index.
+    // The official notice number (issue 217). Exact match; `walks()` isolates every
+    // publication_id lookup (the `ORDER BY id` pagination defeats the composite index,
+    // so a sparse value walks — a fast path is tracked on 217).
     if let Some(publication_id) = &filter.publication_id {
         q.push(" AND publication_id = ?", [t(publication_id)]);
     }
