@@ -1,9 +1,27 @@
 # 218 — a notice's own parsed content (and any quarantined notice's payload) is reachable only via /v1/sql, not REST
 
-Status: needs-triage — MEDIUM, CONFIRMED (code) 2026-08-15. Filed from the API completeness review (subagent).
+Status: PART A (quarantine) DONE — committed `ec456a3`, awaiting deploy. `/v1/notices/{id}` now carries a
+`quarantine` object (current + original cause, attempts, and the reclaimed/skipped terminal stamps) or
+`null` when the notice parsed, via `read::notice_quarantine` (a bounded `(notice_id)` seek). This closes
+the SHARP half — a quarantined notice has no parsed satellites and no tender, so this was its only
+unreachable-via-REST content. PART B (the parsed satellites of a cleanly-parsed notice, the MILD half) is
+still open — see below.
 Kind: completeness (a whole content class has SQL access but no REST surface)
 Blocked by: —
 Relates to: 50 (sql-analyst-surface), 87 (quarantine reasons), the ledger/quarantine dashboard work
+
+## PART B (open) — the parsed satellites of a cleanly-parsed notice
+
+For a notice that PROJECTED, its parsed fields live in the `notice_*` satellites and are reachable via
+the tender it projects to (`/v1/tenders/{its tender}`) or `/v1/sql`, but not as the notice's OWN content.
+This is the "mild" half the issue flags: the canonical tender detail is the intended path, so it is a
+convenience/completeness gap, not an unreachable-content gap. A `/v1/notices/{id}/content` sub-resource
+returning the section-grouped `notice_sections`/`texts`/`codes`/`classifications`/`amounts`/`dates`/
+`integers`/`numbers`/`ids` (all bounded `(notice_id)` slices) would close it. Deferred as its own slice —
+it is a large response shape (8 satellite tables) with lower per-byte value than PART A, and warrants its
+own firing. Raw quarantine PAYLOAD bytes remain a deliberate NON-goal on the unauthenticated surface
+(size + unvalidated-bytes footgun; the source notice is already public via TED/DÖE, and `/v1/sql` remains
+for the token-holder who needs the raw member).
 
 ## Gap
 
