@@ -647,6 +647,46 @@ async fn notices_can_be_scoped_to_a_tender() {
     assert_eq!(server.status("/v1/notices?tender=99999999").await, 404);
 }
 
+/// Issue 217-A: a Notice is reachable by its official publication number, the
+/// real-world external key printed on every notice — an exact-match `publication_id`
+/// filter on `/v1/notices`. On collections that do not honour it, it is NAMED ignored
+/// (issue 118), never silently applied.
+#[tokio::test]
+async fn notices_can_be_looked_up_by_publication_id() {
+    let server = Server::start("pubid").await;
+    server.ingest_chain().await;
+
+    let notices = items(&server.get("/v1/notices").await).clone();
+    let pubid = notices[0]["publication_id"].as_str().expect("publication_id").to_owned();
+    let id = notices[0]["id"].as_i64().expect("notice id");
+
+    // Exact lookup (source-paired: the indexed path) returns that notice, only it.
+    let hit = server.get(&format!("/v1/notices?source=ted&publication_id={pubid}")).await;
+    let hit_ids: Vec<i64> = items(&hit).iter().map(|n| n["id"].as_i64().unwrap()).collect();
+    assert!(hit_ids.contains(&id), "publication_id lookup returns the matching notice");
+    assert!(
+        items(&hit).iter().all(|n| n["publication_id"] == pubid),
+        "the page contains only that publication_id"
+    );
+
+    // Unknown value → empty page, not a 400 and not an unfiltered dump.
+    let miss = server.get("/v1/notices?publication_id=nonesuch-9999").await;
+    assert!(items(&miss).is_empty(), "an unknown publication_id returns an empty page");
+
+    // On a collection that does not apply it, it is named ignored, not silently dropped.
+    let on_tenders = server.get(&format!("/v1/tenders?publication_id={pubid}")).await;
+    let ignored: Vec<String> = on_tenders["ignored_filters"]
+        .as_array()
+        .expect("ignored_filters is always present")
+        .iter()
+        .map(|v| v.as_str().expect("a filter name").to_owned())
+        .collect();
+    assert!(
+        ignored.iter().any(|f| f == "publication_id"),
+        "publication_id must be named ignored on /v1/tenders, got {ignored:?}"
+    );
+}
+
 /// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
 /// mistakes "everything matched" for "my typo'd filter matched".
 #[tokio::test]

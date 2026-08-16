@@ -158,6 +158,10 @@ pub struct Filter {
     pub kind: Option<String>,
     /// Restrict Lots to one parent Tender.
     pub tender: Option<i64>,
+    /// Exact-match a Notice's official publication number (`publication_id`) on
+    /// `/v1/notices` (issue 217). Not a Tender/Lot/Org predicate — those collections
+    /// name it ignored rather than applying it.
+    pub publication_id: Option<String>,
     pub now: i64,
 }
 
@@ -450,7 +454,9 @@ impl Collection {
             // on `/v1/notices` too, but by an app-layer dispatch (the store has no
             // notice->tender predicate) that intercepts it before this read path is
             // reached, so it is not part of this set.
-            Collection::Notices => &["source", "kind"],
+            // `publication_id` (issue 217) is the official notice number, applied by
+            // `notices_query` directly.
+            Collection::Notices => &["source", "kind", "publication_id"],
         }
     }
 }
@@ -508,6 +514,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         max_value,
         kind,
         tender,
+        publication_id,
         now: _,
     } = f;
 
@@ -564,8 +571,13 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // `buyer` is `o.id`, the primary key. Nothing here can walk.
         Collection::Organizations => false,
         // `source` is served by `notices_source_id` and `kind` (`profile`) by
-        // `notices_profile`. Nothing here can walk.
-        Collection::Notices => false,
+        // `notices_profile`. `publication_id` (issue 217) seeks the
+        // `UNIQUE(source, publication_id, content_hash)` index only when `source`
+        // pins its leading column; `publication_id` alone cannot seek that composite
+        // and scans it (~14M rows), so isolate exactly that case (issue 120) — a
+        // source-paired lookup (a TED number implies its source) stays on the main
+        // pool. Everything else here is index-served or inert.
+        Collection::Notices => publication_id.is_some() && source.is_none(),
     }
 }
 
@@ -1791,6 +1803,11 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
     }
     if let Some(kind) = &filter.kind {
         q.push(" AND profile = ?", [t(kind)]);
+    }
+    // The official notice number (issue 217). Exact match; `walks()` isolates the
+    // source-less case, which cannot seek the source-leading unique index.
+    if let Some(publication_id) = &filter.publication_id {
+        q.push(" AND publication_id = ?", [t(publication_id)]);
     }
     match scope {
         Scope::Page { after, limit } => q.push(

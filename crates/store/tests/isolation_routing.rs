@@ -96,6 +96,32 @@ fn tenders_kind_isolates_because_no_index_covers_it() {
 }
 
 #[test]
+fn notices_publication_id_isolates_only_without_source() {
+    // Issue 217: `publication_id` seeks the `UNIQUE(source, publication_id, …)` index
+    // only when `source` pins its leading column; alone it scans, so isolate that
+    // case (issue 120) while a source-paired lookup stays on the main pool.
+    assert!(
+        walks(Collection::Notices, &Filter { publication_id: Some("00018218-2024".into()), ..f() }),
+        "publication_id alone cannot seek the source-leading index — isolate it"
+    );
+    assert!(
+        !walks(
+            Collection::Notices,
+            &Filter {
+                publication_id: Some("00018218-2024".into()),
+                source: Some("ted".into()),
+                ..f()
+            }
+        ),
+        "source + publication_id seeks the composite index — main pool"
+    );
+    assert!(
+        !walks(Collection::Notices, &Filter { source: Some("ted".into()), ..f() }),
+        "source alone is index-served and stays on the main pool"
+    );
+}
+
+#[test]
 fn the_index_served_shapes_stay_on_the_main_pool() {
     // Isolating these would push ordinary traffic through a small semaphore for no
     // benefit — the cost of being wrong in the safe direction, which is why the safe

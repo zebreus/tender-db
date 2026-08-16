@@ -461,6 +461,8 @@ pub struct Params {
     max_value: Option<i64>,
     kind: Option<String>,
     tender: Option<i64>,
+    /// Official notice number (`publication_id`); exact-match on `/v1/notices` (issue 217).
+    publication_id: Option<String>,
     /// Pagination position: the last id of the previous page.
     cursor: Option<String>,
     limit: Option<i64>,
@@ -494,6 +496,7 @@ impl Params {
             max_value: self.max_value,
             kind: self.kind.clone(),
             tender: self.tender,
+            publication_id: self.publication_id.clone(),
             now,
         })
     }
@@ -554,6 +557,9 @@ impl Params {
         }
         if self.tender.is_some() {
             out.push("tender");
+        }
+        if self.publication_id.is_some() {
+            out.push("publication_id");
         }
         out
     }
