@@ -1,6 +1,27 @@
 # 211 — /v1/changes emits three undocumented entity kinds (lot_result, bid, contract), contradicting the schema and the "same events as SSE" promise
 
-Status: needs-triage — CONFIRMED (code + live) 2026-08-15. Filed from the API review (subagent).
+Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `5023ceb` ("changes: filter the poll feed and
+webhook delivery to the public entity kinds"), pushed to `origin/main` + the handover branch. Took
+**Option 1** (filter the feed) as recommended: the poll feed AND webhook delivery — the reviewer's issue
+was `/v1/changes`, but the webhook sweeper had the identical leak (both call `changes_since(None)` and
+serialize via `change_event`) — now serialize only `tender`/`lot`/`organization` (the kinds SSE emits via
+`Collection::entity_kind`), and `/v1/changes?entity=<non-public>` returns 400 instead of undocumented 200s.
+The cursor still advances over the full fetch (poll `last`/`more`; webhook `to`/`changes.len()`), so a
+window of only result-graph rows carries the client past them without redelivery — poll ≡ webhook ≡ SSE.
+Result-graph data stays reachable via the parent tender's detail (no data lost). No schema change: the
+published `ChangeEvent.entity` enum already listed only the three kinds, so the code now matches the docs
+and the "same events as SSE" parity claim is true.
+
+Shared predicate `sse::is_public_change_kind` / `PUBLIC_CHANGE_KINDS`. Tests: new
+`the_change_feed_carries_only_the_public_entity_kinds` (asserts the raw log DOES contain result-graph kinds
+via a store reader, then that the feed excludes them and `entity=lot_result`/`bid` → 400); existing
+changes/collections/filters + all five webhook-delivery tests stay green (api 6/6, webhooks 5/5).
+
+**NOT yet deployed** — same harness deploy gate (all ssh + `./deploy.sh` refused this session). Prod still
+serves `8938e02`. The dead-reference-id note in this issue is fully resolved by Option 1 (no unresolvable
+id is ever emitted now).
+
+Was: needs-triage — CONFIRMED (code + live) 2026-08-15. Filed from the API review (subagent).
 Kind: correctness / API contract (the poll feed vs its published schema)
 Blocked by: —
 Relates to: 51 (error-envelope), 164/163 (the SSE side of the change feed), 46 (feed_generation)
