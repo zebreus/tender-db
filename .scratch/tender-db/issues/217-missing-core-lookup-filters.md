@@ -21,6 +21,13 @@ Relates to: 118 (accepted-but-ignored filters), 50 (sql-analyst-surface — toda
   external key printed on every notice; not accepting it is a glaring hole.
 - Fix: add an exact-match `publication_id=` filter to `/v1/tenders` and `/v1/notices` (the column is already
   indexed for ingestion dedup), or a `/v1/notices?publication_id=` lookup.
+- **Index correction (2026-08-16, owner):** the dedup index is `UNIQUE(source, publication_id, content_hash)`
+  (`lib.rs:138`) — a **source-leading composite**, so `publication_id=` ALONE is NOT a clean seek (the
+  leading `source` column is unconstrained). `source=? AND publication_id=?` seeks it cleanly (and a TED
+  number implies its source), so the cheap path is to pair them; `publication_id=` alone should either route
+  to isolation (issue 120) or get a dedicated `notices(publication_id)` index via the deferred-index builder
+  (issue 111). Same question on the tenders side — `tender_versions.publication_id` has no standalone index —
+  so this section is a real index-infrastructure task, not a one-line filter add. Split it out when built.
 
 ## B. Organizations only fetchable by internal id — no lookup by official identifier value or name (HIGH/MED)
 
