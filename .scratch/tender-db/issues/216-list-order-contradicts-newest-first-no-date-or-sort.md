@@ -1,7 +1,16 @@
 # 216 — /v1/tenders documents "newest matching first" but sorts ascending id, and offers no date-range or sort controls
 
-Status: PART A DEPLOYED & VERIFIED 2026-08-16 (serving rev `647b026`) — PART B (date-range + sort capability)
-OPEN. Prod re-probe: served `/v1/openapi.json` now describes `/v1/tenders` as "in ascending id order …", and
+Status: PART A + PART B (published half) DEPLOYED & VERIFIED 2026-08-16 (serving rev `dfe8b62`) —
+PART B (deadline half) OPEN. `/v1/tenders` now takes `sort=published_at` (+`order`) and
+`published_after`/`published_before` (unix or RFC 3339), riding `tenders_current_published
+(current_published_at, id)` end to end with a composite `<published>.<id>` keyset cursor in the
+BOUNDED-OR form (chosen by prod measurement: 1-2 ms at any depth vs naive-OR 527 ms / row-value 94 ms).
+Prod-verified: newest-first page 2.4 ms with the cursor correctly crossing a same-instant tie; window
+query 0.8 ms; a walk-shaped companion (`country`) routes isolated and answers; default id order
+unchanged; sort/order elsewhere and bad vocabulary are hard 400s. The DEADLINE half
+(`deadline_before`/`deadline_after`, `sort=deadline`) remains open — the current deadline is a MAX over
+`tender_version_dates` rows, not a column, so it needs a materialised head column or dedicated index
+design, a genuinely separate project. Prod re-probe: served `/v1/openapi.json` now describes `/v1/tenders` as "in ascending id order …", and
 `/docs` has zero occurrences of "newest matching first". Part A, the doc-vs-behavior lie, is fixed: the
 three surfaces (`docs.rs:122`, `docs.rs:407`, `openapi.json:65`) now state the real order — **ascending id on every collection** (a stable keyset order for
 pagination, not by date). The query is unchanged (`ORDER BY t.id`, read.rs:956); shipping the honest doc now
