@@ -458,6 +458,20 @@ fn entity_event(
         .expect("a literal object always serialises")
 }
 
+/// The entity kinds the public change feed carries (issue 211). The projection
+/// also writes `lot_result`, `bid` and `contract` change rows for the canonical
+/// layer, but those are not a public-feed concern: the SSE diff loop never emits
+/// them (it drives off `Collection::entity_kind`, which covers only these three),
+/// they are absent from the published `ChangeEvent.entity` enum, and their ids
+/// resolve to no REST endpoint. The poll feed and webhook delivery filter to these
+/// so all three transports carry the same documented, resolvable events.
+pub(crate) const PUBLIC_CHANGE_KINDS: [&str; 3] = ["tender", "lot", "organization"];
+
+/// Whether a raw `changes.entity_kind` belongs on the public change feed.
+pub(crate) fn is_public_change_kind(kind: &str) -> bool {
+    PUBLIC_CHANGE_KINDS.contains(&kind)
+}
+
 /// A change-log row as the poll endpoint returns it.
 pub fn change_event(change: &Change) -> serde_json::Value {
     serde_json::json!({

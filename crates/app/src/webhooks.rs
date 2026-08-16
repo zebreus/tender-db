@@ -432,7 +432,16 @@ impl Sweeper {
         generation: i64,
         changes: &[store::Change],
     ) -> Outcome {
-        let events: Vec<serde_json::Value> = changes.iter().map(crate::v1::sse::change_event).collect();
+        // Deliver only the public-feed kinds (issue 211): the webhook transport is
+        // one of the three feeds that must carry the same documented, resolvable
+        // events SSE does — lot_result/bid/contract change rows are filtered out.
+        // The cursor still advances over the full window (`to`/`changes.len()` in
+        // `deliver`), so a batch of only result-graph rows acks and moves on.
+        let events: Vec<serde_json::Value> = changes
+            .iter()
+            .filter(|c| crate::v1::sse::is_public_change_kind(&c.entity_kind))
+            .map(crate::v1::sse::change_event)
+            .collect();
         let body = serde_json::json!({
             "cursor_from": from.to_string(),
             "cursor": to.to_string(),

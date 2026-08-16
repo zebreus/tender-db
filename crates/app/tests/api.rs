@@ -433,6 +433,52 @@ async fn the_collections_serve_the_canonical_layer() {
     assert!(valued["value"]["currency"].is_string());
 }
 
+/// Issue 211: the poll feed must carry only the public entity kinds SSE emits —
+/// tender/lot/organization. The projection also writes lot_result/bid/contract
+/// change rows for the canonical layer, but those are undocumented, never emitted
+/// by SSE, and carry ids that resolve to no REST endpoint; a strict generated
+/// client crashes on them. They must not appear on `/v1/changes`, and the filter
+/// param must reject them with a 400.
+#[tokio::test]
+async fn the_change_feed_carries_only_the_public_entity_kinds() {
+    let server = Server::start("changes-kinds").await;
+    server.ingest_chain().await;
+
+    // Precondition, so the assertions are not vacuous: the award chain really does
+    // write result-graph change rows. Read the raw log through the store.
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let raw = store::read::changes_since(&reader, 0, 10_000, None).await.expect("raw changes");
+    drop(reader);
+    let raw_kinds: std::collections::BTreeSet<&str> =
+        raw.iter().map(|c| c.entity_kind.as_str()).collect();
+    assert!(
+        raw_kinds.iter().any(|k| matches!(*k, "lot_result" | "bid" | "contract")),
+        "fixture precondition: the award chain must write result-graph change rows, got {raw_kinds:?}"
+    );
+
+    // The public feed excludes them.
+    let feed = server.get("/v1/changes?since=0").await;
+    let events = feed["events"].as_array().expect("events");
+    assert!(!events.is_empty(), "the chain produced public changes to deliver");
+    for e in events {
+        let kind = e["entity"].as_str().expect("each event names its entity kind");
+        assert!(
+            matches!(kind, "tender" | "lot" | "organization"),
+            "the poll feed leaked the undocumented entity kind {kind:?} (issue 211)"
+        );
+    }
+
+    // The filter param rejects a non-public value with a 400, never undocumented rows.
+    assert_eq!(server.status("/v1/changes?since=0&entity=lot_result").await, 400);
+    assert_eq!(server.status("/v1/changes?since=0&entity=bid").await, 400);
+    // A documented value still narrows to that kind.
+    assert_eq!(server.status("/v1/changes?since=0&entity=tender").await, 200);
+    let tenders_only = server.get("/v1/changes?since=0&entity=tender").await;
+    for e in tenders_only["events"].as_array().expect("events") {
+        assert_eq!(e["entity"], "tender", "the tender filter must return only tender events");
+    }
+}
+
 #[tokio::test]
 async fn the_filters_narrow_the_same_way_on_every_collection() {
     let server = Server::start("filters").await;

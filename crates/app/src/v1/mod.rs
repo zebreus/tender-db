@@ -785,13 +785,33 @@ async fn tender_notices(state: &AppState, tender_id: i64, ignored: &[&str]) -> A
 /// filtering as SSE — a client that cannot hold a connection open loses
 /// nothing but latency.
 async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Params>) -> ApiResult {
+    // The `entity` filter is the public-feed enum only (issue 211): the projection
+    // also writes lot_result/bid/contract change rows, but those are not on the
+    // public feed (SSE never emits them, they are absent from the schema, and their
+    // ids resolve to no endpoint). Reject an out-of-enum value with a 400 rather
+    // than returning undocumented rows.
+    if let Some(entity) = params.entity.as_deref()
+        && !sse::is_public_change_kind(entity)
+    {
+        return Err(ApiError::bad_request(format!(
+            "unknown entity {entity:?}; expected one of tender, lot, organization"
+        )));
+    }
     let limit = params.limit();
     let reader = state.readers.get().await?;
     let rows =
         read::changes_since(&reader, params.since(), limit, params.entity.as_deref()).await?;
     let last = rows.last().map(|c| c.cursor).unwrap_or_else(|| params.since());
     let more = rows.len() as i64 == limit;
-    let events: Vec<Value> = rows.iter().map(sse::change_event).collect();
+    // Serialize only the public-feed kinds (issue 211). The cursor still advances
+    // over the FULL fetch (`last`/`more` above), so a window dominated by result-
+    // graph rows carries the client past them without redelivering — keeping the
+    // poll feed identical to what SSE emits.
+    let events: Vec<Value> = rows
+        .iter()
+        .filter(|c| sse::is_public_change_kind(&c.entity_kind))
+        .map(sse::change_event)
+        .collect();
     Ok(axum::Json(json!({
         "events": events,
         "last_cursor": json::cursor(last),
