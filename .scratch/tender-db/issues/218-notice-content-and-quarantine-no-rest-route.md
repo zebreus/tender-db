@@ -1,11 +1,13 @@
 # 218 — a notice's own parsed content (and any quarantined notice's payload) is reachable only via /v1/sql, not REST
 
-Status: PART A (quarantine) DONE — committed `ec456a3`, awaiting deploy. `/v1/notices/{id}` now carries a
-`quarantine` object (current + original cause, attempts, and the reclaimed/skipped terminal stamps) or
-`null` when the notice parsed, via `read::notice_quarantine` (a bounded `(notice_id)` seek). This closes
-the SHARP half — a quarantined notice has no parsed satellites and no tender, so this was its only
-unreachable-via-REST content. PART B (the parsed satellites of a cleanly-parsed notice, the MILD half) is
-still open — see below.
+Status: RESOLVED — BOTH PARTS DEPLOYED & VERIFIED. Part A (quarantine surfacing on `/v1/notices/{id}`,
+rev `d127ccb`); Part B (`/v1/notices/{id}/content`, rev `4c3c367`, 2026-08-16): the whole parsed payload —
+section tree + every typed value in the source's field vocabulary — via the same `parsed_by_ids` seek set
+the projection folds from, so the endpoint can never disagree with the fold. Prod-verified: notice 1
+serves 119 sections / 454 values in 9.6 ms (root `PROCEDURE`, real BT ids, language-tagged texts); held
+notice 20 → zero sections (its `quarantine` field on the detail says why); unknown id → 404. Raw
+quarantine PAYLOAD bytes remain deliberately SQL-only (the policy call the issue flagged): the source
+notice is already public at TED/DÖE, and unvalidated bytes don't belong on the anonymous surface.
 Kind: completeness (a whole content class has SQL access but no REST surface)
 Blocked by: —
 Relates to: 50 (sql-analyst-surface), 87 (quarantine reasons), the ledger/quarantine dashboard work
