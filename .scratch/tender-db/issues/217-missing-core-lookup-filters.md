@@ -13,6 +13,14 @@ class). First deploy (`88d876a`) wrongly kept `source+publication_id` on the mai
 shared REST readers; `5ca7971` isolates every `publication_id` lookup (issue 120), verified: during an 8.5 s
 lookup, concurrent `/v1/tenders` stayed at 0.48 s. So the capability exists and is shed-safe, but slow.
 
+**C (bidder) DEPLOYED & VERIFIED 2026-08-16 (serving rev `00f2f48`).** `/v1/tenders?bidder=<org>` /
+`/v1/lots?bidder=<org>` — an EXISTS over `tender_version_bid_parties` (role `tenderer`, verified against
+prod), mirroring `winner`; isolated with an index-served `reachable()` probe, honoured on tenders/lots,
+named ignored elsewhere. Prod: an unknown bidder short-circuits to an empty page; a PRESENT org walks the
+isolated pool and **times out a 35 s client — but so does `winner` on the same org** (measured), so bidder
+is exactly consistent, not a regression. That shared present-value walk (issue-117 Class B, all of
+buyer/winner/bidder) is now its own issue **223**.
+
 **Open follow-ups (split out):**
 - **A fast path for `publication_id`** — a query shape that seeks the composite index for the exact-match /
   ≤1-result case (drop the id-cursor pagination when `publication_id` is present), or a dedicated
