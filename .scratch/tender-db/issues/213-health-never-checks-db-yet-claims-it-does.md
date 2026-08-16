@@ -1,6 +1,26 @@
 # 213 — /health can never report unhealthy but claims "the database answers"; the 503 branch is dead code
 
-Status: needs-triage — CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
+Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `67c947d` ("health: make /health honest liveness
++ give /health/deep a real DB-answer check"), pushed to `origin/main` + the handover branch. Owner chose a
+blend of both options: **shallow `/health` → Option 2** (honest liveness — keeps issue-61's instant,
+DB-free design so a saturated reader pool during a projection never fails the deploy gate; dropped the dead
+`is_some()`/`unavailable`/`503` scaffolding and the false `database` field; reworded handler doc, OpenAPI,
+`/docs`, operations.md); **deep `/health/deep` → Option 1 where it belongs** (its `database` verdict now
+comes from the real reader-pool `recent_job_runs` read it already makes — WAL-served, never blocks the
+writer, so issue-61-safe — instead of the infallible in-memory cursor; `assess()`'s previously-unreachable
+unhealthy branch is now live). Rejected a `SELECT 1` on shallow `/health`: it would flap to 503 during
+heavy folds when the reader pool is busy, defeating the reason `/health` is DB-free.
+
+Tests green: `assess()` unit suite (10) incl. `cursor:None → unhealthy`; api integration
+`the_service_root_and_health_answer` (now asserts `/health` carries no `database` field),
+`the_deep_health_probe_reports_operational_health`, `the_openapi_spec_matches_the_served_surface`.
+
+**NOT yet deployed** — same harness deploy gate blocking issue 219 (`./deploy.sh`/`git push vps` refused
+this session; flagged to Lennart). Prod still serves `8938e02`. Response-shape note: `/health` no longer
+returns the always-`"ok"` `database` field — monitors keying on HTTP status are unaffected; any keying on
+that field should move to `/health/deep`.
+
+Was: needs-triage — CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
 Kind: correctness / honesty (the deploy readiness probe)
 Blocked by: —
 Relates to: 61 (the deliberate no-DB, instant-`/health` design this half-implements), 161 (health-signal
