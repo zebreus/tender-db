@@ -969,6 +969,29 @@ fn split_codes(concat: Option<String>) -> Vec<String> {
         .unwrap_or_default()
 }
 
+/// The `caused_by_notice_id` of each of a Tender's versions, in `seq` order — the
+/// version→notice mapping behind `/v1/notices?tender=X`, and nothing else.
+///
+/// This is the slice [`tender_detail`] builds from the same `tender_versions` read
+/// (see its version block), separated so the notice-list handler stops paying for
+/// the ~17 satellite queries — lots, `summarise`, results, parties, amounts — that
+/// `tender_detail` also runs and the handler then discards (issue 220). The result
+/// is empty exactly when the Tender has no versions; for a projected corpus every
+/// real Tender has ≥1, so the caller reads emptiness as its `404`.
+pub async fn tender_version_notice_ids(conn: &Connection, tender_id: i64) -> turso::Result<Vec<i64>> {
+    let mut rows = conn
+        .query(
+            "SELECT caused_by_notice_id FROM tender_versions WHERE tender_id = ? ORDER BY seq",
+            (Value::Integer(tender_id),),
+        )
+        .await?;
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await? {
+        out.push(int(&row, 0));
+    }
+    Ok(out)
+}
+
 /// One Tender's full current state: the version chain, the satellites, the
 /// parties — everything `/v1/tenders/{id}` answers.
 pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<TenderDetail>> {

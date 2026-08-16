@@ -762,10 +762,16 @@ async fn organization(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) 
 /// Tender itself is unknown, so `?tender=` never masks a bad id as "no notices".
 async fn tender_notices(state: &AppState, tender_id: i64, ignored: &[&str]) -> ApiResult {
     let reader = state.readers.get().await?;
-    let Some(detail) = read::tender_detail(&reader, tender_id).await? else {
+    // Only the version→notice mapping is needed. A full `tender_detail` (issue 220)
+    // ran ~17 satellite queries — lots + `summarise`, lot_results/bids/contracts with
+    // their org joins, parties, amounts, dates — on the main reader pool and then
+    // discarded all but this, thousands of rows fetched for a handful of notice ids on
+    // a high-lot tender. A tender with no versions is an unknown id (every real Tender
+    // has ≥1), so emptiness is the 404 — the same 404 `tender_detail` gave.
+    let mut ids = read::tender_version_notice_ids(&reader, tender_id).await?;
+    if ids.is_empty() {
         return Err(ApiError::not_found("tender"));
-    };
-    let mut ids: Vec<i64> = detail.versions.iter().map(|v| v.caused_by_notice_id).collect();
+    }
     ids.sort_unstable();
     ids.dedup();
     let mut items = Vec::new();
