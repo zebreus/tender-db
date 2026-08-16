@@ -687,6 +687,62 @@ async fn notices_can_be_looked_up_by_publication_id() {
     );
 }
 
+/// Issue 217-C: a Tender is reachable by an org that SUBMITTED a bid on it (a
+/// tenderer), won or not — the competitor-history reverse-lookup, a superset of
+/// `winner`. Honoured on tenders/lots, named ignored elsewhere (issue 118), and an
+/// org that bid on nothing short-circuits to an empty page (issue 219 / reachable()).
+#[tokio::test]
+async fn tenders_can_be_filtered_by_bidder() {
+    let server = Server::start("bidder").await;
+    server.ingest_chain().await;
+
+    // A real tenderer + its tender from the fixture, so the positive case is not vacuous.
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query(
+            "SELECT organization_id, tender_id FROM tender_version_bid_parties WHERE role = 'tenderer' LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query bid parties");
+    let bidder = rows.next().await.expect("row").map(|r| {
+        (
+            r.get_value(0).unwrap().as_integer().copied().unwrap(),
+            r.get_value(1).unwrap().as_integer().copied().unwrap(),
+        )
+    });
+    drop(rows);
+    drop(reader);
+
+    if let Some((org, tender_id)) = bidder {
+        let page = server.get(&format!("/v1/tenders?bidder={org}")).await;
+        assert!(
+            items(&page).iter().any(|t| t["id"].as_i64() == Some(tender_id)),
+            "the bidder filter returns a tender the org submitted a bid on"
+        );
+    }
+
+    // An org that bid on nothing → empty page (reachable() short-circuit, not a walk).
+    assert!(
+        items(&server.get("/v1/tenders?bidder=999999999").await).is_empty(),
+        "an unknown bidder returns an empty page"
+    );
+
+    // Honoured on tenders; named ignored on notices (which has no bid predicate).
+    let ig = |page: &Value| -> Vec<String> {
+        page["ignored_filters"]
+            .as_array()
+            .expect("ignored_filters present")
+            .iter()
+            .map(|v| v.as_str().unwrap().to_owned())
+            .collect()
+    };
+    assert!(!ig(&server.get("/v1/tenders?bidder=7").await).iter().any(|f| f == "bidder"),
+        "bidder is honoured on /v1/tenders");
+    assert!(ig(&server.get("/v1/notices?bidder=7").await).iter().any(|f| f == "bidder"),
+        "bidder is named ignored on /v1/notices");
+}
+
 /// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
 /// mistakes "everything matched" for "my typo'd filter matched".
 #[tokio::test]

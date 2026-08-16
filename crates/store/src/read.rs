@@ -150,6 +150,9 @@ pub struct Filter {
     pub buyer: Option<i64>,
     /// Canonical Organization id that won at least one Lot of the Tender.
     pub winner: Option<i64>,
+    /// Canonical Organization id that submitted a bid (role `tenderer`) on the
+    /// Tender — a superset of `winner` (issue 217).
+    pub bidder: Option<i64>,
     pub status: Option<Status>,
     pub min_value: Option<i64>,
     pub max_value: Option<i64>,
@@ -437,14 +440,14 @@ impl Collection {
             // `tenders_query` reads `source` and `kind` directly and the rest through
             // `version_predicates`; only the Lot-containment `tender` has no meaning.
             Collection::Tenders => &[
-                "source", "country", "cpv", "buyer", "winner", "status", "min_value",
-                "max_value", "kind",
+                "source", "country", "cpv", "buyer", "winner", "bidder", "status",
+                "min_value", "max_value", "kind",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
             Collection::Lots => &[
-                "source", "country", "cpv", "buyer", "winner", "status", "min_value",
-                "max_value", "kind", "tender",
+                "source", "country", "cpv", "buyer", "winner", "bidder", "status",
+                "min_value", "max_value", "kind", "tender",
             ],
             // `organizations_query`: only the three identity-shaped predicates. The
             // value/CPV/status filters are Tender-shaped and have no meaning here.
@@ -509,6 +512,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         cpv,
         buyer,
         winner,
+        bidder,
         status,
         min_value,
         max_value,
@@ -527,6 +531,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         || cpv.is_some()
         || buyer.is_some()
         || winner.is_some()
+        || bidder.is_some()
         || status.is_some()
         || min_value.is_some()
         || max_value.is_some();
@@ -623,6 +628,17 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
                            WHERE w.tender_id = {tid} AND w.seq = {seq}
                              AND w.organization_id = ?)"),
             [Value::Integer(winner)],
+        );
+    }
+    if let Some(bidder) = f.bidder {
+        // Any org that SUBMITTED a bid (role `tenderer`, verified against prod), won
+        // or not — the competitor-history reverse-lookup (issue 217). Subcontractors
+        // are named in a bid but did not submit it, so they are excluded.
+        q.push(
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_bid_parties bp
+                           WHERE bp.tender_id = {tid} AND bp.seq = {seq}
+                             AND bp.organization_id = ? AND bp.role = 'tenderer')"),
+            [Value::Integer(bidder)],
         );
     }
     if let Some(status) = f.status {
@@ -736,9 +752,11 @@ async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -
             return Ok(false);
         }
     }
-    for (org, table) in
-        [(filter.buyer, "tender_version_parties"), (filter.winner, "tender_version_result_winners")]
-    {
+    for (org, table) in [
+        (filter.buyer, "tender_version_parties"),
+        (filter.winner, "tender_version_result_winners"),
+        (filter.bidder, "tender_version_bid_parties"),
+    ] {
         let Some(org) = org else { continue };
         // Both seek `..._org(organization_id)`, the indexes issue 62 deferred.
         let sql = format!("SELECT 1 FROM {table} WHERE organization_id = ? LIMIT 1");

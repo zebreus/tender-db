@@ -456,6 +456,8 @@ pub struct Params {
     buyer: Option<i64>,
     /// Tenders where this Organization won at least one Lot.
     winner: Option<i64>,
+    /// Tenders this Organization submitted a bid on (a `tenderer`), won or not.
+    bidder: Option<i64>,
     status: Option<String>,
     min_value: Option<i64>,
     max_value: Option<i64>,
@@ -491,6 +493,7 @@ impl Params {
             cpv: self.cpv.clone(),
             buyer: self.buyer,
             winner: self.winner,
+            bidder: self.bidder,
             status,
             min_value: self.min_value,
             max_value: self.max_value,
@@ -542,6 +545,9 @@ impl Params {
         }
         if self.winner.is_some() {
             out.push("winner");
+        }
+        if self.bidder.is_some() {
+            out.push("bidder");
         }
         if self.status.is_some() {
             out.push("status");

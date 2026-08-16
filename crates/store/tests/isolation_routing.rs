@@ -34,6 +34,7 @@ fn every_version_predicate_isolates_on_the_collections_that_apply_them() {
         ("cpv", Filter { cpv: Some("45".into()), ..f() }),
         ("buyer", Filter { buyer: Some(7), ..f() }),
         ("winner", Filter { winner: Some(7), ..f() }),
+        ("bidder", Filter { bidder: Some(7), ..f() }),
         ("status", Filter { status: Some(store::read::Status::Open), ..f() }),
         ("min_value", Filter { min_value: Some(1), ..f() }),
         ("max_value", Filter { max_value: Some(1), ..f() }),

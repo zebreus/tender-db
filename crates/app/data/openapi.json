@@ -70,6 +70,7 @@
           { "$ref": "#/components/parameters/cpv" },
           { "$ref": "#/components/parameters/buyer" },
           { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/bidder" },
           { "$ref": "#/components/parameters/status" },
           { "$ref": "#/components/parameters/min_value" },
           { "$ref": "#/components/parameters/max_value" },
@@ -130,6 +131,7 @@
           { "$ref": "#/components/parameters/cpv" },
           { "$ref": "#/components/parameters/buyer" },
           { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/bidder" },
           { "$ref": "#/components/parameters/status" },
           { "$ref": "#/components/parameters/min_value" },
           { "$ref": "#/components/parameters/max_value" },
@@ -662,6 +664,12 @@
         "name": "winner",
         "in": "query",
         "description": "Organization id that won at least one Lot.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "bidder": {
+        "name": "bidder",
+        "in": "query",
+        "description": "Organization id that submitted a bid (a tenderer) on the Tender, won or not — a superset of winner.",
         "schema": { "type": "integer", "format": "int64" }
       },
       "status": {
