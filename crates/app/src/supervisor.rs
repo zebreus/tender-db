@@ -186,6 +186,10 @@ enum Spec {
     /// lets `process` run with zero re-downloads. Idempotent — known periods are
     /// skipped without hashing.
     RegisterArchive,
+    /// Unicode-lowercase every org name into `name_norm` (issue 217-B) — the
+    /// batched backfill behind the name-prefix search. Idempotent (stamped rows
+    /// are skipped), durable like its siblings.
+    BackfillOrgNames,
     /// Stamp `tenders.current_deadline` from each head version's dates (issue 216,
     /// deadline half). Batched + checkpointed like the mark job (issue 42);
     /// idempotent, so a restart redoes the walk from zero at worst. A unit
@@ -389,6 +393,10 @@ impl Supervisor {
             // idempotent, hash-only-what's-missing, so safe to fire any time.
             "register-archive" => Ok(vec![
                 self.push("register-archive", "register-archive".into(), Spec::RegisterArchive)
+                    .await,
+            ]),
+            "backfill-org-names" => Ok(vec![
+                self.push("backfill-org-names", "backfill-org-names".into(), Spec::BackfillOrgNames)
                     .await,
             ]),
             // Stamp every tender's current_deadline from its head version's dates
@@ -978,6 +986,29 @@ impl Supervisor {
                      known (skipped unhashed), {} unrecognised entr(ies)",
                     done.registered, done.existing, done.unrecognised
                 ))
+            }
+            Spec::BackfillOrgNames => {
+                // The deadline backfill's shape (issue 42: bounded batches,
+                // TRUNCATE checkpoints), over organizations.
+                let mut stamped = 0i64;
+                let mut watermark = 0i64;
+                loop {
+                    let (rows, next) = self
+                        .db
+                        .backfill_org_name_norm(BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows == 0 {
+                        break;
+                    }
+                    stamped += rows;
+                    watermark = next;
+                    self.update(|p| p.members_done = stamped as u64);
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after org-name batch: {e}");
+                    }
+                }
+                Ok(format!("name_norm stamped over {stamped} organizations"))
             }
             Spec::BackfillDeadlines => {
                 // Walk the whole tenders table in id order, one bounded batch per

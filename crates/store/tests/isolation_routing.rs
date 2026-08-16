@@ -104,6 +104,16 @@ fn a_published_range_isolates_the_id_ordered_tenders_shape() {
 }
 
 #[test]
+fn a_name_prefix_isolates_the_id_ordered_organizations_shape() {
+    // Issue 217-B: the id-ordered application (SSE snapshots) filters the PK walk,
+    // so it isolates; the REST search seeks organizations_name_norm_id in name
+    // order and never consults this arm with the prefix still set.
+    assert!(walks(Collection::Organizations, &Filter { name_prefix: Some("siemens".into()), ..f() }));
+    assert!(!walks(Collection::Tenders, &Filter { name_prefix: Some("siemens".into()), ..f() }));
+    assert!(!walks(Collection::Notices, &Filter { name_prefix: Some("siemens".into()), ..f() }));
+}
+
+#[test]
 fn tenders_kind_isolates_because_no_index_covers_it() {
     // `t.kind` is covered by none of tenders_procedure_key / tenders_island /
     // tenders_current_published / tenders_source_id, so a value matching nothing walks

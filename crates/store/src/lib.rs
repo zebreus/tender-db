@@ -470,6 +470,10 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // 7.9M rows would be a multi-minute blocking boot (the 82/83 regression) in
     // one giant WAL transaction (the issue-42 lesson). Metadata-only, O(1).
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_deadline INTEGER").await?;
+    // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
+    // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
+    // open; the 82/83 + issue-42 lessons, same as current_deadline above).
+    add_column(conn, "ALTER TABLE organizations ADD COLUMN name_norm TEXT").await?;
     if added {
         conn.execute(
             "UPDATE tenders SET
@@ -1941,6 +1945,45 @@ impl Db {
         )
         .await?;
         Ok((count, watermark))
+    }
+
+    /// One batch of the org `name_norm` backfill (issue 217-B): Unicode-lowercase
+    /// the next `batch` names past the watermark, in Rust — SQL `lower()` is
+    /// ASCII-only and would leave every umlauted name unfindable by the
+    /// case-insensitive search the column exists for. Returns `(rows, watermark)`;
+    /// `rows == 0` ends the walk. Rows already stamped are skipped, so re-runs and
+    /// crash-restarts do only the remainder. The caller checkpoints between
+    /// batches (issue 42), exactly like [`Self::backfill_current_deadline`].
+    pub async fn backfill_org_name_norm(
+        &self,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT id, name FROM organizations
+                  WHERE id > ? AND name_norm IS NULL ORDER BY id LIMIT ?",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let mut pending: Vec<(i64, String)> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            pending.push((int(&row, 0), text(&row, 1)));
+        }
+        drop(rows);
+        let Some(&(last, _)) = pending.last() else { return Ok((0, after)) };
+        let count = pending.len() as i64;
+        conn.execute("BEGIN", ()).await?;
+        for (id, name) in pending {
+            conn.execute(
+                "UPDATE organizations SET name_norm = ? WHERE id = ?",
+                (Value::Text(name.to_lowercase()), Value::Integer(id)),
+            )
+            .await?;
+        }
+        conn.execute("COMMIT", ()).await?;
+        Ok((count, last))
     }
 
     /// The sibling-scope predicate with its skipped-state condition FLIPPED: rows
@@ -3603,6 +3646,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 "published_before" => Filter { published_before: Some(1_786_000_000), ..base },
                 "deadline_after" => Filter { deadline_after: Some(1_754_000_000), ..base },
                 "deadline_before" => Filter { deadline_before: Some(1_786_000_000), ..base },
+                "name_prefix" => Filter { name_prefix: Some("siemens".into()), ..base },
                 other => panic!("unknown parameter {other}"),
             }
         };
@@ -3617,10 +3661,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .0
         };
 
-        const ALL: [&str; 17] = [
+        const ALL: [&str; 18] = [
             "source", "country", "cpv", "buyer", "winner", "bidder", "status", "min_value",
             "max_value", "kind", "tender", "publication_id", "identifier", "published_after",
-            "published_before", "deadline_after", "deadline_before",
+            "published_before", "deadline_after", "deadline_before", "name_prefix",
         ];
         for c in
             [Collection::Tenders, Collection::Lots, Collection::Organizations, Collection::Notices]

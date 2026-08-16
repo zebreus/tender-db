@@ -477,6 +477,9 @@ pub struct Params {
     /// half): same format and contract as the published pair. Tenders-only.
     deadline_after: Option<String>,
     deadline_before: Option<String>,
+    /// Case-insensitive organization name prefix (issue 217-B);
+    /// `/v1/organizations` only.
+    name_prefix: Option<String>,
     /// `/v1/tenders` REST only (issue 216): `id` (default), `published_at` or
     /// `deadline`. A bound on one date column implies sorting by it unless an
     /// explicit `sort` says otherwise.
@@ -524,6 +527,18 @@ impl Params {
             published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
             deadline_after: parse_instant(self.deadline_after.as_deref(), "deadline_after")?,
             deadline_before: parse_instant(self.deadline_before.as_deref(), "deadline_before")?,
+            // Unicode-lowercased HERE, once, so the store layer always sees the
+            // normalised form the name_norm column stores. An empty prefix would
+            // be an unbounded name-ordered dump of 24.6M orgs — refuse it.
+            name_prefix: match self.name_prefix.as_deref().map(str::trim) {
+                None => None,
+                Some("") => {
+                    return Err(ApiError::bad_request(
+                        "name_prefix must not be empty; pass at least one character",
+                    ));
+                }
+                Some(p) => Some(p.to_lowercase()),
+            },
             now,
         })
     }
@@ -605,6 +620,9 @@ impl Params {
         }
         if self.deadline_before.is_some() {
             out.push("deadline_before");
+        }
+        if self.name_prefix.is_some() {
+            out.push("name_prefix");
         }
         out
     }
@@ -943,7 +961,54 @@ async fn organizations(
     ApiQuery(p): ApiQuery<Params>,
 ) -> ApiResult {
     reject_sort(&p, "/v1/organizations")?;
+    let filter = p.filter(store::now_unix())?;
+    // issue 217-B: a REST name-prefix search rides organizations_name_norm_id in
+    // name order (the probe-settled fast path). SSE keeps the id-ordered
+    // collection path, where walks() isolates the prefix application.
+    if let (Some(prefix), false) = (filter.name_prefix.clone(), wants_events(&h)) {
+        return organizations_by_name(s, p, filter, prefix).await;
+    }
     collection(Collection::Organizations, s, h, p).await
+}
+
+/// The name-ordered organization search (issue 217-B). Cursor: `<id>~<name_norm>`
+/// of the last row — id first (digits, so the FIRST `~` always ends it; a name
+/// may contain anything, including `~`).
+async fn organizations_by_name(
+    state: AppState,
+    params: Params,
+    filter: Filter,
+    prefix: String,
+) -> ApiResult {
+    let cursor = match params.cursor.as_deref() {
+        None => None,
+        Some(raw) => match raw
+            .split_once('~')
+            .and_then(|(id, norm)| Some((norm.to_owned(), id.parse::<i64>().ok()?)))
+        {
+            Some(pair) => Some(pair),
+            None => {
+                return Err(ApiError::bad_request(
+                    "cursor does not match a name_prefix search; pass the previous page's \
+                     next_cursor verbatim, or drop it to restart",
+                ));
+            }
+        },
+    };
+    let limit = params.limit();
+    let reader = state.readers.get().await?;
+    let mut rows =
+        read::organizations_by_name(&reader, &filter, &prefix, cursor, limit + 1).await?;
+    let next = (rows.len() as i64 > limit).then(|| {
+        let last = &rows[limit as usize - 1];
+        format!("{}~{}", last.id, last.name.to_lowercase())
+    });
+    rows.truncate(limit as usize);
+    let honoured = store::read::Collection::Organizations.honoured_params();
+    let ignored: Vec<&str> =
+        params.provided_filters().into_iter().filter(|f| !honoured.contains(f)).collect();
+    let items: Vec<serde_json::Value> = rows.iter().map(json::organization).collect();
+    Ok(axum::Json(json::page(items, next, &ignored)).into_response())
 }
 
 /// `sort`/`order` are a /v1/tenders capability (issue 216). The other collections

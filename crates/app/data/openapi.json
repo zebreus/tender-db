@@ -177,6 +177,7 @@
           { "$ref": "#/components/parameters/country" },
           { "$ref": "#/components/parameters/kind" },
           { "$ref": "#/components/parameters/identifier" },
+          { "$ref": "#/components/parameters/name_prefix" },
           { "$ref": "#/components/parameters/buyer" },
           { "$ref": "#/components/parameters/limit" },
           { "$ref": "#/components/parameters/cursor" },
@@ -768,6 +769,12 @@
         "in": "query",
         "description": "Only tenders whose current version's submission deadline is before this instant (exclusive; unix seconds or RFC 3339). Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
         "schema": { "type": "string" }
+      },
+      "name_prefix": {
+        "name": "name_prefix",
+        "in": "query",
+        "description": "Case-insensitive organization name prefix (Unicode-aware, so umlauts match either case). Returns matches in name order with a keyset cursor; combine with country/kind to narrow. /v1/organizations only; must not be empty.",
+        "schema": { "type": "string", "minLength": 1 }
       },
       "identifier": {
         "name": "identifier",

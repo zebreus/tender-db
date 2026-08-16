@@ -183,6 +183,12 @@ pub struct Filter {
     /// isolates, [`tenders_ordered`] rides `tenders_current_deadline`.
     pub deadline_after: Option<i64>,
     pub deadline_before: Option<i64>,
+    /// Case-insensitive organization name prefix (issue 217-B), ALREADY
+    /// Unicode-lowercased by the caller — matched against `o.name_norm`.
+    /// Organizations-only; the other collections name it ignored. The id-ordered
+    /// application here isolates (a sparse prefix filters the PK walk);
+    /// [`organizations_by_name`] is the fast name-ordered path.
+    pub name_prefix: Option<String>,
     pub now: i64,
 }
 
@@ -495,7 +501,7 @@ impl Collection {
             // `organizations_query`: the identity-shaped predicates. `identifier` is
             // the official id value (issue 217), paired with `kind` for the scheme. The
             // value/CPV/status filters are Tender-shaped and have no meaning here.
-            Collection::Organizations => &["country", "kind", "buyer", "identifier"],
+            Collection::Organizations => &["country", "kind", "buyer", "identifier", "name_prefix"],
             // `notices_query` narrows by the notice layer's own vocabulary — `source`
             // and `kind` (the mapping profile) — and nothing else. `tender` is honoured
             // on `/v1/notices` too, but by an app-layer dispatch (the store has no
@@ -534,7 +540,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 18] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 19] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -560,6 +566,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 18] = [
     ("deadline_after", "Tenders: same contract as published_after, over current_deadline / \
                         tenders_current_deadline (issue 216 deadline half). Ignored elsewhere"),
     ("deadline_before", "same as deadline_after"),
+    ("name_prefix", "Organizations, id-ordered shape: a sparse prefix filters the PK walk -> \
+                     isolates. The REST name-ordered path seeks organizations_name_norm_id \
+                     (issue 217-B). Ignored by Tenders/Lots/Notices"),
     ("now", "not a predicate: the reference instant `status` compares against"),
 ];
 
@@ -582,6 +591,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         published_before,
         deadline_after,
         deadline_before,
+        name_prefix,
         now: _,
     } = f;
 
@@ -659,8 +669,12 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // cases above still isolate.
         Collection::Lots => tender.is_none() && (version_predicate || source.is_some() || kind.is_some()),
         // `country` and `identifier_kind` are served by the issue-117 indexes, and
-        // `buyer` is `o.id`, the primary key. Nothing here can walk.
-        Collection::Organizations => false,
+        // `buyer` is `o.id`, the primary key. `name_prefix` (issue 217-B) isolates
+        // in THIS id-ordered shape — a sparse prefix filters the PK walk (SSE
+        // snapshots take this path); the REST handler routes prefix searches
+        // through `organizations_by_name`, which seeks `(name_norm, id)` by
+        // construction and strips the prefix before consulting this arm.
+        Collection::Organizations => name_prefix.is_some(),
         // `source` is served by `notices_source_id` and `kind` (`profile`) by
         // `notices_profile`. `publication_id` (issue 217-A) is served by
         // `notices_publication_id_id (publication_id, id)`: `notices_query` emits it
@@ -2107,6 +2121,16 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     if let Some(identifier) = &filter.identifier {
         q.push(" AND o.identifier = ?", [t(identifier)]);
     }
+    // The id-ordered application of the name prefix (issue 217-B): correct but
+    // walk-shaped (walks() isolates it); the REST handler uses the name-ordered
+    // `organizations_by_name` instead. Range over the normalised column; the
+    // upper bound is the prefix's successor, or unbounded for a 0xFF-tail edge.
+    if let Some(prefix) = &filter.name_prefix {
+        q.push(" AND o.name_norm >= ?", [t(prefix)]);
+        if let Some(hi) = successor(prefix) {
+            q.push(" AND o.name_norm < ?", [t(&hi)]);
+        }
+    }
     if let Some(buyer) = filter.buyer {
         q.push(" AND o.id = ?", [Value::Integer(buyer)]);
     }
@@ -2117,6 +2141,55 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
         ),
         Scope::At { id, .. } => q.push(" AND o.id = ?", [Value::Integer(id)]),
     }    q
+}
+
+/// The name-ordered organization search (issue 217-B): every org whose
+/// Unicode-lowercased name starts with `prefix` (itself already lowercased), in
+/// `(name_norm, id)` order, riding `organizations_name_norm_id` end to end —
+/// prefix range, keyset cursor and ORDER BY on one index (the issue-216 shape;
+/// the probe measured the plain-index seek at 3.3 ms where every NOCASE shape
+/// scanned). `country`/`kind` filter per row within the prefix slice. The cursor
+/// is the last row's `(name_norm, id)`, applied bounded-OR.
+pub async fn organizations_by_name(
+    conn: &Connection,
+    filter: &Filter,
+    prefix: &str,
+    cursor: Option<(String, i64)>,
+    limit: i64,
+) -> turso::Result<Vec<OrganizationRow>> {
+    let mut q = Query::default();
+    q.push(
+        "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier, o.provisional,
+                (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id)
+           FROM organizations o WHERE o.name_norm >= ?",
+        [t(prefix)],
+    );
+    if let Some(hi) = successor(prefix) {
+        q.push(" AND o.name_norm < ?", [t(&hi)]);
+    }
+    if let Some(country) = &filter.country {
+        q.push(" AND o.country = ?", [t(country)]);
+    }
+    if let Some(kind) = &filter.kind {
+        q.push(" AND o.identifier_kind = ?", [t(kind)]);
+    }
+    if let Some((norm, id)) = cursor {
+        q.push(
+            " AND o.name_norm >= ? AND (o.name_norm > ? OR o.id > ?)",
+            [t(&norm), t(&norm), Value::Integer(id)],
+        );
+    }
+    q.push(" ORDER BY o.name_norm, o.id LIMIT ?", [Value::Integer(limit)]);
+    q.rows(conn, |row| OrganizationRow {
+        id: int(row, 0),
+        name: text(row, 1),
+        country: opt_text_of(row, 2),
+        identifier_kind: opt_text_of(row, 3),
+        identifier: opt_text_of(row, 4),
+        provisional: int(row, 5) != 0,
+        mentions: int(row, 6),
+    })
+    .await
 }
 
 // ------------------------------------------------------------------- notices

@@ -305,6 +305,13 @@ pub(crate) const SCHEMA: &str = "
         identifier_kind TEXT, -- vat | national
         identifier      TEXT,
         name            TEXT NOT NULL,
+        -- Unicode-lowercased `name` (issue 217-B): the case-insensitive
+        -- name-prefix search seeks `(name_norm, id)`, because turso 0.7 accepts
+        -- COLLATE NOCASE index DDL but only ever SCANS such an index (measured,
+        -- name_prefix_probe.rs). Written by the resolver in Rust (`to_lowercase`
+        -- — SQL lower() is ASCII-only and would break umlauts); backfilled by the
+        -- batched `backfill-org-names` job on a pre-existing DB.
+        name_norm       TEXT,
         provisional     INTEGER NOT NULL,
         created_at      INTEGER NOT NULL
     ) STRICT;
@@ -1448,8 +1455,8 @@ impl Db {
         conn.execute(
             "CREATE TABLE organizations (
                  id INTEGER PRIMARY KEY AUTOINCREMENT, country TEXT, identifier_kind TEXT,
-                 identifier TEXT, name TEXT NOT NULL, provisional INTEGER NOT NULL,
-                 created_at INTEGER NOT NULL
+                 identifier TEXT, name TEXT NOT NULL, name_norm TEXT,
+                 provisional INTEGER NOT NULL, created_at INTEGER NOT NULL
              ) STRICT",
             (),
         )
@@ -1551,7 +1558,7 @@ impl Db {
     /// `organizations_identity` is deliberately absent: it is built only when the
     /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
     /// legitimately lacks the index and must not be reported as missing.
-    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 4] = [
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 5] = [
         ("organization_mentions_org", "organization_mentions(organization_id)"),
         ("organizations_country_id", "organizations(country, id)"),
         ("organizations_kind_id", "organizations(identifier_kind, id)"),
@@ -1562,6 +1569,10 @@ impl Db {
         // and kind listings use. `missing_deferred_indexes` will report it absent until
         // a `Reindex` builds it (auto-enqueued on open, or run on demand).
         ("organizations_identifier_id", "organizations(identifier, id)"),
+        // Issue 217-B: the case-insensitive name-prefix search's index. Leads with
+        // the normalised name so the prefix range seeks; ends with `id` so the
+        // (name_norm, id) keyset cursor rides the same index (the 216 shape).
+        ("organizations_name_norm_id", "organizations(name_norm, id)"),
     ];
 
     /// The notice indexes that are deferred rather than schema-batch.
@@ -2645,13 +2656,14 @@ impl Db {
                 } else {
                     conn.execute(
                         "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                             provisional, created_at)
-                         VALUES(?, ?, ?, ?, 0, ?)",
+                             name_norm, provisional, created_at)
+                         VALUES(?, ?, ?, ?, ?, 0, ?)",
                         (
                             opt_text(id.country.as_deref()),
                             t(&id.kind),
                             t(&id.value),
                             t(&m.name),
+                            Value::Text(m.name.to_lowercase()),
                             Value::Integer(now),
                         ),
                     )
@@ -2664,9 +2676,14 @@ impl Db {
             None => {
                 conn.execute(
                     "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                         provisional, created_at)
-                     VALUES(?, NULL, NULL, ?, 1, ?)",
-                    (opt_text(m.country.as_deref()), t(&m.name), Value::Integer(now)),
+                         name_norm, provisional, created_at)
+                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                    (
+                        opt_text(m.country.as_deref()),
+                        t(&m.name),
+                        Value::Text(m.name.to_lowercase()),
+                        Value::Integer(now),
+                    ),
                 )
                 .await?;
                 (last_insert_rowid(conn).await?, true)

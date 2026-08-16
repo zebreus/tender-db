@@ -1009,6 +1009,64 @@ async fn tenders_reverse_lookup_by_buyer_matches_the_recorded_role() {
     assert!(items(&server.get("/v1/tenders?buyer=999999999").await).is_empty());
 }
 
+/// Issue 217-B: `/v1/organizations?name_prefix=` — the case-insensitive name
+/// search, in name order with a keyset cursor. The vocabulary contracts: empty
+/// prefix 400s, a bad cursor 400s, other collections name it ignored.
+#[tokio::test]
+async fn organizations_can_be_searched_by_name_prefix() {
+    let server = Server::start("org_name_prefix").await;
+    server.ingest_chain().await;
+
+    let orgs = items(&server.get("/v1/organizations").await).clone();
+    let name = orgs[0]["name"].as_str().expect("org name").to_owned();
+    let id = orgs[0]["id"].as_i64().expect("org id");
+    // Search by the UPPERCASED first grapheme-ish chunk of a real name — the
+    // round trip must be case-insensitive in both directions.
+    let prefix: String = name.chars().take(4).collect::<String>().to_uppercase();
+
+    let hit = server.get(&format!("/v1/organizations?name_prefix={}", urlenc(&prefix))).await;
+    assert!(
+        items(&hit).iter().any(|o| o["id"].as_i64() == Some(id)),
+        "an uppercased prefix of a real name finds the org (case-insensitive)"
+    );
+    assert!(
+        items(&hit).iter().all(|o| {
+            o["name"].as_str().unwrap().to_lowercase().starts_with(&prefix.to_lowercase())
+        }),
+        "every hit actually carries the prefix"
+    );
+
+    // Absent prefix → empty page; empty prefix → 400; bad cursor → 400.
+    assert!(items(&server.get("/v1/organizations?name_prefix=zzzzzzz").await).is_empty());
+    assert_eq!(server.status("/v1/organizations?name_prefix=").await, 400);
+    assert_eq!(
+        server.status("/v1/organizations?name_prefix=a&cursor=not-a-name-cursor").await,
+        400
+    );
+
+    // Named ignored on collections that do not apply it (issue 118).
+    let ig: Vec<String> = server.get("/v1/tenders?name_prefix=a").await["ignored_filters"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_str().unwrap().into())
+        .collect();
+    assert!(ig.iter().any(|f| f == "name_prefix"));
+}
+
+fn urlenc(s: &str) -> String {
+    // Percent-encode per UTF-8 BYTE (an umlaut is two %XX escapes, not one).
+    s.bytes()
+        .flat_map(|b| {
+            if b.is_ascii_alphanumeric() {
+                vec![b as char]
+            } else {
+                format!("%{b:02X}").chars().collect()
+            }
+        })
+        .collect()
+}
+
 /// Issue 218-B: `/v1/notices/{id}/content` serves the notice's WHOLE parsed
 /// payload — the section tree and every typed value in the source's own field
 /// vocabulary — so no business term is unreachable via REST even before it earns
