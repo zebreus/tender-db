@@ -321,6 +321,105 @@ async fn download_once(
     Ok((data.len() as i64, crate::sha256_hex(&data)))
 }
 
+/// What [`register_archive`] did, for the job log.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Registered {
+    /// Files hashed and recorded — periods the registry did not know.
+    pub registered: i64,
+    /// Periods the registry already had — skipped WITHOUT hashing (cheap re-run).
+    pub existing: i64,
+    /// Entries that do not match the `<source>/<kind>/<period>[.ext]` layout.
+    pub unrecognised: i64,
+}
+
+/// Rebuild the `fetches` registry from the on-disk archive (issue 23 / the DR
+/// premise's load-bearing finding): a lost DB forced a full ~180 GB re-download
+/// even with `/data/archive` intact, because `fetch()` decides idempotency from
+/// `latest_fetch(...)` and `process` walks packages via `fetches` rows — the
+/// archive could not function as the source of truth ADR-0001 calls it. This
+/// walks `<archive_root>/<source>/<kind>/`, hashes each package whose period the
+/// registry lacks, and `record_fetch`s it, after which a fresh DB can `process`
+/// the whole archive with zero downloads.
+///
+/// Provenance honesty: the original URL is gone, so the row records
+/// `archive://<rel_path>`; `fetched_at` is the file's mtime (when the bytes
+/// arrived, as the filesystem remembers it), never "now". Version files
+/// (`-v<N>`, finality rewrites) register in version order under their one
+/// period, so `latest_fetch` resolves to the newest content exactly as the live
+/// history would have left it. A period the registry already knows is skipped
+/// without hashing — re-runs are cheap and never overwrite real provenance.
+pub async fn register_archive(db: &store::Db, archive_root: &Path) -> Result<Registered, Error> {
+    let mut summary = Registered::default();
+    for source in ["ted", "doe"] {
+        for kind in ["daily", "monthly"] {
+            let dir = archive_root.join(source).join(kind);
+            let entries = match std::fs::read_dir(&dir) {
+                Ok(e) => e,
+                Err(_) => continue, // a source without this kind is normal
+            };
+            // Group by period so version files land in order under one identity.
+            let mut by_period: std::collections::BTreeMap<String, Vec<(usize, PathBuf)>> =
+                std::collections::BTreeMap::new();
+            for entry in entries {
+                let path = entry?.path();
+                let Some(name) = path.file_name().and_then(|n| n.to_str()) else { continue };
+                if !path.is_file() {
+                    continue; // nested dirs are not archive packages
+                }
+                if name.ends_with(".part") {
+                    // Interrupted-download debris — not content, not an anomaly.
+                    continue;
+                }
+                let stem = name.split_once('.').map_or(name, |(s, _)| s);
+                let (period, version) = match stem.rsplit_once("-v") {
+                    Some((p, v)) if v.chars().all(|c| c.is_ascii_digit()) && !v.is_empty() => {
+                        (p.to_owned(), v.parse().unwrap_or(1))
+                    }
+                    _ => (stem.to_owned(), 1),
+                };
+                if period.is_empty() {
+                    summary.unrecognised += 1;
+                    continue;
+                }
+                by_period.entry(period).or_default().push((version, path));
+            }
+            for (period, mut files) in by_period {
+                if db.latest_fetch(source, kind, &period).await?.is_some() {
+                    summary.existing += 1;
+                    continue;
+                }
+                files.sort_by_key(|(version, _)| *version);
+                for (_, path) in files {
+                    let data = std::fs::read(&path)?;
+                    let rel_path = format!(
+                        "{source}/{kind}/{}",
+                        path.file_name().and_then(|n| n.to_str()).unwrap_or_default()
+                    );
+                    let fetched_at = std::fs::metadata(&path)?
+                        .modified()
+                        .ok()
+                        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                        .map(|d| d.as_secs() as i64)
+                        .unwrap_or_else(store::now_unix);
+                    db.record_fetch(&store::Fetch {
+                        source: source.into(),
+                        kind: kind.into(),
+                        period: period.clone(),
+                        url: format!("archive://{rel_path}"),
+                        sha256: crate::sha256_hex(&data),
+                        bytes: data.len() as i64,
+                        fetched_at,
+                        path: rel_path,
+                    })
+                    .await?;
+                    summary.registered += 1;
+                }
+            }
+        }
+    }
+    Ok(summary)
+}
+
 fn temp_path(final_path: &Path) -> PathBuf {
     let mut p = final_path.as_os_str().to_owned();
     p.push(".part");

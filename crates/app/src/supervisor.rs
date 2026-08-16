@@ -181,6 +181,11 @@ enum Spec {
     /// dropping the tenders list to a full scan. Idempotent (`CREATE INDEX IF NOT
     /// EXISTS` loops), so it builds only what's missing. A unit variant → durable.
     Reindex,
+    /// Rebuild the `fetches` registry from the on-disk archive (issue 23 / the DR
+    /// premise finding): after a DB loss with the archive intact, this is what
+    /// lets `process` run with zero re-downloads. Idempotent — known periods are
+    /// skipped without hashing.
+    RegisterArchive,
     /// Stamp `tenders.current_deadline` from each head version's dates (issue 216,
     /// deadline half). Batched + checkpointed like the mark job (issue 42);
     /// idempotent, so a restart redoes the walk from zero at worst. A unit
@@ -380,6 +385,12 @@ impl Supervisor {
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
+            // Rebuild the fetches registry from the on-disk archive (issue 23):
+            // idempotent, hash-only-what's-missing, so safe to fire any time.
+            "register-archive" => Ok(vec![
+                self.push("register-archive", "register-archive".into(), Spec::RegisterArchive)
+                    .await,
+            ]),
             // Stamp every tender's current_deadline from its head version's dates
             // (issue 216, deadline half) — batched, checkpointed, idempotent. One-off
             // after the column ships; the fold maintains it from then on.
@@ -956,6 +967,17 @@ impl Supervisor {
                 self.db.build_notice_indexes().await.map_err(|e| e.to_string())?;
                 let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
                 Ok("deferred org + tender + notice indexes rebuilt".into())
+            }
+            Spec::RegisterArchive => {
+                let done = ingest::fetch::register_archive(&self.db, &self.archive)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
+                Ok(format!(
+                    "archive re-registered: {} package(s) hashed+recorded, {} period(s) already \
+                     known (skipped unhashed), {} unrecognised entr(ies)",
+                    done.registered, done.existing, done.unrecognised
+                ))
             }
             Spec::BackfillDeadlines => {
                 // Walk the whole tenders table in id order, one bounded batch per
