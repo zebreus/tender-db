@@ -1,6 +1,13 @@
 # 215 — API contract / OpenAPI drift cluster (limit ceiling, include_data on notices, changes `more`, lots absent-value routing)
 
-Status: needs-triage — LOW, CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `1591a66`). All four drifts fixed in
+`1591a66` and re-probed in prod: **A** served OpenAPI `limit.maximum` = 1000 and `/docs` "max 1000" (made
+the docs authoritative rather than lowering `MAX_PAGE`, which also caps `tender_detail` lots); **B** the
+`/v1/notices` spec entry now lists `include_data` (the notices SSE snapshot already honoured it); **C**
+`/v1/changes` now does a `limit+1` look-ahead so an exactly-full final page reports `more:false` (test
+`the_change_feed_reports_more_only_when_a_next_page_exists`); **D** the `/docs` performance table labels the
+absent-value filter row "isolated" to match `walks()` (the routing/guard itself was issue 219). api 4/4
+green. Was: needs-triage — LOW, CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
 Four small, independent drifts between documented and actual behavior. Grouped because each is a
 one-line-ish fix and none alone warrants its own ticket; split out if one grows.
 Kind: correctness / API contract + docs drift
