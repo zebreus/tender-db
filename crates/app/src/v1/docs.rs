@@ -413,7 +413,7 @@ milliseconds.</p>
 <table>
   <tr><td class="ep"><span class="method">GET</span>/v1</td><td>Service info: version, revision, current cursor, endpoint list, source offer.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/openapi.json</td><td>This API as an <a href="/v1/openapi.json">OpenAPI 3.0 document</a> — machine-readable, CORS-enabled, for client generators and API tooling.</td></tr>
-  <tr><td class="ep"><span class="method">GET</span>/health</td><td>Readiness probe (process up, database answers).</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/health</td><td>Liveness probe (process up; does not query the DB &mdash; see /health/deep).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/_source</td><td>AGPL §13 corresponding-source offer for the running revision.</td></tr>
 </table>
 <p>Browse and try the API interactively in

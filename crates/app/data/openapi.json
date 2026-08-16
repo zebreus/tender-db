@@ -559,8 +559,8 @@
     "/health": {
       "get": {
         "tags": ["service"],
-        "summary": "Readiness probe",
-        "description": "Process up and database answering. Outside the rate limiter.",
+        "summary": "Liveness probe",
+        "description": "Process is up and serving HTTP. Does not query the database — see /health/deep for a DB-backed readiness check. Outside the rate limiter.",
         "operationId": "health",
         "responses": {
           "200": {
@@ -572,14 +572,12 @@
                   "properties": {
                     "ok": { "type": "boolean" },
                     "rev": { "type": "string" },
-                    "database": { "type": "string" },
                     "cursor": { "$ref": "#/components/schemas/Cursor" }
                   }
                 }
               }
             }
-          },
-          "503": { "description": "Unavailable." }
+          }
         }
       }
     },

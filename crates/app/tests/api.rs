@@ -297,7 +297,12 @@ async fn the_service_root_and_health_answer() {
 
     let health = server.get("/health").await;
     assert_eq!(health["ok"], Value::Bool(true));
-    assert_eq!(health["database"], "ok");
+    // Liveness only: `/health` does NOT query the database (issue 61/213), so it
+    // must NOT report a `database` verdict — that claim now lives on `/health/deep`.
+    assert!(
+        health.get("database").is_none(),
+        "/health is a liveness probe and must not report a DB check it never runs"
+    );
     assert!(health["rev"].is_string(), "health names the revision deploy.sh checks");
     assert_eq!(health["cursor"], "0", "a fresh database sits at cursor zero");
 

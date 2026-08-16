@@ -859,21 +859,27 @@ async fn source() -> Response {
         .into_response()
 }
 
-/// The deploy script's readiness probe: the process is up, the database
-/// answers, and this is what it was built from.
+/// The deploy script's post-restart gate: a LIVENESS probe. It confirms the
+/// process is up and serving HTTP, and reports the revision it was built from. It
+/// deliberately does NOT query the database (issue 61), so it stays instant and
+/// answers `200` even while a projection saturates the reader pool — which is
+/// exactly what a "did the new build come back up" gate needs. It has no unhealthy
+/// path and must not imply one: a hung or crashed process fails this by not
+/// answering at all, not by a `503`. For a database-backed readiness signal — DB
+/// answering, ingest fresh, disk, canonical layer — see [`health::deep`]
+/// (`/health/deep`).
 async fn health(State(state): State<AppState>) -> Response {
-    // The newest cursor from the in-memory doorbell — no DB access, so the deploy
-    // readiness probe stays instant regardless of `changes`-table size (issue 61).
-    let cursor = Some(state.db.current_cursor());
+    // In-memory doorbell read — no DB access (issue 61). The last-known ingestion
+    // cursor is reported as a liveness DETAIL, not as a claim the database was
+    // queried; the DB-answering check lives in `/health/deep`. This probe has no
+    // failing path, so it does not pretend to (the old `is_some()`/`unavailable`/
+    // `503` scaffolding was dead code over an infallible read — issue 213).
     let body = json!({
-        "ok": cursor.is_some(),
+        "ok": true,
         "rev": rev(),
-        "database": if cursor.is_some() { "ok" } else { "unavailable" },
-        "cursor": cursor.map(|c| c.to_string()),
+        "cursor": state.db.current_cursor().to_string(),
     });
-    let status =
-        if cursor.is_some() { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE };
-    (status, axum::Json(body)).into_response()
+    (StatusCode::OK, axum::Json(body)).into_response()
 }
 
 // ------------------------------------------------------------- stream budget

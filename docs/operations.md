@@ -337,8 +337,8 @@ down). The watcher today is a Claude scheduled routine polling every ~4 h — se
 
 | Endpoint | Cost | Answers | Used by |
 | --- | --- | --- | --- |
-| `GET /health` | DB-cheap, always fast | process is up + the database answers (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
-| `GET /health/deep` | one cursor read + one job-log scan + one `statvfs` | the above **plus** ingest freshness, last-job outcome and disk usage | the external watcher routine |
+| `GET /health` | no DB access, always fast | process is up + serving HTTP — liveness only, does **not** query the DB (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
+| `GET /health/deep` | one job-log scan (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
 
 `/health` is deliberately narrow: its `ok` reflects only liveness, so a deploy
 is never failed by a stale-ingest or full-disk condition unrelated to the new
@@ -348,7 +348,10 @@ build. **Do not widen it** — `deploy.sh` greps its `ok:true`.
 verdict, so a single external check covers uptime, freshness, job failures and
 disk:
 
-- **database** — the same cursor read `/health` does.
+- **database** — a real reader-pool read: the job-log scan below serves over WAL
+  (issue 20), so its success is the "the database answered" signal and an error
+  flips this check unhealthy. `/health` itself is liveness-only and does not touch
+  the DB (issue 61/213).
 - **ingest_freshness** — unhealthy when no job has succeeded in **26 h**
   (`INGEST_STALE_SECS`). The scheduler lands a successful run at least daily
   (TED Mon–Fri, DÖE + projection every day), and 26 h carries a Friday success

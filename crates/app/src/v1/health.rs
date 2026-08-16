@@ -1,9 +1,10 @@
 //! Deep operational health (issue 24).
 //!
 //! [`super::health`] stays the fast liveness probe `deploy.sh` greps for
-//! `ok:true` — process up, database answers, nothing more, so a deploy is never
-//! failed by a stale-ingest or full-disk signal that has nothing to do with the
-//! new build being live. `/health/deep` is what an *external* pinger watches: it
+//! `ok:true` — process up and serving HTTP, nothing more (no DB access, issue 61),
+//! so a deploy is never failed by a stale-ingest or full-disk signal that has
+//! nothing to do with the new build being live. The database-answering check lives
+//! HERE, not there. `/health/deep` is what an *external* pinger watches: it
 //! folds that liveness check together with the operational signals that tell an
 //! unattended operator production has quietly broken — the daily ingest stopped
 //! landing, the last job errored, or the disk is filling. One external check on
@@ -52,13 +53,25 @@ const JOB_SCAN: i64 = 100;
 /// The deep probe: liveness + ingest freshness + last-job outcome + disk, folded
 /// into one `ok` the external pinger alerts on.
 pub async fn deep(State(state): State<AppState>) -> Response {
-    // 1. Liveness — the newest cursor from the in-memory doorbell, NO DB access, so
-    //    the probe never queues behind the writer nor scans `changes` (issue 61).
-    let cursor = Some(state.db.current_cursor());
+    // 1. Database answering — a REAL reader-pool read, not the in-memory cursor.
+    //    `recent_job_runs` (step 2) is a reader-pool query (issue 20), so its
+    //    success IS the "the database answered" signal, and an `Err` means the
+    //    reader pool could not serve a read — the box is not ready. The reader pool
+    //    serves over WAL and never queues behind the writer, so this honours issue
+    //    61's "don't block behind a projection" rule while still being a genuine DB
+    //    touch. The old `Some(current_cursor())` was an in-memory read that can
+    //    never fail, which made this check vacuous (issue 213) — its `unhealthy`
+    //    branch in `assess` was unreachable.
+    let runs_result = state.db.recent_job_runs(JOB_SCAN).await;
+    let db_answered = runs_result.is_ok();
+    let runs = runs_result.unwrap_or_default();
 
-    // 2. Ingest freshness and the last job's outcome, from the persisted log
-    //    (also reader-pooled — see [`store::Db::recent_job_runs`], issue 20).
-    let runs = state.db.recent_job_runs(JOB_SCAN).await.unwrap_or_default();
+    // The last-known cursor, reported only when the DB actually answered, so the
+    // `database` verdict flips unhealthy (cursor `None`) exactly when the read failed.
+    let cursor = db_answered.then(|| state.db.current_cursor());
+
+    // 2. Ingest freshness and the last job's outcome, from that same reader-pooled
+    //    log read (issue 20).
     let last_success = runs.iter().find(|r| r.outcome == "ok").map(|r| r.finished_at);
     let last_job = runs.into_iter().next();
 
