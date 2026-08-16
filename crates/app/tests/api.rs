@@ -945,6 +945,45 @@ async fn tenders_list_sorts_by_deadline() {
     assert!(ig.iter().any(|f| f == "deadline_after"));
 }
 
+/// A sorted page's cursor is a position in ONE ordering. Both tender sorts key
+/// on an `<epoch>.<id>` pair, so before the sort tag a published_at cursor
+/// pasted into `sort=deadline` parsed — and silently served a page keyed off
+/// the wrong column (found probing the documented claim against prod). The
+/// contract is the documented 400, same as the bare-id cursor case.
+#[tokio::test]
+async fn a_sorted_cursor_never_crosses_into_another_ordering() {
+    let server = Server::start("cross_sort_cursor").await;
+    server.ingest_chain().await;
+
+    // The single-tender fixture never emits a next_cursor, so build the position
+    // the server would have emitted for its one row: the sort tag + the row's
+    // (published_at, id) — the same `tag` variable feeds parse and emission.
+    let page = server.get("/v1/tenders?sort=published_at").await;
+    let row = &items(&page)[0];
+    let epoch = chrono::DateTime::parse_from_rfc3339(row["published_at"].as_str().unwrap())
+        .expect("valid ISO 8601")
+        .timestamp();
+    let cursor = format!("p{}.{}", epoch, row["id"].as_i64().unwrap());
+
+    // Its own ordering accepts it — and positions PAST the row (empty page), so
+    // the cursor was applied, not ignored. Every other read rejects it.
+    let resumed = server.get(&format!("/v1/tenders?sort=published_at&cursor={cursor}")).await;
+    assert!(items(&resumed).is_empty(), "the cursor positions after its own row");
+    assert_eq!(
+        server.status(&format!("/v1/tenders?sort=deadline&cursor={cursor}")).await,
+        400,
+        "a published_at cursor must not seed the deadline ordering"
+    );
+    // The id-ordered list keeps its own documented lenience (`after()`): an
+    // unparseable cursor restarts from the beginning rather than stranding the
+    // client — visible (ids repeat), unlike the wrong-column page above.
+    let plain = server.get(&format!("/v1/tenders?cursor={cursor}")).await;
+    assert_eq!(
+        items(&plain)[0]["id"], row["id"],
+        "the id-ordered list restarts on a foreign cursor, it does not misplace"
+    );
+}
+
 /// Issue 225: the buyer seed narrows by role in SQL (`role LIKE '%Buyer%'`),
 /// mirroring the EXISTS's own match — a vocabulary drift between the two would
 /// silently drop legitimate buyers, so this pins the round trip on a REAL buyer

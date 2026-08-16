@@ -897,10 +897,20 @@ async fn tenders_ordered(
     order: read::HeadOrder,
     desc: bool,
 ) -> ApiResult {
+    // The cursor is tagged with its sort column. Both orderings carry an
+    // `<epoch>.<id>` position, so without the tag a published_at cursor pasted
+    // into sort=deadline PARSES — and silently returns a page keyed off the
+    // wrong column (found by probing the documented "a cursor is specific to
+    // its sort" claim against prod). The tag makes the documented 400 real.
+    let tag = match order {
+        read::HeadOrder::PublishedAt => 'p',
+        read::HeadOrder::Deadline => 'd',
+    };
     let cursor = match params.cursor.as_deref() {
         None => None,
-        Some(raw) => match raw.split_once('.').and_then(|(p, i)| {
-            Some((p.parse::<i64>().ok()?, i.parse::<i64>().ok()?))
+        Some(raw) => match raw.strip_prefix(tag).and_then(|rest| {
+            let (k, i) = rest.split_once('.')?;
+            Some((k.parse::<i64>().ok()?, i.parse::<i64>().ok()?))
         }) {
             Some(pair) => Some(pair),
             None => {
@@ -940,7 +950,7 @@ async fn tenders_ordered(
             // row\'s deadline is the same MAX the column materialises.
             read::HeadOrder::Deadline => last.deadline.map(|d| d.utc_seconds).unwrap_or(0),
         };
-        format!("{}.{}", key, last.id)
+        format!("{tag}{}.{}", key, last.id)
     });
     rows.truncate(limit as usize);
     let honoured = store::read::Collection::Tenders.honoured_params();
