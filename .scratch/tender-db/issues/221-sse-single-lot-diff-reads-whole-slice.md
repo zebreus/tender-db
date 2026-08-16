@@ -1,6 +1,16 @@
 # 221 — SSE single-lot diff (Scope::At) re-reads the whole tender-version lot slice via summarise (quadratic per version bump)
 
-Status: needs-triage — LOW (rare reachability, but per-trigger amplification is quadratic), CONFIRMED (code)
+Status: RESOLVED — committed `cb80e60`, awaiting deploy. The diff no longer decorates to classify. Split
+`read::lots` into `lots_identity` (the match set, no `summarise`) + decoration; added `read_matches` over
+it; the diff loop now classifies added/changed/removed by PRESENCE on each side and decorates only the
+NEW side, only under `?include_data=true`. A lot change costs at most one `summarise` (down from up to
+four: new+old × decorate, of which the old side's fields and — by default — the new side's were never
+emitted). Behaviour-preserving (`entity_event` embeds `data` only under `include_data`); the include_data
+diff test now asserts the payload, and `lot_summary_equivalence` pins `lots_identity` ≡ `lots` on the
+identity columns across every fixture shape. A true O(1) `lot_id` seek would still need a satellite index
+(heavier than this path warranted, and now moot for the common case).
+
+Was: needs-triage — LOW (rare reachability, but per-trigger amplification is quadratic), CONFIRMED (code)
 2026-08-15. Filed from the API performance review (subagent).
 Kind: performance (SSE diff decoration amplification)
 Blocked by: —
