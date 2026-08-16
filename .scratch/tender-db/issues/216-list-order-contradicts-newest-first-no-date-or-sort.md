@@ -1,29 +1,14 @@
 # 216 — /v1/tenders documents "newest matching first" but sorts ascending id, and offers no date-range or sort controls
 
-Status: PART A + PART B (published half) DEPLOYED & VERIFIED 2026-08-16 (serving rev `dfe8b62`) —
-PART B (deadline half) OPEN. `/v1/tenders` now takes `sort=published_at` (+`order`) and
-`published_after`/`published_before` (unix or RFC 3339), riding `tenders_current_published
-(current_published_at, id)` end to end with a composite `<published>.<id>` keyset cursor in the
-BOUNDED-OR form (chosen by prod measurement: 1-2 ms at any depth vs naive-OR 527 ms / row-value 94 ms).
-Prod-verified: newest-first page 2.4 ms with the cursor correctly crossing a same-instant tie; window
-query 0.8 ms; a walk-shaped companion (`country`) routes isolated and answers; default id order
-unchanged; sort/order elsewhere and bad vocabulary are hard 400s. The DEADLINE half is now HALF-DONE (store side
-DEPLOYED, serving rev `3e42fa7`): `tenders.current_deadline` exists (O(1) ALTER — deliberately NOT the
-boot-blocking one-shot backfill the current_published_at migration used), the fold's head update
-maintains it from the in-memory head facts (tender- and lot-level, matching the read's pick exactly —
-api test pins column == served submission_deadline), and the batched `backfill-deadlines` job (10k/txn,
-TRUNCATE checkpoints, idempotent) stamped **7,921,795 tenders in 70 s** on prod (job 706; WAL stayed at
-12 KB; API responsive throughout; spot-checks column == recomputed MAX; 6,049,341 tenders carry a
-deadline). REMAINING for the next firing: the deferred `(current_deadline, id)` index, then
-`deadline_before`/`deadline_after` + `sort=deadline` mirroring the published half (bounded-OR keyset,
-range implies the order, walks() isolation for the id-ordered application) — with "closes soon" =
-`deadline_after=now&sort=deadline&order=asc` as the flagship. Prod re-probe: served `/v1/openapi.json` now describes `/v1/tenders` as "in ascending id order …", and
-`/docs` has zero occurrences of "newest matching first". Part A, the doc-vs-behavior lie, is fixed: the
-three surfaces (`docs.rs:122`, `docs.rs:407`, `openapi.json:65`) now state the real order — **ascending id on every collection** (a stable keyset order for
-pagination, not by date). The query is unchanged (`ORDER BY t.id`, read.rs:956); shipping the honest doc now
-stops actively misleading clients, as the issue recommended, ahead of the sort capability. Test:
-`pagination_walks_the_whole_collection_exactly_once` now asserts the list is served in ascending id order,
-so a future descending change (Part B) must move the docs with it.
+Status: RESOLVED — ALL PARTS DEPLOYED & VERIFIED 2026-08-16 (serving rev `b36d5cb`). A (honest docs),
+B-published (`sort=published_at` + `published_after/_before`, rev `dfe8b62`), and B-deadline
+(`sort=deadline` + `deadline_after/_before`, riding the fold-maintained `current_deadline` column
+backfilled over 7.92M rows by job 706 and the `tenders_current_deadline` index, auto-built in 12 s).
+Prod-verified flagships: "closes soon" (`deadline_after=now`) returns tenders closing TONIGHT, soonest
+first, in 13 ms with a tie-safe composite cursor; the week window is 3 ms; newest-published is 2.4 ms.
+Ambiguous double-bounds 400; deadline-less tenders are omitted from the deadline ordering; default id
+order, SSE and other collections unchanged. Bonus fix en route: `parse_instant` restores a URL-decoded
+`+` so every timestamp the API itself serves can be pasted back unencoded (was a 400).
 
 Part B — `published_after`/`published_before`, `deadline_before`/`deadline_after`, and `sort`/`order` with a
 keyset cursor carrying the sort key — remains OPEN. It needs a date index on `tender_version_dates`
