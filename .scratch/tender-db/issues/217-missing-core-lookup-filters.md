@@ -21,14 +21,28 @@ isolated pool and **times out a 35 s client — but so does `winner` on the same
 is exactly consistent, not a regression. That shared present-value walk (issue-117 Class B, all of
 buyer/winner/bidder) is now its own issue **223**.
 
+**B (org `identifier`) DEPLOYED & VERIFIED 2026-08-16 (serving rev `7eb2495`).**
+`/v1/organizations?identifier=<value>` (pair with `kind` for the scheme) — served by a new deferred index
+`organizations_identifier_id (identifier, id)`, so the `(filter, id)` paginated read seeks with no sorter.
+The auto-reindex detector enqueued the build on open (`703`, ~38 s); prod-verified: a present VAT
+(`RO42283735` → org 2) returns in **7.8 ms**, `identifier + kind` in 6 ms, an unknown value in **0.8 ms**
+(a seek that finds nothing, not a walk). Honoured on organizations, named ignored elsewhere. This is the
+front door to the winner/buyer/bidder reverse-lookups (issue 223): a consumer holding a company's VAT can
+now resolve its canonical id, then its participation history.
+
 **Open follow-ups (split out):**
 - **A fast path for `publication_id`** — a query shape that seeks the composite index for the exact-match /
   ≤1-result case (drop the id-cursor pagination when `publication_id` is present), or a dedicated
   `notices(publication_id)` index. Would move the lookup from the isolated ~10 s walk to a ~ms main-pool
-  seek. HIGH-ish (it is the primary lookup and 10 s is poor UX).
+  seek. HIGH-ish (it is the primary lookup and 10 s is poor UX). NOTE: `organizations_identifier_id` just
+  proved the deferred-index path (add to DEFERRED_*_INDEXES, auto-reindex builds it) is cheap and safe at
+  this scale — a `notices(publication_id, id)` index is the same move.
 - **A-tenders** — `/v1/tenders?publication_id=` (an EXISTS over `tender_versions.publication_id`, also
   un-indexed-alone; same walk shape).
-- **B** (org `identifier`/`name`) and **C** (`bidder`/`tenderer`) — untouched.
+- **B-name** — `/v1/organizations?name=` prefix/contains search. Deferred: a `(name, id)` prefix index has
+  the common-prefix sort cost, and a contains search needs FTS/trigram — its own design + index, unlike
+  the clean exact-match `identifier` shipped here.
+- **C** (`bidder`/`tenderer`) — DONE (issue 217-C, serving rev `00f2f48`; see above).
 
 Was: needs-triage — HIGH, CONFIRMED (code) 2026-08-15. Filed from the API completeness review (subagent).
 Three related capability gaps, grouped because each is "add a filter to an existing collection" and they
