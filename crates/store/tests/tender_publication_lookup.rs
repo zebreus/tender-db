@@ -103,6 +103,25 @@ async fn the_official_number_resolves_its_tender() {
     // And a wrong-source companion excludes exactly like before the seed.
     let wrong = Filter { source: Some("doe".into()), ..by("SHARED") };
     assert!(ids(&conn, &wrong).await.is_empty());
+
+    // The `t.`-column companions are POST-FILTERED under a publication seed (the
+    // planner flatten, measured 35 s on prod) — same rows, applied in Rust.
+    // Tender 2 published at 201, tender 3 at 301: a bound splits the pair.
+    let bounded = Filter { published_after: Some(250), ..by("SHARED") };
+    assert_eq!(ids(&conn, &bounded).await, vec![3], "published bound narrows the seeded pair");
+    let none = Filter { deadline_after: Some(1), ..by("SHARED") };
+    assert!(ids(&conn, &none).await.is_empty(), "a deadline bound excludes deadline-less rows");
+
+    // The guard itself: with a publication seed no `t.`-column predicate may reach
+    // the SQL, or the flatten returns (the ordered seam is the public one).
+    let (sql, _) = read::tenders_ordered_statement(
+        &Filter { source: Some("ted".into()), ..by("SHARED") },
+        HeadOrder::PublishedAt,
+        true,
+        None,
+        10,
+    );
+    assert!(!sql.contains("t.source = ?"), "companions must not ride the seeded SQL:\n{sql}");
 }
 
 #[tokio::test]

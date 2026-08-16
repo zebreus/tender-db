@@ -1039,7 +1039,32 @@ pub async fn tenders(
         return Ok(Vec::new());
     }
     let q = tenders_query(filter, scope);
-    q.rows(conn, tender_row).await
+    let mut rows = q.rows(conn, tender_row).await?;
+    retain_publication_companions(&mut rows, filter);
+    Ok(rows)
+}
+
+/// issue 217-A: a publication seed leaves every `t.`-column companion out of the
+/// SQL (see `tenders_query` — the planner otherwise flattens onto the companion's
+/// index and walks its slice, measured 35 s). They apply here, over the ≤handful
+/// of rows one publication number maps to. A page can only UNDER-fill from this
+/// (the number is nearly unique, its whole result is one page), never
+/// mis-paginate. The bounds read the returned row's own version values, which at
+/// the head equal the `current_*` pointer columns the SQL form reads.
+fn retain_publication_companions(rows: &mut Vec<TenderRow>, f: &Filter) {
+    if f.publication_id.is_none() {
+        return;
+    }
+    rows.retain(|r| {
+        f.source.as_ref().is_none_or(|s| r.source == *s)
+            && f.kind.as_ref().is_none_or(|k| r.kind == *k)
+            && f.published_after.is_none_or(|a| r.published_at >= a)
+            && f.published_before.is_none_or(|b| r.published_at < b)
+            && f.deadline_after
+                .is_none_or(|a| r.deadline.as_ref().is_some_and(|d| d.utc_seconds >= a))
+            && f.deadline_before
+                .is_none_or(|b| r.deadline.as_ref().is_some_and(|d| d.utc_seconds < b))
+    });
 }
 
 /// One list row off the [`tender_select_head`] column order — shared by every
@@ -1135,7 +1160,9 @@ pub async fn tenders_ordered(
         return Ok(Vec::new());
     }
     let q = tenders_ordered_query(filter, order, desc, cursor, limit);
-    q.rows(conn, tender_row).await
+    let mut rows = q.rows(conn, tender_row).await?;
+    retain_publication_companions(&mut rows, filter);
+    Ok(rows)
 }
 
 /// The statement [`tenders_ordered`] builds — the same test seam every other
@@ -1171,23 +1198,27 @@ fn tenders_ordered_query(
         ),
         [],
     );
-    if let Some(after) = filter.published_after {
-        q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
-    }
-    if let Some(before) = filter.published_before {
-        q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
-    }
-    if let Some(after) = filter.deadline_after {
-        q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
-    }
-    if let Some(before) = filter.deadline_before {
-        q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
-    }
-    if let Some(source) = &filter.source {
-        q.push(" AND t.source = ?", [t(source)]);
-    }
-    if let Some(kind) = &filter.kind {
-        q.push(" AND t.kind = ?", [t(kind)]);
+    // Same flatten hazard as `tenders_query`: a publication seed must be the only
+    // `t.`-column predicate — the companions post-filter in Rust.
+    if filter.publication_id.is_none() {
+        if let Some(after) = filter.published_after {
+            q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.published_before {
+            q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+        }
+        if let Some(after) = filter.deadline_after {
+            q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.deadline_before {
+            q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+        }
+        if let Some(source) = &filter.source {
+            q.push(" AND t.source = ?", [t(source)]);
+        }
+        if let Some(kind) = &filter.kind {
+            q.push(" AND t.kind = ?", [t(kind)]);
+        }
     }
     version_predicates(&mut q, filter, "t.id", "v.seq");
     if let Some((value, id)) = cursor {
@@ -1311,28 +1342,37 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     let seq = seq_expr(scope, "t", &mut q.params);
     q.push(&format!("{seq} WHERE 1 = 1"), []);
 
-    if let Some(source) = &filter.source {
-        q.push(" AND t.source = ?", [t(source)]);
-    }
-    if let Some(kind) = &filter.kind {
-        q.push(" AND t.kind = ?", [t(kind)]);
-    }
-    // Publication-date bounds (issue 216). In THIS id-ordered shape a narrow range
-    // walks the PK to fill its page, so `walks()` isolates it; the REST handler
-    // routes range/sorted reads through `tenders_by_published` instead, which rides
-    // `tenders_current_published`. This application exists so the filter also means
-    // something on the id-ordered paths (SSE snapshots, an explicit `sort=id`).
-    if let Some(after) = filter.published_after {
-        q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
-    }
-    if let Some(before) = filter.published_before {
-        q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
-    }
-    if let Some(after) = filter.deadline_after {
-        q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
-    }
-    if let Some(before) = filter.deadline_before {
-        q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+    // issue 217-A: with a publication seed, NO `t.`-column predicate may ride
+    // along — the planner flattens the compound WHERE onto the companion's index
+    // and walks its slice instead of seeking the seed (`source=ted` measured at
+    // 35 s vs 3 ms on prod; the notices lesson, repeated on tenders). Those
+    // companions post-filter in Rust over the seed's ≤handful of rows
+    // (`retain_publication_companions`); the `EXISTS` predicates stay — they have
+    // no `tenders` index to flatten onto (winner companion measured 1.9 ms).
+    if filter.publication_id.is_none() {
+        if let Some(source) = &filter.source {
+            q.push(" AND t.source = ?", [t(source)]);
+        }
+        if let Some(kind) = &filter.kind {
+            q.push(" AND t.kind = ?", [t(kind)]);
+        }
+        // Publication-date bounds (issue 216). In THIS id-ordered shape a narrow range
+        // walks the PK to fill its page, so `walks()` isolates it; the REST handler
+        // routes range/sorted reads through `tenders_by_published` instead, which rides
+        // `tenders_current_published`. This application exists so the filter also means
+        // something on the id-ordered paths (SSE snapshots, an explicit `sort=id`).
+        if let Some(after) = filter.published_after {
+            q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.published_before {
+            q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+        }
+        if let Some(after) = filter.deadline_after {
+            q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.deadline_before {
+            q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+        }
     }
     version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {
