@@ -1,6 +1,24 @@
 # 220 — /v1/notices?tender=X runs a full tender_detail (~17 satellite queries) and discards all but the version chain
 
-Status: needs-triage — MEDIUM, CONFIRMED (code) 2026-08-15. Filed from the API performance review (subagent).
+Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `4a08382` ("notices: serve ?tender= from the
+version chain, not a full tender_detail"), pushed to `origin/main` + the handover branch. Took the
+recommended direction: new store helper `read::tender_version_notice_ids` reads exactly
+`SELECT caused_by_notice_id FROM tender_versions WHERE tender_id=? ORDER BY seq` (the same rows
+`tender_detail`'s version block builds from), and `tender_notices` uses it instead of a full
+`tender_detail`. ~17 satellite queries (lots + `summarise`, lot_results/bids/contracts with org joins,
+parties, amounts, dates) → 1 + N-distinct-notices. Empty chain = unknown id → 404 (unchanged).
+
+Behavior verified unchanged by the existing suite: `notices_can_be_scoped_to_a_tender` (4 notices + 404 on
+`?tender=99999999`) and `the_tender_detail_carries_its_whole_evidence_trail` (detail still runs
+`tender_detail`) — api 7/7 green. Minor, benign semantic sharpening: a row present in `tenders` with ZERO
+`tender_versions` (a projection anomaly that does not occur in a healthy corpus) now returns 404 rather
+than a 200 empty page — consistent with "a Tender with no versions is not a real Tender."
+
+**NOT yet deployed** — same harness deploy gate (deploy/ssh/curl all refused this session; git push works).
+Prod still serves `8938e02`. The perf verification (fattest-tender `time_total` before/after) is owed
+post-deploy; the code path is proven equivalent by the query source + green behavior tests.
+
+Was: needs-triage — MEDIUM, CONFIRMED (code) 2026-08-15. Filed from the API performance review (subagent).
 Kind: performance (wasted per-request work on the main reader pool)
 Blocked by: —
 Relates to: 115/116 (the tender_detail satellite reads this over-uses), 120 (main vs isolated pool)
