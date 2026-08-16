@@ -1,8 +1,9 @@
 # 216 — /v1/tenders documents "newest matching first" but sorts ascending id, and offers no date-range or sort controls
 
-Status: PART A FIXED (docs reconciled) 2026-08-16 — PART B (date-range + sort capability) OPEN. Part A, the
-doc-vs-behavior lie, is fixed: the three "newest matching first" surfaces (`docs.rs:122`, `docs.rs:407`,
-`openapi.json:65`) now state the real order — **ascending id on every collection** (a stable keyset order for
+Status: PART A DEPLOYED & VERIFIED 2026-08-16 (serving rev `647b026`) — PART B (date-range + sort capability)
+OPEN. Prod re-probe: served `/v1/openapi.json` now describes `/v1/tenders` as "in ascending id order …", and
+`/docs` has zero occurrences of "newest matching first". Part A, the doc-vs-behavior lie, is fixed: the
+three surfaces (`docs.rs:122`, `docs.rs:407`, `openapi.json:65`) now state the real order — **ascending id on every collection** (a stable keyset order for
 pagination, not by date). The query is unchanged (`ORDER BY t.id`, read.rs:956); shipping the honest doc now
 stops actively misleading clients, as the issue recommended, ahead of the sort capability. Test:
 `pagination_walks_the_whole_collection_exactly_once` now asserts the list is served in ascending id order,
