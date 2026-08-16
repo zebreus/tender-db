@@ -1,6 +1,8 @@
 # 211 — /v1/changes emits three undocumented entity kinds (lot_result, bid, contract), contradicting the schema and the "same events as SSE" promise
 
-Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `5023ceb` ("changes: filter the poll feed and
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). Prod re-probe:
+`/v1/changes?entity=lot_result` and `?entity=bid` → **400**; `/v1/changes?since=0` returns only public
+kinds (a 50-row page was all `organization`, no lot_result/bid/contract). Fix in `5023ceb` ("changes: filter the poll feed and
 webhook delivery to the public entity kinds"), pushed to `origin/main` + the handover branch. Took
 **Option 1** (filter the feed) as recommended: the poll feed AND webhook delivery — the reviewer's issue
 was `/v1/changes`, but the webhook sweeper had the identical leak (both call `changes_since(None)` and

@@ -1,6 +1,8 @@
 # 219 — unauthenticated isolated-pool saturation: absent tender `kind` (and lots `country`/`buyer`) skip the short-circuit and walk the corpus
 
-Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-15. Fix in `827f259` ("read: fold the absent-value guard
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). The deploy gate lifted; prod
+re-probe: `/v1/tenders?kind=zzz` → 200 empty in **1.2s** (was a 130–230s full walk holding an isolated
+slot) and `/v1/lots?country=zz` → 200 empty in **0.75s** — both guarded. Fix in `827f259` ("read: fold the absent-value guard
 into one reachable() over every isolation-routed filter"), pushed to `origin/main` + the handover branch,
 `store` regression suite green (`tenders_shortcircuit`: 3 passed incl. the new lots + tender-kind guards;
 `lots_filter_fixture` green). **NOT yet deployed** — `./deploy.sh main` and its decomposed `git push vps`

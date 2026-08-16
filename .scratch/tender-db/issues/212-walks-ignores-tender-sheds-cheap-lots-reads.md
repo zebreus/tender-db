@@ -1,6 +1,8 @@
 # 212 — walks() ignores `tender`, so a bounded `/v1/lots?tender=X&kind=…` read is routed to the shed-only isolated pool and can 503
 
-Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `0625baf` ("read: let a tender= containment bound
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). Prod re-probe:
+`/v1/lots?tender=1&kind=Lot` → 200 in **0.79s** on the main pool (bounded containment read, no isolated-pool
+503). Fix in `0625baf` ("read: let a tender= containment bound
 suppress isolation routing"), pushed to `origin/main` + the handover branch. Applied the recommended
 one-liner: the Lots arm of `walks()` is now
 `tender.is_none() && (version_predicate || source.is_some() || kind.is_some())`, and the `let _ = tender`

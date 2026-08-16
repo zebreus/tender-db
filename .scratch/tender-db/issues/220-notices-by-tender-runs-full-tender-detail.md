@@ -1,6 +1,8 @@
 # 220 — /v1/notices?tender=X runs a full tender_detail (~17 satellite queries) and discards all but the version chain
 
-Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `4a08382` ("notices: serve ?tender= from the
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). Prod re-probe:
+`/v1/notices?tender=1` → 200 in **0.56s** returning the version-chain notices (no full `tender_detail`).
+Fix in `4a08382` ("notices: serve ?tender= from the
 version chain, not a full tender_detail"), pushed to `origin/main` + the handover branch. Took the
 recommended direction: new store helper `read::tender_version_notice_ids` reads exactly
 `SELECT caused_by_notice_id FROM tender_versions WHERE tender_id=? ORDER BY seq` (the same rows

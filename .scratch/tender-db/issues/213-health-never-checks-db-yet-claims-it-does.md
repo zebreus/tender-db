@@ -1,6 +1,8 @@
 # 213 — /health can never report unhealthy but claims "the database answers"; the 503 branch is dead code
 
-Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `67c947d` ("health: make /health honest liveness
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `005c617`). Prod re-probe: `/health` now
+returns `{"cursor":…,"ok":true,"rev":…}` with **no `database` field** (honest liveness), and `/health/deep`
+still carries its `database` check (now the real reader-pool read). Fix in `67c947d` ("health: make /health honest liveness
 + give /health/deep a real DB-answer check"), pushed to `origin/main` + the handover branch. Owner chose a
 blend of both options: **shallow `/health` → Option 2** (honest liveness — keeps issue-61's instant,
 DB-free design so a saturated reader pool during a projection never fails the deploy gate; dropped the dead

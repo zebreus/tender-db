@@ -1,6 +1,9 @@
 # 214 — webhook target is vetted only at registration; delivery re-resolves the host with no IP pin (DNS-rebinding SSRF to the Hetzner metadata endpoint)
 
-Status: PRIMARY ATTACK CLOSED ON MAIN, DEPLOY BLOCKED 2026-08-16 — pin follow-up open. Fix in `ec0038f`
+Status: PRIMARY ATTACK CLOSED — DEPLOYED 2026-08-16 (serving rev `005c617`), pin follow-up open. The
+delivery-time re-vet is live in prod (`Sweeper::init` builds with `revet_on_send: true`); its refusal path
+is proven by the unit/integration test `a_rebound_endpoint_is_refused_at_delivery` — a live DNS-rebind probe
+in prod is not run (it needs attacker-controlled DNS on a registered endpoint). Fix in `ec0038f`
 ("webhooks: re-vet the endpoint host at delivery, not just registration"), pushed to `origin/main` + the
 handover branch. The sweeper now re-runs the public-IP guard (`vet_url`) on **every** delivery and refuses a
 host that resolves non-public before any bytes are sent — closing the **persistent rebind** (register public,
