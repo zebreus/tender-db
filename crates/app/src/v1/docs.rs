@@ -150,7 +150,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">min_value / max_value</td><td>Value in <strong>cents</strong>.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag.</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
-  <tr><td class="ep">limit</td><td>Page size, default 100, max 500.</td></tr>
+  <tr><td class="ep">limit</td><td>Page size, default 100, max 1000.</td></tr>
   <tr><td class="ep">cursor</td><td>Opaque page position — pass back the previous page's <code>next_cursor</code>.</td></tr>
 </table>
 <p>An unknown or misspelled query parameter is rejected with <code>400</code>
@@ -392,7 +392,7 @@ milliseconds.</p>
   <tr><td>Tender list (page)</td><td class="ep">GET /v1/tenders?limit=50</td><td>~19 ms</td><td>main</td></tr>
   <tr><td>Organization list</td><td class="ep">GET /v1/organizations?limit=50</td><td>~65 ms</td><td>main</td></tr>
   <tr><td>Filter, common value</td><td class="ep">?country=DE, ?cpv=45</td><td>~40 ms</td><td>isolated</td></tr>
-  <tr><td>Filter, absent value</td><td class="ep">?country=ZZ</td><td>&lt;1 ms*</td><td>main</td></tr>
+  <tr><td>Filter, absent value</td><td class="ep">?country=ZZ</td><td>&lt;1 ms*</td><td>isolated</td></tr>
   <tr><td>Filter, sparse value</td><td class="ep">?buyer=&lt;rare&gt;, ?winner=&lt;rare&gt;</td><td>walks &rarr; up to a full scan; 503 under load</td><td>isolated</td></tr>
   <tr><td>Change feed</td><td class="ep">GET /v1/changes?since=0</td><td>&lt;1 ms</td><td>main</td></tr>
   <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>

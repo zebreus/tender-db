@@ -222,7 +222,8 @@
           { "$ref": "#/components/parameters/kind" },
           { "$ref": "#/components/parameters/tender" },
           { "$ref": "#/components/parameters/limit" },
-          { "$ref": "#/components/parameters/cursor" }
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
         ],
         "responses": {
           "200": {
@@ -696,7 +697,7 @@
         "name": "limit",
         "in": "query",
         "description": "Page size.",
-        "schema": { "type": "integer", "default": 100, "maximum": 500, "minimum": 1 }
+        "schema": { "type": "integer", "default": 100, "maximum": 1000, "minimum": 1 }
       },
       "cursor": {
         "name": "cursor",

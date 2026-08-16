@@ -479,6 +479,29 @@ async fn the_change_feed_carries_only_the_public_entity_kinds() {
     }
 }
 
+/// Issue 215-C: `/v1/changes` must report `more:true` only when a next page really
+/// exists — an exactly-`limit` FINAL page reports `more:false` (a `limit+1`
+/// look-ahead), so a caller is not sent one extra empty poll. `more`/the cursor
+/// operate over the raw change rows (all kinds, issue 211), so the total is read
+/// through the store.
+#[tokio::test]
+async fn the_change_feed_reports_more_only_when_a_next_page_exists() {
+    let server = Server::start("changes-more").await;
+    server.ingest_chain().await;
+
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let total = store::read::changes_since(&reader, 0, 100_000, None).await.expect("changes").len() as i64;
+    drop(reader);
+    assert!(total >= 2, "the chain produced change rows");
+
+    // A page of EXACTLY the total is the final page.
+    let full = server.get(&format!("/v1/changes?since=0&limit={total}")).await;
+    assert_eq!(full["more"], false, "an exactly-full final page must report more:false");
+    // One short of the end → a next row exists.
+    let short = server.get(&format!("/v1/changes?since=0&limit={}", total - 1)).await;
+    assert_eq!(short["more"], true, "a page one short of the end must report more:true");
+}
+
 #[tokio::test]
 async fn the_filters_narrow_the_same_way_on_every_collection() {
     let server = Server::start("filters").await;

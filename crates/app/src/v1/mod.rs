@@ -805,10 +805,14 @@ async fn changes(State(state): State<AppState>, ApiQuery(params): ApiQuery<Param
     }
     let limit = params.limit();
     let reader = state.readers.get().await?;
-    let rows =
-        read::changes_since(&reader, params.since(), limit, params.entity.as_deref()).await?;
+    // Fetch one past the page (issue 215-C): `more` comes from the overflow row, not
+    // from a full page, so an exactly-`limit` final page reports `more:false` instead
+    // of costing the client one extra empty poll — mirrors the list handler.
+    let mut rows =
+        read::changes_since(&reader, params.since(), limit + 1, params.entity.as_deref()).await?;
+    let more = rows.len() as i64 > limit;
+    rows.truncate(limit as usize);
     let last = rows.last().map(|c| c.cursor).unwrap_or_else(|| params.since());
-    let more = rows.len() as i64 == limit;
     // Serialize only the public-feed kinds (issue 211). The cursor still advances
     // over the FULL fetch (`last`/`more` above), so a window dominated by result-
     // graph rows carries the client past them without redelivering — keeping the
