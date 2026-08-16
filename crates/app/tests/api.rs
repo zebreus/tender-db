@@ -1821,6 +1821,38 @@ async fn the_openapi_spec_matches_the_served_surface() {
     assert_eq!(root["openapi"], "/v1/openapi.json", "the service info links the spec");
 }
 
+/// `/docs` names the whole machine-readable surface (issue 227).
+///
+/// The OpenAPI document is held to the router by the test above; nothing held
+/// the prose page to either, so the week the query vocabulary grew, `/docs`
+/// silently stayed a week behind and read as if the flagship queries did not
+/// exist. This is the missing leg: every parameter name and every path in the
+/// spec must occur in the docs source. A byte-grep on purpose — the gate is
+/// "documented at all", not prose quality — but anchored: a query parameter
+/// counts only as `>name<` (a code span or table cell naming exactly it) or
+/// `name=` (a usage example), so a prose word like "sort" or "order" cannot
+/// vouch for an undocumented parameter; a path parameter counts as `{name}`,
+/// the spelling every endpoint row uses.
+#[test]
+fn the_docs_page_names_the_whole_spec_surface() {
+    let spec: Value =
+        serde_json::from_str(include_str!("../data/openapi.json")).expect("openapi.json parses");
+    let docs = include_str!("../src/v1/docs.rs");
+
+    for (key, param) in spec["components"]["parameters"].as_object().expect("parameters") {
+        let name = param["name"].as_str().expect("a parameter name");
+        let documented = if param["in"] == "path" {
+            docs.contains(&format!("{{{name}}}"))
+        } else {
+            docs.contains(&format!(">{name}<")) || docs.contains(&format!("{name}="))
+        };
+        assert!(documented, "parameter `{key}` ({name}) is in openapi.json but never named on /docs");
+    }
+    for path in spec["paths"].as_object().expect("paths").keys() {
+        assert!(docs.contains(path.as_str()), "{path} is in openapi.json but never named on /docs");
+    }
+}
+
 /// The unauthenticated surface is CORS-open to any origin; the token-gated
 /// surface is not. Also the SSE-resume preflight: a reconnecting EventSource
 /// sends Last-Event-ID, which is not CORS-safelisted, so OPTIONS must answer

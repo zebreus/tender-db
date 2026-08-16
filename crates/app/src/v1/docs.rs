@@ -93,7 +93,10 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <a href="#conventions">Conventions</a><br>
   <a href="#collections">Collections</a><br>
   <a href="#filters">Filters &amp; pagination</a><br>
+  <a href="#ordering">Ordering tenders</a><br>
+  <a href="#lookups">Lookups by real-world key</a><br>
   <a href="#detail">Tender detail</a><br>
+  <a href="#notice-content">Notice content</a><br>
   <a href="#changes">Change feed (poll)</a><br>
   <a href="#sse">Live feed (SSE)</a><br>
   <a href="#event">Event schema</a><br>
@@ -119,13 +122,14 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 <code>Accept: text/event-stream</code> — becomes a live subscription (<a href="#sse">SSE</a>).</p>
 <table>
   <tr><th>Endpoint</th><th>Returns</th></tr>
-  <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), in ascending id order.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), ascending id by default — see <a href="#ordering">ordering</a> for newest-first and closes-soon.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices</td><td>Raw import records. No canonical change rows, so an SSE subscription here is a snapshot then silence.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}</td><td>One Notice by id — the counterpart of a version's <code>caused_by_notice_id</code>.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/notices/{id}/content</td><td>Everything the parser extracted from that Notice — see <a href="#notice-content">notice content</a>.</td></tr>
 </table>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?limit=2"</code></pre>
 <p>Envelope: <code>{"items": [ … ], "next_cursor": "1234"|null, "more": true|false, "ignored_filters": []}</code>.
@@ -146,12 +150,20 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
+  <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline).</td></tr>
-  <tr><td class="ep">min_value / max_value</td><td>Value in <strong>cents</strong>.</td></tr>
-  <tr><td class="ep">kind</td><td>Tender/Lot kind flag.</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>cents</strong>.</td></tr>
+  <tr><td class="ep">kind</td><td>Tender/Lot kind flag; on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
+  <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match, on <code>/v1/notices</code>. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds or RFC 3339; a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
+  <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code>.</td></tr>
+  <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
+  <tr><td class="ep">order</td><td><code>asc</code> | <code>desc</code>. Defaults per sort: <code>published_at</code> newest-first, <code>deadline</code> soonest-first, <code>id</code> ascending (its only direction).</td></tr>
   <tr><td class="ep">limit</td><td>Page size, default 100, max 1000.</td></tr>
-  <tr><td class="ep">cursor</td><td>Opaque page position — pass back the previous page's <code>next_cursor</code>.</td></tr>
+  <tr><td class="ep">cursor</td><td>Opaque page position — pass back the previous page's <code>next_cursor</code>, to the same query shape (a cursor is specific to its <code>sort</code>).</td></tr>
 </table>
 <p>An unknown or misspelled query parameter is rejected with <code>400</code>
 rather than silently ignored, so a typo (<code>cvp</code> for <code>cpv</code>)
@@ -165,10 +177,10 @@ filtered, every list response names the filters it dropped in
 <code>ignored_filters</code>; an empty array means all of them applied. The full map:</p>
 <table>
   <tr><th>Collection</th><th>Applies</th><th>Accepted but ignored</th></tr>
-  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, status, min_value, max_value, kind</td><td>tender</td></tr>
-  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, status, min_value, max_value, kind, tender</td><td>—</td></tr>
-  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer</td><td>cpv, source, status, winner, min_value, max_value, tender</td></tr>
-  <tr><td class="ep">/v1/notices</td><td>source, kind</td><td>country, cpv, buyer, winner, status, min_value, max_value, tender</td></tr>
+  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, publication_id, identifier, name_prefix</td></tr>
+  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
+  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, tender, publication_id, the date bounds</td></tr>
+  <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, identifier, name_prefix, the date bounds</td></tr>
 </table>
 <p>So <code>GET /v1/notices?country=DE</code> returns
 <em>every</em> notice with <code>"ignored_filters": ["country"]</code> in the
@@ -177,6 +189,55 @@ envelope — not the German ones, and the field says so.</p>
 <p>Paginate by following <code>next_cursor</code> until <code>more</code> is false:</p>
 <pre><code>curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50"
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&amp;status=open&amp;limit=50&amp;cursor=14327"</code></pre>
+
+<h2 id="ordering">Ordering tenders</h2>
+<p>Every collection lists in ascending id by default — a stable keyset order for
+pagination, not a domain order. <code>/v1/tenders</code> additionally sorts by
+domain time:</p>
+<table>
+  <tr><th>Query</th><th>Returns</th></tr>
+  <tr><td class="ep">?sort=published_at</td><td>Newest first (default <code>order=desc</code>) — "what's new". <code>order=asc</code> for oldest-first.</td></tr>
+  <tr><td class="ep">?sort=deadline</td><td>Soonest submission deadline first (default <code>order=asc</code>) — "closes soon". Only tenders that <em>have</em> a deadline appear; pair with <code>status=open</code> and <code>deadline_after</code> for still-open ones.</td></tr>
+  <tr><td class="ep">?sort=id</td><td>The default ascending list, named explicitly. Descending id is not supported — use <code>sort=published_at</code> for newest-first.</td></tr>
+</table>
+<p>The date <strong>bounds imply their ordering</strong>: a
+<code>published_after</code>/<code>published_before</code> bound alone implies
+<code>sort=published_at</code>, a <code>deadline_after</code>/<code>deadline_before</code>
+bound implies <code>sort=deadline</code>. Bounds on <em>both</em> columns need an
+explicit <code>sort</code> to pick the ordering, else <code>400</code>. Instants
+are unix seconds or RFC 3339 (the format the API itself serves; an unencoded
+<code>+01:00</code> offset pasted into a URL works). All of this composes with the
+other filters, and pagination is unchanged: follow <code>next_cursor</code>, back
+into the <em>same</em> query shape — a cursor is specific to its sort. Sorted
+reads are REST-only; an SSE subscription snapshots in id order and then follows
+the change log, so <code>sort</code>/<code>order</code> on a stream is
+<code>400</code>.</p>
+<pre><code># the five newest tenders
+curl -s "https://tenders.zebreus.click/v1/tenders?sort=published_at&amp;limit=5"
+
+# open German tenders closing soonest
+curl -s "https://tenders.zebreus.click/v1/tenders?sort=deadline&amp;status=open&amp;country=DE&amp;deadline_after=1786910000"
+
+# everything published since August 1st, newest first (bound implies the sort)
+curl -s "https://tenders.zebreus.click/v1/tenders?published_after=2026-08-01T00:00:00Z"</code></pre>
+
+<h2 id="lookups">Lookups by real-world key</h2>
+<p>The keys a consumer actually holds — an official notice number, a VAT number,
+a company name — resolve directly, without knowing any internal id:</p>
+<table>
+  <tr><th>You hold</th><th>Query</th></tr>
+  <tr><td>An official notice number</td><td class="ep">GET /v1/notices?publication_id=123456-2026</td></tr>
+  <tr><td>An organization's official identifier (VAT &amp; co.)</td><td class="ep">GET /v1/organizations?identifier=RO42283735&amp;kind=VAT</td></tr>
+  <tr><td>An organization's name</td><td class="ep">GET /v1/organizations?name_prefix=müller</td></tr>
+</table>
+<ul>
+  <li><code>publication_id</code> is an exact match on the number the source printed on the notice; pair with <code>source=</code> if the same number could exist in two sources. An unknown number is an empty page, not a <code>404</code>. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
+  <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the VAT to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it.</li>
+  <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match), and switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
+</ul>
+<pre><code># VAT → canonical org → everything they ever bid on
+curl -s "https://tenders.zebreus.click/v1/organizations?identifier=RO42283735"
+curl -s "https://tenders.zebreus.click/v1/tenders?bidder=2"</code></pre>
 
 <h2 id="detail">Tender detail</h2>
 <p><code class="ep">GET /v1/tenders/{id}</code> returns the current version of a
@@ -188,6 +249,34 @@ Tender plus its satellites: <code>lots</code> count and <code>lot_details</code>
 <code>caused_by_notice_id</code> that produced it (the ADR-0001 traceability
 chain). A missing id is <code>404</code>.</p>
 <pre><code>curl -s https://tenders.zebreus.click/v1/tenders/14327</code></pre>
+
+<h2 id="notice-content">Notice content</h2>
+<p><code class="ep">GET /v1/notices/{id}/content</code> returns <em>everything</em>
+the parser extracted from one Notice — the full section tree with every typed
+field value, verbatim from the parse layer (source field ids like TED business
+terms, not canonical projections). Use it when the projected tender is not
+enough: to see a field the canonical layer does not model, or to check what a
+quarantined notice did yield. A held or unparsed notice returns its metadata
+row via <code>/v1/notices/{id}</code> but an empty <code>sections</code> array
+here; an unknown id is <code>404</code>.</p>
+<pre><code>{
+  "notice_id": 14327,
+  "sections": [
+    {
+      "section_id": 1, "kind": "root", "parent_section_id": null,
+      "values": [
+        {"type": "text",   "field_id": "BT-21",  "ordinal": 0, "lang": "deu", "value": "…"},
+        {"type": "amount", "field_id": "BT-27",  "ordinal": 0, "cents": 1200000, "currency": "EUR"},
+        {"type": "date",   "field_id": "BT-131", "ordinal": 0, "value": "2026-09-01T10:00:00+02:00"}
+      ]
+    }
+  ]
+}</code></pre>
+<p class="muted">Value types: <code>text</code>, <code>code</code>,
+<code>classification</code>, <code>amount</code>, <code>date</code>,
+<code>integer</code>, <code>number</code>, <code>id</code> — each carrying its
+own fields (see the <a href="/v1/openapi.json">OpenAPI schema</a>). Values sort
+by <code>(field_id, ordinal)</code> within their section.</p>
 
 <h2 id="changes">Change feed — poll</h2>
 <p><code class="ep">GET /v1/changes?since={cursor}</code> returns everything the
@@ -322,7 +411,8 @@ reachable by id or a small page is index-served and returns in single-digit to t
 milliseconds; a filter on a <em>selective</em> value is the only thing that can be slow,
 and it is deliberately kept from affecting anything else.</p>
 <p class="muted">Median of 5 warm server-side samples, measured 2026-08-15 against the
-live corpus (≈7.9M tenders / 14.3M notices). Absolute numbers drift as the corpus grows
+live corpus (≈7.9M tenders / 14.3M notices; the external-key lookups and sorts
+2026-08-16, ≈24.6M organizations). Absolute numbers drift as the corpus grows
 and the hardware changes — the <em>shape</em> is the durable part, not the exact
 milliseconds.</p>
 
@@ -391,9 +481,11 @@ milliseconds.</p>
   <tr><td>Small list</td><td class="ep">GET /v1/notices, /v1/lots</td><td>~1 ms</td><td>main</td></tr>
   <tr><td>Tender list (page)</td><td class="ep">GET /v1/tenders?limit=50</td><td>~19 ms</td><td>main</td></tr>
   <tr><td>Organization list</td><td class="ep">GET /v1/organizations?limit=50</td><td>~65 ms</td><td>main</td></tr>
+  <tr><td>Lookup by external key</td><td class="ep">?publication_id=&hellip;, ?identifier=&hellip;, ?name_prefix=&hellip;</td><td>1&ndash;8 ms</td><td>main</td></tr>
+  <tr><td>Ordered tender list</td><td class="ep">?sort=published_at, ?sort=deadline</td><td>2&ndash;13 ms</td><td>main</td></tr>
   <tr><td>Filter, common value</td><td class="ep">?country=DE, ?cpv=45</td><td>~40 ms</td><td>isolated</td></tr>
   <tr><td>Filter, absent value</td><td class="ep">?country=ZZ</td><td>&lt;1 ms*</td><td>isolated</td></tr>
-  <tr><td>Filter, sparse value</td><td class="ep">?buyer=&lt;rare&gt;, ?winner=&lt;rare&gt;</td><td>walks &rarr; up to a full scan; 503 under load</td><td>isolated</td></tr>
+  <tr><td>Filter, sparse value</td><td class="ep">?buyer=&lt;rare&gt;, ?winner=&lt;rare&gt;, ?bidder=&lt;rare&gt;</td><td>walks &rarr; up to a full scan; 503 under load</td><td>isolated</td></tr>
   <tr><td>Change feed</td><td class="ep">GET /v1/changes?since=0</td><td>&lt;1 ms</td><td>main</td></tr>
   <tr><td>SQL (bounded)</td><td class="ep">POST /v1/sql (indexed SELECT)</td><td>~1 ms</td><td>isolated, 10 s cap</td></tr>
   <tr><td>Metadata</td><td class="ep">/v1, /docs, /v1/openapi.json, /health</td><td>&lt;1 ms</td><td>&mdash;</td></tr>
@@ -403,8 +495,8 @@ milliseconds.</p>
 <h3>Why the shape looks like this</h3>
 <ul>
   <li>Everything reachable by id or a small page is <strong>index-served</strong>, so it is sub-millisecond to tens of milliseconds regardless of corpus size. The organization list is the heaviest &ldquo;fast&rdquo; read because it counts each row's mentions.</li>
-  <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. (Measured: main-pool reads stayed under 18 ms while a walking filter ran.)</li>
-  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Sort order is fixed: ascending id on every collection (a stable keyset order for pagination, not by date).</li>
+  <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. (Measured: main-pool reads stayed under 18 ms while a walking filter ran.) A <code>name_prefix</code> search paired with <code>country</code>/<code>kind</code> is one of these walking shapes; alone it is index-served and fast.</li>
+  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Ascending id is the default order everywhere (a stable keyset order for pagination); the tender <a href="#ordering">sorts</a> and the org <a href="#lookups">name search</a> ride their own indexes, so they are equally page-cheap at any depth.</li>
   <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
   <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
 </ul>
