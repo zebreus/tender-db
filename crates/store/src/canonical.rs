@@ -1558,8 +1558,19 @@ impl Db {
     /// 3.5M rows, which is where the schema-batch placement was reasonable; at 27.4M
     /// it no longer is. The estimate did not scale, and nobody re-checked it — the
     /// reason this one was measured instead of reasoned by analogy.
-    const DEFERRED_NOTICE_INDEXES: [(&'static str, &'static str); 1] =
-        [("notices_source_id", "notices(source, id)")];
+    const DEFERRED_NOTICE_INDEXES: [(&'static str, &'static str); 2] = [
+        ("notices_source_id", "notices(source, id)"),
+        // Issue 217-A: the official notice number is the primary external key a
+        // consumer holds, and without this index its lookup walks (the `ORDER BY id
+        // LIMIT` pagination drives off the id PK and FILTERs — ~10 s measured on
+        // prod, isolated pool). Leads with `publication_id` and ends with `id`, the
+        // same (filter, id) shape as `notices_source_id` and the org listing indexes,
+        // so `WHERE publication_id = ? AND id > ? ORDER BY id LIMIT ?` seeks the value
+        // and rides the cursor with no sorter. Routing stays ISOLATED until the built
+        // index is measured serving on prod — de-isolating on the assumption an index
+        // helps is exactly the 88d876a regression (issue 217's first deploy).
+        ("notices_publication_id_id", "notices(publication_id, id)"),
+    ];
 
     /// Build the deferred notice indexes. Separate from the org and tender builders
     /// because `notices` has neither's lifecycle: it is never dropped by a rebuild, so
