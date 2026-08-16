@@ -74,3 +74,13 @@ soon." Both are unreachable:
 - `GET /v1/tenders?deadline_before=<iso>&status=open` returns only tenders closing before that instant.
 - `GET /v1/tenders?sort=published_at&order=desc` returns most-recent first and paginates cleanly to the end.
 - An unknown param still 400s (deny_unknown_fields preserved).
+
+## Post-resolution hardening (2026-08-16, serving rev `7786508`)
+
+Probing the docs claim "a cursor is specific to its sort" against prod found it was a lie: both
+orderings key on an `<epoch>.<id>` pair, so a `sort=published_at` cursor pasted into
+`sort=deadline` PARSED and silently served a page keyed off the wrong column. Cursors are now
+tagged with their sort (`p`/`d` prefix) on emission and parse, so the cross-sort paste gets the
+documented "cursor does not match this sort" 400 (prod-verified). The id-ordered list keeps its
+deliberate lenience — an unparseable cursor restarts visibly rather than strands.
+`a_sorted_cursor_never_crosses_into_another_ordering` pins all three behaviors.
