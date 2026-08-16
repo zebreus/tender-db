@@ -1,6 +1,28 @@
 # 217 — the API can't be queried by the keys real consumers hold: publication_id, org identifier/name, tenderer/bidder
 
-Status: needs-triage — HIGH, CONFIRMED (code) 2026-08-15. Filed from the API completeness review (subagent).
+Status: PART A (notices) DEPLOYED & VERIFIED 2026-08-16 (serving rev `5ca7971`) — B, C, and A-tenders + a
+fast path OPEN. `/v1/notices?publication_id=<id>` now resolves the official notice number (commits
+`88d876a` + `5ca7971`); prod-verified: a source-paired lookup returns the matching notice, unknown → empty
+page, and it is named in `ignored_filters` on `/v1/tenders` (honoured_params, issue 118).
+
+**Finding worth keeping:** the filter is NOT the index seek this issue assumed. The dedup index is
+`UNIQUE(source, publication_id, content_hash)`, but the list path's `ORDER BY id LIMIT` pagination makes the
+planner drive off the id PK / `notices_source_id` and FILTER by `publication_id`, so a sparse value (≤1
+match) walks the table to fill the page — **~10 s measured in prod, WITH or without `source`** (issue-117
+class). First deploy (`88d876a`) wrongly kept `source+publication_id` on the main pool, a 10 s walk on the 8
+shared REST readers; `5ca7971` isolates every `publication_id` lookup (issue 120), verified: during an 8.5 s
+lookup, concurrent `/v1/tenders` stayed at 0.48 s. So the capability exists and is shed-safe, but slow.
+
+**Open follow-ups (split out):**
+- **A fast path for `publication_id`** — a query shape that seeks the composite index for the exact-match /
+  ≤1-result case (drop the id-cursor pagination when `publication_id` is present), or a dedicated
+  `notices(publication_id)` index. Would move the lookup from the isolated ~10 s walk to a ~ms main-pool
+  seek. HIGH-ish (it is the primary lookup and 10 s is poor UX).
+- **A-tenders** — `/v1/tenders?publication_id=` (an EXISTS over `tender_versions.publication_id`, also
+  un-indexed-alone; same walk shape).
+- **B** (org `identifier`/`name`) and **C** (`bidder`/`tenderer`) — untouched.
+
+Was: needs-triage — HIGH, CONFIRMED (code) 2026-08-15. Filed from the API completeness review (subagent).
 Three related capability gaps, grouped because each is "add a filter to an existing collection" and they
 share a theme; split out if one grows. Each section is independently actionable and severity-tagged.
 Kind: completeness (missing query filters / lookups)
