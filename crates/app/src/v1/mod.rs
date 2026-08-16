@@ -149,6 +149,7 @@ pub fn router(state: AppState) -> Router {
         .route("/v1/organizations/{id}", get(organization))
         .route("/v1/notices", get(notices))
         .route("/v1/notices/{id}", get(notice))
+        .route("/v1/notices/{id}/content", get(notice_content))
         .route("/v1/changes", get(changes))
         .route("/v1/me", get(me))
         .merge(sql::routes())
@@ -998,6 +999,30 @@ async fn notice(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> Api
         }
         None => Err(ApiError::not_found("notice")),
     }
+}
+
+/// `GET /v1/notices/{id}/content` — the notice's whole parsed payload (issue
+/// 218-B): the section tree and every typed field value, verbatim from the parse
+/// layer (source field ids, not canonical projections). Bounded: one notice's
+/// satellite slices, read by the same `parsed_by_ids` seek set the projection
+/// folds from. A quarantined notice legitimately has zero sections — held whole,
+/// never partially imported (ADR-0004) — and the detail's `quarantine` field says
+/// why; an unknown id is a 404, so the two "nothing here" cases stay distinct.
+async fn notice_content(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
+    let reader = state.readers.get().await?;
+    if read::notices(&reader, &Filter::default(), Scope::At { id, seq: 0 }).await?.is_empty() {
+        return Err(ApiError::not_found("notice"));
+    }
+    drop(reader);
+    let parsed = state
+        .db
+        .parsed_by_ids(&[id])
+        .await?
+        .into_iter()
+        .next()
+        .map(|(_, p)| p)
+        .unwrap_or_default();
+    Ok(axum::Json(json::notice_content(id, &parsed)).into_response())
 }
 
 /// `GET /v1/organizations/{id}` — one Organization by id, the counterpart of a

@@ -132,6 +132,73 @@ pub fn notice_detail(n: &NoticeRow, q: Option<&QuarantineRow>) -> Value {
     base
 }
 
+/// A notice's whole parsed payload (issue 218-B): the section tree and every
+/// typed value, grouped by section in published-section order, values in
+/// `(field_id, ordinal)` order within their type. Field ids stay in the SOURCE's
+/// own vocabulary (eForms BT/OPT ids, TED export field ids…) — this is the parse
+/// layer verbatim, not the canonical projection; `profile` on the notice detail
+/// names which vocabulary to read them in.
+pub fn notice_content(notice_id: i64, parsed: &store::Parsed) -> Value {
+    let value_json = |v: &store::NoticeValue| -> Value {
+        match v {
+            store::NoticeValue::Text { lang, value } => {
+                json!({ "type": "text", "lang": lang, "value": value })
+            }
+            store::NoticeValue::Code { list, code } => {
+                json!({ "type": "code", "list": list, "code": code })
+            }
+            store::NoticeValue::Classification { scheme, code } => {
+                json!({ "type": "classification", "scheme": scheme, "code": code })
+            }
+            store::NoticeValue::Amount { cents, currency } => {
+                json!({ "type": "amount", "cents": cents, "currency": currency })
+            }
+            store::NoticeValue::Date { utc_seconds, offset_minutes, has_time } => {
+                json!({
+                    "type": "date",
+                    "value": stamp(Some(store::read::Stamp {
+                        utc_seconds: *utc_seconds,
+                        offset_minutes: *offset_minutes,
+                        has_time: *has_time,
+                    })),
+                })
+            }
+            store::NoticeValue::Integer(value) => json!({ "type": "integer", "value": value }),
+            store::NoticeValue::Number { value, unit } => {
+                json!({ "type": "number", "value": value, "unit": unit })
+            }
+            store::NoticeValue::Id { scheme, value, is_ref } => {
+                json!({ "type": "id", "scheme": scheme, "value": value, "is_ref": is_ref })
+            }
+        }
+    };
+    let sections: Vec<Value> = parsed
+        .sections
+        .iter()
+        .map(|s| {
+            let mut values: Vec<&store::ValueRow> =
+                parsed.values.iter().filter(|v| v.section_id == s.id).collect();
+            values.sort_by(|a, b| (&a.field_id, a.ordinal).cmp(&(&b.field_id, b.ordinal)));
+            json!({
+                "section_id": s.id,
+                "kind": s.kind,
+                "parent_section_id": s.parent,
+                "values": values
+                    .iter()
+                    .map(|v| {
+                        let mut o = value_json(&v.value);
+                        let map = o.as_object_mut().expect("value objects");
+                        map.insert("field_id".into(), json!(v.field_id));
+                        map.insert("ordinal".into(), json!(v.ordinal));
+                        o
+                    })
+                    .collect::<Vec<_>>(),
+            })
+        })
+        .collect();
+    json!({ "notice_id": notice_id, "sections": sections })
+}
+
 /// The quarantine hold, as a client sees it. Timestamps are ISO 8601 like every
 /// other instant in the contract; `first_reason`/`first_detail` appear only when a
 /// re-attempt overwrote the original cause (issue 87), and the terminal stamps say

@@ -1009,6 +1009,44 @@ async fn tenders_reverse_lookup_by_buyer_matches_the_recorded_role() {
     assert!(items(&server.get("/v1/tenders?buyer=999999999").await).is_empty());
 }
 
+/// Issue 218-B: `/v1/notices/{id}/content` serves the notice's WHOLE parsed
+/// payload — the section tree and every typed value in the source's own field
+/// vocabulary — so no business term is unreachable via REST even before it earns
+/// a canonical projection (the parser-audit's per-layer contract).
+#[tokio::test]
+async fn notice_content_serves_the_whole_parsed_layer() {
+    let server = Server::start("notice_content").await;
+    server.ingest_chain().await;
+
+    let id = items(&server.get("/v1/notices").await)[0]["id"].as_i64().expect("notice id");
+    let content = server.get(&format!("/v1/notices/{id}/content")).await;
+    assert_eq!(content["notice_id"].as_i64(), Some(id));
+
+    let sections = content["sections"].as_array().expect("sections array");
+    assert!(!sections.is_empty(), "a parsed notice has sections");
+    assert!(
+        sections.iter().any(|s| s["section_id"] == "PROCEDURE"),
+        "the notice root is the PROCEDURE section"
+    );
+    // Every value carries the envelope fields + a type tag; at least one text
+    // value exists somewhere (every real notice titles something).
+    let values: Vec<&Value> =
+        sections.iter().flat_map(|s| s["values"].as_array().unwrap()).collect();
+    assert!(!values.is_empty(), "a parsed notice has values");
+    for v in &values {
+        assert!(v["field_id"].is_string(), "every value names its source field");
+        assert!(v["ordinal"].is_i64(), "every value carries its repeat ordinal");
+        assert!(v["type"].is_string(), "every value is type-tagged");
+    }
+    assert!(
+        values.iter().any(|v| v["type"] == "text" && v["value"].is_string()),
+        "at least one text value"
+    );
+
+    // An unknown notice is a 404 — distinct from a held notice's empty content.
+    assert_eq!(server.status("/v1/notices/999999999/content").await, 404);
+}
+
 /// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a held notice
 /// explains why it is absent from the canonical layer instead of returning a bare
 /// `parse_state` stub. A cleanly-parsed notice reports `null`; the list rows stay

@@ -273,6 +273,24 @@
         }
       }
     },
+    "/v1/notices/{id}/content": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "A Notice's parsed content",
+        "description": "The notice's whole parsed payload: the section tree (repeatable-node instances, `PROCEDURE` for the root) and every typed field value, verbatim from the parse layer — field ids in the source's own vocabulary (eForms BT/OPT ids, TED export field ids; the notice's `profile` names which). This is the pre-projection reading: every business term of the notice is here even before (or without) earning a canonical field. A quarantined notice has zero sections — its payload is held whole; see the notice detail's `quarantine` field for why.",
+        "operationId": "getNoticeContent",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The parsed content.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoticeContent" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
     "/v1/changes": {
       "get": {
         "tags": ["changes"],
@@ -897,6 +915,28 @@
           "source": { "type": "string" }
         },
         "additionalProperties": true
+      },
+      "NoticeContent": {
+        "type": "object",
+        "description": "A notice's parsed payload, grouped by section. Each value carries its source field_id, its ordinal (document-order repeat counter within the section) and a `type` tag naming which typed shape follows: text {lang, value}, code {list, code}, classification {scheme, code}, amount {cents, currency}, date {value: ISO 8601 in the published offset}, integer {value}, number {value, unit}, id {scheme, value, is_ref}.",
+        "properties": {
+          "notice_id": { "type": "integer", "format": "int64" },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "section_id": { "type": "string", "description": "The identifier the notice published (LOT-0001, ORG-0002, PROCEDURE for the root)." },
+                "kind": { "type": "string", "description": "The repeatable node's kind (Lot, Organisation, LotResult, …)." },
+                "parent_section_id": { "type": "string", "nullable": true },
+                "values": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true }
+                }
+              }
+            }
+          }
+        }
       },
       "NoticeDetail": {
         "description": "One Notice by id: the list-row identity plus `quarantine`. A held notice has no parsed satellites and no canonical tender, so its quarantine row is the only content it carries.",
