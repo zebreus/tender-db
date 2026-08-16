@@ -148,6 +148,12 @@ struct Job {
 /// during the recovery. The job checkpoints between batches.
 const MARK_BATCH: i64 = 5_000;
 
+/// Tenders per `backfill-deadlines` transaction (issue 216). Rows are small and
+/// the per-row work is one indexed `(tender_id, seq)` seek into the dates
+/// satellite, so the batch can be larger than [`MARK_BATCH`]'s wide quarantine
+/// rows while keeping each WAL transaction bounded.
+const BACKFILL_BATCH: i64 = 10_000;
+
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
@@ -175,6 +181,11 @@ enum Spec {
     /// dropping the tenders list to a full scan. Idempotent (`CREATE INDEX IF NOT
     /// EXISTS` loops), so it builds only what's missing. A unit variant → durable.
     Reindex,
+    /// Stamp `tenders.current_deadline` from each head version's dates (issue 216,
+    /// deadline half). Batched + checkpointed like the mark job (issue 42);
+    /// idempotent, so a restart redoes the walk from zero at worst. A unit
+    /// variant → durable across restarts like `Reindex`.
+    BackfillDeadlines,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -369,6 +380,13 @@ impl Supervisor {
             // Rebuild any missing deferred indexes on the existing layer, no re-fold
             // (issues 82/83). Safe to fire repeatedly (idempotent).
             "reindex" => Ok(vec![self.push("reindex", "reindex".into(), Spec::Reindex).await]),
+            // Stamp every tender's current_deadline from its head version's dates
+            // (issue 216, deadline half) — batched, checkpointed, idempotent. One-off
+            // after the column ships; the fold maintains it from then on.
+            "backfill-deadlines" => Ok(vec![
+                self.push("backfill-deadlines", "backfill-deadlines".into(), Spec::BackfillDeadlines)
+                    .await,
+            ]),
             // Escape hatch for a stale rebuild watermark (issue 85 interlock). No-op
             // safe: it reports whether the flag was actually set.
             "clear-rebuild-flag" => {
@@ -938,6 +956,34 @@ impl Supervisor {
                 self.db.build_notice_indexes().await.map_err(|e| e.to_string())?;
                 let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
                 Ok("deferred org + tender + notice indexes rebuilt".into())
+            }
+            Spec::BackfillDeadlines => {
+                // Walk the whole tenders table in id order, one bounded batch per
+                // transaction, WAL-checkpointing between batches (issue 42) — the
+                // mark job's shape. Progress surfaces as members_done so the
+                // dashboard shows the walk moving.
+                let mut stamped = 0i64;
+                let mut watermark = 0i64;
+                loop {
+                    let (rows, next) = self
+                        .db
+                        .backfill_current_deadline(BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows == 0 {
+                        break;
+                    }
+                    stamped += rows;
+                    watermark = next;
+                    self.update(|p| p.members_done = stamped as u64);
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after deadline batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "current_deadline stamped over {stamped} tenders (head-version \
+                     submission_deadline; NULL where none is published)"
+                ))
             }
             Spec::Refold { profiles, expect } => {
                 let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();

@@ -739,6 +739,51 @@ async fn organizations_can_be_looked_up_by_identifier() {
     assert!(ig.iter().any(|f| f == "identifier"), "identifier is named ignored on /v1/tenders");
 }
 
+/// Issue 216 (deadline half, store side): the fold's head update maintains
+/// `tenders.current_deadline` — for every ingested tender it must equal the
+/// submission deadline the API serves (the read's own MAX-over-the-version pick),
+/// so the materialised column can never drift from what a client sees.
+#[tokio::test]
+async fn the_fold_maintains_the_current_deadline_column() {
+    let server = Server::start("current_deadline").await;
+    server.ingest_chain().await;
+
+    let page = server.get("/v1/tenders?limit=100").await;
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut checked = 0;
+    for t in items(&page) {
+        let id = t["id"].as_i64().unwrap();
+        let mut rows = reader
+            .query(
+                "SELECT current_deadline FROM tenders WHERE id = ?",
+                [store::turso::Value::Integer(id)],
+            )
+            .await
+            .expect("query");
+        let column = rows
+            .next()
+            .await
+            .expect("row")
+            .and_then(|r| r.get_value(0).unwrap().as_integer().copied());
+        // The API's submission_deadline is the same instant rendered in the
+        // published offset; compare on the unix value via a re-parse.
+        let api = t["submission_deadline"].as_str().map(|s| {
+            chrono::DateTime::parse_from_rfc3339(s).expect("valid ISO 8601").timestamp()
+        });
+        assert_eq!(
+            column, api,
+            "tender {id}: current_deadline must equal the served submission_deadline"
+        );
+        checked += 1;
+    }
+    assert!(checked > 0, "the fixture serves tenders");
+    // At least one fixture tender actually has a deadline, or this test is vacuous.
+    assert!(
+        items(&page).iter().any(|t| t["submission_deadline"].is_string()),
+        "the fixture must include a tender with a submission deadline"
+    );
+}
+
 /// Issue 216: the published-ordered Tender list — `sort=published_at` serves the
 /// flagship "most recently published" query, newest first by default, paginating
 /// by a composite (published_at, id) keyset cursor; a published range implies the

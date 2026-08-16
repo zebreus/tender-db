@@ -765,6 +765,27 @@ impl Fact {
     }
 }
 
+/// The head version's submission deadline (issue 216): the LATEST
+/// `submission_deadline` date across the version's tender-level AND lot-level
+/// facts — exactly the value the list row's `pick` reads back out of
+/// `tender_version_dates` (`ORDER BY utc_seconds DESC LIMIT 1` over all rows of
+/// the version, lot rows included), computed here from the in-memory facts so the
+/// head update pays no extra query. `None` when the version publishes no deadline
+/// (award notices), which the read layer treats as "not in the deadline
+/// ordering".
+pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
+    head.facts
+        .iter()
+        .chain(head.lots.iter().flat_map(|l| l.facts.iter()))
+        .filter_map(|f| match f {
+            Fact::Date { field, utc_seconds, .. } if field == "submission_deadline" => {
+                Some(*utc_seconds)
+            }
+            _ => None,
+        })
+        .max()
+}
+
 /// A Lot as one version publishes it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct LotState {
@@ -2845,6 +2866,7 @@ impl Db {
                     Value::Integer(p.versions.len() as i64),
                     Value::Integer(head.published_at),
                     Value::Integer(PROJECTION_EPOCH),
+                    head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
                     Value::Integer(tender_id),
                 ))
                 .await?;
@@ -4207,7 +4229,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")

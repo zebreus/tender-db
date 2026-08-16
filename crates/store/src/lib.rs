@@ -464,6 +464,12 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
 
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_seq INTEGER").await?;
     let added = add_column(conn, "ALTER TABLE tenders ADD COLUMN current_published_at INTEGER").await? || added;
+    // The current version's submission deadline (issue 216, deadline half):
+    // maintained by the fold's head update; existing rows are backfilled by the
+    // batched `backfill-deadlines` admin job, NOT here — a one-shot UPDATE over
+    // 7.9M rows would be a multi-minute blocking boot (the 82/83 regression) in
+    // one giant WAL transaction (the issue-42 lesson). Metadata-only, O(1).
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_deadline INTEGER").await?;
     if added {
         conn.execute(
             "UPDATE tenders SET
@@ -1891,6 +1897,50 @@ impl Db {
         conn.execute(&sql, (Value::Integer(now), reason.to_owned(), Value::Integer(batch))).await?;
         let mut rows = conn.query("SELECT changes()", ()).await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// One batch of the `current_deadline` backfill (issue 216, deadline half):
+    /// stamp the next `batch` tenders past the `after` watermark with their head
+    /// version's submission deadline, straight from `tender_version_dates` — the
+    /// same MAX-over-the-version's-rows (lot rows included) the fold's
+    /// `head_deadline` computes in memory for new writes. Returns `(rows,
+    /// watermark)`; `rows == 0` means the walk is complete.
+    ///
+    /// Batched for the same reason as [`Self::mark_skipped_siblings`]: turso writes
+    /// a WAL frame per row and cannot checkpoint mid-statement, so the caller
+    /// checkpoints between batches (issue 42). Idempotent — recomputing a stamped
+    /// row writes the same value — so a crashed run restarts from zero at worst.
+    pub async fn backfill_current_deadline(
+        &self,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((0, after));
+        }
+        conn.execute(
+            "UPDATE tenders SET current_deadline =
+                 (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
+                   WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
+                     AND d.field = 'submission_deadline')
+              WHERE id > ? AND id <= ?",
+            (Value::Integer(after), Value::Integer(watermark)),
+        )
+        .await?;
+        Ok((count, watermark))
     }
 
     /// The sibling-scope predicate with its skipped-state condition FLIPPED: rows
