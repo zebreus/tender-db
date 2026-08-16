@@ -62,7 +62,7 @@
       "get": {
         "tags": ["collections"],
         "summary": "List Tenders",
-        "description": "The current version of each Tender, newest matching first. With `Accept: text/event-stream` this becomes a live subscription with the same filters.",
+        "description": "The current version of each Tender, in ascending id order (a stable keyset order for pagination, not by publication date). With `Accept: text/event-stream` this becomes a live subscription with the same filters.",
         "operationId": "listTenders",
         "parameters": [
           { "$ref": "#/components/parameters/source" },

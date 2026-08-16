@@ -741,6 +741,10 @@ async fn pagination_walks_the_whole_collection_exactly_once() {
         .map(|n| n["id"].as_i64().expect("notice id"))
         .collect();
     assert_eq!(all.len(), 4);
+    // The documented order (issue 216): every collection is served in ASCENDING id
+    // order, a stable keyset order — not "newest first". If a future change makes it
+    // descending (real published-date sort, issue 216-B), the docs must move with it.
+    assert!(all.windows(2).all(|w| w[0] < w[1]), "the list is served in ascending id order");
 
     let mut seen = Vec::new();
     let mut cursor = None;

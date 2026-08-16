@@ -119,7 +119,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 <code>Accept: text/event-stream</code> — becomes a live subscription (<a href="#sse">SSE</a>).</p>
 <table>
   <tr><th>Endpoint</th><th>Returns</th></tr>
-  <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), newest matching first.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), in ascending id order.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
@@ -404,7 +404,7 @@ milliseconds.</p>
 <ul>
   <li>Everything reachable by id or a small page is <strong>index-served</strong>, so it is sub-millisecond to tens of milliseconds regardless of corpus size. The organization list is the heaviest &ldquo;fast&rdquo; read because it counts each row's mentions.</li>
   <li>Filterable collection reads run on a <strong>separate isolated reader pool</strong>. A filter on a common value fills its page quickly; a filter on a <em>selective</em> value can walk the whole corpus, so it is kept off the main pool &mdash; it may be slow or return <code>503</code> under contention, but it <strong>never slows point lookups, indexed lists, or other clients</strong>. (Measured: main-pool reads stayed under 18 ms while a walking filter ran.)</li>
-  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Sort order is fixed (newest-first for tenders, id for the rest).</li>
+  <li>For a fast, predictable read, filter on a value you expect to be common, keep <code>limit</code> modest, and paginate with the returned <code>next_cursor</code>. Sort order is fixed: ascending id on every collection (a stable keyset order for pagination, not by date).</li>
   <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
   <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
 </ul>
