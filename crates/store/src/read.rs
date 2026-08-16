@@ -533,8 +533,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 14] = [
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
-    ("publication_id", "Notices: isolates whenever present — ORDER BY id defeats the composite \
-                        index so a sparse value walks (issue 217). Ignored by Tenders/Lots/Organizations"),
+    ("publication_id", "Notices: index-served by notices_publication_id_id (publication_id, id); \
+                        companions post-filter in Rust so the planner cannot flatten onto the wrong \
+                        index (issue 217-A, measured). Ignored by Tenders/Lots/Organizations"),
     ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
                     (issue 217). Ignored by Tenders/Lots/Notices"),
     ("now", "not a predicate: the reference instant `status` compares against"),
@@ -577,6 +578,9 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
     // like `country`/`kind` do — and the other collections ignore it. It therefore
     // isolates nowhere; bound here only so adding the field forced this decision.
     let _ = identifier;
+    // `publication_id` (issue 217-A) likewise: served by `notices_publication_id_id`
+    // on Notices (see that arm's comment for the measurement), ignored elsewhere.
+    let _ = publication_id;
 
     // `tender` is the containment shape (issues 115/116): a `tender=X` read drives
     // from that one Tender's `tender_version_lots` slice (whole-corpus max ~2,604
@@ -618,15 +622,16 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // `buyer` is `o.id`, the primary key. Nothing here can walk.
         Collection::Organizations => false,
         // `source` is served by `notices_source_id` and `kind` (`profile`) by
-        // `notices_profile`. `publication_id` (issue 217) ISOLATES whenever present:
-        // it was expected to seek `UNIQUE(source, publication_id, content_hash)`, but
-        // the `ORDER BY id LIMIT` pagination makes the planner drive off the id PK
-        // (or `notices_source_id`) and FILTER by publication_id instead — a sparse
-        // value (≤1 match) then walks the whole table to fill the page (~10 s
-        // measured in prod, both with and without `source` — issue 117 class, tracked
-        // for a fast path on issue 217). Cost, not servedness, decides routing (issue
-        // 120), so it goes to the isolated pool in every case.
-        Collection::Notices => publication_id.is_some(),
+        // `notices_profile`. `publication_id` (issue 217-A) is served by
+        // `notices_publication_id_id (publication_id, id)`: `notices_query` emits it
+        // as the ONLY identity predicate (companions post-filter in Rust, or the
+        // planner flattens onto the wrong index — 7.8 s, measured), so the read is a
+        // seek + cursor ride. De-isolated on MEASUREMENT, not assumption (the 88d876a
+        // rule): 1 ms present / 0.8 ms absent against prod's real file with the index
+        // built. A box whose index is not yet built (fresh restore, pre-auto-reindex)
+        // walks on the main pool for those minutes — accepted and bounded: the
+        // missing-index detector enqueues the build at boot.
+        Collection::Notices => false,
     }
 }
 
@@ -1906,20 +1911,35 @@ pub async fn notices(
     scope: Scope,
 ) -> turso::Result<Vec<NoticeRow>> {
     let q = notices_query(filter, scope);
-    q.rows(conn, |row| NoticeRow {
-        id: int(row, 0),
-        source: text(row, 1),
-        publication_id: text(row, 2),
-        content_hash: text(row, 3),
-        profile: text(row, 4),
-        declared_version: opt_text_of(row, 5),
-        member_path: text(row, 6),
-        ingested_at: int(row, 7),
-        parse_state: text(row, 8),
-        published_at: opt_int_of(row, 9),
-        dispatched_at: opt_int_of(row, 10),
-    })
-    .await
+    let mut rows = q
+        .rows(conn, |row| NoticeRow {
+            id: int(row, 0),
+            source: text(row, 1),
+            publication_id: text(row, 2),
+            content_hash: text(row, 3),
+            profile: text(row, 4),
+            declared_version: opt_text_of(row, 5),
+            member_path: text(row, 6),
+            ingested_at: int(row, 7),
+            parse_state: text(row, 8),
+            published_at: opt_int_of(row, 9),
+            dispatched_at: opt_int_of(row, 10),
+        })
+        .await?;
+    // A publication_id read seeks its own index and leaves `source`/`kind` out of
+    // the SQL (see notices_query) — apply them here, over the ≤handful of rows one
+    // publication number maps to. A page can only UNDER-fill from this (the number
+    // is nearly unique), never mis-paginate: the cursor advances on row ids the
+    // seek actually returned.
+    if filter.publication_id.is_some() {
+        if let Some(source) = &filter.source {
+            rows.retain(|r| r.source == *source);
+        }
+        if let Some(kind) = &filter.kind {
+            rows.retain(|r| r.profile == *kind);
+        }
+    }
+    Ok(rows)
 }
 
 /// The statement [`notices`] builds, without running it — the seam 112's plan gate
@@ -1946,17 +1966,25 @@ fn notices_query(filter: &Filter, scope: Scope) -> Query {
            FROM notices WHERE 1 = 1",
         [],
     );
-    if let Some(source) = &filter.source {
-        q.push(" AND source = ?", [t(source)]);
-    }
-    if let Some(kind) = &filter.kind {
-        q.push(" AND profile = ?", [t(kind)]);
-    }
-    // The official notice number (issue 217). Exact match; `walks()` isolates every
-    // publication_id lookup (the `ORDER BY id` pagination defeats the composite index,
-    // so a sparse value walks — a fast path is tracked on 217).
+    // The official notice number (issue 217-A). When present it is the ONLY
+    // identity predicate emitted in SQL: `notices_publication_id_id (publication_id,
+    // id)` then serves the whole read as a seek + cursor ride (measured 1 ms against
+    // prod, absent 0.8 ms). Emitting `source`/`profile` ALONGSIDE it lets the planner
+    // flatten and drive from THEIR indexes instead, filtering publication_id per row —
+    // a 7.8 s walk over the source's slice, measured; the FROM-subquery and IN-seed
+    // shapes that fix this on two-table reads (issue 223) get flattened here because
+    // both sides are `notices`. So companion filters are applied by [`notices`] in
+    // Rust, over the ≤handful of rows one publication number maps to — semantically
+    // identical, deterministically fast, no planner statistics involved.
     if let Some(publication_id) = &filter.publication_id {
         q.push(" AND publication_id = ?", [t(publication_id)]);
+    } else {
+        if let Some(source) = &filter.source {
+            q.push(" AND source = ?", [t(source)]);
+        }
+        if let Some(kind) = &filter.kind {
+            q.push(" AND profile = ?", [t(kind)]);
+        }
     }
     match scope {
         Scope::Page { after, limit } => q.push(

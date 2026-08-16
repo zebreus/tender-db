@@ -97,19 +97,26 @@ fn tenders_kind_isolates_because_no_index_covers_it() {
 }
 
 #[test]
-fn notices_publication_id_always_isolates() {
-    // Issue 217: `publication_id` was expected to seek the source-leading
-    // `UNIQUE(source, publication_id, …)` index, but the `ORDER BY id LIMIT`
-    // pagination makes the planner drive off the id PK / `notices_source_id` and
-    // FILTER — a sparse value (≤1 match) then walks the table to fill the page
-    // (~10 s measured in prod, WITH or without `source`). Cost decides routing
-    // (issue 120), so every `publication_id` lookup isolates.
+fn notices_publication_id_seeks_on_the_main_pool() {
+    // Issue 217-A, the fast path. History matters here because this test used to
+    // assert the OPPOSITE: without a serving index, `ORDER BY id LIMIT` pagination
+    // drove off the id PK / `notices_source_id` and a sparse value walked (~10 s,
+    // measured in prod) — so every publication_id lookup isolated. Two things
+    // changed, BOTH measured against prod's real file before this assertion flipped
+    // (the 88d876a rule: never de-isolate on assumption):
+    //   * `notices_publication_id_id (publication_id, id)` now serves the seek —
+    //     1 ms present, 0.8 ms absent;
+    //   * `notices_query` emits publication_id as the ONLY identity predicate
+    //     (companions post-filter in Rust), because emitting `source` alongside let
+    //     the planner flatten and drive from `notices_source_id` instead — 7.8 s.
+    // If this fails after a query-shape change, check BOTH halves before touching
+    // the routing: the index must exist AND the SQL must not re-admit companions.
     assert!(
-        walks(Collection::Notices, &Filter { publication_id: Some("00018218-2024".into()), ..f() }),
-        "publication_id alone walks — isolate it"
+        !walks(Collection::Notices, &Filter { publication_id: Some("00018218-2024".into()), ..f() }),
+        "publication_id seeks its own index — main pool"
     );
     assert!(
-        walks(
+        !walks(
             Collection::Notices,
             &Filter {
                 publication_id: Some("00018218-2024".into()),
@@ -117,7 +124,7 @@ fn notices_publication_id_always_isolates() {
                 ..f()
             }
         ),
-        "source + publication_id still walks (ORDER BY id defeats the composite index) — isolate it"
+        "source + publication_id: the same seek (source post-filters in Rust) — main pool"
     );
     assert!(
         !walks(Collection::Notices, &Filter { source: Some("ted".into()), ..f() }),
