@@ -1,6 +1,17 @@
 # 225 — `buyer=` still walks for ubiquitous non-buyer party orgs; needs a role/org covering index
 
-Status: needs-triage — MEDIUM (usability; the last slow case of the org reverse-lookups, but a small
+Status: RESOLVED — DEPLOYED & VERIFIED 2026-08-16 (serving rev `14081a8`). The buyer seed now narrows by
+role in SQL (`role LIKE '%Buyer%'`, mirroring the EXISTS's own match so the superset property holds), and
+a covering deferred index `tender_version_parties_org_role (organization_id, role, tender_id)` serves it
+index-only (auto-reindex 705 built it in 246 s, no guard refusal). Prod-measured: `buyer=2` **19.5 s →
+17 ms** (correctly empty — its 112k rows are all `Procedure-SProvider`, zero buyer), `buyer=3` **16.9 s →
+239 ms** (1.79M rows, 3 real `Procedure-Buyer` → 2 current tenders), orgs 1/4 unchanged-fast,
+winner/bidder unaffected. Role vocabulary confirmed on prod before shipping (`Procedure-Buyer` matches
+`%Buyer%`). With 223 + this, every participation reverse-lookup (buyer/winner/bidder) is sub-second for
+every org class tested. New api test pins the role round-trip (recorded buyer reachable; only-non-buyer
+org excluded; absent short-circuits).
+
+Was: needs-triage — MEDIUM (usability; the last slow case of the org reverse-lookups, but a small
 set of orgs and no regression), CONFIRMED (prod-measured) 2026-08-16. Split from issue 223, which fixed
 `winner`/`bidder` fully and `buyer` for all but this class.
 
