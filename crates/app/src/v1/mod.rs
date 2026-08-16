@@ -465,6 +465,9 @@ pub struct Params {
     tender: Option<i64>,
     /// Official notice number (`publication_id`); exact-match on `/v1/notices` (issue 217).
     publication_id: Option<String>,
+    /// Official organization identifier value (e.g. a VAT number); exact-match on
+    /// `/v1/organizations`, pair with `kind` for the scheme (issue 217).
+    identifier: Option<String>,
     /// Pagination position: the last id of the previous page.
     cursor: Option<String>,
     limit: Option<i64>,
@@ -500,6 +503,7 @@ impl Params {
             kind: self.kind.clone(),
             tender: self.tender,
             publication_id: self.publication_id.clone(),
+            identifier: self.identifier.clone(),
             now,
         })
     }
@@ -566,6 +570,9 @@ impl Params {
         }
         if self.publication_id.is_some() {
             out.push("publication_id");
+        }
+        if self.identifier.is_some() {
+            out.push("identifier");
         }
         out
     }

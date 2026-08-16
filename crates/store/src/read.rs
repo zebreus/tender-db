@@ -165,6 +165,11 @@ pub struct Filter {
     /// `/v1/notices` (issue 217). Not a Tender/Lot/Org predicate — those collections
     /// name it ignored rather than applying it.
     pub publication_id: Option<String>,
+    /// Exact-match an Organization's official identifier VALUE (e.g. a VAT number) on
+    /// `/v1/organizations` (issue 217). Pair with `kind` (the identifier scheme) to
+    /// disambiguate a value reused across schemes. An Organizations-only predicate —
+    /// the other collections name it ignored rather than applying it.
+    pub identifier: Option<String>,
     pub now: i64,
 }
 
@@ -472,9 +477,10 @@ impl Collection {
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
                 "min_value", "max_value", "kind", "tender",
             ],
-            // `organizations_query`: only the three identity-shaped predicates. The
+            // `organizations_query`: the identity-shaped predicates. `identifier` is
+            // the official id value (issue 217), paired with `kind` for the scheme. The
             // value/CPV/status filters are Tender-shaped and have no meaning here.
-            Collection::Organizations => &["country", "kind", "buyer"],
+            Collection::Organizations => &["country", "kind", "buyer", "identifier"],
             // `notices_query` narrows by the notice layer's own vocabulary — `source`
             // and `kind` (the mapping profile) — and nothing else. `tender` is honoured
             // on `/v1/notices` too, but by an app-layer dispatch (the store has no
@@ -513,7 +519,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 13] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 14] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -529,6 +535,8 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 13] = [
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
     ("publication_id", "Notices: isolates whenever present — ORDER BY id defeats the composite \
                         index so a sparse value walks (issue 217). Ignored by Tenders/Lots/Organizations"),
+    ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
+                    (issue 217). Ignored by Tenders/Lots/Notices"),
     ("now", "not a predicate: the reference instant `status` compares against"),
 ];
 
@@ -546,6 +554,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         kind,
         tender,
         publication_id,
+        identifier,
         now: _,
     } = f;
 
@@ -562,6 +571,12 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         || status.is_some()
         || min_value.is_some()
         || max_value.is_some();
+
+    // `identifier` (issue 217) is served by `organizations_identifier_id (identifier,
+    // id)` on the one collection that reads it, so it seeks on the main pool exactly
+    // like `country`/`kind` do — and the other collections ignore it. It therefore
+    // isolates nowhere; bound here only so adding the field forced this decision.
+    let _ = identifier;
 
     // `tender` is the containment shape (issues 115/116): a `tender=X` read drives
     // from that one Tender's `tender_version_lots` slice (whole-corpus max ~2,604
@@ -1861,6 +1876,13 @@ fn organizations_query(filter: &Filter, scope: Scope) -> Query {
     }
     if let Some(kind) = &filter.kind {
         q.push(" AND o.identifier_kind = ?", [t(kind)]);
+    }
+    // The official identifier value (issue 217), served by `organizations_identifier_id
+    // (identifier, id)` so `WHERE identifier=? AND id>? ORDER BY id LIMIT` seeks and the
+    // cursor rides the same index — present OR absent, both O(log n), no sorter. Pair
+    // with `kind` above to pin the scheme; alone it returns every scheme's match.
+    if let Some(identifier) = &filter.identifier {
+        q.push(" AND o.identifier = ?", [t(identifier)]);
     }
     if let Some(buyer) = filter.buyer {
         q.push(" AND o.id = ?", [Value::Integer(buyer)]);

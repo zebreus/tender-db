@@ -3499,6 +3499,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             ("max_value", Filter { max_value: Some(9000), ..base.clone() }),
             ("kind", Filter { kind: Some("Lot".into()), ..base.clone() }),
             ("tender", Filter { tender: Some(424_242), ..base.clone() }),
+            ("identifier", Filter { identifier: Some("DE811907980".into()), ..base.clone() }),
         ];
         for (fname, f) in &filters {
             for after in [0i64, 49_377] {
@@ -3547,6 +3548,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 "kind" => Filter { kind: Some("Lot".into()), ..base },
                 "tender" => Filter { tender: Some(424_242), ..base },
                 "publication_id" => Filter { publication_id: Some("00018218-2024".into()), ..base },
+                "identifier" => Filter { identifier: Some("DE811907980".into()), ..base },
                 other => panic!("unknown parameter {other}"),
             }
         };
@@ -3561,9 +3563,9 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .0
         };
 
-        const ALL: [&str; 12] = [
+        const ALL: [&str; 13] = [
             "source", "country", "cpv", "buyer", "winner", "bidder", "status", "min_value",
-            "max_value", "kind", "tender", "publication_id",
+            "max_value", "kind", "tender", "publication_id", "identifier",
         ];
         for c in
             [Collection::Tenders, Collection::Lots, Collection::Organizations, Collection::Notices]

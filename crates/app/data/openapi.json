@@ -170,6 +170,7 @@
         "parameters": [
           { "$ref": "#/components/parameters/country" },
           { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/identifier" },
           { "$ref": "#/components/parameters/buyer" },
           { "$ref": "#/components/parameters/limit" },
           { "$ref": "#/components/parameters/cursor" },
@@ -706,6 +707,12 @@
         "name": "publication_id",
         "in": "query",
         "description": "Exact-match a Notice's official publication number (the OJ S / TED notice id) on /v1/notices. Runs on the isolated reader pool (a bounded scan), so it may be slower than an indexed filter and can shed 503 under heavy isolated-pool load.",
+        "schema": { "type": "string" }
+      },
+      "identifier": {
+        "name": "identifier",
+        "in": "query",
+        "description": "Exact-match an Organization's official identifier value (e.g. a VAT number) on /v1/organizations. Pair with `kind` to pin the scheme when a value is reused across schemes. Index-served (organizations_identifier_id), so present and absent values are both fast.",
         "schema": { "type": "string" }
       },
       "limit": {

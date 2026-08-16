@@ -687,6 +687,58 @@ async fn notices_can_be_looked_up_by_publication_id() {
     );
 }
 
+/// Issue 217: an Organization is reachable by its official identifier VALUE (e.g. a
+/// VAT number), not just its internal id — the canonical lookup that turns "I have
+/// this company's VAT" into its profile, and the front door to the winner/buyer/
+/// bidder reverse-lookups. Paired with `kind` it pins the scheme; unknown → empty
+/// page; named ignored on collections that do not apply it (issue 118).
+#[tokio::test]
+async fn organizations_can_be_looked_up_by_identifier() {
+    let server = Server::start("org_identifier").await;
+    server.ingest_chain().await;
+
+    // A real org that carries an official identifier, from the fixture.
+    let orgs = items(&server.get("/v1/organizations").await).clone();
+    let identified = orgs.iter().find(|o| o["identifier"].is_string());
+
+    if let Some(org) = identified {
+        let value = org["identifier"].as_str().expect("identifier").to_owned();
+        let id = org["id"].as_i64().expect("org id");
+        let kind = org["identifier_kind"].as_str().map(str::to_owned);
+
+        let hit = server.get(&format!("/v1/organizations?identifier={value}")).await;
+        let hit_ids: Vec<i64> = items(&hit).iter().map(|o| o["id"].as_i64().unwrap()).collect();
+        assert!(hit_ids.contains(&id), "the identifier lookup returns the matching org");
+        assert!(
+            items(&hit).iter().all(|o| o["identifier"].as_str() == Some(value.as_str())),
+            "the page contains only that identifier value"
+        );
+
+        // Paired with its scheme, still a hit (kind narrows, does not exclude).
+        if let Some(kind) = kind {
+            let paired =
+                server.get(&format!("/v1/organizations?identifier={value}&kind={kind}")).await;
+            assert!(
+                items(&paired).iter().any(|o| o["id"].as_i64() == Some(id)),
+                "identifier + its own kind still returns the org"
+            );
+        }
+    }
+
+    // Unknown value → empty page (a seek that finds nothing), not a 400 or a dump.
+    let miss = server.get("/v1/organizations?identifier=ZZ-nonesuch-9999").await;
+    assert!(items(&miss).is_empty(), "an unknown identifier returns an empty page");
+
+    // Named ignored where it has no meaning (issue 118), never silently dropped.
+    let ig: Vec<String> = server.get("/v1/tenders?identifier=DE811907980").await["ignored_filters"]
+        .as_array()
+        .expect("ignored_filters present")
+        .iter()
+        .map(|v| v.as_str().unwrap().to_owned())
+        .collect();
+    assert!(ig.iter().any(|f| f == "identifier"), "identifier is named ignored on /v1/tenders");
+}
+
 /// Issue 218: `/v1/notices/{id}` carries a `quarantine` field so a held notice
 /// explains why it is absent from the canonical layer instead of returning a bare
 /// `parse_state` stub. A cleanly-parsed notice reports `null`; the list rows stay

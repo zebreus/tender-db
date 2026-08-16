@@ -1530,10 +1530,17 @@ impl Db {
     /// `organizations_identity` is deliberately absent: it is built only when the
     /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
     /// legitimately lacks the index and must not be reported as missing.
-    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 3] = [
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 4] = [
         ("organization_mentions_org", "organization_mentions(organization_id)"),
         ("organizations_country_id", "organizations(country, id)"),
         ("organizations_kind_id", "organizations(identifier_kind, id)"),
+        // Issue 217: look up an Organization by its official identifier value (a VAT
+        // number, say). Leads with `identifier` and ends with `id` so the paginated
+        // `WHERE identifier=? AND id>? ORDER BY id LIMIT` seeks the value and rides the
+        // cursor on one index with no sorter — the same (filter, id) shape the country
+        // and kind listings use. `missing_deferred_indexes` will report it absent until
+        // a `Reindex` builds it (auto-enqueued on open, or run on demand).
+        ("organizations_identifier_id", "organizations(identifier, id)"),
     ];
 
     /// The notice indexes that are deferred rather than schema-batch.

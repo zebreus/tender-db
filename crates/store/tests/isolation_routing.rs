@@ -135,6 +135,12 @@ fn the_index_served_shapes_stay_on_the_main_pool() {
     assert!(!walks(Collection::Notices, &Filter { kind: Some("eforms".into()), ..f() }));
     assert!(!walks(Collection::Organizations, &Filter { country: Some("DE".into()), ..f() }));
     assert!(!walks(Collection::Organizations, &Filter { kind: Some("vat".into()), ..f() }));
+    // Issue 217: served by `organizations_identifier_id (identifier, id)`, so a lookup
+    // by official id value seeks on the main pool — never the shed-only isolated one.
+    assert!(!walks(
+        Collection::Organizations,
+        &Filter { identifier: Some("DE811907980".into()), ..f() }
+    ));
     assert!(!walks(Collection::Lots, &Filter { tender: Some(1), ..f() }));
     assert!(!walks(Collection::Tenders, &f()), "an unfiltered page is index-driven");
 }
