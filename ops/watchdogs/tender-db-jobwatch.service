@@ -1,0 +1,6 @@
+[Unit]
+Description=tender-db job-failure watch: failed dailies + wedged jobs (detection only, journal-visible)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tender-db-jobwatch.sh

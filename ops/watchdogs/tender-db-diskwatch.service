@@ -1,0 +1,6 @@
+[Unit]
+Description=tender-db free-space watch: /data + / (detection only, journal-visible)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tender-db-diskwatch.sh

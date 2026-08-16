@@ -1,0 +1,9 @@
+[Unit]
+Description=Hourly tender-db free-space watch (/data + /)
+
+[Timer]
+OnCalendar=*-*-* *:17:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

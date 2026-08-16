@@ -1,0 +1,9 @@
+[Unit]
+Description=Hourly tender-db job-failure watch
+
+[Timer]
+OnCalendar=*-*-* *:29:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
