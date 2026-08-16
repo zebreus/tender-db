@@ -177,6 +177,12 @@ pub struct Filter {
     /// [`tenders_by_published`] as the index range it rides (the fast path).
     pub published_after: Option<i64>,
     pub published_before: Option<i64>,
+    /// Submission-deadline bounds on the current version (`t.current_deadline`,
+    /// inclusive after / exclusive before — issue 216, deadline half). Same
+    /// contract as the published pair: Tenders-only, id-ordered application
+    /// isolates, [`tenders_ordered`] rides `tenders_current_deadline`.
+    pub deadline_after: Option<i64>,
+    pub deadline_before: Option<i64>,
     pub now: i64,
 }
 
@@ -478,6 +484,7 @@ impl Collection {
             Collection::Tenders => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
                 "min_value", "max_value", "kind", "published_after", "published_before",
+                "deadline_after", "deadline_before",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
@@ -527,7 +534,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 16] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 18] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -550,6 +557,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 16] = [
                          The REST published-ordered path rides tenders_current_published instead \
                          (issue 216). Ignored by Lots/Organizations/Notices"),
     ("published_before", "same as published_after"),
+    ("deadline_after", "Tenders: same contract as published_after, over current_deadline / \
+                        tenders_current_deadline (issue 216 deadline half). Ignored elsewhere"),
+    ("deadline_before", "same as deadline_after"),
     ("now", "not a predicate: the reference instant `status` compares against"),
 ];
 
@@ -570,6 +580,8 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         identifier,
         published_after,
         published_before,
+        deadline_after,
+        deadline_before,
         now: _,
     } = f;
 
@@ -621,6 +633,8 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
                 || kind.is_some()
                 || published_after.is_some()
                 || published_before.is_some()
+                || deadline_after.is_some()
+                || deadline_before.is_some()
         }
         // Isolated because the COST is unbounded for sparse and absent values — NOT
         // because the filter is unserved. That distinction became load-bearing when
@@ -1028,28 +1042,68 @@ fn tender_row(row: &turso::Row) -> TenderRow {
     }
 }
 
-/// The published-ordered Tender list (issue 216): newest- or oldest-published
-/// first, riding `tenders_current_published (current_published_at, id)` end to end
-/// — the range bound, the cursor and the ORDER BY are all served by that one
-/// index, so there is no sorter and no walk (first page 5 ms, deep keyset pages
-/// 1-2 ms, measured on prod's 4.26M-row file before this was built).
+/// Which materialised head column an ordered Tender list rides (issue 216): the
+/// publication date or the submission deadline. Each is fold-maintained on
+/// `tenders` and covered by its own `(column, id)` index, so the range bound, the
+/// keyset cursor and the ORDER BY are all one index — no sorter, no walk.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum HeadOrder {
+    PublishedAt,
+    Deadline,
+}
+
+impl HeadOrder {
+    fn column(self) -> &'static str {
+        match self {
+            HeadOrder::PublishedAt => "t.current_published_at",
+            HeadOrder::Deadline => "t.current_deadline",
+        }
+    }
+
+    /// The bounds this ordering SERVES on its own index — the caller strips
+    /// exactly these from the filter before consulting `walks()`, because the
+    /// OTHER column's bounds (and every version predicate) still filter the
+    /// ordered stream per row and can walk it for sparse values.
+    pub fn strip_served(self, filter: &Filter) -> Filter {
+        let mut stripped = filter.clone();
+        match self {
+            HeadOrder::PublishedAt => {
+                stripped.published_after = None;
+                stripped.published_before = None;
+            }
+            HeadOrder::Deadline => {
+                stripped.deadline_after = None;
+                stripped.deadline_before = None;
+            }
+        }
+        stripped
+    }
+}
+
+/// The ordered Tender list (issue 216): by publication date (newest-first
+/// flagship) or by submission deadline ("closes soon"), riding the ordering
+/// column's `(column, id)` index end to end. First page 5 ms, deep keyset pages
+/// 1-2 ms, measured on prod's real file for the published twin; the deadline twin
+/// is the identical shape over `tenders_current_deadline`.
 ///
-/// The keyset cursor is `(published_at, id)` of the last row, applied in the
-/// BOUNDED-OR form — `published <= ?p AND (published < ?p OR id < ?id)` for DESC —
-/// because the planner seeks the redundant outer bound and the OR only trims the
-/// tie edge. Measured against the alternatives on prod: naive OR 527 ms (no seek),
-/// row-value 94 ms; bounded-OR 1-2 ms at any depth.
+/// The keyset cursor is `(key, id)` of the last row, applied in the BOUNDED-OR
+/// form — `key <= ?k AND (key < ?k OR id < ?id)` for DESC — because the planner
+/// seeks the redundant outer bound and the OR only trims the tie edge. Measured
+/// against the alternatives on prod: naive OR 527 ms (no seek), row-value 94 ms;
+/// bounded-OR 1-2 ms at any depth.
 ///
-/// Rows whose head has no publication date (`current_published_at IS NULL`) do not
-/// appear in this ordering — there is nothing truthful to sort them by.
-/// Companion filters apply exactly as on the id-ordered list: `source`/`kind`
-/// directly, the org reverse-lookups via the issue-223 seed, the rest per row
-/// through `version_predicates` — WHICH CAN WALK the ordered stream for sparse
-/// values, so the caller must route through `walks()` with the published bounds
-/// stripped (they are served here; the REMAINING filters decide isolation).
-pub async fn tenders_by_published(
+/// Rows whose head lacks the ordering value (`IS NULL`) do not appear — there is
+/// nothing truthful to sort them by (award-only tenders have no deadline, say).
+/// Companion filters apply exactly as on the id-ordered list: `source`/`kind` and
+/// the OTHER column's bounds directly, the org reverse-lookups via the issue-223
+/// seed, the rest per row through `version_predicates` — WHICH CAN WALK the
+/// ordered stream for sparse values, so the caller must route through `walks()`
+/// with [`HeadOrder::strip_served`] applied (the served bounds decide nothing;
+/// the REMAINING filters decide isolation).
+pub async fn tenders_ordered(
     conn: &Connection,
     filter: &Filter,
+    order: HeadOrder,
     desc: bool,
     cursor: Option<(i64, i64)>,
     limit: i64,
@@ -1057,36 +1111,41 @@ pub async fn tenders_by_published(
     if !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Vec::new());
     }
-    let q = tenders_by_published_query(filter, desc, cursor, limit);
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit);
     q.rows(conn, tender_row).await
 }
 
-/// The statement [`tenders_by_published`] builds — the same test seam every other
+/// The statement [`tenders_ordered`] builds — the same test seam every other
 /// list shape exposes (issue 114: assert the artifact, not a paraphrase).
 #[doc(hidden)]
-pub fn tenders_by_published_statement(
+pub fn tenders_ordered_statement(
     filter: &Filter,
+    order: HeadOrder,
     desc: bool,
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> (String, Vec<Value>) {
-    let q = tenders_by_published_query(filter, desc, cursor, limit);
+    let q = tenders_ordered_query(filter, order, desc, cursor, limit);
     (q.sql, q.params)
 }
 
-fn tenders_by_published_query(
+fn tenders_ordered_query(
     filter: &Filter,
+    order: HeadOrder,
     desc: bool,
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> Query {
+    let key = order.column();
     let mut q = Query::default();
     let (from, seed_param) = tender_from(filter);
     q.push(&tender_select_head(&from), seed_param);
     // Always the current head — this list has no At-scope.
     q.push(
-        "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
-         WHERE t.current_published_at IS NOT NULL",
+        &format!(
+            "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+             WHERE {key} IS NOT NULL"
+        ),
         [],
     );
     if let Some(after) = filter.published_after {
@@ -1095,6 +1154,12 @@ fn tenders_by_published_query(
     if let Some(before) = filter.published_before {
         q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
     }
+    if let Some(after) = filter.deadline_after {
+        q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+    }
+    if let Some(before) = filter.deadline_before {
+        q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+    }
     if let Some(source) = &filter.source {
         q.push(" AND t.source = ?", [t(source)]);
     }
@@ -1102,21 +1167,15 @@ fn tenders_by_published_query(
         q.push(" AND t.kind = ?", [t(kind)]);
     }
     version_predicates(&mut q, filter, "t.id", "v.seq");
-    if let Some((published, id)) = cursor {
+    if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         q.push(
-            &format!(
-                " AND t.current_published_at {outer} ?
-                  AND (t.current_published_at {tie} ? OR t.id {tie} ?)"
-            ),
-            [Value::Integer(published), Value::Integer(published), Value::Integer(id)],
+            &format!(" AND {key} {outer} ? AND ({key} {tie} ? OR t.id {tie} ?)"),
+            [Value::Integer(value), Value::Integer(value), Value::Integer(id)],
         );
     }
     let dir = if desc { "DESC" } else { "ASC" };
-    q.push(
-        &format!(" ORDER BY t.current_published_at {dir}, t.id {dir} LIMIT ?"),
-        [Value::Integer(limit)],
-    );
+    q.push(&format!(" ORDER BY {key} {dir}, t.id {dir} LIMIT ?"), [Value::Integer(limit)]);
     q
 }
 
@@ -1229,6 +1288,12 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     }
     if let Some(before) = filter.published_before {
         q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+    }
+    if let Some(after) = filter.deadline_after {
+        q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+    }
+    if let Some(before) = filter.deadline_before {
+        q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
     }
     version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {

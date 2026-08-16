@@ -62,7 +62,7 @@
       "get": {
         "tags": ["collections"],
         "summary": "List Tenders",
-        "description": "The current version of each Tender. Default order is ascending id (a stable keyset order for pagination); `sort=published_at` (or any published_after/published_before bound) switches to publication-date order, newest first unless `order=asc`. With `Accept: text/event-stream` this becomes a live subscription with the same filters (sort/order do not apply to streams).",
+        "description": "The current version of each Tender. Default order is ascending id (a stable keyset order for pagination); `sort=published_at` switches to publication-date order (newest first by default) and `sort=deadline` to submission-deadline order (closing soonest first by default) — a bound on either date column implies its ordering. With `Accept: text/event-stream` this becomes a live subscription with the same filters (sort/order do not apply to streams).",
         "operationId": "listTenders",
         "parameters": [
           { "$ref": "#/components/parameters/source" },
@@ -77,6 +77,8 @@
           { "$ref": "#/components/parameters/kind" },
           { "$ref": "#/components/parameters/published_after" },
           { "$ref": "#/components/parameters/published_before" },
+          { "$ref": "#/components/parameters/deadline_after" },
+          { "$ref": "#/components/parameters/deadline_before" },
           { "$ref": "#/components/parameters/sort" },
           { "$ref": "#/components/parameters/order" },
           { "$ref": "#/components/parameters/limit" },
@@ -728,14 +730,26 @@
       "sort": {
         "name": "sort",
         "in": "query",
-        "description": "List order for /v1/tenders: `id` (default, ascending) or `published_at` (publication date of the current version; tenders without one are omitted). Index-served either way.",
-        "schema": { "type": "string", "enum": ["id", "published_at"] }
+        "description": "List order for /v1/tenders: `id` (default, ascending), `published_at` (publication date of the current version) or `deadline` (submission deadline of the current version). Tenders without the chosen date are omitted from that ordering. Index-served in every case.",
+        "schema": { "type": "string", "enum": ["id", "published_at", "deadline"] }
       },
       "order": {
         "name": "order",
         "in": "query",
-        "description": "`asc` or `desc`. Defaults: ascending for sort=id (descending id is not supported), descending (newest first) for sort=published_at. Keep sort/order stable while paginating and pass next_cursor verbatim.",
+        "description": "`asc` or `desc`. Defaults follow the question each ordering answers: ascending for sort=id (descending id is not supported), descending (newest first) for sort=published_at, ascending (closing soonest first) for sort=deadline. Keep sort/order stable while paginating and pass next_cursor verbatim.",
         "schema": { "type": "string", "enum": ["asc", "desc"] }
+      },
+      "deadline_after": {
+        "name": "deadline_after",
+        "in": "query",
+        "description": "Only tenders whose current version's submission deadline is at or after this instant (unix seconds or RFC 3339). `deadline_after=now` with sort=deadline&order=asc is the \"closes soon\" query. Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "deadline_before": {
+        "name": "deadline_before",
+        "in": "query",
+        "description": "Only tenders whose current version's submission deadline is before this instant (exclusive; unix seconds or RFC 3339). Implies sort=deadline unless an explicit sort says otherwise. /v1/tenders only.",
+        "schema": { "type": "string" }
       },
       "identifier": {
         "name": "identifier",

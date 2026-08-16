@@ -862,6 +862,89 @@ async fn tenders_list_sorts_by_publication_date() {
     );
 }
 
+/// Issue 216 (deadline half): `sort=deadline` serves "what closes soon" —
+/// soonest-closing first by default, deadline-less tenders omitted, the composite
+/// cursor paginating cleanly; a deadline bound implies the ordering; giving both
+/// date bounds without an explicit sort is ambiguous and must 400.
+#[tokio::test]
+async fn tenders_list_sorts_by_deadline() {
+    let server = Server::start("deadline_sort").await;
+    server.ingest_chain().await;
+
+    let deadline = |t: &Value| t["submission_deadline"].as_str().map(str::to_owned);
+
+    // Soonest-closing first by default; every listed row HAS a deadline.
+    let page = server.get("/v1/tenders?sort=deadline").await;
+    let ds: Vec<String> = items(&page).iter().map(|t| deadline(t).expect("listed ⇒ has one")).collect();
+    assert!(!ds.is_empty(), "the fixture has deadline-carrying tenders");
+    let mut asc = ds.clone();
+    asc.sort();
+    assert_eq!(ds, asc, "sort=deadline defaults to soonest first");
+
+    // A tender without a deadline exists in the corpus but not in this ordering.
+    let all = server.get("/v1/tenders?limit=100").await;
+    let deadline_less = items(&all).iter().filter(|t| deadline(t).is_none()).count();
+    if deadline_less > 0 {
+        assert!(
+            items(&page).len() < items(&all).len(),
+            "deadline-less tenders are omitted from the deadline ordering"
+        );
+    }
+
+    // One-row pages reassemble the ordered list exactly (composite cursor).
+    let mut paged: Vec<i64> = Vec::new();
+    let mut cursor: Option<String> = None;
+    loop {
+        let q = match &cursor {
+            Some(c) => format!("/v1/tenders?sort=deadline&limit=1&cursor={c}"),
+            None => "/v1/tenders?sort=deadline&limit=1".into(),
+        };
+        let p = server.get(&q).await;
+        paged.extend(items(&p).iter().map(|t| t["id"].as_i64().unwrap()));
+        match p["next_cursor"].as_str() {
+            Some(next) => cursor = Some(next.to_owned()),
+            None => break,
+        }
+    }
+    let whole: Vec<i64> = items(&page).iter().map(|t| t["id"].as_i64().unwrap()).collect();
+    assert_eq!(paged, whole, "1-row pages must reassemble the deadline ordering");
+
+    // A deadline bound implies the ordering and narrows. Deliberately UNencoded:
+    // the timestamp's `+` decodes to a space, which parse_instant restores — a
+    // client pasting a served timestamp back must not 400.
+    let first = &ds[0];
+    let bounded = server.get(&format!("/v1/tenders?deadline_after={first}")).await;
+    assert!(
+        items(&bounded)
+            .iter()
+            .all(|t| deadline(t).expect("bounded ⇒ has one").as_str() >= first.as_str()),
+        "deadline_after keeps only rows at or after the bound"
+    );
+
+    // Ambiguity and vocabulary contracts.
+    assert_eq!(
+        server
+            .status("/v1/tenders?published_after=2020-01-01T00:00:00Z&deadline_after=2020-01-01T00:00:00Z")
+            .await,
+        400,
+        "both date bounds without sort is ambiguous"
+    );
+    assert_eq!(server.status("/v1/tenders?sort=deadline&order=sideways").await, 400);
+    assert_eq!(
+        server.status("/v1/notices?deadline_after=2020-01-01T00:00:00Z").await,
+        200,
+        "deadline_after is accepted and named ignored off-tenders"
+    );
+    let ig: Vec<String> = server.get("/v1/notices?deadline_after=2020-01-01T00:00:00Z").await
+        ["ignored_filters"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|v| v.as_str().unwrap().into())
+        .collect();
+    assert!(ig.iter().any(|f| f == "deadline_after"));
+}
+
 /// Issue 225: the buyer seed narrows by role in SQL (`role LIKE '%Buyer%'`),
 /// mirroring the EXISTS's own match — a vocabulary drift between the two would
 /// silently drop legitimate buyers, so this pins the round trip on a REAL buyer

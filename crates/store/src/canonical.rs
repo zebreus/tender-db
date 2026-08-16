@@ -1719,7 +1719,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 12] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 13] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
@@ -1753,6 +1753,11 @@ impl Db {
         // the next boot rebuilds it. `current_published_at` is random in fold order, so it
         // belongs here — dropped before the fold, rebuilt once sorted at the end.
         ("tenders_current_published", "tenders(current_published_at, id)"),
+        // Issue 216 (deadline half): the twin of tenders_current_published for the
+        // deadline ordering — "what closes soon" seeks this, range + cursor +
+        // ORDER BY on one index. The column is fold-maintained and was backfilled
+        // by job 706 (7.92M rows), so the index is correct from its first build.
+        ("tenders_current_deadline", "tenders(current_deadline, id)"),
         // Issue 117: the paginated reads' `(filter, id)` indexes. Each one exists so
         // that `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` can use BOTH the
         // filter and the cursor as index bounds — the shape `tenders_current_published`

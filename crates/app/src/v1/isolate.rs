@@ -213,12 +213,13 @@ impl IsolatedReads {
         }
     }
 
-    /// [`Self::read`] for the published-ordered Tender list (issue 216): the same
-    /// slot admission, permit-tracks-the-query lifetime and shed semantics — see the
+    /// [`Self::read`] for the ordered Tender list (issue 216): the same slot
+    /// admission, permit-tracks-the-query lifetime and shed semantics — see the
     /// comments there; only the query differs.
-    pub async fn read_published(
+    pub async fn read_ordered(
         &self,
         filter: Filter,
+        order: store::read::HeadOrder,
         desc: bool,
         cursor: Option<(i64, i64)>,
         limit: i64,
@@ -229,7 +230,7 @@ impl IsolatedReads {
         let handle = self.runtime.spawn(async move {
             let _permit = permit;
             let reader = readers.get().await?;
-            store::read::tenders_by_published(&reader, &filter, desc, cursor, limit).await
+            store::read::tenders_ordered(&reader, &filter, order, desc, cursor, limit).await
         });
         let _abandon = AbortOnDrop(handle.abort_handle());
         match handle.await {

@@ -96,6 +96,8 @@ fn a_published_range_isolates_the_id_ordered_tenders_shape() {
     // bounds before asking `walks()` about the REMAINING filters.
     assert!(walks(Collection::Tenders, &Filter { published_after: Some(1), ..f() }));
     assert!(walks(Collection::Tenders, &Filter { published_before: Some(1), ..f() }));
+    assert!(walks(Collection::Tenders, &Filter { deadline_after: Some(1), ..f() }));
+    assert!(walks(Collection::Tenders, &Filter { deadline_before: Some(1), ..f() }));
     // Inert on the other collections — never applied there, so never isolating.
     assert!(!walks(Collection::Notices, &Filter { published_after: Some(1), ..f() }));
     assert!(!walks(Collection::Organizations, &Filter { published_after: Some(1), ..f() }));

@@ -6,7 +6,7 @@
 //! exercises. Seeded through a raw connection so the ties are constructed, not
 //! hoped for.
 
-use store::read::{self, Filter};
+use store::read::{self, Filter, HeadOrder};
 use store::turso::{self, Value};
 
 async fn open(name: &str) -> turso::Connection {
@@ -68,7 +68,7 @@ async fn ids(
     cursor: Option<(i64, i64)>,
     limit: i64,
 ) -> Vec<i64> {
-    read::tenders_by_published(conn, filter, desc, cursor, limit)
+    read::tenders_ordered(conn, filter, HeadOrder::PublishedAt, desc, cursor, limit)
         .await
         .unwrap()
         .into_iter()
@@ -91,7 +91,7 @@ async fn desc_pages_cross_a_publication_tie_without_dup_or_gap() {
     let mut paged = Vec::new();
     let mut cursor = None;
     loop {
-        let rows = read::tenders_by_published(&conn, &f, true, cursor, 2).await.unwrap();
+        let rows = read::tenders_ordered(&conn, &f, HeadOrder::PublishedAt, true, cursor, 2).await.unwrap();
         if rows.is_empty() {
             break;
         }
@@ -106,6 +106,52 @@ async fn desc_pages_cross_a_publication_tie_without_dup_or_gap() {
     // ASC is the exact reverse (tie by ascending id).
     let asc = ids(&conn, &f, false, None, 100).await;
     assert_eq!(asc, all.iter().rev().copied().collect::<Vec<_>>());
+}
+
+#[tokio::test]
+async fn the_deadline_ordering_is_the_same_shape_over_its_own_column() {
+    // Issue 216, deadline half: identical keyset mechanics over current_deadline.
+    // Deadlines deliberately DISAGREE with publication order (tender 9 published
+    // newest but closes last; 8 closes soonest), so a pass here proves the
+    // ordering actually reads its own column. 10 (NULL both) never appears; 5
+    // has a deadline but the tie tenders 1..=4 do not (award-style rows leave
+    // the deadline ordering entirely).
+    let conn = open("deadline").await;
+    seed(&conn).await;
+    conn.execute(
+        "UPDATE tenders SET current_deadline = CASE id
+             WHEN 5 THEN 3000 WHEN 6 THEN 1000 WHEN 7 THEN 2000
+             WHEN 8 THEN 500 WHEN 9 THEN 9000 ELSE NULL END",
+        (),
+    )
+    .await
+    .unwrap();
+    let f = Filter::default();
+
+    // "Closes soon": ascending deadline.
+    let soon: Vec<i64> = read::tenders_ordered(&conn, &f, HeadOrder::Deadline, false, None, 100)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|r| r.id)
+        .collect();
+    assert_eq!(soon, vec![8, 6, 7, 5, 9], "soonest first; deadline-less rows absent");
+
+    // A deadline window, while a PUBLISHED bound filters within the same read
+    // (the other column's bound applies as a plain predicate).
+    let f2 = Filter {
+        deadline_after: Some(1000),
+        deadline_before: Some(9000),
+        published_after: Some(300), // drops 8 (published 200) — already out — and keeps 5,6,7
+        ..Filter::default()
+    };
+    let windowed: Vec<i64> = read::tenders_ordered(&conn, &f2, HeadOrder::Deadline, false, None, 100)
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|r| r.id)
+        .collect();
+    assert_eq!(windowed, vec![6, 7, 5], "deadline window rides the index, published bound filters");
 }
 
 #[tokio::test]

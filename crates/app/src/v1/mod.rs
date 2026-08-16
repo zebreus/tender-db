@@ -472,8 +472,13 @@ pub struct Params {
     /// RFC 3339. `after` inclusive, `before` exclusive. Tenders-only.
     published_after: Option<String>,
     published_before: Option<String>,
-    /// `/v1/tenders` REST only (issue 216): `id` (default) or `published_at`.
-    /// A published bound implies `sort=published_at` unless `sort=id` is explicit.
+    /// Submission-deadline bounds on the current version (issue 216, deadline
+    /// half): same format and contract as the published pair. Tenders-only.
+    deadline_after: Option<String>,
+    deadline_before: Option<String>,
+    /// `/v1/tenders` REST only (issue 216): `id` (default), `published_at` or
+    /// `deadline`. A bound on one date column implies sorting by it unless an
+    /// explicit `sort` says otherwise.
     sort: Option<String>,
     /// `asc` | `desc`. Defaults: `asc` for `sort=id`, `desc` for `sort=published_at`.
     order: Option<String>,
@@ -516,6 +521,8 @@ impl Params {
             identifier: self.identifier.clone(),
             published_after: parse_instant(self.published_after.as_deref(), "published_after")?,
             published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
+            deadline_after: parse_instant(self.deadline_after.as_deref(), "deadline_after")?,
+            deadline_before: parse_instant(self.deadline_before.as_deref(), "deadline_before")?,
             now,
         })
     }
@@ -591,6 +598,12 @@ impl Params {
         }
         if self.published_before.is_some() {
             out.push("published_before");
+        }
+        if self.deadline_after.is_some() {
+            out.push("deadline_after");
+        }
+        if self.deadline_before.is_some() {
+            out.push("deadline_before");
         }
         out
     }
@@ -746,7 +759,18 @@ fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiErro
     if let Ok(unix) = raw.parse::<i64>() {
         return Ok(Some(unix));
     }
-    match chrono::DateTime::parse_from_rfc3339(raw) {
+    // A `+` in a query string URL-decodes to a space, so a pasted
+    // `…T09:30:00+01:00` arrives as `…T09:30:00 01:00`. RFC 3339 has no bare
+    // space at that position, so restoring the `+` is unambiguous — without this,
+    // every timestamp the API itself serves would 400 when pasted back unencoded.
+    let restored;
+    let candidate = if raw.contains(' ') {
+        restored = raw.replace(' ', "+");
+        restored.as_str()
+    } else {
+        raw
+    };
+    match chrono::DateTime::parse_from_rfc3339(candidate) {
         Ok(dt) => Ok(Some(dt.timestamp())),
         Err(_) => Err(ApiError::bad_request(format!(
             "{name} must be unix seconds or RFC 3339, not {raw:?}"
@@ -769,13 +793,22 @@ async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
     // narrow range is walk-shaped — it exists for SSE snapshots and explicit
     // sort=id, both isolated), and explicit sort=id keeps today's ascending list.
     // Copy verdicts, not borrows: `p` moves into the dispatched handler below.
-    let (sort_published, sort_id_explicit) = match p.sort.as_deref() {
-        None => (false, false),
-        Some("id") => (false, true),
-        Some("published_at") => (true, false),
+    // `sort` names the ordering; a bound on one date column implies sorting by it.
+    #[derive(Clone, Copy, PartialEq)]
+    enum SortChoice {
+        Unset,
+        Id,
+        Published,
+        Deadline,
+    }
+    let sort = match p.sort.as_deref() {
+        None => SortChoice::Unset,
+        Some("id") => SortChoice::Id,
+        Some("published_at") => SortChoice::Published,
+        Some("deadline") => SortChoice::Deadline,
         Some(other) => {
             return Err(ApiError::bad_request(format!(
-                "sort must be 'id' or 'published_at', not {other:?}"
+                "sort must be 'id', 'published_at' or 'deadline', not {other:?}"
             )));
         }
     };
@@ -790,32 +823,59 @@ async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
         }
     };
     let filter = p.filter(store::now_unix())?;
-    let has_range = filter.published_after.is_some() || filter.published_before.is_some();
-    let by_published = sort_published || (has_range && !sort_id_explicit);
-    if !by_published {
+    let published_range = filter.published_after.is_some() || filter.published_before.is_some();
+    let deadline_range = filter.deadline_after.is_some() || filter.deadline_before.is_some();
+    let sort = match sort {
+        SortChoice::Unset => match (published_range, deadline_range) {
+            (true, true) => {
+                return Err(ApiError::bad_request(
+                    "both published and deadline bounds given; pass sort=published_at or \
+                     sort=deadline to choose the ordering",
+                ));
+            }
+            (true, false) => SortChoice::Published,
+            (false, true) => SortChoice::Deadline,
+            (false, false) => SortChoice::Id,
+        },
+        explicit => explicit,
+    };
+    let head_order = match sort {
+        SortChoice::Published => Some(read::HeadOrder::PublishedAt),
+        SortChoice::Deadline => Some(read::HeadOrder::Deadline),
+        _ => None,
+    };
+    let Some(head_order) = head_order else {
         if order_desc {
             return Err(ApiError::bad_request(
                 "descending id order is not supported; use sort=published_at for newest-first",
             ));
         }
         return collection(Collection::Tenders, s, h, p).await;
-    }
+    };
     if wants_events(&h) {
         return Err(ApiError::bad_request(
             "sort does not apply to event streams: a subscription snapshots in id order \
              and then follows the change log; subscribe without sort/order",
         ));
     }
-    tenders_by_published(s, p, filter, !order_asc).await
+    // Direction defaults follow the question each ordering answers: newest-first
+    // for publication ("what just came out"), soonest-first for deadlines ("what
+    // closes soon").
+    let desc = match head_order {
+        read::HeadOrder::PublishedAt => !order_asc,
+        read::HeadOrder::Deadline => order_desc,
+    };
+    tenders_ordered(s, p, filter, head_order, desc).await
 }
 
-/// The published-ordered Tender list (issue 216): the REST half that rides
-/// `tenders_current_published`. The cursor is `<published_at>.<id>` of the last
-/// row, opaque to clients (echo `next_cursor` verbatim).
-async fn tenders_by_published(
+/// The ordered Tender list (issue 216): the REST half that rides the ordering
+/// column\'s `(column, id)` index. The cursor is `<key>.<id>` of the last row,
+/// opaque to clients (echo `next_cursor` verbatim).
+async fn tenders_ordered(
     state: AppState,
     params: Params,
     filter: Filter,
+    order: read::HeadOrder,
     desc: bool,
 ) -> ApiResult {
     let cursor = match params.cursor.as_deref() {
@@ -826,7 +886,7 @@ async fn tenders_by_published(
             Some(pair) => Some(pair),
             None => {
                 return Err(ApiError::bad_request(
-                    "cursor does not match sort=published_at; pass the previous page's \
+                    "cursor does not match this sort; pass the previous page's \
                      next_cursor verbatim, or drop it to restart",
                 ));
             }
@@ -837,10 +897,9 @@ async fn tenders_by_published(
     // filters decide isolation exactly as on the id-ordered list (issue 120) — a
     // sparse version-predicate walks the ordered stream the same way it walks the
     // PK, so it must not hold a main-pool reader.
-    let stripped =
-        Filter { published_after: None, published_before: None, ..filter.clone() };
+    let stripped = order.strip_served(&filter);
     let mut rows = if store::read::walks(store::read::Collection::Tenders, &stripped) {
-        match state.isolated.read_published(filter, desc, cursor, limit + 1).await {
+        match state.isolated.read_ordered(filter, order, desc, cursor, limit + 1).await {
             Ok(result) => result?,
             Err(isolate::Shed) => {
                 return Err(ApiError(
@@ -851,11 +910,18 @@ async fn tenders_by_published(
         }
     } else {
         let reader = state.readers.get().await?;
-        read::tenders_by_published(&reader, &filter, desc, cursor, limit + 1).await?
+        read::tenders_ordered(&reader, &filter, order, desc, cursor, limit + 1).await?
     };
     let next = (rows.len() as i64 > limit).then(|| {
         let last = &rows[limit as usize - 1];
-        format!("{}.{}", last.published_at, last.id)
+        let key = match order {
+            read::HeadOrder::PublishedAt => last.published_at,
+            // The deadline the row was ordered by; the row always HAS one here
+            // (NULL-deadline rows are excluded from this ordering), and the list
+            // row\'s deadline is the same MAX the column materialises.
+            read::HeadOrder::Deadline => last.deadline.map(|d| d.utc_seconds).unwrap_or(0),
+        };
+        format!("{}.{}", key, last.id)
     });
     rows.truncate(limit as usize);
     let honoured = store::read::Collection::Tenders.honoured_params();
