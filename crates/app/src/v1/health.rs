@@ -50,6 +50,16 @@ const LAYER_STALE_SECS: i64 = 6 * 3_600;
 /// last-job check, which flips unhealthy the moment the newest run errors.
 const JOB_SCAN: i64 = 100;
 
+/// The daily ingestion pipeline's job kinds (probe → process → project, T+1).
+/// `ingest_freshness` tracks the newest SUCCESSFUL run among ONLY these, so a
+/// maintenance job that happens to succeed — a `reindex`, `reprocess`, `refold` —
+/// cannot reset the clock and report the box "fresh" while the daily ingest has
+/// actually stalled. Before this, `last_success` took any-kind success, so a manual
+/// reindex marked ingestion fresh even though nothing new was coming in. `probe`
+/// runs every day regardless of new packages, so it is the reliable heartbeat; the
+/// other two only run when there is work, but their success is equally an ingest.
+const INGEST_KINDS: [&str; 3] = ["probe", "process", "project"];
+
 /// The deep probe: liveness + ingest freshness + last-job outcome + disk, folded
 /// into one `ok` the external pinger alerts on.
 pub async fn deep(State(state): State<AppState>) -> Response {
@@ -71,8 +81,10 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     let cursor = db_answered.then(|| state.db.current_cursor());
 
     // 2. Ingest freshness and the last job's outcome, from that same reader-pooled
-    //    log read (issue 20).
-    let last_success = runs.iter().find(|r| r.outcome == "ok").map(|r| r.finished_at);
+    //    log read (issue 20). Freshness counts only the daily-pipeline kinds
+    //    (`INGEST_KINDS`), so a maintenance job cannot mask a stalled ingest; the
+    //    last-job check below is any-kind on purpose (it reports the newest run).
+    let last_success = ingest_last_success(&runs);
     let last_job = runs.into_iter().next();
 
     // 3. Disk on the volume holding the database file.
@@ -90,6 +102,15 @@ pub async fn deep(State(state): State<AppState>) -> Response {
     let body = json!({ "ok": ok, "rev": rev(), "checks": checks });
     let status = if ok { StatusCode::OK } else { StatusCode::SERVICE_UNAVAILABLE };
     (status, Json(body)).into_response()
+}
+
+/// When the newest SUCCESSFUL daily-pipeline run finished — the freshness clock.
+/// Filters to [`INGEST_KINDS`] so a maintenance job's success cannot reset it and
+/// hide a stalled ingest. `runs` is newest-first, so the first match is the newest.
+fn ingest_last_success(runs: &[JobRun]) -> Option<i64> {
+    runs.iter()
+        .find(|r| r.outcome == "ok" && INGEST_KINDS.contains(&r.kind.as_str()))
+        .map(|r| r.finished_at)
 }
 
 /// The raw inputs the verdict is computed from — gathered by [`deep`] (all the
@@ -253,6 +274,46 @@ mod tests {
 
     fn present(name: &str, state: LayerState) -> LayerPresence {
         LayerPresence { name: name.to_string(), state }
+    }
+
+    /// Ingest freshness must track the last DAILY-PIPELINE success, not any job —
+    /// else a maintenance job (a manual `reindex`, as on 2026-08-16) resets the
+    /// clock and reports the box fresh while the ingest has actually stalled.
+    #[test]
+    fn a_maintenance_success_does_not_reset_ingest_freshness() {
+        let job = |kind: &str, outcome: &str, finished_at: i64| JobRun {
+            id: 1,
+            kind: kind.into(),
+            params: String::new(),
+            started_at: finished_at - 10,
+            finished_at,
+            outcome: outcome.into(),
+            counts: String::new(),
+        };
+        // Newest-first: a reindex just succeeded, but the last real ingest was earlier.
+        let runs = vec![
+            job("reindex", "ok", 2_000),
+            job("reprocess", "ok", 1_800),
+            job("process", "ok", 1_000),
+            job("probe", "ok", 900),
+        ];
+        assert_eq!(
+            ingest_last_success(&runs),
+            Some(1_000),
+            "freshness is the last ingest run, not the newer maintenance one"
+        );
+
+        // Only maintenance in the window → None: unmeasured, never a false green.
+        assert_eq!(
+            ingest_last_success(&[job("reindex", "ok", 2_000), job("reprocess", "ok", 1_800)]),
+            None
+        );
+
+        // A failed ingest does not count; the prior successful ingest does.
+        assert_eq!(
+            ingest_last_success(&[job("process", "error", 2_000), job("project", "ok", 1_500)]),
+            Some(1_500)
+        );
     }
 
     /// A table that held rows and is now empty must flip the probe unhealthy —
