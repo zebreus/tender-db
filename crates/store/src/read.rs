@@ -490,18 +490,22 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 11] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 13] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
     ("buyer", "EXISTS per row -> isolates. Organizations: o.id, the primary key"),
     ("winner", "EXISTS per row -> isolates"),
+    ("bidder", "EXISTS per row -> isolates. Issue 223 seeds the driver from the org index \
+                for speed, but a present org still routes to isolation"),
     ("status", "EXISTS over tender_version_dates per row -> isolates"),
     ("min_value", "EXISTS over tender_version_amounts per row -> isolates"),
     ("max_value", "EXISTS over tender_version_amounts per row -> isolates"),
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
+    ("publication_id", "Notices: isolates whenever present — ORDER BY id defeats the composite \
+                        index so a sparse value walks (issue 217). Ignored by Tenders/Lots/Organizations"),
     ("now", "not a predicate: the reference instant `status` compares against"),
 ];
 
@@ -663,6 +667,39 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
                 [Value::Integer(cents)],
             );
         }
+    }
+}
+
+/// Which participation filter, if any, should SEED the driven set — and the org id
+/// to seed it with (issue 223).
+///
+/// `winner`/`bidder`/`buyer` are per-row `EXISTS` predicates (see
+/// [`version_predicates`]). Driven off the `tenders`/`lots` primary key by the
+/// `ORDER BY id LIMIT` pagination, they are evaluated for every driven row, so a
+/// PRESENT org walks the whole corpus to fill a page — 35 s+, a client timeout.
+/// The reverse-lookup's natural driver is instead "the tenders this org touched",
+/// which the participation table's `organization_id` index serves directly and
+/// which is small (an org appears on a bounded slice of the corpus).
+///
+/// So the caller seeds the FROM clause with
+/// `(SELECT DISTINCT tender_id FROM <table> WHERE organization_id = ?)` and joins
+/// the driven table to it. The seed is a SUPERSET of the true matches — it ignores
+/// the role narrowing (`buyer`'s `%Buyer%`, `bidder`'s `tenderer`) and the
+/// current-version constraint, both of which the untouched `EXISTS` predicates
+/// still enforce — so the result is byte-identical to the walk, only bounded by the
+/// org's participation count instead of the corpus. Precedence is by expected
+/// selectivity (winner rows ⊆ bidder rows ⊆ a frequent buyer's), but any present
+/// filter is a correct seed because the `EXISTS` set, not the seed, decides
+/// membership.
+fn participation_seed(f: &Filter) -> Option<(&'static str, i64)> {
+    if let Some(org) = f.winner {
+        Some(("tender_version_result_winners", org))
+    } else if let Some(org) = f.bidder {
+        Some(("tender_version_bid_parties", org))
+    } else if let Some(org) = f.buyer {
+        Some(("tender_version_parties", org))
+    } else {
+        None
     }
 }
 
@@ -945,6 +982,21 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             "1 = 1",
         )
     };
+    // issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
+    // participation table's `organization_id` index instead of walking `tenders`.
+    // The `hits` set is the org's tenders (a superset of the matches); the untouched
+    // `EXISTS` predicates below still decide membership, so the result is identical.
+    let seed = participation_seed(filter);
+    let (from, seed_param): (String, Vec<Value>) = match seed {
+        Some((table, org)) => (
+            format!(
+                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?) hits
+                   JOIN tenders t ON t.id = hits.tender_id"
+            ),
+            vec![Value::Integer(org)],
+        ),
+        None => ("tenders t".to_owned(), vec![]),
+    };
     q.push(
         &format!(
             "SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at,
@@ -964,14 +1016,14 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
                       WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
                     (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
                       WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts')
-               FROM tenders t
+               FROM {from}
                JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
             currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
             utc = deadline("utc_seconds"),
             offset = deadline("offset_minutes"),
             has_time = deadline("has_time"),
         ),
-        [],
+        seed_param,
     );
     let seq = seq_expr(scope, "t", &mut q.params);
     q.push(&format!("{seq} WHERE 1 = 1"), []);
@@ -1529,6 +1581,22 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     // version they are reading.
     const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
 
+    // issue 223: an org reverse-lookup drives from the participation table's
+    // `organization_id` index rather than walking `lots`. The `hits` set is the org's
+    // tenders (seek-served, small); `l.tender_id = hits.tender_id` is served by the
+    // `UNIQUE(tender_id, lot_key)` index. The `EXISTS` probe and the untouched version
+    // predicates still decide membership, so the result matches the walk exactly.
+    let seed = participation_seed(filter);
+    let (from, seed_param): (String, Vec<Value>) = match seed {
+        Some((table, org)) => (
+            format!(
+                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?) hits
+                   JOIN lots l ON l.tender_id = hits.tender_id"
+            ),
+            vec![Value::Integer(org)],
+        ),
+        None => ("lots l".to_owned(), vec![]),
+    };
     let mut q = Query::default();
     q.push(
         &format!(
@@ -1537,12 +1605,12 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
                       WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
                         AND vl.lot_id = l.id),
                     {SEQ}
-               FROM lots l
+               FROM {from}
               WHERE EXISTS (SELECT 1 FROM tender_version_lots vl
                              WHERE vl.tender_id = l.tender_id AND vl.seq = {SEQ}
                                AND vl.lot_id = l.id"
         ),
-        [],
+        seed_param,
     );
     // `kind` filters INSIDE the existence probe: it is a property of the version's lot
     // row, so a lot whose current version does not carry the kind must not match.

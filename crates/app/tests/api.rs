@@ -743,6 +743,73 @@ async fn tenders_can_be_filtered_by_bidder() {
         "bidder is named ignored on /v1/notices");
 }
 
+/// Issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
+/// participation table's `organization_id` index instead of walking the corpus. The
+/// rewrite must not change WHAT the filter returns — only how fast — so this pins the
+/// semantics the driving `hits` join has to preserve: the matching tender is present,
+/// appears exactly once (the `DISTINCT` join must not duplicate a tender the org won
+/// on several lots), and a companion filter still narrows correctly.
+#[tokio::test]
+async fn tenders_reverse_lookup_by_winner_preserves_semantics() {
+    let server = Server::start("winner_reverse_lookup").await;
+    server.ingest_chain().await;
+
+    // A real current-version winner + its tender + that tender's source, so the
+    // positive and companion cases are grounded in the fixture, not invented ids.
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query(
+            "SELECT w.organization_id, w.tender_id, t.source
+               FROM tender_version_result_winners w
+               JOIN tenders t ON t.id = w.tender_id
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = w.seq
+              WHERE v.seq = (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+              LIMIT 1",
+            (),
+        )
+        .await
+        .expect("query winners");
+    let winner = rows.next().await.expect("row").map(|r| {
+        (
+            r.get_value(0).unwrap().as_integer().copied().unwrap(),
+            r.get_value(1).unwrap().as_integer().copied().unwrap(),
+            r.get_value(2).unwrap().as_text().cloned().unwrap(),
+        )
+    });
+    drop(rows);
+    drop(reader);
+
+    if let Some((org, tender_id, source)) = winner {
+        let page = server.get(&format!("/v1/tenders?winner={org}")).await;
+        let hits: Vec<i64> = items(&page).iter().filter_map(|t| t["id"].as_i64()).collect();
+        assert!(hits.contains(&tender_id), "the winner filter returns the won tender");
+        assert_eq!(
+            hits.iter().filter(|&&id| id == tender_id).count(),
+            1,
+            "the DISTINCT driving join must not duplicate a tender the org won more than once"
+        );
+
+        // Companion filter: the tender's own source keeps it; a different source drops it.
+        let same = server.get(&format!("/v1/tenders?winner={org}&source={source}")).await;
+        assert!(
+            items(&same).iter().any(|t| t["id"].as_i64() == Some(tender_id)),
+            "winner + the tender's own source still returns it"
+        );
+        let other = if source == "ted" { "doe" } else { "ted" };
+        let filtered = server.get(&format!("/v1/tenders?winner={org}&source={other}")).await;
+        assert!(
+            !items(&filtered).iter().any(|t| t["id"].as_i64() == Some(tender_id)),
+            "winner + a different source excludes the tender"
+        );
+    }
+
+    // An org that won nothing → empty page via the reachable() short-circuit.
+    assert!(
+        items(&server.get("/v1/tenders?winner=999999999").await).is_empty(),
+        "an unknown winner returns an empty page"
+    );
+}
+
 /// Issue 49: an unknown or mistyped query param is a 400, so an analyst never
 /// mistakes "everything matched" for "my typo'd filter matched".
 #[tokio::test]
