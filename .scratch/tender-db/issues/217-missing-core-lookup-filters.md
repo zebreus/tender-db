@@ -1,9 +1,24 @@
 # 217 — the API can't be queried by the keys real consumers hold: publication_id, org identifier/name, tenderer/bidder
 
-Status: PART A (notices) DEPLOYED & VERIFIED 2026-08-16 (serving rev `5ca7971`) — B, C, and A-tenders + a
-fast path OPEN. `/v1/notices?publication_id=<id>` now resolves the official notice number (commits
-`88d876a` + `5ca7971`); prod-verified: a source-paired lookup returns the matching notice, unknown → empty
-page, and it is named in `ignored_filters` on `/v1/tenders` (honoured_params, issue 118).
+Status: RESOLVED — every capability DEPLOYED & VERIFIED 2026-08-16/17. A (notices `5ca7971`+`7386914`),
+A-tenders (`e3825d8`+`3a658ec`+`1e57a04`, below), B (`7eb2495`), B-name (`5fa2c6c`), C (`00f2f48`).
+The one optional residual — a `(country, name_norm, id)` composite for companioned name search — waits
+for demand, tracked in the B-name section.
+
+**A-tenders DEPLOYED & VERIFIED 2026-08-17 (serving rev `1e57a04`).** `/v1/tenders?publication_id=`
+resolves the official number to the TENDER it caused, through any version (a corrigendum's number still
+finds the procedure). Seeded FROM off the new deferred `tender_versions_publication (publication_id,
+tender_id)` (auto-reindex 711, ~30 s); the seed is EXACT so it doubles as the predicate and takes
+precedence over the participation seeds. Two findings en route, both prod-measured:
+(1) the tenders flatten repeats the notices one — `source=ted` alongside the number drove
+`tenders_source_id` (8M-row slice), a 35 s timeout; fixed the same way (`retain_publication_companions`:
+NO `t.`-column predicate rides the seeded SQL, source/kind/date-bounds post-filter in Rust; the
+statement seam pins it). (2) the seed SUPPRESSES isolation (issue-212 pattern) — every companion is
+bounded by the seed's handful. Final numbers on the MAIN pool: bare 1.8 ms, source-paired 1.7 ms,
+kind+winner companioned 1.8 ms, absent 1.6 ms; main list pages 14-20 ms throughout.
+Bonus catch (own commit `e3825d8`): `reset_tender_layer`'s bare CREATE TABLE lacked `current_deadline`
+(216 added it via migrate() ALTER only) — a from-scratch rebuild would have broken mid-fold; the column
+now lives in the schema batch and the recreate DDL, red-lit by the rebuild-index test.
 
 **Finding worth keeping:** the filter is NOT the index seek this issue assumed. The dedup index is
 `UNIQUE(source, publication_id, content_hash)`, but the list path's `ORDER BY id LIMIT` pagination makes the
