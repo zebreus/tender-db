@@ -206,6 +206,47 @@ async fn a_batch_is_delivered_signed_and_the_slot_advances() {
     assert_eq!(recv.hits().len(), hits.len(), "no re-delivery of an already-acked batch");
 }
 
+/// Issue 214: the public-IP guard runs at DELIVERY, not only at registration. An
+/// endpoint whose host now resolves to a non-public address — a DNS rebind to the
+/// Hetzner cloud-metadata endpoint after a public-looking `register` — is refused
+/// before any bytes are sent. The IP literal `169.254.169.254` stands in for "the
+/// name now resolves here", so no DNS control is needed. The slot must hold and the
+/// log must NAME the SSRF re-check, which is what distinguishes a guard refusal from
+/// an ordinary connection failure (a plain unreachable host would also fail, but
+/// with reqwest's text, and only after trying to connect).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rebound_endpoint_is_refused_at_delivery() {
+    let fx = Fixture::start("rebind").await;
+    fx.ingest_chain().await;
+    let head = fx.db.latest_cursor().await.unwrap();
+    assert!(head > 0, "the chain produced changes to deliver");
+
+    let secret = webhooks::generate_secret();
+    let ep = fx
+        .db
+        .create_webhook(fx.user_id, "https://169.254.169.254/hook", &secret, 0, 1, store::now_unix())
+        .await
+        .unwrap();
+
+    // Enforcement ON, exactly as production's `init` builds the sweeper.
+    let sweeper = Sweeper::new(fx.db.clone(), reqwest::Client::new()).recheck_ssrf_on_send();
+    sweeper.sweep().await.expect("sweep");
+
+    // Nothing was POSTed: the slot never advanced and a failure was recorded.
+    let after = fx.db.webhook(fx.user_id, ep.id).await.unwrap().unwrap();
+    assert_eq!(after.last_delivered_cursor, 0, "a refused delivery must not advance the slot");
+    assert_eq!(after.consecutive_failures, 1, "the refusal is recorded as a failure and backed off");
+
+    // The log names the SSRF re-check — proof the guard refused it rather than a
+    // network error that would also have failed but carried reqwest's message.
+    let log = fx.db.recent_webhook_deliveries(ep.id, 10).await.unwrap();
+    assert!(
+        log.iter()
+            .any(|d| !d.ok && d.error.as_deref().unwrap_or_default().contains("SSRF re-check")),
+        "a delivery-log row must name the SSRF re-check, got {log:?}"
+    );
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn a_failure_holds_the_cursor_then_a_recovery_delivers_the_backlog() {
     let fx = Fixture::start("retry").await;

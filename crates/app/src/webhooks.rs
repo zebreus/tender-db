@@ -270,6 +270,10 @@ pub struct Sweeper {
     db: Arc<Db>,
     readers: Arc<Readers>,
     http: reqwest::Client,
+    /// Re-run the public-IP guard on every delivery, not just at registration
+    /// (issue 214). On in production; off for the local delivery tests, whose
+    /// receivers are on `127.0.0.1` and would otherwise be refused as non-public.
+    revet_on_send: bool,
 }
 
 static SWEEPER: OnceLock<Arc<Sweeper>> = OnceLock::new();
@@ -288,7 +292,7 @@ pub fn init(db: Arc<Db>) -> Arc<Sweeper> {
                 .redirect(reqwest::redirect::Policy::none())
                 .build()
                 .expect("a default reqwest client always builds");
-            let sweeper = Arc::new(Sweeper { db, readers, http });
+            let sweeper = Arc::new(Sweeper { db, readers, http, revet_on_send: true });
             sweeper.clone().spawn();
             sweeper
         })
@@ -299,7 +303,19 @@ impl Sweeper {
     /// Construct without spawning — the integration test drives `sweep` directly.
     pub fn new(db: Arc<Db>, http: reqwest::Client) -> Sweeper {
         let readers = db.readers(2).expect("webhook reader pool");
-        Sweeper { db, readers, http }
+        // Delivery re-vetting OFF by default: the delivery tests POST to a
+        // `127.0.0.1` receiver, which the public-IP guard would refuse. Production
+        // uses `init`, which turns it on; a test wanting the guard opts in with
+        // [`Sweeper::recheck_ssrf_on_send`].
+        Sweeper { db, readers, http, revet_on_send: false }
+    }
+
+    /// Turn on the delivery-time SSRF re-check (issue 214) for a test-built
+    /// sweeper — production gets it from [`init`].
+    #[doc(hidden)]
+    pub fn recheck_ssrf_on_send(mut self) -> Self {
+        self.revet_on_send = true;
+        self
     }
 
     fn spawn(self: Arc<Self>) {
@@ -452,6 +468,26 @@ impl Sweeper {
     /// Sign a prepared body with the Standard-Webhooks HMAC and POST it, classifying
     /// the HTTP result — the tail shared by a normal batch and a reset notice.
     async fn sign_and_send(&self, endpoint: &Endpoint, from: i64, to: i64, body: String) -> Outcome {
+        // Re-vet at delivery, not just at registration (issue 214). `register`'s
+        // `vet_url` ran once; every later POST re-resolves the stored host through
+        // reqwest with no IP pin, so a DNS-rebinding attacker who showed a public
+        // address at registration can repoint the name at a link-local / cloud-
+        // metadata address (169.254.169.254 on this Hetzner box) afterwards. Re-
+        // running the public-IP guard on each send refuses a host that now resolves
+        // non-public — the persistent rebind — before any bytes leave the box.
+        // (The residual sub-millisecond TOCTOU between this resolve and reqwest's own
+        // is closed only by pinning the connection to the vetted IP; that needs a
+        // live delivery to verify and is tracked as the issue-214 follow-up.)
+        if self.revet_on_send
+            && let Err(reason) = vet_url(&endpoint.url).await
+        {
+            return Outcome::Failed {
+                status: None,
+                error: Some(format!("delivery refused: endpoint host failed the SSRF re-check ({reason})")),
+                duration_ms: 0,
+            };
+        }
+
         let msg_id = format!("evt_{}_{}_{}", endpoint.id, from, to);
         let timestamp = store::now_unix();
         let signature = sign(&endpoint.secret, &msg_id, timestamp, &body);
