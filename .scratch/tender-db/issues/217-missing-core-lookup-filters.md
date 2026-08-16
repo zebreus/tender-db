@@ -30,13 +30,18 @@ The auto-reindex detector enqueued the build on open (`703`, ~38 s); prod-verifi
 front door to the winner/buyer/bidder reverse-lookups (issue 223): a consumer holding a company's VAT can
 now resolve its canonical id, then its participation history.
 
+**A fast path DEPLOYED & VERIFIED 2026-08-16 (serving rev `7386914`).** Two steps, both prod-measured:
+(1) deferred index `notices_publication_id_id (publication_id, id)` (auto-reindex 704 built it in 25 s) —
+`publication_id=` alone dropped ~10 s → **1.0 ms**; (2) the pairing stayed a 7.8 s walk because the
+planner flattens the compound WHERE and drives from `notices_source_id`, so `notices_query` now emits
+publication_id as the ONLY identity predicate and `source`/`kind` post-filter in Rust over the ≤handful
+of matched rows. Final numbers: alone 1.0 ms, source-paired **0.5 ms**, kind-paired 0.5 ms, absent
+0.6 ms, wrong-source correctly empty. Notices de-isolated per the 88d876a rule (measured first); the
+isolation test inverted with full history. Finding worth keeping: turso flattens same-table FROM-subquery
+and IN-seed shapes (the issue-223 trick does NOT transfer when both sides are one table) — post-filtering
+in Rust over a near-unique key is the deterministic fix.
+
 **Open follow-ups (split out):**
-- **A fast path for `publication_id`** — a query shape that seeks the composite index for the exact-match /
-  ≤1-result case (drop the id-cursor pagination when `publication_id` is present), or a dedicated
-  `notices(publication_id)` index. Would move the lookup from the isolated ~10 s walk to a ~ms main-pool
-  seek. HIGH-ish (it is the primary lookup and 10 s is poor UX). NOTE: `organizations_identifier_id` just
-  proved the deferred-index path (add to DEFERRED_*_INDEXES, auto-reindex builds it) is cheap and safe at
-  this scale — a `notices(publication_id, id)` index is the same move.
 - **A-tenders** — `/v1/tenders?publication_id=` (an EXISTS over `tender_versions.publication_id`, also
   un-indexed-alone; same walk shape).
 - **B-name** — `/v1/organizations?name=` prefix/contains search. Deferred: a `(name, id)` prefix index has
