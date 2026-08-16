@@ -1,6 +1,21 @@
 # 222 — ingest fires once at 09:35; a bounded morning catch-up poll would never miss a late TED day and fetch the moment it's final
 
-Status: PROPOSED — awaiting owner (Lennart) go-ahead on the approach 2026-08-16. Prompted by Lennart's
+Status: IMPLEMENTED & DEPLOYED 2026-08-16 (serving rev `e9cf997`) — awaiting first live weekday morning.
+Lennart said "it's your project, you decide", so I built it. Chose the lowest-risk shape (design choice #1
+below → the read-only watermark variant): the 09:35 tick and `enqueue_daily` are UNCHANGED, and a
+purely-additive weekday catch-up runs after the tick — give the tick's probe time to land TED's package,
+and if it has not, re-probe every 5 min (`CATCHUP_POLL_SECS`) until it does or a ~3h window closes
+(`CATCHUP_WINDOW_SECS`), then process+project the late package the same morning. On a normal day the
+watermark has already advanced so no catch-up runs; a late/holiday morning is a handful of cheap no-op
+probes. Detection is a read-only `latest_ted_issue` check, so nothing races the queue. Commit `e9cf997`;
+`latest_ted_issue_now_reflects_the_newest_registered_daily` + the 22-test supervisor suite green; clean
+boot verified in prod.
+
+**Owed:** first live observation on a weekday morning (next: Mon 2026-08-17 09:35 CEST) — confirm a normal
+on-time TED day still runs exactly once (no spurious catch-up), and, ideally, watch a slipped day get
+caught. Today (Sun) the weekday-gated catch-up does not run.
+
+Was: PROPOSED — awaiting owner (Lennart) go-ahead on the approach 2026-08-16. Prompted by Lennart's
 question "can we check more often and start the big thing in reaction?" (2026-08-16). The answer to the
 literal question is no (see Non-goal); this issue is the useful version of the idea.
 Kind: operability / ingestion responsiveness + resilience
