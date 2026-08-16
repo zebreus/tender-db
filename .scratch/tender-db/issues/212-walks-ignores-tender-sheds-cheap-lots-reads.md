@@ -1,6 +1,23 @@
 # 212 — walks() ignores `tender`, so a bounded `/v1/lots?tender=X&kind=…` read is routed to the shed-only isolated pool and can 503
 
-Status: needs-triage — CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
+Status: FIXED ON MAIN, DEPLOY BLOCKED 2026-08-16. Fix in `0625baf` ("read: let a tender= containment bound
+suppress isolation routing"), pushed to `origin/main` + the handover branch. Applied the recommended
+one-liner: the Lots arm of `walks()` is now
+`tender.is_none() && (version_predicate || source.is_some() || kind.is_some())`, and the `let _ = tender`
+drop is gone — a `tender=X` bound now SUPPRESSES isolation (the read is a bounded containment lookup over
+one Tender's lot slice, index-served, cannot walk), instead of a companion `kind`/`source` re-isolating the
+cheap read and 503-ing it under pool saturation. The sparse/absent-density cases WITHOUT a tender bound
+(the shapes issue 120 protects) still isolate.
+
+Test `a_tender_containment_bound_suppresses_isolation_even_with_a_companion_filter` covers
+tender+kind/source/country → main pool and the no-tender density cases → still isolated; the existing
+`isolation_routing` suite stays green (7/7). `walks()` is a pure function so this is fully unit-verified
+without a DB.
+
+**NOT yet deployed** — same harness deploy gate (all ssh/curl/`./deploy.sh` refused this session; git
+push works). Prod still serves `8938e02`.
+
+Was: needs-triage — CONFIRMED (code) 2026-08-15. Filed from the API review (subagent).
 Kind: correctness / routing (issue-120 isolation classifier)
 Blocked by: —
 Relates to: 120 (the isolated read pool + Shed this misroutes into), 115/116 (the `tender` containment
