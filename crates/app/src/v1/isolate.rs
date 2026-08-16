@@ -213,6 +213,34 @@ impl IsolatedReads {
         }
     }
 
+    /// [`Self::read`] for the name-ordered organization search when a companion
+    /// filter rides along (issue 217-B): `country`/`kind` beside the name range
+    /// makes the planner drive from the COMPANION's index and scan its whole
+    /// slice (measured 4.9 s for country=DE over 3.85M rows) — correct, but a
+    /// walk, so it must not hold a main-pool reader. Bare-prefix searches stay on
+    /// the main pool (1.7 ms, measured).
+    pub async fn read_org_named(
+        &self,
+        filter: Filter,
+        prefix: String,
+        cursor: Option<(String, i64)>,
+        limit: i64,
+    ) -> Result<store::turso::Result<Vec<store::read::OrganizationRow>>, Shed> {
+        let permit: OwnedSemaphorePermit =
+            self.slots.clone().try_acquire_owned().map_err(|_| Shed)?;
+        let readers = self.readers.clone();
+        let handle = self.runtime.spawn(async move {
+            let _permit = permit;
+            let reader = readers.get().await?;
+            store::read::organizations_by_name(&reader, &filter, &prefix, cursor, limit).await
+        });
+        let _abandon = AbortOnDrop(handle.abort_handle());
+        match handle.await {
+            Ok(result) => Ok(result),
+            Err(_) => Err(Shed),
+        }
+    }
+
     /// [`Self::read`] for the ordered Tender list (issue 216): the same slot
     /// admission, permit-tracks-the-query lifetime and shed semantics — see the
     /// comments there; only the query differs.

@@ -996,9 +996,27 @@ async fn organizations_by_name(
         },
     };
     let limit = params.limit();
-    let reader = state.readers.get().await?;
-    let mut rows =
-        read::organizations_by_name(&reader, &filter, &prefix, cursor, limit + 1).await?;
+    // A companion filter beside the name range flips the planner onto the
+    // companion's index and scans its whole slice (country=DE: 4.9 s over 3.85M
+    // rows, measured on prod) — correct but walk-shaped, so it runs isolated;
+    // the bare prefix seeks in ~2 ms and stays on the main pool. A
+    // (country, name_norm, id) composite would make the pairing seek too —
+    // tracked on issue 217.
+    let companioned = filter.country.is_some() || filter.kind.is_some();
+    let mut rows = if companioned {
+        match state.isolated.read_org_named(filter, prefix, cursor, limit + 1).await {
+            Ok(result) => result?,
+            Err(isolate::Shed) => {
+                return Err(ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "too many expensive filtered reads in flight; retry shortly".into(),
+                ));
+            }
+        }
+    } else {
+        let reader = state.readers.get().await?;
+        read::organizations_by_name(&reader, &filter, &prefix, cursor, limit + 1).await?
+    };
     let next = (rows.len() as i64 > limit).then(|| {
         let last = &rows[limit as usize - 1];
         format!("{}~{}", last.id, last.name.to_lowercase())
