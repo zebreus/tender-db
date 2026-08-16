@@ -1,9 +1,34 @@
 # 223 — org reverse-lookups (buyer/winner/bidder) walk all tenders for a PRESENT value → 35 s+ client timeout
 
-Status: needs-triage — HIGH (usability; the reverse-lookups are advertised filters that time out on
+Status: RESOLVED for `winner`/`bidder`, PARTIAL for `buyer` — DEPLOYED & VERIFIED 2026-08-16 (serving
+rev `f3a1628`). The driven set is now seeded from the participation table's `organization_id` index
+(`participation_seed` + a `hits` subquery in `tenders_query`/`lots_query`); the untouched `EXISTS`
+predicates still decide membership, so results are byte-identical to the walk. **Measured on prod:** the
+org that timed a 35 s client out last firing (`23494787`) now returns in **10 ms** for `bidder=` and
+**2.6 ms** for `winner=`; across a spread of orgs, every `winner=`/`bidder=` lookup is sub-25 ms. One
+residual: **`buyer=` still walks for a handful of ubiquitous non-buyer PARTY orgs** (e.g. org 2/3:
+~17–19 s) — see the residual section below — split out as issue **225**. No regression: those orgs
+walked before too, and the isolated pool kept the main pool at 0.03 s throughout.
+
+Was: needs-triage — HIGH (usability; the reverse-lookups are advertised filters that time out on
 their most common input), CONFIRMED (prod-measured) 2026-08-16. Filed by the owner while shipping the
 `bidder` filter (issue 217-C): every org reverse-lookup returns fast for an ABSENT org (short-circuit,
 issue 219) but times out a 35 s client for a PRESENT one.
+
+## Residual: `buyer=` for ubiquitous non-buyer party orgs (→ issue 225)
+
+`winner` and `bidder` seed from `tender_version_result_winners` / `tender_version_bid_parties`, where an
+org's row count is bounded by how often it won / bid — small, so the seed is cheap and every tested org
+is sub-25 ms. `buyer` seeds from `tender_version_parties`, which holds **every** tender-level party role,
+not just buyers. A few orgs (org 2, org 3) are parties on a huge fraction of the corpus in some
+NON-buyer role, so `SELECT DISTINCT tender_id FROM tender_version_parties WHERE organization_id = ?`
+returns a massive candidate set that the `%Buyer%` EXISTS then filters to ~0 — the work is paid before
+the filter. Because `tender_version_parties_org` covers only `organization_id`, the seed also does one
+table lookup per row to read `tender_id`, so it cannot even be answered index-only. The fix is a covering
+index (`tender_version_parties(organization_id, tender_id)`, ideally `(organization_id, role, tender_id)`
+so the seed filters to buyer rows index-only) via the deferred-index builder (issue 111), plus adding the
+role predicate to the buyer seed. That is index-infra + a reindex job, so it is its own issue (**225**),
+not a rushed add here.
 
 Kind: performance / usability (present-value walk on the participation reverse-lookups)
 Blocked by: —
