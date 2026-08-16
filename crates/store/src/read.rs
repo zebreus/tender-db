@@ -170,6 +170,13 @@ pub struct Filter {
     /// disambiguate a value reused across schemes. An Organizations-only predicate —
     /// the other collections name it ignored rather than applying it.
     pub identifier: Option<String>,
+    /// Publication-date bounds on the CURRENT version (`t.current_published_at`,
+    /// inclusive after / exclusive before — issue 216). Tenders-only; the other
+    /// collections name them ignored. Applied by `tenders_query` in id order (which
+    /// walks for a narrow range, so `walks()` isolates it) and by
+    /// [`tenders_by_published`] as the index range it rides (the fast path).
+    pub published_after: Option<i64>,
+    pub published_before: Option<i64>,
     pub now: i64,
 }
 
@@ -465,11 +472,12 @@ impl Collection {
     /// are echoed to the client verbatim.
     pub fn honoured_params(self) -> &'static [&'static str] {
         match self {
-            // `tenders_query` reads `source` and `kind` directly and the rest through
-            // `version_predicates`; only the Lot-containment `tender` has no meaning.
+            // `tenders_query` reads `source`, `kind` and the published bounds directly
+            // and the rest through `version_predicates`; only the Lot-containment
+            // `tender` has no meaning.
             Collection::Tenders => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "kind",
+                "min_value", "max_value", "kind", "published_after", "published_before",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
@@ -519,7 +527,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 14] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 16] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -538,6 +546,10 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 14] = [
                         index (issue 217-A, measured). Ignored by Tenders/Lots/Organizations"),
     ("identifier", "Organizations: index-served by organizations_identifier_id (identifier, id) \
                     (issue 217). Ignored by Tenders/Lots/Notices"),
+    ("published_after", "Tenders, id-ordered shape: a narrow range filters the PK walk -> isolates. \
+                         The REST published-ordered path rides tenders_current_published instead \
+                         (issue 216). Ignored by Lots/Organizations/Notices"),
+    ("published_before", "same as published_after"),
     ("now", "not a predicate: the reference instant `status` compares against"),
 ];
 
@@ -556,6 +568,8 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         tender,
         publication_id,
         identifier,
+        published_after,
+        published_before,
         now: _,
     } = f;
 
@@ -595,7 +609,19 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         // and `tenders_source_id` are the whole set — so a value matching nothing walks
         // 4.26M rows exactly as the filters issue 117 fixed did. It was not in 117's
         // audit; routing it here is what stops it being a silent survivor.
-        Collection::Tenders => version_predicate || kind.is_some(),
+        //
+        // A published range (issue 216) isolates HERE because this classifies the
+        // id-ordered `tenders_query` shape (SSE snapshots, `sort=id`), where a narrow
+        // range filters the PK walk. The REST published-ordered path never consults
+        // this arm for the range — `tenders_by_published` rides the
+        // `tenders_current_published` index by construction, and the handler strips
+        // the range before asking `walks()` about the REMAINING filters.
+        Collection::Tenders => {
+            version_predicate
+                || kind.is_some()
+                || published_after.is_some()
+                || published_before.is_some()
+        }
         // Isolated because the COST is unbounded for sparse and absent values — NOT
         // because the filter is unserved. That distinction became load-bearing when
         // issue 16 restructured this read: `lots` now drives and the probe is a
@@ -976,7 +1002,13 @@ pub async fn tenders(
         return Ok(Vec::new());
     }
     let q = tenders_query(filter, scope);
-    q.rows(conn, |row| TenderRow {
+    q.rows(conn, tender_row).await
+}
+
+/// One list row off the [`tender_select_head`] column order — shared by every
+/// tender list shape so the mapping cannot drift from the SELECT.
+fn tender_row(row: &turso::Row) -> TenderRow {
+    TenderRow {
         id: int(row, 0),
         source: text(row, 1),
         procedure_key: opt_text_of(row, 2),
@@ -993,8 +1025,99 @@ pub async fn tenders(
         lots: int(row, 14),
         cpv: split_codes(opt_text_of(row, 16)),
         country: split_codes(opt_text_of(row, 17)),
-    })
-    .await
+    }
+}
+
+/// The published-ordered Tender list (issue 216): newest- or oldest-published
+/// first, riding `tenders_current_published (current_published_at, id)` end to end
+/// — the range bound, the cursor and the ORDER BY are all served by that one
+/// index, so there is no sorter and no walk (first page 5 ms, deep keyset pages
+/// 1-2 ms, measured on prod's 4.26M-row file before this was built).
+///
+/// The keyset cursor is `(published_at, id)` of the last row, applied in the
+/// BOUNDED-OR form — `published <= ?p AND (published < ?p OR id < ?id)` for DESC —
+/// because the planner seeks the redundant outer bound and the OR only trims the
+/// tie edge. Measured against the alternatives on prod: naive OR 527 ms (no seek),
+/// row-value 94 ms; bounded-OR 1-2 ms at any depth.
+///
+/// Rows whose head has no publication date (`current_published_at IS NULL`) do not
+/// appear in this ordering — there is nothing truthful to sort them by.
+/// Companion filters apply exactly as on the id-ordered list: `source`/`kind`
+/// directly, the org reverse-lookups via the issue-223 seed, the rest per row
+/// through `version_predicates` — WHICH CAN WALK the ordered stream for sparse
+/// values, so the caller must route through `walks()` with the published bounds
+/// stripped (they are served here; the REMAINING filters decide isolation).
+pub async fn tenders_by_published(
+    conn: &Connection,
+    filter: &Filter,
+    desc: bool,
+    cursor: Option<(i64, i64)>,
+    limit: i64,
+) -> turso::Result<Vec<TenderRow>> {
+    if !reachable(conn, filter, Collection::Tenders).await? {
+        return Ok(Vec::new());
+    }
+    let q = tenders_by_published_query(filter, desc, cursor, limit);
+    q.rows(conn, tender_row).await
+}
+
+/// The statement [`tenders_by_published`] builds — the same test seam every other
+/// list shape exposes (issue 114: assert the artifact, not a paraphrase).
+#[doc(hidden)]
+pub fn tenders_by_published_statement(
+    filter: &Filter,
+    desc: bool,
+    cursor: Option<(i64, i64)>,
+    limit: i64,
+) -> (String, Vec<Value>) {
+    let q = tenders_by_published_query(filter, desc, cursor, limit);
+    (q.sql, q.params)
+}
+
+fn tenders_by_published_query(
+    filter: &Filter,
+    desc: bool,
+    cursor: Option<(i64, i64)>,
+    limit: i64,
+) -> Query {
+    let mut q = Query::default();
+    let (from, seed_param) = tender_from(filter);
+    q.push(&tender_select_head(&from), seed_param);
+    // Always the current head — this list has no At-scope.
+    q.push(
+        "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+         WHERE t.current_published_at IS NOT NULL",
+        [],
+    );
+    if let Some(after) = filter.published_after {
+        q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+    }
+    if let Some(before) = filter.published_before {
+        q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+    }
+    if let Some(source) = &filter.source {
+        q.push(" AND t.source = ?", [t(source)]);
+    }
+    if let Some(kind) = &filter.kind {
+        q.push(" AND t.kind = ?", [t(kind)]);
+    }
+    version_predicates(&mut q, filter, "t.id", "v.seq");
+    if let Some((published, id)) = cursor {
+        let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
+        q.push(
+            &format!(
+                " AND t.current_published_at {outer} ?
+                  AND (t.current_published_at {tie} ? OR t.id {tie} ?)"
+            ),
+            [Value::Integer(published), Value::Integer(published), Value::Integer(id)],
+        );
+    }
+    let dir = if desc { "DESC" } else { "ASC" };
+    q.push(
+        &format!(" ORDER BY t.current_published_at {dir}, t.id {dir} LIMIT ?"),
+        [Value::Integer(limit)],
+    );
+    q
 }
 
 /// The statement [`tenders`] builds, without running it — the seam 112's plan gate
@@ -1012,9 +1135,12 @@ pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<V
     (q.sql, q.params)
 }
 
-/// The identity half of [`tenders`], built but not run.
-fn tenders_query(filter: &Filter, scope: Scope) -> Query {
-    let mut q = Query::default();
+/// The Tender list row's SELECT list + FROM/JOIN, up to (and including) the
+/// `v.seq = ` the caller completes with its seq expression. One string shared by
+/// the id-ordered [`tenders_query`] and the published-ordered
+/// [`tenders_by_published_query`], so the two shapes cannot drift in WHAT a row is
+/// — they may only differ in which rows and in what order.
+fn tender_select_head(from: &str) -> String {
     let title = pick(
         "tender_version_texts",
         "value",
@@ -1033,12 +1159,37 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             "1 = 1",
         )
     };
-    // issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
-    // participation table's `organization_id` index instead of walking `tenders`.
-    // The `hits` set is the org's tenders (a superset of the matches); the untouched
-    // `EXISTS` predicates below still decide membership, so the result is identical.
-    let seed = participation_seed(filter);
-    let (from, seed_param): (String, Vec<Value>) = match seed {
+    format!(
+        "SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at,
+                v.publication_id, v.notice_subtype,
+                {title},
+                (SELECT MAX(a.cents) FROM tender_version_amounts a
+                  WHERE a.tender_id = t.id AND a.seq = v.seq),
+                {currency},
+                {utc}, {offset}, {has_time},
+                (SELECT COUNT(*) FROM tender_version_lots l
+                  WHERE l.tender_id = t.id AND l.seq = v.seq),
+                v.dispatched_at,
+                -- The version's CPV and NUTS codes, echoed so a list row
+                -- shows why it matched a cpv/country filter (issue 49). Both
+                -- seek by (tender_id, seq) on the classifications index.
+                (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+                  WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
+                (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
+                  WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts')
+           FROM {from}
+           JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
+        currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
+        utc = deadline("utc_seconds"),
+        offset = deadline("offset_minutes"),
+        has_time = deadline("has_time"),
+    )
+}
+
+/// The participation-seeded FROM clause both tender list shapes share (issue 223):
+/// either the plain driven table or the org seed joined to it.
+fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
+    match participation_seed(filter) {
         Some((table, extra, org)) => (
             format!(
                 "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
@@ -1047,35 +1198,18 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             vec![Value::Integer(org)],
         ),
         None => ("tenders t".to_owned(), vec![]),
-    };
-    q.push(
-        &format!(
-            "SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at,
-                    v.publication_id, v.notice_subtype,
-                    {title},
-                    (SELECT MAX(a.cents) FROM tender_version_amounts a
-                      WHERE a.tender_id = t.id AND a.seq = v.seq),
-                    {currency},
-                    {utc}, {offset}, {has_time},
-                    (SELECT COUNT(*) FROM tender_version_lots l
-                      WHERE l.tender_id = t.id AND l.seq = v.seq),
-                    v.dispatched_at,
-                    -- The version's CPV and NUTS codes, echoed so a list row
-                    -- shows why it matched a cpv/country filter (issue 49). Both
-                    -- seek by (tender_id, seq) on the classifications index.
-                    (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
-                      WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'cpv'),
-                    (SELECT group_concat(DISTINCT c.code) FROM tender_version_classifications c
-                      WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'nuts')
-               FROM {from}
-               JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
-            currency = pick("tender_version_amounts", "currency", None, "s.cents DESC", "1 = 1"),
-            utc = deadline("utc_seconds"),
-            offset = deadline("offset_minutes"),
-            has_time = deadline("has_time"),
-        ),
-        seed_param,
-    );
+    }
+}
+
+/// The identity half of [`tenders`], built but not run.
+fn tenders_query(filter: &Filter, scope: Scope) -> Query {
+    let mut q = Query::default();
+    // issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
+    // participation table's `organization_id` index instead of walking `tenders`.
+    // The `hits` set is the org's tenders (a superset of the matches); the untouched
+    // `EXISTS` predicates below still decide membership, so the result is identical.
+    let (from, seed_param) = tender_from(filter);
+    q.push(&tender_select_head(&from), seed_param);
     let seq = seq_expr(scope, "t", &mut q.params);
     q.push(&format!("{seq} WHERE 1 = 1"), []);
 
@@ -1084,6 +1218,17 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     }
     if let Some(kind) = &filter.kind {
         q.push(" AND t.kind = ?", [t(kind)]);
+    }
+    // Publication-date bounds (issue 216). In THIS id-ordered shape a narrow range
+    // walks the PK to fill its page, so `walks()` isolates it; the REST handler
+    // routes range/sorted reads through `tenders_by_published` instead, which rides
+    // `tenders_current_published`. This application exists so the filter also means
+    // something on the id-ordered paths (SSE snapshots, an explicit `sort=id`).
+    if let Some(after) = filter.published_after {
+        q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+    }
+    if let Some(before) = filter.published_before {
+        q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
     }
     version_predicates(&mut q, filter, "t.id", "v.seq");
     match scope {

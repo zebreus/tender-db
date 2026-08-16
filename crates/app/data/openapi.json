@@ -62,7 +62,7 @@
       "get": {
         "tags": ["collections"],
         "summary": "List Tenders",
-        "description": "The current version of each Tender, in ascending id order (a stable keyset order for pagination, not by publication date). With `Accept: text/event-stream` this becomes a live subscription with the same filters.",
+        "description": "The current version of each Tender. Default order is ascending id (a stable keyset order for pagination); `sort=published_at` (or any published_after/published_before bound) switches to publication-date order, newest first unless `order=asc`. With `Accept: text/event-stream` this becomes a live subscription with the same filters (sort/order do not apply to streams).",
         "operationId": "listTenders",
         "parameters": [
           { "$ref": "#/components/parameters/source" },
@@ -75,6 +75,10 @@
           { "$ref": "#/components/parameters/min_value" },
           { "$ref": "#/components/parameters/max_value" },
           { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/published_after" },
+          { "$ref": "#/components/parameters/published_before" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
           { "$ref": "#/components/parameters/limit" },
           { "$ref": "#/components/parameters/cursor" },
           { "$ref": "#/components/parameters/include_data" }
@@ -708,6 +712,30 @@
         "in": "query",
         "description": "Exact-match a Notice's official publication number (the OJ S / TED notice id) on /v1/notices. Index-served (notices_publication_id_id), so present and absent values are both fast; combining with source/kind narrows the same fast result.",
         "schema": { "type": "string" }
+      },
+      "published_after": {
+        "name": "published_after",
+        "in": "query",
+        "description": "Only tenders whose current version was published at or after this instant (unix seconds or RFC 3339). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "published_before": {
+        "name": "published_before",
+        "in": "query",
+        "description": "Only tenders whose current version was published before this instant (exclusive; unix seconds or RFC 3339). Implies sort=published_at unless sort=id is explicit. /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "description": "List order for /v1/tenders: `id` (default, ascending) or `published_at` (publication date of the current version; tenders without one are omitted). Index-served either way.",
+        "schema": { "type": "string", "enum": ["id", "published_at"] }
+      },
+      "order": {
+        "name": "order",
+        "in": "query",
+        "description": "`asc` or `desc`. Defaults: ascending for sort=id (descending id is not supported), descending (newest first) for sort=published_at. Keep sort/order stable while paginating and pass next_cursor verbatim.",
+        "schema": { "type": "string", "enum": ["asc", "desc"] }
       },
       "identifier": {
         "name": "identifier",

@@ -87,6 +87,21 @@ fn a_tender_containment_bound_suppresses_isolation_even_with_a_companion_filter(
 }
 
 #[test]
+fn a_published_range_isolates_the_id_ordered_tenders_shape() {
+    // Issue 216: `published_after/_before` on the ID-ORDERED list (SSE snapshots,
+    // explicit sort=id) filter the PK walk — a narrow range walks the corpus to
+    // fill its page, the issue-117 sparse class. The REST published-ordered path
+    // does NOT consult this arm for the range: `tenders_by_published` rides
+    // `tenders_current_published` by construction, and the handler strips the
+    // bounds before asking `walks()` about the REMAINING filters.
+    assert!(walks(Collection::Tenders, &Filter { published_after: Some(1), ..f() }));
+    assert!(walks(Collection::Tenders, &Filter { published_before: Some(1), ..f() }));
+    // Inert on the other collections — never applied there, so never isolating.
+    assert!(!walks(Collection::Notices, &Filter { published_after: Some(1), ..f() }));
+    assert!(!walks(Collection::Organizations, &Filter { published_after: Some(1), ..f() }));
+}
+
+#[test]
 fn tenders_kind_isolates_because_no_index_covers_it() {
     // `t.kind` is covered by none of tenders_procedure_key / tenders_island /
     // tenders_current_published / tenders_source_id, so a value matching nothing walks

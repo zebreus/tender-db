@@ -739,6 +739,84 @@ async fn organizations_can_be_looked_up_by_identifier() {
     assert!(ig.iter().any(|f| f == "identifier"), "identifier is named ignored on /v1/tenders");
 }
 
+/// Issue 216: the published-ordered Tender list — `sort=published_at` serves the
+/// flagship "most recently published" query, newest first by default, paginating
+/// by a composite (published_at, id) keyset cursor; a published range implies the
+/// order; invalid sort vocabulary and unsupported combinations are hard 400s so a
+/// client can never mistake an unsorted page for a sorted one.
+#[tokio::test]
+async fn tenders_list_sorts_by_publication_date() {
+    let server = Server::start("published_sort").await;
+    server.ingest_chain().await;
+
+    let published = |t: &Value| t["published_at"].as_str().expect("published_at").to_owned();
+
+    // Newest first by default under sort=published_at.
+    let page = server.get("/v1/tenders?sort=published_at").await;
+    let desc: Vec<String> = items(&page).iter().map(published).collect();
+    assert!(!desc.is_empty(), "the fixture has published tenders");
+    let mut sorted = desc.clone();
+    sorted.sort_by(|a, b| b.cmp(a)); // ISO 8601 sorts lexicographically
+    assert_eq!(desc, sorted, "sort=published_at defaults to newest first");
+
+    // order=asc reverses.
+    let asc_page = server.get("/v1/tenders?sort=published_at&order=asc").await;
+    let asc: Vec<String> = items(&asc_page).iter().map(published).collect();
+    let mut fwd = asc.clone();
+    fwd.sort();
+    assert_eq!(asc, fwd, "order=asc is oldest first");
+
+    // One-row pages reassemble the full list via the composite cursor — no dup, no gap.
+    let mut paged: Vec<i64> = Vec::new();
+    let mut cursor: Option<String> = None;
+    loop {
+        let q = match &cursor {
+            Some(c) => format!("/v1/tenders?sort=published_at&limit=1&cursor={c}"),
+            None => "/v1/tenders?sort=published_at&limit=1".into(),
+        };
+        let p = server.get(&q).await;
+        paged.extend(items(&p).iter().map(|t| t["id"].as_i64().unwrap()));
+        match p["next_cursor"].as_str() {
+            Some(next) => cursor = Some(next.to_owned()),
+            None => break,
+        }
+    }
+    let whole: Vec<i64> = items(&page).iter().map(|t| t["id"].as_i64().unwrap()).collect();
+    assert_eq!(paged, whole, "1-row pages must reassemble the whole ordered list");
+
+    // A published range narrows (and implies the published order without ?sort=).
+    let newest = &desc[0];
+    let ranged = server.get(&format!("/v1/tenders?published_after={newest}")).await;
+    assert!(
+        items(&ranged).iter().all(|t| published(t).as_str() >= newest.as_str()),
+        "published_after keeps only rows at or after the bound"
+    );
+
+    // The strictness contract: bad vocabulary and unsupported shapes are 400s.
+    assert_eq!(server.status("/v1/tenders?sort=newest").await, 400);
+    assert_eq!(server.status("/v1/tenders?sort=published_at&order=sideways").await, 400);
+    assert_eq!(server.status("/v1/tenders?order=desc").await, 400, "desc id order unsupported");
+    assert_eq!(server.status("/v1/lots?sort=published_at").await, 400, "only /v1/tenders sorts");
+    assert_eq!(
+        server.status("/v1/tenders?sort=published_at&cursor=12345").await,
+        400,
+        "an id-shaped cursor does not match the published sort"
+    );
+    assert_eq!(server.status("/v1/tenders?published_after=not-a-date").await, 400);
+
+    // Honesty: published_after is honoured on tenders, named ignored on notices.
+    let ig = |page: &Value| -> Vec<String> {
+        page["ignored_filters"].as_array().unwrap().iter().map(|v| v.as_str().unwrap().into()).collect()
+    };
+    assert!(!ig(&ranged).iter().any(|f| f == "published_after"));
+    assert!(
+        ig(&server.get("/v1/notices?published_after=2020-01-01T00:00:00Z").await)
+            .iter()
+            .any(|f| f == "published_after"),
+        "published_after is named ignored on /v1/notices"
+    );
+}
+
 /// Issue 225: the buyer seed narrows by role in SQL (`role LIKE '%Buyer%'`),
 /// mirroring the EXISTS's own match — a vocabulary drift between the two would
 /// silently drop legitimate buyers, so this pins the round trip on a REAL buyer

@@ -468,7 +468,17 @@ pub struct Params {
     /// Official organization identifier value (e.g. a VAT number); exact-match on
     /// `/v1/organizations`, pair with `kind` for the scheme (issue 217).
     identifier: Option<String>,
-    /// Pagination position: the last id of the previous page.
+    /// Publication-date bounds on the current version (issue 216): unix seconds or
+    /// RFC 3339. `after` inclusive, `before` exclusive. Tenders-only.
+    published_after: Option<String>,
+    published_before: Option<String>,
+    /// `/v1/tenders` REST only (issue 216): `id` (default) or `published_at`.
+    /// A published bound implies `sort=published_at` unless `sort=id` is explicit.
+    sort: Option<String>,
+    /// `asc` | `desc`. Defaults: `asc` for `sort=id`, `desc` for `sort=published_at`.
+    order: Option<String>,
+    /// Pagination position: the last id of the previous page (or, under
+    /// `sort=published_at`, the previous page's opaque `next_cursor` verbatim).
     cursor: Option<String>,
     limit: Option<i64>,
     /// `/v1/changes` only.
@@ -504,6 +514,8 @@ impl Params {
             tender: self.tender,
             publication_id: self.publication_id.clone(),
             identifier: self.identifier.clone(),
+            published_after: parse_instant(self.published_after.as_deref(), "published_after")?,
+            published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
             now,
         })
     }
@@ -573,6 +585,12 @@ impl Params {
         }
         if self.identifier.is_some() {
             out.push("identifier");
+        }
+        if self.published_after.is_some() {
+            out.push("published_after");
+        }
+        if self.published_before.is_some() {
+            out.push("published_before");
         }
         out
     }
@@ -709,7 +727,7 @@ async fn collection(
         let reader = state.readers.get().await?;
         read_items(collection, &reader, &filter, scope).await?
     };
-    let next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id);
+    let next = (items.len() as i64 > limit).then(|| items[limit as usize - 1].id.to_string());
     items.truncate(limit as usize);
     // Name any filter the client sent that this collection does not apply, so an
     // unfiltered page never masquerades as a filtered one (issue 118). The honoured
@@ -719,6 +737,21 @@ async fn collection(
         params.provided_filters().into_iter().filter(|p| !honoured.contains(p)).collect();
     Ok(axum::Json(json::page(items.into_iter().map(|i| i.json).collect(), next, &ignored))
         .into_response())
+}
+
+/// A client-supplied instant: unix seconds, or RFC 3339 (the format every
+/// timestamp in the responses uses). Anything else is a 400 naming the parameter.
+fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiError> {
+    let Some(raw) = value else { return Ok(None) };
+    if let Ok(unix) = raw.parse::<i64>() {
+        return Ok(Some(unix));
+    }
+    match chrono::DateTime::parse_from_rfc3339(raw) {
+        Ok(dt) => Ok(Some(dt.timestamp())),
+        Err(_) => Err(ApiError::bad_request(format!(
+            "{name} must be unix seconds or RFC 3339, not {raw:?}"
+        ))),
+    }
 }
 
 fn wants_events(headers: &HeaderMap) -> bool {
@@ -731,10 +764,109 @@ fn wants_events(headers: &HeaderMap) -> bool {
 // ------------------------------------------------------------------ handlers
 
 async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
-    collection(Collection::Tenders, s, h, p).await
+    // Sort resolution (issue 216). Validated here because only /v1/tenders sorts;
+    // a published bound implies published order (the id-ordered application of a
+    // narrow range is walk-shaped — it exists for SSE snapshots and explicit
+    // sort=id, both isolated), and explicit sort=id keeps today's ascending list.
+    // Copy verdicts, not borrows: `p` moves into the dispatched handler below.
+    let (sort_published, sort_id_explicit) = match p.sort.as_deref() {
+        None => (false, false),
+        Some("id") => (false, true),
+        Some("published_at") => (true, false),
+        Some(other) => {
+            return Err(ApiError::bad_request(format!(
+                "sort must be 'id' or 'published_at', not {other:?}"
+            )));
+        }
+    };
+    let (order_asc, order_desc) = match p.order.as_deref() {
+        None => (false, false),
+        Some("asc") => (true, false),
+        Some("desc") => (false, true),
+        Some(other) => {
+            return Err(ApiError::bad_request(format!(
+                "order must be 'asc' or 'desc', not {other:?}"
+            )));
+        }
+    };
+    let filter = p.filter(store::now_unix())?;
+    let has_range = filter.published_after.is_some() || filter.published_before.is_some();
+    let by_published = sort_published || (has_range && !sort_id_explicit);
+    if !by_published {
+        if order_desc {
+            return Err(ApiError::bad_request(
+                "descending id order is not supported; use sort=published_at for newest-first",
+            ));
+        }
+        return collection(Collection::Tenders, s, h, p).await;
+    }
+    if wants_events(&h) {
+        return Err(ApiError::bad_request(
+            "sort does not apply to event streams: a subscription snapshots in id order \
+             and then follows the change log; subscribe without sort/order",
+        ));
+    }
+    tenders_by_published(s, p, filter, !order_asc).await
+}
+
+/// The published-ordered Tender list (issue 216): the REST half that rides
+/// `tenders_current_published`. The cursor is `<published_at>.<id>` of the last
+/// row, opaque to clients (echo `next_cursor` verbatim).
+async fn tenders_by_published(
+    state: AppState,
+    params: Params,
+    filter: Filter,
+    desc: bool,
+) -> ApiResult {
+    let cursor = match params.cursor.as_deref() {
+        None => None,
+        Some(raw) => match raw.split_once('.').and_then(|(p, i)| {
+            Some((p.parse::<i64>().ok()?, i.parse::<i64>().ok()?))
+        }) {
+            Some(pair) => Some(pair),
+            None => {
+                return Err(ApiError::bad_request(
+                    "cursor does not match sort=published_at; pass the previous page's \
+                     next_cursor verbatim, or drop it to restart",
+                ));
+            }
+        },
+    };
+    let limit = params.limit();
+    // The published bounds are SERVED by this read's index ride; the REMAINING
+    // filters decide isolation exactly as on the id-ordered list (issue 120) — a
+    // sparse version-predicate walks the ordered stream the same way it walks the
+    // PK, so it must not hold a main-pool reader.
+    let stripped =
+        Filter { published_after: None, published_before: None, ..filter.clone() };
+    let mut rows = if store::read::walks(store::read::Collection::Tenders, &stripped) {
+        match state.isolated.read_published(filter, desc, cursor, limit + 1).await {
+            Ok(result) => result?,
+            Err(isolate::Shed) => {
+                return Err(ApiError(
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "too many expensive filtered reads in flight; retry shortly".into(),
+                ));
+            }
+        }
+    } else {
+        let reader = state.readers.get().await?;
+        read::tenders_by_published(&reader, &filter, desc, cursor, limit + 1).await?
+    };
+    let next = (rows.len() as i64 > limit).then(|| {
+        let last = &rows[limit as usize - 1];
+        format!("{}.{}", last.published_at, last.id)
+    });
+    rows.truncate(limit as usize);
+    let honoured = store::read::Collection::Tenders.honoured_params();
+    let ignored: Vec<&str> =
+        params.provided_filters().into_iter().filter(|f| !honoured.contains(f)).collect();
+    let items: Vec<serde_json::Value> = rows.iter().map(json::tender).collect();
+    Ok(axum::Json(json::page(items, next, &ignored)).into_response())
 }
 
 async fn lots(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
+    reject_sort(&p, "/v1/lots")?;
     collection(Collection::Lots, s, h, p).await
 }
 
@@ -743,10 +875,25 @@ async fn organizations(
     h: HeaderMap,
     ApiQuery(p): ApiQuery<Params>,
 ) -> ApiResult {
+    reject_sort(&p, "/v1/organizations")?;
     collection(Collection::Organizations, s, h, p).await
 }
 
+/// `sort`/`order` are a /v1/tenders capability (issue 216). The other collections
+/// REJECT rather than ignore them: a silently-unsorted page masquerading as a
+/// sorted one is exactly the lie `ignored_filters` (issue 118) exists to prevent,
+/// and these are not filters, so that channel cannot carry the honesty.
+fn reject_sort(params: &Params, path: &str) -> Result<(), ApiError> {
+    if params.sort.is_some() || params.order.is_some() {
+        return Err(ApiError::bad_request(format!(
+            "sort/order are not available on {path}; only /v1/tenders sorts"
+        )));
+    }
+    Ok(())
+}
+
 async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<Params>) -> ApiResult {
+    reject_sort(&p, "/v1/notices")?;
     // `?tender=` lists the Notices that caused a Tender's versions — the
     // ADR-0001 chain, walkable from a detail's `caused_by_notice_id`. The store
     // has no notice→tender predicate, so this is answered in the app from the

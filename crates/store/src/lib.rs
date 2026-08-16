@@ -3549,6 +3549,8 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 "tender" => Filter { tender: Some(424_242), ..base },
                 "publication_id" => Filter { publication_id: Some("00018218-2024".into()), ..base },
                 "identifier" => Filter { identifier: Some("DE811907980".into()), ..base },
+                "published_after" => Filter { published_after: Some(1_754_000_000), ..base },
+                "published_before" => Filter { published_before: Some(1_786_000_000), ..base },
                 other => panic!("unknown parameter {other}"),
             }
         };
@@ -3563,9 +3565,10 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .0
         };
 
-        const ALL: [&str; 13] = [
+        const ALL: [&str; 15] = [
             "source", "country", "cpv", "buyer", "winner", "bidder", "status", "min_value",
-            "max_value", "kind", "tender", "publication_id", "identifier",
+            "max_value", "kind", "tender", "publication_id", "identifier", "published_after",
+            "published_before",
         ];
         for c in
             [Collection::Tenders, Collection::Lots, Collection::Organizations, Collection::Notices]
