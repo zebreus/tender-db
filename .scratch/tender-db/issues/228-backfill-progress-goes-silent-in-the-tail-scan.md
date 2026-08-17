@@ -1,8 +1,9 @@
 # 228 — a chunked backfill's progress counter goes silent for its whole tail scan, and reads as a hang
 
-Status: open — filed 2026-08-17 (owner) while operating the issue-58-v2 step-2 backfill. Not a
-defect in the result; an observability defect in the job, and it cost 40 minutes of operator doubt
-on its first real run.
+Status: FIXED on main 2026-08-17 (owner), awaiting deploy — and the fix found a latent
+CORRECTNESS bug beside the observability one, see "Resolution" at the bottom. Filed while
+operating the issue-58-v2 step-2 backfill; it cost 40 minutes of operator doubt on its first
+real run.
 Kind: operational rough edge / job observability
 Blocked by: —
 Relates to: 58 (the legacy-adjacency backfill this surfaced on), 53 (`/metrics` — the trend surface
@@ -64,3 +65,39 @@ every future chunked job of this shape.
 A long-running chunked backfill shows *movement* on `tender-admin jobs` throughout, including any
 phase in which it finds nothing to write; and an operator can tell a working job from a wedged one
 without reading `/proc`.
+
+## Resolution (2026-08-17, owner)
+
+Fixed by **windowing the id range**, which is option 2 done properly — not by precomputing
+`MAX(id)` over legacy notices (that would have paid the same full scan up front, merely moving the
+silence to the start), and not by option 1: carrying the cursor in `members_done`/`members_total`
+would put an id where every other job puts a count, and mixing the two in one field pair is the
+kind of dishonest signal this issue is complaining about.
+
+Each query is now bounded on **both** axes: at most `ADJACENCY_BACKFILL_CHUNK` matching rows
+(memory, unchanged from the issue-42 shape) and at most `ADJACENCY_BACKFILL_ID_WINDOW` = 500k ids
+scanned (I/O). Termination becomes "the cursor reached the target captured up front" instead of "a
+chunk came back empty", because an empty chunk now means only *no legacy notices in this window* —
+the normal state of every eForms-era window. Progress therefore ticks through the tail, and the
+wasted tail I/O is gone as a side effect.
+
+**The latent correctness bug the fix exposed.** Terminating on an empty chunk was not merely quiet.
+Had the pre-filter ever returned an empty chunk mid-corpus, the sweep would have stopped early and
+then called `establish_legacy_adjacency(target)` anyway — publishing a watermark that attests
+coverage up to the target while rows above the stopping point were never written. Step 3's closure
+walk trusts that watermark to decide it may scope a legacy fold, so the failure would not have
+surfaced as a missing row; it would have surfaced as a silently under-scoped projection. Today's
+corpus cannot hit it (the legacy eras sit in a dense low-id range and the eForms tail is contiguous
+above them), which is why the run in flight is trustworthy — but "the data happens not to trigger
+it" is not a property anyone should have to re-establish.
+
+The new test is shaped for exactly that: `legacy → three eForms → legacy`, so the second legacy
+notice is found only if the walk crosses the gap. Red-checked against the old loop — it fails on
+the progress assertion (one tick where the corpus spans five windows) and passes with the fix. The
+window is a parameter so the test can force one window per id over a 5-row corpus; production
+always takes the default.
+
+Deploy note: the run in flight (job 1, enqueued 08:39 UTC) is on the OLD code and is being left
+alone — restarting it to pick up the fix would discard ~1.5 h of sweep and re-establish nothing.
+Its result is trustworthy for the reason above. The fix lands with the next deploy, and the
+verification that matters is the NEXT backfill of this shape showing movement throughout.
