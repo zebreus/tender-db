@@ -690,6 +690,15 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// | 1 | issue 98 — DE-1.x organization references (`is_ref` + 25 role aliases) |
 /// | 2 | issue 174 — r208 `RECEIPT_LIMIT_DATE` maps to `submission_deadline`, so the 2011–2016 era re-folds with deadlines |
 /// | 3 | issue 177 — r208 `VALUE_COST` routes by context (CN estimate / award value / CAN final total), so the era re-folds with `estimated_value`/`result_value` |
+///
+/// **Bump this ONLY for a logic change that crosses profiles** (issue 179). A
+/// profile-scoped mapping fix — the 174/177 class, historically every bump —
+/// must instead ship WITHOUT touching this constant and ride the `refold` job,
+/// which now stamps scoped staleness ([`Db::stamp_stale_for_profiles`]): the
+/// cohort's tenders rewrite under the new logic, every other tender keeps its
+/// early-return. A global bump declares 7.9M tenders stale to fix one era and
+/// owes the whole corpus a rewrite on the next full walk — measured at
+/// 6h02m / 14.2M version writes for a 2.69M-notice cohort (issue 179).
 pub const PROJECTION_EPOCH: i64 = 3;
 
 const NODE_WRITE_BATCH: usize = 20_000;
@@ -1402,6 +1411,64 @@ impl Db {
     pub async fn set_projection_epoch_for_test(&self, epoch: i64) -> turso::Result<u64> {
         let conn = self.conn().await;
         conn.execute("UPDATE tenders SET projection_epoch = ?", (Value::Integer(epoch),)).await
+    }
+
+    /// Stamp the Tenders whose chains a profile cohort caused as EPOCH-STALE
+    /// (issue 179): `projection_epoch = 0`, the pre-epoch "oldest" value, so the
+    /// next fold's chain-compare keeps nothing for THEM and rewrites them under
+    /// the current logic — without bumping the global [`PROJECTION_EPOCH`], which
+    /// declares every unrelated Tender stale too and owes the whole corpus a
+    /// rewrite on the next full walk (the issue-179 half-day, measured: 7.9M
+    /// tenders / 14.2M versions rewritten for a 2.69M-notice cohort).
+    ///
+    /// The requeue alone ([`Db::unmark_projected_for_profiles`]) cannot do this:
+    /// re-queueing clears the watermark but leaves each Tender's CHAIN identical,
+    /// and an unchanged chain with a current epoch early-returns — the mapping fix
+    /// would silently never land (the issue-85 shells, issue 99's motivation). So
+    /// the refold job runs both: requeue puts the cohort in the delta, this stamp
+    /// makes the fold rewrite it. A tender with a MIXED chain (cohort + other
+    /// profiles) is stamped too — its whole chain refolds, which is what planning
+    /// does with it anyway.
+    ///
+    /// Batched with checkpoints like every bulk UPDATE (issue 63); idempotent, so
+    /// a job re-run after a crash heals. Returns the number of Tenders stamped.
+    pub async fn stamp_stale_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
+        if profiles.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        // The cohort's tender ids: notices by profile (notices_profile) resolved
+        // through the causing edge (tender_versions_notice). Deduped in Rust — a
+        // SQL DISTINCT over millions of rows would sort server-side for nothing.
+        let sql = format!(
+            "SELECT v.tender_id FROM notices n
+               JOIN tender_versions v ON v.caused_by_notice_id = n.id
+              WHERE n.profile IN ({})",
+            placeholders(profiles.len())
+        );
+        let params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        let mut ids: Vec<i64> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            ids.push(int(&row, 0));
+        }
+        ids.sort_unstable();
+        ids.dedup();
+
+        const STAMP_BATCH: usize = 500;
+        for (i, chunk) in ids.chunks(STAMP_BATCH).enumerate() {
+            let sql = format!(
+                "UPDATE tenders SET projection_epoch = 0 WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            conn.execute(&sql, params).await?;
+            if i % 100 == 99 {
+                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+            }
+        }
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        Ok(ids.len() as u64)
     }
 
     pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {

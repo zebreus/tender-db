@@ -592,6 +592,68 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
     }
 }
 
+/// Issue 179: a profile-scoped refold must not owe the whole corpus a rewrite.
+/// The refold job's two halves — requeue + `stamp_stale_for_profiles` — make
+/// exactly the cohort's tenders rewrite (their chains are unchanged, so ONLY
+/// the scoped stamp can force it), while a tender of another profile keeps its
+/// chain-unchanged early-return and is never written. The global
+/// PROJECTION_EPOCH is untouched throughout.
+#[tokio::test]
+async fn a_scoped_stale_stamp_rewrites_only_the_profiles_tenders() {
+    let (db, fetch, path) = scratch("scoped-stamp").await;
+    // Two single-tender cohorts under different profiles.
+    record_p(&db, fetch, "R2-cn", "ted-export-r208", keyed("bt04-r208", 1, "Legacy era")).await;
+    record_p(&db, fetch, "S13-cn", "eforms:eforms-sdk-1.13", keyed("bt04-s13", 1, "Modern era"))
+        .await;
+    project::project(&db, false).await.expect("establish");
+    let before = snapshot_content(&db).await;
+
+    // The refold job's two steps, scoped to the r208 cohort.
+    let requeued =
+        db.unmark_projected_for_profiles(&["ted-export-r208"]).await.expect("requeue");
+    assert_eq!(requeued, 1);
+    let stamped = db.stamp_stale_for_profiles(&["ted-export-r208"]).await.expect("stamp");
+    assert_eq!(stamped, 1, "exactly the cohort's tender is stamped");
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tenders WHERE projection_epoch = 0").await,
+        1,
+        "the stamp ages the cohort's tender and nobody else"
+    );
+
+    // The re-fold rewrites the stamped tender — its chain is unchanged, so the
+    // stamp is doing the forcing — and leaves the other cohort untouched.
+    let refolded = project::project(&db, false).await.expect("re-fold");
+    assert_eq!(
+        refolded.applied.versions_written, 1,
+        "exactly the stamped tender's chain rewrites — the other cohort's \
+         chain-unchanged early-return must hold"
+    );
+    assert_eq!(
+        before,
+        snapshot_content(&db).await,
+        "a scoped rewrite under UNCHANGED logic reproduces byte-identical content"
+    );
+    assert_eq!(
+        count(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}",
+                store::canonical::PROJECTION_EPOCH
+            ),
+        )
+        .await,
+        0,
+        "the rewrite restamps the cohort with the current epoch"
+    );
+
+    // An unrelated-profile stamp is a no-op: nothing matches, nothing ages.
+    assert_eq!(db.stamp_stale_for_profiles(&["no-such-profile"]).await.expect("noop"), 0);
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// Issue 133: the 2026-07-30 shape. A killed rebuild's `reset_tender_layer` is
 /// DDL — durable the instant it runs — so the layer sits empty with every
 /// later signal green. The next incremental fold must REFUSE to compound that

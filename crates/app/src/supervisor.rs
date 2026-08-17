@@ -1060,7 +1060,18 @@ impl Supervisor {
                 }
                 let requeued =
                     self.db.unmark_projected_for_profiles(&refs).await.map_err(|e| e.to_string())?;
-                Ok(format!("re-queued {requeued} notices for the incremental fold"))
+                // issue 179: the requeue alone leaves each Tender's chain identical,
+                // and an unchanged chain with a current epoch early-returns — the
+                // mapping fix would never land. Stamp the cohort's tenders
+                // epoch-stale so exactly THEY rewrite; the global PROJECTION_EPOCH
+                // stays put, so nobody else does. Unconditional (not gated on
+                // requeued > 0) so a job re-run after a crash heals both halves.
+                let stamped =
+                    self.db.stamp_stale_for_profiles(&refs).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
+                     for the incremental fold"
+                ))
             }
             Spec::MarkSkippedSiblings { dry_run, expect, expect_gaps } => {
                 // Count first, always — in dry-run it IS the answer, and in a real
