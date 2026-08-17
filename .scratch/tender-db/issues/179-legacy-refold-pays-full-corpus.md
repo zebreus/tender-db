@@ -1,6 +1,40 @@
 # 179 — a legacy-era refold pays a full-corpus epoch rewrite (58-v1 fallback × epoch bump)
 
-Status: ready-for-agent
+Status: WRITE HALF SHIPPED 2026-08-17 (commit `19c7590`, deployed rev `19c7590`) — the epoch-bump
+rewrite debt is gone for profile-scoped fixes; the PLANNING half (legacy fallback plans the full
+corpus) stays open as the issue-58-v2 durable-adjacency build.
+
+## Shipped: scoped staleness (2026-08-17, owner)
+
+The half-day was two mechanisms COMPOUNDING, and the bigger one is now removed at its root:
+the `refold` job stamps `projection_epoch = 0` on exactly the tenders whose chains the cohort
+caused (`stamp_stale_for_profiles`: notices_profile → tender_versions_notice, batched +
+checkpointed, idempotent), so THEY rewrite under the new logic and the other ~5.2M keep their
+chain-unchanged early-return. The global PROJECTION_EPOCH is no longer bumped for
+profile-scoped fixes at all (doctrine now in its doc comment: bump only for cross-profile
+logic changes). The requeue alone can never do this — an unchanged chain with a current epoch
+early-returns and the fix silently never lands (the issue-85 shells; asserted in the new test
+`a_scoped_stale_stamp_rewrites_only_the_profiles_tenders`, which pins versions_written == the
+cohort's chain exactly).
+
+Expected cost for the next 174/177-class fix: full-corpus PLAN + early-return walk (the
+fallback, ~1.5h at 2026-08 scale) + the cohort's own rewrite — instead of 6h02m / 14.2M
+version writes. Prod exercise pending: verify the job detail line ("re-queued N, stamped M")
+and the shrunken apply phase on the next real profile refold.
+
+**Option (b) is rejected, permanently:** the clean-slate path reissues tender ids ⇒ generation
+bump ⇒ every mirror resyncs (issue 46). Trading consumer id-stability for fold wall-clock on an
+operator-initiated maintenance job is the wrong direction; do not pick it up again.
+
+**Remaining (the planning half, = issue 58 v2):** the legacy fallback still PLANS the whole
+corpus because the OJS transitive closure needs the edge graph. The durable fix: persist/index
+the OJS reference edges (both directions — a late notice can be referenced BY an existing one),
+compute the delta's closure over persisted state, seed the plan with the closure's tenders'
+full notice sets, and run the same grouping SQL scoped; absorption (retire_absorbed) must stay
+within scope. That is a design+build of its own; the bridge-merge case (a delta notice merging
+two existing legacy tenders) is the correctness crux and needs its red test first.
+
+Was: ready-for-agent
 Severity: MEDIUM (operational cost of every future legacy mapping fix; no
 correctness impact — the output is right, it just costs half a day+)
 Found: 2026-08-10 (orchestrator), watching issue 177's refold live
