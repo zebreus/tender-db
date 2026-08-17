@@ -1,6 +1,14 @@
 # 41 — INTERNAL_OJS R2.0.5 era profile (the 2008 OPOCE export)
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-17, owner — prod rev `62f0e19`), with a caveat about HOW to read
+the evidence. 2008 is served by two profiles and the year is COMPLETE: internal-ojs holds 26,955 and
+text holds 313,059, summing to **340,014 against 339,534 published — ratio 1.0014**, inside the ±2%
+tolerance. So the last completeness-blocking year is cleared, as this issue set out to do.
+
+The caveat matters because the dashboard does not show it that way: the coverage grid divides EACH
+profile's held count by the whole year's published total, so these two rows read as 0.079 and 0.922 —
+a catastrophic-looking gap that does not exist. Filed as issue 229; do not re-open this issue on the
+strength of a per-profile row.
 Priority: completeness-critical (the last verify-blocking year)
 
 ## Resolution (2026-07-23, commit c496898)

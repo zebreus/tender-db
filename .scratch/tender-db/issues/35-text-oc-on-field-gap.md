@@ -1,6 +1,11 @@
 # 35 — Text profile: the `OC`/`ON` fields are unmapped (~577k members, ~47k real loss)
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-17, owner — prod rev `62f0e19`). Acceptance met on every clause:
+the `unknown-field-code` bucket is at ZERO outstanding (today's only non-zero quarantine buckets are
+8 terminal unreadable-zips and 5,174 `unrepresentable-value`), and the 1995-98 coverage this issue
+predicted would rise now reads **1.011 / 1.015 / 1.019 / 1.016** against the vendored ground truth —
+inside the ±2% tolerance, all four years. (Slightly ABOVE 1.0, which the ground-truth CSV header
+documents as expected: the upstream counts are approximate for the older eras.)
 
 Split out of issue 30's quarantine triage (2026-07-21). The
 `unknown-field-code` bucket is 576,753 members and — sampled via `/v1/sql` on

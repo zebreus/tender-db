@@ -1,6 +1,18 @@
 # 50 — SQL analyst surface: time format, schema noise, missing views
 
-Status: needs-verification (complete — app-side + store views)
+Status: RESOLVED-VERIFIED (2026-08-17, owner — probed `/v1/sql/schema` on prod rev `62f0e19`). All
+three acceptance clauses hold: **time columns unambiguous** (an explicit note — "Unix epoch seconds,
+NOT ISO … filter with strftime(col,'unixepoch'); WHERE published_at LIKE '2012%' silently matches
+nothing" — plus a per-column flag); **schema clean and documented** (45 allow-listed tables/views, 7
+notes covering the allow-list, dialect gaps, row/byte caps and rate limits, 3 worked examples); **the
+common questions one view away** (12 analyst views live: v_tenders, v_tender_current, v_awards,
+v_lot_results, v_lots, v_organizations, v_tender_buyers, v_tender_amounts, v_tender_dates,
+v_tender_classifications, v_tender_notices, v_fetches).
+
+One thing found and fixed while verifying: the "mid-backfill scope" note was STALE, still telling
+analysts the v_* layer held only 2026-forward data long after the backfill completed — which would
+make a real gap read as expected emptiness. Corrected in this firing to state the full 1993-onward
+coverage and to say that an empty v_* year IS a finding.
 Severity: MEDIUM (the "easy data inspection" goal clause)
 
 Found by usability audit (2026-07-21). The /v1/sql experience has

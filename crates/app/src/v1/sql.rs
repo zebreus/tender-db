@@ -520,11 +520,14 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
              ISO, so the two disagree. Filter/format with strftime(col,'unixepoch'); \
              each timestamp column's note flags this. WHERE published_at LIKE \
              '2012%' silently matches nothing.",
-            "Backfill in progress: the canonical v_* layer currently reflects only \
-             PROJECTED tenders (2026 forward, until the historical backfill is \
-             projected), so a v_* query scoped to earlier years may return nothing \
-             yet. The notice_* and quarantine layers already hold the full \
-             imported history.",
+            // Was "Backfill in progress: … 2026 forward …" — true when written and
+            // FALSE since the backfill completed (14.27M notices → 7.9M tenders).
+            // A stale scope note is worse than none: it tells an analyst their
+            // empty result for 2012 is expected, so a real gap reads as normal.
+            "The canonical v_* layer covers the full imported history (1993 \
+             onward), not just recent years. A v_* query that returns nothing for \
+             a year the coverage grid shows as held is a finding worth reporting, \
+             not an artefact of an unfinished backfill.",
             "Turso SQL dialect gaps: no WITH RECURSIVE; window functions are \
              partial (row_number and aggregate OVER work; rank/lead/lag and \
              custom frames do not).",
