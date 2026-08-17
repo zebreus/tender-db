@@ -4,7 +4,9 @@
       "Bash(ssh root@zebreus.click *)",
       "Bash(ssh root@zebreus.click*)",
       "Bash(./deploy.sh*)",
-      "Bash(./deploy.sh *)"
+      "Bash(./deploy.sh *)",
+      "Bash(git push*)",
+      "Bash(git push *)"
     ]
   }
 }
