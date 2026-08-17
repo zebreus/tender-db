@@ -234,3 +234,72 @@ construction), and the reprocessing model (append-only by content_hash; re-parse
 flips parse_state in place → watermark must be a per-notice marker, not an id).
 The legacy transitive-reach is the only genuinely hard piece and it is
 side-stepped for daily by the rebuild fallback (legacy is historical/backfill).
+
+## v2 DESIGN — durable OJS adjacency, so a legacy delta folds its own components (2026-08-17, owner)
+
+The v1 fallback (any legacy notice in the delta → full projection) is issue 179's remaining half:
+the write side is fixed (scoped stale-stamp, `19c7590`), but planning still pays the whole corpus.
+This design removes that by making the legacy edge graph QUERYABLE from persisted state.
+
+### Ground truth (verified in code)
+
+`Ident::read` already computes, per legacy notice: `ojs_self: Option<OjsKey>` (its own OJS number,
+from `publication_id` or `LEGACY_OWN_NUMBER_FIELDS`) and `ojs_edges: Vec<OjsKey>` (every
+`is_ref` OJS-scheme id — the REF_OJS chain edges), both encodable as one i64 (`encode_ojs`,
+year×1e9+number). Grouping unions notices sharing any key. The inverse mapping (key → the notices
+carrying it) is what an incremental closure needs and what nothing persists: `notices.publication_id`
+is NOT usable as that inverse (one key ↔ many era spellings; `ojs_key` normalizes many-to-one).
+
+### The durable store
+
+New table, legacy-only, written where `Ident` is already in hand:
+
+    legacy_ojs_keys (ojs_key INTEGER NOT NULL, notice_id INTEGER NOT NULL,
+                     PRIMARY KEY (ojs_key, notice_id))   -- self and edge rows alike
+
+- Self vs edge needs no flag: the closure treats them identically (a shared key groups, whichever
+  side it came from).
+- Writers: (1) the full/rebuild plan build (visits every notice; rewrite-all idempotent),
+  (2) the incremental pass-1 for new legacy notices (BEFORE the closure walk, so the delta's own
+  rows are queryable), (3) a one-time backfill job for the standing corpus (batched sweep of the
+  parse layer's `notice_ids` scheme='ojs' rows + publication ids — the issue-42 checkpoint pattern).
+- Completeness witness: `legacy_adjacency_watermark` (max notice id covered). The incremental path
+  uses the closure ONLY when the watermark covers the corpus; otherwise it falls back to full
+  exactly as today. Self-healing forward: pass-1 writes rows before raising the watermark.
+- Size: ~6-7M legacy notices × ~1-3 keys ≈ 15M rows + PK — a small fraction of one value table.
+
+### The closure walk (replaces the v1 fallback when the witness holds)
+
+    seed_keys   = ∪ (self ∪ edges) of the delta's legacy notices     (from pass-1's Idents)
+    loop until no new keys:
+        notices  = SELECT notice_id FROM legacy_ojs_keys WHERE ojs_key IN (frontier)
+        tenders  = caused_by lookup over those notices               (tender_versions_notice index)
+        notices += notice_ids_for_tenders(tenders)                   (existing fn)
+        keys     = SELECT ojs_key FROM legacy_ojs_keys WHERE notice_id IN (new notices)
+    all_ids = closure notices ∪ delta; plan scoped; SAME grouping SQL; retire_regrouped over the
+    touched tenders (absorption stays inside the closure by construction).
+
+Safety bound: if the closure exceeds a cap (500k notices, say), log and take the full path — a
+pathological component (issue 68's class) must degrade to today's behavior, never to a wrong scope.
+
+### Red tests, in order
+
+1. **Bridge merge** (the correctness crux): two existing single-notice legacy tenders A and B; a
+   delta notice referencing both their keys → ONE merged tender, the loser retired/absorbed, all
+   three notices in the chain — asserted equal to what a full projection of the same corpus yields.
+2. **Late back-reference**: existing notice references key K; the delta notice IS K (its self) —
+   the closure must find the existing notice through the key row written when IT was planned.
+3. **Watermark gate**: delta with the witness stale → full fallback (today's behavior), loudly.
+4. **Cap**: synthetic over-cap component → full fallback, loudly.
+5. **Fold-source invariance**: the scoped legacy plan through both Phase-2 folds, byte-identical
+   (the existing invariance-test shape, extended to a legacy corpus).
+
+### Rollout order
+
+1. Table + writers behind the watermark (no behavior change; fallback still fires) + backfill job.
+2. Run the backfill on prod (quiet window; batched); watermark raised.
+3. The closure path replacing the fallback, cap-guarded; deploy; verify a small real legacy
+   reclaim folds scoped (journal shows closure size, not "re-projecting the whole corpus").
+4. Only then: the next era refold measures the whole 179 win end to end (scoped stamp + scoped plan).
+
+Estimated: 2-3 firings. Steps are independently shippable; each lands green on its own.
