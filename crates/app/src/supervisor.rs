@@ -768,6 +768,40 @@ impl Supervisor {
         }
     }
 
+    /// The projection's [`Progress`] events → the durable phase record (issue
+    /// 65). One arm per variant, each keeping the event's own counts and units —
+    /// no unit ever borrows another's field, the issue-228 rule.
+    fn phase_from_progress(&self, p: ingest::project::Progress) {
+        use ingest::project::Progress;
+        match p {
+            Progress::Planning { notices, total } => {
+                self.set_phase("planning", Some(notices), Some(total), "notices planned".into());
+            }
+            // No total, honestly: the sweep is bounded by an id RANGE, and
+            // counting its rows up front would pay the very scan the pre-pass
+            // exists to do once. Movement alone is the signal (issue 228).
+            Progress::PrePass { notices } => {
+                self.set_phase("pre-pass", Some(notices), None, "notices swept into buckets".into());
+            }
+            Progress::Grouped { tenders, islands } => {
+                self.set_phase(
+                    "folding",
+                    Some(0),
+                    Some(tenders),
+                    format!("plan grouped: {tenders} tenders, {islands} single-notice islands"),
+                );
+            }
+            Progress::Applying { tenders, total, versions } => {
+                self.set_phase(
+                    "folding",
+                    Some(tenders),
+                    Some(total),
+                    format!("{versions} version rows written"),
+                );
+            }
+        }
+    }
+
     /// Record what the running job is doing now (issue 65). `done`/`total` are
     /// optional because a phase that cannot cheaply know its end still shows
     /// movement from `done` alone — which is what separates a working job from a
@@ -1003,8 +1037,17 @@ impl Supervisor {
                 // full bounded-streaming projection (initial build / schema change)
                 // and resets the `projected` watermark.
                 let report = if salvage || *rebuild {
-                    project::project(&self.db, true).await
+                    // Observed (issue 65): the projection's Progress events feed
+                    // the durable phase record, so /admin/jobs shows planning /
+                    // pre-pass / folding instead of dead air for the multi-hour
+                    // phases. The journal keeps its heartbeats — project_observed
+                    // composes the stderr sink with this mapping, one stream.
+                    project::project_observed(&self.db, true, |p| self.phase_from_progress(p))
+                        .await
                 } else {
+                    // The incremental daily is seconds-to-minutes; its scoping
+                    // already logs its own decisions (the issue-58 closure line
+                    // or a named fallback). No phase record until one is earned.
                     project::project_incremental(&self.db).await
                 }
                 .map_err(|e| e.to_string())?;

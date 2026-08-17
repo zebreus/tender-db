@@ -694,6 +694,17 @@ pub enum Progress {
     /// signal that a projection-logic re-fold (issue 99's epoch) is really
     /// rewriting rather than silently skipping.
     Applying { tenders: u64, total: u64, versions: u64 },
+    /// Phase 2 pre-pass: `notices` read and spilled to buckets so far, summed
+    /// across all shard workers (issue 65). No total: the sweep's bound is an id
+    /// RANGE, not a row count, and counting the rows in it up front would cost a
+    /// scan of exactly the shape the pre-pass exists to do once — so this reports
+    /// movement without a destination rather than paying twice for one. Emitted
+    /// by the parent thread on a coarse poll of the workers' shared counter, so
+    /// ticks arrive every couple of seconds however many shards run; a final
+    /// tick with the complete count always closes the phase, which is also what
+    /// makes the variant deterministic for tests over corpora that finish before
+    /// the first poll.
+    PrePass { notices: u64 },
 }
 
 /// Which Phase-2 fold the projection runs. Byte-identical either way — both build
@@ -725,9 +736,17 @@ pub enum Phase2 {
 /// a batch at a time never splits a Tender's notices across a boundary (issue 57).
 /// Progress is logged to stderr; use [`project_with_progress`] to observe it.
 pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> turso::Result<Report> {
-    // Default sink: log heartbeats to stderr, Phase-1 throttled to PLAN_HEARTBEAT.
+    project_with_progress(db, rebuild, notice_batch, stderr_progress_sink()).await
+}
+
+/// The default progress sink: heartbeats to stderr (the journal), the per-event
+/// phases throttled so a multi-hour run logs steadily rather than floods.
+/// Extracted (issue 65) so the supervisor can COMPOSE with it — journal lines
+/// and the durable phase record come from one mapping, not two drifting copies.
+pub fn stderr_progress_sink() -> impl FnMut(Progress) {
     let mut last_plan_log = 0u64;
-    project_with_progress(db, rebuild, notice_batch, |p| match p {
+    let mut last_prepass_log = 0u64;
+    move |p| match p {
         Progress::Planning { notices, total } => {
             if notices - last_plan_log >= PLAN_HEARTBEAT || notices == total {
                 eprintln!("[project] phase 1: {notices}/{total} notices planned");
@@ -740,6 +759,32 @@ pub async fn project_with_batch(db: &Db, rebuild: bool, notice_batch: usize) -> 
         Progress::Applying { tenders, total, versions } => {
             eprintln!("[project] phase 2: {tenders}/{total} tenders folded, {versions} versions written");
         }
+        // Aggregate line beside the per-shard heartbeats `write_shard` already
+        // prints (issue 94) — same cadence bound, so the journal cost is one
+        // extra line per PREPASS_HEARTBEAT notices, not one per poll tick.
+        Progress::PrePass { notices } => {
+            if notices - last_prepass_log >= PREPASS_HEARTBEAT {
+                eprintln!("[project] phase 2 pre-pass: {notices} notices swept into buckets");
+                last_prepass_log = notices;
+            }
+        }
+    }
+}
+
+/// [`project`] with the caller observing progress on top of the default journal
+/// logging (issue 65): every event reaches BOTH the stderr sink and `observe`.
+/// This is the supervisor's entry — the journal keeps its heartbeats and the
+/// durable job-phase record gets the same stream, so the two can never disagree
+/// about what the projection was doing.
+pub async fn project_observed(
+    db: &Db,
+    rebuild: bool,
+    mut observe: impl FnMut(Progress),
+) -> turso::Result<Report> {
+    let mut log = stderr_progress_sink();
+    project_with_progress(db, rebuild, APPLY_NOTICE_BATCH, move |p| {
+        log(p);
+        observe(p);
     })
     .await
 }
@@ -1765,6 +1810,7 @@ async fn bucketed_fold(
         &boundaries,
         &dir,
         worker_count(shards, boundaries.len(), fd_budget),
+        &mut on_progress,
     )
     .await?;
 
@@ -1932,6 +1978,7 @@ async fn write_buckets_sharded(
     boundaries: &[String],
     dir: &Path,
     k: usize,
+    on_progress: &mut impl FnMut(Progress),
 ) -> turso::Result<usize> {
     std::fs::create_dir_all(dir).expect("create bucket dir");
 
@@ -1970,6 +2017,11 @@ async fn write_buckets_sharded(
     // notices, so the per-worker chunk shrinks as workers are added (issue 94 /
     // the bounded-memory principle). Concurrency goes up, the working set does not.
     let chunk = (PREPASS_CHUNK_BUDGET / k).clamp(PREPASS_CHUNK_MIN, PREPASS_CHUNK_MAX) as i64;
+    // Aggregate sweep counter the workers bump per chunk (never per notice — the
+    // cadence bound is the chunk, issue 65's "keep it cheap" rule) and the parent
+    // polls into `on_progress` while they run. The per-shard stderr heartbeats in
+    // `write_shard` stay: they carry id positions the aggregate cannot.
+    let swept = std::sync::atomic::AtomicU64::new(0);
     std::thread::scope(|scope| -> turso::Result<()> {
         let handles: Vec<_> = stripes
             .iter()
@@ -1977,6 +2029,7 @@ async fn write_buckets_sharded(
             .enumerate()
             .map(|(s, (lo, hi))| {
                 let readers = readers.clone();
+                let swept = &swept;
                 scope.spawn(move || -> turso::Result<()> {
                     let rt = tokio::runtime::Builder::new_current_thread()
                         .enable_all()
@@ -1984,16 +2037,33 @@ async fn write_buckets_sharded(
                         .expect("build worker runtime");
                     rt.block_on(async move {
                         let conn = readers.get().await?;
-                        write_shard(&conn, boundaries, dir, s, lo, hi, chunk).await
+                        write_shard(&conn, boundaries, dir, s, lo, hi, chunk, swept).await
                     })
                 })
             })
             .collect();
+        // The parent thread already blocks here for the pre-pass's whole
+        // duration (the joins below) — polling first costs nothing extra and is
+        // what turns the workers' shared counter into progress events. Coarse on
+        // purpose: an in-memory read every 2 s against a phase measured in hours.
+        while handles.iter().any(|h| !h.is_finished()) {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            on_progress(Progress::PrePass {
+                notices: swept.load(std::sync::atomic::Ordering::Relaxed),
+            });
+        }
         for h in handles {
             h.join().expect("shard worker panicked")?;
         }
         Ok(())
     })?;
+    // The closing tick, AFTER every worker joined: the complete count, exactly
+    // once, however fast the corpus went. A test corpus finishes before the
+    // first poll fires, so without this the variant would be untestable — and a
+    // prod operator gets a final "the sweep read N" line either way.
+    on_progress(Progress::PrePass {
+        notices: swept.load(std::sync::atomic::Ordering::Relaxed),
+    });
     Ok(k)
 }
 
@@ -2028,6 +2098,7 @@ async fn write_shard(
     lo: i64,
     hi: i64,
     read_chunk: i64,
+    total_swept: &std::sync::atomic::AtomicU64,
 ) -> turso::Result<()> {
     // Every bucket file is created (even if it stays empty) so the fold's
     // `read_bucket_shards` can open `shard{s}_bucket{b}.bin` for every (s, b).
@@ -2071,6 +2142,9 @@ async fn write_shard(
         // stripe has been consumed, which is what makes an unbalanced partition or a
         // slow stripe visible while it is happening rather than afterwards.
         swept += chunk.len() as u64;
+        // The aggregate the parent polls into Progress::PrePass (issue 65): once
+        // per chunk, alongside the local counter — never per notice.
+        total_swept.fetch_add(chunk.len() as u64, std::sync::atomic::Ordering::Relaxed);
         if swept - last_beat >= PREPASS_HEARTBEAT {
             last_beat = swept;
             eprintln!(

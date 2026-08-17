@@ -303,6 +303,52 @@ async fn bucketed_fold_matches_the_parsed_fold() {
     }
 }
 
+/// The pre-pass reports its sweep through `Progress::PrePass` (issue 65): the
+/// count is non-decreasing, every tick lands before the fold starts applying
+/// (the pre-pass is a barrier), and the CLOSING tick — the one emitted after all
+/// shard workers join, which is the only tick a corpus this small is guaranteed
+/// to produce — carries the complete sweep: every parsed notice, exactly once.
+///
+/// Pinning the closing tick is what makes the variant testable at all: the
+/// parent polls the workers' shared counter on a coarse interval sized for
+/// multi-hour prod sweeps, so a test corpus finishes before the first poll and
+/// the intermediate ticks are timing-dependent. The final one is not.
+#[tokio::test]
+async fn the_prepass_reports_its_sweep_as_progress() {
+    const BATCH: usize = 7;
+    let (db, f, path) = scratch("prepass-progress").await;
+    build_corpus(&db, f).await;
+
+    let mut prepass = Vec::new();
+    let mut applying_seen = false;
+    project::project_with_progress_phase2(&db, true, BATCH, Phase2::Buckets { shards: None }, |p| {
+        match p {
+            project::Progress::PrePass { notices } => {
+                assert!(!applying_seen, "the pre-pass is a barrier: no tick after the fold starts");
+                prepass.push(notices);
+            }
+            project::Progress::Applying { .. } => applying_seen = true,
+            _ => {}
+        }
+    })
+    .await
+    .expect("bucketed projection");
+
+    assert!(applying_seen, "the corpus folds, so the fold reported too");
+    assert!(!prepass.is_empty(), "the pre-pass reported at least its closing tick");
+    assert!(prepass.windows(2).all(|w| w[0] <= w[1]), "the sweep count never goes backwards: {prepass:?}");
+    let parsed = count(&db, "SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(
+        prepass.last().copied(),
+        Some(parsed as u64),
+        "the closing tick is the whole corpus: every parsed notice swept exactly once"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// The sharded pre-pass (issue 66) is byte-identical to the serial one for ANY worker
 /// count. Sharding the parsed read by notice-id splits a group's notices across shard
 /// files (a keyed procedure's waves, a legacy CN and its award), but routing is by
