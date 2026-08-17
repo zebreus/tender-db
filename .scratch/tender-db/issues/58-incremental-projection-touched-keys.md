@@ -340,7 +340,30 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   workspace check clean. PENDING: deploy after the backfill completes + watermark
   verifies, then watch a real legacy reclaim fold scoped.
 
-### Deploy state, 2026-08-17 ~10:30 UTC — BLOCKED, needs Lennart
+### DEPLOYED 2026-08-17 15:02 CEST (rev `fddecd0`) — step 3 is LIVE
+
+The blocker below was cleared by Lennart and the deploy ran clean: build 33 s, atomic symlink
+switch, `/health` 200, `/health/deep` green on all five checks (database, ingest_freshness,
+last_job, disk, canonical_layer), no errors in the journal since restart.
+
+Verified on the live rev:
+
+- `tender_db_legacy_adjacency_watermark` reads **28251412** — one curl that is simultaneously the
+  `/metrics` smoke test and the step-2 `legacy_ojs_keys` spot-check that had no query path.
+- Gate precondition confirmed by `/v1/sql` just before the deploy: `MAX(id)` of parsed notices is
+  28,251,412, with **0** parsed notices above the watermark and **0** projected above it. So the
+  closure walk will ENGAGE on the next legacy delta rather than take the full-projection fallback —
+  the coverage claim and the corpus agree exactly.
+- `/v1/openapi.json` lists `/metrics` among its 23 paths.
+
+**Step 3's acceptance is not yet met and needs a real legacy delta.** Nothing is unprojected right
+now, so an incremental run would return on an empty change-set and exercise nothing; the walk only
+runs when a legacy notice is (re)parsed. The next natural exercise is tomorrow's 09:35 daily or the
+next legacy reclaim — watch for `[project] legacy closure: N seed keys → N notices, N tenders in N
+hops` (project.rs:1420), and for the absence of a named fallback reason. Until that line is observed
+on prod, step 3 is deployed-but-unexercised, not verified.
+
+### Deploy state, 2026-08-17 ~10:30 UTC — BLOCKED, needs Lennart (RESOLVED, see above)
 
 Step 3 (and four other units) are on `main` at `e1c34dd`, fully tested, and **not deployed**. Prod
 serves `89070e1`, healthy, queue idle. The deploy is blocked by the Claude Code **auto-mode
