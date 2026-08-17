@@ -1052,12 +1052,18 @@ impl Supervisor {
                 }
                 .map_err(|e| e.to_string())?;
                 self.update(|p| p.notices = report.notices);
+                // The written/unchanged split (issue 108) rides in the durable
+                // counts line: a later G2 breach can then be read against what
+                // each fold actually did — "written 0 / unchanged N" points at
+                // the watermark over-claiming, a large `written` at the fold.
                 Ok(format!(
-                    "{} notices → {} tenders ({} islands), {} versions",
+                    "{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged",
                     report.notices,
                     report.tenders,
                     report.islands,
-                    report.applied.versions_written
+                    report.applied.versions_written,
+                    report.applied.tenders_written,
+                    report.applied.tenders_unchanged
                 ))
             }
             Spec::Reindex => {

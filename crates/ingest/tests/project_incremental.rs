@@ -816,6 +816,16 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
         "with a current epoch and unchanged chains the fold must skip every Tender — \
          this is the issue-99 defect, and gate 2 depends on it being real"
     );
+    // The issue-108 split: the all-skip fold SAYS so in its own report — every
+    // consideration went to the verified-unchanged exit, none to the write path.
+    // Before these counters, this fold and a fold that wrote everything were
+    // indistinguishable from their reports, which is how issue 85's 2,185
+    // factless shells could read as "fully projected".
+    assert_eq!(
+        (skipped.applied.tenders_written, skipped.applied.tenders_unchanged),
+        (0, skipped.tenders),
+        "every touched Tender verified current, none written"
+    );
 
     // Now age every Tender's stored epoch and re-fold: the chains are still
     // unchanged, so ONLY the epoch can force the rewrite.
@@ -825,6 +835,13 @@ async fn an_epoch_forced_rewrite_reproduces_identical_content() {
     assert!(
         forced.applied.versions_written > 0,
         "a stale epoch must force the rewrite the chain check skipped"
+    );
+    // And the inverse split under identical inputs: only the stored epoch
+    // differs, so every consideration now goes to the write path.
+    assert_eq!(
+        (forced.applied.tenders_written, forced.applied.tenders_unchanged),
+        (forced.tenders, 0),
+        "every touched Tender rewritten, none skipped"
     );
     assert_eq!(
         before,

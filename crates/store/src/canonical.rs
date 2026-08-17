@@ -956,6 +956,18 @@ pub struct Applied {
     pub versions_written: u64,
     pub versions_removed: u64,
     pub changes: u64,
+    /// Tenders whose chain CHANGED — the write path ran (issue 108). Together
+    /// with `tenders_unchanged` this makes the fold's two exits countable:
+    /// `projected = 1` means "considered by a fold", and these two say which
+    /// way each consideration went. A G2 breach reads differently under
+    /// `written 0 / unchanged N` (the watermark over-claims — issue 105's
+    /// marked-without-a-row route) than under a large `written` (the fold
+    /// itself misbehaved), and before this split that diagnosis needed someone
+    /// who knew both mechanisms reading code under time pressure.
+    pub tenders_written: u64,
+    /// Tenders verified current by the unchanged-chain early return (same
+    /// epoch, same causing-notice sequence) — considered, decided, zero writes.
+    pub tenders_unchanged: u64,
 }
 
 impl Applied {
@@ -966,6 +978,8 @@ impl Applied {
         self.versions_written += other.versions_written;
         self.versions_removed += other.versions_removed;
         self.changes += other.changes;
+        self.tenders_written += other.tenders_written;
+        self.tenders_unchanged += other.tenders_unchanged;
     }
 }
 
@@ -3266,8 +3280,13 @@ impl Db {
                 .count()
         };
         if !stale && keep == stored.len() && keep == p.versions.len() {
+            // Considered and verified current — counted, so a fold that skips
+            // everything is distinguishable from one that wrote everything by
+            // its report alone (issue 108).
+            applied.tenders_unchanged += 1;
             return Ok((applied, None));
         }
+        applied.tenders_written += 1;
 
         // A note for whoever reconciles a re-fold's numbers, because the obvious
         // reading is wrong and it reconciles anyway.
