@@ -1,6 +1,13 @@
 # 33 — Dashboard: pipeline funnel + honest re-walk display
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-17, owner — against the live panel, rev `160b3d8`). Part 1: the
+funnel serves both sources with the full stage chain — doe: 72 packages (fetch complete ✓) →
+1,114,223 notices → 669,759 tenders; ted: 423 packages (fetch complete ✓) → 13,169,256 notices →
+7,253,559 tenders — the at-a-glance "which stage are we in" this asked for, fed by the background
+refresher (no request-path scans). Part 2: the honest re-walk display is the `rewalking` branch of
+the RunningJob component ("Re-walking already-ingested packages — N dup, M new"), keyed on
+`duplicates > notices` from the JobProgress counters; the same shape carried the issue-228/65 work
+this week (a count that stops moving must SAY why). Both acceptance clauses hold on prod.
 
 User feedback (Lennart, 2026-07-21): during the backfill re-walk the
 dashboard showed "0.0 notices/s" for an hour — indistinguishable from a

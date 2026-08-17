@@ -1,6 +1,16 @@
 # 30 — Quarantine headline is mostly benign: split it, then triage the real gaps
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-17, owner — against the live panel, rev `160b3d8`). Both work
+items hold on prod. (1) The split is the panel's shape now: total 2,419,477 held ever, but the
+headline distinguishes outstanding 5,182 / actionable 5,174 / suspected 0, with reclaimed 1,812,657
+and policy-skipped 601,638 counted separately — the benign mass no longer masquerades as data loss.
+(2) The triage happened at full scale across the reclaim campaigns (issues 139/180/196/199/200/201/
+202, the 194/195 slices, ADR-0009/0010): the two big buckets this issue named — `unknown-field-code`
+(576,753 then) and `unparsable-xml` (628,204 then) — are BOTH at zero outstanding; today's only
+non-zero buckets are 8 terminal unreadable-zips and 5,174 `unrepresentable-value` (issue 132/134
+family, design pending). The r2.0.8 award gap and the text-era `RP` continuation this issue spotted
+in the samples were fixed as issues 31/41's line. Every drained category tells its story via the
+issue-40 ledger (44 rows live).
 
 The dashboard's headline data-quality metric (quarantine total) reads
 1,212,695 mid-backfill (rev bad8dda), dominated by `unparsable-xml`

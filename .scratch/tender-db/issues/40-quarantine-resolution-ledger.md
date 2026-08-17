@@ -1,6 +1,15 @@
 # 40 — Quarantine resolution ledger on the dashboard
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-17, owner — against the live panel, rev `160b3d8`). Acceptance
+met exactly as written: **44 resolved-category rows** live on the quarantine panel, each carrying
+category, diagnosis, fix reference and reclaimed/outstanding counts — e.g. "Form copies diverging
+from their original: issue 201 (eb05139), reclaimed 94, outstanding 0" and "2010 records split by
+quoted reference numbers: issue 200 (ac484f5), reclaimed 108, outstanding 0" — categories driven to
+zero that still tell their story. The ledger is source-controlled at
+`crates/app/data/quarantine-ledger.json` (368 lines, reviewed in git like any code change; adding a
+row IS part of landing a quarantine fix — the 2026-08-12→17 campaign entries all shipped that way).
+Counts come from the background refresher's measure (no request-path scans). The ledger long
+outgrew the seed list: it now records the full reclaim-campaign history.
 
 User request (Lennart, 2026-07-21): as quarantine categories get fixed
 and reprocessed, their counts go to zero and the story disappears. The
