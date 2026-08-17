@@ -1,6 +1,35 @@
 # 114 — the plan gate must DERIVE its SQL and its engine from the artifacts, never restate them
 
-Status: open — filed 2026-08-03 (sdk-vendor), scope widened same day.
+Status: RESOLVED-BY-SUCCESSION (owner decision, 2026-08-17) — the PRINCIPLE ("derive from the
+artifact, never paraphrase") landed in-tree and is the working discipline; the out-of-repo
+checked-set/section-E half is retired. Evidence and reasoning:
+
+- **Part 1 (engine)**: never built, and its predicted failure already happened —
+  `/opt/tender-db/turso-bench/` is GONE from the box (verified 2026-08-17), so section B has no
+  engine; `tender-db-verify.timer` was never installed either (no permanently-yellow report is
+  running anywhere). The gate is de-facto manual/dormant.
+- **Part 2 (SQL from the builder)**: shipped in-tree as the `*_statement` seams (lots `2ea1b23`,
+  then tenders / tenders_ordered / organizations / notices through issues 216/217), and in-tree
+  tests consume them — `honoured_params_match_the_emitted_sql` asserts SQL-change ⇔ honoured for
+  every collection × param, and the 217-A flatten guard asserts no companion predicate rides the
+  seeded SQL. Statements under test are the emitted artifacts, not paraphrases.
+- **The set-completeness half**: absorbed by compile-enforced in-tree registries —
+  `walks()` destructures `Filter` exhaustively (new field = compile error) with
+  `FILTER_CLASSIFICATION` as its test-enforced ledger, and `honoured_params` +
+  `provided_filters` force the honesty decision. A new filter cannot enter unseen, which is the
+  guarantee the checked-set TSV existed to provide.
+- **The plan-verdict half is deliberately superseded, not ported**: 112's own rule 6 (a plan
+  names the access path, never the rows on it; the 151,648x regression REWARDED by a greener
+  plan) is why every read-path change since 216 ships with before/after prod measurements in its
+  issue instead — that discipline caught the 4.9 s companioned name search and the 35 s
+  publication_id flatten, which no EQP text could.
+- `checked-set.tsv` (stale at `e51b88e`, ~11 read-path revs behind) and its triage stay in
+  canonical-verify/ as history; the scripts remain manual diagnostics.
+
+Reopen trigger: a read-path regression that the in-tree gates + prod-measurement discipline
+miss. Part 1's app-side EQP design (~30 lines) stays sound if that day comes.
+
+Was: open — filed 2026-08-03 (sdk-vendor), scope widened same day.
 **Part 2 (source the SQL from the builder) raised from LOW to HIGH on 2026-08-03**: it
 stopped being a hardening and became the fix for a DEMONSTRATED hole in 5 of the 6
 hot-read checks. See "Part 2 is no longer hypothetical" below. Part 1 (the engine)
