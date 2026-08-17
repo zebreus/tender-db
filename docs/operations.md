@@ -340,6 +340,10 @@ down). The watcher today is a Claude scheduled routine polling every ~4 h — se
 | `GET /health` | no DB access, always fast | process is up + serving HTTP — liveness only, does **not** query the DB (`{"ok":true,…}`) | `deploy.sh`'s post-deploy check |
 | `GET /health/deep` | one job-log scan (also the DB-answer read) + one `statvfs` | liveness **plus** a real DB-answer check, ingest freshness, last-job outcome and disk usage | the external watcher routine |
 
+(A third endpoint, [`GET /metrics`](#get-metrics--the-prometheus-scrape-issue-53),
+serves the same signals as *time series* for trend-watching rather than as a
+pass/fail verdict.)
+
 `/health` is deliberately narrow: its `ok` reflects only liveness, so a deploy
 is never failed by a stale-ingest or full-disk condition unrelated to the new
 build. **Do not widen it** — `deploy.sh` greps its `ok:true`.
@@ -386,6 +390,56 @@ curl -s https://tenders.zebreus.click/health/deep | jq
   }
 }
 ```
+
+### `GET /metrics` — the Prometheus scrape (issue 53)
+
+A third endpoint, and the one for *trends* rather than verdicts:
+`/metrics` (`crates/app/src/v1/metrics.rs`) serves the operational levels in
+Prometheus text format. It exists because the numbers we hand-watch — WAL size,
+RSS, per-job duration, quarantine counts — are all "watch this move over time"
+questions, and eyeballing a dashboard answers them hours late. The 2026-07-22/23
+WAL incident is the case in point.
+
+```sh
+curl -s https://tenders.zebreus.click/metrics | head -20
+```
+
+**It is a scrape, not a measurement.** Every gauge is either O(1) (change
+cursor, RSS from `/proc/self/status`, live SSE streams, one `statvfs`, the same
+bounded job-log window `/health/deep` reads) or a read of the **dashboard's
+60-second cache** (canonical row counts, quarantine totals and per-reason
+breakdown, import lag). No table-proportional scan runs on this path — that rule
+is what keeps a 15-second scrape interval from becoming the load it exists to
+observe, and it is the same discipline `coverage.rs` applies to its own heavy
+sections.
+
+**A gauge nobody has measured yet is ABSENT, never zero.** On a fresh box, or
+while the dashboard's heavy sections are still gated behind a running write job,
+the corresponding series simply do not appear. A scraper sees them start when
+the first real measurement lands. This is deliberate: a fabricated `0` for
+`quarantine_outstanding` reads exactly like a drained backlog.
+
+Series exposed (all gauges — a restart cannot reset a counter mid-series
+because nothing here accumulates in-process):
+
+| Prefix | Source |
+| --- | --- |
+| `tender_db_change_cursor`, `tender_db_sse_streams`, `tender_db_rss_bytes` | in-process, O(1) |
+| `tender_db_disk_{used_fraction,free_bytes,total_bytes}`, `tender_db_wal_bytes` | one `statvfs` + the `-wal` stat (same as `/health/deep`) |
+| `tender_db_job_last_{duration_seconds,finished_timestamp_seconds,ok}{kind=…}` | newest run per kind in the bounded job-log window |
+| `tender_db_ingest_last_success_timestamp_seconds`, `tender_db_ingest_{fetch,notice}_age_seconds` | the freshness clock (`probe`/`process`/`project` only) + import lag |
+| `tender_db_canonical_rows{table=…}`, `tender_db_quarantine_*` | dashboard cache (absent until measured) |
+
+**A Prometheus + Grafana server stays deliberately deferred** (team-lead
+decision on issue 53): that is real operational weight — extra processes to run,
+secure and resource-budget on an 8 GB box — against a single-process monolith
+(ADR-0005). This endpoint is what makes standing one up a later, reversible
+choice; until then the scrape is readable by hand or by any transient scraper.
+
+Like the health probes, `/metrics` sits **outside the rate limiter** (a scraper
+on a fixed cadence must not spend the public request budget) and, unlike them, is
+**not** in the public CORS grant — it is an operator surface, so browser
+JavaScript on another origin cannot read it.
 
 ### The off-box watcher (an external Claude scheduled routine)
 

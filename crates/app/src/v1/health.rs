@@ -48,7 +48,8 @@ const LAYER_STALE_SECS: i64 = 6 * 3_600;
 /// How far back to scan the job log for the newest success. A failure run longer
 /// than this would bury the last success — but that is itself caught by the
 /// last-job check, which flips unhealthy the moment the newest run errors.
-const JOB_SCAN: i64 = 100;
+/// Shared with `/metrics`, whose per-kind last-run gauges read the same window.
+pub(super) const JOB_SCAN: i64 = 100;
 
 /// The daily ingestion pipeline's job kinds (probe → process → project, T+1).
 /// `ingest_freshness` tracks the newest SUCCESSFUL run among ONLY these, so a
@@ -107,7 +108,7 @@ pub async fn deep(State(state): State<AppState>) -> Response {
 /// When the newest SUCCESSFUL daily-pipeline run finished — the freshness clock.
 /// Filters to [`INGEST_KINDS`] so a maintenance job's success cannot reset it and
 /// hide a stalled ingest. `runs` is newest-first, so the first match is the newest.
-fn ingest_last_success(runs: &[JobRun]) -> Option<i64> {
+pub(super) fn ingest_last_success(runs: &[JobRun]) -> Option<i64> {
     runs.iter()
         .find(|r| r.outcome == "ok" && INGEST_KINDS.contains(&r.kind.as_str()))
         .map(|r| r.finished_at)
@@ -131,14 +132,14 @@ struct Signals {
     layer: Option<Vec<(LayerPresence, i64)>>,
 }
 
-struct Disk {
-    used_fraction: f64,
-    free_bytes: u64,
-    total_bytes: u64,
+pub(super) struct Disk {
+    pub(super) used_fraction: f64,
+    pub(super) free_bytes: u64,
+    pub(super) total_bytes: u64,
     /// Size of the `-wal` sidecar, surfaced so the alerting routine sees a
     /// runaway WAL during bulk loads (issue 42). Informational — a large WAL is
     /// expected mid-backfill, so it does not by itself flip the disk verdict.
-    wal_bytes: Option<u64>,
+    pub(super) wal_bytes: Option<u64>,
 }
 
 /// Turn the raw signals into an overall verdict plus the per-check JSON. A
@@ -222,7 +223,7 @@ fn assess(s: &Signals) -> (bool, Value) {
 /// Usage of the filesystem holding the database file (`TENDER_DB`, same volume
 /// as the archive in production). `None` if the path cannot be stat'd — a
 /// portability quirk must not masquerade as a full disk.
-fn disk_usage() -> Option<Disk> {
+pub(super) fn disk_usage() -> Option<Disk> {
     let db = std::env::var("TENDER_DB").unwrap_or_else(|_| "tender-db.db".into());
     let path = std::path::Path::new(&db);
     // statvfs needs an existing path; fall back to the DB's directory when the

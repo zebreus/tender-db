@@ -387,6 +387,92 @@ async fn the_deep_health_probe_reports_operational_health() {
     assert_eq!(errored["checks"]["last_job"]["ok"], Value::Bool(false));
 }
 
+/// `/metrics` (issue 53) exposes the operational levels in Prometheus text
+/// form. What is asserted here is the *contract a scraper depends on*: the
+/// content type, that a gauge carries its HELP/TYPE headers, that the job log
+/// reaches the per-kind series, and — the point of the design — that a section
+/// nobody has measured yet is ABSENT rather than exposed as a false zero. The
+/// numbers themselves are not asserted: RSS and disk are host measurements, and
+/// pinning them here would be the standing expected-red the deep-probe test
+/// above explains at length.
+#[tokio::test]
+async fn the_metrics_endpoint_exposes_prometheus_text() {
+    let server = Server::start("metrics").await;
+
+    let response =
+        server.http.get(format!("{}/metrics", server.base)).send().await.expect("request");
+    assert_eq!(response.status().as_u16(), 200);
+    assert_eq!(
+        response.headers().get("content-type").and_then(|v| v.to_str().ok()),
+        Some("text/plain; version=0.0.4; charset=utf-8"),
+    );
+    let body = response.text().await.expect("body");
+
+    // The always-available O(1) gauges, each with its exposition headers.
+    for name in ["tender_db_change_cursor", "tender_db_sse_streams"] {
+        assert!(body.contains(&format!("# TYPE {name} gauge\n")), "{name} declares its type:\n{body}");
+        assert!(
+            body.lines().any(|l| l.starts_with(name) && l.split(' ').count() == 2),
+            "{name} carries a sample:\n{body}"
+        );
+    }
+
+    // A fresh box has never run a job and the dashboard cache has measured
+    // nothing: those gauges are absent, NOT zero. This is the assertion that
+    // keeps a made-up zero from ever being read as a real measurement.
+    for absent in [
+        "tender_db_ingest_last_success_timestamp_seconds",
+        "tender_db_job_last_ok",
+        "tender_db_quarantine_outstanding",
+        "tender_db_canonical_rows",
+    ] {
+        assert!(!body.contains(absent), "{absent} must be absent before it is measured:\n{body}");
+    }
+
+    // Once runs exist, each kind's newest run reports duration, finish and outcome.
+    let now = store::now_unix();
+    server
+        .db
+        .record_job_run("process", "ted daily (all)", now - 70, now - 10, "ok", "42 notices")
+        .await
+        .unwrap();
+    server
+        .db
+        .record_job_run("project", "rebuild=false", now - 5, now, "error", "db: locked")
+        .await
+        .unwrap();
+    let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
+        .text().await.expect("body");
+    assert!(body.contains("tender_db_job_last_duration_seconds{kind=\"process\"} 60\n"), "{body}");
+    assert!(body.contains("tender_db_job_last_ok{kind=\"process\"} 1\n"), "{body}");
+    assert!(body.contains("tender_db_job_last_ok{kind=\"project\"} 0\n"), "{body}");
+    // `project` errored, so the ingest clock reads the `process` success.
+    assert!(
+        body.contains(&format!("tender_db_ingest_last_success_timestamp_seconds {}\n", now - 10)),
+        "{body}"
+    );
+}
+
+/// `/metrics` is an operator surface: reachable without a token (it is on the
+/// loopback-facing box, like the health probes) but deliberately NOT in the
+/// public CORS grant, so browser JavaScript on another origin cannot scrape it.
+#[tokio::test]
+async fn the_metrics_endpoint_is_not_cors_open() {
+    let server = Server::start("metrics-cors").await;
+    let response = server
+        .http
+        .get(format!("{}/metrics", server.base))
+        .header("origin", "https://example.com")
+        .send()
+        .await
+        .expect("request");
+    assert_eq!(response.status().as_u16(), 200);
+    assert!(
+        response.headers().get("access-control-allow-origin").is_none(),
+        "/metrics must not carry the public CORS grant"
+    );
+}
+
 #[tokio::test]
 async fn a_fresh_database_answers_every_collection_with_an_empty_page() {
     let server = Server::start("empty").await;

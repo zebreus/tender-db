@@ -10,6 +10,7 @@ pub mod auth;
 pub mod docs;
 pub mod health;
 pub mod json;
+pub mod metrics;
 pub mod openapi;
 pub mod sql;
 pub mod sse;
@@ -167,6 +168,13 @@ pub fn router(state: AppState) -> Router {
         // ingest freshness, job failures and disk. Outside the rate limiter, like
         // `/health`: a pinger must never be throttled (issue 24).
         .route("/health/deep", get(health::deep))
+        // The Prometheus scrape (issue 53). Outside the rate limiter for the
+        // same reason as the health probes — a scraper on a fixed cadence must
+        // not spend, or be refused by, the public request budget. Deliberately
+        // NOT in `is_public_surface`: it is an operator surface, so browser
+        // JavaScript on other origins has no business reading it, and every
+        // gauge it exposes is an operational level rather than corpus data.
+        .route("/metrics", get(metrics::metrics))
         .route("/_source", get(source))
         // The human-readable API reference. Outside the rate limiter (like
         // `/_source`): reading the docs is not a service call and must not spend
@@ -1306,6 +1314,11 @@ impl AppState {
         }
         *count += 1;
         Some(StreamSlot { streams: self.streams.clone(), key: key.to_owned() })
+    }
+
+    /// Live subscriptions across all clients — the `/metrics` stream gauge.
+    pub(super) fn live_streams(&self) -> usize {
+        self.streams.lock().expect("stream budget lock").values().sum()
     }
 }
 
