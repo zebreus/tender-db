@@ -429,6 +429,17 @@ because nothing here accumulates in-process):
 | `tender_db_job_last_{duration_seconds,finished_timestamp_seconds,ok}{kind=…}` | newest run per kind in the bounded job-log window |
 | `tender_db_ingest_last_success_timestamp_seconds`, `tender_db_ingest_{fetch,notice}_age_seconds` | the freshness clock (`probe`/`process`/`project` only) + import lag |
 | `tender_db_canonical_rows{table=…}`, `tender_db_quarantine_*` | dashboard cache (absent until measured) |
+| `tender_db_legacy_adjacency_watermark` | one-row point read on the reader pool |
+
+One gauge is deliberately exempt from the absence rule above:
+`tender_db_legacy_adjacency_watermark` reports **0** rather than vanishing,
+because 0 is a real state there — "legacy OJS adjacency coverage was never
+established", in which every legacy delta takes the full-projection fallback
+instead of the scoped closure walk (issue 58 v2). It is also the *only* external
+view of that claim: the adjacency tables are projection machinery and are not in
+`/v1/sql`'s public allow-list, so a value > 0 here is how an operator confirms
+the incremental projection may scope a legacy fold at all. Read it after any
+backfill of that layer, and after a full rebuild (which resets it).
 
 **A Prometheus + Grafana server stays deliberately deferred** (team-lead
 decision on issue 53): that is real operational weight — extra processes to run,

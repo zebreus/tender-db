@@ -56,6 +56,23 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
 
+    // The legacy-adjacency coverage watermark (issue 58 v2). A one-row point read
+    // on the reader pool, and the only external view of the claim the incremental
+    // projection's closure walk gates on: > 0 means it may scope a legacy fold to
+    // the touched component, 0 means every legacy delta takes the full-projection
+    // fallback. The adjacency tables are deliberately not in `/v1/sql`'s public
+    // allow-list (they are projection machinery, not corpus data), so without this
+    // gauge the gate's input is unobservable from outside the process — which is
+    // exactly the position the step-2 backfill's verification found itself in.
+    if let Ok(watermark) = state.db.legacy_adjacency_watermark_observed().await {
+        header(
+            &mut out,
+            "tender_db_legacy_adjacency_watermark",
+            "Notice id up to which legacy OJS adjacency coverage is attested; 0 = never established.",
+        );
+        sample(&mut out, "tender_db_legacy_adjacency_watermark", &[], watermark as f64);
+    }
+
     // The job log — the same bounded reader-pool window `/health/deep` reads
     // (newest `JOB_SCAN` runs), reduced to the newest run per kind. Durations
     // and finish stamps per kind are the "watch a number trend" series the

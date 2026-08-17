@@ -2435,6 +2435,22 @@ impl Db {
         })
     }
 
+    /// [`Db::legacy_adjacency_watermark`] over the READER POOL — for observers
+    /// (`/metrics`) rather than the projection. The projection wants the writer's
+    /// own view, since it raises the watermark in the same transaction sequence
+    /// it writes key rows; an observer must never take the writer mutex, or a
+    /// scrape during a projection would queue behind a multi-hour fold. Serving
+    /// over WAL, this can read a watermark one commit stale, which is harmless
+    /// for a gauge and never for a gate (the gate uses the writer view above).
+    pub async fn legacy_adjacency_watermark_observed(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT watermark FROM legacy_adjacency WHERE id = 0", ()).await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        })
+    }
+
     /// ESTABLISH coverage after a pass that visited EVERY parsed notice (a full
     /// plan build, or the backfill job): watermark := max(current, `to`). Only
     /// such a pass may make the first raise — the incremental advance below

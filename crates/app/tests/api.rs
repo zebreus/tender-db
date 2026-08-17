@@ -429,6 +429,14 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         assert!(!body.contains(absent), "{absent} must be absent before it is measured:\n{body}");
     }
 
+    // The adjacency watermark is the exception to absent-until-measured, and
+    // deliberately so: 0 is a REAL value there ("coverage never established", the
+    // state in which every legacy delta takes the full-projection fallback), not
+    // a placeholder for an unmeasured one. It is the only external view of what
+    // the closure walk gates on, since the adjacency tables are not in /v1/sql's
+    // allow-list.
+    assert!(body.contains("tender_db_legacy_adjacency_watermark 0\n"), "{body}");
+
     // Once runs exist, each kind's newest run reports duration, finish and outcome.
     let now = store::now_unix();
     server
@@ -451,6 +459,13 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         body.contains(&format!("tender_db_ingest_last_success_timestamp_seconds {}\n", now - 10)),
         "{body}"
     );
+
+    // Establishing coverage moves the gauge — the scrape reads through the
+    // reader pool, so this also proves the observed view sees a committed raise.
+    server.db.establish_legacy_adjacency(4242).await.unwrap();
+    let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
+        .text().await.expect("body");
+    assert!(body.contains("tender_db_legacy_adjacency_watermark 4242\n"), "{body}");
 }
 
 /// `/metrics` is an operator surface: reachable without a token (it is on the
