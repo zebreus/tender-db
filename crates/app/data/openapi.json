@@ -624,6 +624,17 @@
         }
       }
     },
+    "/metrics": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Prometheus metrics scrape",
+        "description": "Operational gauges in Prometheus text exposition format: change cursor, RSS, live SSE streams, disk and WAL size, per-job last-run duration and outcome, ingest freshness and lag, canonical row counts and quarantine totals. Every value is O(1) or read from the dashboard's 60-second cache, so a scrape never runs a table scan; a gauge not yet measured is absent rather than reported as zero. Outside the rate limiter, and — unlike the health probes — not CORS-open, being an operator surface.",
+        "operationId": "metrics",
+        "responses": {
+          "200": { "description": "The current gauges.", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
     "/_source": {
       "get": {
         "tags": ["service"],

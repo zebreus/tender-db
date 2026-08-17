@@ -1982,6 +1982,22 @@ async fn the_openapi_spec_matches_the_served_surface() {
         );
     }
     assert_eq!(root["openapi"], "/v1/openapi.json", "the service info links the spec");
+
+    // Router → spec, the half `GET /v1` cannot vouch for. The service info lists
+    // only `/v1/…` data endpoints, so the loop above is blind to the operational
+    // surface — yet the spec deliberately documents that surface too (`/health`,
+    // `/health/deep`, `/metrics`, `/_source`, `/docs`). `/metrics` was added
+    // outside `/v1` and neither direction noticed, which is exactly the silent
+    // drift issue 227 closed for `/docs`. Enumerated rather than derived: axum
+    // exposes no route inventory, so the honest gate is a list that a new
+    // operational route must be added to — and this comment is where the next
+    // person learns that.
+    for path in ["/health", "/health/deep", "/metrics", "/_source", "/docs"] {
+        assert!(
+            spec_paths.contains_key(path),
+            "{path} is served outside /v1 but missing from the OpenAPI spec"
+        );
+    }
 }
 
 /// `/docs` names the whole machine-readable surface (issue 227).
