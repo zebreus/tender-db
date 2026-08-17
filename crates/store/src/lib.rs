@@ -1003,6 +1003,85 @@ impl Db {
         }
     }
 
+    /// Every table [`Db::insert_parsed`] writes — the notice's whole parsed layer.
+    /// A re-parse must clear exactly this set, so the two lists are maintained
+    /// together; `a_reparse_clears_every_parsed_table` fails if the schema grows a
+    /// `notice_*` table that this misses, which is the drift that would otherwise
+    /// leave orphan rows behind a re-parse.
+    const PARSED_TABLES: [&'static str; 9] = [
+        "notice_sections",
+        "notice_texts",
+        "notice_codes",
+        "notice_classifications",
+        "notice_dates",
+        "notice_amounts",
+        "notice_numbers",
+        "notice_integers",
+        "notice_ids",
+    ];
+
+    /// Drop one notice's parsed layer, leaving the `notices` row itself.
+    async fn clear_parsed(&self, conn: &Connection, id: i64) -> turso::Result<()> {
+        for table in Self::PARSED_TABLES {
+            conn.execute(&format!("DELETE FROM {table} WHERE notice_id = ?"), (Value::Integer(id),))
+                .await?;
+        }
+        Ok(())
+    }
+
+    /// RE-PARSE an already-parsed notice in place: replace its parsed layer with
+    /// `parsed` and clear its `projected` watermark so the next projection re-folds
+    /// it (issue 100).
+    ///
+    /// This is deliberately NOT a flag on [`Db::reclaim_notice`], whose
+    /// already-parsed arm exists to make a re-run a no-op and is load-bearing for
+    /// the reclaim campaigns. Re-parsing is the opposite intent — overwrite what is
+    /// already good, because the PARSER changed — so it gets its own entry point
+    /// that says so at the call site.
+    ///
+    /// The clear is the whole point and the reason this cannot be done by calling
+    /// `insert_parsed` on a parsed notice: that function is pure `INSERT`, so
+    /// without the clear a re-parse would DOUBLE every section, text, code and id
+    /// row rather than replace them — silent corruption, and worse than the missing
+    /// feature it would look like it implemented. Clear + insert + the state update
+    /// commit as one transaction, so a crash leaves the notice with its old parsed
+    /// layer intact rather than a half-replaced one.
+    ///
+    /// Returns `false` when there is no notice row for `n` (nothing to re-parse);
+    /// the caller counts that rather than treating it as an error, since a cohort
+    /// walk can legitimately meet a member whose notice was never ingested.
+    pub async fn reparse_notice(&self, n: &Notice, parsed: &Parsed) -> turso::Result<bool> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result = async {
+            let Some((id, _)) = self.notice_state(&conn, n).await? else { return Ok(false) };
+            self.clear_parsed(&conn, id).await?;
+            self.insert_parsed(&conn, id, parsed).await?;
+            // `projected = 0` is what makes the re-parse reach the canonical layer:
+            // the next incremental projection takes unprojected parsed notices as
+            // its change-set (issue 58). Without it the new parse rows would sit
+            // there and every reader would keep seeing the old fold.
+            conn.execute(
+                "UPDATE notices SET parse_state = 'parsed', projected = 0,
+                     published_at = ?, dispatched_at = ? WHERE id = ?",
+                (opt_int(n.published_at), opt_int(n.dispatched_at), Value::Integer(id)),
+            )
+            .await?;
+            Ok(true)
+        }
+        .await;
+        match result {
+            Ok(outcome) => {
+                conn.execute("COMMIT", ()).await?;
+                Ok(outcome)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
     async fn reclaim_notice_tx(&self, conn: &Connection, n: &Notice, parse: &Parse) -> turso::Result<Reclaim> {
         match self.notice_state(conn, n).await? {
             // Already good — never re-touch a parsed notice (guards double-writes
@@ -4626,6 +4705,104 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 value: NoticeValue::Text { lang: Some("EN".into()), value: "hello".into() },
             }],
         }
+    }
+
+    /// Issue 100: a re-parse REPLACES the parsed layer and re-opens the notice for
+    /// folding. The hazard it guards is duplication, not absence — `insert_parsed`
+    /// is pure INSERT, so a re-parse that forgot to clear would double every row
+    /// and still look like it worked.
+    #[tokio::test]
+    async fn a_reparse_replaces_the_parsed_layer_and_reopens_the_fold() {
+        let path = format!("/tmp/tender-db-reparse-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        let notice = held_notice();
+        assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        let id = int_of(&db, "SELECT id FROM notices").await.expect("the notice row");
+        db.mark_projected(&[id]).await.unwrap();
+        assert!(db.unprojected_parsed_notice_ids().await.unwrap().is_empty(), "starts folded");
+
+        // A DIFFERENT parse of the same notice — the shape a parser fix produces:
+        // the section keeps its identity, the value changes.
+        let reparsed = Parsed {
+            sections: vec![Section { id: "RES-0001".into(), kind: "LotResult".into(), parent: None }],
+            values: vec![ValueRow {
+                section_id: "RES-0001".into(),
+                field_id: "TITLE".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: Some("EN".into()), value: "rewritten".into() },
+            }],
+        };
+        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "the notice exists");
+
+        // Replaced, not appended — one section and one text row, carrying the NEW
+        // content. A missing clear would show 2 of each here.
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_sections").await, Some(1));
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts").await, Some(1));
+        assert_eq!(
+            text_of(&db, "SELECT section_id FROM notice_sections").await.as_deref(),
+            Some("RES-0001"),
+            "the new section id is what the references will resolve against"
+        );
+        assert_eq!(text_of(&db, "SELECT value FROM notice_texts").await.as_deref(), Some("rewritten"));
+
+        // And it is folding work again: without this the new rows would sit unread
+        // behind the projected watermark.
+        assert_eq!(
+            db.unprojected_parsed_notice_ids().await.unwrap(),
+            vec![id],
+            "a re-parsed notice re-enters the incremental change-set"
+        );
+        assert_eq!(
+            text_of(&db, "SELECT parse_state FROM notices").await.as_deref(),
+            Some("parsed"),
+            "it stays parsed throughout — a re-parse must never open a window where \
+             the notice is absent from the corpus"
+        );
+
+        // An unknown notice is reported, not an error: a cohort walk can meet a
+        // member that was never ingested.
+        let stranger = Notice { publication_id: "999-2099".into(), ..held_notice() };
+        assert!(!db.reparse_notice(&stranger, &tiny_parsed()).await.unwrap());
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The clear must cover every table the parsed layer occupies. This reads the
+    /// SCHEMA rather than trusting the constant, so adding a tenth `notice_*` table
+    /// to `insert_parsed` without adding it to `PARSED_TABLES` fails here instead
+    /// of silently orphaning rows on every future re-parse.
+    #[tokio::test]
+    async fn a_reparse_clears_every_parsed_table() {
+        let path = format!("/tmp/tender-db-reparse-tables-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name LIKE 'notice\\_%' ESCAPE '\\'",
+                (),
+            )
+            .await
+            .unwrap();
+        let mut schema = Vec::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            schema.push(text(&row, 0));
+        }
+        drop(rows);
+        drop(conn);
+        schema.sort();
+        let mut covered: Vec<String> = Db::PARSED_TABLES.iter().map(|t| t.to_string()).collect();
+        covered.sort();
+        assert_eq!(
+            schema, covered,
+            "PARSED_TABLES must equal the notice_* tables in the schema — a table in one list \
+             and not the other is either an orphan-row leak (missing from the clear) or a \
+             DELETE against nothing"
+        );
+
+        let _ = std::fs::remove_file(&path);
     }
 
     fn held_notice() -> Notice {
