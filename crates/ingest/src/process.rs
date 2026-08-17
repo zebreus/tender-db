@@ -526,3 +526,77 @@ pub async fn reclaim_package(
     }
     Ok(report)
 }
+
+/// What a [`reparse_package`] pass did.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct ReparseReport {
+    /// Members the walker read.
+    pub members: u64,
+    /// Notices whose parsed layer was REPLACED from the archive.
+    pub reparsed: u64,
+    /// Records that re-parsed fine but matched no notice row — nothing to replace.
+    /// Not an error: the selected members come from `notices`, but a package walk
+    /// can yield records the selection did not name (a text-era member file holds
+    /// several records, and only some may be in the cohort).
+    pub unmatched: u64,
+    /// Records the CURRENT parser quarantines. Their existing parsed layer is left
+    /// untouched — a re-parse must never trade a good layer for a failure.
+    pub now_failing: u64,
+}
+
+/// Re-parse a package's already-parsed members IN PLACE against the current
+/// parser (issue 100), replacing each notice's parsed layer and re-opening it for
+/// folding. The reclaim path's twin, for the case where the notices are fine and
+/// the PARSER changed.
+///
+/// `members` is the set to walk, from [`store::Db::parsed_member_files`], so a
+/// cohort sparse in a big package costs its members and not the package (issue
+/// 77's discipline).
+///
+/// A record the current parser QUARANTINES leaves the stored layer alone and is
+/// counted in `now_failing`. That is the conservative reading and the reason this
+/// cannot simply route through the reclaim path: swapping a good parsed layer for
+/// a quarantine would turn a parser regression into data loss, and the counter
+/// makes such a regression visible in the job summary instead of silent.
+pub async fn reparse_package(
+    db: &store::Db,
+    archive: &Path,
+    source: &str,
+    fetch_id: i64,
+    members: std::collections::HashSet<String>,
+    mut on_progress: impl FnMut(u64, u64, &ReparseReport),
+) -> Result<ReparseReport, Error> {
+    let (rx, walker, estimated) =
+        spawn_record_producer(archive, Some(members), &db.unreadable_bundle_members(fetch_id).await?)?;
+    let mut report = ReparseReport::default();
+    let now = store::now_unix();
+    let mut done = 0u64;
+    let mut slot = Some(rx);
+    while let Some((record, parse)) = recv_next(&mut slot).await {
+        if let Record::Notice(n) = record {
+            match &parse {
+                store::Parse::Parsed(parsed) => {
+                    let resolved = resolved_notice(source, fetch_id, now, n, &parse);
+                    if db.reparse_notice(&resolved, parsed).await? {
+                        report.reparsed += 1;
+                    } else {
+                        report.unmatched += 1;
+                    }
+                }
+                // Quarantined now: keep what the corpus already has.
+                _ => report.now_failing += 1,
+            }
+        }
+        done += 1;
+        // Same WAL bound as the reclaim walk (issue 80): each notice commits, so a
+        // dense package would grow the log its whole length without this.
+        if done % CHECKPOINT_EVERY == 0 {
+            let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+        }
+        on_progress(done, estimated.max(done), &report);
+    }
+    drop(slot);
+    let tally = walker.join().expect("package walker panicked")?;
+    report.members = tally.members;
+    Ok(report)
+}

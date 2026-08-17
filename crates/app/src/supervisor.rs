@@ -166,6 +166,10 @@ enum Spec {
     /// layer in place for members that now parse (issues 71/72/73). The bucket is
     /// `reason` + optional `detail LIKE` + optional exact `profile`.
     Reprocess { reason: String, detail_like: Option<String>, profile: Option<String> },
+    /// Re-parse a profile cohort's already-parsed notices from the archive
+    /// against the current parser (issue 100). Resume rides on the job row's
+    /// `resume_after` like `process`/`reprocess`, not in the spec.
+    Reparse { profiles: Vec<String> },
     /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
     /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
     /// generation for the recovered baseline instead of appending. `#[serde(default)]`
@@ -415,6 +419,37 @@ impl Supervisor {
             // the coverage watermark (issue 58 v2, step 2) — batched, checkpointed,
             // idempotent. One-off after the table ships; the plan builds maintain
             // it from then on.
+            // Re-parse a PROFILE cohort's already-parsed notices from the archive
+            // against the current parser, then fold what changed (issue 100). The
+            // `reprocess` twin for the case where the notices are fine and the
+            // PARSER changed — reprocess cannot serve it (it walks quarantine rows)
+            // and `refold` cannot either (it re-folds the existing parse rows).
+            // Profiles ride in the request's `profiles` list, like `refold`.
+            "reparse" => {
+                let profiles = req.profiles.clone().unwrap_or_default();
+                if profiles.is_empty() {
+                    return Err("reparse needs at least one profile".into());
+                }
+                let params = format!("reparse {}", profiles.join(","));
+                let mut ids = vec![
+                    self.push("reparse", params, Spec::Reparse { profiles })
+                        .await,
+                ];
+                // Re-parsed notices land `projected = 0`, so an ordinary incremental
+                // projection folds them — no `refold` needed. `reclaim_only` skips
+                // it for a bulk run that would rather pay one sequential rebuild.
+                if !req.reclaim_only.unwrap_or(false) {
+                    ids.push(
+                        self.push(
+                            "project",
+                            "rebuild=false".into(),
+                            Spec::Project { rebuild: false, clear_changes: false },
+                        )
+                        .await,
+                    );
+                }
+                Ok(ids)
+            }
             "backfill-legacy-adjacency" => Ok(vec![
                 self.push(
                     "backfill-legacy-adjacency",
@@ -997,6 +1032,9 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
+            Spec::Reparse { profiles } => {
+                self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
+            }
             Spec::Reprocess { reason, detail_like, profile } => {
                 self.run_reprocess(
                     job.id,
@@ -1508,6 +1546,88 @@ impl Supervisor {
     /// layer in place for members that now parse (issues 71/72/73). Resumable by
     /// `fetch_id` cursor (like `run_process`) and idempotent — a reclaimed member
     /// is `parsed` on the next pass, so a restart mid-bucket redoes nothing.
+    /// Re-parse a profile cohort from the archive (issue 100), one package at a
+    /// time, resumable on the same `resume_after` cursor `process`/`reprocess` use.
+    ///
+    /// One thing differs from `run_reprocess` and it decides termination: a
+    /// reclaim's work list SHRINKS as rows get `reprocessed_at`, so a re-query
+    /// converges. A re-parsed notice is still a parsed notice of the same profile,
+    /// so this work list is IDEMPOTENT — the cursor is the only progress there is,
+    /// which is why it is advanced per package and read back on resume.
+    async fn run_reparse(
+        &self,
+        job_id: u64,
+        profiles: &[String],
+        resume_after: Option<&str>,
+    ) -> Result<String, String> {
+        let after = resume_after.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
+        let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
+        let packages =
+            self.db.reparse_packages(&refs, after).await.map_err(|e| e.to_string())?;
+        self.update(|p| p.packages_total = packages.len() as u64);
+        if packages.is_empty() {
+            return Ok(format!("no packages hold parsed notices of {}", refs.join(",")));
+        }
+
+        let (mut reparsed, mut unmatched, mut failing, mut members) = (0u64, 0u64, 0u64, 0u64);
+        for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
+            self.update(|p| {
+                p.package = Some(format!("fetch {fetch_id}"));
+                p.packages_done = i as u64;
+                p.members_done = 0;
+                p.members_total = 0;
+            });
+            self.set_phase(
+                "re-parsing",
+                Some(i as u64),
+                Some(packages.len() as u64),
+                format!("fetch {fetch_id}: {reparsed} notices re-parsed so far"),
+            );
+            let selected = self
+                .db
+                .parsed_member_files(*fetch_id, &refs)
+                .await
+                .map_err(|e| e.to_string())?;
+            let report = ingest::process::reparse_package(
+                &self.db,
+                &self.archive.join(path),
+                source,
+                *fetch_id,
+                selected,
+                |done, members_total, _| {
+                    if done % 64 == 0 || done == members_total {
+                        self.update(|p| {
+                            p.members_done = done;
+                            p.members_total = members_total;
+                        });
+                    }
+                },
+            )
+            .await
+            .map_err(|e| format!("db: {e}"))?;
+            reparsed += report.reparsed;
+            unmatched += report.unmatched;
+            failing += report.now_failing;
+            members += report.members;
+            self.update(|p| p.packages_done = (i + 1) as u64);
+            if let Err(e) = self.db.record_job_progress(job_id as i64, &fetch_id.to_string()).await {
+                eprintln!("supervisor: job {job_id} record reparse progress {fetch_id}: {e}");
+            }
+            if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                eprintln!("supervisor: job {job_id} checkpoint after fetch {fetch_id}: {e}");
+            }
+        }
+
+        // `now_failing` is the line to read first on any future run: it counts
+        // notices the CURRENT parser can no longer parse, whose stored layer was
+        // therefore left alone. Non-zero means a parser regression, not progress.
+        Ok(format!(
+            "re-parsed {reparsed} notices across {} packages ({members} members walked, \
+             {unmatched} unmatched, {failing} now failing and left untouched)",
+            packages.len()
+        ))
+    }
+
     async fn run_reprocess(
         &self,
         job_id: u64,
@@ -1993,6 +2113,49 @@ mod tests {
             duplicates: 0,
             phase: None,
         }
+    }
+
+    /// Issue 100: `reparse` needs at least one profile, and pairs itself with a
+    /// projection — re-parsed notices land `projected = 0`, so the ordinary
+    /// incremental fold carries them into the canonical layer.
+    #[tokio::test]
+    async fn reparse_needs_profiles_and_pairs_with_a_projection() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+
+        assert!(
+            sup.enqueue_request(&req("reparse")).await.is_err(),
+            "a profile-less reparse would walk the whole corpus — refuse it"
+        );
+
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "reparse".into(),
+                profiles: Some(vec!["eforms:eforms-de-1.1".into(), "eforms:eforms-de-1.2".into()]),
+                ..Default::default()
+            })
+            .await
+            .expect("a reparse with profiles enqueues");
+        assert_eq!(ids.len(), 2, "the reparse and its trailing projection");
+        let queued = sup.queued();
+        assert_eq!(queued[0].kind, "reparse");
+        assert_eq!(
+            queued[0].params, "reparse eforms:eforms-de-1.1,eforms:eforms-de-1.2",
+            "the cohort is legible in the job log, not hidden in the spec"
+        );
+        assert_eq!(queued[1].kind, "project");
+
+        // `reclaim_only` drops the fold, for a bulk run that would rather pay one
+        // sequential rebuild afterwards (the ADR-0009 shape).
+        let bulk = sup
+            .enqueue_request(&JobRequest {
+                kind: "reparse".into(),
+                profiles: Some(vec!["eforms:eforms-de-1.1".into()]),
+                reclaim_only: Some(true),
+                ..Default::default()
+            })
+            .await
+            .expect("bulk reparse enqueues");
+        assert_eq!(bulk.len(), 1, "reclaim_only leaves the fold to a later rebuild");
     }
 
     /// Issue 65: a phase record names what a non-package-walking job is doing,

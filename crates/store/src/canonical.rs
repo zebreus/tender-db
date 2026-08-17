@@ -4853,7 +4853,7 @@ fn value_sources() -> Vec<(&'static str, &'static str, ValueBuilder)> {
 }
 
 /// A `?,?,…` placeholder list of `n` bind slots for an `IN (…)` clause.
-fn placeholders(n: usize) -> String {
+pub(crate) fn placeholders(n: usize) -> String {
     let mut s = String::with_capacity(n * 2);
     for i in 0..n {
         if i > 0 {

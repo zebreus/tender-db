@@ -1681,6 +1681,71 @@ impl Db {
         Ok(out)
     }
 
+    /// The archived packages holding PARSED notices of these profiles, whose
+    /// `fetch_id` exceeds `after` — the re-parse job's resumable work list (issue
+    /// 100), the profile-scoped twin of [`Db::quarantine_reclaim_packages`].
+    ///
+    /// The two differ in a way worth stating, because it decides how the job knows
+    /// it is done. A reclaim's work list SHRINKS as it runs: a reclaimed row gets
+    /// `reprocessed_at` and its package drops out of a re-query. A re-parse has no
+    /// such stamp — a re-parsed notice is still a parsed notice of the same
+    /// profile, so this list is IDEMPOTENT and re-querying returns the same
+    /// packages. Progress therefore lives entirely in the `after` cursor, and a
+    /// resumed run must carry it or redo work it already did.
+    pub async fn reparse_packages(
+        &self,
+        profiles: &[&str],
+        after: i64,
+    ) -> turso::Result<Vec<(i64, String, String)>> {
+        if profiles.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = self.reader().await?;
+        let list = crate::canonical::placeholders(profiles.len());
+        let sql = format!(
+            "SELECT DISTINCT n.fetch_id, f.source, f.path
+               FROM notices n JOIN fetches f ON f.id = n.fetch_id
+              WHERE n.parse_state = 'parsed' AND n.profile IN ({list}) AND n.fetch_id > ?
+              ORDER BY n.fetch_id"
+        );
+        let mut params: Vec<Value> = profiles.iter().map(|p| t(*p)).collect();
+        params.push(Value::Integer(after));
+        let mut rows = conn.query(&sql, params).await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((int(&row, 0), text(&row, 1), text(&row, 2)));
+        }
+        Ok(out)
+    }
+
+    /// The member FILES of one package holding parsed notices of these profiles —
+    /// what a re-parse must walk in that package, and nothing else (the issue-77
+    /// sparse-bucket discipline). `member_file` strips the text-era `#<ordinal>`
+    /// suffix so the set matches what the archive walker yields.
+    pub async fn parsed_member_files(
+        &self,
+        fetch_id: i64,
+        profiles: &[&str],
+    ) -> turso::Result<std::collections::HashSet<String>> {
+        if profiles.is_empty() {
+            return Ok(Default::default());
+        }
+        let conn = self.reader().await?;
+        let list = crate::canonical::placeholders(profiles.len());
+        let sql = format!(
+            "SELECT DISTINCT member_path FROM notices
+              WHERE fetch_id = ? AND parse_state = 'parsed' AND profile IN ({list})"
+        );
+        let mut params: Vec<Value> = vec![Value::Integer(fetch_id)];
+        params.extend(profiles.iter().map(|p| t(*p)));
+        let mut rows = conn.query(&sql, params).await?;
+        let mut out = std::collections::HashSet::new();
+        while let Some(row) = rows.next().await? {
+            out.insert(member_file(text(&row, 0)));
+        }
+        Ok(out)
+    }
+
     /// Notice counts per mapping profile — the era-split check and the
     /// dashboard's coverage breakdown.
     pub async fn notice_counts_by_profile(&self) -> turso::Result<Vec<(String, i64)>> {
