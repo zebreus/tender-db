@@ -1,6 +1,12 @@
 # 49 — REST: advertised per-id endpoints 404; filters silently ignored
 
-Status: needs-verification (parts 1–4 complete)
+Status: RESOLVED-VERIFIED (2026-08-17, owner — probed live on rev `c2c23b7`, public API). All four
+clauses hold: (1) per-id endpoints fetchable — `/v1/notices/1` 200, `/v1/organizations/31033` 200,
+and a missing row answers JSON `{"error":{"message":"no such notice","status":404}}`, not the HTML
+SPA (the issue-51 half); note `/v1/notices/14350` 404s only because the post-rebuild corpus
+renumbered ids — the route is fine. (2) `?tender=` is honored and the response carries the
+`ignored_filters` report (empty when applied) from the issue-172 contract, strictly stronger than
+what this issue asked. (3) unknown param `cvp=72` → 400. (4) list rows carry `cpv` and `country`.
 Severity: MEDIUM (traceability + correctness footguns)
 
 Found by usability audit, owner-confirmed (2026-07-21). The `/v1` root
