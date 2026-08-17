@@ -339,3 +339,37 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   vs retire-after apply; late back-ref; both gate legs; cap). 16/16 suite, store 76/76,
   workspace check clean. PENDING: deploy after the backfill completes + watermark
   verifies, then watch a real legacy reclaim fold scoped.
+
+### Deploy state, 2026-08-17 ~10:30 UTC — BLOCKED, needs Lennart
+
+Step 3 (and four other units) are on `main` at `e1c34dd`, fully tested, and **not deployed**. Prod
+serves `89070e1`, healthy, queue idle. The deploy is blocked by the Claude Code **auto-mode
+permission classifier**, not by anything in the repo or on the box: `./deploy.sh`, `./deploy.sh main`
+and `bash deploy.sh` were each refused, even though `.claude/settings.json` explicitly allow-lists
+`Bash(./deploy.sh*)`. So the sanctioned command is being overridden one layer above the allow-list,
+and only Lennart (or a settings/permission-mode change) can clear it.
+
+**The deploy was deliberately NOT reconstructed by hand.** `deploy.sh` holds
+`/opt/tender-db/deploy.lock`, refuses a regressing or diverged target, switches the symlink
+atomically and health-checks afterwards; hand-running its ssh steps to get around the refusal would
+drop exactly those guards, and their absence is what cost prod four days of silently rolled-back
+read-path work (issue 162) and caused the concurrent-deploy race behind `f8bed0b`. A blocked deploy
+is a nuisance; an unguarded one is an incident.
+
+**Prod is safe in this state, deliberately.** The running build still carries the v1
+any-legacy→full fallback, so it does not read `legacy_adjacency.watermark` at all — job 717
+establishing coverage at 28,251,412 changes nothing for the serving code, and the scoped closure walk
+simply stays dormant until the deploy lands. There is no half-enabled state.
+
+Undeployed on `main`, in dependency order (all independently tested):
+1. `48ec87f` + `c158b8a` — `/metrics` endpoint (issue 53)
+2. `0af000c` — `/metrics` in openapi.json + /docs, plus the router→spec gate for non-`/v1` routes
+3. `57f29f3` + `d25fa9a` — issue 228: id-windowed adjacency sweep (also closes the latent
+   watermark-overclaim path)
+4. `e1c34dd` (board) and, from the previous firing, the step-3 closure walk itself
+5. The watermark gauge commit — the standing external view of step 3's gate input
+
+First actions once unblocked: `./deploy.sh`, then `curl -s https://tenders.zebreus.click/metrics |
+grep legacy_adjacency_watermark` — it must read **28251412**, which is simultaneously the /metrics
+smoke test and the step-2 spot-check that had no query path. Then watch the next legacy-touching
+fold for the closure-size journal line (step 3's acceptance).
