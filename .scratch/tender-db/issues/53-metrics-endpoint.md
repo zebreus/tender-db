@@ -1,6 +1,18 @@
 # 53 — In-process /metrics endpoint (Prometheus text); defer the server
 
-Status: ready-for-agent (post-backfill / launch-hardening — NOT now)
+Status: BUILT 2026-08-17 (owner) — endpoint landed, awaiting deploy. `GET /metrics`
+(`crates/app/src/v1/metrics.rs`) serves Prometheus text: change cursor, RSS, live SSE
+streams, disk + `wal_bytes`, per-kind last-run duration/finish/outcome from the bounded
+job-log window, the freshness clock, import lag, canonical row counts and the quarantine
+totals + per-reason breakdown. Cost discipline held: every gauge is O(1) or a read of the
+dashboard's existing 60s cache — no table-proportional scan on the scrape path, so a
+frequent scrape can't become the load it observes. A section not yet measured is ABSENT,
+never zero (e2e-pinned: a fake `0` for `quarantine_outstanding` would read as a drained
+backlog). Gauges only — nothing accumulates in-process, so a restart can't reset a series
+mid-flight. Hand-rolled exposition (~40 lines) rather than a metrics crate, same
+weight-without-payoff call that rejected OTel; Prometheus+Grafana server stays deferred as
+decided. Outside the rate limiter, NOT in the public CORS grant. 2 e2e + 4 unit tests,
+44/44 api suite; runbook section written. Remaining: deploy + one live scrape.
 
 Motivation (validated by the 2026-07-22/23 WAL incident): the WAL-growth
 + throughput collapse, RSS creep (issue 52), and per-era throughput
