@@ -1,7 +1,19 @@
 # 108 — the `projected` watermark marks a notice folded even when its Tender was skipped
 
-Status: open — surfaced while answering the issue-99 re-fold's G2 question. Not urgent; latent until a
-skip is not a true no-op, which is exactly what 99 exists for.
+Status: RESOLVED (2026-08-17, owner — deployed rev `21128fc`). The fix-sketch's first half shipped:
+`Applied` counts each fold exit (`tenders_written` / `tenders_unchanged`, incremented at the write
+path and the unchanged-chain early return respectively), the job summary carries the split ("N
+tenders written, M verified unchanged"), so job_log rows and the dashboard record what each fold
+actually did. A G2 breach now reads against the fold's own report: "written 0 / unchanged N" points
+at the watermark over-claiming (the 105 route), a large `written` at the fold itself — the ambiguity
+this issue was about is resolved by counting, not by hand. Pinned in the epoch test on both branches
+((0, touched) all-skip; (touched, 0) epoch-forced) over identical inputs.
+
+The sketch's second half — mark only written notices, with a separate verified-current mark — is
+DECLINED deliberately: both exits must keep marking (an unchanged Tender's notices must not re-enter
+every delta forever), so separate marks would add write cost for information the counters already
+carry. `projected = 1` still means "considered"; what changed is that every fold now SAYS how each
+consideration went, which is the record-accuracy this issue asked for.
 Kind: correctness (record accuracy) / observability
 Blocked by: —
 Relates to: 99 (the case where a skip is NOT a no-op), 58 (the watermark), 105 (the other way a planned
