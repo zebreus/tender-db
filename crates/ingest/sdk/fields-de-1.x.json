@@ -1,5 +1,5 @@
 {
- "$comment": "Merged empirical era checklist for the DÖE eForms-DE 1.0/1.1/1.2 national dialect (ADR-0002 amendment, ADR-0004). eForms-DE 1.x shipped no SDK-DE fields.json artifact (issue 75: the SDK-eForms-DE fork on gitlab.opencode.de starts at national 2.0; the 1.x line on projekte.kosit.org is spec+schematron only), so the mappable universe is the full observed inventory: every element path in every eforms-de-1.x notice of the DÖE archive 2023-10..2026-07 (218876 notices: 1.0=31, 1.1=145859, 1.2=72986; scan de1x-scan.json, scripts de1x_scan.py + de1x_gen.py). Field ids are the source's own element names (DE1- prefix, extension plumbing elided); types are derived from naming conventions and observed listName/currencyID/unitCode attributes, cross-checked against sampled text. Merged (not per-minor): 686/773 paths are common to 1.1 and 1.2 and a superset only over-claims, never under-claims. A path outside this inventory quarantines the notice (ADR-0004); extending it is a reviewed edit + reprocess. EU base: DE-1.1~SDK 1.7, DE-1.2~SDK 1.8/1.9. Being empirical + predicate-free, this is independent of the xpath //+or grammar gap (issue 74).",
+ "$comment": "Merged empirical era checklist for the DÖE eForms-DE 1.0/1.1/1.2 national dialect (ADR-0002 amendment, ADR-0004). eForms-DE 1.x shipped no SDK-DE fields.json artifact (issue 75: the SDK-eForms-DE fork on gitlab.opencode.de starts at national 2.0; the 1.x line on projekte.kosit.org is spec+schematron only), so the mappable universe is the full observed inventory: every element path in every eforms-de-1.x notice of the DÖE archive 2023-10..2026-07 (218876 notices: 1.0=31, 1.1=145859, 1.2=72986; scan de1x-scan.json, scripts de1x_scan.py + de1x_gen.py). Field ids are the source's own element names (DE1- prefix, extension plumbing elided); types are derived from naming conventions and observed listName/currencyID/unitCode attributes, cross-checked against sampled text. Merged (not per-minor): 686/773 paths are common to 1.1 and 1.2 and a superset only over-claims, never under-claims. A path outside this inventory quarantines the notice (ADR-0004); extending it is a reviewed edit + reprocess. EU base: DE-1.1~SDK 1.7, DE-1.2~SDK 1.8/1.9. Being empirical + predicate-free, this is independent of the xpath //+or grammar gap (issue 74). POST-GENERATION DELTA (issue 100, 2026-08-17): identifierFieldId wired on the FOUR NoticeResult definition nodes (ND-LotResult, ND-LotTender, ND-SettledContract, ND-TenderingParty at their top-level efac:NoticeResult positions) to their own DE1-...-ID fields. Without it the parser synthesised section ids while the references kept the published RES-/TEN-/CON-/TPA- ids, so every result-to-result hop of the winner chain resolved to nothing (2% winner rate). Safe because those ids are unique WITHIN a notice (measured 2026-08-15: zero duplicates over 5902/5217/4855/4760 values). Deliberately NOT applied to the NESTED ND-LotTender/ND-SettledContract entries under LotResult and SettledContract: those are reference holders (OPT-320/OPT-315/BT-3202) whose cbc:ID names the target, and identifying a section by the id it points AT would collide with the definition's own section - the same trap index.rs documents for ND-ContractingParty. NOTE: de1x_gen.py on the box does not reproduce this delta; regenerating the inventory silently reverts it.",
  "sdkVersion": "eforms-de-1.x",
  "fields": [
   {
@@ -3118,7 +3118,8 @@
   {
    "id": "ND-LotResult",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotResult",
-   "repeatable": true
+   "repeatable": true,
+   "identifierFieldId": "DE1-NoticeResult-LotResult-ID"
   },
   {
    "id": "ND-FinancingParty",
@@ -3193,7 +3194,8 @@
   {
    "id": "ND-LotTender",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:LotTender",
-   "repeatable": true
+   "repeatable": true,
+   "identifierFieldId": "DE1-NoticeResult-LotTender-ID"
   },
   {
    "id": "ND-FieldsPrivacy",
@@ -3208,7 +3210,8 @@
   {
    "id": "ND-SettledContract",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:SettledContract",
-   "repeatable": true
+   "repeatable": true,
+   "identifierFieldId": "DE1-NoticeResult-SettledContract-ID"
   },
   {
    "id": "ND-SignatoryParty",
@@ -3228,7 +3231,8 @@
   {
    "id": "ND-TenderingParty",
    "xpathAbsolute": "/*/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:NoticeResult/efac:TenderingParty",
-   "repeatable": true
+   "repeatable": true,
+   "identifierFieldId": "DE1-NoticeResult-TenderingParty-ID"
   },
   {
    "id": "ND-SubContractor",

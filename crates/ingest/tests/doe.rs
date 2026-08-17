@@ -448,3 +448,74 @@ fn eforms_de_1x_award_notice_builds_the_result_layer() {
         assert!(can.sections.iter().any(|s| s.id == v.section_id), "orphan {}", v.field_id);
     }
 }
+
+/// Issue 100: the result sections must be identified by the ids the REFERENCES
+/// use, or the winner chain resolves to nothing.
+///
+/// The defect: `ND-LotResult`/`ND-LotTender`/`ND-SettledContract`/
+/// `ND-TenderingParty` carried no `identifierFieldId`, so the parser synthesised
+/// section ids (`ND-LotTender#0`) while the notice's own references kept the
+/// published `TEN-`/`TPA-`/`CON-` ids. Lots and organizations resolved (they had
+/// identifiers), every result-to-result hop did not — the projection's winner
+/// chain LotResult →(OPT-320)→ LotTender →(OPT-310)→ TenderingParty → Tenderer
+/// broke at the first hop and DE-1.x awards projected 2% winners.
+///
+/// This asserts the identity, not the projection: a section's id IS the id its
+/// referrers name. The reference-holder positions must NOT be identified this way
+/// (see the inventory's post-generation note), which the last assertion pins.
+#[test]
+fn de_1x_result_sections_are_identified_by_their_published_ids() {
+    let can = parse_fixture(DE1_CAN);
+    // Each entity must have a DEFINITION section carrying its published id. The
+    // same kind may also appear as reference-holder sections (the nested
+    // `LotResult/LotTender` etc.), which keep synthetic ids on purpose — so this
+    // asserts existence, not that every section of the kind is published-id'd.
+    for (kind, prefix) in [
+        ("LotResult", "RES-"),
+        ("LotTender", "TEN-"),
+        ("SettledContract", "CON-"),
+        ("TenderingParty", "TPA-"),
+    ] {
+        let ids: Vec<&String> =
+            can.sections.iter().filter(|s| s.kind == kind).map(|s| &s.id).collect();
+        assert!(
+            ids.iter().any(|id| id.starts_with(prefix)),
+            "{kind} needs a section identified by its published {prefix}… id — a wholly synthetic \
+             set here is the issue-100 defect, since the references carry the published ids. Got \
+             {ids:?}"
+        );
+    }
+
+    // The chain the fixture actually publishes: the LotTender's tendering-party
+    // reference names a TenderingParty section that EXISTS under that id, and
+    // that party's Tenderer names an Organization. Both hops must resolve by id
+    // for a winner to reach the canonical layer.
+    let party_ref = can
+        .values
+        .iter()
+        .find(|v| v.field_id == "DE1-NoticeResult-LotTender-TenderingParty-ID")
+        .map(|v| match &v.value {
+            NoticeValue::Id { value, .. } => value.clone(),
+            other => panic!("expected an id reference, got {other:?}"),
+        })
+        .expect("the fixture's LotTender references a TenderingParty");
+    assert!(
+        can.sections.iter().any(|s| s.kind == "TenderingParty" && s.id == party_ref),
+        "OPT-310 {party_ref:?} must name a real TenderingParty section; sections: {:?}",
+        can.sections.iter().filter(|s| s.kind == "TenderingParty").map(|s| &s.id).collect::<Vec<_>>()
+    );
+
+    // And the reference holders stay anonymous: identifying them by the id they
+    // POINT AT would give two sections the same id — the definition and the
+    // pointer — which is why only the definition positions were wired.
+    let tender_sections: Vec<&String> =
+        can.sections.iter().filter(|s| s.kind == "LotTender").map(|s| &s.id).collect();
+    let mut unique = tender_sections.clone();
+    unique.sort();
+    unique.dedup();
+    assert_eq!(
+        tender_sections.len(),
+        unique.len(),
+        "no two sections may share an id: {tender_sections:?}"
+    );
+}
