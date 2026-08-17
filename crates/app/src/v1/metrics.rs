@@ -56,6 +56,13 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
 
+    // The running job's identity and phase (issue 65) — from the supervisor's
+    // in-memory progress, a lock-and-clone, no DB. Absent when no job runs or
+    // when this API serves without a supervisor (tests, embeddings).
+    if let Some(job) = state.jobs.as_ref().and_then(|s| s.current_progress()) {
+        render_running_job(&mut out, &job);
+    }
+
     // The legacy-adjacency coverage watermark (issue 58 v2). A one-row point read
     // on the reader pool, and the only external view of the claim the incremental
     // projection's closure walk gates on: > 0 means it may scope a legacy fold to
@@ -139,6 +146,35 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         out,
     )
         .into_response()
+}
+
+/// The running job's gauges (issue 65): that it runs, when it started, and its
+/// phase counts. Labels carry only the small closed vocabularies — job `kind`
+/// and phase `name` — never the free-text detail, which is unbounded and would
+/// mint a new series per sweep position. The phase's `updated_at` is exported
+/// so an alert can express "a job is running but its reporter went silent",
+/// the dead-vs-slow distinction, as `time() - updated > threshold`.
+fn render_running_job(out: &mut String, job: &model::ingestion::JobProgress) {
+    header(out, "tender_db_job_running", "1 while a job runs; the series is absent when idle.");
+    sample(out, "tender_db_job_running", &[("kind", &job.kind)], 1.0);
+    header(out, "tender_db_job_started_timestamp_seconds", "When the running job started.");
+    sample(out, "tender_db_job_started_timestamp_seconds", &[("kind", &job.kind)], job.started_at as f64);
+    let Some(phase) = &job.phase else { return };
+    let labels = [("kind", job.kind.as_str()), ("phase", phase.name.as_str())];
+    if let Some(done) = phase.done {
+        header(out, "tender_db_job_phase_done", "Units completed in the running job's phase.");
+        sample(out, "tender_db_job_phase_done", &labels, done as f64);
+    }
+    if let Some(total) = phase.total {
+        header(out, "tender_db_job_phase_total", "The phase's end, when it is known up front.");
+        sample(out, "tender_db_job_phase_total", &labels, total as f64);
+    }
+    header(
+        out,
+        "tender_db_job_phase_updated_timestamp_seconds",
+        "When the phase was last reported — a stale stamp under a running job is a silent reporter.",
+    );
+    sample(out, "tender_db_job_phase_updated_timestamp_seconds", &labels, phase.updated_at as f64);
 }
 
 /// Per-kind last-run gauges from the newest-first job log: duration, finish
@@ -275,5 +311,51 @@ mod tests {
         let mut out = String::new();
         emit_job_gauges(&mut out, &[]);
         assert_eq!(out, "");
+    }
+
+    #[test]
+    fn a_running_job_renders_its_phase_without_the_free_text() {
+        let job = model::ingestion::JobProgress {
+            id: 1,
+            kind: "backfill-legacy-adjacency".into(),
+            params: String::new(),
+            started_at: 1_000,
+            package: None,
+            packages_done: 0,
+            packages_total: 0,
+            members_done: 5,
+            members_total: 0,
+            notices: 0,
+            duplicates: 0,
+            phase: Some(model::ingestion::Phase {
+                name: "sweeping".into(),
+                done: Some(11_400_000),
+                total: Some(28_251_412),
+                detail: "notice id 11,400,000 of 28,251,412".into(),
+                updated_at: 2_000,
+            }),
+        };
+        let mut out = String::new();
+        render_running_job(&mut out, &job);
+        assert!(out.contains("tender_db_job_running{kind=\"backfill-legacy-adjacency\"} 1\n"), "{out}");
+        assert!(
+            out.contains("tender_db_job_phase_done{kind=\"backfill-legacy-adjacency\",phase=\"sweeping\"} 11400000\n"),
+            "{out}"
+        );
+        assert!(
+            out.contains("tender_db_job_phase_updated_timestamp_seconds{kind=\"backfill-legacy-adjacency\",phase=\"sweeping\"} 2000\n"),
+            "{out}"
+        );
+        // The unbounded detail string must never become a label or a series.
+        assert!(!out.contains("11,400,000 of"), "detail text stays out of the exposition: {out}");
+
+        // A phase with no total (the pre-pass shape) renders done alone; a job
+        // with no phase renders only the running pair.
+        let mut bare = job.clone();
+        bare.phase = None;
+        let mut out = String::new();
+        render_running_job(&mut out, &bare);
+        assert!(out.contains("tender_db_job_running"), "{out}");
+        assert!(!out.contains("tender_db_job_phase"), "no phase, no phase series: {out}");
     }
 }

@@ -49,6 +49,9 @@ fn main() {
         // touches the production DB — the fetch/process/project CLIs are dev
         // tools for scratch databases. `init` spawns the worker + scheduler once.
         let supervisor = tender_db::supervisor::init(db.clone()).await;
+        // /metrics scrapes the running job's phase from the supervisor (issue 65).
+        let mut api = api;
+        api.jobs = Some(supervisor.clone());
 
         // The webhook delivery sweeper (issue 08): a background task that pushes
         // signed change batches to registered endpoints, woken by the same

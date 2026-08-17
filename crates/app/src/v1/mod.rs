@@ -85,6 +85,11 @@ pub struct AppState {
     /// spacing of its cancellation points (issue 55). Production keeps the
     /// default; tests shrink it to exercise multi-page snapshots.
     pub snapshot_page: i64,
+    /// The job supervisor, when one runs beside this API (issue 65) — `/metrics`
+    /// scrapes the running job's phase from it. `None` in tests and any embedding
+    /// that serves the API without an ingestion worker; the gauges are then
+    /// absent, not zero, same rule as every other unmeasured source there.
+    pub jobs: Option<Arc<crate::supervisor::Supervisor>>,
     streams: Arc<Mutex<HashMap<String, usize>>>,
 }
 
@@ -119,6 +124,7 @@ impl AppState {
             sql,
             isolated,
             snapshot_page: sse::SNAPSHOT_PAGE,
+            jobs: None,
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
     }

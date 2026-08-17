@@ -762,6 +762,13 @@ impl Supervisor {
         *self.current.write().expect("progress lock") = progress;
     }
 
+    /// The running job's live progress, cloned under the read lock — the cheap
+    /// synchronous view `/metrics` scrapes (issue 65). `ingestion()` is the full
+    /// snapshot (queue + persisted runs, a DB read); a scrape must not pay that.
+    pub fn current_progress(&self) -> Option<JobProgress> {
+        self.current.read().expect("progress lock").clone()
+    }
+
     fn update<F: FnOnce(&mut JobProgress)>(&self, f: F) {
         if let Some(p) = self.current.write().expect("progress lock").as_mut() {
             f(p);
