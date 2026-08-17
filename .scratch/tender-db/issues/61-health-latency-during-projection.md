@@ -1,6 +1,11 @@
 # 61 — /health (and API) latency spikes to ~4.5s during a full projection
 
-Status: ready-for-agent
+Status: RESOLVED (2026-08-17, owner triage sweep) — fixed by design, long shipped: `/health` no
+longer queries the database AT ALL (mod.rs `async fn health`, whose doc cites this issue) — it reads
+the in-memory cursor doorbell and answers instantly regardless of reader-pool saturation; DB-backed
+readiness moved to `/health/deep`. Prod-corroborated: /health stayed fast/200 through the 2026-08-15
+full rebuild and every multi-hour backfill since (no pinger incidents in the journals).
+Was: ready-for-agent
 Severity: LOW-MEDIUM (service stays 200, but slow; may trip the cloud pinger)
 
 Found 2026-07-24 right after deploying 8f0dc74 (issue 59 disk-backed plan +

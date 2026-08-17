@@ -1,6 +1,15 @@
 # 59 — Corpus-independent projection memory: back the grouping plan with disk
 
-Status: ready-for-agent (design signed off 2026-07-24; in implementation)
+Status: RESOLVED-VERIFIED (2026-08-17, owner triage sweep) — the disk-backed plan IS the shipped
+design: `Vec<Ident>` no longer exists in project.rs, and BOTH fold paths build the plan through
+`reset_plan`/`insert_plan`/`build_plan_groups` (the full path AND the issue-81 chunked incremental).
+Issue 61's observation of ~12.4M plan_notice rows written during Phase 1 was this design running on
+prod (rev 8f0dc74, 2026-07-24), and every projection since — including the 2026-08-15 full rebuild —
+ran on it. RESIDUAL carried, not blocking: the `MentionResolver` `org_of` dedup map is still in-RAM
+and scales with identified orgs (24.6M today vs 7.5M when the 150-250 MB estimate was written) — if
+the next full rebuild's RSS crowds the 4 GB target, disk-backing that map is the follow-up, filed
+from measurement not estimate.
+Was: ready-for-agent (design signed off 2026-07-24; in implementation)
 Severity: MEDIUM (latent wall; the deployed issue-57 fix keeps prod safe meanwhile)
 Follow-up to: 57 (bounded per-batch). Relation to 58: see "Coordination".
 

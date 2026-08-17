@@ -1,6 +1,11 @@
 # 60 — Projection Phase-1 read throughput is ~30 MB/s (slow)
 
-Status: ready-for-agent
+Status: DORMANT-ABSORBED (2026-08-17, owner triage sweep) — the measured shape no longer exists.
+The 30 MB/s figure was the per-notice scattered re-read; large plans now route through the BUCKETED
+sweep (issue 91: whole 14.1M-notice parsed layer in 7h13m) and the pipelined fold (issue 175), which
+replaced exactly the access pattern measured here. No current defect to work: re-measure at the next
+full projection and reopen with fresh numbers if Phase-1 still crawls; do not work from these.
+Was: ready-for-agent
 Severity: MEDIUM (makes every full projection multi-hour; complements 58)
 
 Observed 2026-07-24 during the first-ever full projection rebuild on prod
