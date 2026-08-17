@@ -1,18 +1,16 @@
 # 65 — surface projection/big-job progress on the dashboard + /admin/jobs
 
-Status: UNITS 1+2 DEPLOYED 2026-08-17 (unit 1 `ccd606f` in rev `fddecd0`; unit 2 `3fd6201` deployed
-same day, health green). The phase record exists, the legacy-adjacency sweep reports through it, and
-the projection's planning / pre-pass / folding phases now reach the durable record via
-`project_observed` (stderr sink composed with the supervisor mapping — one stream, no drift). The
-pre-pass reports its aggregate sweep through the new `Progress::PrePass` (shared counter bumped per
-chunk, parent polls 2s, deterministic closing tick). Incremental daily deliberately unobserved
-(fast, and its scoping logs its own decisions). Unit 4a DEPLOYED same day (`160b3d8`): the jobs panel renders the phase — label with whichever
-counts the phase honestly has, bar when done/total both exist, detail line, and an error line when
-the reporter's stamp is older than PHASE_SILENT_SECS (300 s), so dead-vs-slow is visible on the
-panel too. REMAINING: a `/metrics` phase gauge (needs the supervisor handle in AppState — its own
-wiring unit); the reset/index-build phases still show as dead air within `project`. First prod
-evidence arrives with the next rebuild/refold, which will show phases on `/admin/jobs`.
-**Part of the motivation as written is STALE — see "Correction" before working this.**
+Status: RESOLVED (2026-08-17, owner — final unit deployed rev `c2c23b7`). The full chain shipped
+across four units, each verified on prod: the generic `Phase` record on `JobProgress` (unit 1,
+`ccd606f`), the projection's planning/pre-pass/folding phases reaching it via `project_observed`'s
+composed sink plus the new `Progress::PrePass` aggregate (unit 2, `3fd6201`), the dashboard's
+phase line with the dead-vs-slow reporter flag (unit 4a, `160b3d8`), and the `/metrics` job/phase
+gauges — running/started + per-phase done/total/updated, closed-vocabulary labels only, absent when
+idle (final unit, `c2c23b7`). The adjacency sweep reports position+count split per issue 228's rule.
+ACCEPTED GAP, deliberately not built: the `reset_tender_layer` and end-of-fold index-build phases
+still show no phase record — each is minutes, not the multi-hour dead air this issue was filed
+about; wire them if they ever grow. The original motivation text below is partially stale (see
+Correction).
 Kind: observability / dashboard
 Blocked by: —
 Relates to: 228 (filed the same complaint from a chunked backfill and deliberately deferred the
