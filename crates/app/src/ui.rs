@@ -244,6 +244,13 @@ fn IngestionPanel() -> Element {
     }
 }
 
+/// A phase whose reporter has been silent this long gets flagged (issue 65).
+/// Sized generously above every reporter's cadence — the pre-pass polls at 2 s,
+/// the adjacency sweep ticks per id window — so only a genuinely stopped
+/// reporter trips it. This is the anti-ambiguity half of the phase record: a
+/// slow phase shows an old `done` under a fresh stamp, a dead one a stale stamp.
+const PHASE_SILENT_SECS: i64 = 300;
+
 #[component]
 fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
     // Elapsed and throughput are the server's clock minus the job's start — the
@@ -254,6 +261,19 @@ fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
     // while notices stay flat. Name it, so "0.0 notices/s" is never mistaken for
     // a hang (issue 33) — the member bar above shows it is very much alive.
     let rewalking = job.duplicates > job.notices;
+    // The phase line (issue 65): what a non-package-walking job is doing. The
+    // label folds in whichever counts the phase honestly has — a sweep with no
+    // cheap total shows movement alone, which is precisely its signal.
+    let phase = job.phase.clone();
+    let phase_label = phase.as_ref().map(|ph| match (ph.done, ph.total) {
+        (Some(d), Some(t)) => format!("{} — {} / {}", ph.name, group(d as i64), group(t as i64)),
+        (Some(d), None) => format!("{} — {}", ph.name, group(d as i64)),
+        _ => ph.name.clone(),
+    });
+    let phase_silent = phase.as_ref().and_then(|ph| {
+        let age = measured_at - ph.updated_at;
+        (age > PHASE_SILENT_SECS).then(|| duration(age.max(0)))
+    });
     rsx! {
         div { class: "running",
             p { class: "job-title", "{job.kind} — {job.params}" }
@@ -271,6 +291,20 @@ fn RunningJob(job: JobProgress, measured_at: i64) -> Element {
                     "Members {group(job.members_done as i64)} / {group(job.members_total as i64)}"
                 }
                 progress { max: "{job.members_total}", value: "{job.members_done}" }
+            }
+            if let Some(text) = phase_label {
+                label { class: "muted", "{text}" }
+            }
+            if let Some(ph) = phase {
+                if let (Some(done), Some(total)) = (ph.done, ph.total) {
+                    progress { max: "{total}", value: "{done}" }
+                }
+                if !ph.detail.is_empty() {
+                    p { class: "muted", "{ph.detail}" }
+                }
+            }
+            if let Some(age) = phase_silent {
+                p { class: "error", "phase reporter silent for {age} — a live job's stamp refreshes on every tick" }
             }
             if rewalking {
                 p { class: "muted",
