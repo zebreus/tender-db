@@ -316,4 +316,13 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   re-derives the choke point's rows set-identically. Deployed rev `89070e1` 08:34 UTC, backfill
   enqueued 08:39 UTC (job id 1). PENDING VERIFY on completion: `legacy_adjacency.watermark`
   = MAX(id) of parsed notices, spot-check a known 2008 chain's keys.
-- Step 3 (the closure walk behind the watermark gate) not started.
+- **Step 3 BUILT** (2026-08-17, pushed ~09:10 UTC): the closure walk replaces the v1
+  any-legacy→full fallback. Pass 1 collects legacy seeds (self ∪ edges); `legacy_closure`
+  expands keys → notices → tenders → members → keys to a fixpoint; gate = watermark
+  established AND no projected parsed notice above it (`projected_parsed_above` catches
+  rollback holes) AND component ≤ 500k cap — any failure logs its reason and takes the
+  full path, which re-establishes. All 5 red tests green (bridge merge content-identical
+  to full + change events set-identical — cursor order differs by design, retire-before
+  vs retire-after apply; late back-ref; both gate legs; cap). 16/16 suite, store 76/76,
+  workspace check clean. PENDING: deploy after the backfill completes + watermark
+  verifies, then watch a real legacy reclaim fold scoped.
