@@ -142,3 +142,52 @@ missing role aliases (both issue 98). The common root is that an empirical inven
 observed XML can recover *structure* but not *semantics* — which ids are references, and which ids are
 identities the references will name. Both need the SDK's own model, or an explicit check against it. That
 lesson belongs in the DE-2.x work and any future dialect vendoring, not just here.
+
+## Parse-layer fix LANDED & DEPLOYED (2026-08-17, owner — rev `2df2703`)
+
+The cheap arm the measurement licensed is in: `identifierFieldId` wired on the four NoticeResult
+**definition** nodes (`ND-LotResult`, `ND-LotTender`, `ND-SettledContract`, `ND-TenderingParty` at
+their top-level `efac:NoticeResult` positions) → their own `DE1-…-ID` fields, in
+`crates/ingest/sdk/fields-de-1.x.json`. Section ids are now the published `RES-`/`TEN-`/`CON-`/`TPA-`
+ids, which is the vocabulary the references already spoke.
+
+**A structural distinction the issue had not recorded, and it shaped the edit.** The inventory holds
+SEVEN nodes across these kinds, not four: `ND-LotTender` appears three times and `ND-SettledContract`
+twice, at different grafted xpaths. Only the top-level ones are definitions; the nested
+`LotResult/LotTender`, `LotResult/SettledContract` and `SettledContract/LotTender` positions are
+**reference holders** — in eForms `efac:LotResult/efac:LotTender/cbc:ID` IS OPT-320, a pointer whose
+`cbc:ID` names its target. Wiring those would give the pointer and the definition the same section
+id, the exact collision `index.rs` already documents for `ND-ContractingParty`. The test is checkable,
+not a judgement call: a definition is the position whose own-ID field sits at exactly
+`node + /cbc:ID`, true for these four and no others. So "just key on the published id" was right for
+the definitions and would have been WRONG applied uniformly — closer to issue 75's caution than the
+one-line framing suggested.
+
+Red-checked both directions (revert the inventory → the test fails naming `ND-LotResult#0`; restore →
+passes). 11/11 doe, 46 eforms, golden + data-quality + process green. The inventory's `$comment` now
+records the delta and warns that `de1x_gen.py` on the box does not reproduce it — regenerating would
+silently revert a data-correctness fix.
+
+### Next unit: the cohort reprocess — sized, and its mechanism is an OPEN QUESTION
+
+Cohort measured via `/v1/sql` today: **218,876 notices** — `eforms-de-1.0` 31, `1.1` 145,859, `1.2`
+72,986. (Exactly the inventory's scan count, so the profile labels and the 2023-10..2026-07 scan
+agree.)
+
+`section_id` is written at PARSE time, so nothing above reaches the canonical layer until these are
+re-parsed. **The mechanism is not settled and must not be improvised:** the `reprocess` job kind
+re-attempts QUARANTINED rows by reason/detail/profile, but this cohort is already `parse_state =
+'parsed'` — there is no reason bucket to name, and `refold`/`refold-fields` only clear the projected
+watermark and re-fold the canonical layer from the EXISTING parse rows, which is precisely what
+cannot help here. A `process` re-walk dedupes by content hash and would skip. So one of:
+
+1. a new job kind (re-parse by profile, walking the archive for already-parsed members), or
+2. an extension of `reprocess` to accept a profile-only selector against parsed rows, or
+3. confirmation that some existing path already re-parses (checked the enqueue arms today and found
+   none — worth a second reader before building anything).
+
+Settle that first, then: re-parse → fold → verify. Verification shape is fixed by issue 98's
+precedent (`C11`/`C12`/`H7`): a winner must carry `mention_notice_id` = the DE notice itself, never a
+merged TED twin, or the 2%-inherited-winner reading repeats with a bigger number. Do NOT run the
+re-parse before the daily 09:35 window is clear, and expect it to be long — 218,876 members through
+dispatch+parse.
