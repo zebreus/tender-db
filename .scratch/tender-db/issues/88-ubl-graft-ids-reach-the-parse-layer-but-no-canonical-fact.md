@@ -1,6 +1,37 @@
 # 88 — the 47 grafted `UBL-*` field ids reach the parse layer but map to no canonical fact
 
-Status: open — DISCOVERED 2026-08-01 (sdk-vendor, incidental to issue 85; verified by proj-fix)
+Status: DISPOSITIONS SHIPPED 2026-08-17 (commit `767c261`, deployed rev `767c261`) — refold-scope
+follow-up OPEN (below). The inventory had grown 47 → 68 ids since filing; every one now has its
+ADR-0004 disposition, gate-enforced.
+
+## Shipped (2026-08-17, owner)
+
+- **Mapped (6):** `UBL-FrameworkMaximumAmount` + `UBL-FrameworkEstimatedMaximumValue` →
+  `framework_maximum` (the BT-271 fact, same target the DE1 alias table routes to);
+  `UBL-FundingProgram` → `funding_program`, `UBL-SelectionCriterionName` → `selection_criterion`,
+  `UBL-TendererRequirementDescription` → `tenderer_requirement`, `UBL-AppealTermsDescription` →
+  `appeal_terms` (new additive text facts). Full-id keyed like SDK01-*; scope from the section.
+- **Explicitly ignored (62):** `UBL_PARSE_ONLY`, each with its reason — no canonical channel for
+  code/indicator/integer/number types; org-contact PII stays parse-layer (issue-173 posture);
+  results-layer statistics (Lower/HigherTenderAmount, ReceivedTenderQuantity, TenderResultStartDate)
+  belong to the results binder, a fact row would misfile them; period fields
+  (FrameworkDuration*/PlannedPeriod*) have unsettled semantics — mapping wrongly beats not mapping
+  only in the wrong direction. All still served verbatim by `/v1/notices/{id}/content` (218-B).
+- **Gate:** `ubl_grafts_are_all_mapped_or_ignored` reads index.rs's graft inventory from SOURCE and
+  fails any id with no (or two) dispositions plus stale ledger entries — a new graft cannot ship
+  undispositioned. Red-demonstrated three times during the pass itself (ContractExecutionDescription,
+  the Electronic*Usage family, the PlannedPeriod pair — each missed by hand, caught by the gate).
+
+## Follow-up (open): refold scope for the already-folded corpus
+
+The 6 mapped facts apply to NEW ingests and any future era refold; already-folded notices carrying
+these ids keep their pre-mapping content until refolded. The profile-scoped stamp (issue 179) does
+not fit a field-level gap — the affected set is "notices whose parse layer carries one of the 6
+mapped ids", cross-profile. Needs a bounded enumeration job (the field ids are not indexed; a
+batched sweep over notice value tables), then requeue + `stamp_stale` for exactly their tenders.
+Low urgency: the mapped ids are sdk-0.1/TenderResult-era mounts, a small slice of the corpus.
+
+Was: open — DISCOVERED 2026-08-01 (sdk-vendor, incidental to issue 85; verified by proj-fix)
 Kind: correctness / completeness (projection mapping)
 Blocked by: —
 Relates to: 85 (the DE1-* instance of this same class), ADR-0004, CONTEXT.md "nothing silently dropped"
