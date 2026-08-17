@@ -79,3 +79,17 @@ network blip. Cost is negligible — the probe is one cheap request that 404s un
 Filed because I asked Lennart "want me to implement?" and this captures the design for his yes/adjust. It
 touches the scheduler (high blast radius), so I'm holding implementation for his nod on choice #1 rather
 than picking unilaterally. Ready to build with tests the moment it's approved.
+
+## Pre-observation note (2026-08-17 ~02:00 UTC, owner)
+
+Scheduler audited ahead of the first live weekday morning (today, 07:35 UTC): armed (in-process
+loop, re-computed at every boot — tonight's deploy restarts are harmless, the next tick always
+lands on the coming 09:35 Berlin). Expected evidence of a NORMAL day: probe/process/project jobs
+at ~07:35 UTC, no "(catch-up)" params anywhere, exactly one enqueue_daily.
+
+**Operational rule found while auditing:** `ted_before` — the watermark the catch-up compares
+against — is PROCESS-LOCAL state captured at the tick. A deploy restart during the catch-up
+window (07:35–10:35 UTC) loses it and silently skips that day's catch-up (next tick computes to
+tomorrow). So: **do not deploy between 07:30 and ~08:00 UTC on weekdays**, and after the daily
+jobs finish check the watermark advanced before any morning deploy. If a restart in that window
+is ever unavoidable, re-run the day by hand (`probe refetch=true` + process + project).
