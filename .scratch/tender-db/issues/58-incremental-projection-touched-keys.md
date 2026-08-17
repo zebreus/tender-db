@@ -316,6 +316,19 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   re-derives the choke point's rows set-identically. Deployed rev `89070e1` 08:34 UTC, backfill
   enqueued 08:39 UTC (job id 1). PENDING VERIFY on completion: `legacy_adjacency.watermark`
   = MAX(id) of parsed notices, spot-check a known 2008 chain's keys.
+- **Step 2 DONE — VERIFIED ON PROD** (2026-08-17). Job 717 (`backfill-legacy-adjacency`,
+  08:39→10:18 UTC, 99.7 min, outcome ok): **11,003,672 legacy notices swept, 16,089,272 key
+  rows offered, watermark established at 28,251,412**. Verified rather than assumed: a
+  `/v1/sql` read of `MAX(id) FROM notices WHERE parse_state='parsed'` returns **28,251,412**
+  — exact match, so coverage is attested over the entire parsed corpus with no gap at the
+  top. Zero `[store] reclaim stamped NO ledger rows` on the current instance; queue idle;
+  daily probe/process/project all ok. The sweep's flat progress counter through its last
+  40 minutes was diagnosed (not a hang — the legacy-free tail scan) and became issue 228,
+  fixed the same day, which also caught a latent watermark-overclaim path. The
+  `legacy_ojs_keys` spot-check that motivated the audit had no query path (those tables are
+  correctly outside `/v1/sql`'s allow-list) — closed by exposing
+  `tender_db_legacy_adjacency_watermark` on `/metrics`, now the standing external view of
+  this gate's input.
 - **Step 3 BUILT** (2026-08-17, pushed ~09:10 UTC): the closure walk replaces the v1
   any-legacy→full fallback. Pass 1 collects legacy seeds (self ∪ edges); `legacy_closure`
   expands keys → notices → tenders → members → keys to a fixpoint; gate = watermark
