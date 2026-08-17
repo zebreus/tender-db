@@ -1008,8 +1008,12 @@ impl Db {
     /// together; `a_reparse_clears_every_parsed_table` fails if the schema grows a
     /// `notice_*` table that this misses, which is the drift that would otherwise
     /// leave orphan rows behind a re-parse.
+    /// ORDER MATTERS: `notice_sections` is last. The value tables reference
+    /// `notices(id)` only, so their order among themselves is free, but
+    /// `organization_mentions` carries `FOREIGN KEY (notice_id, section_id)
+    /// REFERENCES notice_sections` — the one FK pointing INTO the parsed layer —
+    /// so sections cannot go before their referrers are gone.
     const PARSED_TABLES: [&'static str; 9] = [
-        "notice_sections",
         "notice_texts",
         "notice_codes",
         "notice_classifications",
@@ -1018,10 +1022,31 @@ impl Db {
         "notice_numbers",
         "notice_integers",
         "notice_ids",
+        "notice_sections",
     ];
 
     /// Drop one notice's parsed layer, leaving the `notices` row itself.
+    ///
+    /// Also drops the notice's `organization_mentions`, and that is not an
+    /// overreach — it is forced, and it is recoverable. Forced: those rows carry
+    /// an FK onto `notice_sections`, so sections cannot be replaced while they
+    /// exist (prod taught this — the first re-parse run died on `immediate foreign
+    /// key constraint failed`). Recoverable: mentions are written by the
+    /// PROJECTION's Phase 1, not by parse, and `resolve_mentions` preloads
+    /// existing rows per notice for idempotency — so a re-parsed notice, which
+    /// leaves here with `projected = 0`, has its mentions re-derived against the
+    /// NEW section ids by the fold that follows. Keeping the stale rows was never
+    /// an option anyway: they point at section ids the re-parse has deleted.
+    ///
+    /// An organization whose last mention this removes survives with a zero
+    /// mention count until the re-fold re-mentions it (the resolver dedupes by
+    /// identity, so it is the same organization row, not a new one).
     async fn clear_parsed(&self, conn: &Connection, id: i64) -> turso::Result<()> {
+        conn.execute(
+            "DELETE FROM organization_mentions WHERE notice_id = ?",
+            (Value::Integer(id),),
+        )
+        .await?;
         for table in Self::PARSED_TABLES {
             conn.execute(&format!("DELETE FROM {table} WHERE notice_id = ?"), (Value::Integer(id),))
                 .await?;
@@ -4799,7 +4824,33 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 value: NoticeValue::Text { lang: Some("EN".into()), value: "rewritten".into() },
             }],
         };
+        // A mention on the OLD section id — the shape prod actually had, and the
+        // FK that made the first real re-parse run fail. The projection writes
+        // these, so they reference sections the re-parse is about to delete.
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let mentions = vec![Mention {
+            notice_id: id,
+            section_id: "PROCEDURE".into(),
+            name: "Alte Behoerde".into(),
+            country: Some("DE".into()),
+            raw_identifier: None,
+            scheme: None,
+            identifier: None,
+        }];
+        db.resolve_mentions(&mut resolver, &mentions, 100).await.unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await, Some(1));
+
         assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "the notice exists");
+
+        // The stale mention is gone with the section it named — it could not
+        // survive (its FK points at a deleted section) and the following fold
+        // re-derives it against the new ids.
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await,
+            Some(0),
+            "a re-parse clears the notice's mentions; Phase 1 re-records them"
+        );
 
         // Replaced, not appended — one section and one text row, carrying the NEW
         // content. A missing clear would show 2 of each here.
