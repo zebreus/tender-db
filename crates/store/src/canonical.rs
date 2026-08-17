@@ -1455,6 +1455,15 @@ impl Db {
         ids.sort_unstable();
         ids.dedup();
 
+        Self::stamp_tenders_stale(&conn, ids).await
+    }
+
+    /// The shared batched stamp: `projection_epoch = 0` over a deduped tender-id
+    /// list, checkpointed per the issue-63 WAL discipline. Callers differ only in
+    /// how they derive the cohort (profile join, notice-id join).
+    async fn stamp_tenders_stale(conn: &Connection, mut ids: Vec<i64>) -> turso::Result<u64> {
+        ids.sort_unstable();
+        ids.dedup();
         const STAMP_BATCH: usize = 500;
         for (i, chunk) in ids.chunks(STAMP_BATCH).enumerate() {
             let sql = format!(
@@ -1464,11 +1473,108 @@ impl Db {
             let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
             conn.execute(&sql, params).await?;
             if i % 100 == 99 {
+                let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            }
+        }
+        let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+        Ok(ids.len() as u64)
+    }
+
+    /// The parsed notices whose value layer carries any of `field_ids` — the
+    /// FIELD-scoped cohort a mapping fix affects (issue 88's follow-up), where the
+    /// profile-scoped refold would over-fold whole profiles for a handful of
+    /// carriers. Sweeps `notice_amounts` and `notice_texts` (the two channels the
+    /// issue-88 mappings use — extend the table list when a mapped id needs
+    /// another channel) in notice-id windows that ride each table's
+    /// `(notice_id, …)` primary key, so each statement is bounded and progress is
+    /// visible. `field_id` itself is unindexed — this is a full pass over both
+    /// tables by design; run it as a queued job in a quiet window, never inline.
+    pub async fn notice_ids_carrying_fields(&self, field_ids: &[&str]) -> turso::Result<Vec<i64>> {
+        if field_ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = self.conn().await;
+        let max_id = {
+            let mut rows = conn.query("SELECT MAX(id) FROM notices", ()).await?;
+            match rows.next().await? {
+                Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+                None => 0,
+            }
+        };
+        const WINDOW: i64 = 500_000;
+        let list = placeholders(field_ids.len());
+        let mut ids: Vec<i64> = Vec::new();
+        for table in ["notice_amounts", "notice_texts"] {
+            let sql = format!(
+                "SELECT DISTINCT notice_id FROM {table}
+                  WHERE notice_id >= ? AND notice_id < ? AND field_id IN ({list})"
+            );
+            let mut lo = 0i64;
+            while lo <= max_id {
+                let hi = lo.saturating_add(WINDOW);
+                let mut params: Vec<Value> = vec![Value::Integer(lo), Value::Integer(hi)];
+                params.extend(field_ids.iter().map(|f| t(*f)));
+                let mut rows = conn.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    ids.push(int(&row, 0));
+                }
+                if lo % 5_000_000 == 0 {
+                    eprintln!("[store] field sweep {table}: {lo}/{max_id}, {} carriers", ids.len());
+                }
+                lo = hi;
+            }
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        Ok(ids)
+    }
+
+    /// Re-queue an explicit notice-id cohort for the incremental fold — the
+    /// by-ids twin of [`Db::unmark_projected_for_profiles`], for cohorts a
+    /// profile cannot name (issue 88's field carriers). Only parsed, currently
+    /// projected rows are touched; returns how many actually re-queued.
+    pub async fn unmark_projected_by_ids(&self, ids: &[i64]) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        let mut requeued = 0u64;
+        for (i, chunk) in ids.chunks(500).enumerate() {
+            let sql = format!(
+                "UPDATE notices SET projected = 0
+                  WHERE parse_state = 'parsed' AND projected <> 0 AND id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            requeued += conn.execute(&sql, params).await?;
+            if i % 100 == 99 {
                 let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
             }
         }
         let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
-        Ok(ids.len() as u64)
+        Ok(requeued)
+    }
+
+    /// Stamp the Tenders whose chains a NOTICE-ID cohort caused as epoch-stale —
+    /// the by-ids twin of [`Db::stamp_stale_for_profiles`], same rationale: the
+    /// requeue alone leaves chains identical and the fold early-returns, so the
+    /// mapping fix never lands (issues 85/99/179).
+    pub async fn stamp_stale_for_notices(&self, notice_ids: &[i64]) -> turso::Result<u64> {
+        if notice_ids.is_empty() {
+            return Ok(0);
+        }
+        let conn = self.conn().await;
+        // tender_versions_notice (caused_by_notice_id) serves each chunk's probe.
+        let mut ids: Vec<i64> = Vec::new();
+        for chunk in notice_ids.chunks(500) {
+            let sql = format!(
+                "SELECT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+        }
+        Self::stamp_tenders_stale(&conn, ids).await
     }
 
     pub async fn unmark_projected_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {

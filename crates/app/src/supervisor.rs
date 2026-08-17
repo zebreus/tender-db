@@ -202,6 +202,13 @@ enum Spec {
     /// run aborts BEFORE writing if the cohort is not about that size, which is what
     /// a mistyped profile string looks like.
     Refold { profiles: Vec<String>, expect: Option<u64> },
+    /// Re-project the notices whose PARSE LAYER carries any of these field ids —
+    /// the FIELD-scoped refold (issue 88 follow-up): a new mapping for a grafted
+    /// id affects exactly its carriers, a set no profile names. Sweeps the value
+    /// tables (bounded windows), then requeues the carriers and stamps their
+    /// tenders epoch-stale (issue 179's scoped-staleness pair). `expect` guards
+    /// like `Refold`'s: abort before any write if the cohort size surprises.
+    RefoldFields { fields: Vec<String>, expect: Option<u64> },
     /// Issue 84: mark the 2008 per-language duplicate siblings as
     /// skipped-by-policy, so the outstanding count stops reporting ~593k rows of
     /// work that no reprocess can ever do. `dry_run` counts and writes nothing.
@@ -423,6 +430,23 @@ impl Supervisor {
                 let params = format!("refold {}", profiles.join(","));
                 Ok(vec![
                     self.push("refold", params, Spec::Refold { profiles, expect: req.expect }).await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
+            // The FIELD-scoped twin (issue 88 follow-up): re-project the notices
+            // whose parse layer carries these field ids. Reuses the request's
+            // `profiles` list as the field-id list — one list-shaped parameter per
+            // request, keyed by kind. Paired with a projection like `refold`.
+            "refold-fields" => {
+                let fields = req.profiles.clone().unwrap_or_default();
+                if fields.is_empty() {
+                    return Err("refold-fields needs at least one field id (pass via profiles)".into());
+                }
+                let params = format!("refold-fields {}", fields.join(","));
+                Ok(vec![
+                    self.push("refold-fields", params, Spec::RefoldFields { fields, expect: req.expect })
+                        .await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
@@ -740,7 +764,10 @@ impl Supervisor {
             .expect("progress lock")
             .as_ref()
             .is_some_and(|p| {
-                matches!(p.kind.as_str(), "process" | "project" | "reprocess" | "reindex" | "refold")
+                matches!(
+                    p.kind.as_str(),
+                    "process" | "project" | "reprocess" | "reindex" | "refold" | "refold-fields"
+                )
             })
     }
 
@@ -1071,6 +1098,36 @@ impl Supervisor {
                 Ok(format!(
                     "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
                      for the incremental fold"
+                ))
+            }
+            Spec::RefoldFields { fields, expect } => {
+                let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
+                // Enumerate BEFORE writing (the sweep is the expensive step and is
+                // read-only), then gate on `expect` exactly like `refold`: a
+                // mistyped field id matching a far larger carrier set must abort
+                // while nothing has been written.
+                let carriers =
+                    self.db.notice_ids_carrying_fields(&refs).await.map_err(|e| e.to_string())?;
+                let found = carriers.len() as u64;
+                if let Some(expect) = expect {
+                    let slack = expect / 4;
+                    if found.abs_diff(*expect) > slack {
+                        return Err(format!(
+                            "refold-fields aborted: {found} notices carry {fields:?}, expected \
+                             ~{expect} — check the field ids (nothing was written)"
+                        ));
+                    }
+                }
+                let requeued =
+                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
+                // Same issue-179 pair as `refold`: requeue + scoped stale-stamp,
+                // both idempotent so a crashed job heals on re-run.
+                let stamped =
+                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "{found} carriers of {} field id(s): re-queued {requeued} notices, \
+                     stamped {stamped} tenders epoch-stale for the incremental fold",
+                    refs.len()
                 ))
             }
             Spec::MarkSkippedSiblings { dry_run, expect, expect_gaps } => {
