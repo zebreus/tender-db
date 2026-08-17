@@ -191,3 +191,38 @@ precedent (`C11`/`C12`/`H7`): a winner must carry `mention_notice_id` = the DE n
 merged TED twin, or the 2%-inherited-winner reading repeats with a bigger number. Do NOT run the
 re-parse before the daily 09:35 window is clear, and expect it to be long — 218,876 members through
 dispatch+parse.
+
+### Re-parse mechanism: SETTLED (2026-08-17, owner — groundwork deployed rev `ff9795047`)
+
+The open question above is answered from the code, and the answer is narrower than "build a new
+subsystem". Ruled out by reading, not assumption:
+
+- `reclaim_notice`'s already-parsed arm returns `AlreadyParsed` **by design** — it is what makes a
+  reclaim re-run a no-op, load-bearing for the campaigns, so it must not gain a force flag;
+- `run_reprocess` walks `quarantine_reclaim_packages`, so it can only ever see HELD rows;
+- `refold` / `refold-fields` re-fold from the EXISTING parse rows — exactly what cannot help;
+- a `process` re-walk dedupes by content hash and skips.
+
+But the in-place parse write already existed for the quarantined arm (`insert_parsed` + the
+`parse_state`/`projected` update). Only the reach was missing — **and one safety property**.
+
+**The hazard, which is why this got its own commit:** `insert_parsed` is pure `INSERT`. Forcing it on
+an already-parsed notice DOUBLES every section/text/code/date/amount/number/integer/id row instead of
+replacing them — it would have looked like a working feature while corrupting the parse layer. So
+`Db::reparse_notice` clears first (`clear_parsed` over `PARSED_TABLES`), then inserts, then sets
+`parse_state='parsed', projected=0`, in ONE transaction: a crash leaves the old layer whole, and the
+notice never leaves `parsed`, so no window exists where it is absent from the corpus. Red-checked by
+deleting the clear — 2 rows where 1 is required. A second test reads `sqlite_master` and asserts
+`PARSED_TABLES` equals the schema's `notice_*` tables, so a future table added to `insert_parsed`
+fails the suite rather than orphaning rows on every re-parse.
+
+**Remaining for this issue**, in order:
+1. A job kind selecting the cohort by profile and walking its archive packages through
+   `reparse_notice` — the `run_reprocess` shape (per-package member sets, checkpoint per package,
+   resumable) but with the work list from `notices WHERE profile IN (…)` instead of `quarantine`.
+2. The fold: re-parsed notices land `projected=0`, so a following incremental projection picks them
+   up — no `refold` needed, and `reclaim_only` semantics apply if the run is bulk.
+3. Verification, shape fixed by issue 98's precedent (`C11`/`C12`/`H7`): a winner must carry
+   `mention_notice_id` = the DE notice itself, never a merged TED twin, or the 2%-inherited reading
+   simply repeats with a bigger number. Also re-check the award-linkage ratio for the DE profiles on
+   the dashboard, which is where the 2% is visible today.
