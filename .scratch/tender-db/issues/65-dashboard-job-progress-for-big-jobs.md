@@ -6,10 +6,12 @@ the projection's planning / pre-pass / folding phases now reach the durable reco
 `project_observed` (stderr sink composed with the supervisor mapping — one stream, no drift). The
 pre-pass reports its aggregate sweep through the new `Progress::PrePass` (shared counter bumped per
 chunk, parent polls 2s, deterministic closing tick). Incremental daily deliberately unobserved
-(fast, and its scoping logs its own decisions). REMAINING: unit 4 — dashboard render of the phase
-(bar from done/total, detail line) + a `/metrics` phase gauge; and the reset/index-build phases
-(`reset_tender_layer`, end-of-fold index builds) still show as dead air within `project`. First
-prod evidence arrives with the next rebuild/refold, which will show phases on `/admin/jobs`.
+(fast, and its scoping logs its own decisions). Unit 4a DEPLOYED same day (`160b3d8`): the jobs panel renders the phase — label with whichever
+counts the phase honestly has, bar when done/total both exist, detail line, and an error line when
+the reporter's stamp is older than PHASE_SILENT_SECS (300 s), so dead-vs-slow is visible on the
+panel too. REMAINING: a `/metrics` phase gauge (needs the supervisor handle in AppState — its own
+wiring unit); the reset/index-build phases still show as dead air within `project`. First prod
+evidence arrives with the next rebuild/refold, which will show phases on `/admin/jobs`.
 **Part of the motivation as written is STALE — see "Correction" before working this.**
 Kind: observability / dashboard
 Blocked by: —
