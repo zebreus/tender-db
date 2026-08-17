@@ -1,6 +1,13 @@
 # 43 — SQL endpoint exposed webhook secrets + private tables (HIGH)
 
-Status: needs-verification (immediate deny-list fix landed; allow-list = issue 45)
+Status: RESOLVED-SUBSUMED (2026-08-17, owner). The permanent fix — issue 45's positive allow-list —
+was prod-verified 2026-08-16 (see 45's status: AST walk, 45 ALLOWED entries, denied by default,
+`sqlite_schema` refused live), and it subsumes this issue's interim deny-list entirely: a
+default-deny surface cannot re-expose a private table by omission, which was this issue's risk. And
+independently re-confirmed today from the other side: the issue-58-v2 verification found the NEW
+private tables (`legacy_adjacency`, `legacy_ojs_keys`) unreachable through `/v1/sql` — the
+default-deny doing exactly what a deny-list could not have promised for tables that did not exist
+when the list was written.
 Severity: HIGH (cross-account credential leak)
 
 Found by a fresh-eyes security review, code-verified by the owner
