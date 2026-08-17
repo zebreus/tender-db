@@ -2483,6 +2483,91 @@ impl Db {
         Ok(())
     }
 
+    /// One key→notices hop of the legacy closure walk (issue 58 v2, step 3):
+    /// every notice carrying ANY of the given OJS keys. Sorted, deduplicated.
+    pub async fn legacy_notices_for_keys(&self, keys: &[i64]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = std::collections::BTreeSet::new();
+        for chunk in keys.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&k| Value::Integer(k)).collect();
+            let sql = format!(
+                "SELECT DISTINCT notice_id FROM legacy_ojs_keys WHERE ojs_key IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// The notices→keys hop: every OJS key carried by ANY of the given notices
+    /// (self and edge rows alike — the closure treats them identically).
+    pub async fn legacy_keys_for_notices(&self, notice_ids: &[i64]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = std::collections::BTreeSet::new();
+        for chunk in notice_ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT DISTINCT ojs_key FROM legacy_ojs_keys WHERE notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// The Tenders the given notices currently fold into — the closure walk pulls
+    /// each hop's tender memberships so those Tenders re-derive IN FULL. Same
+    /// `caused_by_notice_id` lookup [`Db::touched_existing_tender_ids`] runs over
+    /// the changed set.
+    pub async fn tenders_for_notice_ids(&self, notice_ids: &[i64]) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut set = std::collections::BTreeSet::new();
+        for chunk in notice_ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT DISTINCT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                set.insert(int(&row, 0));
+            }
+        }
+        Ok(set.into_iter().collect())
+    }
+
+    /// Coverage-gap verify for the closure gate (issue 58 v2, step 3): the highest
+    /// PROJECTED parsed notice above the watermark, if any. The advance induction
+    /// (see [`Db::advance_legacy_adjacency`]) makes this impossible under the
+    /// current binary — a hit means a fold ran WITHOUT the choke-point writer (a
+    /// rollback binary projected notices and never advanced), so the table has
+    /// silent holes and the closure must fall back to the full path, which
+    /// re-establishes coverage. Cheap: the id range above the watermark is
+    /// normally just the current (unprojected) delta.
+    pub async fn projected_parsed_above(&self, watermark: i64) -> turso::Result<Option<i64>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT MAX(id) FROM notices
+                  WHERE id > ? AND parse_state = 'parsed' AND projected = 1",
+                (Value::Integer(watermark),),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => match row.get_value(0)? {
+                Value::Integer(id) => Some(id),
+                _ => None,
+            },
+            None => None,
+        })
+    }
+
     async fn insert_plan_tx(&self, conn: &Connection, rows: &[PlanRow]) -> turso::Result<()> {
         for r in rows {
             conn.execute(

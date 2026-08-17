@@ -409,17 +409,16 @@ async fn incremental_bucketed_fold_matches_parsed_fold_and_full() {
     }
 }
 
-/// A delta containing a LEGACY notice falls back to a full non-rebuild projection
-/// (issue 58 v1) — the transitive OJS graph is not persisted incrementally — and
-/// still produces the correct canonical layer.
+/// A delta containing a LEGACY notice with no component to join (its keys match
+/// nothing durable) stays SCOPED through the closure walk (issue 58 v2, step 3 —
+/// this was the v1 full-fallback trigger) and still matches a full projection.
 #[tokio::test]
-async fn incremental_legacy_delta_falls_back_to_full() {
+async fn incremental_legacy_delta_stays_scoped_and_matches_full() {
     let (full, ff, pf) = scratch("legfull").await;
     let (incr, fi, pi) = scratch("legincr").await;
     establish(&full, ff).await;
     establish(&incr, fi).await;
 
-    // A legacy (ted-export-r209) notice in the delta — must trigger the fallback.
     let legacy = Parsed {
         sections: vec![sec("PROC", "Notice", None)],
         values: vec![
@@ -431,20 +430,278 @@ async fn incremental_legacy_delta_falls_back_to_full() {
     record_p(&incr, fi, "100000-2019", "ted-export-r209", legacy).await;
 
     project::project(&full, false).await.expect("full absorb");
-    // Incremental sees a legacy notice → falls back internally to a full run.
-    project::project_incremental(&incr).await.expect("incremental (fallback) absorb");
+    project::project_incremental(&incr).await.expect("incremental (closure) absorb");
 
     assert_eq!(
         snapshot(&full).await,
         snapshot(&incr).await,
-        "legacy fallback must match a full non-rebuild projection"
+        "a scoped legacy delta must match a full non-rebuild projection"
     );
-    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "fallback drains the change-set");
+    assert_eq!(incr.unprojected_parsed_notice_ids().await.unwrap().len(), 0, "the run drains the change-set");
 
     for p in [pf, pi] {
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{p}{s}"));
         }
+    }
+}
+
+/// The `changes` feed as an ORDER-FREE set — for comparing two projection paths
+/// that emit the same events at different cursor positions (retire-before-apply
+/// vs retire-after-apply).
+async fn changes_set(db: &Db) -> String {
+    match db
+        .scalar(
+            "SELECT group_concat(r, x'0a') FROM (
+                 SELECT entity_kind||'|'||op||'|'||coalesce(version_seq,-1)||'|'||entity_id AS r
+                   FROM changes ORDER BY entity_kind, op, version_seq, entity_id)",
+        )
+        .await
+        .expect("changes set")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// A legacy notice with `pub_id` as its own OJS number, plus `refs` edges.
+fn legacy_notice(title: &str, refs: &[&str]) -> Parsed {
+    let mut parsed = Parsed {
+        sections: vec![sec("PROC", "Notice", None)],
+        values: vec![
+            text_val("PROC", "TED-TITLE", title),
+            date_val("PROC", "TED-DS_DATE_DISPATCH", 42),
+        ],
+    };
+    for (i, r) in refs.iter().enumerate() {
+        parsed.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: "TED-REF_OJS".into(),
+            ordinal: i as i64,
+            value: NoticeValue::Id { scheme: Some("ojs".into()), value: (*r).into(), is_ref: true },
+        });
+    }
+    parsed
+}
+
+/// Issue 58 v2 step 3, the correctness crux: a delta notice BRIDGING two existing
+/// single-notice legacy Tenders must merge them into ONE Tender — which only
+/// happens if the closure walk pulls BOTH existing notices into the plan through
+/// their durable key rows. A scoped run without the closure would group the
+/// bridge alone and diverge from the full projection.
+#[tokio::test]
+async fn a_legacy_bridge_delta_merges_existing_components_like_full() {
+    let (full, ff, pf) = scratch("bridgefull").await;
+    let (incr, fi, pi) = scratch("bridgeincr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        record_p(db, fetch, "100-2008", "ted-export-r209", legacy_notice("Legacy A", &[])).await;
+        record_p(db, fetch, "200-2008", "ted-export-r209", legacy_notice("Legacy B", &[])).await;
+        project::project(db, false).await.expect("establish legacy pair");
+    }
+
+    // The bridge: references BOTH components' keys.
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        record_p(
+            db,
+            fetch,
+            "300-2008",
+            "ted-export-r209",
+            legacy_notice("Legacy bridge", &["100-2008", "200-2008"]),
+        )
+        .await;
+    }
+    project::project(&full, false).await.expect("full absorb");
+    project::project_incremental(&incr).await.expect("incremental (closure) absorb");
+
+    // Content byte-identity. The `changes` FEED is compared as a set below: the
+    // full path retires the absorbed legacy Tender AFTER apply, the incremental
+    // retires regrouped Tenders BEFORE apply (deliberately — the old Tender must
+    // be gone before its notices reappear elsewhere), so the same events carry
+    // different cursor positions. Both orders are coherent records of the merge.
+    assert_eq!(
+        snapshot_content(&full).await,
+        snapshot_content(&incr).await,
+        "the bridge merge content must be identical to a full non-rebuild projection"
+    );
+    assert_eq!(
+        changes_set(&full).await,
+        changes_set(&incr).await,
+        "the bridge merge must emit the same change events (as a set)"
+    );
+    let tenders = count(
+        &incr,
+        "SELECT COUNT(DISTINCT tender_id) FROM tender_versions tv
+          JOIN notices n ON n.id = tv.caused_by_notice_id
+         WHERE n.publication_id IN ('100-2008','200-2008','300-2008')",
+    )
+    .await;
+    assert_eq!(tenders, 1, "all three legacy notices fold into ONE merged Tender");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 58 v2 step 3, late back-reference: an EXISTING notice references an OJS
+/// number that only now arrives as the delta notice's OWN number. The closure
+/// must find the existing notice through the edge row written when IT was
+/// planned — the delta's self key is the seed.
+#[tokio::test]
+async fn a_late_back_referenced_legacy_delta_joins_its_referrer() {
+    let (full, ff, pf) = scratch("backreffull").await;
+    let (incr, fi, pi) = scratch("backrefincr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        establish(db, fetch).await;
+        record_p(db, fetch, "100-2008", "ted-export-r209", legacy_notice("Legacy plain", &[])).await;
+        // References 300-2008, which does not exist yet.
+        record_p(db, fetch, "200-2008", "ted-export-r209", legacy_notice("Legacy referrer", &["300-2008"]))
+            .await;
+        project::project(db, false).await.expect("establish referrer");
+    }
+
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        record_p(db, fetch, "300-2008", "ted-export-r209", legacy_notice("Legacy target", &[])).await;
+    }
+    project::project(&full, false).await.expect("full absorb");
+    project::project_incremental(&incr).await.expect("incremental (closure) absorb");
+
+    assert_eq!(
+        snapshot(&full).await,
+        snapshot(&incr).await,
+        "the late back-reference must match a full non-rebuild projection"
+    );
+    let tenders = count(
+        &incr,
+        "SELECT COUNT(DISTINCT tender_id) FROM tender_versions tv
+          JOIN notices n ON n.id = tv.caused_by_notice_id
+         WHERE n.publication_id IN ('200-2008','300-2008')",
+    )
+    .await;
+    assert_eq!(tenders, 1, "referrer and target fold into one Tender");
+    let plain = count(
+        &incr,
+        "SELECT COUNT(DISTINCT tender_id) FROM tender_versions tv
+          JOIN notices n ON n.id = tv.caused_by_notice_id
+         WHERE n.publication_id = '100-2008'",
+    )
+    .await;
+    assert_eq!(plain, 1, "the unrelated legacy notice stays its own Tender");
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
+/// Issue 58 v2 step 3, the watermark gate: with the witness never established
+/// (watermark 0) a legacy delta must take the FULL path. Proven by the watermark
+/// itself: the full path ESTABLISHES it (advance refuses a 0 base), so watermark
+/// == max parsed id afterwards ⟺ the fallback ran.
+#[tokio::test]
+async fn a_stale_witness_forces_the_full_fallback() {
+    let (db, fetch, path) = scratch("gatewm").await;
+    establish(&db, fetch).await;
+    record_p(&db, fetch, "100-2008", "ted-export-r209", legacy_notice("Legacy seed", &[])).await;
+    project::project(&db, false).await.expect("establish legacy");
+
+    let raw = store::turso::Builder::new_local(&path).build().await.expect("raw db");
+    raw.connect()
+        .expect("raw conn")
+        .execute("UPDATE legacy_adjacency SET watermark = 0 WHERE id = 0", ())
+        .await
+        .expect("wipe the witness");
+
+    record_p(&db, fetch, "200-2008", "ted-export-r209", legacy_notice("Legacy late", &["100-2008"]))
+        .await;
+    project::project_incremental(&db).await.expect("incremental (gated → full)");
+
+    let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(
+        db.legacy_adjacency_watermark().await.expect("watermark"),
+        max_id,
+        "only the full path establishes — the gate must have routed there"
+    );
+    let tenders = count(
+        &db,
+        "SELECT COUNT(DISTINCT tender_id) FROM tender_versions tv
+          JOIN notices n ON n.id = tv.caused_by_notice_id
+         WHERE n.publication_id IN ('100-2008','200-2008')",
+    )
+    .await;
+    assert_eq!(tenders, 1, "the fallback still groups the chain correctly");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 58 v2 step 3, the coverage-gap verify: a watermark that CLAIMS coverage
+/// while a projected parsed notice sits above it (a rollback binary folded
+/// without writing key rows) must be distrusted — full fallback, and the full
+/// pass repairs the witness.
+#[tokio::test]
+async fn a_coverage_gap_forces_the_full_fallback() {
+    let (db, fetch, path) = scratch("gategap").await;
+    establish(&db, fetch).await;
+    record_p(&db, fetch, "100-2008", "ted-export-r209", legacy_notice("Legacy seed", &[])).await;
+    project::project(&db, false).await.expect("establish legacy");
+
+    // Simulate the rollback hole: pull the watermark BELOW the newest projected
+    // notice, as if a pre-feature binary had folded it without writing rows.
+    let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    let raw = store::turso::Builder::new_local(&path).build().await.expect("raw db");
+    raw.connect()
+        .expect("raw conn")
+        .execute(
+            "UPDATE legacy_adjacency SET watermark = ? WHERE id = 0",
+            (store::turso::Value::Integer(max_id - 1),),
+        )
+        .await
+        .expect("pull the watermark under a projected notice");
+
+    record_p(&db, fetch, "200-2008", "ted-export-r209", legacy_notice("Legacy late", &["100-2008"]))
+        .await;
+    project::project_incremental(&db).await.expect("incremental (gap → full)");
+
+    let new_max = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(
+        db.legacy_adjacency_watermark().await.expect("watermark"),
+        new_max,
+        "the full pass repairs the witness to true coverage"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 58 v2 step 3, the cap: an over-cap component reports the fallback reason
+/// instead of a wrong scope; the production cap admits the same small component.
+#[tokio::test]
+async fn an_over_cap_closure_reports_fallback() {
+    let (db, fetch, path) = scratch("gatecap").await;
+    establish(&db, fetch).await;
+    record_p(&db, fetch, "100-2008", "ted-export-r209", legacy_notice("Legacy A", &[])).await;
+    record_p(&db, fetch, "200-2008", "ted-export-r209", legacy_notice("Legacy B", &["100-2008"]))
+        .await;
+    project::project(&db, false).await.expect("establish legacy chain");
+
+    let seeds = vec![2_008_000_000_100];
+    let over = project::legacy_closure_capped(&db, &seeds, 1).await.expect("walk (tiny cap)");
+    let reason = over.expect_err("a 2-notice component must exceed a cap of 1");
+    assert!(reason.contains("exceeds cap"), "the reason names the cap: {reason}");
+
+    let ok = project::legacy_closure_capped(&db, &seeds, 500_000).await.expect("walk (real cap)");
+    let (notices, tenders) = ok.expect("the production cap admits the component");
+    assert_eq!(notices.len(), 2, "both chain notices in scope");
+    assert_eq!(tenders.len(), 1, "their one Tender in scope");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
 
@@ -697,7 +954,7 @@ async fn the_legacy_adjacency_rows_and_watermark_follow_the_plan_builds() {
 
     // An incremental delta ADVANCES the established watermark…
     record_p(&db, fetch, "300-2008", "ted-export-r209", island("Legacy late")).await;
-    project::project_incremental(&db).await.expect("incremental (legacy → v1 fallback is fine)");
+    project::project_incremental(&db).await.expect("incremental (scoped legacy closure)");
     let new_max = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
     assert_eq!(db.legacy_adjacency_watermark().await.expect("watermark"), new_max);
     assert_eq!(

@@ -1224,13 +1224,15 @@ pub async fn backfill_legacy_adjacency(
 /// Tenders' full notice sets, so the same grouping SQL runs over a bounded set;
 /// (3) retirement is scoped to the touched set.
 ///
-/// LEGACY FALLBACK: the transitive OJS union-find needs the whole existing edge
-/// graph, which is not persisted between runs. Legacy notices are the pre-2024
-/// historical era, loaded by bulk backfill (`rebuild:true`), never in the daily
-/// near-real-time feed — so if the delta contains ANY legacy notice this falls
-/// back to a full non-rebuild projection (correct, and effectively never fires
-/// daily). It logs loudly, so if legacy ever starts arriving incrementally we
-/// notice and build the durable-adjacency path (issue 58 v2).
+/// LEGACY CLOSURE (issue 58 v2, step 3): the transitive OJS union-find needs the
+/// whole existing edge graph, persisted in `legacy_ojs_keys` (written at the
+/// plan-build choke point; the standing corpus swept by the backfill job). When
+/// `legacy_adjacency.watermark` attests coverage, a legacy delta expands to its
+/// OJS component via [`legacy_closure`] — keys → notices → tenders → member
+/// notices → keys, to a fixpoint — and the run stays scoped. Without the
+/// attestation (watermark 0, a coverage gap, or an over-cap component) it falls
+/// back to a full non-rebuild projection exactly as v1 did, loudly; the full
+/// pass re-establishes the watermark, so the fallback self-heals.
 pub async fn project_incremental(db: &Db) -> turso::Result<Report> {
     let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
@@ -1288,6 +1290,101 @@ pub async fn project_incremental_chunked(db: &Db, chunk_size: usize) -> turso::R
 /// by plan size, `Some(_)` forces one. The forcing form exists so the fold-source
 /// invariance test can prove BOTH folds produce a byte-identical canonical layer
 /// over the same SCOPED plan, at a corpus size far below the routing threshold.
+/// Closure notices above which the incremental fold gives up on scoping and takes
+/// the full path (issue 58 v2). A pathological component (issue 68's class — a
+/// hub key referenced by hundreds of thousands of notices) must degrade to
+/// today's full-projection behavior, never to a wrong scope; and past this size
+/// a full pass is not meaningfully more expensive anyway.
+const LEGACY_CLOSURE_CAP: usize = 500_000;
+
+/// Expand legacy seed keys to their full OJS component via the durable adjacency
+/// (issue 58 v2, step 3): keys → notices (`legacy_ojs_keys`), notices → tenders
+/// (`caused_by`), tenders → member notices, members → keys; repeat to a fixpoint.
+/// Seeds must be the UNION of every legacy delta notice's keys (self ∪ edges), so
+/// intra-delta joins are pre-joined and the delta's own rows need not be durable
+/// yet (they are written later, at the pass-2 choke point).
+///
+/// Returns `Ok((notices, tenders))` — existing notice ids to add to the plan and
+/// existing tender ids whose grouping may change (both sorted) — or `Err(reason)`
+/// when the closure must not be trusted: watermark never established, a coverage
+/// gap (see [`Db::projected_parsed_above`]), or an over-cap component. The caller
+/// then takes the full path, which re-establishes coverage.
+async fn legacy_closure(
+    db: &Db,
+    seeds: &[i64],
+) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
+    legacy_closure_capped(db, seeds, LEGACY_CLOSURE_CAP).await
+}
+
+/// As [`legacy_closure`], with an explicit cap. Exposed so the cap test can
+/// drive a tiny cap over a small component; production uses
+/// [`LEGACY_CLOSURE_CAP`].
+pub async fn legacy_closure_capped(
+    db: &Db,
+    seeds: &[i64],
+    cap: usize,
+) -> turso::Result<Result<(Vec<i64>, Vec<i64>), String>> {
+    let watermark = db.legacy_adjacency_watermark().await?;
+    if watermark == 0 {
+        return Ok(Err("legacy adjacency never established".into()));
+    }
+    if let Some(id) = db.projected_parsed_above(watermark).await? {
+        return Ok(Err(format!(
+            "legacy adjacency coverage gap: projected parsed notice {id} above watermark {watermark}"
+        )));
+    }
+    let mut seen_keys: std::collections::HashSet<i64> = seeds.iter().copied().collect();
+    let mut frontier: Vec<i64> = seeds.to_vec();
+    let mut notices = std::collections::BTreeSet::new();
+    let mut tenders = std::collections::BTreeSet::new();
+    let mut hops = 0usize;
+    while !frontier.is_empty() {
+        hops += 1;
+        let mut new_notices: Vec<i64> = db
+            .legacy_notices_for_keys(&frontier)
+            .await?
+            .into_iter()
+            .filter(|id| notices.insert(*id))
+            .collect();
+        if new_notices.is_empty() {
+            break;
+        }
+        // Membership expansion: a hop notice's Tender re-derives IN FULL, so its
+        // other member notices join the closure (and contribute their keys) too.
+        let new_tenders: Vec<i64> = db
+            .tenders_for_notice_ids(&new_notices)
+            .await?
+            .into_iter()
+            .filter(|t| tenders.insert(*t))
+            .collect();
+        new_notices.extend(
+            db.notice_ids_for_tenders(&new_tenders)
+                .await?
+                .into_iter()
+                .filter(|id| notices.insert(*id)),
+        );
+        if notices.len() > cap {
+            return Ok(Err(format!(
+                "legacy closure exceeds cap ({} notices > {cap})",
+                notices.len()
+            )));
+        }
+        frontier = db
+            .legacy_keys_for_notices(&new_notices)
+            .await?
+            .into_iter()
+            .filter(|k| seen_keys.insert(*k))
+            .collect();
+    }
+    eprintln!(
+        "[project] legacy closure: {} seed keys → {} notices, {} tenders in {hops} hops",
+        seeds.len(),
+        notices.len(),
+        tenders.len()
+    );
+    Ok(Ok((notices.into_iter().collect(), tenders.into_iter().collect())))
+}
+
 pub async fn project_incremental_chunked_phase2(
     db: &Db,
     chunk_size: usize,
@@ -1313,20 +1410,21 @@ pub async fn project_incremental_chunked_phase2(
     eprintln!("[project] incremental: {} changed notices", changed.len());
 
     // Pass 1 (streamed): read the changed notices' grouping identity in id-ordered
-    // chunks — detect legacy (→ fallback) and collect their new keyed keys — without
-    // holding the whole delta's parsed layer.
+    // chunks — collect keyed keys and legacy OJS seed keys — without holding the
+    // whole delta's parsed layer.
     let mut new_keyed_keys: Vec<String> = Vec::new();
+    let mut legacy_seed_keys: Vec<i64> = Vec::new();
+    let mut legacy_delta = 0usize;
     for chunk in changed.chunks(chunk_size) {
         let mut batch = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut batch);
         for (notice, parsed) in &batch {
             let ident = Ident::read(notice, parsed);
             if ident.legacy {
-                eprintln!(
-                    "[project] INCREMENTAL → FULL fallback: delta contains legacy notice(s) \
-                     (issue 58 v1); re-projecting the whole corpus"
+                legacy_delta += 1;
+                legacy_seed_keys.extend(
+                    ident.ojs_self.iter().chain(ident.ojs_edges.iter()).copied().map(encode_ojs),
                 );
-                return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
             }
             if let Some(key) = &ident.procedure_key {
                 new_keyed_keys.push(key.clone());
@@ -1335,19 +1433,58 @@ pub async fn project_incremental_chunked_phase2(
     }
     new_keyed_keys.sort_unstable();
     new_keyed_keys.dedup();
-    stage(&format!("pass-1 identity ({} new keyed keys)", new_keyed_keys.len()));
+    legacy_seed_keys.sort_unstable();
+    legacy_seed_keys.dedup();
+    stage(&format!(
+        "pass-1 identity ({} new keyed keys, {legacy_delta} legacy notices, {} seed keys)",
+        new_keyed_keys.len(),
+        legacy_seed_keys.len()
+    ));
+
+    // A legacy delta groups transitively with EXISTING notices through shared OJS
+    // keys — expand to the whole component via the durable adjacency, or fall back
+    // to the full path when the closure cannot be trusted (never established, a
+    // coverage gap, an over-cap component). A keyless legacy notice (no self
+    // number, no refs) shares nothing and needs no closure — the empty-seed case
+    // is correct without the gate.
+    let (closure_ids, closure_tenders) = if legacy_seed_keys.is_empty() {
+        (Vec::new(), Vec::new())
+    } else {
+        match legacy_closure(db, &legacy_seed_keys).await? {
+            Ok(scoped) => scoped,
+            Err(reason) => {
+                eprintln!(
+                    "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
+                     re-projecting the whole corpus"
+                );
+                return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
+            }
+        }
+    };
+    if !closure_ids.is_empty() || !closure_tenders.is_empty() {
+        stage(&format!(
+            "legacy closure ({} notices, {} tenders)",
+            closure_ids.len(),
+            closure_tenders.len()
+        ));
+    }
 
     // Expand to the touched EXISTING Tenders and their full notice sets; the plan
-    // covers changed ∪ touched-existing, in one global id order.
-    let touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
+    // covers changed ∪ touched-existing ∪ legacy closure, in one global id order.
+    let mut touched_tenders = db.touched_existing_tender_ids(&changed, &new_keyed_keys).await?;
+    touched_tenders.extend(closure_tenders);
+    touched_tenders.sort_unstable();
+    touched_tenders.dedup();
     let existing_ids = db.notice_ids_for_tenders(&touched_tenders).await?;
     let changed_set: std::collections::HashSet<i64> = changed.iter().copied().collect();
     let mut all_ids: Vec<i64> = changed
         .iter()
         .copied()
         .chain(existing_ids.iter().copied().filter(|id| !changed_set.contains(id)))
+        .chain(closure_ids.iter().copied().filter(|id| !changed_set.contains(id)))
         .collect();
     all_ids.sort_unstable();
+    all_ids.dedup();
     stage(&format!(
         "touched expansion ({} touched Tenders → {} planned notices)",
         touched_tenders.len(),
