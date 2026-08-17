@@ -1029,6 +1029,71 @@ async fn the_backfill_rederives_the_choke_points_rows_exactly() {
     }
 }
 
+/// Issue 228: the sweep must keep advancing through a stretch of corpus that
+/// holds NO legacy notices, and must reach the target rather than stopping at
+/// the first window that finds nothing.
+///
+/// The bug this pins: the walk used to terminate on an empty chunk and let the
+/// row LIMIT decide how far a query scanned. With a legacy pre-filter that
+/// combination cannot stop early in a legacy-free range — one query scans to the
+/// end of the table to prove no match remains (~3.3M rows and ~40 silent minutes
+/// on prod) — and, worse, an eForms notice ordered BEFORE a legacy one would
+/// have ended the sweep early had the filter ever returned an empty chunk mid-
+/// corpus. Windowing the id range fixes both: every window advances the cursor,
+/// finding nothing is normal, and only the target ends the walk.
+///
+/// A window of 1 makes each notice id its own window over a 5-notice corpus, so
+/// the legacy-free stretch is real rather than simulated.
+#[tokio::test]
+async fn the_backfill_sweeps_past_a_stretch_with_no_legacy_notices() {
+    let (db, fetch, path) = scratch("adjbackfill-tail").await;
+    // A legacy notice FIRST, then three eForms notices, then a second legacy one:
+    // the sweep must cross the middle stretch and still find the last row.
+    record_p(&db, fetch, "300-2008", "ted-export-r209", island("Legacy CN")).await;
+    record(&db, fetch, "E-1", keyed("bt04-tail-1", 1, "Modern one")).await;
+    record(&db, fetch, "E-2", keyed("bt04-tail-2", 1, "Modern two")).await;
+    record(&db, fetch, "E-3", keyed("bt04-tail-3", 1, "Modern three")).await;
+    record_p(&db, fetch, "400-2008", "ted-export-r209", island("Legacy CAN")).await;
+    project::project(&db, false).await.expect("full projection");
+
+    let baseline = key_rows(&db).await;
+    assert_eq!(baseline.len(), 2, "one self key per legacy notice");
+
+    let raw = store::turso::Builder::new_local(&path).build().await.expect("raw db");
+    let conn = raw.connect().expect("raw conn");
+    conn.execute("DELETE FROM legacy_ojs_keys", ()).await.expect("wipe rows");
+    conn.execute("UPDATE legacy_adjacency SET watermark = 0 WHERE id = 0", ())
+        .await
+        .expect("wipe watermark");
+    drop(conn);
+
+    let mut ticks = Vec::new();
+    let done = project::backfill_legacy_adjacency_windowed(&db, 1, |n| ticks.push(n))
+        .await
+        .expect("backfill");
+
+    // Both legacy notices found — the one after the gap is the assertion that
+    // matters, since the old loop would have stopped at the gap.
+    assert_eq!(key_rows(&db).await, baseline, "the sweep crossed the gap and re-derived both");
+    assert_eq!((done.swept, done.keys), (2, 2), "two legacy notices; the three eForms rows skipped");
+
+    // Progress fired once per window, including the windows that found nothing —
+    // that visible movement is the whole point of issue 228. With a window of 1
+    // there is one tick per id in the corpus, and the counter is non-decreasing.
+    let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(ticks.len() as i64, max_id, "one progress tick per window, gaps included");
+    assert!(ticks.windows(2).all(|w| w[0] <= w[1]), "swept never goes backwards: {ticks:?}");
+    assert_eq!(ticks.last().copied(), Some(2), "the last tick reports both legacy notices");
+
+    // And the walk still ends by reaching the target, establishing coverage.
+    assert_eq!(done.watermark, max_id);
+    assert_eq!(db.legacy_adjacency_watermark().await.expect("watermark"), max_id);
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// The full `(ojs_key, notice_id)` set, encoded one pair per scalar probe so the
 /// comparison needs no direct row access (`Db::scalar` is the test surface).
 async fn key_rows(db: &Db) -> Vec<(i64, i64)> {

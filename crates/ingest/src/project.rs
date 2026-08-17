@@ -1155,6 +1155,18 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
 /// and the WAL is truncated between chunks.
 const ADJACENCY_BACKFILL_CHUNK: i64 = 50_000;
 
+/// How many notice IDS one chunk query may scan, however few of them match the
+/// legacy pre-filter (issue 228). Without this bound the row LIMIT alone decides
+/// when a query stops, so once the cursor passes the last legacy notice the
+/// query cannot return early — it scans every remaining row to prove none is
+/// left. On prod that tail was ~3.3M eForms notices swept in ONE query, ~40
+/// minutes long, during which the sweep reported no progress at all and a
+/// working job was indistinguishable from a wedged one. Windowing the id range
+/// makes the sparse tail advance in visible steps and caps the I/O of any single
+/// query; the row limit still bounds memory in the dense legacy eras, where a
+/// window fills long before it is exhausted.
+const ADJACENCY_BACKFILL_ID_WINDOW: i64 = 500_000;
+
 /// What [`backfill_legacy_adjacency`] did: notices swept (legacy only), key rows
 /// offered (self ∪ edges; pre-existing rows are ignored, not re-written), and the
 /// coverage watermark it established.
@@ -1180,17 +1192,38 @@ pub struct LegacyAdjacencyBackfill {
 /// completes — jobs are queue-serialized, so nothing (re)parses into the swept
 /// range mid-run; notices parsed after this job are covered by their own fold's
 /// choke-point write + `advance_legacy_adjacency`.
+///
+/// The walk is bounded on BOTH axes (issue 228): each query reads at most
+/// [`ADJACENCY_BACKFILL_CHUNK`] matching rows (memory, the issue-42 shape) and
+/// scans at most [`ADJACENCY_BACKFILL_ID_WINDOW`] ids (I/O, and the reason a
+/// legacy-free tail still advances). Termination is the cursor reaching the
+/// captured target, not a chunk coming back empty — an empty chunk now means
+/// only "no legacy notices in this window", which is the normal state of every
+/// eForms-era window.
 pub async fn backfill_legacy_adjacency(
     db: &Db,
+    progress: impl FnMut(u64),
+) -> turso::Result<LegacyAdjacencyBackfill> {
+    backfill_legacy_adjacency_windowed(db, ADJACENCY_BACKFILL_ID_WINDOW, progress).await
+}
+
+/// [`backfill_legacy_adjacency`] with the id window as a parameter. Production
+/// always takes the default; a test passes a tiny window so a handful of fixture
+/// notices span many windows — the only way to exercise the legacy-free tail
+/// (issue 228) without half a million rows.
+pub async fn backfill_legacy_adjacency_windowed(
+    db: &Db,
+    window: i64,
     mut progress: impl FnMut(u64),
 ) -> turso::Result<LegacyAdjacencyBackfill> {
+    debug_assert!(window > 0, "a non-positive window could not advance the cursor");
     let target = db.max_parsed_notice_id().await?;
     let mut cursor = 0i64;
     let mut swept = 0u64;
     let mut keys = 0u64;
-    loop {
-        let chunk = db.legacy_parsed_chunk(cursor, ADJACENCY_BACKFILL_CHUNK).await?;
-        let Some(last) = chunk.last().map(|(n, _)| n.id) else { break };
+    while cursor < target {
+        let hi = cursor.saturating_add(window).min(target);
+        let chunk = db.legacy_parsed_chunk(cursor, hi, ADJACENCY_BACKFILL_CHUNK).await?;
         let mut batch: Vec<(i64, i64)> = Vec::new();
         for (notice, parsed) in &chunk {
             let ident = Ident::read(notice, parsed);
@@ -1204,7 +1237,15 @@ pub async fn backfill_legacy_adjacency(
         }
         keys += batch.len() as u64;
         db.insert_legacy_ojs_keys(&batch).await?;
-        cursor = last;
+        // A full chunk may have stopped short of the window's end on the row
+        // limit, so resume from the last row read; otherwise the whole window is
+        // swept and the cursor takes its end. Both advance strictly, so the walk
+        // cannot stall — the bug this replaced could only stall by scanning
+        // ahead invisibly, never by looping.
+        cursor = match chunk.last() {
+            Some((n, _)) if chunk.len() as i64 >= ADJACENCY_BACKFILL_CHUNK => n.id,
+            _ => hi,
+        };
         progress(swept);
         let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
     }

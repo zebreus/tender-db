@@ -1051,13 +1051,19 @@ impl Db {
     /// issue-58-v2 adjacency backfill's read: it sweeps only the notices whose
     /// keys the choke-point writer would record, skipping the (larger) eForms
     /// half of the corpus entirely.
+    /// `hi` caps the ID RANGE the query may scan, not just the rows it returns
+    /// (issue 228). The legacy pre-filter means `limit` alone cannot stop a query
+    /// early in a legacy-free range — it scans to the end of the table to prove
+    /// no match remains — so the caller windows the range and the two bounds
+    /// together keep both memory and per-query I/O bounded.
     pub async fn legacy_parsed_chunk(
         &self,
         after_id: i64,
+        hi: i64,
         limit: i64,
     ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
         let conn = self.reader().await?;
-        Self::parsed_chunk_inner(&conn, after_id, i64::MAX, limit, true).await
+        Self::parsed_chunk_inner(&conn, after_id, hi, limit, true).await
     }
 
     async fn parsed_chunk_inner(
