@@ -190,6 +190,11 @@ enum Spec {
     /// batched backfill behind the name-prefix search. Idempotent (stamped rows
     /// are skipped), durable like its siblings.
     BackfillOrgNames,
+    /// Populate the durable legacy OJS adjacency for the standing corpus and
+    /// establish its coverage watermark (issue 58 v2, step 2). Batched +
+    /// checkpointed, idempotent (INSERT OR IGNORE), so a restart re-runs from
+    /// zero at worst. A unit variant → durable across restarts.
+    BackfillLegacyAdjacency,
     /// Stamp `tenders.current_deadline` from each head version's dates (issue 216,
     /// deadline half). Batched + checkpointed like the mark job (issue 42);
     /// idempotent, so a restart redoes the walk from zero at worst. A unit
@@ -405,6 +410,18 @@ impl Supervisor {
             "backfill-org-names" => Ok(vec![
                 self.push("backfill-org-names", "backfill-org-names".into(), Spec::BackfillOrgNames)
                     .await,
+            ]),
+            // Sweep the standing legacy corpus into `legacy_ojs_keys` and establish
+            // the coverage watermark (issue 58 v2, step 2) — batched, checkpointed,
+            // idempotent. One-off after the table ships; the plan builds maintain
+            // it from then on.
+            "backfill-legacy-adjacency" => Ok(vec![
+                self.push(
+                    "backfill-legacy-adjacency",
+                    "backfill-legacy-adjacency".into(),
+                    Spec::BackfillLegacyAdjacency,
+                )
+                .await,
             ]),
             // Stamp every tender's current_deadline from its head version's dates
             // (issue 216, deadline half) — batched, checkpointed, idempotent. One-off
@@ -1036,6 +1053,22 @@ impl Supervisor {
                     }
                 }
                 Ok(format!("name_norm stamped over {stamped} organizations"))
+            }
+            Spec::BackfillLegacyAdjacency => {
+                // The org-names shape: the sweep batches and checkpoints itself
+                // (issue 42); progress surfaces as members_done so the dashboard
+                // shows the walk moving.
+                let done = ingest::project::backfill_legacy_adjacency(&self.db, |n| {
+                    self.update(|p| p.members_done = n);
+                })
+                .await
+                .map_err(|e| e.to_string())?;
+                let _ = self.db.checkpoint(store::CheckpointMode::Truncate).await;
+                Ok(format!(
+                    "legacy adjacency backfilled: {} legacy notices swept, {} key rows offered, \
+                     watermark established at {}",
+                    done.swept, done.keys, done.watermark
+                ))
             }
             Spec::BackfillDeadlines => {
                 // Walk the whole tenders table in id order, one bounded batch per

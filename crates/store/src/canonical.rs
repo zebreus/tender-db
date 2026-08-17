@@ -1044,15 +1044,46 @@ impl Db {
         hi: i64,
         limit: i64,
     ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        Self::parsed_chunk_inner(conn, after_id, hi, limit, false).await
+    }
+
+    /// As [`Db::parsed_chunk`], restricted to LEGACY-profile notices — the
+    /// issue-58-v2 adjacency backfill's read: it sweeps only the notices whose
+    /// keys the choke-point writer would record, skipping the (larger) eForms
+    /// half of the corpus entirely.
+    pub async fn legacy_parsed_chunk(
+        &self,
+        after_id: i64,
+        limit: i64,
+    ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
+        let conn = self.reader().await?;
+        Self::parsed_chunk_inner(&conn, after_id, i64::MAX, limit, true).await
+    }
+
+    async fn parsed_chunk_inner(
+        conn: &Connection,
+        after_id: i64,
+        hi: i64,
+        limit: i64,
+        legacy_only: bool,
+    ) -> turso::Result<Vec<(NoticeRef, Parsed)>> {
         let mut out: Vec<(NoticeRef, Parsed)> = Vec::new();
         let mut slot: std::collections::HashMap<i64, usize> = std::collections::HashMap::new();
 
+        // The legacy predicate mirrors `is_legacy_profile` (project.rs) exactly;
+        // it is a pre-filter only — the sweep re-derives legacy per notice in
+        // Rust, so an over-match costs a read, never a wrong row.
+        let legacy = if legacy_only {
+            " AND (profile = 'text' OR profile = 'internal-ojs' OR profile LIKE 'ted-export%')"
+        } else {
+            ""
+        };
+        let sql = format!(
+            "SELECT id, source, publication_id, profile FROM notices
+             WHERE parse_state = 'parsed' AND id > ? AND id <= ?{legacy} ORDER BY id LIMIT ?"
+        );
         let mut rows = conn
-            .query(
-                "SELECT id, source, publication_id, profile FROM notices
-                 WHERE parse_state = 'parsed' AND id > ? AND id <= ? ORDER BY id LIMIT ?",
-                (Value::Integer(after_id), Value::Integer(hi), Value::Integer(limit)),
-            )
+            .query(&sql, (Value::Integer(after_id), Value::Integer(hi), Value::Integer(limit)))
             .await?;
         while let Some(row) = rows.next().await? {
             let id = int(&row, 0);
@@ -1071,9 +1102,10 @@ impl Db {
         if out.is_empty() {
             return Ok(out);
         }
-        // The chunk's contiguous id window: parsed ids in (after_id, hi] are
-        // exactly this chunk (ORDER BY id LIMIT), so a ranged scan of each value
-        // table over [lo, hi] yields precisely their rows.
+        // The chunk's contiguous id window: a ranged scan of each value table
+        // over [lo, hi] yields every member's rows (plus, under the legacy
+        // filter, interlopers' rows — dropped by the `slot` lookup below;
+        // legacy ids sit in dense historical ranges, so the waste is small).
         let lo = out.first().expect("non-empty").0.id;
         let hi = out.last().expect("non-empty").0.id;
         let window = (Value::Integer(lo), Value::Integer(hi));
@@ -2428,6 +2460,26 @@ impl Db {
             (Value::Integer(to),),
         )
         .await?;
+        Ok(())
+    }
+
+    /// One backfill batch of durable adjacency rows (issue 58 v2, step 2) in a
+    /// single transaction. INSERT OR IGNORE — re-sweeping a notice the plan
+    /// build (or an interrupted earlier backfill) already recorded is free.
+    pub async fn insert_legacy_ojs_keys(&self, rows: &[(i64, i64)]) -> turso::Result<()> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let conn = self.conn().await;
+        conn.execute("BEGIN", ()).await?;
+        for &(key, notice_id) in rows {
+            conn.execute(
+                "INSERT OR IGNORE INTO legacy_ojs_keys(ojs_key, notice_id) VALUES(?, ?)",
+                (Value::Integer(key), Value::Integer(notice_id)),
+            )
+            .await?;
+        }
+        conn.execute("COMMIT", ()).await?;
         Ok(())
     }
 

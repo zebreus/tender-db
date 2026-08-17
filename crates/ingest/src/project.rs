@@ -1150,6 +1150,68 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
     Ok(report)
 }
 
+/// Notices per adjacency-backfill chunk (issue 58 v2, step 2): the same size the
+/// incremental fold streams at — full parsed layers for a chunk fit comfortably,
+/// and the WAL is truncated between chunks.
+const ADJACENCY_BACKFILL_CHUNK: i64 = 50_000;
+
+/// What [`backfill_legacy_adjacency`] did: notices swept (legacy only), key rows
+/// offered (self ∪ edges; pre-existing rows are ignored, not re-written), and the
+/// coverage watermark it established.
+pub struct LegacyAdjacencyBackfill {
+    pub swept: u64,
+    pub keys: u64,
+    pub watermark: i64,
+}
+
+/// Issue 58 v2, step 2: populate `legacy_ojs_keys` for the STANDING corpus — the
+/// notices folded before the choke-point writer existed — and establish the
+/// coverage watermark. One bounded chunk at a time (the issue-42 shape), each
+/// batch idempotent, so an interrupted run just re-runs.
+///
+/// Zero drift by construction: each notice's keys come from the SAME
+/// [`Ident::read`] the plan build feeds the choke point, over the same parsed
+/// layer. (The DE-1.x alias fold the plan build applies first is a no-op here:
+/// its profiles are eForms, disjoint from the legacy set this sweeps.) The SQL
+/// legacy pre-filter in [`Db::legacy_parsed_chunk`] only bounds the read;
+/// `Ident::read`'s own `legacy` verdict decides what is written.
+///
+/// The sweep target is captured BEFORE the walk and established AFTER it
+/// completes — jobs are queue-serialized, so nothing (re)parses into the swept
+/// range mid-run; notices parsed after this job are covered by their own fold's
+/// choke-point write + `advance_legacy_adjacency`.
+pub async fn backfill_legacy_adjacency(
+    db: &Db,
+    mut progress: impl FnMut(u64),
+) -> turso::Result<LegacyAdjacencyBackfill> {
+    let target = db.max_parsed_notice_id().await?;
+    let mut cursor = 0i64;
+    let mut swept = 0u64;
+    let mut keys = 0u64;
+    loop {
+        let chunk = db.legacy_parsed_chunk(cursor, ADJACENCY_BACKFILL_CHUNK).await?;
+        let Some(last) = chunk.last().map(|(n, _)| n.id) else { break };
+        let mut batch: Vec<(i64, i64)> = Vec::new();
+        for (notice, parsed) in &chunk {
+            let ident = Ident::read(notice, parsed);
+            if !ident.legacy {
+                continue;
+            }
+            swept += 1;
+            for k in ident.ojs_self.into_iter().chain(ident.ojs_edges) {
+                batch.push((encode_ojs(k), notice.id));
+            }
+        }
+        keys += batch.len() as u64;
+        db.insert_legacy_ojs_keys(&batch).await?;
+        cursor = last;
+        progress(swept);
+        let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+    }
+    db.establish_legacy_adjacency(target).await?;
+    Ok(LegacyAdjacencyBackfill { swept, keys, watermark: target })
+}
+
 /// The daily projection: re-derive only the Tenders TOUCHED by notices parsed
 /// since the last run, so cost scales with the delta, not the corpus (issue 58).
 ///

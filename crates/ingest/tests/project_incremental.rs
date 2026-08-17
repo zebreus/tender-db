@@ -725,6 +725,78 @@ async fn the_legacy_adjacency_rows_and_watermark_follow_the_plan_builds() {
     }
 }
 
+/// Issue 58 v2, step 2: the backfill job re-derives EXACTLY the rows the
+/// choke-point writer records — proven by set equality on the same corpus —
+/// and establishes the watermark. This is the drift test between the two
+/// writers: both must read keys through `Ident::read`, so a corpus the plan
+/// build has annotated, wiped back to the pre-feature state (no rows,
+/// watermark 0), must come back byte-identical from the sweep.
+#[tokio::test]
+async fn the_backfill_rederives_the_choke_points_rows_exactly() {
+    let (db, fetch, path) = scratch("adjbackfill").await;
+    let mut can = island("Legacy CAN");
+    can.values.push(ValueRow {
+        section_id: "PROC".into(),
+        field_id: "TED-REF_OJS".into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: Some("ojs".into()), value: "100-2008".into(), is_ref: true },
+    });
+    record_p(&db, fetch, "100-2008", "ted-export-r209", island("Legacy CN")).await;
+    record_p(&db, fetch, "200-2008", "ted-export-r209", can).await;
+    record(&db, fetch, "E-cn", keyed("bt04-adjb", 1, "Modern")).await;
+    project::project(&db, false).await.expect("full projection");
+
+    let baseline = key_rows(&db).await;
+    assert_eq!(baseline.len(), 3, "choke point wrote two self keys + one edge key");
+
+    // Wipe to the pre-feature state a standing prod corpus is in.
+    let raw = store::turso::Builder::new_local(&path).build().await.expect("raw db");
+    let conn = raw.connect().expect("raw conn");
+    conn.execute("DELETE FROM legacy_ojs_keys", ()).await.expect("wipe rows");
+    conn.execute("UPDATE legacy_adjacency SET watermark = 0 WHERE id = 0", ())
+        .await
+        .expect("wipe watermark");
+    drop(conn);
+
+    let mut ticks = 0u64;
+    let done = project::backfill_legacy_adjacency(&db, |n| ticks = n).await.expect("backfill");
+    assert_eq!(key_rows(&db).await, baseline, "the sweep and the choke point must never drift");
+    assert_eq!((done.swept, done.keys), (2, 3), "two legacy notices, three key rows; eForms skipped");
+    assert_eq!(ticks, 2, "progress surfaced per chunk");
+    let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(done.watermark, max_id);
+    assert_eq!(db.legacy_adjacency_watermark().await.expect("watermark"), max_id);
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// The full `(ojs_key, notice_id)` set, encoded one pair per scalar probe so the
+/// comparison needs no direct row access (`Db::scalar` is the test surface).
+async fn key_rows(db: &Db) -> Vec<(i64, i64)> {
+    let n = count(db, "SELECT COUNT(*) FROM legacy_ojs_keys").await;
+    let mut out = Vec::new();
+    for i in 0..n {
+        let k = count(
+            db,
+            &format!(
+                "SELECT ojs_key FROM legacy_ojs_keys ORDER BY ojs_key, notice_id LIMIT 1 OFFSET {i}"
+            ),
+        )
+        .await;
+        let id = count(
+            db,
+            &format!(
+                "SELECT notice_id FROM legacy_ojs_keys ORDER BY ojs_key, notice_id LIMIT 1 OFFSET {i}"
+            ),
+        )
+        .await;
+        out.push((k, id));
+    }
+    out
+}
+
 /// Issue 133: the 2026-07-30 shape. A killed rebuild's `reset_tender_layer` is
 /// DDL — durable the instant it runs — so the layer sits empty with every
 /// later signal green. The next incremental fold must REFUSE to compound that
