@@ -226,3 +226,46 @@ fails the suite rather than orphaning rows on every re-parse.
    `mention_notice_id` = the DE notice itself, never a merged TED twin, or the 2%-inherited reading
    simply repeats with a bigger number. Also re-check the award-linkage ratio for the DE profiles on
    the dashboard, which is where the 2% is visible today.
+
+### The re-parse job is BUILT but NOT USABLE yet — three structural facts found by running it
+
+Ran `reparse` on the smallest slice of the cohort first (`eforms-de-1.0`, 31 notices) rather than all
+218,876. It failed, twice, and the failures are the useful part. **Do not fire `reparse` expecting it
+to work** — it errors safely (the transaction rolls back, the parsed layer is untouched, the paired
+projection finds nothing) but it cannot currently complete on any notice that has been folded.
+
+**1. The parsed layer is pinned by the canonical layer, two levels deep.** `organization_mentions`
+carries `FOREIGN KEY (notice_id, section_id) REFERENCES notice_sections` — the only FK into the parsed
+layer, and enough to break the first run. Clearing the notice's mentions first (committed, tested,
+red-checked against prod's exact error) fixed that and exposed the next level:
+`tender_version_parties` AND `tender_version_bid_parties` carry `FOREIGN KEY (mention_notice_id,
+mention_section_id) REFERENCES organization_mentions(notice_id, section_id)`. So the chain is
+**tender_version_parties → organization_mentions → notice_sections**, and a notice's parsed layer
+cannot be replaced while any tender version cites the organizations it mentioned. That is ADR-0001
+traceability working as designed — a tender party points back at the exact mention it came from — not
+a bug to route around.
+
+**2. Even with the deletes ordered correctly, the fold would silently skip the work.**
+`apply_tender_tx` keys its early return on the sequence of causing notice ids, NOT on content. A
+re-parse changes a notice's CONTENT while leaving its chain identical, so every affected tender hits
+`keep == stored.len() == p.versions.len()` and early-returns — new parse rows sitting in the corpus,
+canonical layer unchanged, and (because `delete_version` is what removes party satellites) the
+citations left dangling. This is issue 99's lesson arriving from a new direction: a projection-logic
+or parse-content change needs a `PROJECTION_EPOCH` bump to force rewrites. Without one, the entire
+re-parse would have reported success and produced nothing — the exact "accurate about what it
+measured, misleading about what it is read as" shape issue 108 catalogues.
+
+**3. So the remaining work is bigger than a job kind, and it is a decision, not a task.** Completing
+issue 100 needs all three: (a) `clear_parsed` extended to the citing `tender_version_parties` /
+`tender_version_bid_parties` rows; (b) a `PROJECTION_EPOCH` bump — which per issue 99's own note
+"declares 7.9M tenders stale to fix one era", i.e. a multi-hour full refold, not a DE-1.x-sized one;
+(c) the cohort re-parse itself. The cheaper alternative is ADR-0009's shape: re-parse with
+`reclaim_only`, then ONE `project --rebuild`, which clears canonical and DROPs the org tables anyway
+— removing the FK obstacle wholesale and making (a) unnecessary. That trades a targeted operation for
+a full rebuild, and it is the pattern every prior parse-layer cohort change used (71/72/75/78/85/139/
+195).
+
+**Recommendation for whoever picks this up:** take the ADR-0009 route (re-parse `reclaim_only` → full
+rebuild) and schedule it as a planned rebuild window, not an hourly-firing task. Verify afterwards per
+issue 98's `C11`/`C12`/`H7` precedent — a winner must carry `mention_notice_id` = the DE notice, never
+a merged TED twin — plus the dashboard's DE award-linkage ratio, which reads 98% unchained today.
