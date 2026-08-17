@@ -93,6 +93,14 @@ const TEXTS: &[(&str, &str)] = &[
     ("SDK01-ProcurementProjectLot-ProcurementProject-Name", "title"),
     ("SDK01-ProcurementProject-Description", "description"),
     ("SDK01-ProcurementProjectLot-ProcurementProject-Description", "description"),
+    // The grafted UBL-* inventory (issue 88): the tender-scoped prose facts with
+    // unambiguous meaning map; everything else is in [`UBL_PARSE_ONLY`] with its
+    // reason. Full-id keyed like SDK01-*; scope (Tender/Lot) comes from the
+    // value's section, as for every fact.
+    ("UBL-FundingProgram", "funding_program"),
+    ("UBL-SelectionCriterionName", "selection_criterion"),
+    ("UBL-TendererRequirementDescription", "tenderer_requirement"),
+    ("UBL-AppealTermsDescription", "appeal_terms"),
 ];
 const AMOUNTS: &[(&str, &str)] = &[
     ("BT-27", "estimated_value"),
@@ -108,6 +116,12 @@ const AMOUNTS: &[(&str, &str)] = &[
     // restated copy — many carry no QUANTITY_SCOPE value at all (the committed
     // 2014 F02 is one).
     ("TED-TOTAL_ESTIMATED.VALUE_COST", "estimated_value"),
+    // The grafted framework ceilings (issue 88): the UBL spelling of BT-271, at
+    // whatever scope the section gives them — same fact the DE1 alias table
+    // routes to BT-271. "Estimated maximum" is sdk-0.1-era phrasing of the same
+    // ceiling.
+    ("UBL-FrameworkMaximumAmount", "framework_maximum"),
+    ("UBL-FrameworkEstimatedMaximumValue", "framework_maximum"),
 ];
 const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("BT-262", "main"),
@@ -164,6 +178,118 @@ const DATES: &[(&str, &str)] = &[
     ("TXT-DD", "submission_deadline"),
     // DÖE sdk-0.1: the lot's tender-submission deadline (an EndDate period).
     ("SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "submission_deadline"),
+];
+
+/// The grafted `UBL-*` ids that stay PARSE-LAYER-ONLY, each with its reason
+/// (issue 88). ADR-0004 allows two dispositions — mapped, or explicitly
+/// ignored — and until this ledger existed the grafts were neither: captured by
+/// the parser, then silently dropped by the fold. Every entry here is still
+/// served verbatim by `/v1/notices/{id}/content`, so "ignored" means "not a
+/// canonical fact", not "invisible". `ubl_grafts_are_all_mapped_or_ignored`
+/// enforces the two-disposition rule: a new graft fails the gate until it is
+/// mapped above or entered here with a reason. Revisit any entry when a
+/// consumer asks for it — that is what the reason strings are for.
+const UBL_PARSE_ONLY: &[(&str, &str)] = &[
+    // -- no canonical channel for the value type (code/integer/number/plain id).
+    ("UBL-AddressFormatCode", "code; org/address satellite, no code fact channel"),
+    ("UBL-AwardCriterionParameterCode", "code; no code fact channel"),
+    ("UBL-CompanyLegalFormCode", "code; org satellite, no code fact channel"),
+    ("UBL-ContractExecutionPermissionCode", "code; no code fact channel"),
+    ("UBL-ContractExecutionReservedCode", "code; no code fact channel"),
+    ("UBL-ContractingPartyTypeCode", "code; org satellite, no code fact channel"),
+    ("UBL-DocumentLanguageID", "code; document plumbing"),
+    ("UBL-DocumentStatusCode", "code; document plumbing"),
+    ("UBL-ProcurementAdditionalTypeCode", "code; no code fact channel"),
+    ("UBL-SelectionCriterionParameterCode", "code; no code fact channel"),
+    ("UBL-SelectionCriterionType", "code; no code fact channel"),
+    ("UBL-SelectionCriterionUsage", "code; no code fact channel"),
+    ("UBL-TenderResultCode", "code; results-layer state, no code fact channel"),
+    ("UBL-TendererRequirementTypeCode", "code; no code fact channel"),
+    ("UBL-AwardCriterionWeightNumeric", "number; no number fact channel"),
+    ("UBL-FrameworkDurationMeasure", "number; no number fact channel"),
+    ("UBL-ExpectedOperatorQuantity", "integer; no integer fact channel"),
+    (
+        "UBL-ReceivedTenderQuantity",
+        "integer; the sdk-0.1 received-bids stat — belongs to the results binder's \
+         statistics channel (LEGACY_BID_COUNT_FIELDS class), not a fact-table row",
+    ),
+    (
+        "UBL-WinningPartyReference",
+        "id; sdk-0.1 winner identity rides the WinningParty section mentions \
+         (SDK01_WINNER_KIND) — the bare reference adds no edge the section lacks",
+    ),
+    ("UBL-ProcurementLegislationID", "id; legislation citation, provenance not content"),
+    // -- org/contact/address satellite prose: the canonical Organization layer
+    //    owns identity; contact-person PII deliberately stays out of canonical
+    //    facts (the issue-173 posture).
+    ("UBL-JobTitle", "contact-person PII; parse-layer only by posture"),
+    ("UBL-PersonFirstName", "contact-person PII; parse-layer only by posture"),
+    ("UBL-PersonFamilyName", "contact-person PII; parse-layer only by posture"),
+    ("UBL-CommitteePersonFirstName", "contact-person PII; parse-layer only by posture"),
+    ("UBL-ContactDepartment", "org contact satellite"),
+    ("UBL-ContactID", "org contact plumbing"),
+    ("UBL-Postbox", "org address satellite"),
+    ("UBL-AddressDescription", "org address satellite"),
+    ("UBL-CountryName", "org address satellite (country rides mentions already)"),
+    ("UBL-CountrySubentity", "org address satellite (NUTS rides classifications)"),
+    ("UBL-CompanyLegalForm", "org satellite prose"),
+    ("UBL-CompanyLegalFormDescription", "org satellite prose"),
+    // -- document plumbing / provenance.
+    ("UBL-DocumentFileName", "document plumbing"),
+    ("UBL-DocumentHash", "document plumbing"),
+    ("UBL-AdditionalDocumentID", "document plumbing"),
+    ("UBL-AdditionalDocumentURI", "document plumbing"),
+    // -- semantics not settled; mapping wrongly is worse than parse-only.
+    (
+        "UBL-FrameworkDurationStart",
+        "framework VALIDITY period ≠ contract duration_start (BT-536); needs its \
+         own canonical names before mapping",
+    ),
+    (
+        "UBL-FrameworkDurationEnd",
+        "framework VALIDITY period ≠ contract duration_end (BT-537); see Start",
+    ),
+    ("UBL-FrameworkDurationDescription", "prose twin of the unsettled framework period"),
+    ("UBL-FrameworkDurationDescriptionCode", "code twin of the unsettled framework period"),
+    (
+        "UBL-InvitationSubmissionDeadline",
+        "invitation-to-tender deadline ≠ submission_deadline; conflating would \
+         corrupt status open/closed",
+    ),
+    ("UBL-TenderValidityDeadline", "offer-validity end ≠ any mapped deadline"),
+    ("UBL-TenderResultStartDate", "results-layer date; the results binder owns result facts"),
+    (
+        "UBL-LowerTenderAmount",
+        "result statistic (lowest offer); the results binder owns result amounts — \
+         a fact-table row would misfile it as a tender value",
+    ),
+    ("UBL-HigherTenderAmount", "result statistic (highest offer); see Lower"),
+    ("UBL-AwardCriterionWeight", "prose twin of the weight numeric; neither has a channel"),
+    ("UBL-CalculationExpression", "award-formula prose; too free-form for a named fact"),
+    (
+        "UBL-ContractExecutionDescription",
+        "contract-execution prose; candidate canonical name pending demand",
+    ),
+    ("UBL-ProcessReason", "procedure-justification prose; candidate canonical name pending demand"),
+    ("UBL-ProcessJustificationDescription", "procedure-justification prose; see ProcessReason"),
+    ("UBL-ProcurementLegislationDescription", "legislation citation prose"),
+    ("UBL-ProcurementTypeLabel", "free-text type label; kind rides the section machinery"),
+    ("UBL-SubTypeDescription", "notice-subtype prose; subtype rides notice metadata"),
+    // -- boolean/indicator codes: no indicator fact channel; the eForms BT
+    //    equivalents (BT-743/-92/-93 etc.) are not canonical facts either, so
+    //    mapping the UBL spellings first would invert completeness.
+    ("UBL-ElectronicCatalogueUsage", "indicator code; no indicator channel (BT-764 class)"),
+    ("UBL-ElectronicInvoiceAccepted", "indicator code; no indicator channel (BT-743 class)"),
+    ("UBL-ElectronicInvoiceUsage", "indicator code; no indicator channel (BT-743 class)"),
+    ("UBL-ElectronicOrderUsage", "indicator code; no indicator channel (BT-92 class)"),
+    ("UBL-ElectronicPaymentUsage", "indicator code; no indicator channel (BT-93 class)"),
+    ("UBL-RenewalsIndicator", "indicator; no indicator channel (BT-58 class)"),
+    ("UBL-TerminatedIndicator", "indicator; results-layer state, no indicator channel"),
+    // -- planned-period instants: which period (contract? framework? lot
+    //    delivery?) depends on the mount; settle semantics before mapping, as
+    //    with the framework validity pair above.
+    ("UBL-PlannedPeriodStartTime", "planned-period semantics unsettled; see FrameworkDurationStart"),
+    ("UBL-PlannedPeriodEndTime", "planned-period semantics unsettled; see FrameworkDurationStart"),
 ];
 
 /// Sections that are Lots in the canonical sense — Parts and LotsGroups are
@@ -3365,6 +3491,46 @@ mod tests {
                 || RESULT_STEMS.contains(&stem(target));
             assert!(known, "{de1} → {target}: the projection reads no such field");
             assert!(de1.starts_with("DE1-"), "{de1}: not a DE-1.x source id");
+        }
+    }
+
+    /// Issue 88 / ADR-0004: every grafted `UBL-*` id has exactly one disposition
+    /// — MAPPED (a fact table above) or EXPLICITLY IGNORED (`UBL_PARSE_ONLY`,
+    /// with a reason). Before this gate the grafts were neither: the parser
+    /// captured them and the fold silently dropped them, the same class that
+    /// produced issue 85's 218K factless tenders. The inventory is read from
+    /// index.rs's SOURCE, so adding a graft fails here until it is dispositioned
+    /// — exactly how the docs page is held to openapi.json.
+    #[test]
+    fn ubl_grafts_are_all_mapped_or_ignored() {
+        let index = include_str!("eforms/index.rs");
+        let mut ids = std::collections::BTreeSet::new();
+        for (pos, _) in index.match_indices("UBL-") {
+            let body: String = index[pos + 4..].chars().take_while(char::is_ascii_alphabetic).collect();
+            if !body.is_empty() {
+                ids.insert(format!("UBL-{body}"));
+            }
+        }
+        assert!(ids.len() >= 50, "the graft inventory extraction broke: {} ids", ids.len());
+
+        for id in &ids {
+            let mapped = canonical_name(TEXTS, id).is_some()
+                || canonical_name(AMOUNTS, id).is_some()
+                || canonical_name(CLASSIFICATIONS, id).is_some()
+                || canonical_name(DATES, id).is_some();
+            let ignored = UBL_PARSE_ONLY.iter().any(|(i, _)| i == id);
+            assert!(
+                mapped || ignored,
+                "{id}: no disposition — ADR-0004 allows mapped or explicitly ignored, \
+                 not silently dropped; map it or enter it in UBL_PARSE_ONLY with a reason"
+            );
+            assert!(!(mapped && ignored), "{id}: contradictory disposition — mapped AND parse-only");
+        }
+
+        // The ledger cannot rot: every entry names a graft that still exists.
+        for (id, reason) in UBL_PARSE_ONLY {
+            assert!(ids.contains(*id), "{id}: stale UBL_PARSE_ONLY entry (no such graft)");
+            assert!(!reason.is_empty(), "{id}: an ignore without a reason is not a disposition");
         }
     }
 
