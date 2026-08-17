@@ -303,3 +303,16 @@ pathological component (issue 68's class) must degrade to today's behavior, neve
 4. Only then: the next era refold measures the whole 179 win end to end (scoped stamp + scoped plan).
 
 Estimated: 2-3 firings. Steps are independently shippable; each lands green on its own.
+
+### v2 progress
+
+- **Step 1 SHIPPED** (2026-08-17, `6c97734`, deployed 06:09 UTC): `legacy_ojs_keys` +
+  choke-point writer inside `insert_plan_tx` (self ∪ edges, legacy-gated, INSERT OR IGNORE) +
+  `legacy_adjacency.watermark` with the establish/advance lifecycle (full build establishes,
+  incremental advances, advance refuses on a never-established base). Lifecycle test green.
+- **Step 2 BUILT** (2026-08-17, pushed ~07:25 UTC): `backfill-legacy-adjacency` admin job —
+  `legacy_parsed_chunk` bounded read (SQL mirror of `is_legacy_profile` as pre-filter only;
+  `Ident::read`'s verdict decides writes), org-names job shape, drift test proves the sweep
+  re-derives the choke point's rows set-identically. PENDING: deploy after the 07:30–08:00
+  freeze + daily, then run on prod and verify watermark = max parsed id.
+- Step 3 (the closure walk behind the watermark gate) not started.
