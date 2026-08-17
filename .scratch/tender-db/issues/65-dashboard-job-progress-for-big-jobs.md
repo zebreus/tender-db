@@ -1,8 +1,16 @@
 # 65 — surface projection/big-job progress on the dashboard + /admin/jobs
 
-Status: UNIT 1 LANDED on main 2026-08-17 (`ccd606f`), awaiting deploy — the generic phase record
-exists and the legacy-adjacency sweep reports through it. Units 2–4 below remain. **Part of the
-motivation as written is now STALE — see "Correction" before working this.**
+Status: UNITS 1+2 DEPLOYED 2026-08-17 (unit 1 `ccd606f` in rev `fddecd0`; unit 2 `3fd6201` deployed
+same day, health green). The phase record exists, the legacy-adjacency sweep reports through it, and
+the projection's planning / pre-pass / folding phases now reach the durable record via
+`project_observed` (stderr sink composed with the supervisor mapping — one stream, no drift). The
+pre-pass reports its aggregate sweep through the new `Progress::PrePass` (shared counter bumped per
+chunk, parent polls 2s, deterministic closing tick). Incremental daily deliberately unobserved
+(fast, and its scoping logs its own decisions). REMAINING: unit 4 — dashboard render of the phase
+(bar from done/total, detail line) + a `/metrics` phase gauge; and the reset/index-build phases
+(`reset_tender_layer`, end-of-fold index builds) still show as dead air within `project`. First
+prod evidence arrives with the next rebuild/refold, which will show phases on `/admin/jobs`.
+**Part of the motivation as written is STALE — see "Correction" before working this.**
 Kind: observability / dashboard
 Blocked by: —
 Relates to: 228 (filed the same complaint from a chunked backfill and deliberately deferred the
