@@ -11,9 +11,12 @@ probes. Detection is a read-only `latest_ted_issue` check, so nothing races the 
 `latest_ted_issue_now_reflects_the_newest_registered_daily` + the 22-test supervisor suite green; clean
 boot verified in prod.
 
-**Owed:** first live observation on a weekday morning (next: Mon 2026-08-17 09:35 CEST) — confirm a normal
-on-time TED day still runs exactly once (no spurious catch-up), and, ideally, watch a slipped day get
-caught. Today (Sun) the weekday-gated catch-up does not run.
+**Owed:** ~~first live observation on a weekday morning~~ **SATISFIED 2026-08-17** (first weekday
+morning after deploy): the 07:35:00 UTC tick enqueued exactly one TED probe+process (jobs 712/713),
+one DÖE probe+process (714/715), one project (716) — all `ok`, zero catch-up probes, no "(catch-up)"
+params anywhere in recent[], queue empty afterwards. TED was on time, the watermark advanced on the
+tick's own probe, and the catch-up loop correctly stayed silent. **Still owed:** observing a genuinely
+slipped TED day get caught by the poll (needs TED to actually be late — passive watch, no action).
 
 Was: PROPOSED — awaiting owner (Lennart) go-ahead on the approach 2026-08-16. Prompted by Lennart's
 question "can we check more often and start the big thing in reaction?" (2026-08-16). The answer to the

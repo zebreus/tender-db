@@ -310,9 +310,10 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   choke-point writer inside `insert_plan_tx` (self ∪ edges, legacy-gated, INSERT OR IGNORE) +
   `legacy_adjacency.watermark` with the establish/advance lifecycle (full build establishes,
   incremental advances, advance refuses on a never-established base). Lifecycle test green.
-- **Step 2 BUILT** (2026-08-17, pushed ~07:25 UTC): `backfill-legacy-adjacency` admin job —
+- **Step 2 DEPLOYED & RUNNING** (2026-08-17): `backfill-legacy-adjacency` admin job —
   `legacy_parsed_chunk` bounded read (SQL mirror of `is_legacy_profile` as pre-filter only;
   `Ident::read`'s verdict decides writes), org-names job shape, drift test proves the sweep
-  re-derives the choke point's rows set-identically. PENDING: deploy after the 07:30–08:00
-  freeze + daily, then run on prod and verify watermark = max parsed id.
+  re-derives the choke point's rows set-identically. Deployed rev `89070e1` 08:34 UTC, backfill
+  enqueued 08:39 UTC (job id 1). PENDING VERIFY on completion: `legacy_adjacency.watermark`
+  = MAX(id) of parsed notices, spot-check a known 2008 chain's keys.
 - Step 3 (the closure walk behind the watermark gate) not started.
