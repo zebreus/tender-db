@@ -1,8 +1,45 @@
 # 65 — surface projection/big-job progress on the dashboard + /admin/jobs
 
-Status: open
+Status: UNIT 1 LANDED on main 2026-08-17 (`ccd606f`), awaiting deploy — the generic phase record
+exists and the legacy-adjacency sweep reports through it. Units 2–4 below remain. **Part of the
+motivation as written is now STALE — see "Correction" before working this.**
 Kind: observability / dashboard
 Blocked by: —
+Relates to: 228 (filed the same complaint from a chunked backfill and deliberately deferred the
+field this issue proposes — "needs a supervisor progress field that is not `members_done`"), 94 (put
+the pre-pass heartbeat in the journal), 53 (`/metrics`, the trend surface)
+
+## Correction (2026-08-17, owner) — the pre-pass is no longer silent
+
+The claim below that "the multi-hour `write_buckets` pre-pass emits NOTHING at all until the fold
+pass starts" was true when filed and is **not true now**. Issue 94 added `PREPASS_HEARTBEAT`
+(`project.rs`, 250k notices per shard) plus a shard-layout line at pre-pass start, after hitting the
+same wall this issue describes — and its comment records the same reason the bucket files are no help
+(`BufWriter`-wrapped, flushed only at the end, so on-disk size stays near zero however far along the
+sweep is).
+
+So proposal item 2's parenthetical "add a periodic journal line too" is **already done**, and anyone
+starting from the text below would either duplicate it or conclude the code was worse than it is. The
+real remaining gap is exactly item 1 of "What's missing": those heartbeats reach **stderr only** and
+never enter the durable progress row that `/admin/jobs` and the dashboard read. An operator watching
+the journal is fine today; one watching the API still sees dead air.
+
+That gap has a structural cause worth knowing before starting: the pre-pass heartbeat is emitted
+inside `write_shard`, on each worker's own thread, and `on_progress` is a non-`Sync` `FnMut` owned by
+the parent — so worker progress cannot simply call it. Routing it needs a shared counter the workers
+increment (per chunk, not per notice) and a parent that reports from it while the shards run, e.g.
+polling `ScopedJoinHandle::is_finished` instead of blocking straight into `join`. Additive and
+output-neutral by construction — it only counts — but it touches the projection's hot pre-pass, so it
+wants a prod run to verify rather than tests alone.
+
+## Unit 1, landed
+
+`model::ingestion::Phase { name, done, total, detail, updated_at }` on `JobProgress.phase`, set via
+`Supervisor::set_phase`, surfaced by `/admin/jobs` through serde with no handler change. `done`/`total`
+are optional so a phase whose end is only provable by reaching it still shows movement; `updated_at`
+is stamped inside `set_phase` so a stopped reporter cannot pass for a slow one. The legacy-adjacency
+sweep is wired: `members_done` keeps its meaning (a count) and the id-window cursor rides in the
+phase, which is the split issue 228 asked for and declined to fake.
 
 ## Motivation
 
