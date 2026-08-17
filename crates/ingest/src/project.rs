@@ -1176,6 +1176,26 @@ pub struct LegacyAdjacencyBackfill {
     pub watermark: i64,
 }
 
+/// One progress tick from the sweep (issue 65, closing the field issue 228
+/// deferred). Carries the count AND the position, kept as separate fields on
+/// purpose: `swept` is a count of legacy notices and belongs where every other
+/// job puts a count, while `cursor`/`target` are notice ids. Issue 228 declined
+/// to merge them into `members_done` for exactly that reason — an id in a count's
+/// field is the dishonest-signal shape the issue was filed about.
+///
+/// The pair is what makes a legacy-free tail legible: through the eForms era
+/// `swept` is motionless while `cursor` climbs toward `target`, which is a
+/// working job. Both motionless is a wedged one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SweepTick {
+    /// Legacy notices found so far.
+    pub swept: u64,
+    /// Notice id the walk has reached.
+    pub cursor: i64,
+    /// Notice id it is walking to — captured before the walk.
+    pub target: i64,
+}
+
 /// Issue 58 v2, step 2: populate `legacy_ojs_keys` for the STANDING corpus — the
 /// notices folded before the choke-point writer existed — and establish the
 /// coverage watermark. One bounded chunk at a time (the issue-42 shape), each
@@ -1202,7 +1222,7 @@ pub struct LegacyAdjacencyBackfill {
 /// eForms-era window.
 pub async fn backfill_legacy_adjacency(
     db: &Db,
-    progress: impl FnMut(u64),
+    progress: impl FnMut(SweepTick),
 ) -> turso::Result<LegacyAdjacencyBackfill> {
     backfill_legacy_adjacency_windowed(db, ADJACENCY_BACKFILL_ID_WINDOW, progress).await
 }
@@ -1214,7 +1234,7 @@ pub async fn backfill_legacy_adjacency(
 pub async fn backfill_legacy_adjacency_windowed(
     db: &Db,
     window: i64,
-    mut progress: impl FnMut(u64),
+    mut progress: impl FnMut(SweepTick),
 ) -> turso::Result<LegacyAdjacencyBackfill> {
     debug_assert!(window > 0, "a non-positive window could not advance the cursor");
     let target = db.max_parsed_notice_id().await?;
@@ -1246,7 +1266,7 @@ pub async fn backfill_legacy_adjacency_windowed(
             Some((n, _)) if chunk.len() as i64 >= ADJACENCY_BACKFILL_CHUNK => n.id,
             _ => hi,
         };
-        progress(swept);
+        progress(SweepTick { swept, cursor, target });
         let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
     }
     db.establish_legacy_adjacency(target).await?;

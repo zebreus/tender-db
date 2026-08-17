@@ -51,6 +51,44 @@ pub struct JobProgress {
     /// backfill re-walk this climbs while `notices` stays flat — the signal the
     /// dashboard uses to say "re-walking" instead of a bare 0.0 notices/s.
     pub duplicates: u64,
+    /// What the job is doing right now, for kinds whose work is not a package
+    /// walk (issue 65). `None` for jobs that only move the counters above.
+    ///
+    /// This exists because the counters above are the WRONG SHAPE for several
+    /// real jobs, and overloading them lies. The projection walks phases, not
+    /// packages, and its multi-hour pre-pass moved nothing at all; a chunked
+    /// backfill sweeps an id range, and issue 228 declined to put that cursor in
+    /// `members_done` precisely because an id in a field every other job fills
+    /// with a count is a dishonest signal. So: a separate, honestly-typed field
+    /// rather than a reinterpretation of an existing one.
+    pub phase: Option<Phase>,
+}
+
+/// A named stage of a running job, with optional progress through it (issue 65).
+///
+/// `done`/`total` are deliberately optional and deliberately NOT a fraction: a
+/// phase that cannot cheaply know its total (a scan whose end is only provable
+/// by reaching it) reports `done` alone and still shows movement, which is the
+/// whole point — the failure this fixes is a reader unable to tell a working job
+/// from a wedged one. A phase that knows neither still names itself, which beats
+/// dead air.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct Phase {
+    /// Short stable name — `pre-pass`, `folding`, `sweeping`, `index-build`.
+    /// Stable because an operator learns these and `/metrics` labels by them.
+    pub name: String,
+    /// Units completed in this phase, in whatever unit `detail` names.
+    pub done: Option<u64>,
+    /// The phase's end, when it is known up front without extra work.
+    pub total: Option<u64>,
+    /// One human line: what the unit is, and any position that is not a count
+    /// (e.g. `id 11,400,000 of 28,251,412` for an id-windowed sweep).
+    pub detail: String,
+    /// When this phase record was last written — so a reader can tell a phase
+    /// that is progressing slowly from one whose reporter has itself stopped.
+    /// Without it, a stale phase and a slow phase look identical, which is the
+    /// same ambiguity in a new place.
+    pub updated_at: i64,
 }
 
 /// A job still in the queue — identity plus what it will do, so the operator can

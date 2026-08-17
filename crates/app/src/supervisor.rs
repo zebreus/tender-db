@@ -22,7 +22,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 use ingest::{doe, fetch, process, project, ted};
-use model::ingestion::{Ingestion, JobProgress, QueuedJob};
+use model::ingestion::{Ingestion, JobProgress, Phase, QueuedJob};
 use serde::{Deserialize, Serialize};
 use store::turso;
 use tokio::sync::{Notify, OnceCell};
@@ -768,6 +768,20 @@ impl Supervisor {
         }
     }
 
+    /// Record what the running job is doing now (issue 65). `done`/`total` are
+    /// optional because a phase that cannot cheaply know its end still shows
+    /// movement from `done` alone — which is what separates a working job from a
+    /// wedged one, the distinction issue 228 cost 40 minutes of doubt over.
+    ///
+    /// Stamps `updated_at` here rather than at the call site so every phase
+    /// carries a truthful "last heard from" instant: a reporter that stops
+    /// leaves a stale stamp, which reads differently from a slow phase.
+    fn set_phase(&self, name: &str, done: Option<u64>, total: Option<u64>, detail: String) {
+        let phase =
+            Phase { name: name.to_owned(), done, total, detail, updated_at: store::now_unix() };
+        self.update(|p| p.phase = Some(phase));
+    }
+
     /// True while a write-heavy job — a package walk (`process`) or a projection
     /// (`project`) — is running. These are the jobs whose per-package / per-batch
     /// TRUNCATE checkpoint (issue 42) needs reader-free windows to reclaim the
@@ -856,6 +870,7 @@ impl Supervisor {
             members_total: 0,
             notices: 0,
             duplicates: 0,
+            phase: None,
         }));
 
         let result = self.run_spec(&job).await;
@@ -1056,10 +1071,23 @@ impl Supervisor {
             }
             Spec::BackfillLegacyAdjacency => {
                 // The org-names shape: the sweep batches and checkpoints itself
-                // (issue 42); progress surfaces as members_done so the dashboard
-                // shows the walk moving.
-                let done = ingest::project::backfill_legacy_adjacency(&self.db, |n| {
-                    self.update(|p| p.members_done = n);
+                // (issue 42). `members_done` keeps its established meaning — a
+                // count, here of legacy notices found — and the id-window
+                // position rides in the phase record instead (issues 228 + 65).
+                // That split is the whole point: through the eForms tail the
+                // count is motionless while the cursor climbs, so "working" and
+                // "wedged" stop looking the same from the outside.
+                let done = ingest::project::backfill_legacy_adjacency(&self.db, |t| {
+                    self.update(|p| p.members_done = t.swept);
+                    self.set_phase(
+                        "sweeping",
+                        Some(t.cursor.max(0) as u64),
+                        Some(t.target.max(0) as u64),
+                        format!(
+                            "notice id {} of {} scanned; {} legacy notices found",
+                            t.cursor, t.target, t.swept
+                        ),
+                    );
                 })
                 .await
                 .map_err(|e| e.to_string())?;
@@ -1907,7 +1935,41 @@ mod tests {
             members_total: 0,
             notices: 0,
             duplicates: 0,
+            phase: None,
         }
+    }
+
+    /// Issue 65: a phase record names what a non-package-walking job is doing,
+    /// and `set_phase` stamps its own `updated_at` so the stamp cannot lie about
+    /// when the reporter was last heard from.
+    #[tokio::test]
+    async fn set_phase_records_what_the_running_job_is_doing() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+
+        let snapshot = || sup.current.read().expect("progress lock").clone();
+
+        // No running job: setting a phase is a no-op, not a panic. The worker and
+        // the API race by construction — a job can finish between a reporter's
+        // last tick and the write.
+        sup.set_phase("sweeping", Some(1), Some(2), "detail".into());
+        assert!(snapshot().is_none(), "idle stays idle");
+
+        sup.set_current(Some(progress("backfill-legacy-adjacency")));
+        assert!(snapshot().expect("running").phase.is_none(), "a job starts with no phase");
+
+        let before = store::now_unix();
+        sup.set_phase("sweeping", Some(11_400_000), Some(28_251_412), "notice id 11.4M".into());
+        let phase = snapshot().expect("running").phase.expect("phase set");
+        assert_eq!(phase.name, "sweeping");
+        assert_eq!((phase.done, phase.total), (Some(11_400_000), Some(28_251_412)));
+        assert_eq!(phase.detail, "notice id 11.4M");
+        assert!(phase.updated_at >= before, "the stamp is taken when the phase is written");
+
+        // A phase that cannot know its end reports position alone and still shows
+        // movement — the case the count-only signal could not express.
+        sup.set_phase("pre-pass", Some(7), None, "notices bucketed".into());
+        let phase = snapshot().expect("running").phase.expect("phase set");
+        assert_eq!((phase.name.as_str(), phase.done, phase.total), ("pre-pass", Some(7), None));
     }
 
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only

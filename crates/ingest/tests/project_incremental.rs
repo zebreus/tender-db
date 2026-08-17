@@ -1016,7 +1016,8 @@ async fn the_backfill_rederives_the_choke_points_rows_exactly() {
     drop(conn);
 
     let mut ticks = 0u64;
-    let done = project::backfill_legacy_adjacency(&db, |n| ticks = n).await.expect("backfill");
+    let done =
+        project::backfill_legacy_adjacency(&db, |t| ticks = t.swept).await.expect("backfill");
     assert_eq!(key_rows(&db).await, baseline, "the sweep and the choke point must never drift");
     assert_eq!((done.swept, done.keys), (2, 3), "two legacy notices, three key rows; eForms skipped");
     assert_eq!(ticks, 2, "progress surfaced per chunk");
@@ -1082,8 +1083,31 @@ async fn the_backfill_sweeps_past_a_stretch_with_no_legacy_notices() {
     // there is one tick per id in the corpus, and the counter is non-decreasing.
     let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
     assert_eq!(ticks.len() as i64, max_id, "one progress tick per window, gaps included");
-    assert!(ticks.windows(2).all(|w| w[0] <= w[1]), "swept never goes backwards: {ticks:?}");
-    assert_eq!(ticks.last().copied(), Some(2), "the last tick reports both legacy notices");
+    assert!(
+        ticks.windows(2).all(|w| w[0].swept <= w[1].swept),
+        "swept never goes backwards: {ticks:?}"
+    );
+    assert_eq!(ticks.last().map(|t| t.swept), Some(2), "the last tick reports both legacy notices");
+
+    // Issue 65 — the assertion that actually matches the operator complaint. The
+    // count alone was never the signal: across the three eForms notices it does
+    // not move, which is exactly what looked like a hang for 40 minutes on prod.
+    // The CURSOR is what distinguishes working from wedged, so pin that it climbs
+    // strictly while `swept` sits still, and that every tick carries the target it
+    // is climbing towards (a position with no destination is not a progress bar).
+    assert!(
+        ticks.windows(2).all(|w| w[0].cursor < w[1].cursor),
+        "the cursor advances on EVERY tick, gaps included: {ticks:?}"
+    );
+    assert!(ticks.iter().all(|t| t.target == max_id), "every tick names the sweep's end: {ticks:?}");
+    assert_eq!(ticks.last().map(|t| t.cursor), Some(max_id), "the last tick reaches the target");
+    let gap: Vec<&project::SweepTick> =
+        ticks.iter().filter(|t| t.cursor > 1 && t.cursor < max_id).collect();
+    assert!(
+        gap.iter().all(|t| t.swept == 1),
+        "through the legacy-free stretch the count is frozen at 1 — only the cursor moves: {gap:?}"
+    );
+    assert!(gap.len() >= 3, "the three eForms notices each produced a silent-but-moving tick");
 
     // And the walk still ends by reaching the target, establishing coverage.
     assert_eq!(done.watermark, max_id);
