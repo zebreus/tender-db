@@ -22,7 +22,18 @@ ADR-0004 disposition, gate-enforced.
   undispositioned. Red-demonstrated three times during the pass itself (ContractExecutionDescription,
   the Electronic*Usage family, the PlannedPeriod pair — each missed by hand, caught by the gate).
 
-## Follow-up (open): refold scope for the already-folded corpus
+## Follow-up: refold scope — JOB SHIPPED 2026-08-17 (commit `0f701f3`, deployed), RUN PENDING
+
+`refold-fields` (admin kind, field ids via the `profiles` list) enumerates the carriers by
+sweeping notice_amounts + notice_texts in PK-riding windows, gates on `expect`, then applies the
+issue-179 pair scoped to them (unmark_projected_by_ids + stamp_stale_for_notices) and queues the
+projection. Counted heavy-write. To run in a quiet window (NOT before this morning's first live
+issue-222 observation):
+
+    profiles=[UBL-FrameworkMaximumAmount, UBL-FrameworkEstimatedMaximumValue, UBL-FundingProgram,
+    UBL-SelectionCriterionName, UBL-TendererRequirementDescription, UBL-AppealTermsDescription]
+
+Original scoping note:
 
 The 6 mapped facts apply to NEW ingests and any future era refold; already-folded notices carrying
 these ids keep their pre-mapping content until refolded. The profile-scoped stamp (issue 179) does
