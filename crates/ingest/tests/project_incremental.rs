@@ -654,6 +654,77 @@ async fn a_scoped_stale_stamp_rewrites_only_the_profiles_tenders() {
     }
 }
 
+/// Issue 58 v2, step 1: the durable OJS adjacency is written wherever the plan
+/// is built, and the watermark attests coverage with the right lifecycle — a
+/// full plan build ESTABLISHES it, an incremental ADVANCES it, and an
+/// incremental on a never-established base leaves it 0 (the closure must not
+/// trust rows no full pass vouched for). No behavior change to the fold itself.
+#[tokio::test]
+async fn the_legacy_adjacency_rows_and_watermark_follow_the_plan_builds() {
+    let (db, fetch, path) = scratch("adjacency").await;
+    // A two-notice legacy chain: 200-2008 references 100-2008; both carry their
+    // own OJS number via publication_id. An eForms notice rides along to prove
+    // non-legacy rows are never written.
+    let mut cn = island("Legacy CN");
+    let mut can = island("Legacy CAN");
+    can.values.push(ValueRow {
+        section_id: "PROC".into(),
+        field_id: "TED-REF_OJS".into(),
+        ordinal: 0,
+        value: NoticeValue::Id { scheme: Some("ojs".into()), value: "100-2008".into(), is_ref: true },
+    });
+    record_p(&db, fetch, "100-2008", "ted-export-r209", cn.clone()).await;
+    record_p(&db, fetch, "200-2008", "ted-export-r209", can).await;
+    record(&db, fetch, "E-cn", keyed("bt04-adj", 1, "Modern")).await;
+    project::project(&db, false).await.expect("full projection");
+
+    // The full plan build wrote self + edge rows for the legacy pair only, and
+    // established the watermark at the newest planned notice.
+    let rows = count(&db, "SELECT COUNT(*) FROM legacy_ojs_keys").await;
+    assert_eq!(rows, 3, "two self keys + one edge key; the eForms notice writes none");
+    let shared = count(
+        &db,
+        "SELECT COUNT(DISTINCT notice_id) FROM legacy_ojs_keys WHERE ojs_key = 2008000000100",
+    )
+    .await;
+    assert_eq!(shared, 2, "the referenced key names both the owner and the referrer");
+    let max_id = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(
+        db.legacy_adjacency_watermark().await.expect("watermark"),
+        max_id,
+        "a full plan build establishes coverage up to the newest planned notice"
+    );
+
+    // An incremental delta ADVANCES the established watermark…
+    record_p(&db, fetch, "300-2008", "ted-export-r209", island("Legacy late")).await;
+    project::project_incremental(&db).await.expect("incremental (legacy → v1 fallback is fine)");
+    let new_max = count(&db, "SELECT MAX(id) FROM notices WHERE parse_state = 'parsed'").await;
+    assert_eq!(db.legacy_adjacency_watermark().await.expect("watermark"), new_max);
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM legacy_ojs_keys").await,
+        4,
+        "the late notice's self key joined the durable rows"
+    );
+
+    // …but on a never-established base it refuses to move.
+    let raw = store::turso::Builder::new_local(&path).build().await.expect("raw db");
+    raw.connect()
+        .expect("raw conn")
+        .execute("UPDATE legacy_adjacency SET watermark = 0 WHERE id = 0", ())
+        .await
+        .expect("reset the base");
+    db.advance_legacy_adjacency(9_999_999).await.expect("advance");
+    assert_eq!(
+        db.legacy_adjacency_watermark().await.expect("watermark"),
+        0,
+        "advance must not establish: only a full pass vouches for the base"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// Issue 133: the 2026-07-30 shape. A killed rebuild's `reset_tender_layer` is
 /// DDL — durable the instant it runs — so the layer sits empty with every
 /// later signal green. The next incremental fold must REFUSE to compound that

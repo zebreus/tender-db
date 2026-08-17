@@ -1035,6 +1035,10 @@ async fn build_plan(
 
     let (mut notices, mut mentions_total) = (0u64, 0u64);
     let mut chunks = 0usize;
+    // The newest planned notice id — the legacy-adjacency attestation bound
+    // (issue 58 v2). Chunks arrive id-ordered, but take the max rather than
+    // trusting that.
+    let mut max_planned = 0i64;
     let mut plan_err: Option<turso::Error> = None;
     while let Ok(sent) = rx.recv() {
         let chunk = match sent {
@@ -1045,6 +1049,7 @@ async fn build_plan(
             }
         };
         notices += chunk.rows.len() as u64;
+        max_planned = chunk.rows.iter().map(|r| r.notice_id).fold(max_planned, i64::max);
         let resolved = match db.resolve_mentions(&mut resolver, &chunk.mentions, now).await {
             Ok(resolved) => resolved,
             Err(e) => {
@@ -1111,6 +1116,11 @@ async fn build_plan(
         return Err(e);
     }
     db.finish_mention_resolver(resolver).await?;
+    // issue 58 v2: this loop visited EVERY parsed notice, so the durable
+    // adjacency rows insert_plan wrote are complete up to the newest planned
+    // notice — attest it. (Reached only on success; an aborted plan returned
+    // above and the watermark stays where it was.)
+    db.establish_legacy_adjacency(max_planned).await?;
     eprintln!(
         "[project] plan: {notices} notices, {mentions_total} mentions resolved in {:.1}s",
         t0.elapsed().as_secs_f64()
@@ -1306,6 +1316,13 @@ pub async fn project_incremental_chunked_phase2(
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     db.finish_mention_resolver(resolver).await?;
+    // issue 58 v2: the delta is ALL unprojected parsed notices, so after this
+    // plan build every parsed notice above the old adjacency watermark has its
+    // durable key rows (insert_plan wrote them) — advance the attestation. A
+    // never-established watermark (0) stays 0: only a full pass may set the base.
+    if let Some(max) = all_ids.last() {
+        db.advance_legacy_adjacency(*max).await?;
+    }
     stage(&format!("pass-2 plan build ({} mentions resolved)", report.mentions));
 
     // Group the whole plan (same SQL as a full run — over the touched set only).

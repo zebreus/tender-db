@@ -496,6 +496,27 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     INSERT OR IGNORE INTO feed_generation(id, generation) VALUES (0, 1);
 
+    -- issue 58 v2: the DURABLE legacy OJS adjacency — every OJS key a legacy
+    -- notice touches (its own number and every REF_OJS edge, unified: the
+    -- closure treats them identically). Written where the plan already has them
+    -- (insert_plan), so it cannot drift from the grouping's own reading; parse-
+    -- derived, so a canonical rebuild does not invalidate it. The incremental
+    -- fold may replace its issue-58-v1 full-corpus fallback with a closure walk
+    -- over this table ONLY when legacy_adjacency.watermark attests coverage
+    -- (every parsed notice with id <= watermark has its rows here); 0 = never
+    -- established, and the fallback then behaves exactly as v1.
+    CREATE TABLE IF NOT EXISTS legacy_ojs_keys (
+        ojs_key   INTEGER NOT NULL,
+        notice_id INTEGER NOT NULL,
+        PRIMARY KEY (ojs_key, notice_id)
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS legacy_ojs_keys_notice ON legacy_ojs_keys(notice_id);
+    CREATE TABLE IF NOT EXISTS legacy_adjacency (
+        id        INTEGER PRIMARY KEY CHECK (id = 0),
+        watermark INTEGER NOT NULL DEFAULT 0
+    ) STRICT;
+    INSERT OR IGNORE INTO legacy_adjacency(id, watermark) VALUES (0, 0);
+
     -- ---------------------------------------------------------------- views
     -- Current state = the highest seq per Tender.
 
@@ -2364,6 +2385,52 @@ impl Db {
         }
     }
 
+    /// The legacy-adjacency coverage attestation (issue 58 v2): every parsed
+    /// notice with id ≤ watermark has its `legacy_ojs_keys` rows. 0 = never
+    /// established — the incremental fold must keep the v1 full fallback.
+    pub async fn legacy_adjacency_watermark(&self) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        let mut rows = conn.query("SELECT watermark FROM legacy_adjacency WHERE id = 0", ()).await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        })
+    }
+
+    /// ESTABLISH coverage after a pass that visited EVERY parsed notice (a full
+    /// plan build, or the backfill job): watermark := max(current, `to`). Only
+    /// such a pass may make the first raise — the incremental advance below
+    /// refuses to move a 0 watermark, so induction always starts from a base
+    /// that actually covered the corpus.
+    pub async fn establish_legacy_adjacency(&self, to: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE legacy_adjacency SET watermark = MAX(watermark, ?) WHERE id = 0",
+            (Value::Integer(to),),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// ADVANCE coverage after an incremental plan build. Sound because the delta
+    /// is ALL unprojected parsed notices: any parsed notice above the old
+    /// watermark has never been folded (projected is only ever set by a fold that
+    /// planned it, which wrote its rows), so it is in this delta and its rows
+    /// were just written; everything at or below is covered by induction. A
+    /// reclaimed notice below the watermark re-enters the next delta and rewrites
+    /// its rows before any closure runs. No-op while the base was never
+    /// established (watermark 0).
+    pub async fn advance_legacy_adjacency(&self, to: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE legacy_adjacency SET watermark = MAX(watermark, ?)
+              WHERE id = 0 AND watermark > 0",
+            (Value::Integer(to),),
+        )
+        .await?;
+        Ok(())
+    }
+
     async fn insert_plan_tx(&self, conn: &Connection, rows: &[PlanRow]) -> turso::Result<()> {
         for r in rows {
             conn.execute(
@@ -2383,6 +2450,21 @@ impl Db {
                 ),
             )
             .await?;
+            // issue 58 v2: the DURABLE adjacency rows, in the same transaction —
+            // every key this legacy notice touches, self and edges alike (a
+            // SUPERSET of what the grouping unions below, which is the safe
+            // direction for the closure: over-collecting widens the scoped plan,
+            // under-collecting would mis-merge). INSERT OR IGNORE: re-planning
+            // the same notice is idempotent.
+            if r.legacy {
+                for key in r.ojs_self.iter().chain(&r.ojs_edges) {
+                    conn.execute(
+                        "INSERT OR IGNORE INTO legacy_ojs_keys(ojs_key, notice_id) VALUES(?, ?)",
+                        (Value::Integer(*key), Value::Integer(r.notice_id)),
+                    )
+                    .await?;
+                }
+            }
             // A legacy notice with its own OJS number seeds the union-find graph:
             // append its symmetric edges (sequential). Its node — and every edge
             // target's node — is materialised later from these rows and
