@@ -143,3 +143,44 @@ pooled reader.
    shape. Expect a missing index on the satellite's `(notice_id)`/`(tender_id, seq)` side, or a
    `COUNT(DISTINCT …)` that forces a sort over tens of millions of rows. Re-cost, then re-open the
    gate.
+
+
+## Second attempt: root cause FOUND and fixed, cost estimate wrong AGAIN (2026-08-18)
+
+**The pathological shape was documented in this file the whole time.** The linkage query carries an
+explicit warning that it does NOT wrap its satellite in an inline `(SELECT DISTINCT …) AS a JOIN`,
+because *turso re-evaluates such a derived table per outer row* and times out "even at a few thousand
+rows". `field_sql` built exactly that shape. So last night's >50-minute single query was a known trap
+applied to the wrong query and never revisited — not a surprise about the data.
+
+Rewritten to the prescribed shape (`b04c897`): drive from `tender_versions`, probe the satellite with
+an indexed `EXISTS` on `(tender_id, seq)`, the by-version index texts/amounts/dates/classifications all
+carry. A test now pins it — no `SELECT DISTINCT` in any field query, an `EXISTS` in every one — so the
+trap cannot return.
+
+**And then I got the cost wrong a second time.** Measured with bounded windows instead of another
+uncapped run: 0.37 s at 50k tenders, 1.25 s at 200k, 4.79 s at 800k — clean and linear, ~6 µs/tender,
+extrapolating to ~47 s over 7.9M. Ran it confirmed; five minutes later it was still on the same query.
+The windows were **cache-hot**: at 800k tenders the satellite index pages fit in RAM, and per-row cost
+climbs once the working set does not. A linear fit across three points inside the cache says nothing
+about the point outside it.
+
+Two cost estimates, two errors, one night. The lesson is not "estimate better" — it is that this
+measurement must be **inherently bounded rather than hopefully fast**.
+
+`a79540e` therefore makes the job DECLINE unconditionally, which also stopped the second run (the
+deploy's restart killed it; the recovered job returned the refusal instead of starting a third scan).
+`/health/deep` green throughout; `bin/data-quality` still works against a small instance.
+
+### The design to build (and it already exists elsewhere)
+
+Issue 228 solved this exact class for the adjacency sweep: **window the id range, bound every query on
+both axes, report progress per window.** Applied here — accumulate per-profile counts over
+`tender_versions.tender_id` windows, summing in Rust — each query is measured-fast at its window size
+(0.37 s per 50k is a measurement, not an extrapolation), the pass is interruptible between windows, and
+the phase record shows real movement. ~158 windows at 50k for the full corpus.
+
+Structural note for whoever builds it: `queries()` currently hands out opaque SQL strings, so nothing
+can inject a range predicate. The catalogue needs to declare, per query, whether it is windowable and
+on which column — which is also the honest place to record that `merge` and the density queries may not
+be windowable the same way.
