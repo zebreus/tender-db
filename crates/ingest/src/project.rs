@@ -2787,6 +2787,27 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             rounds.push(round.clone());
         }
 
+        // Membership carries forward like lots and facts, and for the same reason: the
+        // composition is published by the notice that DEFINES the groups — a contract
+        // notice — while the bids that reference a group arrive with the award notice
+        // several versions later. Read only from its own notice, membership would be
+        // present on exactly the version that has no bids, which is the one shape this
+        // table exists to serve (issue 237).
+        //
+        // Supersession is per GROUP, mirroring `supersede`'s per-field rule: a notice
+        // that republishes a group's composition replaces that group's member list
+        // entirely, and a group it is silent about keeps the one it had.
+        let mut group_members: Vec<(String, String)> =
+            previous.map(|p| p.group_members.clone()).unwrap_or_default();
+        if !state.group_members.is_empty() {
+            let republished: BTreeSet<&str> =
+                state.group_members.iter().map(|(group, _)| group.as_str()).collect();
+            group_members.retain(|(group, _)| !republished.contains(group.as_str()));
+            group_members.extend(state.group_members.iter().cloned());
+            group_members.sort_unstable();
+            group_members.dedup();
+        }
+
         versions.push(TenderVersion {
             caused_by_notice_id: state.notice_id,
             published_at: state.published_at,
@@ -2796,7 +2817,7 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             facts,
             lots,
             rounds,
-            group_members: state.group_members.clone(),
+            group_members,
         });
     }
     versions
@@ -3947,6 +3968,60 @@ mod tests {
             group_members(4, &compose(&[], None, &["LOT-1"])),
             Vec::<(String, String)>::new(),
             "no group at all: the members have nothing to attach to",
+        );
+    }
+
+    /// Issue 237: membership must survive to the version that HAS the bids.
+    ///
+    /// The composition is published by the notice that defines the groups — a contract
+    /// notice — and the bids referencing a group arrive with the award notice, versions
+    /// later. Measured on prod: 1,408 bids across 505 notices reference a `LotsGroup`,
+    /// and membership read only from its own notice sits on the one version with no bids
+    /// at all. So it carries forward like `lots` and `facts`, superseded per group.
+    #[test]
+    fn lots_group_membership_carries_forward_and_supersedes_per_group() {
+        let state = |notice_id: i64, members: &[(&str, &str)]| NoticeState {
+            notice_id,
+            publication_id: format!("k{notice_id:04}-w0"),
+            published_at: notice_id * 1_000,
+            dispatched_at: None,
+            subtype: None,
+            logical_id: None,
+            is_correction: false,
+            facts: BTreeSet::new(),
+            lots: Vec::new(),
+            roles: Vec::new(),
+            raw_results: RawResults::default(),
+            round: None,
+            group_members: members
+                .iter()
+                .map(|(g, m)| ((*g).to_owned(), (*m).to_owned()))
+                .collect(),
+        };
+        let pair = |group: &str, member: &str| (group.to_owned(), member.to_owned());
+
+        // A contract notice composes two groups; a corrigendum says nothing about either;
+        // an award notice republishes GLO-1 with a different member list.
+        let composed = state(1, &[("GLO-1", "LOT-1"), ("GLO-1", "LOT-2"), ("GLO-2", "LOT-9")]);
+        let silent = state(2, &[]);
+        let recomposed = state(3, &[("GLO-1", "LOT-3")]);
+        let chain: Vec<&NoticeState> = vec![&composed, &silent, &recomposed];
+        let versions = fold(&chain);
+
+        assert_eq!(
+            versions[0].group_members,
+            vec![pair("GLO-1", "LOT-1"), pair("GLO-1", "LOT-2"), pair("GLO-2", "LOT-9")],
+            "the composing notice's own pairs",
+        );
+        assert_eq!(
+            versions[1].group_members, versions[0].group_members,
+            "a notice silent about every group changes no membership — this is the case that \
+             matters, because the award notice is usually the silent one",
+        );
+        assert_eq!(
+            versions[2].group_members,
+            vec![pair("GLO-1", "LOT-3"), pair("GLO-2", "LOT-9")],
+            "republishing GLO-1 replaces ITS list entirely and leaves GLO-2 alone",
         );
     }
 
