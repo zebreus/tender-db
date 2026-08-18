@@ -113,7 +113,8 @@ explicit `reset` event. Poll endpoint and webhooks consume the same log
   `Accept: text/event-stream` on collection endpoints. JSON, cursor-paginated.
 - SQL gate layers: turso_parser single-SELECT allow-list → accounts-table
   deny (users/api_tokens/sessions share the DB file and must never be
-  SELECTable) → `query_only` reader → 10s timeout with cooperative per-row
+  SELECTable) → `query_only` reader (a borrow that waits is a 503, not a 408 —
+  issue 238) → 10s timeout with cooperative per-row
   yields (turso resolves cached work without pending, so a bare
   timeout-by-drop never fires — issue 07 finding) → 10k rows/10MB streaming
   caps → per-token limits (2 concurrent, 300/h). Never enable ATTACH on

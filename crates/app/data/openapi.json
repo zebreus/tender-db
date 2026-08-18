@@ -402,8 +402,9 @@
           },
           "400": { "$ref": "#/components/responses/BadRequest" },
           "401": { "$ref": "#/components/responses/Unauthorized" },
-          "408": { "description": "The query exceeded the per-query time limit; its server-side work was abandoned.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
-          "429": { "$ref": "#/components/responses/RateLimited" }
+          "408": { "description": "The QUERY exceeded the per-query time limit; its server-side work was abandoned. Make the query cheaper (narrow the range, add a LIMIT) before retrying.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "description": "The BACKEND was busy: no reader connection came free in time, so the query was never run. Distinct from 408 on purpose — retry the same query unchanged rather than rewriting it. Transient and self-clearing (a checkpoint holds readers off briefly).", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     },

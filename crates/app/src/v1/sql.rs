@@ -74,8 +74,9 @@ use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use serde_json::{Value as Json_, json};
 use std::collections::HashMap;
 use std::num::NonZeroU32;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
 
 /// Dedicated `query_only` reader connections for this endpoint. Separate from
@@ -92,6 +93,11 @@ pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
 /// streaming query always reports through the in-task path (a clean drop between
 /// rows) and the backstop only ever fires for a non-yielding aggregate.
 const TIMEOUT_GRACE: Duration = Duration::from_secs(1);
+
+/// Log a reader borrow that took longer than this. Well under the query budget, so a
+/// borrow eating a visible share of it is recorded before anyone has to guess (issue
+/// 238: a cold borrow measured ~7 s of the 10 s budget).
+const SLOW_ACQUIRE: Duration = Duration::from_secs(2);
 
 /// Result caps, applied while streaming rows out of the engine.
 const MAX_ROWS: usize = 10_000;
@@ -290,8 +296,29 @@ async fn run(
     // that pins its worker thread cannot touch the main API/SSE runtime.
     let readers = sql_state.readers.clone();
     let timeout = sql_state.timeout;
+    // Whether the task ever got a reader. The backstop below cannot otherwise tell
+    // "waited for a reader" from "ran too long", and it used to report both as the
+    // query's fault (issue 238): during a projection's gated checkpoint EVERY query
+    // here returned "query exceeded the 10s time limit", `SELECT 1` included, which
+    // sends the operator off to optimise a query that was never the problem.
+    //
+    // `Readers::get` blocks on two things — a pool permit, then the WAL gate's
+    // SHARED side — and a `Truncate` checkpoint holds that gate EXCLUSIVELY (issue
+    // 63). So "no reader available" is a real, routine, self-clearing state that
+    // deserves its own answer rather than a misattributed one.
+    let acquired = Arc::new(AtomicBool::new(false));
+    let acquired_in_task = acquired.clone();
     let handle = sql_state.runtime.spawn(async move {
+        let waited = Instant::now();
         let reader = readers.get().await.map_err(Executed::Db)?;
+        acquired_in_task.store(true, Ordering::Release);
+        // Acquisition is not free on a 441 GB file — a cold borrow measured ~7 s,
+        // most of the 10 s budget — so a slow one is worth seeing in the log before
+        // it becomes a 503.
+        let waited = waited.elapsed();
+        if waited > SLOW_ACQUIRE {
+            eprintln!("[sql] waited {:.1}s for a reader before executing", waited.as_secs_f64());
+        }
         // The in-task timeout drops a *streaming* query between rows, freeing its
         // reader promptly. A non-yielding aggregate computes in one poll and
         // slips past it — the handler-side backstop below is what bounds that.
@@ -329,10 +356,16 @@ async fn run(
         // A streaming query dropped between rows by the in-task timeout, or the
         // backstop firing on a non-yielding aggregate — both are the query
         // exceeding the time limit, and both are a 408.
-        Ok(Ok(Err(Executed::Timeout))) | Err(_) => Err(timed_out(timeout)),
+        Ok(Ok(Err(Executed::Timeout))) => Err(timed_out(timeout)),
+        // The backstop fired. WHICH limit was hit depends on whether a reader was
+        // ever borrowed: if not, the time went on waiting for one and this is the
+        // backend being busy, not the query being slow.
+        Err(_) => Err(backstop_error(acquired.load(Ordering::Acquire), timeout)),
         // The task was aborted because we stopped waiting (backstop/disconnect):
-        // report the same 408 rather than a spurious 500.
-        Ok(Err(join)) if join.is_cancelled() => Err(timed_out(timeout)),
+        // report the same way, on the same test.
+        Ok(Err(join)) if join.is_cancelled() => {
+            Err(backstop_error(acquired.load(Ordering::Acquire), timeout))
+        }
         // A genuine panic on the isolated runtime — our fault, not the caller's.
         Ok(Err(join)) => {
             Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, format!("sql runtime: {join}")))
@@ -345,6 +378,29 @@ fn timed_out(timeout: Duration) -> ApiError {
     ApiError(
         StatusCode::REQUEST_TIMEOUT,
         format!("query exceeded the {}s time limit", timeout.as_secs()),
+    )
+}
+
+/// Which error the backstop reports, given whether a reader was ever borrowed.
+///
+/// Its own function so the choice is testable: the plumbing that sets the flag is
+/// three lines and reads plainly, but the MAPPING is the part that was wrong for as
+/// long as the endpoint existed, and it is the part worth pinning.
+fn backstop_error(acquired: bool, timeout: Duration) -> ApiError {
+    if acquired { timed_out(timeout) } else { backend_busy() }
+}
+
+/// The 503 a caller gets when no reader could be borrowed in time — the backend is
+/// busy (a gated checkpoint, or every reader in use), not the query at fault.
+///
+/// 503 + `Retry-After` rather than 408, because the two ask for opposite responses:
+/// a 408 says "make your query cheaper", a 503 says "ask again unchanged". Telling a
+/// caller to rewrite a working query is the whole defect (issue 238).
+fn backend_busy() -> ApiError {
+    ApiError(
+        StatusCode::SERVICE_UNAVAILABLE,
+        "sql backend busy: no reader was free in time — retry unchanged (the query was never run)"
+            .to_owned(),
     )
 }
 
@@ -1047,6 +1103,36 @@ fn store_int(row: &store::turso::Row, idx: usize) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 238: the backstop must not blame the query for a reader it never got.
+    ///
+    /// The bug this pins was observable as `SELECT 1` returning "query exceeded the
+    /// 10s time limit" at 11.0 s while a projection's gated checkpoint held the WAL
+    /// gate exclusively — a query that had not run, cannot cost 10 s, and needed no
+    /// rewriting. The two answers ask for opposite things from the caller, so the
+    /// status codes have to differ: 408 "make it cheaper", 503 "send it again as is".
+    #[test]
+    fn a_reader_that_never_arrived_is_a_503_not_a_408() {
+        let limit = Duration::from_secs(10);
+
+        let busy = backstop_error(false, limit);
+        assert_eq!(busy.0, StatusCode::SERVICE_UNAVAILABLE, "no reader borrowed = backend busy");
+        assert!(busy.1.contains("never run"), "it must say the query did not run: {}", busy.1);
+        assert!(busy.1.contains("retry"), "and that retrying unchanged is right: {}", busy.1);
+        assert!(
+            !busy.1.contains("time limit"),
+            "it must NOT read as a query-cost problem, which is the whole defect: {}",
+            busy.1
+        );
+
+        let slow = backstop_error(true, limit);
+        assert_eq!(slow.0, StatusCode::REQUEST_TIMEOUT, "a reader was borrowed, so the query is slow");
+        assert!(slow.1.contains("10s time limit"), "and it names the limit: {}", slow.1);
+
+        // The threshold that decides which log line an operator sees must sit well
+        // inside the budget, or a borrow eating most of it goes unrecorded.
+        assert!(SLOW_ACQUIRE < DEFAULT_TIMEOUT, "a slow borrow is logged before it becomes a 503");
+    }
 
     #[test]
     fn accepts_a_plain_select() {
