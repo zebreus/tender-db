@@ -184,3 +184,34 @@ Structural note for whoever builds it: `queries()` currently hands out opaque SQ
 can inject a range predicate. The catalogue needs to declare, per query, whether it is windowable and
 on which column — which is also the honest place to record that `merge` and the density queries may not
 be windowable the same way.
+
+
+## Windowing, step 1 landed (`5d64015`, 2026-08-18)
+
+The primitives, with the correctness property tested rather than asserted in prose:
+
+- `windowed_queries()` — the seven version-driven queries (denominator + six field probes) as templates
+  with a `{window}` placeholder, each running over a half-open `(lo, hi]` slice of
+  `tender_versions.tender_id`.
+- `sum_profile_counts()` — folds per-window results into the one per-profile result set the assembler
+  already expects.
+- `unwindowed_labels()` — names the four that are NOT windowed (`linkage`, both densities, `merge`),
+  so a caller reports them as unmeasured through the `None` path instead of dropping them. Each drives
+  from a different table and wants its own decision; a partial report that says what is missing beats a
+  complete one that cannot finish.
+- **Test:** over the real fixture corpus with a window size of ONE — every `tender_id` its own window,
+  every seam exercised — the summed result equals the whole-range result for all seven. If that
+  property fails, a bounded measurement is a wrong measurement, so it is checked rather than argued.
+
+`queries()` is untouched, so `bin/data-quality` against a small instance is unchanged.
+
+### Remaining, in order
+
+1. Teach `run_data_quality` to drive `windowed_queries()` — walk `MAX(tender_id)` in fixed windows,
+   accumulate, report `window k/N` in the phase record, and mark the four unwindowed labels as
+   unmeasured. Then lift the refusal.
+2. Re-measure on prod **outside** the 09:35 daily window, and record the real per-window timing — a
+   measurement, not an extrapolation. Pick the window size from that.
+3. Only then: schedule it, and add the read surface for the stored body.
+4. Separately decide windowing for the four remaining queries, or accept them as permanently
+   unmeasured and say so in the report's own text.
