@@ -126,14 +126,16 @@ async fn main() -> ExitCode {
     // and the rest of the report still renders — rather than aborting the whole
     // run. Any degraded section is reported on stderr and reflected in the exit
     // code, so a partial report is never mistaken for a complete one.
-    let mut results: Vec<(String, Rows)> = Vec::new();
+    let mut results: Vec<(String, Option<Rows>)> = Vec::new();
     let mut degraded = false;
     for (label, query) in data_quality::queries() {
         match instance.sql(&query).await {
-            Ok(rows) => results.push((label, rows)),
+            Ok(rows) => results.push((label, Some(rows))),
             Err(e) => {
-                eprintln!("query `{label}` failed ({e}) — its section will be empty");
-                results.push((label, Vec::new()));
+                eprintln!("query `{label}` failed ({e}) — its section will be UNMEASURED");
+                // `None`, not an empty result set: the report must be able to say
+                // "unmeasured" rather than print a zero it never measured (230).
+                results.push((label, None));
                 degraded = true;
             }
         }

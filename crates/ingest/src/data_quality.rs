@@ -255,6 +255,12 @@ pub struct Report {
     pub linkage: Vec<LinkageRow>,
     pub density: Vec<DensityRow>,
     pub merge: Merge,
+    /// Query labels that did NOT run (issue 230). A failed query used to arrive
+    /// as empty rows, indistinguishable from a query that legitimately returned
+    /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
+    /// 0") for numbers nobody measured. The exit code and stderr always told the
+    /// truth; stdout did not, and stdout is what gets pasted into a comment.
+    pub unmeasured: Vec<String>,
 }
 
 // ------------------------------------------------------------------- assembly
@@ -293,35 +299,49 @@ pub struct Raw {
     pub density_can: Rows,
     pub density_with: Rows,
     pub merge: Rows,
+    /// Labels whose query never ran (issue 230), in the order collected.
+    pub unmeasured: Vec<String>,
 }
 
 impl Raw {
     /// Collect the ordered `(label, rows)` results the bin gathered into the
     /// named slots the assembler expects, so the transport never has to know the
-    /// query shapes. A label the bin could not run is expected to arrive with
-    /// empty rows (a degraded section), never missing.
-    pub fn from_labelled(mut results: Vec<(String, Rows)>) -> Result<Raw, String> {
-        let mut take = |label: &str| {
+    /// query shapes.
+    ///
+    /// `None` rows mean the query FAILED; `Some(vec![])` means it ran and matched
+    /// nothing. Those are different claims and the report must not merge them
+    /// (issue 230) — a failed query is recorded in [`Raw::unmeasured`] and the
+    /// slot is filled with no rows so assembly still proceeds.
+    pub fn from_labelled(mut results: Vec<(String, Option<Rows>)>) -> Result<Raw, String> {
+        let mut unmeasured = Vec::new();
+        let mut take = |label: &str, unmeasured: &mut Vec<String>| {
             let pos = results
                 .iter()
                 .position(|(l, _)| l == label)
                 .ok_or_else(|| format!("missing result set: {label}"))?;
-            Ok::<Rows, String>(results.remove(pos).1)
+            Ok::<Rows, String>(match results.remove(pos).1 {
+                Some(rows) => rows,
+                None => {
+                    unmeasured.push(label.to_owned());
+                    Vec::new()
+                }
+            })
         };
         Ok(Raw {
-            versions: take("versions")?,
+            versions: take("versions", &mut unmeasured)?,
             fields: [
-                take("title")?,
-                take("buyer")?,
-                take("value")?,
-                take("cpv")?,
-                take("deadline")?,
-                take("winner")?,
+                take("title", &mut unmeasured)?,
+                take("buyer", &mut unmeasured)?,
+                take("value", &mut unmeasured)?,
+                take("cpv", &mut unmeasured)?,
+                take("deadline", &mut unmeasured)?,
+                take("winner", &mut unmeasured)?,
             ],
-            linkage: take("linkage")?,
-            density_can: take("density_can")?,
-            density_with: take("density_with")?,
-            merge: take("merge")?,
+            linkage: take("linkage", &mut unmeasured)?,
+            density_can: take("density_can", &mut unmeasured)?,
+            density_with: take("density_with", &mut unmeasured)?,
+            merge: take("merge", &mut unmeasured)?,
+            unmeasured,
         })
     }
 }
@@ -375,7 +395,14 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         merged: as_u64(r.get(1)),
     });
 
-    Report { base_url: base_url.to_owned(), completeness, linkage, density, merge }
+    Report {
+        base_url: base_url.to_owned(),
+        completeness,
+        linkage,
+        density,
+        merge,
+        unmeasured: raw.unmeasured.clone(),
+    }
 }
 
 // ------------------------------------------------------------------- rendering
@@ -393,8 +420,22 @@ pub fn render_text(report: &Report) -> String {
     let _ = writeln!(out, "tender-db data-quality — {}", report.base_url);
     let _ = writeln!(
         out,
-        "unit: tender-version (≈ one per notice); era = mapping profile of the version's notice\n"
+        "unit: tender-version (≈ one per notice); era = mapping profile of the version's notice"
     );
+    // Say it in the report itself, not only on stderr (issue 230): stdout is what
+    // gets pasted into a comment, and an unmeasured section that renders as zeros
+    // is the reading that misleads.
+    if !report.unmeasured.is_empty() {
+        let _ = writeln!(
+            out,
+            "INCOMPLETE: {} of {} queries did not run ({}). Sections below that depend on them are \
+             UNMEASURED, not zero.",
+            report.unmeasured.len(),
+            report.unmeasured.len() + 11 - report.unmeasured.len(),
+            report.unmeasured.join(", ")
+        );
+    }
+    let _ = writeln!(out);
 
     let _ = writeln!(out, "== 1. Field completeness (share of versions carrying each field) ==");
     let _ = writeln!(
@@ -441,12 +482,18 @@ pub fn render_text(report: &Report) -> String {
     }
 
     let _ = writeln!(out, "\n== 4. TED↔DÖE merge (of DÖE procedures, share also seen on TED) ==");
-    let m = report.merge;
-    let _ = writeln!(
-        out,
-        "  DÖE procedure Tenders: {}; merged with TED: {} ({})",
-        group(m.doe_tenders), group(m.merged), pct(m.merged, m.doe_tenders)
-    );
+    if report.unmeasured.iter().any(|l| l == "merge") {
+        // Printing "0; merged with TED: 0" for a query that never ran was the one
+        // place this report stated a number it had not measured (issue 230).
+        let _ = writeln!(out, "  UNMEASURED — the `merge` query did not run.");
+    } else {
+        let m = report.merge;
+        let _ = writeln!(
+            out,
+            "  DÖE procedure Tenders: {}; merged with TED: {} ({})",
+            group(m.doe_tenders), group(m.merged), pct(m.merged, m.doe_tenders)
+        );
+    }
     out
 }
 
@@ -600,21 +647,21 @@ mod tests {
     #[test]
     fn assembles_a_report_from_labelled_rows() {
         let results = vec![
-            ("versions".to_owned(), vec![
+            ("versions".to_owned(), Some(vec![
                 vec![json!("eforms:eforms-sdk-1.13"), json!(10)],
                 vec![json!("ted-export-r209"), json!(4)],
-            ]),
-            ("title".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(10)], vec![json!("ted-export-r209"), json!(4)]]),
-            ("buyer".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(9)]]),
-            ("value".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(7)]]),
-            ("cpv".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(10)]]),
-            ("deadline".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(6)]]),
-            ("winner".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]]),
-            ("linkage".to_owned(), vec![vec![json!("ted-export-r209"), json!(2), json!(1)]]),
+            ])),
+            ("title".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(10)], vec![json!("ted-export-r209"), json!(4)]])),
+            ("buyer".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(9)]])),
+            ("value".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(7)]])),
+            ("cpv".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(10)]])),
+            ("deadline".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(6)]])),
+            ("winner".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
+            ("linkage".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(2), json!(1)]])),
             // Density: 2 projected award notices for the eForms era, 0 materialised.
-            ("density_can".to_owned(), vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]]),
-            ("density_with".to_owned(), vec![]),
-            ("merge".to_owned(), vec![vec![json!(3), json!(1)]]),
+            ("density_can".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
+            ("density_with".to_owned(), Some(vec![])),
+            ("merge".to_owned(), Some(vec![vec![json!(3), json!(1)]])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
@@ -650,9 +697,46 @@ mod tests {
         assert_eq!(json["completeness"][0]["rate"]["winner"], json!(0.2));
     }
 
+    /// Issue 230: a query that FAILED and a query that ran and matched nothing
+    /// are different claims, and the rendered report must not merge them. This is
+    /// the exact shape prod produced — all 11 queries 408'd — where section 4
+    /// printed "DÖE procedure Tenders: 0; merged with TED: 0 (—)" for numbers
+    /// nobody had measured.
+    #[test]
+    fn a_failed_query_renders_as_unmeasured_not_as_zero() {
+        let labels = [
+            "versions", "title", "buyer", "value", "cpv", "deadline", "winner", "linkage",
+            "density_can", "density_with", "merge",
+        ];
+        // Every query failed: None, not an empty result set.
+        let all_failed: Vec<(String, Option<Rows>)> =
+            labels.iter().map(|l| ((*l).to_owned(), None)).collect();
+        let raw = Raw::from_labelled(all_failed).expect("labelled");
+        assert_eq!(raw.unmeasured.len(), 11, "every label recorded as unmeasured");
+        let text = render_text(&assemble("http://x", &raw));
+        assert!(text.contains("INCOMPLETE: 11 of 11 queries did not run"), "{text}");
+        assert!(text.contains("UNMEASURED — the `merge` query did not run."), "{text}");
+        assert!(
+            !text.contains("merged with TED: 0"),
+            "a number nobody measured must not be printed: {text}"
+        );
+
+        // The complement: a query that RAN and matched nothing still reports its
+        // real zero, and the report is not marked incomplete.
+        let mut ran: Vec<(String, Option<Rows>)> =
+            labels.iter().map(|l| ((*l).to_owned(), Some(Vec::new()))).collect();
+        ran.retain(|(l, _)| l != "merge");
+        ran.push(("merge".to_owned(), Some(vec![vec![json!(0), json!(0)]])));
+        let raw = Raw::from_labelled(ran).expect("labelled");
+        assert!(raw.unmeasured.is_empty());
+        let text = render_text(&assemble("http://x", &raw));
+        assert!(!text.contains("INCOMPLETE"), "{text}");
+        assert!(text.contains("merged with TED: 0"), "a measured zero is still reported: {text}");
+    }
+
     #[test]
     fn from_labelled_reports_a_missing_result_set() {
-        let err = Raw::from_labelled(vec![("versions".to_owned(), vec![])]).unwrap_err();
+        let err = Raw::from_labelled(vec![("versions".to_owned(), Some(vec![]))]).unwrap_err();
         assert!(err.contains("title"), "{err}");
     }
 }
