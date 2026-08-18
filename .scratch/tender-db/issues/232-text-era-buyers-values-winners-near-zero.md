@@ -1,6 +1,6 @@
 # 232 — the text era projects titles but almost no buyers, values or winners (3.79M versions)
 
-Status: needs-triage — measured 2026-08-18 against prod (job 731, rev `a79540e`)
+Status: DIAGNOSED 2026-08-18 (cause found in code, see below) — ready for a fix decision
 Kind: projection mapping gap, largest single era by volume
 Blocked by: —
 Relates to: 11 (the text-era profile), 176 (the per-era headline-fields matrix — fixture-level,
@@ -36,9 +36,34 @@ The two candidate causes, and they are distinguishable:
    (`TXT-*`) stems for party, amount and winner, exactly as issue 177 found for r208 values and
    issue 29 found for sdk-0.1. Grep the mapping tables for `TXT-` coverage per field.
 
-Start by reading ONE text-era notice end to end — raw archive bytes → `notice_sections` →
-`organization_mentions` → `tender_version_parties`. Whichever layer the buyer disappears at
-names the cause, and one notice is enough to name it.
+**DIAGNOSED from the code, same day — it is cause 2, and more absolute than "a missing stem".**
+The text era emits **no organization role reference at all**, so there is no path by which a
+buyer party row could be written:
+
+- A party role is created in exactly one place: `project.rs:2413` matches
+  `NoticeValue::Id { is_ref: true }`, skips `scheme == "ojs"` (chain edges), and asks
+  `role_name(field_id)` for the role. `role_name` (project.rs:3355) understands three prefixes
+  — `OPT-300-`, `OPT-301-`, `TED-` — and nothing else. There is no `TXT-` branch.
+- The text parser can only ever produce ONE kind of ref: `text/parse.rs:165`'s `Type::Ref` arm
+  hardcodes `scheme: Some("ojs")`. Every text-era reference is an OJS chain edge, and those are
+  filtered out one line before `role_name` is reached.
+- The authority field itself is not a ref: `text/rules.rs:64` declares `("AU", Prose(None))`, so
+  `TXT-AU` arrives as a Text value. `ORG_NAME_FIELDS` does include `TXT-AU`
+  (project.rs:307), so a mention gets a NAME — but a mention with no role never becomes a
+  `tender_version_parties` row.
+
+So the text era seeds organization mentions and then has nothing to attach them to. The fix is
+not a new entry in a mapping table (there is no ref to map); it is deciding how a text-era
+authority becomes a role — most likely synthesising a `buyer` role at the AU-bearing section,
+which is exactly what issue 29's sdk-0.1 fix did for `ContractingParty` ("`read` synthesises a
+`buyer` role at the ContractingParty section"). That precedent is the template.
+
+**Still to explain: why 0.5 % and not 0.0 %.** ~19,000 versions DO carry a buyer, and on this
+diagnosis none should. Candidates: transition-year (2009–2010) notices carrying TED-style
+address blocks under `TED-*` ids while still profiled `text`, or notices whose Tender also holds
+a non-text version whose parties resolved (parties are per version, so this should NOT leak —
+worth confirming). Find one and read it before building the fix: if the 0.5 % arrives by a path
+that already works, that path may be the fix rather than a new one.
 
 ## Why it hid
 
