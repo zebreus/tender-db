@@ -78,12 +78,24 @@ const FIELDS: [FieldSpec; 6] = [
 /// it is a single scan: distinct `(tender_id, seq)` that have the field, joined
 /// up to the version's notice for its profile.
 fn field_sql(spec: &FieldSpec) -> String {
-    let filter = spec.predicate.map(|p| format!(" WHERE {p}")).unwrap_or_default();
+    let filter = spec.predicate.map(|p| format!(" AND {p}")).unwrap_or_default();
+    // Indexed EXISTS, driven from `tender_versions` — NOT an inline
+    // `(SELECT DISTINCT …) d JOIN`. That derived-table shape is what this
+    // function used to build, and it is the exact pattern the linkage query below
+    // documents as pathological: turso re-evaluates such a derived table per
+    // outer row. At full-corpus scale it cost >50 minutes at 100% CPU on a single
+    // field (issue 230) — the warning was written for `lot_results` and applied
+    // here all along.
+    //
+    // Driving from the versions side makes this one pass over `tender_versions`
+    // with a probe per row into the satellite's by-version index (`(tender_id,
+    // seq)`, which texts/amounts/dates/classifications all carry), so the cost is
+    // the same order as the DENOMINATOR_SQL pass beside it.
     format!(
-        "SELECT n.profile, COUNT(*) AS present FROM \
-         (SELECT DISTINCT s.tender_id, s.seq FROM {satellite} s{filter}) d \
-         JOIN tender_versions v ON v.tender_id = d.tender_id AND v.seq = d.seq \
-         JOIN notices n ON n.id = v.caused_by_notice_id \
+        "SELECT n.profile, COUNT(*) AS present \
+         FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+         WHERE EXISTS (SELECT 1 FROM {satellite} s \
+                        WHERE s.tender_id = v.tender_id AND s.seq = v.seq{filter}) \
          GROUP BY n.profile",
         satellite = spec.satellite,
     )
@@ -600,11 +612,25 @@ mod tests {
     fn field_sql_narrows_only_when_a_predicate_exists() {
         let title = field_sql(&FIELDS[0]);
         assert!(title.contains("tender_version_texts"));
-        assert!(title.contains("WHERE field = 'title'"));
-        // `value` has no predicate — any amount row counts.
+        assert!(title.contains("AND field = 'title'"), "{title}");
+        // `value` has no predicate — any amount row counts, so the EXISTS carries
+        // only the version join.
         let value = field_sql(&FIELDS[2]);
         assert!(value.contains("tender_version_amounts"));
-        assert!(!value.contains("WHERE"));
+        assert!(!value.contains("AND field"), "{value}");
+
+        // Issue 230: the derived-table shape must never come back. It is the
+        // documented turso trap (re-evaluated per outer row) and it cost >50
+        // minutes on one field at full-corpus scale.
+        for spec in FIELDS.iter() {
+            let sql = field_sql(spec);
+            assert!(!sql.contains("SELECT DISTINCT"), "no derived DISTINCT table: {sql}");
+            assert!(sql.contains("WHERE EXISTS (SELECT 1 FROM"), "indexed EXISTS: {sql}");
+            assert!(
+                sql.contains("s.tender_id = v.tender_id AND s.seq = v.seq"),
+                "the probe must hit the satellite by-version index: {sql}"
+            );
+        }
     }
 
     #[test]

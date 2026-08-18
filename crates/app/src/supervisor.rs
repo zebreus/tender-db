@@ -171,7 +171,9 @@ enum Spec {
     /// `resume_after` like `process`/`reprocess`, not in the spec.
     Reparse { profiles: Vec<String> },
     /// Run the semantic data-quality measurement and store its report (issue 230).
-    DataQuality,
+    /// `confirmed` is the operator's explicit "yes, tie the queue up for this" —
+    /// see the enqueue arm.
+    DataQuality { confirmed: bool },
     /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
     /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
     /// generation for the recovered baseline instead of appending. `#[serde(default)]`
@@ -458,9 +460,17 @@ impl Supervisor {
             // full-corpus scale, and they are far too expensive for the
             // dashboard's 60s cadence. As a job they are queue-serialized, run on
             // the reader pool, carry a phase record, and land in the job log.
-            "data-quality" => Ok(vec![
-                self.push("data-quality", "data-quality".into(), Spec::DataQuality).await,
-            ]),
+            // The measurement is a ~10 minute full-corpus pass that holds the
+            // queue (jobs are serialized), so it asks to be meant: `dry_run`
+            // defaults to TRUE and a dry run only reports what it would do. Same
+            // safe-default convention as `mark-skipped-siblings` — a forgotten
+            // flag must mean the harmless thing.
+            "data-quality" => {
+                let confirmed = !req.dry_run.unwrap_or(true);
+                let params =
+                    if confirmed { "data-quality" } else { "data-quality dry-run" }.to_owned();
+                Ok(vec![self.push("data-quality", params, Spec::DataQuality { confirmed }).await])
+            }
             "backfill-legacy-adjacency" => Ok(vec![
                 self.push(
                     "backfill-legacy-adjacency",
@@ -1043,30 +1053,21 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
-            Spec::DataQuality => {
-                // GATED, and the gate is the finding (issue 230). The first prod
-                // run spent ~50 minutes at 100% CPU on the SECOND of eleven
-                // queries and showed no sign of finishing, so the measurement is
-                // not merely expensive — at least one of these aggregates is
-                // algorithmically wrong for this corpus (nested loops, most
-                // likely), and jobs are queue-serialized, so letting it run would
-                // have held the daily ingest behind it for hours.
+            Spec::DataQuality { confirmed } => {
+                // Measured 2026-08-18 after the field_sql rewrite: ~47 s per field
+                // query at full-corpus scale (extrapolated from bounded windows —
+                // 0.37 s at 50k tenders, 1.25 s at 200k, 4.79 s at 800k, linear),
+                // so the whole pass is ~10 minutes. That is affordable, and it is
+                // why this is a confirmation rather than the hard gate the first
+                // version had: before the rewrite ONE field query ran >50 minutes
+                // at 100% CPU and had to be killed.
                 //
-                // A per-query deadline is NOT the answer: turso cannot interrupt a
-                // statement (docs/agents/prod-box-reads.md), so a timeout would
-                // abandon the future while the scan kept burning a pooled reader.
-                // The queries have to become affordable first — plan analysis, and
-                // probably an index — which is issue 230's open item 3.
-                //
-                // Declining is reported as SUCCESS, not an error: the job did
-                // exactly what it should. An `error` outcome would turn
-                // /health/deep's last-job check red and trade a blocked queue for
-                // a false alarm.
-                if std::env::var("TENDER_DATA_QUALITY").ok().as_deref() != Some("1") {
+                // Still opt-in because jobs are queue-serialized: a run started in
+                // the daily's window would hold ingest behind it.
+                if !*confirmed {
                     return Ok(
-                        "data-quality SKIPPED: gated behind TENDER_DATA_QUALITY=1 — its queries are \
-                         unbounded at full-corpus scale (issue 230, open item 3). Set the variable \
-                         deliberately, on a box you are willing to tie up for hours."
+                        "data-quality DRY RUN: would measure 11 aggregates over the full corpus \
+                         (~10 min, holds the job queue). Re-enqueue with dry_run=false to measure."
                             .to_owned(),
                     );
                 }
@@ -2244,6 +2245,20 @@ mod tests {
         let ids = sup.enqueue_request(&req("data-quality")).await.expect("enqueues");
         assert_eq!(ids.len(), 1, "a measurement changes nothing, so nothing follows it");
         assert_eq!(sup.queued()[0].kind, "data-quality");
+        // A forgotten flag means the harmless thing: the default is a dry run, and
+        // the params say so, so the job log never hides which one ran.
+        assert_eq!(sup.queued()[0].params, "data-quality dry-run");
+
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "data-quality".into(),
+                dry_run: Some(false),
+                ..Default::default()
+            })
+            .await
+            .expect("enqueues");
+        assert_eq!(ids.len(), 1);
+        assert_eq!(sup.queued()[1].params, "data-quality", "a confirmed run is named plainly");
     }
 
     /// Issue 100: `reparse` needs at least one profile, and pairs itself with a
