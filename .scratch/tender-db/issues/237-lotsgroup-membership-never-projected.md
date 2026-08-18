@@ -56,6 +56,40 @@ Extending it to `BT-*` means dispositioning every SDK field, which is a much lar
 probably wants to start as a report (how many SDK fields the fold reads vs. how many the parser claims)
 rather than a hard gate that fails on day one. Sized honestly, it is its own piece of work.
 
+## The published shape, read from the bytes (2026-08-18, test in `adbcf82`)
+
+Verified against the committed `eforms/can-maximal-sdk17.xml` before writing any mapping, and it is
+NOT what this issue assumed. Membership does not live on the LotsGroup section:
+
+    ND-GroupComposition#0   kind=GroupComposition   parent=PROCEDURE
+      BT-330-Procedure   -> GLO-0001              (the group being composed)
+      BT-1375-Procedure  -> LOT-0001, LOT-0002    (one repeat per member lot)
+
+    GLO-0001               kind=LotsGroup          parent=PROCEDURE
+      BT-137/157/21/24/27/300-LotsGroup  (its own title, value, description…)
+
+The composition is a SIBLING of the group, hanging off the notice root — so a mapping that looked for
+membership under `GLO-nnnn` would find nothing and conclude the data was absent. That is plausibly how
+this stayed unmapped: the field id points at the group, but the section it lives in does not.
+
+Both ends resolve to `lots` rows once projected (the group is a `LotsGroup`-kind section, and members
+are ordinary `Lot` sections), so the link table needs no new identity — exactly the property the design
+decision above depends on.
+
+**Also unmapped: `BT-330-Procedure`.** It is the other half of the pair and shares BT-1375's fate, so
+whatever reads one must read both.
+
+### Implementation, now that the shape is known
+
+Read each `GroupComposition` section in `project.rs`'s `read()`: the group is its single BT-330 id-ref,
+the members are all its BT-1375 id-refs. Carry the pairs on `NoticeState`, and have the fold resolve
+both lot keys through the existing `lots` lookup and write
+`lot_group_members(tender_id, group_lot_id, member_lot_id)`.
+
+Sequencing note: populating it needs a re-fold, and the `current_title` work (issue 239) showed a
+projection-side column can be filled by a bounded backfill job rather than a corpus rebuild — the same
+option applies here, since membership derives from the parse layer that is already stored.
+
 ## Acceptance
 
 - A `lot_group_members` (or equivalent) canonical link, populated from `BT-1375-Procedure`, with the
