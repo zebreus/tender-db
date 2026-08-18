@@ -381,6 +381,41 @@ closing for every future legacy change, not just this one. Until then step 3 is
 **verified-by-tests, gate-verified on prod, unexercised at scale** — stated that way so nobody reads
 it as fully proven.
 
+### Option (1) BUILT: `refold-notices` (2026-08-18, owner, rev `3504b3c`)
+
+The recommended path exists. `refold-notices` takes an explicit notice-id list, re-queues exactly
+those notices and stamps exactly their Tenders epoch-stale, then a trailing ordinary incremental
+projection folds them. Both store primitives already existed (`unmark_projected_by_ids`,
+`stamp_stale_for_notices`, built for issue 88's field carriers), so the job is a thin spec over them.
+
+The guard is a **cap of 1,000 ids**, deliberately not the `expect`-with-slack the derived refolds use:
+slack guards a cohort nobody enumerated, and it tells you nothing about a list somebody typed — a
+mistyped id in a hand-written list does not change the list's length. The refusal names the limit and
+points at `refold`/`refold-fields` for anything cohort-sized.
+
+The summary reports **named / re-queued / stamped** separately, because the differences are the
+finding: fewer re-queued than named means ids that were unparsed, already queued, or nonexistent (a
+typo'd id would otherwise vanish into a job that says "ok"); fewer stamped than re-queued means
+notices that never reached a Tender.
+
+**Not yet run.** The acceptance procedure, to run when the queue is free:
+
+1. Pick a handful (3–5) of legacy notices whose OJS component is SMALL and known — an internal-ojs or
+   text-era notice with few `REF_NOTICE` edges. Bound the pick itself: read `legacy_ojs_keys` for a
+   candidate and confirm its component size before choosing, so the closure is known to be far under
+   `LEGACY_CLOSURE_CAP` (500k) BEFORE anything is written. That check is the whole reason not to just
+   fire `refold` at a profile.
+2. `POST /admin/jobs {"kind":"refold-notices","notices":[…]}` with the queue idle.
+3. Read the journal for the two lines this issue has been unable to obtain:
+   `[project] group step union-load: …s (N nodes)` and `[project] group step legacy-update: …s (M
+   legacy)` — with **N > 0 and M > 0** for the first time, plus the closure-size line. That is the
+   scoped-fold evidence step 3's acceptance asks for.
+4. Confirm the fold did NOT fall back to a full projection: the incremental line's touched-Tender
+   count should be on the order of the component, not the corpus.
+
+Until step 3 is exercised this way it stays **verified-by-tests, gate-verified on prod, unexercised at
+scale** — the exerciser existing is not the same as having run it.
+
 ### DEPLOYED 2026-08-17 15:02 CEST (rev `fddecd0`) — step 3 is LIVE
 
 The blocker below was cleared by Lennart and the deploy ran clean: build 33 s, atomic symlink
