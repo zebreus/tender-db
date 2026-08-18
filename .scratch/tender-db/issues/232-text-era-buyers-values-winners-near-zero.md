@@ -1,6 +1,7 @@
 # 232 — the text era projects titles but almost no buyers, values or winners (3.79M versions)
 
-Status: DIAGNOSED 2026-08-18 (cause found in code, see below) — ready for a fix decision
+Status: buyer FIXED in code 2026-08-18 (`0074b61`, awaiting the era re-parse); `value` closed as
+NOT-A-BUG (the era publishes no amount field); `winner` open, blocked on a `CO` archive study
 Kind: projection mapping gap, largest single era by volume
 Blocked by: —
 Relates to: 11 (the text-era profile), 176 (the per-era headline-fields matrix — fixture-level,
@@ -89,3 +90,86 @@ volume.
   currencies (issue 172) and most text-era notices are not award notices, so those two columns
   need the right denominators before anyone calls them bugs. Section 3 of the report (results
   materialisation, measurable from rev `c731a05`) is where the winner question belongs.
+
+## 2026-08-18, later — buyer FIXED in code; `value` is not a bug; `winner` needs an archive study
+
+### Correction to the diagnosis above
+
+The diagnosis said the era "seeds organization mentions and then has nothing to attach them to". That
+is **wrong**, and the difference decides the fix: **no mention is seeded at all.**
+`Projection::mentions` (project.rs:2484) only creates a mention for sections whose KIND is
+party-bearing — `Organization`, or sdk-0.1's party kinds — and a text-era record has exactly ONE
+section, `PROCEDURE` of kind `Notice`, because the era publishes no structure (`text/parse.rs`'s module
+doc says so outright). `TXT-AU` sitting in `ORG_NAME_FIELDS` could never have mattered: there was
+nothing for the name to attach to.
+
+That rules out a projection-only fix, which is what the earlier note implied was possible. And
+`organization_mentions` carries FOREIGN KEY (notice_id, section_id) REFERENCES notice_sections, so the
+section has to exist in the parsed layer — it cannot be conjured at fold time.
+
+### Fixed: the authority becomes an Organization (`0074b61`)
+
+The parse layer now manufactures the section, exactly as the r209 walker already does for inline
+address blocks (`Rule::Org`): open `ORG-1` of kind `Organization`, put the authority's name inside it,
+and record the ROLE as an id-ref on the enclosing section. The ref is emitted as
+`TED-ADDRESS_CONTRACTING_BODY`, which `legacy_role` already folds onto `buyer` — **so the projection
+needed no new mapping, no new code path and no new vocabulary.** The only thing that changed is where
+`TXT-AU` lands.
+
+`AU` is safe to treat as a bare name: a single clean line in every vintage the fixtures cover (1993,
+1993-rp, 1995, 2000, 2005, 2008), and the inventory declares it in all six.
+
+The era matrix test (issue 176) gained the `buyer` column whose absence let this hide — it asserted
+title/deadline/cpv/value and never looked at parties at all, which is exactly how a fixture-level test
+stayed green while 99.5 % of the era had no buyer. All seven rows are `true`, each re-checked against
+raw fixture bytes. Red-checked: with the AU routing disabled, `text-2008` fails on `buyer` and the
+other six eras still pass.
+
+### `value` 0.1 % is CORRECT — drop it from this issue
+
+The text-era inventory has **36 field codes and not one of them is a monetary amount.** In full: AA
+AB AC AU CC CO CT CY DD DR DS DT HD IA MA NC ND OC OJ OL ON OT PC PD PG PN PR RC RG RN RP TD TI TW TX
+TY — `PG` is "Page in the OJ", the closest thing to a number, and there is nothing else. The era's
+header record simply does not publish a contract value; any amount lives inside the `TX`/`OT`/`AB`
+prose bodies as unstructured text.
+
+So ~0 % is the honest reading, not a mapping gap, and chasing it would be effort spent against
+nothing. This is the same trap issue 231 flags for sdk-0.1's CPV — check whether the era publishes the
+field before mapping it. (Extracting values from prose is a different project entirely, and would want
+its own issue and its own accuracy argument.)
+
+### `winner` IS a real gap, but do not map `CO` yet
+
+`CO` = "Successful contractor(s)", present 2000–2010, and it is `Prose(None)` — a text row on the root
+that reaches nothing. So the gap is real. But the one committed fixture that carries it shows a shape
+that would produce garbage if mapped as-is (`text/2005-can-154-2005.txt`):
+
+    CO: Name and address of successful supplier, contractor or service provider:
+        Grahams Engineering Ltd.
+        NSG Environmental Ltd.
+
+The head line is a **LABEL**, and the continuation lines are **two separate contractors**. `Prose(None)`
+newline-joins all three into one blob, so a naive `CO` → winner-name mapping would create one
+Organization named "Name and address of successful supplier, contractor or service provider:\nGrahams
+Engineering Ltd.\nNSG Environmental Ltd." — a fabricated party, which is worse than a missing one.
+
+Needed before any code: an archive study across the vintages `CO` spans (2000, 2005, 2007, 2008,
+2010) answering — is the head line always a label, or do some vintages put the first name there? Is it
+always one contractor per continuation line? Are addresses mixed in with names? Only then does the
+rule (`Prose` → `PerLine`, plus label stripping) become a decision rather than a guess. One fixture is
+not an era; this is the same discipline that made the sdk-0.1 and r208 value work land correctly.
+
+### Also evidenced, also deferred
+
+`TW` = "Town of the awarding authority" and `CY` = "Country (code)" both describe the authority, and
+`ORG_COUNTRY_FIELDS` already lists `TXT-CY` — evidence the design anticipated a text-era org. Routing
+them into `ORG-1` beside the name would give the mention a country (which helps organization identity
+dedup). Deliberately left out of `0074b61` to keep one claim per commit; it is a small follow-on with
+the evidence already in hand.
+
+### Status: the code is in, the corpus is not
+
+The 3,786,955 stored notices keep their old parse layer until the era is re-parsed. That is a separate
+scheduled unit and it wants the same rebuild window issue 100's DE-1.x cohort is waiting for
+(`reparse` → one `project --rebuild`, ADR-0009). Until then the data-quality report will keep showing
+0.5 % buyer for the text era, and that is expected rather than a sign the fix did not work.
