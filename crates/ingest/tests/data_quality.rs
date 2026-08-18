@@ -105,10 +105,63 @@ fn cell(value: turso::Value) -> Value {
 async fn measure(db: &Db, base_url: &str) -> data_quality::Report {
     let mut results = Vec::new();
     for (label, sql) in data_quality::queries() {
-        results.push((label, rows(db, &sql).await));
+        results.push((label, Some(rows(db, &sql).await)));
     }
     let raw = Raw::from_labelled(results).expect("all result sets present");
     data_quality::assemble(base_url, &raw)
+}
+
+/// Issue 230: summing a windowed query across disjoint windows must equal the
+/// unwindowed result. This is the property the whole windowed design rests on — if
+/// it does not hold, a bounded measurement is a wrong measurement — and it is
+/// checked against the real fixture corpus, with a window size of ONE so every
+/// tender_id sits in its own window and the seams are maximally exercised.
+#[tokio::test]
+async fn windowed_sums_equal_the_unwindowed_result() {
+    let (db, fetch_id, path) = scratch("windowed").await;
+    // Same corpus the full-report test uses: several eras, so the per-profile sum
+    // has more than one key to get wrong.
+    for fixture in [
+        "eforms-chain/1-cn-16-831374-2025.xml",
+        "eforms-chain/4-can-29-380868-2026.xml",
+    ] {
+        ingest_from(&db, fetch_id, "ted", fixture).await;
+    }
+    ingest_from(&db, fetch_id, "ted", "doe-ted-pair/ted-cn-00373130-2026.xml").await;
+    ingest_from(&db, fetch_id, "doe", "doe-ted-pair/doe-cn-ebb72363-832d-4cea-8db6-04999414ea8c-01.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    let max_id = match db.scalar("SELECT MAX(tender_id) FROM tender_versions").await.unwrap() {
+        Some(turso::Value::Integer(i)) => i,
+        other => panic!("no versions to window over: {other:?}"),
+    };
+    assert!(max_id > 1, "the fixture corpus must span several tenders");
+
+    for wq in data_quality::windowed_queries() {
+        // Unwindowed: the same query with a range that covers everything.
+        let whole = rows(&db, &wq.sql(0, max_id)).await;
+        // Windowed: one window per id, summed.
+        let mut parts = Vec::new();
+        for lo in 0..max_id {
+            parts.push(rows(&db, &wq.sql(lo, lo + 1)).await);
+        }
+        let summed = data_quality::sum_profile_counts(&parts);
+        let whole_sorted = data_quality::sum_profile_counts(&[whole]);
+        assert_eq!(
+            summed, whole_sorted,
+            "{}: windowed sum must equal the whole-range result",
+            wq.label
+        );
+        // And the measurement is not vacuous — the fixtures do carry versions.
+        if wq.label == "versions" {
+            let total: i64 = summed.iter().filter_map(|r| r.get(1).and_then(|v| v.as_i64())).sum();
+            assert!(total > 0, "the denominator must count something");
+        }
+    }
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
 }
 
 /// The eForms chain (CN → 2 corrigenda → CAN) plus the DÖE↔TED pair: enough to

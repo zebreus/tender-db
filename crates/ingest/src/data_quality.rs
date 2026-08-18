@@ -191,6 +191,82 @@ pub fn queries() -> Vec<(String, String)> {
     out
 }
 
+/// A query that can be run over a bounded slice of `tender_versions` and summed
+/// (issue 230). Windowing is what makes the measurement affordable at full-corpus
+/// scale, and it is affordable for a measured reason rather than an estimated one:
+/// each window is small enough to time honestly, and the total is the sum of
+/// timed parts instead of a line extrapolated past the page cache.
+///
+/// Only the version-driven queries qualify — the denominator and the six field
+/// probes, which all shape as `FROM tender_versions v … GROUP BY n.profile` and so
+/// take an extra `v.tender_id` range predicate without changing meaning. Summing
+/// their per-profile counts across disjoint windows gives exactly the unwindowed
+/// result, because every version belongs to exactly one window.
+///
+/// `linkage`, the two density queries and `merge` are NOT here: they drive from
+/// other tables and each needs its own windowing decision, so they stay
+/// unmeasured (honestly, via the `None` path) until someone makes that decision.
+pub struct WindowedQuery {
+    pub label: String,
+    /// SQL carrying a single `{window}` placeholder inside its WHERE clause.
+    template: String,
+}
+
+impl WindowedQuery {
+    /// The SQL for one half-open window `(lo, hi]` of `tender_versions.tender_id`.
+    pub fn sql(&self, lo: i64, hi: i64) -> String {
+        self.template
+            .replace("{window}", &format!("v.tender_id > {lo} AND v.tender_id <= {hi}"))
+    }
+}
+
+/// The windowable half of [`queries`] — the denominator and the field probes.
+pub fn windowed_queries() -> Vec<WindowedQuery> {
+    let mut out = vec![WindowedQuery {
+        label: "versions".to_owned(),
+        template: "SELECT n.profile, COUNT(*) AS versions \
+                   FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+                   WHERE {window} GROUP BY n.profile"
+            .to_owned(),
+    }];
+    for spec in &FIELDS {
+        let filter = spec.predicate.map(|p| format!(" AND {p}")).unwrap_or_default();
+        out.push(WindowedQuery {
+            label: spec.key.to_owned(),
+            template: format!(
+                "SELECT n.profile, COUNT(*) AS present \
+                 FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+                 WHERE {{window}} AND EXISTS (SELECT 1 FROM {satellite} s \
+                        WHERE s.tender_id = v.tender_id AND s.seq = v.seq{filter}) \
+                 GROUP BY n.profile",
+                satellite = spec.satellite,
+            ),
+        });
+    }
+    out
+}
+
+/// The labels [`windowed_queries`] does NOT cover, so a caller can report them as
+/// unmeasured rather than silently dropping them.
+pub fn unwindowed_labels() -> Vec<String> {
+    ["linkage", "density_can", "density_with", "merge"].iter().map(|s| (*s).to_owned()).collect()
+}
+
+/// Sum per-profile count rows across windows into the single result set the
+/// assembler expects: `[profile, count]` per era, profile-sorted so the report is
+/// stable run to run.
+pub fn sum_profile_counts(windows: &[Rows]) -> Rows {
+    let mut totals: std::collections::BTreeMap<String, i64> = Default::default();
+    for rows in windows {
+        for row in rows {
+            let Some(profile) = row.first().and_then(|v| v.as_str()) else { continue };
+            let n = row.get(1).and_then(|v| v.as_i64()).unwrap_or(0);
+            *totals.entry(profile.to_owned()).or_insert(0) += n;
+        }
+    }
+    totals.into_iter().map(|(p, n)| vec![Value::String(p), serde_json::json!(n)]).collect()
+}
+
 // ------------------------------------------------------------------- eras
 
 /// A human era label for a mapping profile — the same era split the dashboard
