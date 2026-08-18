@@ -71,9 +71,40 @@ Two consequences worth stating plainly:
   `organizations_name_norm_id` indexes it — so a name-based merge has its input ready and unread. That
   makes option (1) below cheaper than it looks, and makes the fact that nothing reads it more glaring.
 
-Still unmeasured, and the next question: how much of the 23.5M would a `(country, name_norm)` merge
-actually collapse? That is a `GROUP BY` over a 24.6M-row table, so it needs the bounded-batch treatment
-and an idle box — and it is the number that decides between options (1) and (2).
+### How much would a merge collapse? Measured — and the answer is NOT one number
+
+Four bounded 200k id-windows over provisional rows, each ~0.1 s (`id BETWEEN` rides the PK, so no scan
+of the 24.6M table was needed):
+
+    ids  2,000,000..    199,026 provisional →  70,050 distinct   2.84×
+    ids  7,000,000..    198,383 provisional →  71,030 distinct   2.79×
+    ids 12,000,000..    195,376 provisional →  56,226 distinct   3.47×
+    ids 18,000,000..    194,796 provisional →  48,015 distinct   4.06×
+    ids 23,000,000..     92,488 provisional →   6,432 distinct  14.38×
+
+distinct = `COUNT(DISTINCT COALESCE(country,'?') || '|' || COALESCE(name_norm,''))`, i.e. what a
+`(country, name_norm)` merge would leave.
+
+**The ratio is not stable — it climbs from 2.8× to 14.4× across the id space**, so any single sample
+extrapolated to the table would have been wrong, and I nearly recorded the 3.47× window alone as "the"
+collapse ratio. Ids are AUTOINCREMENT and therefore roughly chronological, so the newest slice is over
+14× more repetitive than the oldest. The plausible reading is that recent eForms notices name the same
+few bodies over and over — issue 225 measured one review-body organization holding 1.79M party rows —
+while older legacy eras name genuinely varied parties. That is a hypothesis about WHY, not part of the
+measurement.
+
+What this settles and what it does not:
+- **Settles:** a name-based merge is not a marginal dedup. Even the most conservative window removes
+  ~64 % of provisional rows, and the newest removes ~93 %. Option (1) is worth doing.
+- **Does not settle:** the whole-table figure (needs a full pass or a stratified estimate — cheap now
+  that the windowed shape is known), nor whether the collapse is CORRECT. Ratio measures how much would
+  merge, never how much should: two distinct bodies sharing a name in one country merge here too, and
+  the 14× window is exactly where that risk concentrates.
+
+Next: before implementing, sample the 23M window's largest merge groups by name and eyeball whether
+they are one entity or several. A 14× collapse driven by "Ministry of Health" appearing 90,000 times is
+right; one driven by a generic string like "Contracting Authority" is the over-merge issue 04's finding
+#3 warns about.
 
 ## What to decide
 
