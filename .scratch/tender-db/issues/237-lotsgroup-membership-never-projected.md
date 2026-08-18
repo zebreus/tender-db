@@ -1,7 +1,7 @@
 # 237 — a multi-lot bid names a LotsGroup, and we never record which lots that group contains
 
-Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`); the coverage fallback deployed the same day
-(`2c31ac3`) — `refold-sections GroupComposition` re-run in flight, coverage measurement pending
+Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`, `2c31ac3`, `ff87753`) — mapping is COMPLETE
+relative to what the corpus publishes; the remaining gap is a source limitation, not a projection one
 Kind: projection mapping gap (parse layer HAS the data) + a coverage-gate blind spot
 Blocked by: —
 Relates to: 13 (results layer), 116 (tender detail reported more lots than it shipped), 88/85 (the
@@ -261,3 +261,74 @@ better than dropping a published composition). With BT-330 that path almost neve
 volume it may. So the verification also counts membership rows whose member — or group — is absent from
 the same version's `tender_version_lots`. Non-zero is not wrong, but it is a shape the corpus was not
 known to have, and it should be a number on this issue rather than a surprise later.
+
+## Corrected by a whole-corpus count (2026-08-18): BT-330 is never missing, BT-1375 almost always is
+
+The "covers only ~1 %" section above, and the fallback built from it, rest on a **mis-measured sample**.
+Counted across every `GroupComposition` section in the corpus rather than ten sampled notices:
+
+    GroupComposition sections                          11,416   (across 9,694 notices)
+    ...carrying BT-330-Procedure  (the group)          11,416   ← every single one, one value each
+    ...carrying BT-1375-Procedure (the members)            68   (62 notices, 235 values)
+    ...carrying any OTHER field                             0   ← nothing else is ever in one
+
+So the earlier reading — "most compositions list their members and never name the group" — is **exactly
+backwards**. Every composition names its group. Almost none lists its members.
+
+That re-reads the coverage number completely. Membership held 233 rows / 59 groups / 54 tenders across
+**62 carrier notices**, and 62 is precisely the number of notices that publish BT-1375 at all. The
+mapping was never at 1 % — it was, and is, **complete with respect to what is published**. The
+denominator in the earlier section (9,694 carriers) counts notices that publish a group's IDENTITY; only
+62 of them publish its COMPOSITION.
+
+### What that means for the fallback shipped in `2c31ac3`
+
+It cannot fire on today's corpus: it triggers only where a composition carries no BT-330, and no such
+composition exists (11,416 of 11,416 carry one). It is dead code — kept, because it is three lines, it
+fails safe (skip and log, never guess), and a future SDK version omitting BT-330 is exactly the shape it
+handles. But it bought no coverage, and the commit message claiming it would is wrong. The lesson is the
+plain one: **the sample was 10 notices and the population was 9,694, and the cheap whole-corpus count
+that inverted the conclusion was available the whole time.** Count the population when the population is
+one indexed query away.
+
+### The real defect the re-check found: membership did not survive the chain
+
+`fold()` carried `facts`, `lots` and `rounds` forward from the previous version and took
+`group_members` from the causing notice ALONE. So membership sat on the version published by the notice
+that defines the groups — a contract notice — while the bids that reference a group arrive with the award
+notice, versions later. A consumer joining a bid to membership at the same `(tender_id, seq)` would have
+found nothing.
+
+Sizing, from the `notice_ids_target` index (every reference that resolves to a `LotsGroup` section):
+
+    BT-330-Procedure     11,416 refs   9,694 notices   (the composition naming its group)
+    BT-13714-Tender       1,408 refs     505 notices   ← BIDS on a group: what this table is for
+    BT-13716-notice         173 refs      72 notices
+    BT-556-NoticeResult     117 refs     107 notices   (per-group result statistics)
+    BT-786-Review             1 ref        1 notice
+
+Fixed in `ff87753`: membership carries forward like the rest, superseded **per group** — a notice
+republishing a group's composition replaces that group's list entirely, a group it is silent about keeps
+the list it had. Unit-tested over a three-notice chain (compose → silent → recompose), because the
+silent middle notice is the case that matters: the award notice is usually the silent one.
+
+## What is left, and it is not ours to fix
+
+For **9,632 of 9,694** carriers the composition is simply not published: the notice names the group, and
+nothing in it — no field, no other section — says which lots the group contains. Nothing else in the
+notice references the group either (checked on notice 379: the only reference to `GLO-0005` anywhere in
+it is the composition's own BT-330).
+
+So for those groups a bid's per-lot coverage is **not recoverable from the notice**, at any effort. That
+is a statement about TED's data, not about this projection, and it changes what any consumer should be
+told: "which lots did this bid cover" is answerable for the 62 notices that publish it and unanswerable
+for the rest. A per-lot rollup must therefore report combined-award bids as an explicit unattributable
+residue rather than silently omitting them — which is the one part of this issue's original complaint
+that still stands, now with a number on it (1,408 group-referencing bids, of which the ~233-pair
+population is attributable).
+
+Possible future recovery, in descending order of honesty: the group's own title (`BT-22-LotsGroup`
+carries a buyer's internal id like `NN.270.4.2025`) sometimes encodes the lots; `BT-556-NoticeResult`
+statistics per group hint at member count; neither is a published composition and both would be
+inference. Not worth doing unless a consumer asks for it, and if it is ever done it belongs in a
+DERIVED table with its own provenance, never in `tender_version_lot_group_members`.
