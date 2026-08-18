@@ -101,10 +101,49 @@ What this settles and what it does not:
   merge, never how much should: two distinct bodies sharing a name in one country merge here too, and
   the 14× window is exactly where that risk concentrates.
 
-Next: before implementing, sample the 23M window's largest merge groups by name and eyeball whether
-they are one entity or several. A 14× collapse driven by "Ministry of Health" appearing 90,000 times is
-right; one driven by a generic string like "Contracting Authority" is the over-merge issue 04's finding
-#3 warns about.
+### The over-merge check: done, and it comes back clean
+
+Largest merge groups in the 14× window (ids 23,000,000.., provisional, by `(country, name_norm)`):
+
+     51,388  LU  Publications Office of the European Union
+      3,433  IE  The High Court of Ireland
+      2,647  CH  Bundesverwaltungsgericht
+      1,210  CH  Tribunal administratif fédéral
+      1,184  DE  1. Vergabekammer des Freistaates Sachsen bei der Landesdirektion…
+        867  LU  Court of Justice of the European Union
+        851  BE  European Commission
+        809  MT  Public Contracts Review Board
+        712  DE  Bundeskartellamt, Vergabekammern des Bundes
+        677  DE  Bundeskartellamt - Vergabekammern des Bundes
+        710  LU  Juridictions administratives
+        552  ES  Tribunal Català de Contractes del Sector Públic
+
+**Every one is a specific, identifiable institution — courts, review bodies, EU organs. Not a single
+generic string** like "Contracting Authority", which is the shape issue 04's finding #3 warns about. So
+on this evidence a `(country, name_norm)` merge is collapsing repeated mentions of ONE body, which is
+exactly what it should do.
+
+Two observations that make the case stronger, not weaker:
+
+- **The merge is CONSERVATIVE — it under-merges rather than over-merges.** Rows 3 and 4 are the same
+  Swiss court in two languages (`Bundesverwaltungsgericht` = `Tribunal administratif fédéral`), and rows
+  9 and 10 are one German body differing only by comma-versus-dash. `name_norm` is lowercased but not
+  punctuation- or language-normalised, so those stay separate. The collapse this merge achieves is
+  therefore a **floor**, and the safe direction to err in.
+- **A handful of EU-level bodies dominate.** 51,388 rows in a single 200k window are the Publications
+  Office alone — plausibly because it appears on essentially every TED notice as the eSender/service
+  provider (the `Procedure-SProvider` role seen elsewhere today), though that attribution is inference
+  and not measured here. It suggests much of the 23.5M is a small set of ubiquitous parties, which is
+  also why the newest window collapses hardest.
+
+**Caveat kept honest:** this is the top 12 by size, which says nothing about the tail. A generic string
+could sit at rank 50 and still merge thousands of unrelated bodies. Before implementing, run the same
+grouping filtered to groups whose name is short or matches a generic pattern — cheap now that the query
+shape is proven at ~0.1 s.
+
+Conclusion for the decision above: **option (1) is both worthwhile and safe on current evidence**, with
+punctuation/language normalisation as a deliberate LATER refinement rather than part of the first cut —
+merging more aggressively is the step that would need its own evidence.
 
 ## What to decide
 
