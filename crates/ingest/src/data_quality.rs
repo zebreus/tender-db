@@ -619,7 +619,10 @@ pub fn render_text(report: &Report) -> String {
             "INCOMPLETE: {} of {} queries did not run ({}). Sections below that depend on them are \
              UNMEASURED, not zero.",
             report.unmeasured.len(),
-            report.unmeasured.len() + 11 - report.unmeasured.len(),
+            // The catalog's own length, not a literal: a query added to `queries()`
+            // must not leave this banner quietly claiming a total that no longer
+            // matches how many ran.
+            queries().len(),
             report.unmeasured.join(", ")
         );
     }
