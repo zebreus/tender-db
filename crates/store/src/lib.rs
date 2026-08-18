@@ -1058,14 +1058,25 @@ impl Db {
     /// mention count until the re-fold re-mentions it (the resolver dedupes by
     /// identity, so it is the same organization row, not a new one).
     async fn clear_parsed(&self, conn: &Connection, id: i64) -> turso::Result<()> {
-        conn.execute(
-            "DELETE FROM organization_mentions WHERE notice_id = ?",
-            (Value::Integer(id),),
-        )
-        .await?;
+        // Each step names itself on failure. Two prod re-parse runs died with a bare
+        // "immediate foreign key constraint failed" (jobs 721 and 733), which says
+        // an FK broke but not WHICH statement broke it — and the obvious suspect,
+        // the mentions/sections ordering below, is demonstrably not it: a store test
+        // re-parses a mentioned notice successfully. Without the statement, the next
+        // occurrence is another round of guessing.
+        Self::step(conn, "clear organization_mentions", "DELETE FROM organization_mentions WHERE notice_id = ?", id)
+            .await?;
         for table in Self::PARSED_TABLES {
-            conn.execute(&format!("DELETE FROM {table} WHERE notice_id = ?"), (Value::Integer(id),))
-                .await?;
+            Self::step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
+        }
+        Ok(())
+    }
+
+    /// One notice-scoped statement, logging which one it was if it fails.
+    async fn step(conn: &Connection, label: &str, sql: &str, id: i64) -> turso::Result<()> {
+        if let Err(e) = conn.execute(sql, (Value::Integer(id),)).await {
+            eprintln!("[store] notice {id}: {label} failed: {e}");
+            return Err(e);
         }
         Ok(())
     }
@@ -1113,7 +1124,21 @@ impl Db {
         .await;
         match result {
             Ok(outcome) => {
-                conn.execute("COMMIT", ()).await?;
+                // Attributed separately from the statements above, and that
+                // distinction is the point: prod's failure reads "IMMEDIATE foreign
+                // key constraint failed" where a row-level violation in this build
+                // reads "FOREIGN KEY constraint failed", so the check that fails may
+                // be the transaction's rather than any single statement's. A log
+                // showing this line and NO statement line means the violation is only
+                // visible once the whole transaction is considered — a different bug
+                // with a different fix, and worth knowing before writing either.
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    eprintln!(
+                        "[store] notice re-parse COMMIT failed (no single statement did): {e}"
+                    );
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
                 Ok(outcome)
             }
             Err(e) => {
@@ -1484,12 +1509,22 @@ impl Db {
     /// Fan one notice's parsed form out into the value tables.
     async fn insert_parsed(&self, conn: &Connection, id: i64, parsed: &Parsed) -> turso::Result<()> {
         for s in &parsed.sections {
-            conn.execute(
-                "INSERT INTO notice_sections(notice_id, section_id, kind, parent_section_id)
-                 VALUES(?, ?, ?, ?)",
-                (Value::Integer(id), t(&s.id), t(&s.kind), opt_text(s.parent.as_deref())),
-            )
-            .await?;
+            if let Err(e) = conn
+                .execute(
+                    "INSERT INTO notice_sections(notice_id, section_id, kind, parent_section_id)
+                     VALUES(?, ?, ?, ?)",
+                    (Value::Integer(id), t(&s.id), t(&s.kind), opt_text(s.parent.as_deref())),
+                )
+                .await
+            {
+                // Includes the parent id, because a section whose parent is not in
+                // this same batch is the one shape that can fail here on an FK.
+                eprintln!(
+                    "[store] notice {id}: insert section {} (kind {}, parent {:?}) failed: {e}",
+                    s.id, s.kind, s.parent
+                );
+                return Err(e);
+            }
         }
         for v in &parsed.values {
             let key = (Value::Integer(id), t(&v.section_id), t(&v.field_id), Value::Integer(v.ordinal));
