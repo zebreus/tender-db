@@ -1955,12 +1955,36 @@ impl Supervisor {
             }
         }
 
+        // Without this stamp the whole job reports success and changes nothing
+        // (issue 100, point (b)). `reparse_notice` sets `projected = 0`, so the
+        // notice does enter the incremental change-set — but the fold EARLY-RETURNS
+        // on a Tender whose chain is unchanged and whose epoch is current, and a
+        // re-parse changes neither: same notices, same order, same chain. The new
+        // parse rows would sit there while every reader kept seeing the old fold.
+        //
+        // The alternative on the table was a global `PROJECTION_EPOCH` bump, which
+        // issue 99 measures as "declares 7.9M tenders stale to fix one era" — hours,
+        // to land a 31-notice cohort. Stamping just this cohort's tenders is the same
+        // trick the `refold` jobs already use for the same reason (issues 85/99/179),
+        // and it is why a targeted re-parse no longer implies a full rebuild.
+        //
+        // Scoped by PROFILE rather than by the ids actually re-parsed: a superset,
+        // deliberately, because a stale stamp only forces a rewrite that recomputes
+        // identical content, while a missed one silently loses the re-parse. Gated on
+        // `reparsed > 0` so a no-op walk does not age a whole profile for nothing.
+        let stamped = if reparsed > 0 {
+            self.db.stamp_stale_for_profiles(&refs).await.map_err(|e| e.to_string())?
+        } else {
+            0
+        };
+
         // `now_failing` is the line to read first on any future run: it counts
         // notices the CURRENT parser can no longer parse, whose stored layer was
         // therefore left alone. Non-zero means a parser regression, not progress.
         Ok(format!(
             "re-parsed {reparsed} notices across {} packages ({members} members walked, \
-             {unmatched} unmatched, {failing} now failing and left untouched)",
+             {unmatched} unmatched, {failing} now failing and left untouched); \
+             stamped {stamped} tender(s) epoch-stale",
             packages.len()
         ))
     }
