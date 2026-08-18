@@ -2185,10 +2185,19 @@ impl Supervisor {
     /// When the data-quality measurement is queued: Berlin wall-clock `(weekday,
     /// hour, minute)`, `0` = Sunday (issue 230).
     ///
-    /// Weekly, not daily: the run is ~36 minutes of measured reader-pool work over
-    /// 32 id windows and it holds the serialized queue for all of it, while the
-    /// numbers it produces (per-era field completeness, award linkage, results
-    /// density) move on the scale of a parser change, not of a day's ingest.
+    /// Weekly, not daily: the run is hours of reader-pool work over 32 id windows
+    /// and it holds the serialized queue for all of it, while the numbers it
+    /// produces (per-era field completeness, award linkage, results density) move on
+    /// the scale of a parser change, not of a day's ingest.
+    ///
+    /// Measured on prod rather than guessed, because guessing is what went wrong
+    /// twice before: the SEVEN-query pass (before linkage/density/merge were
+    /// windowed) took **1258 s over 32 windows** with zero failed windows. Adding
+    /// the last four queries roughly quadrupled a window — 291 s and 229 s for the
+    /// first two — which puts the eleven-query pass in the 2–3 hour range. Even at
+    /// the top of that, a 03:10 Berlin start finishes hours before the 09:35 daily.
+    /// The per-query cost breakdown each run now logs is what will say whether that
+    /// price is an index away from being much lower.
     ///
     /// 03:10 Sunday, not the 09:35 daily tick: the daily is the busiest moment the
     /// box has — probe, process and fold, back to back — and a measurement queued
