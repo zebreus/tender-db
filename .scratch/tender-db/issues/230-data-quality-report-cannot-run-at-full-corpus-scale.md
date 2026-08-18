@@ -340,14 +340,61 @@ The breakdown costs nothing extra to obtain: it lands with the next scheduled Su
    unmeasured and say so in the report's own text.~~ **DONE** (`b50184b`) — all four windowed, and
    `density_with`'s unit bug fixed on the way.
 
+## The COMPLETE report ran (job 732, 2026-08-18): 2366 s, zero unmeasured
+
+    data quality measured: 23 eras over 32 windows in 2366s; 0 label(s) unmeasured ()
+
+All eleven queries, all four sections, 14.15M tender-versions, **zero failed windows**. The issue's
+original state — 11 of 11 queries returning HTTP 408 and every section printing blank — is closed.
+
+**The runtime projection was wrong by 4×, in the safe direction this time.** From the first two windows
+(291 s, 229 s) I recorded "2–3 hours"; the real total is 39 minutes, because the mid-corpus id ranges
+are sparse and run in 17–27 s. That is the THIRD partial-sample misprediction on this job — 47 s
+predicted for an unbounded query that ran for minutes, then 36 minutes, then 2–3 hours for a 39-minute
+run. The lesson is not "estimate better", it is that this cost is not extrapolable from any prefix, and
+the per-query breakdown is the only honest instrument. `DQ_WINDOW` stays at 250k.
+
+### It found two defects in its own output on the first run
+
+Both are now fixed (`371c5a7`), and both are the kind that only a full-corpus run could surface:
+
+1. **The results denominator was era-blind.** `DENSITY_CAN_SQL` matched `s.kind = 'LotResult'` while
+   claiming in its doc to be "era-agnostic". sdk-0.1's results live in `TenderResult` sections
+   (`project.rs`'s `SDK01_RESULT_KIND`), so the entire DÖE island fell out of the denominator while the
+   numerator counted it: **0 award notices against 139,961 with results.** Now matches both kinds.
+2. **That impossible row rendered as `—`.** A numerator above its denominator is not a high rate, it is
+   the two halves disagreeing about the population, and neither an em dash ("nothing to report") nor a
+   >100 % figure ("a rate") says so. Such a row now prints `IMPOSSIBLE` with a line naming the
+   section-kind list as the first place to look, so the next occurrence announces itself whatever its
+   cause.
+
+### And two findings filed from sections 2 and 3
+
+- **Issue 235** — section 3 reads **exactly 100.0 % for all twenty eras that measure**, numerator
+  identical to denominator, on eras of 1.07M and 2.10M versions. That uniformity is the finding: both
+  halves key on the same fact, so the metric measures the projection against its own parse layer and
+  cannot see an award notice that materialised nothing. Issue 100's open DE-1.x winner gap reads
+  100.0 % in it. The module docstring's old "0.3 %" example is retired (`28bdd06`) pointing at 235
+  rather than swapped for a fresh number.
+- **Issue 236** — eForms EU awards chain at 44–77 % where eForms-DE manages 98–100 %: ~246,000
+  unchained award Tenders, distinct from the two known island cases (internal-ojs 3.5 %, sdk-0.1 2.0 %,
+  issues 187/188, both visible in the same table). Filed with a falsifiable cross-era hypothesis whose
+  first prediction already looks shaky — sdk-1.14 is the worst row, not the best — recorded that way on
+  purpose.
+
+Section 4 measures for the first time: **DÖE procedure Tenders 902,853; merged with TED 233,074
+(25.8 %)** — ADR-0003's promise, quantified. Plausible on its face (only above-threshold German
+procedures reach TED, and sdk-0.1's non-uuid folder ids stay islands per issue 34), so not filed as a
+defect; recorded here as the first baseline to watch.
+
 ### Remaining after all four
 
 - **Read the cost-per-query line** from the first run that carries it and decide whether
   `density_can` (or another) wants an index. Do not add an index to `notice_sections` before that line
   says so.
-- **Confirm sections 2–4 are populated** in the first eleven-query report, and judge the era winner
-  questions (issues 231/232) from section 3's award-notice denominator rather than from the `winner`
-  column's all-versions one.
+- ~~**Confirm sections 2–4 are populated**~~ **DONE** — all four populate (job 732). But the era
+  winner questions on issues 231/232 CANNOT yet be judged from section 3, because issue 235 shows that
+  denominator does not mean what it needs to mean. Those two wait on 235.
 - **`bin/data-quality` still re-runs all eleven queries live**, which no longer works against prod.
   Point it at `GET /admin/reports/data-quality` for the stored body, keeping its live path for small
   instances.
