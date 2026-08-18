@@ -1539,26 +1539,35 @@ async fn sdk01_projects_title_buyer_and_winner() {
 /// container and form; `amount_target` routes them).
 #[tokio::test]
 async fn every_era_projects_its_headline_fields() {
-    // (era, source, fixture path, dispatch member path, title, deadline, cpv, value)
-    let matrix: &[(&str, &str, &str, &str, bool, bool, bool, bool)] = &[
+    // (era, source, fixture path, dispatch member path, title, deadline, cpv, value, buyer)
+    //
+    // `buyer` was added by issue 232 and every row is `true`: all seven fixtures were
+    // re-checked against their raw bytes and each carries a buyer-bearing element —
+    // `cac:ContractingParty` (eForms EU, DE-1.x, sdk-0.1), `ADDRESS_CONTRACTING_BODY`
+    // (r209), `CONTRACTING_AUTHORITY_INFORMATION`+`OFFICIALNAME` (r208),
+    // `CONTRACTING_AUTHORITY`+`ADDRESSES_CONTRACT` (internal-ojs), `AU:` (text).
+    // The column's absence was a real hole: the text era carried a buyer on 0.5% of
+    // 3.79M versions on prod and this matrix could not see it, because it did not
+    // look at parties at all.
+    let matrix: &[(&str, &str, &str, &str, bool, bool, bool, bool, bool)] = &[
         // cbc:Name / TenderSubmissionDeadlinePeriod/EndDate / ItemClassificationCode
-        ("eforms-eu", "ted", "eforms/cn-16-00494343-2026.xml", "eforms/cn-16-00494343-2026.xml", true, true, true, false),
+        ("eforms-eu", "ted", "eforms/cn-16-00494343-2026.xml", "eforms/cn-16-00494343-2026.xml", true, true, true, false, true),
         // the same UBL carriers under the eforms-de-1.1 customization (empirical inventory)
-        ("eforms-de-1x", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml", true, true, true, false),
+        ("eforms-de-1x", "doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml", "doe/eforms-de-1.1-cn-7d69b0f7.xml", true, true, true, false, true),
         // SDK01-ProcurementProject-Name + the lot's TenderSubmissionDeadlinePeriod;
         // the dialect's committed CN carries no CPV
-        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml", true, true, false, false),
+        ("doe-sdk01", "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml", "doe/sdk-0.1-numeric-cn-25599482-1.xml", true, true, false, false, true),
         // TITLE / DATE_RECEIPT_TENDERS / CPV_CODE
-        ("r209", "ted", "r209/f02-000245-2019.xml", "r209/f02-000245-2019.xml", true, true, true, false),
+        ("r209", "ted", "r209/f02-000245-2019.xml", "r209/f02-000245-2019.xml", true, true, true, false, true),
         // TITLE_CONTRACT / RECEIPT_LIMIT_DATE (issue 174's loss) / CPV_CODE /
         // F02_FRAMEWORK TOTAL_ESTIMATED VALUE_COST (issue 177's loss)
-        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", true, true, true, true),
+        ("r208", "ted", "r208/f02-000333-2014.xml", "r208/f02-000333-2014.xml", true, true, true, true, true),
         // OPOCE 2008 full CONTRACT notice: TITLE_CONTRACT / RECEIPT_LIMIT_DATE / CPV_CODE
-        ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true, false),
+        ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true, false, true),
         // TI / DT (deadline with clock) / PC
-        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true, false),
+        ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true, false, true),
     ];
-    for &(era, source, fixture, member, title, deadline, cpv, value) in matrix {
+    for &(era, source, fixture, member, title, deadline, cpv, value, buyer) in matrix {
         let (db, fetch_id, path) = scratch(&format!("matrix-{era}")).await;
         ingest_as(&db, fetch_id, source, fixture, member).await;
         let report = project::project(&db, false).await.expect("project");
@@ -1576,6 +1585,11 @@ async fn every_era_projects_its_headline_fields() {
                 value,
                 "SELECT COUNT(*) FROM tender_version_amounts WHERE field = 'estimated_value'",
             ),
+            // `LIKE '%uyer%'` because the eras name the role differently and both
+            // spellings are correct: eForms carries `Procedure-Buyer` (from
+            // `OPT-300-Procedure-Buyer`), the legacy profiles fold theirs onto plain
+            // `buyer`. The dashboard's own completeness query matches the same way.
+            ("buyer", buyer, "SELECT COUNT(*) FROM tender_version_parties WHERE role LIKE '%uyer%'"),
         ];
         for &(name, carried, sql) in checks {
             if carried {

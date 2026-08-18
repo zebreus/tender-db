@@ -17,8 +17,26 @@ use store::{NoticeValue, Parsed, Section, ValueRow};
 use super::rules::{self, Rule, Type};
 use crate::r209::value;
 
-/// The single section every text-era value lands in.
+/// The section every text-era value lands in, except the awarding authority.
 const SECTION: &str = "PROCEDURE";
+
+/// The synthesized Organization section holding the awarding authority's name
+/// (issue 232).
+///
+/// The era publishes no section structure, so this is manufactured exactly as the
+/// r209 walker manufactures its `ORG-n` sections for inline address blocks: open a
+/// section of kind `Organization`, put the party's own values inside it, and record
+/// the ROLE as an id-ref on the enclosing section. Reusing the legacy `TED-` role
+/// vocabulary is deliberate — `project.rs`'s `legacy_role` already folds
+/// `ADDRESS_CONTRACTING_BODY` onto `buyer`, so the projection needs no new mapping
+/// and no new code path to reach this.
+///
+/// Why it has to be a section at all: `organization_mentions` carries FOREIGN KEY
+/// (notice_id, section_id) REFERENCES notice_sections, and the projection only
+/// seeds a mention for sections whose KIND says party. A name sitting on the
+/// notice root — which is where `TXT-AU` sat for 3.79M notices — can never become
+/// an Organization, whatever the field tables say.
+const AUTHORITY_SECTION: &str = "ORG-1";
 
 #[derive(Debug, PartialEq)]
 pub struct Rejected {
@@ -135,7 +153,14 @@ fn flush(emit: &mut Emit, field: Option<Field>) -> Result<(), Rejected> {
             }
             let text = lines.join("\n");
             if !text.is_empty() {
-                emit.text(&id, lang, text);
+                // `AU` is the awarding authority's NAME — one clean line in every
+                // vintage the fixtures cover (1993, 1995, 2000, 2005, 2008) — so it
+                // becomes an Organization rather than a text row on the root.
+                if field.code == "AU" {
+                    emit.authority(text);
+                } else {
+                    emit.text(&id, lang, text);
+                }
             }
         }
     }
@@ -184,7 +209,38 @@ impl Emit {
         self.push(field, NoticeValue::Text { lang: lang.map(str::to_owned), value });
     }
 
+    /// The awarding authority as an Organization (issue 232): its name inside a
+    /// synthesized `ORG-1` section, and a `buyer` role reference to it on the root.
+    ///
+    /// Opened at most once per record. A second `AU` — not observed, but the parser
+    /// does not forbid it — adds another name row to the same section, and the
+    /// projection's mention keeps the first, so the role never doubles.
+    fn authority(&mut self, name: String) {
+        self.root();
+        if !self.parsed.sections.iter().any(|s| s.id == AUTHORITY_SECTION) {
+            self.parsed.sections.push(Section {
+                id: AUTHORITY_SECTION.into(),
+                kind: "Organization".into(),
+                parent: Some(SECTION.into()),
+            });
+            self.push_into(SECTION, "TED-ADDRESS_CONTRACTING_BODY", NoticeValue::Id {
+                scheme: None,
+                value: AUTHORITY_SECTION.into(),
+                is_ref: true,
+            });
+        }
+        self.push_into(AUTHORITY_SECTION, "TXT-AU", NoticeValue::Text { lang: None, value: name });
+    }
+
     fn push(&mut self, field: &str, value: NoticeValue) {
+        self.root();
+        self.push_into(SECTION, field, value);
+    }
+
+    /// The root section, created on first use — a record with no consumed field
+    /// emits no sections at all, which is what makes the `empty-record` rejection
+    /// detectable.
+    fn root(&mut self) {
         if self.parsed.sections.is_empty() {
             self.parsed.sections.push(Section {
                 id: SECTION.into(),
@@ -192,10 +248,13 @@ impl Emit {
                 parent: None,
             });
         }
+    }
+
+    fn push_into(&mut self, section: &str, field: &str, value: NoticeValue) {
         let ordinal = self.ordinals.entry(field.to_owned()).or_insert(-1);
         *ordinal += 1;
         self.parsed.values.push(ValueRow {
-            section_id: SECTION.into(),
+            section_id: section.to_owned(),
             field_id: field.to_owned(),
             ordinal: *ordinal,
             value,
