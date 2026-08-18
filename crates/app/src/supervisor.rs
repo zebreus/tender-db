@@ -1692,6 +1692,12 @@ impl Supervisor {
         // of being paged in seven times.
         let units = (windows.len() * queries.len()) as u64;
         let mut per_label: BTreeMap<String, Vec<Rows>> = BTreeMap::new();
+        // Elapsed per LABEL across every window, so the run says which query costs
+        // what. A per-window total cannot: the eleven queries differ by more than an
+        // order of magnitude in cost, so "this window took 291 s" identifies nothing
+        // to fix. This breakdown is the input to the next sizing or indexing
+        // decision, which is the whole reason the timings are logged at all.
+        let mut cost: BTreeMap<String, f64> = BTreeMap::new();
         let mut broken: Vec<String> = Vec::new();
         let mut done = 0u64;
         let run_started = Instant::now();
@@ -1704,7 +1710,11 @@ impl Supervisor {
                     Some(units),
                     format!("window {}/{} query {}", wi + 1, windows.len(), query.label),
                 );
-                match self.db.measure_rows(&query.sql(*lo, *hi)).await {
+                let query_started = Instant::now();
+                let measured = self.db.measure_rows(&query.sql(*lo, *hi)).await;
+                *cost.entry(query.label.clone()).or_default() +=
+                    query_started.elapsed().as_secs_f64();
+                match measured {
                     Ok(rows) => per_label
                         .entry(query.label.clone())
                         .or_default()
@@ -1732,6 +1742,19 @@ impl Supervisor {
                 run_started.elapsed().as_secs_f64(),
             );
         }
+
+        // Costliest first: the line an operator reads to decide what to index or
+        // resize next.
+        let mut ranked: Vec<(&String, &f64)> = cost.iter().collect();
+        ranked.sort_by(|a, b| b.1.total_cmp(a.1));
+        eprintln!(
+            "[data-quality] cost by query: {}",
+            ranked
+                .iter()
+                .map(|(label, secs)| format!("{label} {secs:.0}s"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
 
         let mut results: Vec<(String, Option<Rows>)> = Vec::new();
         for query in &queries {
