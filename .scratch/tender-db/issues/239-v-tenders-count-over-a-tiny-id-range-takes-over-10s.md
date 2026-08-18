@@ -75,6 +75,35 @@ GROUP BY examples may now be feasible where before they could not be. It is a co
 denormalisation that this schema wanted anyway. It just does not address filtering, and the commit
 message claiming the view now "flattens" is wrong — corrected here rather than rewritten.
 
+### The cause was ALREADY IN THE REPO, and that is the finding worth keeping
+
+`crates/store/src/lib.rs:3684`, in a test's doc comment, predating any of this work:
+
+    /// (turso does not push a predicate through a view, so like the existing
+    /// v_tenders/v_lots a filtered query materialises the view; the guarantee that
+    /// matters here is "no version aggregation/sort", …)
+
+It names the property, names turso as the cause, and names `v_tenders` and `v_lots` as the affected
+views. `grep -rn "push a predicate" crates/` finds it in under a second.
+
+So this investigation re-derived a documented fact, and paid for it with a schema migration, a fold
+change, a backfill job, 150 lines of tests, two deploys and a 7,924,659-row write — all aimed at a
+subquery that was never the cause.
+
+**This is the second time today.** Issue 100's own "BUILT but NOT USABLE yet" section had already named
+the `clear_parsed` fix before I ran that job three times and instrumented it to rediscover the same
+thing. Two different subsystems, same failure: I investigate before searching for what is already known.
+
+Concretely, for next time — cost me hours today, costs seconds:
+- `grep` the repo for the SUBSYSTEM's known behaviour before measuring it (`push a predicate`,
+  `materialise`, the view name, the function name).
+- Read the issue's own open-questions section before running the job it describes.
+- Prefer the cheap discriminating measurement to the plausible mechanism: two queries (join raw vs join
+  in a view) beat two hours of reasoning, and would have matched what the repo already said.
+
+The `EXPLAIN QUERY PLAN` I kept saying was unavailable through the sandbox is also right there in that
+same test, run against a scratch DB — so the plan was always obtainable in a unit test.
+
 ### Two documentation defects found by running the endpoint's own advice (FIXED, `8519810`)
 
 Testing the acceptance list meant running what `/v1/sql` tells callers to run, and none of it worked:
@@ -95,9 +124,11 @@ answer a filtered question.
 
 ### Fix directions, now that the cause is known
 
-- **Point analysts at the base tables** and say plainly that the `v_*` views cannot be filtered. Cheapest
-  honest step, deployable today: the endpoint's own schema descriptions (`sql.rs:548`) currently
-  advertise `v_tenders` as "the usual entry point", which is the opposite of true.
+- ~~**Point analysts at the base tables**~~ **DONE** (`8519810`, `7498c2d`): the four current-state views
+  carry a NOT FILTERABLE warning naming the base-table join to use instead, and the public
+  `/v1/docs` page — which called the views "the main entry points", shipped the 408 example, taught the
+  NULL-returning date idiom, and carried a long-stale "only 2026 forward is projected" caveat — now
+  says see-with-views, query-with-tables and shows the 17 ms join.
 - **Materialise** the views as real fold-maintained tables. Removes the problem entirely, costs write
   amplification and schema surface; the `current_*` columns are already halfway there.
 - **Upstream**: predicate pushdown into views is ordinary SQLite behaviour, so this is a turso gap worth
