@@ -1,7 +1,7 @@
 # 238 — /v1/sql answers "your query exceeded the 10s limit" when the truth is "no reader was free"
 
-Status: message half FIXED and deployed 2026-08-18 (`7809efe`, corrected in `f1cc6d4`); the
-AVAILABILITY half is open — two uninterruptible queries still deny the endpoint to all users
+Status: message half FIXED (`7809efe`, corrected `f1cc6d4`) and fast-shed FIXED (`f771443`), both
+deployed and verified on prod. Remaining: admission control, so a huge scan is not admitted at all
 Kind: misleading diagnostic (the error names the wrong cause) + cold-connection cost
 Blocked by: —
 Relates to: 17 (the isolated SQL runtime), 51 (abandon on disconnect / slot bounding), 230 (whose
@@ -101,6 +101,41 @@ index-choice inversion where adding a `kind` predicate moves the planner off a P
 `notice_sections_kind`. Only the first is in scope here, but while it persists no on-box investigation
 can tell "my query is wrong" from "the backend was busy", which is precisely the confusion that makes
 this worth fixing before the next investigation rather than after.
+
+## The fast shed is DONE and verified on prod (2026-08-18, rev `f771443`)
+
+The endpoint now counts executions occupying a worker and refuses when there is no room, after a 750 ms
+grace. Verified by accident, which is the best kind: three sequential queries of
+`SELECT COUNT(*) FROM v_tenders WHERE id < 5000` produced
+
+    HTTP408 [11.00s]   ← genuine query timeout; pinned worker 1
+    HTTP408 [11.00s]   ← genuine query timeout; pinned worker 2
+    HTTP503 [0.76s]    ← shed at exactly CAPACITY_GRACE, instead of 11 s
+
+and throughout, `/health` served in 0.8 ms and `/v1/tenders` in 28 ms. Both halves of the intended
+behaviour, in one run.
+
+Two design points, since both were nearly got wrong:
+- A **count**, not a semaphore: a permit released when the request ends would report capacity that does
+  not exist, because the computation outlives the request. The guard lives inside the isolated task, so
+  its drop waits on the computation.
+- A **grace**, not an instant refusal: two legitimate 8 s aggregates saturate the runtime too, and a
+  third cheap query arriving mid-flight used to wait a moment and succeed. Shedding on sight would have
+  traded this bug for a smaller one.
+
+### An unwelcome finding from the same run
+
+`SELECT COUNT(*) FROM v_tenders WHERE id < 5000` **takes over 10 seconds** — a count over a 5,000-id
+range on the analyst surface's headline view. I had reached for it as an obviously-cheap query and it
+was not; the view's own cost dominates, so an id range that looks tiny still pays for it.
+
+That is a usability problem for `/v1/sql` in its own right (issue 50's surface), and it materially
+strengthens the admission-check argument below: the plan for that query would have shown the scan
+before it burned a worker for eleven seconds. It also means the workers pinned in this very
+verification were pinned by a query nobody would have predicted was expensive.
+
+Filed as its own issue rather than left here, since it is about view cost rather than about error
+reporting.
 
 ## Fix directions
 
