@@ -1,7 +1,8 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: needs-triage, RAISED — `v_tenders` cannot serve even a primary-key point read (measured
-2026-08-18); the analyst surface's headline view is unusable for any filtered query
+Status: CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
+surface is unusable for filtered queries (a single-table view is 1000x slower than its table). The
+`current_title` denormalisation shipped and helps unfiltered reads, but is NOT the fix
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
 Blocked by: —
 Relates to: 50 (the analyst surface), 238 (found while verifying its fix; strengthens its
@@ -27,7 +28,65 @@ the practical harm: an unremarkable-looking query is enough to saturate the SQL 
 check built for 238 has to catch this shape, and any capacity reasoning that assumes "cheap queries are
 cheap" is wrong here.
 
-## FIXED in code and deployed (2026-08-18, rev `f985136`) — backfill running
+## THE REAL CAUSE (2026-08-18, measured after deploying the wrong fix): turso does not push predicates into views AT ALL
+
+The `current_title` work below was built on a hypothesis I never tested, and it did **not** fix the
+symptom. After deploying it and backfilling 7,924,659 rows, the original query was still >10 s. The
+measurements that should have come first:
+
+    SELECT current_seq FROM tenders          WHERE id = 93601         0.001 s   ← raw table, warm
+    SELECT seq FROM v_tender_current         WHERE tender_id = 93601  1.41 s    ← SINGLE-TABLE view
+    (repeated, warm)                                                  1.41 s, 1.51 s — not a cache effect
+    raw 2-table join, same PK filter                                  0.017 s   ← the join is fine
+    SELECT id, title FROM v_tenders          WHERE id = 93601         >10 s     ← same join, in a view
+    SELECT id FROM v_lots                    WHERE tender_id = 93601  >10 s     ← and v_lots too
+
+**A single-table view over `tenders` filtered by primary key is ~1000× slower than the same filter on
+the table.** So the predicate is not pushed into a view, period — not for joins, not for subqueries, not
+for a trivial `SELECT … FROM tenders WHERE current_seq IS NOT NULL`. Every `v_*` view scans its whole
+source and filters afterwards, and the only reason the numbers differ is how expensive each view's full
+scan is (a narrow scan of `tenders` costs 1.4 s; the joined one blows the budget).
+
+### Consequence: the whole `v_*` analyst surface is unusable for filtered queries
+
+Not one view, and not aggregates only. `/v1/sql` allow-lists both the views and the base tables, and the
+base tables plan correctly — the raw two-table join with a PK filter is 17 ms. So the curated surface is
+the slow path and the raw tables are the fast one, which is precisely backwards from what the views were
+introduced to do (issue 50).
+
+### Two wrong hypotheses, and the cheap test that would have killed both
+
+1. "The count pays ~5,000 correlated subqueries" — wrong by 1000×; the filter did nothing at all.
+2. "The correlated subquery blocks view flattening, so denormalise the title" — plausible, precedented,
+   tested by nobody. The subquery was real per-row cost, but it was never why the filter failed.
+
+The discriminating experiment was **two queries**: run the view's own join raw, then in the view. 17 ms
+vs >10 s answers it immediately, needs no code, and I ran it only after writing a schema migration, a
+fold change, a backfill job, 150 lines of tests, a deploy, and a 7.9M-row write. The lesson is not
+"hypothesise better" — it is that when a cheap discriminating measurement exists, it comes before the
+code, not after it.
+
+### What the `current_title` work is actually worth
+
+Not wasted, and not a fix. It removed a genuine per-row cost from the view (a subquery with a sort on two
+computed expressions, evaluated for every row of every full scan), so unfiltered reads improved sharply —
+`SELECT title FROM v_tenders LIMIT 1` is 2 ms and returns a correct title ("Ladekabel eAutos"), and the
+GROUP BY examples may now be feasible where before they could not be. It is a correct, tested
+denormalisation that this schema wanted anyway. It just does not address filtering, and the commit
+message claiming the view now "flattens" is wrong — corrected here rather than rewritten.
+
+### Fix directions, now that the cause is known
+
+- **Point analysts at the base tables** and say plainly that the `v_*` views cannot be filtered. Cheapest
+  honest step, deployable today: the endpoint's own schema descriptions (`sql.rs:548`) currently
+  advertise `v_tenders` as "the usual entry point", which is the opposite of true.
+- **Materialise** the views as real fold-maintained tables. Removes the problem entirely, costs write
+  amplification and schema surface; the `current_*` columns are already halfway there.
+- **Upstream**: predicate pushdown into views is ordinary SQLite behaviour, so this is a turso gap worth
+  reporting and pinning with a version note.
+- Do NOT reach for "make the views single-table" — measured above, it does not help.
+
+## Superseded: FIXED in code and deployed (2026-08-18, rev `f985136`) — backfill running
 
 `v_tenders.title` now reads `tenders.current_title`, a fold-maintained column, instead of computing a
 correlated subquery per row. The view is a plain two-table join, so it flattens, so a caller's filter
