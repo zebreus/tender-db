@@ -1981,7 +1981,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 14] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 16] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         // Issue 217-A: `/v1/tenders?publication_id=` seeds its FROM with "the
@@ -1990,6 +1990,14 @@ impl Db {
         ("tender_versions_publication", "tender_versions(publication_id, tender_id)"),
         ("tender_version_classifications_code", "tender_version_classifications(scheme, code)"),
         ("tender_version_parties_org", "tender_version_parties(organization_id)"),
+        // Issue 100: the RE-PARSE path's delete key. Clearing a notice's parsed layer
+        // has to clear the party rows anchored to its mentions first (they carry an FK
+        // onto `organization_mentions`), and without an index on the mention's notice
+        // that DELETE is a full scan of this table PER NOTICE — survivable for a
+        // 31-notice cohort, fatal for the 218,876-notice one the re-parse exists to
+        // serve. Leads with `mention_notice_id` because that is the whole predicate.
+        ("tender_version_parties_mention", "tender_version_parties(mention_notice_id)"),
+        ("tender_version_bid_parties_mention", "tender_version_bid_parties(mention_notice_id)"),
         // Issue 225: the buyer reverse-lookup's covering index. The seed
         // (`participation_seed`) narrows `tender_version_parties` by organization AND
         // buyer role; this index serves that whole shape index-only, so a ubiquitous

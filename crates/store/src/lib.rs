@@ -1064,6 +1064,36 @@ impl Db {
         // the mentions/sections ordering below, is demonstrably not it: a store test
         // re-parses a mentioned notice successfully. Without the statement, the next
         // occurrence is another round of guessing.
+        // The canonical party rows come first, and finding out WHY took two prod
+        // failures and a statement-level log (jobs 721/733/735): both
+        // `tender_version_parties` and `tender_version_bid_parties` carry
+        // `FOREIGN KEY (mention_notice_id, mention_section_id) REFERENCES
+        // organization_mentions`, so a notice that has been FOLDED has canonical rows
+        // pinning the very mentions this clear must remove. The mentions-before-
+        // sections ordering fixed earlier was necessary and not sufficient; this is
+        // the layer above it.
+        //
+        // Deleting them is coherent rather than collateral: `projected = 0`, set at
+        // the end of this same transaction, declares exactly that everything derived
+        // from this notice's parse is stale, and these rows are derived from it. The
+        // re-fold rebuilds them from the new parse. It does leave a window in which
+        // the Tender carries texts and amounts but no parties — inherent to
+        // re-parsing in place, and the bulk path (`reclaim_only` then one rebuild)
+        // spends that window with the canonical layer under reconstruction anyway.
+        //
+        // Only what the FK forces is deleted. `lot_results`, `bids` and `contracts`
+        // also reference this notice, but by `notice_id` onto `notices`, so nothing
+        // breaks by leaving them for the fold to replace — and a re-parse that
+        // quietly widened into the results layer would be much harder to reason about.
+        for table in ["tender_version_parties", "tender_version_bid_parties"] {
+            Self::step(
+                conn,
+                table,
+                &format!("DELETE FROM {table} WHERE mention_notice_id = ?"),
+                id,
+            )
+            .await?;
+        }
         Self::step(conn, "clear organization_mentions", "DELETE FROM organization_mentions WHERE notice_id = ?", id)
             .await?;
         for table in Self::PARSED_TABLES {

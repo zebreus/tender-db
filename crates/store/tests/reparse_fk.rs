@@ -96,6 +96,69 @@ async fn a_projected_notice_can_be_reparsed() {
     .await
     .unwrap();
 
+    // And what the projection's PHASE 2 writes: the canonical party row, anchored
+    // to that mention by (mention_notice_id, mention_section_id). THIS is the row
+    // that made prod fail — `tender_version_parties` and `tender_version_bid_parties`
+    // both carry an FK onto `organization_mentions`, so the mention cannot be deleted
+    // while a party points at it. Without these rows the test is not prod-like: a
+    // notice that has been folded once has been party-ed once.
+    conn.execute(
+        "INSERT INTO tenders (source, procedure_key, kind, created_at)
+         VALUES ('doe', 'proc-1', 'procedure', 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at,
+             publication_id) VALUES (1, 1, ?, 0, 'pub-1')",
+        (Value::Integer(id),),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id,
+             mention_notice_id, mention_section_id) VALUES (1, 1, 'buyer', 1, ?, 'ORG-1')",
+        (Value::Integer(id),),
+    )
+    .await
+    .unwrap();
+
+    // A SECOND notice with its own mention and party row, which must survive. The
+    // clear deletes by notice, and a `DELETE FROM tender_version_parties` that lost
+    // its WHERE would empty the corpus while still passing every assertion above.
+    let other = Notice { publication_id: "pub-2".into(), content_hash: "hash-2".into(), ..notice_ref() };
+    db.record_notice(&other, &Parse::Parsed(parsed("OTHER GmbH"))).await.expect("second parse");
+    let other_id: i64 = {
+        let mut rows = conn
+            .query("SELECT id FROM notices WHERE publication_id = 'pub-2'", ())
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().expect("the second notice");
+        row.get_value(0).unwrap().as_integer().copied().unwrap()
+    };
+    conn.execute(
+        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name)
+         VALUES (?, 'ORG-1', 1, 'OTHER GmbH')",
+        (Value::Integer(other_id),),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at,
+             publication_id) VALUES (1, 2, ?, 0, 'pub-2')",
+        (Value::Integer(other_id),),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id,
+             mention_notice_id, mention_section_id) VALUES (1, 2, 'buyer', 1, ?, 'ORG-1')",
+        (Value::Integer(other_id),),
+    )
+    .await
+    .unwrap();
+
     // The re-parse under test: same notice, a parser that now reads a better name.
     let reparsed = db.reparse_notice(&n, &parsed("ACME GESELLSCHAFT MBH")).await;
     let reparsed = reparsed.expect("a projected notice must be re-parsable, FK and all");
@@ -126,4 +189,35 @@ async fn a_projected_notice_can_be_reparsed() {
         row.get_value(0).unwrap().as_integer().copied().unwrap()
     };
     assert_eq!(projected, 0, "a re-parsed notice must be re-folded");
+
+    // The mention-anchored canonical rows for THIS notice are gone (the re-fold
+    // rebuilds them from the new parse), and the other notice's are untouched.
+    let parties = |nid: i64| {
+        let conn = &conn;
+        async move {
+            let mut rows = conn
+                .query(
+                    "SELECT COUNT(*) FROM tender_version_parties WHERE mention_notice_id = ?",
+                    (Value::Integer(nid),),
+                )
+                .await
+                .unwrap();
+            let row = rows.next().await.unwrap().unwrap();
+            row.get_value(0).unwrap().as_integer().copied().unwrap()
+        }
+    };
+    assert_eq!(parties(id).await, 0, "the re-parsed notice's party rows are cleared for the re-fold");
+    assert_eq!(parties(other_id).await, 1, "another notice's party rows are NOT collateral");
+    let mentions: i64 = {
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM organization_mentions WHERE notice_id = ?",
+                (Value::Integer(other_id),),
+            )
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        row.get_value(0).unwrap().as_integer().copied().unwrap()
+    };
+    assert_eq!(mentions, 1, "and neither are its mentions");
 }
