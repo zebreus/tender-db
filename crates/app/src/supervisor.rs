@@ -1667,15 +1667,18 @@ impl Supervisor {
 
         let queries = data_quality::windowed_queries();
         if !confirmed {
+            let unwindowed = data_quality::unwindowed_labels();
+            let caveat = if unwindowed.is_empty() {
+                "; every label is windowed".to_owned()
+            } else {
+                format!("; unmeasured, no windowing: {}", unwindowed.join(","))
+            };
             return Ok(format!(
                 "data-quality dry run: would measure {} window(s) of {DQ_WINDOW} ids up to \
-                 tender_id {max_id}, {} queries each ({} statements); {} label(s) have no \
-                 windowing and would report unmeasured ({})",
+                 tender_id {max_id}, {} queries each ({} statements){caveat}",
                 windows.len(),
                 queries.len(),
                 windows.len() * queries.len(),
-                data_quality::unwindowed_labels().len(),
-                data_quality::unwindowed_labels().join(","),
             ));
         }
         if windows.is_empty() {
@@ -2549,10 +2552,16 @@ mod tests {
         let plan = sup.run_data_quality(false).await.expect("a dry run cannot fail on an empty db");
         assert!(plan.starts_with("data-quality dry run:"), "{plan}");
         assert!(plan.contains("0 window(s)"), "an empty corpus plans no windows: {plan}");
-        // The four unwindowed labels are named in the plan, so their absence from
-        // the report is known BEFORE the run rather than discovered in the body.
-        for label in ["linkage", "density_can", "density_with", "merge"] {
-            assert!(plan.contains(label), "the plan names {label} as unmeasured: {plan}");
+        // Whatever cannot be windowed is named in the plan, so a hole in the report
+        // is known BEFORE the run rather than discovered in the body. Nothing is
+        // unwindowed today, and the plan says that rather than saying nothing.
+        let unwindowed = ingest::data_quality::unwindowed_labels();
+        if unwindowed.is_empty() {
+            assert!(plan.contains("every label is windowed"), "{plan}");
+        } else {
+            for label in unwindowed {
+                assert!(plan.contains(&label), "the plan names {label} as unmeasured: {plan}");
+            }
         }
         assert!(sup.db.latest_report("data-quality").await.unwrap().is_none(), "a dry run stores nothing");
 

@@ -150,11 +150,25 @@ pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
                     WHERE s.notice_id = tv.caused_by_notice_id AND s.kind = 'LotResult') \
       GROUP BY n.profile";
 
-/// Results materialisation per era, numerator: notices that actually produced a
-/// canonical `lot_results` row. Driven *from* `lot_results` (bounded by award
-/// volume) and joined to `notices` by primary key, so it stays fast at scale.
-pub const DENSITY_WITH_SQL: &str = "SELECT n.profile, COUNT(DISTINCT lr.notice_id) AS with_results \
-       FROM lot_results lr JOIN notices n ON n.id = lr.notice_id \
+/// Results materialisation per era, numerator: award-notice versions whose own
+/// notice actually produced a canonical `lot_results` row.
+///
+/// Version-driven, matching [`DENSITY_CAN_SQL`]'s unit — and that is a FIX, not a
+/// windowing convenience (issue 230). The previous form drove from `lot_results`
+/// and counted `COUNT(DISTINCT lr.notice_id)`, so the denominator counted versions
+/// while the numerator counted notices: a notice causing two versions contributed
+/// 2 below the line and 1 above it, quietly depressing the density of exactly the
+/// eras where corrigenda are common. Both halves now count versions, so the ratio
+/// is a ratio.
+///
+/// The `EXISTS` probes `lot_results` on `(tender_id, notice_id)` — the prefix of
+/// its `UNIQUE(tender_id, notice_id, result_key)` index — so it stays an indexed
+/// seek. Driving from `lot_results` by `notice_id` would not: that column has no
+/// index, which is why the two halves are measured separately at all.
+pub const DENSITY_WITH_SQL: &str = "SELECT n.profile, COUNT(*) AS with_results \
+       FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+      WHERE EXISTS(SELECT 1 FROM lot_results lr \
+                    WHERE lr.tender_id = tv.tender_id AND lr.notice_id = tv.caused_by_notice_id) \
       GROUP BY n.profile";
 
 /// TED↔DÖE merge (ADR-0003), single row. A keyed Tender whose versions include
@@ -166,7 +180,13 @@ pub const DENSITY_WITH_SQL: &str = "SELECT n.profile, COUNT(DISTINCT lr.notice_i
 /// flips to `ted`, so we must find them through `notices.source = 'doe'`, not
 /// `tenders.source`), each then tested for a TED notice with an indexed
 /// existence check — bounded by DÖE volume, not the whole canonical layer.
-pub const MERGE_SQL: &str = "SELECT COUNT(*) AS doe_tenders, \
+///
+/// The leading constant `'all'` column exists so this single-row result has the
+/// same `[label, counts…]` shape every other query has, and therefore sums across
+/// windows through the same [`sum_profile_counts`] as the rest (issue 230). There
+/// is no era split here — a merge is a property of a Tender, not of one notice's
+/// profile — so the label is a constant rather than a profile.
+pub const MERGE_SQL: &str = "SELECT 'all' AS scope, COUNT(*) AS doe_tenders, \
             SUM(CASE WHEN EXISTS( \
                   SELECT 1 FROM tender_versions v2 JOIN notices n2 ON n2.id = v2.caused_by_notice_id \
                    WHERE v2.tender_id = d.tender_id AND n2.source = 'ted' \
@@ -203,20 +223,43 @@ pub fn queries() -> Vec<(String, String)> {
 /// their per-profile counts across disjoint windows gives exactly the unwindowed
 /// result, because every version belongs to exactly one window.
 ///
-/// `linkage`, the two density queries and `merge` are NOT here: they drive from
-/// other tables and each needs its own windowing decision, so they stay
-/// unmeasured (honestly, via the `None` path) until someone makes that decision.
+/// ALL eleven are here now (issue 230, step 3). Each of the four late ones drives
+/// from `tender_versions` and so takes the same `v.tender_id` range predicate:
+///
+/// - `linkage` drives from `seq = 1` versions — one row per Tender, but reached by
+///   scanning the version layer, so it is windowed like the rest. Both of its counts
+///   (awards, unchained) are additive over disjoint Tender sets.
+/// - `density_can` counts award-notice versions; `density_with` counts the subset
+///   whose notice materialised `lot_results`. Both are version counts (see
+///   [`DENSITY_WITH_SQL`] — making them share a unit is what let the numerator be
+///   windowed at all).
+/// - `merge` counts DÖE-touching Tenders and the merged subset. Its inner `SELECT
+///   DISTINCT v.tender_id` is windowed, and since Tender ids are disjoint across
+///   windows, a `DISTINCT` inside each window sums exactly. This one is the reason
+///   the label column exists: the result has no era split, so it carries a constant
+///   scope label to share the `[label, counts…]` shape.
+///
+/// The `DISTINCT` deserves the explicit argument, because a `DISTINCT` summed across
+/// windows is normally WRONG: it is only safe here because the distinct key IS the
+/// window key. Distinct-on-anything-else — say notices rather than Tenders — would
+/// need proof that the key cannot straddle two windows, and `tender_versions` only
+/// declares `UNIQUE (tender_id, caused_by_notice_id)`, which does not give it.
 pub struct WindowedQuery {
     pub label: String,
     /// SQL carrying a single `{window}` placeholder inside its WHERE clause.
     template: String,
+    /// The qualified Tender-id column the window ranges over, e.g. `v.tender_id`.
+    /// Per-query because the eleven statements alias `tender_versions` differently
+    /// (`v`, `v1`, `tv`) and a hardcoded alias silently becomes "no such table" —
+    /// which is how the equivalence test caught this rather than a reviewer.
+    column: String,
 }
 
 impl WindowedQuery {
     /// The SQL for one half-open window `(lo, hi]` of `tender_versions.tender_id`.
     pub fn sql(&self, lo: i64, hi: i64) -> String {
-        self.template
-            .replace("{window}", &format!("v.tender_id > {lo} AND v.tender_id <= {hi}"))
+        let col = &self.column;
+        self.template.replace("{window}", &format!("{col} > {lo} AND {col} <= {hi}"))
     }
 }
 
@@ -228,6 +271,7 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
                    FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
                    WHERE {window} GROUP BY n.profile"
             .to_owned(),
+        column: "v.tender_id".to_owned(),
     }];
     for spec in &FIELDS {
         let filter = spec.predicate.map(|p| format!(" AND {p}")).unwrap_or_default();
@@ -241,30 +285,84 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
                  GROUP BY n.profile",
                 satellite = spec.satellite,
             ),
+            column: "v.tender_id".to_owned(),
         });
     }
+    // The four that used to be unmeasurable. Each is the catalog SQL with a range
+    // predicate spliced into its existing WHERE, so the two forms cannot drift into
+    // measuring different things.
+    out.push(WindowedQuery {
+        label: "linkage".to_owned(),
+        template: LINKAGE_SQL.replace("WHERE v1.seq = 1", "WHERE {window} AND v1.seq = 1"),
+        column: "v1.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "density_can".to_owned(),
+        template: DENSITY_CAN_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        column: "tv.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "density_with".to_owned(),
+        template: DENSITY_WITH_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        column: "tv.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "merge".to_owned(),
+        template: MERGE_SQL.replace("WHERE n.source = 'doe'", "WHERE {window} AND n.source = 'doe'"),
+        // Spliced into the INNER `SELECT DISTINCT v.tender_id`, where `v` is in scope
+        // — windowing the driver, which is what makes the DISTINCT sum exactly.
+        column: "v.tender_id".to_owned(),
+    });
     out
 }
 
 /// The labels [`windowed_queries`] does NOT cover, so a caller can report them as
-/// unmeasured rather than silently dropping them.
+/// unmeasured rather than silently dropping them. Empty since step 3 — every query
+/// is windowed — and kept rather than deleted for two reasons: the caller's
+/// "measure these, declare those unmeasured" split is the right shape whether or
+/// not the second half is currently empty, and a query added later that cannot be
+/// windowed belongs here instead of being quietly left out of the report.
 pub fn unwindowed_labels() -> Vec<String> {
-    ["linkage", "density_can", "density_with", "merge"].iter().map(|s| (*s).to_owned()).collect()
+    Vec::new()
 }
 
-/// Sum per-profile count rows across windows into the single result set the
-/// assembler expects: `[profile, count]` per era, profile-sorted so the report is
-/// stable run to run.
+/// Sum labelled count rows across windows into the single result set the assembler
+/// expects: `[label, count…]` per label, label-sorted so the report is stable run
+/// to run.
+///
+/// Column 0 is the label (an era profile, or `merge`'s constant scope) and EVERY
+/// column after it is summed, so a query reporting two counts side by side —
+/// `linkage`'s awards and unchained, `merge`'s DÖE Tenders and merged — folds
+/// correctly without a second summing function to keep in step with this one.
+///
+/// A row narrower than the widest is padded with zeros rather than dropped: a
+/// window matching no unchained awards may return fewer columns, and treating that
+/// as "no data" instead of "no rows of that kind" is the confusion this module
+/// spends its effort avoiding.
 pub fn sum_profile_counts(windows: &[Rows]) -> Rows {
-    let mut totals: std::collections::BTreeMap<String, i64> = Default::default();
+    let mut totals: std::collections::BTreeMap<String, Vec<i64>> = Default::default();
     for rows in windows {
         for row in rows {
-            let Some(profile) = row.first().and_then(|v| v.as_str()) else { continue };
-            let n = row.get(1).and_then(|v| v.as_i64()).unwrap_or(0);
-            *totals.entry(profile.to_owned()).or_insert(0) += n;
+            let Some(label) = row.first().and_then(|v| v.as_str()) else { continue };
+            let counts = totals.entry(label.to_owned()).or_default();
+            for (i, cell) in row.iter().skip(1).enumerate() {
+                if counts.len() <= i {
+                    counts.resize(i + 1, 0);
+                }
+                counts[i] += cell.as_i64().unwrap_or(0);
+            }
         }
     }
-    totals.into_iter().map(|(p, n)| vec![Value::String(p), serde_json::json!(n)]).collect()
+    let width = totals.values().map(Vec::len).max().unwrap_or(0);
+    totals
+        .into_iter()
+        .map(|(label, mut counts)| {
+            counts.resize(width, 0);
+            let mut row = vec![Value::String(label)];
+            row.extend(counts.into_iter().map(|n| serde_json::json!(n)));
+            row
+        })
+        .collect()
 }
 
 // ------------------------------------------------------------------- eras
@@ -478,9 +576,11 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         })
         .collect();
 
+    // Column 0 is the constant `'all'` scope label that lets the merge row sum
+    // across windows like every other result set, so the counts start at 1.
     let merge = raw.merge.first().map_or(Merge::default(), |r| Merge {
-        doe_tenders: as_u64(r.first()),
-        merged: as_u64(r.get(1)),
+        doe_tenders: as_u64(r.get(1)),
+        merged: as_u64(r.get(2)),
     });
 
     Report {
@@ -719,6 +819,36 @@ mod tests {
         );
     }
 
+    /// Issue 230: every catalog query must be either windowed or explicitly named
+    /// unmeasurable. A query that is in neither list is one the report silently does
+    /// not measure — the failure mode this whole issue is about, reintroduced by a
+    /// future addition rather than by a timeout.
+    #[test]
+    fn every_query_is_either_windowed_or_declared_unmeasured() {
+        let catalog: Vec<String> = queries().into_iter().map(|(l, _)| l).collect();
+        let mut covered: Vec<String> =
+            windowed_queries().into_iter().map(|q| q.label).chain(unwindowed_labels()).collect();
+        covered.sort();
+        let mut expected = catalog.clone();
+        expected.sort();
+        assert_eq!(covered, expected, "windowed ∪ unmeasured must be exactly the catalog");
+
+        // And each template must actually carry the placeholder, exactly once. The
+        // four late queries build theirs by splicing a predicate into the catalog
+        // SQL, so a text that stopped matching would leave an UNWINDOWED statement
+        // wearing a windowed label — the original unbounded pass, back again.
+        for q in windowed_queries() {
+            let sql = q.sql(10, 20);
+            assert!(!sql.contains("{window}"), "{}: placeholder unfilled", q.label);
+            assert_eq!(
+                sql.matches("tender_id > 10 AND ").count(),
+                1,
+                "{}: exactly one window predicate: {sql}",
+                q.label
+            );
+        }
+    }
+
     #[test]
     fn as_u64_tolerates_int_float_and_null() {
         assert_eq!(as_u64(Some(&json!(42))), 42);
@@ -763,7 +893,9 @@ mod tests {
             // Density: 2 projected award notices for the eForms era, 0 materialised.
             ("density_can".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
             ("density_with".to_owned(), Some(vec![])),
-            ("merge".to_owned(), Some(vec![vec![json!(3), json!(1)]])),
+            // Column 0 is merge's constant scope label (issue 230) — the shape that
+            // lets a single-row result sum across windows like every other one.
+            ("merge".to_owned(), Some(vec![vec![json!("all"), json!(3), json!(1)]])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
@@ -828,7 +960,7 @@ mod tests {
         let mut ran: Vec<(String, Option<Rows>)> =
             labels.iter().map(|l| ((*l).to_owned(), Some(Vec::new()))).collect();
         ran.retain(|(l, _)| l != "merge");
-        ran.push(("merge".to_owned(), Some(vec![vec![json!(0), json!(0)]])));
+        ran.push(("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])));
         let raw = Raw::from_labelled(ran).expect("labelled");
         assert!(raw.unmeasured.is_empty());
         let text = render_text(&assemble("http://x", &raw));
