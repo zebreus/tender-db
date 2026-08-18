@@ -239,6 +239,11 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs
 
+# Re-fold an explicit, small notice-id list (issue 58's step-3 exerciser). Capped
+# at 1,000 ids: a longer list is a cohort and wants `refold`/`refold-fields`.
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
+  -d '{"kind":"refold-notices","notices":[123,124,125]}' $BASE/admin/jobs
+
 # Cancel a still-queued job (the running one cannot be cancelled).
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
 
@@ -256,9 +261,10 @@ measured" and "measured as zero" are different claims and the report is careful
 about the difference (its own text banners any section it could not measure).
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
-fetch|process|project|backfill|daily|reprocess|reindex|refold|
-mark-skipped-siblings|clear-rebuild-flag, source?, package_kind?, period?,
-range?, rebuild?, refetch?}` (the `snapshot` kind was removed 2026-08-06).
+fetch|process|project|backfill|daily|reprocess|reindex|refold|refold-fields|
+refold-notices|reparse|data-quality|mark-skipped-siblings|clear-rebuild-flag,
+source?, package_kind?, period?, range?, rebuild?, refetch?, profiles?, notices?,
+expect?, dry_run?}` (the `snapshot` kind was removed 2026-08-06).
 Defaults: `source` `ted`, `package_kind` `daily`.
 `process`/`project` accept no period to run the whole source (`process` with no
 `period` re-parses every archived package of that source). `refetch:true`

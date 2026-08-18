@@ -164,6 +164,17 @@ const BACKFILL_BATCH: i64 = 10_000;
 /// elapsed, so resizing it is a decision the journal can support.
 const DQ_WINDOW: i64 = 250_000;
 
+/// Most notice ids `refold-notices` will accept (issue 58 v2, step 3).
+///
+/// The job exists to make a legacy fold observable at a size a person can reason
+/// about, so its guard is a cap rather than the `expect`-with-slack the derived
+/// refolds use: slack is a statistical guard on a cohort nobody enumerated, and it
+/// says nothing about a list that was typed. 1,000 is well above any exerciser
+/// (step 3's is a handful) and far below any cohort worth a real refold — a list
+/// that big means someone reached for the wrong job, and being told so beats being
+/// obeyed.
+const REFOLD_NOTICES_CAP: usize = 1_000;
+
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
@@ -225,6 +236,21 @@ enum Spec {
     /// run aborts BEFORE writing if the cohort is not about that size, which is what
     /// a mistyped profile string looks like.
     Refold { profiles: Vec<String>, expect: Option<u64> },
+    /// Re-fold an EXPLICIT, small notice-id list (issue 58 v2, step 3's exerciser).
+    ///
+    /// `refold` and `refold-fields` both derive their cohort, and both derive one
+    /// that is far too large to use as a test: the smallest legacy profile is tens
+    /// of thousands of notices, and step 3's whole question is what the incremental
+    /// projection's legacy CLOSURE WALK does when a legacy delta arrives — a
+    /// question that needs a delta of five notices, not fifty thousand. The daily
+    /// fold cannot answer it either: its journal reads `legacy-update: 0.0s (0
+    /// legacy)` on an ordinary day, because eForms-only days never touch a legacy
+    /// chain at all.
+    ///
+    /// So the cohort here is named, not derived. That makes the size guard
+    /// structural rather than statistical (`expect`-style slack is meaningless for
+    /// a list you typed): the list is capped, and a list over the cap is refused.
+    RefoldNotices { notices: Vec<i64> },
     /// Re-project the notices whose PARSE LAYER carries any of these field ids —
     /// the FIELD-scoped refold (issue 88 follow-up): a new mapping for a grafted
     /// id affects exactly its carriers, a set no profile names. Sweeps the value
@@ -321,6 +347,9 @@ pub struct JobRequest {
     /// off by more than a quarter — the shape of a mistyped profile string.
     pub profiles: Option<Vec<String>>,
     pub expect: Option<u64>,
+    /// `refold-notices` only: the explicit notice ids to re-fold (issue 58 v2's
+    /// step-3 exerciser). Capped — see [`REFOLD_NOTICES_CAP`].
+    pub notices: Option<Vec<i64>>,
     /// `mark-skipped-siblings` execute only: the number of in-scope rows the
     /// sibling guard is EXPECTED to reject (issue 84, the 154).
     ///
@@ -538,6 +567,42 @@ impl Supervisor {
                 Ok(vec![
                     self.push("refold-fields", params, Spec::RefoldFields { fields, expect: req.expect })
                         .await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
+            // The NAMED-ids twin (issue 58 v2, step 3's exerciser): re-fold exactly
+            // these notices. Paired with a projection like the other two refolds, so
+            // the fold that follows is an ordinary incremental one — which is the
+            // point, since the behaviour under test is what that fold does with a
+            // legacy delta.
+            "refold-notices" => {
+                let notices = req.notices.clone().unwrap_or_default();
+                if notices.is_empty() {
+                    return Err("refold-notices needs at least one notice id".into());
+                }
+                if notices.len() > REFOLD_NOTICES_CAP {
+                    return Err(format!(
+                        "refold-notices refuses {} ids (cap {REFOLD_NOTICES_CAP}) — a list this \
+                         long is a cohort, and a cohort wants `refold` or `refold-fields`",
+                        notices.len()
+                    ));
+                }
+                // The ids go in the params line, not just the spec, so the job log
+                // records WHICH notices a run touched. A run whose effect cannot be
+                // attributed afterwards is not much of an experiment.
+                let shown: Vec<String> = notices.iter().take(8).map(i64::to_string).collect();
+                let params = format!(
+                    "refold-notices {}{}",
+                    shown.join(","),
+                    if notices.len() > shown.len() {
+                        format!(" (+{} more)", notices.len() - shown.len())
+                    } else {
+                        String::new()
+                    }
+                );
+                Ok(vec![
+                    self.push("refold-notices", params, Spec::RefoldNotices { notices }).await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
@@ -1296,6 +1361,21 @@ impl Supervisor {
                 Ok(format!(
                     "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
                      for the incremental fold"
+                ))
+            }
+            Spec::RefoldNotices { notices } => {
+                let requeued =
+                    self.db.unmark_projected_by_ids(notices).await.map_err(|e| e.to_string())?;
+                let stamped =
+                    self.db.stamp_stale_for_notices(notices).await.map_err(|e| e.to_string())?;
+                // Report all three numbers, because their DIFFERENCES are the
+                // finding. Fewer re-queued than asked means some ids were unparsed,
+                // already re-queued, or simply do not exist — a typo'd id would
+                // otherwise vanish into a job that says "ok". Fewer stamped than
+                // re-queued means notices that never reached a Tender.
+                Ok(format!(
+                    "{} notice(s) named: re-queued {requeued}, stamped {stamped} tender(s)                      epoch-stale for the incremental fold",
+                    notices.len()
                 ))
             }
             Spec::RefoldFields { fields, expect } => {
@@ -2593,6 +2673,60 @@ mod tests {
         let out = sup.run_data_quality(true).await.expect("an empty confirmed run is not an error");
         assert_eq!(out, "data quality: no tender versions to measure");
         assert!(sup.db.latest_report("data-quality").await.unwrap().is_none());
+    }
+
+    /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a
+    /// cap rather than `expect`-with-slack — slack guards a cohort nobody
+    /// enumerated, and says nothing about a list somebody typed.
+    #[tokio::test]
+    async fn refold_notices_needs_ids_caps_the_list_and_logs_which_ones() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+
+        assert!(
+            sup.enqueue_request(&req("refold-notices")).await.is_err(),
+            "an empty list has nothing to fold — refuse it rather than run a no-op"
+        );
+
+        let too_many: Vec<i64> = (1..=(REFOLD_NOTICES_CAP as i64 + 1)).collect();
+        let err = sup
+            .enqueue_request(&JobRequest {
+                kind: "refold-notices".into(),
+                notices: Some(too_many),
+                ..Default::default()
+            })
+            .await
+            .expect_err("a list past the cap is a cohort, not an exerciser");
+        assert!(err.contains("cap"), "the refusal says what the limit is: {err}");
+
+        let ids = vec![11i64, 22, 33];
+        let queued_ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "refold-notices".into(),
+                notices: Some(ids.clone()),
+                ..Default::default()
+            })
+            .await
+            .expect("a small named list enqueues");
+        assert_eq!(queued_ids.len(), 2, "the refold and its trailing projection");
+        let queued = sup.queued();
+        assert_eq!(queued[0].kind, "refold-notices");
+        // The ids are in the params, so the job log records which notices a run
+        // touched — a run whose effect cannot be attributed later is not much of an
+        // experiment.
+        assert_eq!(queued[0].params, "refold-notices 11,22,33");
+        assert_eq!(queued[1].kind, "project");
+
+        // A long-but-legal list is summarised rather than dumped whole: the params
+        // line is read by a human in a job log.
+        let many: Vec<i64> = (1..=12).collect();
+        sup.enqueue_request(&JobRequest {
+            kind: "refold-notices".into(),
+            notices: Some(many),
+            ..Default::default()
+        })
+        .await
+        .expect("twelve ids is well inside the cap");
+        assert_eq!(sup.queued()[2].params, "refold-notices 1,2,3,4,5,6,7,8 (+4 more)");
     }
 
     /// Issue 100: `reparse` needs at least one profile, and pairs itself with a
