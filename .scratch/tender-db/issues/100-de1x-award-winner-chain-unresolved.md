@@ -419,3 +419,48 @@ Before running it, size the walk — DE-1.0's 31 notices spanned 5 packages and 
 minutes, so 1.1 is hours, and it belongs in a planned window with the 09:35 daily kept clear. Run the
 same census on a DE-1.1 sample FIRST: if 1.1 also lacks `TenderingParty`/`LotTender` sections, the
 whole premise of this issue needs re-examining before another cohort is re-parsed.
+
+#### DE-1.1 census + baseline: this issue's premise needs re-examining before any cohort re-parse
+
+Sampled both ends of the era (300 notices each, `ORDER BY id` ASC and DESC over 145,859 DE-1.1
+notices), which is what the note above asked for.
+
+**Parse layer — the full winner chain is present, unlike DE-1.0:**
+
+    sections            oldest 300      newest 300
+    LotResult                  106             297
+    LotTender                  146             837
+    TenderingParty              73             194
+    SettledContract            126             472
+
+Every link of `LotResult → SettledContract → LotTender → TenderingParty → Organization` exists at both
+ends. So DE-1.1 CAN answer the winner question, where DE-1.0 structurally cannot.
+
+**Canonical layer — winners are already resolved for most of both samples:**
+
+    oldest 300 notices → 299 tenders: 309 winner rows across 186 tenders (62 %)
+    newest 300 notices → 288 tenders: 9,032 winner rows across 220 tenders (76 %)
+
+**That is 62–76 %, against the data-quality report's `eforms-de-1.1: winner 1.4%`.** Both numbers are
+correct; they measure different things. The report's `winner` FieldSpec counts VERSIONS carrying a
+winner row, and DE-1.1 tenders have many versions — contract notices and corrigenda (the same samples
+carry `Change` sections) legitimately have no winner. So per-version presence is ~1 %, while per-tender
+presence is ~70 %.
+
+**This is the third time this exact denominator has misled on this board** (see the caveats added to
+issues 231 and 232, and the winner correction earlier in this issue), and it is precisely what issue
+235 exists to fix. The report's `winner` column cannot distinguish "winners are lost" from "most
+versions are not awards", and should not be cited as evidence of either until 235 lands.
+
+**Consequence — do NOT run the 218,876-notice re-parse yet.** Its justification was "DE-1.x award
+winners unresolved", and the evidence for that was the 1.4 %, which measures something else. What is
+established: the chain is present in the parse layer, and most sampled tenders already carry winners.
+What is NOT established: how many award RESULTS lack a winner they should have. That is the number
+that justifies or cancels hours of re-parsing, and it needs the per-`lot_result` denominator:
+
+    of lot_results whose origin notice is DE-1.x, what share have ≥1 tender_version_result_winners row?
+
+Measuring it is not free — `lot_results` has no index leading with `notice_id`
+(`UNIQUE(tender_id, notice_id, result_key)`), so it must be driven from a bounded tender-id list. My
+attempt at it is what saturated the SQL runtime and took `/v1/sql` down for every user (issue 238), so
+run it in small batches (≤50 tender ids) and check the shape's cost on one batch before scaling.
