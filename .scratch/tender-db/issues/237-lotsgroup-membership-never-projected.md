@@ -174,3 +174,53 @@ available: per issue 239 a filtered query on a view here reads the whole corpus.
 everywhere and the branch proves genuinely painful in practice, the flat derived table is the answer —
 and it can be built without touching identity, which is exactly why the identity layer should stay
 free of synthetic rows now.
+
+## Deployed, and covering only ~1% of carriers — measured, with the fix designed (2026-08-18)
+
+`refold-sections GroupComposition` (job 740) re-queued **9,694 carrier notices** and stamped 5,890
+tenders; the projection (741) rewrote all 5,890. The membership table then held:
+
+    member_rows 233 · groups 59 · member_lots 191 · tenders 54
+
+**233 rows across 54 tenders, from 9,694 carrier notices.** The mapping works on the committed fixture
+and misses ~99% of the corpus — the fixture-is-not-the-corpus trap, caught by checking the number rather
+than trusting the green test.
+
+### Why
+
+`group_members()` requires `BT-330-Procedure` (the group reference) and skips a composition without one.
+Across 10 sampled carriers' composition sections:
+
+    BT-1375-Procedure   59 values   (the members)
+    BT-330-Procedure    13 values   (the group)
+
+So most compositions list their members and never name the group. The maximal fixture happens to carry
+BT-330; real notices mostly do not.
+
+### The group is still recoverable, for almost all of them
+
+Sampled carriers, sections per notice:
+
+    9 of 10 notices:  1 LotsGroup, 1 GroupComposition   → unambiguous without BT-330
+    1 of 10 (24189305): 4 LotsGroups, 4 GroupCompositions → ambiguous without it
+
+So the fix is a fallback with a hard edge, not a guess:
+- BT-330 present → use it (unchanged).
+- Absent AND the notice publishes exactly ONE LotsGroup → that group. Unambiguous, and it covers the
+  overwhelming majority.
+- Absent AND several LotsGroups → **skip, and count the skips**. Pairing `ND-GroupComposition#0` with the
+  first group in document order is the obvious guess and is exactly that; the composition order and the
+  group order are not documented to correspond, and a wrong membership row is worse than a missing one
+  because it silently reassigns a bid's coverage.
+
+The skip counter matters: it turns the residual into a number someone can watch rather than a silence.
+
+### What is deployed meanwhile is under-coverage, not wrongness
+
+Every row written so far came from an explicit BT-330 reference, so the 233 rows are correct — the table
+is simply missing most of what it should hold. That is the safe direction to be wrong in, and it means
+the fallback can land later without correcting any existing row.
+
+Next: implement the fallback, re-run `refold-sections GroupComposition`, and expect the tender count to
+move from 54 toward the 5,890 the refold touched. If it does not, the remaining carriers differ in some
+further way and want the same treatment — measure before assuming.
