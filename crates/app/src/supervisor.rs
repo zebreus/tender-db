@@ -170,6 +170,8 @@ enum Spec {
     /// against the current parser (issue 100). Resume rides on the job row's
     /// `resume_after` like `process`/`reprocess`, not in the spec.
     Reparse { profiles: Vec<String> },
+    /// Run the semantic data-quality measurement and store its report (issue 230).
+    DataQuality,
     /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
     /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
     /// generation for the recovered baseline instead of appending. `#[serde(default)]`
@@ -450,6 +452,15 @@ impl Supervisor {
                 }
                 Ok(ids)
             }
+            // Measure semantic data quality and store the rendered report (issue
+            // 230). A JOB, not a refresher section and not an external tool: the
+            // eleven aggregates each blow through the /v1/sql 10s cap at
+            // full-corpus scale, and they are far too expensive for the
+            // dashboard's 60s cadence. As a job they are queue-serialized, run on
+            // the reader pool, carry a phase record, and land in the job log.
+            "data-quality" => Ok(vec![
+                self.push("data-quality", "data-quality".into(), Spec::DataQuality).await,
+            ]),
             "backfill-legacy-adjacency" => Ok(vec![
                 self.push(
                     "backfill-legacy-adjacency",
@@ -1032,6 +1043,7 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
+            Spec::DataQuality => self.run_data_quality().await,
             Spec::Reparse { profiles } => {
                 self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
             }
@@ -1546,6 +1558,65 @@ impl Supervisor {
     /// layer in place for members that now parse (issues 71/72/73). Resumable by
     /// `fetch_id` cursor (like `run_process`) and idempotent — a reclaimed member
     /// is `parsed` on the next pass, so a restart mid-bucket redoes nothing.
+    /// Run the data-quality measurement (issue 230) and store the rendered report.
+    ///
+    /// The queries are the SAME ones `bin/data-quality` sends — one source of
+    /// truth for what "semantic completeness" means — but they run here on the
+    /// reader pool with no request deadline, because at full-corpus scale every
+    /// one of them exceeds the endpoint's 10 s cap. A failed query stays
+    /// distinguishable from an empty one all the way to the rendered text (the
+    /// `None` that `from_labelled` reads as unmeasured), so a partial report says
+    /// which sections it could not measure instead of printing zeros.
+    async fn run_data_quality(&self) -> Result<String, String> {
+        use ingest::data_quality::{self, Raw, Rows};
+
+        let queries = data_quality::queries();
+        let total = queries.len() as u64;
+        let mut results: Vec<(String, Option<Rows>)> = Vec::new();
+        let mut failed: Vec<String> = Vec::new();
+        for (i, (label, sql)) in queries.into_iter().enumerate() {
+            self.set_phase(
+                "measuring",
+                Some(i as u64),
+                Some(total),
+                format!("query {label}"),
+            );
+            match self.db.measure_rows(&sql).await {
+                Ok(rows) => results.push((label, Some(rows.into_iter().map(json_row).collect()))),
+                Err(e) => {
+                    // Report it and carry on: one unmeasurable section must not
+                    // cost the other ten.
+                    eprintln!("[data-quality] query {label} failed: {e}");
+                    failed.push(label.clone());
+                    results.push((label, None));
+                }
+            }
+        }
+
+        let raw = Raw::from_labelled(results).map_err(|e| e.to_string())?;
+        let report = data_quality::assemble("(in-process)", &raw);
+        let body = data_quality::render_text(&report);
+        let now = store::now_unix();
+        self.db.put_report("data-quality", &body, now).await.map_err(|e| e.to_string())?;
+
+        // The summary is the digest; the body is in `reports` for whoever reads it.
+        if failed.is_empty() {
+            Ok(format!(
+                "data quality measured: {} eras, {} linkage rows, {} density rows",
+                report.completeness.len(),
+                report.linkage.len(),
+                report.density.len()
+            ))
+        } else {
+            Ok(format!(
+                "data quality PARTIAL: {}/{total} queries failed ({}); {} eras measured",
+                failed.len(),
+                failed.join(","),
+                report.completeness.len()
+            ))
+        }
+    }
+
     /// Re-parse a profile cohort from the archive (issue 100), one package at a
     /// time, resumable on the same `resume_after` cursor `process`/`reprocess` use.
     ///
@@ -1628,6 +1699,28 @@ impl Supervisor {
         ))
     }
 
+}
+
+/// One measured row as JSON (issue 230): `store::measure_rows` returns turso
+/// values because the store carries no JSON dependency, and `data_quality` speaks
+/// `serde_json`. Mirrors the `/v1/sql` cell mapping, minus the byte accounting
+/// that endpoint needs for its response cap.
+fn json_row(cells: Vec<store::turso::Value>) -> Vec<serde_json::Value> {
+    use store::turso::Value;
+    cells
+        .into_iter()
+        .map(|v| match v {
+            Value::Null => serde_json::Value::Null,
+            Value::Integer(n) => serde_json::json!(n),
+            Value::Real(f) => serde_json::Number::from_f64(f)
+                .map_or(serde_json::Value::Null, serde_json::Value::Number),
+            Value::Text(s) => serde_json::Value::String(s),
+            Value::Blob(b) => serde_json::Value::String(b.iter().map(|x| format!("{x:02x}")).collect()),
+        })
+        .collect()
+}
+
+impl Supervisor {
     async fn run_reprocess(
         &self,
         job_id: u64,
@@ -2113,6 +2206,16 @@ mod tests {
             duplicates: 0,
             phase: None,
         }
+    }
+
+    /// Issue 230: `data-quality` is a plain single job — no parameters to get
+    /// wrong, and deliberately NOT paired with anything, since it only measures.
+    #[tokio::test]
+    async fn data_quality_enqueues_as_a_single_measuring_job() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ids = sup.enqueue_request(&req("data-quality")).await.expect("enqueues");
+        assert_eq!(ids.len(), 1, "a measurement changes nothing, so nothing follows it");
+        assert_eq!(sup.queued()[0].kind, "data-quality");
     }
 
     /// Issue 100: `reparse` needs at least one profile, and pairs itself with a

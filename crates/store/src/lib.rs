@@ -371,6 +371,22 @@ const SCHEMA: &str = "
     -- tempting shortcut: `clear_changes` (canonical.rs) legitimately empties
     -- that table as a paired one-time reset, so it is not the never-cleared
     -- witness it looks like.
+    -- Rendered operator reports, one row per kind (issue 230). A measurement too
+    -- expensive to run per request — the semantic data-quality report is minutes
+    -- of scanning — is computed by a JOB and left here for whoever asks, so the
+    -- read is a point lookup instead of eleven full scans through a 10s-capped
+    -- endpoint.
+    CREATE TABLE IF NOT EXISTS reports (
+        kind        TEXT PRIMARY KEY,
+        -- When the job that produced this finished, unix seconds. A reader
+        -- decides for itself whether that is too old to trust; the row never
+        -- expires on its own, because a stale report that says WHEN it was made
+        -- beats no report at all.
+        computed_at INTEGER NOT NULL,
+        -- The rendered body, exactly as the tool would have printed it.
+        body        TEXT NOT NULL
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS layer_presence (
         name           TEXT PRIMARY KEY,
         -- 1 once this table has been observed non-empty at least once. Never
@@ -4795,6 +4811,48 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 value: NoticeValue::Text { lang: Some("EN".into()), value: "hello".into() },
             }],
         }
+    }
+
+    /// Issue 230: a report round-trips, and a re-run REPLACES rather than
+    /// accumulating — the latest measurement is the only one worth keeping.
+    #[tokio::test]
+    async fn a_report_round_trips_and_the_newest_run_wins() {
+        let path = format!("/tmp/tender-db-reports-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+
+        assert!(db.latest_report("data-quality").await.unwrap().is_none(), "nothing measured yet");
+
+        db.put_report("data-quality", "first body", 1_000).await.unwrap();
+        assert_eq!(
+            db.latest_report("data-quality").await.unwrap(),
+            Some(("first body".to_owned(), 1_000))
+        );
+
+        db.put_report("data-quality", "second body", 2_000).await.unwrap();
+        assert_eq!(
+            db.latest_report("data-quality").await.unwrap(),
+            Some(("second body".to_owned(), 2_000)),
+            "the newest run replaces the previous body and stamp"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM reports").await, Some(1), "one row per kind");
+
+        // A different kind is independent.
+        db.put_report("other", "x", 3_000).await.unwrap();
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM reports").await, Some(2));
+        assert_eq!(
+            db.latest_report("data-quality").await.unwrap().map(|(b, _)| b),
+            Some("second body".to_owned()),
+            "kinds do not overwrite each other"
+        );
+
+        // measure_rows runs an aggregate on the reader pool and shapes it as rows.
+        let rows = db.measure_rows("SELECT COUNT(*), 'lit' FROM reports").await.unwrap();
+        assert_eq!(rows.len(), 1);
+        assert!(matches!(rows[0][0], Value::Integer(2)), "{:?}", rows[0][0]);
+        assert!(matches!(&rows[0][1], Value::Text(s) if s == "lit"), "{:?}", rows[0][1]);
+
+        let _ = std::fs::remove_file(&path);
     }
 
     /// Issue 100: a re-parse REPLACES the parsed layer and re-opens the notice for

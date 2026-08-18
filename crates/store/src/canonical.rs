@@ -4405,6 +4405,63 @@ impl Db {
     /// a confident, plausible, permanently-green answer — the exact shape of
     /// failure this whole layer exists to catch, so it must not be reproduced
     /// here.
+    /// Store a rendered operator report under `kind`, replacing any previous one
+    /// (issue 230). One row per kind: the latest measurement is the only one worth
+    /// keeping, and a history of multi-minute scans is not worth its storage.
+    pub async fn put_report(&self, kind: &str, body: &str, computed_at: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "INSERT INTO reports(kind, computed_at, body) VALUES(?, ?, ?)
+               ON CONFLICT(kind) DO UPDATE SET computed_at = excluded.computed_at,
+                                               body = excluded.body",
+            (t(kind), Value::Integer(computed_at), t(body)),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// The latest stored report of `kind` and when it was computed, or `None` if
+    /// no run has produced one yet. Reader pool: this is a point lookup a request
+    /// path may serve, unlike the measurement that produced it.
+    pub async fn latest_report(&self, kind: &str) -> turso::Result<Option<(String, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT body, computed_at FROM reports WHERE kind = ?", (t(kind),))
+            .await?;
+        Ok(rows.next().await?.map(|row| (text(&row, 0), int(&row, 1))))
+    }
+
+    /// Run one read-only aggregate on the READER POOL and return its rows as
+    /// JSON, for a measurement job that would not survive the `/v1/sql` deadline
+    /// (issue 230: the data-quality report's eleven queries each exceed the 10 s
+    /// cap at full-corpus scale).
+    ///
+    /// No sandbox, no allow-list, no time limit — so this is NOT reachable from a
+    /// request path and must never become so: the caller is a supervisor job,
+    /// which is serialized against other jobs and visible in the job log. It runs
+    /// on the reader pool rather than the writer, so a multi-minute scan cannot
+    /// block ingestion; it can still pin the WAL, which is why the caller gates
+    /// on the queue being its own (jobs run one at a time) rather than racing a
+    /// projection.
+    /// Rows come back as turso values, not JSON: `store` carries no JSON
+    /// dependency and the only consumer already has one, so the mapping belongs
+    /// at the call site.
+    pub async fn measure_rows(&self, sql: &str) -> turso::Result<Vec<Vec<Value>>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query(sql, ()).await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            let mut cells = Vec::new();
+            let mut i = 0;
+            while let Ok(v) = row.get_value(i) {
+                cells.push(v);
+                i += 1;
+            }
+            out.push(cells);
+        }
+        Ok(out)
+    }
+
     pub async fn read_layer_presence(&self) -> turso::Result<Vec<(LayerPresence, i64)>> {
         let conn = self.reader().await?;
         let mut rows = conn
