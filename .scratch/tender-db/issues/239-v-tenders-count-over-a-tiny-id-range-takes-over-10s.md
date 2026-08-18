@@ -1,6 +1,7 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: needs-triage — measured 2026-08-18 on prod, twice, from the analyst surface
+Status: needs-triage, RAISED — `v_tenders` cannot serve even a primary-key point read (measured
+2026-08-18); the analyst surface's headline view is unusable for any filtered query
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
 Blocked by: —
 Relates to: 50 (the analyst surface), 238 (found while verifying its fix; strengthens its
@@ -25,6 +26,47 @@ It also burned two worker threads for 11 s each in the very run that verified is
 the practical harm: an unremarkable-looking query is enough to saturate the SQL runtime. Any admission
 check built for 238 has to catch this shape, and any capacity reasoning that assumes "cheap queries are
 cheap" is wrong here.
+
+## MEASURED (2026-08-18): it is far worse than a slow aggregate, and my estimate was wrong
+
+Three measurements settle it, and correct the hypothesis below:
+
+    SELECT COUNT(*) FROM tenders    WHERE id < 5000   →  200, 0.043 s
+    SELECT COUNT(*) FROM v_tenders  WHERE id < 5000   →  408, >10 s
+    SELECT COUNT(*) FROM v_tenders  WHERE id < 100    →  408, >10 s   ← same cost, 50× smaller range
+    SELECT id, title FROM v_tenders WHERE id = 93601  →  408, >10 s   ← a PRIMARY KEY point read
+
+**The cost does not depend on the filter at all.** So the predicate is never pushed into the view's
+driving table: `v_tenders` materialises essentially the whole corpus and filters afterwards, whether the
+caller asked for 7.9M rows, 100, or one.
+
+That makes my estimate below — "the count pays ~5,000 correlated subqueries" — **wrong by three orders of
+magnitude**. It pays ~7.9M. I reasoned about the per-row cost and never questioned whether the row COUNT
+would be what the caller asked for. The one measurement that exposed it (shrink the range and see if the
+cost moves) took ten seconds and should have come first.
+
+**And the headline finding is not the aggregate.** `WHERE id = <pk>` also takes >10 s, so `v_tenders`
+cannot serve a point read by primary key. The analyst surface's flagship view is unusable for ANY
+filtered query, not merely for aggregates — which is a much bigger claim than this issue's title, and
+the title now undersells it.
+
+### Why (best supported explanation)
+
+A correlated subquery in a view's SELECT list is the classic blocker to view flattening: the planner
+cannot merge the view into the outer query, so it cannot push `id = ?` down, so it evaluates the view
+in full. The same shape appears in `v_lots` and `v_organizations` (a per-row `COUNT(*)` over
+`organization_mentions`), which should be measured next — if they share the defect, this is a
+surface-wide problem rather than one view's.
+
+Not yet distinguished: whether the planner drives from `tenders` or from `tender_versions` (14.15M rows).
+Either way it does not seek, so the fix is the same; the distinction only changes the size of the number.
+
+### Note for whoever measures next
+
+Each of these 11 s queries **keeps computing after the endpoint abandons it** (turso has no
+`interrupt()`), so two probes in a row pin both SQL workers and the endpoint sheds everything for minutes
+— issue 238. Measuring this view is itself an outage risk: leave a gap between probes, and check
+`SELECT 1` first.
 
 ## Leading hypothesis, from the view definition (read locally, no prod access needed)
 
