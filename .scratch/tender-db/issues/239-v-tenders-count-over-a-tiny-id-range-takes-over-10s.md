@@ -27,6 +27,31 @@ the practical harm: an unremarkable-looking query is enough to saturate the SQL 
 check built for 238 has to catch this shape, and any capacity reasoning that assumes "cheap queries are
 cheap" is wrong here.
 
+## FIXED in code and deployed (2026-08-18, rev `f985136`) — backfill running
+
+`v_tenders.title` now reads `tenders.current_title`, a fold-maintained column, instead of computing a
+correlated subquery per row. The view is a plain two-table join, so it flattens, so a caller's filter
+pushes down.
+
+- `head_title` (canonical.rs) applies the precedence when the fold writes a head pointer — the same
+  place `current_seq` / `current_published_at` / `current_deadline` are written (issues 25, 216). The
+  pattern already existed; this view was just not using it.
+- `backfill_current_title` + the `backfill-titles` job stamp the 7.9M existing rows, batched and
+  checkpointed like `backfill-deadlines`, restartable from a watermark, idempotent. **Running now.**
+- Both writers are pinned by tests, on the cases where precedence decides: Tender-title over
+  lot-title, ENG over another language, a title on a NON-head version losing, and no title staying
+  NULL. The backfill's SQL is deliberately the old subquery verbatim, so "same answer, computed once"
+  can be checked by reading it.
+
+Deploy order was deliberate: the column is NULL until the backfill finishes, and only `/v1/sql` reads
+this view (the REST endpoints do not), so the window costs absent titles on a surface that could not
+answer a filtered query at all. Acceptance checks to run once the backfill lands are at the bottom of
+this issue.
+
+**One more thing the investigation turned up:** `/v1/sql`'s own documented example queries
+(`sql.rs:712`) are `GROUP BY` aggregates over `v_tenders`. On the old view those could not have
+completed inside the 10 s budget either — the endpoint was shipping examples it could not run.
+
 ## MEASURED (2026-08-18): it is far worse than a slow aggregate, and my estimate was wrong
 
 Three measurements settle it, and correct the hypothesis below:
@@ -111,9 +136,18 @@ idea, and it would also speed every non-aggregate read of the view.
 
 ## Acceptance
 
-- The plan is recorded here, with the specific step that dominates.
-- Either the view is fixed/indexed so a narrow-range aggregate completes well inside the budget, or the
-  limitation is documented on the analyst surface — an advertised view that cannot be aggregated should
-  say so rather than time out.
+- ~~The plan is recorded here~~ — superseded by the measurement above, which localised the cause without
+  needing a plan: cost independent of the filter is conclusive on its own.
+- ~~Either the view is fixed…~~ **DONE in code** (`f985136`); verify on prod once the backfill lands:
+  - `SELECT id, title FROM v_tenders WHERE id = 93601` returns in milliseconds, with a non-NULL title.
+  - `SELECT COUNT(*) FROM v_tenders WHERE id < 5000` completes well inside the budget.
+  - `SELECT source, count(*) FROM v_tenders GROUP BY source` — the endpoint's own documented example —
+    completes at all.
+  - Spot-check a handful of titles against `tender_version_texts` for the same `(tender_id, seq)`, since
+    the whole change rests on the two writers agreeing.
+- **Still open: `v_lots` and `v_organizations` carry the same correlated-subquery shape** and were never
+  measured. `v_organizations`' subquery is a `COUNT(*)` over `organization_mentions` (40.9M rows) per
+  row, which is a worse shape than the one just fixed. Measure both before assuming this issue is closed
+  — and mind the outage risk noted above when doing it.
 - A regression probe alongside the existing `crates/store/tests/*_probe.rs` cost tests, which exist for
   exactly this class.
