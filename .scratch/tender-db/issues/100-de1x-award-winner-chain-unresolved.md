@@ -387,3 +387,35 @@ Two separate obstacles, both worth knowing:
 diagnostic is now costing a data investigation, not just an operator's patience. Retry this on an idle
 box once 238's acquisition timing is separated, and drive the confirming count from `notice_sections`
 by notice id WITHOUT a `kind` predicate (filter in the client) so the planner cannot invert.
+
+#### SETTLED: DE-1.0 cannot answer the winner question, because it publishes no winner graph
+
+The count that issue 238 was blocking now runs (in 3–5 ms, on the fixed endpoint). Across all 31
+DE-1.0 notices, the complete section-kind census:
+
+    LotResult                      1     ReceivedSubmissionsStatistics    3
+    LotTender                      0     TenderingParty                   0
+    SettledContract                0     Change                          13
+    ContractExecutionRequirement 142     SelectionCriteria              135
+    (…21 further contract-notice kinds…)
+
+**One LotResult section in the entire era, and not a single `LotTender`, `TenderingParty` or
+`SettledContract`.** The winner chain is `LotResult → SettledContract → LotTender → TenderingParty →
+Organization`, so with zero of the middle three links, **no winner can be resolved from a DE-1.0 notice
+by any parser.** `winner 0.0%` for this era is correct-by-source, not a defect.
+
+This also reconciles exactly with section 3 of the data-quality report, which reads
+`eforms-de-1.0: 1 award-notice, 1 with lot_results, 100.0%` — one award notice, its result
+materialised.
+
+So the earlier reading ("suggestive that DE-1.0 is contract-notice-only") is now settled, and the
+caveat attached to it was right to hold: the top-12-by-count view had hidden `LotResult` at 1, below
+its cutoff. A census beats a top-N whenever the interesting value is a small one.
+
+**Consequence for this issue:** DE-1.0 was a bad choice of verification cohort — it proved the
+re-parse MECHANISM (which was the point, and worth it) but is structurally incapable of proving the
+winner fix. The cohort that can is `eforms-de-1.1`: 145,720 versions and 65,207 awards per the report.
+Before running it, size the walk — DE-1.0's 31 notices spanned 5 packages and 92,839 members in ~35
+minutes, so 1.1 is hours, and it belongs in a planned window with the 09:35 daily kept clear. Run the
+same census on a DE-1.1 sample FIRST: if 1.1 also lacks `TenderingParty`/`LotTender` sections, the
+whole premise of this issue needs re-examining before another cohort is re-parsed.
