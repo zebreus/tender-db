@@ -1,6 +1,7 @@
 # 238 — /v1/sql answers "your query exceeded the 10s limit" when the truth is "no reader was free"
 
-Status: needs-triage — found 2026-08-18, code-confirmed, cost me three query rewrites the same hour
+Status: needs-triage, RAISED — found 2026-08-18, code-confirmed; now BLOCKING issue 100's award
+verification, so it costs a data investigation and not just operator patience
 Kind: misleading diagnostic (the error names the wrong cause) + cold-connection cost
 Blocked by: —
 Relates to: 17 (the isolated SQL runtime), 51 (abandon on disconnect / slot bounding), 230 (whose
@@ -47,6 +48,17 @@ It also partly reinterprets issue 230's opening symptom. That issue starts from 
 HTTP 408", which was read as eleven too-slow queries. The windowed measurements later proved those
 queries genuinely do take 17–90 s each, so the conclusion held — but the FIRST 408 of any run would have
 been inflated by acquisition, and nothing in the report could have told the difference.
+
+## It is already blocking other work
+
+Issue 100's next step is counting results whose ORIGIN notice is DE-1.x. That count could not be
+obtained: the endpoint failed the same query it had answered a minute earlier, intermittently, with the
+408 this issue is about. Two distinct obstacles were in play there and it is worth keeping them apart —
+one is this issue (an acquisition stall wearing a query-timeout message), the other is an
+index-choice inversion where adding a `kind` predicate moves the planner off a PK seek onto
+`notice_sections_kind`. Only the first is in scope here, but while it persists no on-box investigation
+can tell "my query is wrong" from "the backend was busy", which is precisely the confusion that makes
+this worth fixing before the next investigation rather than after.
 
 ## Fix directions
 

@@ -358,3 +358,32 @@ issue 238, so it wants retrying on an idle box. If DE-1.0 genuinely publishes no
 `eforms-de-1.1` (145,720 versions, 65,207 awards per the data-quality report) and size the package walk
 first: DE-1.0's 31 notices spanned 5 packages and 92,839 members in ~35 minutes, so the 1.1 cohort is
 hours and belongs in a planned window with the daily's 09:35 slot kept clear.
+
+#### Partial evidence on whether DE-1.0 publishes awards at all (2026-08-18)
+
+Section kinds across the 31 DE-1.0 notices' parse layer, top 12 by count:
+
+    ContractExecutionRequirement 142   TendererQualificationRequest 123
+    SelectionCriteria            135   AdditionalCommodityClassification 95
+    SpecificTendererRequirement  130   SubordinateAwardingCriterion  89
+    RealizedLocation             124   AwardCriterionParameter       89
+    ContractingSystem             88   PartyName / PartyLegalEntity / Organization 64
+
+**No results-layer kind appears** — no `LotResult`, `LotTender`, `TenderingParty` or `SettledContract`
+— and the list runs down to 64, well below where a CAN's handful of result sections would sit. Strongly
+suggestive that DE-1.0 is a contract-notice-only cohort, which would make its `winner 0.0%`
+**correct-by-source** and confirm it is the wrong cohort to prove the DE-1.x winner fix with.
+
+Not yet conclusive: the confirming query (`… AND kind IN ('LotResult',…)`) could not be completed.
+Two separate obstacles, both worth knowing:
+- Adding the `kind` predicate flips the planner off the `notice_sections` PK seek onto
+  `notice_sections_kind` (millions of rows), so it times out on cost — an index-choice inversion, and
+  the same shape as the `lot_results` `notice_id IN (…)` subquery, which cannot use its
+  `(tender_id, notice_id, result_key)` index at all.
+- The endpoint then began failing the very query that had just succeeded, which is issue **238**
+  (a reader-acquisition stall reported as a query timeout), not a property of the query.
+
+**Issue 238 is therefore blocking this verification**, which raises its priority: a misleading
+diagnostic is now costing a data investigation, not just an operator's patience. Retry this on an idle
+box once 238's acquisition timing is separated, and drive the confirming count from `notice_sections`
+by notice id WITHOUT a `kind` predicate (filter in the client) so the planner cannot invert.
