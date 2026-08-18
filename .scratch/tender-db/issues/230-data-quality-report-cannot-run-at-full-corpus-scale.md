@@ -74,8 +74,12 @@ data-quality report wants the same treatment rather than a bigger hammer:
 
 **Two smaller pieces, independent of which option above wins:**
 
-- The RENDER must distinguish unmeasured from zero (see the correction). The exit code and stderr
-  already do; stdout does not, and stdout is what gets pasted into an issue comment.
+- ~~The RENDER must distinguish unmeasured from zero~~ **DONE** (`1f9a538`, 2026-08-18): failure is now
+  explicit in the type — `from_labelled` takes `Option<Rows>`, `None` meaning the query did not run —
+  and `Raw`/`Report` carry the unmeasured labels. The report opens with an `INCOMPLETE: N of 11 queries
+  did not run (…)` line and section 4 prints `UNMEASURED — the \`merge\` query did not run` instead of a
+  zero. Test drives the exact prod shape (all 11 failed) plus the complement (a query that ran and
+  matched nothing still reports its real zero, no banner).
 - Something must RUN it. A report nobody invokes cannot rot loudly however good its exit code is —
   which is precisely what happened here. If the measurement moves server-side (option 1) this solves
   itself, since the refresher runs on a cadence; if it stays external, it needs a schedule and somewhere
