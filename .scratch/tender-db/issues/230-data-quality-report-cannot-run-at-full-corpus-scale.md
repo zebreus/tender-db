@@ -84,3 +84,39 @@ data-quality report wants the same treatment rather than a bigger hammer:
   which is precisely what happened here. If the measurement moves server-side (option 1) this solves
   itself, since the refresher runs on a cadence; if it stays external, it needs a schedule and somewhere
   for a non-zero exit to land.
+
+
+## Scale half: MEASUREMENT MOVED TO A JOB (2026-08-18, owner — deployed rev `d09e08b`)
+
+Implemented, with a refinement on option 1 above: **a job, not the dashboard refresher.** The
+refresher's cadence is 60 s and assumes seconds-long sections; measured on prod tonight each field
+query takes roughly **five minutes**, so eleven of them on that cadence would add close to an hour of
+full scans after every ingest. As a job they are queue-serialized against ingestion (so no fold or
+process runs beside them), execute on the reader pool (a long scan cannot block the writer), carry an
+issue-65 phase record naming the query in flight, and land in the job log with a digest.
+
+- `Db::measure_rows` — one read-only aggregate on the reader pool, no sandbox, no deadline.
+  Deliberately documented as unreachable from a request path and must stay that way; the caller is a
+  supervisor job, not a handler.
+- `reports` table, one row per kind, replaced per run. A history of multi-minute scans is not worth
+  storing; a stale report that states when it was measured beats none.
+- `POST /admin/jobs {"kind":"data-quality"}`. Same `data_quality::queries()` as the binary — one
+  definition of what semantic completeness means — so `bin/data-quality` still works against a small
+  instance, and only the transport differs.
+- The failed-vs-empty distinction carries end to end: an erroring query becomes `None`, the stored
+  body marks those sections UNMEASURED, and the summary reads "PARTIAL: n/11 queries failed (…)".
+
+**First prod run, 2026-08-18 ~04:00 UTC:** the `versions` query — which 408'd through `/v1/sql` — 
+COMPLETED on the reader pool, confirming the diagnosis was the deadline and not the query. The run
+then proceeded through the field queries at ~5 min each.
+
+### Still open
+
+1. **Nothing schedules it.** This is the gap that hid the rot in the first place, so it is the one that
+   matters most. An hour-long measurement does not belong on the daily's critical path — a weekly
+   timer, or a monthly one, queued outside the 09:35 window.
+2. **No read surface** for the stored body beyond the `reports` table itself. `bin/data-quality`
+   should learn to fetch the stored report instead of re-running eleven scans, and/or an operator
+   endpoint should serve it with its `computed_at`.
+3. **The ~5 min/query cost is unexamined.** It may be that a couple of these aggregates want an index
+   they do not have; worth a plan check before accepting an hour as the price.
