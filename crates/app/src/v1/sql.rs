@@ -74,7 +74,7 @@ use governor::{DefaultKeyedRateLimiter, Quota, RateLimiter};
 use serde_json::{Value as Json_, json};
 use std::collections::HashMap;
 use std::num::NonZeroU32;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::Semaphore;
@@ -228,6 +228,16 @@ pub struct SqlState {
     runtime: tokio::runtime::Handle,
     /// The per-query time limit — [`DEFAULT_TIMEOUT`] in production.
     timeout: Duration,
+    /// Executions currently occupying a worker on the isolated runtime.
+    ///
+    /// Counted rather than gated by a semaphore, and the difference is the point: a
+    /// turso aggregate that never yields cannot be interrupted (there is no
+    /// `interrupt()`), so its future keeps computing after the client has gone and
+    /// after `AbortOnDrop` has fired. A semaphore permit released on abort would
+    /// therefore report capacity that does not exist. This count is decremented by a
+    /// guard INSIDE the task, whose drop cannot run until the computation actually
+    /// returns — so it tracks pinned threads, not live requests.
+    in_flight: Arc<AtomicUsize>,
 }
 
 impl SqlState {
@@ -245,6 +255,7 @@ impl SqlState {
             concurrency: Mutex::new(HashMap::new()),
             runtime: spawn_sql_runtime(),
             timeout,
+            in_flight: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -291,6 +302,24 @@ async fn run(
 
     classify(&sql)?;
 
+    // Shed early when every worker is pinned, instead of making the caller wait out
+    // the full backstop to be told the same thing (issue 238): 11 s per attempt to
+    // learn the query had never started, measured on prod, repeatedly, while two
+    // abandoned scans held both threads.
+    //
+    // With a short grace, NOT instantly, because the two situations look identical
+    // for the first instant and only one of them deserves a 503. Two analysts each
+    // running a legitimate 8 s aggregate saturate the runtime too, and a third cheap
+    // query arriving mid-flight used to wait a moment and succeed; shedding it on
+    // sight would trade one bug for a smaller one. A pin lasts minutes, so
+    // [`CAPACITY_GRACE`] separates them cleanly.
+    //
+    // Racy by construction, harmlessly: the count can change between the last read
+    // and the spawn, and the backstop still reports saturation correctly if it does.
+    if !wait_for_capacity(&sql_state.in_flight).await {
+        return Err(busy(SATURATED).into());
+    }
+
     // Run the query on the isolated SQL runtime (issue 17), not this one. The
     // reader is borrowed and the in-task timeout applied *there*, so even a query
     // that pins its worker thread cannot touch the main API/SSE runtime.
@@ -309,7 +338,11 @@ async fn run(
     let started = Arc::new(AtomicBool::new(false));
     let acquired = Arc::new(AtomicBool::new(false));
     let (started_in_task, acquired_in_task) = (started.clone(), acquired.clone());
+    let in_flight = InFlight::enter(&sql_state.in_flight);
     let handle = sql_state.runtime.spawn(async move {
+        // Moved in, so the count falls only when this future is really finished —
+        // including the abandoned-but-still-computing case.
+        let _in_flight = in_flight;
         // Set on the first poll, BEFORE borrowing anything. Its absence means the
         // task was never polled at all, i.e. every `sql-exec` thread is pinned —
         // which is a different failure from waiting on a reader and needs a
@@ -414,10 +447,60 @@ fn backstop_error(started: bool, acquired: bool, timeout: Duration) -> ApiError 
             "no reader was free in time (readers busy, or a checkpoint holds them off)",
         ),
         // Not polled at all: nothing to do with readers, so do not say so.
-        (false, false) => busy(
-            "the SQL runtime is saturated — every worker is pinned by an earlier query that \
-             cannot be interrupted",
-        ),
+        (false, false) => busy(SATURATED),
+    }
+}
+
+/// How long a query waits for a free worker before being shed.
+///
+/// Long enough that ordinary overlap between two working queries is invisible, short
+/// enough that a pinned runtime answers in under a second instead of eleven.
+const CAPACITY_GRACE: Duration = Duration::from_millis(750);
+
+/// Poll for a free worker until [`CAPACITY_GRACE`] elapses. `true` if one appeared.
+///
+/// Polls rather than waits on a notification because the thing being waited for — a
+/// non-yielding computation finishing — cannot signal anything; there is nobody to
+/// send the wakeup. This runs on the MAIN runtime, where it only ever sleeps, so it
+/// costs no SQL capacity of its own.
+async fn wait_for_capacity(in_flight: &AtomicUsize) -> bool {
+    const STEP: Duration = Duration::from_millis(25);
+    // tokio's clock, not std's, so this honours a paused clock under test and the
+    // grace costs the suite nothing.
+    let deadline = tokio::time::Instant::now() + CAPACITY_GRACE;
+    loop {
+        if in_flight.load(Ordering::Acquire) < SQL_RUNTIME_THREADS {
+            return true;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            return false;
+        }
+        tokio::time::sleep(STEP).await;
+    }
+}
+
+/// What a caller is told when every worker on the isolated runtime is pinned.
+///
+/// One constant because two code paths report it — the fast shed before spawning and
+/// the backstop for a task that was spawned but never polled — and they must not
+/// drift into describing the same state two ways.
+const SATURATED: &str = "the SQL runtime is saturated — every worker is pinned by an earlier query \
+     that cannot be interrupted";
+
+/// Increments a counter for as long as it is alive. Held INSIDE the isolated task so
+/// its drop waits on the computation, not on the request (issue 238).
+struct InFlight(Arc<AtomicUsize>);
+
+impl InFlight {
+    fn enter(counter: &Arc<AtomicUsize>) -> InFlight {
+        counter.fetch_add(1, Ordering::AcqRel);
+        InFlight(counter.clone())
+    }
+}
+
+impl Drop for InFlight {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
     }
 }
 
@@ -1169,6 +1252,12 @@ mod tests {
             saturated.1
         );
 
+        // The fast-shed path and the backstop must describe saturation identically —
+        // they report the same state from different places, and a caller comparing two
+        // 503s should not have to wonder whether they mean different things.
+        assert!(saturated.1.contains(SATURATED), "the backstop uses the shared wording");
+        assert_eq!(busy(SATURATED).0, StatusCode::SERVICE_UNAVAILABLE, "so does the fast shed");
+
         let slow = backstop_error(true, true, limit);
         assert_eq!(slow.0, StatusCode::REQUEST_TIMEOUT, "a reader was borrowed, so the query is slow");
         assert!(slow.1.contains("10s time limit"), "and it names the limit: {}", slow.1);
@@ -1176,6 +1265,32 @@ mod tests {
         // The threshold that decides which log line an operator sees must sit well
         // inside the budget, or a borrow eating most of it goes unrecorded.
         assert!(SLOW_ACQUIRE < DEFAULT_TIMEOUT, "a slow borrow is logged before it becomes a 503");
+    }
+
+    /// The in-flight count must fall only when a computation truly ends, because that
+    /// is the whole reason it is a count and not a semaphore: an uninterruptible
+    /// aggregate keeps its worker after the request is gone, and capacity that is
+    /// reported free but is not is worse than no accounting at all (issue 238).
+    /// Costs one real [`CAPACITY_GRACE`] (750 ms) on the refusal leg. Paying it beats
+    /// pulling in tokio's `test-util` feature to fake a clock for a single assertion.
+    #[tokio::test]
+    async fn in_flight_tracks_the_computation_not_the_request() {
+        let counter = Arc::new(AtomicUsize::new(0));
+        assert_eq!(counter.load(Ordering::Acquire), 0);
+
+        let one = InFlight::enter(&counter);
+        assert_eq!(counter.load(Ordering::Acquire), 1, "entering occupies a worker");
+        let two = InFlight::enter(&counter);
+        assert_eq!(counter.load(Ordering::Acquire), SQL_RUNTIME_THREADS, "both workers occupied");
+
+        // At the cap the handler's capacity check must report no room.
+        assert!(!wait_for_capacity(&counter).await, "at the cap, capacity is refused");
+
+        drop(one);
+        assert_eq!(counter.load(Ordering::Acquire), 1, "one finishing frees exactly one");
+        assert!(wait_for_capacity(&counter).await, "one free worker is enough to admit a query");
+        drop(two);
+        assert_eq!(counter.load(Ordering::Acquire), 0, "and the last leaves it clean");
     }
 
     #[test]
