@@ -1,6 +1,7 @@
 # 234 — an identifier-less mention mints a NEW provisional Organization every time, so legacy buyer rollups cannot aggregate
 
-Status: needs-triage — found 2026-08-18 reading `resolve_one_mention` while fixing issue 232
+Status: needs-triage, RAISED — SIZED 2026-08-18: 23,462,294 of 24,618,292 organizations (95.30%) are
+provisional, so this is the corpus's present state, not a risk the text-era re-parse would introduce
 Kind: canonical identity gap (correct per-notice, useless per-organization)
 Blocked by: —
 Relates to: 232 (the text-era buyer fix that makes this bite at 3.79M scale), 04 (where provisional
@@ -39,6 +40,40 @@ The result would be a buyer that is *present* but not *aggregatable*: "MAIRIE DE
 as thousands of distinct Organizations, so the buyer rollups and authority-level analytics that
 motivated issue 232 still would not work. The field-completeness number would go green while the
 capability stayed broken — which is the exact failure mode issue 230 exists to stop us celebrating.
+
+## SIZED (2026-08-18) — and it has already happened, at scale
+
+The acceptance item below asked for these counts "before re-parsing the text era, so the growth is a
+prediction that gets checked rather than a surprise". They were free all along: the dashboard's
+`tender_db_canonical_rows` gauges publish them, no query needed.
+
+    total organizations      24,618,292
+      canonical               1,155,998   ( 4.70%)
+      provisional            23,462,294   (95.30%)
+    organization_mentions    41,297,219
+    provisional per mention        0.568
+
+**95.3 % of the organization layer is provisional.** So this is not a latent risk that the text-era
+re-parse would introduce — it is the corpus's present state. Issue 04 measured 1,216 provisional profiles
+out of 8,221 (~15 %) on one eForms daily and treated that as the tolerable minority case; at full-corpus
+scale, with the legacy eras included, the ratio is inverted almost exactly.
+
+0.568 provisional organizations per mention is the number that names the defect precisely: mentions
+that carry no usable identifier mint a fresh row nearly every time, so the "canonical Organization"
+concept currently describes 4.7 % of the table. A buyer or winner rollup over the legacy corpus is
+therefore not fragmented at the margins — it is mostly fragments.
+
+Two consequences worth stating plainly:
+- **This raises the issue's priority above the text-era re-parse it was filed alongside.** Issue 232's
+  buyer fix would add ~3.8M more provisional rows (one per text-era notice), a ~16 % increase on top of
+  23.5M — meaningful, but no longer the thing that "causes" the problem. The problem is here now.
+- **The `name_norm` material already exists for all 23.5M rows** — every insert writes it, and
+  `organizations_name_norm_id` indexes it — so a name-based merge has its input ready and unread. That
+  makes option (1) below cheaper than it looks, and makes the fact that nothing reads it more glaring.
+
+Still unmeasured, and the next question: how much of the 23.5M would a `(country, name_norm)` merge
+actually collapse? That is a `GROUP BY` over a 24.6M-row table, so it needs the bounded-batch treatment
+and an idle box — and it is the number that decides between options (1) and (2).
 
 ## What to decide
 
