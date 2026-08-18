@@ -64,3 +64,48 @@ rather than a hard gate that fails on day one. Sized honestly, it is its own pie
   no new fixture is needed.
 - A re-fold, then a check that bids on groups can be attributed to member lots.
 - Separately: a recorded decision on whether the SDK-native disposition gap becomes a gate or a report.
+
+## Design decision (2026-08-18): make MEMBERSHIP first class; do NOT synthesise singleton groups
+
+Asked directly: should LotsGroup become first class, with a synthetic group for every lot even when it
+contains only that one lot, so a bid always references a group? **Recommendation: no** — populate
+membership from published data instead. The uniformity is genuine and the cost is too high on four
+counts.
+
+**1. It invents data the source never published.** A singleton group has no `notice_sections` row behind
+it. This layer's discipline is that a canonical row traces to a published fact — `organization_mentions`
+is "the immutable evidence", ADR-0004 demands exhaustive consumption of what IS there. Synthesising
+entities is the same class of problem as issue 234's provisional organizations, except self-inflicted
+rather than forced by a source that publishes no identifier.
+
+**2. Identity breaks, and this schema is unusually exposed to that.** A derived key
+(`GLO-synth-LOT-0003`) is stable but fictional, and will eventually collide with a real `GLO-` id a buyer
+publishes. A rowid key is unstable across `project --rebuild`, which drops and re-derives the canonical
+layer — so every synthetic id changes and any external reference rots. The current model avoids this
+completely because `lots.lot_key` IS the published id.
+
+**3. Row cost, measured rather than guessed** (dashboard counts, 2026-08-18): `lots` = **13,304,590**,
+`bids` = 6,898,781. Synthesising a group per ungrouped lot is roughly **+13M group rows and +13M
+membership rows**, near-doubling the lot layer to serve the minority shape. In a corpus where a full scan
+of a large table costs seconds and the `v_*` views cannot be filtered at all (issue 239), growing a table
+for a rare case is the wrong direction.
+
+**4. It relocates the polymorphism rather than removing it.** eForms still publishes `BT-13714-Tender`
+pointing at either `LOT-nnnn` or `GLO-nnnn`, so the writer must still branch — and now also mint or look
+up a synthetic group, in the fold, the re-parse and the cross-source merge, which are the hard paths. The
+reader's uniformity is paid for by the three writers.
+
+### What to build instead
+
+`lot_group_members(tender_id, group_lot_id, member_lot_id)` populated from `BT-1375-Procedure`. Coverage
+is then one branch: if the bid's lot row has `kind = 'LotsGroup'`, join membership; otherwise the bid
+covers that lot. Published facts only, no synthesis, no new identity.
+
+If consumers later want the flat shape, build it as a DERIVED `bid_lot_coverage` on top of published
+membership, when a read pattern actually demands it. (A view would be the obvious vehicle and is not
+available: per issue 239 a filtered query on a view here reads the whole corpus.)
+
+**Kept as a live option, not dismissed:** if a future consumer needs per-lot award attribution
+everywhere and the branch proves genuinely painful in practice, the flat derived table is the answer —
+and it can be built without touching identity, which is exactly why the identity layer should stay
+free of synthetic rows now.
