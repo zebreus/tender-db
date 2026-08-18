@@ -2190,14 +2190,17 @@ impl Supervisor {
     /// produces (per-era field completeness, award linkage, results density) move on
     /// the scale of a parser change, not of a day's ingest.
     ///
-    /// Measured on prod rather than guessed, because guessing is what went wrong
-    /// twice before: the SEVEN-query pass (before linkage/density/merge were
-    /// windowed) took **1258 s over 32 windows** with zero failed windows. Adding
-    /// the last four queries roughly quadrupled a window — 291 s and 229 s for the
-    /// first two — which puts the eleven-query pass in the 2–3 hour range. Even at
-    /// the top of that, a 03:10 Berlin start finishes hours before the 09:35 daily.
-    /// The per-query cost breakdown each run now logs is what will say whether that
-    /// price is an index away from being much lower.
+    /// Measured end to end on prod, which is the only number worth writing down
+    /// here: the eleven-query pass took **2366 s (39 min) over 32 windows with zero
+    /// failed windows**, and the seven-query pass before it took 1258 s. A 03:10
+    /// Berlin start therefore finishes around 03:50, some five hours clear of the
+    /// 09:35 daily.
+    ///
+    /// The first two windows of that run cost 291 s and 229 s, and projecting from
+    /// them gave "2–3 hours" — wrong by a factor of four, because the mid-corpus id
+    /// ranges are sparse and run in 17–27 s. That is the third time on this job that
+    /// a partial sample has mispredicted the whole, in both directions. The per-query
+    /// cost breakdown each run logs is the thing to read instead.
     ///
     /// 03:10 Sunday, not the 09:35 daily tick: the daily is the busiest moment the
     /// box has — probe, process and fold, back to back — and a measurement queued
