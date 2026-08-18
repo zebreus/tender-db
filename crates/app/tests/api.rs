@@ -425,6 +425,10 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
         "tender_db_job_last_ok",
         "tender_db_quarantine_outstanding",
         "tender_db_canonical_rows",
+        // Issue 230: a report nobody has computed emits no series at all. A zero
+        // here would be a 1970 stamp — perpetually "stale", so perpetually alerting,
+        // and therefore perpetually muted.
+        "tender_db_report_computed_timestamp_seconds",
     ] {
         assert!(!body.contains(absent), "{absent} must be absent before it is measured:\n{body}");
     }
@@ -436,6 +440,20 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
     // the closure walk gates on, since the adjacency tables are not in /v1/sql's
     // allow-list.
     assert!(body.contains("tender_db_legacy_adjacency_watermark 0\n"), "{body}");
+
+    // A computed report DOES get a series, labelled by kind, carrying the stamp
+    // rather than an age — the shape an alert reads as `time() - stamp > threshold`
+    // (issue 230).
+    let stamped = store::now_unix() - 3_600;
+    server.db.put_report("data-quality", "COMPLETENESS\n  eforms 99.0%", stamped).await.unwrap();
+    let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
+        .text().await.expect("body");
+    assert!(
+        body.contains(&format!(
+            "tender_db_report_computed_timestamp_seconds{{kind=\"data-quality\"}} {stamped}\n"
+        )),
+        "the report stamp is exposed per kind:\n{body}"
+    );
 
     // Once runs exist, each kind's newest run reports duration, finish and outcome.
     let now = store::now_unix();

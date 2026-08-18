@@ -4431,6 +4431,23 @@ impl Db {
         Ok(rows.next().await?.map(|row| (text(&row, 0), int(&row, 1))))
     }
 
+    /// Every stored report's kind and when it was computed — the stamps without the
+    /// bodies (issue 230).
+    ///
+    /// `reports` holds one row per kind (newest wins), so this is bounded by how
+    /// many kinds the code writes, not by the corpus. Separate from
+    /// [`Db::latest_report`] so a `/metrics` scrape can expose report freshness
+    /// without dragging a multi-kilobyte body across on every scrape.
+    pub async fn report_stamps(&self) -> turso::Result<Vec<(String, i64)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT kind, computed_at FROM reports", ()).await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok(out)
+    }
+
     /// Run one read-only aggregate on the READER POOL and return its rows as
     /// JSON, for a measurement job that would not survive the `/v1/sql` deadline
     /// (issue 230: the data-quality report's eleven queries each exceed the 10 s

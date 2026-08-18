@@ -80,6 +80,33 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         sample(&mut out, "tender_db_legacy_adjacency_watermark", &[], watermark as f64);
     }
 
+    // Stored report freshness (issue 230). The timestamp, not an age — Prometheus
+    // convention is to expose the stamp and let the alert say `time() - stamp >
+    // 10d`, and a stamp is also the series that survives a scrape gap honestly.
+    //
+    // This is the gauge that makes the original rot alertable. The data-quality
+    // report had been failing every query for months and nothing noticed, because
+    // "nobody ran it" and "it ran and passed" produce the same silence. A kind
+    // that has never been computed emits NO series rather than a zero, so the
+    // alert fires on absence instead of on a fabricated 1970 stamp.
+    if let Ok(stamps) = state.db.report_stamps().await {
+        if !stamps.is_empty() {
+            header(
+                &mut out,
+                "tender_db_report_computed_timestamp_seconds",
+                "When each stored report was last computed; absent = never computed.",
+            );
+            for (kind, at) in &stamps {
+                sample(
+                    &mut out,
+                    "tender_db_report_computed_timestamp_seconds",
+                    &[("kind", kind)],
+                    *at as f64,
+                );
+            }
+        }
+    }
+
     // The job log — the same bounded reader-pool window `/health/deep` reads
     // (newest `JOB_SCAN` runs), reduced to the newest run per kind. Durations
     // and finish stamps per kind are the "watch a number trend" series the
