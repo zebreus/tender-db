@@ -1,7 +1,7 @@
 # 238 — /v1/sql answers "your query exceeded the 10s limit" when the truth is "no reader was free"
 
-Status: needs-triage, RAISED — found 2026-08-18, code-confirmed; now BLOCKING issue 100's award
-verification, so it costs a data investigation and not just operator patience
+Status: message half FIXED and deployed 2026-08-18 (`7809efe`, corrected in `f1cc6d4`); the
+AVAILABILITY half is open — two uninterruptible queries still deny the endpoint to all users
 Kind: misleading diagnostic (the error names the wrong cause) + cold-connection cost
 Blocked by: —
 Relates to: 17 (the isolated SQL runtime), 51 (abandon on disconnect / slot bounding), 230 (whose
@@ -19,6 +19,48 @@ second **0.8 ms**.
 
 Public reads were unaffected throughout — `/health` 0.4 ms, `/v1/tenders?limit=2` 2.6 ms,
 `/health/deep` green. The problem is confined to the sandbox path.
+
+## CORRECTION (same day): the cause is runtime saturation, not readers
+
+The diagnosis below — WAL gate + cold connection cost — is **wrong**, and worth leaving in place with
+this correction on top rather than quietly rewriting, because the reasoning error is the instructive
+part.
+
+Measured on prod after the first fix deployed: `SELECT 1` returning 503 at 11.0 s while **two
+`sql-exec` threads sat at 25 % and 16 % CPU**. `SQL_RUNTIME_THREADS = 2`, and both were pinned by full
+scans abandoned minutes earlier. turso has no `interrupt()`, so `AbortOnDrop` cannot stop a
+non-yielding aggregate: the computation runs to completion whether or not a client is still waiting.
+New tasks were therefore **never polled at all** — readers were never even reached.
+
+The clue I had and failed to weigh: the wedge persisted for MINUTES with an idle job queue. No
+checkpoint explains that. I reasoned from the shape of `Readers::get` (permit, then WAL gate) to a
+plausible story, and stopped when the story fit rather than when the evidence forced it.
+
+The fix (rev `f1cc6d4`) reports three outcomes from how far the task got — never polled (saturation),
+polled without a reader (readers/checkpoint), reader borrowed (genuine query timeout) — so the message
+names the actual subsystem. "Busy" alone had already cost an hour on the wrong one.
+
+## The availability gap this exposes — still open
+
+Issue 17's isolation goal HELD, exactly as its own comment predicted ("can pin at most this many
+threads and never starves the rest of the server"): throughout the wedge, `/health` served in 0.4 ms
+and `/v1/tenders` in 2.6 ms. That design decision is vindicated.
+
+What is NOT bounded is `/v1/sql`'s own availability. **Two uninterruptible queries deny the endpoint to
+every user**, and the per-user cap of 2 concurrent cannot help, because the pinning outlives the
+request that caused it — the caller disconnects, the thread keeps computing. One analyst's pair of
+full scans is a total outage of the analyst surface for as long as they run.
+
+Options, none free:
+- **More threads** — raises the ceiling, does not remove it, and spends CPU the rest of the server may want.
+- **Admission control on cost** — refuse a query whose plan looks like a full scan of a huge table.
+  Needs a plan check (`EXPLAIN QUERY PLAN` is available and cheap) and a policy; would have refused
+  every query that caused this.
+- **A per-user thread budget** so one token cannot occupy every worker.
+- **Accept and document** — the endpoint is best-effort, and the 503 now says so honestly.
+
+Recommendation: the plan check, because it attacks the cause (unbounded scans admitted at all) rather
+than the symptom, and because the same check would have spared issue 230's eleven 408s.
 
 ## The cause, from the code (`crates/app/src/v1/sql.rs`)
 
