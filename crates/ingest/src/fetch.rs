@@ -40,6 +40,13 @@ pub enum Outcome {
 pub enum Error {
     Http(reqwest::Error),
     Status(reqwest::StatusCode),
+    /// A status the server itself says is temporary: 429 Too Many Requests or 408
+    /// Request Timeout, carrying its `Retry-After` seconds when it sent one.
+    ///
+    /// Split from [`Error::Status`] because these are the two 4xx codes that mean
+    /// "ask again later", and lumping them in with 400/404 is what made a TED rate
+    /// limit fail a daily probe outright (2026-08-18, job 725).
+    Throttled { status: reqwest::StatusCode, retry_after: Option<u64> },
     Io(std::io::Error),
     Db(turso::Error),
 }
@@ -49,6 +56,10 @@ impl std::fmt::Display for Error {
         match self {
             Error::Http(e) => write!(f, "http: {e}"),
             Error::Status(s) => write!(f, "unexpected status: {s}"),
+            Error::Throttled { status, retry_after } => match retry_after {
+                Some(secs) => write!(f, "throttled: {status} (Retry-After: {secs}s)"),
+                None => write!(f, "throttled: {status} (no Retry-After)"),
+            },
             Error::Io(e) => write!(f, "io: {e}"),
             Error::Db(e) => write!(f, "db: {e}"),
         }
@@ -280,11 +291,76 @@ async fn download(
         match download_once(client, url, &part).await {
             Ok(v) => return Ok(v),
             // Client errors are permanent — retrying a 400/404 just wastes time.
+            // 429/408 are NOT in this class: they arrive as `Throttled`, below.
             Err(e @ Error::Status(s)) if s.is_client_error() => return Err(e),
+            // A rate limit is the one 4xx that asks to be retried, and TED does
+            // send them: a 429 on the 2026-08-18 daily probe (job 725) failed the
+            // job outright because `is_client_error()` swallowed the retry. Honour
+            // the server's own `Retry-After` when it sends one — capped, so a wild
+            // or hostile value cannot park the queue — and fall back to a longer
+            // backoff than the generic one, since a limit that just tripped will
+            // still be tripped two seconds later.
+            Err(e @ Error::Throttled { .. }) if attempt >= THROTTLE_ATTEMPTS => return Err(e),
+            Err(Error::Throttled { retry_after, .. }) => {
+                let wait = retry_after
+                    .unwrap_or(THROTTLE_BACKOFF_SECS * attempt as u64)
+                    .min(THROTTLE_WAIT_CAP_SECS);
+                eprintln!("[fetch] throttled on {url}, waiting {wait}s (attempt {attempt})");
+                tokio::time::sleep(std::time::Duration::from_secs(wait)).await;
+            }
             Err(e) if attempt >= 3 => return Err(e),
             Err(_) => tokio::time::sleep(std::time::Duration::from_secs(2 * attempt as u64)).await,
         }
     }
+}
+
+/// How many times a throttled request is re-attempted before the job fails.
+///
+/// More than the generic 3 because the wait is the point: a rate limit clears on
+/// the server's schedule, not ours, and a daily probe that gives up after six
+/// seconds loses the day's notices for the sake of finishing early.
+const THROTTLE_ATTEMPTS: u32 = 5;
+/// Base backoff when the server sends no `Retry-After` (multiplied by attempt).
+const THROTTLE_BACKOFF_SECS: u64 = 15;
+/// Longest single wait honoured, whatever `Retry-After` claims. Jobs are
+/// serialized, so an unbounded sleep here is an unbounded queue stall.
+const THROTTLE_WAIT_CAP_SECS: u64 = 120;
+
+/// What a response status means for the download: append to the partial file,
+/// overwrite it, or fail — and if fail, whether it is worth asking again.
+///
+/// Its own function so the classification is testable without a server, because
+/// the distinction it draws is the whole point: 429 and 408 are the two 4xx codes
+/// that mean "later", and treating them like 404 cost a daily probe its day
+/// (job 725, 2026-08-18). `retry_after` is a closure so the header is only read
+/// when the status is one that carries it.
+fn classify_status(
+    status: reqwest::StatusCode,
+    retry_after: impl FnOnce() -> Option<u64>,
+) -> Result<bool, Error> {
+    match status {
+        reqwest::StatusCode::OK => Ok(false), // full body (server ignored/no Range)
+        reqwest::StatusCode::PARTIAL_CONTENT => Ok(true),
+        reqwest::StatusCode::TOO_MANY_REQUESTS | reqwest::StatusCode::REQUEST_TIMEOUT => {
+            Err(Error::Throttled { status, retry_after: retry_after() })
+        }
+        status => Err(Error::Status(status)),
+    }
+}
+
+/// `Retry-After` in seconds, when the server sent it as a delay.
+///
+/// The header also permits an HTTP-date, which is deliberately NOT parsed: a date
+/// requires trusting the server's clock against ours, and the fallback backoff is
+/// a fine answer when the format is one we do not read.
+fn retry_after_secs(headers: &reqwest::header::HeaderMap) -> Option<u64> {
+    headers
+        .get(reqwest::header::RETRY_AFTER)?
+        .to_str()
+        .ok()?
+        .trim()
+        .parse::<u64>()
+        .ok()
 }
 
 async fn download_once(
@@ -299,11 +375,7 @@ async fn download_once(
     }
     let mut resp = req.send().await?;
 
-    let append = match resp.status() {
-        reqwest::StatusCode::OK => false, // full body (server ignored/no Range)
-        reqwest::StatusCode::PARTIAL_CONTENT => true,
-        status => return Err(Error::Status(status)),
-    };
+    let append = classify_status(resp.status(), || retry_after_secs(resp.headers()))?;
 
     let mut file = if append && resume_from > 0 {
         std::fs::OpenOptions::new().append(true).open(part)?
@@ -436,7 +508,10 @@ fn versioned(rel_path: &str, version: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{civil_date, days_from_civil, versioned};
+    use super::{
+        civil_date, classify_status, days_from_civil, retry_after_secs, versioned, Error,
+        THROTTLE_ATTEMPTS, THROTTLE_BACKOFF_SECS, THROTTLE_WAIT_CAP_SECS,
+    };
 
     #[test]
     fn versioned_filenames() {
@@ -451,5 +526,72 @@ mod tests {
         for &(y, m, d) in &[(1970u16, 1u8, 1u8), (2000, 2, 29), (2026, 7, 19), (1993, 1, 1)] {
             assert_eq!(civil_date(days_from_civil(y, m, d) * 86_400), (y, m, d));
         }
+    }
+
+    /// The rule a TED rate limit taught on 2026-08-18 (job 725, `ted daily (probe)`
+    /// → `unexpected status: 429`): 429 and 408 are the two 4xx codes that mean
+    /// "ask again later", and `download`'s "client errors are permanent" shortcut
+    /// was swallowing the retry for exactly them. A 429 that arrives before the
+    /// fetch loses the day's notices and leaves only a red probe row to say so.
+    #[test]
+    fn a_rate_limit_is_retryable_where_a_404_is_not() {
+        use reqwest::StatusCode;
+
+        // The success shapes, unchanged: 206 appends to the partial file, 200 does not.
+        assert_eq!(classify_status(StatusCode::OK, || None).unwrap(), false);
+        assert_eq!(classify_status(StatusCode::PARTIAL_CONTENT, || None).unwrap(), true);
+
+        // Throttled, and the server's own delay is carried through.
+        for status in [StatusCode::TOO_MANY_REQUESTS, StatusCode::REQUEST_TIMEOUT] {
+            match classify_status(status, || Some(30)) {
+                Err(Error::Throttled { status: got, retry_after: Some(30) }) => {
+                    assert_eq!(got, status);
+                }
+                other => panic!("{status} must be throttled with its delay, got {other:?}"),
+            }
+        }
+        // No `Retry-After` is fine — the backoff covers it.
+        assert!(matches!(
+            classify_status(StatusCode::TOO_MANY_REQUESTS, || None),
+            Err(Error::Throttled { retry_after: None, .. })
+        ));
+
+        // The genuinely permanent ones stay permanent, which is the other half of
+        // the rule: retrying a 404 forever is how a probe hangs on a day that will
+        // never exist.
+        for status in [StatusCode::NOT_FOUND, StatusCode::BAD_REQUEST, StatusCode::FORBIDDEN] {
+            assert!(
+                matches!(classify_status(status, || None), Err(Error::Status(s)) if s == status),
+                "{status} is permanent"
+            );
+        }
+
+        // A server error is neither: it takes `download`'s generic short backoff.
+        assert!(matches!(
+            classify_status(StatusCode::INTERNAL_SERVER_ERROR, || None),
+            Err(Error::Status(s)) if s.is_server_error()
+        ));
+
+        // The waits are bounded, because jobs are serialized and a sleep here is a
+        // queue stall.
+        assert!(THROTTLE_WAIT_CAP_SECS >= THROTTLE_BACKOFF_SECS);
+        assert!(THROTTLE_ATTEMPTS * (THROTTLE_WAIT_CAP_SECS as u32) < 900, "worst case under 15min");
+    }
+
+    /// Seconds only. The header also permits an HTTP-date, and reading one would
+    /// mean trusting the server's clock against ours for a value the fallback
+    /// backoff already covers.
+    #[test]
+    fn retry_after_reads_a_delay_and_ignores_a_date() {
+        let headers = |v: &str| {
+            let mut h = reqwest::header::HeaderMap::new();
+            h.insert(reqwest::header::RETRY_AFTER, v.parse().expect("header value"));
+            h
+        };
+        assert_eq!(retry_after_secs(&headers("30")), Some(30));
+        assert_eq!(retry_after_secs(&headers("  7 ")), Some(7));
+        assert_eq!(retry_after_secs(&headers("Wed, 21 Oct 2026 07:28:00 GMT")), None);
+        assert_eq!(retry_after_secs(&headers("-1")), None);
+        assert_eq!(retry_after_secs(&reqwest::header::HeaderMap::new()), None);
     }
 }
