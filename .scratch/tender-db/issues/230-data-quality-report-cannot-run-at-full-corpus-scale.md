@@ -106,9 +106,27 @@ issue-65 phase record naming the query in flight, and land in the job log with a
 - The failed-vs-empty distinction carries end to end: an erroring query becomes `None`, the stored
   body marks those sections UNMEASURED, and the summary reads "PARTIAL: n/11 queries failed (…)".
 
-**First prod run, 2026-08-18 ~04:00 UTC:** the `versions` query — which 408'd through `/v1/sql` — 
-COMPLETED on the reader pool, confirming the diagnosis was the deadline and not the query. The run
-then proceeded through the field queries at ~5 min each.
+**First prod run, 2026-08-18 — and it had to be killed.** The `versions` query, which 408'd through
+`/v1/sql`, DID complete on the reader pool, which confirmed the deadline was the obstacle for it. But
+the run then sat on the SECOND query (`title`) for **over 50 minutes at 100% CPU**, single-threaded, no
+I/O wait, with no sign of finishing. My "~5 min per query" figure earlier in this issue was a guess
+from two early observations and is **wrong** — at least one of these aggregates is not merely expensive
+but algorithmically wrong for this corpus (nested loops over the version×satellite join, most likely).
+
+Because jobs are queue-serialized it would have held the daily ingest behind it for hours, so the
+measurement is now **gated behind `TENDER_DATA_QUALITY=1`** (`37a8c4c`) and deploying that gate cleared
+the stuck run: the restart killed it, the recovered job declined immediately, the queue drained, and
+`/health/deep` stayed green throughout (declining reports SUCCESS on purpose — an `error` outcome would
+have turned the last-job check red and traded a blocked queue for a false alarm).
+
+**The mistake worth recording:** the 408s told me these queries exceeded 10 s and I read that as
+"a bit slower than the cap" instead of measuring the real cost before running eleven of them on the
+serving box. The `/v1/sql` deadline was doing its job; I removed it without first asking what it was
+protecting against.
+
+A per-query timeout is NOT the fix: turso cannot interrupt a statement
+(`docs/agents/prod-box-reads.md`), so a deadline abandons the future while the scan keeps burning a
+pooled reader.
 
 ### Still open
 
@@ -118,5 +136,10 @@ then proceeded through the field queries at ~5 min each.
 2. **No read surface** for the stored body beyond the `reports` table itself. `bin/data-quality`
    should learn to fetch the stored report instead of re-running eleven scans, and/or an operator
    endpoint should serve it with its `computed_at`.
-3. **The ~5 min/query cost is unexamined.** It may be that a couple of these aggregates want an index
-   they do not have; worth a plan check before accepting an hour as the price.
+3. **The query cost is the BLOCKER now, not a footnote** — it gates items 1 and 2, since there is no
+   point scheduling or serving a measurement that cannot finish. Next step is a plan check on the
+   completeness queries (`EXPLAIN QUERY PLAN` via the hot-read-plans gate, which is metadata-only and
+   free per the prod-box-reads rule), starting with `title`, then whichever satellite joins share its
+   shape. Expect a missing index on the satellite's `(notice_id)`/`(tender_id, seq)` side, or a
+   `COUNT(DISTINCT …)` that forces a sort over tens of millions of rows. Re-cost, then re-open the
+   gate.
