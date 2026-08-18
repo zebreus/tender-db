@@ -167,6 +167,21 @@ them into `ORG-1` beside the name would give the mention a country (which helps 
 dedup). Deliberately left out of `0074b61` to keep one claim per commit; it is a small follow-on with
 the evidence already in hand.
 
+### One consequence of the fix, filed as issue 234
+
+Landing this by re-parsing the era will mint roughly **one provisional Organization per notice**, and
+that is worth knowing before the re-parse rather than after. `resolve_one_mention` reuses an
+Organization only when the mention carries a usable identifier; without one it runs an unconditional
+INSERT — no lookup, no key. The text era publishes no identifier anywhere in its 36-code inventory, so
+every one of its 3.79M mentions would mint its own row.
+
+The buyer would then be **present but not aggregatable** — "MAIRIE DE PARIS" as thousands of distinct
+Organizations, so the authority rollups that motivated this issue still would not work, while this
+issue's completeness number went green. Issue 234 carries the decision. Deliberately NOT bundled here:
+that one is an identity policy that can silently merge distinct entities, this one is a mapping backed
+by six vintages of fixture evidence, and landing them together would make a bad outcome
+un-attributable.
+
 ### Status: the code is in, the corpus is not
 
 The 3,786,955 stored notices keep their old parse layer until the era is re-parsed. That is a separate
