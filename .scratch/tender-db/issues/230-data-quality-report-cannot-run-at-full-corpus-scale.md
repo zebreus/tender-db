@@ -31,10 +31,22 @@ reached 14.27M notices → 7.9M tenders → ~14.15M tender_versions, with 40.9M 
 a satellite-driven `GROUP BY` over the version layer is now a multi-minute scan. The 10s `/v1/sql` cap
 — which exists precisely to protect the serving DB (issue 17/120) — refuses them all.
 
-It went unnoticed because the tool is *descriptive by design*: no pass/fail, so it exits successfully
-while reporting nothing. A scheduled run would have looked fine forever. That is the issue-226 shape
-again — and it means the project has had NO semantic-quality measurement for however long the corpus
-has been this size, while believing issue 27 delivered one.
+**CORRECTION (2026-08-18, same day, owner).** The first version of this issue said the tool "exits
+successfully while reporting nothing" and made that the reason the rot hid. That is WRONG, and I
+inferred it from the module docstring ("no pass/fail — it *measures*") without reading the exit path.
+`bin/data-quality` in fact handles degradation properly: every failed query is named on stderr, sets
+`degraded = true`, and the process returns `ExitCode::FAILURE`. A scheduled run would NOT have looked
+fine.
+
+The real reason it went unnoticed is duller and more actionable: **nothing runs it.** It is a manual
+tool, invoked by a person when someone thinks to, and nobody had since the corpus outgrew the queries.
+So the project has had no semantic-quality measurement for however long that is, while believing issue
+27 delivered one — not because the signal lied, but because no one was listening for it.
+
+One real conflation does survive, in the RENDERED output rather than the exit code: section 4 printed
+"DÖE procedure Tenders: 0; merged with TED: 0 (—)" for a query that never ran. stdout shows zeros
+where it should show "unmeasured", so a reader who sees the report pasted into a comment — without the
+stderr lines or the exit code — is misled. That is worth fixing on its own.
 
 ## What NOT to do
 
@@ -60,6 +72,11 @@ data-quality report wants the same treatment rather than a bigger hammer:
 
 (1) matches how every other expensive number in this codebase is produced and is the recommendation.
 
-**Whatever the fix, close the silent-emptiness half too:** the tool must exit non-zero, and say so in
-one line, when a section is empty because its query failed rather than because the data is absent. A
-measurement tool that cannot distinguish "zero" from "unmeasured" is the defect that hid this one.
+**Two smaller pieces, independent of which option above wins:**
+
+- The RENDER must distinguish unmeasured from zero (see the correction). The exit code and stderr
+  already do; stdout does not, and stdout is what gets pasted into an issue comment.
+- Something must RUN it. A report nobody invokes cannot rot loudly however good its exit code is —
+  which is precisely what happened here. If the measurement moves server-side (option 1) this solves
+  itself, since the refresher runs on a cadence; if it stays external, it needs a schedule and somewhere
+  for a non-zero exit to land.

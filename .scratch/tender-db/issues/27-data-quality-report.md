@@ -7,8 +7,9 @@ every section prints empty. The other two clauses DO hold: the baseline is docum
 docs/research/data-quality.md, and the anomalies it found became issues (100, 101, 188 among them).
 
 Nothing regressed in the code — the queries were bounded for the mid-backfill corpus this was written
-against, and the corpus outgrew them. Because the tool is descriptive (no pass/fail) it exits
-successfully while reporting nothing, so the rot was invisible. Filed as issue 230 with the measured
+against, and the corpus outgrew them. (Correction to this note's first version: the tool DOES exit
+non-zero on a degraded run and names each failed query on stderr — I had inferred otherwise from its
+docstring without reading the exit path. The rot hid because nothing RUNS the tool, not because it lied.) Filed as issue 230 with the measured
 output, the reason not to simply raise the cap, and the recommended fix (compute it server-side on the
 dashboard refresher's cadence, which already runs comparable aggregates at this scale).
 
