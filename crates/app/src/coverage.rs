@@ -385,22 +385,43 @@ async fn measure_coverage_pipeline(
     now: i64,
 ) -> store::turso::Result<(Vec<Coverage>, Vec<PipelineStage>)> {
     let truth = ground_truth();
-    let coverage: Vec<Coverage> = db
-        .notice_counts_by_profile_year()
-        .await?
+    let cells = db.notice_counts_by_profile_year().await?;
+    // Notices each (source, year) holds across ALL its profiles, and how many
+    // profiles serve it (issue 229). The denominator is always the whole year, so
+    // a year at an era boundary — 2008 carries internal-ojs AND text — has no
+    // per-profile ratio to report: dividing one profile's share by the year's
+    // total read 0.079 and 0.922 for a year that was in fact complete.
+    let mut per_year: std::collections::HashMap<(String, String), (i64, usize)> = Default::default();
+    for cell in &cells {
+        let e = per_year.entry((cell.source.clone(), cell.year.clone())).or_insert((0, 0));
+        e.0 += cell.notices;
+        e.1 += 1;
+    }
+    let coverage: Vec<Coverage> = cells
         .into_iter()
         .map(|cell| {
             let published = (cell.source == GROUND_TRUTH_SOURCE)
                 .then(|| truth.iter().find(|p| p.year == cell.year))
                 .flatten();
+            let (year_held, profiles) = per_year
+                .get(&(cell.source.clone(), cell.year.clone()))
+                .copied()
+                .unwrap_or((cell.notices, 1));
+            let shared = profiles > 1;
             Coverage {
                 source: cell.source,
                 profile: cell.profile,
                 year: cell.year,
                 held: cell.notices,
                 published: published.map(|p| p.notices),
-                ratio: published.map(|p| cell.notices as f64 / p.notices as f64),
+                // Suppressed for a shared year: there is no per-profile ground
+                // truth, so any number here would be a gap report about nothing.
+                ratio: (!shared)
+                    .then(|| published.map(|p| cell.notices as f64 / p.notices as f64))
+                    .flatten(),
                 partial: published.is_some_and(|p| p.partial),
+                year_held,
+                year_ratio: published.map(|p| year_held as f64 / p.notices as f64),
             }
         })
         .collect();

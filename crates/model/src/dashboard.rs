@@ -225,6 +225,27 @@ pub struct Coverage {
     /// The ground-truth year is incomplete (the current year), so a ratio below
     /// 1.0 is expected and not a gap.
     pub partial: bool,
+    /// Notices ALL profiles of this source hold for this year (issue 229). Equal
+    /// to `held` for a year one profile serves alone.
+    ///
+    /// A year at an era boundary is served by two profiles — 2008 carries both
+    /// `internal-ojs` and `text` — and the denominator is the whole year either
+    /// way, so dividing one profile's share by it reports a gap that does not
+    /// exist (2008 read 0.079 and 0.922 while the year was complete). There is no
+    /// per-profile ground truth to divide by, so for such a year `ratio` is
+    /// `None` and this pair carries the only ratio the data supports.
+    pub year_held: i64,
+    /// `year_held / published` — the honest coverage of a shared year. `None`
+    /// when no ground truth exists.
+    pub year_ratio: Option<f64>,
+}
+
+impl Coverage {
+    /// This year is served by more than one profile, so `ratio` is `None` and
+    /// [`Coverage::year_ratio`] is the number to show.
+    pub fn shared_year(&self) -> bool {
+        self.ratio.is_none() && self.year_ratio.is_some()
+    }
 }
 
 /// How stale the two stages of the import pipeline are. Both are ages in

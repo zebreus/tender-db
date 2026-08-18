@@ -54,7 +54,9 @@ mod tests {
         let spec: Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
         for (path, item) in spec["paths"].as_object().expect("paths") {
             assert!(
-                path.starts_with("/v1") || ["/health", "/health/deep", "/_source", "/docs"].contains(&path.as_str()),
+                path.starts_with("/v1")
+                    || ["/health", "/health/deep", "/metrics", "/_source", "/docs"]
+                        .contains(&path.as_str()),
                 "unexpected path prefix: {path}"
             );
             for (method, op) in item.as_object().expect("path item") {

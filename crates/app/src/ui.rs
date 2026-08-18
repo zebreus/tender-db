@@ -479,7 +479,20 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                                         td { "{row.year}" }
                                         td { class: "num", "{group(row.held)}" }
                                         td { class: "num", "{published_cell(row.published)}" }
-                                        td { class: "num", "{coverage_pct(row.ratio, row.partial)}" }
+                                        // A year served by two profiles has no
+                                        // per-profile ratio (issue 229): show the
+                                        // YEAR's coverage, marked, so a boundary
+                                        // year cannot read as two gaps.
+                                        if row.shared_year() {
+                                            td { class: "num",
+                                                title: "{row.year} is served by more than one profile; \
+                                                        this is the whole year's coverage \
+                                                        ({group(row.year_held)} held), not this profile's share",
+                                                "{coverage_pct(row.year_ratio, row.partial)}†"
+                                            }
+                                        } else {
+                                            td { class: "num", "{coverage_pct(row.ratio, row.partial)}" }
+                                        }
                                     }
                                 }
                             }
@@ -487,6 +500,11 @@ fn CoveragePanel(rows: Vec<Coverage>) -> Element {
                     }
                 }
                 p { class: "muted", "* the year is not over; a shortfall there is the calendar, not a gap." }
+                p { class: "muted",
+                    "† the year is served by more than one profile (an era boundary), so the figure is \
+                     the whole year across all of them — there is no ground truth for one profile's \
+                     share of a year."
+                }
             }
         }
     }
@@ -1240,6 +1258,8 @@ mod tests {
             published,
             ratio: published.map(|p| held as f64 / p as f64),
             partial: false,
+            year_held: held,
+            year_ratio: published.map(|p| held as f64 / p as f64),
         };
         let eras = coverage_by_era(vec![
             cell("eforms", "2024", 50, Some(200)),
@@ -1254,5 +1274,45 @@ mod tests {
         assert_eq!(eforms.published, Some(300));
         assert_eq!(eforms.years.first().map(|y| y.year.as_str()), Some("2025"));
         assert!((eforms.ratio.unwrap() - 80.0 / 300.0).abs() < 1e-9);
+    }
+
+    /// Issue 229: a year served by two profiles must not render a per-profile
+    /// ratio. The measured 2008 case is the fixture — internal-ojs 26,955 and
+    /// text 313,059 against 339,534 published — which read as 0.079 and 0.922
+    /// before this, a 313k-notice hole that did not exist.
+    #[test]
+    fn a_shared_year_shows_the_years_coverage_not_a_profiles_share() {
+        let shared = |profile: &str, held| Coverage {
+            source: "ted".into(),
+            profile: profile.into(),
+            year: "2008".into(),
+            held,
+            published: Some(339_534),
+            // What measure_coverage_pipeline does for a multi-profile year: no
+            // per-profile ratio exists, so none is offered.
+            ratio: None,
+            partial: false,
+            year_held: 26_955 + 313_059,
+            year_ratio: Some((26_955 + 313_059) as f64 / 339_534.0),
+        };
+        for row in [shared("internal-ojs", 26_955), shared("text", 313_059)] {
+            assert!(row.shared_year(), "{} must render the year figure", row.profile);
+            let pct = row.year_ratio.expect("a shared year still has the year's ratio");
+            assert!((pct - 1.0014).abs() < 1e-3, "the year is complete, not a gap: {pct}");
+        }
+
+        // A year one profile serves alone keeps its own ratio and is NOT marked.
+        let alone = Coverage {
+            source: "ted".into(),
+            profile: "eforms".into(),
+            year: "2025".into(),
+            held: 30,
+            published: Some(100),
+            ratio: Some(0.3),
+            partial: false,
+            year_held: 30,
+            year_ratio: Some(0.3),
+        };
+        assert!(!alone.shared_year(), "a sole profile's ratio is its own and stands");
     }
 }
