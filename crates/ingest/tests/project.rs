@@ -1604,6 +1604,67 @@ async fn every_era_projects_its_headline_fields() {
     }
 }
 
+/// Issue 237: a LotsGroup's membership reaches the canonical layer, so a bid that names
+/// the group can be attributed to the lots it actually covers.
+///
+/// eForms gives a Bid exactly ONE lot reference, pointing at either a Lot or a LotsGroup,
+/// so the group IS the mechanism for a multi-lot offer — and until this landed, the
+/// composition was parsed and dropped, leaving "which lots does this bid cover"
+/// unanswerable and every per-lot rollup silently short of combined-award bids.
+///
+/// The fixture composes GLO-0001 from LOT-0001 and LOT-0002 (pinned at the parse layer in
+/// `tests/eforms.rs`); here the same pair must survive the fold as `lots` ids.
+#[tokio::test]
+async fn a_lots_group_membership_reaches_the_canonical_layer() {
+    let (db, fetch_id, path) = scratch("group-members").await;
+    ingest_as(&db, fetch_id, "ted", "eforms/can-maximal-sdk17.xml", "eforms/can-maximal-sdk17.xml")
+        .await;
+    project::project(&db, false).await.expect("project");
+
+    // Asserted by lot KEY, not by surrogate id, so the test says what it means and
+    // survives an id shift. Counted per pair rather than listed, because the store's text
+    // reader is crate-private — and a per-pair count localises a failure to the pair that
+    // broke.
+    for member in ["LOT-0001", "LOT-0002"] {
+        assert_eq!(
+            scalar(
+                &db,
+                &format!(
+                    "SELECT COUNT(*) FROM tender_version_lot_group_members x
+                       JOIN lots g ON g.id = x.group_lot_id
+                       JOIN lots m ON m.id = x.member_lot_id
+                      WHERE g.lot_key = 'GLO-0001' AND m.lot_key = '{member}'"
+                )
+            )
+            .await,
+            1,
+            "GLO-0001 contains {member}, resolved through lots"
+        );
+    }
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_group_members").await,
+        2,
+        "and nothing else — the fixture composes exactly one group of two"
+    );
+
+    // The group end must be the LotsGroup-kind lot, not an ordinary one — the whole
+    // point is that a bid pointing at a GROUP can be expanded to member lots.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_lot_group_members x
+               JOIN tender_version_lots vl
+                 ON vl.tender_id = x.tender_id AND vl.seq = x.seq AND vl.lot_id = x.group_lot_id
+              WHERE vl.kind = 'LotsGroup'"
+        )
+        .await,
+        2,
+        "both rows hang off a LotsGroup-kind lot"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ---------------------------------- issue 34: sdk-0.1 ContractFolderID as a key
 
 /// A minimal synthetic notice carrying a single id field on its PROCEDURE root —

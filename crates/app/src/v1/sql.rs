@@ -117,7 +117,7 @@ const PER_HOUR: u32 = 300;
 /// re-opened whenever a private table was added. Each entry is public business
 /// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
 /// registry are deliberately absent (see the note below the list).
-const ALLOWED: [&str; 45] = [
+const ALLOWED: [&str; 46] = [
     // Current-state views — the analyst entry points (docs/architecture.md).
     "v_tenders",         // current version of each Tender
     "v_lots",            // current Lots
@@ -148,6 +148,7 @@ const ALLOWED: [&str; 45] = [
     "tender_version_dates",
     "tender_version_classifications",
     "tender_version_lots",
+    "tender_version_lot_group_members",
     "tender_version_parties",
     "tender_version_bids",
     "tender_version_bid_parties",
@@ -552,6 +553,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       the corpus and exceeds the time limit (issue 239, measured). Use it for small unfiltered \
       peeks; for anything filtered, join `tenders` to `tender_versions` on \
       `(tender_id, seq = current_seq)` — 17ms for the same point read."),
+    ("tender_version_lot_group_members", "Which lots each LotsGroup contains, per version \
+      (issue 237). eForms gives a Bid ONE lot reference, to a Lot or to a LotsGroup, so a bid \
+      covering several lots names the GROUP — join through here to attribute it to member lots. \
+      Both columns are `lots.id`; the group end is the lot whose `tender_version_lots.kind` is \
+      'LotsGroup'."),
     ("v_lots", "Current Lots — subdivisions of a Tender. NOT FILTERABLE, same as v_tenders \
       (measured: `WHERE tender_id = ?` exceeds the time limit); join `lots` to \
       `tender_version_lots` instead."),

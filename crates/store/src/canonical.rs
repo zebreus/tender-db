@@ -205,6 +205,30 @@ pub(crate) const SCHEMA: &str = "
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
 
+    -- Which lots a LotsGroup contains, as this version publishes it (issue 237).
+    --
+    -- Version-keyed like every other satellite, because composition is a published
+    -- fact that a corrigendum can restate: the group is a Lot row of kind 'LotsGroup'
+    -- and each member an ordinary Lot, so both ends are `lots` ids and this table adds
+    -- no identity of its own.
+    --
+    -- Why it exists: eForms gives a Bid exactly ONE lot reference (BT-13714-Tender),
+    -- pointing at either a Lot or a LotsGroup, so a bid covering several lots names the
+    -- GROUP. Without this table we know a bid covers GLO-0002 and not which lots that
+    -- is, and every per-lot rollup silently omits combined-award bids.
+    CREATE TABLE IF NOT EXISTS tender_version_lot_group_members (
+        tender_id     INTEGER NOT NULL,
+        seq           INTEGER NOT NULL,
+        group_lot_id  INTEGER NOT NULL REFERENCES lots(id),
+        member_lot_id INTEGER NOT NULL REFERENCES lots(id),
+        PRIMARY KEY (tender_id, seq, group_lot_id, member_lot_id),
+        FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
+    ) STRICT;
+    -- Answers the reverse question (which groups is this lot in), the direction a
+    -- per-lot rollup needs.
+    CREATE INDEX IF NOT EXISTS tender_version_lot_group_members_member
+        ON tender_version_lot_group_members(member_lot_id);
+
     -- The version-keyed satellites. `lot_id IS NULL` means the value is the
     -- Tender's own; otherwise it belongs to that Lot. They carry no uniqueness
     -- constraint of their own: the projection writes each (tender, seq) exactly
@@ -951,6 +975,10 @@ pub struct TenderVersion {
     pub facts: BTreeSet<Fact>,
     pub lots: Vec<LotState>,
     pub rounds: Vec<Round>,
+    /// `(group lot key, member lot key)` pairs this version publishes (issue 237),
+    /// read from the notice's `GroupComposition` sections. Empty for the vast majority
+    /// of notices, which declare no lots group at all.
+    pub group_members: Vec<(String, String)>,
 }
 
 /// A whole Tender as the projection computed it, ready to reconcile against
@@ -1363,7 +1391,8 @@ impl Db {
             "tender_version_dates",
             "tender_version_amounts",
             "tender_version_classifications",
-            "tender_version_lots",
+            "tender_version_lot_group_members",
+        "tender_version_lots",
             "tender_versions",
             "lot_results",
             "bids",
@@ -2187,7 +2216,8 @@ impl Db {
             "tender_version_dates",
             "tender_version_amounts",
             "tender_version_classifications",
-            "tender_version_lots",
+            "tender_version_lot_group_members",
+        "tender_version_lots",
             "tender_versions",
             "lot_results",
             "bids",
@@ -3551,7 +3581,8 @@ impl Db {
             "tender_version_dates",
             "tender_version_amounts",
             "tender_version_classifications",
-            "tender_version_lots",
+            "tender_version_lot_group_members",
+        "tender_version_lots",
             "tender_versions",
         ] {
             conn.execute(
@@ -3591,6 +3622,22 @@ impl Db {
                 t(&lot.kind),
             ]);
             self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending);
+        }
+        // After the lots loop on purpose: both ends of a membership pair are lots this
+        // same version publishes, so by here they are already in `lots` and
+        // `lot_identity` is a lookup rather than an insert. A pair naming a lot the
+        // notice does NOT publish would create the row — that shape is not in the
+        // corpus we have seen, and creating it is better than dropping a published
+        // composition silently, which is the failure this table exists to end.
+        for (group_key, member_key) in &v.group_members {
+            let group_lot_id = self.lot_identity(conn, tender_id, group_key, stmts).await?;
+            let member_lot_id = self.lot_identity(conn, tender_id, member_key, stmts).await?;
+            pending.lot_group_members.extend([
+                Value::Integer(tender_id),
+                Value::Integer(seq),
+                Value::Integer(group_lot_id),
+                Value::Integer(member_lot_id),
+            ]);
         }
         for round in &v.rounds {
             self.write_round(conn, tender_id, seq, round, stmts, pending).await?;
@@ -3942,7 +3989,7 @@ impl Db {
 
     /// Every content table a retired Tender's rows must be deleted from, in
     /// dependency order (satellites before the entities they reference).
-    const RETIRE_TABLES: [&'static str; 17] = [
+    const RETIRE_TABLES: [&'static str; 18] = [
         "tender_version_result_winners",
         "tender_version_result_stats",
         "tender_version_lot_results",
@@ -3954,6 +4001,7 @@ impl Db {
         "tender_version_dates",
         "tender_version_amounts",
         "tender_version_classifications",
+        "tender_version_lot_group_members",
         "tender_version_lots",
         "tender_versions",
         "lot_results",
@@ -4856,6 +4904,8 @@ impl TenderInserts {
 struct Pending {
     versions: Vec<Value>,
     version_lots: Vec<Value>,
+    /// Issue 237: `(tender_id, seq, group_lot_id, member_lot_id)` quadruples.
+    lot_group_members: Vec<Value>,
     texts: Vec<Value>,
     amounts: Vec<Value>,
     classifications: Vec<Value>,
@@ -4877,6 +4927,7 @@ impl Pending {
     async fn flush(&mut self, conn: &Connection) -> turso::Result<()> {
         flush_rows(conn, "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, dispatched_at, notice_subtype, publication_id) VALUES ", 7, &mut self.versions).await?;
         flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
+        flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
         flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency) VALUES ", 6, &mut self.amounts).await?;
         flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
@@ -5016,6 +5067,7 @@ mod tests {
                 facts: lot_facts.into_iter().collect::<BTreeSet<_>>(),
             }],
             rounds: Vec::new(),
+            group_members: Vec::new(),
         }
     }
 

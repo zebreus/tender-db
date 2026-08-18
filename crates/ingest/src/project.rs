@@ -296,6 +296,16 @@ const UBL_PARSE_ONLY: &[(&str, &str)] = &[
 /// Lots with a kind flag (CONTEXT.md).
 const LOT_KINDS: &[&str] = &["Lot", "LotsGroup", "Part"];
 
+/// The section a lots-group composition lives in, and the two fields naming its ends
+/// (issue 237). Named constants rather than literals in the reader because both ids are
+/// `-Procedure`-suffixed and read as procedure-level facts, which is exactly the
+/// confusion that left them unmapped.
+const GROUP_COMPOSITION_KIND: &str = "GroupComposition";
+/// BT-330: the LotsGroup this composition composes.
+const GROUP_ID_FIELD: &str = "BT-330-Procedure";
+/// BT-1375: one repeat per member lot of that group.
+const GROUP_MEMBER_FIELD: &str = "BT-1375-Procedure";
+
 /// The results-layer entity sections (docs/research/eforms-data-model.md §2):
 /// LotResult = the award decision, LotTender = a Bid, TenderingParty = the
 /// consortium behind a Bid, SettledContract = a Contract.
@@ -2258,6 +2268,15 @@ struct BucketRow {
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
     round: Option<Round>,
+    /// Issue 237's lots-group membership.
+    ///
+    /// Adding a field here changes an on-disk format, and `serde(default)` would NOT
+    /// make that backward compatible: these rows are framed with **postcard**, which is
+    /// not self-describing, so old bytes read under a new struct misparse rather than
+    /// defaulting. What makes it safe is the lifecycle — the bucket directory is
+    /// `remove_dir_all`'d at the START of every sharded run and again at the end, so no
+    /// run ever reads bytes another binary wrote.
+    group_members: Vec<(String, String)>,
 }
 
 impl BucketRow {
@@ -2282,6 +2301,7 @@ impl BucketRow {
             facts: state.facts,
             lots: state.lots,
             round: state.round,
+            group_members: state.group_members,
         }
     }
 
@@ -2304,6 +2324,7 @@ impl BucketRow {
             published_at: self.published_at,
             dispatched_at: self.dispatched_at,
             subtype: self.subtype.clone(),
+            group_members: self.group_members.clone(),
             logical_id: None,
             is_correction: self.is_correction,
             facts: self.facts.clone(),
@@ -2339,6 +2360,9 @@ struct NoticeState {
     raw_results: RawResults,
     /// The bound results — `Some` exactly when the notice published any.
     round: Option<Round>,
+    /// `(group lot key, member lot key)` pairs from this notice's `GroupComposition`
+    /// sections (issue 237). Empty for the vast majority of notices.
+    group_members: Vec<(String, String)>,
 }
 
 /// Where a value belongs: the Tender itself, or one of its Lots.
@@ -2464,6 +2488,7 @@ impl NoticeState {
             published_at,
             dispatched_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
+            group_members: group_members(parsed),
             logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
@@ -2771,6 +2796,7 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             facts,
             lots,
             rounds,
+            group_members: state.group_members.clone(),
         });
     }
     versions
@@ -3459,6 +3485,47 @@ fn de1_mark_reference(value: &mut store::ValueRow) {
     }
 }
 
+/// Which lots each `LotsGroup` contains, as `(group key, member key)` pairs (issue 237).
+///
+/// eForms publishes the composition in its OWN section — `GroupComposition`, a sibling of
+/// the group hanging off the notice root, NOT a child of `GLO-nnnn`. The group is that
+/// section's [`GROUP_ID_FIELD`] reference and each member one of its repeated
+/// [`GROUP_MEMBER_FIELD`] references. Verified against the bytes in
+/// `ingest/tests/eforms.rs`, because looking for membership under the group section finds
+/// nothing and invites the conclusion that it is not published at all.
+///
+/// A composition naming no group is skipped: a member list with nothing to attach it to
+/// is not a fact about any lot.
+fn group_members(parsed: &Parsed) -> Vec<(String, String)> {
+    let composed: Vec<&str> = parsed
+        .sections
+        .iter()
+        .filter(|s| s.kind == GROUP_COMPOSITION_KIND)
+        .map(|s| s.id.as_str())
+        .collect();
+    let refs_in = |section: &str, field: &str| -> Vec<String> {
+        parsed
+            .values
+            .iter()
+            .filter(|v| v.section_id == section && v.field_id == field)
+            .filter_map(|v| match &v.value {
+                NoticeValue::Id { value, is_ref: true, .. } => Some(value.clone()),
+                _ => None,
+            })
+            .collect()
+    };
+    let mut out = Vec::new();
+    for section in composed {
+        let Some(group) = refs_in(section, GROUP_ID_FIELD).into_iter().next() else { continue };
+        for member in refs_in(section, GROUP_MEMBER_FIELD) {
+            out.push((group.clone(), member));
+        }
+    }
+    out.sort_unstable();
+    out.dedup();
+    out
+}
+
 /// Which kind of lot a DE-1.x `ProcurementProjectLot` section is, read back from
 /// its own id: eForms numbers lots `LOT-nnnn`, lots groups `GLO-nnnn` and parts
 /// `PAR-nnnn`, and the id is the `cbc:ID` the predicate would have tested. An
@@ -3775,6 +3842,8 @@ mod tests {
             facts,
             lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
             round: Some(round),
+            // Issue 237: carried through the frame, so the round-trip covers it.
+            group_members: vec![("GLO-1".into(), "LOT-1".into())],
         };
 
         // Frame exactly as write_buckets does, then read exactly as read_bucket does.

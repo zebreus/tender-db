@@ -3471,6 +3471,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             facts: Default::default(),
             lots: Vec::new(),
             rounds: Vec::new(),
+            group_members: Vec::new(),
         };
         let projection = |versions: Vec<canonical::TenderVersion>| canonical::TenderProjection {
             source: "ted".into(),
