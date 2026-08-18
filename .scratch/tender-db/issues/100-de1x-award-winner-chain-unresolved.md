@@ -311,3 +311,50 @@ The cheaper answer already exists in the codebase and simply is not wired to `re
 `stamp_stale_for_notices` — the by-ids twin the `refold` jobs use for exactly this reason (issues
 85/99/179). A `reparse` that stamped its own cohort's tenders epoch-stale would need no global bump
 and no rebuild. That is the next unit.
+
+### (b) DONE and the mechanism VERIFIED END TO END on prod (2026-08-18, rev `689feb6`)
+
+`run_reparse` now stamps its cohort's tenders epoch-stale (`stamp_stale_for_profiles`), so the fold no
+longer early-returns on an unchanged chain. Both structural blockers are closed and both were verified
+on the smallest cohort rather than argued:
+
+    737 reparse -> ok: re-parsed 31 notices across 5 packages (92839 members walked, 0 unmatched,
+                       0 now failing and left untouched); stamped 22 tender(s) epoch-stale
+    738 project -> ok: 31 notices → 22 tenders (1 islands), 106 versions; 22 tenders written,
+                       0 verified unchanged
+
+Both predictions recorded in the commit held: a non-zero stamp, and a projection writing MORE than the
+0 tenders job 734 wrote. `22 written, 0 verified unchanged` means every one actually rewrote — which is
+precisely what the missing epoch stamp had been preventing. **This is the first successful targeted
+re-parse in the project**, and it needed no full rebuild, so the ADR-0009 route recorded above is now
+optional rather than forced.
+
+### A correction, before anyone reads the winner numbers as success
+
+Checking the re-folded cohort I found 22 rows in `tender_version_result_winners` across 14 of the 22
+tenders, where the data-quality report reads `eforms-de-1.0: winner 0.0%`. I nearly recorded that as
+"the re-parse resolved winners". **It is not.** Tracing each winner to its origin notice's profile:
+
+    eforms:eforms-sdk-1.7    18
+    eforms:eforms-de-2.0      2
+    eforms:eforms-sdk-1.10    1
+    eforms:eforms-sdk-1.12    1
+
+**Not one winner cites a DE-1.0 notice.** They come from the EU/TED twin notices merged into the same
+procedure, and they were almost certainly there before this re-parse. So these 22 tenders have winners
+*despite* DE-1.0, not *because of* it — the opposite of the C11/C12 criterion issue 98 sets ("a winner
+must carry the DE notice, never a merged TED twin"). The number was measured on the Tenders rather than
+on the notices, which is the wrong denominator, and it flattered the result.
+
+What this does and does not establish:
+- **Established:** the re-parse MECHANISM works — parse layer replaced, cohort aged, fold rewrote all 22.
+- **NOT established:** that the DE-1.x parse-layer fix produces winners. DE-1.0 is 31 versions of an
+  early dialect whose awards were mostly published later in other profiles, so it may be the wrong
+  cohort to answer that at all.
+
+**Next, and in this order:** count `lot_results` and winners whose ORIGIN notice is DE-1.x (not whose
+Tender happens to contain one) — the query for that is what tripped the /v1/sql reader stall filed as
+issue 238, so it wants retrying on an idle box. If DE-1.0 genuinely publishes no awards, move to
+`eforms-de-1.1` (145,720 versions, 65,207 awards per the data-quality report) and size the package walk
+first: DE-1.0's 31 notices spanned 5 packages and 92,839 members in ~35 minutes, so the 1.1 cohort is
+hours and belongs in a planned window with the daily's 09:35 slot kept clear.
