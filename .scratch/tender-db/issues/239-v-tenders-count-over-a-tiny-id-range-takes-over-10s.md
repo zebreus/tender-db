@@ -75,6 +75,24 @@ GROUP BY examples may now be feasible where before they could not be. It is a co
 denormalisation that this schema wanted anyway. It just does not address filtering, and the commit
 message claiming the view now "flattens" is wrong — corrected here rather than rewritten.
 
+### Two documentation defects found by running the endpoint's own advice (FIXED, `8519810`)
+
+Testing the acceptance list meant running what `/v1/sql` tells callers to run, and none of it worked:
+
+- **The documented date idiom returns NULL for every row, silently.** `EPOCH_NOTE` and one example taught
+  `strftime(published_at,'unixepoch')` — measured, that yields one NULL bucket holding all 7,924,659
+  Tenders and raises nothing. Format-first (`strftime('%Y', col, 'unixepoch')`) gives the real histogram
+  (1993: 49,087 · 1994: 69,714 · 1995: 96,078).
+- **All three documented examples were unusable.** Two aggregated over `v_tenders` (408, per the cause
+  above) and the third joined two views. Three shipped examples, none runnable — possible only because
+  nobody executed them.
+
+Replaced with three queries actually run against prod, their timings recorded in the code beside each:
+source histogram 3.3 s, year histogram 1.3 s, base-table join for one Tender's current version 17 ms. The
+`v_tenders` and `v_lots` descriptions now say **NOT FILTERABLE** and point at the base-table join;
+`v_tenders` had been advertised as "the usual entry point", which is precisely the shape that cannot
+answer a filtered question.
+
 ### Fix directions, now that the cause is known
 
 - **Point analysts at the base tables** and say plainly that the `v_*` views cannot be filtered. Cheapest
