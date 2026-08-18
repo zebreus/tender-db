@@ -262,7 +262,7 @@ about the difference (its own text banners any section it could not measure).
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|refold|refold-fields|
-refold-notices|reparse|data-quality|mark-skipped-siblings|clear-rebuild-flag,
+refold-notices|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,
 source?, package_kind?, period?, range?, rebuild?, refetch?, profiles?, notices?,
 expect?, dry_run?}` (the `snapshot` kind was removed 2026-08-06).
 Defaults: `source` `ted`, `package_kind` `daily`.

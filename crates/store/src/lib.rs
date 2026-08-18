@@ -486,6 +486,11 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // 7.9M rows would be a multi-minute blocking boot (the 82/83 regression) in
     // one giant WAL transaction (the issue-42 lesson). Metadata-only, O(1).
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_deadline INTEGER").await?;
+    // Issue 239: `v_tenders.title` reads this instead of a correlated subquery. NULL on
+    // every pre-239 row until the backfill job fills it, and the view honestly shows
+    // NULL rather than a wrong title in the meantime — a title that is absent for an
+    // hour beats a view nobody can query.
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_title TEXT").await?;
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
     // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
     // open; the 82/83 + issue-42 lessons, same as current_deadline above).
@@ -2190,6 +2195,54 @@ impl Db {
                  (SELECT MAX(d.utc_seconds) FROM tender_version_dates d
                    WHERE d.tender_id = tenders.id AND d.seq = tenders.current_seq
                      AND d.field = 'submission_deadline')
+              WHERE id > ? AND id <= ?",
+            (Value::Integer(after), Value::Integer(watermark)),
+        )
+        .await?;
+        Ok((count, watermark))
+    }
+
+    /// One batch of the `current_title` backfill (issue 239): stamp the next `batch`
+    /// tenders past the `after` watermark with their head version's title, straight
+    /// from `tender_version_texts`.
+    ///
+    /// The ORDER BY reproduces `head_title`'s precedence — the Tender's own title over a
+    /// lot's, `ENG` over another language — and it is the same expression the OLD
+    /// `v_tenders` ran per row. That is the point: the cost was never the precedence, it
+    /// was paying for it on every read instead of once per fold.
+    ///
+    /// Batched and idempotent for the same reasons as
+    /// [`Self::backfill_current_deadline`]: turso writes a WAL frame per row and cannot
+    /// checkpoint mid-statement, so the caller checkpoints between batches (issue 42),
+    /// and recomputing a stamped row writes the same value.
+    pub async fn backfill_current_title(
+        &self,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((0, after));
+        }
+        conn.execute(
+            "UPDATE tenders SET current_title =
+                 (SELECT x.value FROM tender_version_texts x
+                   WHERE x.tender_id = tenders.id AND x.seq = tenders.current_seq
+                     AND x.field = 'title'
+                   ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
+                   LIMIT 1)
               WHERE id > ? AND id <= ?",
             (Value::Integer(after), Value::Integer(watermark)),
         )

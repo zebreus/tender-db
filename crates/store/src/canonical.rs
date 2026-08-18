@@ -126,6 +126,12 @@ pub(crate) const SCHEMA: &str = "
         -- (job 706). Also ALTERed in by migrate() for pre-216 files; it lives
         -- here too so a fresh file and reset_tender_layer's recreate agree.
         current_deadline     INTEGER,
+        -- The head version's title (issue 239), fold-maintained like the pointers
+        -- above. It exists so `v_tenders` can SELECT a column instead of running a
+        -- correlated subquery per row: that subquery blocked view flattening, so the
+        -- planner could not push a filter down and the view materialised the whole
+        -- corpus for every query — a primary-key point read measured >10s.
+        current_title        TEXT,
         -- Which PROJECTION LOGIC this Tender's content was last folded under
         -- (issue 99). The fold's early-return keys on the chain of causing
         -- notices, which is a state key only while the logic is fixed: a mapping
@@ -529,15 +535,20 @@ pub(crate) const SCHEMA: &str = "
     SELECT id AS tender_id, current_seq AS seq FROM tenders WHERE current_seq IS NOT NULL;
 
     DROP VIEW IF EXISTS v_tenders;
+    -- `title` reads a COLUMN, not a per-row correlated subquery (issue 239). The old
+    -- shape computed it inline with an ORDER BY over two computed expressions, which
+    -- blocked view flattening: the planner could not merge the view into the caller's
+    -- query, so it could not push the caller's filter down, so every query — even
+    -- `WHERE id = <pk>` — materialised essentially the whole corpus. Measured on prod:
+    -- >10 s for a point read, and identical cost for `id < 100` and `id < 5000`, which
+    -- is what proved the filter was doing nothing.
+    --
+    -- The precedence that subquery encoded now lives in `head_title`, applied by the
+    -- fold when it writes the head pointer.
     CREATE VIEW v_tenders AS
     SELECT t.id, t.source, t.procedure_key, t.kind,
            v.seq, v.published_at, v.caused_by_notice_id, v.notice_subtype, v.publication_id,
-           (SELECT x.value FROM tender_version_texts x
-             WHERE x.tender_id = t.id AND x.seq = v.seq AND x.field = 'title'
-             -- The Tender's own title wins; a lot-only title stands in for the
-             -- many notices that title their lots and not the procedure.
-             ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
-             LIMIT 1) AS title
+           t.current_title AS title
       FROM tenders t
       JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq;
 
@@ -826,6 +837,33 @@ pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
             _ => None,
         })
         .max()
+}
+
+/// The title to denormalise onto `tenders.current_title` (issue 239).
+///
+/// Reproduces exactly the precedence `v_tenders` used to compute per row with a
+/// correlated subquery: **the Tender's own title wins over a lot's**, and within a
+/// scope an `ENG` variant wins over another language. The lot fallback is not a nicety
+/// — many notices title their lots and never the procedure, so without it those
+/// Tenders would read as untitled (the reason the subquery had that ORDER BY at all).
+///
+/// Ties beyond that are resolved by first-seen, which is stable because `facts` is a
+/// `BTreeSet`: two ENG titles at the same scope is not a shape the corpus should
+/// publish, and picking deterministically beats picking arbitrarily.
+pub fn head_title(head: &TenderVersion) -> Option<String> {
+    let pick = |facts: &mut dyn Iterator<Item = &Fact>| -> Option<(bool, String)> {
+        facts
+            .filter_map(|f| match f {
+                Fact::Text { field, lang, value } if field == "title" => {
+                    Some((lang.as_deref() == Some("ENG"), value.clone()))
+                }
+                _ => None,
+            })
+            .max_by_key(|(is_eng, _)| *is_eng)
+    };
+    pick(&mut head.facts.iter())
+        .or_else(|| pick(&mut head.lots.iter().flat_map(|l| l.facts.iter())))
+        .map(|(_, value)| value)
 }
 
 /// A Lot as one version publishes it.
@@ -2131,7 +2169,7 @@ impl Db {
                  procedure_key TEXT, island_notice_id INTEGER REFERENCES notices(id),
                  kind TEXT NOT NULL, created_at INTEGER NOT NULL,
                  current_seq INTEGER, current_published_at INTEGER,
-                 current_deadline INTEGER,
+                 current_deadline INTEGER, current_title TEXT,
                  projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
@@ -3346,6 +3384,7 @@ impl Db {
                     Value::Integer(head.published_at),
                     Value::Integer(PROJECTION_EPOCH),
                     head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
+                    head_title(head).map(Value::Text).unwrap_or(Value::Null),
                     Value::Integer(tender_id),
                 ))
                 .await?;
@@ -4782,7 +4821,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")
@@ -4952,8 +4991,64 @@ const IN_CHUNK: usize = 512;
 
 #[cfg(test)]
 mod tests {
-    use super::MinUnionFind;
-    use std::collections::{HashMap, HashSet, VecDeque};
+    use super::{Fact, LotState, MinUnionFind, TenderVersion, head_title};
+    use std::collections::{BTreeSet, HashMap, HashSet, VecDeque};
+
+    fn text(field: &str, lang: Option<&str>, value: &str) -> Fact {
+        Fact::Text {
+            field: field.into(),
+            lang: lang.map(str::to_owned),
+            value: value.into(),
+        }
+    }
+
+    fn head(facts: Vec<Fact>, lot_facts: Vec<Fact>) -> TenderVersion {
+        TenderVersion {
+            caused_by_notice_id: 1,
+            published_at: 0,
+            dispatched_at: None,
+            notice_subtype: None,
+            publication_id: "pub-1".into(),
+            facts: facts.into_iter().collect::<BTreeSet<_>>(),
+            lots: vec![LotState {
+                key: "LOT-0001".into(),
+                kind: "Lot".into(),
+                facts: lot_facts.into_iter().collect::<BTreeSet<_>>(),
+            }],
+            rounds: Vec::new(),
+        }
+    }
+
+    /// Issue 239: the fold's title writer must agree with the SQL backfill's, because
+    /// they populate the same column and `v_tenders` now trusts it. The precedence is
+    /// the one the old per-row subquery encoded — Tender over lot, ENG over other — and
+    /// `crates/store/tests/title_backfill.rs` asserts the SQL side of the same cases.
+    #[test]
+    fn head_title_prefers_the_tender_then_english() {
+        // A Tender's own title beats a lot's.
+        assert_eq!(
+            head_title(&head(vec![text("title", None, "tender")], vec![text("title", None, "lot")]))
+                .as_deref(),
+            Some("tender")
+        );
+        // Lot-only is the fallback that exists because many notices title only lots.
+        assert_eq!(
+            head_title(&head(Vec::new(), vec![text("title", None, "lot")])).as_deref(),
+            Some("lot")
+        );
+        // ENG wins within a scope, whichever order the facts arrive in.
+        assert_eq!(
+            head_title(&head(
+                vec![text("title", Some("DEU"), "deutsch"), text("title", Some("ENG"), "english")],
+                Vec::new(),
+            ))
+            .as_deref(),
+            Some("english")
+        );
+        // Other fields are not titles, and no title at all is None rather than "".
+        assert_eq!(head_title(&head(vec![text("description", None, "d")], Vec::new())), None);
+        assert_eq!(head_title(&head(Vec::new(), Vec::new())), None);
+    }
 
     /// A deterministic LCG so the random graphs are reproducible without
     /// `Math.random`/`rand` (Numerical Recipes constants).

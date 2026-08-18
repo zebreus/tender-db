@@ -229,6 +229,12 @@ enum Spec {
     /// idempotent, so a restart redoes the walk from zero at worst. A unit
     /// variant → durable across restarts like `Reindex`.
     BackfillDeadlines,
+    /// Stamp `tenders.current_title` from each head version's texts (issue 239).
+    ///
+    /// The `BackfillDeadlines` twin, one column over, and needed for the same reason:
+    /// the fold maintains the column for Tenders it touches, so without a one-time
+    /// walk every pre-239 row reads NULL and `v_tenders` shows no title.
+    BackfillTitles,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -529,6 +535,9 @@ impl Supervisor {
             // Stamp every tender's current_deadline from its head version's dates
             // (issue 216, deadline half) — batched, checkpointed, idempotent. One-off
             // after the column ships; the fold maintains it from then on.
+            "backfill-titles" => Ok(vec![
+                self.push("backfill-titles", "backfill-titles".into(), Spec::BackfillTitles).await,
+            ]),
             "backfill-deadlines" => Ok(vec![
                 self.push("backfill-deadlines", "backfill-deadlines".into(), Spec::BackfillDeadlines)
                     .await,
@@ -1326,6 +1335,32 @@ impl Supervisor {
                 Ok(format!(
                     "current_deadline stamped over {stamped} tenders (head-version \
                      submission_deadline; NULL where none is published)"
+                ))
+            }
+            Spec::BackfillTitles => {
+                // The `BackfillDeadlines` walk exactly: bounded batch per transaction,
+                // WAL checkpoint between batches (issue 42), progress as members_done.
+                let mut stamped = 0i64;
+                let mut watermark = 0i64;
+                loop {
+                    let (rows, next) = self
+                        .db
+                        .backfill_current_title(BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows == 0 {
+                        break;
+                    }
+                    stamped += rows;
+                    watermark = next;
+                    self.update(|p| p.members_done = stamped as u64);
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after title batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "current_title stamped over {stamped} tenders (head-version title, \
+                     Tender's own before a lot's; NULL where none is published)"
                 ))
             }
             Spec::Refold { profiles, expect } => {
