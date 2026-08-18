@@ -306,9 +306,17 @@ async fn run(
     // SHARED side — and a `Truncate` checkpoint holds that gate EXCLUSIVELY (issue
     // 63). So "no reader available" is a real, routine, self-clearing state that
     // deserves its own answer rather than a misattributed one.
+    let started = Arc::new(AtomicBool::new(false));
     let acquired = Arc::new(AtomicBool::new(false));
-    let acquired_in_task = acquired.clone();
+    let (started_in_task, acquired_in_task) = (started.clone(), acquired.clone());
     let handle = sql_state.runtime.spawn(async move {
+        // Set on the first poll, BEFORE borrowing anything. Its absence means the
+        // task was never polled at all, i.e. every `sql-exec` thread is pinned —
+        // which is a different failure from waiting on a reader and needs a
+        // different explanation to the caller (measured on prod: two abandoned
+        // full scans held both threads and every later query, `SELECT 1` included,
+        // died at the backstop).
+        started_in_task.store(true, Ordering::Release);
         let waited = Instant::now();
         let reader = readers.get().await.map_err(Executed::Db)?;
         acquired_in_task.store(true, Ordering::Release);
@@ -360,12 +368,18 @@ async fn run(
         // The backstop fired. WHICH limit was hit depends on whether a reader was
         // ever borrowed: if not, the time went on waiting for one and this is the
         // backend being busy, not the query being slow.
-        Err(_) => Err(backstop_error(acquired.load(Ordering::Acquire), timeout)),
+        Err(_) => Err(backstop_error(
+            started.load(Ordering::Acquire),
+            acquired.load(Ordering::Acquire),
+            timeout,
+        )),
         // The task was aborted because we stopped waiting (backstop/disconnect):
         // report the same way, on the same test.
-        Ok(Err(join)) if join.is_cancelled() => {
-            Err(backstop_error(acquired.load(Ordering::Acquire), timeout))
-        }
+        Ok(Err(join)) if join.is_cancelled() => Err(backstop_error(
+            started.load(Ordering::Acquire),
+            acquired.load(Ordering::Acquire),
+            timeout,
+        )),
         // A genuine panic on the isolated runtime — our fault, not the caller's.
         Ok(Err(join)) => {
             Err(ApiError(StatusCode::INTERNAL_SERVER_ERROR, format!("sql runtime: {join}")))
@@ -381,26 +395,43 @@ fn timed_out(timeout: Duration) -> ApiError {
     )
 }
 
-/// Which error the backstop reports, given whether a reader was ever borrowed.
+/// Which error the backstop reports, from how far the task actually got.
 ///
-/// Its own function so the choice is testable: the plumbing that sets the flag is
-/// three lines and reads plainly, but the MAPPING is the part that was wrong for as
-/// long as the endpoint existed, and it is the part worth pinning.
-fn backstop_error(acquired: bool, timeout: Duration) -> ApiError {
-    if acquired { timed_out(timeout) } else { backend_busy() }
+/// Three outcomes, because there are three genuinely different causes and they ask
+/// the caller for different things (issue 238):
+/// - never polled → the isolated runtime's threads are all pinned. 503.
+/// - polled, no reader → readers are all borrowed, or a gated checkpoint holds the
+///   WAL gate's exclusive side (issue 63). 503.
+/// - reader borrowed → the query itself ran past the limit. 408.
+///
+/// Its own function so the choice is testable: the flags are set in two obvious
+/// lines, but this MAPPING is the part that was wrong for as long as the endpoint
+/// existed, and it is the part worth pinning.
+fn backstop_error(started: bool, acquired: bool, timeout: Duration) -> ApiError {
+    match (started, acquired) {
+        (_, true) => timed_out(timeout),
+        (true, false) => busy(
+            "no reader was free in time (readers busy, or a checkpoint holds them off)",
+        ),
+        // Not polled at all: nothing to do with readers, so do not say so.
+        (false, false) => busy(
+            "the SQL runtime is saturated — every worker is pinned by an earlier query that \
+             cannot be interrupted",
+        ),
+    }
 }
 
-/// The 503 a caller gets when no reader could be borrowed in time — the backend is
-/// busy (a gated checkpoint, or every reader in use), not the query at fault.
+/// The 503 for "the backend could not get to your query", whatever stopped it.
 ///
-/// 503 + `Retry-After` rather than 408, because the two ask for opposite responses:
-/// a 408 says "make your query cheaper", a 503 says "ask again unchanged". Telling a
-/// caller to rewrite a working query is the whole defect (issue 238).
-fn backend_busy() -> ApiError {
+/// 503 rather than 408 because the two ask for opposite responses: a 408 says "make
+/// your query cheaper", a 503 says "send the same query again". Telling a caller to
+/// rewrite a working query is the whole defect (issue 238) — and the `reason` is
+/// spelled out because "busy" alone sent me looking at the wrong subsystem for an
+/// hour.
+fn busy(reason: &str) -> ApiError {
     ApiError(
         StatusCode::SERVICE_UNAVAILABLE,
-        "sql backend busy: no reader was free in time — retry unchanged (the query was never run)"
-            .to_owned(),
+        format!("sql backend busy: {reason} — retry unchanged (the query was never run)"),
     )
 }
 
@@ -1115,17 +1146,30 @@ mod tests {
     fn a_reader_that_never_arrived_is_a_503_not_a_408() {
         let limit = Duration::from_secs(10);
 
-        let busy = backstop_error(false, limit);
-        assert_eq!(busy.0, StatusCode::SERVICE_UNAVAILABLE, "no reader borrowed = backend busy");
-        assert!(busy.1.contains("never run"), "it must say the query did not run: {}", busy.1);
-        assert!(busy.1.contains("retry"), "and that retrying unchanged is right: {}", busy.1);
+        // Polled, but no reader came free: readers busy or a checkpoint holding them off.
+        let no_reader = backstop_error(true, false, limit);
+        assert_eq!(no_reader.0, StatusCode::SERVICE_UNAVAILABLE, "no reader borrowed = backend busy");
+        assert!(no_reader.1.contains("reader"), "it names readers as the cause: {}", no_reader.1);
+        assert!(no_reader.1.contains("never run"), "and that the query did not run: {}", no_reader.1);
+        assert!(no_reader.1.contains("retry"), "and that retrying unchanged is right: {}", no_reader.1);
         assert!(
-            !busy.1.contains("time limit"),
+            !no_reader.1.contains("time limit"),
             "it must NOT read as a query-cost problem, which is the whole defect: {}",
-            busy.1
+            no_reader.1
         );
 
-        let slow = backstop_error(true, limit);
+        // Never polled: every sql-exec thread pinned by an uninterruptible query.
+        // Measured on prod — two abandoned full scans denied `SELECT 1` for minutes.
+        let saturated = backstop_error(false, false, limit);
+        assert_eq!(saturated.0, StatusCode::SERVICE_UNAVAILABLE);
+        assert!(saturated.1.contains("saturated"), "it names saturation: {}", saturated.1);
+        assert!(
+            !saturated.1.contains("reader"),
+            "and must NOT blame readers, which had nothing to do with it: {}",
+            saturated.1
+        );
+
+        let slow = backstop_error(true, true, limit);
         assert_eq!(slow.0, StatusCode::REQUEST_TIMEOUT, "a reader was borrowed, so the query is slow");
         assert!(slow.1.contains("10s time limit"), "and it names the limit: {}", slow.1);
 
