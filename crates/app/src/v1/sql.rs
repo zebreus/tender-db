@@ -539,14 +539,22 @@ enum Executed {
 /// Time columns are Unix epoch seconds in SQL while REST returns ISO — the trap
 /// issue 50 calls out. Reused across every timestamp column.
 const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
-    ISO). Filter/format with strftime(col,'unixepoch'), e.g. \
-    strftime(published_at,'unixepoch') LIKE '2012%'.";
+    ISO). Format with the FORMAT FIRST and 'unixepoch' after the column: \
+    strftime('%Y', published_at, 'unixepoch'). The reversed order returns NULL for \
+    every row without erroring — measured on prod, one NULL bucket holding all \
+    7,924,659 Tenders (issue 239).";
 
 /// One-line descriptions for the tables/views worth explaining in
 /// `/v1/sql/schema` (issue 50); the rest are self-describing.
 const TABLE_NOTES: &[(&str, &str)] = &[
-    ("v_tenders", "Current version of each Tender — the usual entry point (one row per Tender)."),
-    ("v_lots", "Current Lots — subdivisions of a Tender."),
+    ("v_tenders", "Current version of each Tender (one row per Tender). NOT FILTERABLE: a \
+      WHERE on a view is applied AFTER the whole view is built, so even `WHERE id = ?` scans \
+      the corpus and exceeds the time limit (issue 239, measured). Use it for small unfiltered \
+      peeks; for anything filtered, join `tenders` to `tender_versions` on \
+      `(tender_id, seq = current_seq)` — 17ms for the same point read."),
+    ("v_lots", "Current Lots — subdivisions of a Tender. NOT FILTERABLE, same as v_tenders \
+      (measured: `WHERE tender_id = ?` exceeds the time limit); join `lots` to \
+      `tender_version_lots` instead."),
     ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count."),
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
       winner_* is NULL for an unresolved or withheld award."),
@@ -708,13 +716,24 @@ async fn schema(State(state): State<AppState>) -> Result<Response, ApiError> {
                      past the cap — including a slow aggregate — is 408).",
                     state.sql.timeout.as_secs()),
         ],
+        // Every example here has been RUN against prod and its timing recorded in
+        // the comments. The three it replaces had not: two aggregated over `v_tenders`
+        // (408 — see the note on the views below) and the third joined two views, and
+        // one taught the reversed `strftime` order that silently yields NULL. Shipping
+        // an example nobody executed is how that survived (issue 239).
         "examples": [
-            "SELECT source, count(*) FROM v_tenders GROUP BY source",
-            "SELECT strftime(published_at,'unixepoch','start of year') AS year, \
-             count(*) AS tenders FROM v_tenders GROUP BY year ORDER BY year",
-            "SELECT o.name, count(*) AS lots_won FROM v_lot_results r \
-             JOIN v_organizations o ON o.id = r.winner_organization_id \
-             GROUP BY o.id ORDER BY lots_won DESC LIMIT 10",
+            // 3.3s on 7.9M Tenders.
+            "SELECT source, count(*) FROM tenders GROUP BY source",
+            // 1.3s. Note the format-first strftime; the reverse yields one NULL bucket.
+            "SELECT strftime('%Y', current_published_at, 'unixepoch') AS year, \
+             count(*) AS tenders FROM tenders WHERE current_published_at IS NOT NULL \
+             GROUP BY year ORDER BY year",
+            // 17ms — the base-table join is the FAST way to reach a Tender's current
+            // version, and the pattern to copy for any filtered query.
+            "SELECT t.id, t.current_title AS title, v.publication_id, v.published_at \
+             FROM tenders t JOIN tender_versions v \
+               ON v.tender_id = t.id AND v.seq = t.current_seq \
+             WHERE t.id = 93601",
         ],
     }))
     .into_response())
@@ -1291,6 +1310,41 @@ mod tests {
         assert!(wait_for_capacity(&counter).await, "one free worker is enough to admit a query");
         drop(two);
         assert_eq!(counter.load(Ordering::Acquire), 0, "and the last leaves it clean");
+    }
+
+    /// Issue 239: two documentation defects that cost an analyst silently, so both are
+    /// pinned here rather than trusted to review.
+    ///
+    /// The date idiom had the arguments reversed. `strftime(col, 'unixepoch')` returns
+    /// NULL for every row and raises nothing — measured on prod as a single NULL bucket
+    /// holding all 7,924,659 Tenders — while `strftime('%Y', col, 'unixepoch')` works.
+    /// A wrong answer with no error is the worst shape a documented example can have.
+    ///
+    /// And no example may aggregate or filter a `v_*` view, because a WHERE on a view is
+    /// applied after the whole view is built: two of the three examples this replaces
+    /// returned 408 against prod, which nobody had run.
+    #[test]
+    fn the_documented_sql_idioms_are_ones_that_actually_work() {
+        assert!(
+            EPOCH_NOTE.contains("strftime('%Y', published_at, 'unixepoch')"),
+            "the epoch note must teach format-first: {EPOCH_NOTE}"
+        );
+        assert!(
+            !EPOCH_NOTE.contains("strftime(published_at,'unixepoch')"),
+            "and must not teach the reversed order, which silently yields NULL: {EPOCH_NOTE}"
+        );
+
+        // The views' own descriptions have to carry the warning, since that is what a
+        // caller reads before writing a query against them.
+        let views: Vec<&str> = TABLE_NOTES
+            .iter()
+            .filter(|(name, _)| *name == "v_tenders" || *name == "v_lots")
+            .map(|(_, note)| *note)
+            .collect();
+        assert_eq!(views.len(), 2, "both views are described");
+        for note in views {
+            assert!(note.contains("NOT FILTERABLE"), "the view warns it cannot be filtered: {note}");
+        }
     }
 
     #[test]
