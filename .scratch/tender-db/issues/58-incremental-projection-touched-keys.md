@@ -340,6 +340,47 @@ Estimated: 2-3 firings. Steps are independently shippable; each lands green on i
   workspace check clean. PENDING: deploy after the backfill completes + watermark
   verifies, then watch a real legacy reclaim fold scoped.
 
+### Step 3 acceptance: the plan I recorded is UNSOUND (2026-08-18, owner)
+
+I said the closure-size journal line would arrive with "tomorrow's 09:35 daily or the next legacy
+reclaim". The daily has now run on the deployed rev and the journal says why that will never happen:
+
+    [project] group step union-load: 0.0s (0 nodes)
+    [project] group step legacy-update: 0.0s (0 legacy)
+    [project] incremental: 3033 changed → 2876 touched Tenders (0 retired) in 100.4s
+
+**Zero legacy notices in the delta** — and that is by design, not luck. This issue's own v1 note says
+it: "in steady-state DAILY operation the delta is eForms + DÖE (keyed/island) — TED legacy is the
+pre-2024 historical era, loaded by BULK BACKFILL, never in the near-real-time feed." So waiting for a
+natural legacy delta is waiting for something the architecture excludes. The walk fires only on a
+deliberate legacy REPROCESS or REFOLD.
+
+**And manufacturing one is not free.** The obvious lever — `refold` on a legacy profile — is unbounded
+in the direction that matters: even the smallest legacy cohort (internal-ojs, 26,955 notices) sits in
+the 2008 transition year whose OJS chains reach into the text era, so its closure could exceed
+`LEGACY_CLOSURE_CAP` (500k), trip the fallback, and turn an acceptance test into a multi-hour full
+projection. After two unbounded-cost mistakes with the data-quality job tonight (issue 230), I am not
+firing that speculatively.
+
+**So the choice is a real one, and it is recorded rather than fudged:**
+
+1. Add a bounded exerciser — teach `refold` (or a sibling) to take an explicit small notice-id list, so
+   a handful of legacy notices can be re-folded and the closure line observed at known cost. Cheapest
+   honest path to prod evidence, and useful beyond this issue.
+2. Accept the test suite as the verification and say so plainly: five red-checked tests cover the walk
+   including the bridge merge (content byte-identical to a full projection, change events
+   set-identical), the late back-reference, both gate legs and the cap; prod confirms the GATE's input
+   (`tender_db_legacy_adjacency_watermark` reads 28,251,412) and that the dormant path costs nothing
+   (today's daily: 0 legacy, 0 nodes, no fallback).
+3. Wait for the next legacy reclaim to happen for its own reasons — which is what "eventually" means
+   here, since no legacy bucket is currently held (8 terminal zips + 5,179 unrepresentable-value are
+   the only outstanding quarantine).
+
+Recommendation: (1), because "we cannot exercise this without risking a multi-hour job" is a gap worth
+closing for every future legacy change, not just this one. Until then step 3 is
+**verified-by-tests, gate-verified on prod, unexercised at scale** — stated that way so nobody reads
+it as fully proven.
+
 ### DEPLOYED 2026-08-17 15:02 CEST (rev `fddecd0`) — step 3 is LIVE
 
 The blocker below was cleared by Lennart and the deploy ran clean: build 33 s, atomic symlink
