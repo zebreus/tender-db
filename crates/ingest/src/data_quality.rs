@@ -12,8 +12,17 @@
 //! Unlike `verify`, this is **descriptive, not pass/fail** — there is no
 //! external ground truth for "the right completeness rate", the numbers *are*
 //! the finding. It is the discovery tool that turns "we think results aren't
-//! projecting" into "eForms CANs materialise results at 0.3 %"; the fixes it
-//! points at become their own issues.
+//! projecting" into a number; the fixes it points at become their own issues, and
+//! the first full-corpus run produced four (issues 231–234) plus two defects in the
+//! report itself.
+//!
+//! This paragraph used to cite "eForms CANs materialise results at 0.3 %" as the
+//! example. That number is **no longer reproducible** — section 3 now reads 100 %
+//! for every era that measures — and rather than quietly swap in a fresh figure,
+//! see issue 235: the uniform 100 % is itself evidence that the density metric
+//! measures the projection against its own parse layer and cannot see the failure
+//! the 0.3 % once described. A stale example is a small problem; a metric that
+//! cannot go red is the reason the example went stale.
 //!
 //! Design notes it is worth being explicit about:
 //!
