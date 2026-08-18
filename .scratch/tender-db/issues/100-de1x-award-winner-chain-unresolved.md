@@ -269,3 +269,45 @@ a full rebuild, and it is the pattern every prior parse-layer cohort change used
 rebuild) and schedule it as a planned rebuild window, not an hourly-firing task. Verify afterwards per
 issue 98's `C11`/`C12`/`H7` precedent — a winner must carry `mention_notice_id` = the DE notice, never
 a merged TED twin — plus the dashboard's DE award-linkage ratio, which reads 98% unchained today.
+
+### (a) is DONE — and the board had already said what it was (2026-08-18, owner, rev `f542229`)
+
+`clear_parsed` now clears the citing `tender_version_parties` / `tender_version_bid_parties` rows
+before the mentions, with deferred indexes on `(mention_notice_id)` for both tables, a test that
+reproduces the failure and a second notice in that test proving the delete stays scoped.
+
+**The honest part first: this was already written down here, in the section directly above, on
+2026-08-17** — "(a) `clear_parsed` extended to the citing `tender_version_parties` /
+`tender_version_bid_parties` rows". I ran the re-parse job anyway (jobs 721, 733, 735), watched it fail
+three times with `immediate foreign key constraint failed`, blamed the mentions/sections ordering,
+"fixed" that, ran it again, added statement-level logging, deployed, ran it again, and read the log to
+learn what this issue's own text said before I started. The commit message calls the cause a grep that
+was too narrow; that is true but not the whole truth. The section titled "The re-parse job is BUILT but
+NOT USABLE yet" was exactly the thing to read before running the job, and I did not.
+
+Lesson recorded for the next person, including me: when an issue has a "not usable yet / open
+question" section, that section is the pre-flight checklist. Three failed prod jobs and two deploys
+bought information that was already on the board.
+
+The statement-level logging is worth keeping regardless — it named the failing statement on its first
+run, and the next FK surprise in this path will not need three attempts.
+
+### What (a) changes about the recommendation
+
+The section above recommends the ADR-0009 route — re-parse `reclaim_only`, then ONE `project
+--rebuild` — precisely BECAUSE a rebuild DROPs the org tables and so "remov[es] the FK obstacle
+wholesale, making (a) unnecessary". With (a) done, that trade is no longer forced: a targeted re-parse
+can now clear its own citations without a corpus-wide rebuild. That matters well beyond this issue —
+the text-era buyer fix (issue 232) faces the same choice over 3.79M notices, where a full rebuild is
+far dearer than for DE-1.x.
+
+**But (b) is still open, and it is what stops a targeted re-parse from landing.** `reparse_notice`
+sets `projected = 0`, so the notice enters the incremental change-set — and per point 2 above the fold
+then EARLY-RETURNS on an unchanged chain with a current epoch, producing nothing while reporting
+success. The global `PROJECTION_EPOCH` bump is one answer and a multi-hour one (issue 99: "declares
+7.9M tenders stale to fix one era").
+
+The cheaper answer already exists in the codebase and simply is not wired to `reparse`:
+`stamp_stale_for_notices` — the by-ids twin the `refold` jobs use for exactly this reason (issues
+85/99/179). A `reparse` that stamped its own cohort's tenders epoch-stale would need no global bump
+and no rebuild. That is the next unit.
