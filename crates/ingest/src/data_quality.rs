@@ -142,12 +142,22 @@ pub const LINKAGE_SQL: &str = "SELECT n.profile, \
 ///
 /// Kept as its own query (not a `lot_results` join) because `lot_results` has no
 /// index on `notice_id`: joining it by that column is a per-row table scan that
-/// times the endpoint out. The numerator is measured separately, driven *from*
-/// `lot_results`, and the two are combined by profile.
+/// times the endpoint out. The numerator is measured separately and the two are
+/// combined by profile.
+///
+/// **Both result section kinds, and that is a fix, not breadth** (issue 230). This
+/// query previously matched `kind = 'LotResult'` alone and its doc claimed to be
+/// "era-agnostic" because legacy award blocks synthesise that kind. True for
+/// legacy, false for sdk-0.1: `project.rs`'s `SDK01_RESULT_KIND` is `TenderResult`,
+/// so the whole DÖE island fell out of the DENOMINATOR while the numerator counted
+/// it — the first full run reported `0` award notices against `139,961` with
+/// results, a state that cannot exist. A hardcoded vocabulary in a query that
+/// claims to span eras is exactly the trap issue 174 named.
 pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
        FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
       WHERE EXISTS(SELECT 1 FROM notice_sections s \
-                    WHERE s.notice_id = tv.caused_by_notice_id AND s.kind = 'LotResult') \
+                    WHERE s.notice_id = tv.caused_by_notice_id \
+                      AND s.kind IN ('LotResult', 'TenderResult')) \
       GROUP BY n.profile";
 
 /// Results materialisation per era, numerator: award-notice versions whose own
@@ -663,12 +673,31 @@ pub fn render_text(report: &Report) -> String {
 
     let _ = writeln!(out, "\n== 3. Results materialisation (award notices → lot_results) ==");
     let _ = writeln!(out, "  {:<30} {:>10} {:>14} {:>8}", "era", "award-notices", "with lot_results", "density");
+    let mut impossible = 0usize;
     for row in &report.density {
+        // A numerator above its denominator is not a high rate, it is a
+        // CONTRADICTION: the two halves are measuring different populations. Neither
+        // `—` (which reads as "nothing to report") nor a >100% figure (which reads
+        // as a rate) says so, and this report has already been burned once by a
+        // number that could not distinguish two states. Name it.
+        let rate = if row.with_results > row.can_notices {
+            impossible += 1;
+            "IMPOSSIBLE".to_owned()
+        } else {
+            pct(row.with_results, row.can_notices)
+        };
         let _ = writeln!(
             out,
             "  {:<30} {:>10} {:>14} {:>8}",
-            display_era(&row.profile), group(row.can_notices), group(row.with_results),
-            pct(row.with_results, row.can_notices)
+            display_era(&row.profile), group(row.can_notices), group(row.with_results), rate
+        );
+    }
+    if impossible > 0 {
+        let _ = writeln!(
+            out,
+            "  IMPOSSIBLE ({impossible} era(s)): more notices carry results than are counted as \
+             award notices, so the two halves disagree about the population. The denominator's \
+             section-kind list is the first place to look."
         );
     }
 
@@ -850,6 +879,43 @@ mod tests {
                 q.label
             );
         }
+    }
+
+    /// Issue 230: the denominator must know every era's result section kind, and a
+    /// numerator above it must be named rather than dashed. Both come from the same
+    /// real defect — sdk-0.1's `TenderResult` sections were invisible to a query
+    /// hardcoded to `LotResult`, so the first full-corpus run reported 0 award
+    /// notices against 139,961 with results and rendered it as `—`.
+    #[test]
+    fn the_density_denominator_spans_both_result_kinds_and_names_a_contradiction() {
+        assert!(
+            DENSITY_CAN_SQL.contains("s.kind IN ('LotResult', 'TenderResult')"),
+            "sdk-0.1 names its results `TenderResult` (project.rs SDK01_RESULT_KIND): {DENSITY_CAN_SQL}"
+        );
+
+        let raw = Raw::from_labelled(vec![
+            ("versions".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-0.1"), json!(10)]])),
+            ("title".to_owned(), Some(vec![])),
+            ("buyer".to_owned(), Some(vec![])),
+            ("value".to_owned(), Some(vec![])),
+            ("cpv".to_owned(), Some(vec![])),
+            ("deadline".to_owned(), Some(vec![])),
+            ("winner".to_owned(), Some(vec![])),
+            ("linkage".to_owned(), Some(vec![])),
+            // The prod shape: a zero denominator under a large numerator.
+            ("density_can".to_owned(), Some(vec![])),
+            ("density_with".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-0.1"), json!(139_961)]])),
+            ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
+        ])
+        .expect("labelled");
+        let text = render_text(&assemble("http://x", &raw));
+        assert!(text.contains("IMPOSSIBLE"), "a contradiction must be named:\n{text}");
+        // And specifically NOT dashed, which reads as "nothing to report".
+        let density_line = text
+            .lines()
+            .find(|l| l.contains("DÖE sdk-0.1 island") && l.contains("139,961"))
+            .expect("the density row is rendered");
+        assert!(!density_line.contains('—'), "a contradiction is not an absent rate: {density_line}");
     }
 
     #[test]
