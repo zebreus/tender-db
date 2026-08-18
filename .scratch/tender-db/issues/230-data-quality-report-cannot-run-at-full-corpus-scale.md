@@ -205,11 +205,45 @@ The primitives, with the correctness property tested rather than asserted in pro
 
 `queries()` is untouched, so `bin/data-quality` against a small instance is unchanged.
 
+## Windowing, step 2 landed — the refusal is lifted (2026-08-18)
+
+`run_data_quality` now drives the windows, so the job is bounded by construction rather than by hope:
+
+- Range bounds come from **two separate** indexed aggregates. `MIN(x)` alone and `MAX(x)` alone are
+  index probes; asking for both in one statement makes SQLite scan the index, and a full index scan of
+  14.15M versions is exactly the unbounded statement this job exists to stop running.
+- The floor is *derived* (`MIN(tender_id) - 1`), not assumed to be 0. Windows are half-open `(lo, hi]`,
+  so an assumed floor that was wrong would silently drop one tender — and a dropped version renders as
+  a plausible percentage, not as an error.
+- `dq_windows()` is a pure function, tested for exact tiling: first window opens at the floor, last
+  closes at the max, consecutive windows share a boundary, none empty, none wider than the bound, and
+  an empty range yields NO windows (so an empty corpus cannot store a report full of zeros). Overlap
+  double-counts, a gap under-counts, and both look believable in the output — that is why the
+  arithmetic is asserted instead of read.
+- Windows OUTER, queries INNER: the seven probes over one slice touch the same version and notice
+  pages, so a slice is paged in once rather than seven times.
+- `DQ_WINDOW = 250_000` ids — an order of magnitude inside the largest window anyone actually timed
+  (4.79 s over 800k, cache-hot), leaving headroom for the cold case that made the two unwindowed runs
+  unkillable. Every window logs its own elapsed and the running total, so re-sizing it will be a
+  decision the journal supports.
+- A label with ANY failed window is reported **unmeasured**, never summed. A sum missing one window is
+  a wrong number wearing a right number's clothes — the precise failure `Raw::from_labelled`'s `None`
+  path exists to prevent.
+- `confirmed` recovers its meaning: a dry run reports the plan (window count, statement count, and the
+  four labels that will come back unmeasured) off the two aggregates alone, having touched no data page.
+  The summary now names the unmeasured labels too — the job log is what an operator reads first.
+
+Tests: `dq_windows` tiling + a dry run that plans and stores nothing, and a confirmed run over an empty
+corpus that returns "no tender versions to measure" and stores nothing rather than overwriting a real
+earlier measurement. 77/77 app lib, 4/4 ingest data-quality green.
+
+**Not yet run on prod.** Item 2 below is the next thing and it is a measurement, not a formality.
+
 ### Remaining, in order
 
-1. Teach `run_data_quality` to drive `windowed_queries()` — walk `MAX(tender_id)` in fixed windows,
+1. ~~Teach `run_data_quality` to drive `windowed_queries()` — walk `MAX(tender_id)` in fixed windows,
    accumulate, report `window k/N` in the phase record, and mark the four unwindowed labels as
-   unmeasured. Then lift the refusal.
+   unmeasured. Then lift the refusal.~~ **DONE** — see "Windowing, step 2" above.
 2. Re-measure on prod **outside** the 09:35 daily window, and record the real per-window timing — a
    measurement, not an extrapolation. Pick the window size from that.
 3. Only then: schedule it, and add the read surface for the stored body.

@@ -154,6 +154,15 @@ const MARK_BATCH: i64 = 5_000;
 /// rows while keeping each WAL transaction bounded.
 const BACKFILL_BATCH: i64 = 10_000;
 
+/// Span of `tender_versions.tender_id` measured per data-quality window (issue
+/// 230). The size is chosen against the only numbers anyone actually measured —
+/// the field probes ran 0.37 s over 50k tenders, 1.25 s over 200k and 4.79 s over
+/// 800k, all cache-hot — so 250k sits an order of magnitude inside the largest
+/// timed window and leaves room for the cold case that made the two unwindowed
+/// runs unkillable. It is a tuning knob, not a law: every window logs its own
+/// elapsed, so resizing it is a decision the journal can support.
+const DQ_WINDOW: i64 = 250_000;
+
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
@@ -1053,30 +1062,10 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
-            Spec::DataQuality { confirmed } => {
-                // DECLINED unconditionally, and the two failed attempts are the
-                // reason (issue 230). The EXISTS rewrite genuinely fixed the
-                // pathological shape — bounded windows measured 0.37 s at 50k
-                // tenders, 1.25 s at 200k, 4.79 s at 800k — but extrapolating that
-                // line to 7.9M predicted ~47 s and the real full-corpus query was
-                // still running after five minutes. The windows were cache-hot; the
-                // full pass is not, and per-row cost climbs once the satellite
-                // index working set outgrows RAM. Estimating twice and being wrong
-                // twice is the signal to stop estimating.
-                //
-                // The fix is to make the measurement inherently bounded rather than
-                // hopefully fast: accumulate per-profile counts over id WINDOWS —
-                // the shape issue 228 landed for the adjacency sweep, where each
-                // query is bounded on both axes and progress is per window. Until
-                // that exists this job refuses to run, because a confirmed operator
-                // and a fast query are different things and only one of them was
-                // ever true here.
-                let _ = confirmed;
-                Ok("data-quality DECLINED: needs the windowed implementation (issue 230). The \
-                    unwindowed pass is unbounded at full-corpus scale — two runs were killed. \
-                    bin/data-quality still works against a small instance."
-                    .to_owned())
-            }
+            // Bounded at last (issue 230): the two killed runs are recorded on
+            // `run_data_quality`, which now measures over id windows instead of
+            // over the whole corpus in one statement.
+            Spec::DataQuality { confirmed } => self.run_data_quality(*confirmed).await,
             Spec::Reparse { profiles } => {
                 self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
             }
@@ -1600,30 +1589,151 @@ impl Supervisor {
     /// distinguishable from an empty one all the way to the rendered text (the
     /// `None` that `from_labelled` reads as unmeasured), so a partial report says
     /// which sections it could not measure instead of printing zeros.
-    async fn run_data_quality(&self) -> Result<String, String> {
-        use ingest::data_quality::{self, Raw, Rows};
+     /// One integer out of a one-row, one-column measurement query, on the reader
+    /// pool. Absent rows and non-integers read as 0 rather than as an error: every
+    /// caller wraps its SQL in `COALESCE`, so a missing number means an empty
+    /// table, not a broken query.
+    async fn measure_i64(&self, sql: &str) -> Result<i64, String> {
+        Ok(self
+            .db
+            .measure_rows(sql)
+            .await
+            .map_err(|e| e.to_string())?
+            .into_iter()
+            .next()
+            .map(json_row)
+            .and_then(|row| row.first().and_then(serde_json::Value::as_i64))
+            .unwrap_or(0))
+    }
 
-        let queries = data_quality::queries();
-        let total = queries.len() as u64;
-        let mut results: Vec<(String, Option<Rows>)> = Vec::new();
-        let mut failed: Vec<String> = Vec::new();
-        for (i, (label, sql)) in queries.into_iter().enumerate() {
-            self.set_phase(
-                "measuring",
-                Some(i as u64),
-                Some(total),
-                format!("query {label}"),
-            );
-            match self.db.measure_rows(&sql).await {
-                Ok(rows) => results.push((label, Some(rows.into_iter().map(json_row).collect()))),
-                Err(e) => {
-                    // Report it and carry on: one unmeasurable section must not
-                    // cost the other ten.
-                    eprintln!("[data-quality] query {label} failed: {e}");
-                    failed.push(label.clone());
-                    results.push((label, None));
+    /// Measure semantic data quality over bounded id windows, store the rendered
+    /// report, and say what could not be measured (issue 230).
+    ///
+    /// Two earlier attempts ran these aggregates across the whole corpus in one
+    /// statement each and both had to be killed. The EXISTS rewrite did fix the
+    /// pathological query *shape*, but shape was never the whole problem: one
+    /// statement over 7.9M versions is unbounded work, turso cannot interrupt a
+    /// running statement, and so "slower than I guessed" and "will never finish"
+    /// look identical from outside. Both times the guess came from cache-hot
+    /// samples (0.37 s at 50k tenders extrapolated to ~47 s at full scale) and both
+    /// times the real pass was still running minutes later.
+    ///
+    /// So the measurement is no longer *hopefully* fast, it is *inherently*
+    /// bounded — issue 228's shape. Each statement covers one [`DQ_WINDOW`]-wide
+    /// slice of `tender_versions.tender_id`; per-profile counts accumulate across
+    /// the slices; every version falls in exactly one slice, so the sum is exactly
+    /// the unwindowed answer. Two things follow that the unwindowed pass could not
+    /// offer: the job reports honest `window k/N` progress instead of sitting mute,
+    /// and each window's elapsed goes to the journal — so the next sizing decision
+    /// is a measurement rather than a third extrapolation.
+    ///
+    /// A label with a FAILED window is reported unmeasured, never summed. A sum
+    /// missing one window is a wrong number wearing a right number's clothes, which
+    /// is the precise failure `Raw::from_labelled`'s `None` path exists to prevent.
+    /// The four queries with no windowing yet (`linkage`, both densities, `merge`)
+    /// are unmeasured for the same reason rather than quietly dropped.
+    ///
+    /// `confirmed` still means what it meant — the operator accepting that the job
+    /// holds the serialized queue for the duration — and a dry run now has
+    /// something worth reporting: the window count the run would take, from one
+    /// indexed `MAX`, having touched no data page.
+    async fn run_data_quality(&self, confirmed: bool) -> Result<String, String> {
+        use ingest::data_quality::{self, Raw, Rows};
+        use std::collections::BTreeMap;
+        use std::time::Instant;
+
+        // Two separate indexed aggregates, not one `MIN(), MAX()` query: SQLite
+        // turns a LONE min or max over an indexed column into a probe, but has to
+        // scan the index when asked for both at once — and a full index scan of
+        // 7.9M versions is precisely the unbounded statement this job exists to
+        // stop running.
+        let max_id =
+            self.measure_i64("SELECT COALESCE(MAX(tender_id), 0) FROM tender_versions").await?;
+        // Windows are half-open `(lo, hi]`, so the first must start BELOW the
+        // smallest id or it drops that tender silently. Deriving the floor beats
+        // assuming ids begin at 1: the assumption would be invisible if it broke.
+        let floor =
+            self.measure_i64("SELECT COALESCE(MIN(tender_id), 1) FROM tender_versions").await? - 1;
+        let windows = dq_windows(floor, max_id);
+
+        let queries = data_quality::windowed_queries();
+        if !confirmed {
+            return Ok(format!(
+                "data-quality dry run: would measure {} window(s) of {DQ_WINDOW} ids up to \
+                 tender_id {max_id}, {} queries each ({} statements); {} label(s) have no \
+                 windowing and would report unmeasured ({})",
+                windows.len(),
+                queries.len(),
+                windows.len() * queries.len(),
+                data_quality::unwindowed_labels().len(),
+                data_quality::unwindowed_labels().join(","),
+            ));
+        }
+        if windows.is_empty() {
+            // Nothing to measure is not a report worth storing — storing one would
+            // overwrite a real earlier measurement with a row of zeros.
+            return Ok("data quality: no tender versions to measure".to_owned());
+        }
+
+        // Windows outer, queries inner: the seven probes over one slice hit the same
+        // version and notice pages, so the slice stays warm for all of them instead
+        // of being paged in seven times.
+        let units = (windows.len() * queries.len()) as u64;
+        let mut per_label: BTreeMap<String, Vec<Rows>> = BTreeMap::new();
+        let mut broken: Vec<String> = Vec::new();
+        let mut done = 0u64;
+        let run_started = Instant::now();
+        for (wi, (lo, hi)) in windows.iter().enumerate() {
+            let window_started = Instant::now();
+            for query in &queries {
+                self.set_phase(
+                    "measuring",
+                    Some(done),
+                    Some(units),
+                    format!("window {}/{} query {}", wi + 1, windows.len(), query.label),
+                );
+                match self.db.measure_rows(&query.sql(*lo, *hi)).await {
+                    Ok(rows) => per_label
+                        .entry(query.label.clone())
+                        .or_default()
+                        .push(rows.into_iter().map(json_row).collect()),
+                    Err(e) => {
+                        eprintln!(
+                            "[data-quality] window {}/{} ({lo}..{hi}] query {} failed: {e}",
+                            wi + 1,
+                            windows.len(),
+                            query.label
+                        );
+                        if !broken.contains(&query.label) {
+                            broken.push(query.label.clone());
+                        }
+                    }
                 }
+                done += 1;
             }
+            eprintln!(
+                "[data-quality] window {}/{} ({lo}..{hi}]: {:.1}s for {} queries ({:.1}s elapsed)",
+                wi + 1,
+                windows.len(),
+                window_started.elapsed().as_secs_f64(),
+                queries.len(),
+                run_started.elapsed().as_secs_f64(),
+            );
+        }
+
+        let mut results: Vec<(String, Option<Rows>)> = Vec::new();
+        for query in &queries {
+            let rows = if broken.contains(&query.label) {
+                None
+            } else {
+                Some(data_quality::sum_profile_counts(
+                    per_label.get(&query.label).map(Vec::as_slice).unwrap_or_default(),
+                ))
+            };
+            results.push((query.label.clone(), rows));
+        }
+        for label in data_quality::unwindowed_labels() {
+            results.push((label, None));
         }
 
         let raw = Raw::from_labelled(results).map_err(|e| e.to_string())?;
@@ -1633,19 +1743,27 @@ impl Supervisor {
         self.db.put_report("data-quality", &body, now).await.map_err(|e| e.to_string())?;
 
         // The summary is the digest; the body is in `reports` for whoever reads it.
-        if failed.is_empty() {
+        // Unmeasured labels are named in the summary, not just in the body — the job
+        // log is what an operator sees first.
+        let took = run_started.elapsed().as_secs_f64();
+        if broken.is_empty() {
             Ok(format!(
-                "data quality measured: {} eras, {} linkage rows, {} density rows",
+                "data quality measured: {} eras over {} windows in {took:.0}s; {} label(s) \
+                 unmeasured ({})",
                 report.completeness.len(),
-                report.linkage.len(),
-                report.density.len()
+                windows.len(),
+                report.unmeasured.len(),
+                report.unmeasured.join(","),
             ))
         } else {
             Ok(format!(
-                "data quality PARTIAL: {}/{total} queries failed ({}); {} eras measured",
-                failed.len(),
-                failed.join(","),
-                report.completeness.len()
+                "data quality PARTIAL: {} window query label(s) failed ({}) in {took:.0}s; {} \
+                 eras measured, {} label(s) unmeasured ({})",
+                broken.len(),
+                broken.join(","),
+                report.completeness.len(),
+                report.unmeasured.len(),
+                report.unmeasured.join(","),
             ))
         }
     }
@@ -1738,6 +1856,26 @@ impl Supervisor {
 /// values because the store carries no JSON dependency, and `data_quality` speaks
 /// `serde_json`. Mirrors the `/v1/sql` cell mapping, minus the byte accounting
 /// that endpoint needs for its response cap.
+/// The half-open `(lo, hi]` windows of `tender_versions.tender_id` that together
+/// cover every id in `floor+1 ..= max_id`, each at most [`DQ_WINDOW`] wide (issue
+/// 230).
+///
+/// Kept separate from the job that walks them because the arithmetic is where a
+/// bounded measurement silently becomes a wrong one: an overlap double-counts a
+/// version, a gap drops one, and either way the report still renders a plausible
+/// percentage. Exact coverage is a property worth asserting, so it lives somewhere
+/// a test can reach without a corpus.
+fn dq_windows(floor: i64, max_id: i64) -> Vec<(i64, i64)> {
+    let mut out = Vec::new();
+    let mut lo = floor;
+    while lo < max_id {
+        let hi = lo.saturating_add(DQ_WINDOW).min(max_id);
+        out.push((lo, hi));
+        lo = hi;
+    }
+    out
+}
+
 fn json_row(cells: Vec<store::turso::Value>) -> Vec<serde_json::Value> {
     use store::turso::Value;
     cells
@@ -2263,6 +2401,66 @@ mod tests {
             .expect("enqueues");
         assert_eq!(ids.len(), 1);
         assert_eq!(sup.queued()[1].params, "data-quality", "a confirmed run is named plainly");
+    }
+
+    /// Issue 230: the windows must tile the id range EXACTLY — no gap (a dropped
+    /// version understates a completeness rate) and no overlap (a double-counted
+    /// one can push it over 100%). Both render as a believable percentage, so the
+    /// tiling is checked rather than trusted.
+    #[test]
+    fn data_quality_windows_tile_the_id_range_exactly() {
+        // The realistic shape: a floor of 0 (ids start at 1) and a span that is not
+        // a whole number of windows.
+        let w = dq_windows(0, DQ_WINDOW * 2 + 7);
+        assert_eq!(w.len(), 3);
+        assert_eq!(w[0], (0, DQ_WINDOW));
+        assert_eq!(w[2], (DQ_WINDOW * 2, DQ_WINDOW * 2 + 7), "the tail window is short, not skipped");
+
+        // Contiguity and coverage, for several spans including exact multiples and
+        // spans smaller than one window.
+        for (floor, max_id) in
+            [(0, 1), (0, DQ_WINDOW), (0, DQ_WINDOW * 3), (5, 5 + DQ_WINDOW + 1), (-1, 4)]
+        {
+            let w = dq_windows(floor, max_id);
+            assert_eq!(w.first().unwrap().0, floor, "the first window opens at the floor");
+            assert_eq!(w.last().unwrap().1, max_id, "the last window closes at the max");
+            for pair in w.windows(2) {
+                assert_eq!(pair[0].1, pair[1].0, "consecutive windows share a boundary exactly");
+            }
+            for (lo, hi) in &w {
+                assert!(hi > lo, "no empty window");
+                assert!(hi - lo <= DQ_WINDOW, "no window wider than the bound");
+            }
+        }
+
+        // Nothing to measure yields nothing to run — not one window over an empty
+        // table, which would store a report full of zeros.
+        assert!(dq_windows(0, 0).is_empty());
+        assert!(dq_windows(9, 9).is_empty());
+        assert!(dq_windows(9, 4).is_empty());
+    }
+
+    /// Issue 230: a dry run reports the plan and measures nothing. It is cheap by
+    /// construction — two indexed aggregates — so an operator can see the shape of
+    /// the run before accepting that it holds the serialized queue.
+    #[tokio::test]
+    async fn a_data_quality_dry_run_reports_the_plan_and_measures_nothing() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let plan = sup.run_data_quality(false).await.expect("a dry run cannot fail on an empty db");
+        assert!(plan.starts_with("data-quality dry run:"), "{plan}");
+        assert!(plan.contains("0 window(s)"), "an empty corpus plans no windows: {plan}");
+        // The four unwindowed labels are named in the plan, so their absence from
+        // the report is known BEFORE the run rather than discovered in the body.
+        for label in ["linkage", "density_can", "density_with", "merge"] {
+            assert!(plan.contains(label), "the plan names {label} as unmeasured: {plan}");
+        }
+        assert!(sup.db.latest_report("data-quality").await.unwrap().is_none(), "a dry run stores nothing");
+
+        // And a confirmed run over an empty corpus still stores nothing, rather than
+        // overwriting a real earlier measurement with zeros.
+        let out = sup.run_data_quality(true).await.expect("an empty confirmed run is not an error");
+        assert_eq!(out, "data quality: no tender versions to measure");
+        assert!(sup.db.latest_report("data-quality").await.unwrap().is_none());
     }
 
     /// Issue 100: `reparse` needs at least one profile, and pairs itself with a
