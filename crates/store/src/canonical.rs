@@ -1669,6 +1669,40 @@ impl Db {
         Ok(ids)
     }
 
+    /// The parsed notices carrying a section of any of these KINDS — the cohort a
+    /// mapping keyed on a section kind affects (issue 237).
+    ///
+    /// The cheap sibling of [`Db::notice_ids_carrying_fields`], and the reason it exists:
+    /// that one sweeps whole value tables because `field_id` is unindexed, which is
+    /// minutes of I/O. `notice_sections` has `notice_sections_kind`, so a kind-scoped
+    /// cohort is an index range read instead — 11,416 `GroupComposition` sections came
+    /// back in 15 ms on prod, against a full pass over `notice_ids` for the same answer.
+    ///
+    /// Prefer this whenever the mapping's trigger is a section kind rather than a field
+    /// id: several past cohorts (the sibling-mount classes, sdk-0.1's party kinds) were
+    /// exactly that shape.
+    pub async fn notice_ids_with_section_kind(&self, kinds: &[&str]) -> turso::Result<Vec<i64>> {
+        if kinds.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = self.conn().await;
+        let sql = format!(
+            "SELECT DISTINCT s.notice_id FROM notice_sections s
+               JOIN notices n ON n.id = s.notice_id
+              WHERE s.kind IN ({}) AND n.parse_state = 'parsed'",
+            placeholders(kinds.len())
+        );
+        let params: Vec<Value> = kinds.iter().map(|k| t(*k)).collect();
+        let mut rows = conn.query(&sql, params).await?;
+        let mut ids: Vec<i64> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            ids.push(int(&row, 0));
+        }
+        ids.sort_unstable();
+        ids.dedup();
+        Ok(ids)
+    }
+
     /// Re-queue an explicit notice-id cohort for the incremental fold — the
     /// by-ids twin of [`Db::unmark_projected_for_profiles`], for cohorts a
     /// profile cannot name (issue 88's field carriers). Only parsed, currently

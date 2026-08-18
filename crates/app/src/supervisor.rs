@@ -242,6 +242,12 @@ enum Spec {
     /// run aborts BEFORE writing if the cohort is not about that size, which is what
     /// a mistyped profile string looks like.
     Refold { profiles: Vec<String>, expect: Option<u64> },
+    /// Re-fold every notice carrying a section of these KINDS (issue 237).
+    ///
+    /// The `RefoldFields` twin for mappings whose trigger is a section kind rather than a
+    /// field id — and much cheaper, because `notice_sections_kind` makes the cohort an
+    /// index read where the field sweep must pass whole value tables.
+    RefoldSections { kinds: Vec<String> },
     /// Re-fold an EXPLICIT, small notice-id list (issue 58 v2, step 3's exerciser).
     ///
     /// `refold` and `refold-fields` both derive their cohort, and both derive one
@@ -585,6 +591,21 @@ impl Supervisor {
             // the fold that follows is an ordinary incremental one — which is the
             // point, since the behaviour under test is what that fold does with a
             // legacy delta.
+            // Reuses the request's `profiles` list as the KIND list, exactly as
+            // `refold-fields` reuses it for field ids: one list-shaped parameter per
+            // request, read according to the kind of job asked for.
+            "refold-sections" => {
+                let kinds = req.profiles.clone().unwrap_or_default();
+                if kinds.is_empty() {
+                    return Err("refold-sections needs at least one section kind (pass via profiles)".into());
+                }
+                let params = format!("refold-sections {}", kinds.join(","));
+                Ok(vec![
+                    self.push("refold-sections", params, Spec::RefoldSections { kinds }).await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
             "refold-notices" => {
                 let notices = req.notices.clone().unwrap_or_default();
                 if notices.is_empty() {
@@ -1396,6 +1417,30 @@ impl Supervisor {
                 Ok(format!(
                     "re-queued {requeued} notices, stamped {stamped} tenders epoch-stale \
                      for the incremental fold"
+                ))
+            }
+            Spec::RefoldSections { kinds } => {
+                let refs: Vec<&str> = kinds.iter().map(String::as_str).collect();
+                let carriers =
+                    self.db.notice_ids_with_section_kind(&refs).await.map_err(|e| e.to_string())?;
+                if carriers.is_empty() {
+                    // Not an error: a kind no notice carries is a legitimate answer, and
+                    // saying so beats re-queueing nothing while reporting success.
+                    return Ok(format!("no parsed notice carries a {:?} section", kinds));
+                }
+                self.set_phase("re-folding", None, None, format!("{} carriers", carriers.len()));
+                let requeued =
+                    self.db.unmark_projected_by_ids(&carriers).await.map_err(|e| e.to_string())?;
+                // The issue-179 pair: the requeue alone leaves each chain identical and an
+                // unchanged chain with a current epoch early-returns, so the mapping fix
+                // would never land.
+                let stamped =
+                    self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "{} notice(s) carry a {:?} section: re-queued {requeued}, stamped {stamped} \
+                     tender(s) epoch-stale for the incremental fold",
+                    carriers.len(),
+                    kinds
                 ))
             }
             Spec::RefoldNotices { notices } => {
@@ -2744,6 +2789,30 @@ mod tests {
         let out = sup.run_data_quality(true).await.expect("an empty confirmed run is not an error");
         assert_eq!(out, "data quality: no tender versions to measure");
         assert!(sup.db.latest_report("data-quality").await.unwrap().is_none());
+    }
+
+    /// Issue 237: `refold-sections` needs a kind, and pairs itself with a projection so
+    /// the re-queued notices are actually folded.
+    #[tokio::test]
+    async fn refold_sections_needs_a_kind_and_pairs_with_a_projection() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        assert!(
+            sup.enqueue_request(&req("refold-sections")).await.is_err(),
+            "a kind list is the whole cohort — refuse an empty one rather than re-fold nothing"
+        );
+        let ids = sup
+            .enqueue_request(&JobRequest {
+                kind: "refold-sections".into(),
+                profiles: Some(vec!["GroupComposition".into()]),
+                ..Default::default()
+            })
+            .await
+            .expect("a kind enqueues");
+        assert_eq!(ids.len(), 2, "the refold and its trailing projection");
+        let queued = sup.queued();
+        assert_eq!(queued[0].kind, "refold-sections");
+        assert_eq!(queued[0].params, "refold-sections GroupComposition");
+        assert_eq!(queued[1].kind, "project", "without the fold the requeue changes nothing");
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a
