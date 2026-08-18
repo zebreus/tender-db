@@ -1754,3 +1754,55 @@ fn the_pinned_sdk_versions_are_the_vendored_ones() {
     }
 }
 
+
+/// Issue 237: a bid that covers several lots references a LotsGroup, and the group's
+/// MEMBERSHIP is published — this pins the exact shape the projection has to read, since
+/// nothing maps it yet and a mapping written from the spec rather than from the bytes
+/// would be a guess.
+///
+/// The composition is NOT on the LotsGroup section. It is its own `GroupComposition`
+/// section hanging off the notice root, naming the group by `BT-330-Procedure` and each
+/// member lot by a repeated `BT-1375-Procedure` — so the projection must read the pair
+/// from that section, not from `GLO-nnnn`.
+#[test]
+fn lots_group_membership_is_published_as_a_group_composition_section() {
+    let parsed = parse_fixture("eforms/can-maximal-sdk17.xml");
+
+    let composition: Vec<&store::Section> =
+        parsed.sections.iter().filter(|s| s.kind == "GroupComposition").collect();
+    assert_eq!(composition.len(), 1, "the maximal example composes one group");
+    let comp = composition[0];
+    assert_eq!(
+        comp.parent.as_deref(),
+        Some("PROCEDURE"),
+        "the composition hangs off the notice root, NOT off the LotsGroup — the reason the \
+         projection cannot simply read membership from the GLO section: {comp:?}"
+    );
+
+    let refs = |field: &str| -> Vec<String> {
+        parsed
+            .values
+            .iter()
+            .filter(|v| v.section_id == comp.id && v.field_id == field)
+            .filter_map(|v| match &v.value {
+                store::NoticeValue::Id { value, is_ref: true, .. } => Some(value.clone()),
+                _ => None,
+            })
+            .collect()
+    };
+
+    // The group being composed, and its member lots.
+    assert_eq!(refs("BT-330-Procedure"), vec!["GLO-0001".to_string()], "BT-330 names the group");
+    assert_eq!(
+        refs("BT-1375-Procedure"),
+        vec!["LOT-0001".to_string(), "LOT-0002".to_string()],
+        "BT-1375 repeats once per member lot"
+    );
+
+    // And the group itself is a real Lot-kind section, so both ends of the membership
+    // resolve to `lots` rows once projected.
+    assert!(
+        parsed.sections.iter().any(|s| s.id == "GLO-0001" && s.kind == "LotsGroup"),
+        "the group is a LotsGroup section"
+    );
+}
