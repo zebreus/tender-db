@@ -1,6 +1,7 @@
 # 230 — the data-quality report times out on every query at full-corpus scale, and reports empty instead of saying so loudly
 
-Status: needs-triage — measured 2026-08-18 against prod (rev `cc0ef20`)
+Status: FIXED and measured on prod 2026-08-18 — the report runs at full-corpus scale; two
+follow-ups remain (cost-per-query index decision, bin/data-quality read path)
 Kind: observability / tooling rot (a green that stopped being green without anyone noticing)
 Blocked by: —
 Relates to: 27 (the report this is, whose acceptance no longer holds), 120 (the app cannot bound an
@@ -239,13 +240,114 @@ earlier measurement. 77/77 app lib, 4/4 ingest data-quality green.
 
 **Not yet run on prod.** Item 2 below is the next thing and it is a measurement, not a formality.
 
+## MEASURED on prod: the report runs at full-corpus scale (2026-08-18)
+
+The thing this issue exists for now happens. Job 731, rev `a79540e`, queue idle, outside the daily
+window:
+
+    data quality measured: 23 eras over 32 windows in 1258s; 4 label(s) unmeasured
+
+**Zero failed windows.** 14.15M tender-versions measured across 23 eras — the same queries that
+returned 11-of-11 HTTP 408 when this issue was opened. Per-window timings from the journal (the real
+distribution, not a line through two points): 65.8 s, 70.3 s, 65.2 s, 68.5 s, 54.9 s, then a stretch
+of 12–25 s through the sparse mid-corpus id ranges, rising back to 36–65 s in the dense recent eras,
+24.4 s for the short tail window. The variance is the reason a single sample extrapolates so badly:
+the cheapest window in this run was 5× faster than the dearest.
+
+The stored report is readable at `GET /admin/reports/data-quality` (body + `computed_at` +
+`age_seconds`), and `/metrics` now carries
+`tender_db_report_computed_timestamp_seconds{kind="data-quality"}`, so "nobody has run it lately" is
+finally an alertable condition rather than a silence.
+
+### What the first report found
+
+Four board outcomes in the first hour of having the measurement, none of them previously visible:
+
+- **Issue 29 VERIFIED CLOSED at scale.** It had sat at needs-verification since 2026-07-21 with a note
+  saying this exact measurement was what it needed. Over 666,671 sdk-0.1 versions: title 100 %, buyer
+  100 %, deadline 77.9 % — off the floor, era-wide, not fixture-wide. Its "0 % on every field" premise
+  is retired.
+- **Issue 231 filed** — the narrowed sdk-0.1 residual: `value` 0 % (AMOUNTS never gained an `SDK01-*`
+  entry, visible in the code), `cpv` 0 % (a research question BEFORE a mapping question).
+- **Issue 232 filed and then DIAGNOSED the same day** — the text era, 3,786,955 versions and ~27 % of
+  the corpus, carries a buyer on 0.5 % of them. Cause found in the code: the text parser emits no
+  organization role reference at all (`text/parse.rs` hardcodes every ref to `scheme: "ojs"`, which the
+  projection filters as a chain edge before `role_name` is reached; `role_name` has no `TXT-` branch;
+  `AU` is declared `Prose`, not a ref). Mentions get a name and nothing ever attaches a role.
+- **Issue 233 filed** — INTERNAL_OJS 2008 carries a title on 43.7 % of versions where every other era
+  manages 96 %+, while the same notices resolve a buyer 91.5 % and a CPV 100 % of the time.
+
+Each of the three new issues states explicitly what NOT to conclude from the `winner` column, which is
+measured over all versions and therefore dominated by the CN/CAN mix.
+
+## Windowing step 3: all eleven queries windowed (`b50184b`, 2026-08-18)
+
+The 4 unmeasured labels are gone. Three took the same treatment as the seven; the fourth turned up a
+bug.
+
+- `linkage`, `density_can` and `merge` each drive from `tender_versions`, so each takes a `tender_id`
+  range predicate spliced into its existing WHERE. `merge`'s inner `SELECT DISTINCT v.tender_id` is
+  the windowed part, and that `DISTINCT` sums exactly **only because the distinct key IS the window
+  key** — a DISTINCT over anything else would need proof the key cannot straddle two windows, and
+  `tender_versions` declares only `UNIQUE (tender_id, caused_by_notice_id)`, which does not give it.
+- **`density_with` was measuring the wrong unit.** It drove from `lot_results` counting
+  `COUNT(DISTINCT lr.notice_id)` — distinct on NOTICES while its own denominator (`density_can`)
+  counts VERSIONS. A notice causing two versions contributed 2 below the line and 1 above it, quietly
+  depressing results density in exactly the eras where corrigenda are common. Now version-driven like
+  its denominator, probing `lot_results` on `(tender_id, notice_id)` (the prefix of its UNIQUE index,
+  so still an indexed seek). Windowing it was the *occasion*; the ratio being a ratio is the fix.
+- `sum_profile_counts` now sums every count column after the label, `merge` carries a constant `'all'`
+  scope label to share the `[label, counts…]` shape, and `WindowedQuery` carries its own `tender_id`
+  column — the eleven statements alias `tender_versions` as `v`, `v1` and `tv`, and a hardcoded alias
+  becomes "no such table", which the equivalence test caught rather than a reviewer.
+- New test: every catalog query must be either windowed or declared unmeasured, and every template
+  must carry exactly one filled window predicate. A query in neither list is one the report silently
+  does not measure — this issue's own failure mode, reintroduced by a future addition.
+
+### The eleven-query pass costs 4× a window, and that is the next decision
+
+First two windows of the eleven-query pass: **291.3 s** and **228.6 s**, against 65.8 s and 70.3 s for
+the same windows with seven queries. So the four added queries roughly triple-to-quadruple a window,
+putting the full pass in the **2–3 hour** range. The schedule survives it (a 03:10 Berlin start
+finishes hours before the 09:35 daily), so this is a cost question, not a safety one.
+
+It is deliberately NOT being answered by inspection. A per-window total cannot say which of eleven
+queries spent the time, so the run now logs **cost per query, costliest first** at the end
+(`f3d1bbf`). The suspicion on the table — to be confirmed or killed by that line, not by argument —
+is `density_can`'s `EXISTS(… notice_sections WHERE notice_id = ? AND kind = 'LotResult')`:
+`notice_sections` is indexed `PRIMARY KEY (notice_id, section_id)` plus a lone `(kind)` index, so this
+predicate has no exact-seek path and must range-scan every section of each notice. If the breakdown
+confirms it, a `(notice_id, kind)` index is the fix — and building one on a table that size is itself
+a job, so it wants the deferred-index machinery, not an inline DDL.
+
+The breakdown costs nothing extra to obtain: it lands with the next scheduled Sunday run.
+
 ### Remaining, in order
 
 1. ~~Teach `run_data_quality` to drive `windowed_queries()` — walk `MAX(tender_id)` in fixed windows,
    accumulate, report `window k/N` in the phase record, and mark the four unwindowed labels as
    unmeasured. Then lift the refusal.~~ **DONE** — see "Windowing, step 2" above.
-2. Re-measure on prod **outside** the 09:35 daily window, and record the real per-window timing — a
-   measurement, not an extrapolation. Pick the window size from that.
-3. Only then: schedule it, and add the read surface for the stored body.
-4. Separately decide windowing for the four remaining queries, or accept them as permanently
-   unmeasured and say so in the report's own text.
+2. ~~Re-measure on prod **outside** the 09:35 daily window, and record the real per-window timing — a
+   measurement, not an extrapolation. Pick the window size from that.~~ **DONE** — 1258 s over 32
+   windows, zero failed, per-window distribution recorded above. `DQ_WINDOW = 250_000` stays: the
+   spread (12 s to 70 s per window) shows the size is not the binding constraint, query cost is.
+3. ~~Only then: schedule it, and add the read surface for the stored body.~~ **DONE** (`766bb0b`) —
+   `spawn_report_scheduler` queues it Sunday 03:10 Berlin in its own loop (never stacking two), and
+   `GET /admin/reports/{kind}` serves body + `computed_at` + `age_seconds`. Plus
+   `tender_db_report_computed_timestamp_seconds{kind}` on `/metrics` (`c731a05`), which is what makes
+   the original rot alertable rather than merely fixed.
+4. ~~Separately decide windowing for the four remaining queries, or accept them as permanently
+   unmeasured and say so in the report's own text.~~ **DONE** (`b50184b`) — all four windowed, and
+   `density_with`'s unit bug fixed on the way.
+
+### Remaining after all four
+
+- **Read the cost-per-query line** from the first run that carries it and decide whether
+  `density_can` (or another) wants an index. Do not add an index to `notice_sections` before that line
+  says so.
+- **Confirm sections 2–4 are populated** in the first eleven-query report, and judge the era winner
+  questions (issues 231/232) from section 3's award-notice denominator rather than from the `winner`
+  column's all-versions one.
+- **`bin/data-quality` still re-runs all eleven queries live**, which no longer works against prod.
+  Point it at `GET /admin/reports/data-quality` for the stored body, keeping its live path for small
+  instances.
