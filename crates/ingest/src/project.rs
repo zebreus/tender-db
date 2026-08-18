@@ -2488,7 +2488,7 @@ impl NoticeState {
             published_at,
             dispatched_at,
             subtype: first_code(parsed, SUBTYPE_FIELD),
-            group_members: group_members(parsed),
+            group_members: group_members(notice.id, parsed),
             logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
@@ -3494,9 +3494,19 @@ fn de1_mark_reference(value: &mut store::ValueRow) {
 /// `ingest/tests/eforms.rs`, because looking for membership under the group section finds
 /// nothing and invites the conclusion that it is not published at all.
 ///
-/// A composition naming no group is skipped: a member list with nothing to attach it to
-/// is not a fact about any lot.
-fn group_members(parsed: &Parsed) -> Vec<(String, String)> {
+/// When a composition carries no [`GROUP_ID_FIELD`], the group is inferred ONLY if the
+/// notice publishes exactly one `LotsGroup` — then there is nothing to be wrong about.
+/// Measured on prod: BT-330 is absent from most compositions (13 values against
+/// BT-1375's 59 in a sample), and **9,272 of ~9,694 carrier notices publish exactly one
+/// group**, so this fallback is what makes the mapping cover the corpus rather than the
+/// fixture. Before it, membership landed for 54 tenders out of 5,890 re-folded.
+///
+/// With SEVERAL groups and no BT-330 the composition is skipped and logged. Pairing
+/// `ND-GroupComposition#0` with the first group in document order is the obvious guess and
+/// is deliberately not made: nothing documents the two orders as corresponding, and a
+/// wrong row silently reassigns which lots a bid covered, which is worse than a missing
+/// one. ~406 notices are in that shape; the log names each so the residual is countable.
+fn group_members(notice_id: i64, parsed: &Parsed) -> Vec<(String, String)> {
     let composed: Vec<&str> = parsed
         .sections
         .iter()
@@ -3514,9 +3524,29 @@ fn group_members(parsed: &Parsed) -> Vec<(String, String)> {
             })
             .collect()
     };
+    let groups: Vec<&str> = parsed
+        .sections
+        .iter()
+        .filter(|s| s.kind == "LotsGroup")
+        .map(|s| s.id.as_str())
+        .collect();
+
     let mut out = Vec::new();
     for section in composed {
-        let Some(group) = refs_in(section, GROUP_ID_FIELD).into_iter().next() else { continue };
+        let named = refs_in(section, GROUP_ID_FIELD).into_iter().next();
+        let group = match (named, groups.as_slice()) {
+            (Some(id), _) => id,
+            // Exactly one group: unambiguous, so infer it.
+            (None, [only]) => (*only).to_owned(),
+            (None, several) => {
+                eprintln!(
+                    "[project] notice {notice_id} {section}: no {GROUP_ID_FIELD} and {} LotsGroup \
+                     section(s) — membership skipped rather than guessed (issue 237)",
+                    several.len()
+                );
+                continue;
+            }
+        };
         for member in refs_in(section, GROUP_MEMBER_FIELD) {
             out.push((group.clone(), member));
         }
@@ -3853,6 +3883,71 @@ mod tests {
         let len = u32::from_le_bytes(framed[..4].try_into().unwrap()) as usize;
         let decoded: BucketRow = postcard::from_bytes(&framed[4..4 + len]).expect("deserialize");
         assert_eq!(row, decoded, "the bucket row must round-trip byte-identically");
+    }
+
+    /// Issue 237: which lots group a `GroupComposition` section attaches to.
+    ///
+    /// Three shapes, in the order they occur on prod: the composition names its group
+    /// with BT-330; it names none but the notice publishes exactly one group (9,272 of
+    /// ~9,694 carriers — inferred, since there is nothing to be wrong about); it names
+    /// none and the notice publishes several (~406 — skipped, because nothing documents
+    /// composition order as corresponding to group order, and a wrong row silently
+    /// reassigns which lots a bid covered).
+    #[test]
+    fn a_group_composition_attaches_to_its_named_group_or_to_the_only_one() {
+        const COMPOSITION: &str = "ND-GroupComposition";
+        let compose = |groups: &[&str], named: Option<&str>, members: &[&str]| -> Parsed {
+            let mut parsed = Parsed::default();
+            for group in groups {
+                parsed.sections.push(store::Section {
+                    id: (*group).into(),
+                    kind: "LotsGroup".into(),
+                    parent: None,
+                });
+            }
+            parsed.sections.push(store::Section {
+                id: COMPOSITION.into(),
+                kind: GROUP_COMPOSITION_KIND.into(),
+                parent: None,
+            });
+            let mut push = |field: &str, value: &str, ordinal: i64| {
+                parsed.values.push(store::ValueRow {
+                    section_id: COMPOSITION.into(),
+                    field_id: field.into(),
+                    ordinal,
+                    value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: true },
+                });
+            };
+            if let Some(id) = named {
+                push(GROUP_ID_FIELD, id, 0);
+            }
+            for (i, member) in members.iter().enumerate() {
+                push(GROUP_MEMBER_FIELD, member, i as i64);
+            }
+            parsed
+        };
+        let pair = |group: &str, member: &str| (group.to_owned(), member.to_owned());
+
+        assert_eq!(
+            group_members(1, &compose(&["GLO-1", "GLO-2"], Some("GLO-2"), &["LOT-3", "LOT-4"])),
+            vec![pair("GLO-2", "LOT-3"), pair("GLO-2", "LOT-4")],
+            "a named group wins, however many groups the notice publishes",
+        );
+        assert_eq!(
+            group_members(2, &compose(&["GLO-1"], None, &["LOT-1", "LOT-2"])),
+            vec![pair("GLO-1", "LOT-1"), pair("GLO-1", "LOT-2")],
+            "the sole group is inferred — this is what covers the corpus (issue 237)",
+        );
+        assert_eq!(
+            group_members(3, &compose(&["GLO-1", "GLO-2"], None, &["LOT-1"])),
+            Vec::<(String, String)>::new(),
+            "several groups and no BT-330: skipped, not paired by document order",
+        );
+        assert_eq!(
+            group_members(4, &compose(&[], None, &["LOT-1"])),
+            Vec::<(String, String)>::new(),
+            "no group at all: the members have nothing to attach to",
+        );
     }
 
     #[test]
