@@ -1054,24 +1054,28 @@ impl Supervisor {
                     .await
             }
             Spec::DataQuality { confirmed } => {
-                // Measured 2026-08-18 after the field_sql rewrite: ~47 s per field
-                // query at full-corpus scale (extrapolated from bounded windows —
-                // 0.37 s at 50k tenders, 1.25 s at 200k, 4.79 s at 800k, linear),
-                // so the whole pass is ~10 minutes. That is affordable, and it is
-                // why this is a confirmation rather than the hard gate the first
-                // version had: before the rewrite ONE field query ran >50 minutes
-                // at 100% CPU and had to be killed.
+                // DECLINED unconditionally, and the two failed attempts are the
+                // reason (issue 230). The EXISTS rewrite genuinely fixed the
+                // pathological shape — bounded windows measured 0.37 s at 50k
+                // tenders, 1.25 s at 200k, 4.79 s at 800k — but extrapolating that
+                // line to 7.9M predicted ~47 s and the real full-corpus query was
+                // still running after five minutes. The windows were cache-hot; the
+                // full pass is not, and per-row cost climbs once the satellite
+                // index working set outgrows RAM. Estimating twice and being wrong
+                // twice is the signal to stop estimating.
                 //
-                // Still opt-in because jobs are queue-serialized: a run started in
-                // the daily's window would hold ingest behind it.
-                if !*confirmed {
-                    return Ok(
-                        "data-quality DRY RUN: would measure 11 aggregates over the full corpus \
-                         (~10 min, holds the job queue). Re-enqueue with dry_run=false to measure."
-                            .to_owned(),
-                    );
-                }
-                self.run_data_quality().await
+                // The fix is to make the measurement inherently bounded rather than
+                // hopefully fast: accumulate per-profile counts over id WINDOWS —
+                // the shape issue 228 landed for the adjacency sweep, where each
+                // query is bounded on both axes and progress is per window. Until
+                // that exists this job refuses to run, because a confirmed operator
+                // and a fast query are different things and only one of them was
+                // ever true here.
+                let _ = confirmed;
+                Ok("data-quality DECLINED: needs the windowed implementation (issue 230). The \
+                    unwindowed pass is unbounded at full-corpus scale — two runs were killed. \
+                    bin/data-quality still works against a small instance."
+                    .to_owned())
             }
             Spec::Reparse { profiles } => {
                 self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
