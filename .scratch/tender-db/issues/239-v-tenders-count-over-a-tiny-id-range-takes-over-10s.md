@@ -26,6 +26,36 @@ the practical harm: an unremarkable-looking query is enough to saturate the SQL 
 check built for 238 has to catch this shape, and any capacity reasoning that assumes "cheap queries are
 cheap" is wrong here.
 
+## Leading hypothesis, from the view definition (read locally, no prod access needed)
+
+`v_tenders` computes its `title` column with a **correlated subquery that also sorts**, once per row
+(`canonical.rs:532`):
+
+    (SELECT x.value FROM tender_version_texts x
+      WHERE x.tender_id = t.id AND x.seq = v.seq AND x.field = 'title'
+      ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
+      LIMIT 1) AS title
+
+So every row the view yields costs a seek into `tender_version_texts` plus a sort over the matches on two
+COMPUTED expressions (which no index can serve). For `COUNT(*)` the column is never read, and an
+optimiser that proved the subquery unnecessary would drop it — evidently this one does not, so the count
+pays ~5,000 correlated subqueries-with-sort. That is the right order of magnitude for >10 s.
+
+**Test it in one step before believing it:** `SELECT COUNT(*) FROM tenders WHERE id < 5000` (a PK range)
+against the view version. If the bare table is instant, the subquery is confirmed as the cost and the
+`EXPLAIN QUERY PLAN` is confirmation rather than discovery.
+
+## If confirmed, the fix has a precedent in this schema
+
+`tenders` already carries fold-maintained denormalised head pointers for exactly this reason —
+`current_seq`, `current_published_at`, `current_deadline` (issues 25 and 216), each added because a
+per-row lookup was too expensive on a listing path. A `current_title` maintained the same way would
+remove the subquery from the view entirely, and the fold already knows the title when it writes the
+version.
+
+That is a schema change plus a backfill, so it wants sizing — but it is a known pattern here, not a new
+idea, and it would also speed every non-aggregate read of the view.
+
 ## Where to look first
 
 - **`EXPLAIN QUERY PLAN` for the statement** — the cheapest possible next step, and it names the culprit
