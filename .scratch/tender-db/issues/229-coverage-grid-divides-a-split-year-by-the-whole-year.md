@@ -1,6 +1,22 @@
 # 229 — the coverage grid divides each profile's held count by the WHOLE year, so a year served by two profiles reads as two gaps
 
-Status: needs-triage — found 2026-08-17 while verifying issue 41 against prod (rev `62f0e19`)
+Status: RESOLVED-VERIFIED (2026-08-18, owner — deployed rev `cc0ef20`). Fixed the way the sketch's
+second option describes, taken to its logical end: a shared year offers NO per-profile ratio, because
+no ground truth exists for one profile's share of a year. `Coverage` gained `year_held`/`year_ratio`
+(the year summed across its profiles), `ratio` is `None` when the year has more than one profile, and
+the grid renders the year figure daggered, with the year's held count in the cell title and a footnote
+explaining the era boundary. A year one profile serves alone is unchanged.
+
+Verified on prod after deploy — both 2008 rows now read `year_held` 340,014, `year_ratio` 1.0014,
+`ratio` null, exactly the honest shape:
+
+    profile internal-ojs  held  26,955  year_held 340,014  ratio null  year_ratio 1.0014
+    profile text          held 313,059  year_held 340,014  ratio null  year_ratio 1.0014
+
+The test uses these measured numbers as its fixture and pins the complement (a sole profile keeps its
+own ratio, unmarked). Not done, and deliberately: the issue suggested checking other transition years
+for the same shape — the fix is general (it triggers on any year with >1 profile, whatever the era),
+so no year-by-year sweep is needed; the r208→r209 and r209→eForms boundaries now self-report.
 Kind: observability / dashboard (misleading-as-read, not wrong)
 Blocked by: —
 Relates to: 33 (the funnel + grid this lives in), 41 (the 2008 era whose verification surfaced it),
