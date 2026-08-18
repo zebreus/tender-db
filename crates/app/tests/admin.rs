@@ -100,6 +100,14 @@ impl Harness {
         r.send().await.unwrap()
     }
 
+    async fn report(&self, secret: Option<&str>, kind: &str) -> reqwest::Response {
+        let mut r = self.http.get(format!("{}/admin/reports/{kind}", self.base));
+        if let Some(s) = secret {
+            r = r.header("x-admin-secret", s);
+        }
+        r.send().await.unwrap()
+    }
+
     /// Poll the queue until it is idle and at least `min_runs` runs are logged.
     async fn drain(&self, min_runs: usize) -> Value {
         for _ in 0..200 {
@@ -133,6 +141,25 @@ async fn admin_api_drives_ingestion_end_to_end() {
     let state: Value = h.get(Some(SECRET)).await.json().await.unwrap();
     assert!(state["current"].is_null());
     assert!(state["queued"].as_array().unwrap().is_empty());
+
+    // --- the stored-report read surface (issue 230) --------------------------
+    // Nothing has been measured yet, so the answer is 404 and not an empty body:
+    // "no measurement" and "a measurement of nothing" are the distinction this
+    // whole issue is about.
+    let missing = h.report(Some(SECRET), "data-quality").await;
+    assert_eq!(missing.status().as_u16(), 404, "an uncomputed report is absent, not empty");
+    assert_eq!(h.report(None, "data-quality").await.status().as_u16(), 403, "reports are operator-only");
+
+    h.db.put_report("data-quality", "COMPLETENESS\n  eforms 99.0%", store::now_unix() - 5)
+        .await
+        .unwrap();
+    let stored: Value = h.report(Some(SECRET), "data-quality").await.json().await.unwrap();
+    assert_eq!(stored["body"], "COMPLETENESS\n  eforms 99.0%", "the body is served verbatim");
+    // The age is served, not left for the reader to compute — a stale report read as
+    // a current one is the exact failure that hid the rot in the first place.
+    let age = stored["age_seconds"].as_i64().expect("age is a number");
+    assert!((5..60).contains(&age), "age reflects computed_at, got {age}");
+    assert!(stored["computed_at"].as_i64().unwrap() > 0);
 
     // --- enqueue a process job over the fixture package ----------------------
     let accepted =

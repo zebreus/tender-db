@@ -88,6 +88,7 @@ pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
             sup.ensure_deferred_indexes().await;
             sup.clone().spawn_worker();
             sup.clone().spawn_scheduler();
+            sup.clone().spawn_report_scheduler();
             sup.clone().spawn_presence_observer();
             sup
         })
@@ -333,6 +334,14 @@ pub struct JobRequest {
 }
 
 impl Supervisor {
+    /// The store handle, for read-only operator surfaces that need it (the stored
+    /// report reader, issue 230). An accessor rather than a public field on purpose:
+    /// a caller can read, and the queue stays the only way to make the supervisor
+    /// write.
+    pub fn db(&self) -> &store::Db {
+        &self.db
+    }
+
     pub fn new(db: Arc<store::Db>, archive: PathBuf, http: reqwest::Client) -> Supervisor {
         Supervisor {
             db,
@@ -2067,6 +2076,65 @@ impl Supervisor {
         fetch::latest_ted_issue(&self.db, year).await.unwrap_or(None)
     }
 
+    /// When the data-quality measurement is queued: Berlin wall-clock `(weekday,
+    /// hour, minute)`, `0` = Sunday (issue 230).
+    ///
+    /// Weekly, not daily: the run is ~36 minutes of measured reader-pool work over
+    /// 32 id windows and it holds the serialized queue for all of it, while the
+    /// numbers it produces (per-era field completeness, award linkage, results
+    /// density) move on the scale of a parser change, not of a day's ingest.
+    ///
+    /// 03:10 Sunday, not the 09:35 daily tick: the daily is the busiest moment the
+    /// box has — probe, process and fold, back to back — and a measurement queued
+    /// behind it would either delay the fold or measure a corpus mid-write. Sunday
+    /// pre-dawn is the emptiest slot in the week and 6+ hours clear of that day's
+    /// tick in either direction.
+    const REPORT_TICK: (i64, i64, i64) = (0, 3, 10);
+
+    /// Queue the data-quality measurement once a week (issue 230).
+    ///
+    /// Its own loop rather than a branch in the daily scheduler, which carries the
+    /// TED catch-up retry window: a weekly job hanging off that loop would inherit
+    /// timing that exists for a completely different reason and break the next time
+    /// the catch-up is tuned.
+    ///
+    /// And scheduling it at all is the point of the issue, not a nicety. The report
+    /// rotted for months precisely because nothing ran it: every query had been
+    /// timing out, `bin/data-quality` was correctly returning FAILURE about it, and
+    /// no scheduled run existed to see that failure. A measurement nobody runs is
+    /// indistinguishable from a measurement that passes.
+    pub fn spawn_report_scheduler(self: Arc<Self>) {
+        tokio::spawn(async move {
+            let (weekday, hour, minute) = Self::REPORT_TICK;
+            loop {
+                let now = store::now_unix();
+                let (tick, _) = next_berlin_tick(now, hour, minute);
+                tokio::time::sleep(std::time::Duration::from_secs((tick - now).max(0) as u64)).await;
+
+                // A pre-dawn Berlin tick falls on the same UTC calendar day at either
+                // DST offset, so the UTC day number names the Berlin weekday.
+                if weekday_of(tick.div_euclid(86_400)) == weekday {
+                    // Never stack two: if last week's run is still waiting behind
+                    // something long, a second one would double a 36-minute job for
+                    // one report that gets overwritten anyway.
+                    if self.queued().iter().any(|j| j.kind == "data-quality") {
+                        eprintln!("[schedule] data-quality already queued, skipping this week");
+                    } else {
+                        self.push(
+                            "data-quality",
+                            "data-quality (weekly)".into(),
+                            Spec::DataQuality { confirmed: true },
+                        )
+                        .await;
+                    }
+                }
+
+                // Step past this tick so the next computation lands on tomorrow.
+                tokio::time::sleep(std::time::Duration::from_secs(61)).await;
+            }
+        });
+    }
+
     /// How often the canonical layer's presence is observed (issue 133 / #38).
     ///
     /// Deliberately NOT the daily scheduler and NOT the job queue. The daily
@@ -2245,6 +2313,12 @@ fn months_between(a: &str, b: &str) -> Result<Vec<String>, String> {
 
 // ------------------------------------------------------------ Europe/Berlin
 
+/// Day of week for a unix *day* number, `0` = Sunday. Day 0 (1970-01-01) was a
+/// Thursday, hence the `+4`.
+fn weekday_of(day: i64) -> i64 {
+    (day + 4).rem_euclid(7)
+}
+
 /// The next unix instant at which Berlin local wall-clock reads `hour:minute`,
 /// with that day's weekday (`true` = Mon–Fri). 09:35 is far from the 01:00–03:00
 /// DST switch, so taking the day's offset at noon is unambiguous.
@@ -2255,7 +2329,7 @@ fn next_berlin_tick(now: i64, hour: i64, minute: i64) -> (i64, bool) {
         let offset = berlin_offset(midnight + 12 * 3_600);
         let tick = midnight + hour * 3_600 + minute * 60 - offset;
         if tick > now {
-            let weekday = (day + k + 4).rem_euclid(7); // 0 = Sunday
+            let weekday = weekday_of(day + k);
             return (tick, weekday != 0 && weekday != 6);
         }
     }
@@ -2401,6 +2475,32 @@ mod tests {
             .expect("enqueues");
         assert_eq!(ids.len(), 1);
         assert_eq!(sup.queued()[1].params, "data-quality", "a confirmed run is named plainly");
+    }
+
+    /// Issue 230: the weekly measurement's slot is a claim about the calendar, so
+    /// the calendar arithmetic is checked. A tick that silently landed on the wrong
+    /// weekday would queue a 36-minute job into a busy morning.
+    #[test]
+    fn the_weekly_report_tick_lands_on_its_named_weekday() {
+        // 2026-08-16 is a Sunday, the 18th a Tuesday.
+        assert_eq!(weekday_of(fetch::days_from_civil(2026, 8, 16)), 0);
+        assert_eq!(weekday_of(fetch::days_from_civil(2026, 8, 18)), 2);
+        assert_eq!(weekday_of(fetch::days_from_civil(2026, 8, 22)), 6);
+
+        // `next_berlin_tick`'s own weekday flag and `weekday_of` must agree, or one
+        // of the two schedulers is reading a different calendar.
+        for d in 0..14 {
+            let noon = (fetch::days_from_civil(2026, 8, 10) + d) * 86_400 + 12 * 3_600;
+            let (tick, weekday) = next_berlin_tick(noon, 3, 10);
+            let wd = weekday_of(tick.div_euclid(86_400));
+            assert_eq!(weekday, wd != 0 && wd != 6, "weekday flag disagrees at day {d}");
+        }
+
+        // The configured slot is the Sunday pre-dawn one this schedule argues for,
+        // and it is nowhere near the 09:35 daily tick.
+        let (weekday, hour, minute) = Supervisor::REPORT_TICK;
+        assert_eq!((weekday, hour, minute), (0, 3, 10));
+        assert!(hour < 9, "the measurement must not collide with the daily fold");
     }
 
     /// Issue 230: the windows must tile the id range EXACTLY — no gap (a dropped

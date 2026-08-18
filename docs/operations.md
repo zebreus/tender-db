@@ -241,7 +241,19 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 
 # Cancel a still-queued job (the running one cannot be cancelled).
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/42
+
+# Read the newest stored data-quality report (issue 230). The measurement is a
+# weekly job — Sunday 03:10 Berlin, ~36 min over 32 id windows — and this is
+# where its body lands. `age_seconds` is served so a stale report cannot be
+# mistaken for a current one.
+curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/reports/data-quality | jq -r .body
+curl -s -H "X-Admin-Secret: $SECRET" $BASE/admin/reports/data-quality | jq '{computed_at, age_seconds}'
 ```
+
+On the box: `tender-admin raw GET /admin/reports/data-quality </dev/null | jq -r
+.body`. A kind nothing has computed yet answers 404, not an empty report — "not
+measured" and "measured as zero" are different claims and the report is careful
+about the difference (its own text banners any section it could not measure).
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|refold|

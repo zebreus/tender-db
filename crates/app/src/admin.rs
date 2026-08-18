@@ -28,6 +28,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
     Router::new()
         .route("/admin/jobs", post(enqueue).get(list))
         .route("/admin/jobs/{id}", delete(cancel))
+        .route("/admin/reports/{kind}", axum::routing::get(report))
         .with_state(supervisor)
 }
 
@@ -102,4 +103,42 @@ async fn cancel(
 /// Used only to log a one-line startup note.
 pub fn enabled() -> bool {
     std::env::var(SECRET_ENV).is_ok_and(|s| !s.is_empty())
+}
+
+/// `GET /admin/reports/{kind}` — the newest stored report of that kind (issue
+/// 230).
+///
+/// The measurement is a job now, which means its output outlives the run and
+/// nobody was able to read it: the body went into `reports` and stayed there. This
+/// is the read side, and it is deliberately here rather than on `/v1` — a report is
+/// operator output, not part of the public data contract, and putting it behind the
+/// same secret as the job that produced it keeps one surface for both halves.
+///
+/// `age_seconds` is served alongside `computed_at` because the bug this whole issue
+/// came from was a stale signal read as a current one. A reader that has to compute
+/// the age itself is a reader that will forget to.
+async fn report(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Path(kind): Path<String>,
+) -> Response {
+    if let Some(denial) = deny(&headers) {
+        return denial;
+    }
+    match sup.db().latest_report(&kind).await {
+        Ok(Some((body, computed_at))) => axum::Json(json!({
+            "kind": kind,
+            "computed_at": computed_at,
+            "age_seconds": store::now_unix().saturating_sub(computed_at),
+            "body": body,
+        }))
+        .into_response(),
+        // A kind that was never computed and a kind that does not exist are the
+        // same answer, and it is not an error: nothing has run yet.
+        Ok(None) => error(StatusCode::NOT_FOUND, "no report of that kind has been computed"),
+        Err(e) => {
+            eprintln!("[admin] report {kind} read failed: {e}");
+            error(StatusCode::INTERNAL_SERVER_ERROR, "report read failed")
+        }
+    }
 }
