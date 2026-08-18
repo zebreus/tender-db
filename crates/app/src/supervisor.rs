@@ -1043,7 +1043,35 @@ impl Supervisor {
                 self.run_process(job.id, source, package_kind, period.as_deref(), job.resume_after.as_deref())
                     .await
             }
-            Spec::DataQuality => self.run_data_quality().await,
+            Spec::DataQuality => {
+                // GATED, and the gate is the finding (issue 230). The first prod
+                // run spent ~50 minutes at 100% CPU on the SECOND of eleven
+                // queries and showed no sign of finishing, so the measurement is
+                // not merely expensive — at least one of these aggregates is
+                // algorithmically wrong for this corpus (nested loops, most
+                // likely), and jobs are queue-serialized, so letting it run would
+                // have held the daily ingest behind it for hours.
+                //
+                // A per-query deadline is NOT the answer: turso cannot interrupt a
+                // statement (docs/agents/prod-box-reads.md), so a timeout would
+                // abandon the future while the scan kept burning a pooled reader.
+                // The queries have to become affordable first — plan analysis, and
+                // probably an index — which is issue 230's open item 3.
+                //
+                // Declining is reported as SUCCESS, not an error: the job did
+                // exactly what it should. An `error` outcome would turn
+                // /health/deep's last-job check red and trade a blocked queue for
+                // a false alarm.
+                if std::env::var("TENDER_DATA_QUALITY").ok().as_deref() != Some("1") {
+                    return Ok(
+                        "data-quality SKIPPED: gated behind TENDER_DATA_QUALITY=1 — its queries are \
+                         unbounded at full-corpus scale (issue 230, open item 3). Set the variable \
+                         deliberately, on a box you are willing to tie up for hours."
+                            .to_owned(),
+                    );
+                }
+                self.run_data_quality().await
+            }
             Spec::Reparse { profiles } => {
                 self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
             }
