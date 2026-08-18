@@ -1,6 +1,16 @@
 # 27 — Data-quality report: semantic completeness per era
 
-Status: needs-verification
+Status: REOPENED-AS-ROTTED (2026-08-18, owner). Verification ATTEMPTED against prod rev `cc0ef20` and
+the acceptance does NOT hold today: "report runs green against prod" fails — all 11 queries time out on
+the 10s `/v1/sql` cap at full-corpus scale (14.15M tender_versions, 40.9M organization_mentions), so
+every section prints empty. The other two clauses DO hold: the baseline is documented in
+docs/research/data-quality.md, and the anomalies it found became issues (100, 101, 188 among them).
+
+Nothing regressed in the code — the queries were bounded for the mid-backfill corpus this was written
+against, and the corpus outgrew them. Because the tool is descriptive (no pass/fail) it exits
+successfully while reporting nothing, so the rot was invisible. Filed as issue 230 with the measured
+output, the reason not to simply raise the cap, and the recommended fix (compute it server-side on the
+dashboard refresher's cadence, which already runs comparable aggregates at this scale).
 
 Coverage (counts) and quarantine (parse failures) are measured; semantic
 quality is not. Nobody knows what fraction of notices per era carry a
