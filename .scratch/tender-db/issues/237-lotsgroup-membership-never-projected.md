@@ -1,6 +1,7 @@
 # 237 — a multi-lot bid names a LotsGroup, and we never record which lots that group contains
 
-Status: needs-triage — found 2026-08-18 answering "how do we represent bids covering multiple lots?"
+Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`) — the fold writes membership for Tenders it
+touches; a backfill for pre-existing groups is the remaining unit
 Kind: projection mapping gap (parse layer HAS the data) + a coverage-gate blind spot
 Blocked by: —
 Relates to: 13 (results layer), 116 (tender detail reported more lots than it shipped), 88/85 (the
@@ -78,6 +79,36 @@ decision above depends on.
 
 **Also unmapped: `BT-330-Procedure`.** It is the other half of the pair and shares BT-1375's fate, so
 whatever reads one must read both.
+
+### IMPLEMENTED and deployed (2026-08-18, rev `d4fee5f`)
+
+`tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id)` — version-keyed like
+every satellite, both ends `lots` ids, no new identity. The projection reads each `GroupComposition`
+section (BT-330 → group, repeated BT-1375 → members), carries the pairs on `NoticeState` and through the
+plan's `BucketRow`, and the fold writes them AFTER the lots loop so both ends resolve as lookups. The
+table is allow-listed on `/v1/sql` with a note explaining the join.
+
+**Four lifecycle lists needed the table, and a search found them where a guess would not have:**
+`clear_canonical`, `reset_tender_layer`, `delete_version` and `RETIRE_TABLES`. `delete_version` is the
+load-bearing one — without it a re-fold would double the rows — and `RETIRE_TABLES` matters because
+membership references `lots`, so retirement would otherwise fail on the FK when deleting lots.
+
+Two mistakes caught before shipping, both worth recording:
+
+- I put `#[serde(default)]` on the new `BucketRow` field with a comment about old plans still
+  deserialising. `BucketRow` is framed with **postcard**, which is not self-describing, so that is
+  simply false — old bytes misparse rather than defaulting. What actually makes the format change safe
+  is the lifecycle: the bucket directory is `remove_dir_all`'d at the start of every sharded run AND at
+  the end, so no run ever reads bytes another binary wrote. The attribute is gone and the comment says
+  the real reason.
+- A pattern-replace inserted the table name TWICE into three of the four lists, because the 8-space
+  indent pattern is a substring of the 12-space one. Caught by counting occurrences after the edit
+  (8 expected, 11 found) rather than by the compiler, which would have accepted the duplicates happily.
+
+Not yet done: **nothing populates history.** The fold maintains membership for Tenders it touches, so
+pre-`d4fee5f` groups read as empty until a re-fold. Same choice as `current_title` (issue 239) — a
+bounded backfill job reading `notice_ids` for BT-330/BT-1375 would fill it without a corpus rebuild, and
+is the natural next unit.
 
 ### Implementation, now that the shape is known
 
