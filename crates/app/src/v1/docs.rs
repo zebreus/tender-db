@@ -349,24 +349,34 @@ read-only <code>SELECT</code></strong> against the public schema. Send the SQL a
 the raw request body — it never travels in the URL, so it stays out of access
 logs. Discover the queryable tables and views at
 <a href="/v1/sql/schema"><code class="ep">GET /v1/sql/schema</code></a> (public,
-no token); the main entry points are the current-state views
-<code>v_tenders</code>, <code>v_lots</code>, <code>v_lot_results</code> and
-<code>v_organizations</code>. Convenience views answer the common questions
-directly — <code>v_tender_buyers</code>, <code>v_awards</code>,
+no token). The <code>v_*</code> views — <code>v_tenders</code>, <code>v_lots</code>,
+<code>v_lot_results</code>, <code>v_organizations</code>, the convenience views
+<code>v_tender_buyers</code>, <code>v_awards</code>,
 <code>v_tender_classifications</code>, <code>v_tender_amounts</code>,
-<code>v_tender_dates</code>, <code>v_tender_notices</code> — and
-<code>v_fetches</code> gives path-free source provenance.</p>
+<code>v_tender_dates</code>, <code>v_tender_notices</code>, and
+<code>v_fetches</code> for path-free provenance — show the current version of each
+row and are the readable way to <em>see</em> the shape of the data.</p>
+<p><strong>But do not filter a view.</strong> A <code>WHERE</code> on a view is
+applied only after the whole view has been built, so even
+<code>WHERE id = 12345</code> reads the entire corpus and hits the time limit. For
+anything filtered, query the base tables and take the current version through
+<code>tenders.current_seq</code> — measured at 17 ms for the point read below,
+against a view that cannot answer it at all.</p>
 <pre><code>curl -s -X POST https://tenders.zebreus.click/v1/sql \
   -H "Authorization: Bearer tdb_…" \
-  --data 'SELECT source, count(*) FROM v_tenders GROUP BY source'</code></pre>
+  --data 'SELECT t.id, t.current_title AS title, v.publication_id
+            FROM tenders t
+            JOIN tender_versions v
+              ON v.tender_id = t.id AND v.seq = t.current_seq
+           WHERE t.id = 12345'</code></pre>
 <p>Rules:</p>
 <ul>
   <li>Exactly one statement, and it must be a bare <code>SELECT</code> — no writes, PRAGMA, ATTACH, EXPLAIN, CTE-wrapped writes or multi-statement bodies.</li>
   <li>The queryable surface is a positive allow-list: the <code>v_*</code> views and the public business tables (canonical, notice, quarantine, changes). Account, webhook and operator tables — and the raw-fetch registry, whose paths are server infrastructure — are never queryable, and a table not on the list is denied by default.</li>
-  <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing; use <code>strftime(published_at,'unixepoch')</code>. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
-  <li><strong>Backfill in progress:</strong> the canonical <code>v_*</code> layer currently holds only projected tenders (2026 forward, until the historical backfill is projected), so a <code>v_*</code> query scoped to earlier years may return nothing yet; the <code>notice_*</code> and <code>quarantine</code> layers already hold the full imported history.</li>
+  <li><strong>Time columns are epoch seconds in SQL</strong>, not ISO — unlike the REST responses above. <code>WHERE published_at LIKE '2012%'</code> matches nothing. Put the FORMAT FIRST: <code>strftime('%Y', published_at, 'unixepoch')</code>. The reversed order, <code>strftime(published_at,'unixepoch')</code>, returns <code>NULL</code> for every row and raises no error — so it silently collapses a histogram into one empty bucket. Each timestamp column is flagged in <a href="/v1/sql/schema">the schema</a>, which also carries per-table notes, enum vocabularies and worked examples.</li>
+  <li><strong>Coverage:</strong> the canonical layer holds the full imported history — 7.9M Tenders, 1993 to today (1993 alone has 49k). An earlier version of this page warned that only 2026 forward was projected; that backfill has long since completed.</li>
   <li>Result caps: 10 000 rows / 10 MB — a capped response carries <code>"truncated": true</code>.</li>
-  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>, and its server-side work is abandoned so it never holds a slot past the cap.</li>
+  <li>Limits per token: 2 concurrent queries, 300 per hour, 10 s per query. Over-limit is <code>429</code> with <code>Retry-After</code>; any query past the time limit — a slow scan or a heavy aggregate alike — is <code>408</code>, and its server-side work is abandoned so it never holds a slot past the cap. A <code>503</code> is different and means the query never ran: the backend had no capacity, so retry it unchanged rather than rewriting it.</li>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>

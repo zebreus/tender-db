@@ -555,9 +555,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_lots", "Current Lots — subdivisions of a Tender. NOT FILTERABLE, same as v_tenders \
       (measured: `WHERE tender_id = ?` exceeds the time limit); join `lots` to \
       `tender_version_lots` instead."),
-    ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count."),
+    ("v_organizations", "Canonical Organizations (buyers, bidders, winners) with a mention count. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
+      built, so a filtered query reads the whole corpus (issue 239); join `organizations` (and `organization_mentions` for the count) instead."),
     ("v_lot_results", "Current award decisions: one row per (result, winning organization); \
-      winner_* is NULL for an unresolved or withheld award."),
+      winner_* is NULL for an unresolved or withheld award. NOT FILTERABLE, like every `v_*` view — a WHERE is applied after the view is \
+      built, so a filtered query reads the whole corpus (issue 239); join `lot_results` to `tender_version_result_winners` instead."),
     ("v_tender_current", "The (tender_id, seq) current-version pointer — join it to read any \
       version satellite at current state cheaply."),
     ("notices", "One row per raw publication event. The parsed payload is in the notice_* \
@@ -1344,6 +1346,19 @@ mod tests {
         assert_eq!(views.len(), 2, "both views are described");
         for note in views {
             assert!(note.contains("NOT FILTERABLE"), "the view warns it cannot be filtered: {note}");
+        }
+
+        // Every CURRENT-STATE view carries the warning, because the property is turso's
+        // and not one view's — `store/src/lib.rs` records it as such. Named explicitly
+        // rather than "all v_*": the pointer view v_tender_current is the thing callers
+        // are told to JOIN, so warning them off it would be wrong.
+        for name in ["v_tenders", "v_lots", "v_organizations", "v_lot_results"] {
+            let note = TABLE_NOTES
+                .iter()
+                .find(|(t, _)| t == &name)
+                .map(|(_, n)| *n)
+                .unwrap_or_else(|| panic!("{name} has a description"));
+            assert!(note.contains("NOT FILTERABLE"), "{name} must warn: {note}");
         }
     }
 
