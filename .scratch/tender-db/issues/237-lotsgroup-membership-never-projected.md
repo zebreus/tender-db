@@ -1,7 +1,7 @@
 # 237 — a multi-lot bid names a LotsGroup, and we never record which lots that group contains
 
-Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`) — the fold writes membership for Tenders it
-touches; a backfill for pre-existing groups is the remaining unit
+Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`); the coverage fallback deployed the same day
+(`2c31ac3`) — `refold-sections GroupComposition` re-run in flight, coverage measurement pending
 Kind: projection mapping gap (parse layer HAS the data) + a coverage-gate blind spot
 Blocked by: —
 Relates to: 13 (results layer), 116 (tender detail reported more lots than it shipped), 88/85 (the
@@ -224,3 +224,40 @@ the fallback can land later without correcting any existing row.
 Next: implement the fallback, re-run `refold-sections GroupComposition`, and expect the tender count to
 move from 54 toward the 5,890 the refold touched. If it does not, the remaining carriers differ in some
 further way and want the same treatment — measure before assuming.
+
+## Fallback landed (2026-08-18, rev `2c31ac3`) — re-fold in flight
+
+`group_members()` now takes the notice id and resolves the group three ways: BT-330 present → use it;
+absent with exactly ONE `LotsGroup` in the notice → infer it; absent with several → skip, logging the
+notice and the group count so the residual stays countable. A unit test covers all three plus the
+no-group-at-all case, and the whole-corpus distribution sized the ambiguous arm before it was written:
+
+    1 LotsGroup:  9,272 notices (95.6 %)
+    2+:             ~406 notices
+
+Deployed and `refold-sections GroupComposition` re-queued (jobs 1 + 2 after the restart). Expected: the
+tender count moves from 54 toward the 5,890 the cohort re-folds. If it lands well short, the remaining
+carriers differ in some further way and want the same measure-first treatment.
+
+### How the residual gets counted, and why no code counts it
+
+The skip is an `eprintln` per notice, not a `Report` counter. Threading a counter from `group_members()`
+(a free function inside `NoticeState::read`) up to the run report means plumbing it through BOTH the
+incremental path and the sharded bucket path, where it would also have to aggregate across shards — and
+it would measure the same thing a bounded query measures exactly:
+
+    SELECT COUNT(DISTINCT tv.caused_by_notice_id)
+      FROM tender_version_lot_group_members m
+      JOIN tender_versions tv ON tv.tender_id = m.tender_id AND tv.seq = m.seq
+
+against the 9,694 carriers `notice_ids_with_section_kind(['GroupComposition'])` returns. The query is the
+better instrument because it counts what actually landed rather than what the projection believed; the
+log line stays for naming WHICH notices, which the query cannot say. Recorded rather than built.
+
+### Two checks the fallback makes worth running, which BT-330 alone did not
+
+`lot_identity` MINTS a `lots` row for a key the version does not publish (canonical.rs, deliberately —
+better than dropping a published composition). With BT-330 that path almost never fired; at ~100× the
+volume it may. So the verification also counts membership rows whose member — or group — is absent from
+the same version's `tender_version_lots`. Non-zero is not wrong, but it is a shape the corpus was not
+known to have, and it should be a number on this issue rather than a surprise later.
