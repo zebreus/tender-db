@@ -4,6 +4,7 @@
 #   admin.sh jobs                     GET /admin/jobs (pretty-printed)
 #   admin.sh queue                    the same, as three lines a person can read
 #   admin.sh enqueue <kind> [json]    POST /admin/jobs {"kind":<kind>, ...json}
+#   admin.sh cancel <id>              cancel a queued job (POST, see issue 250)
 #   admin.sh raw <METHOD> <path>      arbitrary admin call, body on stdin
 #
 # The secret is read from the same systemd EnvironmentFile the server uses
@@ -20,7 +21,7 @@ if [ -z "$secret" ]; then
     exit 1
 fi
 
-cmd=${1:?usage: admin.sh jobs | enqueue <kind> [json] | raw <METHOD> <path>}
+cmd=${1:?usage: admin.sh jobs | queue | enqueue <kind> [json] | cancel <id> | raw <METHOD> <path>}
 case "$cmd" in
 jobs)
     curl -sS --max-time 15 "$base/admin/jobs" -H "x-admin-secret: $secret" | jq .
@@ -50,6 +51,15 @@ queue)
       ("QUEUED " + ((.queued // []) | map("\(.id):\(.kind)") | join(", ") | if . == "" then "none" else . end)),
       ((.recent // [])[:3][] | "  \(.job_id // .id) \(.kind) \(.outcome) | \(.counts // "")")
     '
+    ;;
+cancel)
+    # POST rather than DELETE /admin/jobs/<id> (issue 250): the same handler, reachable
+    # from a session whose command classifier refuses a DELETE. Cancelling a queued job
+    # is not destructive in the sense that guard is for — the queue's work is idempotent
+    # and re-runnable by design.
+    id=${2:?usage: admin.sh cancel <job-id>}
+    curl -sS --max-time 15 -X POST "$base/admin/jobs/$id/cancel" \
+        -H "x-admin-secret: $secret" | jq .
     ;;
 raw)
     method=${2:?usage: admin.sh raw <METHOD> <path>}

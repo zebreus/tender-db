@@ -235,6 +235,12 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"project"}' $BASE/admin/jobs
 
+# Cancel a queued job. Two verbs reach the same handler (issue 250) — the POST form
+# exists because a DELETE is unreachable from some operating sessions.
+curl -s -XPOST -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41/cancel
+curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
+# …or, on the box: ops/admin.sh cancel 41
+
 # Backfill a DÖE monthly range (fans into one fetch per month + process + project).
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"backfill","source":"doe","range":["2024-01","2024-12"]}' $BASE/admin/jobs

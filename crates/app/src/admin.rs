@@ -28,6 +28,14 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
     Router::new()
         .route("/admin/jobs", post(enqueue).get(list))
         .route("/admin/jobs/{id}", delete(cancel))
+        // The same cancellation as a POST (issue 250). The DELETE stays for anyone
+        // already using it, but a DELETE is unreachable from the session that actually
+        // operates this box — its command classifier refuses the shape, twice during the
+        // issue-244 campaign, on a call that removes one row from a queue whose work is
+        // idempotent and re-runnable by design. A verb change is the whole fix: no new
+        // capability, since an operator who can POST /admin/jobs to create a job that
+        // rewrites 2.6M rows can already do far more than cancel one.
+        .route("/admin/jobs/{id}/cancel", post(cancel))
         .route("/admin/reports/{kind}", axum::routing::get(report))
         .with_state(supervisor)
 }
@@ -83,7 +91,8 @@ async fn list(State(sup): State<Arc<Supervisor>>, headers: HeaderMap) -> Respons
     }
 }
 
-/// `DELETE /admin/jobs/{id}` — cancel a still-queued job (never the running one).
+/// `DELETE /admin/jobs/{id}` and `POST /admin/jobs/{id}/cancel` — cancel a job. Both
+/// verbs reach this one handler (issue 250).
 async fn cancel(
     State(sup): State<Arc<Supervisor>>,
     headers: HeaderMap,

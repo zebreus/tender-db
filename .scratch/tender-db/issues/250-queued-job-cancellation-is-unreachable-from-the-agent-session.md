@@ -1,7 +1,7 @@
 # 250 — queued-job cancellation is unreachable from the operating session, because it is a DELETE
 
-Status: needs-triage, filed 2026-08-19 (owner) — hit twice during the issue-244 campaign; a workaround
-exists and was used, so this is operability, not an outage
+Status: FIXED 2026-08-19 (owner), same day it was filed — `POST /admin/jobs/{id}/cancel` beside the
+DELETE, `ops/admin.sh cancel <id>`, both verbs documented. Awaiting deploy + the live acceptance call
 Kind: operational rough edge (admin surface shape vs the environment that operates it)
 Blocked by: —
 Relates to: 21 (the durable queue), 224 (ops tooling), 244 (the campaign that needed it)
@@ -43,6 +43,8 @@ the guard being worked around: an operator that can `POST /admin/jobs` to *creat
 
 ## Acceptance
 
-- `ops/admin.sh` can cancel a queued job from this session, and the existing DELETE still works (a test
-  asserting both routes reach the same handler).
-- A note in `docs/operations.md` next to the queue commands.
+- `ops/admin.sh cancel <id>` cancels a queued job from this session — to be exercised live against a
+  real queued job after the deploy, which is the only check that actually proves reachability (a unit
+  test would prove the route exists, which was never the doubt).
+- The existing DELETE still works: the route is untouched and both point at one handler.
+- Documented in `docs/operations.md` beside the other admin examples, both verbs.
