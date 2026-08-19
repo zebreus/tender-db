@@ -198,7 +198,11 @@ enum Spec {
     /// Re-parse a profile cohort's already-parsed notices from the archive
     /// against the current parser (issue 100). Resume rides on the job row's
     /// `resume_after` like `process`/`reprocess`, not in the spec.
-    Reparse { profiles: Vec<String> },
+    /// `packages` caps how many archive packages one run touches (issue 244): a
+    /// 215-package, 3.8M-notice era is not a thing to launch unmeasured, and the
+    /// resume cursor means a capped run is a PREFIX of the full one rather than a
+    /// different job — run it again and it continues where the cap stopped.
+    Reparse { profiles: Vec<String>, packages: Option<usize> },
     /// Run the semantic data-quality measurement and store its report (issue 230).
     /// `confirmed` is the operator's explicit "yes, tie the queue up for this" —
     /// see the enqueue arm.
@@ -359,6 +363,11 @@ pub struct JobRequest {
     /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
     /// notices `projected=0` for one later `rebuild:true` to fold in bulk.
     pub reclaim_only: Option<bool>,
+    /// `reparse` only: stop after this many archive packages (issue 244). The run is
+    /// resumable per package, so a cap makes a staged first pass — measure the rate
+    /// and check the output on real data — a prefix of the full era rather than a
+    /// separate exercise. Omitted means every package the profile has.
+    pub packages: Option<usize>,
     /// `project` + `rebuild` only: DROP+recreate the CDC feed before folding, so the
     /// rebuild re-emits ONE clean generation for the recovered baseline (issue 81).
     pub clear_changes: Option<bool>,
@@ -501,10 +510,13 @@ impl Supervisor {
                 if profiles.is_empty() {
                     return Err("reparse needs at least one profile".into());
                 }
-                let params = format!("reparse {}", profiles.join(","));
+                let packages = req.packages;
+                let params = match packages {
+                    Some(n) => format!("reparse {} (first {n} package(s))", profiles.join(",")),
+                    None => format!("reparse {}", profiles.join(",")),
+                };
                 let mut ids = vec![
-                    self.push("reparse", params, Spec::Reparse { profiles })
-                        .await,
+                    self.push("reparse", params, Spec::Reparse { profiles, packages }).await,
                 ];
                 // Re-parsed notices land `projected = 0`, so an ordinary incremental
                 // projection folds them — no `refold` needed. `reclaim_only` skips
@@ -1178,8 +1190,8 @@ impl Supervisor {
             // `run_data_quality`, which now measures over id windows instead of
             // over the whole corpus in one statement.
             Spec::DataQuality { confirmed } => self.run_data_quality(*confirmed).await,
-            Spec::Reparse { profiles } => {
-                self.run_reparse(job.id, profiles, job.resume_after.as_deref()).await
+            Spec::Reparse { profiles, packages } => {
+                self.run_reparse(job.id, profiles, *packages, job.resume_after.as_deref()).await
             }
             Spec::Reprocess { reason, detail_like, profile } => {
                 self.run_reprocess(
@@ -2016,12 +2028,21 @@ impl Supervisor {
         &self,
         job_id: u64,
         profiles: &[String],
+        cap: Option<usize>,
         resume_after: Option<&str>,
     ) -> Result<String, String> {
         let after = resume_after.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
         let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
-        let packages =
+        let mut packages =
             self.db.reparse_packages(&refs, after).await.map_err(|e| e.to_string())?;
+        // The cap applies to THIS run, after the resume cursor: a capped run is a
+        // prefix, and running the same request again continues from where it stopped
+        // (issue 244). Truncating here rather than in the query keeps `packages_total`
+        // honest about what this run will do.
+        let held_back = cap.map(|n| packages.len().saturating_sub(n)).unwrap_or(0);
+        if let Some(n) = cap {
+            packages.truncate(n);
+        }
         self.update(|p| p.packages_total = packages.len() as u64);
         if packages.is_empty() {
             return Ok(format!("no packages hold parsed notices of {}", refs.join(",")));
@@ -2102,10 +2123,18 @@ impl Supervisor {
         // `now_failing` is the line to read first on any future run: it counts
         // notices the CURRENT parser can no longer parse, whose stored layer was
         // therefore left alone. Non-zero means a parser regression, not progress.
+        // A capped run must say what it did NOT do, in the job log where an operator
+        // reads it: a summary that looks complete after touching 1 of 215 packages is
+        // how a staged pass gets mistaken for the whole era (issue 244).
+        let remaining = if held_back > 0 {
+            format!("; {held_back} package(s) held back by the cap — run again to continue")
+        } else {
+            String::new()
+        };
         Ok(format!(
             "re-parsed {reparsed} notices across {} packages ({members} members walked, \
              {unmatched} unmatched, {failing} now failing and left untouched); \
-             stamped {stamped} tender(s) epoch-stale",
+             stamped {stamped} tender(s) epoch-stale{remaining}",
             packages.len()
         ))
     }
