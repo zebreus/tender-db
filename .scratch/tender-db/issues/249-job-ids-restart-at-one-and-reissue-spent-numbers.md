@@ -1,8 +1,8 @@
 # 249 — the Supervisor's job ids restart at 1 on a drained restart and reissue numbers the log has spent
 
 Status: FIXED 2026-08-19 (owner) — `job_log.job_id` recorded, recovery seeds from its high-water
-mark; falsified against the unfixed code. Deployed in `08ca548`; the prod acceptance read (one id
-series in the panel) is still to do.
+mark; falsified against the unfixed code. Deployed in `08ca548` and VERIFIED on prod — the panel now
+prints one id series.
 Kind: operational legibility defect (job identity), found by observation during a routine check
 Blocked by: —
 Relates to: 16 (the run log), 21 (the durable queue and the id counter), 65 (the progress record
@@ -66,3 +66,24 @@ the counter never jumps backwards, and never over a number that is already spent
   one. **Falsified**: with the log floor removed the assertion fails (it reissues id 1).
 - On prod after deploy: the ids in the recent-runs lines and the ids in `current`/`queued` come
   from one series, and a restart on a drained queue does not send them back to 1.
+
+
+---
+
+## Verified on prod (2026-08-19, rev `08ca548`)
+
+The same `ops/admin.sh queue` read that opened this issue, after the deploy:
+
+    CURRENT 23 reparse reparse text after fetch 320 (first 1 package(s)) | … | members 9580/9580
+    QUEUED 24:project, 25:reparse, …, 43:reparse, 44:project
+      22 project ok | 13076 notices → 12519 tenders (0 islands), 21467 versions
+      21 reparse ok | re-parsed 13601 notices across 1 packages …
+      20 project ok | 11886 notices → 11427 tenders (0 islands), 21221 versions
+
+Finished runs 20-22, running 23, queued 24-44: **one series**, where the same three lines read
+919/920/921 beside a running `id 7` this morning. Runs logged before the column still show the log's own
+counter (they have no Supervisor id to show, which is the honest fallback), so the series is continuous
+from this deploy forward rather than retroactively renumbered.
+
+The restart also exercised the floor in the direction that matters: the deploy happened over a BUSY
+queue, so recovery had both floors available and new enqueues continued at 43 — no reissue, and no jump.

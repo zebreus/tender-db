@@ -1,6 +1,8 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 1 DONE and VERIFIED ON PROD 2026-08-19 (2 of 215 packages re-parsed). The remaining 213
+Status: SLICE 2 LANDED AND A/B-VERIFIED ON PROD 2026-08-19 (rev `08ca548`) — the pre-2004 numbered
+form reads, taking the vintage from 0.1% to 20.5% of award notices. Four fifths of the era's awards are
+still unread; the two shapes that miss are named below with payload evidence. OPEN.
 packages are a staged campaign; pre-2004 grammar, values and the 2010 tail still open.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
@@ -369,3 +371,46 @@ name) and `Rhône` puts a multi-byte character inside the byte window.
 
 Getting a value wrong is worse than not having it, so this wants the same measure-first discipline: read
 a sample of each label's values off prod, then parse, then A/B one package.
+
+### A/B across the deploy boundary: 0.1 % → 20.5 % of award notices
+
+The grammar deployed mid-campaign, so four adjacent packages of the same vintage straddle the boundary —
+the cleanest A/B this issue is going to get, on real data, at package scale:
+
+    fetch  period    notices  TD:7 awards  winners  binary
+      317  2000-01    12,141            —        6  old
+      318  1999-12    10,294        3,450        4  old      0.1 % of awards
+      319  1999-11    11,886        3,889      797  new     20.5 % of awards
+      320  1999-10    13,076            —      811  new
+
+A ~200× step, and honestly stated: **four fifths of the era's award notices are still unread.** The
+numbered form is not one form, it is a family, and the winner's item number and label vary by directive.
+
+### The two shapes that still miss, read from `fetch 319`
+
+Sampled from TD:7 notices in `fetch 319` that carry NO winner after the new grammar:
+
+**Utilities/supplies form — winner at item 9, and MORE THAN ONE of them** (notice 1,456,070):
+
+    5.  Award procedure: Verhandlungsverfahren.
+    6.  Tenders received: 11.
+    7.  Date of award: 30. 8. 1999.
+    9.  Supplier(s), contractor(s) or service provider(s): BP, Hamburg; Thelen, Mainz.
+
+Three things here, each needed:
+
+- the label `Supplier(s), contractor(s) or service provider(s):` — note it does NOT match the existing
+  `SERVICE PROVIDER:`, because the era writes `service provider(s):` and the `(s)` breaks it;
+- **two winners in one value, `;`-separated, each `Name, City`.** The extractor takes one name per label
+  occurrence, so a `;` list needs the value split before `NAME_STOPS` is applied — a structural change to
+  the scan loop, not another label;
+- ` 10.` as a stop, since this form's winner item is followed by 10 rather than 7.
+
+**EC service-award form with the winner further down than the read window** (notice 1,456,011): items 1
+authority, 2 procedure chosen, 3 category and description — the winner is past 1,100 characters, so the
+next slice must read a full body, not a prefix, before deciding its item number.
+
+Both are the same discipline as this slice: read the payloads, name the labels, add the boundary the
+shape needs, and A/B one package. Do the `;` split with a test that asserts BOTH names — a list read as
+one name would mint `BP, Hamburg; Thelen` as an organization, which is the withheld-boilerplate failure
+in a new costume.
