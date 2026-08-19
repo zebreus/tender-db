@@ -1,6 +1,7 @@
 # 245 — a deploy inside the morning window silently drops the daily catch-up
 
-Status: fix (3) DONE in code 2026-08-19 — startup catch-up landed; (1) deploy-time refusal still open
+Status: RESOLVED 2026-08-19 — both halves landed: the startup catch-up serves a missed tick, and the deploy
+refuses over a running job.
 Kind: operational hazard, in-process scheduler
 Blocked by: —
 Relates to: 222 (the weekday catch-up this would drop), 240 (the outage that showed how invisible a
@@ -88,3 +89,35 @@ about a tick in the past, which is the only question this asks.
   path was observed on prod (a deploy after a served tick logged nothing). The interesting case — a
   restart INSIDE the window, tick unserved, catch-up firing on prod — has not been exercised yet, and
   the honest way to see it is a deliberate restart while the tick's probe has not yet run.
+
+
+---
+
+## Fix (1) landed 2026-08-19 — the deploy asks first
+
+`deploy.sh` now reads `/admin/jobs` before the push and the build, and refuses when a job is running,
+naming it:
+
+    ==> Checking the job queue on root@zebreus.click
+    refusing to deploy while a job is running: 23 reparse reparse text after fetch 261
+
+    A restart re-runs it from the top — its durable row survives, so nothing is lost, but the
+    work is redone. Wait for the queue to drain (ops/admin.sh queue), stop the job
+    (DELETE /admin/jobs/<id>), or override with FORCE_BUSY=1 if the deploy is the urgent thing.
+
+Tested by running it against the live issue-244 campaign, which is what the refusal above is.
+
+Why it earned its place: the cost is real and I paid it twice in one afternoon. A deploy restarts the
+service, recovery puts the interrupted job back at the FRONT of the queue (issue 21, by design), and a
+package re-parse then redoes 20,000 notices. The check costs a second and runs before the five-minute
+build, so a busy box is refused cheaply.
+
+The refusal names the two better options beside the override, and both now exist: `ops/admin.sh queue`
+reads the queue in three lines (added the same day), and `DELETE /admin/jobs/{id}` stops a running job
+cooperatively (issue 247) — which it could not do when this issue was filed.
+
+### On the original tick concern
+
+Fix (3), the startup catch-up, remains the answer for a tick missed while the box was down. This guard
+makes the common case rarer rather than replacing it: an operator who waits for the queue is no longer
+restarting mid-window in the first place.
