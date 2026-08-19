@@ -75,6 +75,8 @@ struct Args {
     base_url: String,
     token: Option<String>,
     json: bool,
+    /// Print the catalog's SQL and exit, touching no database and needing no token.
+    print_sql: bool,
 }
 
 fn usage() -> ! {
@@ -93,7 +95,12 @@ fn usage() -> ! {
 
 fn parse_args() -> Args {
     let mut args =
-        Args { base_url: DEFAULT_BASE_URL.to_owned(), token: std::env::var("TENDER_API_TOKEN").ok(), json: false };
+        Args {
+            base_url: DEFAULT_BASE_URL.to_owned(),
+            token: std::env::var("TENDER_API_TOKEN").ok(),
+            json: false,
+            print_sql: false,
+        };
     let mut it = std::env::args().skip(1);
     while let Some(arg) = it.next() {
         let mut value = || it.next().unwrap_or_else(|| usage());
@@ -101,6 +108,7 @@ fn parse_args() -> Args {
             "--base-url" | "--base" => args.base_url = value().trim_end_matches('/').to_owned(),
             "--token" => args.token = Some(value()),
             "--json" => args.json = true,
+            "--print-sql" => args.print_sql = true,
             "-h" | "--help" => usage(),
             _ => usage(),
         }
@@ -111,6 +119,22 @@ fn parse_args() -> Args {
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> ExitCode {
     let args = parse_args();
+    // `--print-sql` needs no token and no database: it exists so the report's SQL can be
+    // read, diffed and A/B'd by hand. Reconstructing a query from the source by regex —
+    // the alternative, tried once — got the six-marker award predicate wrong.
+    if args.print_sql {
+        for (label, sql) in data_quality::queries() {
+            println!("-- {label}\n{sql}\n");
+        }
+        // The windowed form, instantiated on one sample window rather than printed as a
+        // template: `WindowedQuery::sql` is the only way the window is ever spliced, so
+        // this is the statement the job actually runs, and it is ready to paste into
+        // /v1/sql with the ids changed.
+        for q in data_quality::windowed_queries() {
+            println!("-- {} (windowed, tender_id 0..250000]\n{}\n", q.label, q.sql(0, 250_000));
+        }
+        return ExitCode::SUCCESS;
+    }
     let Some(token) = args.token.filter(|t| !t.is_empty()) else {
         eprintln!(
             "no API token: the data-quality report reads via /v1/sql, which is account-gated.\n\
