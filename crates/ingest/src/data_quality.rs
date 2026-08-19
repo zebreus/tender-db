@@ -279,6 +279,19 @@ const EFORMS_OTHER_SUBTYPES: &[&str] = &[
 
 /// Per-era document-type markers, in the order the report's diagnostic renders
 /// them. See [`DocTypeMarker`] for how each list was measured.
+/// The TED `TD` ("type of document") codes that announce a result, shared by every
+/// TED-lineage era: `7` contract award, `J` concession award, `K` modification,
+/// `R` design-contest result, `V` voluntary ex-ante transparency.
+const TED_TD_AWARD: &[&str] = &["7", "J", "K", "R", "V"];
+
+/// The `TD` codes that are known NOT to announce a result. A code in neither list
+/// is reported as `unclassified` rather than assumed non-award — the 2008 era's
+/// tail (`E`, `G`, `I`, `S`, `B`, `4`, `6`) sits there deliberately: ~60 notices in
+/// 27k, no cross-tab evidence either way, and inventing an answer for them would be
+/// the same guess this issue exists to remove.
+const TED_TD_OTHER: &[&str] =
+    &["0", "1", "2", "3", "A", "C", "D", "H", "M", "O", "P", "Q", "Y"];
+
 pub const DOC_TYPE_MARKERS: &[DocTypeMarker] = &[
     // eForms EU (every SDK 1.x) and eForms-DE 2.x, which publishes the EU field.
     DocTypeMarker {
@@ -306,8 +319,8 @@ pub const DOC_TYPE_MARKERS: &[DocTypeMarker] = &[
     DocTypeMarker {
         profiles: &["ted-export-r20%"],
         field_id: "TED-TD_DOCUMENT_TYPE",
-        award: &["7", "J", "K", "R", "V"],
-        other: &["0", "1", "2", "3", "A", "C", "D", "H", "M", "O", "P", "Q", "Y"],
+        award: TED_TD_AWARD,
+        other: TED_TD_OTHER,
     },
     // The text era publishes the same `TD` concept as a labelled line.
     DocTypeMarker {
@@ -316,12 +329,38 @@ pub const DOC_TYPE_MARKERS: &[DocTypeMarker] = &[
         award: &["7"],
         other: &["0", "2", "3", "C"],
     },
-    // The 2008 OPOCE export carries no TD element; its form names the type.
+    // Why the 2008 export is read through `NAT_NOTICE` and not through its form.
+    //
+    // Measured on prod (27k internal-ojs notices, cross-tabbing the two fields on the
+    // 6k that carry both):
+    //
+    // | `TED-FORM`      | `TED-NAT_NOTICE` | what the form is        |
+    // |-----------------|------------------|-------------------------|
+    // | `2` / `2_SUM`   | `3`              | contract notice         |
+    // | `3` / `3_SUM`   | `7`              | contract award          |
+    // | `6` / `6_SUM`   | `7`              | utilities award         |
+    // | `1` / `1_SUM`   | `0`              | prior information       |
+    // | `13_SUM`        | `R`              | design-contest result   |
+    // | `12_SUM`        | `D`              | —                       |
+    //
+    // Two facts follow, and both favour `NAT_NOTICE`:
+    //
+    // 1. **It IS the `TD` vocabulary.** Award forms map to `7`, contract notices to
+    //    `3`, design-contest results to `R` — the same codes [`TED_TD_AWARD`] carries
+    //    for r2.0.8/r2.0.9. So the era needs no vocabulary of its own.
+    // 2. **It is on every notice: 26,955 of 26,955.** `TED-FORM` is on 88 % — 3.2k
+    //    notices have no form at all — and a form-keyed marker would have reported
+    //    those as untyped.
+    //
+    // The form-keyed version of this marker also undercounted: it listed `3`/`3_SUM`
+    // as the award forms and missed `6`/`6_SUM`, the utilities awards, which
+    // `NAT_NOTICE` files under the same `7`. Awards in the era: 9,731 by `NAT_NOTICE`
+    // (36 %) against roughly 30 % by form.
     DocTypeMarker {
         profiles: &["internal-ojs"],
-        field_id: "TED-FORM",
-        award: &["3", "3_SUM"],
-        other: &[],
+        field_id: "TED-NAT_NOTICE",
+        award: TED_TD_AWARD,
+        other: TED_TD_OTHER,
     },
 ];
 
@@ -1504,18 +1543,31 @@ mod tests {
     /// vocabulary: `TED-FORM` exists in r2.0.8 and r2.0.9 too, with different
     /// values, and those eras are classified by `TD_DOCUMENT_TYPE` instead.
     #[test]
-    fn the_internal_ojs_form_vocabulary_does_not_leak_into_the_other_ted_eras() {
-        let form = DOC_TYPE_MARKERS
+    fn the_2008_export_is_read_through_the_shared_ted_vocabulary() {
+        let ojs = DOC_TYPE_MARKERS
             .iter()
-            .find(|m| m.field_id == "TED-FORM")
-            .expect("the 2008 export is classified by its form");
-        assert_eq!(form.profiles, &["internal-ojs"]);
+            .find(|m| m.profiles == ["internal-ojs"])
+            .expect("the 2008 export is classified");
+        // Not by its form: `TED-FORM` is missing from 12 % of the era, and its award
+        // forms are 3/3_SUM AND 6/6_SUM (utilities), which the form list missed.
+        // `NAT_NOTICE` is on 26,955 of 26,955 and files both under `7`.
+        assert_eq!(ojs.field_id, "TED-NAT_NOTICE");
+        assert!(std::ptr::eq(ojs.award, TED_TD_AWARD), "the era shares the TD award list");
+        assert!(std::ptr::eq(ojs.other, TED_TD_OTHER), "and the TD non-award list");
+        // Sharing the list is the point: no era-local vocabulary to drift.
+        let r20x = DOC_TYPE_MARKERS
+            .iter()
+            .find(|m| m.field_id == "TED-TD_DOCUMENT_TYPE")
+            .expect("the r2.0.x marker");
+        assert_eq!((r20x.award, r20x.other), (ojs.award, ojs.other));
+        // And the marker is still profile-scoped at version level: `TED-NAT_NOTICE`
+        // exists in r2.0.x too, where TD_DOCUMENT_TYPE is the authority.
         let sql = awards_can_sql();
         assert!(
             sql.contains("(n.profile LIKE 'internal-ojs') AND EXISTS("),
-            "the form marker must be profile-scoped, at version level: {sql}"
+            "the marker must be profile-scoped, at version level: {sql}"
         );
-        assert!(sql.contains("AND c.field_id = 'TED-FORM' AND c.code IN ('3', '3_SUM')"), "{sql}");
+        assert!(sql.contains("AND c.field_id = 'TED-NAT_NOTICE' AND c.code IN ('7',"), "{sql}");
     }
 
     #[test]
