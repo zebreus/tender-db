@@ -259,6 +259,9 @@ async fn measures_completeness_results_and_merge_over_real_fixtures() {
     // in the denominator: a denominator that counted them would measure something
     // else entirely.
     assert_eq!(density.award_notices, 1, "one of the four chain notices is an award");
+    // The complement of the text-era case: this CAN published a result block AND it
+    // materialised, so nothing is explained away.
+    assert_eq!(density.no_award_content, 0, "the eForms CAN published its results: {density:?}");
     // And every version's type was readable, so the rate covers its population.
     for row in &report.doc_types {
         assert_eq!(
@@ -335,6 +338,10 @@ async fn an_award_notice_that_materialises_nothing_reads_as_zero_not_as_absent()
         .expect("the text era appears in section 3 on the strength of its own doc type");
     assert_eq!(density.award_notices, 1, "`TD: 7` is an award notice: {density:?}");
     assert_eq!(density.with_results, 0, "and it materialised nothing: {density:?}");
+    // Issue 242: and the reason is upstream — the 2005 text-era CAN publishes no
+    // award block, so this 0 % is a publication gap, not a projection failure. The
+    // report says which, in the same row.
+    assert_eq!(density.no_award_content, 1, "no award block was published: {density:?}");
 
     // The invariant, in the same run, is silent about it — which is the point.
     // "Did the projection write what it parsed" cannot answer "was anything

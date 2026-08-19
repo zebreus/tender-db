@@ -469,6 +469,47 @@ fn awards_with_template(win: &str) -> String {
     )
 }
 
+/// Section 3's third number, EXPLANATORY: award-typed versions whose notice parsed
+/// with no result block at all (issue 242).
+///
+/// A rate needs this to be readable. An award notice can announce a result and
+/// publish no machine-readable award content whatsoever, and then no projection
+/// can materialise it — the gap is upstream, in what was published. Two measured
+/// shapes in r2.0.8, which together are its ENTIRE shortfall:
+///
+/// - the whole body is `OTH_NOT` free-text prose, no structured form at all
+///   (~425 per 200k notices; `339168-2017` is one, with 24 language versions of
+///   paragraphs and a `TD` code saying "Contract award notice");
+/// - the F06 utilities award container is published EMPTY,
+///   `<AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES/>` (~465 per 200k; `017037-2017`,
+///   which the r209 suite pins as a fixture).
+///
+/// So `award_notices - with_results - no_award_content` is the number that means
+/// "we failed to project an award somebody actually published" — the only one of
+/// the three that is ours to fix. Printing the rate without this column invites
+/// exactly the wrong conclusion, which is the mistake issue 242 opened with.
+///
+/// This DOES read `notice_sections`, deliberately: the point is to compare the
+/// published type against the parse, and the comparison is the finding. What
+/// section 3's denominator must never do is DERIVE itself from the parse — see
+/// [`awards_can_sql`].
+pub fn awards_barren_sql() -> String {
+    awards_barren_template("")
+}
+
+fn awards_barren_template(win: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS no_award_content \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}({award}) \
+            AND NOT EXISTS(SELECT 1 FROM notice_sections s \
+                            WHERE s.notice_id = tv.caused_by_notice_id \
+                              AND s.kind IN ('LotResult', 'TenderResult')) \
+          GROUP BY n.profile",
+        award = award_predicate(),
+    )
+}
+
 /// Document-type COVERAGE per era: how much of the denominator's input this
 /// vocabulary cannot read (issue 235).
 ///
@@ -546,6 +587,7 @@ pub fn queries() -> Vec<(String, String)> {
     // Section 3 proper: the denominator the notice publishes about itself.
     out.push(("awards_can".to_owned(), awards_can_sql()));
     out.push(("awards_with".to_owned(), awards_with_sql()));
+    out.push(("awards_barren".to_owned(), awards_barren_sql()));
     out.push(("doc_types".to_owned(), doc_type_sql()));
     // The section→row invariant, under its own name (issue 235): worth keeping,
     // just not a density.
@@ -662,6 +704,11 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
     out.push(WindowedQuery {
         label: "awards_with".to_owned(),
         template: awards_with_template("{window} AND "),
+        column: "tv.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "awards_barren".to_owned(),
+        template: awards_barren_template("{window} AND "),
         column: "tv.tender_id".to_owned(),
     });
     out.push(WindowedQuery {
@@ -791,6 +838,10 @@ pub struct DensityRow {
     /// what lets this rate fall below 100 %.
     pub award_notices: u64,
     pub with_results: u64,
+    /// Of the denominator, the versions whose notice published no award block at
+    /// all — see [`awards_barren_sql`]. Not a failure of ours, and the difference
+    /// between a readable rate and a misleading one.
+    pub no_award_content: u64,
 }
 
 /// One era's projection invariant: of the versions whose notice parsed WITH a
@@ -881,6 +932,7 @@ pub struct Raw {
     pub linkage: Rows,
     pub awards_can: Rows,
     pub awards_with: Rows,
+    pub awards_barren: Rows,
     pub doc_types: Rows,
     pub sections_can: Rows,
     pub sections_with: Rows,
@@ -926,6 +978,7 @@ impl Raw {
             linkage: take("linkage", &mut unmeasured)?,
             awards_can: take("awards_can", &mut unmeasured)?,
             awards_with: take("awards_with", &mut unmeasured)?,
+            awards_barren: take("awards_barren", &mut unmeasured)?,
             doc_types: take("doc_types", &mut unmeasured)?,
             sections_can: take("sections_can", &mut unmeasured)?,
             sections_with: take("sections_with", &mut unmeasured)?,
@@ -968,6 +1021,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
     // (the gap the metric exists to show).
     let can = count_by_profile(&raw.awards_can);
     let with = count_by_profile(&raw.awards_with);
+    let barren = count_by_profile(&raw.awards_barren);
     let mut profiles: std::collections::BTreeSet<String> = can.keys().cloned().collect();
     profiles.extend(with.keys().cloned());
     let density: Vec<DensityRow> = profiles
@@ -975,6 +1029,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         .map(|profile| DensityRow {
             award_notices: can.get(&profile).copied().unwrap_or(0),
             with_results: with.get(&profile).copied().unwrap_or(0),
+            no_award_content: barren.get(&profile).copied().unwrap_or(0),
             profile,
         })
         .collect();
@@ -1095,7 +1150,11 @@ pub fn render_text(report: &Report) -> String {
         out,
         "\n== 3. Results materialisation (notices whose PUBLISHED type announces a result → lot_results) =="
     );
-    let _ = writeln!(out, "  {:<30} {:>10} {:>14} {:>8}", "era", "award-notices", "with lot_results", "density");
+    let _ = writeln!(
+        out,
+        "  {:<30} {:>10} {:>14} {:>8} {:>16}",
+        "era", "award-notices", "with lot_results", "density", "no content pub."
+    );
     let mut impossible = 0usize;
     for row in &report.density {
         // A numerator above its denominator is not a high rate, it is a
@@ -1111,8 +1170,12 @@ pub fn render_text(report: &Report) -> String {
         };
         let _ = writeln!(
             out,
-            "  {:<30} {:>10} {:>14} {:>8}",
-            display_era(&row.profile), group(row.award_notices), group(row.with_results), rate
+            "  {:<30} {:>10} {:>14} {:>8} {:>16}",
+            display_era(&row.profile),
+            group(row.award_notices),
+            group(row.with_results),
+            rate,
+            group(row.no_award_content)
         );
     }
     if impossible > 0 {
@@ -1123,6 +1186,33 @@ pub fn render_text(report: &Report) -> String {
              award predicate ({markers} document-type markers), so a contradiction here means the \
              predicate itself changed between the two queries.",
             markers = DOC_TYPE_MARKERS.len()
+        );
+    }
+    // The column that makes the rate readable (issue 242): of the notices that
+    // announce a result, how many published no award block for anyone to project.
+    // What is left after subtracting those is the part that is ours to fix, so say
+    // that number out loud rather than leaving the reader to compute it.
+    if report.unmeasured.iter().any(|l| l == "awards_barren") {
+        let _ = writeln!(
+            out,
+            "  no content published: UNMEASURED — the `awards_barren` query did not run, so the \
+             density above cannot be split into published-nothing and failed-to-project."
+        );
+    } else {
+        let barren: u64 = report.density.iter().map(|r| r.no_award_content).sum();
+        let missing: u64 = report
+            .density
+            .iter()
+            .map(|r| r.award_notices.saturating_sub(r.with_results).saturating_sub(r.no_award_content))
+            .sum();
+        let _ = writeln!(
+            out,
+            "  no content published: {} award notice(s) parsed with no result block at all — an \
+             empty or free-text award (measured shapes: an `OTH_NOT` prose body, an empty F06 \
+             container). Nothing can project those. Unmaterialised award notices that DID publish \
+             a result block, i.e. the projection's own shortfall: {}.",
+            group(barren),
+            group(missing)
         );
     }
     // A rate is only worth as much as the share of its population the vocabulary
@@ -1223,6 +1313,11 @@ pub fn render_json(report: &Report) -> String {
             "award_notices": r.award_notices,
             "with_results": r.with_results,
             "density": rate(r.with_results, r.award_notices),
+            // Issue 242: the part of the denominator nobody could project, and the
+            // part that is genuinely ours. A consumer plotting `density` alone would
+            // read a publication-quality floor as our defect rate.
+            "no_award_content": r.no_award_content,
+            "unprojected": r.award_notices.saturating_sub(r.with_results).saturating_sub(r.no_award_content),
         }))
         .collect();
     let invariant: Vec<Value> = report
@@ -1345,6 +1440,8 @@ mod tests {
                 // Section 3: the notice's own published type (issue 235) …
                 "awards_can",
                 "awards_with",
+                // …split into "published nothing" and "we missed it" (issue 242) …
+                "awards_barren",
                 "doc_types",
                 // … and the section→row invariant that used to wear its name.
                 "sections_can",
@@ -1408,6 +1505,7 @@ mod tests {
             // The prod shape: a zero denominator under a large numerator.
             ("awards_can".to_owned(), Some(vec![])),
             ("awards_with".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-0.1"), json!(139_961)]])),
+            ("awards_barren".to_owned(), Some(vec![])),
             ("doc_types".to_owned(), Some(vec![])),
             ("sections_can".to_owned(), Some(vec![])),
             ("sections_with".to_owned(), Some(vec![])),
@@ -1467,6 +1565,77 @@ mod tests {
         assert!(awards_with_sql().contains(&award), "the numerator repeats it verbatim");
         // And the numerator adds exactly one thing: the canonical row.
         assert!(awards_with_sql().contains("FROM lot_results lr"), "{}", awards_with_sql());
+    }
+
+    /// Issue 242: a density below 100 % has two very different causes, and the
+    /// report must not let a reader mistake one for the other.
+    ///
+    /// Both eras below read 40.0 %. In the first, every unmaterialised notice
+    /// published no award block at all (an `OTH_NOT` prose body, an empty F06
+    /// container) — nothing to project, our shortfall is zero. In the second, all
+    /// six published a result block and we did not project it. Same rate, opposite
+    /// meaning.
+    #[test]
+    fn the_barren_column_separates_a_publication_gap_from_a_projection_gap() {
+        let labels = |barren: Rows| -> Vec<(String, Option<Rows>)> {
+            let mut out: Vec<(String, Option<Rows>)> =
+                queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect();
+            for (label, rows) in [
+                ("awards_can", vec![
+                    vec![json!("ted-export-r208"), json!(10)],
+                    vec![json!("eforms:eforms-sdk-1.13"), json!(10)],
+                ]),
+                ("awards_with", vec![
+                    vec![json!("ted-export-r208"), json!(4)],
+                    vec![json!("eforms:eforms-sdk-1.13"), json!(4)],
+                ]),
+                ("awards_barren", barren.clone()),
+            ] {
+                let slot = out.iter_mut().find(|(l, _)| l == label).expect("label");
+                slot.1 = Some(rows);
+            }
+            out
+        };
+
+        let raw = Raw::from_labelled(labels(vec![
+            vec![json!("ted-export-r208"), json!(6)],
+            vec![json!("eforms:eforms-sdk-1.13"), json!(0)],
+        ]))
+        .expect("labelled");
+        let report = assemble("http://x", &raw);
+        let r208 = report.density.iter().find(|r| r.profile == "ted-export-r208").expect("r208");
+        assert_eq!((r208.award_notices, r208.with_results, r208.no_award_content), (10, 4, 6));
+
+        let text = render_text(&report);
+        // The rate is still reported honestly …
+        assert!(text.contains("40.0%"), "{text}");
+        // … and so is the split: 6 published nothing, 6 are ours (the sdk-1.13 era).
+        assert!(
+            text.contains("6 award notice(s) parsed with no result block at all"),
+            "the publication gap must be named: {text}"
+        );
+        assert!(
+            text.contains("the projection's own shortfall: 6"),
+            "and so must the part that is ours: {text}"
+        );
+
+        // JSON carries both per era, so a consumer never has to subtract.
+        let json: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        let rows = json["results_density"].as_array().expect("rows");
+        let ted = rows.iter().find(|r| r["profile"] == "ted-export-r208").expect("r208 row");
+        assert_eq!((ted["no_award_content"].as_u64(), ted["unprojected"].as_u64()), (Some(6), Some(0)));
+        let eforms =
+            rows.iter().find(|r| r["profile"] == "eforms:eforms-sdk-1.13").expect("eforms row");
+        assert_eq!((eforms["no_award_content"].as_u64(), eforms["unprojected"].as_u64()), (Some(0), Some(6)));
+
+        // And a barren count that did not run must not silently read as zero —
+        // that would turn "unknown" into "all of it is our fault" (issue 230).
+        let mut failed = labels(Vec::new());
+        failed.iter_mut().find(|(l, _)| l == "awards_barren").expect("label").1 = None;
+        let raw = Raw::from_labelled(failed).expect("labelled");
+        let text = render_text(&assemble("http://x", &raw));
+        assert!(text.contains("no content published: UNMEASURED"), "{text}");
+        assert!(!text.contains("the projection's own shortfall"), "no arithmetic on a missing input: {text}");
     }
 
     /// The vocabulary itself: every marker must classify codes into two disjoint
@@ -1614,6 +1783,9 @@ mod tests {
             // Density: 2 award-TYPED notices for the eForms era, 0 materialised.
             ("awards_can".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
             ("awards_with".to_owned(), Some(vec![])),
+            // Both eForms award notices published a result block, so the 0 % density
+            // is entirely the projection's own gap — nothing is explained away.
+            ("awards_barren".to_owned(), Some(vec![])),
             // One version of the r209 era carries a type this vocabulary cannot read.
             ("doc_types".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(1), json!(0)]])),
             // The section→row invariant: 3 parsed a result section, all 3 written.
