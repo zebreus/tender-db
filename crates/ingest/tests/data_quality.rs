@@ -72,6 +72,50 @@ async fn ingest_from(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     .expect("record notice");
 }
 
+/// The text era needs its own ingest path: dispatch is keyed on the member NAME
+/// (`EN_20050101_001_UTF8_ORG.ZIP!…`, not a fixture path), one member holds many
+/// records, each record carries its own byte span, and the parser is
+/// `text::parse_payload` rather than the profile-dispatched one (which returns
+/// `Pending` for `text`).
+async fn ingest_text(db: &Db, fetch_id: i64, fixture: &str, member_path: &str) {
+    let path = format!("tests/fixtures/text/{fixture}");
+    let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    let ingest::profile::Disposition::Records(records) = ingest::profile::dispatch(member_path, &bytes)
+    else {
+        panic!("{fixture}: dispatch skipped a text-era member");
+    };
+    for record in records {
+        let ingest::profile::Record::Notice(n) = record else { continue };
+        let (start, end) = n.span.expect("text records carry their span");
+        let parse = ingest::text::parse_payload(&n.member_path, &bytes[start..end]);
+        assert!(matches!(parse, Parse::Parsed(_)), "{fixture}: {parse:?}");
+        let (published_at, dispatched_at) = match &parse {
+            Parse::Parsed(parsed) => {
+                let (p, d) = project::notice_instants(parsed);
+                (Some(p), d)
+            }
+            _ => (None, None),
+        };
+        db.record_notice(
+            &Notice {
+                source: "ted".into(),
+                publication_id: n.publication_id.clone(),
+                content_hash: n.content_hash.clone(),
+                profile: n.profile.clone(),
+                declared_version: n.declared_version.clone(),
+                fetch_id,
+                member_path: n.member_path.clone(),
+                ingested_at: 0,
+                published_at,
+                dispatched_at,
+            },
+            &parse,
+        )
+        .await
+        .expect("record notice");
+    }
+}
+
 /// Run one query and return its rows as the JSON matrix the assembler expects —
 /// the same shape `/v1/sql` hands the bin.
 async fn rows(db: &Db, sql: &str) -> data_quality::Rows {
@@ -200,16 +244,30 @@ async fn measures_completeness_results_and_merge_over_real_fixtures() {
         .expect("an eForms EU era row");
     assert!(eforms.present[5] > 0, "the CAN produced at least one named winner");
 
-    // Results density: the eForms CAN is an award notice (LotResult sections)
-    // and it materialised, so the eForms era's density is 100% here — the exact
-    // metric that reads ~0% on the pre-results-projection deploy (issue 15).
+    // Results density: the CAN is an award notice by its own PUBLISHED subtype
+    // (`OPP-070-notice = 29`, issue 235) and it materialised, so the eForms era's
+    // density is 100% here — the exact metric that reads ~0% on the
+    // pre-results-projection deploy (issue 15).
     let density = report
         .density
         .iter()
         .find(|r| data_quality::era_of(&r.profile) == "eForms EU")
         .expect("an eForms award-notice era");
-    assert!(density.can_notices > 0, "the CAN is counted as an award notice");
-    assert_eq!(density.with_results, density.can_notices, "every award notice materialised results");
+    assert!(density.award_notices > 0, "the CAN is counted as an award notice");
+    assert_eq!(density.with_results, density.award_notices, "every award notice materialised results");
+    // The chain's three non-award notices (CN + 2 corrigenda, subtype 16) are NOT
+    // in the denominator: a denominator that counted them would measure something
+    // else entirely.
+    assert_eq!(density.award_notices, 1, "one of the four chain notices is an award");
+    // And every version's type was readable, so the rate covers its population.
+    for row in &report.doc_types {
+        assert_eq!(
+            (row.unclassified, row.untyped),
+            (0, 0),
+            "{}: the fixtures' document types must all be classified",
+            row.profile
+        );
+    }
 
     // The merge: exactly the one DÖE procedure, and it merged with its TED twin.
     assert_eq!(report.merge.doe_tenders, 1);
@@ -239,8 +297,61 @@ async fn legacy_award_notice_counts_toward_results_density() {
         .iter()
         .find(|r| data_quality::era_of(&r.profile) == "TED_EXPORT r2.0.9")
         .expect("an r2.0.9 award-notice era");
-    assert!(density.can_notices > 0, "the F03 is an award notice");
-    assert_eq!(density.with_results, density.can_notices, "the legacy award materialised results");
+    // `TD_DOCUMENT_TYPE CODE="7"` — the era's own words for "Contract award",
+    // read from the notice rather than from what the projection made of it.
+    assert!(density.award_notices > 0, "the F03 is an award notice");
+    assert_eq!(density.with_results, density.award_notices, "the legacy award materialised results");
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 235's regression, end to end: an award notice that materialises NO
+/// results must pull section 3 below 100 %.
+///
+/// The text era's 2005 CAN is the case the old metric could not see. It publishes
+/// `TD: 7 - Contract award` — so its own document type says it announces a result
+/// — and the projection produces no `lot_results` row for it at all. Under the
+/// old definition the notice was excluded from BOTH halves (no result section
+/// parsed ⇒ not in the denominator), and the era simply vanished from section 3
+/// or read a perfect rate on whatever remained. Now it reads 1 award notice,
+/// 0 materialised, 0.0 %.
+#[tokio::test]
+async fn an_award_notice_that_materialises_nothing_reads_as_zero_not_as_absent() {
+    let (db, fetch_id, path) = scratch("text-can").await;
+    ingest_text(
+        &db,
+        fetch_id,
+        "2005-can-154-2005.txt",
+        "EN_20050101_001_UTF8_ORG.ZIP!EN_20050101_2005001_UTF8_ORG",
+    )
+    .await;
+    project::project(&db, false).await.expect("project");
+
+    let report = measure(&db, "scratch://text-can").await;
+    let density = report
+        .density
+        .iter()
+        .find(|r| r.profile == "text")
+        .expect("the text era appears in section 3 on the strength of its own doc type");
+    assert_eq!(density.award_notices, 1, "`TD: 7` is an award notice: {density:?}");
+    assert_eq!(density.with_results, 0, "and it materialised nothing: {density:?}");
+
+    // The invariant, in the same run, is silent about it — which is the point.
+    // "Did the projection write what it parsed" cannot answer "was anything
+    // parsed", so keeping both is what makes either one readable.
+    let invariant = report.invariant.iter().find(|r| r.profile == "text");
+    assert!(
+        invariant.is_none_or(|r| r.with_sections == 0),
+        "no result section was parsed, so the invariant has no denominator here: {invariant:?}"
+    );
+
+    // And it renders as a rate, not as a dash or a missing row.
+    let text = data_quality::render_text(&report);
+    let line = text
+        .lines()
+        .find(|l| l.contains("text 1993") && l.contains("0.0%"))
+        .expect("the text era's 0.0% density is rendered");
+    assert!(line.contains(" 1 "), "one award notice, zero materialised: {line}");
 
     let _ = std::fs::remove_file(&path);
 }

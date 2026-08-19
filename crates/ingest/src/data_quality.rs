@@ -17,12 +17,21 @@
 //! report itself.
 //!
 //! This paragraph used to cite "eForms CANs materialise results at 0.3 %" as the
-//! example. That number is **no longer reproducible** — section 3 now reads 100 %
-//! for every era that measures — and rather than quietly swap in a fresh figure,
-//! see issue 235: the uniform 100 % is itself evidence that the density metric
-//! measures the projection against its own parse layer and cannot see the failure
-//! the 0.3 % once described. A stale example is a small problem; a metric that
-//! cannot go red is the reason the example went stale.
+//! example, then recorded that the number was no longer reproducible because
+//! section 3 read 100 % for every era. **Both readings were artefacts of the same
+//! definition defect, now fixed** (issue 235): section 3's denominator was
+//! "notices that already carry a result SECTION", so it measured the projection
+//! against its own parse layer and an award notice that parsed with zero results
+//! — the actual failure, and what 0.3 % was probably describing — fell out of
+//! both halves.
+//!
+//! The denominator now comes from what the notice IS: its published document type
+//! ([`DOC_TYPE_MARKERS`] — the eForms subtype, the TED `TD` code, the 2008
+//! export's form). The old pair survives as section 3b under an honest name, the
+//! projection-writes-what-it-parsed invariant, which is a real invariant that has
+//! caught a real defect. Neither number above is restated here: the next
+//! full-corpus run measures the question properly and that reading, not this
+//! comment, is the record.
 //!
 //! Design notes it is worth being explicit about:
 //!
@@ -39,8 +48,9 @@
 //!   scale.** Completeness is satellite-driven (`FROM <satellite> … JOIN
 //!   tender_versions`) — one sequential scan probing only primary keys, safe even
 //!   where a satellite lacks a `(tender_id, seq)` index. Linkage/density/merge
-//!   drive from their small sets (award Tenders, projected award notices, DÖE
-//!   Tenders) and filter with indexed `EXISTS`, never an inline
+//!   drive from their small sets (award Tenders, award-typed notices, DÖE
+//!   Tenders) and filter with indexed `EXISTS` — the document-type probe seeks
+//!   `notice_codes(notice_id, …)`, the prefix of its primary key — never an inline
 //!   `(SELECT DISTINCT …) AS x JOIN` — turso re-evaluates such a derived table
 //!   per outer row, timing the endpoint out even at a few thousand rows.
 //!
@@ -162,7 +172,7 @@ pub const LINKAGE_SQL: &str = "SELECT n.profile, \
 /// it — the first full run reported `0` award notices against `139,961` with
 /// results, a state that cannot exist. A hardcoded vocabulary in a query that
 /// claims to span eras is exactly the trap issue 174 named.
-pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
+pub const SECTIONS_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
        FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
       WHERE EXISTS(SELECT 1 FROM notice_sections s \
                     WHERE s.notice_id = tv.caused_by_notice_id \
@@ -172,7 +182,7 @@ pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
 /// Results materialisation per era, numerator: award-notice versions whose own
 /// notice actually produced a canonical `lot_results` row.
 ///
-/// Version-driven, matching [`DENSITY_CAN_SQL`]'s unit — and that is a FIX, not a
+/// Version-driven, matching [`SECTIONS_CAN_SQL`]'s unit — and that is a FIX, not a
 /// windowing convenience (issue 230). The previous form drove from `lot_results`
 /// and counted `COUNT(DISTINCT lr.notice_id)`, so the denominator counted versions
 /// while the numerator counted notices: a notice causing two versions contributed
@@ -184,11 +194,281 @@ pub const DENSITY_CAN_SQL: &str = "SELECT n.profile, COUNT(*) AS can_notices \
 /// its `UNIQUE(tender_id, notice_id, result_key)` index — so it stays an indexed
 /// seek. Driving from `lot_results` by `notice_id` would not: that column has no
 /// index, which is why the two halves are measured separately at all.
-pub const DENSITY_WITH_SQL: &str = "SELECT n.profile, COUNT(*) AS with_results \
+pub const SECTIONS_WITH_SQL: &str = "SELECT n.profile, COUNT(*) AS with_results \
        FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
       WHERE EXISTS(SELECT 1 FROM lot_results lr \
                     WHERE lr.tender_id = tv.tender_id AND lr.notice_id = tv.caused_by_notice_id) \
       GROUP BY n.profile";
+
+// ------------------------------------------- the published document type
+
+/// One era family's published document-type marker: where the type is recorded
+/// in the parse layer, which of its codes name a **result-bearing** publication,
+/// and which are known not to.
+///
+/// This table exists because section 3's denominator used to be "notices that
+/// already carry a result SECTION" — the projection measured against itself, so
+/// an award notice that parsed with zero results was excluded from BOTH halves
+/// and the rate read exactly 100.0 % on all twenty eras that measure (issue
+/// 235). A denominator has to come from what the notice *is*, which every era
+/// publishes and no era leaves to the projection.
+///
+/// **Both lists are spelled out on purpose.** A code in NEITHER is counted per
+/// era by [`doc_type_sql`] as unclassified, so a vocabulary this table does not
+/// know shows up as a number instead of silently becoming "not an award" — the
+/// same defect one layer up, where `kind = 'LotResult'` dropped sdk-0.1's
+/// `TenderResult` sections and the report read 0 award notices against 139,961
+/// with results (issue 230).
+///
+/// ## Where each list comes from (measured on prod, 2026-08-19)
+///
+/// Sampled notices per profile, cross-tabbed against "carries a result section",
+/// and — for the legacy TED codes — against `TED-FORM`, whose 2014 form set names
+/// the document type outright. Every code below was observed; nothing is inferred
+/// from a codelist we do not vendor.
+///
+/// | marker | award codes | evidence |
+/// |---|---|---|
+/// | `OPP-070-notice` | 25–40, `E4`, `E5` | ≤24 never carried results (800 notices); ≥25 always did; `E4` 21/21, `E5` 1/1 |
+/// | `DE1-NoticeSubType-SubTypeCode` | same numeric scheme | DE 1.x reaches `SUBTYPE_FIELD` through this alias (project.rs) |
+/// | `TED-TD_DOCUMENT_TYPE` | `7`, `J`, `K`, `R`, `V` | 7↔F03/F06 award (776/776), J↔F25 concession award, K↔F20 modification, R↔F13 design-contest result, V↔F15 VEAT — each 100 % result-bearing |
+/// | `TXT-TD` | `7` | the text era publishes its own label: `TD: 7 - Contract awards` (1993 daily fixture), `TD: 3 - Invitation to tender` |
+/// | `TED-FORM` (internal-ojs only) | `3`, `3_SUM` | the 2008 export carries no `TD_DOCUMENT_TYPE` at all; form 3 is the award form, 256/256 result-bearing |
+///
+/// The letter codes' meanings are the fixtures' own element text, not a guess:
+/// `TD_DOCUMENT_TYPE CODE="V">Voluntary ex ante transparency notice`,
+/// `CODE="K">Modification of a contract/concession during its term`,
+/// `CODE="7">Contract award`, `CODE="3">Contract notice`.
+pub struct DocTypeMarker {
+    /// `notices.profile` values this marker speaks for, as SQL `LIKE` patterns —
+    /// the eForms families are versioned, so `'eforms:eforms-sdk-1%'` is the
+    /// honest scope and an exact name is a pattern without a wildcard.
+    ///
+    /// Scoping matters: `TED-FORM` exists in r2.0.8 and r2.0.9 too, with a
+    /// DIFFERENT vocabulary (`F03`, `15`, `13`), and those eras are classified by
+    /// their `TD_DOCUMENT_TYPE` instead. An unscoped field id would apply the
+    /// 2008 form list to them and report every r2.0.9 form as unclassified.
+    pub profiles: &'static [&'static str],
+    /// The parse-layer field carrying the published type (`notice_codes.field_id`).
+    pub field_id: &'static str,
+    /// Codes naming a result-bearing publication: an award, a concession award, a
+    /// design-contest result, a direct-award prenotification (VEAT), or a
+    /// contract modification. All five publish a decision the projection is
+    /// expected to materialise, which is the population section 3 asks about.
+    pub award: &'static [&'static str],
+    /// Codes observed and known NOT to be result-bearing. Only measured codes are
+    /// listed — an unlisted one is unclassified, which is visible, rather than
+    /// silently non-award, which is not.
+    pub other: &'static [&'static str],
+}
+
+/// The eForms result-notice subtypes: 25–40 (direct-award prenotification,
+/// result, modification) plus the `E`-family award subtypes. Shared by the EU
+/// SDKs and the DE 1.x alias, which use the same numbering.
+const EFORMS_AWARD_SUBTYPES: &[&str] = &[
+    "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40",
+    "E4", "E5",
+];
+
+/// The eForms planning and competition subtypes — measured never to carry a
+/// result section (800 notices across sdk-1.7, sdk-1.14, de-1.1, de-2.1).
+const EFORMS_OTHER_SUBTYPES: &[&str] = &[
+    "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17",
+    "18", "19", "20", "21", "22", "23", "24", "E1", "E3",
+];
+
+/// Per-era document-type markers, in the order the report's diagnostic renders
+/// them. See [`DocTypeMarker`] for how each list was measured.
+pub const DOC_TYPE_MARKERS: &[DocTypeMarker] = &[
+    // eForms EU (every SDK 1.x) and eForms-DE 2.x, which publishes the EU field.
+    DocTypeMarker {
+        profiles: &["eforms:eforms-sdk-1%", "eforms:eforms-de-2%"],
+        field_id: "OPP-070-notice",
+        award: EFORMS_AWARD_SUBTYPES,
+        other: EFORMS_OTHER_SUBTYPES,
+    },
+    // eForms-DE 1.x names the same subtype through its own id — the alias
+    // `DE1-NoticeSubType-SubTypeCode` → `SUBTYPE_FIELD` in project.rs.
+    DocTypeMarker {
+        profiles: &["eforms:eforms-de-1%"],
+        field_id: "DE1-NoticeSubType-SubTypeCode",
+        award: EFORMS_AWARD_SUBTYPES,
+        other: EFORMS_OTHER_SUBTYPES,
+    },
+    // The DÖE island spells its type in words rather than subtype numbers.
+    DocTypeMarker {
+        profiles: &["eforms:eforms-sdk-0.1"],
+        field_id: "SDK01-NoticeTypeCode",
+        award: &["can-standard"],
+        other: &["cn-standard", "pin-only"],
+    },
+    // R2.0.8 / R2.0.9 / defence: the TED-wide `TD` vocabulary.
+    DocTypeMarker {
+        profiles: &["ted-export-r20%"],
+        field_id: "TED-TD_DOCUMENT_TYPE",
+        award: &["7", "J", "K", "R", "V"],
+        other: &["0", "1", "2", "3", "A", "C", "D", "H", "M", "O", "P", "Q", "Y"],
+    },
+    // The text era publishes the same `TD` concept as a labelled line.
+    DocTypeMarker {
+        profiles: &["text"],
+        field_id: "TXT-TD",
+        award: &["7"],
+        other: &["0", "2", "3", "C"],
+    },
+    // The 2008 OPOCE export carries no TD element; its form names the type.
+    DocTypeMarker {
+        profiles: &["internal-ojs"],
+        field_id: "TED-FORM",
+        award: &["3", "3_SUM"],
+        other: &[],
+    },
+];
+
+/// The section every era files its document type under.
+///
+/// Measured, and it is the difference between a 1.3 s query and an 11 s timeout:
+/// `notice_codes` is keyed `(notice_id, section_id, field_id, ordinal)`, so a probe
+/// that gives only `notice_id` scans every code row of the notice — ~100 rows for a
+/// legacy form, each tested against six OR'd vocabularies. Pinning `section_id`
+/// makes it a three-column primary-key prefix seek.
+///
+/// All six markers agree on `PROCEDURE` (checked per era on prod: `TXT-TD`,
+/// `TED-TD_DOCUMENT_TYPE`, `TED-FORM`, `OPP-070-notice`, `SDK01-NoticeTypeCode`
+/// and `DE1-NoticeSubType-SubTypeCode` all land there), which is why it is one
+/// constant rather than a per-marker field. A parser that filed the type elsewhere
+/// would show up as `untyped` in [`doc_type_sql`], not as a silent zero.
+const DOC_TYPE_SECTION: &str = "PROCEDURE";
+
+/// One marker's test, as a version-level predicate:
+/// `(<this era's profiles> AND EXISTS(<seek this era's code>))`.
+///
+/// The profile test sits OUTSIDE the `EXISTS`, and that placement is the whole
+/// cost of the query. With the six profile `LIKE`s inside the subquery they were
+/// re-evaluated for every code row the probe visited — a legacy form files ~30
+/// codes under `PROCEDURE` — and one 83k-version window took over 10 s. Outside,
+/// each version pays six cheap string tests and then runs exactly ONE subquery
+/// against a single `field_id`. Same answer, measured 1.4 s.
+fn marker_term(m: &DocTypeMarker, code_pred: &str) -> String {
+    format!(
+        "({scope} AND EXISTS(SELECT 1 FROM notice_codes c \
+                              WHERE c.notice_id = tv.caused_by_notice_id \
+                                AND c.section_id = '{DOC_TYPE_SECTION}' \
+                                AND c.field_id = '{field}'{code_pred}))",
+        scope = profile_scope(m),
+        field = m.field_id,
+    )
+}
+
+/// A quoted SQL list of codes.
+fn code_list(codes: &[&str]) -> String {
+    codes.iter().map(|c| format!("'{c}'")).collect::<Vec<_>>().join(", ")
+}
+
+/// The marker's profile scope as SQL. Correlated on the outer query's `n`, so it
+/// costs nothing beyond the row already joined.
+fn profile_scope(m: &DocTypeMarker) -> String {
+    let ors: Vec<String> = m.profiles.iter().map(|p| format!("n.profile LIKE '{p}'")).collect();
+    format!("({})", ors.join(" OR "))
+}
+
+/// "This version's notice publishes a result-announcing document type", per era,
+/// OR'd across the markers.
+fn award_predicate() -> String {
+    let terms: Vec<String> = DOC_TYPE_MARKERS
+        .iter()
+        .map(|m| marker_term(m, &format!(" AND c.code IN ({})", code_list(m.award))))
+        .collect();
+    terms.join(" OR ")
+}
+
+/// Results materialisation per era, DENOMINATOR: versions whose notice's own
+/// published document type says it announces a result (issue 235).
+///
+/// Read off `notice_codes` — the parse layer's record of what the publisher said
+/// — never off `notice_sections`, whose result sections are the very thing the
+/// numerator checks the projection produced. That independence is the whole
+/// point: this denominator counts an award notice that parsed with zero result
+/// sections, which the old one could not.
+pub fn awards_can_sql() -> String {
+    awards_can_template("")
+}
+
+/// [`awards_can_sql`] with `win` spliced into its `WHERE` — one builder for both
+/// the catalog and the windowed form, so the two cannot drift into measuring
+/// different populations (the drift issue 230 hit when it spliced by text).
+fn awards_can_template(win: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS award_notices \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}({award}) \
+          GROUP BY n.profile",
+        award = award_predicate(),
+    )
+}
+
+/// Results materialisation per era, NUMERATOR: award-typed versions whose notice
+/// actually produced a canonical `lot_results` row.
+///
+/// The award predicate is repeated verbatim from [`awards_can_sql`] rather than
+/// joined against it, so the numerator is a subset of the denominator by
+/// construction and the ratio cannot exceed 1 — the `IMPOSSIBLE` state the old
+/// pair could reach (it counted versions below the line and notices above it).
+pub fn awards_with_sql() -> String {
+    awards_with_template("")
+}
+
+fn awards_with_template(win: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS with_results \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}({award}) \
+            AND EXISTS(SELECT 1 FROM lot_results lr \
+                        WHERE lr.tender_id = tv.tender_id AND lr.notice_id = tv.caused_by_notice_id) \
+          GROUP BY n.profile",
+        award = award_predicate(),
+    )
+}
+
+/// Document-type COVERAGE per era: how much of the denominator's input this
+/// vocabulary cannot read (issue 235).
+///
+/// Two counts, both of them ways for an award notice to go missing from section 3
+/// without anyone noticing:
+///
+/// - `unclassified` — the notice carries its era's marker field with a code in
+///   neither [`DocTypeMarker::award`] nor [`DocTypeMarker::other`]. A new subtype
+///   (`X02` appeared in sdk-1.1x during the measurement) lands here.
+/// - `untyped` — the notice carries no marker field at all, so its award-hood is
+///   unknown rather than negative. 44 % of the 2008 internal-ojs sample had no
+///   `TED-FORM`, and a silent "not an award" would have hidden them.
+///
+/// A rate is only as good as the share of its population it can classify, so this
+/// renders next to section 3 rather than in a separate report.
+pub fn doc_type_sql() -> String {
+    doc_type_template("")
+}
+
+fn doc_type_template(win: &str) -> String {
+    let unknown: Vec<String> = DOC_TYPE_MARKERS
+        .iter()
+        .map(|m| {
+            let known: Vec<&str> = m.award.iter().chain(m.other).copied().collect();
+            marker_term(m, &format!(" AND c.code NOT IN ({})", code_list(&known)))
+        })
+        .collect();
+    let any: Vec<String> = DOC_TYPE_MARKERS.iter().map(|m| marker_term(m, "")).collect();
+    format!(
+        "SELECT n.profile, \
+                SUM(CASE WHEN {unknown} THEN 1 ELSE 0 END) AS unclassified, \
+                SUM(CASE WHEN NOT ({any}) THEN 1 ELSE 0 END) AS untyped \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}1 = 1 \
+          GROUP BY n.profile",
+        unknown = unknown.join(" OR "),
+        any = any.join(" OR "),
+    )
+}
 
 /// TED↔DÖE merge (ADR-0003), single row. A keyed Tender whose versions include
 /// notices from *both* sources is a merge: one procedure, two sources, one
@@ -224,8 +504,14 @@ pub fn queries() -> Vec<(String, String)> {
         out.push((spec.key.to_owned(), field_sql(spec)));
     }
     out.push(("linkage".to_owned(), LINKAGE_SQL.to_owned()));
-    out.push(("density_can".to_owned(), DENSITY_CAN_SQL.to_owned()));
-    out.push(("density_with".to_owned(), DENSITY_WITH_SQL.to_owned()));
+    // Section 3 proper: the denominator the notice publishes about itself.
+    out.push(("awards_can".to_owned(), awards_can_sql()));
+    out.push(("awards_with".to_owned(), awards_with_sql()));
+    out.push(("doc_types".to_owned(), doc_type_sql()));
+    // The section→row invariant, under its own name (issue 235): worth keeping,
+    // just not a density.
+    out.push(("sections_can".to_owned(), SECTIONS_CAN_SQL.to_owned()));
+    out.push(("sections_with".to_owned(), SECTIONS_WITH_SQL.to_owned()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
     out
 }
@@ -250,7 +536,7 @@ pub fn queries() -> Vec<(String, String)> {
 ///   (awards, unchained) are additive over disjoint Tender sets.
 /// - `density_can` counts award-notice versions; `density_with` counts the subset
 ///   whose notice materialised `lot_results`. Both are version counts (see
-///   [`DENSITY_WITH_SQL`] — making them share a unit is what let the numerator be
+///   [`SECTIONS_WITH_SQL`] — making them share a unit is what let the numerator be
 ///   windowed at all).
 /// - `merge` counts DÖE-touching Tenders and the merged subset. Its inner `SELECT
 ///   DISTINCT v.tender_id` is windowed, and since Tender ids are disjoint across
@@ -316,13 +602,32 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
         column: "v1.tender_id".to_owned(),
     });
     out.push(WindowedQuery {
-        label: "density_can".to_owned(),
-        template: DENSITY_CAN_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        label: "sections_can".to_owned(),
+        template: SECTIONS_CAN_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
         column: "tv.tender_id".to_owned(),
     });
     out.push(WindowedQuery {
-        label: "density_with".to_owned(),
-        template: DENSITY_WITH_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        label: "sections_with".to_owned(),
+        template: SECTIONS_WITH_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        column: "tv.tender_id".to_owned(),
+    });
+    // The three document-type queries build their windowed form from the SAME
+    // builder as the catalog form, with the predicate passed in rather than
+    // spliced by text — one source, so windowed and unwindowed cannot come to
+    // measure different populations.
+    out.push(WindowedQuery {
+        label: "awards_can".to_owned(),
+        template: awards_can_template("{window} AND "),
+        column: "tv.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "awards_with".to_owned(),
+        template: awards_with_template("{window} AND "),
+        column: "tv.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "doc_types".to_owned(),
+        template: doc_type_template("{window} AND "),
         column: "tv.tender_id".to_owned(),
     });
     out.push(WindowedQuery {
@@ -437,12 +742,42 @@ pub struct LinkageRow {
     pub unchained: u64,
 }
 
-/// One era's results materialisation.
+/// One era's results materialisation: award notices by their own PUBLISHED type
+/// (issue 235), and how many of them produced a canonical `lot_results` row.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DensityRow {
     pub profile: String,
-    pub can_notices: u64,
+    /// Versions whose notice's document type announces a result — see
+    /// [`DOC_TYPE_MARKERS`]. Independent of what the projection wrote, which is
+    /// what lets this rate fall below 100 %.
+    pub award_notices: u64,
     pub with_results: u64,
+}
+
+/// One era's projection invariant: of the versions whose notice parsed WITH a
+/// result section, how many carry a `lot_results` row.
+///
+/// This is the pair that used to be called density (issue 235). It measures the
+/// projection against the parse layer — "did we write what we parsed" — which is a
+/// real invariant that caught a real defect (sdk-0.1's `TenderResult` sections
+/// falling out of the denominator, issue 230), and is NOT the question section 3
+/// asks. Kept under its own name rather than deleted.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct InvariantRow {
+    pub profile: String,
+    pub with_sections: u64,
+    pub with_rows: u64,
+}
+
+/// One era's document-type coverage: the share of the section-3 population whose
+/// award-hood this vocabulary could not read. See [`doc_type_sql`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DocTypeRow {
+    pub profile: String,
+    /// Carries its era's marker field, with a code in neither list.
+    pub unclassified: u64,
+    /// Carries no marker field at all — award-hood unknown, not negative.
+    pub untyped: u64,
 }
 
 /// The TED↔DÖE merge tally.
@@ -459,6 +794,10 @@ pub struct Report {
     pub completeness: Vec<CompletenessRow>,
     pub linkage: Vec<LinkageRow>,
     pub density: Vec<DensityRow>,
+    /// The section→row invariant, per era (issue 235).
+    pub invariant: Vec<InvariantRow>,
+    /// How much of each era section 3's vocabulary can classify (issue 235).
+    pub doc_types: Vec<DocTypeRow>,
     pub merge: Merge,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
@@ -501,8 +840,11 @@ pub struct Raw {
     pub versions: Rows,
     pub fields: [Rows; 6],
     pub linkage: Rows,
-    pub density_can: Rows,
-    pub density_with: Rows,
+    pub awards_can: Rows,
+    pub awards_with: Rows,
+    pub doc_types: Rows,
+    pub sections_can: Rows,
+    pub sections_with: Rows,
     pub merge: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
@@ -543,8 +885,11 @@ impl Raw {
                 take("winner", &mut unmeasured)?,
             ],
             linkage: take("linkage", &mut unmeasured)?,
-            density_can: take("density_can", &mut unmeasured)?,
-            density_with: take("density_with", &mut unmeasured)?,
+            awards_can: take("awards_can", &mut unmeasured)?,
+            awards_with: take("awards_with", &mut unmeasured)?,
+            doc_types: take("doc_types", &mut unmeasured)?,
+            sections_can: take("sections_can", &mut unmeasured)?,
+            sections_with: take("sections_with", &mut unmeasured)?,
             merge: take("merge", &mut unmeasured)?,
             unmeasured,
         })
@@ -578,22 +923,47 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         .collect();
     linkage.sort_by(|a, b| a.profile.cmp(&b.profile));
 
-    // Density is two separately-measured halves (denominator from the projected
-    // award notices, numerator from `lot_results`) combined by profile — every
-    // profile in either half becomes one row, a missing numerator being 0 (the
-    // gap the metric exists to show).
-    let can = count_by_profile(&raw.density_can);
-    let with = count_by_profile(&raw.density_with);
+    // Density is two separately-measured halves (denominator from the notice's
+    // published document type, numerator from `lot_results`) combined by profile —
+    // every profile in either half becomes one row, a missing numerator being 0
+    // (the gap the metric exists to show).
+    let can = count_by_profile(&raw.awards_can);
+    let with = count_by_profile(&raw.awards_with);
     let mut profiles: std::collections::BTreeSet<String> = can.keys().cloned().collect();
     profiles.extend(with.keys().cloned());
     let density: Vec<DensityRow> = profiles
         .into_iter()
         .map(|profile| DensityRow {
-            can_notices: can.get(&profile).copied().unwrap_or(0),
+            award_notices: can.get(&profile).copied().unwrap_or(0),
             with_results: with.get(&profile).copied().unwrap_or(0),
             profile,
         })
         .collect();
+
+    // The section→row invariant, same two-halves shape under its own name.
+    let sec = count_by_profile(&raw.sections_can);
+    let sec_rows = count_by_profile(&raw.sections_with);
+    let mut profiles: std::collections::BTreeSet<String> = sec.keys().cloned().collect();
+    profiles.extend(sec_rows.keys().cloned());
+    let invariant: Vec<InvariantRow> = profiles
+        .into_iter()
+        .map(|profile| InvariantRow {
+            with_sections: sec.get(&profile).copied().unwrap_or(0),
+            with_rows: sec_rows.get(&profile).copied().unwrap_or(0),
+            profile,
+        })
+        .collect();
+
+    let mut doc_types: Vec<DocTypeRow> = raw
+        .doc_types
+        .iter()
+        .map(|r| DocTypeRow {
+            profile: as_str(r.first()),
+            unclassified: as_u64(r.get(1)),
+            untyped: as_u64(r.get(2)),
+        })
+        .collect();
+    doc_types.sort_by(|a, b| a.profile.cmp(&b.profile));
 
     // Column 0 is the constant `'all'` scope label that lets the merge row sum
     // across windows like every other result set, so the counts start at 1.
@@ -607,6 +977,8 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         completeness,
         linkage,
         density,
+        invariant,
+        doc_types,
         merge,
         unmeasured: raw.unmeasured.clone(),
     }
@@ -680,7 +1052,10 @@ pub fn render_text(report: &Report) -> String {
         );
     }
 
-    let _ = writeln!(out, "\n== 3. Results materialisation (award notices → lot_results) ==");
+    let _ = writeln!(
+        out,
+        "\n== 3. Results materialisation (notices whose PUBLISHED type announces a result → lot_results) =="
+    );
     let _ = writeln!(out, "  {:<30} {:>10} {:>14} {:>8}", "era", "award-notices", "with lot_results", "density");
     let mut impossible = 0usize;
     for row in &report.density {
@@ -689,24 +1064,64 @@ pub fn render_text(report: &Report) -> String {
         // `—` (which reads as "nothing to report") nor a >100% figure (which reads
         // as a rate) says so, and this report has already been burned once by a
         // number that could not distinguish two states. Name it.
-        let rate = if row.with_results > row.can_notices {
+        let rate = if row.with_results > row.award_notices {
             impossible += 1;
             "IMPOSSIBLE".to_owned()
         } else {
-            pct(row.with_results, row.can_notices)
+            pct(row.with_results, row.award_notices)
         };
         let _ = writeln!(
             out,
             "  {:<30} {:>10} {:>14} {:>8}",
-            display_era(&row.profile), group(row.can_notices), group(row.with_results), rate
+            display_era(&row.profile), group(row.award_notices), group(row.with_results), rate
         );
     }
     if impossible > 0 {
         let _ = writeln!(
             out,
             "  IMPOSSIBLE ({impossible} era(s)): more notices carry results than are counted as \
-             award notices, so the two halves disagree about the population. The denominator's \
-             section-kind list is the first place to look."
+             award notices, so the two halves disagree about the population. Both halves share one \
+             award predicate ({markers} document-type markers), so a contradiction here means the \
+             predicate itself changed between the two queries.",
+            markers = DOC_TYPE_MARKERS.len()
+        );
+    }
+    // A rate is only worth as much as the share of its population the vocabulary
+    // could classify — printed with the rate, not in an appendix (issue 235).
+    let unread: Vec<&DocTypeRow> =
+        report.doc_types.iter().filter(|r| r.unclassified > 0 || r.untyped > 0).collect();
+    if report.unmeasured.iter().any(|l| l == "doc_types") {
+        let _ = writeln!(out, "  document-type coverage: UNMEASURED — the `doc_types` query did not run.");
+    } else if unread.is_empty() {
+        let _ = writeln!(out, "  document-type coverage: every version's notice carries a classified type.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  document-type coverage — versions section 3 CANNOT classify (not counted as awards):"
+        );
+        let _ = writeln!(out, "  {:<30} {:>14} {:>10}", "era", "unclassified", "untyped");
+        for row in unread {
+            let _ = writeln!(
+                out,
+                "  {:<30} {:>14} {:>10}",
+                display_era(&row.profile), group(row.unclassified), group(row.untyped)
+            );
+        }
+    }
+
+    let _ = writeln!(
+        out,
+        "\n== 3b. Projection invariant (notices that PARSED a result section → lot_results) =="
+    );
+    let _ = writeln!(out, "  {:<30} {:>10} {:>14} {:>8}", "era", "w/ sections", "with lot_results", "written");
+    for row in &report.invariant {
+        let _ = writeln!(
+            out,
+            "  {:<30} {:>10} {:>14} {:>8}",
+            display_era(&row.profile),
+            group(row.with_sections),
+            group(row.with_rows),
+            pct(row.with_rows, row.with_sections)
         );
     }
 
@@ -766,9 +1181,30 @@ pub fn render_json(report: &Report) -> String {
         .map(|r| json!({
             "profile": r.profile,
             "era": era_of(&r.profile),
-            "award_notices": r.can_notices,
+            "award_notices": r.award_notices,
             "with_results": r.with_results,
-            "density": rate(r.with_results, r.can_notices),
+            "density": rate(r.with_results, r.award_notices),
+        }))
+        .collect();
+    let invariant: Vec<Value> = report
+        .invariant
+        .iter()
+        .map(|r| json!({
+            "profile": r.profile,
+            "era": era_of(&r.profile),
+            "with_sections": r.with_sections,
+            "with_rows": r.with_rows,
+            "written_rate": rate(r.with_rows, r.with_sections),
+        }))
+        .collect();
+    let doc_types: Vec<Value> = report
+        .doc_types
+        .iter()
+        .map(|r| json!({
+            "profile": r.profile,
+            "era": era_of(&r.profile),
+            "unclassified": r.unclassified,
+            "untyped": r.untyped,
         }))
         .collect();
     let value = json!({
@@ -777,6 +1213,8 @@ pub fn render_json(report: &Report) -> String {
         "completeness": completeness,
         "award_linkage": linkage,
         "results_density": density,
+        "sections_to_rows": invariant,
+        "doc_type_coverage": doc_types,
         "ted_doe_merge": {
             "doe_tenders": report.merge.doe_tenders,
             "merged": report.merge.merged,
@@ -856,7 +1294,24 @@ mod tests {
         let labels: Vec<&str> = q.iter().map(|(l, _)| l.as_str()).collect();
         assert_eq!(
             labels,
-            ["versions", "title", "buyer", "value", "cpv", "deadline", "winner", "linkage", "density_can", "density_with", "merge"]
+            [
+                "versions",
+                "title",
+                "buyer",
+                "value",
+                "cpv",
+                "deadline",
+                "winner",
+                "linkage",
+                // Section 3: the notice's own published type (issue 235) …
+                "awards_can",
+                "awards_with",
+                "doc_types",
+                // … and the section→row invariant that used to wear its name.
+                "sections_can",
+                "sections_with",
+                "merge",
+            ]
         );
     }
 
@@ -896,10 +1351,10 @@ mod tests {
     /// hardcoded to `LotResult`, so the first full-corpus run reported 0 award
     /// notices against 139,961 with results and rendered it as `—`.
     #[test]
-    fn the_density_denominator_spans_both_result_kinds_and_names_a_contradiction() {
+    fn the_section_invariant_spans_both_result_kinds_and_a_contradiction_is_named() {
         assert!(
-            DENSITY_CAN_SQL.contains("s.kind IN ('LotResult', 'TenderResult')"),
-            "sdk-0.1 names its results `TenderResult` (project.rs SDK01_RESULT_KIND): {DENSITY_CAN_SQL}"
+            SECTIONS_CAN_SQL.contains("s.kind IN ('LotResult', 'TenderResult')"),
+            "sdk-0.1 names its results `TenderResult` (project.rs SDK01_RESULT_KIND): {SECTIONS_CAN_SQL}"
         );
 
         let raw = Raw::from_labelled(vec![
@@ -912,8 +1367,11 @@ mod tests {
             ("winner".to_owned(), Some(vec![])),
             ("linkage".to_owned(), Some(vec![])),
             // The prod shape: a zero denominator under a large numerator.
-            ("density_can".to_owned(), Some(vec![])),
-            ("density_with".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-0.1"), json!(139_961)]])),
+            ("awards_can".to_owned(), Some(vec![])),
+            ("awards_with".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-0.1"), json!(139_961)]])),
+            ("doc_types".to_owned(), Some(vec![])),
+            ("sections_can".to_owned(), Some(vec![])),
+            ("sections_with".to_owned(), Some(vec![])),
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
         ])
         .expect("labelled");
@@ -925,6 +1383,139 @@ mod tests {
             .find(|l| l.contains("DÖE sdk-0.1 island") && l.contains("139,961"))
             .expect("the density row is rendered");
         assert!(!density_line.contains('—'), "a contradiction is not an absent rate: {density_line}");
+    }
+
+    /// Issue 235, THE regression: the award denominator must not be read from the
+    /// projection's own output.
+    ///
+    /// The old denominator was "notices carrying a result SECTION", and the
+    /// numerator was "notices carrying a `lot_results` ROW" — the projection
+    /// writes the second from the first, so the pair could only ever measure
+    /// whether the fold ran. It read exactly 100.0 % on all twenty eras that
+    /// measure, including 60,037/60,037 on eforms-de-1.1 while issue 100's DE-1.x
+    /// winners were known unresolved. An award notice that parsed with ZERO result
+    /// sections — the actual failure — was excluded from both halves.
+    ///
+    /// So: no `notice_sections` anywhere in either half of section 3. If a future
+    /// edit reaches for it again for convenience, this fails.
+    #[test]
+    fn the_award_denominator_never_reads_the_projections_own_output() {
+        for (label, sql) in [("awards_can", awards_can_sql()), ("awards_with", awards_with_sql())] {
+            assert!(
+                !sql.contains("notice_sections"),
+                "{label} must read the notice's PUBLISHED type, not what the projection wrote: {sql}"
+            );
+            assert!(sql.contains("notice_codes"), "{label} reads the doc type from notice_codes: {sql}");
+        }
+        // And each half seeks by the primary-key prefix rather than scanning the
+        // notice's codes: measured, this is 1.3 s vs an 11 s timeout on one window.
+        for (label, sql) in [
+            ("awards_can", awards_can_sql()),
+            ("awards_with", awards_with_sql()),
+            ("doc_types", doc_type_sql()),
+        ] {
+            assert!(
+                sql.contains("c.section_id = 'PROCEDURE'"),
+                "{label} must pin the section so the probe is a (notice_id, section_id, field_id) \
+                 prefix seek: {sql}"
+            );
+        }
+
+        // The numerator carries the denominator's predicate verbatim, so it is a
+        // subset by construction and the rate cannot exceed 1.
+        let award = award_predicate();
+        assert!(awards_can_sql().contains(&award), "the denominator IS the award predicate");
+        assert!(awards_with_sql().contains(&award), "the numerator repeats it verbatim");
+        // And the numerator adds exactly one thing: the canonical row.
+        assert!(awards_with_sql().contains("FROM lot_results lr"), "{}", awards_with_sql());
+    }
+
+    /// The vocabulary itself: every marker must classify codes into two disjoint
+    /// lists, because a code in both makes "unclassified" meaningless and a code in
+    /// neither is the visible gap [`doc_type_sql`] exists to count.
+    #[test]
+    fn every_doc_type_marker_lists_disjoint_award_and_other_codes() {
+        for m in DOC_TYPE_MARKERS {
+            assert!(!m.profiles.is_empty(), "{}: a marker with no profile scope reads no era", m.field_id);
+            assert!(!m.award.is_empty(), "{}: a marker naming no award code cannot feed a denominator", m.field_id);
+            for code in m.award {
+                assert!(
+                    !m.other.contains(code),
+                    "{}: `{code}` is in both lists, so it is both an award and not one",
+                    m.field_id
+                );
+            }
+            let mut seen: Vec<&str> = m.award.iter().chain(m.other).copied().collect();
+            let before = seen.len();
+            seen.sort_unstable();
+            seen.dedup();
+            assert_eq!(before, seen.len(), "{}: a code is listed twice", m.field_id);
+        }
+        // Every era family the report labels must have a marker, or section 3
+        // silently reports no award notices for a whole era. `other` is the
+        // catch-all `era_of` bucket and has no corpus behind it.
+        for profile in [
+            "text",
+            "internal-ojs",
+            "ted-export-r208",
+            "ted-export-r209",
+            "eforms:eforms-sdk-0.1",
+            "eforms:eforms-sdk-1.13",
+            "eforms:eforms-de-1.1",
+            "eforms:eforms-de-2.1@eforms-sdk-1.13",
+        ] {
+            assert!(
+                DOC_TYPE_MARKERS.iter().any(|m| m.profiles.iter().any(|p| like_matches(p, profile))),
+                "no document-type marker covers {profile}, so its awards cannot be counted"
+            );
+        }
+    }
+
+    /// A minimal SQL `LIKE` for the test above: `%` only, which is all
+    /// [`DocTypeMarker::profiles`] uses.
+    fn like_matches(pattern: &str, value: &str) -> bool {
+        match pattern.strip_suffix('%') {
+            Some(prefix) => value.starts_with(prefix),
+            None => pattern == value,
+        }
+    }
+
+    /// The unclassified diagnostic must actually be able to fire: it asks for a
+    /// marker field whose code is in NEITHER list, per era. A measured example is
+    /// `OPP-070-notice = 'X02'`, which appeared in sdk-1.1x and is in neither list
+    /// on purpose — the vocabulary should report it, not absorb it.
+    #[test]
+    fn doc_type_coverage_counts_a_code_in_neither_list() {
+        let sql = doc_type_sql();
+        assert!(sql.contains("AS unclassified") && sql.contains("AS untyped"), "{sql}");
+        assert!(sql.contains("c.code NOT IN ("), "an unclassified code is one outside the known set: {sql}");
+        for m in DOC_TYPE_MARKERS {
+            assert!(sql.contains(m.field_id), "{} must be probed: {sql}", m.field_id);
+        }
+        // A code we deliberately do NOT classify must not appear in the known set.
+        assert!(!sql.contains("'X02'"), "X02 is unclassified by design, so the diagnostic can show it");
+        // The eForms scheme's boundary, as measured: 24 is never a result notice,
+        // 25 (direct-award prenotification) always is.
+        assert!(EFORMS_OTHER_SUBTYPES.contains(&"24"), "24 is a competition subtype");
+        assert!(EFORMS_AWARD_SUBTYPES.contains(&"25"), "25 announces a direct award");
+    }
+
+    /// The per-era scope is what keeps one field id from carrying another era's
+    /// vocabulary: `TED-FORM` exists in r2.0.8 and r2.0.9 too, with different
+    /// values, and those eras are classified by `TD_DOCUMENT_TYPE` instead.
+    #[test]
+    fn the_internal_ojs_form_vocabulary_does_not_leak_into_the_other_ted_eras() {
+        let form = DOC_TYPE_MARKERS
+            .iter()
+            .find(|m| m.field_id == "TED-FORM")
+            .expect("the 2008 export is classified by its form");
+        assert_eq!(form.profiles, &["internal-ojs"]);
+        let sql = awards_can_sql();
+        assert!(
+            sql.contains("(n.profile LIKE 'internal-ojs') AND EXISTS("),
+            "the form marker must be profile-scoped, at version level: {sql}"
+        );
+        assert!(sql.contains("AND c.field_id = 'TED-FORM' AND c.code IN ('3', '3_SUM')"), "{sql}");
     }
 
     #[test]
@@ -968,9 +1559,14 @@ mod tests {
             ("deadline".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(6)]])),
             ("winner".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
             ("linkage".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(2), json!(1)]])),
-            // Density: 2 projected award notices for the eForms era, 0 materialised.
-            ("density_can".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
-            ("density_with".to_owned(), Some(vec![])),
+            // Density: 2 award-TYPED notices for the eForms era, 0 materialised.
+            ("awards_can".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
+            ("awards_with".to_owned(), Some(vec![])),
+            // One version of the r209 era carries a type this vocabulary cannot read.
+            ("doc_types".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(1), json!(0)]])),
+            // The section→row invariant: 3 parsed a result section, all 3 written.
+            ("sections_can".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(3)]])),
+            ("sections_with".to_owned(), Some(vec![vec![json!("ted-export-r209"), json!(3)]])),
             // Column 0 is merge's constant scope label (issue 230) — the shape that
             // lets a single-row result sum across windows like every other one.
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(3), json!(1)]])),
@@ -990,8 +1586,15 @@ mod tests {
         assert_eq!(report.linkage[0].awards, 2);
         assert_eq!(report.linkage[0].unchained, 1);
         // The issue-15 anomaly in miniature: 2 award notices, 0 materialised.
-        assert_eq!(report.density[0].can_notices, 2);
+        assert_eq!(report.density[0].award_notices, 2);
         assert_eq!(report.density[0].with_results, 0);
+        // The invariant is its own row set now (issue 235), and it reads 3/3 —
+        // "the projection wrote what it parsed" is TRUE on the same era where the
+        // award density is 0 %, which is exactly the pair of facts one metric
+        // could not express.
+        assert_eq!(report.invariant[0].with_sections, 3);
+        assert_eq!(report.invariant[0].with_rows, 3);
+        assert_eq!(report.doc_types[0].unclassified, 1);
         assert_eq!(report.merge, Merge { doe_tenders: 3, merged: 1 });
 
         // Rendered text carries the headline rates.
@@ -1006,7 +1609,14 @@ mod tests {
         let json: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
         assert_eq!(json["ted_doe_merge"]["merged"], json!(1));
         assert_eq!(json["results_density"][0]["density"], json!(0.0));
+        assert_eq!(json["sections_to_rows"][0]["written_rate"], json!(1.0));
+        assert_eq!(json["doc_type_coverage"][0]["unclassified"], json!(1));
         assert_eq!(json["completeness"][0]["rate"]["winner"], json!(0.2));
+        // And the two questions render as separate sections, so a reader cannot
+        // mistake one for the other.
+        assert!(text.contains("PUBLISHED type announces a result"), "{text}");
+        assert!(text.contains("3b. Projection invariant"), "{text}");
+        assert!(text.contains("CANNOT classify"), "{text}");
     }
 
     /// Issue 230: a query that FAILED and a query that ran and matched nothing
@@ -1016,17 +1626,15 @@ mod tests {
     /// nobody had measured.
     #[test]
     fn a_failed_query_renders_as_unmeasured_not_as_zero() {
-        let labels = [
-            "versions", "title", "buyer", "value", "cpv", "deadline", "winner", "linkage",
-            "density_can", "density_with", "merge",
-        ];
+        let labels: Vec<String> = queries().into_iter().map(|(l, _)| l).collect();
+        let total = labels.len();
         // Every query failed: None, not an empty result set.
         let all_failed: Vec<(String, Option<Rows>)> =
-            labels.iter().map(|l| ((*l).to_owned(), None)).collect();
+            labels.iter().map(|l| (l.clone(), None)).collect();
         let raw = Raw::from_labelled(all_failed).expect("labelled");
-        assert_eq!(raw.unmeasured.len(), 11, "every label recorded as unmeasured");
+        assert_eq!(raw.unmeasured.len(), total, "every label recorded as unmeasured");
         let text = render_text(&assemble("http://x", &raw));
-        assert!(text.contains("INCOMPLETE: 11 of 11 queries did not run"), "{text}");
+        assert!(text.contains(&format!("INCOMPLETE: {total} of {total} queries did not run")), "{text}");
         assert!(text.contains("UNMEASURED — the `merge` query did not run."), "{text}");
         assert!(
             !text.contains("merged with TED: 0"),
@@ -1036,7 +1644,7 @@ mod tests {
         // The complement: a query that RAN and matched nothing still reports its
         // real zero, and the report is not marked incomplete.
         let mut ran: Vec<(String, Option<Rows>)> =
-            labels.iter().map(|l| ((*l).to_owned(), Some(Vec::new()))).collect();
+            labels.iter().map(|l| (l.clone(), Some(Vec::new()))).collect();
         ran.retain(|(l, _)| l != "merge");
         ran.push(("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])));
         let raw = Raw::from_labelled(ran).expect("labelled");
