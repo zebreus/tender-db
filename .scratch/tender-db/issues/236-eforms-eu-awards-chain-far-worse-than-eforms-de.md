@@ -1,9 +1,9 @@
 # 236 — eForms EU awards chain to their contract notice at 44–77 %, where eForms-DE manages 98–100 %
 
-Status: DIAGNOSED 2026-08-19, decision recorded in ADR-0011 — the cross-era hypothesis below is
-FALSIFIED; the cause is BT-04 that is not stable across a procedure's notices, and `OPP-090-Procedure` is
-the published repair for ~12 % of the cohort. Next: implement the edge (needs a corpus re-projection —
-bundle with issues 100/232/235).
+Status: IMPLEMENTED and deployed 2026-08-19 (`537620e`), verified on prod against a real pair — the
+cross-era hypothesis below is FALSIFIED; the cause is BT-04 that is not stable across a procedure's
+notices, and `OPP-090-Procedure` (ADR-0011) is the published repair for ~12 % of the cohort. Remaining:
+the corpus-wide repair needs the rebuild (bundle with issues 100/232/235).
 Kind: identity/chaining gap, suspected cross-era boundary
 Blocked by: —
 Relates to: 187 (INTERNAL_OJS 100 % unchained), 188 (sdk-0.1 98 % unchained), 58 (legacy OJS closure —
@@ -192,3 +192,45 @@ the edge must join procedure-key components rather than pull eForms notices into
 their publication ids parse as `(year, number)` and would fit `ojs_self`/`ojs_edges` with no new
 machinery, but the legacy component is keyed by MIN OJS, so eForms Tender identity would stop being BT-04
 — reissuing ids corpus-wide to fix a 12 % gap.
+
+## Implemented and verified on prod (2026-08-19, rev `537620e`)
+
+Three commits: `62b9021` reads `OPP-090-Procedure` into `Ident`/`PlanRow` with the publication-id
+normalisation; `51c453e` adds the real fixture pair and pins the parse-layer claim; `537620e` groups on
+the edge.
+
+**Where the pass sits and why.** After the keyed and legacy passes (it unions COMPONENTS, so every
+notice must already carry a `group_key`) and before `plan_notice_fold` is created (so the relabel pays no
+index maintenance). Resolution goes reference → `notices` UNIQUE(source, publication_id, …) → `plan_notice`
+by primary key, which is why it needs **no new index** on a 22M-row plan table — the first design that
+came to mind wanted `plan_notice(publication_id)` and would have cost an extra full index build.
+
+**The representative is the earliest-published key**, reusing `MinUnionFind` by unioning over positions in
+earliest-first order instead of writing a second union-find. Same rule as the legacy closure's `MIN(ojs)`:
+a procedure is identified by its first appearance.
+
+**Verified on production data, not only in a test.** `refold-notices [24324996, 24506261]` (job 749) then
+the paired projection (750) reported `2 notices → 1 tenders (0 islands), 2 versions`, and the corpus now
+holds:
+
+    tender 2832   (was the award's island, key 00a143ab-…)   GONE — absorbed and retired
+    tender 138780 (the CN's, key 1d76f173-…)                 current_seq 2
+      seq 1  00615938-2024  2024-10-10   the contract notice
+      seq 2  00000566-2025  2025-01-01   the award, its lot_result attached
+
+That exercises the retire path as well, which the unit test cannot: the award's old Tender id is gone, so
+a consumer holding it must follow the `removed` event (issue 46's protocol).
+
+### What is still open, precisely
+
+- **The corpus repair.** Only this one pair is merged. The incremental plan holds just the touched
+  notices, so a daily run resolves an edge only when BOTH ends are in that plan — otherwise it unions
+  nothing and the award stays an island. That is deliberate (a late merge beats a partial one), and it
+  means the ~10⁴ merges land with the bundled rebuild. `refold-notices` is the manual lever meanwhile,
+  as used above.
+- **Scope expansion for the incremental path** would make dailies merge immediately: when a new notice
+  references publication P, P's Tender's notices must join the touched set. Issue 58 v2 built exactly this
+  shape for legacy adjacency (`legacy_ojs_keys` + the closure walk, task #32), so the pattern exists to
+  copy. Not started; it is the natural next unit and worth its own issue if it does not get picked up here.
+- **The expected Tender-count drop** when the rebuild lands (one Tender per merge) wants a ledger row, or
+  it reads as data loss.
