@@ -1,0 +1,94 @@
+# 246 — ADR-0010's reopen trigger has no instrument, and the arrival rate turns out to be measurable
+
+Status: needs-triage — measured on prod 2026-08-19 during a routine quarantine audit
+Kind: instrument gap behind a policy decision (not a defect in the policy)
+Blocked by: —
+Relates to: ADR-0010 (sub-cent amounts stay quarantined; names its own reopen trigger), 184 (declared
+the campaign's terminal state and the disclosure), 144 (diagnosed cause F), 171 (the value-domain
+study ADR-0010 nominates as "the watch"), 132 (negative amounts), 53 (`/metrics`), 230/235 (the report
+this belongs in)
+
+## What ADR-0010 promised
+
+> Revisit only if the value domain shifts (issue 171 is the watch) … If cause F ever grows past a
+> nuisance, this is the alternative to reopen first [claim-and-store] — it is cheaper than (1) and
+> honest, just not worth the surface today.
+
+The decision is sound and deliberately reversible. What it does not have is a way to notice the
+condition it names. **Issue 171 is a one-off study**, done once on 2026-08-09; nothing measures cause F
+continuously, and the obvious proxy — the size of the `unrepresentable-value` bucket — cannot answer
+the question, because relabel passes move rows INTO the bucket from other reasons and the bucket's own
+age is an artifact of a July repopulation.
+
+## The arrival rate, measured
+
+Today's daily ingest quarantined 3 notices, all `BT-720-Tender: amount has more than two fraction
+digits` — `358168.44102` (sdk-1.12), `268.527` and `68.53280` (de-2.1). Following that thread:
+
+`first_reason IS NULL` is the discriminator that makes this measurable at all — issue 87's relabel
+machinery preserves the first-ingest reason there, so a row that has never been relabelled is a genuine
+first-time hold:
+
+| provenance | rows | first_seen span |
+|-----------|------|-----------------|
+| never relabelled | 3,122 | 2026-07-19 → 2026-08-19 |
+| relabelled from `unknown-customization` | 1,899 | 2026-07-22/23 |
+| relabelled from `unrepresentable-value` (failed again) | 164 | 2026-07-23 |
+
+The 1,899 are issue 184's step-2 drain landing exactly where it predicted (it forecast 1,907). And the
+never-relabelled rows are NOT a steady stream — one day dominates:
+
+    2026-07-23  2884      <- the DE-1.x reprocess campaign meeting sub-cent amounts at scale
+    2026-07-24    48
+    2026-07-29    20
+    2026-08-05    17
+    …others       14–20
+
+Steady-state, against the day's own ingest:
+
+| day | notices ingested | held sub-cent | share |
+|-----|------------------|---------------|-------|
+| 2026-08-19 | 4,046 |  3 | 0.07 % |
+| 2026-08-18 | 3,038 |  5 | 0.16 % |
+| 2026-08-17 | 3,782 |  5 | 0.13 % |
+| 2026-08-13 | 5,810 |  8 | 0.14 % |
+| 2026-08-12 | 4,220 |  8 | 0.19 % |
+| 2026-08-11 | 3,258 |  8 | 0.25 % |
+| 2026-08-10 | 4,051 | 13 | 0.32 % |
+
+**~5–13 notices a day, ~0.15 % of arrivals, ~2,000–4,700 a year.** Each one is a whole notice absent
+from the corpus — buyer, title, CPV, dates, lots and all — over an amount with three or more decimal
+places. Verified on one of today's: notice 28,456,452 has 0 versions, 0 texts, 0 codes.
+
+## What this does and does not say
+
+It does **not** say the policy is wrong. ADR-0010's reasoning survives this measurement intact: a finer
+integer unit is an epoch bump over every amount in the corpus, rounding invents values the source never
+published, and claim-and-store splits the amounts surface. 0.15 % of arrivals is not obviously past
+"nuisance".
+
+It does say two things worth acting on:
+
+1. **The framing in ADR-0010 flatters the cost.** "~0.02 % of notices" was cause F measured against the
+   7.9M historical corpus. Measured against what is arriving now it is ~0.15 %, about seven times that,
+   because sub-cent precision is a live eForms practice rather than a historical artifact — sdk-1.12 and
+   de-2.1 in today's three. The denominator, not the policy, is what changed.
+2. **The trigger needs an instrument**, or the next person to ask "has cause F grown?" repeats today's
+   half-hour of forensics — and will get it wrong if they use the bucket size, which is dominated by one
+   relabel day and one campaign day.
+
+## Steps
+
+1. Put the arrival rate in the data-quality report: fresh holds by reason over the last 30 days, with
+   the day's ingest as the denominator, keyed on `first_reason IS NULL` so relabels cannot inflate it.
+   `unwindowed_labels()` exists for exactly this shape — a query that cannot be windowed by
+   `tender_id` — and is currently empty, its comment already anticipating the first such query.
+2. State the arrival rate in ADR-0010 as an amendment (not a reversal): the share of ARRIVALS, next to
+   the historical share, so the trigger is stated in the units it will be observed in.
+3. Only then, if the rate climbs: reopen alternative (3) claim-and-store, as ADR-0010 directs.
+
+## Acceptance
+
+- "Has cause F grown past a nuisance?" is answerable from the report, without ad-hoc SQL and without
+  the relabel confound.
+- ADR-0010 carries the arrival-rate framing alongside its corpus-share framing.
