@@ -51,15 +51,25 @@ const LAYER_STALE_SECS: i64 = 6 * 3_600;
 /// Shared with `/metrics`, whose per-kind last-run gauges read the same window.
 pub(super) const JOB_SCAN: i64 = 100;
 
-/// The daily ingestion pipeline's job kinds (probe → process → project, T+1).
-/// `ingest_freshness` tracks the newest SUCCESSFUL run among ONLY these, so a
-/// maintenance job that happens to succeed — a `reindex`, `reprocess`, `refold` —
-/// cannot reset the clock and report the box "fresh" while the daily ingest has
-/// actually stalled. Before this, `last_success` took any-kind success, so a manual
-/// reindex marked ingestion fresh even though nothing new was coming in. `probe`
-/// runs every day regardless of new packages, so it is the reliable heartbeat; the
-/// other two only run when there is work, but their success is equally an ingest.
-const INGEST_KINDS: [&str; 3] = ["probe", "process", "project"];
+/// The job kinds whose success proves data is still ARRIVING. `ingest_freshness`
+/// tracks the newest successful run among ONLY these, so a maintenance job that
+/// happens to succeed — a `reindex`, `reprocess`, `refold` — cannot reset the clock
+/// and report the box "fresh" while the daily ingest has actually stalled. Before
+/// this, `last_success` took any-kind success, so a manual reindex marked ingestion
+/// fresh even though nothing new was coming in.
+///
+/// `project` used to be in this list and had to come out. Every maintenance refold
+/// enqueues a PAIRED `project` — `refold`, `refold-notices`, `refold-sections` and
+/// `reprocess` all push one — so a busy maintenance day kept freshness green through
+/// the pair, which is exactly the masking this constant exists to prevent. Found by
+/// operating the box: after an hour of refolds the check read 20 minutes fresh while
+/// nothing had been fetched from any source for 23 hours.
+///
+/// What is left says only "we asked a source for data, or processed a package, and it
+/// worked". `enqueue_daily` pushes a DÖE `probe` + `process` every single day and a
+/// TED pair on weekdays, so the heartbeat does not go quiet at weekends, and a
+/// projection — which folds what is already stored — no longer speaks for the fetch.
+const INGEST_KINDS: [&str; 2] = ["probe", "process"];
 
 /// The deep probe: liveness + ingest freshness + last-job outcome + disk, folded
 /// into one `ok` the external pinger alerts on.
@@ -312,8 +322,28 @@ mod tests {
 
         // A failed ingest does not count; the prior successful ingest does.
         assert_eq!(
-            ingest_last_success(&[job("process", "error", 2_000), job("project", "ok", 1_500)]),
+            ingest_last_success(&[job("process", "error", 2_000), job("probe", "ok", 1_500)]),
             Some(1_500)
+        );
+
+        // The refold pair must NOT count. Every maintenance refold enqueues a
+        // `project` alongside it, so counting `project` handed the masking back:
+        // an hour of refolds reported freshness while nothing had been fetched for
+        // a day. A projection folds what is already stored — it says nothing about
+        // whether data is still arriving.
+        assert_eq!(
+            ingest_last_success(&[
+                job("project", "ok", 2_000),
+                job("refold", "ok", 1_990),
+                job("probe", "ok", 1_000),
+            ]),
+            Some(1_000),
+            "a refold's paired project is maintenance, not evidence of arrival"
+        );
+        assert_eq!(
+            ingest_last_success(&[job("project", "ok", 2_000), job("refold", "ok", 1_990)]),
+            None,
+            "a window holding only the refold pair is unmeasured, never fresh"
         );
     }
 
