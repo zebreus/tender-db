@@ -1,6 +1,7 @@
 # 246 — ADR-0010's reopen trigger has no instrument, and the arrival rate turns out to be measurable
 
-Status: needs-triage — measured on prod 2026-08-19 during a routine quarantine audit
+Status: step 1 DONE 2026-08-19 (deployed 6cb2853) — section 5 of the data-quality report now measures
+arrivals; step 2 (amend ADR-0010's framing) still open
 Kind: instrument gap behind a policy decision (not a defect in the policy)
 Blocked by: —
 Relates to: ADR-0010 (sub-cent amounts stay quarantined; names its own reopen trigger), 184 (declared
@@ -92,3 +93,47 @@ It does say two things worth acting on:
 - "Has cause F grown past a nuisance?" is answerable from the report, without ad-hoc SQL and without
   the relabel confound.
 - ADR-0010 carries the arrival-rate framing alongside its corpus-share framing.
+
+
+---
+
+## Step 1 landed 2026-08-19 — section 5 of the data-quality report
+
+    == 5. Quarantine arrivals (first-time holds in the last 30 days, per reason) ==
+      reason                                                arrivals  newest
+      unrepresentable-value                                    3,103  2026-08-19
+      not-utf8                                                 1,492  2026-07-21
+      unknown-root                                               753  2026-07-21
+      …
+
+Arrivals keyed on `first_reason IS NULL`, with the newest arrival as a date so a live
+bucket is distinguishable from settled residue at a glance — `unrepresentable-value` fed today,
+`not-utf8` and `unknown-root` untouched for a month. The rendered table carries the caveat that this is
+arrivals and not bucket size, because the two differ by a factor of two in this very bucket.
+
+No denominator: counting notices ingested in the same window is a full `notices` scan, measured at over
+10 s against the public endpoint's limit, and an arrival rate stands on its own.
+
+**A new query category.** This is the first query that cannot be windowed by `tender_id` — quarantine
+rows have no tender — but can still be measured, so it runs once through a new `whole_corpus_queries()`.
+`unwindowed_labels()` keeps its meaning: a query that cannot be measured at all. The catalog invariant
+is now a three-way partition and also asserts disjointness, since a label in two lists would be counted
+twice and an arrival count would silently double.
+
+Verified on the box by dry run (job 759): *"480 statements, plus 1 whole-corpus statement(s) run once
+(fresh_holds); every label is windowed or whole-corpus"*. The table itself renders on the next full run
+(weekly schedule); the query was run against prod by hand first, which is where the numbers above come
+from.
+
+### Note on a date in this issue
+
+An earlier revision of the text above said `not-utf8` was last fed 2026-07-19. It is 2026-07-21 — the
+unit test's date assertion caught the slip when it was written against the same timestamps. The
+substance (dormant for a month) is unchanged.
+
+### Still open
+
+- **Step 2**: amend ADR-0010 with the arrival-rate framing beside its corpus-share framing, so the
+  trigger is stated in the units it will now be observed in.
+- **Step 3**: nothing to do unless the rate climbs, at which point ADR-0010 names claim-and-store as the
+  alternative to reopen first.
