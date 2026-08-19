@@ -1915,8 +1915,26 @@ impl Db {
     /// `organizations_identity` is deliberately absent: it is built only when the
     /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
     /// legitimately lacks the index and must not be reported as missing.
-    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 5] = [
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 6] = [
         ("organization_mentions_org", "organization_mentions(organization_id)"),
+        // Issue 247: the re-parse's clear deletes a notice's mentions, and that single
+        // statement was 99.6% of a re-parse's writer time — 153 ms per notice, measured
+        // by `tender_db_reparse_clear_statement_seconds_total` on prod, against
+        // microseconds for every other statement in the same clear.
+        //
+        // `organization_mentions` already declares `PRIMARY KEY (notice_id, section_id)`,
+        // so this index looks redundant. It is not, and the measurement says why: the
+        // DELETE does not use the implicit composite-PK index and scans all 41.78M rows
+        // instead — including for a notice with ZERO mentions, which is the case that
+        // proves it is scanning rather than deleting. A SELECT with the identical
+        // predicate answers in 0.8 ms, so reads seek and this write did not.
+        //
+        // The two party tables' deletes in that same clear cost 14 ms and 8 ms IN TOTAL
+        // over 555 notices, and the only thing they have that this lacked is an explicit
+        // single-column index on the predicate (`tender_version_parties_mention`, added
+        // by issue 100 for exactly this reason). Do not "tidy" this away as duplicated
+        // by the primary key.
+        ("organization_mentions_notice", "organization_mentions(notice_id)"),
         ("organizations_country_id", "organizations(country, id)"),
         ("organizations_kind_id", "organizations(identifier_kind, id)"),
         // Issue 217: look up an Organization by its official identifier value (a VAT
