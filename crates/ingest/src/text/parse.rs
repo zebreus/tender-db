@@ -59,6 +59,24 @@ const AWARD_LABELS: [&str; 2] = ["SERVICE PROVIDER:", "HAS BEEN AWARDED:"];
 /// to something plausible instead of swallowing the remaining form.
 const NAME_STOPS: [&str; 6] = [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO"];
 
+/// Drop the period that ends the sentence, and keep the one that ends an
+/// abbreviation (issue 244).
+///
+/// The value is a sentence fragment, so `Grahams Engineering Ltd.` wants its trailing
+/// dot gone. But `European Dynamics … Telematics S.A.` does not: trimming there gives
+/// `… S.A`, a second spelling of a company that also appears written out, and since
+/// these winners carry no identifier their canonical identity IS the name — two
+/// spellings are two organizations (issue 234).
+///
+/// The discriminator is what precedes the dot: a single letter means an abbreviation
+/// mid-run (`S.A.`, `A.G.`, `S.p.A.`), anything longer means a word that happened to
+/// end the fragment (`Ltd.`, `GmbH.`).
+fn trim_sentence_period(name: &str) -> &str {
+    let Some(head) = name.strip_suffix('.') else { return name };
+    let last = head.rsplit('.').next().unwrap_or(head);
+    if last.chars().count() == 1 { name } else { head.trim_end() }
+}
+
 /// The winner names a 2004-or-later award body publishes, in document order
 /// (issue 244).
 ///
@@ -100,7 +118,7 @@ fn awarded_names(body: &str) -> Vec<String> {
             .filter_map(|stop| rest.to_uppercase().find(stop))
             .min()
             .unwrap_or(rest.len());
-        let name = rest[..end].trim().trim_end_matches('.').trim();
+        let name = trim_sentence_period(rest[..end].trim());
         if !name.is_empty() {
             names.push(name.to_owned());
         }
@@ -612,6 +630,24 @@ mod tests {
                      provider: Eurovia Méditerranée, Att: Christophe Verweirde, Route de Gréoux\n\
                      V.1.2)  Information on value of contract";
         assert_eq!(awarded_names(y2004), vec!["Eurovia Méditerranée".to_owned()]);
+
+        // An abbreviation keeps its period; a word does not. Measured on prod: this
+        // notice's winner is written `… Telematics S.A., 209 Kifissias Avenue …`, and
+        // trimming to `S.A` would make it a second organization for the same company
+        // (these winners carry no identifier, so the name IS the identity).
+        let abbrev = "V.3)  … HAS BEEN AWARDED: European Dynamics Advanced Systems of \n\
+                      Telecommunications Informatics and Telematics S.A., 209 Kifissias Avenue.";
+        assert_eq!(
+            awarded_names(abbrev),
+            vec![
+                "European Dynamics Advanced Systems of Telecommunications Informatics and \
+                 Telematics S.A."
+                    .to_owned()
+            ]
+        );
+        assert_eq!(trim_sentence_period("Grahams Engineering Ltd."), "Grahams Engineering Ltd");
+        assert_eq!(trim_sentence_period("Foo S.A."), "Foo S.A.");
+        assert_eq!(trim_sentence_period("Foo Ltd"), "Foo Ltd");
 
         let multi = "SECTION V: AWARD OF CONTRACT\n\
                      CONTRACT NO: 088273\n\
