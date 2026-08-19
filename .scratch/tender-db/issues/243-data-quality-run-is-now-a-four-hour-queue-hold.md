@@ -1,6 +1,6 @@
 # 243 — the data-quality pass went from 40 minutes to ~4 hours, and it holds the job queue the whole time
 
-Status: needs-triage — measured 2026-08-19 on prod, rev `e2ad213` (the run is still going as this is filed)
+Status: needs-triage — CORRECTED 2026-08-19: the real figure is 92.8 min, not ~4 h. Per-label costs now in hand.
 Kind: cost regression in a scheduled job (correct numbers, impractical runtime)
 Blocked by: — (the fix wants the per-label cost breakdown this very run will print)
 Relates to: 230 (windowed measurement), 235 (added three queries), 242 (added the fourth), 27 (the report)
@@ -76,3 +76,62 @@ run itself is about to print per-query numbers, is the mistake this project keep
 The cost of a query in this report is not "how long does it take on a test window" — it is that,
 times 32, plus its share of a queue that everything else waits behind. Two of the four queries added
 this week would have been affordable; four were not.
+
+
+---
+
+## Corrected with the finished run (2026-08-19, owner)
+
+**The ~4 h projection in the filing above was wrong.** It extrapolated from window 1, which was cold:
+451 s. Warm windows ran 120–190 s and the dense eForms tail 320–416 s. The run finished in **5,566 s =
+92.8 minutes** (job 751: 23 eras over 32 windows, 0 labels unmeasured), against the 39.5 min baseline.
+So the regression is ~2.3×, not 6×. Filing a projection as if it were a measurement was the mistake;
+the number below is the measurement.
+
+### Cost by query, whole run
+
+    awards_can      1346s   <- new (issue 235)
+    sections_can     900s
+    awards_barren     813s  <- new (issue 242)
+    title             746s
+    doc_types         614s  <- new (issue 235)
+    awards_with       495s  <- new (issue 235)
+    cpv               203s
+    deadline           87s
+    buyer              77s
+    versions           65s
+    merge              65s
+    winner             53s
+    value              37s
+    linkage            36s
+    sections_with      28s
+
+The four new queries are 3,268 s of 5,566 s — **59 % of the run**, which matches the 2,370 s baseline
+plus 3,268 s almost exactly.
+
+### The one surprise, and it points at the fix
+
+`awards_can` (1,346 s) costs nearly 3× `awards_with` (495 s) **despite doing strictly less work** —
+`awards_with` is the same query plus an `EXISTS(lot_results …)`. The extra predicate makes it FASTER,
+which means the planner evaluates the cheap `lot_results` seek first and the expensive `notice_codes`
+document-type probe only for rows that survive it. So the document-type probe is the cost, and probe
+ORDER is worth as much as probe count.
+
+That makes the merge in the filing above more attractive than estimated: one pass, one document-type
+probe, three counts. Expected saving 1,300–1,800 s of the 2,654 s the three award queries cost today —
+call it 25–30 % of the whole run.
+
+`sections_can` at 900 s is next, and it is not new: it is the invariant's denominator (section 3b),
+which sweeps `notice_sections` for every version in the window. Worth folding into the same shape as a
+second step, since 3b's two halves have the same relationship as section 3's three.
+
+### Revised steps
+
+1. Merge `awards_can` + `awards_with` + `awards_barren` into one CASE-aggregate pass, with the cheap
+   `lot_results` / `notice_sections` predicates written FIRST so the planner keeps the ordering the
+   timings just revealed. Expect ~70 min → ~65 min plus a much better worst case on the dense windows.
+2. Then consider the same treatment for `sections_can` / `sections_with` (section 3b).
+3. `doc_types` (614 s) is a coverage diagnostic over an unfiltered population; leave it alone until 1
+   and 2 land, then re-measure before touching it.
+4. Fix the stale runtime claims in `supervisor.rs` ("~10 minute full-corpus pass", "a 36-minute job")
+   to the measured 93 min, and note that the number moves whenever a query is added.

@@ -1,6 +1,6 @@
 # 233 — INTERNAL_OJS 2008 carries a title on only 43.7 % of its versions
 
-Status: FIXED in code 2026-08-19 (38ae9bc) — needs the era re-folded (26,955 notices) to materialise
+Status: DONE 2026-08-19 — deployed (`bc4bf41`), era re-folded (job 752/753), verified 3,000/3,000 titles on prod
 Kind: projection mapping gap, one small era
 Blocked by: —
 Relates to: 187 (INTERNAL_OJS awards 100 % unchained — same era, the linkage half), 193/194
@@ -120,3 +120,16 @@ all (issue 187 notes the same era's awards are 100 % unchained, for related reas
 procurement chains). Giving these notices a title makes them findable and honest; deciding whether
 non-procurement 2008 notices belong in the Tender population at all is a policy question for the
 era, not a mapping one.
+
+
+### Verified on prod (2026-08-19)
+
+Deployed `bc4bf41`, then `refold internal-ojs` (job 752: re-queued 26,955 notices, stamped 24,742
+tenders) and the paired fold (job 753: 26,955 notices → 24,742 tenders, 63,799 versions, 0 islands).
+
+The same statement recorded above as the baseline, re-run afterwards:
+
+    versions 3000, with_title 3000   (100.0%, was 1447 / 48.2%)
+
+Every version in the slice now carries a title. The next data-quality run should show INTERNAL_OJS 2008
+at or near 100 % title in section 1, where it read 43.7 %.
