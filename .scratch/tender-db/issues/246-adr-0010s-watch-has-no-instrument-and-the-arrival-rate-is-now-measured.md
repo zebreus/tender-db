@@ -1,7 +1,7 @@
 # 246 — ADR-0010's reopen trigger has no instrument, and the arrival rate turns out to be measurable
 
-Status: step 1 DONE 2026-08-19 (deployed 6cb2853) — section 5 of the data-quality report now measures
-arrivals; step 2 (amend ADR-0010's framing) still open
+Status: RESOLVED 2026-08-19 — step 1 (instrument, deployed 6cb2853) and step 2 (ADR-0010 amendment,
+d96c073) both done; step 3 is a no-op unless the rate climbs
 Kind: instrument gap behind a policy decision (not a defect in the policy)
 Blocked by: —
 Relates to: ADR-0010 (sub-cent amounts stay quarantined; names its own reopen trigger), 184 (declared
@@ -133,7 +133,10 @@ substance (dormant for a month) is unchanged.
 
 ### Still open
 
-- **Step 2**: amend ADR-0010 with the arrival-rate framing beside its corpus-share framing, so the
-  trigger is stated in the units it will now be observed in.
-- **Step 3**: nothing to do unless the rate climbs, at which point ADR-0010 names claim-and-store as the
-  alternative to reopen first.
+- **Step 2 done** (`d96c073`): ADR-0010 carries an amendment stating the cost as a rate (~0.15 % of
+  arrivals, 5–13 notices a day) beside its corpus share (~0.02 %), notes that the decision is unchanged
+  because 0.15 % does not clear "past a nuisance", and replaces the nomination of issue 171 (a one-off
+  study) with section 5 as the continuous watch. It also records why the bucket total is the wrong thing
+  to watch, with the 1,899-renamed / 2,884-in-one-day numbers.
+- **Step 3** is a no-op unless the rate climbs, at which point ADR-0010 names claim-and-store as the
+  alternative to reopen first. Nothing to schedule: the report now carries the number that would say so.
