@@ -1,7 +1,8 @@
 # 247 — the same text-era package re-parses 40× slower on a later run, pread-bound inside the DB
 
-Status: three fixes measured (index, deferred FKs, full-key delete): 153ms → 10.2s → 2.2s a notice. Still
-100× too slow for the era; the next move is the bulk path, not another micro-fix. Campaign paused.
+Status: RESOLVED 2026-08-19 — the 40× was real and is explained; three fixes landed (153ms → 2.2s a
+notice, and ~1ms for a notice with no mentions). The remaining constraint outlives this issue and is now
+issue 248.
 Kind: performance regression, re-parse path
 Blocked by: —
 Relates to: 244 (the campaign that hit it), 100 (the re-parse mechanism), 92 (fold quadratic in chain
@@ -307,3 +308,32 @@ all 215 packages with `reclaim_only`, then one rebuild. That is a deliberate, si
 Before committing to it, one cheap check remains: confirm that a notice with ZERO mentions really does
 re-parse at the fast rate now (the seek path). fetch 186's 864 cleared notices are exactly that
 population, so re-running that package measures it directly.
+
+
+## Closed, with the confirmation the plan needed (2026-08-19)
+
+Re-running `fetch 186` — the package whose 864 notices had already had their mentions cleared — settles it:
+
+    870 notices in 80 seconds, of which the mention DELETE accounted for 61.3 s across
+    the ~28 notices that still had one. The other ~842 cost about a millisecond each.
+
+So a notice with no mentions re-parses at full speed and a notice with mentions costs 2.2 s, which is the
+whole story of this issue: the "40× slower on a second pass" was the population changing under the
+measurement, not the mechanism degrading.
+
+What landed here, all deployed and measured on prod:
+
+- `organization_mentions_notice`, and the deferred-index bootstrap that now moves its reindex to the FRONT
+  of the queue instead of filing it behind the job that needs it;
+- per-phase and per-statement re-parse timings on `/metrics`, which is what ended three rounds of wrong
+  guesses;
+- a seek before the mention delete, so a notice with nothing to delete pays a millisecond;
+- deletion by full primary key rather than PK prefix (10.2 s → 2.2 s);
+- `PRAGMA defer_foreign_keys` inside the transaction (accepted; worth little on its own, kept because it
+  is correct and costs nothing);
+- and `DELETE /admin/jobs/{id}` can now stop a RUNNING job, which is what made five experiments in an
+  afternoon affordable at all.
+
+The part that does not belong to this issue is the constraint underneath: an in-place re-parse cannot scale
+while `tender_version_parties` is full, because the FK proof is not index-served. That is **issue 248**,
+with the three options sized — and it, not this issue, is where the campaign's fate is decided.
