@@ -492,9 +492,9 @@ fn awards_with_template(win: &str) -> String {
 /// **What this column does NOT say** (issue 244, from the first full-corpus run):
 /// it is a statement about the PARSE, not about the publisher. The r2.0.8 rows
 /// above really did publish nothing extractable. The text era's 1,306,514 did
-/// publish their awards — `CO: Name and address of successful supplier …` with the
-/// names on the following lines — and nothing turns that into a result block yet.
-/// Same column, opposite causes, so the rendered line names the split instead of
+/// publish their awards — winner and value, under numbered headings inside the
+/// `TXT-TX` prose body — and nothing turns that into a result block yet. Same
+/// column, opposite causes, so the rendered line names the split instead of
 /// asserting one cause for all of it.
 ///
 /// This DOES read `notice_sections`, deliberately: the point is to compare the
@@ -1203,9 +1203,10 @@ pub fn render_text(report: &Report) -> String {
     //
     // - r2.0.8's 14,532 really did publish nothing extractable — an `OTH_NOT` prose
     //   body, or an empty `<AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES/>` container.
-    // - the text era's 1,306,514 DID publish their awards, in the era's own
-    //   labelled-line format (`CO: Name and address of successful supplier …`
-    //   followed by the names). Nothing parses them into a result block yet.
+    // - the text era's 1,306,514 DID publish their awards, inside the prose body
+    //   (`TXT-TX`) under TED's own numbered headings — `SECTION V: AWARD OF CONTRACT`
+    //   / `V.3) …AWARDED: <name>` in the later shape, ` 6.  Supplier(s): …` in the
+    //   1993 one. Nothing parses either into a result block yet.
     //
     // The first draft of this line claimed "nothing can project those" for the whole
     // column. That was false for 1.3M notices and exactly the kind of confident
@@ -1229,8 +1230,8 @@ pub fn render_text(report: &Report) -> String {
             "  no result block parsed: {} award notice(s) announce a result and have no result \
              block in the parse layer. That is one of two different things per era — the notice \
              published nothing extractable (r2.0.8: `OTH_NOT` prose bodies, empty F06 containers), \
-             or its era's award block is not extracted yet (the text era publishes winners under \
-             `CO:` — issue 244). Award notices whose result block IS parsed and still did not \
+             or its era's award block is not extracted yet (the text era publishes winner and value \
+             inside its prose body — issue 244). Award notices whose result block IS parsed and still did not \
              materialise, i.e. the fold's own shortfall: {}.",
             group(barren),
             group(missing)
