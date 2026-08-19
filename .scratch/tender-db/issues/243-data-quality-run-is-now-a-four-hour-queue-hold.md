@@ -135,3 +135,39 @@ second step, since 3b's two halves have the same relationship as section 3's thr
    and 2 land, then re-measure before touching it.
 4. Fix the stale runtime claims in `supervisor.rs` ("~10 minute full-corpus pass", "a 36-minute job")
    to the measured 93 min, and note that the number moves whenever a query is added.
+
+
+---
+
+## The merge, A/B'd against prod before touching any plumbing (2026-08-19)
+
+Rather than refactor the report and hope, the merged SQL was run beside the three separate queries on
+the same window (`tv.tender_id` 1,840,000–2,100,000, text era, 122,274 award versions, single-marker
+predicate so it could be written by hand):
+
+| form | query time | numbers |
+|------|-----------|---------|
+| three separate | 1.08 + 1.14 + 1.32 = **3.53 s** | 122,274 / 0 / 122,274 |
+| merged, one pass | **2.46 s** | 122,274 / 0 / 122,274 |
+
+**Identical numbers**, which is the half that matters — the merge is an algebraic rewrite and the
+window confirms it — and ~30 % less query time, plus three round trips collapsed to one.
+
+**So the earlier 25–30 %-of-the-run estimate was too optimistic.** Scaling the measured 30 % onto the
+2,654 s the three award queries actually cost gives ~1,850 s, a saving of ~800 s: **14 % of the
+5,566 s run**, not 25–30 %. The reason is visible in the A/B: the merge pays the document-type probe
+once instead of three times, but the `lot_results` EXISTS and the `notice_sections` NOT EXISTS still run
+for every row that passes the predicate, and on this era every row passes.
+
+Still worth doing — 800 s off a job that holds the serial queue, and one round trip instead of three —
+but it is a 14 % fix, and the next thing after it (`sections_can`, 900 s) is worth more than the
+remainder of this one.
+
+### What the refactor has to touch (scoped, not yet done)
+
+`sum_profile_counts` already sums every column after the label, so a 3-count row needs no new summing.
+The rest: one `awards_template` replacing three; one catalog + one windowed entry replacing three;
+`RawRows`' three fields becoming one; the assembler's three `count_by_profile` calls becoming one pass;
+and the `UNMEASURED` narration, which loses per-query granularity — if the merged query fails, all
+three numbers go unmeasured together. That last point is a real (small) loss and the honest note to put
+in the narration: they share one scan, so in practice they always did fail together.
