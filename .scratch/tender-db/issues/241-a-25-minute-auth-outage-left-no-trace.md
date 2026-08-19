@@ -1,6 +1,7 @@
 # 241 — a 25-minute outage of every authenticated endpoint left no trace in any probe, and nothing bounded the hang
 
-Status: gap 1 DONE in code 2026-08-19 (e04a4e5, awaiting deploy); gap 2 still open — needs the edge's timeout behaviour checked first
+Status: gap 1 DONE and VERIFIED ON PROD 2026-08-19; gap 2 still open — needs the edge's timeout
+behaviour checked first
 Kind: observability gap + missing bound on the request path
 Blocked by: —
 Relates to: 240 (the outage that exposed both), 61 (`/health` reads the in-memory cursor by design),
@@ -90,13 +91,33 @@ behind a held writer and asserts the depth gauge reads 3 **while they wait** —
 after the fact would be useless for the alert it exists to raise — and that the high-water mark is one
 wait rather than the sum.
 
-### Still to do for gap 1's acceptance
+### Gap 1's acceptance, met on prod (2026-08-19)
 
-The acceptance asks for verification "the way 240 was: by probing prod during a real long-running job".
-That needs the deploy plus a writer-holding job (a fold or refold — the data-quality pass holding the
-queue right now is a READER job and will not move these gauges, which is itself the correct behaviour
-to observe). The internal-ojs re-fold queued for issue 233 is the natural occasion: scrape `/metrics`
-while it runs and confirm depth moves off zero and back.
+Verified during a real writer-heavy job — the staged text-era re-parse (issue 244), which acquires the
+writer about **390 times a second** while it rewrites a package's parse layer. Scraping `/metrics`
+through the run:
+
+    tender_db_writer_acquisitions_total   12,125 → 17,509 → 22,112 → 26,094   (~390/s)
+    tender_db_writer_queue_depth          0
+    tender_db_writer_wait_seconds_total   0
+
+Depth and waits at zero while a job hammers the writer is the CORRECT reading, and worth stating: this
+job takes the writer briefly and often, so nothing queues. It also means the run alone could not
+demonstrate the alerting half, so contention was then created deliberately — three job enqueues (each a
+writer-side row) fired into that stream:
+
+    tender_db_writer_acquisitions_total   33,206
+    tender_db_writer_wait_seconds_total   0.016472639
+    tender_db_writer_longest_wait_seconds 0.003961235
+
+Both wait counters moved off zero, and the high-water mark **persisted after the contention ended** —
+the property issue 240 needed and did not have. The magnitude is the point of comparison: 4 ms here
+against the ~1,500 s a 25-minute stall would record, so the gauge distinguishes ordinary contention
+from an outage by three orders of magnitude rather than by a threshold anyone has to tune.
+
+One thing this run also settles: a fold is not the only writer shape. Issue 240's outage came from a job
+HOLDING the writer for a whole transaction; a re-parse instead takes it hundreds of times a second.
+`queue_depth` catches the first, the wait counters catch the second, which is why both are exported.
 
 ### Gap 2 is deliberately still open
 
