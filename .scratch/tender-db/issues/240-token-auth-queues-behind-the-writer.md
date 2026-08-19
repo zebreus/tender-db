@@ -1,7 +1,8 @@
 # 240 — authenticating a bearer token took the WRITER connection, so every gated request hung for the whole of a fold
 
-Status: FIXED 2026-08-19 (`accounts.rs`, test `a_token_authenticates_while_the_writer_is_held`) — found
-by probing prod during a live re-fold; deploy pending the idle window
+Status: DONE 2026-08-19 — deployed (`be8cba6`) and re-probed on prod DURING a live re-fold: a real
+query returned 200 in 1.6 ms and an invalid token 401 in 0.6 ms, against no response in 120 s / 25 s
+before. Follow-ups split out to issue 241.
 Kind: availability defect on the auth path (not a query-cost problem)
 Blocked by: —
 Relates to: 61 (/health reads the in-memory cursor, which is why it stayed green), 238 (the sandbox's
