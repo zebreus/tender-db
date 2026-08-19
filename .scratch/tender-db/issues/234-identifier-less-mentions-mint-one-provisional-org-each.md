@@ -1,7 +1,8 @@
 # 234 — an identifier-less mention mints a NEW provisional Organization every time, so legacy buyer rollups cannot aggregate
 
-Status: needs-triage, RAISED — SIZED 2026-08-18: 23,462,294 of 24,618,292 organizations (95.30%) are
-provisional, so this is the corpus's present state, not a risk the text-era re-parse would introduce
+Status: needs-triage, RAISED — SIZED 2026-08-18 at 23,462,294 of 24,618,292 (95.30%) provisional; the
+text-era campaign is now the corpus's dominant growth driver and is on course to add ~11M more (measured
+2026-08-19, below)
 Kind: canonical identity gap (correct per-notice, useless per-organization)
 Blocked by: —
 Relates to: 232 (the text-era buyer fix that makes this bite at 3.79M scale), 04 (where provisional
@@ -172,3 +173,29 @@ then decide this with that number in hand.
 - A decision recorded here between (1) and (2), with the over-merge risk addressed explicitly.
 - If (1): a red-checked test that two notices naming the same authority in the same country resolve to
   ONE organization, and that two same-named bodies in different countries stay separate.
+
+
+## The text-era campaign is now adding to this, measured (2026-08-19)
+
+Not a projection any more. `MAX(organizations.id)` was **26,047,161** after 28 packages of issue 244's
+campaign, against the 24,618,292 rows counted on 2026-08-18 — so roughly **1.43M new organization rows in
+one afternoon**, from ~550k re-parsed notices. Every one of them is provisional: of the rows above id
+26,000,000, all 47,161 sampled carry `provisional = 1`, and they are exactly the era's parties —
+`MINDEF/DGA/DCE/CEG, MINISTERE DE LA DEFENSE`, `ONIC (OFFICE NATIONAL INTERPROFESSIONNEL DES CEREALES)`,
+`WHITECHAPEL ART GALLERY`.
+
+Extrapolating the same rate over all 215 packages: **~11M more provisional organizations**, taking the
+table from ~24.6M to ~35M and the provisional share from 95.3% to about 97%.
+
+Two things follow, and they point the same way:
+
+- **This does not argue against the campaign.** The awards and buyers it extracts are real published facts
+  that were previously absent entirely; one row per mention is the correct per-notice answer, and issue 232
+  and 244 are both worth having. What grows is the cost of NOT having a name-based merge.
+- **It moves this issue from latent to load-bearing.** A name-based merge applied afterwards has ~35M rows
+  to collapse rather than ~24M, and every month of delay adds more. The material is all there: every row
+  above carries `name_norm`, and `organizations_name_norm_id` is built.
+
+The cheapest useful next step is unchanged — measure how much the corpus would actually collapse under a
+`(country, name_norm)` merge before designing one — but the number to measure it against has moved, so
+measure it after the campaign rather than before.
