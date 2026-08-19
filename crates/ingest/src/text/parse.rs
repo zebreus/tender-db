@@ -181,7 +181,7 @@ const VALUE_LABELS: [&str; 4] =
 /// neither. Whatever this refuses stays where it already was — inside the `TXT-TX` prose
 /// that is claimed as a whole — so refusing costs a fact and never exhaustiveness
 /// (ADR-0004).
-fn parse_money(value: &str) -> Option<(i64, String)> {
+fn parse_money(value: &str) -> Option<(i64, String, Option<&'static str>)> {
     let value = value.trim().trim_end_matches('.').trim();
     if value.is_empty() || value.len() > 64 {
         return None;
@@ -189,7 +189,17 @@ fn parse_money(value: &str) -> Option<(i64, String)> {
     let mut whole: Option<i64> = None; // units, accumulated across thousands groups
     let mut fraction: Option<i64> = None; // the cents, once a decimal group is seen
     let mut currency: Option<String> = None;
+    let mut basis: Option<&'static str> = None;
     for token in value.split(' ').filter(|t| !t.is_empty()) {
+        // Tax markers are tested BEFORE currency codes, because `TTC` is three
+        // upper-case letters and would otherwise read as a second currency and refuse
+        // the whole value — which is exactly what it did until this was measured.
+        if let Some(marked) = tax_marker(token) {
+            if basis.replace(marked).is_some_and(|seen| seen != marked) {
+                return None; // both bases claimed at once
+            }
+            continue;
+        }
         if is_currency_code(token) {
             if currency.replace(token.to_owned()).is_some() {
                 return None; // two codes — a dual-currency restatement
@@ -216,10 +226,57 @@ fn parse_money(value: &str) -> Option<(i64, String)> {
     match (whole, currency) {
         (Some(units), Some(code)) => {
             let cents = units.checked_mul(100)?.checked_add(fraction.unwrap_or(0))?;
-            (cents > 0).then_some((cents, code))
+            (cents > 0).then_some((cents, code, basis))
         }
         _ => None,
     }
+}
+
+/// A standalone token that states whether the figure beside it includes tax.
+///
+/// Four, all measured on prod: the French `TTC` / `HT` pair and the Belgian `TVAC` /
+/// `HTVA`. `TTC` is the reason this runs before the currency test — three upper-case
+/// letters, indistinguishable from a code by shape alone.
+///
+/// The basis has no canonical destination yet (issue 251: `tender_version_amounts`
+/// records no tax basis, and the corpus already mixes the two unlabelled). It is
+/// captured in the parse layer anyway, so that when a destination exists the era does
+/// not have to be re-parsed to find out what it already said.
+fn tax_marker(token: &str) -> Option<&'static str> {
+    match token.trim_end_matches(['.', ',']) {
+        "TTC" | "TVAC" => Some("incl"),
+        "HT" | "HTVA" => Some("excl"),
+        _ => None,
+    }
+}
+
+/// Phrases a local-language sub-label uses to state the basis, searched in the label
+/// that stands between the price heading and the figure. Measured shapes:
+/// `Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.` and its `mit` twin, which
+/// between them are most of the era's refused values.
+const BASIS_PHRASES: [(&str, &str); 8] = [
+    ("OHNE UMSATZSTEUER", "excl"),
+    ("OHNE UST", "excl"),
+    ("EXCLUDING VAT", "excl"),
+    ("NETTO", "excl"),
+    ("MIT UMSATZSTEUER", "incl"),
+    ("MIT UST", "incl"),
+    ("INCLUDING VAT", "incl"),
+    ("BRUTTO", "incl"),
+];
+
+/// The basis a sub-label states, or `None` when it states neither or both.
+fn phrase_basis(label: &str) -> Option<&'static str> {
+    let mut found: Option<&'static str> = None;
+    for (phrase, basis) in BASIS_PHRASES {
+        if find_ascii_ci(label, phrase).is_some() {
+            match found {
+                Some(seen) if seen != basis => return None,
+                _ => found = Some(basis),
+            }
+        }
+    }
+    found
 }
 
 /// A three-letter upper-case ASCII currency code (`EUR`, `FRF`, `ATS`, `GBP`). Not a
@@ -480,12 +537,12 @@ fn awarded_names(body: &str) -> Vec<String> {
 /// disagree — `8. Price:` and `9. Value of winning award(s):` both present with
 /// different figures is a notice this cannot resolve, and picking one would be a guess
 /// recorded as a fact.
-fn awarded_value(body: &str) -> Option<(i64, String)> {
+fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
     if find_ascii_ci(body, "PRICE").is_none() && find_ascii_ci(body, "VALUE").is_none() {
         return None;
     }
     let flat = flatten(body);
-    let mut found: Option<(i64, String)> = None;
+    let mut found: Option<(i64, String, Option<&'static str>)> = None;
     let mut at = 0usize;
     while at < flat.len() {
         let Some((start, label)) = VALUE_LABELS
@@ -510,7 +567,7 @@ fn awarded_value(body: &str) -> Option<(i64, String)> {
         // is 5, 9 or 10 — [`ITEM_STOPS`], which is aimed at the winner item, does not
         // bound this. Any numbered item does.
         let end = next_item_marker(window);
-        if let Some(money) = parse_money(&window[..end.unwrap_or(window.len())]) {
+        if let Some(money) = read_value_item(&window[..end.unwrap_or(window.len())]) {
             match &found {
                 // Two labels agreeing is one fact stated twice; two disagreeing is a
                 // notice this cannot read.
@@ -522,6 +579,34 @@ fn awarded_value(body: &str) -> Option<(i64, String)> {
         at = value_at;
     }
     found
+}
+
+/// One value item: the figure it states, whether or not a sub-label stands in front of
+/// it (issue 244 slice 5).
+///
+/// Measured on `fetch 300`: the strict shape alone claimed 390 of the 3,227 bodies that
+/// state a price label, and SIX of eight sampled refusals were one shape — a
+/// local-language sub-label ending in a colon before an otherwise perfect figure:
+///
+///     Price: Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.
+///
+/// So a value that does not parse whole is retried after its LAST colon — but only when
+/// the part being skipped **contains no digit**. That guard is the whole safety of this
+/// rule: without it, `1 000 000 EUR, of which subcontracted: 200 000 EUR` would claim
+/// the subcontracted figure as the contract price. A pure label has no digits; a second
+/// figure does.
+fn read_value_item(item: &str) -> Option<(i64, String, Option<&'static str>)> {
+    if let Some(money) = parse_money(item) {
+        return Some(money);
+    }
+    let (label, figure) = item.rsplit_once(':')?;
+    if label.bytes().any(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let (cents, currency, basis) = parse_money(figure)?;
+    // A marker beside the figure wins over the sub-label's wording; they agree in every
+    // measured body, and the marker is the more specific statement.
+    Some((cents, currency, basis.or_else(|| phrase_basis(label))))
 }
 
 /// Where the next numbered form item begins: ` <n>. ` with one or two digits, in the
@@ -711,8 +796,8 @@ fn claim_awarded_value(emit: &mut Emit) {
             _ => None,
         })
         .and_then(awarded_value);
-    if let Some((cents, currency)) = money {
-        emit.value(cents, currency);
+    if let Some((cents, currency, basis)) = money {
+        emit.value(cents, currency, basis);
     }
 }
 
@@ -891,8 +976,19 @@ impl Emit {
     /// the projection's `AMOUNTS` map as `result_value`, so this reaches
     /// `tender_version_amounts` with no mapping change — it is the same fact the r209
     /// era publishes under the same field id, arrived at from prose instead of a tag.
-    fn value(&mut self, cents: i64, currency: String) {
+    fn value(&mut self, cents: i64, currency: String, basis: Option<&'static str>) {
         self.push("TED-VAL_TOTAL", NoticeValue::Amount { cents, currency });
+        // The tax basis the source states, captured in the parse layer even though the
+        // canonical layer has nowhere to put it yet (issue 251). Recording it now means
+        // that when a destination exists, the era does not have to be re-parsed to learn
+        // what it already said — and a reader of the parse layer can already tell an
+        // inclusive figure from an exclusive one.
+        if let Some(basis) = basis {
+            self.push("TED-VAL_TOTAL_TAX_BASIS", NoticeValue::Code {
+                list: None,
+                code: basis.to_owned(),
+            });
+        }
     }
 
     fn push(&mut self, field: &str, value: NoticeValue) {
@@ -1442,14 +1538,18 @@ mod tests {
     #[test]
     fn a_price_is_claimed_only_in_one_unambiguous_shape() {
         // Claimed: one number, one code, nothing else. Either order.
-        assert_eq!(parse_money("2 143 000 EUR."), Some((214_300_000, "EUR".to_owned())));
-        assert_eq!(parse_money("5 301 802,22 FRF"), Some((530_180_222, "FRF".to_owned())));
-        assert_eq!(parse_money("EUR 1 131 079,99"), Some((113_107_999, "EUR".to_owned())));
-        assert_eq!(parse_money("562680 GBP"), Some((56_268_000, "GBP".to_owned())));
+        assert_eq!(parse_money("2 143 000 EUR."), Some((214_300_000, "EUR".to_owned(), None)));
+        assert_eq!(parse_money("5 301 802,22 FRF"), Some((530_180_222, "FRF".to_owned(), None)));
+        assert_eq!(parse_money("EUR 1 131 079,99"), Some((113_107_999, "EUR".to_owned(), None)));
+        assert_eq!(parse_money("562680 GBP"), Some((56_268_000, "GBP".to_owned(), None)));
 
         // Refused, and each for its own reason.
         assert_eq!(parse_money("562 680 GBP p.a."), None, "annual, not a total");
-        assert_eq!(parse_money("5 301 802,22 FRF TTC"), None, "a tax basis this column lacks");
+        assert_eq!(
+            parse_money("5 301 802,22 FRF TTC"),
+            Some((530_180_222, "FRF".to_owned(), Some("incl"))),
+            "the marker is read, not refused (slice 5)"
+        );
         assert_eq!(parse_money("15 564 000 ATS / 1 131 079,99 EUR"), None, "two currencies");
         assert_eq!(parse_money("Minimum/maximum: Lit 2 610/Lit 3 289"), None, "a range");
         assert_eq!(parse_money("Lit 1 000 000 000"), None, "`Lit` is not a currency code");
@@ -1478,7 +1578,7 @@ mod tests {
                       4.  Contract value: 2 143 000 EUR.\n\
                       5.  Date of award of the contract: 11.5.2001.\n\
                       6.  Number of tenders received: 6.";
-        assert_eq!(awarded_value(starcm), Some((214_300_000, "EUR".to_owned())));
+        assert_eq!(awarded_value(starcm), Some((214_300_000, "EUR".to_owned(), None)));
 
         // …and the whole record, so the fact lands where the projection reads it.
         let record = |td: &str| {
@@ -1519,14 +1619,19 @@ mod tests {
                         prejudice the legitimate commercial interests of a particular undertaking.";
         assert_eq!(awarded_value(withheld), None);
 
-        // notice 1,710,458: `8.  Price: 5 301 802,22 FRF TTC.` — a tax basis, refused.
+        // notice 1,710,458: `8.  Price: 5 301 802,22 FRF TTC.` — slice 4 refused this on the
+        // reasoning that a stated tax basis must not be mixed silently into a column that
+        // records none. Slice 5 reverses it, because the measurement said so: refusing
+        // every value that states its basis discards most of the era's money, and the
+        // column already mixes bases corpus-wide (the form eras' VAT indicator is not
+        // mapped either — issue 251). So the figure is claimed AND the basis captured.
         let ttc = "6.  Successful contractor(s): Groupement d'entreprises CGEV.\n\
                    8.  Price: 5 301 802,22 FRF TTC.";
-        assert_eq!(awarded_value(ttc), None);
+        assert_eq!(awarded_value(ttc), Some((530_180_222, "FRF".to_owned(), Some("incl"))));
 
         // Two labels stating the SAME figure is one fact twice, and is read.
         let agreeing = "8.  Price: 1 000 000 EUR.\n 9.  Value of winning award(s): 1 000 000 EUR.";
-        assert_eq!(awarded_value(agreeing), Some((100_000_000, "EUR".to_owned())));
+        assert_eq!(awarded_value(agreeing), Some((100_000_000, "EUR".to_owned(), None)));
 
         // Two labels DISAGREEING is a notice this cannot read, so it claims nothing
         // rather than guessing which one the analyst wanted.
@@ -1545,15 +1650,88 @@ mod tests {
         for heading in ["Value of winning award(s):", "VALUE OF WINNING AWARD(S):", "Value of winning award:"] {
             assert_eq!(
                 awarded_value(&format!("8.  {heading} 1 000 000 EUR.\n 10.  Subcontract: No.")),
-                Some((100_000_000, "EUR".to_owned())),
+                Some((100_000_000, "EUR".to_owned(), None)),
                 "{heading}"
             );
         }
 
         // A price stated right before a two-digit item still parses.
         assert_eq!(
-            awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: No."),
-            Some((100_000_000, "EUR".to_owned()))
+awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: No."),
+            Some((100_000_000, "EUR".to_owned(), None))
+        );
+    }
+
+    /// Issue 244 slice 5: the sub-label the era puts between the price heading and the
+    /// figure, which was six of eight sampled refusals — and the one shape where skipping
+    /// to the figure would be WRONG.
+    #[test]
+    fn a_sub_label_between_the_heading_and_the_figure_is_skipped_but_a_second_figure_is_not() {
+        // The measured shape, both bases, verbatim from prod (notices 1,710,441-1,710,446).
+        assert_eq!(
+            read_value_item(" Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM."),
+            Some((68_965_517, "DEM".to_owned(), Some("excl")))
+        );
+        assert_eq!(
+            read_value_item(" Auftragssumme (mit Umsatzsteuer): 110 761,16 DEM."),
+            Some((11_076_116, "DEM".to_owned(), Some("incl")))
+        );
+        // No separators, and a sub-label that states no basis at all.
+        assert_eq!(
+            read_value_item(" Auftragssumme: 1 944 255 DEM."),
+            Some((194_425_500, "DEM".to_owned(), None))
+        );
+
+        // THE GUARD. Skipping to after the last colon here would claim the SUBCONTRACTED
+        // figure as the contract price. A pure label carries no digits; a second figure
+        // does, and that is the whole test of whether the skip is safe.
+        assert_eq!(
+            read_value_item(" 1 000 000 EUR, of which subcontracted: 200 000 EUR"),
+            None,
+            "a second figure must never be read as the price"
+        );
+        assert_eq!(
+            read_value_item(" Total for lot 2: 200 000 EUR"),
+            None,
+            "a label carrying a digit is not a label this trusts"
+        );
+
+        // Still refused after the retry, because the figure itself does not qualify.
+        assert_eq!(read_value_item(" Preis: 15 564 000 ATS / 1 131 079,99 EUR"), None);
+        assert_eq!(read_value_item(" Price of product plus price of transport."), None);
+        assert_eq!(read_value_item(" Minimum/maximum: Lit 2 610/Lit 3 289"), None);
+
+        // The French/Belgian markers, which slice 4 read as a second currency code.
+        assert_eq!(tax_marker("TTC"), Some("incl"));
+        assert_eq!(tax_marker("TVAC"), Some("incl"));
+        assert_eq!(tax_marker("HT"), Some("excl"));
+        assert_eq!(tax_marker("HTVA"), Some("excl"));
+        assert_eq!(tax_marker("EUR"), None);
+        assert_eq!(read_value_item(" 1 000 000 FRF HT"), Some((100_000_000, "FRF".to_owned(), Some("excl"))));
+        // A body claiming both bases at once states neither.
+        assert_eq!(read_value_item(" 1 000 000 FRF HT TTC"), None);
+        // A label that literally states both bases states neither.
+        assert_eq!(phrase_basis("netto (ohne Umsatzsteuer) und brutto (mit Umsatzsteuer)"), None);
+        assert_eq!(phrase_basis("Auftragssumme (ohne Umsatzsteuer)"), Some("excl"));
+        assert_eq!(phrase_basis("Auftragssumme"), None);
+
+        // And the basis reaches the parse layer as its own code beside the amount.
+        let body = "3.  Date of award: 30.3.2001.\n\
+                    8.  Price: Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.\n\
+                    9.";
+        let record = format!(
+            "1.0/000001\nND: 1-2001\nTD: 7 - Contract award\nTX: {}\n",
+            body.replace('\n', "\n    ")
+        );
+        let p = parse(&record).expect("parses");
+        assert_eq!(
+            p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL").map(|v| &v.value),
+            Some(&NoticeValue::Amount { cents: 68_965_517, currency: "DEM".to_owned() })
+        );
+        assert_eq!(
+            p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL_TAX_BASIS").map(|v| &v.value),
+            Some(&NoticeValue::Code { list: None, code: "excl".to_owned() }),
+            "the basis has no canonical home yet (issue 251), but it is captured"
         );
     }
 

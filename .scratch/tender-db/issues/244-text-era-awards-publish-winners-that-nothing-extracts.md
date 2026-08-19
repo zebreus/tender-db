@@ -645,3 +645,46 @@ sub-labels state their **tax basis** (`ohne`/`mit Umsatzsteuer`, `TTC`, `HT`) an
 has nowhere to put it. Refusing every value that states its basis discards most of the era's money;
 claiming them mixes bases in one column — which the corpus already does, since the r208/r209 eras'
 published VAT indicator is not modelled either. See issue 251.
+
+
+## Slice 5: skip the sub-label, read the tax marker, guard the second figure (2026-08-19)
+
+Three rules, each from the refusal sample, and one of them reverses a slice-4 decision on purpose.
+
+**Skip a sub-label.** A value that does not parse whole is retried after its LAST colon —
+`Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.` becomes `689 655,17 DEM`. That was six of eight
+sampled refusals.
+
+**But only when the skipped part carries no digit.** This is the whole safety of the rule and it is
+worth stating plainly, because without it the shape
+
+    1 000 000 EUR, of which subcontracted: 200 000 EUR
+
+claims the **subcontracted** figure as the contract price. A pure label has no digits; a second figure
+does. Falsified: with the guard removed the test gets `Some((20000000, "EUR"))`.
+
+**Read the tax marker instead of choking on it.** `TTC` is three upper-case letters, so slice 4's
+currency test saw it as a second currency and refused `5 301 802,22 FRF TTC` — the French shape, whole
+and unambiguous. Markers (`TTC`/`TVAC` incl., `HT`/`HTVA` excl.) are now tested *before* currency codes,
+and the German sub-label wording (`ohne`/`mit Umsatzsteuer`, `netto`/`brutto`) is read from the label
+that was skipped. A value stating both bases states neither.
+
+### The reversal, stated as a reversal
+
+Slice 4 refused every value that stated its tax basis, on the reasoning that mixing bases silently into
+a column that records none would be a subtle wrong. **The measurement reversed it**: that refusal drops
+most of the era's money, and the column already mixes bases corpus-wide because the r208/r209 eras'
+published VAT indicator is not mapped either. Refusing was not the neutral choice, it was a large
+silent loss chosen to avoid a smaller inaccuracy that exists everywhere else.
+
+So the figure is claimed **and** the basis captured, as its own parse-layer code
+`TED-VAL_TOTAL_TAX_BASIS` (`incl`/`excl`) beside the amount. It has no canonical destination yet — that
+is issue 251 — but recording it now means the era will not have to be re-parsed to learn what it
+already said, and a parse-layer reader can already tell the two apart. The text era therefore becomes
+the *best*-labelled money in the corpus rather than another unlabelled contributor.
+
+### Unchanged
+
+`Price of product plus price of transport.` (prose), `Minimum/maximum: Lit 2 610/Lit 3 289` (a range
+whose label carries digits anyway), `15 564 000 ATS / 1 131 079,99 EUR` (two currencies) and the 1993
+`Lit`-prefixed figures are all still refused. The committed 1993 daily still asserts **zero** prices.
