@@ -1312,6 +1312,24 @@ impl Db {
     pub async fn reparse_notice(&self, n: &Notice, parsed: &Parsed) -> turso::Result<bool> {
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
+        // Defer the foreign-key checks to COMMIT (issue 247). Measured on prod: deleting
+        // ONE mention row cost ~10 s, because `tender_version_parties` and
+        // `tender_version_bid_parties` reference `organization_mentions`, and verifying
+        // that no child row does so is not served by an index here — all 78,033,566 party
+        // rows get walked, per notice. Reads of the same shape seek in 1 ms, so it is the
+        // enforcement path rather than a missing index.
+        //
+        // Deferring does not weaken anything: the constraints are still checked, once, at
+        // COMMIT, where a violation still aborts the whole transaction. And this clear
+        // deletes the children BEFORE their parents anyway, so nothing is ever actually
+        // in violation — only the proving of it was expensive.
+        //
+        // Best-effort: an engine without the pragma must not turn a re-parse into an
+        // error, so the failure is logged once and the transaction proceeds with immediate
+        // checks (correct, just slow).
+        if let Err(e) = conn.execute("PRAGMA defer_foreign_keys = ON", ()).await {
+            eprintln!("[store] re-parse: defer_foreign_keys unavailable ({e}); FK checks stay immediate");
+        }
         let result = async {
             // Timed per phase (issue 247): the same statements are milliseconds through
             // the reader pool, so if a re-parse crawls the cost has to be attributed on
