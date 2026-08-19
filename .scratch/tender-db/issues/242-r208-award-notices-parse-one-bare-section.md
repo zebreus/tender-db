@@ -1,8 +1,8 @@
 # 242 — r2.0.8 contract-award notices that parse to a single bare `Notice` section, so their results never exist
 
-Status: needs-triage — found 2026-08-19 by the repaired section 3 (issue 235), on the first window that could express it
-Kind: parser gap (award data present in the source, absent from the parse layer)
-Blocked by: 235's deploy (for the corpus-scale count; the defect itself is confirmed)
+Status: RESOLVED 2026-08-19 — not a parser gap. Diagnosed from the archive, report fixed to say so.
+Kind: publication-quality finding + a metric that could not express it (was filed as: parser gap)
+Blocked by: — (the corpus-scale split lands with 235's deployed run)
 Relates to: 235 (the metric that can now see this), 10 (r208 profile), 139 (r209 DTD strip — a
 neighbouring shallow-parse class), 174/177 (r208 fields that never projected), 13 (results layer)
 
@@ -93,3 +93,81 @@ r2.0.8 holds 1.07M versions. If the shortfall rate holds, that is ~15k award not
 values and contract dates exist in the published document and in no queryable form here. And the only
 reason anyone can see them is that the denominator stopped being drawn from the projection's own
 output — which is the argument for keeping that property in every metric the report grows.
+
+
+---
+
+## RESOLVED (2026-08-19, owner) — the premise was wrong, and the fix is in the report
+
+The filing above assumed the 62 shortfall versions were award data we failed to extract. Chased to
+the primary source, they are award notices that **publish no award data at all**. Nothing to extract,
+nothing to fix in the parser — and the report now says which half of any gap is ours.
+
+### What the archive says
+
+**1. The no-form class (26 of 28 sampled) publishes prose.** `339168-2017`, pulled from
+`/data/archive/ted/monthly/2017-08.tar`:
+
+- namespace `ted/R2.0.8.S03/publication`, `COMMENTS: From Convertor` — so the r2.0.8 profile
+  assignment is CORRECT for these 2017 documents; the "mis-dispatched?" question in the filing is
+  answered, no.
+- `<TD_DOCUMENT_TYPE CODE="7">Contract award notice</TD_DOCUMENT_TYPE>` — it really does announce an
+  award, in its own words.
+- `AC_AWARD_CRIT CODE="Z"` ("Not specified"), `TY_TYPE_BID CODE="9"` ("Not applicable").
+- The body is `OTH_NOT` / `FD_OTH_NOT`: 24 language versions of `BLK_BTX`/`<P>` paragraphs and no
+  structured award element anywhere. There is a `FORM_SECTION` but no `FORM` attribute, which is
+  exactly why no `TED-FORM` code is recorded — the absence IS the signal, not a parser miss.
+
+The winner and value exist only inside prose, in 24 languages. Out of scope for anything short of NLP.
+
+**2. The F06 class (2 of 28) publishes an EMPTY award container.** `017037-2017` carries
+`<AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES/>` — self-closing. And the wrapper is not unmapped:
+
+- `AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES` is r208-only (XSD inventory) and sits in `Rule::Group`,
+  which looks like the bug. Its CHILD, `AWARD_AND_CONTRACT_VALUE`, is already in the r208
+  `Section(Kind::LotResult)` group.
+- Verified against prod: `002856-2017` (populated container) HAS one `LotResult` section, with
+  `CONTRACT_NO`, `DATE_OF_CONTRACT_AWARD`, the contractor org ref, and the awarded value
+  17,850,000 PLN kept distinct from the 18,000,000 PLN pre-award estimate. `017037-2017` (empty
+  container) has none.
+- In `2017-01.tar` the container is populated 73 times and empty 13. Promoting the wrapper to a
+  section would nest a second, empty result section inside every populated F06.
+
+Both notices are now fixtures (`f06-002856-2017.xml`, `f06-017037-2017.xml`) with tests that pin the
+transparent-wrapper decision and the empty-container behaviour, so the next reader who finds a
+sub-100 % density does not "fix" the parser. Both pass the ADR-0004 exhaustiveness sweep.
+
+**3. Nothing else is affected.** Grouping the r2.0.8 shortfall by form, over two 200k-notice windows:
+`form 6 → 465 / 21`, `no form → 425 / 307`, `T02 → 0 / 3`, and nothing else. TD codes `J`, `K`, `R`,
+`V` show zero shortfall. r2.0.9 shows zero in a 100k slice — its award blocks use the plain
+`AWARD_CONTRACT` element, which is mapped, which is why the gap is r2.0.8-only. The remaining
+`Rule::Group` names that look like award blocks (`AWARD_CONTRACT_MOVE`, `AWARD_CONTRACT_PI_MOVE`,
+`AWARD_NOTIFICATION`, `AWARD_PRIZES`) cost nothing measurable today — they would have surfaced as
+another form code in that breakdown. Left alone deliberately, unmeasured rather than guessed at; the
+pre-2014 monthly tars nest per-day ZIPs, so a raw scan for them needs a different probe than the one
+used here.
+
+### The real defect was in the metric, and it is fixed
+
+Section 3 could report "98.5 %" without being able to say whether that 1.5 % was a publisher shipping
+prose or us dropping data. It now measures a third number, `awards_barren` — award-typed versions
+whose notice parsed with no result block at all — and prints both halves:
+
+    era                     award-notices   with lot_results   density   no content pub.
+    TED_EXPORT r2.0.8               4,250              4,188     98.5%                62
+    no content published: 62 award notice(s) parsed with no result block at all …
+    Unmaterialised award notices that DID publish a result block, i.e. the projection's
+    own shortfall: 0.
+
+JSON carries `no_award_content` and `unprojected` per era. On the window that started this issue,
+**the projection's shortfall is zero** — every r2.0.8 award notice that published a result block
+projected one.
+
+This deliberately reads `notice_sections`, which issue 235 forbade for the DENOMINATOR. The rule it
+keeps: a denominator must not derive itself from the projection's own output. Comparing the published
+type against the parse is not that — the comparison is the finding.
+
+### What is left
+
+Nothing here. The corpus-scale split (how many award notices publish nothing, per era) arrives with
+issue 235's deployed run, and belongs to that issue's first-run readout rather than to this one.
