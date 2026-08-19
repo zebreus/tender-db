@@ -70,7 +70,7 @@ fn every_r209_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 8, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 10, "corpus changed; update the expectation");
 
     for relative in names {
         let (profile, parse) = ingest_fixture(&relative);
@@ -178,6 +178,86 @@ fn contract_notice_extracts_its_business_content() {
         NoticeValue::Number { value: 2.0, unit: Some("MONTH".into()) }
     );
     assert_eq!(*value(&cn, "PROCEDURE", "TED-NO_LOT_DIVISION"), NoticeValue::Integer(1));
+}
+
+/// The R2.0.8 F06 (utilities award) wraps its award block in an era-specific
+/// container, `AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES`, whose child is the
+/// already-mapped `AWARD_AND_CONTRACT_VALUE`. The container stays a transparent
+/// group and the INNER element opens the section — this test pins that, because
+/// the outer name looks like an unmapped award block and promoting it would nest
+/// a second, empty result section inside every F06.
+#[test]
+fn the_f06_utilities_award_block_opens_one_result_section_from_its_inner_element() {
+    let can = parse_fixture("r209/f06-002856-2017.xml");
+
+    let awards: Vec<_> = can.sections.iter().filter(|s| s.kind == "LotResult").collect();
+    assert_eq!(awards.len(), 1, "one award block, one section: {awards:?}");
+    assert_eq!(awards[0].id, "RES-1");
+
+    // The award content the era publishes inside that block.
+    assert!(matches!(
+        value(&can, "RES-1", "TED-CONTRACT_NO"),
+        NoticeValue::Id { value, is_ref: false, .. } if value == "DU/127/OW/2016/JK"
+    ));
+    assert_eq!(
+        *value(&can, "RES-1", "TED-VALUE_COST"),
+        NoticeValue::Amount { cents: 1_785_000_000, currency: "PLN".into() },
+        "the awarded value, not the pre-award estimate"
+    );
+    assert_eq!(
+        *value(&can, "RES-1", "TED-DATE_OF_CONTRACT_AWARD"),
+        NoticeValue::Date { utc_seconds: 1_482_796_800, offset_minutes: 0, has_time: false }
+    );
+    assert_eq!(*value(&can, "RES-1", "TED-OFFERS_RECEIVED_NUMBER"), NoticeValue::Integer(2));
+    // Winner: an inline org block under the award, role-referenced like F03's —
+    // the role here is the award element itself, since F06 nests the contractor
+    // address directly under `AWARD_AND_CONTRACT_VALUE`.
+    let NoticeValue::Id { value: winner, is_ref: true, .. } =
+        value(&can, "RES-1", "TED-AWARD_AND_CONTRACT_VALUE")
+    else {
+        panic!("winner role ref missing")
+    };
+    assert_eq!(text(&can, winner, "TED-OFFICIALNAME"), "ELPATOR Jerzy Pawełek");
+    // The pre-award estimate stays distinguishable from the awarded value.
+    assert_eq!(
+        *value(&can, "RES-1", "TED-INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT.VALUE_COST"),
+        NoticeValue::Amount { cents: 1_800_000_000, currency: "PLN".into() }
+    );
+}
+
+/// Issue 242: an award notice can announce a result and publish NO award content.
+///
+/// This F06 carries `<AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES/>` — the container
+/// is there, empty — so there is no award block to make a section from, and the
+/// notice legitimately projects no `lot_results` row. Measured on prod: 465 such
+/// notices per 200k r2.0.8 notices, alongside ~425 whose whole body is `OTH_NOT`
+/// prose. Together they are the entire r2.0.8 shortfall in the report's section 3,
+/// and none of it is a parser miss — which is why section 3 reports the class
+/// rather than counting it as a failure.
+///
+/// The test exists so a future reader who finds the 98.5 % density does not "fix"
+/// the parser: there is nothing here to extract.
+#[test]
+fn an_award_notice_with_an_empty_award_container_yields_no_result_section() {
+    let can = parse_fixture("r209/f06-017037-2017.xml");
+
+    assert!(
+        !can.sections.iter().any(|s| s.kind == "LotResult"),
+        "an empty award container must not fabricate a result section: {:?}",
+        can.sections
+    );
+    // It is still recognisably an award notice by its own published type — the
+    // fact that makes it appear in section 3's denominator (issue 235).
+    assert!(matches!(
+        value(&can, "PROCEDURE", "TED-TD_DOCUMENT_TYPE"),
+        NoticeValue::Code { code, .. } if code == "7"
+    ));
+    // And the notice is not empty: the procedure-level value is published, the
+    // award-level one is not.
+    assert_eq!(
+        *value(&can, "PROCEDURE", "TED-VALUE_COST"),
+        NoticeValue::Amount { cents: 59_214_000, currency: "EUR".into() }
+    );
 }
 
 /// F03 award notice: winner, award value in exact cents, conclusion date.
