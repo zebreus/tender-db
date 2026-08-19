@@ -342,13 +342,27 @@ impl Db {
 
     /// Resolve a presented bearer token to its account, recording the use.
     ///
-    /// The `last_used_at` touch is best-effort: it is what makes a stale token
-    /// visible in the dashboard, and losing one write is preferable to failing
-    /// an otherwise valid request.
+    /// **On a READER, and the touch only if the writer is free.** Both halves used
+    /// to run on the writer — one mutex-guarded connection that a projection holds
+    /// for the whole of a fold — so authenticating queued behind an hours-long job,
+    /// and every token-bearing request to any gated endpoint hung for its duration.
+    /// Nothing timed it out either: `/v1/sql`'s backstop lives inside the handler,
+    /// and an extractor that never returns never reaches one. Measured on prod
+    /// during a 25-minute re-fold: `SELECT 1` on the sandbox got no response in
+    /// 120 s, while `/v1/tenders` (reader pool) answered in 5 ms and `/health`
+    /// (in-memory cursor, issue 61) in 0.4 ms — which is exactly why no probe saw
+    /// it.
+    ///
+    /// The `last_used_at` touch stays best-effort: it is what makes a stale token
+    /// visible in the dashboard, and losing one write is preferable to failing an
+    /// otherwise valid request. `try_lock` is what makes that comment true — WAITING
+    /// for the writer is the outage above, so a touch that cannot have the writer
+    /// now is dropped, which costs a dashboard timestamp during jobs and nothing
+    /// else.
     pub async fn authenticate_token(&self, token: &str, now: i64) -> turso::Result<Option<User>> {
         let hash = digest(token);
-        let conn = self.conn().await;
-        let mut rows = conn
+        let reader = self.reader().await?;
+        let mut rows = reader
             .query(
                 "SELECT u.id, u.username, u.created_at FROM api_tokens k
                    JOIN users u ON u.id = k.user_id
@@ -360,12 +374,14 @@ impl Db {
         let user =
             User { id: int(&row, 0), username: text(&row, 1), created_at: int(&row, 2) };
         drop(rows);
-        let _ = conn
-            .execute(
-                "UPDATE api_tokens SET last_used_at = ? WHERE token_hash = ?",
-                (Value::Integer(now), t(hash)),
-            )
-            .await;
+        if let Ok(conn) = self.conn.try_lock() {
+            let _ = conn
+                .execute(
+                    "UPDATE api_tokens SET last_used_at = ? WHERE token_hash = ?",
+                    (Value::Integer(now), t(hash)),
+                )
+                .await;
+        }
         Ok(Some(user))
     }
 }
@@ -455,6 +471,48 @@ mod tests {
         assert!(db.revoke_token(user.id, record.id, 30).await.expect("revoke"));
         assert!(!db.revoke_token(user.id, record.id, 31).await.expect("revoke"));
         assert!(db.authenticate_token(&token, 40).await.expect("auth").is_none());
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// A held writer must not delay authentication. A projection keeps the writer
+    /// connection for the whole of a fold, so an auth path that waits for it hangs
+    /// every token-bearing request for the job's duration — and nothing times that
+    /// out, because an extractor that never returns never reaches a handler's
+    /// backstop. Wrapped in a timeout so a regression FAILS here instead of hanging.
+    #[tokio::test]
+    async fn a_token_authenticates_while_the_writer_is_held() {
+        let (db, path) = db("token-writer-held").await;
+        let user = db
+            .create_user("ada", &hash_password("pw").expect("hash"), 0)
+            .await
+            .expect("create")
+            .expect("fresh");
+        let token = generate_token();
+        db.create_token(user.id, &token, "ci", 10).await.expect("create token");
+
+        // Exactly what a fold does: take the writer and keep it.
+        let held = db.conn().await;
+        let authenticated = tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            db.authenticate_token(&token, 20),
+        )
+        .await
+        .expect("authentication must not wait on the writer")
+        .expect("auth");
+        assert_eq!(authenticated, Some(user.clone()), "resolved on a reader");
+        drop(held);
+
+        // The best-effort `last_used_at` touch is the one half that needs the writer,
+        // so it is DROPPED rather than waited for — the trade the doc comment always
+        // claimed, now actually true.
+        let listed = db.list_tokens(user.id).await.expect("list");
+        assert_eq!(listed[0].last_used_at, None, "touch skipped while the writer was busy");
+
+        // With the writer free it lands as before.
+        db.authenticate_token(&token, 30).await.expect("auth");
+        let listed = db.list_tokens(user.id).await.expect("list");
+        assert_eq!(listed[0].last_used_at, Some(30), "and a free writer still records the use");
 
         let _ = std::fs::remove_file(&path);
     }
