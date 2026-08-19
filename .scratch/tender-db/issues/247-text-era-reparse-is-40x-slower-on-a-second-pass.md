@@ -84,3 +84,47 @@ The text era is 215 packages. At the first run's rate the campaign is ~11 hours 
 one's it is over a week, and it holds the queue against the daily ingest tick the whole time. Either
 number is worth knowing before committing to the remaining 200 packages — and if suspect 3 is the
 answer, then no re-parse campaign of this corpus can be planned from a single warm measurement.
+
+
+## Eliminated on prod, 2026-08-19 (so the next session need not redo these)
+
+The rate got worse on longer observation — 256 → 448 members in 55 minutes is **3.5 members/min**,
+against 410/min on the first pass. Each of the three suspects was then tested directly:
+
+**1. `notice_state`'s identity lookup — NOT it.** Through the reader pool, the exact query the re-parse
+uses answers in **1–3 ms** on a fetch-186 notice:
+
+    SELECT id, parse_state FROM notices
+     WHERE source='ted' AND publication_id='355567-2010' AND content_hash='…'   → 0.001 s
+
+**2. `clear_parsed`'s per-notice work — NOT it.** Every parse-layer table answers a `notice_id` lookup in
+about a millisecond, and the row counts are tiny (sections 2, texts 5, codes 10, classifications 1,
+amounts 0, dates 2):
+
+    notice_sections 0.0010s · notice_texts 0.0010s · notice_codes 0.0012s
+    notice_classifications 0.0010s · notice_amounts 0.0008s · notice_dates 0.0011s
+
+**3. WAL / checkpoint pressure — NOT it.** Sampled every 20 s during the run, the WAL grows ~24 KB/s and
+stays small (1.5 → 3.4 MB), so checkpoints are succeeding. That 24 KB/s is also the honest write rate:
+about 2 notices a second.
+
+**And the box is not degraded.** Load 1.01 (our process alone), `md3` clean `[UU]` on NVMe, 62 GB RAM
+with 57 GB in page cache and 59 GB available. The 270 MB/s of `rchar` against 94 MB/s of `read_bytes` is
+therefore mostly cache hits, not a disk problem.
+
+### What that leaves
+
+**~135 MB of page reads per notice** (270 MB/s ÷ 2 notices/s), burning one core, while the same
+statements answer in a millisecond each through the reader pool. The difference between the two is the
+CONNECTION: `reparse_notice` runs everything on the long-lived WRITER connection inside
+`BEGIN IMMEDIATE`, and the millisecond timings above came from the reader pool. A per-connection plan or
+prepared-statement difference on the writer would explain a fast reader and a scanning writer, and it
+would explain why restarts do not help (each new process re-establishes the same writer).
+
+Next steps, in order:
+1. The queued `fetch 240` comparison still decides package-specific vs global.
+2. If global: instrument the writer path — time `notice_state` / `clear_parsed` / `insert_parsed`
+   individually inside `reparse_notice` behind a flag, and log the per-notice split. Guessing has cost
+   two hours; the numbers are cheap to collect.
+3. A symbol-preserving build would let `perf` name the hot function — the release binary is stripped and
+   the samples only resolve to addresses.
