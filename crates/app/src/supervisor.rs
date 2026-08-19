@@ -935,6 +935,17 @@ impl Supervisor {
         }
         let recovered = jobs.len();
         self.queue.lock().expect("queue lock").extend(jobs);
+        // The pending queue is only half the floor. It is emptied as jobs finish,
+        // so a restart that finds no work outstanding recovers max_id = 0 and the
+        // counter stays at 1 — handing ids that already name finished runs in the
+        // log to brand-new jobs. The log's own high-water mark closes that; rows
+        // older than the `job_id` column answer NULL and contribute no floor,
+        // which is correct (they were numbered under the old scheme anyway).
+        match self.db.max_logged_job_id().await {
+            Ok(Some(logged)) if logged > 0 => max_id = max_id.max(logged as u64),
+            Ok(_) => {}
+            Err(e) => eprintln!("supervisor: read job-id high-water mark: {e}"),
+        }
         if max_id + 1 > self.next_id.load(Ordering::Relaxed) {
             self.next_id.store(max_id + 1, Ordering::Relaxed);
         }
@@ -1200,7 +1211,15 @@ impl Supervisor {
         };
         if let Err(e) = self
             .db
-            .record_job_run(&job.kind, &job.params, started_at, store::now_unix(), outcome, &counts)
+            .record_job_run(
+                job.id as i64,
+                &job.kind,
+                &job.params,
+                started_at,
+                store::now_unix(),
+                outcome,
+                &counts,
+            )
             .await
         {
             // The log is best-effort telemetry; a failure to persist it must not
@@ -2992,6 +3011,7 @@ mod tests {
     fn a_tick_that_passed_unserved_is_caught_up_on_startup() {
         let run = |kind: &str, outcome: &str, finished_at: i64| JobRun {
             id: 1,
+            job_id: None,
             kind: kind.into(),
             params: String::new(),
             started_at: finished_at - 10,
@@ -3428,6 +3448,37 @@ mod tests {
                 want.id
             );
         }
+    }
+
+    /// A restart that finds an EMPTY queue must not restart the id counter, or new
+    /// jobs get numbers that already name finished runs in the log. Observed on
+    /// prod 2026-08-19: `/admin/jobs` reported a running `id 7` while the log's
+    /// newest rows were in the 900s, because `next_id` is in-memory, starts at 1,
+    /// and was seeded from the *pending* queue only — which a drained restart
+    /// finds empty. The log's high-water mark is the missing floor.
+    #[tokio::test]
+    async fn a_drained_restart_does_not_reissue_a_spent_job_id() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let ids = sup.enqueue_request(&req("project")).await.unwrap();
+        let id = ids[0];
+
+        // The job runs and concludes: its log row records the id, its queue row goes.
+        db.record_job_run(id as i64, "project", "rebuild=false", 10, 20, "ok", "0 tenders")
+            .await
+            .unwrap();
+        db.remove_job(id as i64).await.unwrap();
+        assert!(db.pending_jobs().await.unwrap().is_empty(), "the queue is drained");
+
+        // "Restart" over the same database, with nothing outstanding to recover.
+        let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        restarted.recover().await;
+        let fresh = restarted.enqueue_request(&req("project")).await.unwrap();
+        assert!(
+            fresh[0] > id,
+            "a drained restart reissued id {} (spent by the logged run {id})",
+            fresh[0]
+        );
     }
 
     /// recovered, rebuilds the same pending jobs in the same order — the restart

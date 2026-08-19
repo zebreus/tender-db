@@ -6,12 +6,24 @@
 //! restart re-enqueues what was outstanding instead of losing it. Live progress
 //! of the running job is in-memory in the app; only these two land here.
 
-use crate::{Db, Value, int, opt_text_of, t, text};
+use crate::{Db, Value, int, opt_int_of, opt_text_of, t, text};
 use model::ingestion::JobRun;
 
 pub const SCHEMA: &str = "
     CREATE TABLE IF NOT EXISTS job_log (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        -- The Supervisor's own job id for this run — the same number the queue
+        -- and `/admin/jobs` use while the job is live. `id` is the log's own
+        -- append counter and is NOT that number: they are two independent
+        -- namespaces, and before this column existed a finished run could not be
+        -- correlated with the queue row it came from. Worse, the Supervisor's
+        -- counter is in-memory and seeded from the *pending* queue, so a restart
+        -- with an empty queue restarted it at 1 and re-used numbers that already
+        -- named different runs in this log. Recording it here gives recovery a
+        -- durable floor (see `max_logged_job_id`), which makes job ids unique and
+        -- monotonic for the life of the database. NULL for rows written before
+        -- the column existed.
+        job_id      INTEGER,
         kind        TEXT NOT NULL,
         params      TEXT NOT NULL,
         started_at  INTEGER NOT NULL, -- unix seconds
@@ -56,6 +68,7 @@ impl Db {
     /// — the panel shows it verbatim.
     pub async fn record_job_run(
         &self,
+        job_id: i64,
         kind: &str,
         params: &str,
         started_at: i64,
@@ -65,9 +78,10 @@ impl Db {
     ) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute(
-            "INSERT INTO job_log(kind, params, started_at, finished_at, outcome, counts_json)
-             VALUES(?, ?, ?, ?, ?, ?)",
+            "INSERT INTO job_log(job_id, kind, params, started_at, finished_at, outcome, counts_json)
+             VALUES(?, ?, ?, ?, ?, ?, ?)",
             (
+                Value::Integer(job_id),
                 t(kind),
                 t(params),
                 Value::Integer(started_at),
@@ -88,7 +102,7 @@ impl Db {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
-                "SELECT id, kind, params, started_at, finished_at, outcome, counts_json
+                "SELECT id, job_id, kind, params, started_at, finished_at, outcome, counts_json
                  FROM job_log ORDER BY id DESC LIMIT ?",
                 (Value::Integer(limit),),
             )
@@ -97,15 +111,32 @@ impl Db {
         while let Some(row) = rows.next().await? {
             out.push(JobRun {
                 id: int(&row, 0),
-                kind: text(&row, 1),
-                params: text(&row, 2),
-                started_at: int(&row, 3),
-                finished_at: int(&row, 4),
-                outcome: text(&row, 5),
-                counts: text(&row, 6),
+                job_id: opt_int_of(&row, 1),
+                kind: text(&row, 2),
+                params: text(&row, 3),
+                started_at: int(&row, 4),
+                finished_at: int(&row, 5),
+                outcome: text(&row, 6),
+                counts: text(&row, 7),
             });
         }
         Ok(out)
+    }
+
+    /// The highest Supervisor job id this log has ever recorded, or `None` if the
+    /// log is empty or predates the `job_id` column.
+    ///
+    /// Recovery needs this as a floor. The pending queue is emptied as jobs
+    /// finish, so seeding the Supervisor's counter from it alone lets the counter
+    /// fall back to 1 on any restart that happens with no work outstanding — and
+    /// then hands the numbers of long-finished runs to new ones. Reading the log's
+    /// high-water mark closes that, without ever re-using a number: old rows
+    /// answer NULL and are simply not a floor.
+    pub async fn max_logged_job_id(&self) -> turso::Result<Option<i64>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT MAX(job_id) FROM job_log", ()).await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        Ok(opt_int_of(&row, 0))
     }
 
     // ------------------------------------------------------------ durable queue
@@ -179,10 +210,10 @@ mod tests {
 
         assert!(db.recent_job_runs(10).await.unwrap().is_empty());
 
-        db.record_job_run("process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
+        db.record_job_run(7, "process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
             .await
             .unwrap();
-        db.record_job_run("project", "rebuild=false", 200, 205, "error", "db: locked")
+        db.record_job_run(8, "project", "rebuild=false", 200, 205, "error", "db: locked")
             .await
             .unwrap();
 
@@ -245,7 +276,7 @@ mod tests {
         let _ = std::fs::remove_file(&path);
         let db = Db::open(&path).await.unwrap();
 
-        db.record_job_run("process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
+        db.record_job_run(7, "process", "ted daily 2026-00136", 100, 160, "ok", "42 notices")
             .await
             .unwrap();
 

@@ -516,7 +516,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 5] = [
+const MIGRATIONS: [&str; 6] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -530,6 +530,13 @@ const MIGRATIONS: [&str; 5] = [
     // resets on first contact — the conservative choice, since a rebuild may have
     // stranded its cursor beyond the new head with no batch to carry the signal.
     "ALTER TABLE webhook_endpoints ADD COLUMN last_generation INTEGER",
+    // The Supervisor's job id on a finished run. `job_log` shipped in issue 16
+    // keyed only by its own append counter, so a finished run carried no link
+    // back to the queue id it ran under — and the in-memory counter, seeded from
+    // the *pending* queue only, restarted at 1 whenever a restart found no work
+    // outstanding, re-using ids the log had already spent. NULL for every
+    // pre-existing row, which recovery reads as "no floor from this row".
+    "ALTER TABLE job_log ADD COLUMN job_id INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
@@ -5262,6 +5269,54 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // And it is writable — the resume cursor works on the migrated table.
         db.record_job_progress(3, "2008-06").await.unwrap();
         assert_eq!(db.pending_jobs().await.unwrap()[0].progress.as_deref(), Some("2008-06"));
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// The `job_log.job_id` migration. The log shipped in issue 16 keyed only by
+    /// its own append counter, so a prod database has a `job_log` without the
+    /// column — and `recent_job_runs`' `SELECT … job_id` would crash the new
+    /// binary on the first dashboard read. Opens a pre-column log holding a run,
+    /// then asserts the read path works, the old row reads NULL, and a new row
+    /// carries and reports its Supervisor id.
+    #[tokio::test]
+    async fn migration_adds_the_job_log_job_id_column() {
+        let path = format!("/tmp/tender-db-joblogmigrate-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        // The pre-column schema, holding one finished run.
+        let database = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = database.connect().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE job_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, params TEXT NOT NULL,
+                started_at INTEGER NOT NULL, finished_at INTEGER NOT NULL,
+                outcome TEXT NOT NULL, counts_json TEXT NOT NULL
+             ) STRICT;
+             INSERT INTO job_log(id, kind, params, started_at, finished_at, outcome, counts_json)
+             VALUES(919, 'reparse', 'reparse text', 10, 20, 'ok', '12385 notices');",
+        )
+        .await
+        .unwrap();
+        drop(conn);
+        drop(database);
+
+        let db = Db::open(&path).await.expect("open must migrate the pre-job_id job_log");
+        let runs = db.recent_job_runs(10).await.expect("the migrated column is readable");
+        assert_eq!(runs.len(), 1);
+        assert_eq!(runs[0].id, 919, "the log's own counter is untouched");
+        assert_eq!(runs[0].job_id, None, "a row written before the column has no Supervisor id");
+        // A NULL-only log offers recovery no floor, which is the honest answer —
+        // those rows were numbered under the old scheme.
+        assert_eq!(db.max_logged_job_id().await.unwrap(), None);
+
+        // And the column is writable: a new run carries its Supervisor id, which
+        // is a different number from the log's append counter.
+        db.record_job_run(7, "project", "rebuild=false", 30, 40, "ok", "0 tenders").await.unwrap();
+        let runs = db.recent_job_runs(10).await.unwrap();
+        assert_eq!(runs[0].job_id, Some(7));
+        assert_ne!(runs[0].id, 7, "the two ids are independent namespaces");
+        assert_eq!(db.max_logged_job_id().await.unwrap(), Some(7), "now recovery has a floor");
 
         let _ = std::fs::remove_file(&path);
     }

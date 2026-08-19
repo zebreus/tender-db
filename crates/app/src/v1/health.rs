@@ -258,6 +258,7 @@ mod tests {
     fn run(outcome: &str, finished_at: i64) -> JobRun {
         JobRun {
             id: 1,
+            job_id: None,
             kind: "process".into(),
             params: "ted daily (all)".into(),
             started_at: finished_at - 10,
@@ -294,6 +295,7 @@ mod tests {
     fn a_maintenance_success_does_not_reset_ingest_freshness() {
         let job = |kind: &str, outcome: &str, finished_at: i64| JobRun {
             id: 1,
+            job_id: None,
             kind: kind.into(),
             params: String::new(),
             started_at: finished_at - 10,

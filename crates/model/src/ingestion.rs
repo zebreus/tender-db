@@ -105,6 +105,10 @@ pub struct QueuedJob {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct JobRun {
     pub id: i64,
+    /// The Supervisor's job id for this run — the number `/admin/jobs` showed
+    /// while it was live. `None` for runs logged before the column existed;
+    /// `id` above is the log's own append counter, a different namespace.
+    pub job_id: Option<i64>,
     pub kind: String,
     pub params: String,
     pub started_at: i64,

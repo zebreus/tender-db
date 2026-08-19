@@ -48,7 +48,7 @@ queue)
           + (if (.members_total // 0) > 0 then " | members \(.members_done)/\(.members_total)" else "" end)
       ) end),
       ("QUEUED " + ((.queued // []) | map("\(.id):\(.kind)") | join(", ") | if . == "" then "none" else . end)),
-      ((.recent // [])[:3][] | "  \(.id) \(.kind) \(.outcome) | \(.counts // "")")
+      ((.recent // [])[:3][] | "  \(.job_id // .id) \(.kind) \(.outcome) | \(.counts // "")")
     '
     ;;
 raw)

@@ -361,6 +361,7 @@ mod tests {
     fn run(kind: &str, started_at: i64, finished_at: i64, outcome: &str) -> JobRun {
         JobRun {
             id: 0,
+            job_id: None,
             kind: kind.into(),
             params: String::new(),
             started_at,

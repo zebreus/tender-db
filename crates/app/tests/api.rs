@@ -372,14 +372,14 @@ async fn the_deep_health_probe_reports_operational_health() {
     // A successful run refreshes the freshness clock; a later failure trips the
     // last-job check and flips the whole probe to 503 for the pinger.
     let now = store::now_unix();
-    server.db.record_job_run("process", "ted daily (all)", now - 20, now - 10, "ok", "42 notices").await.unwrap();
+    server.db.record_job_run(1, "process", "ted daily (all)", now - 20, now - 10, "ok", "42 notices").await.unwrap();
     let (status, ok_run) = server.get_with_status("/health/deep").await;
     assert_verdict_is_the_conjunction(status, &ok_run, "after a successful run");
     assert_eq!(ok_run["checks"]["ingest_freshness"]["last_success_at"], Value::from(now - 10));
 
     // The unhealthy direction IS asserted absolutely: one failing check must force
     // 503 whatever the disk says, because failure is monotone in the conjunction.
-    server.db.record_job_run("project", "rebuild=false", now - 5, now, "error", "db: locked").await.unwrap();
+    server.db.record_job_run(2, "project", "rebuild=false", now - 5, now, "error", "db: locked").await.unwrap();
     let (status, errored) = server.get_with_status("/health/deep").await;
     assert_verdict_is_the_conjunction(status, &errored, "after a failed job");
     assert_eq!(status, 503, "the last job errored — unhealthy regardless of the host");
@@ -459,12 +459,12 @@ async fn the_metrics_endpoint_exposes_prometheus_text() {
     let now = store::now_unix();
     server
         .db
-        .record_job_run("process", "ted daily (all)", now - 70, now - 10, "ok", "42 notices")
+        .record_job_run(1, "process", "ted daily (all)", now - 70, now - 10, "ok", "42 notices")
         .await
         .unwrap();
     server
         .db
-        .record_job_run("project", "rebuild=false", now - 5, now, "error", "db: locked")
+        .record_job_run(2, "project", "rebuild=false", now - 5, now, "error", "db: locked")
         .await
         .unwrap();
     let body = server.http.get(format!("{}/metrics", server.base)).send().await.expect("request")
