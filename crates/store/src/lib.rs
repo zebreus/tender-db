@@ -451,16 +451,24 @@ struct ReparsePhases {
     clear_nanos: AtomicU64,
     insert_nanos: AtomicU64,
     commit_nanos: AtomicU64,
+    /// Per-STATEMENT totals inside the clear, keyed by the label `Db::step` already
+    /// carries. `clear` turned out to be 99.6% of a re-parse's writer time (measured:
+    /// 159 ms a notice against 57 µs for the lookup) and it runs nine statements, so
+    /// the phase total names the wrong thing on its own. A mutex is free at this scale:
+    /// every write here already holds the writer.
+    clear_stmt_nanos: std::sync::Mutex<std::collections::BTreeMap<&'static str, u64>>,
 }
 
 /// A snapshot of [`ReparsePhases`], so a scrape reads one consistent set.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ReparseStats {
     pub notices: u64,
     pub lookup_seconds: f64,
     pub clear_seconds: f64,
     pub insert_seconds: f64,
     pub commit_seconds: f64,
+    /// `(statement label, seconds)` inside the clear, busiest first.
+    pub clear_statements: Vec<(&'static str, f64)>,
 }
 
 pub struct Db {
@@ -825,6 +833,13 @@ impl Db {
             clear_seconds: self.reparse.clear_nanos.load(Ordering::Relaxed) as f64 / NANOS,
             insert_seconds: self.reparse.insert_nanos.load(Ordering::Relaxed) as f64 / NANOS,
             commit_seconds: self.reparse.commit_nanos.load(Ordering::Relaxed) as f64 / NANOS,
+            clear_statements: {
+                let by_stmt = self.reparse.clear_stmt_nanos.lock().expect("clear stmt lock");
+                let mut out: Vec<(&'static str, f64)> =
+                    by_stmt.iter().map(|(label, nanos)| (*label, *nanos as f64 / NANOS)).collect();
+                out.sort_by(|a, b| b.1.total_cmp(&a.1));
+                out
+            },
         }
     }
 
@@ -1212,7 +1227,7 @@ impl Db {
         // breaks by leaving them for the fold to replace — and a re-parse that
         // quietly widened into the results layer would be much harder to reason about.
         for table in ["tender_version_parties", "tender_version_bid_parties"] {
-            Self::step(
+            self.step(
                 conn,
                 table,
                 &format!("DELETE FROM {table} WHERE mention_notice_id = ?"),
@@ -1220,17 +1235,28 @@ impl Db {
             )
             .await?;
         }
-        Self::step(conn, "clear organization_mentions", "DELETE FROM organization_mentions WHERE notice_id = ?", id)
+        self.step(conn, "organization_mentions", "DELETE FROM organization_mentions WHERE notice_id = ?", id)
             .await?;
         for table in Self::PARSED_TABLES {
-            Self::step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
+            self.step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
         }
         Ok(())
     }
 
-    /// One notice-scoped statement, logging which one it was if it fails.
-    async fn step(conn: &Connection, label: &str, sql: &str, id: i64) -> turso::Result<()> {
-        if let Err(e) = conn.execute(sql, (Value::Integer(id),)).await {
+    /// One notice-scoped statement, logging which one it was if it fails and timing it
+    /// so the clear's cost can be attributed to a statement rather than to the phase
+    /// (issue 247).
+    async fn step(&self, conn: &Connection, label: &'static str, sql: &str, id: i64) -> turso::Result<()> {
+        let started = std::time::Instant::now();
+        let outcome = conn.execute(sql, (Value::Integer(id),)).await;
+        *self
+            .reparse
+            .clear_stmt_nanos
+            .lock()
+            .expect("clear stmt lock")
+            .entry(label)
+            .or_insert(0) += started.elapsed().as_nanos() as u64;
+        if let Err(e) = outcome {
             eprintln!("[store] notice {id}: {label} failed: {e}");
             return Err(e);
         }

@@ -86,6 +86,24 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         ] {
             sample(&mut out, "tender_db_reparse_phase_seconds_total", &[("phase", phase)], seconds);
         }
+        // The clear is nine statements and, measured, 99.6% of the writer-side cost, so
+        // the phase total alone names the wrong thing. One series per statement says
+        // which DELETE is paying.
+        if !reparse.clear_statements.is_empty() {
+            header(
+                &mut out,
+                "tender_db_reparse_clear_statement_seconds_total",
+                "Seconds per statement inside a re-parse's clear.",
+            );
+            for (stmt, seconds) in &reparse.clear_statements {
+                sample(
+                    &mut out,
+                    "tender_db_reparse_clear_statement_seconds_total",
+                    &[("stmt", stmt)],
+                    *seconds,
+                );
+            }
+        }
     }
 
     // Disk on the DB volume — the same statvfs `/health/deep` folds into its
