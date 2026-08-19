@@ -1,7 +1,7 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 1 DONE in code 2026-08-19 — the 2004+ grammar is read and reaches the canonical layer;
-awaiting the era re-parse to land it over the corpus. Pre-2004 grammar, values and 2010 still open.
+Status: SLICE 1 DONE and VERIFIED ON PROD 2026-08-19 (2 of 215 packages re-parsed). The remaining 213
+packages are a staged campaign; pre-2004 grammar, values and the 2010 tail still open.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -196,3 +196,48 @@ under its own `CONTRACT NO:`.
    no amount.
 4. **The 2010 tail**: 171 of 244 award notices in the sampled window have no text values at all. Needs
    its own investigation — possibly related to issues 139 (the 2010-03 DTD population) or 199.
+
+
+---
+
+## Slice 1 verified on prod (2026-08-19), and what the staging found
+
+Two packages re-parsed with the new `packages` / `after` caps, each followed by its fold.
+
+**`fetch 186` — 35,830 notices, 1,012 members, 0 unmatched, 0 now failing — and zero result sections.**
+Correct, and the reason is the point: that package is 2010-12-01..03, and the 2010 tail is exactly the
+slice with neither award label. Had the run not been capped, this would have looked like the extractor
+silently doing nothing across the whole era.
+
+**`fetch 240` — 20,755 notices (2006-06) — the extractor working:**
+
+    sampled 800 notices of the package
+    with a LotResult section          346
+    with a TED-OFFICIALNAME winner    346
+
+and through the fold into the canonical layer:
+
+    winner parties from 300 sampled notices   605
+    Polatom Sp. z o.o 12, TBS-FR 8, Sodiprho 7, PGF Urtica Sp. z o.o 7,
+    STMI 6, Farmacol SA 6, Techniques et technologies 5, Gambro Poland Sp. z o.o 5
+
+Real company names, several winners per award notice (the multi-contract shape), reaching
+`tender_version_parties` with role `winner` — which is the whole chain the era has never had.
+
+Two cosmetic notes for whoever reads these names later: the trailing period of an abbreviation is
+trimmed (`Sp. z o.o.` → `Sp. z o.o`), deterministically, so mentions still merge; and the name is
+whatever precedes the first comma, so a company whose legal name contains a comma will be cut at it.
+
+`0 now failing` on both packages is the line that matters for a parser change: no notice that parsed
+before stopped parsing.
+
+## The remaining campaign
+
+213 packages left, at roughly 4–5 minutes each plus a fold — call it 15–20 hours of queue time, so it is
+a staged campaign across firings, not one job. `after` + `packages` make each step selectable and
+resumable, and the summary names what the cap held back.
+
+One thing checked and found harmless: each re-parse reports `stamped 2,601,443 tender(s) epoch-stale`,
+the same number both times, so the stamp is the whole legacy cohort and re-stamping is idempotent — it
+is not accumulating per-package debt. The fold each time touched only the re-parsed notices' own tenders
+(19,335 and 33,160).
