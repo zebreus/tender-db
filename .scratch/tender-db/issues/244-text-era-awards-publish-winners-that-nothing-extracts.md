@@ -724,3 +724,16 @@ past, so it was an unknown token that refused the whole value. `netto`/`brutto` 
 
 So the honest position for the era's money at notice scope: **near its ceiling**. What is left is either
 per-lot (structural), a converted or annualised figure (a different fact), or withheld.
+
+
+### The fifth A/B: 996, and the price arc closed
+
+`netto`/`brutto` as bare trailing words, deployed as `2f48c0c`:
+
+    notice_amounts rows, fetch 300     0 → 390 → 984 → 996
+    tax basis captured                 279 excl · 120 incl   (399 of the 996)
+
++12 rows, which is the right size for a narrow shape and confirms the sample was read correctly. The
+arc for this package's money is therefore **0 % → 30.9 %** of its 3,227 price-label bodies, and the rest
+is the refusal set analysed above — per-lot lists, conversions, annualised figures, withheld, prose —
+which is where it should stay until a value can be attributed per LotResult.
