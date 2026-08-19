@@ -962,11 +962,28 @@ impl Supervisor {
             return;
         }
         if reindex_already_queued {
+            // Already queued is not the same as queued FIRST, and the difference is the
+            // whole of issue 247: the reindex prod needed was in the queue for hours,
+            // behind the job it would have made a hundred times faster. So move it, and
+            // say whether the move was needed.
+            let moved = {
+                let mut queue = self.queue.lock().expect("queue lock");
+                match queue.iter().position(|j| matches!(j.spec, Spec::Reindex)) {
+                    Some(0) | None => false,
+                    Some(at) => {
+                        let job = queue.remove(at).expect("position just found");
+                        queue.push_front(job);
+                        true
+                    }
+                }
+            };
             eprintln!(
-                "supervisor: {} deferred index(es) missing ({}); a reindex is already queued",
+                "supervisor: {} deferred index(es) missing ({}); a reindex was already queued{}",
                 missing.len(),
-                missing.join(", ")
+                missing.join(", "),
+                if moved { " — moved to the front" } else { " and is already first" }
             );
+            self.wake.notify_one();
             return;
         }
         eprintln!(
@@ -2787,14 +2804,34 @@ mod tests {
 
         sup.ensure_deferred_indexes().await;
 
-        let kinds: Vec<String> =
-            sup.queue.lock().expect("queue lock").iter().map(|j| j.kind.clone()).collect();
+        let kinds = |sup: &Arc<Supervisor>| -> Vec<String> {
+            sup.queue.lock().expect("queue lock").iter().map(|j| j.kind.clone()).collect()
+        };
         assert_eq!(
-            kinds,
+            kinds(&sup),
             vec!["reindex", "reparse", "project"],
             "the reindex runs FIRST: a re-parse behind a missing index costs 153 ms a notice \
              instead of microseconds, and prod paid that for hours"
         );
+
+        // And a reindex that is already queued BEHIND work gets moved, which is the case
+        // prod was actually in — the first boot queued one at the back, and every later
+        // boot said "already queued" and left it there.
+        {
+            let mut queue = sup.queue.lock().expect("queue lock");
+            let stale = queue.pop_front().expect("the reindex");
+            queue.push_back(stale);
+        }
+        assert_eq!(kinds(&sup), vec!["reparse", "project", "reindex"], "moved to the back");
+        sup.ensure_deferred_indexes().await;
+        assert_eq!(
+            kinds(&sup),
+            vec!["reindex", "reparse", "project"],
+            "an already-queued reindex is moved to the front, not left where it was"
+        );
+        // Idempotent: a third call with it already first changes nothing.
+        sup.ensure_deferred_indexes().await;
+        assert_eq!(kinds(&sup), vec!["reindex", "reparse", "project"]);
     }
 
     #[test]
