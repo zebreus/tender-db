@@ -432,6 +432,26 @@ impl Supervisor {
     // ---------------------------------------------------------------- queueing
 
     async fn push(&self, kind: &'static str, params: String, spec: Spec) -> u64 {
+        self.enqueue(kind, params, spec, false).await
+    }
+
+    /// Enqueue at the FRONT — for work the rest of the queue depends on (issue 247).
+    ///
+    /// Only the deferred-index bootstrap uses it, and the reason is a measured deadlock:
+    /// a missing index made a queued re-parse take 153 ms a notice instead of
+    /// microseconds, and the Reindex that would have fixed it sat behind that same
+    /// re-parse for hours. Ordinary work must never jump the queue — an operator's
+    /// sequence is a sequence — but a job whose absence is what makes the queue slow is
+    /// not ordinary work.
+    ///
+    /// In-memory only: a restart rebuilds the queue from the durable rows in id order,
+    /// so the priority is lost across a restart and `ensure_deferred_indexes` re-applies
+    /// it on the next boot (it runs before the worker, every time).
+    async fn push_front(&self, kind: &'static str, params: String, spec: Spec) -> u64 {
+        self.enqueue(kind, params, spec, true).await
+    }
+
+    async fn enqueue(&self, kind: &'static str, params: String, spec: Spec, front: bool) -> u64 {
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
         // Persist before enqueuing in memory: the durable row is what a restart
         // rebuilds the queue from, so it must exist first (issue 21). Best-effort
@@ -441,13 +461,15 @@ impl Supervisor {
         if let Err(e) = self.db.enqueue_job(id as i64, kind, &params, &spec_json).await {
             eprintln!("supervisor: persist queued job {id}: {e}");
         }
-        self.queue.lock().expect("queue lock").push_back(Job {
-            id,
-            kind: kind.to_owned(),
-            params,
-            spec,
-            resume_after: None,
-        });
+        let job = Job { id, kind: kind.to_owned(), params, spec, resume_after: None };
+        {
+            let mut queue = self.queue.lock().expect("queue lock");
+            if front {
+                queue.push_front(job);
+            } else {
+                queue.push_back(job);
+            }
+        }
         self.wake.notify_one();
         id
     }
@@ -948,11 +970,17 @@ impl Supervisor {
             return;
         }
         eprintln!(
-            "supervisor: {} deferred index(es) missing ({}) — queueing a background reindex",
+            "supervisor: {} deferred index(es) missing ({}) — queueing a reindex AHEAD of \
+             {} pending job(s)",
             missing.len(),
-            missing.join(", ")
+            missing.join(", "),
+            self.queue.lock().expect("queue lock").len()
         );
-        self.push("reindex", format!("auto: {}", missing.join(", ")), Spec::Reindex).await;
+        // Ahead of the queue, not behind it (issue 247). A missing index is not a
+        // background chore when the queued work is what needs it: prod spent hours on a
+        // re-parse costing 153 ms a notice while the Reindex that would have made it
+        // microseconds waited its turn behind that very job.
+        self.push_front("reindex", format!("auto: {}", missing.join(", ")), Spec::Reindex).await;
     }
 
     // ---------------------------------------------------------------- progress
@@ -2735,6 +2763,39 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is
+    /// what needs the index.
+    #[tokio::test]
+    async fn a_missing_index_reindex_is_queued_ahead_of_pending_work() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
+
+        // Two ordinary jobs first — the shape prod had: a long re-parse and its fold,
+        // already queued when the box notices an index is missing.
+        sup.push("reparse", "reparse text".into(), Spec::Reparse {
+            profiles: vec!["text".to_owned()],
+            packages: Some(1),
+            after: None,
+        })
+        .await;
+        sup.push("project", "rebuild=false".into(), Spec::Project {
+            rebuild: false,
+            clear_changes: false,
+        })
+        .await;
+
+        sup.ensure_deferred_indexes().await;
+
+        let kinds: Vec<String> =
+            sup.queue.lock().expect("queue lock").iter().map(|j| j.kind.clone()).collect();
+        assert_eq!(
+            kinds,
+            vec!["reindex", "reparse", "project"],
+            "the reindex runs FIRST: a re-parse behind a missing index costs 153 ms a notice \
+             instead of microseconds, and prod paid that for hours"
+        );
+    }
 
     #[test]
     fn months_between_is_inclusive_and_crosses_years() {
