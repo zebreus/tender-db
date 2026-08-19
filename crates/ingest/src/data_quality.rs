@@ -582,6 +582,58 @@ pub const MERGE_SQL: &str = "SELECT 'all' AS scope, COUNT(*) AS doe_tenders, \
                FROM notices n JOIN tender_versions v ON v.caused_by_notice_id = n.id \
               WHERE n.source = 'doe') d";
 
+/// How far back [`fresh_holds_sql`] counts arrivals: 30 days, long enough that a
+/// quiet week does not read as a settled bucket and short enough to be a RATE rather
+/// than a history.
+const FRESH_HOLD_WINDOW_SECS: i64 = 30 * 86_400;
+
+/// Quarantine ARRIVALS per reason over the last [`FRESH_HOLD_WINDOW_SECS`] — which
+/// bucket is still being fed, and which is settled residue (issue 246).
+///
+/// `first_reason IS NULL` is what makes this a rate at all. Issue 87's relabel
+/// machinery moves a row's original reason there the first time a failed reclaim
+/// rewrites `reason`, so a row that has never been relabelled is a genuine
+/// first-time hold, and one that has is a row that already existed under another
+/// name. Without that filter the count is dominated by relabel passes: on 2026-08-19
+/// the `unrepresentable-value` bucket held 5,185 rows, of which 1,899 had merely
+/// been renamed from `unknown-customization` by issue 184's drain and 2,884 arrived
+/// on ONE day when the DE-1.x reprocess met sub-cent amounts at scale. The bucket's
+/// size answered no question anybody was asking.
+///
+/// Why it exists: ADR-0010 keeps sub-cent amounts quarantined and says to reopen
+/// claim-and-store "if cause F ever grows past a nuisance", nominating issue 171 as
+/// the watch — but 171 is a one-off study, so the trigger had no instrument. This is
+/// the instrument. `newest` is the last arrival, so a dormant bucket (`not-utf8`, last
+/// fed 2026-07-19) is visibly distinct from a live one (`unrepresentable-value`, fed
+/// daily).
+///
+/// Deliberately no denominator: counting the notices ingested in the same window
+/// costs a full scan of `notices` (measured: >10 s, over the public endpoint's limit),
+/// and the trigger is an arrival RATE, which stands on its own. The day's ingest
+/// counts are in the job log beside it.
+///
+/// Whole-corpus by nature: quarantine rows have no `tender_id`, so no window can
+/// slice this — see [`whole_corpus_queries`]. `newest` is a MAX rather than a count
+/// for the same reason; nothing sums these rows.
+pub fn fresh_holds_sql() -> String {
+    format!(
+        "SELECT q.reason AS reason, COUNT(*) AS fresh_holds, MAX(q.first_seen) AS newest \
+           FROM quarantine q \
+          WHERE q.first_reason IS NULL \
+            AND q.first_seen > strftime('%s','now') - {FRESH_HOLD_WINDOW_SECS} \
+          GROUP BY q.reason \
+          ORDER BY fresh_holds DESC"
+    )
+}
+
+/// The queries that measure a population no `tender_id` window can slice, so the
+/// in-process job runs them ONCE against the whole corpus instead of per window
+/// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
+/// cannot be measured at all.
+pub fn whole_corpus_queries() -> Vec<(String, String)> {
+    vec![("fresh_holds".to_owned(), fresh_holds_sql())]
+}
+
 /// Every query the report runs, as `(label, sql)` — the order the bin executes
 /// them and the order the JSON records them. The six field labels match
 /// [`FIELDS`]; `versions`, `linkage`, `density_can`/`density_with` and `merge`
@@ -602,6 +654,9 @@ pub fn queries() -> Vec<(String, String)> {
     out.push(("sections_can".to_owned(), SECTIONS_CAN_SQL.to_owned()));
     out.push(("sections_with".to_owned(), SECTIONS_WITH_SQL.to_owned()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
+    // Whole-corpus queries last: the bin runs every label in this list, and these
+    // are the ones the in-process job runs once rather than per window.
+    out.extend(whole_corpus_queries());
     out
 }
 
@@ -878,6 +933,19 @@ pub struct DocTypeRow {
     pub untyped: u64,
 }
 
+/// One quarantine reason's arrival count over the report's fresh-hold window
+/// (issue 246).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FreshHoldRow {
+    pub reason: String,
+    /// Rows first held under this reason inside the window — never relabelled, so
+    /// this is arrivals rather than bucket size.
+    pub fresh_holds: u64,
+    /// The newest arrival's `first_seen`, which is what separates a live bucket from
+    /// settled residue. Unix seconds; 0 when the row somehow carries none.
+    pub newest: u64,
+}
+
 /// The TED↔DÖE merge tally.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Merge {
@@ -897,6 +965,8 @@ pub struct Report {
     /// How much of each era section 3's vocabulary can classify (issue 235).
     pub doc_types: Vec<DocTypeRow>,
     pub merge: Merge,
+    /// Quarantine arrivals per reason over the last 30 days (issue 246).
+    pub fresh_holds: Vec<FreshHoldRow>,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
     /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
@@ -945,6 +1015,8 @@ pub struct Raw {
     pub sections_can: Rows,
     pub sections_with: Rows,
     pub merge: Rows,
+    /// Quarantine arrivals per reason over the last 30 days (issue 246).
+    pub fresh_holds: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -991,6 +1063,7 @@ impl Raw {
             sections_can: take("sections_can", &mut unmeasured)?,
             sections_with: take("sections_with", &mut unmeasured)?,
             merge: take("merge", &mut unmeasured)?,
+            fresh_holds: take("fresh_holds", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1074,6 +1147,19 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         merged: as_u64(r.get(2)),
     });
 
+    // Arrivals, already ordered by the query (busiest reason first) — kept in that
+    // order rather than re-sorted, because "which bucket is being fed" is the
+    // question and the SQL answers it.
+    let fresh_holds: Vec<FreshHoldRow> = raw
+        .fresh_holds
+        .iter()
+        .map(|r| FreshHoldRow {
+            reason: as_str(r.first()),
+            fresh_holds: as_u64(r.get(1)),
+            newest: as_u64(r.get(2)),
+        })
+        .collect();
+
     Report {
         base_url: base_url.to_owned(),
         completeness,
@@ -1082,6 +1168,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         invariant,
         doc_types,
         merge,
+        fresh_holds,
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1289,7 +1376,60 @@ pub fn render_text(report: &Report) -> String {
             group(m.doe_tenders), group(m.merged), pct(m.merged, m.doe_tenders)
         );
     }
+
+    // Section 5 (issue 246): which quarantine buckets are still being FED. Bucket
+    // size cannot answer that — relabel passes move rows between reasons, and one
+    // campaign day can dominate a whole bucket — so this counts arrivals that were
+    // never relabelled, and prints the newest one so a settled bucket is visibly
+    // settled. ADR-0010's "reopen if cause F grows past a nuisance" is the trigger
+    // this exists to make observable.
+    let _ = writeln!(
+        out,
+        "\n== 5. Quarantine arrivals (first-time holds in the last {} days, per reason) ==",
+        FRESH_HOLD_WINDOW_SECS / 86_400
+    );
+    if report.unmeasured.iter().any(|l| l == "fresh_holds") {
+        let _ = writeln!(out, "  UNMEASURED — the `fresh_holds` query did not run.");
+    } else if report.fresh_holds.is_empty() {
+        let _ = writeln!(
+            out,
+            "  none — no member was held for the first time in the window. Every row in the \
+             quarantine ledger predates it."
+        );
+    } else {
+        let _ = writeln!(out, "  {:<52}{:>10}  {}", "reason", "arrivals", "newest");
+        for r in &report.fresh_holds {
+            let mut reason = r.reason.clone();
+            if reason.chars().count() > 50 {
+                reason = reason.chars().take(49).collect::<String>() + "…";
+            }
+            let _ = writeln!(
+                out,
+                "  {:<52}{:>10}  {}",
+                reason,
+                group(r.fresh_holds),
+                day_utc(r.newest)
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  Arrivals, not bucket size: a row that a failed reclaim merely RENAMED is excluded \
+             (it carries `first_reason`), so this is what is still coming in. A reason whose newest \
+             arrival is weeks old is settled residue; one fed daily is a live cost — which is the \
+             distinction ADR-0010's reopen trigger needs and the bucket totals cannot make."
+        );
+    }
     out
+}
+
+/// A unix timestamp as `YYYY-MM-DD` (UTC), or `—` for none. Days are the resolution
+/// this report reads at; an exact instant would be noise in a table of rates.
+fn day_utc(unix: u64) -> String {
+    if unix == 0 {
+        return "—".to_owned();
+    }
+    let (y, m, d) = crate::fetch::civil_date(unix as i64);
+    format!("{y:04}-{m:02}-{d:02}")
 }
 
 /// The machine report.
@@ -1469,23 +1609,74 @@ mod tests {
                 "sections_can",
                 "sections_with",
                 "merge",
+                "fresh_holds",
             ]
         );
     }
 
-    /// Issue 230: every catalog query must be either windowed or explicitly named
-    /// unmeasurable. A query that is in neither list is one the report silently does
-    /// not measure — the failure mode this whole issue is about, reintroduced by a
-    /// future addition rather than by a timeout.
+    /// Issue 246: the arrivals section must say ARRIVALS, and must distinguish a
+    /// bucket still being fed from settled residue — the whole reason it exists.
     #[test]
-    fn every_query_is_either_windowed_or_declared_unmeasured() {
+    fn quarantine_arrivals_are_rendered_as_a_rate_with_the_newest_arrival() {
+        // Every catalog label present and empty, so only the section under test speaks.
+        let all = || -> Vec<(String, Option<Rows>)> {
+            queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect()
+        };
+        let mut ran = all();
+        ran.iter_mut().find(|(l, _)| l == "fresh_holds").expect("label").1 = Some(vec![
+            vec![json!("unrepresentable-value"), json!(31), json!(1_787_124_972u64)],
+            vec![json!("not-utf8"), json!(4), json!(1_784_619_647u64)],
+        ]);
+        let raw = Raw::from_labelled(ran).expect("labelled");
+        let text = render_text(&assemble("(t)", &raw));
+
+        assert!(text.contains("== 5. Quarantine arrivals"), "the section must exist: {text}");
+        assert!(text.contains("unrepresentable-value"), "{text}");
+        // The newest arrival as a date, which is what separates live from settled.
+        assert!(text.contains("2026-08-19"), "the live bucket's newest arrival: {text}");
+        assert!(text.contains("2026-07-21"), "the settled bucket's newest arrival: {text}");
+        // And the caveat that keeps this from being read as a bucket total.
+        assert!(text.contains("Arrivals, not bucket size"), "{text}");
+
+        // A query that did not run must not read as "nothing arrived" — the same
+        // distinction issue 230 drew for every other label.
+        let mut failed = all();
+        failed.iter_mut().find(|(l, _)| l == "fresh_holds").expect("label").1 = None;
+        let text = render_text(&assemble("(t)", &Raw::from_labelled(failed).expect("labelled")));
+        assert!(text.contains("UNMEASURED — the `fresh_holds` query did not run"), "{text}");
+        assert!(!text.contains("Arrivals, not bucket size"), "no caveat for an absent table: {text}");
+    }
+
+    /// Issue 230: every catalog query must be windowed, run whole-corpus, or
+    /// explicitly named unmeasurable. A query in NONE of those lists is one the
+    /// report silently does not measure — the failure mode that issue is about,
+    /// reintroduced by a future addition rather than by a timeout.
+    ///
+    /// Three categories since issue 246 added the whole-corpus one, and the
+    /// partition must stay a partition: a label in two lists would be measured twice
+    /// per run, which for a quarantine-arrival count would silently double it.
+    #[test]
+    fn every_query_is_either_windowed_whole_corpus_or_declared_unmeasured() {
         let catalog: Vec<String> = queries().into_iter().map(|(l, _)| l).collect();
-        let mut covered: Vec<String> =
-            windowed_queries().into_iter().map(|q| q.label).chain(unwindowed_labels()).collect();
+        let windowed: Vec<String> = windowed_queries().into_iter().map(|q| q.label).collect();
+        let whole: Vec<String> = whole_corpus_queries().into_iter().map(|(l, _)| l).collect();
+        for label in &whole {
+            assert!(!windowed.contains(label), "{label} is both windowed and whole-corpus");
+            assert!(!unwindowed_labels().contains(label), "{label} is both measured and declared unmeasured");
+        }
+        let mut covered: Vec<String> = windowed
+            .iter()
+            .cloned()
+            .chain(whole.iter().cloned())
+            .chain(unwindowed_labels())
+            .collect();
         covered.sort();
         let mut expected = catalog.clone();
         expected.sort();
-        assert_eq!(covered, expected, "windowed ∪ unmeasured must be exactly the catalog");
+        assert_eq!(
+            covered, expected,
+            "windowed ∪ whole-corpus ∪ unmeasured must be exactly the catalog"
+        );
 
         // And each template must actually carry the placeholder, exactly once. The
         // four late queries build theirs by splicing a predicate into the catalog
@@ -1532,6 +1723,7 @@ mod tests {
             ("sections_can".to_owned(), Some(vec![])),
             ("sections_with".to_owned(), Some(vec![])),
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
+            ("fresh_holds".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -1822,6 +2014,13 @@ mod tests {
             // Column 0 is merge's constant scope label (issue 230) — the shape that
             // lets a single-row result sum across windows like every other one.
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(3), json!(1)]])),
+            (
+                "fresh_holds".to_owned(),
+                Some(vec![
+                    vec![json!("unrepresentable-value"), json!(31), json!(1_787_124_972u64)],
+                    vec![json!("not-utf8"), json!(4), json!(1_784_619_647u64)],
+                ]),
+            ),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
@@ -1899,6 +2098,7 @@ mod tests {
             labels.iter().map(|l| (l.clone(), Some(Vec::new()))).collect();
         ran.retain(|(l, _)| l != "merge");
         ran.push(("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])));
+        ran.push(("fresh_holds".to_owned(), Some(vec![])));
         let raw = Raw::from_labelled(ran).expect("labelled");
         assert!(raw.unmeasured.is_empty());
         let text = render_text(&assemble("http://x", &raw));

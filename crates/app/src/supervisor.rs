@@ -1834,16 +1834,28 @@ impl Supervisor {
         let windows = dq_windows(floor, max_id);
 
         let queries = data_quality::windowed_queries();
+        let whole = data_quality::whole_corpus_queries();
         if !confirmed {
             let unwindowed = data_quality::unwindowed_labels();
             let caveat = if unwindowed.is_empty() {
-                "; every label is windowed".to_owned()
+                "; every label is windowed or whole-corpus".to_owned()
             } else {
                 format!("; unmeasured, no windowing: {}", unwindowed.join(","))
             };
+            // The whole-corpus labels are named, not just counted: a dry run exists to
+            // show what WOULD run, and "3 more statements" says nothing about which.
+            let once = if whole.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    ", plus {} whole-corpus statement(s) run once ({})",
+                    whole.len(),
+                    whole.iter().map(|(l, _)| l.as_str()).collect::<Vec<_>>().join(","),
+                )
+            };
             return Ok(format!(
                 "data-quality dry run: would measure {} window(s) of {DQ_WINDOW} ids up to \
-                 tender_id {max_id}, {} queries each ({} statements){caveat}",
+                 tender_id {max_id}, {} queries each ({} statements){once}{caveat}",
                 windows.len(),
                 queries.len(),
                 windows.len() * queries.len(),
@@ -1858,7 +1870,10 @@ impl Supervisor {
         // Windows outer, queries inner: the seven probes over one slice hit the same
         // version and notice pages, so the slice stays warm for all of them instead
         // of being paged in seven times.
-        let units = (windows.len() * queries.len()) as u64;
+        // The whole-corpus queries (issue 246) run once each after the windows, so the
+        // progress denominator counts them too — a phase that reads 480/480 with work
+        // still to do is the kind of small lie issue 65 added phases to avoid.
+        let units = (windows.len() * queries.len() + whole.len()) as u64;
         let mut per_label: BTreeMap<String, Vec<Rows>> = BTreeMap::new();
         // Elapsed per LABEL across every window, so the run says which query costs
         // what. A per-window total cannot: the eleven queries differ by more than an
@@ -1934,6 +1949,24 @@ impl Supervisor {
                 ))
             };
             results.push((query.label.clone(), rows));
+        }
+        // Whole-corpus queries (issue 246): a population no `tender_id` window can
+        // slice — the quarantine ledger has no tender — so they run ONCE here rather
+        // than per window. A failure records the label as unmeasured, exactly as a
+        // failed windowed query does: "the query did not run" and "nothing arrived"
+        // must stay different claims (issue 230).
+        for (label, sql) in whole {
+            self.set_phase("measuring", Some(done), Some(units), format!("whole-corpus {label}"));
+            match self.db.measure_rows(&sql).await {
+                Ok(rows) => {
+                    results.push((label, Some(rows.into_iter().map(json_row).collect())));
+                }
+                Err(e) => {
+                    eprintln!("[data-quality] whole-corpus query {label} failed: {e}");
+                    results.push((label, None));
+                }
+            }
+            done += 1;
         }
         for label in data_quality::unwindowed_labels() {
             results.push((label, None));
