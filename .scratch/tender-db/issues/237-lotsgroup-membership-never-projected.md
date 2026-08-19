@@ -1,7 +1,8 @@
 # 237 — a multi-lot bid names a LotsGroup, and we never record which lots that group contains
 
-Status: IMPLEMENTED and deployed 2026-08-18 (`d4fee5f`, `2c31ac3`, `ff87753`) — mapping is COMPLETE
-relative to what the corpus publishes; the remaining gap is a source limitation, not a projection one
+Status: DONE 2026-08-19 (`d4fee5f`, `2c31ac3`, `ff87753`; verified on prod) — mapping is COMPLETE
+relative to what the corpus publishes; the remaining gap is a source limitation, not a projection one.
+Open follow-up, split out: the SDK-native disposition gate (second finding below) is unbuilt.
 Kind: projection mapping gap (parse layer HAS the data) + a coverage-gate blind spot
 Blocked by: —
 Relates to: 13 (results layer), 116 (tender detail reported more lots than it shipped), 88/85 (the
@@ -332,3 +333,30 @@ carries a buyer's internal id like `NN.270.4.2025`) sometimes encodes the lots; 
 statistics per group hint at member count; neither is a published composition and both would be
 inference. Not worth doing unless a consumer asks for it, and if it is ever done it belongs in a
 DERIVED table with its own provenance, never in `tender_version_lot_group_members`.
+
+## Verified on prod after the carry-forward re-fold (2026-08-19, rev `ff87753`)
+
+`refold-sections GroupComposition` (job 744) + projection (745), then bounded checks:
+
+    member_rows                                       277   (233 before the carry-forward)
+    groups / member_lots / tenders              59 / 191 / 54
+    versions carrying membership                       71   (62 before)
+    rows whose GROUP end is not a LotsGroup-kind lot     0
+    rows whose MEMBER end the version does not publish   0   (lot_identity never had to mint one)
+
+The +44 rows are the carry-forward doing its job: the same 59 groups, now present on the later versions
+of their tenders instead of only the version that published the composition.
+
+**The acceptance criterion — "a bid on a group can be attributed to member lots" — now holds:**
+
+    bids sitting on a group whose membership is recorded at the SAME version    2
+    the same count computed at TENDER level (any version)                       2
+
+Both being 2 is the interesting part: within these 54 tenders the carry-forward leaves nothing behind, so
+version-scoped and tender-scoped attribution agree. The number is 2 rather than hundreds because
+composition-publishing and group-bidding rarely co-occur in one tender — of the 1,408 bids that reference
+a group corpus-wide, the attributable set is bounded by the 62 notices that publish any composition.
+
+That is the whole of what this issue can deliver. The residue (1,406 group bids with no published
+composition anywhere in their tender) is the source limitation described above, and the right response is
+to report it as an explicit unattributable count, not to infer it.
