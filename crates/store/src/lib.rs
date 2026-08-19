@@ -1247,20 +1247,43 @@ impl Db {
         // not. Both are cheap; the ordering means a box whose index has not been built
         // yet is not stuck waiting for a Reindex that is queued behind the very job the
         // index would speed up.
-        let has_mentions = {
+        // Read the section ids first, then delete each mention by its FULL primary key.
+        //
+        // `WHERE notice_id = ?` is a PK PREFIX, and on prod that DELETE cost seconds per
+        // notice while a SELECT of the same shape seeks in a millisecond — with the
+        // single-column index built and with `defer_foreign_keys` on, neither of which
+        // moved it (issue 247). A full-key equality is the one shape left that the engine
+        // has no excuse to widen, so the delete is issued per row: at most eight rows a
+        // notice in the era being re-parsed, each an exact `(notice_id, section_id)` hit.
+        let sections: Vec<String> = {
             let mut rows = conn
-                .query("SELECT 1 FROM organization_mentions WHERE notice_id = ? LIMIT 1", (Value::Integer(id),))
+                .query("SELECT section_id FROM organization_mentions WHERE notice_id = ?", (Value::Integer(id),))
                 .await?;
-            rows.next().await?.is_some()
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await? {
+                out.push(text(&row, 0));
+            }
+            out
         };
-        if has_mentions {
-            self.step(
-                conn,
-                "organization_mentions",
-                "DELETE FROM organization_mentions WHERE notice_id = ?",
-                id,
-            )
-            .await?;
+        for section in &sections {
+            let started = std::time::Instant::now();
+            if let Err(e) = conn
+                .execute(
+                    "DELETE FROM organization_mentions WHERE notice_id = ? AND section_id = ?",
+                    (Value::Integer(id), t(section)),
+                )
+                .await
+            {
+                eprintln!("[store] notice {id}: clear mention {section} failed: {e}");
+                return Err(e);
+            }
+            *self
+                .reparse
+                .clear_stmt_nanos
+                .lock()
+                .expect("clear stmt lock")
+                .entry("organization_mentions")
+                .or_insert(0) += started.elapsed().as_nanos() as u64;
         }
         for table in Self::PARSED_TABLES {
             self.step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
