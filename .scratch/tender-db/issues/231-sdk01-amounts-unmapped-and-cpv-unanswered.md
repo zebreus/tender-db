@@ -1,7 +1,8 @@
 # 231 — sdk-0.1 amounts are never mapped, and whether the era carries CPV at all is unanswered
 
-Status: CPV half FIXED in code 2026-08-19 (mapped + fixture-tested, awaiting the era's re-fold); the value
-half is NOT a mapping gap — the amounts never reach the parse layer, so its diagnosis moves upstream
+Status: CPV half DONE and VERIFIED on prod 2026-08-19 (mapped, fixture-tested, era re-folded); the value
+half is NOT a mapping gap — the amounts never reach the parse layer, so its diagnosis moves upstream and
+stays open
 Kind: projection mapping gap (one era, two fields) + one research question
 Blocked by: —
 Relates to: 29 (the parent gap, now verified closed for title/buyer/deadline), 177 (the same
@@ -105,3 +106,15 @@ is being claimed as something else, and the field inventory above is where to lo
 simply not publish one? The `can-standard` sample makes the second answer plausible — an award notice with
 no award value at all — but it has not been read from the payloads yet, and that is the next step for this
 half.
+
+
+### CPV verified on prod after the re-fold
+
+`refold eforms:eforms-sdk-0.1` (job 917) re-queued **667,084 notices** and the paired fold (job 918) wrote
+**656,503 tenders / 668,913 versions**. Spot-checking a tender of the era afterwards:
+
+    tender 1,746,372:  cpv additional 4 · cpv main 2 · nuts place 2
+
+Before this the same rows read `nuts place` only. So the era's published CPV now reaches the canonical
+layer at both scopes, and the next data-quality run should move its `cpv` column off 0.0 % — that column is
+the acceptance number and it is the one thing still to read.
