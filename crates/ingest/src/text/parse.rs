@@ -53,6 +53,12 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// columns, and the words before the colon are the part that stayed stable.
 const AWARD_LABELS: [&str; 2] = ["SERVICE PROVIDER:", "HAS BEEN AWARDED:"];
 
+/// How far past the label a name's end is looked for. Generous next to the measured
+/// shapes — the longest name seen on prod is 89 characters and its comma follows
+/// immediately — and the bound is what keeps the scan linear in the body rather than
+/// quadratic in (awards × length).
+const NAME_WINDOW: usize = 256;
+
 /// Where a winner's name ends. The value runs `<name>, <address…>. Tel. …`, so the
 /// comma is the boundary in every measured shape; the rest are stops that catch a
 /// value with no comma at all before the next heading, so a missing comma truncates
@@ -132,18 +138,39 @@ fn awarded_names(body: &str) -> Vec<String> {
         };
         let value_at = start + label.len();
         let rest = &flat[value_at..];
-        let end = NAME_STOPS
-            .iter()
-            .filter_map(|stop| find_ascii_ci(rest, stop))
-            .min()
-            .unwrap_or(rest.len());
-        let name = trim_sentence_period(rest[..end].trim());
+        // Look for the name's end in a WINDOW, not in the rest of the notice. Scanning
+        // the whole remainder made the function quadratic in (awards × body length), and
+        // a notice awarding hundreds of contracts then took minutes: the campaign's
+        // `fetch 186` went from 148 s to under two members a minute at 133% CPU with
+        // three writer acquisitions in 45 seconds. A winner's name is never 8 kB from
+        // its own label.
+        let window = &rest[..char_bound(rest, NAME_WINDOW)];
+        let Some(end) = NAME_STOPS.iter().filter_map(|stop| find_ascii_ci(window, stop)).min()
+        else {
+            // No boundary inside the window: the value is not a shape this recognises.
+            // Skipping beats taking the window verbatim — a 256-byte "name" would mint
+            // an organization per notice and poison the identity that has no identifier
+            // to fall back on (issue 234).
+            at = value_at;
+            continue;
+        };
+        let name = trim_sentence_period(window[..end].trim());
         if !name.is_empty() {
             names.push(name.to_owned());
         }
         at = value_at;
     }
     names
+}
+
+/// The largest char boundary at or below `at`, so a window can be cut by byte length
+/// without splitting a character.
+fn char_bound(s: &str, at: usize) -> usize {
+    let mut at = at.min(s.len());
+    while at > 0 && !s.is_char_boundary(at) {
+        at -= 1;
+    }
+    at
 }
 
 /// ASCII-case-insensitive substring search, returning a byte index into `haystack`.
@@ -717,6 +744,31 @@ mod tests {
             .map(|s| (s.id.as_str(), s.parent.as_deref()))
             .collect();
         assert_eq!(orgs, vec![("ORG-2", Some("RES-1")), ("ORG-3", Some("RES-2"))]);
+    }
+
+    /// The scan must stay linear in the body, and must refuse a value with no boundary
+    /// in sight rather than inventing a name out of the window (issue 244).
+    #[test]
+    fn a_long_body_with_many_awards_stays_cheap_and_never_invents_a_name() {
+        // 400 awards in one body — the shape that took minutes per notice when the
+        // name's end was looked for in the whole remainder.
+        let one = "CONTRACT NO: 1 V.3)  … HAS BEEN AWARDED: Acme Ltd, 1 Road, Town. ";
+        let body: String = std::iter::repeat_n(one, 400).collect();
+        let names = awarded_names(&body);
+        assert_eq!(names.len(), 400, "every award is read");
+        assert!(names.iter().all(|n| n == "Acme Ltd"), "{:?}", &names[..3]);
+
+        // A value with no comma and no following heading inside the window yields
+        // NOTHING: a 256-byte name would be one organization per notice.
+        let runaway = format!("V.3)  HAS BEEN AWARDED: {}", "x".repeat(400));
+        assert!(awarded_names(&runaway).is_empty(), "no boundary, no name");
+
+        // And the window is cut on a char boundary, not mid-character: a body whose
+        // 256th byte lands inside a multi-byte character must not panic.
+        let multibyte = format!("V.3)  HAS BEEN AWARDED: {}, rest", "é".repeat(200));
+        assert_eq!(awarded_names(&multibyte).len(), 0, "no boundary within the window");
+        let near = format!("V.3)  HAS BEEN AWARDED: {}é, rest", "é".repeat(120));
+        let _ = awarded_names(&near); // must not panic
     }
 
     /// The index arithmetic must survive a character whose uppercase is a different
