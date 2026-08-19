@@ -1198,7 +1198,12 @@ impl Db {
     /// An organization whose last mention this removes survives with a zero
     /// mention count until the re-fold re-mentions it (the resolver dedupes by
     /// identity, so it is the same organization row, not a new one).
-    async fn clear_parsed(&self, conn: &Connection, id: i64) -> turso::Result<()> {
+    async fn clear_parsed(
+        &self,
+        conn: &Connection,
+        id: i64,
+        keep: &std::collections::HashSet<&str>,
+    ) -> turso::Result<()> {
         // Each step names itself on failure. Two prod re-parse runs died with a bare
         // "immediate foreign key constraint failed" (jobs 721 and 733), which says
         // an FK broke but not WHICH statement broke it — and the obvious suspect,
@@ -1247,21 +1252,30 @@ impl Db {
         // not. Both are cheap; the ordering means a box whose index has not been built
         // yet is not stuck waiting for a Reindex that is queued behind the very job the
         // index would speed up.
-        // Read the section ids first, then delete each mention by its FULL primary key.
+        // Only the mentions whose SECTION is going away (issue 248).
         //
-        // `WHERE notice_id = ?` is a PK PREFIX, and on prod that DELETE cost seconds per
-        // notice while a SELECT of the same shape seeks in a millisecond — with the
-        // single-column index built and with `defer_foreign_keys` on, neither of which
-        // moved it (issue 247). A full-key equality is the one shape left that the engine
-        // has no excuse to widen, so the delete is issued per row: at most eight rows a
-        // notice in the era being re-parsed, each an exact `(notice_id, section_id)` hit.
+        // A mention references `(notice_id, section_id)`, so it has to go before its
+        // section does — but a section the new parse re-creates under the same id does not
+        // go anywhere, and neither does its mention. That distinction is worth a great deal:
+        // deleting one mention row costs ~2.2 s on prod (proving that no row of
+        // `tender_version_parties`' 78M references it is not index-served on the write
+        // path), while keeping it costs nothing. The text era re-creates every section id it
+        // had — `PROCEDURE` and `ORG-1` — and merely ADDS the award sections, so an era
+        // re-parse that used to be 2,300 hours of foreign-key proving becomes none at all.
+        //
+        // Read the ids first, then delete each survivor-to-be by its FULL primary key: a
+        // prefix `WHERE notice_id = ?` cost 10.2 s where the full key costs 2.2 s, and
+        // neither the single-column index nor `defer_foreign_keys` moved the prefix form.
         let sections: Vec<String> = {
             let mut rows = conn
                 .query("SELECT section_id FROM organization_mentions WHERE notice_id = ?", (Value::Integer(id),))
                 .await?;
             let mut out = Vec::new();
             while let Some(row) = rows.next().await? {
-                out.push(text(&row, 0));
+                let section = text(&row, 0);
+                if !keep.contains(section.as_str()) {
+                    out.push(section);
+                }
             }
             out
         };
@@ -1285,8 +1299,50 @@ impl Db {
                 .entry("organization_mentions")
                 .or_insert(0) += started.elapsed().as_nanos() as u64;
         }
+        // The value tables go wholesale — nothing references them, and they are replaced
+        // in full by the new parse.
         for table in Self::PARSED_TABLES {
+            if table == "notice_sections" {
+                continue;
+            }
             self.step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
+        }
+        // Sections, however, are referenced (by mentions), and a section the new parse
+        // re-creates under the same id is not going anywhere — see the note above. So
+        // delete only the ones that are, by full primary key, and let `insert_parsed`
+        // UPSERT the survivors.
+        let vanishing: Vec<String> = {
+            let mut rows = conn
+                .query("SELECT section_id FROM notice_sections WHERE notice_id = ?", (Value::Integer(id),))
+                .await?;
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await? {
+                let section = text(&row, 0);
+                if !keep.contains(section.as_str()) {
+                    out.push(section);
+                }
+            }
+            out
+        };
+        for section in &vanishing {
+            let started = std::time::Instant::now();
+            if let Err(e) = conn
+                .execute(
+                    "DELETE FROM notice_sections WHERE notice_id = ? AND section_id = ?",
+                    (Value::Integer(id), t(section)),
+                )
+                .await
+            {
+                eprintln!("[store] notice {id}: clear section {section} failed: {e}");
+                return Err(e);
+            }
+            *self
+                .reparse
+                .clear_stmt_nanos
+                .lock()
+                .expect("clear stmt lock")
+                .entry("notice_sections")
+                .or_insert(0) += started.elapsed().as_nanos() as u64;
         }
         Ok(())
     }
@@ -1360,7 +1416,11 @@ impl Db {
             let t0 = std::time::Instant::now();
             let Some((id, _)) = self.notice_state(&conn, n).await? else { return Ok(false) };
             let t1 = std::time::Instant::now();
-            self.clear_parsed(&conn, id).await?;
+            // The sections the new parse re-creates: kept rather than deleted, so their
+            // mentions survive and the expensive FK proof never runs (issue 248).
+            let keep: std::collections::HashSet<&str> =
+                parsed.sections.iter().map(|s| s.id.as_str()).collect();
+            self.clear_parsed(&conn, id, &keep).await?;
             let t2 = std::time::Instant::now();
             self.insert_parsed(&conn, id, parsed).await?;
             let t3 = std::time::Instant::now();
@@ -1774,10 +1834,18 @@ impl Db {
     /// Fan one notice's parsed form out into the value tables.
     async fn insert_parsed(&self, conn: &Connection, id: i64, parsed: &Parsed) -> turso::Result<()> {
         for s in &parsed.sections {
+            // UPSERT, not INSERT: a re-parse now KEEPS the sections it is about to
+            // re-create (issue 248), so the row may already be there — with its mentions
+            // still attached, which is the whole point. `ON CONFLICT DO UPDATE` refreshes
+            // the kind and parent without a delete, so no foreign key is ever momentarily
+            // violated and none has to be proven satisfied. A fresh ingest takes the
+            // INSERT path exactly as before.
             if let Err(e) = conn
                 .execute(
                     "INSERT INTO notice_sections(notice_id, section_id, kind, parent_section_id)
-                     VALUES(?, ?, ?, ?)",
+                     VALUES(?, ?, ?, ?)
+                     ON CONFLICT(notice_id, section_id) DO UPDATE SET
+                         kind = excluded.kind, parent_section_id = excluded.parent_section_id",
                     (Value::Integer(id), t(&s.id), t(&s.kind), opt_text(s.parent.as_deref())),
                 )
                 .await
@@ -5269,6 +5337,94 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// Issue 100: a re-parse REPLACES the parsed layer and re-opens the notice for
     /// folding. The hazard it guards is duplication, not absence — `insert_parsed`
     /// is pure INSERT, so a re-parse that forgot to clear would double every row
+    /// Issue 248: a section the new parse RE-CREATES keeps its mention, and that is what
+    /// makes an era-scale re-parse possible at all.
+    ///
+    /// Deleting one mention costs ~2.2 s on prod — proving that none of
+    /// `tender_version_parties`' 78M rows references it is not index-served on the write
+    /// path — so a 3.79M-notice era spent 2,300 hours on foreign-key proving. The text
+    /// era's parse re-creates every section id it had (`PROCEDURE`, `ORG-1`) and merely
+    /// ADDS the award sections, so with this the proof never runs.
+    #[tokio::test]
+    async fn a_reparse_keeps_the_mentions_of_sections_it_recreates() {
+        let path = format!("/tmp/tender-db-reparse-keep-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        let notice = held_notice();
+        assert!(db.record_notice(&notice, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        let id = int_of(&db, "SELECT id FROM notices").await.expect("the notice row");
+
+        // A mention on `PROCEDURE`, the section `tiny_parsed` declares — and the section
+        // the re-parse below declares again.
+        let mut resolver = db.mention_resolver().await.unwrap();
+        db.resolve_mentions(
+            &mut resolver,
+            &[Mention {
+                notice_id: id,
+                section_id: "PROCEDURE".into(),
+                name: "Behoerde".into(),
+                country: Some("DE".into()),
+                raw_identifier: None,
+                scheme: None,
+                identifier: None,
+            }],
+            100,
+        )
+        .await
+        .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        let org = int_of(&db, "SELECT organization_id FROM organization_mentions").await;
+        assert!(org.is_some(), "the mention resolved to an organization");
+
+        // The new parse keeps `PROCEDURE` and adds an award section beside it — the exact
+        // shape issue 244's text-era extraction produces.
+        let reparsed = Parsed {
+            sections: vec![
+                Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                Section {
+                    id: "RES-1".into(),
+                    kind: "LotResult".into(),
+                    parent: Some("PROCEDURE".into()),
+                },
+            ],
+            values: vec![ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "TITLE".into(),
+                ordinal: 0,
+                value: NoticeValue::Text { lang: None, value: "rewritten".into() },
+            }],
+        };
+        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "the notice exists");
+
+        // The mention SURVIVED, still pointing at the same organization: no delete, so no
+        // foreign-key proof, so no 2.2 seconds.
+        assert_eq!(
+            int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await,
+            Some(1),
+            "a re-created section keeps its mention"
+        );
+        assert_eq!(int_of(&db, "SELECT organization_id FROM organization_mentions").await, org);
+
+        // And the parse layer is still REPLACED, not appended: the kept section is upserted
+        // (its kind refreshed), the new one added, and the values are the new ones only.
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_sections").await, Some(2));
+        assert_eq!(
+            text_of(&db, "SELECT kind FROM notice_sections WHERE section_id = 'PROCEDURE'")
+                .await
+                .as_deref(),
+            Some("Notice"),
+            "the kept section's kind is refreshed by the upsert"
+        );
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts").await, Some(1));
+        assert_eq!(
+            text_of(&db, "SELECT value FROM notice_texts").await.as_deref(),
+            Some("rewritten")
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// and still look like it worked.
     #[tokio::test]
     async fn a_reparse_replaces_the_parsed_layer_and_reopens_the_fold() {
