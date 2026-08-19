@@ -120,6 +120,14 @@ pub struct Supervisor {
     wake: Notify,
     next_id: AtomicU64,
     current: RwLock<Option<JobProgress>>,
+    /// The id of a RUNNING job an operator has asked to stop, or 0 (issue 247).
+    ///
+    /// `cancel` could only ever reach QUEUED jobs, and the one time that mattered — a
+    /// re-parse crawling at 153 ms a notice, holding the queue against the index build
+    /// that would have fixed it — the only ways to stop it were a service-environment
+    /// escape hatch and a restart that re-ran it from the top. A long job that cannot be
+    /// stopped is a long job nobody can afford to start.
+    cancel_running: AtomicU64,
     /// Monotonic count of CONCLUDED jobs (ok or error). The dashboard's
     /// change-gate folds this into its watermark: a reprocess stamps quarantine
     /// rows and flips parse states IN PLACE — no new notice id, no fetch row, no
@@ -417,6 +425,7 @@ impl Supervisor {
             wake: Notify::new(),
             next_id: AtomicU64::new(1),
             current: RwLock::new(None),
+            cancel_running: AtomicU64::new(0),
             jobs_completed: AtomicU64::new(0),
             worker_runtime: spawn_worker_runtime(),
         }
@@ -836,12 +845,28 @@ impl Supervisor {
             queue.retain(|job| job.id != id);
             queue.len() != before
         };
-        if removed
-            && let Err(e) = self.db.remove_job(id as i64).await
-        {
-            eprintln!("supervisor: remove cancelled job {id}: {e}");
+        if removed {
+            if let Err(e) = self.db.remove_job(id as i64).await {
+                eprintln!("supervisor: remove cancelled job {id}: {e}");
+            }
+            return true;
         }
-        removed
+        // Not queued: it may be the one RUNNING. Flag it and let the job notice — a
+        // cooperative stop, so the job ends its transaction, records a run log saying it
+        // was cancelled, and drops its durable row like any concluded job. Killing it
+        // mid-transaction would leave the row behind and re-run it on the next start.
+        if self.current_progress().is_some_and(|p| p.id == id) {
+            self.cancel_running.store(id, Ordering::Relaxed);
+            eprintln!("supervisor: job {id} is running — asked it to stop at its next checkpoint");
+            return true;
+        }
+        false
+    }
+
+    /// Whether this running job has been asked to stop (issue 247). Checked at a job's
+    /// own checkpoints — between packages, and between members inside one.
+    fn cancelled(&self, id: u64) -> bool {
+        self.cancel_running.load(Ordering::Relaxed) == id
     }
 
     fn pop(&self) -> Option<Job> {
@@ -1160,6 +1185,13 @@ impl Supervisor {
 
         let result = self.run_spec(&job).await;
         self.set_current(None);
+        // Clear any stop request with the job it named, so it cannot leak onto the next.
+        let _ = self.cancel_running.compare_exchange(
+            job.id,
+            0,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        );
         self.jobs_completed.fetch_add(1, Ordering::Relaxed);
 
         let (outcome, counts) = match result {
@@ -2110,6 +2142,8 @@ impl Supervisor {
         }
 
         let (mut reparsed, mut unmatched, mut failing, mut members) = (0u64, 0u64, 0u64, 0u64);
+        // Issue 247: how far the run got, and whether it stopped because it was asked to.
+        let (mut stopped, mut packages_done) = (false, 0usize);
         for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
             self.update(|p| {
                 p.package = Some(format!("fetch {fetch_id}"));
@@ -2142,6 +2176,10 @@ impl Supervisor {
                         });
                     }
                 },
+                // A stop request is honoured between notices (issue 247), so a long
+                // package need not finish before an operator can reclaim the queue —
+                // the gap that made an unstoppable job an operational problem.
+                || self.cancelled(job_id),
             )
             .await
             .map_err(|e| format!("db: {e}"))?;
@@ -2149,6 +2187,12 @@ impl Supervisor {
             unmatched += report.unmatched;
             failing += report.now_failing;
             members += report.members;
+            if report.cancelled {
+                stopped = true;
+                packages_done = i;
+                break;
+            }
+            packages_done = i + 1;
             self.update(|p| p.packages_done = (i + 1) as u64);
             if let Err(e) = self.db.record_job_progress(job_id as i64, &fetch_id.to_string()).await {
                 eprintln!("supervisor: job {job_id} record reparse progress {fetch_id}: {e}");
@@ -2187,7 +2231,12 @@ impl Supervisor {
         // A capped run must say what it did NOT do, in the job log where an operator
         // reads it: a summary that looks complete after touching 1 of 215 packages is
         // how a staged pass gets mistaken for the whole era (issue 244).
-        let remaining = if held_back > 0 {
+        let remaining = if stopped {
+            format!(
+                "; STOPPED at an operator's request after {packages_done} of {} package(s)",
+                packages.len()
+            )
+        } else if held_back > 0 {
             format!("; {held_back} package(s) held back by the cap — run again to continue")
         } else {
             String::new()
@@ -2780,6 +2829,50 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 247: `cancel` must reach the RUNNING job, not only queued ones.
+    #[tokio::test]
+    async fn cancelling_the_running_job_asks_it_to_stop() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
+
+        // Nothing running, nothing queued: cancel finds no such job.
+        assert!(!sup.cancel(1).await, "no job to cancel");
+
+        // A queued job still cancels the old way — removed from the queue outright.
+        let queued = sup
+            .push("project", "rebuild=false".into(), Spec::Project {
+                rebuild: false,
+                clear_changes: false,
+            })
+            .await;
+        assert!(sup.cancel(queued).await, "a queued job is cancellable");
+        assert!(sup.queue.lock().expect("queue lock").is_empty());
+        assert!(!sup.cancelled(queued), "a removed job needs no stop flag");
+
+        // A RUNNING job is flagged instead: it ends its own transaction, logs why, and
+        // drops its durable row like any concluded job. `execute` publishes the progress
+        // record, so that is what identifies the running job here.
+        sup.set_current(Some(JobProgress {
+            id: 42,
+            kind: "reparse".into(),
+            params: "reparse text".into(),
+            started_at: 0,
+            package: None,
+            packages_done: 0,
+            packages_total: 1,
+            members_done: 0,
+            members_total: 0,
+            notices: 0,
+            duplicates: 0,
+            phase: None,
+        }));
+        assert!(!sup.cancelled(42), "not cancelled until asked");
+        assert!(sup.cancel(42).await, "the running job accepts a stop request");
+        assert!(sup.cancelled(42), "and the job sees it at its next checkpoint");
+        // The flag names ONE job: a different id must not stop on someone else's request.
+        assert!(!sup.cancelled(43));
+    }
 
     /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is
     /// what needs the index.

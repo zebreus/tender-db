@@ -542,6 +542,10 @@ pub struct ReparseReport {
     /// Records the CURRENT parser quarantines. Their existing parsed layer is left
     /// untouched — a re-parse must never trade a good layer for a failure.
     pub now_failing: u64,
+    /// Set when the run stopped at an operator's request (issue 247) rather than at the
+    /// end of the package. The caller says so in the job summary: a partial re-parse
+    /// that reads as complete is how a cohort silently keeps its old parse.
+    pub cancelled: bool,
 }
 
 /// Re-parse a package's already-parsed members IN PLACE against the current
@@ -565,6 +569,7 @@ pub async fn reparse_package(
     fetch_id: i64,
     members: std::collections::HashSet<String>,
     mut on_progress: impl FnMut(u64, u64, &ReparseReport),
+    should_stop: impl Fn() -> bool,
 ) -> Result<ReparseReport, Error> {
     let (rx, walker, estimated) =
         spawn_record_producer(archive, Some(members), &db.unreadable_bundle_members(fetch_id).await?)?;
@@ -594,6 +599,14 @@ pub async fn reparse_package(
             let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
         }
         on_progress(done, estimated.max(done), &report);
+        // A cooperative stop between notices (issue 247). Each notice is its own
+        // transaction, so stopping here leaves the corpus consistent — some notices
+        // re-parsed, the rest untouched — and a later run redoes the package from the
+        // top, which a re-parse is free to do (it is idempotent by identity).
+        if should_stop() {
+            report.cancelled = true;
+            break;
+        }
     }
     drop(slot);
     let tally = walker.join().expect("package walker panicked")?;
