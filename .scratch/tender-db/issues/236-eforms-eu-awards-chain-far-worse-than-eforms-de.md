@@ -1,8 +1,9 @@
 # 236 — eForms EU awards chain to their contract notice at 44–77 %, where eForms-DE manages 98–100 %
 
-Status: DIAGNOSED 2026-08-19 — the cross-era hypothesis below is FALSIFIED; the cause is BT-04 that is
-not stable across a procedure's notices, with `OPP-090-Procedure` as the published repair for part of it.
-Next: an ADR on whether a publisher-declared previous-notice reference is an identity edge, then the edge.
+Status: DIAGNOSED 2026-08-19, decision recorded in ADR-0011 — the cross-era hypothesis below is
+FALSIFIED; the cause is BT-04 that is not stable across a procedure's notices, and `OPP-090-Procedure` is
+the published repair for ~12 % of the cohort. Next: implement the edge (needs a corpus re-projection —
+bundle with issues 100/232/235).
 Kind: identity/chaining gap, suspected cross-era boundary
 Blocked by: —
 Relates to: 187 (INTERNAL_OJS 100 % unchained), 188 (sdk-0.1 98 % unchained), 58 (legacy OJS closure —
@@ -175,3 +176,19 @@ union-find), and the value needs the 8-digit zero-pad normalisation shown above,
   strictly more than the sample asked for. Both carry BT-04, so "does the CAN carry BT-04 at all" is
   answered: yes, always — the earlier sample of 300 `sdk-1.13` notices found 1 island in 300.
 - `eforms-sdk-1.0` at 0.3 % is still unexamined.
+
+### Guards measured for ADR-0011 (2026-08-19)
+
+On the 563 resolvable edges of the measured month:
+
+    reference points at an EARLIER publication      563 / 563
+    ...at the same instant or later                   0
+    ...at a notice with no projected version          0
+    notices carrying 1 / 2 / 3 references      1,340 / 2 / 1
+
+So "must resolve, within TED, to an earlier notice" costs nothing on today's data, and the edge has to
+accept a SET of references rather than one value. Both are written into ADR-0011, which also records why
+the edge must join procedure-key components rather than pull eForms notices into the legacy OJS key space:
+their publication ids parse as `(year, number)` and would fit `ojs_self`/`ojs_edges` with no new
+machinery, but the legacy component is keyed by MIN OJS, so eForms Tender identity would stop being BT-04
+— reissuing ids corpus-wide to fix a 12 % gap.
