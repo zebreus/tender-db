@@ -1,0 +1,19 @@
+# `crates/app` is a Dioxus fullstack crate: its server-side modules — the whole
+# `v1` API, the supervisor, health, metrics — are behind `#[cfg(feature =
+# "server")]`, because the same crate also compiles to WASM for the browser client.
+#
+# The consequence is a trap. `cargo test -p tender-db` compiles the crate WITHOUT
+# that feature, finds none of the 83 server-side unit tests, and prints
+#
+#     test result: ok. 0 passed; 0 failed
+#
+# which reads exactly like a pass. Nothing is wrong and nothing was checked. So the
+# app crate has an alias that always carries the feature, and it is the one to use:
+#
+#     cargo test-app                  # all 83 server-side unit tests
+#     cargo test-app health           # filtered, as usual
+#
+# `cargo test -p store` / `-p ingest` / `-p model` need no alias — those crates have
+# no feature gates and their plain invocations run everything.
+[alias]
+test-app = "test -p tender-db --features server --lib"

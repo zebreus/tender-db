@@ -646,6 +646,29 @@ TENDER_API_TOKEN=<token> cargo run -p ingest --bin verify
 TENDER_API_TOKEN=<token> cargo run -p ingest --bin data-quality
 ```
 
+### Running the tests
+
+`crates/app` is a Dioxus fullstack crate, so every server-side module — the `v1` API,
+the supervisor, health, metrics — sits behind `#[cfg(feature = "server")]`; the same
+crate also builds to WASM for the browser client. A plain
+
+```sh
+cargo test -p tender-db      # DON'T: compiles none of the server modules
+```
+
+finds none of those 83 unit tests and prints `test result: ok. 0 passed; 0 failed`,
+which reads like a pass and checked nothing. Use the workspace alias:
+
+```sh
+cargo test-app               # the app crate's server-side unit tests
+cargo test-app health        # filtered, as usual
+```
+
+`store`, `ingest` and `model` have no feature gates, so `cargo test -p store` and
+friends already run everything. On a tight disk, prefix any of these with
+`CARGO_PROFILE_TEST_DEBUG=0 CARGO_PROFILE_DEV_DEBUG=0`: debuginfo for this
+workspace's test binaries runs to tens of gigabytes and nothing here needs it.
+
 ## Open items
 
 Known gaps in the production setup, tracked here so they aren't rediscovered:
