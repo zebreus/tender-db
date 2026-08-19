@@ -1,6 +1,7 @@
 # 231 — sdk-0.1 amounts are never mapped, and whether the era carries CPV at all is unanswered
 
-Status: needs-triage — measured 2026-08-18 against prod (job 731, rev `a79540e`)
+Status: CPV half FIXED in code 2026-08-19 (mapped + fixture-tested, awaiting the era's re-fold); the value
+half is NOT a mapping gap — the amounts never reach the parse layer, so its diagnosis moves upstream
 Kind: projection mapping gap (one era, two fields) + one research question
 Blocked by: —
 Relates to: 29 (the parent gap, now verified closed for title/buyer/deadline), 177 (the same
@@ -56,3 +57,51 @@ job 731 could not measure and which rev `c731a05` onward does. Judge sdk-0.1 win
 - The data-quality report's `DÖE sdk-0.1 island` row shows non-trivial `value`.
 - For CPV: either mapped and non-trivial, OR a recorded finding that the era does not publish
   CPV — in which case the 0 % is documented as correct rather than left looking like a bug.
+
+
+---
+
+## Both halves answered from prod (2026-08-19)
+
+### CPV: the era DOES publish it, so the 0 % was a missing destination
+
+The presence question this issue insisted on asking first, answered before any mapping was written. 175
+sampled `can-standard` notices of the era carry **1,328 `cpv`-scheme classification rows** — 7.6 apiece —
+under four field ids:
+
+    SDK01-ProcurementProject-MainCommodityClassification-ItemClassificationCode                    147
+    SDK01-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-…                   147
+    SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode              366
+    SDK01-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-…             366
+
+So the parse layer had CPV all along and the canonical layer had nowhere to put it — issue 177's shape one
+era over, as this issue guessed for the value half. All four ids are now in `CLASSIFICATIONS`, main and
+additional, Tender and Lot scope.
+
+**Neither committed sdk-0.1 fixture carries a `CommodityClassification`**, so a test written against them
+would have passed against nothing. A real prod payload (`17750180-1`, from the 2022-12 DÖE monthly, 3.9 kB)
+is committed as a third fixture and the projection test now asserts that both `main` and `additional` reach
+`tender_version_classifications`.
+
+Acceptance for this half: the era's `cpv` column in section 1 of the data-quality report, after the era is
+re-folded. It cannot move before that.
+
+### value: not a mapping gap — the amounts are not in the parse layer at all
+
+This issue's reasoning was that `AMOUNTS` never gained an `SDK01-*` entry, so 0.0 % was "expected from the
+code as written". Half right, and the missing half changes the work: **`notice_amounts` holds zero rows for
+this era.**
+
+    400 sampled sdk-0.1 notices          → 0 amount rows
+    175 sampled `can-standard` notices   → 0 amount rows
+
+A single notice's full field inventory shows the shape: texts for party name, project name/description, lot
+name/description, city and document references; codes for notice type, country, regulatory domain and
+procedure. No monetary value of any kind.
+
+So adding `AMOUNTS` entries would have mapped nothing, and the question moves upstream: does the sdk-0.1
+payload carry a monetary value that the PARSER is not claiming as an amount (in which case ADR-0004 says it
+is being claimed as something else, and the field inventory above is where to look), or does the dialect
+simply not publish one? The `can-standard` sample makes the second answer plausible — an award notice with
+no award value at all — but it has not been read from the payloads yet, and that is the next step for this
+half.
