@@ -79,7 +79,12 @@ const NAME_STOPS: [&str; 6] = [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT 
 /// end the fragment (`Ltd.`, `GmbH.`).
 fn trim_sentence_period(name: &str) -> &str {
     let Some(head) = name.strip_suffix('.') else { return name };
-    let last = head.rsplit('.').next().unwrap_or(head);
+    // TRIMMED, because the letter is often preceded by a space: the campaign's own output
+    // showed `Hurtownia Farmaceutyczna Ismed Sp. J.` stored as `… Sp. J` — the Polish legal
+    // form `sp. j.` written with a space — while `Balton Spółka z o.o.` came through intact.
+    // Two spellings of one company are two organizations in a layer with no identifier to
+    // merge on (issue 234), so the discriminator has to see `J`, not ` J`.
+    let last = head.rsplit('.').next().unwrap_or(head).trim();
     if last.chars().count() == 1 { name } else { head.trim_end() }
 }
 
@@ -713,6 +718,10 @@ mod tests {
         assert_eq!(trim_sentence_period("Grahams Engineering Ltd."), "Grahams Engineering Ltd");
         assert_eq!(trim_sentence_period("Foo S.A."), "Foo S.A.");
         assert_eq!(trim_sentence_period("Foo Ltd"), "Foo Ltd");
+        // The abbreviation's letter can be preceded by a space — the Polish `sp. j.`, seen
+        // in the campaign's own output as `Hurtownia Farmaceutyczna Ismed Sp. J.`
+        assert_eq!(trim_sentence_period("Ismed Sp. J."), "Ismed Sp. J.");
+        assert_eq!(trim_sentence_period("Balton Spółka z o.o."), "Balton Spółka z o.o.");
 
         let multi = "SECTION V: AWARD OF CONTRACT\n\
                      CONTRACT NO: 088273\n\
