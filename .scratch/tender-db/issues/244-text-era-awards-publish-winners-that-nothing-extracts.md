@@ -610,3 +610,38 @@ single amount in the parse layer, so this A/B starts from a clean zero and any n
 is pure gain. The denominator to judge it against is the **3,227** `TD:7` bodies of that package that
 state a price label; the strict shape will claim some fraction of those and the rest are the refusals
 above, which is exactly the number worth knowing.
+
+### The value A/B: 0 → 390, and what the other 88 % refused on
+
+Deployed as `44ac476`, `fetch 300` re-parsed, same bounded band:
+
+    notice_amounts rows, fetch 300      before: 0        after: 390 (390 distinct notices)
+
+Ten currencies, every one a plausible code for 2001, and the magnitudes check out — ITL from 157 M lira
+(≈ €81 k) to 214 bn lira (≈ €110 M), ESP up to 8.96 bn pesetas (≈ €54 M), DEM up to 230 M, SEK up to
+809 M:
+
+    EUR 106 · GBP 60 · SEK 56 · DEM 39 · ESP 37 · ITL 28 · FIM 25 · FRF 10 · NLG 9 · PTE 7
+
+Against the 3,227 bodies stating a price label, 390 is **12.1 %**. Sampling the refusals — the whole
+point of building the strict shape first — shows they are not spread over a dozen causes. Six of eight
+consecutive samples are ONE shape:
+
+    Price: Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.
+    Price: Auftragssumme (mit Umsatzsteuer): 110 761,16 DEM.
+    Price: Auftragssumme (ohne Umsatzsteuer): 1 944 255 DEM.
+
+A **local-language sub-label ending in a colon**, and then an otherwise perfect `<number> <CUR>`. The
+other two samples are refused for good: `Price of product plus price of transport.` is prose, and
+`Importo netto di 26 985 463 468 ITL (13 936 828,783 EUR), a cui si sommano 1 351 6…` is a net figure
+with a parenthetical conversion at three decimals plus additions.
+
+So slice 5 is small and well-aimed: **skip a trailing sub-label** — if what follows the price label
+carries a colon before the number, restart after the last one — leaving the number/currency test exactly
+as strict as it is.
+
+It also forces a decision this slice ducked, so it is filed separately rather than settled here: those
+sub-labels state their **tax basis** (`ohne`/`mit Umsatzsteuer`, `TTC`, `HT`) and `tender_version_amounts`
+has nowhere to put it. Refusing every value that states its basis discards most of the era's money;
+claiming them mixes bases in one column — which the corpus already does, since the r208/r209 eras'
+published VAT indicator is not modelled either. See issue 251.
