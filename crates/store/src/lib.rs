@@ -1235,8 +1235,33 @@ impl Db {
             )
             .await?;
         }
-        self.step(conn, "organization_mentions", "DELETE FROM organization_mentions WHERE notice_id = ?", id)
+        // Seek before deleting, because this one statement was the whole cost of a
+        // re-parse (issue 247): 153 ms a notice, measured, scanning all 41.78M mention
+        // rows even for a notice that has none. Most notices have none — the era being
+        // re-parsed has mentions only where a party was extracted — so a 0.8 ms seek
+        // that skips the DELETE is the difference between 3.5 and 400 members a minute.
+        //
+        // This is not a substitute for `organization_mentions_notice` (queued by the same
+        // issue) and not made redundant by it: the index fixes the DELETE for notices
+        // that DO have mentions, and this skips the statement entirely for those that do
+        // not. Both are cheap; the ordering means a box whose index has not been built
+        // yet is not stuck waiting for a Reindex that is queued behind the very job the
+        // index would speed up.
+        let has_mentions = {
+            let mut rows = conn
+                .query("SELECT 1 FROM organization_mentions WHERE notice_id = ? LIMIT 1", (Value::Integer(id),))
+                .await?;
+            rows.next().await?.is_some()
+        };
+        if has_mentions {
+            self.step(
+                conn,
+                "organization_mentions",
+                "DELETE FROM organization_mentions WHERE notice_id = ?",
+                id,
+            )
             .await?;
+        }
         for table in Self::PARSED_TABLES {
             self.step(conn, table, &format!("DELETE FROM {table} WHERE notice_id = ?"), id).await?;
         }
@@ -5273,6 +5298,16 @@ tmpfs /data/ramcache tmpfs rw 0 0
             vec![id],
             "a re-parsed notice re-enters the incremental change-set"
         );
+
+        // Issue 247: re-parse AGAIN, now that the notice has no mentions. This is the
+        // path the mention delete is skipped on — the common one in a bulk campaign, and
+        // the one whose unconditional DELETE cost 153 ms a notice scanning 41.78M rows —
+        // so it has to reach the same end state as the first pass rather than quietly
+        // leaving the parse layer half-replaced.
+        assert!(db.reparse_notice(&notice, &reparsed).await.unwrap(), "a second re-parse works");
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM organization_mentions").await, Some(0));
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_sections").await, Some(1));
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM notice_texts").await, Some(1));
         assert_eq!(
             text_of(&db, "SELECT parse_state FROM notices").await.as_deref(),
             Some("parsed"),
