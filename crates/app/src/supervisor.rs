@@ -22,13 +22,21 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
 use ingest::{doe, fetch, process, project, ted};
-use model::ingestion::{Ingestion, JobProgress, Phase, QueuedJob};
+use model::ingestion::{Ingestion, JobProgress, JobRun, Phase, QueuedJob};
 use serde::{Deserialize, Serialize};
 use store::turso;
 use tokio::sync::{Notify, OnceCell};
 
 /// How many recent runs the dashboard/admin log shows.
 const RECENT_RUNS: i64 = 20;
+
+/// How far back the startup catch-up reads the job log for this morning's probe
+/// (issue 245). Much deeper than [`RECENT_RUNS`] on purpose: a maintenance-heavy
+/// morning fills 20 rows in under a day — on 2026-08-19 those 20 rows covered 18.9
+/// hours — and a probe that falls out of the window reads as "never ran", which would
+/// re-run a daily that already happened. Cheap either way: one reader-pool query, once,
+/// at startup.
+const CATCH_UP_SCAN: i64 = 200;
 
 /// Worker threads on the isolated job runtime (issue 61). A job's heavy body —
 /// projection/process/fetch/snapshot — runs here, never on the main
@@ -2231,8 +2239,51 @@ impl Supervisor {
     /// morning is a handful of cheap no-op probes, not a busy loop.
     const CATCHUP_POLL_SECS: u64 = 300;
 
+    /// Run today's daily pipeline if its tick has already passed unserved (issue 245).
+    ///
+    /// Reads the job log through the reader pool and the queue that `recover` has
+    /// already rebuilt, so it sees both "a probe succeeded this morning" and "the
+    /// tick's probe is still pending after a restart" and stays quiet for either.
+    async fn catch_up_missed_tick(&self) {
+        let now = store::now_unix();
+        let day = now.div_euclid(86_400);
+        let tick = berlin_tick_on(day, 9, 35);
+        let runs = match self.db.recent_job_runs(CATCH_UP_SCAN).await {
+            Ok(runs) => runs,
+            // No job log, no evidence either way. Enqueuing a whole daily pipeline on a
+            // guess is worse than leaving the tick to the loop, so say so and move on.
+            Err(e) => {
+                eprintln!("supervisor: startup catch-up: read job log: {e}");
+                return;
+            }
+        };
+        let probe_queued =
+            self.queue.lock().expect("queue lock").iter().any(|j| j.kind == "probe");
+        if !tick_needs_catch_up(tick, now, &runs, probe_queued) {
+            return;
+        }
+        let weekday = weekday_of(day);
+        let weekday = weekday != 0 && weekday != 6;
+        println!(
+            "[scheduler] the 09:35 Berlin tick passed unserved {}s ago — running today's daily now (issue 245)",
+            now - tick
+        );
+        self.enqueue_daily(weekday).await;
+    }
+
     pub fn spawn_scheduler(self: Arc<Self>) {
         tokio::spawn(async move {
+            // Startup catch-up (issue 245). The tick is an in-process timer, so it is
+            // lost whenever the process is not running at 09:35 — a box that was down,
+            // and far more often here, a deploy that restarted the service inside the
+            // morning window. `enqueue_daily`'s jobs are durable rows and re-run on
+            // their own, but issue 222's re-probe loop lives only in this task and dies
+            // with it silently: no log line, no job record, and the day is missed until
+            // tomorrow's walk-forward. Deploys land at whatever minute the work
+            // finishes, so treat a missed tick as ordinary and serve it on startup
+            // instead of waiting a day.
+            self.catch_up_missed_tick().await;
+
             loop {
                 let now = store::now_unix();
                 let (tick, weekday) = next_berlin_tick(now, 9, 35);
@@ -2547,15 +2598,42 @@ fn weekday_of(day: i64) -> i64 {
 fn next_berlin_tick(now: i64, hour: i64, minute: i64) -> (i64, bool) {
     let day = now.div_euclid(86_400);
     for k in 0..8 {
-        let midnight = (day + k) * 86_400;
-        let offset = berlin_offset(midnight + 12 * 3_600);
-        let tick = midnight + hour * 3_600 + minute * 60 - offset;
+        let tick = berlin_tick_on(day + k, hour, minute);
         if tick > now {
             let weekday = weekday_of(day + k);
             return (tick, weekday != 0 && weekday != 6);
         }
     }
     unreachable!("a matching tick exists within a week")
+}
+
+/// The unix instant at which Berlin wall-clock reads `hour:minute` on this UTC `day`.
+/// Split out of [`next_berlin_tick`] so the startup catch-up (issue 245) can ask about
+/// a tick in the PAST — today's — which the "next" form by construction cannot answer.
+fn berlin_tick_on(day: i64, hour: i64, minute: i64) -> i64 {
+    let midnight = day * 86_400;
+    let offset = berlin_offset(midnight + 12 * 3_600);
+    midnight + hour * 3_600 + minute * 60 - offset
+}
+
+/// Whether the day's tick passed without being served, so startup should run it now
+/// (issue 245).
+///
+/// A tick counts as served by a SUCCESSFUL `probe` at or after it — the first job
+/// `enqueue_daily` pushes — or by one still sitting in the queue, which the durable
+/// job rows re-run on their own after a restart. Anything else means the tick fired
+/// into a process that is no longer here, or never fired because the box was down.
+///
+/// Deliberately keyed on `probe` rather than on any daily job: `project` is pushed by
+/// every maintenance refold too (the same conflation that made `ingest_freshness`
+/// lie), and `process` succeeds trivially when there is nothing to process.
+fn tick_needs_catch_up(tick: i64, now: i64, runs: &[JobRun], probe_queued: bool) -> bool {
+    if tick > now || probe_queued {
+        return false;
+    }
+    !runs
+        .iter()
+        .any(|r| r.kind == "probe" && r.outcome == "ok" && r.finished_at >= tick)
 }
 
 /// Berlin's UTC offset in seconds at `unix`: +1h CET, +2h CEST. EU rule: summer
@@ -2637,6 +2715,42 @@ mod tests {
         let sat = fetch::days_from_civil(2026, 7, 18) * 86_400;
         let (_, weekend) = next_berlin_tick(sat, 9, 35);
         assert!(!weekend, "Saturday is not a weekday");
+    }
+
+    /// The startup catch-up's decision (issue 245), which is the whole of it: the
+    /// enqueue afterwards is `enqueue_daily`, already covered.
+    #[test]
+    fn a_tick_that_passed_unserved_is_caught_up_on_startup() {
+        let run = |kind: &str, outcome: &str, finished_at: i64| JobRun {
+            id: 1,
+            kind: kind.into(),
+            params: String::new(),
+            started_at: finished_at - 10,
+            finished_at,
+            outcome: outcome.into(),
+            counts: String::new(),
+        };
+        let tick = fetch::days_from_civil(2026, 7, 15) * 86_400 + 7 * 3_600 + 35 * 60;
+        let now = tick + 4 * 3_600; // startup at 13:35 Berlin, four hours late
+
+        // Nothing since the tick — the deploy that restarted the box ate it.
+        assert!(tick_needs_catch_up(tick, now, &[run("project", "ok", now - 60)], false));
+
+        // A probe that succeeded after the tick means the daily ran: stay quiet.
+        assert!(!tick_needs_catch_up(tick, now, &[run("probe", "ok", tick + 30)], false));
+
+        // A probe that succeeded BEFORE the tick is yesterday's, and does not serve today.
+        assert!(tick_needs_catch_up(tick, now, &[run("probe", "ok", tick - 100)], false));
+
+        // A probe still in the queue after a restart will run on its own — the durable
+        // rows survive; only the catch-up LOOP is lost. Do not double up.
+        assert!(!tick_needs_catch_up(tick, now, &[], true));
+
+        // Before the tick, there is nothing to catch up; the loop will serve it.
+        assert!(!tick_needs_catch_up(tick, tick - 1, &[], false));
+
+        // A FAILED probe is not a served tick — the pipeline did not get its data.
+        assert!(tick_needs_catch_up(tick, now, &[run("probe", "error", tick + 30)], false));
     }
 
     async fn scratch() -> Arc<store::Db> {
