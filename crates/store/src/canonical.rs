@@ -1085,6 +1085,11 @@ pub struct PlanRow {
     pub published_at: i64,
     pub subtype: Option<String>,
     pub ojs_edges: Vec<i64>,
+    /// Normalised `publication_id`s this notice names as its predecessors
+    /// (`OPP-090-Procedure`, ADR-0011). Stored as an edge per reference in
+    /// `plan_prev_edge`, resolved to a group after the keyed/island and legacy
+    /// passes have given every notice a `group_key`.
+    pub prev_refs: Vec<String>,
 }
 
 /// One Tender's notices, streamed from the plan in fold order (issue 59). Carries

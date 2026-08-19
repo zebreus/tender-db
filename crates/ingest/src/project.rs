@@ -546,6 +546,14 @@ const DE1_FOLDER_FIELD: &str = "DE1-ContractFolderID";
 const PROCEDURE_KEY_FIELD: &str = "BT-04-notice";
 const LOGICAL_NOTICE_FIELD: &str = "BT-701-notice";
 const SUBTYPE_FIELD: &str = "OPP-070-notice";
+/// eForms' explicit previous-publication reference (`ND-PreviousNoticeReference`):
+/// the publisher's own statement that an earlier TED publication continues into
+/// this notice. ADR-0011 makes it an identity edge, because EU eForms does NOT
+/// keep BT-04 stable across a procedure's notices — measured on prod, 27–39 % of
+/// EU award Tenders are single-notice islands whose contract notice sits in the
+/// corpus under a different BT-04 (issue 236), and this field is how the source
+/// says so.
+const PREVIOUS_NOTICE_FIELD: &str = "OPP-090-Procedure";
 const ORGANIZATION_KIND: &str = "Organization";
 const ORG_NAME_FIELD: &str = "BT-500-Organization-Company";
 const ORG_IDENTIFIER_FIELD: &str = "BT-501-Organization-Company";
@@ -2658,6 +2666,10 @@ struct Ident {
     procedure_key: Option<String>,
     ojs_self: Option<OjsKey>,
     ojs_edges: Vec<OjsKey>,
+    /// Normalised `publication_id`s this notice names as its predecessors
+    /// (ADR-0011). A set: 2 of 1,343 measured carriers named two publications and
+    /// one named three, and a procedure republished in parts is still one procedure.
+    prev_refs: Vec<String>,
     subtype: Option<String>,
 }
 
@@ -2667,6 +2679,49 @@ struct Ident {
 /// fits `i64` and never collides across keys.
 fn encode_ojs((year, number): OjsKey) -> i64 {
     year * 1_000_000_000 + number
+}
+
+/// Every predecessor publication this notice names, normalised and deduped
+/// (ADR-0011). Not filtered to `is_ref`: the field is published as a plain id
+/// (`scheme` absent, `is_ref = 0`), so requiring a reference flag would find
+/// nothing — checked against the bytes on prod before this was written.
+fn previous_publications(parsed: &Parsed) -> Vec<String> {
+    let mut out: Vec<String> = parsed
+        .values
+        .iter()
+        .filter(|v| v.field_id == PREVIOUS_NOTICE_FIELD)
+        .filter_map(|v| match &v.value {
+            NoticeValue::Id { value, .. } => publication_ref(value),
+            _ => None,
+        })
+        .collect();
+    out.sort_unstable();
+    out.dedup();
+    out
+}
+
+/// A previous-notice reference as a `notices.publication_id`, or `None` if it is
+/// not a TED publication number.
+///
+/// eForms writes `615938-2024`; the archive holds `00615938-2024` — 8 digits,
+/// zero-padded, then the year. Normalising here rather than at the join keeps the
+/// shape in one place and makes an unparseable reference a `None` at read time
+/// instead of a row that silently matches nothing later. Anything that is not
+/// `<digits>-<4 digits>` is ignored rather than guessed at: a wrong publication id
+/// would merge two unrelated procedures, which ADR-0011 rates worse than leaving
+/// them apart.
+fn publication_ref(value: &str) -> Option<String> {
+    let (number, year) = value.trim().split_once('-')?;
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+    if year.len() != 4 || !digits(year) || !digits(number) {
+        return None;
+    }
+    let number = number.trim_start_matches('0');
+    // Longer than the archive's own width is not a publication number we hold.
+    if number.is_empty() || number.len() > 8 {
+        return None;
+    }
+    Some(format!("{number:0>8}-{year}"))
 }
 
 impl Ident {
@@ -2704,6 +2759,7 @@ impl Ident {
             procedure_key: procedure_key(parsed, sdk01, is_de1_profile(&notice.profile)),
             ojs_self,
             ojs_edges,
+            prev_refs: previous_publications(parsed),
             subtype: first_code(parsed, SUBTYPE_FIELD),
         }
     }
@@ -2722,6 +2778,7 @@ impl Ident {
             published_at: self.published_at,
             subtype: self.subtype,
             ojs_edges: self.ojs_edges.into_iter().map(encode_ojs).collect(),
+            prev_refs: self.prev_refs,
         }
     }
 }
@@ -3969,6 +4026,33 @@ mod tests {
             Vec::<(String, String)>::new(),
             "no group at all: the members have nothing to attach to",
         );
+    }
+
+    /// ADR-0011: a previous-notice reference becomes a `notices.publication_id`, or
+    /// nothing. eForms writes `615938-2024`; the archive holds `00615938-2024`.
+    /// A reference that does not parse is dropped rather than guessed at — a wrong
+    /// publication id merges two unrelated procedures, which is worse than leaving
+    /// them apart.
+    #[test]
+    fn a_previous_notice_reference_normalises_to_an_archive_publication_id() {
+        assert_eq!(publication_ref("615938-2024").as_deref(), Some("00615938-2024"), "the published form");
+        assert_eq!(publication_ref("00615938-2024").as_deref(), Some("00615938-2024"), "already padded");
+        assert_eq!(publication_ref(" 1-2019 ").as_deref(), Some("00000001-2019"), "surrounding space, short number");
+        assert_eq!(publication_ref("12345678-2024").as_deref(), Some("12345678-2024"), "the full width");
+
+        for bad in [
+            "615938",           // no year
+            "615938-24",        // two-digit year
+            "615938-20244",     // five-digit year
+            "-2024",            // no number
+            "0-2024",           // number zero is not a publication
+            "123456789-2024",   // wider than the archive's own form
+            "61x938-2024",      // not digits
+            "615938-20a4",
+            "",
+        ] {
+            assert_eq!(publication_ref(bad), None, "{bad:?} is not a publication id");
+        }
     }
 
     /// Issue 237: membership must survive to the version that HAS the bids.
