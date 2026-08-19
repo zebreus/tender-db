@@ -601,3 +601,12 @@ house number (`Emilienstrasse 8,` — no period).
 The committed 1993 daily asserts **zero** prices, which is the correct answer for that vintage: it
 writes the lira as `Lit 1 000 000 000` and its ranges as `Lit 2 610/Lit 3 289`, and neither qualifies.
 Asserting the zero is how a future loosening of `parse_money` announces itself.
+
+
+### The value baseline, read before the deploy
+
+`notice_amounts` holds **zero rows** for `fetch 300`'s 13,734 notices — the text era has never had a
+single amount in the parse layer, so this A/B starts from a clean zero and any number after the deploy
+is pure gain. The denominator to judge it against is the **3,227** `TD:7` bodies of that package that
+state a price label; the strict shape will claim some fraction of those and the rest are the refusals
+above, which is exactly the number worth knowing.
