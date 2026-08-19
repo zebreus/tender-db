@@ -1,10 +1,12 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 3 DEPLOYED AND A/B-VERIFIED 2026-08-19 (rev `9652868`) — three passes over one package,
-against a before-value recorded before any of it was written: 12 → 755 → 3,807 notices with a winner,
-0.3% → 18.2% → 91.7% of its 4,153 award notices, and 6,166 refs from 3,807 notices so multi-winner
-values land too. That is 98.7% of the notices that carry a label at all. NEXT on this issue is the
-value/date/tenders-received fields, not more winner labels. Also still open: the 2010 tail.
+Status: SLICE 4 BUILT 2026-08-19 — the contract price, at notice scope, claimed only from one
+unambiguous shape (one number, one three-letter currency code, nothing else); everything ranged,
+dual-currency, tax-qualified, annualised, sub-cent or withheld is refused rather than guessed.
+No projection change: `TED-VAL_TOTAL` at root is already mapped to `result_value`. Slice 3 is
+DEPLOYED and A/B-verified — winners went 12 → 755 → 3,807 on one package, 0.3% → 18.2% → 91.7% of
+its 4,153 award notices. AWAITING DEPLOY + the value A/B. Still open: the award date and the
+tenders-received count (both need canonical destinations), and the 2010 tail.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -520,3 +522,82 @@ reads 98.7 % of the notices where a label exists. The rest is the guards firing 
 where a name should be, a withheld value, `Various.` — plus whatever shape is still unnamed. That is
 close enough to the ceiling that the next work on this issue should be the **value/date/tenders-received
 fields**, not more winner labels.
+
+
+## Slice 4: the price, at notice scope, in one shape only (2026-08-19)
+
+Winners are at 91.7 % of the vintage's award notices, so the next fact is the money — issue 232's
+`value` column, and the one this issue has been pointing at since the 2001 payload read.
+
+### Where it is, counted
+
+Over `fetch 300`'s 13,734 bodies (4,153 TD:7 award records):
+
+    Price:                        3,081        Date of award                 2,991
+    Value of winning award…         483        Tenders received:             2,787
+    Contract value:                  25        Estimated value                 467
+
+So the money is stated about as often as the winner is.
+
+### Destination: no projection change needed
+
+`("TED-VAL_TOTAL", "result_value")` is already in the projection's `AMOUNTS` map, so a
+`TED-VAL_TOTAL` amount at notice scope reaches `tender_version_amounts` as `result_value` — the same
+fact the r209 era publishes under the same field id, arrived at from prose instead of a tag.
+
+Notice scope, deliberately, **not** the LotResult: the value is stated once per notice (`8. Price:`)
+while a notice can name several winners, so attaching it to the first result would attribute a whole
+contract to one of them.
+
+### One shape, and a long list of refusals
+
+A wrong amount is worse than a missing one — it lands in a fact table and nothing downstream can tell
+it from a published figure. So: exactly one number and exactly one three-letter upper-case currency
+code, in either order, and nothing else in the item but a closing period.
+
+    2 143 000 EUR.                                    claimed
+    EUR 1 131 079,99                                  claimed
+    5 301 802,22 FRF TTC.                             refused — a tax basis this column lacks
+    562 680 GBP p.a.                                  refused — annual, not a total
+    15 564 000 ATS / 1 131 079,99 EUR.                refused — two currencies
+    Minimum/maximum: Lit 2 610/Lit 3 289.             refused — a range
+    Lit 1 000 000 000.                                refused — `Lit` is not a code
+    1 000,255 EUR                                     refused — sub-cent (ADR-0010)
+    2 14 3000 EUR                                     refused — groups are not thousands
+    Publication of this information would prejudice…  refused — withheld
+
+And two labels in one notice **disagreeing** (`8. Price:` 1 000 000 EUR beside `9. Value of winning
+award(s):` 900 000 EUR) claims nothing rather than guessing which figure the analyst wanted; agreeing,
+it is one fact stated twice and is read.
+
+Everything refused stays exactly where it already was — inside the `TXT-TX` prose claimed as a whole —
+so a refusal costs a fact and never exhaustiveness (ADR-0004).
+
+### The claim is gated on the notice being an award — and that gate was measured, not assumed
+
+Winner labels needed no such gate: all 3,857 bodies carrying one are `TD:7`. The price labels are
+**not** that clean. Of the 3,250 bodies in `fetch 300` stating one:
+
+    TD:7  awards                      3,227
+    TD:3  invitations to tender          18
+    TD:0                                  4
+    TD:2  corrigendum                     1
+
+A notice with no result must not carry a `result_value`, so those 23 are exactly the wrong facts to
+refuse — and refusing them needs the document type, which is why the claim is a **post-pass over the
+finished record** rather than a hook in the prose flush: `TD` may be consumed before or after `TX`
+depending on field order, and a post-pass sees both. A record with no `TD` at all is not assumed to be
+an award either.
+
+### One mechanical thing the boundary forced
+
+The value item is 4, 8 or 9 depending on the form, so the item that follows it is 5, 9 or 10 —
+`ITEM_STOPS`, aimed at the winner item, does not bound it. `next_item_marker` finds any ` <n>. `
+instead, and has to tell an item marker from a date (`11.5.2001` — no space after `11.`) and from a
+house number (`Emilienstrasse 8,` — no period).
+
+### Gate
+
+The committed 1993 daily asserts **zero** prices, which is the correct answer for that vintage: it
+writes the lira as `Lit 1 000 000 000` and its ranges as `Lit 2 610/Lit 3 289`, and neither qualifies.
+Asserting the zero is how a future loosening of `parse_money` announces itself.

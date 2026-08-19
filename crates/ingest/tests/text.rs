@@ -129,6 +129,27 @@ fn the_1993_daily_yields_its_award_winners() {
         assert!(!name.eq_ignore_ascii_case("various"), "a non-answer became a company");
     }
 
+    // The prices of the same delivery. 1993 writes the lira as `Lit 1 000 000 000` and
+    // its ranges as `Lit 2 610/Lit 3 289`, neither of which is a shape a value may be
+    // claimed from — so a LOW count here is the correct answer, and asserting it is how
+    // a future loosening of parse_money announces itself.
+    let mut prices = Vec::new();
+    for (_, parse) in &records {
+        let Parse::Parsed(parsed) = parse else { continue };
+        for row in &parsed.values {
+            if row.field_id == "TED-VAL_TOTAL" {
+                if let NoticeValue::Amount { cents, currency } = &row.value {
+                    prices.push((*cents, currency.clone()));
+                }
+            }
+        }
+    }
+    for (cents, currency) in &prices {
+        assert!(*cents > 0, "a zero price was claimed");
+        assert_eq!(currency.len(), 3, "not a currency code: {currency:?}");
+    }
+    assert_eq!(prices.len(), 0, "1993 states its money in shapes none of which qualify: {prices:?}");
+
     // Spot-checks: one plain, one lot-keyed, one that the comma must keep whole.
     assert!(names.iter().any(|n| n == "Motorola Limited"), "{names:#?}");
     assert!(names.iter().any(|n| n == "Ailsa Truck and Bus Limited"), "{names:#?}");

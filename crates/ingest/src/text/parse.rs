@@ -152,6 +152,104 @@ fn plausible_name(name: &str) -> bool {
     !NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some())
 }
 
+/// Labels under which the numbered form states what the contract cost (issue 244).
+/// Counted over `fetch 300`'s 13,734 bodies: `Price:` 3,081, `Value of winning award…` 483,
+/// `Contract value:` 25 — against 4,153 TD:7 award records, so the money is stated about
+/// as often as the winner is.
+const VALUE_LABELS: [&str; 4] =
+    ["PRICE:", "PRICE(S):", "CONTRACT VALUE:", "VALUE OF WINNING AWARD"];
+
+/// How a monetary value must be written to be claimed at all.
+///
+/// This is deliberately the strictest reading of the shapes on prod, because a wrong
+/// amount is worse than a missing one — it lands in `tender_version_amounts` as a
+/// `result_value` and nothing downstream can tell it from a published figure. The
+/// measured shapes, and what happens to each:
+///
+///     2 143 000 EUR.                                    claimed
+///     5 301 802,22 FRF TTC.                             refused — `TTC` is a tax basis
+///     562 680 GBP p.a.                                  refused — annual, not a total
+///     15 564 000 ATS / 1 131 079,99 EUR.                refused — two currencies
+///     Minimum/maximum: Lit 2 610/Lit 3 289.             refused — a range
+///     Lit 1 000 000 000.                                refused — `Lit` is not a code
+///     Publication of this information would prejudice…  refused — withheld
+///
+/// So: exactly one number and exactly one three-letter upper-case currency code, in
+/// either order, and NOTHING else in the value but a closing period. A qualifier that
+/// changes what the number means (`p.a.`) and one that changes its basis (`TTC`, `HT`)
+/// are both refused rather than silently mixed into one column with figures that carry
+/// neither. Whatever this refuses stays where it already was — inside the `TXT-TX` prose
+/// that is claimed as a whole — so refusing costs a fact and never exhaustiveness
+/// (ADR-0004).
+fn parse_money(value: &str) -> Option<(i64, String)> {
+    let value = value.trim().trim_end_matches('.').trim();
+    if value.is_empty() || value.len() > 64 {
+        return None;
+    }
+    let mut whole: Option<i64> = None; // units, accumulated across thousands groups
+    let mut fraction: Option<i64> = None; // the cents, once a decimal group is seen
+    let mut currency: Option<String> = None;
+    for token in value.split(' ').filter(|t| !t.is_empty()) {
+        if is_currency_code(token) {
+            if currency.replace(token.to_owned()).is_some() {
+                return None; // two codes — a dual-currency restatement
+            }
+            continue;
+        }
+        // A decimal group ends the number: anything after it is a second figure.
+        if fraction.is_some() {
+            return None;
+        }
+        let (digits, group_fraction) = digit_group(token)?;
+        // Every group after the first is a thousands group and must be exactly three
+        // digits, so `2 143 000` groups and `2 14 3000` refuses.
+        if whole.is_some() && digits.len() != 3 {
+            return None;
+        }
+        let group: i64 = digits.parse().ok()?;
+        whole = Some(match whole {
+            Some(n) => n.checked_mul(1000)?.checked_add(group)?,
+            None => group,
+        });
+        fraction = group_fraction;
+    }
+    match (whole, currency) {
+        (Some(units), Some(code)) => {
+            let cents = units.checked_mul(100)?.checked_add(fraction.unwrap_or(0))?;
+            (cents > 0).then_some((cents, code))
+        }
+        _ => None,
+    }
+}
+
+/// A three-letter upper-case ASCII currency code (`EUR`, `FRF`, `ATS`, `GBP`). Not a
+/// closed list: the era spans a dozen pre-euro currencies and this only has to
+/// distinguish a code from a word — `Lit`, the Italian lira's own spelling, is
+/// deliberately NOT one, and its shapes are ranges this refuses anyway.
+fn is_currency_code(token: &str) -> bool {
+    token.len() == 3 && token.chars().all(|c| c.is_ascii_uppercase())
+}
+
+/// One space-separated group of a written number: its digits, and the two decimal
+/// digits if this group carried them. `802,22` is `("802", Some(22))`; `301` is
+/// `("301", None)`. Three decimals would be sub-cent (ADR-0010) and one a typo, so
+/// neither is a number this reads.
+fn digit_group(token: &str) -> Option<(&str, Option<i64>)> {
+    let (digits, fraction) = match token.split_once([',', '.']) {
+        Some((whole, fraction)) => {
+            if fraction.len() != 2 || !fraction.bytes().all(|b| b.is_ascii_digit()) {
+                return None;
+            }
+            (whole, Some(fraction.parse::<i64>().ok()?))
+        }
+        None => (token, None),
+    };
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    Some((digits, fraction))
+}
+
 /// How long a lot reference in front of a winner's name is allowed to be.
 /// `1, 2, 3 and 4:` is the longest measured, at 14 characters.
 const LOT_PREFIX_MAX: usize = 24;
@@ -316,16 +414,7 @@ fn awarded_names(body: &str) -> Vec<String> {
     if find_ascii_ci(body, "AWARD").is_none() && find_ascii_ci(body, "PROVIDER").is_none() {
         return Vec::new();
     }
-    // Flatten TED's ~72-column wrap into one line. Built directly rather than through
-    // `split_whitespace().collect::<Vec<_>>().join(" ")`, which allocated a vector of
-    // slices as well as the string.
-    let mut flat = String::with_capacity(body.len());
-    for word in body.split_whitespace() {
-        if !flat.is_empty() {
-            flat.push(' ');
-        }
-        flat.push_str(word);
-    }
+    let flat = flatten(body);
 
     let mut names = Vec::new();
     let mut at = 0usize;
@@ -381,6 +470,100 @@ fn awarded_names(body: &str) -> Vec<String> {
         at = value_at;
     }
     names
+}
+
+/// The one monetary value a numbered-form award body states, or `None`.
+///
+/// `None` covers three different situations and deliberately does not distinguish them,
+/// because the outcome is the same: no value is claimed. The body may state no price;
+/// it may state one in a shape [`parse_money`] refuses; or it may state SEVERAL that
+/// disagree — `8. Price:` and `9. Value of winning award(s):` both present with
+/// different figures is a notice this cannot resolve, and picking one would be a guess
+/// recorded as a fact.
+fn awarded_value(body: &str) -> Option<(i64, String)> {
+    if find_ascii_ci(body, "PRICE").is_none() && find_ascii_ci(body, "VALUE").is_none() {
+        return None;
+    }
+    let flat = flatten(body);
+    let mut found: Option<(i64, String)> = None;
+    let mut at = 0usize;
+    while at < flat.len() {
+        let Some((start, label)) = VALUE_LABELS
+            .iter()
+            .filter_map(|l| find_ascii_ci(&flat[at..], l).map(|i| (at + i, *l)))
+            .min_by_key(|(i, _)| *i)
+        else {
+            break;
+        };
+        let value_at = start + label.len();
+        let rest = &flat[value_at..];
+        let window = &rest[..char_bound(rest, NAME_WINDOW)];
+        // `VALUE OF WINNING AWARD` is matched without its `(s):` tail, since the era writes
+        // both the plural and the singular. Skip to just past the colon that ends the
+        // heading — by position, so `(s):` and `(S):` behave the same. The bound keeps this
+        // from running to some later item's colon when the label already ended in one.
+        let window = match window.find(':') {
+            Some(colon) if colon <= 4 => &window[colon + 1..],
+            _ => window,
+        };
+        // The value item is 4, 8 or 9 depending on the form, so the item that FOLLOWS it
+        // is 5, 9 or 10 — [`ITEM_STOPS`], which is aimed at the winner item, does not
+        // bound this. Any numbered item does.
+        let end = next_item_marker(window);
+        if let Some(money) = parse_money(&window[..end.unwrap_or(window.len())]) {
+            match &found {
+                // Two labels agreeing is one fact stated twice; two disagreeing is a
+                // notice this cannot read.
+                Some(seen) if *seen != money => return None,
+                Some(_) => {}
+                None => found = Some(money),
+            }
+        }
+        at = value_at;
+    }
+    found
+}
+
+/// Where the next numbered form item begins: ` <n>. ` with one or two digits, in the
+/// flattened body. Used to bound a value item whose successor is not one of the three
+/// [`ITEM_STOPS`] the winner item is followed by.
+///
+/// The digits must be followed by a period and then a space or the end, which is what
+/// separates an item marker from a date (`11.5.2001` has no space after `11.`) or a
+/// house number (`Emilienstrasse 8,` has no period).
+fn next_item_marker(window: &str) -> Option<usize> {
+    let bytes = window.as_bytes();
+    for i in 0..bytes.len() {
+        if bytes[i] != b' ' {
+            continue;
+        }
+        let mut j = i + 1;
+        while j < bytes.len() && j - i <= 2 && bytes[j].is_ascii_digit() {
+            j += 1;
+        }
+        if j == i + 1 || j >= bytes.len() || bytes[j] != b'.' {
+            continue;
+        }
+        if j + 1 == bytes.len() || bytes[j + 1] == b' ' {
+            return Some(i);
+        }
+    }
+    None
+}
+
+/// Flatten TED's ~72-column wrap into one line.
+///
+/// Built directly rather than through `split_whitespace().collect::<Vec<_>>().join(" ")`,
+/// which allocated a vector of slices as well as the string.
+fn flatten(body: &str) -> String {
+    let mut flat = String::with_capacity(body.len());
+    for word in body.split_whitespace() {
+        if !flat.is_empty() {
+            flat.push(' ');
+        }
+        flat.push_str(word);
+    }
+    flat
 }
 
 /// The largest char boundary at or below `at`, so a window can be cut by byte length
@@ -488,7 +671,49 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
     if emit.parsed.values.is_empty() {
         return Err(Rejected { reason: "empty-record", detail: "no header fields".into() });
     }
+    claim_awarded_value(&mut emit);
     Ok(emit.parsed)
+}
+
+/// The contract's price, claimed after the whole record is read (issue 244).
+///
+/// A post-pass rather than a hook in the prose flush, for one reason that matters: the
+/// claim is only legitimate on an **award** notice, and the document-type code `TD` may
+/// be consumed before or after the `TX` body depending on the record's field order. A
+/// post-pass sees both regardless.
+///
+/// Why the gate is needed: measured over `fetch 300`, of the 3,250 bodies stating a price
+/// label, 3,227 are `TD:7` awards — but 18 are `TD:3` invitations to tender, 4 are `TD:0`
+/// and 1 is a `TD:2` corrigendum. A notice with no result must not carry a
+/// `result_value`, so those 23 are exactly the wrong facts this refuses to write. (The
+/// winner labels needed no such gate: all 3,857 bodies carrying one are `TD:7`.)
+///
+/// Notice scope, not the LotResult: the price is stated once per notice while a notice
+/// can name several winners, so attaching it to the first result would hand one of them a
+/// whole contract. `TED-VAL_TOTAL` at root is already mapped to `result_value` in the
+/// projection's `AMOUNTS`, so this needs no mapping change.
+fn claim_awarded_value(emit: &mut Emit) {
+    let is_award = emit.parsed.values.iter().any(|v| {
+        v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
+    });
+    if !is_award {
+        return;
+    }
+    // The borrow of `values` ends with the expression, so the body is read in place
+    // rather than cloned — these are multi-kilobyte prose blobs and the era has 3.8M of
+    // them.
+    let money = emit
+        .parsed
+        .values
+        .iter()
+        .find_map(|v| match (&v.field_id, &v.value) {
+            (f, NoticeValue::Text { value, .. }) if f == "TXT-TX" => Some(value.as_str()),
+            _ => None,
+        })
+        .and_then(awarded_value);
+    if let Some((cents, currency)) = money {
+        emit.value(cents, currency);
+    }
 }
 
 struct Field {
@@ -660,6 +885,14 @@ impl Emit {
         // in one notice. The buyer's `TXT-AU` has neither problem — it is in that list
         // and it is not also a root value.
         self.push_into(&org, "TED-OFFICIALNAME", NoticeValue::Text { lang: None, value: name });
+    }
+
+    /// The contract's price, at notice scope (issue 244). `TED-VAL_TOTAL` is already in
+    /// the projection's `AMOUNTS` map as `result_value`, so this reaches
+    /// `tender_version_amounts` with no mapping change — it is the same fact the r209
+    /// era publishes under the same field id, arrived at from prose instead of a tag.
+    fn value(&mut self, cents: i64, currency: String) {
+        self.push("TED-VAL_TOTAL", NoticeValue::Amount { cents, currency });
     }
 
     fn push(&mut self, field: &str, value: NoticeValue) {
@@ -1202,6 +1435,126 @@ mod tests {
                          7.  Works provided: CPV: 45112210, 45233220.\n\
                          11.  Other information: Procédure annulée: décision de la PRM du 15.5.2001.";
         assert!(awarded_names(cancelled).is_empty());
+    }
+
+    /// Issue 244: the money the numbered form states, and the far longer list of shapes
+    /// it states money in that this refuses. Every string is from a prod body.
+    #[test]
+    fn a_price_is_claimed_only_in_one_unambiguous_shape() {
+        // Claimed: one number, one code, nothing else. Either order.
+        assert_eq!(parse_money("2 143 000 EUR."), Some((214_300_000, "EUR".to_owned())));
+        assert_eq!(parse_money("5 301 802,22 FRF"), Some((530_180_222, "FRF".to_owned())));
+        assert_eq!(parse_money("EUR 1 131 079,99"), Some((113_107_999, "EUR".to_owned())));
+        assert_eq!(parse_money("562680 GBP"), Some((56_268_000, "GBP".to_owned())));
+
+        // Refused, and each for its own reason.
+        assert_eq!(parse_money("562 680 GBP p.a."), None, "annual, not a total");
+        assert_eq!(parse_money("5 301 802,22 FRF TTC"), None, "a tax basis this column lacks");
+        assert_eq!(parse_money("15 564 000 ATS / 1 131 079,99 EUR"), None, "two currencies");
+        assert_eq!(parse_money("Minimum/maximum: Lit 2 610/Lit 3 289"), None, "a range");
+        assert_eq!(parse_money("Lit 1 000 000 000"), None, "`Lit` is not a currency code");
+        assert_eq!(parse_money("2 143 000"), None, "no currency at all");
+        assert_eq!(parse_money("EUR"), None, "no number at all");
+        assert_eq!(parse_money("0 EUR"), None, "zero is not a price");
+        assert_eq!(
+            parse_money("Publication of this information would prejudice the interests"),
+            None,
+            "withheld"
+        );
+        // Sub-cent is ADR-0010's quarantine trigger, so it must never become an Amount.
+        assert_eq!(parse_money("1 000,255 EUR"), None, "three decimals is sub-cent");
+        assert_eq!(parse_money("1 000,2 EUR"), None, "one decimal is not cents");
+        // Mis-grouped digits are not a number this reads.
+        assert_eq!(parse_money("2 14 3000 EUR"), None, "groups are not thousands");
+        assert_eq!(parse_money("1 000,00 2 000,00 EUR"), None, "two figures");
+    }
+
+    /// The value in place, read off the whole body — including the two ways a body
+    /// states money that this must NOT resolve.
+    #[test]
+    fn the_notices_price_reaches_the_amount_at_notice_scope() {
+        // notice 1,710,387 (2001-06), the external-aid form.
+        let starcm = "Service contract award notice\n\
+                      4.  Contract value: 2 143 000 EUR.\n\
+                      5.  Date of award of the contract: 11.5.2001.\n\
+                      6.  Number of tenders received: 6.";
+        assert_eq!(awarded_value(starcm), Some((214_300_000, "EUR".to_owned())));
+
+        // …and the whole record, so the fact lands where the projection reads it.
+        let record = |td: &str| {
+            format!("1.0/000001\nND: 1-2001\nTD: {td}\nTX: {}\n", starcm.replace('\n', "\n    "))
+        };
+        let p = parse(&record("7 - Contract award")).expect("parses");
+        let amount = p
+            .values
+            .iter()
+            .find(|v| v.field_id == "TED-VAL_TOTAL")
+            .expect("the price is claimed as TED-VAL_TOTAL");
+        assert_eq!(amount.section_id, SECTION, "notice scope, not a result");
+        assert_eq!(
+            amount.value,
+            NoticeValue::Amount { cents: 214_300_000, currency: "EUR".to_owned() }
+        );
+
+        // The SAME body on a notice that is not an award claims nothing: a notice with no
+        // result must not carry a result_value. Measured on fetch 300, 23 of the 3,250
+        // bodies stating a price label are TD:3/0/2 rather than TD:7.
+        for td in ["3 - Invitation to tender", "2 - Corrigendum"] {
+            let p = parse(&record(td)).expect("parses");
+            assert!(
+                !p.values.iter().any(|v| v.field_id == "TED-VAL_TOTAL"),
+                "a non-award notice claimed a result value ({td})"
+            );
+        }
+        // …and a notice with no TD at all is not assumed to be an award.
+        let p = parse(&format!("1.0/000001\nND: 1-2001\nTX: {}\n", starcm.replace('\n', "\n    ")))
+            .expect("parses");
+        assert!(!p.values.iter().any(|v| v.field_id == "TED-VAL_TOTAL"));
+
+        // notice 1,710,454: the price is withheld and the value item is a sentence.
+        let withheld = "3.  Date of award: 30.3.2001.\n\
+                        8.  Price: Publication of this information would prejudice the \n\
+                        legitimate commercial interests of a particular undertaking.\n\
+                        9.  Value of winning award(s): Publication of this information would \n\
+                        prejudice the legitimate commercial interests of a particular undertaking.";
+        assert_eq!(awarded_value(withheld), None);
+
+        // notice 1,710,458: `8.  Price: 5 301 802,22 FRF TTC.` — a tax basis, refused.
+        let ttc = "6.  Successful contractor(s): Groupement d'entreprises CGEV.\n\
+                   8.  Price: 5 301 802,22 FRF TTC.";
+        assert_eq!(awarded_value(ttc), None);
+
+        // Two labels stating the SAME figure is one fact twice, and is read.
+        let agreeing = "8.  Price: 1 000 000 EUR.\n 9.  Value of winning award(s): 1 000 000 EUR.";
+        assert_eq!(awarded_value(agreeing), Some((100_000_000, "EUR".to_owned())));
+
+        // Two labels DISAGREEING is a notice this cannot read, so it claims nothing
+        // rather than guessing which one the analyst wanted.
+        let disagreeing = "8.  Price: 1 000 000 EUR.\n 9.  Value of winning award(s): 900 000 EUR.";
+        assert_eq!(awarded_value(disagreeing), None);
+
+        // A body with no money says so cheaply — the gate returns before flattening.
+        assert_eq!(awarded_value("6.  Successful contractor(s): Mill Group, 3 Road."), None);
+
+        // The item boundary must not mistake a date or a house number for an item.
+        assert_eq!(next_item_marker(" 2 143 000 EUR. 5. Date"), Some(15));
+        assert_eq!(next_item_marker(" 11.5.2001 is a date"), None);
+        assert_eq!(next_item_marker(" Emilienstrasse 8, O-5900"), None);
+        assert_eq!(next_item_marker(" 1 000 000 EUR. 10. Subcontract"), Some(15));
+        // Both spellings of the plural, and the singular.
+        for heading in ["Value of winning award(s):", "VALUE OF WINNING AWARD(S):", "Value of winning award:"] {
+            assert_eq!(
+                awarded_value(&format!("8.  {heading} 1 000 000 EUR.\n 10.  Subcontract: No.")),
+                Some((100_000_000, "EUR".to_owned())),
+                "{heading}"
+            );
+        }
+
+        // A price stated right before a two-digit item still parses.
+        assert_eq!(
+            awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: No."),
+            Some((100_000_000, "EUR".to_owned()))
+        );
     }
 
     /// A withheld winner must mint NOTHING. The era fills the item with boilerplate
