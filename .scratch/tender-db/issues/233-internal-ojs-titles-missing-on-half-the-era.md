@@ -100,6 +100,21 @@ Re-fold the era so the titles materialise: 26,955 notices, the smallest era in t
 expected reading afterwards is title completeness at or near 100 % for INTERNAL_OJS 2008 in the
 data-quality report — which is also the check that this worked.
 
+**Before-number from a second path**, so the after-check does not depend on the report alone
+(measured on prod 2026-08-19, first 3,000 notices of the era):
+
+    WITH s AS (SELECT id FROM notices WHERE profile='internal-ojs' LIMIT 3000)
+    SELECT COUNT(*) AS versions,
+           SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_texts t
+                                 WHERE t.tender_id = tv.tender_id AND t.seq = tv.seq
+                                   AND t.field = 'title') THEN 1 ELSE 0 END) AS with_title
+      FROM tender_versions tv JOIN s ON s.id = tv.caused_by_notice_id
+    -- versions 3000, with_title 1447  (48.2%)
+
+48.2 % on that slice against the report's 43.7 % era-wide — same phenomenon, and it corroborates the
+report from a different query. Re-running this exact statement after the re-fold is the cheapest
+possible confirmation.
+
 Not addressed here, and worth keeping separate: an EEIG registration is arguably not a *tender* at
 all (issue 187 notes the same era's awards are 100 % unchained, for related reasons — they are not
 procurement chains). Giving these notices a title makes them findable and honest; deciding whether
