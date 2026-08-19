@@ -1,7 +1,8 @@
 # 248 — an in-place re-parse cannot scale while the canonical layer is full: the FK proof is not index-served
 
-Status: needs-triage — measured 2026-08-19 (issue 247's investigation, split out because it outlives that
-issue's campaign)
+Status: RESOLVED 2026-08-19 — the proof is not made cheaper, it is no longer needed: a re-parse keeps the
+sections it re-creates. A virgin text-era package now re-parses at 189 notices/s (23,041 in 122 s), so the
+era is ~5.6 h of queue time with no rebuild window and no outage.
 Kind: engine-level constraint on the re-parse mechanism, with an operational consequence
 Blocked by: —
 Relates to: 247 (where it was measured), 244 (the campaign it blocks), 100 (the re-parse mechanism), 179
@@ -74,3 +75,42 @@ maintenance window, 21 hours is not.
 - The era's awards land, by option 1 or 2, with the density in section 3 of the data-quality report as the
   witness.
 - Whichever path is taken, the sizing above is checked against reality once and corrected here.
+
+
+## Resolved by not needing the proof (2026-08-19)
+
+The three options above were all about paying for the foreign-key proof or arranging to avoid the tables
+that make it expensive. There was a fourth, and it is better than any of them: **a mention only has to go
+if its SECTION goes.** A section the new parse re-creates under the same id is not going anywhere, and the
+text era's parse re-creates every section it had — `PROCEDURE` and `ORG-1` — while merely ADDING the award
+sections issue 244 extracts.
+
+`clear_parsed` now takes the set of section ids the new parse will create. Value tables are still cleared
+wholesale; sections and their mentions are deleted only where the id is vanishing, each by full primary
+key; and `insert_parsed` upserts sections with `ON CONFLICT DO UPDATE`, so a kept section's kind and parent
+are refreshed without a delete and nothing is ever momentarily in violation.
+
+### Measured on prod, immediately after
+
+| package | notices | wall clock | rate |
+|---------|---------|-----------|------|
+| `fetch 251`, never re-parsed | 23,041 | **122 s** | **189 notices/s** |
+| `fetch 250`, re-parsed under earlier extractor versions | 1,377 | 155 s | 8.9 notices/s |
+
+Both numbers make sense and together they explain the whole affair. A virgin text-era notice has NO
+mentions at all — `TXT-AU` sat on the notice root for 3.79M notices until issue 232, so the era never had
+party sections — and its old sections are all re-created, so nothing is deleted and nothing is proven. A
+package I had already re-parsed today is slower because earlier versions of the extractor produced a
+different NUMBER of award sections, so some `ORG-n` really do vanish and their mentions really must go.
+
+So the era is **~5.6 hours** of re-parse at 189 notices/s, and the thirteen packages already touched today
+are the only expensive ones. No rebuild window, no outage, and the campaign started on the strength of
+this measurement rather than on a guess.
+
+### What the earlier options are worth now
+
+Option 1 (piggyback a rebuild) is unnecessary. Option 2 (open a window) is unnecessary. Option 3 (make the
+proof cheap) remains unsolved and is now mostly moot — but the constraint is still real for a re-parse
+whose section ids genuinely change (an eForms structural change would), so this issue stays a reference:
+**if a parser change renumbers sections, budget 2.2 s a notice.** The fix in that case is to keep the ids
+stable where the content is the same, which is good practice for its own reasons.
