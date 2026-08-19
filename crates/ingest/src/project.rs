@@ -152,6 +152,24 @@ const CLASSIFICATIONS: &[(&str, &str)] = &[
     // (already carried as a `nuts`-scheme classification by the parser).
     ("SDK01-ProcurementProject-RealizedLocation-Address-CountrySubentityCode", "place"),
     ("SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode", "place"),
+    // DÖE sdk-0.1 CPV, at Tender and Lot scope, main and additional (issue 231).
+    //
+    // The report measured this era at 0.0 % CPV over 666,671 versions and the issue asked
+    // the right question first — does the era publish CPV at all? Answered from prod: yes.
+    // 175 sampled `can-standard` notices carry 1,328 `cpv`-scheme classification rows,
+    // 7.6 apiece, under these four field ids. So the parse layer had them all along and
+    // only the canonical destination was missing — the same shape as issue 177 one era
+    // over, and the 0 % was a mapping gap rather than an absence.
+    ("SDK01-ProcurementProject-MainCommodityClassification-ItemClassificationCode", "main"),
+    ("SDK01-ProcurementProjectLot-ProcurementProject-MainCommodityClassification-ItemClassificationCode", "main"),
+    (
+        "SDK01-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+        "additional",
+    ),
+    (
+        "SDK01-ProcurementProjectLot-ProcurementProject-AdditionalCommodityClassification-ItemClassificationCode",
+        "additional",
+    ),
 ];
 /// The date/time pairs issue 03 stores as one instant, so `(d)` is the whole
 /// deadline and there is no `(t)` row to reunite here.

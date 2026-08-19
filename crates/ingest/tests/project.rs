@@ -1476,6 +1476,7 @@ async fn sdk01_projects_title_buyer_and_winner() {
     let (db, fetch_id, path) = scratch("sdk01").await;
     ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-numeric-cn-25599482-1.xml").await;
     ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-cn-cpv-17750180-1.xml").await;
     project::project(&db, false).await.expect("project");
 
     // Title and description, at Tender scope, resolved from SDK01-ProcurementProject-*.
@@ -1490,14 +1491,32 @@ async fn sdk01_projects_title_buyer_and_winner() {
         "the CN's title projects from SDK01-ProcurementProject-Name",
     );
     assert!(scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'description'").await > 0);
+    // CPV, main and additional, at Tender and Lot scope (issue 231). The era measured
+    // 0.0 % CPV over 666,671 versions and the issue's first question was whether it
+    // publishes CPV at all: it does — 175 sampled prod award notices carry 1,328
+    // `cpv`-scheme rows — so the 0 % was a missing canonical destination, not an absence.
+    // The third fixture is a real prod payload (`17750180-1`, 2022-12) chosen because the
+    // two older ones carry no `CommodityClassification` at all.
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'cpv' AND field = 'main'").await > 0,
+        "sdk-0.1 main CPV must reach the canonical layer"
+    );
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'cpv' AND field = 'additional'").await > 0,
+        "and so must the additional codes"
+    );
+
     // The realized-location NUTS and the lot's submission deadline.
     assert!(
         scalar(&db, "SELECT COUNT(*) FROM tender_version_classifications WHERE scheme = 'nuts' AND field = 'place'").await > 0
     );
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'").await, 1);
+    // Two deadlines and three buyers because there are three fixtures: the CN, the CAN,
+    // and the CPV-bearing CN added for issue 231 (which is also a notice with a deadline
+    // and a contracting party of its own).
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'").await, 2);
 
     // The buyer: the inline ContractingParty becomes a party with role 'buyer'.
-    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'buyer'").await, 2);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_parties WHERE role = 'buyer'").await, 3);
     assert!(
         query_text(
             &db,
