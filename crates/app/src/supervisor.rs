@@ -202,7 +202,7 @@ enum Spec {
     /// 215-package, 3.8M-notice era is not a thing to launch unmeasured, and the
     /// resume cursor means a capped run is a PREFIX of the full one rather than a
     /// different job — run it again and it continues where the cap stopped.
-    Reparse { profiles: Vec<String>, packages: Option<usize> },
+    Reparse { profiles: Vec<String>, packages: Option<usize>, after: Option<i64> },
     /// Run the semantic data-quality measurement and store its report (issue 230).
     /// `confirmed` is the operator's explicit "yes, tie the queue up for this" —
     /// see the enqueue arm.
@@ -368,6 +368,12 @@ pub struct JobRequest {
     /// and check the output on real data — a prefix of the full era rather than a
     /// separate exercise. Omitted means every package the profile has.
     pub packages: Option<usize>,
+    /// `reparse` only: start at the first package whose `fetch_id` exceeds this
+    /// (issue 244). Package ids are ingestion order, NOT publication order — the text
+    /// era's `fetch 186` is 2010-12 and `fetch 240` is 2006-06 — so a staged run that
+    /// wants a particular vintage has to say which package, not just how many. Real
+    /// resume progress overrides it once the job has advanced past it.
+    pub after: Option<i64>,
     /// `project` + `rebuild` only: DROP+recreate the CDC feed before folding, so the
     /// rebuild re-emits ONE clean generation for the recovered baseline (issue 81).
     pub clear_changes: Option<bool>,
@@ -511,12 +517,16 @@ impl Supervisor {
                     return Err("reparse needs at least one profile".into());
                 }
                 let packages = req.packages;
-                let params = match packages {
-                    Some(n) => format!("reparse {} (first {n} package(s))", profiles.join(",")),
-                    None => format!("reparse {}", profiles.join(",")),
-                };
+                let after = req.after;
+                let mut params = format!("reparse {}", profiles.join(","));
+                if let Some(from) = after {
+                    params.push_str(&format!(" after fetch {from}"));
+                }
+                if let Some(n) = packages {
+                    params.push_str(&format!(" (first {n} package(s))"));
+                }
                 let mut ids = vec![
-                    self.push("reparse", params, Spec::Reparse { profiles, packages }).await,
+                    self.push("reparse", params, Spec::Reparse { profiles, packages, after }).await,
                 ];
                 // Re-parsed notices land `projected = 0`, so an ordinary incremental
                 // projection folds them — no `refold` needed. `reclaim_only` skips
@@ -1190,8 +1200,9 @@ impl Supervisor {
             // `run_data_quality`, which now measures over id windows instead of
             // over the whole corpus in one statement.
             Spec::DataQuality { confirmed } => self.run_data_quality(*confirmed).await,
-            Spec::Reparse { profiles, packages } => {
-                self.run_reparse(job.id, profiles, *packages, job.resume_after.as_deref()).await
+            Spec::Reparse { profiles, packages, after } => {
+                self.run_reparse(job.id, profiles, *packages, *after, job.resume_after.as_deref())
+                    .await
             }
             Spec::Reprocess { reason, detail_like, profile } => {
                 self.run_reprocess(
@@ -2029,9 +2040,14 @@ impl Supervisor {
         job_id: u64,
         profiles: &[String],
         cap: Option<usize>,
+        start_after: Option<i64>,
         resume_after: Option<&str>,
     ) -> Result<String, String> {
-        let after = resume_after.and_then(|s| s.parse::<i64>().ok()).unwrap_or(0);
+        // Real progress wins over the requested floor: a job that has already walked
+        // packages must not be sent back to its start by its own parameters.
+        let after = resume_after
+            .and_then(|s| s.parse::<i64>().ok())
+            .unwrap_or_else(|| start_after.unwrap_or(0));
         let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
         let mut packages =
             self.db.reparse_packages(&refs, after).await.map_err(|e| e.to_string())?;
