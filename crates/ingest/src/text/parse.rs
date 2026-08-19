@@ -38,9 +38,11 @@ const SECTION: &str = "PROCEDURE";
 /// an Organization, whatever the field tables say.
 const AUTHORITY_SECTION: &str = "ORG-1";
 
-/// The two labels under which a 2004-or-later body announces its winner (issue 244),
-/// upper-cased for a case-insensitive match. Both are the tail of a longer heading and
-/// both end at the colon the value follows:
+/// The labels under which a text-era body announces its winner (issue 244),
+/// upper-cased for a case-insensitive match. Each is the tail of a longer heading and
+/// each ends at the colon the value follows.
+///
+/// The 2004-onward *sectioned* form:
 ///
 /// - `V.1.1)  Name and address of successful supplier, contractor or service provider:`
 ///   — the 2004/2005 vintage, the same wording the era's own `CO:` line carries;
@@ -51,7 +53,29 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// prod: 2004 202/203, 2005 311/314, 2006 347/354, 2008 361/371. Matching the tail
 /// rather than the whole heading is deliberate: the heading itself wraps at ~72
 /// columns, and the words before the colon are the part that stayed stable.
-const AWARD_LABELS: [&str; 2] = ["SERVICE PROVIDER:", "HAS BEEN AWARDED:"];
+///
+/// The pre-2004 *numbered* form, which neither of those two labels reaches — measured
+/// on the 2001-06 monthly (fetch 300), where 619 of a 2,000-notice band are TD:7 award
+/// records and the sectioned labels matched exactly ONE of them. Two shapes:
+///
+/// - `6.  Successful contractor(s): Mill Group, 3 Burlington Mews, UK-London W1R 8QA.`
+///   — the works/services award form, items 1-14 with the winner at 6;
+/// - `8.  Name and address of successful tenderer: Symonds Travers Morgan Ltd (UK) …`
+///   — the EC external-aid (SCR/EuropeAid) form, winner at 8.
+///
+/// The singular variants are carried too: the era writes both `contractor(s)` and
+/// `contractor`, and both `tenderer` and `tenderer(s)`. A value that is withheld
+/// rather than named ("Publication of this information would prejudice …") reaches no
+/// boundary inside `NAME_WINDOW` and is skipped by the fall-through below, which is
+/// the intended outcome — better no organization than a sentence minted as one.
+const AWARD_LABELS: [&str; 6] = [
+    "SERVICE PROVIDER:",
+    "HAS BEEN AWARDED:",
+    "SUCCESSFUL CONTRACTOR(S):",
+    "SUCCESSFUL CONTRACTOR:",
+    "SUCCESSFUL TENDERER(S):",
+    "SUCCESSFUL TENDERER:",
+];
 
 /// How far past the label a name's end is looked for. Generous next to the measured
 /// shapes — the longest name seen on prod is 89 characters and its comma follows
@@ -63,7 +87,32 @@ const NAME_WINDOW: usize = 256;
 /// comma is the boundary in every measured shape; the rest are stops that catch a
 /// value with no comma at all before the next heading, so a missing comma truncates
 /// to something plausible instead of swallowing the remaining form.
-const NAME_STOPS: [&str; 6] = [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO"];
+///
+/// `7.` and `9.` are the pre-2004 numbered form's next item after the winner (item 6
+/// in the works/services form, item 8 in the external-aid one). Without them a winner
+/// whose address carries no comma runs on into the following item — `Successful
+/// contractor(s): ACME Ltd. 7. Works provided: CPV: 45210000, 74222000` would name the
+/// organization `ACME Ltd. 7. Works provided: CPV: 45210000`. The body is flattened to
+/// single spaces before this runs, so the leading space makes the match reliable.
+const NAME_STOPS: [&str; 8] =
+    [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO", " 7.", " 9."];
+
+/// Phrases that mean the value is not a name, so no organization is minted from it.
+///
+/// The pre-2004 numbered form fills a withheld item with boilerplate rather than
+/// leaving it blank — `6.  Successful contractor(s): Publication of this information
+/// would prejudice the legitimate commercial interests of a particular undertaking.`
+/// (measured on prod: 2001-06 uses it for items 8, 9 and 10 of the same notice). That
+/// sentence reaches a boundary well inside `NAME_WINDOW`, so the fall-through that
+/// protects against runaway values does NOT catch it — it would be minted as an
+/// organization, once per notice that withholds, which is exactly the identity-less
+/// provisional-org problem of issue 234 manufactured on purpose.
+///
+/// Matched case-insensitively against the trimmed candidate. Deliberately literal and
+/// short: a general "does this read like prose" test would also reject real names, and
+/// any other withholding wording the era uses will surface as a junk organization and
+/// can be added with its own evidence.
+const NAME_REJECTS: [&str; 2] = ["WOULD PREJUDICE", "NOT APPLICABLE"];
 
 /// Drop the period that ends the sentence, and keep the one that ends an
 /// abbreviation (issue 244).
@@ -160,7 +209,8 @@ fn awarded_names(body: &str) -> Vec<String> {
             continue;
         };
         let name = trim_sentence_period(window[..end].trim());
-        if !name.is_empty() {
+        let withheld = NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some());
+        if !name.is_empty() && !withheld {
             names.push(name.to_owned());
         }
         at = value_at;
@@ -812,6 +862,96 @@ mod tests {
         // And the 1993 flat grammar is NOT yet read (issue 244's second slice), so it
         // must fail closed rather than half-read: no result, no phantom winner.
         assert!(awarded_names(" 6.  Supplier(s): A: Apotecnia, Climo").is_empty());
+    }
+
+    /// Issue 244, pre-2004 slice: the numbered form's two winner labels, both bodies
+    /// verbatim from prod notices in the 2001-06 monthly (fetch 300, the package the
+    /// campaign was re-parsing when the coverage gap was measured — 619 TD:7 award
+    /// records in a 2,000-notice band, of which the sectioned labels matched one).
+    #[test]
+    fn the_pre_2004_numbered_form_yields_its_winner() {
+        // notice 1,710,454 — the works/services form, winner at item 6.
+        let redcar = "1.  Awarding authority: Redcar and Cleveland Borough Council, Economic
+                      Development Department, Cargo Fleet Offices, Middlesbrough Road, PO Box 
+                      South Bank 20, UK-Middlesbrough TS6 6EL. 
+                      2.  Award procedure, justification (Article 7(4)): Negotiated.
+                      3.  Date of award: 30.3.2001.
+                      4.  Award criteria: Most economically advantageous.
+                      5.  Tenders received: 2.
+                      6.  Successful contractor(s): Mill Group, 3 Burlington Mews, UK-London 
+                      W1R 8QA.
+                      7.  Works provided: CPV: 45210000, 74222000, 74873100.";
+        assert_eq!(awarded_names(redcar), vec!["Mill Group".to_owned()]);
+
+        // notice 1,710,456 — same form, a longer name, and the wrap inside the address.
+        let southwark = "2.  Award procedure, justification (Article 7(4)): Restricted procedure.
+                         5.  Tenders received: 6.
+                         6.  Successful contractor(s): Independent Lift Services Ltd, Unit 3J, 
+                         Barlow Way, Fairview Industrial Park, Manor Way, UK-Rainham RM13 8BT, 
+                         Essex.
+                         7.  Works provided: CPV: 45510000.";
+        assert_eq!(awarded_names(southwark), vec!["Independent Lift Services Ltd".to_owned()]);
+
+        // notice 1,710,387 — the EC external-aid form, winner at item 8, and a consortium
+        // name that the comma boundary correctly keeps whole (the comma is the one before
+        // the street, not one inside the name).
+        let starcm = "Service contract award notice
+                      5.  Date of award of the contract: 11.5.2001.
+                      6.  Number of tenders received: 6.
+                      7.  Overall score of chosen tender: 100%.
+                      8.  Name and address of successful tenderer: Symonds Travers Morgan Ltd 
+                      (UK) in association with Tecnica y Proyectos SA (ES), Symonds House, Wood 
+                      Street, UK-East Grinstead RH19 1 UU, West Sussex.";
+        assert_eq!(
+            awarded_names(starcm),
+            vec!["Symonds Travers Morgan Ltd (UK) in association with Tecnica y Proyectos SA (ES)"
+                .to_owned()]
+        );
+
+        // A winner with no comma after the name: the next numbered item is the boundary,
+        // without which the name runs on into item 7 (see NAME_STOPS).
+        assert_eq!(
+            awarded_names(
+                "Award notice 6.  Successful contractor(s): ACME Ltd. \n\
+                 7.  Works provided: CPV: 45210000, 74222000."
+            ),
+            vec!["ACME Ltd".to_owned()]
+        );
+
+        // The singular spellings the era also uses.
+        assert_eq!(
+            awarded_names("3. Date of award: 1.1.2001. 6. Successful contractor: Mill Group, 3 Burlington Mews."),
+            vec!["Mill Group".to_owned()]
+        );
+        assert_eq!(
+            awarded_names("Award notice 8. Name and address of successful tenderer(s): Acme Ltd, Wood Street."),
+            vec!["Acme Ltd".to_owned()]
+        );
+    }
+
+    /// A withheld winner must mint NOTHING. The era fills the item with boilerplate
+    /// rather than leaving it blank, and that sentence reaches a comma well inside the
+    /// window — so the runaway-value fall-through does not catch it and the reject list
+    /// is what stands between it and one provisional organization per withholding
+    /// notice (issue 234).
+    #[test]
+    fn a_withheld_winner_mints_no_organization() {
+        let body = "3.  Date of award: 30.3.2001.
+                    6.  Successful contractor(s): Publication of this information would 
+                    prejudice the legitimate commercial interests of a particular undertaking.
+                    7.  Works provided: CPV: 45210000, 74222000, 74873100.";
+        assert!(
+            awarded_names(body).is_empty(),
+            "withheld boilerplate became a name: {:?}",
+            awarded_names(body)
+        );
+        // …and the whole record, so nothing downstream sees a phantom result either.
+        let record = format!("1.0/000001\nND: 1-2001\nTX: {}\n", body.replace('\n', "\n    "));
+        let p = parse(&record).expect("parses");
+        assert!(p.sections.iter().all(|s| s.kind != "LotResult"));
+
+        // `Not applicable.` is the era's other non-answer.
+        assert!(awarded_names("Award notice 6. Successful contractor(s): Not applicable, none.").is_empty());
     }
 
 }

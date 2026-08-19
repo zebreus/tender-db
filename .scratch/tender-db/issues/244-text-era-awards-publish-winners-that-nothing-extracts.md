@@ -262,3 +262,78 @@ cheap, redoing 200 would not be.
 Packages re-parsed before that fix, and before the `NAME_WINDOW` and non-ASCII fixes earlier today, want
 redoing at the end of the campaign — the list is `fetch 186` and `240`–`255`-ish, and they are also the
 slow ones (their section ids genuinely changed, so their mentions must go).
+
+
+## The pre-2004 grammar, measured and implemented (2026-08-19, mid-campaign)
+
+The campaign walks the era **backwards in time** — `fetch 251` is 2005-07, `310` is 2000-08, `330` is
+1998-12, `400` is 1993-02. So it crossed the 2004 boundary around `fetch 270` and has since been
+re-parsing vintages whose award notices this extractor could not read. Measured on `fetch 300`
+(2001-06), a package the campaign had already completed, over a bounded 2,000-notice band:
+
+    TD:7 award records in the band                                  619
+    notices whose TX contains `HAS BEEN AWARDED`                      1
+    notices whose TX contains `SERVICE PROVIDER:`                     1
+    notices with a TED-ADDRESS_CONTRACTOR id-ref (extracted winner)   1
+
+Original language in the same band: FR 675, EN 411, DE 378, IT 149, ES 146, NL 89, SV 43, DA 28 — so
+English is a fifth of it, and even against ~227 English awards one winner is 0.4 %. Compare `fetch 252`
+(2005-06), verified earlier in the campaign: **42 %** of notices carry a LotResult. The gap is the
+vintage, not the language and not the extractor's fidelity: on the labels it targets it is at 1-for-1
+in this band too.
+
+### The 2001 grammar, read from three payloads
+
+Pre-2004 award notices use a **numbered-item** form, not sections. Two shapes, both from `fetch 300`:
+
+    notice 1,710,454 — works/services, winner at item 6
+      1.  Awarding authority: Redcar and Cleveland Borough Council, …
+      3.  Date of award: 30.3.2001.
+      5.  Tenders received: 2.
+      6.  Successful contractor(s): Mill Group, 3 Burlington Mews, UK-London W1R 8QA.
+      7.  Works provided: CPV: 45210000, 74222000, 74873100.
+      8.  Price: …            9.  Value of winning award(s): …
+
+    notice 1,710,387 — EC external aid (SCR/EuropeAid), winner at item 8
+      4.  Contract value: 2 143 000 EUR.
+      5.  Date of award of the contract: 11.5.2001.
+      6.  Number of tenders received: 6.
+      8.  Name and address of successful tenderer: Symonds Travers Morgan Ltd (UK) in
+          association with Tecnica y Proyectos SA (ES), Symonds House, …
+
+Note what else is in there, labelled and parseable, beyond the winner: an **award date**, a **contract
+value** (`Price:`, `Contract value:`, `Value of winning award(s):`) and a **tenders-received count**.
+That is issue 232's "text era buyers/values/winners near zero" sitting in plain prose. This slice takes
+only the winner; the value and date are the next one, and they should be taken before the era's final
+re-parse rather than after.
+
+### Landed
+
+`AWARD_LABELS` gains `Successful contractor(s):` / `Successful contractor:` and
+`Successful tenderer(s):` / `Successful tenderer:` (upper-cased, matched case-insensitively, both
+spellings because the era writes both). Two supporting changes the measured bodies forced:
+
+- **`NAME_STOPS` gains ` 7.` and ` 9.`** — the next numbered item after the winner. Without it a winner
+  whose address carries no comma runs on: `Successful contractor(s): ACME Ltd. 7. Works provided: CPV:
+  45210000, 74222000` would name the organization `ACME Ltd. 7. Works provided: CPV: 45210000`.
+- **`NAME_REJECTS`** — the era fills a *withheld* item with boilerplate rather than leaving it blank
+  (`Successful contractor(s): Publication of this information would prejudice the legitimate commercial
+  interests of a particular undertaking.`; 2001-06 uses it for items 8, 9 and 10 of one notice). That
+  sentence reaches a comma well inside `NAME_WINDOW`, so the runaway-value fall-through does **not**
+  catch it — without the reject list it is minted as an organization, once per withholding notice, which
+  is issue 234's identity-less provisional org manufactured on purpose. Falsified: with the guard
+  removed the test fails with the sentence as the name.
+
+Tests: the three prod bodies verbatim, both singular spellings, the no-comma boundary, and the withheld
+case asserted to yield neither a name nor a LotResult section.
+
+### Consequence for the campaign
+
+Everything from `fetch 318` (2000-01) backwards now extracts on its **first** pass. The pre-2004
+packages already done — roughly `fetch 270`–`317`, i.e. 2004-01 down to 2000-01 — join the redo list,
+and a redo is the cheap kind (~2 min: it keeps every section id). The 2004-2005 packages already done
+(251-269) are unaffected: their sectioned labels were read correctly the first time.
+
+Still open for the era: the 1993-1997 flat grammar (`Supplier(s):`, ~50-64 % from the earlier sample),
+the value/date/tender-count fields above, and the 2010 tail (171 of 244 award notices with no text
+values at all).
