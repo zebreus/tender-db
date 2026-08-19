@@ -1,6 +1,6 @@
 # 245 — a deploy inside the morning window silently drops the daily catch-up
 
-Status: needs-triage — noticed 2026-08-19 while timing a deploy around the 09:35 tick
+Status: fix (3) DONE in code 2026-08-19 — startup catch-up landed; (1) deploy-time refusal still open
 Kind: operational hazard, in-process scheduler
 Blocked by: —
 Relates to: 222 (the weekday catch-up this would drop), 240 (the outage that showed how invisible a
@@ -49,3 +49,42 @@ board is the memory, so the fix belongs in the code.
 - A tick missed entirely (box down, deploy at the wrong minute) is visibly caught up rather than
   waiting for the next day, and the catch-up is legible in the job log.
 - Verified by restarting the service inside a simulated window, not only in a test.
+
+
+---
+
+## Fix (3) landed 2026-08-19 — the startup catch-up
+
+`Supervisor::catch_up_missed_tick` runs before the scheduler's loop. It asks whether today's 09:35
+Berlin tick has been served, where served means either
+
+- a **successful `probe` at or after the tick** — the first job `enqueue_daily` pushes, so its success
+  is the tick's own footprint; or
+- **a `probe` still in the queue** — after a restart the durable rows re-run on their own, and
+  double-enqueuing a daily on top of that would just duplicate the work.
+
+Anything else means the tick fired into a process that is gone, or never fired at all, so it runs
+`enqueue_daily` immediately and says so in the log.
+
+Keyed on `probe` deliberately, not on "any daily job": `project` is pushed by every maintenance refold
+(the conflation that had `ingest_freshness` reporting fresh while nothing was arriving — fixed the same
+morning), and `process` succeeds trivially when there is nothing to process. Only a probe means
+"a source was actually asked".
+
+The scan depth is 200 job runs rather than the dashboard's 20, because today's own log filled 20 rows
+in 18.9 hours; a probe that falls out of the window would read as "never ran" and re-run a daily that
+had already happened.
+
+`berlin_tick_on` is factored out of `next_berlin_tick` — the "next tick" form cannot answer a question
+about a tick in the past, which is the only question this asks.
+
+### Still open
+
+- **(1) a deploy-time guard.** The startup catch-up makes a badly-timed restart recoverable, but it
+  does not make it free: a restart mid-fold still discards in-flight work and the catch-up re-does it.
+  A `deploy.sh` check that refuses (with an override) while a fold is running or the morning window is
+  live is still worth having.
+- **Verification against a real restart.** The decision is unit-tested at every branch, and the quiet
+  path was observed on prod (a deploy after a served tick logged nothing). The interesting case — a
+  restart INSIDE the window, tick unserved, catch-up firing on prod — has not been exercised yet, and
+  the honest way to see it is a deliberate restart while the tick's probe has not yet run.
