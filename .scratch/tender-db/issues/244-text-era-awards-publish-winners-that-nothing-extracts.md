@@ -337,3 +337,35 @@ and a redo is the cheap kind (~2 min: it keeps every section id). The 2004-2005 
 Still open for the era: the 1993-1997 flat grammar (`Supplier(s):`, ~50-64 % from the earlier sample),
 the value/date/tender-count fields above, and the 2010 tail (171 of 244 award notices with no text
 values at all).
+
+### The labels are English even when the notice is not — so this is era-wide, not an English slice
+
+The obvious worry about a grammar built from English labels, in an era whose bodies are 20 % English
+(the 2001-06 band: FR 675, EN 411, DE 378, IT 149, ES 146, NL 89, SV 43, DA 28), is that its ceiling is
+that 20 %. **Checked before recording it, and it is false.** Prod notice 1,710,458 carries `OL: FR`, a
+French buyer and a French winner — under English structural labels:
+
+    1.  Awarding authority: Communauté urbaine de Lyon, délégation générale aux services
+        urbains et à la proximité, …, F-69399 Lyon Cedex 03.
+    6.  Successful contractor(s): Groupement d'entreprises CGEV Rhône-Alpes/Parcs et Sports.
+    7.  Works provided: CPV: 45112430, 77321000.
+    8.  Price: 5 301 802,22 FRF TTC.
+
+TED's tagged format labels the *form* in English and leaves only the *content* in the original
+language. So the ceiling for this slice is the era's award notices, not its English ones. That body is
+now a test: it also has no comma before its period (so the ` 7.` stop is what keeps item 7 out of the
+name) and `Rhône` puts a multi-byte character inside the byte window.
+
+### What item 8 says about the value slice
+
+`8.  Price: 5 301 802,22 FRF TTC.` — the next slice is harder than it looks, and needs its own care:
+
+- **decimal comma**, not a point, and the comma is also `NAME_STOPS`' first boundary;
+- **space thousands separators** (`5 301 802`), which the wrap-flattening turns into ordinary spaces;
+- **pre-euro currencies** (FRF here), so ADR-0010's integer cents need the currency to scale;
+- **tax qualifiers** (`TTC` = incl. tax; the UK bodies write `p.a.`), which change what the number means;
+- three different labels for it (`Price:`, `Contract value:`, `Value of winning award(s):`) plus
+  `Total final value of the contract:` in the sectioned form.
+
+Getting a value wrong is worse than not having it, so this wants the same measure-first discipline: read
+a sample of each label's values off prod, then parse, then A/B one package.

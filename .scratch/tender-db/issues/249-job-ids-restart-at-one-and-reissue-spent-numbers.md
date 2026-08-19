@@ -1,7 +1,8 @@
 # 249 — the Supervisor's job ids restart at 1 on a drained restart and reissue numbers the log has spent
 
 Status: FIXED 2026-08-19 (owner) — `job_log.job_id` recorded, recovery seeds from its high-water
-mark; falsified against the unfixed code. Awaiting deploy.
+mark; falsified against the unfixed code. Deployed in `08ca548`; the prod acceptance read (one id
+series in the panel) is still to do.
 Kind: operational legibility defect (job identity), found by observation during a routine check
 Blocked by: —
 Relates to: 16 (the run log), 21 (the durable queue and the id counter), 65 (the progress record

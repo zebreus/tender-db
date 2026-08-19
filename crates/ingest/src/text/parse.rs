@@ -918,6 +918,23 @@ mod tests {
             vec!["ACME Ltd".to_owned()]
         );
 
+        // The labels are ENGLISH even when the notice is not: prod notice 1,710,458 has
+        // `OL: FR` and a French buyer and winner, under `1. Awarding authority:` and
+        // `6. Successful contractor(s):`. So this grammar is not an English-only slice of
+        // the era — it reaches every language's bodies. The name here also has no comma
+        // before its period, so the ` 7.` stop is what keeps the next item out of it, and
+        // `Rhône` makes the window a byte window over a multi-byte character.
+        let lyon = "1.  Awarding authority: Communauté urbaine de Lyon, délégation générale\n\
+                    aux services urbains et à la proximité, F-69399 Lyon Cedex 03. \n\
+                    6.  Successful contractor(s): Groupement d'entreprises CGEV \n\
+                    Rhône-Alpes/Parcs et Sports.\n\
+                    7.  Works provided: CPV: 45112430, 77321000.\n\
+                    8.  Price: 5 301 802,22 FRF TTC.";
+        assert_eq!(
+            awarded_names(lyon),
+            vec!["Groupement d'entreprises CGEV Rhône-Alpes/Parcs et Sports".to_owned()]
+        );
+
         // The singular spellings the era also uses.
         assert_eq!(
             awarded_names("3. Date of award: 1.1.2001. 6. Successful contractor: Mill Group, 3 Burlington Mews."),
