@@ -1604,6 +1604,71 @@ async fn every_era_projects_its_headline_fields() {
     }
 }
 
+/// Issue 233: the 2008 OPOCE era measured 43.7 % title completeness against ≥ 96 %
+/// everywhere else — not because titles were lost, but because whole form families
+/// in that era have no title ELEMENT. `114238_2008.en` is an EEIG registration
+/// (`NAT_NOTICE = G`): no `TITLE_CONTRACT` anywhere in it, and the only human-readable
+/// name of the thing is the heading the Official Journal published it under.
+///
+/// So the projection falls back to `TI_DOC` — but only when the notice mapped no title
+/// of its own, and never onto the paragraph that restates the publication reference:
+/// `TI_DOC` is published as two paragraphs, "NL-Amsterdam: Eurys Consult EESV" and
+/// "2008/S 85-114238", and the second is `NO_DOC_OJS` again. A "first paragraph wins"
+/// rule would eventually title a tender `2008/S 85-114238`.
+#[tokio::test]
+async fn a_notice_with_no_title_element_takes_the_oj_heading() {
+    let (db, fetch_id, path) = scratch("oj-heading").await;
+    ingest_as(&db, fetch_id, "ted", "internal_ojs/114238_2008.en", "114238/opoce-input/114238_2008.en")
+        .await;
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+
+    assert_eq!(
+        title(&db, 1).await.as_deref(),
+        Some("NL-Amsterdam: Eurys Consult EESV"),
+        "the OJ heading is the title of last resort"
+    );
+    // The reference paragraph must never become a title, under any seq.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND value LIKE '2008/S%'").await,
+        0,
+        "the publication reference is not a title"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// The other half of issue 233's fallback: a notice that DOES publish a title keeps it,
+/// so the 44 % of the era that were already fine are untouched — and so is every r2.0.x
+/// and eForms notice, which all carry `TI_DOC` too and would otherwise gain a second,
+/// competing title.
+#[tokio::test]
+async fn the_oj_heading_never_displaces_a_published_title() {
+    let (db, fetch_id, path) = scratch("oj-heading-noop").await;
+    ingest_as(&db, fetch_id, "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en")
+        .await;
+    project::project(&db, false).await.expect("project");
+
+    let title = title(&db, 1).await.expect("a title");
+    assert!(
+        title.starts_with("Framework agreement for hiring of vessels"),
+        "the form's own TITLE_CONTRACT must win: {title}"
+    );
+    // Exactly one tender-level title — the fallback added nothing beside it.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_texts WHERE field = 'title' AND lot_id IS NULL").await,
+        1,
+        "no second title from the OJ heading"
+    );
+    // And the heading is still retrievable in the notice layer, unmapped.
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM notice_texts WHERE field_id = 'TED-TI_DOC'").await > 0,
+        "the heading itself is never dropped"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 237: a LotsGroup's membership reaches the canonical layer, so a bid that names
 /// the group can be attributed to the lots it actually covers.
 ///

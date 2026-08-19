@@ -69,6 +69,12 @@ pub struct Report {
 /// the high-fill core is wired (title, values, CPV/NUTS, key dates, winners);
 /// the ~23 no-eForms-equivalent legacy elements stay in the notice layer under
 /// their prefixed ids, retrievable but not surfaced as canonical facts.
+/// The Official Journal heading, used as a last-resort title — see the fallback in
+/// `state_of`. Deliberately NOT in [`TEXTS`]: as a plain mapping it would add a
+/// second, competing title to every legacy notice (and half the time that title
+/// would be the publication reference).
+const OJ_HEADING_FIELD: &str = "TED-TI_DOC";
+
 const TEXTS: &[(&str, &str)] = &[
     ("BT-21", "title"),
     ("BT-24", "description"),
@@ -2467,6 +2473,42 @@ impl NoticeState {
                         }
                     }
                 }
+            }
+        }
+
+        // Issue 233: the OJ heading as a LAST-RESORT title.
+        //
+        // A notice that carries no title element still has a title: the heading
+        // the Official Journal published it under, `TI_DOC`, e.g.
+        // "NO-Bodø: miscellaneous vessels". The 2008 INTERNAL_OJS era needs this —
+        // 56 % of its versions have no `TITLE_CONTRACT` because whole form families
+        // (EEIG registrations and friends) do not have one, while every notice in
+        // the era carries `TI_DOC` — and it measured 43.7 % title completeness
+        // against ≥ 96 % everywhere else.
+        //
+        // Two rules make it a fallback rather than a competing title:
+        //
+        // - only when the notice mapped NO title of its own, so the 44 % that do
+        //   publish one are untouched, as are r2.0.x and eForms;
+        // - never the paragraph that merely restates the publication reference.
+        //   `TI_DOC` is published as two paragraphs — the heading, then
+        //   "2008/S 85-114238", which is `NO_DOC_OJS` again. A title of
+        //   "2008/S 85-114238" would be worse than none, and it is the shape a
+        //   positional "take the first paragraph" rule would eventually pick up.
+        if !facts.iter().any(|f| matches!(f, Fact::Text { field, .. } if field == "title")) {
+            let reference = first_id(parsed, "TED-NO_DOC_OJS");
+            let heading = parsed.values.iter().find_map(|v| match &v.value {
+                NoticeValue::Text { lang, value }
+                    if v.field_id == OJ_HEADING_FIELD
+                        && scope_of(&sections, &v.section_id) == Scope::Tender
+                        && Some(value.trim()) != reference.as_deref() =>
+                {
+                    Some((lang.clone(), value.clone()))
+                }
+                _ => None,
+            });
+            if let Some((lang, value)) = heading {
+                facts.insert(Fact::Text { field: "title".to_owned(), lang, value });
             }
         }
 
