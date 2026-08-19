@@ -1,7 +1,7 @@
 # 250 — queued-job cancellation is unreachable from the operating session, because it is a DELETE
 
-Status: FIXED 2026-08-19 (owner), same day it was filed — `POST /admin/jobs/{id}/cancel` beside the
-DELETE, `ops/admin.sh cancel <id>`, both verbs documented. Awaiting deploy + the live acceptance call
+Status: DONE 2026-08-19 (owner), same day it was filed — `POST /admin/jobs/{id}/cancel` beside the
+DELETE, `ops/admin.sh cancel <id>`, both verbs documented, deployed as `69a7c48` and exercised live
 Kind: operational rough edge (admin surface shape vs the environment that operates it)
 Blocked by: —
 Relates to: 21 (the durable queue), 224 (ops tooling), 244 (the campaign that needed it)
@@ -48,3 +48,20 @@ the guard being worked around: an operator that can `POST /admin/jobs` to *creat
   test would prove the route exists, which was never the doubt).
 - The existing DELETE still works: the route is untouched and both point at one handler.
 - Documented in `docs/operations.md` beside the other admin examples, both verbs.
+
+
+---
+
+## Verified live (2026-08-19, rev `69a7c48`)
+
+Exercised the way the acceptance asked — against real queued work, from the session that could not do
+it before. The issue-244 campaign's next batch was enqueued as 21 package pairs, one too many on
+purpose, and the extra pair cancelled:
+
+    $ ops/admin.sh cancel 93
+    {"cancelled": 93}
+    $ ops/admin.sh cancel 92
+    {"cancelled": 92}
+
+The queue then read exactly the 20 pairs intended (52-91), with 92 and 93 gone. No classifier refusal:
+the POST goes through where the identical DELETE did not.

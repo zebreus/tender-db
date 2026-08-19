@@ -1,11 +1,10 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 3 BUILT 2026-08-19 — the supplies/utilities labels, multi-winner values and lot-keyed
-names. Slice 2 was A/B-verified on prod twice (0.3%→18.2% on fetch 300, 0.1%→20.5% on fetch 319);
-slice 3 targets the 92.9% of the package's award notices that carry one of the new labels, and is
-gated on the committed 1993 daily at 117 winners from 199 records (was 40). AWAITING DEPLOY + the
-third A/B. Still open beyond it: the 1993 flat grammar's remaining shapes, the value/date/tenders
-fields, and the 2010 tail.
+Status: SLICE 3 DEPLOYED AND A/B-VERIFIED 2026-08-19 (rev `9652868`) — three passes over one package,
+against a before-value recorded before any of it was written: 12 → 755 → 3,807 notices with a winner,
+0.3% → 18.2% → 91.7% of its 4,153 award notices, and 6,166 refs from 3,807 notices so multi-winner
+values land too. That is 98.7% of the notices that carry a label at all. NEXT on this issue is the
+value/date/tenders-received fields, not more winner labels. Also still open: the 2010 tail.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -501,3 +500,23 @@ exists and none is invented — so 100 % of TD:7 is not the target, and never wa
 `Supplier(s):` is the same label in 1993 as in 2001 (notice 21,133: `6.  Supplier(s): CAMST Scrl, via
 Tosarelli 318, …`), so this slice reaches the era's oldest packages, not just the pre-2004 middle. The
 campaign has not walked back that far yet, which means those packages get it on their first pass.
+
+### The third A/B: 0.3 % → 18.2 % → 91.7 % on one package
+
+`fetch 300` (2001-06) has now been re-parsed three times, against a before-value this issue recorded
+before any of it was written. Same package, same 13,734 notices, same 4,153 TD:7 award records, same
+bounded notice-id band:
+
+    pass                      notices with a winner   winner refs   % of the package's awards
+    before slice 2                               12            12                        0.3 %
+    after  slice 2 (numbered form)              755           755                       18.2 %
+    after  slice 3 (supplies + utilities)     3,807         6,166                       91.7 %
+
+**6,166 refs from 3,807 notices** — 1.6 winners per award notice, so the multi-winner values are landing
+rather than collapsing to their first name.
+
+91.7 % against the **92.9 %** of award notices that carry any of the labels at all: the extractor now
+reads 98.7 % of the notices where a label exists. The rest is the guards firing as designed — a count
+where a name should be, a withheld value, `Various.` — plus whatever shape is still unnamed. That is
+close enough to the ceiling that the next work on this issue should be the **value/date/tenders-received
+fields**, not more winner labels.
