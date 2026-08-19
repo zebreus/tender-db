@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 36 notice files, 1.0 MB.
+Total: 38 notice files, 1.1 MB.
 
 ## Selection policy
 
@@ -115,6 +115,36 @@ resets on prefixed elements, e.g.
 `<cbc:ID xmlns="" schemeName="notice-id">`. The `cbc:` prefix still binds
 correctly, so a namespace-URI matcher is unaffected — but a parser that tracks
 the default namespace naively can trip here. Retained deliberately.
+
+---
+
+## `eforms-prev-ref/` — one real procedure under TWO procedure keys, 2 files, 39 KB
+
+The counter-example to `eforms-chain/`: two notices of **one** procedure whose
+`cbc:ContractFolderID` (BT-04) values **differ**, so the keyed grouping cannot see
+that they belong together. Harvested from the production archive
+(`ted/monthly/2024-10.tar` and `2025-01.tar`), byte-identical, sha256 verified
+against the archived members.
+
+| # | File | Bytes | Publication | Profile | BT-04 | Sub |
+|---|---|---|---|---|---|---|
+| 1 | `1-cn-16-615938-2024.xml` | 20 625 | `00615938-2024` | `eforms-sdk-1.7` | (its own) | 16 |
+| 2 | `2-can-29-566-2025.xml` | 18 935 | `00000566-2025` | `eforms-sdk-1.13` | `00a143ab-…` | 29 |
+
+The award carries `OPP-090-Procedure = 615938-2024` — a
+`cac:NoticeDocumentReference` naming file 1's publication — which is the only
+published statement that the two are one procedure. ADR-0011 makes that reference
+an identity edge; issue 236 has the corpus measurements behind it (27–39 % of EU
+eForms award Tenders are single-notice islands for exactly this reason).
+
+Note the two vocabularies for one thing: the XML element is
+`cac:NoticeDocumentReference`, while `PreviousNoticeReference` is the SDK **node**
+id that tender-db uses as the section id. Grepping the payload for the latter finds
+nothing.
+
+Also worth knowing: they are 3 months apart and from **different SDK versions**,
+which is normal for a real procedure and makes the pair a fair test of
+cross-version chaining rather than a same-package coincidence.
 
 ---
 

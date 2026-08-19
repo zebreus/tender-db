@@ -86,8 +86,12 @@ fn kind_of(parsed: &Parsed, section: &str) -> String {
 /// four-notice procedure chain.
 #[test]
 fn every_ted_eforms_fixture_is_consumed_exhaustively() {
-    let corpus: Vec<String> = fixtures("eforms").into_iter().chain(fixtures("eforms-chain")).collect();
-    assert_eq!(corpus.len(), 43, "corpus changed; update the expectation");
+    let corpus: Vec<String> = fixtures("eforms")
+        .into_iter()
+        .chain(fixtures("eforms-chain"))
+        .chain(fixtures("eforms-prev-ref"))
+        .collect();
+    assert_eq!(corpus.len(), 45, "corpus changed; update the expectation");
 
     for relative in corpus {
         match ingest_fixture(&relative) {
@@ -106,6 +110,66 @@ fn every_ted_eforms_fixture_is_consumed_exhaustively() {
             other => panic!("{relative}: {other:?}"),
         }
     }
+}
+
+/// ADR-0011 / issue 236: the publisher's own previous-notice reference reaches the
+/// parse layer, and the notice it names is the other half of the committed pair.
+///
+/// EU eForms does not keep BT-04 stable across a procedure's notices — these two
+/// real notices ARE one procedure and carry different BT-04 UUIDs — so this field is
+/// the only published statement that they belong together. It is what the identity
+/// edge is built on, which makes "the parser still claims it" worth a test of its own.
+///
+/// **The XML element is `cac:NoticeDocumentReference`.** Grepping a payload for
+/// "PreviousNoticeReference" finds nothing: that string is the SDK NODE id, which
+/// tender-db uses as the SECTION id (`ND-PreviousNoticeReference#0`). Recorded here
+/// because looking for the element under the node's name wasted a round.
+#[test]
+fn a_previous_notice_reference_is_published_and_parsed() {
+    let can = parse_fixture("eforms-prev-ref/2-can-29-566-2025.xml");
+    let cn = parse_fixture("eforms-prev-ref/1-cn-16-615938-2024.xml");
+
+    let refs: Vec<&str> = can
+        .values
+        .iter()
+        .filter(|v| v.field_id == "OPP-090-Procedure")
+        .filter_map(|v| match &v.value {
+            NoticeValue::Id { value, .. } => Some(value.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(refs, vec!["615938-2024"], "the award names its contract notice's publication");
+
+    // It hangs off its own section, a sibling of PROCEDURE — not inside the procedure
+    // node, which is where a reader would look for it first.
+    let section = can
+        .values
+        .iter()
+        .find(|v| v.field_id == "OPP-090-Procedure")
+        .map(|v| v.section_id.clone())
+        .expect("the reference has a section");
+    assert!(
+        can.sections.iter().any(|s| s.id == section && s.kind == "PreviousNoticeReference"),
+        "the reference lives in a PreviousNoticeReference section, found {section}"
+    );
+
+    // The two fixtures really are one procedure under two keys — the whole point.
+    let key = |p: &Parsed| {
+        p.values
+            .iter()
+            .find(|v| v.field_id == "BT-04-notice")
+            .and_then(|v| match &v.value {
+                NoticeValue::Id { value, .. } => Some(value.clone()),
+                _ => None,
+            })
+            .expect("BT-04")
+    };
+    assert_ne!(
+        key(&can),
+        key(&cn),
+        "if the BT-04s matched, the existing keyed grouping would already chain them \
+         and this whole issue would not exist"
+    );
 }
 
 // ------------------------------------------------------------- value mapping
