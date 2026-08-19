@@ -1,7 +1,7 @@
 # 247 — the same text-era package re-parses 40× slower on a later run, pread-bound inside the DB
 
-Status: CAUSE FOUND 2026-08-19 — one DELETE, measured. Fix (an index) is committed and queued behind the
-very job it speeds up; the queue will clear it.
+Status: index built and it helped 4x, not 40x — a residual tail of expensive notices remains. Stopping a
+running job is now possible (the operational half is closed); the campaign stays paused.
 Kind: performance regression, re-parse path
 Blocked by: —
 Relates to: 244 (the campaign that hit it), 100 (the re-parse mechanism), 92 (fold quadratic in chain
@@ -225,3 +225,42 @@ The index is building now. The number that closes this issue is the re-parse's c
 lands: `tender_db_reparse_clear_statement_seconds_total{stmt="organization_mentions"}` should fall from
 153 ms a notice to the microseconds every other statement in that clear costs, and the package rate
 should return to the ~400 members/min of the first pass.
+
+
+## After the index: 4× better, and a tail that is not explained (2026-08-19)
+
+`reindex` (job 787) built `organization_mentions_notice`, and the re-parse ran on with it. Two scrapes a
+minute apart, both after the build:
+
+    798 notices, clear 31.5 s      → 39 ms a notice on average
+    804 notices, clear 93.3 s      → the LAST SIX notices took 61.8 s, about 10 s each
+
+So the index moved the base cost from 153 ms to about 39 ms, and there is a residual tail of notices
+costing ~10 s each. That is a different shape from the flat 153 ms this issue opened with: it looks like
+per-notice work proportional to something that varies — most likely the number of mention rows the notice
+has, each delete of which is checked against `tender_version_parties` / `tender_version_bid_parties` by
+their `(mention_notice_id, mention_section_id)` foreign keys.
+
+**Next measurement** (cheap, and it decides the fix): count mentions per notice for this package and see
+whether the expensive notices are the many-mention ones. If they are, the FK check is the remaining cost
+and the fix is an index matching the FK pair rather than its first column — the same lesson one level
+down.
+
+## The operational half is closed
+
+`DELETE /admin/jobs/{id}` now stops a RUNNING job, cooperatively, and it was used to stop this one:
+
+    788 reparse ok | re-parsed 864 notices across 1 packages (1012 members walked, 0 unmatched,
+        0 now failing and left untouched); stamped 2601443 tender(s) epoch-stale;
+        STOPPED at an operator's request after 0 of 1 package(s)
+
+The queue is empty, the box is idle, and tomorrow's 09:35 tick is not queued behind anything. Before
+this, the only ways to stop a job were a service-environment escape hatch and a restart that re-ran it
+from the top — which is why this issue cost two firings rather than one.
+
+## Campaign status
+
+Paused deliberately. 12 of 215 packages are re-parsed (and 11 of those under the old naming rule, so they
+want redoing once the rate is understood). The arithmetic that matters: at 39 ms a notice the era is about
+40 hours of queue time, and at the first pass's rate it was 11. Neither is worth starting until the tail
+above is explained — and now that a running job can be stopped, starting it is no longer irreversible.
