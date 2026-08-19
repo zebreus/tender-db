@@ -64,6 +64,30 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     );
     sample(&mut out, "tender_db_writer_longest_wait_seconds", &[], writer.longest_wait_seconds);
 
+    // Where a re-parse's per-notice time goes (issue 247). Zero until one runs. The
+    // four phases sum to the writer-side cost of a notice, so a crawling campaign says
+    // which statement is paying rather than leaving an operator to profile the box.
+    let reparse = state.db.reparse_stats();
+    if reparse.notices > 0 {
+        header(&mut out, "tender_db_reparse_notices_total", "Notices re-parsed since open.");
+        sample(&mut out, "tender_db_reparse_notices_total", &[], reparse.notices as f64);
+        // One HELP/TYPE pair for the family, then the four labelled samples — the
+        // shape every other labelled series here uses, and the one a scrape can parse.
+        header(
+            &mut out,
+            "tender_db_reparse_phase_seconds_total",
+            "Seconds spent in each re-parse phase, on the writer connection.",
+        );
+        for (phase, seconds) in [
+            ("lookup", reparse.lookup_seconds),
+            ("clear", reparse.clear_seconds),
+            ("insert", reparse.insert_seconds),
+            ("commit", reparse.commit_seconds),
+        ] {
+            sample(&mut out, "tender_db_reparse_phase_seconds_total", &[("phase", phase)], seconds);
+        }
+    }
+
     // Disk on the DB volume — the same statvfs `/health/deep` folds into its
     // verdict, plus the WAL sidecar size (the issue-42 runaway signal).
     if let Some(d) = health::disk_usage() {

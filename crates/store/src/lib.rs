@@ -436,11 +436,40 @@ pub struct WriterStats {
     pub longest_wait_seconds: f64,
 }
 
+/// Where a re-parse's per-notice time goes (issue 247).
+///
+/// Filed under measurement rather than debugging because the guessing cost hours: the
+/// same package re-parsed at 410 members/min on one run and 3.5 on the next, and every
+/// statement involved answers in about a millisecond through the READER pool. The one
+/// structural difference is that `reparse_notice` runs its lookup, deletes and inserts
+/// on the long-lived WRITER connection inside `BEGIN IMMEDIATE` — so the split has to
+/// be measured there, where it happens, not inferred from a reader-pool timing.
+#[derive(Default)]
+struct ReparsePhases {
+    notices: AtomicU64,
+    lookup_nanos: AtomicU64,
+    clear_nanos: AtomicU64,
+    insert_nanos: AtomicU64,
+    commit_nanos: AtomicU64,
+}
+
+/// A snapshot of [`ReparsePhases`], so a scrape reads one consistent set.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ReparseStats {
+    pub notices: u64,
+    pub lookup_seconds: f64,
+    pub clear_seconds: f64,
+    pub insert_seconds: f64,
+    pub commit_seconds: f64,
+}
+
 pub struct Db {
     database: turso::Database,
     conn: Mutex<Connection>,
     /// Writer-contention counters (issue 241), read by `/metrics`.
     writer: WriterContention,
+    /// Re-parse phase timings (issue 247), read by `/metrics`.
+    reparse: ReparsePhases,
     /// The database file path, kept so [`Db::snapshot`] (issue 23) knows which
     /// file to copy — turso exposes no path accessor.
     path: String,
@@ -743,6 +772,7 @@ impl Db {
             database,
             conn: Mutex::new(conn),
             writer: WriterContention::default(),
+            reparse: ReparsePhases::default(),
             path: path.to_owned(),
             read_pool,
             wal_gate,
@@ -780,6 +810,21 @@ impl Db {
             waited_seconds: self.writer.waited_nanos.load(Ordering::Relaxed) as f64 / NANOS,
             longest_wait_seconds: self.writer.longest_wait_nanos.load(Ordering::Relaxed) as f64
                 / NANOS,
+        }
+    }
+
+    /// Where a re-parse's time goes, since open (issue 247). Zero until a re-parse
+    /// runs, which is itself the reading an operator wants: these are per-phase totals
+    /// over the WRITER connection, and `notices` is the denominator for a per-notice
+    /// mean.
+    pub fn reparse_stats(&self) -> ReparseStats {
+        const NANOS: f64 = 1_000_000_000.0;
+        ReparseStats {
+            notices: self.reparse.notices.load(Ordering::Relaxed),
+            lookup_seconds: self.reparse.lookup_nanos.load(Ordering::Relaxed) as f64 / NANOS,
+            clear_seconds: self.reparse.clear_nanos.load(Ordering::Relaxed) as f64 / NANOS,
+            insert_seconds: self.reparse.insert_nanos.load(Ordering::Relaxed) as f64 / NANOS,
+            commit_seconds: self.reparse.commit_nanos.load(Ordering::Relaxed) as f64 / NANOS,
         }
     }
 
@@ -1217,9 +1262,21 @@ impl Db {
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let result = async {
+            // Timed per phase (issue 247): the same statements are milliseconds through
+            // the reader pool, so if a re-parse crawls the cost has to be attributed on
+            // the connection it actually runs on.
+            let t0 = std::time::Instant::now();
             let Some((id, _)) = self.notice_state(&conn, n).await? else { return Ok(false) };
+            let t1 = std::time::Instant::now();
             self.clear_parsed(&conn, id).await?;
+            let t2 = std::time::Instant::now();
             self.insert_parsed(&conn, id, parsed).await?;
+            let t3 = std::time::Instant::now();
+            let phases = &self.reparse;
+            phases.notices.fetch_add(1, Ordering::Relaxed);
+            phases.lookup_nanos.fetch_add((t1 - t0).as_nanos() as u64, Ordering::Relaxed);
+            phases.clear_nanos.fetch_add((t2 - t1).as_nanos() as u64, Ordering::Relaxed);
+            phases.insert_nanos.fetch_add((t3 - t2).as_nanos() as u64, Ordering::Relaxed);
             // `projected = 0` is what makes the re-parse reach the canonical layer:
             // the next incremental projection takes unprojected parsed notices as
             // its change-set (issue 58). Without it the new parse rows would sit
@@ -1243,7 +1300,12 @@ impl Db {
                 // showing this line and NO statement line means the violation is only
                 // visible once the whole transaction is considered — a different bug
                 // with a different fix, and worth knowing before writing either.
-                if let Err(e) = conn.execute("COMMIT", ()).await {
+                let commit_started = std::time::Instant::now();
+                let committed = conn.execute("COMMIT", ()).await;
+                self.reparse
+                    .commit_nanos
+                    .fetch_add(commit_started.elapsed().as_nanos() as u64, Ordering::Relaxed);
+                if let Err(e) = committed {
                     eprintln!(
                         "[store] notice re-parse COMMIT failed (no single statement did): {e}"
                     );
