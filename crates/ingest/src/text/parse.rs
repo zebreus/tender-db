@@ -38,6 +38,77 @@ const SECTION: &str = "PROCEDURE";
 /// an Organization, whatever the field tables say.
 const AUTHORITY_SECTION: &str = "ORG-1";
 
+/// The two labels under which a 2004-or-later body announces its winner (issue 244),
+/// upper-cased for a case-insensitive match. Both are the tail of a longer heading and
+/// both end at the colon the value follows:
+///
+/// - `V.1.1)  Name and address of successful supplier, contractor or service provider:`
+///   — the 2004/2005 vintage, the same wording the era's own `CO:` line carries;
+/// - `V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN
+///   AWARDED:` — 2006 onward.
+///
+/// Measured coverage of award notices carrying an English body, per June window on
+/// prod: 2004 202/203, 2005 311/314, 2006 347/354, 2008 361/371. Matching the tail
+/// rather than the whole heading is deliberate: the heading itself wraps at ~72
+/// columns, and the words before the colon are the part that stayed stable.
+const AWARD_LABELS: [&str; 2] = ["SERVICE PROVIDER:", "HAS BEEN AWARDED:"];
+
+/// Where a winner's name ends. The value runs `<name>, <address…>. Tel. …`, so the
+/// comma is the boundary in every measured shape; the rest are stops that catch a
+/// value with no comma at all before the next heading, so a missing comma truncates
+/// to something plausible instead of swallowing the remaining form.
+const NAME_STOPS: [&str; 6] = [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO"];
+
+/// The winner names a 2004-or-later award body publishes, in document order
+/// (issue 244).
+///
+/// The body is the era's own prose — `TXT-TX`, claimed whole and left authoritative;
+/// these names are a DERIVED claim on top of it, which is what lets the projection
+/// see a text-era award at all (the era publishes no result section, so before this
+/// all 1,306,514 of its award notices materialised nothing).
+///
+/// Newlines collapse to spaces first, because TED's wrapper breaks both the heading
+/// and the value at ~72 columns — `HAS BEEN \nAWARDED:` is the common case, and a
+/// line-oriented match would miss most of the corpus.
+///
+/// One name per label occurrence, and the occurrences repeat: a notice awarding four
+/// contracts prints the heading four times, each under its own `CONTRACT NO:`
+/// (measured: 25% of a 2008 window carries more than one, up to 18). Only the name
+/// is taken, not the address that follows it — an address-bearing string mints a new
+/// organization for every spelling variation of the same company ("Zac Satolas Green"
+/// vs "Zac de Satolas Green", both Stryker France, in one notice), which is issue
+/// 234's problem manufactured on purpose.
+fn awarded_names(body: &str) -> Vec<String> {
+    let flat: String = body.split_whitespace().collect::<Vec<_>>().join(" ");
+    let upper = flat.to_uppercase();
+    let mut names = Vec::new();
+    let mut at = 0usize;
+    while at < upper.len() {
+        // The earliest label from here, so the two vintages can both appear (they do
+        // not in any measured notice, but a mixed body would otherwise skip awards).
+        let Some((start, label)) = AWARD_LABELS
+            .iter()
+            .filter_map(|l| upper[at..].find(l).map(|i| (at + i, *l)))
+            .min_by_key(|(i, _)| *i)
+        else {
+            break;
+        };
+        let value_at = start + label.len();
+        let rest = &flat[value_at..];
+        let end = NAME_STOPS
+            .iter()
+            .filter_map(|stop| rest.to_uppercase().find(stop))
+            .min()
+            .unwrap_or(rest.len());
+        let name = rest[..end].trim().trim_end_matches('.').trim();
+        if !name.is_empty() {
+            names.push(name.to_owned());
+        }
+        at = value_at;
+    }
+    names
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Rejected {
     pub reason: &'static str,
@@ -159,6 +230,15 @@ fn flush(emit: &mut Emit, field: Option<Field>) -> Result<(), Rejected> {
                 if field.code == "AU" {
                     emit.authority(text);
                 } else {
+                    // `TX` is the English body, and from 2004 it carries the award
+                    // block the era publishes no section for (issue 244). The prose
+                    // is emitted whole either way — the winners are derived from it,
+                    // not moved out of it.
+                    if field.code == "TX" {
+                        for name in awarded_names(&text) {
+                            emit.award(name);
+                        }
+                    }
                     emit.text(&id, lang, text);
                 }
             }
@@ -230,6 +310,53 @@ impl Emit {
             });
         }
         self.push_into(AUTHORITY_SECTION, "TXT-AU", NoticeValue::Text { lang: None, value: name });
+    }
+
+    /// One award as a result section with its winner (issue 244), manufactured the
+    /// same way [`Emit::authority`] manufactures the buyer — because the projection
+    /// already reads this shape for every other legacy profile and needs no new code
+    /// path to reach it:
+    ///
+    /// - a `LotResult` section, which `read_legacy_results` turns into a
+    ///   `lot_results` row (`is_legacy_profile` has covered `text` all along; the era
+    ///   simply never produced a section for it to find);
+    /// - an `Organization` section holding the name, since
+    ///   `organization_mentions` has a FOREIGN KEY on `(notice_id, section_id)` and
+    ///   only a party-kinded section can carry a mention;
+    /// - a `TED-ADDRESS_CONTRACTOR` id-ref from the result to that organization,
+    ///   which `legacy_role` already folds onto `winner`.
+    ///
+    /// Ids are numbered per award so a notice awarding several contracts gets several
+    /// results, and the organization ids continue past `ORG-1` — the buyer's — so the
+    /// two never collide.
+    fn award(&mut self, name: String) {
+        self.root();
+        let n = self.parsed.sections.iter().filter(|s| s.kind == "LotResult").count() + 1;
+        let result = format!("RES-{n}");
+        let org = format!("ORG-{}", n + 1);
+        self.parsed.sections.push(Section {
+            id: result.clone(),
+            kind: "LotResult".into(),
+            parent: Some(SECTION.into()),
+        });
+        self.parsed.sections.push(Section {
+            id: org.clone(),
+            kind: "Organization".into(),
+            parent: Some(result.clone()),
+        });
+        self.push_into(&result, "TED-ADDRESS_CONTRACTOR", NoticeValue::Id {
+            scheme: None,
+            value: org.clone(),
+            is_ref: true,
+        });
+        // `TED-OFFICIALNAME`, not the era's own `TXT-CO`, for two reasons that both
+        // matter: `ORG_NAME_FIELDS` in the projection reads only `TED-OFFICIALNAME`
+        // and `TXT-AU`, so a name filed anywhere else leaves the organization
+        // NAMELESS; and `TXT-CO` already exists on the root when the era publishes its
+        // `CO:` line, so reusing it would make one field id mean two different things
+        // in one notice. The buyer's `TXT-AU` has neither problem — it is in that list
+        // and it is not also a root value.
+        self.push_into(&org, "TED-OFFICIALNAME", NoticeValue::Text { lang: None, value: name });
     }
 
     fn push(&mut self, field: &str, value: NoticeValue) {
@@ -431,4 +558,104 @@ mod tests {
         assert_eq!(code("FR"), Some(NoticeValue::Code { list: None, code: "FR".into() }));
         assert_eq!(code("not a code"), None);
     }
+    /// Issue 244: the 2006-onward body, verbatim from prod notice 2,821,477 including
+    /// the wrap that splits `HAS BEEN` from `AWARDED:`.
+    #[test]
+    fn a_2006_body_yields_its_winner_as_a_result_with_an_organization() {
+        let body = "CONTRACT AWARD NOTICE\n\
+                    SECTION V: AWARD OF CONTRACT\n\
+                    V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT HAS BEEN \n\
+                    AWARDED: Gagneraud Construction, 198 chemin des Eucalyptus, F-06160 \n\
+                    Antibes-Juan-les-Pins.\n\
+                    V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:";
+        assert_eq!(awarded_names(body), vec!["Gagneraud Construction".to_owned()]);
+
+        // …and the whole record, so the manufactured shape is what the projection reads.
+        let record =
+            format!("1.0/000001\nND: 1-2006\nTX: {}\n", body.replace('\n', "\n    "));
+        let p = parse(&record).expect("parses");
+        let results: Vec<&str> =
+            p.sections.iter().filter(|s| s.kind == "LotResult").map(|s| s.id.as_str()).collect();
+        assert_eq!(results, vec!["RES-1"], "one award, one result section");
+        let org = p.sections.iter().find(|s| s.kind == "Organization").expect("an organization");
+        assert_eq!(org.parent.as_deref(), Some("RES-1"), "the winner sits inside its award");
+        assert!(
+            p.values.iter().any(|v| v.field_id == "TED-ADDRESS_CONTRACTOR"
+                && v.section_id == "RES-1"
+                && matches!(&v.value, NoticeValue::Id { value, is_ref: true, .. } if value == &org.id)),
+            "the result references the winner, which is what legacy_role folds onto `winner`"
+        );
+        assert_eq!(
+            p.values
+                .iter()
+                .find(|v| v.field_id == "TED-OFFICIALNAME")
+                .map(|v| value_text(&v.value).as_str()),
+            Some("Gagneraud Construction"),
+            "the name must sit in a field the projection reads as a name"
+        );
+        // The prose stays whole: derived facts are ADDED, never moved out (ADR-0004).
+        assert!(
+            p.values.iter().any(|v| v.field_id == "TXT-TX"
+                && value_text(&v.value).contains("AWARDED: Gagneraud Construction")),
+            "the body is still claimed verbatim"
+        );
+    }
+
+    /// The 2004/2005 vintage labels the same value differently, and one notice can
+    /// award many contracts — prod notice 3,401,496 awards four under one heading each.
+    #[test]
+    fn both_label_vintages_and_repeated_awards_are_read() {
+        // 2004: `V.1.1)  Name and address of successful supplier, contractor or service
+        // provider:` — mixed case, so the match has to be case-insensitive.
+        let y2004 = "V.1)  Award and contract value\n\
+                     V.1.1)  Name and address of successful supplier, contractor or service \n\
+                     provider: Eurovia Méditerranée, Att: Christophe Verweirde, Route de Gréoux\n\
+                     V.1.2)  Information on value of contract";
+        assert_eq!(awarded_names(y2004), vec!["Eurovia Méditerranée".to_owned()]);
+
+        let multi = "SECTION V: AWARD OF CONTRACT\n\
+                     CONTRACT NO: 088273\n\
+                     V.3)  NAME AND ADDRESS ... HAS BEEN AWARDED: Stryker France, Zac Satolas \n\
+                     Green, F-69881 Meyzieu Cedex. Tel. 04 72 45 36 00.\n\
+                     V.4)  INFORMATION ON VALUE OF CONTRACT Value: 303 504,79 EUR.\n\
+                     CONTRACT NO: 080050\n\
+                     V.3)  NAME AND ADDRESS ... HAS BEEN AWARDED: Stryker France, Zac de \n\
+                     Satolas Green, F-69881 Meyzieu Cedex.";
+        // Both spellings of the address, one name — which is the point of taking only
+        // the name: an address-bearing string would mint two organizations here.
+        assert_eq!(
+            awarded_names(multi),
+            vec!["Stryker France".to_owned(), "Stryker France".to_owned()]
+        );
+
+        let record =
+            format!("1.0/000001\nND: 1-2008\nTX: {}\n", multi.replace('\n', "\n    "));
+        let p = parse(&record).expect("parses");
+        let results: Vec<&str> =
+            p.sections.iter().filter(|s| s.kind == "LotResult").map(|s| s.id.as_str()).collect();
+        assert_eq!(results, vec!["RES-1", "RES-2"], "two contracts, two results");
+        // Distinct organization sections, each parented to its own award, and neither
+        // colliding with the buyer's ORG-1.
+        let orgs: Vec<(&str, Option<&str>)> = p
+            .sections
+            .iter()
+            .filter(|s| s.kind == "Organization")
+            .map(|s| (s.id.as_str(), s.parent.as_deref()))
+            .collect();
+        assert_eq!(orgs, vec![("ORG-2", Some("RES-1")), ("ORG-3", Some("RES-2"))]);
+    }
+
+    /// A body with no award block must manufacture nothing — most of the era is not an
+    /// award notice at all, and inventing empty results would put 2.5M phantom rows in
+    /// the results layer.
+    #[test]
+    fn a_body_without_an_award_label_manufactures_no_result() {
+        assert!(awarded_names("SECTION II: OBJECT OF THE CONTRACT\nII.1) Description").is_empty());
+        let p = parse("1.0/000001\nND: 1-2006\nTX: SECTION II: OBJECT\n").expect("parses");
+        assert!(p.sections.iter().all(|s| s.kind != "LotResult"));
+        // And the 1993 flat grammar is NOT yet read (issue 244's second slice), so it
+        // must fail closed rather than half-read: no result, no phantom winner.
+        assert!(awarded_names(" 6.  Supplier(s): A: Apotecnia, Climo").is_empty());
+    }
+
 }

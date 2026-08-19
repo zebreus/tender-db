@@ -308,18 +308,25 @@ async fn legacy_award_notice_counts_toward_results_density() {
     let _ = std::fs::remove_file(&path);
 }
 
-/// Issue 235's regression, end to end: an award notice that materialises NO
-/// results must pull section 3 below 100 %.
+/// Issue 244's fix, end to end: the text era's 2005 CAN now materialises the winners
+/// its body publishes, and section 3 counts it in BOTH halves.
 ///
-/// The text era's 2005 CAN is the case the old metric could not see. It publishes
-/// `TD: 7 - Contract award` — so its own document type says it announces a result
-/// — and the projection produces no `lot_results` row for it at all. Under the
-/// old definition the notice was excluded from BOTH halves (no result section
-/// parsed ⇒ not in the denominator), and the era simply vanished from section 3
-/// or read a perfect rate on whatever remained. Now it reads 1 award notice,
-/// 0 materialised, 0.0 %.
+/// This test used to assert the opposite, and the change is the point. The notice
+/// publishes `TD: 7 - Contract award`, and under the old parser nothing came of it:
+/// the era publishes no result SECTION, so the projection had nothing to fold and
+/// section 3 read 1 award notice, 0 materialised. Issue 235 made that visible (the
+/// older definition could not see the notice at all — no result section parsed meant
+/// no denominator either), and issue 244 then found WHY: the body carries
+/// `V.1.1) Name and address of successful supplier, contractor or service provider:`
+/// twice — Grahams Engineering Ltd. and NSG Environmental Ltd. — which the text
+/// parser now reads into a `LotResult` per award.
+///
+/// So the fixture has moved from being the report's evidence of a gap to being the
+/// fix's evidence of a repair, and the assertions move with it. The zero-not-absent
+/// distinction it used to carry is covered by
+/// [`an_award_notice_whose_body_has_no_award_block_reads_zero_not_absent`].
 #[tokio::test]
-async fn an_award_notice_that_materialises_nothing_reads_as_zero_not_as_absent() {
+async fn the_2005_text_era_can_materialises_the_winners_its_body_publishes() {
     let (db, fetch_id, path) = scratch("text-can").await;
     ingest_text(
         &db,
@@ -337,28 +344,53 @@ async fn an_award_notice_that_materialises_nothing_reads_as_zero_not_as_absent()
         .find(|r| r.profile == "text")
         .expect("the text era appears in section 3 on the strength of its own doc type");
     assert_eq!(density.award_notices, 1, "`TD: 7` is an award notice: {density:?}");
-    assert_eq!(density.with_results, 0, "and it materialised nothing: {density:?}");
-    // Issue 242: and the reason is upstream — the 2005 text-era CAN publishes no
-    // award block, so this 0 % is a publication gap, not a projection failure. The
-    // report says which, in the same row.
-    assert_eq!(density.no_award_content, 1, "no award block was published: {density:?}");
+    assert_eq!(density.with_results, 1, "and it now materialises: {density:?}");
+    // And the barren column empties out, because a result block IS parsed now — the
+    // same row that reported the gap reports the repair (issue 242's column, issue
+    // 244's fix).
+    assert_eq!(density.no_award_content, 0, "a result block is parsed: {density:?}");
 
-    // The invariant, in the same run, is silent about it — which is the point.
-    // "Did the projection write what it parsed" cannot answer "was anything
-    // parsed", so keeping both is what makes either one readable.
-    let invariant = report.invariant.iter().find(|r| r.profile == "text");
-    assert!(
-        invariant.is_none_or(|r| r.with_sections == 0),
-        "no result section was parsed, so the invariant has no denominator here: {invariant:?}"
+    // Both winners, one result each, under the era's own label for the value.
+    let results = rows(&db, "SELECT COUNT(*) FROM notice_sections WHERE kind = 'LotResult'").await;
+    assert_eq!(results[0][0], serde_json::json!(2), "the body awards two contracts");
+    // And they reach the CANONICAL layer as winners, which is the fix's whole point:
+    // a name in the parse layer that no projection reads would be invisible.
+    let winners = rows(
+        &db,
+        "SELECT o.name FROM tender_version_parties p JOIN organizations o ON o.id = p.organization_id \
+          WHERE p.role = 'winner' ORDER BY o.name",
+    )
+    .await;
+    let winners: Vec<&str> = winners.iter().map(|r| r[0].as_str().expect("a name")).collect();
+    assert_eq!(
+        winners,
+        vec!["Grahams Engineering Ltd", "NSG Environmental Ltd"],
+        "both winners are organizations with the winner role"
+    );
+
+    // Section 3b gains a denominator for this era, where it had none: the invariant
+    // asks "did the fold write what the parse produced", and until issue 244 the text
+    // era parsed no result section for it to ask about. Now it does, and the answer is
+    // yes — which is the pair of questions section 3 and 3b are meant to answer
+    // separately (issue 235).
+    let invariant = report
+        .invariant
+        .iter()
+        .find(|r| r.profile == "text")
+        .expect("the era now parses result sections");
+    assert_eq!(
+        (invariant.with_sections, invariant.with_rows),
+        (1, 1),
+        "parsed one result-bearing notice and folded it: {invariant:?}"
     );
 
     // And it renders as a rate, not as a dash or a missing row.
     let text = data_quality::render_text(&report);
     let line = text
         .lines()
-        .find(|l| l.contains("text 1993") && l.contains("0.0%"))
-        .expect("the text era's 0.0% density is rendered");
-    assert!(line.contains(" 1 "), "one award notice, zero materialised: {line}");
+        .find(|l| l.contains("text 1993") && l.contains("100.0%"))
+        .expect("the text era's density is rendered");
+    assert!(line.contains(" 1 "), "one award notice, one materialised: {line}");
 
     let _ = std::fs::remove_file(&path);
 }
