@@ -485,9 +485,17 @@ fn awards_with_template(win: &str) -> String {
 ///   which the r209 suite pins as a fixture).
 ///
 /// So `award_notices - with_results - no_award_content` is the number that means
-/// "we failed to project an award somebody actually published" — the only one of
-/// the three that is ours to fix. Printing the rate without this column invites
-/// exactly the wrong conclusion, which is the mistake issue 242 opened with.
+/// "a result block was parsed and the fold still did not write a row". Printing the
+/// rate without this column invites exactly the wrong conclusion, which is the
+/// mistake issue 242 opened with.
+///
+/// **What this column does NOT say** (issue 244, from the first full-corpus run):
+/// it is a statement about the PARSE, not about the publisher. The r2.0.8 rows
+/// above really did publish nothing extractable. The text era's 1,306,514 did
+/// publish their awards — `CO: Name and address of successful supplier …` with the
+/// names on the following lines — and nothing turns that into a result block yet.
+/// Same column, opposite causes, so the rendered line names the split instead of
+/// asserting one cause for all of it.
 ///
 /// This DOES read `notice_sections`, deliberately: the point is to compare the
 /// published type against the parse, and the comparison is the finding. What
@@ -1153,7 +1161,7 @@ pub fn render_text(report: &Report) -> String {
     let _ = writeln!(
         out,
         "  {:<30} {:>10} {:>14} {:>8} {:>16}",
-        "era", "award-notices", "with lot_results", "density", "no content pub."
+        "era", "award-notices", "with lot_results", "density", "no block parsed"
     );
     let mut impossible = 0usize;
     for row in &report.density {
@@ -1188,15 +1196,26 @@ pub fn render_text(report: &Report) -> String {
             markers = DOC_TYPE_MARKERS.len()
         );
     }
-    // The column that makes the rate readable (issue 242): of the notices that
-    // announce a result, how many published no award block for anyone to project.
-    // What is left after subtracting those is the part that is ours to fix, so say
-    // that number out loud rather than leaving the reader to compute it.
+    // The column that makes the rate readable (issue 242), with the correction the
+    // first full run forced (issue 244): this counts award notices with no result
+    // block IN THE PARSE, which is a statement about our parse and NOT about what
+    // the publisher shipped. The two are different, and both occur at scale:
+    //
+    // - r2.0.8's 14,532 really did publish nothing extractable — an `OTH_NOT` prose
+    //   body, or an empty `<AWARD_CONTRACT_CONTRACT_AWARD_UTILITIES/>` container.
+    // - the text era's 1,306,514 DID publish their awards, in the era's own
+    //   labelled-line format (`CO: Name and address of successful supplier …`
+    //   followed by the names). Nothing parses them into a result block yet.
+    //
+    // The first draft of this line claimed "nothing can project those" for the whole
+    // column. That was false for 1.3M notices and exactly the kind of confident
+    // wrong summary this report exists to prevent, so the wording now states the
+    // measurement and points at the split rather than asserting a cause.
     if report.unmeasured.iter().any(|l| l == "awards_barren") {
         let _ = writeln!(
             out,
-            "  no content published: UNMEASURED — the `awards_barren` query did not run, so the \
-             density above cannot be split into published-nothing and failed-to-project."
+            "  no result block parsed: UNMEASURED — the `awards_barren` query did not run, so the \
+             density above cannot be split by cause."
         );
     } else {
         let barren: u64 = report.density.iter().map(|r| r.no_award_content).sum();
@@ -1207,10 +1226,12 @@ pub fn render_text(report: &Report) -> String {
             .sum();
         let _ = writeln!(
             out,
-            "  no content published: {} award notice(s) parsed with no result block at all — an \
-             empty or free-text award (measured shapes: an `OTH_NOT` prose body, an empty F06 \
-             container). Nothing can project those. Unmaterialised award notices that DID publish \
-             a result block, i.e. the projection's own shortfall: {}.",
+            "  no result block parsed: {} award notice(s) announce a result and have no result \
+             block in the parse layer. That is one of two different things per era — the notice \
+             published nothing extractable (r2.0.8: `OTH_NOT` prose bodies, empty F06 containers), \
+             or its era's award block is not extracted yet (the text era publishes winners under \
+             `CO:` — issue 244). Award notices whose result block IS parsed and still did not \
+             materialise, i.e. the fold's own shortfall: {}.",
             group(barren),
             group(missing)
         );
@@ -1611,12 +1632,18 @@ mod tests {
         assert!(text.contains("40.0%"), "{text}");
         // … and so is the split: 6 published nothing, 6 are ours (the sdk-1.13 era).
         assert!(
-            text.contains("6 award notice(s) parsed with no result block at all"),
-            "the publication gap must be named: {text}"
+            text.contains("6 award notice(s) announce a result and have no result block in the parse"),
+            "the unparsed-block count must be named: {text}"
         );
         assert!(
-            text.contains("the projection's own shortfall: 6"),
-            "and so must the part that is ours: {text}"
+            text.contains("the fold's own shortfall: 6"),
+            "and so must the part that is the fold's: {text}"
+        );
+        // Issue 244: and the line must NOT claim a cause it cannot know. The text
+        // era publishes its awards under `CO:` and is counted in this column too.
+        assert!(
+            !text.contains("Nothing can project those"),
+            "the column measures the parse, not the publisher: {text}"
         );
 
         // JSON carries both per era, so a consumer never has to subtract.
@@ -1634,8 +1661,8 @@ mod tests {
         failed.iter_mut().find(|(l, _)| l == "awards_barren").expect("label").1 = None;
         let raw = Raw::from_labelled(failed).expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
-        assert!(text.contains("no content published: UNMEASURED"), "{text}");
-        assert!(!text.contains("the projection's own shortfall"), "no arithmetic on a missing input: {text}");
+        assert!(text.contains("no result block parsed: UNMEASURED"), "{text}");
+        assert!(!text.contains("the fold's own shortfall"), "no arithmetic on a missing input: {text}");
     }
 
     /// The vocabulary itself: every marker must classify codes into two disjoint
