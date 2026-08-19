@@ -191,3 +191,37 @@ mention rows for those notices, `has_mentions` would have been false for every o
 which is precisely the case the new seek skips. If that is right, the fast run was fast for the
 reason the seek now makes permanent, and the campaign's arithmetic should be based on the SLOW
 number until the index is built and measured.
+
+
+## The queue was the other half of the bug (2026-08-19)
+
+The index fix was committed and the box promptly demonstrated why that was not enough. Sequence, from
+the journal:
+
+1. `ensure_deferred_indexes` noticed `organization_mentions_notice` missing and queued a Reindex — at
+   the **back**, behind the crawling re-parse it would have made a hundred times faster.
+2. Every later boot found that row and logged *"a reindex is already queued"*, then left it exactly
+   where it was.
+
+So `push_front` was added for this one caller, and then the early-return had to go too: **already queued
+is not queued FIRST**. The bootstrap now moves a queued Reindex to the head, reports whether the move
+was needed, and wakes the worker. Verified on prod, in the log line the previous deploy had been
+producing:
+
+    supervisor: 1 deferred index(es) missing (organization_mentions_notice);
+                a reindex was already queued — moved to the front
+
+    CURRENT 24 reindex auto: organization_mentions_notice
+    QUEUED  1:reparse
+
+Ordinary work keeps its ordering — an operator's sequence is a sequence — and `push_front` has exactly
+one caller for that reason. The priority is in-memory only: a restart rebuilds the queue from durable
+rows in id order and the bootstrap re-applies it on every boot, which is simpler than persisting a
+second ordering that could disagree with the first.
+
+### Acceptance, still to confirm
+
+The index is building now. The number that closes this issue is the re-parse's clear time after it
+lands: `tender_db_reparse_clear_statement_seconds_total{stmt="organization_mentions"}` should fall from
+153 ms a notice to the microseconds every other statement in that clear costs, and the package rate
+should return to the ~400 members/min of the first pass.
