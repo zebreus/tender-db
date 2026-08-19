@@ -1,6 +1,7 @@
 # 243 — the data-quality pass went from 40 minutes to ~4 hours, and it holds the job queue the whole time
 
-Status: needs-triage — CORRECTED 2026-08-19: the real figure is 92.8 min, not ~4 h. Per-label costs now in hand.
+Status: the award merge is DONE in code 2026-08-19 (one `awards` query replacing three); the
+`sections_can`/`sections_with` pair is the remaining candidate. Runtime figure corrected to 92.8 min.
 Kind: cost regression in a scheduled job (correct numbers, impractical runtime)
 Blocked by: — (the fix wants the per-label cost breakdown this very run will print)
 Relates to: 230 (windowed measurement), 235 (added three queries), 242 (added the fourth), 27 (the report)
@@ -171,3 +172,25 @@ The rest: one `awards_template` replacing three; one catalog + one windowed entr
 and the `UNMEASURED` narration, which loses per-query granularity — if the merged query fails, all
 three numbers go unmeasured together. That last point is a real (small) loss and the honest note to put
 in the narration: they share one scan, so in practice they always did fail together.
+
+
+## The merge landed (2026-08-19)
+
+One `awards` query replaced `awards_can` / `awards_with` / `awards_barren`: `COUNT(*)` plus two `CASE`
+sums over the same rows, with the cheap predicates inside the sums and the document-type probe in the
+`WHERE` — the order the timings argued for.
+
+`sum_profile_counts` needed no change (it already summed every column after the label, which is what
+lets a 3-count row fold across windows), and the assembler reads three columns from one row set. Two
+consequences worth having on the record:
+
+- **`IMPOSSIBLE` is now unreachable from the database.** The render exists because prod produced 0 award
+  notices against 139,961 with results for sdk-0.1 — but that was two queries measuring two populations.
+  With one pass the numerator cannot exceed the denominator. The render and its test stay deliberately:
+  a defensive path nobody exercises rots, and splitting these counts again would need it.
+- **Failure granularity is coarser by one label**, which is honest — they shared a scan, so they always
+  failed together in practice.
+
+Next, if it is worth it: `sections_can` (900 s) and `sections_with` (28 s) are the same shape for section
+3b. That pair is worth more than the remainder of this one, and the same A/B-first discipline applies —
+run both forms against prod on one window and compare row for row before touching the plumbing.
