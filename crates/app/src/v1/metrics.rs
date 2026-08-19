@@ -41,6 +41,29 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     header(&mut out, "tender_db_sse_streams", "Live SSE subscriptions.");
     sample(&mut out, "tender_db_sse_streams", &[], state.live_streams() as f64);
 
+    // Writer contention (issue 241). Issue 240 was a 25-minute outage of every
+    // token-bearing endpoint, and every signal on this page stayed green through
+    // it: requests were queued behind a fold that held the writer, and queueing
+    // was the one thing nothing measured.
+    //
+    // A held writer is normal. `queue_depth` is the part that is not: sustained
+    // non-zero depth means callers are waiting, whoever holds it. The two totals
+    // give the mean wait per acquisition, and `longest_wait_seconds` is a
+    // never-reset high-water mark, so a stall stays visible after it ends.
+    let writer = state.db.writer_stats();
+    header(&mut out, "tender_db_writer_queue_depth", "Callers blocked waiting for the writer.");
+    sample(&mut out, "tender_db_writer_queue_depth", &[], writer.depth as f64);
+    header(&mut out, "tender_db_writer_acquisitions_total", "Writer acquisitions since open.");
+    sample(&mut out, "tender_db_writer_acquisitions_total", &[], writer.acquisitions as f64);
+    header(&mut out, "tender_db_writer_wait_seconds_total", "Seconds spent waiting for the writer.");
+    sample(&mut out, "tender_db_writer_wait_seconds_total", &[], writer.waited_seconds);
+    header(
+        &mut out,
+        "tender_db_writer_longest_wait_seconds",
+        "Longest single wait for the writer since open (high-water mark).",
+    );
+    sample(&mut out, "tender_db_writer_longest_wait_seconds", &[], writer.longest_wait_seconds);
+
     // Disk on the DB volume — the same statvfs `/health/deep` folds into its
     // verdict, plus the WAL sidecar size (the issue-42 runaway signal).
     if let Some(d) = health::disk_usage() {

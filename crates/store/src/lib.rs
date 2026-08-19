@@ -30,6 +30,7 @@ pub use webhooks::{Delivery, Endpoint};
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::{Mutex, MutexGuard, OnceCell, watch};
 use turso::{Connection, Value};
 
@@ -399,9 +400,47 @@ const SCHEMA: &str = "
     ) STRICT;
 ";
 
+/// Live writer-contention counters (issue 241).
+///
+/// Issue 240 was a 25-minute outage in which every token-bearing request queued
+/// behind a fold that held the writer — and NOTHING said so. `/health` reads the
+/// in-memory cursor by design (issue 61), the read path uses the reader pool, and
+/// the job record showed a healthy run. The outage was found by hand.
+///
+/// A held writer is normal: a fold holds it for its whole transaction. The
+/// alertable state is a held writer with WORK QUEUED BEHIND IT, so that pair is
+/// what these counters export. `depth` alone answers it — a sustained non-zero
+/// queue depth is requests (or jobs) waiting, whatever is holding the lock.
+///
+/// Every writer acquisition in the crate funnels through [`Db::conn`], so this
+/// counts all of them and costs two relaxed atomics per acquisition.
+#[derive(Debug, Default)]
+pub struct WriterContention {
+    /// Callers currently blocked in [`Db::conn`], not counting the holder.
+    depth: AtomicU64,
+    /// Total acquisitions since open — the denominator for a mean wait.
+    acquisitions: AtomicU64,
+    /// Total nanoseconds spent waiting, summed across acquisitions.
+    waited_nanos: AtomicU64,
+    /// The longest single wait since open. A high-water mark, never reset: the
+    /// point is to still be able to see yesterday's 25-minute stall.
+    longest_wait_nanos: AtomicU64,
+}
+
+/// A snapshot of [`WriterContention`], so a scrape reads one consistent set.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WriterStats {
+    pub depth: u64,
+    pub acquisitions: u64,
+    pub waited_seconds: f64,
+    pub longest_wait_seconds: f64,
+}
+
 pub struct Db {
     database: turso::Database,
     conn: Mutex<Connection>,
+    /// Writer-contention counters (issue 241), read by `/metrics`.
+    writer: WriterContention,
     /// The database file path, kept so [`Db::snapshot`] (issue 23) knows which
     /// file to copy — turso exposes no path accessor.
     path: String,
@@ -700,11 +739,48 @@ impl Db {
         // shared-lock acquire to every read, so the default leaves it off (None).
         let wal_gate: read::WalGate = gate_on.then(|| Arc::new(tokio::sync::RwLock::new(())));
         let read_pool = Readers::open(database.clone(), READ_POOL, wal_gate.clone())?;
-        Ok(Db { database, conn: Mutex::new(conn), path: path.to_owned(), read_pool, wal_gate, cursor })
+        Ok(Db {
+            database,
+            conn: Mutex::new(conn),
+            writer: WriterContention::default(),
+            path: path.to_owned(),
+            read_pool,
+            wal_gate,
+            cursor,
+        })
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {
-        self.conn.lock().await
+        // Issue 241: the wait itself is the measurement. Nothing else in the
+        // process can see "a request is queued behind the writer" — the fast path
+        // (uncontended) adds one `try_lock` and two relaxed adds.
+        if let Ok(guard) = self.conn.try_lock() {
+            self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
+            return guard;
+        }
+        self.writer.depth.fetch_add(1, Ordering::Relaxed);
+        let started = std::time::Instant::now();
+        let guard = self.conn.lock().await;
+        let waited = started.elapsed().as_nanos().min(u64::MAX as u128) as u64;
+        self.writer.depth.fetch_sub(1, Ordering::Relaxed);
+        self.writer.acquisitions.fetch_add(1, Ordering::Relaxed);
+        self.writer.waited_nanos.fetch_add(waited, Ordering::Relaxed);
+        self.writer.longest_wait_nanos.fetch_max(waited, Ordering::Relaxed);
+        guard
+    }
+
+    /// Writer contention since open (issue 241) — the input to the `/metrics`
+    /// gauges that make issue 240's outage shape visible without running a query
+    /// by hand.
+    pub fn writer_stats(&self) -> WriterStats {
+        const NANOS: f64 = 1_000_000_000.0;
+        WriterStats {
+            depth: self.writer.depth.load(Ordering::Relaxed),
+            acquisitions: self.writer.acquisitions.load(Ordering::Relaxed),
+            waited_seconds: self.writer.waited_nanos.load(Ordering::Relaxed) as f64 / NANOS,
+            longest_wait_seconds: self.writer.longest_wait_nanos.load(Ordering::Relaxed) as f64
+                / NANOS,
+        }
     }
 
     /// A scratch directory beside the database file — where a projection spills its
@@ -3274,6 +3350,68 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert!(started.elapsed().as_secs() < 1, "dashboard reads must not queue behind the writer");
 
         writer.execute("COMMIT", ()).await.unwrap();
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 241: a writer held while callers queue behind it is the shape of
+    /// issue 240's 25-minute outage, and nothing in the process could see it. Now
+    /// the queue itself is measured.
+    ///
+    /// The test holds the writer, parks three callers behind it, and checks that
+    /// the depth gauge reads three WHILE they wait — a gauge that only moved after
+    /// the fact would be useless for the alert it exists to raise.
+    #[tokio::test]
+    async fn a_held_writer_with_callers_behind_it_is_visible_while_it_happens() {
+        let path = format!("/tmp/tender-db-writer-wait-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(Db::open(&path).await.unwrap());
+
+        // An uncontended acquisition counts but never waits: the fast path must
+        // not invent contention out of ordinary writes.
+        {
+            let _ = db.conn().await;
+        }
+        let quiet = db.writer_stats();
+        assert!(quiet.acquisitions > 0, "acquisitions are counted");
+        assert_eq!(quiet.depth, 0, "nobody is waiting");
+        assert_eq!(quiet.waited_seconds, 0.0, "an uncontended acquire waits for nothing");
+
+        // Hold it, the way a fold holds it for its whole transaction.
+        let held = db.conn().await;
+
+        let mut waiters = Vec::new();
+        for _ in 0..3 {
+            let db = Arc::clone(&db);
+            waiters.push(tokio::spawn(async move {
+                let _guard = db.conn().await;
+            }));
+        }
+        // Let them reach the lock. Depth is observed WHILE the writer is held —
+        // this is the assertion that matters.
+        let mut depth = 0;
+        for _ in 0..100 {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            depth = db.writer_stats().depth;
+            if depth == 3 {
+                break;
+            }
+        }
+        assert_eq!(depth, 3, "three callers are queued behind the held writer");
+
+        drop(held);
+        for w in waiters {
+            w.await.unwrap();
+        }
+
+        let after = db.writer_stats();
+        assert_eq!(after.depth, 0, "the queue drains");
+        assert!(after.waited_seconds > 0.0, "the wait is accumulated: {after:?}");
+        assert!(
+            after.longest_wait_seconds > 0.0 && after.longest_wait_seconds <= after.waited_seconds,
+            "the high-water mark is one wait, not the sum: {after:?}"
+        );
+        assert!(after.acquisitions >= 5, "one uncontended + one held + three queued: {after:?}");
+
         let _ = std::fs::remove_file(&path);
     }
 
