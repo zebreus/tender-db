@@ -241,3 +241,24 @@ One thing checked and found harmless: each re-parse reports `stamped 2,601,443 t
 the same number both times, so the stamp is the whole legacy cohort and re-stamping is idempotent — it
 is not accumulating per-package debt. The fold each time touched only the re-parsed notices' own tenders
 (19,335 and 33,160).
+
+
+## Campaign running (2026-08-19), and what it taught in its first hour
+
+The re-parse is going at ~190 notices/s per virgin package (issue 248 explains why it can), each package
+followed by its own fold. Verified on `fetch 252`, one the campaign had just done:
+
+    297 of 700 sampled notices carry a LotResult section  (42%, the era's award share)
+    628 winner parties from 300 sampled notices, with real names —
+        Total France 19, Balton Spółka z o.o. 13, ETDE Ouest 12, Hurtownia Farmaceutyczna Ismed Sp. J 10
+
+That last name is a defect the campaign's own output revealed: `Sp. J.` had lost its period, because the
+abbreviation check looked at the last dot-separated segment WITHOUT trimming it and so saw ` J` rather
+than `J`. `sp. j.` is an ordinary Polish legal form, and since these winners carry no identifier the name
+IS their identity — `Sp. J` and `Sp. J.` would be two organizations for one company (issue 234's failure).
+Fixed, with the case pinned by a test, while the campaign is 15 of 215 packages in: redoing 15 packages is
+cheap, redoing 200 would not be.
+
+Packages re-parsed before that fix, and before the `NAME_WINDOW` and non-ASCII fixes earlier today, want
+redoing at the end of the campaign — the list is `fetch 186` and `240`–`255`-ish, and they are also the
+slow ones (their section ids genuinely changed, so their mentions must go).
