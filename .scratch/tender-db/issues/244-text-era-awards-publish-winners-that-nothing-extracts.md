@@ -1,7 +1,7 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: DIAGNOSED 2026-08-19 — cohort sized and the two publication grammars mapped on prod; the
-extraction target is the `TXT-TX` body, NOT the `CO:` label the first draft assumed
+Status: SLICE 1 DONE in code 2026-08-19 — the 2004+ grammar is read and reaches the canonical layer;
+awaiting the era re-parse to land it over the corpus. Pre-2004 grammar, values and 2010 still open.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -121,3 +121,78 @@ for r2.0.8's 14,532 and false for these 1.3M. Corrected in the same commit that 
 column measures the PARSE, and the two causes — publisher shipped nothing, or we do not extract it yet
 — now get named separately. A correct number under a confident wrong sentence is worse than no
 sentence.
+
+
+---
+
+## The remaining open questions, answered on prod (2026-08-19)
+
+**1. Where the grammar switches: between 2002 and 2004.** Per-year June windows, award notices by their
+own `TXT-TD = 7`, asking what their English body contains:
+
+| year | awards | `SECTION V` | ` Supplier(s):` |
+|------|--------|-------------|------------------|
+| 1994 |    158 |   0 |  75 |
+| 1997 |    207 |   0 | 133 |
+| 2000 |    167 |   0 |  80 |
+| 2002 |    190 |   0 |  97 |
+| 2004 |    203 | 200 |   0 |
+| 2006 |    354 | 349 | 347 |
+| 2009 |    314 | 312 | 312 |
+
+Clean break at the 2004 directive forms. Note the early grammar's `Supplier(s):` reaches only ~50–64 %
+of its awards, so the pre-2004 slice needs more label discovery before it can be written — the other
+half labels the winner some other way.
+
+**2. Two label vintages inside the SECTION-V era**, not one:
+
+| year | `AWARDED:` | `PROVIDER:` | either |
+|------|-----------|-------------|--------|
+| 2004 |   0 | 202 | 202 / 203 |
+| 2005 |   0 | 311 | 311 / 314 |
+| 2006 | 347 |   0 | 347 / 354 |
+| 2008 | 361 |   0 | 361 / 371 |
+| 2010 |   0 |   0 |   0 / 244 |
+
+2004–2005 use `Name and address of successful supplier, contractor or service provider:` (the same
+wording as the era's `CO:` line); 2006+ use `NAME AND ADDRESS OF ECONOMIC OPERATOR TO WHOM THE CONTRACT
+HAS BEEN AWARDED:`. Both end at a colon the value follows, and both wrap mid-heading, so the match has
+to be whitespace-normalised and case-insensitive.
+
+**3. Language, and a new anomaly in the era's tail.** In the 2010 window only 73 of 244 award notices
+have ANY `notice_texts` row at all — no `TXT-TX`, no `TXT-AU`, nothing — while all 244 carry the codes
+that identify them as awards. So the 2010 slice is not a language problem but a content one, and it is
+unexplained. Filed as its own question below rather than guessed at.
+
+## Slice 1 landed (2026-08-19) — the 2004+ grammar
+
+`awarded_names` in the text parser matches both label tails on the whitespace-flattened body and takes
+the name up to the first comma; `Emit::award` manufactures, per occurrence, a `LotResult` section, an
+`Organization` inside it, and a `TED-ADDRESS_CONTRACTOR` id-ref between them — the shape
+`read_legacy_results` and `legacy_role` already read for every legacy profile. No projection change was
+needed: the era needed a section to find, not new folding code.
+
+Two details worth keeping in mind for the next slice:
+
+- The name is filed as **`TED-OFFICIALNAME`**, because `ORG_NAME_FIELDS` reads only that and `TXT-AU`.
+  Filing it under the era's own `TXT-CO` — the first attempt — produced a nameless organization, and no
+  parse-layer test would have caught it. The integration test now asserts through to
+  `tender_version_parties`.
+- **Only the name, never the address.** One prod notice awards four contracts to "Stryker France" at
+  "Zac Satolas Green" and "Zac de Satolas Green"; an address-bearing name mints an organization per
+  spelling, which is issue 234's problem made worse on purpose.
+
+Multi-award notices are ordinary: 25 % of a 2008 window awards more than one contract, up to 18, each
+under its own `CONTRACT NO:`.
+
+## Still open
+
+1. **The re-parse.** Nothing changes for the stored corpus until the era is re-read from the archive.
+   That pass also carries issue 232's `AU:`→buyer fix, which is why both waited for one pass.
+2. **Pre-2004 grammar** (~half the era's award notices by count): `Supplier(s):` covers only ~50–64 %,
+   so the first step is finding what the rest use.
+3. **Values.** `V.4) INFORMATION ON VALUE OF CONTRACT` publishes `Value: 303 504,79 EUR.` — space
+   thousands, comma decimal, sometimes VAT lines after it. Not attempted; a wrong amount is worse than
+   no amount.
+4. **The 2010 tail**: 171 of 244 award notices in the sampled window have no text values at all. Needs
+   its own investigation — possibly related to issues 139 (the 2010-03 DTD population) or 199.
