@@ -1665,6 +1665,70 @@ async fn a_lots_group_membership_reaches_the_canonical_layer() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// ADR-0011 / issue 236: two notices of ONE procedure carrying DIFFERENT BT-04 keys
+/// become one Tender, because the award publishes a reference to the contract notice.
+///
+/// This is the counter-case to `the_real_procedure_chain_becomes_one_tender_with_four_versions`,
+/// which chains on a shared BT-04. EU eForms frequently does not share it — 27–39 % of EU
+/// award Tenders were single-notice islands for this reason — and the fixtures are the real
+/// pair from the production archive: a 2024-10 CN under sdk-1.7 and its 2025-01 award under
+/// sdk-1.13, three months and one SDK version apart.
+#[tokio::test]
+async fn a_previous_notice_reference_chains_two_procedure_keys_into_one_tender() {
+    let (db, fetch_id, path) = scratch("prev-ref").await;
+    // Deliberately ingested award-first: grouping is a function of the plan, not of
+    // arrival order, and the edge points backwards in publication time either way.
+    for fixture in [
+        "eforms-prev-ref/2-can-29-566-2025.xml",
+        "eforms-prev-ref/1-cn-16-615938-2024.xml",
+    ] {
+        ingest(&db, fetch_id, fixture).await;
+    }
+
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 2);
+    assert_eq!(report.tenders, 1, "the award's OPP-090 names the CN's publication");
+    assert_eq!(report.islands, 0, "neither is an island: both carry a BT-04");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_versions").await, 2);
+
+    // Keyed by the EARLIER publication's BT-04 — the procedure's first appearance, the
+    // same rule the legacy closure applies with MIN(ojs).
+    assert_eq!(
+        query_text(&db, "SELECT procedure_key FROM tenders").await.as_deref(),
+        Some("1d76f173-bc11-48fe-b051-962d040b6f7f"),
+        "the contract notice's key, not the award's 00a143ab-…"
+    );
+
+    // Version order is publication order, and the award is last — so the results land on
+    // the head version, which is the whole point of joining them.
+    assert_eq!(
+        query_text(&db, "SELECT publication_id FROM tender_versions WHERE seq = 1").await.as_deref(),
+        Some("00615938-2024"),
+    );
+    assert_eq!(
+        query_text(&db, "SELECT publication_id FROM tender_versions WHERE seq = 2").await.as_deref(),
+        Some("00000566-2025"),
+    );
+    assert!(
+        scalar(&db, "SELECT COUNT(*) FROM lot_results").await > 0,
+        "the award's results are on the merged Tender"
+    );
+    assert!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM lot_results lr JOIN tender_versions v
+               ON v.tender_id = lr.tender_id AND v.seq = 2
+              WHERE lr.notice_id = v.caused_by_notice_id"
+        )
+        .await
+            > 0,
+        "and they belong to the award's version, not the CN's"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ---------------------------------- issue 34: sdk-0.1 ContractFolderID as a key
 
 /// A minimal synthetic notice carrying a single id field on its PROCEDURE root —

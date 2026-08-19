@@ -2493,7 +2493,7 @@ impl Db {
     /// OOM (issue 63; turso has no truncate optimisation), whereas DROP is O(1).
     /// DROP TABLE cascades the fold/edge indexes, so no explicit DROP INDEX is needed.
     async fn clear_plan_on(&self, conn: &Connection) -> turso::Result<()> {
-        for table in ["plan_notice", "plan_ojs_node", "plan_ojs_edge"] {
+        for table in ["plan_notice", "plan_ojs_node", "plan_ojs_edge", "plan_prev_edge", "plan_group_merge"] {
             conn.execute(&format!("DROP TABLE IF EXISTS {table}"), ()).await?;
         }
         conn.execute(
@@ -2521,6 +2521,27 @@ impl Db {
         .await?;
         conn.execute("CREATE TABLE plan_ojs_edge (a INTEGER NOT NULL, b INTEGER NOT NULL) STRICT", ())
             .await?;
+        // ADR-0011: the publisher-declared previous-notice edges. `a_source` rides along
+        // so resolution can require the target to be the SAME Source without joining
+        // plan_notice for it — and so the lookup hits `notices`'
+        // UNIQUE(source, publication_id, …) index by its leading columns.
+        conn.execute(
+            "CREATE TABLE plan_prev_edge (
+                 a_notice_id      INTEGER NOT NULL,
+                 a_source         TEXT NOT NULL,
+                 b_publication_id TEXT NOT NULL
+             ) STRICT",
+            (),
+        )
+        .await?;
+        // The `from_key -> to_key` relabel map the previous-notice pass builds, kept as a
+        // table so the relabel is one indexed pass over plan_notice instead of a
+        // statement per merged component.
+        conn.execute(
+            "CREATE TABLE plan_group_merge (from_key TEXT PRIMARY KEY, to_key TEXT NOT NULL) STRICT",
+            (),
+        )
+        .await?;
         Ok(())
     }
 
@@ -2753,6 +2774,17 @@ impl Db {
                     .await?;
                 }
             }
+            // ADR-0011: one row per predecessor this notice names. Resolution happens at
+            // grouping time, against the plan — a reference to a notice we do not hold
+            // creates nothing, and a reference into another Source is not followed.
+            for pub_id in &r.prev_refs {
+                conn.execute(
+                    "INSERT INTO plan_prev_edge(a_notice_id, a_source, b_publication_id)
+                     VALUES(?, ?, ?)",
+                    (Value::Integer(r.notice_id), t(&r.source), t(pub_id)),
+                )
+                .await?;
+            }
             // A legacy notice with its own OJS number seeds the union-find graph:
             // append its symmetric edges (sequential). Its node — and every edge
             // target's node — is materialised later from these rows and
@@ -2913,6 +2945,127 @@ impl Db {
             let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         }
         eprintln!("[project] group step legacy-update: {:.1}s ({} legacy)", t.elapsed().as_secs_f64(), legacy.len());
+
+        // ADR-0011: the publisher-declared previous-notice edge. It runs HERE — after the
+        // keyed and legacy passes, before the fold index — for two reasons: it unions
+        // COMPONENTS, so every notice must already carry a group_key, and relabelling
+        // before the index exists means the UPDATE pays no index maintenance.
+        //
+        // EU eForms does not keep BT-04 stable across a procedure's notices (issue 236:
+        // 27–39 % of EU award Tenders are single-notice islands whose contract notice sits
+        // in the corpus under a different BT-04). `OPP-090-Procedure` is the source's own
+        // statement that two publications are one procedure, so joining them is reading a
+        // published fact, not inference (ADR-0003's "never heuristic" line).
+        //
+        // Guards, all measured on prod before being written (ADR-0011): the target must
+        // exist, must be the same Source, and must be strictly EARLIER — 563 of 563
+        // resolvable references pointed backwards, so a forward or self reference is not a
+        // shape the corpus has, and refusing it rules out a cycle for free.
+        //
+        // On an INCREMENTAL run the plan holds only the touched notices, so a reference to
+        // an untouched notice finds no `plan_notice b` row and unions nothing: the award
+        // stays an island until a run whose plan holds both. That is the intended
+        // degradation — a partial merge would be far worse than a late one — and it is why
+        // the corpus repair needs the rebuild, not a daily projection.
+        // `started`, because the earlier passes in this function have already bound `t` to
+        // an Instant — which shadows the crate's `t()` text helper for the rest of the
+        // body, so the INSERTs below spell their text values out.
+        let started = std::time::Instant::now();
+        let mut edges: Vec<(String, String)> = Vec::new();
+        let mut rank: std::collections::HashMap<String, (i64, String)> =
+            std::collections::HashMap::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT a.group_key, a.published_at, a.publication_id, \
+                            b.group_key, b.published_at, b.publication_id \
+                       FROM plan_prev_edge e \
+                       JOIN notices n ON n.source = e.a_source \
+                                     AND n.publication_id = e.b_publication_id \
+                       JOIN plan_notice a ON a.notice_id = e.a_notice_id \
+                       JOIN plan_notice b ON b.notice_id = n.id \
+                      WHERE a.group_key IS NOT NULL AND b.group_key IS NOT NULL \
+                        AND b.published_at < a.published_at \
+                        AND a.group_key <> b.group_key",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let (a, b) = (text(&row, 0), text(&row, 3));
+                // A key's rank is the earliest publication it is seen carrying, so the
+                // representative below is the procedure's first appearance — the same rule
+                // the legacy closure applies with MIN(ojs).
+                for (key, at, pub_id) in
+                    [(&a, int(&row, 1), text(&row, 2)), (&b, int(&row, 4), text(&row, 5))]
+                {
+                    let entry = rank.entry(key.clone()).or_insert((at, pub_id.clone()));
+                    if (at, pub_id.clone()) < *entry {
+                        *entry = (at, pub_id);
+                    }
+                }
+                edges.push((a, b));
+            }
+        }
+        let merges: Vec<(String, String)> = if edges.is_empty() {
+            Vec::new()
+        } else {
+            // Order the involved keys by (earliest publication, publication id, key) and
+            // union over their POSITIONS: [`MinUnionFind`] unions to the minimum, so the
+            // component root is by construction the earliest-published key. Reusing it
+            // this way is why there is no second union-find here.
+            let mut keys: Vec<String> = rank.keys().cloned().collect();
+            keys.sort_by(|x, y| rank[x].cmp(&rank[y]).then_with(|| x.cmp(y)));
+            let position: std::collections::HashMap<&str, i64> =
+                keys.iter().enumerate().map(|(i, k)| (k.as_str(), i as i64)).collect();
+            let mut uf = MinUnionFind::default();
+            for (a, b) in &edges {
+                uf.union(position[a.as_str()], position[b.as_str()]);
+            }
+            keys.iter()
+                .enumerate()
+                .filter_map(|(i, key)| {
+                    let root = uf.find(i as i64) as usize;
+                    (root != i).then(|| (key.clone(), keys[root].clone()))
+                })
+                .collect()
+        };
+        if !merges.is_empty() {
+            for chunk in merges.chunks(NODE_WRITE_BATCH) {
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+                for (from, to) in chunk {
+                    conn.execute(
+                        "INSERT OR REPLACE INTO plan_group_merge(from_key, to_key) VALUES(?, ?)",
+                        (Value::Text(from.clone()), Value::Text(to.clone())),
+                    )
+                    .await?;
+                }
+                conn.execute("COMMIT", ()).await?;
+            }
+            // Batched by notice_id like the keyed/island pass, and for the same reason
+            // (issue 63: one whole-plan UPDATE cannot be checkpointed mid-statement).
+            if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
+                let mut lo = min_id;
+                while lo <= max_id {
+                    let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
+                    conn.execute(
+                        "UPDATE plan_notice SET group_key = \
+                             (SELECT to_key FROM plan_group_merge m WHERE m.from_key = plan_notice.group_key) \
+                          WHERE notice_id BETWEEN ? AND ? \
+                            AND group_key IN (SELECT from_key FROM plan_group_merge)",
+                        (Value::Integer(lo), Value::Integer(hi)),
+                    )
+                    .await?;
+                    let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                    lo = hi.saturating_add(1);
+                }
+            }
+        }
+        eprintln!(
+            "[project] group step previous-notice: {:.1}s ({} edge(s) resolved, {} key(s) merged)",
+            started.elapsed().as_secs_f64(),
+            edges.len(),
+            merges.len()
+        );
 
         // The fold order Phase 2 streams by: rows arrive grouped by Tender and, within
         // a Tender, in supersession order (ADR-0003 tiebreak), so no in-RAM sort.
