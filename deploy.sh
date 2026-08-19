@@ -20,6 +20,34 @@ PUBLIC_URL="${PUBLIC_URL:-https://tenders.zebreus.click}"
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
+# A deploy RESTARTS the service, and a restart re-runs the job that was running from
+# the top: its durable row survives by design (issue 21), so recovery puts it back at the
+# front of the queue. That is cheap for a 90-second fold and expensive for a package
+# re-parse — during issue 244's campaign it cost hours of redone work, twice, because
+# nothing said the box was busy (issue 245).
+#
+# So ask first. This runs before the push and the build, so a busy box costs a second
+# rather than five minutes, and the override is explicit: FORCE_BUSY=1 ./deploy.sh
+say "Checking the job queue on $VPS"
+BUSY="$($SSH "$VPS" bash -euo pipefail -s <<'PROBE' || true
+S=$(sed -n 's/^TENDER_ADMIN_SECRET=//p' /root/tender-admin-secret 2>/dev/null || true)
+[ -n "$S" ] || exit 0
+curl -s --max-time 10 -H "x-admin-secret: $S" http://127.0.0.1:8080/admin/jobs 2>/dev/null \
+  | jq -r 'if .current then "\(.current.id) \(.current.kind) \(.current.params)" else "" end' 2>/dev/null || true
+PROBE
+)"
+if [ -n "$BUSY" ] && [ "${FORCE_BUSY:-0}" != "1" ]; then
+    cat >&2 <<MSG
+refusing to deploy while a job is running: $BUSY
+
+A restart re-runs it from the top — its durable row survives, so nothing is lost, but the
+work is redone. Wait for the queue to drain (ops/admin.sh queue), stop the job
+(DELETE /admin/jobs/<id>), or override with FORCE_BUSY=1 if the deploy is the urgent thing.
+MSG
+    exit 1
+fi
+[ -n "$BUSY" ] && say "FORCE_BUSY=1: deploying over the running job ($BUSY)"
+
 say "Pushing $REF to $VPS:$REMOTE_REPO"
 git push vps "$REF:main"
 REV="$(git rev-parse "$REF")"
