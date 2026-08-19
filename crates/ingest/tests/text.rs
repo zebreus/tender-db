@@ -86,6 +86,60 @@ fn the_1993_daily_splits_and_parses_completely() {
     assert_eq!(with_rn, 105);
 }
 
+/// The winners of that same 199-record delivery (issue 244, slice 3). A real-data gate
+/// on the extractor rather than a hand-written body: the fixture's `6.  Supplier(s):`
+/// item appears in every shape the 1993 supplies form uses — plain `Name, address`,
+/// lot-keyed (`1:`, `A:`, `1/2:`, `1, 2, 3 and 4:`), several winners `;`-separated, and
+/// the non-answers (`Various.`, a bare count).
+///
+/// The count is asserted exactly, so a regression that starts inventing names — or one
+/// that stops reading a shape — fails here rather than on prod. Every name is also
+/// checked for the two ways a bad boundary shows up: a lot reference left on the front,
+/// and a value long enough to be an address rather than a company.
+#[test]
+fn the_1993_daily_yields_its_award_winners() {
+    let records = ingest_fixture(
+        "1993-daily-en-19930102.txt",
+        "EN_19930102_1993001_ISO_ORG.zip!EN_19930102_1993001_ISO_ORG",
+    );
+
+    let mut names = Vec::new();
+    for (_, parse) in &records {
+        let Parse::Parsed(parsed) = parse else { continue };
+        for row in &parsed.values {
+            if row.field_id == "TED-OFFICIALNAME" {
+                if let NoticeValue::Text { value, .. } = &row.value {
+                    names.push(value.clone());
+                }
+            }
+        }
+    }
+
+    // 117 winners from 199 records. The number is exact on purpose: it moved from 40 to
+    // 117 when lot-keyed and period-separated lists were read rather than swallowed, and
+    // a regression in either direction should fail here.
+    assert_eq!(names.len(), 117, "winners read from the 1993 daily: {names:#?}");
+    for name in &names {
+        assert!(!name.is_empty(), "an empty winner name");
+        assert!(
+            !name.starts_with(|c: char| c.is_ascii_digit()),
+            "a lot reference survived into the name: {name:?}"
+        );
+        assert!(name.len() <= 80, "this is an address, not a company: {name:?}");
+        assert!(!name.eq_ignore_ascii_case("various"), "a non-answer became a company");
+    }
+
+    // Spot-checks: one plain, one lot-keyed, one that the comma must keep whole.
+    assert!(names.iter().any(|n| n == "Motorola Limited"), "{names:#?}");
+    assert!(names.iter().any(|n| n == "Ailsa Truck and Bus Limited"), "{names:#?}");
+    assert!(names.iter().any(|n| n == "SAF (Soudure Artogene Franccaise)"), "{names:#?}");
+    // An initial before a period is part of the name, not a lot reference.
+    assert!(names.iter().any(|n| n == "H. Meyer GmbH"), "{names:#?}");
+    assert!(names.iter().any(|n| n == "B. Braun Medical"), "{names:#?}");
+    // The fourteen-lot period-separated list is fourteen winners, not one long string.
+    assert_eq!(names.iter().filter(|n| *n == "Discol").count(), 5, "{names:#?}");
+}
+
 // ------------------------------------------------------------- value mapping
 
 /// The first 1993 record in depth: the 1993 vintage carries the pre-CPV

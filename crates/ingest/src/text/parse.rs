@@ -64,17 +64,34 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 ///   — the EC external-aid (SCR/EuropeAid) form, winner at 8.
 ///
 /// The singular variants are carried too: the era writes both `contractor(s)` and
-/// `contractor`, and both `tenderer` and `tenderer(s)`. A value that is withheld
-/// rather than named ("Publication of this information would prejudice …") reaches no
-/// boundary inside `NAME_WINDOW` and is skipped by the fall-through below, which is
-/// the intended outcome — better no organization than a sentence minted as one.
-const AWARD_LABELS: [&str; 6] = [
+/// `contractor`, and both `tenderer` and `tenderer(s)`.
+///
+/// The supplies and utilities forms name the winner under a *different* item and a
+/// different word, which is why the first pre-2004 pass still missed four fifths of
+/// the era's awards. Counted over `fetch 300`'s 13,734 bodies (2001-06), one scan:
+///
+///     …successful contractor…                                785
+///     …successful tenderer…                                  122
+///     supplier(s):                                         1,435
+///     supplier(s), contractor(s) or service provider(s):      410
+///     contractor(s):                                          735   (mostly the above)
+///
+/// So `SUPPLIER(S):` alone is the single biggest remaining label. `SERVICE PROVIDER(S):`
+/// is the tail of the long combined heading — matching the tail rather than the whole
+/// thing covers the standalone spelling too, and the value starts at the same colon
+/// either way. Note the existing `SERVICE PROVIDER:` does NOT reach that heading: the
+/// era writes `service provider(s):` there and the `(s)` breaks the match.
+const AWARD_LABELS: [&str; 10] = [
     "SERVICE PROVIDER:",
+    "SERVICE PROVIDER(S):",
     "HAS BEEN AWARDED:",
     "SUCCESSFUL CONTRACTOR(S):",
     "SUCCESSFUL CONTRACTOR:",
     "SUCCESSFUL TENDERER(S):",
     "SUCCESSFUL TENDERER:",
+    "SUPPLIER(S):",
+    "SUPPLIER:",
+    "CONTRACTOR(S):",
 ];
 
 /// How far past the label a name's end is looked for. Generous next to the measured
@@ -83,19 +100,19 @@ const AWARD_LABELS: [&str; 6] = [
 /// quadratic in (awards × length).
 const NAME_WINDOW: usize = 256;
 
-/// Where a winner's name ends. The value runs `<name>, <address…>. Tel. …`, so the
-/// comma is the boundary in every measured shape; the rest are stops that catch a
-/// value with no comma at all before the next heading, so a missing comma truncates
-/// to something plausible instead of swallowing the remaining form.
+/// Where the winner *value* ends: the next form item or heading. The value is not the
+/// name — one value can carry several winners — so this bounds the value and the comma
+/// rule inside [`awarded_names`] then bounds each name within it.
 ///
-/// `7.` and `9.` are the pre-2004 numbered form's next item after the winner (item 6
-/// in the works/services form, item 8 in the external-aid one). Without them a winner
-/// whose address carries no comma runs on into the following item — `Successful
-/// contractor(s): ACME Ltd. 7. Works provided: CPV: 45210000, 74222000` would name the
-/// organization `ACME Ltd. 7. Works provided: CPV: 45210000`. The body is flattened to
-/// single spaces before this runs, so the leading space makes the match reliable.
-const NAME_STOPS: [&str; 8] =
-    [",", "V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO", " 7.", " 9."];
+/// ` 7.`, ` 9.` and ` 10.` are the numbered form's item after the winner: 6 in the
+/// works/services and supplies forms, 8 in the external-aid one, 9 in the utilities one. Without them
+/// a winner whose address carries no comma runs on into the following item —
+/// `Successful contractor(s): ACME Ltd. 7. Works provided: CPV: 45210000, 74222000`
+/// would name the organization `ACME Ltd. 7. Works provided: CPV: 45210000`. The body
+/// is flattened to single spaces before this runs, so the leading space makes the match
+/// reliable.
+const ITEM_STOPS: [&str; 8] =
+    ["V.1.2)", "V.2)", "V.3)", "V.4)", "CONTRACT NO", " 7.", " 9.", " 10."];
 
 /// Phrases that mean the value is not a name, so no organization is minted from it.
 ///
@@ -113,6 +130,138 @@ const NAME_STOPS: [&str; 8] =
 /// any other withholding wording the era uses will surface as a junk organization and
 /// can be added with its own evidence.
 const NAME_REJECTS: [&str; 2] = ["WOULD PREJUDICE", "NOT APPLICABLE"];
+
+/// Whether a candidate can be a company at all, before it is allowed to mint an
+/// organization. Every rule here comes from a payload that would otherwise have minted
+/// nonsense, and each is cheap enough to run per candidate:
+///
+/// - **it must contain a letter.** `6.  Supplier(s): 99.` is a real 1993 body (notice
+///   21,123): under the supplies form that item sometimes holds the *number* of
+///   suppliers rather than a name. `99` as an organization is worse than no winner.
+/// - **it must not be the era's word for "no single answer".** `6.  Supplier(s): Various.`
+///   appears four times in the committed 1993 daily alone. Compared whole, not as a
+///   substring, so a company whose name contains the word is untouched.
+/// - **it must not be one of [`NAME_REJECTS`]** — the withheld-value boilerplate.
+fn plausible_name(name: &str) -> bool {
+    if name.is_empty() || !name.chars().any(char::is_alphabetic) {
+        return false;
+    }
+    if name.eq_ignore_ascii_case("various") {
+        return false;
+    }
+    !NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some())
+}
+
+/// How long a lot reference in front of a winner's name is allowed to be.
+/// `1, 2, 3 and 4:` is the longest measured, at 14 characters.
+const LOT_PREFIX_MAX: usize = 24;
+
+/// Strip a leading lot reference from a winner value, so the *name* starts where the
+/// name starts.
+///
+/// The 1993 supplies form keys each winner to the lots it won, and it is not a rare
+/// shape — the committed `1993-daily-en-19930102` fixture uses it for roughly a third
+/// of its winners, in every one of these spellings:
+///
+///     6.  Supplier(s): A: Apotecnia, Climo
+///     6.  Supplier(s): 1: Ailsa Truck and Bus Limited, 101 Kelburn Street, …
+///     6.  Supplier(s): 1/2: Evans MacShaw Leyland DAF Limited, Shefford Road, …
+///     6.  Supplier(s): 1, 2: Carlier Chaines, 37/41, rue Roger Salengro, …
+///     6.  Supplier(s): 1, 2, 3 and 4: Dolmen Computer Applications NV, …
+///     6.  Supplier(s): 1: Baxter Healthcare; 2: B. Braun Medical; 3: Fresenius …
+///
+/// Taken verbatim these mint `1: Ailsa Truck and Bus Limited` — a second spelling of a
+/// company that also appears unprefixed, and since these winners carry no identifier the
+/// name IS the identity (issue 234). Fail-closed was the earlier stance and it is worse:
+/// it drops a third of the era's oldest winners rather than reading them.
+///
+/// A prefix qualifies only if everything before the terminator is lot-reference material
+/// — digits, single letters, separators, and the word `and` — and short. Anything else is
+/// left alone, so `ARGE: Walter-Bau-AG` and `Groupement solidaire: Entreprise Quille`,
+/// both real consortium designations in the same fixture, keep their colons.
+///
+/// The terminator may be `.` instead of `:` (`6.  Supplier(s): 1. Poul Pedersen A/S`) —
+/// but then the reference must be DIGITS. A single letter followed by a period is an
+/// initial, not a lot: `H. Meyer GmbH` and `B. Braun Medical` are companies, and
+/// stripping there would rename them.
+fn lot_prefix_len(value: &str) -> Option<usize> {
+    let (at, terminator) = value
+        .char_indices()
+        .take_while(|(i, _)| *i <= LOT_PREFIX_MAX)
+        .find(|(_, c)| *c == ':' || *c == '.')?;
+    let head = &value[..at];
+    if head.is_empty() {
+        return None;
+    }
+    let parts = head.split([',', '/', '-', ' ']).filter(|p| !p.is_empty());
+    let mut any_letter = false;
+    for part in parts {
+        if part.eq_ignore_ascii_case("and") {
+            continue;
+        }
+        if part.chars().all(|c| c.is_ascii_digit()) {
+            continue;
+        }
+        if part.chars().count() == 1 && part.chars().all(|c| c.is_ascii_alphabetic()) {
+            any_letter = true;
+            continue;
+        }
+        return None;
+    }
+    // A lone letter before a period is an initial, not a lot reference.
+    if terminator == '.' && any_letter {
+        return None;
+    }
+    Some(at + terminator.len_utf8())
+}
+
+fn strip_lot_prefix(value: &str) -> &str {
+    match lot_prefix_len(value) {
+        Some(n) => value[n..].trim_start(),
+        None => value,
+    }
+}
+
+/// Split one winner value into one segment per winner.
+///
+/// Two separators, both measured in the committed 1993 daily. `;` is the utilities
+/// form's (`BP, Hamburg; Thelen, Mainz.`). The supplies form instead ends each entry
+/// with a period and opens the next with its lot reference:
+///
+///     6.  Supplier(s): 1: Discol. 2: Rault. 3: Discol. … 14: Sarl Fuseau
+///
+/// Fourteen winners in one item. Read as one value that is a 150-character "company"
+/// name; read as fourteen it is fourteen organizations, which is what the payload says.
+/// A period only separates when a lot reference follows it — otherwise it is the end of
+/// a sentence or of an abbreviation, and the value stays whole.
+fn winner_segments(value: &str) -> Vec<&str> {
+    let mut segments = Vec::new();
+    let bytes = value.as_bytes();
+    let (mut start, mut i) = (0usize, 0usize);
+    while i < bytes.len() {
+        if bytes[i] == b';' || bytes[i] == b'.' {
+            let mut next = i + 1;
+            while next < bytes.len() && bytes[next] == b' ' {
+                next += 1;
+            }
+            // `;` separates on its own; `.` only in front of a lot reference.
+            let separates = if bytes[i] == b';' {
+                true
+            } else {
+                next > i + 1 && lot_prefix_len(&value[next..]).is_some()
+            };
+            if separates && next > start {
+                segments.push(&value[start..i]);
+                start = next;
+                i = next;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    segments.push(&value[start..]);
+    segments
+}
 
 /// Drop the period that ends the sentence, and keep the one that ends an
 /// abbreviation (issue 244).
@@ -192,26 +341,42 @@ fn awarded_names(body: &str) -> Vec<String> {
         };
         let value_at = start + label.len();
         let rest = &flat[value_at..];
-        // Look for the name's end in a WINDOW, not in the rest of the notice. Scanning
+        // Look for the value's end in a WINDOW, not in the rest of the notice. Scanning
         // the whole remainder made the function quadratic in (awards × body length), and
         // a notice awarding hundreds of contracts then took minutes: the campaign's
         // `fetch 186` went from 148 s to under two members a minute at 133% CPU with
         // three writer acquisitions in 45 seconds. A winner's name is never 8 kB from
         // its own label.
         let window = &rest[..char_bound(rest, NAME_WINDOW)];
-        let Some(end) = NAME_STOPS.iter().filter_map(|stop| find_ascii_ci(window, stop)).min()
-        else {
-            // No boundary inside the window: the value is not a shape this recognises.
-            // Skipping beats taking the window verbatim — a 256-byte "name" would mint
-            // an organization per notice and poison the identity that has no identifier
-            // to fall back on (issue 234).
-            at = value_at;
-            continue;
-        };
-        let name = trim_sentence_period(window[..end].trim());
-        let withheld = NAME_REJECTS.iter().any(|r| find_ascii_ci(name, r).is_some());
-        if !name.is_empty() && !withheld {
-            names.push(name.to_owned());
+        // Two levels, because one value can carry more than one winner. The ITEM stop
+        // ends the VALUE; inside it, `;` separates winners and `,` ends each name:
+        //
+        //     9.  Supplier(s), …: BP, Hamburg; Thelen, Mainz.   10.  …
+        //                         ^^          ^^^^^^            ^^^^ item stop
+        //
+        // Reading that as one name would mint `BP, Hamburg; Thelen` as an organization,
+        // which is the withheld-boilerplate failure in a new costume (issue 234).
+        let item_end = ITEM_STOPS.iter().filter_map(|stop| find_ascii_ci(window, stop)).min();
+        let value = &window[..item_end.unwrap_or(window.len())];
+        for segment in winner_segments(value) {
+            // The name ends at the first comma — the address follows it in every
+            // measured shape. With no comma, the name is the whole segment, which is
+            // safe only because the item stop already bounded it: with NEITHER boundary
+            // the segment is the raw 256-byte window, and a "name" that long mints one
+            // organization per notice and poisons an identity that has no identifier to
+            // fall back on. Refuse it instead.
+            let segment = strip_lot_prefix(segment.trim_start());
+            let (name, bounded) = match segment.find(',') {
+                Some(comma) => (&segment[..comma], true),
+                None => (segment, item_end.is_some()),
+            };
+            if !bounded {
+                continue;
+            }
+            let name = trim_sentence_period(name.trim());
+            if plausible_name(name) {
+                names.push(name.to_owned());
+            }
         }
         at = value_at;
     }
@@ -944,6 +1109,99 @@ mod tests {
             awarded_names("Award notice 8. Name and address of successful tenderer(s): Acme Ltd, Wood Street."),
             vec!["Acme Ltd".to_owned()]
         );
+    }
+
+    /// Issue 244 slice 3: the supplies and utilities forms, which name the winner under a
+    /// different item and a different word — measured as four fifths of the era's awards.
+    /// Every body here is verbatim from prod.
+    #[test]
+    fn the_supplies_and_utilities_forms_yield_their_winners() {
+        // notice 1,456,070 (fetch 319, 1999-11) — utilities, winner at item 9, and TWO of
+        // them in one value, `;`-separated, each `Name, City`.
+        let wiesbaden = "1.  Contracting entity: Stadtwerke Wiesbaden AG, Postfach 55 40, D-65045\n\
+                         Wiesbaden.\n\
+                         5.  Award procedure: Verhandlungsverfahren.\n\
+                         6.  Tenders received: 11.\n\
+                         7.  Date of award: 30. 8. 1999.\n\
+                         9.  Supplier(s), contractor(s) or service provider(s): BP, Hamburg; \n\
+                         Thelen, Mainz.\n\
+                         10.  \n\
+                         11.  Other information: Auftragsart: Lieferauftrag.";
+        assert_eq!(awarded_names(wiesbaden), vec!["BP".to_owned(), "Thelen".to_owned()]);
+
+        // notice 1,710,469 (fetch 300, 2001-06) — supplies, `Supplier(s):` at item 6.
+        let wien = "1.  Awarding authority: Bundesministerium für Landesverteidigung, A-1090 Wien.\n\
+                    3.  Date of award: 14.5.2001.\n\
+                    5.  Tenders received: 4.\n\
+                    6.  Supplier(s): Kovosluzba, Priemyselna 4, 04234 Kosice, Slowakei.\n\
+                    7.  Goods, CPA reference number: CPV: 28632200, 36121120.\n\
+                    8.  Price: Gezahlter Preis ohne USt.: 15 564 000 ATS / 1 131 079,99 EUR.";
+        assert_eq!(awarded_names(wien), vec!["Kovosluzba".to_owned()]);
+
+        // The 1993 supplies form keys winners to their lots, in every spelling the
+        // committed `1993-daily-en-19930102` fixture uses. Taken verbatim these would mint
+        // `1: Ailsa Truck and Bus Limited` — a second spelling of a company that also
+        // appears unprefixed, and the name IS the identity here (issue 234).
+        let lots = |v: &str| awarded_names(&format!("Award notice 6.  Supplier(s): {v}\n 7.  Goods."));
+        assert_eq!(lots("A: Apotecnia, Climo"), vec!["Apotecnia".to_owned()]);
+        assert_eq!(
+            lots("1: Ailsa Truck and Bus Limited, 101 Kelburn Street,"),
+            vec!["Ailsa Truck and Bus Limited".to_owned()]
+        );
+        assert_eq!(
+            lots("1/2: Evans MacShaw Leyland DAF Limited, Shefford Road,"),
+            vec!["Evans MacShaw Leyland DAF Limited".to_owned()]
+        );
+        assert_eq!(
+            lots("1, 2, 3 and 4: Dolmen Computer Applications NV,"),
+            vec!["Dolmen Computer Applications NV".to_owned()]
+        );
+        assert_eq!(lots("1: Discol."), vec!["Discol".to_owned()]);
+        // …and lot-keyed AND multi-winner at once, which is where the two rules meet.
+        assert_eq!(
+            lots("1: Baxter Healthcare; 2: B. Braun Medical; 3: Fresenius Ltd."),
+            vec!["Baxter Healthcare".to_owned(), "B. Braun Medical".to_owned(), "Fresenius Ltd".to_owned()]
+        );
+        // A name that merely contains a colon further in is NOT truncated to nothing.
+        assert_eq!(lots("Compagnie IBM France, F-92400 Courbevoie."), vec!["Compagnie IBM France".to_owned()]);
+
+        // notice 21,133 (fetch 400, 1993-02) — the same label eight years earlier, so this
+        // slice reaches the era's oldest packages too.
+        let persiceto = "1.  Awarding authority: Amministrazione comunale, I-40017 San Giovanni.\n\
+                          3.  Date of award: 9. 12. 1992.\n\
+                          5.  Tenders received: 1.\n\
+                          6.  Supplier(s): CAMST Scrl, via Tosarelli 318, Villanova di Castenaso (BO)\n\
+                          .\n\
+                          7.  Goods supplied: Foodstuffs to make school-canteen meals.";
+        assert_eq!(awarded_names(persiceto), vec!["CAMST Scrl".to_owned()]);
+    }
+
+    /// Two ways the era fills the winner item with something that is NOT a winner. Both
+    /// must mint nothing — an organization named `99` or `A: Apotecnia` is worse than a
+    /// missing winner, because these names carry no identifier and so ARE the identity.
+    #[test]
+    fn a_winner_item_that_holds_no_name_mints_nothing() {
+        // notice 21,123 (1993-02): under the supplies form this item sometimes holds the
+        // NUMBER of suppliers.
+        let count = "1.  Awarding authority: Unita sanitaria locale BA/8, I-70032 Bitonto.\n\
+                     5.  Tenders received: 110.\n\
+                     6.  Supplier(s): 99.\n\
+                     7.  Goods supplied: Therapeutic substances.";
+        assert!(awarded_names(count).is_empty(), "a count became a name: {:?}", awarded_names(count));
+
+        // `Various.` is the era's word for "no single answer" — four times in the committed
+        // 1993 daily alone. An organization called `Various` is worse than no winner.
+        let various = "Award notice 6.  Supplier(s): Various.\n 7.  Goods supplied: Fuel.";
+        assert!(awarded_names(various).is_empty(), "{:?}", awarded_names(various));
+
+        // notice 1,710,467 (2001-06): a CANCELLED procedure — item 6 is empty and item 11
+        // says so. There is no winner to find, and none is invented.
+        let cancelled = "1.  Awarding authority: Direction départementale de l'équipement.\n\
+                         2.  Award procedure, justification (Article 7(4)): Appel d'offres ouvert.\n\
+                         6.\n\
+                         7.  Works provided: CPV: 45112210, 45233220.\n\
+                         11.  Other information: Procédure annulée: décision de la PRM du 15.5.2001.";
+        assert!(awarded_names(cancelled).is_empty());
     }
 
     /// A withheld winner must mint NOTHING. The era fills the item with boilerplate

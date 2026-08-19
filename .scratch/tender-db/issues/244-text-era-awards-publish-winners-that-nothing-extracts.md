@@ -1,9 +1,11 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 2 LANDED AND A/B-VERIFIED ON PROD 2026-08-19 (rev `08ca548`) — the pre-2004 numbered
-form reads, taking the vintage from 0.1% to 20.5% of award notices. Four fifths of the era's awards are
-still unread; the two shapes that miss are named below with payload evidence. OPEN.
-packages are a staged campaign; pre-2004 grammar, values and the 2010 tail still open.
+Status: SLICE 3 BUILT 2026-08-19 — the supplies/utilities labels, multi-winner values and lot-keyed
+names. Slice 2 was A/B-verified on prod twice (0.3%→18.2% on fetch 300, 0.1%→20.5% on fetch 319);
+slice 3 targets the 92.9% of the package's award notices that carry one of the new labels, and is
+gated on the committed 1993 daily at 117 winners from 199 records (was 40). AWAITING DEPLOY + the
+third A/B. Still open beyond it: the 1993 flat grammar's remaining shapes, the value/date/tenders
+fields, and the 2010 tail.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -414,3 +416,88 @@ Both are the same discipline as this slice: read the payloads, name the labels, 
 shape needs, and A/B one package. Do the `;` split with a test that asserts BOTH names — a list read as
 one name would mint `BP, Hamburg; Thelen` as an organization, which is the withheld-boilerplate failure
 in a new costume.
+
+
+## Slice 3: the supplies and utilities forms (2026-08-19)
+
+### The second A/B, on the same package, against a recorded before-value
+
+`fetch 300` (2001-06) was re-parsed under slice 2 as job 43 — the cleanest possible A/B, because this
+issue had recorded its before-value that morning:
+
+    fetch 300, 13,734 notices, 4,153 TD:7 award records
+      before slice 2:   12 notices with an extracted winner   (0.3 % of awards)
+      after  slice 2:  755 notices with an extracted winner   (18.2 % of awards)
+
+Which matches `fetch 319`'s 20.5 % from the boundary A/B, so the figure is a property of the vintage
+rather than of one package.
+
+### Where the other four fifths were, counted rather than guessed
+
+One scan over the package's 13,734 bodies:
+
+    …successful contractor…                                785
+    …successful tenderer…                                  122
+    supplier(s):                                         1,435
+    supplier(s), contractor(s) or service provider(s):      410
+    contractor(s):                                          735   (mostly the two above)
+    service provider…                                    2,323
+
+`SUPPLIER(S):` alone is the biggest remaining label, and the combined heading's tail
+`SERVICE PROVIDER(S):` covers the utilities form — note the *existing* `SERVICE PROVIDER:` does not
+reach it, because the era writes `service provider(s):` there and the `(s)` breaks the match.
+
+**And they are award-exclusive.** Every one of the **3,857** bodies in the package carrying any of the
+three new labels is TD:7 — zero on TD:3 invitations, TD:2 corrigenda or anything else. So the new
+labels cannot invent a winner on a notice that has no award, which was the risk worth checking before
+deploying them. 3,857 of 4,153 award notices is 92.9 % carrying a label; the guards below then decide
+how many of those are really names.
+
+### What the payloads forced beyond the labels
+
+**Two winners in one value** (notice 1,456,070, utilities): `9.  Supplier(s), contractor(s) or service
+provider(s): BP, Hamburg; Thelen, Mainz.` The scan now works in two levels — an **item stop ends the
+VALUE**, then `;` separates winners inside it and `,` ends each name. Reading that as one name would
+mint `BP, Hamburg; Thelen` as an organization. Falsified: without the split the test gets `["BP"]`.
+
+**A count where a name should be** (notice 21,123, 1993-02): `6.  Supplier(s): 99.` — under the
+supplies form that item sometimes holds the *number* of suppliers. `plausible_name` now requires at
+least one alphabetic character. Falsified: without it the test gets `["99"]`.
+
+**Lot-keyed winners, which turned out to be a third of the era's oldest awards.** The committed
+`1993-daily-en-19930102` fixture — 199 records, already in the suite — carries `6.  Supplier(s):` in
+every one of these spellings:
+
+    A: Apotecnia, Climo
+    1: Ailsa Truck and Bus Limited, 101 Kelburn Street, …
+    1/2: Evans MacShaw Leyland DAF Limited, Shefford Road, …
+    1, 2: Carlier Chaines, 37/41, rue Roger Salengro, …
+    1, 2, 3 and 4: Dolmen Computer Applications NV, …
+    1: Baxter Healthcare; 2: B. Braun Medical; 3: Fresenius …
+    1: Discol. 2: Rault. 3: Discol. … 14: Sarl Fuseau
+    1. Poul Pedersen A/S
+
+The earlier stance — fail closed on a lot list — was the wrong call: it drops the winners rather than
+reading them. A leading lot reference is now stripped (digits, single letters, `/`, `,`, `and`, short),
+and the last shape shows the separator is not always `;`: the supplies form ends each entry with a
+**period** and opens the next with its lot reference, fourteen winners in one item.
+
+Two rules keep that from eating real names. A lone letter before a period is an **initial**, not a lot
+(`H. Meyer GmbH`, `B. Braun Medical`, `T.C. Harrison Group Limited` all survive), so a period-terminated
+reference must be digits. And a prefix only strips if it is short and entirely lot-reference material,
+so the fixture's two real consortium designations — `ARGE: Walter-Bau-AG` and `Groupement solidaire:
+Entreprise Quille` — keep their colons.
+
+**Measured on that fixture, as a committed gate:** the 199 records yield **117 winners**, up from 40
+before lot-keyed and period-separated lists were read. The count is asserted exactly, and every name is
+checked for the two ways a bad boundary shows: a lot reference left on the front, and a value long
+enough to be an address.
+
+**A cancelled procedure** (notice 1,710,467): item 6 empty, item 11 `Procédure annulée`. No winner
+exists and none is invented — so 100 % of TD:7 is not the target, and never was.
+
+### Reach
+
+`Supplier(s):` is the same label in 1993 as in 2001 (notice 21,133: `6.  Supplier(s): CAMST Scrl, via
+Tosarelli 318, …`), so this slice reaches the era's oldest packages, not just the pre-2004 middle. The
+campaign has not walked back that far yet, which means those packages get it on their first pass.
