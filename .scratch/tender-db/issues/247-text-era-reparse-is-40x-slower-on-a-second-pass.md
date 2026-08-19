@@ -1,7 +1,7 @@
 # 247 — the same text-era package re-parses 40× slower on a later run, pread-bound inside the DB
 
-Status: index built and it helped 4x, not 40x — a residual tail of expensive notices remains. Stopping a
-running job is now possible (the operational half is closed); the campaign stays paused.
+Status: three fixes measured (index, deferred FKs, full-key delete): 153ms → 10.2s → 2.2s a notice. Still
+100× too slow for the era; the next move is the bulk path, not another micro-fix. Campaign paused.
 Kind: performance regression, re-parse path
 Blocked by: —
 Relates to: 244 (the campaign that hit it), 100 (the re-parse mechanism), 92 (fold quadratic in chain
@@ -264,3 +264,46 @@ Paused deliberately. 12 of 215 packages are re-parsed (and 11 of those under the
 want redoing once the rate is understood). The arithmetic that matters: at 39 ms a notice the era is about
 40 hours of queue time, and at the first pass's rate it was 11. Neither is worth starting until the tail
 above is explained — and now that a running job can be stopped, starting it is no longer irreversible.
+
+
+## Every notice has mentions, so this was never a tail (2026-08-19)
+
+The "residual tail" reading was wrong, and the correction matters. Mentions per notice, sampled:
+
+    fetch 250 (never re-parsed):  1 → 288 notices, 2 → 222, 3 → 27, 4 → 14, 8 → 8
+    fetch 186 (re-parsed twice):  0 → 864 notices, 1 → 636
+
+So text-era notices carry one to eight mentions each — the 864 zeros in fetch 186 are exactly the notices
+the cancelled run had already cleared, waiting for a fold to re-record them. Every notice pays the mention
+delete, and the earlier "39 ms average" came from a package most of whose notices had nothing left to
+delete. **This is the whole era, not a tail.**
+
+## Three fixes, each measured on prod
+
+| form | per notice |
+|------|-----------|
+| prefix DELETE, no index | 153 ms (scanning, but deleting nothing — the notices were already cleared) |
+| prefix DELETE, index built, a row actually deleted | **10.2 s** (fetch 240 and fetch 250 alike) |
+| + `PRAGMA defer_foreign_keys = ON` (accepted, no error logged) | ~4 s |
+| + delete by FULL primary key, one statement per mention row | **2.2 s** |
+
+4.6× from the last change alone, and still 100× short of what the era needs: 3.79M notices at 2.2 s is
+2,300 hours. The cost tracks the FK verification against `tender_version_parties` (78,033,566 rows) and
+`tender_version_bid_parties`, which reads of exactly that shape — including the full FK pair — serve in
+1 ms.
+
+## The next move is operational, not another micro-fix
+
+The code comments already name it: *"the bulk path (`reclaim_only` then one rebuild) spends that window
+with the canonical layer under reconstruction anyway"*. If the canonical layer is emptied FIRST, the
+notices have no mentions, the seek added earlier skips the DELETE entirely, and the era re-parses at the
+~250 notices/s the mechanism is actually capable of. Then one rebuild re-derives everything, including the
+new award winners — an operation this project has run before (issue 179 sizes it).
+
+So the campaign plan becomes: empty the canonical layer for the era (or accept a full rebuild), re-parse
+all 215 packages with `reclaim_only`, then one rebuild. That is a deliberate, sized operation rather than
+215 incremental steps each paying 20,000 seconds of foreign-key proving.
+
+Before committing to it, one cheap check remains: confirm that a notice with ZERO mentions really does
+re-parse at the fast rate now (the seek path). fetch 186's 864 cleared notices are exactly that
+population, so re-running that package measures it directly.
