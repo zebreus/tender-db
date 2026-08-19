@@ -1,6 +1,6 @@
 # 241 — a 25-minute outage of every authenticated endpoint left no trace in any probe, and nothing bounded the hang
 
-Status: needs-triage — split out of 240 (2026-08-19), which fixed the specific cause
+Status: gap 1 DONE in code 2026-08-19 (e04a4e5, awaiting deploy); gap 2 still open — needs the edge's timeout behaviour checked first
 Kind: observability gap + missing bound on the request path
 Blocked by: —
 Relates to: 240 (the outage that exposed both), 61 (`/health` reads the in-memory cursor by design),
@@ -59,3 +59,48 @@ request timing — is in the way of answering that from logs alone).
   from "requests are queued behind the writer" (an outage).
 - A request that waits on anything unbounded ends in a status code rather than in silence.
 - Both verified the way 240 was: by probing prod during a real long-running job, not only in a test.
+
+
+---
+
+## Gap 1 closed in code (2026-08-19, owner) — the queue is now measured
+
+`Db::conn` is the single choke point for every writer acquisition in the store crate (83 call sites
+route through it), so the counters live there and cover all of them:
+
+    tender_db_writer_queue_depth           callers blocked waiting for the writer right now
+    tender_db_writer_acquisitions_total    the denominator for a mean wait
+    tender_db_writer_wait_seconds_total    cumulative seconds spent waiting
+    tender_db_writer_longest_wait_seconds  longest single wait since open (never reset)
+
+Design points, both from this issue's own framing:
+
+- **Depth, not held.** A held writer is normal — a fold holds it for its whole transaction — so
+  "held" is not alertable and "held while callers are queued behind it" is. Sustained non-zero
+  `queue_depth` is exactly that state, whoever holds the lock, and it would have read non-zero for the
+  full 25 minutes of issue 240.
+- **A high-water mark that never resets**, so a stall stays visible after it ends. During 240 the
+  outage was over before anyone could look; a gauge that only shows "now" would have been green again
+  by then.
+- **No cost when uncontended.** `try_lock` fast path first: an ordinary write takes two relaxed
+  atomics and records no wait, so the instrument cannot invent contention.
+
+The test (`a_held_writer_with_callers_behind_it_is_visible_while_it_happens`) parks three callers
+behind a held writer and asserts the depth gauge reads 3 **while they wait** — a gauge that only moved
+after the fact would be useless for the alert it exists to raise — and that the high-water mark is one
+wait rather than the sum.
+
+### Still to do for gap 1's acceptance
+
+The acceptance asks for verification "the way 240 was: by probing prod during a real long-running job".
+That needs the deploy plus a writer-holding job (a fold or refold — the data-quality pass holding the
+queue right now is a READER job and will not move these gauges, which is itself the correct behaviour
+to observe). The internal-ojs re-fold queued for issue 233 is the natural occasion: scrape `/metrics`
+while it runs and confirm depth moves off zero and back.
+
+### Gap 2 is deliberately still open
+
+Bounding the request path is a separate change with a real prerequisite this issue already names:
+find out what nginx does with a 25-minute upstream silence before adding a second timeout with
+different semantics. Doing that from logs is blocked on issue 97 (no request timing in the access log),
+so the honest next step is a deliberate probe against the edge, not a tower layer added on assumption.
