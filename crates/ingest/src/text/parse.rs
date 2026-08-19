@@ -243,11 +243,22 @@ fn parse_money(value: &str) -> Option<(i64, String, Option<&'static str>)> {
 /// captured in the parse layer anyway, so that when a destination exists the era does
 /// not have to be re-parsed to find out what it already said.
 fn tax_marker(token: &str) -> Option<&'static str> {
-    match token.trim_end_matches(['.', ',']) {
-        "TTC" | "TVAC" => Some("incl"),
-        "HT" | "HTVA" => Some("excl"),
-        _ => None,
+    let token = token.trim_end_matches(['.', ',']);
+    match token {
+        "TTC" | "TVAC" => return Some("incl"),
+        "HT" | "HTVA" => return Some("excl"),
+        _ => {}
     }
+    // The German pair also appears as a bare word AFTER the figure, with no sub-label and
+    // so no colon to retry past: `8.  Price: 8 600 000 DEM netto.` (prod, 2001-06). Before
+    // this it was an unknown token and refused the whole value.
+    if token.eq_ignore_ascii_case("netto") {
+        return Some("excl");
+    }
+    if token.eq_ignore_ascii_case("brutto") {
+        return Some("incl");
+    }
+    None
 }
 
 /// Phrases a local-language sub-label uses to state the basis, searched in the label
@@ -1707,6 +1718,14 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(tax_marker("HT"), Some("excl"));
         assert_eq!(tax_marker("HTVA"), Some("excl"));
         assert_eq!(tax_marker("EUR"), None);
+        // The German pair as a bare trailing word, with no sub-label to skip past
+        // (prod: `8.  Price: 8 600 000 DEM netto.`).
+        assert_eq!(tax_marker("netto"), Some("excl"));
+        assert_eq!(tax_marker("Brutto"), Some("incl"));
+        assert_eq!(
+            read_value_item(" 8 600 000 DEM netto."),
+            Some((860_000_000, "DEM".to_owned(), Some("excl")))
+        );
         assert_eq!(read_value_item(" 1 000 000 FRF HT"), Some((100_000_000, "FRF".to_owned(), Some("excl"))));
         // A body claiming both bases at once states neither.
         assert_eq!(read_value_item(" 1 000 000 FRF HT TTC"), None);

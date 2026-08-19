@@ -688,3 +688,39 @@ the *best*-labelled money in the corpus rather than another unlabelled contribut
 `Price of product plus price of transport.` (prose), `Minimum/maximum: Lit 2 610/Lit 3 289` (a range
 whose label carries digits anyway), `15 564 000 ATS / 1 131 079,99 EUR` (two currencies) and the 1993
 `Lit`-prefixed figures are all still refused. The committed 1993 daily still asserts **zero** prices.
+
+### The fourth A/B: 390 → 984, and the refusal set is now mostly CORRECT refusals
+
+Same package, same band, slice 5 deployed as `ac17e0c`:
+
+    notice_amounts rows, fetch 300     0 → 390 (slice 4) → 984 (slice 5)
+    tax basis captured                 269 excl · 118 incl   (387 of the 984)
+
+984 of the 3,227 price-label bodies is **30.5 %**, up from 12.1 % — two and a half times, and the first
+tax-basis data anywhere in the corpus. Below the prediction, and the reason is worth recording: the
+German sub-label shape was six of *eight* sampled refusals, and eight was too small a sample to speak
+for 2,800 bodies.
+
+Sampled the refusals again. They have changed character — most are now refused **correctly**:
+
+    Price: 1. 400 000 FIM; 2. 25 500 000 FIM.                     per-LOT price list
+    Price: 1) 460 000 FIM, 2) 6 300 000 FIM.                      per-lot, other spelling
+    Price: Montants des marchés TTC: sites A: 1) 262 966,85 FRF;…  per-site AND per-lot
+    Price: 562 680 GBP p.a.                                        annualised, not a total
+    Price: 198 741 680 ITL (102 641,511 EUR), al netto degli…      figure plus conversion
+    Price: Importo netto di 26 985 463 468 ITL (13 936 828,783 EUR)…  same
+    Price: Publication of this information would prejudice…         withheld
+    Price: Price of product plus price of transport.                prose
+
+The dominant remaining class is a **per-lot price list**, and refusing it at notice scope is the right
+answer, not a gap: there is no single contract price to record, and claiming one figure — or a sum —
+would invent a fact. Reading those properly means attributing a value per LotResult, which is a
+different unit from this one and needs the lot keys the era does not publish in the award block.
+
+One easy recovery did fall out of the sample and is included here: `8 600 000 DEM netto.` — the German
+pair also appears as a bare word AFTER the figure, with no sub-label and therefore no colon to retry
+past, so it was an unknown token that refused the whole value. `netto`/`brutto` are now markers like
+`TTC`/`HT`.
+
+So the honest position for the era's money at notice scope: **near its ceiling**. What is left is either
+per-lot (structural), a converted or annualised figure (a different fact), or withheld.
