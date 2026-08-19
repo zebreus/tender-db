@@ -97,16 +97,35 @@ fn trim_sentence_period(name: &str) -> &str {
 /// vs "Zac de Satolas Green", both Stryker France, in one notice), which is issue
 /// 234's problem manufactured on purpose.
 fn awarded_names(body: &str) -> Vec<String> {
-    let flat: String = body.split_whitespace().collect::<Vec<_>>().join(" ");
-    let upper = flat.to_uppercase();
+    // Gate before allocating anything. Every award body says `AWARD` at least twice —
+    // in `SECTION V: AWARD OF CONTRACT` and again in the label — and a body that says
+    // it nowhere cannot carry either label. This matters because the era is 3.8M
+    // notices: measured on prod, doing the flatten-and-scan unconditionally made a
+    // package's re-parse SEVEN TIMES slower (1,012 members in 148 s became 1 member a
+    // second, CPU-pegged), which is most of an era's re-parse spent on notices that
+    // are not awards at all.
+    if find_ascii_ci(body, "AWARD").is_none() && find_ascii_ci(body, "PROVIDER").is_none() {
+        return Vec::new();
+    }
+    // Flatten TED's ~72-column wrap into one line. Built directly rather than through
+    // `split_whitespace().collect::<Vec<_>>().join(" ")`, which allocated a vector of
+    // slices as well as the string.
+    let mut flat = String::with_capacity(body.len());
+    for word in body.split_whitespace() {
+        if !flat.is_empty() {
+            flat.push(' ');
+        }
+        flat.push_str(word);
+    }
+
     let mut names = Vec::new();
     let mut at = 0usize;
-    while at < upper.len() {
+    while at < flat.len() {
         // The earliest label from here, so the two vintages can both appear (they do
         // not in any measured notice, but a mixed body would otherwise skip awards).
         let Some((start, label)) = AWARD_LABELS
             .iter()
-            .filter_map(|l| upper[at..].find(l).map(|i| (at + i, *l)))
+            .filter_map(|l| find_ascii_ci(&flat[at..], l).map(|i| (at + i, *l)))
             .min_by_key(|(i, _)| *i)
         else {
             break;
@@ -115,7 +134,7 @@ fn awarded_names(body: &str) -> Vec<String> {
         let rest = &flat[value_at..];
         let end = NAME_STOPS
             .iter()
-            .filter_map(|stop| rest.to_uppercase().find(stop))
+            .filter_map(|stop| find_ascii_ci(rest, stop))
             .min()
             .unwrap_or(rest.len());
         let name = trim_sentence_period(rest[..end].trim());
@@ -125,6 +144,25 @@ fn awarded_names(body: &str) -> Vec<String> {
         at = value_at;
     }
     names
+}
+
+/// ASCII-case-insensitive substring search, returning a byte index into `haystack`.
+///
+/// Replaces `haystack.to_uppercase().find(needle)`, which was wrong as well as slow.
+/// Uppercasing can CHANGE a string's byte length — `ı` (Turkish dotless i, 2 bytes)
+/// uppercases to `I` (1 byte), and TED's text era carries Turkish and German names —
+/// so an index found in the uppercased copy did not necessarily address the same place
+/// in the original, and slicing there was either wrong or a panic on a non-boundary.
+///
+/// The labels are pure ASCII, and an ASCII byte can never occur inside a multi-byte
+/// UTF-8 sequence, so a match found byte-wise is always at a char boundary and always
+/// means what it appears to mean. No allocation, which is the other half of the fix.
+fn find_ascii_ci(haystack: &str, needle: &str) -> Option<usize> {
+    let (h, n) = (haystack.as_bytes(), needle.as_bytes());
+    if n.is_empty() || h.len() < n.len() {
+        return None;
+    }
+    h.windows(n.len()).position(|w| w.eq_ignore_ascii_case(n))
 }
 
 #[derive(Debug, PartialEq)]
@@ -679,6 +717,27 @@ mod tests {
             .map(|s| (s.id.as_str(), s.parent.as_deref()))
             .collect();
         assert_eq!(orgs, vec![("ORG-2", Some("RES-1")), ("ORG-3", Some("RES-2"))]);
+    }
+
+    /// The index arithmetic must survive a character whose uppercase is a different
+    /// LENGTH, and the gate must not swallow a real award (issue 244).
+    #[test]
+    fn a_non_ascii_body_is_indexed_by_bytes_not_by_its_uppercase_copy() {
+        // `ı` (Turkish dotless i, 2 bytes) uppercases to `I` (1 byte). Under the old
+        // `to_uppercase().find()` the label's index came from a string one byte shorter
+        // than the one being sliced, so the name came out shifted — or the slice landed
+        // mid-character and panicked.
+        let body = "V.3)  Bakırköy Belediyesi tender … HAS BEEN AWARDED: Çınar İnşaat A.Ş., \n\
+                    Bakırköy, TR-34140 İstanbul.";
+        assert_eq!(awarded_names(body), vec!["Çınar İnşaat A.Ş.".to_owned()]);
+
+        // The gate is a cheap pre-check, not a filter: a body that says AWARD anywhere
+        // still goes through the scan.
+        assert!(find_ascii_ci("section v: award of contract", "AWARD").is_some());
+        assert!(find_ascii_ci("SECTION II: OBJECT", "AWARD").is_none());
+        // And it is ASCII-case-insensitive both ways round.
+        assert_eq!(find_ascii_ci("xxAwArDedxx", "awarded"), Some(2));
+        assert_eq!(find_ascii_ci("short", "longer needle"), None);
     }
 
     /// A body with no award block must manufacture nothing — most of the era is not an
