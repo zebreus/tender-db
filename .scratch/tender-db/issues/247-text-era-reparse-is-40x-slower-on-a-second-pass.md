@@ -1,7 +1,7 @@
 # 247 — the same text-era package re-parses 40× slower on a later run, pread-bound inside the DB
 
-Status: needs-triage — observed on prod 2026-08-19 while running the issue-244 campaign; the decisive
-comparison (re-run a package that was previously fast) is queued
+Status: CAUSE FOUND 2026-08-19 — one DELETE, measured. Fix (an index) is committed and queued behind the
+very job it speeds up; the queue will clear it.
 Kind: performance regression, re-parse path
 Blocked by: —
 Relates to: 244 (the campaign that hit it), 100 (the re-parse mechanism), 92 (fold quadratic in chain
@@ -128,3 +128,66 @@ Next steps, in order:
    two hours; the numbers are cheap to collect.
 3. A symbol-preserving build would let `perf` name the hot function — the release binary is stripped and
    the samples only resolve to addresses.
+
+
+---
+
+## Cause found, by instrumenting instead of guessing (2026-08-19)
+
+Three rounds of reasoning from the code got it wrong three times, so the phases went on
+`/metrics` (`tender_db_reparse_phase_seconds_total`, issue 241's counter pattern). One scrape,
+555 notices:
+
+    lookup   0.043 s
+    clear   85.072 s      <- 99.6%
+    insert   0.267 s
+    commit   0.080 s
+
+The clear runs nine statements, so it got a per-statement series too. Same scrape:
+
+    organization_mentions      84.71 s     <- 153 ms per notice
+    notice_classifications      0.16 s
+    notice_ids                  0.05 s
+    notice_texts                0.05 s
+    tender_version_parties      0.014 s
+    tender_version_bid_parties  0.008 s
+    …everything else            microseconds
+
+**`DELETE FROM organization_mentions WHERE notice_id = ?` is the entire cost of a re-parse.**
+The table has 41.78M rows and the statement scans them.
+
+### Why it scans, and why that is not obvious
+
+`organization_mentions` declares `PRIMARY KEY (notice_id, section_id)`, so the predicate is a
+PK prefix and should seek. Two measurements say the write does not:
+
+- a `SELECT COUNT(*)` with the identical predicate answers in **0.8–1.1 ms** — reads seek fine;
+- the two party deletes in the same clear, which have EXPLICIT single-column indexes on their
+  predicate (`tender_version_parties_mention`, added by issue 100 for exactly this DELETE),
+  cost 14 ms and 8 ms **in total over 555 notices**.
+
+So: turso's DELETE does not use the implicit composite-PK index, and an explicit index on the
+predicate is what the fast statements have. `organization_mentions(notice_id)` is now declared
+in `DEFERRED_ORG_INDEXES` (41.78M rows, well under the 240M auto-build cap), and startup
+reported it missing and queued the Reindex, as designed.
+
+### The queue deadlock, and the one thing that did not work
+
+`recover()` restores durable job rows in id order, so the crawling re-parse holds position 1 and
+the Reindex that would fix it waits behind. A seek-before-delete was added to break that without
+touching the queue — and **it did not help this workload**, which is worth recording: the
+2010-era notices DO have a mention each (their `TXT-AU` buyer, folded by this morning's
+campaign), so `has_mentions` is true, the DELETE runs, and the scan is paid anyway. The seek
+still earns its place for notices with no mentions, but it is not the fix here.
+
+What actually clears this: the queued `reindex` (job 24). The fetch-240 comparison was cancelled
+— it was only ever a way to find out whether the cause was global, and the cause is now known.
+
+### Also worth knowing
+
+Why the FIRST pass of this package was fast (148 s) is still unexplained. The most likely story
+is that it ran before this morning's folds gave the text era its first mentions at all: with no
+mention rows for those notices, `has_mentions` would have been false for every one of them —
+which is precisely the case the new seek skips. If that is right, the fast run was fast for the
+reason the seek now makes permanent, and the campaign's arithmetic should be based on the SLOW
+number until the index is built and measured.
