@@ -15,6 +15,19 @@ by policy, and a notice carrying one stays quarantined whole — as a *documente
 keep*, disclosed on the dashboard (issue 184), never as an undifferentiated
 actionable gap.**
 
+**Amendment, 2026-08-19 (issue 246): state the cost as a RATE as well as a share.**
+The "~0.02% of notices" above is cause F measured against the 7.9M-tender historical
+corpus. Measured against what is arriving now it is **~0.15% — five to thirteen
+notices a day, roughly 2,000–4,700 a year** (prod, the fortnight to 2026-08-19), because
+sub-cent precision is live eForms practice (sdk-1.12, de-2.1) rather than a historical
+artifact. The decision is unchanged: 0.15% of arrivals does not clear "past a nuisance",
+and every alternative below costs what it cost before. What changes is the unit the
+trigger is stated in, because that is the unit it will be observed in — section 5 of the
+data-quality report now counts first-time holds per reason over 30 days, keyed on
+`first_reason IS NULL` so relabel passes cannot inflate it. Watching the BUCKET instead
+would have been misleading: on 2026-08-19 it held 5,185 rows, of which 1,899 were merely
+renamed by issue 184's drain and 2,884 arrived on a single reprocess day.
+
 Alternatives considered and rejected:
 
 1. **A finer integer unit** (micro-units, or a value+scale pair). Representable,
