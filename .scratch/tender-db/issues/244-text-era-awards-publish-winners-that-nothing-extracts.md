@@ -769,3 +769,68 @@ Section 1 moves too, for the same partial reason:
 `value 0.5 %` because the price slices landed only at the very end of the forward pass. Both rise with
 the sweep. `buyer 63.0 %` is the separate `AU:`→buyer mapping this issue's header has always named as
 riding along with the same re-parse.
+
+
+## Slice 7 — the sectioned form's money, which is where the era's value actually is
+
+The price arc above was closed on `fetch 300` (2001-06) and I read it as "near its ceiling". That was
+true **for the numbered form**. The redo sweep then reached the 2005-2010 packages, and `fetch 200`
+(2009-10, notices 3,870,856-3,903,775, 32,920 notices) showed the era's money living somewhere the
+slices 4-6 labels never look:
+
+    bodies                                   32,920
+    `Total final value`                       9,549
+    `INFORMATION ON VALUE OF CONTRACT`        9,152
+    `Initial estimated total value`           4,899
+    `Value:`                                  9,717
+    `Price:`                                     53   <-- the only label slices 4-6 read
+
+    TD:7 award notices                       11,943
+    with a winner                            11,485   (96.2 %, slices 2-6 working)
+    notice_amounts rows                          41   <-- 0.3 % of the awards
+
+**41 amounts against 9,549 bodies that state the value.** The winner half of this package is at its
+ceiling and the money half had barely started, for one reason: `Price:` is a numbered-form label, and
+by 2005 the era writes the sectioned EU form instead.
+
+### Why the existing reader could not have read it
+
+The shape is different in kind, not just in wording. Verbatim from prod:
+
+    3870957  Total final value of the contract: | Value: 791 805 EUR. | Excluding VAT.
+    3870958  TOTAL FINAL VALUE OF CONTRACT(S) | II.2.1) Total final value of contract(s):
+             Value: 39 279 748,48 PLN. | Including VAT. VAT rate (%): 22,00 %. |
+             SECTION V: AWARD OF CONTRACT | CONTRACT NO: 1 | V.3) NAME AND ADDRESS...
+    3870959  ... Total final value of contract(s): Lowest offer: 16 184 142,63 /
+             highest offer: PLN. | Excluding VAT.
+    3870962  ... Total final value of contract(s): Value: 54 639 833,00 SEK. |
+             SECTION V: AWARD OF CONTRACT | CONTRACT NO: 1
+    3870965  ... Value: 104 131,80 EUR. | Excluding VAT. | ... | CONTRACT NO: 4300023446
+
+The numbered form ends its value item with the figure and the next ` <n>. ` marker bounds it. The
+sectioned form does **not**: the item continues into prose. `next_item_marker` finds nothing, and the
+sub-label retry then strips to after the LAST colon in the window — which in 3870958 is
+`VAT rate (%):` and in 3870965 is `CONTRACT NO:`, losing the figure entirely. So these bodies were not
+refused for being ambiguous; they were refused for having *more* stated after the number.
+
+### What landed
+
+`TOTAL FINAL VALUE` as a fifth `VALUE_LABELS` entry, and a new `VALUE_STOPS` list that ends the value
+item at the first of `EXCLUDING VAT`, `INCLUDING VAT`, `SECTION V`, `CONTRACT NO`, `AWARD OF CONTRACT`
+— and, when the stop is a VAT phrase, takes the basis from it. Precedence is nearest-statement-wins: a
+marker beside the figure (`HT`, `netto`) beats a sub-label's wording, which beats the stop phrase.
+
+Three things this deliberately does not do:
+
+- **A range claims nothing.** 3870959 is a real body whose second figure is missing at source
+  (`highest offer: PLN.`); reading `16 184 142,63` would record the *lowest offer* as the contract
+  value. The digit-in-label guard from slice 5 already refuses it, and the test pins that with the
+  prod body rather than a contrived one.
+- **The basis comes from THIS item's stop.** The first stop wins, so a later lot's `Excluding VAT`
+  cannot reach an earlier lot's figure — tested directly.
+- **The duplicated label costs nothing.** In the `II.2.1)` flavour the label appears twice, first as
+  the section heading. The heading occurrence is refused because its label carries the section
+  marker's digits; a refusal does not poison the scan, only a second *claim* that disagrees does.
+
+Falsified rather than assumed: with `VALUE_STOPS` disabled, the new test is the only one in the module
+that fails — so the stops, not some pre-existing path, are what read these bodies.

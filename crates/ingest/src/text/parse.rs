@@ -156,8 +156,31 @@ fn plausible_name(name: &str) -> bool {
 /// Counted over `fetch 300`'s 13,734 bodies: `Price:` 3,081, `Value of winning award…` 483,
 /// `Contract value:` 25 — against 4,153 TD:7 award records, so the money is stated about
 /// as often as the winner is.
-const VALUE_LABELS: [&str; 4] =
-    ["PRICE:", "PRICE(S):", "CONTRACT VALUE:", "VALUE OF WINNING AWARD"];
+const VALUE_LABELS: [&str; 5] =
+    ["PRICE:", "PRICE(S):", "CONTRACT VALUE:", "VALUE OF WINNING AWARD", "TOTAL FINAL VALUE"];
+
+/// Where a value item ends in the SECTIONED form, which does not end its items with a
+/// number (issue 244 slice 7).
+///
+/// The 2005-2010 vintage writes the award value as prose that continues past the figure:
+///
+///     Total final value of the contract: Value: 791 805 EUR. Excluding VAT.
+///     Total final value of contract(s): Value: 39 279 748,48 PLN. Including VAT.
+///                                      VAT rate (%): 22,00 %.
+///
+/// `next_item_marker` cannot bound that — there is no ` <n>. ` — and the sub-label retry
+/// would strip to after the LAST colon, which in the second body is `VAT rate (%):` and
+/// loses the figure entirely. So the value ends at whichever of these comes first, and
+/// when it ends at a VAT phrase, that phrase IS the basis: measured on `fetch 200`
+/// (2009-10), `Total final value` appears in 9,549 of the package's 11,943 award notices
+/// against 53 for `Price:`, so this is where the era's money actually is.
+const VALUE_STOPS: [(&str, Option<&str>); 5] = [
+    ("EXCLUDING VAT", Some("excl")),
+    ("INCLUDING VAT", Some("incl")),
+    ("SECTION V", None),
+    ("CONTRACT NO", None),
+    ("AWARD OF CONTRACT", None),
+];
 
 /// How a monetary value must be written to be claimed at all.
 ///
@@ -607,17 +630,28 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
 /// the subcontracted figure as the contract price. A pure label has no digits; a second
 /// figure does.
 fn read_value_item(item: &str) -> Option<(i64, String, Option<&'static str>)> {
-    if let Some(money) = parse_money(item) {
-        return Some(money);
+    // The sectioned form's prose continues past the figure, so cut it at the first stop
+    // and remember whether that stop stated the basis (issue 244 slice 7).
+    let (item, stop_basis) = match VALUE_STOPS
+        .iter()
+        .filter_map(|(stop, basis)| find_ascii_ci(item, stop).map(|at| (at, *basis)))
+        .min_by_key(|(at, _)| *at)
+    {
+        Some((at, basis)) => (&item[..at], basis),
+        None => (item, None),
+    };
+    if let Some((cents, currency, basis)) = parse_money(item) {
+        return Some((cents, currency, basis.or(stop_basis)));
     }
     let (label, figure) = item.rsplit_once(':')?;
     if label.bytes().any(|b| b.is_ascii_digit()) {
         return None;
     }
     let (cents, currency, basis) = parse_money(figure)?;
-    // A marker beside the figure wins over the sub-label's wording; they agree in every
-    // measured body, and the marker is the more specific statement.
-    Some((cents, currency, basis.or_else(|| phrase_basis(label))))
+    // A marker beside the figure wins over the sub-label's wording, and both win over the
+    // stop phrase; they agree in every measured body, and the nearer statement is the more
+    // specific one.
+    Some((cents, currency, basis.or_else(|| phrase_basis(label)).or(stop_basis)))
 }
 
 /// Where the next numbered form item begins: ` <n>. ` with one or two digits, in the
@@ -1751,6 +1785,159 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL_TAX_BASIS").map(|v| &v.value),
             Some(&NoticeValue::Code { list: None, code: "excl".to_owned() }),
             "the basis has no canonical home yet (issue 251), but it is captured"
+        );
+    }
+
+    /// Issue 244 slice 7: the SECTIONED form, which is where the era's money actually is.
+    ///
+    /// Measured over `fetch 200` (2009-10, notices 3,870,856-3,903,775): of the package's
+    /// 11,943 TD:7 award notices, 9,549 bodies state `Total final value` and only 53 state
+    /// `Price:` — the label slices 4-6 read is the rare one in this vintage. The shape is
+    /// also different in kind: the item does NOT end with its figure. It continues into
+    /// prose that states the VAT basis, or runs straight into the next section heading or
+    /// the next lot's contract number. Every body below is verbatim from prod, with the
+    /// notice id in the comment above it.
+    #[test]
+    fn the_sectioned_forms_total_final_value_carries_its_vat_basis() {
+        // 3870957 — the `V.4)` flavour: the label, the figure a line below it, the basis
+        // a line below that.
+        assert_eq!(
+            awarded_value(
+                "V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                 Total final value of the contract:\n\
+                 Value: 791 805 EUR.\n\
+                 Excluding VAT."
+            ),
+            Some((79_180_500, "EUR".to_owned(), Some("excl")))
+        );
+
+        // 3870958 — the `II.2.1)` flavour, where the label appears TWICE: once as the
+        // section heading and once as the item. The heading occurrence is refused on its
+        // own (see below) and the item occurrence a few words later is what lands, so the
+        // duplication costs nothing. `VAT rate (%): 22,00 %.` is past the stop and never
+        // reached — without the stop the sub-label retry would strip to after ITS colon
+        // and lose the figure entirely.
+        assert_eq!(
+            awarded_value(
+                "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                 II.2.1)  Total final value of contract(s): Value: 39 279 748,48 PLN.\n\
+                 Including VAT. VAT rate (%): 22,00 %.\n\
+                 SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 1\n\
+                 V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR"
+            ),
+            Some((3_927_974_848, "PLN".to_owned(), Some("incl")))
+        );
+        // Why the heading occurrence is harmless: its label carries the `II.2.1)` marker's
+        // digits, so the retry refuses it. A refusal does not poison the scan — only a
+        // second CLAIM that disagrees does.
+        assert_eq!(
+            read_value_item(
+                " OF CONTRACT(S) II.2.1) Total final value of contract(s): Value: 39 279 748,48 PLN."
+            ),
+            None,
+            "a label carrying the section marker's digits is not a label this trusts"
+        );
+
+        // 3870959 — THE GUARD, and it is a real body rather than a contrived one: the era
+        // writes a range here, and this one has LOST its second figure at source
+        // (`highest offer: PLN.`). Reading `16 184 142,63` as the contract value would
+        // record the lowest offer as the price.
+        assert_eq!(
+            awarded_value(
+                "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                 II.2.1)  Total final value of contract(s): Lowest offer: 16 184 142,63 /\n\
+                 highest offer: PLN.\n\
+                 Excluding VAT.\n\
+                 SECTION V: AWARD OF CONTRACT"
+            ),
+            None,
+            "a range must claim nothing, whether or not both ends survived"
+        );
+
+        // 3870962 — no VAT phrase at all: the value ends at the next SECTION heading and
+        // the basis stays unstated. An unstated basis is NULL, not a guess.
+        assert_eq!(
+            awarded_value(
+                "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                 II.2.1)  Total final value of contract(s): Value: 54 639 833,00 SEK.\n\
+                 SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 1"
+            ),
+            Some((5_463_983_300, "SEK".to_owned(), None))
+        );
+
+        // 3870965 — a long contract number after the basis, which the sub-label retry
+        // would otherwise read as the figure's own label.
+        assert_eq!(
+            awarded_value(
+                "II.2.1)  Total final value of contract(s): Value: 104 131,80 EUR.\n\
+                 Excluding VAT.\n\
+                 SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 4300023446"
+            ),
+            Some((10_413_180, "EUR".to_owned(), Some("excl")))
+        );
+
+        // 3870961 — the same, without a VAT phrase between the figure and the contract
+        // number: `CONTRACT NO` is what bounds the value, and without that stop this body
+        // reads as `... CONTRACT NO: 2` and is refused for the digit in its label.
+        assert_eq!(
+            read_value_item(" of the contract: Value: 24 950 EUR. CONTRACT NO: 2"),
+            Some((2_495_000, "EUR".to_owned(), None))
+        );
+
+        // The basis must come from THIS item's stop, never from a later lot's. The first
+        // stop wins, so the `Excluding VAT` belonging to the second lot below does not
+        // reach the first lot's figure.
+        assert_eq!(
+            read_value_item(
+                " of the contract: Value: 100 000 EUR. CONTRACT NO: 2 V.4) Total final \
+                 value: 200 000 EUR. Excluding VAT."
+            ),
+            Some((10_000_000, "EUR".to_owned(), None))
+        );
+        // And a marker beside the figure still outranks the stop phrase, because it is
+        // the nearer statement.
+        assert_eq!(
+            read_value_item(" 1 000 000 FRF HT. Including VAT."),
+            Some((100_000_000, "FRF".to_owned(), Some("excl")))
+        );
+
+        // Two lots stating DIFFERENT totals is a notice this cannot resolve, and the
+        // sectioned form is where that actually happens.
+        assert_eq!(
+            awarded_value(
+                "V.4)  Total final value of the contract:\n\
+                 Value: 24 950 EUR.\n\
+                 Excluding VAT.\n\
+                 CONTRACT NO: 2\n\
+                 V.4)  Total final value of the contract:\n\
+                 Value: 30 000 EUR.\n\
+                 Excluding VAT."
+            ),
+            None,
+            "two labels disagreeing is a notice this cannot read"
+        );
+
+        // End to end, through a TD:7 record: the amount and its basis both reach the
+        // parse layer.
+        let body = "V.4)  INFORMATION ON VALUE OF CONTRACT\n\
+                    Total final value of the contract:\n\
+                    Value: 791 805 EUR.\n\
+                    Excluding VAT.";
+        let record = format!(
+            "1.0/000001\nND: 1-2009\nTD: 7 - Contract award\nTX: {}\n",
+            body.replace('\n', "\n    ")
+        );
+        let p = parse(&record).expect("parses");
+        assert_eq!(
+            p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL").map(|v| &v.value),
+            Some(&NoticeValue::Amount { cents: 79_180_500, currency: "EUR".to_owned() })
+        );
+        assert_eq!(
+            p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL_TAX_BASIS").map(|v| &v.value),
+            Some(&NoticeValue::Code { list: None, code: "excl".to_owned() })
         );
     }
 
