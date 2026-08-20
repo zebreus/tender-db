@@ -493,3 +493,45 @@ Fix applied: write the value into the file that wins and delete the redundant on
 time — there is exactly one `dropjobs.conf`; set its value, use it, reset it to empty. Never add a
 second drop-in for the same variable.** A leftover that sets an empty value is indistinguishable from
 an unset variable at every observation point except `cat -A` on the resolved environment.
+
+## The phase timers' first run — and the hours are GONE (2026-08-20, job 289)
+
+The same statement, the same 245,955-edge plan, the same 14.3M-notice corpus, on the same box:
+
+    21:03:00  group step keyed/island: 28.5s
+    21:03:06  group step union-load: 6.8s (11,007,709 nodes)
+    21:04:54  group step legacy-update: 107.1s (11,003,671 legacy)
+    21:04:54  group step analyze plan_prev_edge: 0.1s
+    21:04:56  group step analyze plan_notice: 2.2s
+    21:04:56  group step previous-notice: 245955 edge(s) in the plan
+    21:05:04  group step previous-notice read: 8.0s (29,646 of 245,955 edge(s) matched, 42,907 key(s) involved)
+    21:05:04  group step previous-notice union: 0.0s (24,528 key(s) to relabel)
+    21:05:04  group step previous-notice merge-write: 0.2s
+
+**The read took 8.0 seconds.** Yesterday the step containing the identical join pinned one core for
+3 h 27 m without completing, twice before that for 2+ hours. The plan is the same size to the edge.
+
+**What I can say and what I cannot.** The completion also answers what the filter keeps: 29,646
+survivors of 245,955 references, 24,528 keys relabelled — the old row-count heartbeat (50,000) could
+indeed never have fired, as recorded above.
+
+The honest position on WHY it is fast now: unattributed. Three observable differences between the runs,
+none of which I can promote to a cause without an experiment this is not worth:
+
+1. **The ANALYZE did real work this time.** `analyze plan_notice` took 2.2 s against 0.3 s on the slow
+   run — on an 11M-row table, 0.3 s cannot have collected meaningful statistics, 2.2 s plausibly did.
+   If turso's stats made the difference, the "tried and not sufficient" verdict I recorded for the
+   pre-join ANALYZE was wrong in the most instructive way: the mitigation was right and its FIRST
+   EXECUTION was the thing that failed, silently.
+2. **A process restart sits between them** (the TENDER_DROP_JOBS bounce) — a fresh page cache, fresh
+   connection state, whatever the slow run's connection had accumulated over its preceding 90-minute
+   phase 1, all gone.
+3. **The build differs** (`715f454` → `45c0a14`), though the join text is byte-identical (now a
+   shared const) and nothing else in the step's data path changed semantically.
+
+This is the FOURTH time this step's behaviour has shifted without a verified cause (batch-size, WAL,
+index — all refuted; now "it is suddenly 1,500× faster" joins the list). The step is now fully
+instrumented per phase, so the next slow occurrence will name its phase and its progress on a 15-second
+clock instead of demanding an afternoon of forensics. That is the durable win; the mystery is recorded,
+not solved, and the stop-checkpoint proposal above stands regardless — an operator still cannot cancel
+a `project` job that DOES grind.
