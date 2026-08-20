@@ -543,3 +543,30 @@ instrumented per phase, so the next slow occurrence will name its phase and its 
 clock instead of demanding an afternoon of forensics. That is the durable win; the mystery is recorded,
 not solved, and the stop-checkpoint proposal above stands regardless — an operator still cannot cancel
 a `project` job that DOES grind.
+
+## The stop checkpoint is built (2026-08-20, same evening)
+
+`project` is now a stoppable kind — the proposal above, implemented the same day the two
+TENDER_DROP_JOBS restarts made its absence vivid:
+
+- **Checkpoints:** between Phase-1 plan chunks, before grouping, and between Phase-2 fold batches
+  (both the bucketed and the ParsedFold arm, full and incremental paths, with the stop forwarded
+  into the incremental's whole-corpus fallback so a cancel reaches whichever path the delta routed
+  to). The same clean points the WAL checkpoints already use.
+- **Semantics: a stop costs a redo, never correctness.** Everything committed before the stop stays
+  committed and marked `projected`; a stopped Phase-1 does NOT attest the legacy-adjacency watermark
+  (an incomplete walk attesting completeness would be issue 105's marked-without-a-row lie); a
+  stopped fold skips retirement, plan teardown and the index builds (retiring legacy keys against a
+  partial fold would remove Tenders whose members simply had not folded yet); a stopped REBUILD keeps
+  `rebuild_in_progress` + the plan, which is exactly the issue-60 salvage state.
+- **The log row says so:** a cancelled run's counts line leads with `CANCELLED at a checkpoint —`,
+  the same looks-complete-isn't rule the capped reparse follows (issue 244), and `Report::stopped`
+  carries it programmatically.
+- **Gates:** `a_stopped_projection_resumes_to_the_identical_layer` (ingest) — an immediate stop
+  folds nothing, marks nothing, attests nothing; a later un-stopped run converges to the identical
+  complete layer. The supervisor's stoppable-list tests now pin
+  `["reparse", "data-quality", "project"]`, with `reindex` taking over as the refused example.
+
+Deploys after the running fold drains. With this, the answer to "this fold is stuck" becomes
+`POST /admin/jobs/<id>/cancel` — the documented route — and the TENDER_DROP_JOBS procedure above
+demotes to the break-glass it should always have been.

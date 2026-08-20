@@ -54,6 +54,13 @@ pub struct Report {
     /// another component (ADR-0003-style merge — their rows got removed events).
     pub absorbed: u64,
     pub applied: store::Applied,
+    /// The run was asked to stop and ended at a checkpoint instead of finishing
+    /// (issue 256). Everything counted above was really done and really committed;
+    /// what the run did NOT do is everything after the checkpoint. A stopped
+    /// rebuild leaves `rebuild_in_progress` set, so the next project job salvages
+    /// it; a stopped incremental/full-fallback run leaves the layer intact and the
+    /// unfolded notices still `projected = 0`, so the next run picks them up.
+    pub stopped: bool,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -913,6 +920,33 @@ pub async fn project_with_progress(
     project_with_progress_phase2(db, rebuild, notice_batch, Phase2::Buckets { shards: None }, on_progress).await
 }
 
+/// [`project_observed`] with a cooperative stop (issue 256): `stop` is polled at
+/// the projection's checkpoints — between Phase-1 plan chunks, before grouping,
+/// and between Phase-2 fold batches — and a `true` ends the run there with
+/// [`Report::stopped`] set. This is what makes `project` a stoppable job kind:
+/// before it, the only way off a grinding fold was a service restart, which
+/// re-runs the job from the top (the TENDER_DROP_JOBS dance, twice in one day).
+pub async fn project_observed_stoppable(
+    db: &Db,
+    rebuild: bool,
+    mut observe: impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
+    let mut log = stderr_progress_sink();
+    project_with_progress_phase2_stoppable(
+        db,
+        rebuild,
+        APPLY_NOTICE_BATCH,
+        Phase2::Buckets { shards: None },
+        move |p| {
+            log(p);
+            observe(p);
+        },
+        stop,
+    )
+    .await
+}
+
 /// The projection core, reporting progress through `on_progress` (called between
 /// awaits, so a cheap closure), with an explicit Phase-2 fold selector ([`Phase2`]).
 /// See [`Progress`]; [`project_with_batch`] wraps this with a stderr-logging sink
@@ -922,7 +956,23 @@ pub async fn project_with_progress_phase2(
     rebuild: bool,
     notice_batch: usize,
     phase2: Phase2,
+    on_progress: impl FnMut(Progress),
+) -> turso::Result<Report> {
+    project_with_progress_phase2_stoppable(db, rebuild, notice_batch, phase2, on_progress, &|| false)
+        .await
+}
+
+/// The projection core with a cooperative stop; see [`project_observed_stoppable`]
+/// for the checkpoint contract. Everything committed before the stop stays
+/// committed — the flag never rolls anything back, it only declines to start the
+/// next unit of work.
+pub async fn project_with_progress_phase2_stoppable(
+    db: &Db,
+    rebuild: bool,
+    notice_batch: usize,
+    phase2: Phase2,
     mut on_progress: impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Report> {
     // Resume-from-plan salvage (issue 60): if an interrupted rebuild already left a
     // COMPLETE grouping plan on disk (Phase-1 finished — the expensive part), skip
@@ -1009,11 +1059,21 @@ pub async fn project_with_progress_phase2(
              skipping Phase-1 and re-running grouping + Phase-2 (salvage)"
         );
     } else {
-        let (notices, mentions) = build_plan(db, now, total, &mut on_progress).await?;
+        let (notices, mentions, stopped) = build_plan(db, now, total, &mut on_progress, stop).await?;
+        report.stopped = stopped;
         report.notices = notices;
         report.mentions = mentions;
     }
     probe(db, "Phase-1 (build_plan)");
+    if report.stopped {
+        // Stopped mid-plan: the partial plan is NOT complete, so nothing downstream
+        // may run on it — grouping would fold a truncated corpus and the salvage
+        // machinery would rightly refuse it anyway (`plan_is_complete` is false).
+        // Leave the plan for the next run's `reset_plan` to clear; a rebuild's
+        // `rebuild_in_progress` flag stays set, so the next project job redoes the
+        // build from scratch — a stop costs the redo, never correctness.
+        return Ok(report);
+    }
 
     // Group the plan into Tenders — keyed chains, the legacy OJS transitive-closure
     // union-find, islands — entirely in SQL over the on-disk plan (issue 59), so no
@@ -1041,6 +1101,13 @@ pub async fn project_with_progress_phase2(
             let mut batches_done = 0usize;
             let mut tenders_done = 0u64;
             loop {
+                // Cooperative stop between apply batches (issue 256): each batch
+                // committed whole, and every folded notice is already marked
+                // projected, so the next run resumes with the unfolded remainder.
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
                 let groups = db.next_plan_batch(&after, notice_batch).await?;
                 let Some(last) = groups.last() else { break };
                 after = last.group_key.clone();
@@ -1061,9 +1128,20 @@ pub async fn project_with_progress_phase2(
             }
         }
         Phase2::Buckets { shards } => {
-            bucketed_fold(db, notice_batch, shards, now, rebuild, &mut report, &mut on_progress)
+            bucketed_fold(db, notice_batch, shards, now, rebuild, &mut report, &mut on_progress, stop)
                 .await?;
         }
+    }
+    if report.stopped {
+        // Stopped mid-fold. Everything applied is committed and marked projected;
+        // retirement, plan teardown and the index builds belong to a COMPLETE fold
+        // (retiring legacy keys against a partial fold would remove Tenders whose
+        // members simply had not folded yet). A stopped rebuild keeps
+        // `rebuild_in_progress` + the complete plan, which is exactly the
+        // issue-60 salvage state — the next project job resumes Phase-2 from it.
+        let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
+        eprintln!("[project] STOPPED at a checkpoint (issue 256) — partial tallies above are committed");
+        return Ok(report);
     }
     // Retire any legacy Tender a late component-merge absorbed (its rows migrated
     // to the surviving key; here it gets `removed` change events).
@@ -1125,7 +1203,8 @@ async fn build_plan(
     now: i64,
     total: u64,
     mut on_progress: impl FnMut(Progress),
-) -> turso::Result<(u64, u64)> {
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<(u64, u64, bool)> {
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
@@ -1200,7 +1279,15 @@ async fn build_plan(
     // trusting that.
     let mut max_planned = 0i64;
     let mut plan_err: Option<turso::Error> = None;
+    let mut stopped = false;
     while let Ok(sent) = rx.recv() {
+        // Cooperative stop (issue 256), between chunks — the same clean point the
+        // WAL checkpoint uses. Everything inserted so far is committed; the reader
+        // thread ends when its next send finds the receiver gone.
+        if stop() {
+            stopped = true;
+            break;
+        }
         let chunk = match sent {
             Ok(chunk) => chunk,
             Err(e) => {
@@ -1278,14 +1365,19 @@ async fn build_plan(
     db.finish_mention_resolver(resolver).await?;
     // issue 58 v2: this loop visited EVERY parsed notice, so the durable
     // adjacency rows insert_plan wrote are complete up to the newest planned
-    // notice — attest it. (Reached only on success; an aborted plan returned
-    // above and the watermark stays where it was.)
-    db.establish_legacy_adjacency(max_planned).await?;
+    // notice — attest it. (Reached only on a COMPLETE walk: an aborted plan
+    // returned above, and a STOPPED one skips the attestation here — a stop is
+    // precisely a walk that did not visit every notice, and attesting it would
+    // be the issue-105 marked-without-a-row lie.)
+    if !stopped {
+        db.establish_legacy_adjacency(max_planned).await?;
+    }
     eprintln!(
-        "[project] plan: {notices} notices, {mentions_total} mentions resolved in {:.1}s",
-        t0.elapsed().as_secs_f64()
+        "[project] plan: {notices} notices, {mentions_total} mentions resolved in {:.1}s{}",
+        t0.elapsed().as_secs_f64(),
+        if stopped { " — STOPPED at a checkpoint (issue 256)" } else { "" }
     );
-    Ok((notices, mentions_total))
+    Ok((notices, mentions_total, stopped))
 }
 
 /// Run only the interruptible PREFIX of a full rebuild — clear the canonical
@@ -1300,7 +1392,7 @@ pub async fn project_plan_only(db: &Db) -> turso::Result<Report> {
         db.clear_canonical().await?;
         db.strip_organization_indexes().await?;
         let total = db.parsed_notice_count().await?;
-        let (notices, mentions) = build_plan(db, store::now_unix(), total, |_| {}).await?;
+        let (notices, mentions, _) = build_plan(db, store::now_unix(), total, |_| {}, &|| false).await?;
         Ok::<Report, turso::Error>(Report { notices, mentions, ..Default::default() })
     }
     .await;
@@ -1455,18 +1547,26 @@ pub async fn backfill_legacy_adjacency_windowed(
 /// back to a full non-rebuild projection exactly as v1 did, loudly; the full
 /// pass re-establishes the watermark, so the fallback self-heals.
 pub async fn project_incremental(db: &Db) -> turso::Result<Report> {
+    project_incremental_stoppable(db, &|| false).await
+}
+
+/// [`project_incremental`] with the cooperative stop (issue 256): the same wipe
+/// guards and FK toggling, the stop polled between fold batches — and forwarded
+/// into the whole-corpus fallback, so a cancel reaches whichever path the delta
+/// routed to.
+pub async fn project_incremental_stoppable(
+    db: &Db,
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
     let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
-    let result = project_incremental_inner(db).await;
+    let result =
+        project_incremental_chunked_phase2_stoppable(db, INCREMENTAL_CHUNK, None, stop).await;
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
     wipe_guard_post(db, pre_populated).await?;
     Ok(report)
-}
-
-async fn project_incremental_inner(db: &Db) -> turso::Result<Report> {
-    project_incremental_chunked(db, INCREMENTAL_CHUNK).await
 }
 
 /// Notices per Phase-1 chunk of the incremental fold (issue 81). The incremental
@@ -1611,6 +1711,18 @@ pub async fn project_incremental_chunked_phase2(
     chunk_size: usize,
     phase2: Option<Phase2>,
 ) -> turso::Result<Report> {
+    project_incremental_chunked_phase2_stoppable(db, chunk_size, phase2, &|| false).await
+}
+
+/// [`project_incremental_chunked_phase2`] with the cooperative stop (issue 256);
+/// polled between fold batches, and forwarded into the whole-corpus fallback so a
+/// cancel reaches whichever path the delta routed to.
+pub async fn project_incremental_chunked_phase2_stoppable(
+    db: &Db,
+    chunk_size: usize,
+    phase2: Option<Phase2>,
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
     let changed = db.unprojected_parsed_notice_ids().await?;
     if changed.is_empty() {
         return Ok(Report::default());
@@ -1678,7 +1790,15 @@ pub async fn project_incremental_chunked_phase2(
                     "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
                      re-projecting the whole corpus"
                 );
-                return project_with_batch(db, false, APPLY_NOTICE_BATCH).await;
+                return project_with_progress_phase2_stoppable(
+                    db,
+                    false,
+                    APPLY_NOTICE_BATCH,
+                    Phase2::Buckets { shards: None },
+                    stderr_progress_sink(),
+                    stop,
+                )
+                .await;
             }
         }
     };
@@ -1773,6 +1893,12 @@ pub async fn project_incremental_chunked_phase2(
             let mut after = String::new();
             let mut tenders_done = 0u64;
             loop {
+                // Cooperative stop between batches (issue 256): folded notices are
+                // already `projected = 1`, the rest re-enter the next delta.
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
                 let groups = db.next_plan_batch(&after, APPLY_NOTICE_BATCH).await?;
                 let Some(last) = groups.last() else { break };
                 after = last.group_key.clone();
@@ -1788,20 +1914,38 @@ pub async fn project_incremental_chunked_phase2(
             }
         }
         Phase2::Buckets { shards } => {
-            bucketed_fold(db, APPLY_NOTICE_BATCH, shards, now, false, &mut report, |p| {
-                if let Progress::Applying { tenders, total, versions } = p {
-                    // `versions` is the load-bearing number: `tenders` climbs to
-                    // completion even if every fold early-returns (issue 99).
-                    eprintln!(
-                        "[project] incremental fold: {tenders}/{total} Tenders folded, \
-                         {versions} versions written"
-                    );
-                }
-            })
+            bucketed_fold(
+                db,
+                APPLY_NOTICE_BATCH,
+                shards,
+                now,
+                false,
+                &mut report,
+                |p| {
+                    if let Progress::Applying { tenders, total, versions } = p {
+                        // `versions` is the load-bearing number: `tenders` climbs to
+                        // completion even if every fold early-returns (issue 99).
+                        eprintln!(
+                            "[project] incremental fold: {tenders}/{total} Tenders folded, \
+                             {versions} versions written"
+                        );
+                    }
+                },
+                stop,
+            )
             .await?;
         }
     }
     stage("phase 2 fold + apply");
+    if report.stopped {
+        // Stopped between batches: folded notices are marked, unfolded ones stay
+        // `projected = 0` and re-enter the next delta whole. The plan is cleared —
+        // the next incremental rebuilds it from the (smaller) remaining delta.
+        db.clear_plan().await?;
+        report.notices = changed.len() as u64;
+        eprintln!("[project] incremental STOPPED at a checkpoint (issue 256)");
+        return Ok(report);
+    }
     db.clear_plan().await?;
     report.notices = changed.len() as u64;
 
@@ -1901,6 +2045,7 @@ async fn bucketed_fold(
     rebuild: bool,
     report: &mut Report,
     mut on_progress: impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<()> {
     let dir = db.scratch_dir("proj_buckets");
     let _ = std::fs::remove_dir_all(&dir);
@@ -1955,6 +2100,13 @@ async fn bucketed_fold(
     let mut tenders_done = 0u64;
     let mut fold_err: Option<turso::Error> = None;
     for b in 0..n_buckets {
+        // Cooperative stop between buckets (issue 256): the bucket just applied is
+        // committed and its notices marked projected; dropping the receiver below
+        // unparks the prepare thread exactly as the error path does.
+        if stop() {
+            report.stopped = true;
+            break;
+        }
         // A recv error means the producer died mid-run; its panic is surfaced by
         // the join below rather than being swallowed into a short row count.
         let Ok(prepared) = rx.recv() else { break };

@@ -888,13 +888,18 @@ impl Supervisor {
 
 /// Job kinds whose loop actually READS the stop flag (issue 252).
 ///
+/// `project` reads it at the projection's checkpoints — between Phase-1 plan chunks
+/// and between Phase-2 fold batches (issue 256): the longest job the system runs was
+/// the one kind that could not be cancelled, and the only exit from a grinding fold
+/// was TENDER_DROP_JOBS plus a service restart, twice in one day.
+///
 /// The flag was built for `reparse` (issue 247) and for a while that was the only reader,
 /// which made `cancel` on any other running job answer "asked it to stop" and then do
 /// nothing — measured on prod: a cancelled `data-quality` run advanced ten more queries
 /// over the following six minutes. Naming the readers here is what lets `cancel` refuse
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
-const STOPPABLE_KINDS: &[&str] = &["reparse", "data-quality"];
+const STOPPABLE_KINDS: &[&str] = &["reparse", "data-quality", "project"];
 
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
@@ -1436,13 +1441,22 @@ impl Supervisor {
                     // pre-pass / folding instead of dead air for the multi-hour
                     // phases. The journal keeps its heartbeats — project_observed
                     // composes the stderr sink with this mapping, one stream.
-                    project::project_observed(&self.db, true, |p| self.phase_from_progress(p))
-                        .await
+                    project::project_observed_stoppable(
+                        &self.db,
+                        true,
+                        |p| self.phase_from_progress(p),
+                        &|| self.cancelled(job.id),
+                    )
+                    .await
                 } else {
                     // The incremental daily is seconds-to-minutes; its scoping
                     // already logs its own decisions (the issue-58 closure line
                     // or a named fallback). No phase record until one is earned.
-                    project::project_incremental(&self.db).await
+                    // Stop still threads through (issue 256): a small delta stops
+                    // between fold batches, and a delta that routed to the
+                    // whole-corpus fallback carries the flag into the full fold.
+                    project::project_incremental_stoppable(&self.db, &|| self.cancelled(job.id))
+                        .await
                 }
                 .map_err(|e| e.to_string())?;
                 self.update(|p| p.notices = report.notices);
@@ -1450,8 +1464,13 @@ impl Supervisor {
                 // counts line: a later G2 breach can then be read against what
                 // each fold actually did — "written 0 / unchanged N" points at
                 // the watermark over-claiming, a large `written` at the fold.
+                // A cancelled run's log row must SAY so (issue 256): its tallies
+                // are real, committed work — but a summary that looks complete is
+                // how a stopped fold gets mistaken for a finished one (the same
+                // rule the capped reparse follows, issue 244).
+                let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
                 Ok(format!(
-                    "{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged",
+                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged",
                     report.notices,
                     report.tenders,
                     report.islands,
@@ -3031,10 +3050,12 @@ mod tests {
             })
         };
 
-        // `project` has no checkpoint: refused, and the refusal names the kind so the
-        // caller can say which.
-        sup.set_current(running("project"));
-        assert_eq!(sup.cancel(7).await, Cancelled::Unstoppable("project".to_owned()));
+        // `reindex` has no checkpoint: refused, and the refusal names the kind so the
+        // caller can say which. (`project` used to be this test's example — it gained
+        // its checkpoints in issue 256, after two TENDER_DROP_JOBS restarts in one
+        // day were what "cancelling" a fold actually took.)
+        sup.set_current(running("reindex"));
+        assert_eq!(sup.cancel(7).await, Cancelled::Unstoppable("reindex".to_owned()));
         assert!(!sup.cancelled(7), "a refused cancel must not leave a flag set");
 
         // `data-quality` now checks between queries, so it is accepted.
@@ -3044,7 +3065,7 @@ mod tests {
 
         // And every kind named stoppable must actually be one — the list is the contract,
         // so a kind added to it without a checkpoint is the bug this test exists to catch.
-        assert_eq!(STOPPABLE_KINDS, &["reparse", "data-quality"]);
+        assert_eq!(STOPPABLE_KINDS, &["reparse", "data-quality", "project"]);
     }
 
     /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is

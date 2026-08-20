@@ -1776,6 +1776,93 @@ async fn sdk01_projects_title_buyer_and_winner() {
     let _ = std::fs::remove_file(&path);
 }
 
+// ----------------------------- issue 256: the projection's cooperative stop
+
+/// A stop honoured at a checkpoint costs a redo, never correctness.
+///
+/// Before this, `project` was the one job kind with no stop checkpoint — the
+/// longest job the system runs, and cancelling it took TENDER_DROP_JOBS plus a
+/// service restart, twice in one day. The contract under test: a stopped run
+/// says so (`Report::stopped`), commits what it finished, attests nothing it did
+/// not finish, and a following un-stopped run produces the complete canonical
+/// layer as if the stop never happened.
+#[tokio::test]
+async fn a_stopped_projection_resumes_to_the_identical_layer() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    let (db, fetch_id, path) = scratch("stoppable").await;
+    ingest_from(&db, fetch_id, "doe", "doe/eforms-de-1.2-can-799811c4.xml").await;
+    ingest(&db, fetch_id, "r209/f13-prize-winner-362996-2018.xml").await;
+    // The stoppable core is the INNER function — the `project()` wrapper owns the
+    // FK toggle (issue 19), so the test does what the wrapper does.
+    db.set_foreign_keys(false).await.expect("fk off");
+
+    // Stop immediately: the first checkpoint poll ends the run before any chunk.
+    let report = project::project_with_progress_phase2_stoppable(
+        &db,
+        false,
+        7,
+        project::Phase2::Buckets { shards: None },
+        |_| {},
+        &|| true,
+    )
+    .await
+    .expect("a stopped run is not an error");
+    assert!(report.stopped, "the report must say it stopped");
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tenders").await,
+        0,
+        "stopped before the first chunk: nothing folded, nothing half-written"
+    );
+    // The adjacency watermark must NOT have been attested by an incomplete walk
+    // (issue 58 v2's marked-without-a-row rule).
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM notices WHERE projected = 1").await,
+        0,
+        "a stopped plan marks nothing projected"
+    );
+
+    // Stop after the FIRST poll returns false — lands between phase-2 batches on
+    // a two-notice corpus only if batches are that small; with batch 7 both fold
+    // in one batch, so this exercises the later checkpoints returning cleanly.
+    let polls = AtomicUsize::new(0);
+    let report = project::project_with_progress_phase2_stoppable(
+        &db,
+        false,
+        7,
+        project::Phase2::Buckets { shards: None },
+        |_| {},
+        &|| polls.fetch_add(1, Ordering::Relaxed) >= 4,
+    )
+    .await
+    .expect("project");
+    // Whether this particular corpus hit a stop or completed, the INVARIANT is
+    // that a final un-stopped run converges to the complete layer…
+    let _ = report;
+    let report = project::project_with_progress_phase2_stoppable(
+        &db,
+        false,
+        7,
+        project::Phase2::Buckets { shards: None },
+        |_| {},
+        &|| false,
+    )
+    .await
+    .expect("project");
+    assert!(!report.stopped);
+    // …identical to what a never-stopped projection of the same corpus produces.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 2);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 2);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM notices WHERE projected = 0").await,
+        0,
+        "the complete run leaves no notice unfolded"
+    );
+    db.set_foreign_keys(true).await.expect("fk back on");
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ------------------- issue 100: the DE-1.x winner chain, broken one section deep
 
 /// eForms-DE 1.x results: the reference carriers are references, not entities.
