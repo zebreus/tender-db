@@ -492,7 +492,14 @@ fn awards_template(win: &str) -> String {
                          THEN 1 ELSE 0 END) AS no_award_content, \
                 SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w \
                                       WHERE w.tender_id = tv.tender_id AND w.seq = tv.seq) \
-                         THEN 1 ELSE 0 END) AS with_winner \
+                         THEN 1 ELSE 0 END) AS with_winner, \
+                SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_lot_results r \
+                                      WHERE r.tender_id = tv.tender_id AND r.seq = tv.seq \
+                                        AND NOT (r.decision IN ('no-rece', 'clos-nw', 'open-nw') \
+                                                 AND NOT EXISTS(SELECT 1 FROM tender_version_result_winners w \
+                                                                 WHERE w.tender_id = r.tender_id \
+                                                                   AND w.seq = r.seq))) \
+                         THEN 1 ELSE 0 END) AS with_awardable \
            FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
           WHERE {win}({award}) \
           GROUP BY n.profile",
@@ -922,6 +929,16 @@ pub struct DensityRow {
     /// Beside the density it is one line — 100 % of DE-1.1's award notices
     /// materialise a result and 3 % of them name who won.
     pub with_winner: u64,
+    /// Of the materialised results, the ones a winner could be expected FOR — the
+    /// denominator `named` divides by (issue 258). Defined by what it excludes: a
+    /// result that positively denies an award (`no-rece`/`clos-nw`/`open-nw`) AND
+    /// names nobody. Everything else counts, including an UNSTATED decision —
+    /// silence is not a denial (issues 100, 257) — and including the publisher's
+    /// own contradiction of a denial that still names a winner, which occurs (5 of
+    /// 2,895 in the sdk-0.1 2023-01 cross-tab). Anything with a winner is in here
+    /// by construction, so `with_winner` is a subset and the rate cannot exceed
+    /// 100 %; a rate above 1 is not a number, it is a bug report.
+    pub with_awardable: u64,
 }
 
 /// One era's projection invariant: of the versions whose notice parsed WITH a
@@ -1145,6 +1162,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             with_results: as_u64(r.get(2)),
             no_award_content: as_u64(r.get(3)),
             with_winner: as_u64(r.get(4)),
+            with_awardable: as_u64(r.get(5)),
         })
         .collect();
     // Profile-sorted, because one query no longer imposes an order the way merging two
@@ -1296,9 +1314,9 @@ pub fn render_text(report: &Report) -> String {
     );
     let _ = writeln!(
         out,
-        "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>7}",
+        "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>9} {:>7}",
         "era", "award-notices", "with lot_results", "density", "no block parsed", "with winner",
-        "named"
+        "closed n/a", "named"
     );
     let mut impossible = 0usize;
     for row in &report.density {
@@ -1315,17 +1333,23 @@ pub fn render_text(report: &Report) -> String {
         };
         let _ = writeln!(
             out,
-            "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>7}",
+            "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>9} {:>7}",
             display_era(&row.profile),
             group(row.award_notices),
             group(row.with_results),
             rate,
             group(row.no_award_content),
             group(row.with_winner),
-            // Against the notices that DID materialise a result, not against every award
-            // notice: a missing result block is already counted one column left, and
-            // dividing by it twice would blame the winner chain for it (issue 101).
-            pct(row.with_winner, row.with_results),
+            // Results the publisher CLOSED without naming anybody — `no-rece`, `clos-nw`,
+            // `open-nw` with no winner. Not a gap of ours, and its own number rather than
+            // a residue you have to subtract to find (issue 258).
+            group(row.with_results.saturating_sub(row.with_awardable)),
+            // Against the results a winner could be expected FOR, not against every
+            // materialised result: a missing result block is already counted two columns
+            // left, and a result the publisher closed with nobody is counted one column
+            // left. Neither is the winner chain's failure, and dividing by either would
+            // blame it for them (issues 101, 258).
+            pct(row.with_winner, row.with_awardable),
         );
     }
     if impossible > 0 {
@@ -1571,7 +1595,12 @@ pub fn render_json(report: &Report) -> String {
             // read a publication-quality floor as our defect rate.
             "no_award_content": r.no_award_content,
             "with_winner": r.with_winner,
-            "winner_rate": rate(r.with_winner, r.with_results),
+            // The denominator is the results a winner could be expected for, so this can
+            // never exceed 1 (issue 258); `closed_no_winner` is the excluded population,
+            // published rather than left to be derived by subtraction.
+            "with_awardable": r.with_awardable,
+            "closed_no_winner": r.with_results.saturating_sub(r.with_awardable),
+            "winner_rate": rate(r.with_winner, r.with_awardable),
             "unprojected": r.award_notices.saturating_sub(r.with_results).saturating_sub(r.no_award_content),
         }))
         .collect();
@@ -1904,6 +1933,11 @@ mod tests {
                     json!(0),
                     json!(139_961),
                     json!(0),
+                    // No winner among them, and every result awardable — so `named` is a
+                    // real 0.0 % rather than the em-dash an absent denominator would give,
+                    // which is what this row is here to keep out of the render.
+                    json!(0),
+                    json!(139_961),
                 ]]),
             ),
             ("doc_types".to_owned(), Some(vec![])),
@@ -1995,6 +2029,60 @@ mod tests {
     /// container) — nothing to project, our shortfall is zero. In the second, all
     /// six published a result block and we did not project it. Same rate, opposite
     /// meaning.
+    /// Issue 258: `named` divides by the results a winner could be expected FOR.
+    ///
+    /// Two populations must not count against the winner chain. A result the publisher
+    /// CLOSED with nobody (`no-rece`, `clos-nw`, `open-nw` and no winner) never had a
+    /// winner to find. And — the trap that falsified this issue's first sketch — an
+    /// UNSTATED decision is not a denial: eForms-DE 1.x publishes no `TenderResultCode`
+    /// at all and DOES name winners (issue 100), sdk-0.1 the same (issue 257). A
+    /// denominator defined as "carries a decision that expects a winner" would have put
+    /// those in the numerator and out of the denominator, and read above 100 %.
+    #[test]
+    fn the_named_rate_divides_by_the_results_a_winner_was_possible_for() {
+        let row = |era: &str, awards, results, barren, winner, awardable| {
+            vec![json!(era), json!(awards), json!(results), json!(barren), json!(winner), json!(awardable)]
+        };
+        let mut rows: Vec<(String, Option<Rows>)> =
+            queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect();
+        rows.iter_mut().find(|(l, _)| l == "awards").expect("label").1 = Some(vec![
+            // 1,000 results, 600 of which the publisher closed naming nobody. 320 of the
+            // remaining 400 name a winner: 80 %, not the 32 % the old denominator read.
+            row("text", 1_000, 1_000, 0, 320, 400),
+            // Every result awardable and every one named — the ceiling still reads 100 %.
+            row("eforms:eforms-sdk-1.13", 500, 500, 0, 500, 500),
+        ]);
+        let report = assemble("(t)", &Raw::from_labelled(rows).expect("labelled"));
+        let text = render_text(&report);
+
+        assert!(text.contains("closed n/a"), "the excluded population must be headed: {text}");
+        assert!(text.contains("80.0%"), "320 of 400 awardable results name a winner: {text}");
+        assert!(
+            !text.contains("32.0%"),
+            "dividing by every materialised result blames the winner chain for the \
+             publisher's own closures: {text}"
+        );
+        assert!(text.contains("100.0%"), "and a fully-named era still reads 100 %: {text}");
+
+        // The invariant the whole shape exists for: the rate cannot exceed 1, because a
+        // result with a winner is in the denominator by construction. A rate above 1 is
+        // not a number, it is a bug report.
+        let json: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        for r in json["results_density"].as_array().expect("rows") {
+            let (w, a) = (r["with_winner"].as_u64().expect("n"), r["with_awardable"].as_u64().expect("n"));
+            assert!(w <= a, "winners must be a subset of awardable results: {r}");
+            assert!(r["winner_rate"].as_f64().expect("rate") <= 1.0, "{r}");
+        }
+        let text_row = json["results_density"]
+            .as_array()
+            .expect("rows")
+            .iter()
+            .find(|r| r["profile"] == "text")
+            .expect("row");
+        assert_eq!(text_row["closed_no_winner"], json!(600), "published, not left to subtraction");
+        assert_eq!(text_row["winner_rate"], json!(0.8));
+    }
+
     #[test]
     fn the_barren_column_separates_a_publication_gap_from_a_projection_gap() {
         // `barren` is the third count per era, in the merged row: 10 award notices, 4
@@ -2065,9 +2153,9 @@ mod tests {
         rows.iter_mut().find(|(l, _)| l == "awards").expect("label").1 = Some(vec![
             // The DE-1.x shape: every award notice materialises a result, almost none
             // names a winner (issue 100).
-            vec![json!("eforms:eforms-de-1.1"), json!(1_000), json!(1_000), json!(0), json!(34)],
+            vec![json!("eforms:eforms-de-1.1"), json!(1_000), json!(1_000), json!(0), json!(34), json!(1_000)],
             // …against an era whose chain works.
-            vec![json!("eforms:eforms-de-2.1"), json!(1_000), json!(1_000), json!(0), json!(800)],
+            vec![json!("eforms:eforms-de-2.1"), json!(1_000), json!(1_000), json!(0), json!(800), json!(1_000)],
         ]);
         let report = assemble("(t)", &Raw::from_labelled(rows).expect("labelled"));
 
@@ -2085,7 +2173,7 @@ mod tests {
         let mut half: Vec<(String, Option<Rows>)> =
             queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect();
         half.iter_mut().find(|(l, _)| l == "awards").expect("label").1 =
-            Some(vec![vec![json!("text"), json!(1_000), json!(500), json!(500), json!(250)]]);
+            Some(vec![vec![json!("text"), json!(1_000), json!(500), json!(500), json!(250), json!(500)]]);
         let text = render_text(&assemble("(t)", &Raw::from_labelled(half).expect("labelled")));
         assert!(
             text.contains("50.0%"),

@@ -441,3 +441,55 @@ rather than afterwards.
 RSS growth is consistent with either the read accumulating `edges`/`rank` or turso's page cache
 growing as the seeks walk a 14.3M-row index; the read timer distinguishes those too, since a slow
 read prints its own elapsed time before the union-find ever starts.
+
+## The step ran 3 h 27 m and never finished — and there was no way to stop it (2026-08-20)
+
+Job 288's previous-notice step started at 15:23:18 and was still running at 18:50:26 — **3 h 27 m**,
+one core pinned at 100 %, RSS flat at 2.2 GB the whole time (so it was not accumulating; it was
+grinding). That is the third occurrence, and the first with a number attached. The step never printed
+its completion line, so the elapsed time this part of the issue was waiting for is a lower bound, not
+a measurement.
+
+**The operator cannot stop it.** This is the part worth fixing. The documented route refuses:
+
+    POST /admin/jobs/288/cancel
+    {"error":{"message":"job 288 is running as kind \"project\", which has no stop checkpoint","status":409}}
+
+`STOPPABLE_KINDS = ["reparse", "data-quality"]`, so a `project` job — the longest job the system runs,
+and the one this whole issue is about holding the writer — is the one kind that cannot be interrupted.
+The supervisor is honest about it (issue 252's message names the reason precisely), but honesty is not
+a lever. What is left is a service restart, and a restart RE-RUNS the job from the top: its durable row
+survives recovery, so the 3.5 h is repaid, not saved.
+
+The only clean exit is the `TENDER_DROP_JOBS` escape hatch: set it, restart (the job is dropped at
+recovery rather than resumed), clear it. That works — it is what unblocked tonight's deploy — but it
+means the answer to "this fold is stuck and the daily tick is due in twelve hours" is *edit a systemd
+drop-in and bounce the service*, which is not an operational procedure so much as a workaround with a
+manual.
+
+**Proposed, not yet built:** give the projection a stop checkpoint. It already checkpoints between
+`GROUP_KEY_UPDATE_BATCH` ranges and between plan chunks — the loop boundaries where a stop flag would
+be read exist and are frequent. `phase 1` reads the flag per chunk, the group step per batch, `phase 2`
+per fold batch. That turns `project` into a stoppable kind and makes the documented cancel route true
+for the job that most needs it. It does NOT need resumability to be useful: dropping out cleanly at a
+checkpoint and leaving the plan for the next run is strictly better than a restart that redoes
+everything.
+
+### An ops trap worth knowing about, found the hard way
+
+Setting `TENDER_DROP_JOBS=288` in a NEW drop-in (`drop-288.conf`) appeared to work — `systemctl show`
+listed the variable, and `/proc/<pid>/environ` confirmed the process had it — but the value was
+**empty**, and the job was recovered rather than dropped:
+
+    TENDER_DROP_JOBS=$          # cat -A: the value is the empty string
+
+`/etc/systemd/system/tender-db.service.d/` already held `dropjobs.conf` from an earlier use of the same
+hatch, left in place with the value reset to empty. Drop-ins are applied in **alphanumeric order**, and
+`drop-288.conf` sorts before `dropjobs.conf` (`-` = 0x2D < `j`), so the older file silently won. The
+symptom is the worst kind: the variable is present, so every check says "it is set", and it is set to
+nothing.
+
+Fix applied: write the value into the file that wins and delete the redundant one. **Rule for next
+time — there is exactly one `dropjobs.conf`; set its value, use it, reset it to empty. Never add a
+second drop-in for the same variable.** A leftover that sets an empty value is indistinguishable from
+an unset variable at every observation point except `cat -A` on the resolved environment.

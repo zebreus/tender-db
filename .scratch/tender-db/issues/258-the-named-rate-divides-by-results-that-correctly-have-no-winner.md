@@ -3,7 +3,8 @@
 Status: needs-triage — filed 2026-08-20 out of issue 257's diagnosis. Small, well-understood, and it
 makes an already-useful column truer. Not urgent: the column is directionally right today
 Kind: measurement precision / honest denominator
-Blocked by: 257 (whose fix creates part of the population this is about)
+Blocked by: 257 and 100 (both create NULL-decision populations this must not mis-handle — see the
+sketch correction below, which they falsified before it was built)
 Relates to: 101 (the column), 242 (the same argument one column to the left), 100, 257
 
 ## The defect
@@ -42,23 +43,46 @@ is ours.
 
 ## Shape of the fix
 
-`awards_template` already aggregates per era in one pass over `tender_versions`. Add a fourth `SUM`
-over the versions whose result carries a decision that *expects* a winner, and make that the `named`
-denominator:
+**Correction to this issue's first sketch, before anyone builds it.** The sketch below originally
+proposed a denominator of "versions whose result carries a decision that expects a winner":
 
-    -- resolvable: the publisher asserted a selection, so a missing winner IS our gap
+    AND r.decision NOT IN ('no-rece', 'clos-nw') AND r.decision IS NOT NULL
+
+That is wrong, and issue 100's fix is what makes it wrong. eForms-DE 1.x publishes **no**
+`TenderResultCode` at all, so its results carry `decision IS NULL` — and after 100 they DO name
+winners. Under that denominator the ~60k DE-1.1 award notices would land in the numerator
+(`with_winner`) while being excluded from the denominator, and the rate would read **above 100 %**.
+The same trap sits in sdk-0.1 after issue 257, whose ~125k unstated decisions are now NULL by design.
+
+The denominator must therefore be defined by what it EXCLUDES, not by what it requires:
+
+    -- exclude only results that positively deny an award AND name nobody
     SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_lot_results r
                           WHERE r.tender_id = tv.tender_id AND r.seq = tv.seq
-                            AND r.decision NOT IN ('no-rece', 'clos-nw')
-                            AND r.decision IS NOT NULL)
-             THEN 1 ELSE 0 END) AS with_awarded_result
+                            AND NOT (r.decision IN ('no-rece', 'clos-nw', 'open-nw')
+                                     AND NOT EXISTS(SELECT 1 FROM tender_version_result_winners w
+                                                     WHERE w.tender_id = r.tender_id
+                                                       AND w.seq = r.seq)))
+             THEN 1 ELSE 0 END) AS with_awardable_result
 
-Then `named = with_winner / with_awarded_result`, and the difference between `with_results` and
-`with_awarded_result` is worth its own column — it is the count of results the publisher closed without
-naming anybody, which is a real and interesting number rather than a residue.
+`named` then divides by `with_awardable_result`. Three properties, all of which matter:
 
-Keep `with_results` and `density` exactly as they are: they answer "did the block materialise", which is
-a different question and already correct.
+- **The rate cannot exceed 100 %**: anything with a winner is in the denominator by construction, so
+  the numerator is a subset. That is the same invariant issue 243's single-pass merge established for
+  `density`, and for the same reason — a rate above 1 is not a number, it is a bug report.
+- **An unstated decision counts as awardable.** Silence is not a denial (issues 100 and 257 both turn
+  on that distinction), so a NULL-decision result stays in the denominator and its missing winner is
+  counted honestly against us.
+- **A publisher contradiction resolves toward inclusion.** `no-rece` WITH a named winner does occur —
+  five of 2,895 in the sdk-0.1 2023-01 cross-tab. Keeping those in the denominator is the safe
+  direction: excluding them while counting their winner is the >100 % bug again.
+
+The difference between `with_results` and `with_awardable_result` is worth its own column: it is the
+count of results the publisher closed without naming anybody, which is a real and interesting number
+rather than a residue.
+
+Keep `with_results` and `density` exactly as they are: they answer "did the block materialise", which
+is a different question and already correct.
 
 ## Gate
 
