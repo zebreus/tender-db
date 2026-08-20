@@ -292,3 +292,117 @@ completes on the next full re-projection — the same run whose new heartbeats w
 edges there were. If it still stalls with stats in place, the next move is to stop guessing at the
 planner and restructure the query (materialise the edge set into a temp table with its own index, or
 resolve the `notices` lookup in a separate pass), not to add another hint.
+
+## Part 2, first instrumented run — 2026-08-20, job 288
+
+The instrumentation deployed as `715f454` reached the step at 15:23:18 box time and printed the
+number the issue was waiting for:
+
+    [project] group step keyed/island: 24.0s
+    [project] group step union-load: 6.7s (11007709 nodes)
+    [project] group step legacy-update: 107.8s (11003671 legacy)
+    [project] group step analyze plan_prev_edge: 0.0s
+    [project] group step analyze plan_notice: 0.3s
+    [project] group step previous-notice: 245955 edge(s) in the plan
+
+**245,955 edges.** Every step before it is minutes; this one has been running 10+ minutes with no
+completion line, and `top` shows the server on **one core at ~91 %, load average 1.00** — single
+threaded and CPU-bound, not blocked on I/O and not deadlocked. That is the shape of a nested-loop
+join, not of work proportional to 245,955 lookups.
+
+**The ANALYZE hypothesis is falsified, or at least did not fire.** `ANALYZE plan_prev_edge` returned
+in **0.0s** on a 245,955-row table. Whatever it did, it did not collect statistics worth the name, and
+the step it was meant to speed up is still slow. I recorded that pre-join ANALYZE as a hypothesis when
+I added it; it should now be read as tried and not sufficient, and it stays only because it is free.
+
+**Correction to my own instrumentation, before anyone reads too much into the silence.** The heartbeat
+counts rows the query RETURNS, not edges it scans:
+
+    while let Some(row) = rows.next().await? {
+        read += 1;
+        if read % PREV_EDGE_HEARTBEAT == 0 { ... }
+
+and the query filters hard (`b.published_at < a.published_at AND a.group_key <> b.group_key`). If
+fewer than 50,000 edges survive that filter, **no heartbeat ever fires even on a perfectly healthy
+run**. So "no heartbeat in 10 minutes" is not evidence of a stall, and I nearly read it as such. What
+IS evidence is the pinned core with no completion line. The heartbeat should be moved to a wall-clock
+interval rather than a row count — filed as the next slice.
+
+## The suspect, stated as a hypothesis with a test
+
+The join's inner side is:
+
+    JOIN notices n ON n.source = e.a_source AND n.publication_id = e.b_publication_id
+
+`notices` carries `UNIQUE(source, publication_id, content_hash)` — so the predicate is a **prefix** of
+an existing unique index, which any competent planner would use. There is no two-column index that
+matches it exactly. turso's planner already has a documented history here (239: no predicate pushdown
+into views; 248: DELETE ignoring a composite-PK index), and "does not use a prefix of a composite
+UNIQUE" belongs to the same family. If it is instead scanning `notices` (14.3M rows) per edge, the
+observed single-core hour is arithmetic, not mystery.
+
+**This is a hypothesis, not a finding, and it must not be shipped as an explanation.** The two
+retractions on this board — "the fold's cost is insensitive to batch size" and "WAL growth explains
+the slow plan" — were both explanations that sounded right and were never tested. The test here:
+reproduce the schema and both plan tables locally at representative row counts and read
+`EXPLAIN QUERY PLAN` for this exact statement. It cannot be read against prod: the plan tables are
+temp tables private to the fold's own connection, invisible to `/v1/sql`. If the plan confirms a scan,
+the fix is a two-column `notices(source, publication_id)` index, which is cheap and independently
+defensible.
+
+The completion line for this step, when job 288 reaches it, gives the first real elapsed time for
+245,955 edges. That number belongs here when it lands.
+
+## The index hypothesis is WRONG — measured, not argued (2026-08-20)
+
+I wrote the two-column-index suspicion above as a hypothesis with a test attached, and then ran the
+test. It refutes the hypothesis. `EXPLAIN QUERY PLAN` on the exact statement the fold runs:
+
+    SCAN plan_prev_edge AS e
+    SEARCH a USING INTEGER PRIMARY KEY (rowid=?)
+    SEARCH n USING INDEX sqlite_autoindex_notices_1 (source=? AND publication_id=?)
+    SEARCH b USING INTEGER PRIMARY KEY (rowid=?)
+
+The plan is optimal and `clear_plan_on`'s comment was right all along: the lookup **does** seek
+`notices` by the leading columns of its `UNIQUE(source, publication_id, content_hash)` index, and both
+`plan_notice` lookups are rowid seeks. The driving table is the small one. There is no scan to remove
+and no index to add. (Caveat stated plainly: the plan is read on an empty DB, where this engine has no
+row statistics — but nothing here depends on statistics. It is an equality predicate on the exact
+prefix of a unique index, and the syntactic join order already puts the small table outermost, which is
+what a statistics-free planner follows.)
+
+That is three hypotheses on this board now retired by measurement rather than by argument — batch-size
+sensitivity, WAL growth, and this. The pattern is consistent enough to be worth naming: on this engine
+my guesses about *why* a step is slow have been wrong every time, and the thing that has never been
+wrong is a timer.
+
+The plan assertion is kept as `the_previous_notice_join_seeks_notices_rather_than_scanning_it`
+(crates/store/src/lib.rs), reading `PREV_EDGE_JOIN_SQL` — the statement is now a named const used by
+both the fold and the test, so the plan can never be checked against a copy that has drifted. It costs
+nothing and it means the next person to suspect this join can see in one test run that it is not the
+problem.
+
+## So: timers, not theories
+
+The step is one `eprintln!` at the start and one at the end, with four quite different things in
+between — the streaming read, the union-find over the involved keys, the `plan_group_merge` writes, and
+the relabel `UPDATE` batched across all ~11M `plan_notice` rows with a TRUNCATE checkpoint per batch.
+Any of the four could be the hour and the log cannot distinguish them. Each now reports its own
+elapsed time, and the two long-running ones (the read, the relabel) heartbeat on a 15-second clock:
+
+    [project] group step previous-notice: 245955 edge(s) in the plan
+    [project] group step previous-notice read: …s (… of 245955 edge(s) matched, … key(s) involved)
+    [project] group step previous-notice union: …s (… key(s) to relabel)
+    [project] group step previous-notice merge-write: …s
+    [project] group step previous-notice relabel: batch N, notice_id lo..hi of max, …s
+    [project] group step previous-notice relabel: …s (N batch(es))
+    [project] group step previous-notice: …s (… edge(s) resolved, … key(s) merged)
+
+`PREV_EDGE_HEARTBEAT` is now a `Duration`, not a row count, for the reason recorded above: a row-count
+interval is silent on a run that matches fewer rows than the interval, and silence that means "fine"
+is indistinguishable from silence that means "hung".
+
+**Sequencing.** Job 288 is deliberately being left to finish rather than restarted onto this build:
+its completion line is the first real elapsed time for 245,955 edges, which is the number this part of
+the issue has been waiting for, and deploying would throw away ~1.5 h of re-projection to learn it a
+different way. Deploy after it drains; the breakdown lands on the next full re-projection.

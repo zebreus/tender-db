@@ -787,12 +787,32 @@ const NODE_WRITE_BATCH: usize = 20_000;
 
 /// How often the ADR-0011 previous-notice pass reports how far it has read (issue 256).
 ///
-/// The step reads one row per publisher-declared previous-notice reference and its own
-/// timing line prints only on completion, so on a full-corpus plan it has twice gone
-/// silent for over two hours with no way — short of `ps -o pcpu` — to tell a grinding
-/// join from an empty edge set. 50,000 is coarse enough that a normal run (563 resolvable
-/// references when ADR-0011 was measured) prints nothing at all beyond the count line.
-const PREV_EDGE_HEARTBEAT: u64 = 50_000;
+/// A DURATION, not a row count. On a full-corpus plan this step has gone silent for
+/// over two hours with no way — short of `ps -o pcpu` — to tell a grinding join from an
+/// empty edge set, which is what the heartbeat was added for. But it counted rows the
+/// query RETURNS, not references in the plan, and the survivor count is not knowable in
+/// advance: the first 50,000-row interval printed nothing at all on the 245,955-edge run
+/// of 2026-08-20, so the silence still looked exactly like a hang and I read it as one
+/// for ten minutes. A clock cannot be silent.
+const PREV_EDGE_HEARTBEAT: std::time::Duration = std::time::Duration::from_secs(15);
+
+/// The ADR-0011 previous-notice join, named so its query plan can be asserted against
+/// the statement the fold actually runs rather than a copy that drifts from it
+/// (`the_previous_notice_join_seeks_notices_rather_than_scanning_it`). `plan_prev_edge`
+/// carries `a_source` precisely so this lookup can seek `notices` by the leading
+/// columns of its `UNIQUE(source, publication_id, content_hash)` index; that was an
+/// assumption in a comment until the test made it checkable. It is the step that pins
+/// one core for the better part of an hour on a full re-projection (issue 256 part 2).
+pub(crate) const PREV_EDGE_JOIN_SQL: &str = "SELECT a.group_key, a.published_at, a.publication_id, \
+        b.group_key, b.published_at, b.publication_id \
+   FROM plan_prev_edge e \
+   JOIN notices n ON n.source = e.a_source \
+                 AND n.publication_id = e.b_publication_id \
+   JOIN plan_notice a ON a.notice_id = e.a_notice_id \
+   JOIN plan_notice b ON b.notice_id = n.id \
+  WHERE a.group_key IS NOT NULL AND b.group_key IS NOT NULL \
+    AND b.published_at < a.published_at \
+    AND a.group_key <> b.group_key";
 
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
 /// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
@@ -3073,29 +3093,23 @@ impl Db {
         let mut edges: Vec<(String, String)> = Vec::new();
         let mut rank: std::collections::HashMap<String, (i64, String)> =
             std::collections::HashMap::new();
+        let t_read = std::time::Instant::now();
         {
             let mut read = 0u64;
-            let mut rows = conn
-                .query(
-                    "SELECT a.group_key, a.published_at, a.publication_id, \
-                            b.group_key, b.published_at, b.publication_id \
-                       FROM plan_prev_edge e \
-                       JOIN notices n ON n.source = e.a_source \
-                                     AND n.publication_id = e.b_publication_id \
-                       JOIN plan_notice a ON a.notice_id = e.a_notice_id \
-                       JOIN plan_notice b ON b.notice_id = n.id \
-                      WHERE a.group_key IS NOT NULL AND b.group_key IS NOT NULL \
-                        AND b.published_at < a.published_at \
-                        AND a.group_key <> b.group_key",
-                    (),
-                )
-                .await?;
+            // Heartbeat on the CLOCK, not on a row count. The count was rows the query
+            // RETURNS, and the query filters hard (same-Source, strictly-earlier, different
+            // key), so a run that matched fewer than the interval printed nothing at all and
+            // looked identical to a hang — which is exactly how I misread 2026-08-20's run
+            // for ten minutes (issue 256 part 2). A clock cannot be silent.
+            let mut beat = std::time::Instant::now();
+            let mut rows = conn.query(PREV_EDGE_JOIN_SQL, ()).await?;
             while let Some(row) = rows.next().await? {
                 read += 1;
-                if read % PREV_EDGE_HEARTBEAT == 0 {
+                if beat.elapsed() >= PREV_EDGE_HEARTBEAT {
+                    beat = std::time::Instant::now();
                     eprintln!(
                         "[project] group step previous-notice: {read}/{planned_edges} edge(s) \
-                         read in {:.1}s",
+                         matched in {:.1}s",
                         started.elapsed().as_secs_f64()
                     );
                 }
@@ -3114,6 +3128,14 @@ impl Db {
                 edges.push((a, b));
             }
         }
+        eprintln!(
+            "[project] group step previous-notice read: {:.1}s ({} of {planned_edges} edge(s) \
+             matched, {} key(s) involved)",
+            t_read.elapsed().as_secs_f64(),
+            edges.len(),
+            rank.len()
+        );
+        let t_uf = std::time::Instant::now();
         let merges: Vec<(String, String)> = if edges.is_empty() {
             Vec::new()
         } else {
@@ -3137,7 +3159,13 @@ impl Db {
                 })
                 .collect()
         };
+        eprintln!(
+            "[project] group step previous-notice union: {:.1}s ({} key(s) to relabel)",
+            t_uf.elapsed().as_secs_f64(),
+            merges.len()
+        );
         if !merges.is_empty() {
+            let t_write = std::time::Instant::now();
             for chunk in merges.chunks(NODE_WRITE_BATCH) {
                 conn.execute("BEGIN IMMEDIATE", ()).await?;
                 for (from, to) in chunk {
@@ -3149,11 +3177,19 @@ impl Db {
                 }
                 conn.execute("COMMIT", ()).await?;
             }
+            eprintln!(
+                "[project] group step previous-notice merge-write: {:.1}s",
+                t_write.elapsed().as_secs_f64()
+            );
             // Batched by notice_id like the keyed/island pass, and for the same reason
             // (issue 63: one whole-plan UPDATE cannot be checkpointed mid-statement).
+            let t_relabel = std::time::Instant::now();
+            let mut beat_relabel = std::time::Instant::now();
+            let mut batches = 0u64;
             if let (Some(min_id), Some(max_id)) = (min_id, max_id) {
                 let mut lo = min_id;
                 while lo <= max_id {
+                    batches += 1;
                     let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
                     conn.execute(
                         "UPDATE plan_notice SET group_key = \
@@ -3164,9 +3200,21 @@ impl Db {
                     )
                     .await?;
                     let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+                    if beat_relabel.elapsed() >= PREV_EDGE_HEARTBEAT {
+                        beat_relabel = std::time::Instant::now();
+                        eprintln!(
+                            "[project] group step previous-notice relabel: batch {batches}, \
+                             notice_id {lo}..{hi} of {max_id}, {:.1}s",
+                            t_relabel.elapsed().as_secs_f64()
+                        );
+                    }
                     lo = hi.saturating_add(1);
                 }
             }
+            eprintln!(
+                "[project] group step previous-notice relabel: {:.1}s ({batches} batch(es))",
+                t_relabel.elapsed().as_secs_f64()
+            );
         }
         eprintln!(
             "[project] group step previous-notice: {:.1}s ({} edge(s) resolved, {} key(s) merged)",

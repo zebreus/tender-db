@@ -3981,6 +3981,52 @@ tmpfs /data/ramcache tmpfs rw 0 0
         let _ = std::fs::remove_file(&path);
     }
 
+    /// ADR-0011's previous-notice pass joins `notices` on `(source, publication_id)`,
+    /// and `clear_plan_on`'s own comment states the intent as fact — `plan_prev_edge`
+    /// carries `a_source` "so the lookup hits `notices`' UNIQUE(source, publication_id, …)
+    /// index by its leading columns". Nothing checked it. It is also the step that pins
+    /// one core for the better part of an hour on a full re-projection: 245,955 edges
+    /// measured on job 288 (issue 256 part 2), every neighbouring step in the tens of
+    /// seconds. A prefix of a composite UNIQUE is exactly the kind of access this engine
+    /// has failed to select before (239: no pushdown into views; 248: DELETE ignoring a
+    /// composite-PK index), so the assumption is worth a gate rather than a comment.
+    ///
+    /// Asserted against `PREV_EDGE_JOIN_SQL` itself, so the plan can never be checked
+    /// against a copy that has drifted from the statement the fold runs.
+    #[tokio::test]
+    async fn the_previous_notice_join_seeks_notices_rather_than_scanning_it() {
+        let path = format!("/tmp/tender-db-preveqp-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        db.reset_plan().await.unwrap();
+
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(&format!("EXPLAIN QUERY PLAN {}", crate::canonical::PREV_EDGE_JOIN_SQL), ())
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+
+        // The `notices` side must be a seek, not a scan. Whatever the engine calls the
+        // access path, the one thing it must not say is that it walks the table: at 14.3M
+        // rows and 245,955 edges a scan per edge is the observed single-core hour.
+        let notices_line = plan
+            .lines()
+            .find(|l| l.contains("notices") && !l.contains("plan_notice"))
+            .unwrap_or_else(|| panic!("no `notices` access in the plan:\n{plan}"));
+        assert!(
+            !notices_line.to_uppercase().contains("SCAN NOTICES"),
+            "the previous-notice join must SEEK notices by (source, publication_id), not scan \
+             14.3M rows per edge — plan was:\n{plan}"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
     /// Issue 82 regression: a rebuild empties the tender layer via
     /// `reset_tender_layer`, which DROPs the `tenders` table — losing every index on
     /// it, including `tenders_current_published` (created only by `migrate()` at
