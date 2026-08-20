@@ -489,7 +489,10 @@ fn awards_template(win: &str) -> String {
                 SUM(CASE WHEN NOT EXISTS(SELECT 1 FROM notice_sections s \
                                           WHERE s.notice_id = tv.caused_by_notice_id \
                                             AND s.kind IN ('LotResult', 'TenderResult')) \
-                         THEN 1 ELSE 0 END) AS no_award_content \
+                         THEN 1 ELSE 0 END) AS no_award_content, \
+                SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w \
+                                      WHERE w.tender_id = tv.tender_id AND w.seq = tv.seq) \
+                         THEN 1 ELSE 0 END) AS with_winner \
            FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
           WHERE {win}({award}) \
           GROUP BY n.profile",
@@ -911,6 +914,14 @@ pub struct DensityRow {
     /// all — see [`awards_sql`]. Not a failure of ours, and the difference
     /// between a readable rate and a misleading one.
     pub no_award_content: u64,
+    /// Of the denominator, the versions that resolved a WINNER (issue 101). A
+    /// result block with no winner in it is the shape issue 100 describes for
+    /// eForms-DE 1.x, and reading it used to take two sections and an inference:
+    /// section 1's `winner` column is a share of ALL versions, so 1.4 % there is
+    /// only a gap once you know what fraction of the era's versions are awards.
+    /// Beside the density it is one line — 100 % of DE-1.1's award notices
+    /// materialise a result and 3 % of them name who won.
+    pub with_winner: u64,
 }
 
 /// One era's projection invariant: of the versions whose notice parsed WITH a
@@ -1133,6 +1144,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             award_notices: as_u64(r.get(1)),
             with_results: as_u64(r.get(2)),
             no_award_content: as_u64(r.get(3)),
+            with_winner: as_u64(r.get(4)),
         })
         .collect();
     // Profile-sorted, because one query no longer imposes an order the way merging two
@@ -1284,8 +1296,9 @@ pub fn render_text(report: &Report) -> String {
     );
     let _ = writeln!(
         out,
-        "  {:<30} {:>10} {:>14} {:>8} {:>16}",
-        "era", "award-notices", "with lot_results", "density", "no block parsed"
+        "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>7}",
+        "era", "award-notices", "with lot_results", "density", "no block parsed", "with winner",
+        "named"
     );
     let mut impossible = 0usize;
     for row in &report.density {
@@ -1302,12 +1315,17 @@ pub fn render_text(report: &Report) -> String {
         };
         let _ = writeln!(
             out,
-            "  {:<30} {:>10} {:>14} {:>8} {:>16}",
+            "  {:<30} {:>10} {:>14} {:>8} {:>16} {:>12} {:>7}",
             display_era(&row.profile),
             group(row.award_notices),
             group(row.with_results),
             rate,
-            group(row.no_award_content)
+            group(row.no_award_content),
+            group(row.with_winner),
+            // Against the notices that DID materialise a result, not against every award
+            // notice: a missing result block is already counted one column left, and
+            // dividing by it twice would blame the winner chain for it (issue 101).
+            pct(row.with_winner, row.with_results),
         );
     }
     if impossible > 0 {
@@ -1552,6 +1570,8 @@ pub fn render_json(report: &Report) -> String {
             // part that is genuinely ours. A consumer plotting `density` alone would
             // read a publication-quality floor as our defect rate.
             "no_award_content": r.no_award_content,
+            "with_winner": r.with_winner,
+            "winner_rate": rate(r.with_winner, r.with_results),
             "unprojected": r.award_notices.saturating_sub(r.with_results).saturating_sub(r.no_award_content),
         }))
         .collect();
@@ -2031,6 +2051,58 @@ mod tests {
         let text = render_text(&assemble("http://x", &raw));
         assert!(text.contains("no result block parsed: UNMEASURED"), "{text}");
         assert!(!text.contains("the fold's own shortfall"), "no arithmetic on a missing input: {text}");
+    }
+
+    /// Issue 101: a result block with nobody in it. Reading that used to take two
+    /// sections and an inference — section 1's `winner` is a share of ALL versions, so
+    /// eForms-DE 1.1's 1.4 % only becomes a gap once you know 41 % of its versions are
+    /// awards. Beside the density it is one line, and it is a rate against the notices
+    /// that DID materialise a result, so a missing result block is not counted twice.
+    #[test]
+    fn a_result_block_with_no_winner_is_its_own_column() {
+        let mut rows: Vec<(String, Option<Rows>)> =
+            queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect();
+        rows.iter_mut().find(|(l, _)| l == "awards").expect("label").1 = Some(vec![
+            // The DE-1.x shape: every award notice materialises a result, almost none
+            // names a winner (issue 100).
+            vec![json!("eforms:eforms-de-1.1"), json!(1_000), json!(1_000), json!(0), json!(34)],
+            // …against an era whose chain works.
+            vec![json!("eforms:eforms-de-2.1"), json!(1_000), json!(1_000), json!(0), json!(800)],
+        ]);
+        let report = assemble("(t)", &Raw::from_labelled(rows).expect("labelled"));
+
+        let de11 = report.density.iter().find(|r| r.profile == "eforms:eforms-de-1.1").expect("row");
+        assert_eq!((de11.with_results, de11.with_winner), (1_000, 34));
+
+        let text = render_text(&report);
+        assert!(text.contains("with winner"), "the column must be headed: {text}");
+        assert!(text.contains("3.4%"), "34 of 1,000 materialised results name a winner: {text}");
+        assert!(text.contains("80.0%"), "and the working era reads 80 %: {text}");
+
+        // The rate divides by the materialised results, NOT by the award notices — a
+        // notice with no result block is already counted one column left, and dividing by
+        // it twice would blame the winner chain for a missing block.
+        let mut half: Vec<(String, Option<Rows>)> =
+            queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect();
+        half.iter_mut().find(|(l, _)| l == "awards").expect("label").1 =
+            Some(vec![vec![json!("text"), json!(1_000), json!(500), json!(500), json!(250)]]);
+        let text = render_text(&assemble("(t)", &Raw::from_labelled(half).expect("labelled")));
+        assert!(
+            text.contains("50.0%"),
+            "250 winners against 500 materialised results is 50 %, not 25 %: {text}"
+        );
+
+        // And the JSON carries the count and the rate, so a consumer never recomputes it.
+        let json: Value = serde_json::from_str(&render_json(&report)).expect("valid json");
+        let de11 = json["results_density"]
+            .as_array()
+            .expect("rows")
+            .iter()
+            .find(|r| r["profile"] == "eforms:eforms-de-1.1")
+            .expect("row")
+            .clone();
+        assert_eq!(de11["with_winner"], json!(34));
+        assert_eq!(de11["winner_rate"], json!(0.034));
     }
 
     /// The vocabulary itself: every marker must classify codes into two disjoint
