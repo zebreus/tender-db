@@ -385,6 +385,31 @@ const LEGACY_OWN_NUMBER_FIELDS: &[&str] = &["TED-NO_DOC_OJS", "TXT-ND"];
 /// of its own. Issue 251 names it as the follow-up.
 const TAX_BASIS_FIELDS: &[&str] = &["TED-VAL_TOTAL_TAX_BASIS"];
 
+/// The form eras state the basis as a bare marker element beside the value, inside a
+/// container that groups the two (issue 251):
+///
+///     <COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="RON">
+///       <VALUE_COST FMTVAL="1681100">1 681 100</VALUE_COST>
+///       <EXCLUDING_VAT/>
+///     </COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE>
+///
+/// Pairing them by SECTION would be wrong, and measurably so: the committed defence
+/// award holds an `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` amount with no marker in the
+/// same section as a `COSTS_RANGE` amount that has one, so a section-keyed lookup labels
+/// the initial estimate from the final value's marker.
+///
+/// The parse layer already separates them, because
+/// `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` is a field-id prefix wrapper and `COSTS_RANGE`
+/// is not — so **the prefix is the container identity**:
+///
+///     TED-VALUE_COST                            ↔  TED-EXCLUDING_VAT
+///     TED-INITIAL_…_CONTRACT.VALUE_COST         ↔  TED-INITIAL_…_CONTRACT.EXCLUDING_VAT
+///
+/// Hence the marker id is derived from the amount id by swapping its trailing element,
+/// which is exact rather than heuristic.
+const AMOUNT_ELEMENT: &str = "VALUE_COST";
+const BASIS_MARKERS: [(&str, &str); 2] = [("EXCLUDING_VAT", "excl"), ("INCLUDING_VAT", "incl")];
+
 const LEGACY_BID_COUNT_FIELDS: &[&str] =
     &["TED-NB_TENDERS_RECEIVED", "TED-OFFERS_RECEIVED_NUMBER"];
 
@@ -2471,6 +2496,26 @@ impl NoticeState {
                 _ => None,
             })
             .collect();
+        // Every (section, field_id) a basis marker sits at, and how many amounts each
+        // (section, field_id) holds. The second is the one guard the derived-id rule still
+        // needs: two unprefixed `COSTS_RANGE` containers in one section would both emit
+        // `TED-VALUE_COST`, and a single marker could not say which it qualifies. None of
+        // the committed fixtures does that, and if one exists the amount stays unlabelled
+        // rather than guessed at.
+        let mut markers: std::collections::BTreeSet<(&str, &str)> = Default::default();
+        let mut amount_counts: std::collections::BTreeMap<(&str, &str), usize> = Default::default();
+        for v in &parsed.values {
+            let at = (v.section_id.as_str(), v.field_id.as_str());
+            match &v.value {
+                NoticeValue::Integer(_)
+                    if BASIS_MARKERS.iter().any(|(el, _)| v.field_id.ends_with(el)) =>
+                {
+                    markers.insert(at);
+                }
+                NoticeValue::Amount { .. } => *amount_counts.entry(at).or_default() += 1,
+                _ => {}
+            }
+        }
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -2485,7 +2530,15 @@ impl NoticeState {
                             currency: currency.clone(),
                             tax_basis: tax_bases
                                 .get(value.section_id.as_str())
-                                .map(|b| (*b).to_owned()),
+                                .map(|b| (*b).to_owned())
+                                .or_else(|| {
+                                    marker_basis(
+                                        &value.section_id,
+                                        field_id,
+                                        &markers,
+                                        &amount_counts,
+                                    )
+                                }),
                         }
                     })
                 }
@@ -3532,6 +3585,33 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
 /// stays unprojected — a restated copy loses to the form value, the issue-174
 /// precedent. `RANGE_VALUE_COST` (low/high ranges) also stays unprojected: a
 /// range is not one estimate (decision recorded on issue 177).
+/// The tax basis stated beside one form-era amount, or `None` (issue 251).
+///
+/// `None` covers three cases that all mean the same thing downstream — the source stated
+/// no basis, it stated both, or the section holds two amounts under this id so the marker
+/// cannot be attributed. NULL means "not stated" in the column either way.
+fn marker_basis(
+    section: &str,
+    amount_field: &str,
+    markers: &std::collections::BTreeSet<(&str, &str)>,
+    amount_counts: &std::collections::BTreeMap<(&str, &str), usize>,
+) -> Option<String> {
+    let stem = amount_field.strip_suffix(AMOUNT_ELEMENT)?;
+    if amount_counts.get(&(section, amount_field)).copied().unwrap_or(0) > 1 {
+        return None;
+    }
+    let mut found: Option<&str> = None;
+    for (element, basis) in BASIS_MARKERS {
+        let id = format!("{stem}{element}");
+        if markers.contains(&(section, id.as_str())) {
+            if found.replace(basis).is_some() {
+                return None; // both bases marked: the notice states neither clearly
+            }
+        }
+    }
+    found.map(str::to_owned)
+}
+
 fn amount_target(
     field_id: &str,
     sections: &HashMap<&str, &store::Section>,

@@ -1,8 +1,8 @@
 # 251 — amounts carry no tax basis, and the corpus already mixes inclusive with exclusive figures
 
-Status: OPTION 1 DONE AND VERIFIED ON PROD 2026-08-20 (rev `96d63a2`) — the column exists and the text
-era populates it, checked past the fold. The r208/r209 VAT indicator and the report line (option 2)
-remain the named follow-ups
+Status: TEXT ERA DONE AND VERIFIED ON PROD; FORM ERAS BUILT 2026-08-20 (INCLUDING_VAT promoted to a
+Marker, container-exact pairing, tests incl. a falsified one) — AWAITING DEPLOY + the r208/r209 refold
+that makes it visible. Option 2, the report line, is still a separate unit with its own A/B
 Kind: canonical modelling gap (a published qualifier with nowhere to land)
 Blocked by: —
 Relates to: 244 (the slice that surfaced it), 232 (the near-zero value columns), 171 (value-domain
@@ -211,3 +211,45 @@ halves should land together, or the first must ship with that caveat written int
 3. Tests over all three committed fixtures, asserting the *initial estimate* stays NULL while the final
    value gets its basis — the case the first design got wrong.
 4. Refold r208/r209 and read the split.
+
+
+---
+
+## The form-era half BUILT (2026-08-20) — steps 1-3 of the four
+
+**Step 1, the parser.** `INCLUDING_VAT` moved from `Rule::Group` to `Rule::Marker` in the r209 rules.
+The two arms are identical but for one line — a Group does `no_stray_text` then recurses, a Marker does
+the same plus emits `Integer(1)` — so the promotion is **purely additive**: same child handling, same
+exhaustiveness, one new value. An inclusive-of-tax figure now leaves a trace where before only its
+`VAT_PRCT` child survived.
+
+**Step 2, the pairing, derived rather than heuristic.** For an amount whose field id ends in
+`VALUE_COST`, the marker is that id with the trailing element swapped:
+
+    TED-VALUE_COST                      →  TED-EXCLUDING_VAT / TED-INCLUDING_VAT
+    TED-INITIAL_…_CONTRACT.VALUE_COST   →  TED-INITIAL_…_CONTRACT.EXCLUDING_VAT / …
+
+Both bases marked at once yields nothing, and so does a section holding **two** amounts under the same
+id — the one residual ambiguity the prefix cannot resolve, since two unprefixed `COSTS_RANGE` containers
+would both emit `TED-VALUE_COST`. Neither is labelled rather than one being guessed.
+
+**Step 3, the tests, and a correction to how I first wrote them.** My first test used the committed
+defence award and asserted "exactly one amount states a basis" — which passes, but **not for the reason
+I claimed**. Printing the table showed that fixture projects exactly ONE amount at all (the initial
+estimate is unprojected by issue 177's rule), so a section-keyed lookup would have passed it too. It
+proves the marker is read end to end from a real payload, and nothing about container-exactness.
+
+The discriminating case had to be synthesised, because no committed fixture projects two amounts in one
+section:
+
+- one section, `TED-VALUE_COST` 500,000 + `TED-VAL_TOTAL` 600,000 + one `TED-EXCLUDING_VAT`: the first
+  takes `excl`, the second must stay NULL. **Falsified** — pairing by section instead gives the
+  `VAL_TOTAL` amount `excl` too, and the test fails with exactly that.
+- one section, two `TED-VALUE_COST` amounts + one marker: neither is labelled.
+
+The fixture test now says in the assertion what it does and does not prove, and carries a guard so that
+if that notice ever starts projecting its second amount, the test asks to be revisited rather than
+quietly continuing to prove less than it appears to.
+
+**Step 4 remains:** refold r208/r209 and read the basis split. That is queue work — the era is 7.2M
+notices — and the text-era sweep has the box until it finishes.

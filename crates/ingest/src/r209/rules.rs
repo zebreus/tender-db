@@ -375,6 +375,13 @@ static GROUPED: &[(Rule, &[&str])] = &[
         "ECONOMIC_CRITERIA_DOC", "EINVOICING", "EORDERING", "EPAYMENT", "EXCLUDING_VAT",
         "EXECUTION", "EXTENDED_CONTRACT_DURATION", "EXTREME_URGENCY_EVENTS_UNFORESEEABLE",
         "FOLLOW_UP_CONTRACTS", "FRAMEWORK", "IDEM", "INDEFINITE_DURATION",
+        // Promoted from `Rule::Group` (issue 251). A Group emits nothing of its own, so an
+        // inclusive-of-tax value left NO trace in the parse layer at all — only its
+        // `VAT_PRCT` child survived, and `tender_version_amounts.tax_basis` had no way to
+        // read the half of the corpus that says "including". A Marker is a Group plus one
+        // `Integer(1)`: same stray-text check, same child recursion, so the promotion is
+        // purely additive and cannot leave anything unclaimed.
+        "INCLUDING_VAT",
         "JOINT_PROCUREMENT_INVOLVED", "LIKELY_SUBCONTRACTED", "LOT_ALL", "LOT_DIVISION",
         "LOT_ONE_ONLY", "LOWEST_PRICE", "MANUFACTURED_BY_DIRECTIVE", "MODIFICATION_ORIGINAL",
         "NOTHING", "NO_ACCEPTED_VARIANTS", "NO_ADDITIONAL_WORKS",
@@ -455,7 +462,7 @@ static GROUPED: &[(Rule, &[&str])] = &[
         "FD_CONTRACT_DEFENCE", "FD_CONTRACT_DEFENSE",
         "FD_PRIOR_INFORMATION_DEFENCE", "FD_PRIOR_INFORMATION_DEFENSE",
         "FORM_SECTION", "FURTHER_INFORMATION",
-        "INCLUDING_VAT", "INFORMATION_REGULATORY_FRAMEWORK", "INFO_MODIFICATIONS",
+        "INFORMATION_REGULATORY_FRAMEWORK", "INFO_MODIFICATIONS",
         "INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT", "INTERNET_ADDRESSES_CONTRACT",
         "INTERNET_ADDRESSES_CONTRACT_AWARD", "INTERNET_ADDRESSES_CONTRACT_DEFENCE",
         "INTERNET_ADDRESSES_PRIOR_INFORMATION", "INTERVAL_DATE", "IS_ELECTRONIC_AUCTION_USABLE",

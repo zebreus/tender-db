@@ -307,6 +307,64 @@ async fn an_amount_carries_the_tax_basis_its_source_stated() {
         assert_eq!(got.as_deref(), want, "cents {cents}");
     }
 
+    // ---- the form eras' marker shape (issue 251), where the discrimination matters ----
+    //
+    // One section, two amounts, ONE marker. The marker's field id derives from the plain
+    // `TED-VALUE_COST` only, so a section-keyed lookup would label both and this labels
+    // one. That is the whole difference, and the committed defence award cannot show it
+    // because it projects a single amount.
+    let marker = |section: &str, field: &str| ValueRow {
+        section_id: section.into(),
+        field_id: field.into(),
+        ordinal: 0,
+        value: NoticeValue::Integer(1),
+    };
+    let (e, pe) = notice("000005-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Marker"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 9 * 86_400),
+        ted_amount("PROCEDURE", "TED-VALUE_COST", 500_000),
+        ted_amount("PROCEDURE", "TED-VAL_TOTAL", 600_000),
+        marker("PROCEDURE", "TED-EXCLUDING_VAT"),
+    ]);
+    db.record_notice(&e, &pe).await.expect("record");
+    project::project(&db, false).await.expect("project");
+    async fn basis_at(db: &Db, cents: i64) -> Option<String> {
+        let sql = format!("SELECT tax_basis FROM tender_version_amounts WHERE cents = {cents}");
+        match db.scalar(&sql).await.expect("query") {
+            Some(turso::Value::Text(t)) => Some(t),
+            _ => None,
+        }
+    }
+    assert_eq!(
+        basis_at(&db, 500_000).await.as_deref(),
+        Some("excl"),
+        "TED-VALUE_COST derives TED-EXCLUDING_VAT and takes it"
+    );
+    assert_eq!(
+        basis_at(&db, 600_000).await,
+        None,
+        "TED-VAL_TOTAL derives no marker id, so the neighbour's marker must not reach it"
+    );
+
+    // Two amounts under the SAME id in one section: the marker cannot say which it
+    // qualifies, so neither is labelled rather than one being guessed.
+    let (f, pf) = notice("000006-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Ambiguous"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 10 * 86_400),
+        ValueRow { ordinal: 0, ..ted_amount("PROCEDURE", "TED-VALUE_COST", 700_000) },
+        ValueRow { ordinal: 1, ..ted_amount("PROCEDURE", "TED-VALUE_COST", 800_000) },
+        marker("PROCEDURE", "TED-EXCLUDING_VAT"),
+    ]);
+    db.record_notice(&f, &pf).await.expect("record");
+    project::project(&db, false).await.expect("project");
+    for cents in [700_000i64, 800_000] {
+        assert_eq!(
+            basis_at(&db, cents).await,
+            None,
+            "two amounts under one id: the marker attributes to neither ({cents})"
+        );
+    }
+
     // A code this vocabulary does not define is not a basis: the column holds 'incl',
     // 'excl' or nothing, so a typo or a future third value stays out rather than becoming
     // a value readers have to guess at.
@@ -322,6 +380,55 @@ async fn an_amount_carries_the_tax_basis_its_source_stated() {
     assert!(
         matches!(db.scalar(sql).await.expect("query"), Some(turso::Value::Null) | None),
         "an undefined basis code must not reach the column"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 251, the form eras: the basis marker pairs with the amount that shares its
+/// CONTAINER, not merely its section — and the committed defence award is the notice that
+/// proves the difference matters.
+///
+/// Its `AWARD_OF_CONTRACT_DEFENCE` section holds two amounts:
+///
+///     <INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT>  VALUE_COST 2 162 630,19   (no marker)
+///     <COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE>  VALUE_COST 1 681 100 + EXCLUDING_VAT
+///
+/// A section-keyed lookup would stamp `excl` on the initial estimate from the final
+/// value's marker. Here the initial estimate must stay NULL while the result value gets
+/// its `excl` — which is the whole reason the marker id is derived from the amount id.
+#[tokio::test]
+async fn a_form_era_amount_takes_the_basis_from_its_own_container_only() {
+    let (db, fetch_id, path) = scratch("vat-container").await;
+    ingest(&db, fetch_id, "r209/f18-defence-001420-2019.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // The COSTS_RANGE value: 1 681 100 RON, marked EXCLUDING_VAT.
+    let sql = "SELECT tax_basis FROM tender_version_amounts WHERE cents = 168110000";
+    let basis = match db.scalar(sql).await.expect("query") {
+        Some(turso::Value::Text(s)) => Some(s),
+        Some(turso::Value::Null) | None => None,
+        other => panic!("{sql}: expected text or null, got {other:?}"),
+    };
+    assert_eq!(
+        basis.as_deref(),
+        Some("excl"),
+        "the COSTS_RANGE value carries the marker that shares its container"
+    );
+
+    // And the initial estimate — same section, its own container, no marker of its own —
+    // is NOT labelled from the neighbour's. It is unprojected by the issue-177 rule, so if
+    // it ever starts projecting this assertion is what stops it arriving mislabelled.
+    // This fixture projects exactly ONE amount — the initial estimate is unprojected by
+    // the issue-177 rule — so it proves the marker is READ from a real payload end to end,
+    // and nothing more. It does not distinguish container-pairing from section-pairing;
+    // the case that does is in `an_amount_carries_the_tax_basis_its_source_stated`, where
+    // two amounts can be put in one section on purpose.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_amounts").await,
+        1,
+        "if this fixture starts projecting its initial estimate too, the assertion above \
+         stops being about one row and this test needs the second amount checked"
     );
 
     let _ = std::fs::remove_file(&path);
