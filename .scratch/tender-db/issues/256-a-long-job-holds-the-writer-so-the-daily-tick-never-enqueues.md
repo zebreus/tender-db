@@ -529,8 +529,16 @@ none of which I can promote to a cause without an experiment this is not worth:
 3. **The build differs** (`715f454` → `45c0a14`), though the join text is byte-identical (now a
    shared const) and nothing else in the step's data path changed semantically.
 
-This is the FOURTH time this step's behaviour has shifted without a verified cause (batch-size, WAL,
-index — all refuted; now "it is suddenly 1,500× faster" joins the list). The step is now fully
+**CORRECTED an hour later, by the relabel heartbeat this same run carried:** there was no shift and
+no mystery. The READ was always seconds — its 8.0 s here is the first time it was measured alone.
+The hours were always the RELABEL, one statement further down, which had no instrumentation and sat
+after the only log line, so every grind was mis-attributed to the join. Batch 12's heartbeat put it
+at ~256 s per 200 k batch × 143 batches ≈ 6 h; the filter `group_key IN (SELECT from_key FROM
+plan_group_merge)` plans as a LIST SUBQUERY that re-SCANS the 24,528-row merge table inside the row
+loop (~5 billion comparisons per batch, EXPLAIN-verified). Benched at matched scale: the IN form
+~1,475 s per 200 k batch, the indexed-EXISTS form 26.3 s — 56×, and prod's release build extrapolates
+to seconds. Fixed in `b416894`. The three refuted theories (batch-size, WAL, the join's index) were
+all theories about the WRONG STATEMENT. The step is now fully
 instrumented per phase, so the next slow occurrence will name its phase and its progress on a 15-second
 clock instead of demanding an afternoon of forensics. That is the durable win; the mystery is recorded,
 not solved, and the stop-checkpoint proposal above stands regardless — an operator still cannot cancel
