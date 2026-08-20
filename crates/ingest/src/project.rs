@@ -3637,7 +3637,19 @@ impl RawResults {
                 };
                 let mut winners: Vec<i64> = if !r.direct_winners.is_empty() {
                     r.direct_winners.iter().filter_map(|s| orgs.get(s.as_str()).copied()).collect()
-                } else if r.decision.as_deref() == Some("selec-w") {
+                // An UNSTATED decision must not suppress a winner the notice names
+                // (issue 100). BT-142 "Winner Chosen" is ERROR-severity and
+                // non-repeatable in the SDK, so standard eForms always carries it and
+                // this arm is unchanged there — but eForms-DE 1.x publishes no
+                // `TenderResultCode` at all, and gating on it silently dropped ~60k
+                // award notices' winners whose whole chain resolves. A LotResult that
+                // REFERENCES a tender (OPT-320, the SDK's "Tender Identifier
+                // Reference") is referring to the tender that won: there is no
+                // mechanism for a result to reference the tenders that lost — those are
+                // counted in ReceivedSubmissionsStatistics, never referenced. A decision
+                // that positively says otherwise (`clos-nw`, `no-rece`, `open-nw`) still
+                // suppresses, which is the case this gate was protecting.
+                } else if matches!(r.decision.as_deref(), Some("selec-w") | None) {
                     winning
                         .iter()
                         .flat_map(|b| members_of(b.party_ref.as_deref()))

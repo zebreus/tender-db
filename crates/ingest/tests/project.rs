@@ -1776,6 +1776,84 @@ async fn sdk01_projects_title_buyer_and_winner() {
     let _ = std::fs::remove_file(&path);
 }
 
+// ------------------- issue 100: the DE-1.x winner chain, broken one section deep
+
+/// eForms-DE 1.x results: the reference carriers are references, not entities.
+///
+/// The chain the notice publishes is complete — this was never a data gap:
+///
+/// ```text
+/// RES-0001 (LotResult)  --efac:LotTender/cbc:ID-->   TEN-0001 (LotTender, BT-720 = 73 332,89)
+/// TEN-0001              --TenderingParty-ID-->       TPA-0001 (TenderingParty)
+/// TPA-0001              --Tenderer-ID (is_ref)-->    ORG-0003 = Gebrüder Schneller GmbH & Co. KG
+/// ```
+///
+/// What broke it was one level of nesting. The DÖE serializer writes the OPT-320 reference
+/// as a nested `efac:LotTender` element inside `efac:LotResult` carrying nothing but the
+/// id, and the DE-1.x inventory declared that nested position as a repeatable NODE. It
+/// therefore opened its own `LotTender` section, and `read_results` attributes a value to
+/// its NEAREST enclosing result entity — which, for a value inside a `LotTender` section,
+/// is that section. So OPT-320 was handed to the LotTender arm, which has no OPT-320 case,
+/// and was dropped; `bid_refs` stayed empty and the chain broke at its first hop. Two
+/// phantom bid rows per notice were minted for the carriers as well.
+///
+/// The carriers hold ONLY the referenced id — the amount, the tendering-party link and the
+/// lot link all sit on the real `TEN-0001` — so nothing is lost by making them transparent.
+/// Measured on the fixture before and after: 4 result sections instead of 7, and the two
+/// references now sit on `RES-0001` where the LotResult arm reads them.
+///
+/// The winner itself is still absent, for a DIFFERENT reason recorded as issue 100's next
+/// slice: `bind` only walks the bid→party→tenderer path when the LotResult's decision reads
+/// `selec-w`, and this dialect publishes no `TenderResultCode` at all. Asserted here as the
+/// current truth rather than left implicit, so the day it changes this test says so.
+#[tokio::test]
+async fn a_de1x_award_reference_reaches_the_tender_it_names() {
+    let (db, fetch_id, path) = scratch("de1x-refs").await;
+    ingest_from(&db, fetch_id, "doe", "doe/eforms-de-1.2-can-799811c4.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lot_results").await, 1);
+
+    // One tender was published, so one bid — not three. A reference carrier is not a bid.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM bids").await, 1, "a reference carrier is not a bid");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM contracts").await, 1);
+
+    // The reference resolved, which is what makes the money reachable: the amount is
+    // published on the LotTender, and only a LotResult that can find its LotTender can
+    // report it. This is the value DE-1.x awards were missing.
+    assert_eq!(
+        scalar(&db, "SELECT awarded_cents FROM tender_version_lot_results").await,
+        7_333_289,
+        "the awarded value rides the OPT-320 reference the carrier used to swallow"
+    );
+
+    // The tendering party and its tenderer are both projected as parties, so the winner
+    // chain's material is present in the canonical layer…
+    assert!(
+        query_text(&db, "SELECT group_concat(role) FROM tender_version_parties")
+            .await
+            .is_some_and(|roles| roles.contains("Tenderer")),
+        "the Tenderer reference must reach the parties layer"
+    );
+
+    // The decision itself is genuinely unstated — this dialect publishes no
+    // TenderResultCode — and that must not be read as "no winner": the notice names one.
+    assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await, None);
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_result_winners w \
+               JOIN organizations o ON o.id = w.organization_id LIMIT 1"
+        )
+        .await
+        .as_deref(),
+        Some("Gebrüder Schneller GmbH & Co. KG"),
+        "LotResult -> LotTender -> TenderingParty -> Tenderer must resolve without BT-142"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // --------------------- issue 259: two Organization sections for one legacy party
 
 /// A legacy prize winner must resolve to the party that carries its NAME.

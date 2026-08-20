@@ -1,33 +1,11 @@
 # 100 — eForms-DE 1.x award-winner chain resolves to nothing (synthetic result-section ids vs published-id references)
 
-Status: open — DESIGN DECIDED 2026-08-15. The blocking measurement (below, "Open question") is now
-DONE and the answer is the cheap path: within a single notice the published result ids are UNIQUE, so
-result sections can be keyed on the published id and the winner chain resolves without a disambiguation
-scheme. Still a parse-layer change (re-parse + re-fold the DE-1.x cohort), but no longer blocked on the
-unknown. Next step: implement in the eForms result-section synthesis (eforms/index.rs grafting +
-eforms/parse.rs section-id-when-no-identifier) — deep sdk-vendor work with fixtures, deliberately not
-rushed. Was: open, DISCOVERED 2026-08-02.
-
-## Measurement — the blocking question, answered (2026-08-15)
-
-The author's within-notice-duplicates query (below) previously "did not complete (starved by
-contention)." Re-run on the current box (queue idle, post-rebuild), over a 200-notice window of each
-cohort:
-
-| cohort | field | values | dupes WITHIN a notice |
-|---|---|---:|---:|
-| de-1.2 | DE1-NoticeResult-LotResult-ID | 5,902 | **0** |
-| de-1.2 | DE1-NoticeResult-LotTender-ID | 5,217 | **0** |
-| de-1.2 | DE1-NoticeResult-SettledContract-ID | 4,855 | **0** |
-| de-1.2 | DE1-NoticeResult-TenderingParty-ID | 4,760 | **0** |
-| de-1.1 | DE1-NoticeResult-LotResult-ID | 67 | **0** |
-| de-1.1 | DE1-NoticeResult-TenderingParty-ID | 47 | **0** |
-
-**Zero within-notice duplicates in both cohorts.** So issue 75's "the ids repeat across grafted
-positions" was a CROSS-notice observation; within one notice each `RES-`/`TEN-`/`CON-`/`TPA-` is unique.
-Section ids only need to be unique within their notice, so keying result sections on the published id is
-safe — this is the "one-line fix" arm the issue named, not the disambiguation-scheme arm. The synthesis
-that gave them synthetic ids was over-cautious for the notice-scoped case.
+Status: FIXED 2026-08-20 (owner) — and the 2026-08-15 design was aimed at the wrong thing. The
+section ids were ALREADY the published ids (`RES-0001`, `TEN-0001`, `CON-0001`, `TPA-0001`); the break
+was that the DE-1.x inventory labelled the three nested REFERENCE positions with the ENTITY node ids,
+so the reference was attributed to the carrier instead of the enclosing LotResult. Renamed to the
+SDK's own reference ids, plus one projection gate widened. Needs a DE-1.x REFOLD, not a re-parse —
+cheaper than this issue assumed throughout. Not deployed; the fold is running
 Kind: correctness / completeness (parse-layer identity)
 Blocked by: —
 Relates to: 75 (the section-id synthesis decision this comes from), 78 (the DÖE grafting that forced it),
@@ -464,3 +442,109 @@ Measuring it is not free — `lot_results` has no index leading with `notice_id`
 (`UNIQUE(tender_id, notice_id, result_key)`), so it must be driven from a bounded tender-id list. My
 attempt at it is what saturated the SQL runtime and took `/v1/sql` down for every user (issue 238), so
 run it in small batches (≤50 tender ids) and check the shape's cost on one batch before scaling.
+
+## Fixed 2026-08-20 — and the diagnosis above was aimed one level off
+
+Everything in the "Root cause" section is a faithful record of 2026-08-02, but it is no longer what is
+happening, and the 2026-08-15 design ("key result sections on the published id") would have changed
+nothing. **The section ids are already the published ids.** Probed directly against the committed
+`doe/eforms-de-1.2-can-799811c4.xml`:
+
+    SECTION  RES-0001         LotResult         parent=PROCEDURE
+    SECTION  TEN-0001         LotTender         parent=PROCEDURE
+    SECTION  CON-0001         SettledContract   parent=PROCEDURE
+    SECTION  TPA-0001         TenderingParty    parent=PROCEDURE
+
+`eforms/parse.rs::section_id` prefers a node's published identifier and only synthesises when there is
+none, and `fields-de-1.x.json` declares `identifierFieldId` on all four top-level result nodes. So the
+"synthetic ids vs published-id references" framing in this issue's title had already been resolved by
+the inventory work, without anyone noticing that it closed this issue's premise.
+
+### What was actually broken: a reference wearing an entity's name
+
+The DÖE serializer writes OPT-320 as a nested `efac:LotTender` element inside `efac:LotResult`
+carrying nothing but the referenced id — **and so does standard eForms**: the SDK's own xpath for
+`OPT-320-LotResult` is `…/efac:NoticeResult/efac:LotResult/efac:LotTender/cbc:ID`. This is not a
+national quirk at all.
+
+The difference is what the two inventories CALL that position:
+
+| position | real SDK 1.13 node id | `fields-de-1.x.json` had |
+|---|---|---|
+| `LotResult/efac:LotTender` | `ND-LotResultTenderReference` | `ND-LotTender` |
+| `LotResult/efac:SettledContract` | `ND-LotResultContractReference` | `ND-SettledContract` |
+| `SettledContract/efac:LotTender` | `ND-SettledContractTenderReference` | `ND-LotTender` |
+
+`kind` is derived from the node id (`ND-` stripped), and `RESULT_KINDS` is
+`["LotResult", "LotTender", "TenderingParty", "SettledContract"]`. So under the SDK's names these
+carriers get kinds *outside* `RESULT_KINDS` and `enclosing(…, RESULT_KINDS)` walks straight past them
+to the LotResult — which is exactly why standard eForms winners resolve. Under the entity names they
+were themselves result entities, so `read_results` handed OPT-320 to the **LotTender arm**, which has
+no OPT-320 case, and dropped it. `bid_refs` stayed empty and the chain died at hop one. Each carrier
+also minted a phantom `bids`/`contracts` row.
+
+The empirical DE-1.x inventory (issue 75) was built by observing element paths, which cannot see a
+node id — so it reasonably guessed the entity name. That guess is the defect.
+
+**Fix: rename the three nodes to the SDK's own reference ids.** Deleting them also works (the parse
+walks intermediate steps without a node), but renaming is strictly better — it keeps the sections,
+matches the vendored artifact verbatim, and can be checked against `fields-1.13.0.json` rather than
+believed. The carriers hold ONLY the referenced id — `PayableAmount`, the tendering-party link and the
+lot link all sit on the real `TEN-0001` — so nothing is lost.
+
+### And one projection gate, which was the last hop
+
+With the reference landing correctly, `bid_refs` resolves and the awarded value arrives — but the
+winner still did not, because `RawResults::bind` only walks bid → party → tenderer when the
+LotResult's decision reads `selec-w`, and **this dialect publishes no `TenderResultCode` at all**.
+
+BT-142 "Winner Chosen" is non-repeatable ERROR-severity in the SDK, so standard eForms always carries
+it and that arm is unchanged there. But an *unstated* decision was being treated as "no winner", on
+notices that name one. A LotResult which REFERENCES a tender is referring to the tender that won —
+there is no mechanism for a result to reference the tenders that lost; those are counted in
+`ReceivedSubmissionsStatistics` and never referenced. So the gate now accepts `Some("selec-w") | None`,
+while a decision that positively says otherwise (`clos-nw`, `no-rece`, `open-nw`) still suppresses,
+which is the case the gate existed to protect.
+
+Scope of the `None` arm, checked rather than assumed: sdk-0.1 results resolve through
+`direct_winners` and carry no bid graph, so their (now deliberately NULL — issue 257) decisions cannot
+reach this arm; the legacy reader always sets a decision. In practice `None` here is DE-1.x.
+
+### Gate
+
+`a_de1x_award_reference_reaches_the_tender_it_names` (ingest/tests/project.rs), on the committed
+fixture, red before the change: one lot_result, **one** bid (not three — a reference carrier is not a
+bid), one contract, `awarded_cents = 7 333 289` reached through the OPT-320 reference the carrier used
+to swallow, a `Tenderer` party, a NULL decision, and the winner resolved as
+`Gebrüder Schneller GmbH & Co. KG`.
+
+### Landing — cheaper than this issue assumed
+
+This issue said throughout that the fix "cannot ride a re-fold — it needs the cohort **re-parsed** from
+the archive". That was true of the design it had in mind. It is **not** true of this one for the
+projection half, and it IS still true of the inventory half: `notice_sections.kind` is written at parse
+time, so the carriers keep their `LotTender` kind until the cohort is re-parsed.
+
+So: re-parse the DE-1.x cohort (218,876 notices, the issue-76 reprocess mechanism), then refold. The
+same cohort already owes a reprocess elsewhere; this should ride it.
+
+**Expected effect, stated in advance so it is checked rather than admired.** Section 3 of the
+data-quality report (issue 101's `named` column) should move eforms-de-1.1 from ~3 % toward the
+~80 % that eforms-de-2.1 already reads — 2.1 is the control that says a working chain looks like that.
+`bids` and `contracts` should FALL for the cohort (the phantoms go away) while winners RISE. If bids do
+not fall, the rename did not take effect and the winner numbers should not be believed either.
+
+### Postscript: the 2026-08-17 delta had this 90 % diagnosed
+
+The inventory's own `$comment` already said, in August, exactly what these positions are:
+
+> Deliberately NOT applied to the NESTED ND-LotTender/ND-SettledContract entries under LotResult and
+> SettledContract: those are **reference holders** (OPT-320/OPT-315/BT-3202) whose cbc:ID names the
+> target, and identifying a section by the id it points AT would collide with the definition's own
+> section — the same trap index.rs documents for ND-ContractingParty.
+
+That reasoning is correct and it is why `identifierFieldId` was rightly withheld from them. It just
+stopped one step short: the **node id itself** decides `kind` (`index.rs` strips the `ND-` prefix), and
+an entity kind puts the holder inside `RESULT_KINDS`. So the holders were correctly denied an identity
+of their own and still left wearing an entity's name — which is the whole defect. Worth recording
+because the fix was one rename away from an author who had already understood the shape.
