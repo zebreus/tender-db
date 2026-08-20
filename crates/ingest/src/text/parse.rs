@@ -178,10 +178,16 @@ const VALUE_LABELS: [&str; 5] =
 /// when it ends at a VAT phrase, that phrase IS the basis: measured on `fetch 200`
 /// (2009-10), `Total final value` appears in 9,549 of the package's 11,943 award notices
 /// against 53 for `Price:`, so this is where the era's money actually is.
+///
+/// `SECTION ` is deliberately the bare word rather than `SECTION V` (slice 9). The
+/// aggregate at `II.2.1` sits BEFORE section IV, so the heading that follows it is often
+/// `SECTION IV: PROCEDURE` — 52 of `fetch 200`'s 1,904 remaining refusals were bodies
+/// whose figure ran on into `IV.1.1) Type of procedure: Open.` and lost to the sub-label
+/// retry. Any section heading ends a value; none of them is ever part of one.
 const VALUE_STOPS: [(&str, Option<&str>); 5] = [
     ("EXCLUDING VAT", Some("excl")),
     ("INCLUDING VAT", Some("incl")),
-    ("SECTION V", None),
+    ("SECTION ", None),
     ("CONTRACT NO", None),
     ("AWARD OF CONTRACT", None),
 ];
@@ -376,10 +382,18 @@ fn is_currency_code(token: &str) -> bool {
 fn digit_group(token: &str) -> Option<(&str, Option<i64>)> {
     let (digits, fraction) = match token.split_once([',', '.']) {
         Some((whole, fraction)) => {
-            if fraction.len() != 2 || !fraction.bytes().all(|b| b.is_ascii_digit()) {
+            // One or two decimal digits, and one digit means TENTHS (slice 9). The
+            // earlier rule refused a single digit beside the sub-cent refusal, as though
+            // `176 713,2` were as unreadable as `1 000,255` — but tenths are exactly
+            // representable in cents and sub-cent amounts are not, which is the whole
+            // distinction ADR-0010 draws. Comma-as-thousands stays refused, because a
+            // thousands group is three digits and a three-digit fraction is not cents.
+            // Measured: 114 of `fetch 200`'s 1,904 remaining refusals write one digit.
+            if !matches!(fraction.len(), 1 | 2) || !fraction.bytes().all(|b| b.is_ascii_digit()) {
                 return None;
             }
-            (whole, Some(fraction.parse::<i64>().ok()?))
+            let scale = if fraction.len() == 1 { 10 } else { 1 };
+            (whole, Some(fraction.parse::<i64>().ok()? * scale))
         }
         None => (token, None),
     };
@@ -1696,7 +1710,27 @@ mod tests {
         );
         // Sub-cent is ADR-0010's quarantine trigger, so it must never become an Amount.
         assert_eq!(parse_money("1 000,255 EUR"), None, "three decimals is sub-cent");
-        assert_eq!(parse_money("1 000,2 EUR"), None, "one decimal is not cents");
+        // Slice 9 overturns this one: it used to be refused beside the sub-cent case, but
+        // tenths ARE cents — 20 of them — and `fetch 200` writes them 114 times a package.
+        assert_eq!(
+            parse_money("1 000,2 EUR"),
+            Some((100_020, "EUR".to_owned(), None)),
+            "one decimal is TENTHS, which is exactly representable"
+        );
+        assert_eq!(
+            parse_money("33 030 818,1 LTL"),
+            Some((3_303_081_810, "LTL".to_owned(), None)),
+            "notice 3871371"
+        );
+        assert_eq!(
+            parse_money("176 713,2 RON"),
+            Some((17_671_320, "RON".to_owned(), None)),
+            "notice 3872503"
+        );
+        // And comma-as-thousands is still not a number this reads, which is what keeps
+        // the tenths reading unambiguous.
+        assert_eq!(parse_money("1,000 EUR"), None, "a three-digit fraction is not cents");
+        assert_eq!(parse_money("1,000,000 EUR"), None, "comma thousands throughout");
         // Mis-grouped digits are not a number this reads.
         assert_eq!(parse_money("2 14 3000 EUR"), None, "groups are not thousands");
         assert_eq!(parse_money("1 000,00 2 000,00 EUR"), None, "two figures");
@@ -1965,6 +1999,22 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
                  CONTRACT NO: 4300023446"
             ),
             Some((10_413_180, "EUR".to_owned(), Some("excl")))
+        );
+
+        // 3871306 and 3873797 — the aggregate at `II.2.1` sits BEFORE section IV, so the
+        // heading that bounds its figure is `SECTION IV: PROCEDURE` (slice 9). Without a
+        // stop there the figure runs on into `IV.1.1) Type of procedure: Open.` and the
+        // sub-label retry strips to after THAT colon.
+        assert_eq!(
+            awarded_value(
+                "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                 II.2.1)  Total final value of contract(s): Value: 7 015 000 GBP.\n\
+                 SECTION IV: PROCEDURE\n\
+                 IV.1)  TYPE OF PROCEDURE\n\
+                 IV.1.1)  Type of procedure: Open."
+            ),
+            Some((701_500_000, "GBP".to_owned(), None)),
+            "any section heading ends a value, not just section V"
         );
 
         // 3870961 — the same, without a VAT phrase between the figure and the contract

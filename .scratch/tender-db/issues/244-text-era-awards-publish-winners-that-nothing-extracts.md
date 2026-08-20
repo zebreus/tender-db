@@ -967,3 +967,38 @@ Two candidate slices, both small and both measured over the package's 1,904 refu
 
 Together ~166 of 1,904, so ~1.7 % of the package's value-stating bodies — worth doing, worth doing
 AFTER the sweep rather than spending a deploy-and-reparse cycle on it while 20 packages wait.
+
+
+## Slice 9 — two small refusals, one of them my own over-strictness
+
+Both classes named at the end of slice 8, implemented together because they are one line each
+and share a test.
+
+**`SECTION ` instead of `SECTION V` as a stop** — 52 bodies per package. `II.2.1` sits before
+section IV, so the heading that bounds the aggregate is often `SECTION IV: PROCEDURE`:
+
+    II.2.1)  Total final value of contract(s): Value: 7 015 000 GBP.
+    SECTION IV: PROCEDURE
+    IV.1.1)  Type of procedure: Open.
+
+With only `SECTION V` in the stop list the figure runs on and the sub-label retry strips to after
+`Type of procedure:`, losing it. No section heading is ever part of a value, so the bare word is
+the right stop and it subsumes the old entry.
+
+**A one-digit decimal group is tenths** — 114 bodies per package. `digit_group` required exactly
+two decimal digits, so `33 030 818,1 LTL` (notice 3871371) and `176 713,2 RON` (notice 3872503)
+were refused. That rule was mine, from slice 4, and it sat in the test file directly beside the
+sub-cent refusal under the comment *"Sub-cent is ADR-0010's quarantine trigger"* — which is
+exactly the confusion: `,255` is sub-cent and unrepresentable, `,2` is twenty cents and exactly
+representable. ADR-0010 says nothing about tenths; I grouped them with sub-cent because both were
+"not two digits".
+
+What keeps the tenths reading unambiguous is the rule right next to it: a three-digit fraction is
+still refused, so comma-as-thousands (`1,000 EUR`, `1,000,000 EUR`) cannot be misread as a decimal.
+The only remaining reading of `176 713,2` is 176 713 and 2 tenths.
+
+Falsified separately: with `SECTION V` restored the new body yields `None`; with the two-digit rule
+restored `1 000,2 EUR` yields `None`.
+
+Not yet deployed — the 221-240 sweep (jobs 282/283) is running, and a deploy restarts the service,
+which re-runs the running job from the top (issue 245). It goes out when the queue is idle.
