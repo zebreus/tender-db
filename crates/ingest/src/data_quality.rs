@@ -1576,6 +1576,20 @@ pub fn render_json(report: &Report) -> String {
             "untyped": r.untyped,
         }))
         .collect();
+    // Section 5 has been missing from this surface since issue 246 added it to the text
+    // report — noticed while wiring section 6 into both. A consumer reading the JSON could
+    // not see the quarantine arrival rate at all, which is the one number ADR-0010's
+    // reopen trigger is watched by.
+    let fresh_holds: Vec<Value> = report
+        .fresh_holds
+        .iter()
+        .map(|r| json!({
+            "reason": r.reason,
+            "fresh_holds": r.fresh_holds,
+            "newest": r.newest,
+            "newest_day": day_utc(r.newest),
+        }))
+        .collect();
     let amount_basis: Vec<Value> = report
         .amount_basis
         .iter()
@@ -1599,6 +1613,10 @@ pub fn render_json(report: &Report) -> String {
         "results_density": density,
         "sections_to_rows": invariant,
         "doc_type_coverage": doc_types,
+        "quarantine_arrivals": {
+            "window_days": FRESH_HOLD_WINDOW_SECS / 86_400,
+            "reasons": fresh_holds,
+        },
         "amount_vat_basis": amount_basis,
         "ted_doe_merge": {
             "doe_tenders": report.merge.doe_tenders,
@@ -1767,6 +1785,11 @@ mod tests {
         // The newest arrival as a date, which is what separates live from settled.
         assert!(text.contains("2026-08-19"), "the live bucket's newest arrival: {text}");
         assert!(text.contains("2026-07-21"), "the settled bucket's newest arrival: {text}");
+        // And the same section on the JSON surface, which it was missing entirely until
+        // section 6 went into both (issue 251's note).
+        let js = render_json(&assemble("(t)", &raw));
+        assert!(js.contains("\"quarantine_arrivals\""), "the JSON must carry section 5: {js}");
+        assert!(js.contains("\"newest_day\": \"2026-08-19\""), "with the day a person reads: {js}");
         // And the caveat that keeps this from being read as a bucket total.
         assert!(text.contains("Arrivals, not bucket size"), "{text}");
 
