@@ -180,11 +180,25 @@ rate() {
 # because this is NOT a rebuild.
 # --------------------------------------------------------------------------
 if [ "${1:-}" = "--baseline" ]; then
-  echo "== pre-fold baseline  ($BASE_URL)  $(date -u +%FT%TZ) =="
+  # Issue 102: the provenance header must name the artifact the numbers actually
+  # came from. In snapshot mode $BASE_URL was never consulted — and at the moment
+  # of capture it can be serving a DIFFERENT state than the snapshot, which is
+  # exactly the pre-85/post-85 confusion that nearly produced a false NO-GO. The
+  # snapshot line carries size+mtime so the baseline ties to a specific file, not
+  # to a path a later snapshot may reuse. "pre-fold" is likewise not hard-coded:
+  # a baseline is the "before" of a NAMED transition or it distinguishes nothing
+  # (BASELINE_LABEL, e.g. "pre-98/99"; default says only what is known).
+  if [ -n "${TDB_SNAPSHOT:-}" ]; then
+    src="snapshot $TDB_SNAPSHOT ($(wc -c < "$TDB_SNAPSHOT") bytes, mtime $(date -u -r "$TDB_SNAPSHOT" +%FT%TZ))"
+  else
+    src="$BASE_URL"
+  fi
+  label="${BASELINE_LABEL:-unlabelled — set BASELINE_LABEL to name the fold this precedes}"
+  echo "== baseline ($label)  ($src)  $(date -u +%FT%TZ) =="
   max_id=$(scalar 'SELECT COALESCE(MAX(id),0) FROM tenders')
   lo=$(( max_id / 3 )); hi=$(( lo + 10000 ))
   {
-    echo "# pre-fold baseline captured $(date -u +%FT%TZ) from $BASE_URL"
+    echo "# baseline ($label) captured $(date -u +%FT%TZ) from $src"
     echo "PRE_TENDERS=$(scalar 'SELECT COUNT(*) FROM tenders')"
     echo "PRE_ISLANDS=$(scalar 'SELECT COUNT(*) FROM tenders WHERE island_notice_id IS NOT NULL')"
     echo "PRE_KEYED=$(scalar 'SELECT COUNT(*) FROM tenders WHERE procedure_key IS NOT NULL')"

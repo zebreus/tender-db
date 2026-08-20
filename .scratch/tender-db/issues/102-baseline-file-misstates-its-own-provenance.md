@@ -1,6 +1,11 @@
 # 102 — the verification baseline file misstates where its numbers came from
 
-Status: open — POST-SHIP follow-up, deliberately not fixed before the 98+99 deploy
+Status: CLOSED 2026-08-20 — the `--baseline` block now writes the provenance it actually has: in
+snapshot mode the header names the snapshot path WITH its byte size and mtime (tying the baseline to
+a specific file, not a path a later snapshot may reuse), live mode names $BASE_URL, and the
+hard-coded "pre-fold" is replaced by BASELINE_LABEL (defaulting to an explicit "unlabelled" that says
+to set it) so the file states WHICH transition it is the before of. The freeze this waited on lifted
+when 98/99 shipped. Was: open, post-ship follow-up
 Kind: observability / record accuracy (verification tooling)
 Blocked by: — (waiting only on `issue98-de1x-org-refs` being unfrozen after the ship)
 Relates to: 98 (the suite this lives in), 99, 85
