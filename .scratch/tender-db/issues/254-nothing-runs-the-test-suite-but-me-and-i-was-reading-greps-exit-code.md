@@ -1,8 +1,8 @@
 # 254 — nothing runs the test suite but me, and I was reading grep's exit code
 
-Status: FIXED (the rot) / OPEN (the gap) 2026-08-20 — the nine broken doctests are fenced and
-`cargo test --workspace --doc` is green. What stays open is the reason they rotted unseen: there
-is no CI, and my own habit of piping cargo through `grep` hides the verdict.
+Status: CLOSED 2026-08-20 — the doctests are fenced, and the gap they rotted in is closed too:
+`ops/check.sh` runs every crate the way that crate has to be run, and `deploy.sh` will not deploy a
+tree it has not seen pass.
 Kind: test-suite hygiene, self-inflicted
 Relates to: 244 (the slices whose doc comments rotted), 251 (the other two)
 
@@ -84,3 +84,33 @@ section, and a feature-gated crate — and it settles the shape of the fix in th
 
 with cargo's own exit code, unpiped. A gate that runs `cargo test --workspace` would reproduce the
 third trap exactly, since `--workspace` compiles the app crate without `server` too.
+
+
+## The gate, as landed (2026-08-20)
+
+`ops/check.sh` — four commands, cargo's own exit code, nothing piped:
+
+    cargo test -p model
+    cargo test -p store
+    cargo test -p ingest
+    cargo test-app            # the alias; `-p tender-db --lib` runs ZERO tests
+
+On success over a CLEAN tree it writes `target/.tests-green` with the commit sha. Not written for a
+dirty tree — a green run over uncommitted edits says nothing about the commit, and a marker that can
+lie is worse than none. `target/` is gitignored, because this is a local fact rather than a
+repository one.
+
+`deploy.sh` runs it before anything touches the VPS, and skips it when the marker already names
+`HEAD` and the tree is clean — so the ordinary flow (check, commit, deploy) pays for the suites once.
+`SKIP_TESTS=1` overrides for the deploy that cannot wait; it announces itself in the log, the same
+shape as `FORCE_BUSY=1`.
+
+Measured on its own first run: **316 s** for all four crates from a warm target directory, and it
+refused to write the marker because the tree was dirty — both halves of the contract, verified by
+running it rather than by reading it. Five minutes is the whole cost of the gate, and zero on the
+ordinary path where the marker already names HEAD.
+
+Chosen over option 2 (a GitHub workflow) for the reason the section above gives: the gate cannot be
+ignored and needs no new infrastructure. What it does NOT do is catch a red tree that someone else
+pushes, since it only guards the deploy — if this repo ever gets a second committer, the workflow
+becomes worth adding beside it.

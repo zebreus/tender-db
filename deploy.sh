@@ -28,6 +28,26 @@ say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 #
 # So ask first. This runs before the push and the build, so a busy box costs a second
 # rather than five minutes, and the override is explicit: FORCE_BUSY=1 ./deploy.sh
+# The test gate (issue 254). Three green-looking zeros went past me in one session — a
+# pipeline's exit code, a truncated doc-test section, and a feature-gated crate that ran
+# no tests at all — so the deploy reads the verdict itself, from cargo's own exit code,
+# via ops/check.sh.
+#
+# Free when `ops/check.sh` already passed at this exact commit with a clean tree: the
+# marker it writes is what this skips on. SKIP_TESTS=1 overrides, for the deploy that
+# cannot wait — a one-line fix while the box is down is not the moment for a 15-minute
+# suite. It runs BEFORE the queue probe so a red tree costs nothing on the VPS.
+HEAD_SHA="$(git rev-parse HEAD)"
+if [ "${SKIP_TESTS:-0}" = "1" ]; then
+    say "SKIP_TESTS=1: deploying WITHOUT running the suites"
+elif [ -f target/.tests-green ] && [ "$(cat target/.tests-green)" = "$HEAD_SHA" ] \
+    && [ -z "$(git status --porcelain)" ]; then
+    say "Suites already green at $(git rev-parse --short HEAD) — skipping (ops/check.sh)"
+else
+    say "Running the suites before deploying (issue 254; SKIP_TESTS=1 to override)"
+    ./ops/check.sh
+fi
+
 say "Checking the job queue on $VPS"
 BUSY="$($SSH "$VPS" bash -euo pipefail -s <<'PROBE' || true
 S=$(sed -n 's/^TENDER_ADMIN_SECRET=//p' /root/tender-admin-secret 2>/dev/null || true)
