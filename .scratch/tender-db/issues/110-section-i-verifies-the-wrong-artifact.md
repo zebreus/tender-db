@@ -1,8 +1,15 @@
 # 110 — section I verifies the wrong artifact: it greps SSR HTML for a client-hydrated ledger
 
-Status: open — POST-LANDING follow-up. Found during the 98+99 ship, 2026-08-02.
+Status: CLOSED 2026-08-20 — everything this issue asked for landed and was verified live; only this
+Status line had not caught up. The fix (`089e715`) asserts the served `/api/dashboard` JSON with
+three-way exit codes (0 discloses / 1 fails to disclose / 2 could not tell), was falsified against a
+four-state stub, ran clean against production (I1–I6 PASS, 2026-08-03), and survived the branch
+convergence with the merged file verified a strict superset: today's re-check of the in-tree
+`canonical-verify/de1x_verify.sh` counts I0–I8, nine `/api/dashboard` assertions, and zero live HTML
+greps (the single `curl $BASE_URL/` match is a comment documenting the predecessor). The freeze this
+was blocked on lifted when 98/99 shipped. Was: open, post-landing follow-up (2026-08-02).
 Kind: verification tooling / false-negative gate
-Blocked by: — (waits on `issue98-de1x-org-refs` being unfrozen)
+Blocked by: —
 Relates to: 107 (snapshot-freshness witness), 102 (baseline naming the wrong source), 98, 100
 
 ## Defect
