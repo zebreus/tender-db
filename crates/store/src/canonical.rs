@@ -481,8 +481,13 @@ pub(crate) const SCHEMA: &str = "
         ON tender_version_bid_parties(organization_id);
 
     -- A settled Contract: the buyer's contract id (BT-150), the conclusion
-    -- date (BT-145), and the value of the winning Bid(s) it settled
-    -- (BT-3202 → BT-720 — eForms contracts carry no value of their own).
+    -- date (BT-145), the winner-decision date (BT-1451), and the value of the
+    -- winning Bid(s) it settled (BT-3202 → BT-720 — eForms contracts carry no
+    -- value of their own).
+    --
+    -- The two dates are different facts and both are published: BT-1451 is when
+    -- the buyer DECIDED, BT-145 is when the contract was signed. Every committed
+    -- eForms CAN fixture carries both, days apart (issue 255).
     CREATE TABLE IF NOT EXISTS tender_version_contracts (
         tender_id          INTEGER NOT NULL,
         seq                INTEGER NOT NULL,
@@ -491,6 +496,9 @@ pub(crate) const SCHEMA: &str = "
         concluded_utc      INTEGER,
         concluded_offset   INTEGER,
         concluded_has_time INTEGER,
+        decided_utc        INTEGER,
+        decided_offset     INTEGER,
+        decided_has_time   INTEGER,
         cents              INTEGER,
         currency           TEXT,
         PRIMARY KEY (tender_id, seq, contract_id),
@@ -966,6 +974,11 @@ pub struct ContractState {
     pub buyer_contract_id: Option<String>,
     /// BT-145 conclusion date: (utc seconds, offset minutes, has_time).
     pub concluded: Option<(i64, i64, bool)>,
+    /// BT-1451 winner-decision date, in the same shape (issue 255). A separate
+    /// fact from [`ContractState::concluded`] — the decision precedes the
+    /// signature, by 1 day in `can-maximal-sdk17` and by 47 in
+    /// `can-subdesc-00570953-2025`.
+    pub decided: Option<(i64, i64, bool)>,
     pub cents: Option<i64>,
     pub currency: Option<String>,
 }
@@ -3935,12 +3948,14 @@ impl Db {
                 .result_identity(conn, "contracts", "contract_key", tender_id, round.notice_id, &contract.key, stmts)
                 .await?;
             let (a, b) = scope();
-            let (utc, offset, has_time) = match contract.concluded {
+            let stamp = |at: Option<(i64, i64, bool)>| match at {
                 Some((utc, offset, has_time)) => {
                     (Some(utc), Some(offset), Some(i64::from(has_time)))
                 }
                 None => (None, None, None),
             };
+            let (utc, offset, has_time) = stamp(contract.concluded);
+            let (d_utc, d_offset, d_has_time) = stamp(contract.decided);
             pending.contracts.extend([
                 a,
                 b,
@@ -3949,6 +3964,9 @@ impl Db {
                 opt_int(utc),
                 opt_int(offset),
                 opt_int(has_time),
+                opt_int(d_utc),
+                opt_int(d_offset),
+                opt_int(d_has_time),
                 opt_int(contract.cents),
                 opt_text(contract.currency.as_deref()),
             ]);
@@ -5165,7 +5183,7 @@ impl Pending {
         flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
         flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency) VALUES ", 6, &mut self.bids).await?;
         flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, cents, currency) VALUES ", 9, &mut self.contracts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency) VALUES ", 12, &mut self.contracts).await?;
         Ok(())
     }
 }

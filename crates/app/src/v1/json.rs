@@ -290,6 +290,9 @@ fn contract(c: &ContractRow) -> Value {
         "key": c.key,
         "buyer_contract_id": c.buyer_contract_id,
         "concluded": stamp(c.concluded),
+        // BT-1451: when the buyer decided, as distinct from when the contract was
+        // signed (issue 255).
+        "decided": stamp(c.decided),
         "value": money(c.cents, c.currency.as_deref()),
     })
 }

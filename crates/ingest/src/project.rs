@@ -3144,6 +3144,7 @@ struct RawContract {
     key: String,
     buyer_contract_id: Option<String>,  // BT-150
     concluded: Option<(i64, i64, bool)>, // BT-145
+    decided: Option<(i64, i64, bool)>,  // BT-1451
     bid_refs: Vec<String>,              // BT-3202
 }
 
@@ -3227,6 +3228,13 @@ fn read_results(
                     }
                     ("BT-145", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
                         c.concluded = Some((*utc_seconds, *offset_minutes, *has_time));
+                    }
+                    // The winner-DECISION date, which the SDK scopes to the settled
+                    // contract rather than to the LotResult (issue 255). A different fact
+                    // from BT-145's signature date and published beside it in every
+                    // committed CAN fixture.
+                    ("BT-1451", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+                        c.decided = Some((*utc_seconds, *offset_minutes, *has_time));
                     }
                     ("BT-3202", NoticeValue::Id { value, .. }) => c.bid_refs.push(value.clone()),
                     _ => {}
@@ -3476,6 +3484,7 @@ impl RawResults {
                     key: c.key.clone(),
                     buyer_contract_id: c.buyer_contract_id.clone(),
                     concluded: c.concluded,
+                    decided: c.decided,
                     cents,
                     currency,
                 }
@@ -4143,6 +4152,7 @@ mod tests {
                 key: "CON-1".into(),
                 buyer_contract_id: Some("BC-1".into()),
                 concluded: Some((700_100_000, 0, false)),
+                decided: Some((700_000_000, 60, false)),
                 cents: Some(999),
                 currency: Some("EUR".into()),
             }],

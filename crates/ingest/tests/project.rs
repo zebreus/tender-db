@@ -869,6 +869,20 @@ async fn the_award_notice_yields_lot_results_bids_and_contracts() {
         scalar(&db, "SELECT cents FROM tender_version_contracts WHERE seq = 4").await,
         23_968_954
     );
+    // Issue 255: this CAN's only `cbc:AwardDate` is UBL 2.3's forced
+    // `cac:TenderResult` dummy, which the parser claims as `OPT-999` at PROCEDURE scope
+    // and which is NOT award data. So the decision date is absent here, and absent is
+    // what the column must say — the fixture that carries the real BT-1451 is asserted
+    // in `the_winner_decision_date_lands_beside_the_conclusion_date`.
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_contracts WHERE seq = 4 AND decided_utc IS NULL"
+        )
+        .await,
+        1,
+        "a dummy AwardDate must never be recorded as the decision date"
+    );
 
     // Issue 04's noted limitation is closed: the award-side Tenderer role is
     // scoped to its Lot, not the Tender.
@@ -1888,6 +1902,61 @@ async fn the_oj_heading_never_displaces_a_published_title() {
 /// composition was parsed and dropped, leaving "which lots does this bid cover"
 /// unanswerable and every per-lot rollup silently short of combined-award bids.
 ///
+/// Issue 255: the winner-DECISION date (BT-1451) beside the conclusion date (BT-145).
+///
+/// Two different published facts — when the buyer decided, and when the contract was
+/// signed — and until this landed only the second had a canonical home, for the whole
+/// eForms era. `can-maximal-sdk17` states them a day apart on each of its two contracts,
+/// which is what makes them visibly distinct rather than a restatement.
+///
+/// The trap this test exists beside: UBL 2.3 forces a `cac:TenderResult/cbc:AwardDate`
+/// onto every CAN and the SDK models it only to swallow it (`OPT-999`, see
+/// `eforms/value.rs`). That dummy is NOT the decision date, and the results-layer test
+/// asserts a notice carrying only the dummy records nothing.
+#[tokio::test]
+async fn the_winner_decision_date_lands_beside_the_conclusion_date() {
+    let (db, fetch_id, path) = scratch("decided").await;
+    ingest_as(&db, fetch_id, "ted", "eforms/can-maximal-sdk17.xml", "eforms/can-maximal-sdk17.xml")
+        .await;
+    project::project(&db, false).await.expect("project");
+
+    // Both contracts carry both dates, and the decision precedes the signature.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_contracts WHERE decided_utc IS NOT NULL")
+            .await,
+        2
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_contracts WHERE decided_utc < concluded_utc"
+        )
+        .await,
+        2,
+        "the buyer decides before the contract is signed"
+    );
+    // The exact instants, offset kept beside them like every other canonical date:
+    // 2023-03-22 and 2023-03-23, both +02:00, neither carrying a clock.
+    assert_eq!(
+        scalar(&db, "SELECT DISTINCT decided_utc FROM tender_version_contracts").await,
+        1_679_522_400
+    );
+    assert_eq!(
+        scalar(&db, "SELECT DISTINCT concluded_utc FROM tender_version_contracts").await,
+        1_679_608_800
+    );
+    assert_eq!(
+        scalar(&db, "SELECT DISTINCT decided_offset FROM tender_version_contracts").await,
+        120
+    );
+    assert_eq!(
+        scalar(&db, "SELECT DISTINCT decided_has_time FROM tender_version_contracts").await,
+        0
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// The fixture composes GLO-0001 from LOT-0001 and LOT-0002 (pinned at the parse layer in
 /// `tests/eforms.rs`); here the same pair must survive the fold as `lots` ids.
 #[tokio::test]

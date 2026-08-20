@@ -516,7 +516,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 7] = [
+const MIGRATIONS: [&str; 10] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -541,6 +541,12 @@ const MIGRATIONS: [&str; 7] = [
     // the honest reading: those figures were written without knowing whether the source
     // called them inclusive or exclusive, and the column has always held both.
     "ALTER TABLE tender_version_amounts ADD COLUMN tax_basis TEXT",
+    // The winner-decision date beside the conclusion date (issue 255). BT-1451 has been
+    // in the parse layer of every eForms CAN all along and had nowhere to land; existing
+    // rows answer NULL until the era is re-folded, which is the honest reading.
+    "ALTER TABLE tender_version_contracts ADD COLUMN decided_utc INTEGER",
+    "ALTER TABLE tender_version_contracts ADD COLUMN decided_offset INTEGER",
+    "ALTER TABLE tender_version_contracts ADD COLUMN decided_has_time INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {
@@ -5321,6 +5327,60 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(runs[0].job_id, Some(7));
         assert_ne!(runs[0].id, 7, "the two ids are independent namespaces");
         assert_eq!(db.max_logged_job_id().await.unwrap(), Some(7), "now recovery has a floor");
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 255: the decision-date columns arrive on a `tender_version_contracts`
+    /// that already holds rows, and an existing row must read NULL rather than
+    /// inheriting the conclusion date — "we did not record it" and "it is the same
+    /// day as the signature" are different claims.
+    #[tokio::test]
+    async fn migration_adds_the_contract_decision_date_columns() {
+        let path = format!("/tmp/tender-db-decidedmigrate-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+
+        // The pre-column schema, holding one folded contract row.
+        let database = turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = database.connect().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE tender_version_contracts (
+                tender_id INTEGER NOT NULL, seq INTEGER NOT NULL, contract_id INTEGER NOT NULL,
+                buyer_contract_id TEXT, concluded_utc INTEGER, concluded_offset INTEGER,
+                concluded_has_time INTEGER, cents INTEGER, currency TEXT,
+                PRIMARY KEY (tender_id, seq, contract_id)
+             ) STRICT;
+             INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id,
+                        concluded_utc, concluded_offset, concluded_has_time, cents, currency)
+             VALUES(5, 1, 9, 'BC-1', 1679608800, 120, 0, 100, 'EUR');",
+        )
+        .await
+        .unwrap();
+        drop(conn);
+        drop(database);
+
+        let db = Db::open(&path).await.expect("open must migrate the pre-decided contracts table");
+        let conn = db.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT decided_utc, decided_offset, decided_has_time, concluded_utc
+                   FROM tender_version_contracts WHERE tender_id = 5",
+                (),
+            )
+            .await
+            .expect("the migrated columns are readable");
+        let row = rows.next().await.unwrap().expect("the pre-existing row survives");
+        assert!(
+            matches!(row.get_value(0).unwrap(), turso::Value::Null),
+            "a row folded before the column knows no decision date"
+        );
+        assert!(matches!(row.get_value(1).unwrap(), turso::Value::Null));
+        assert!(matches!(row.get_value(2).unwrap(), turso::Value::Null));
+        assert_eq!(
+            row.get_value(3).unwrap(),
+            turso::Value::Integer(1_679_608_800),
+            "and its conclusion date is untouched"
+        );
 
         let _ = std::fs::remove_file(&path);
     }

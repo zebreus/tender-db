@@ -407,6 +407,9 @@ pub struct ContractRow {
     pub key: String,
     pub buyer_contract_id: Option<String>,
     pub concluded: Option<Stamp>,
+    /// BT-1451: when the buyer decided, as distinct from when the contract was
+    /// signed (issue 255).
+    pub decided: Option<Stamp>,
     pub cents: Option<i64>,
     pub currency: Option<String>,
 }
@@ -1675,6 +1678,7 @@ async fn results_of(
         .query(
             "SELECT c.notice_id, c.contract_key, s.buyer_contract_id,
                     s.concluded_utc, s.concluded_offset, s.concluded_has_time,
+                    s.decided_utc, s.decided_offset, s.decided_has_time,
                     s.cents, s.currency
                FROM tender_version_contracts s
                JOIN contracts c ON c.id = s.contract_id
@@ -1689,8 +1693,9 @@ async fn results_of(
             key: text(&row, 1),
             buyer_contract_id: opt_text_of(&row, 2),
             concluded: stamp(&row, 3),
-            cents: opt_int_of(&row, 6),
-            currency: opt_text_of(&row, 7),
+            decided: stamp(&row, 6),
+            cents: opt_int_of(&row, 9),
+            currency: opt_text_of(&row, 10),
         });
     }
     Ok((lot_results, bids, contracts))
