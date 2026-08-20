@@ -580,7 +580,12 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_awards", "Current award decisions with their winner and a representative buyer — \
       keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count)."),
     ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme)."),
-    ("v_tender_amounts", "Money amounts of each current Tender (field, cents, currency)."),
+    (
+        "v_tender_amounts",
+        "Money amounts of each current Tender (field, cents, currency, tax_basis). \
+         tax_basis is 'incl', 'excl' or NULL when the source did not say — and NULL is \
+         most of the corpus, so a total over mixed rows is not comparable (issue 251).",
+    ),
     ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes)."),
     ("v_tender_notices", "The notices that caused each Tender version — the ADR-0001 chain, \
       across all versions."),

@@ -1,7 +1,8 @@
 # 251 — amounts carry no tax basis, and the corpus already mixes inclusive with exclusive figures
 
-Status: needs-triage, filed 2026-08-19 (owner) — surfaced by issue 244's value slice, but it is NOT a
-text-era problem: it is corpus-wide and predates that work
+Status: OPTION 1 BUILT 2026-08-20 (owner) — `tender_version_amounts.tax_basis` exists, nullable, and
+the text era populates it; the r208/r209 VAT indicator is the named follow-up, and option 2 (the
+report line) is a separate unit with its own cost measurement. AWAITING DEPLOY
 Kind: canonical modelling gap (a published qualifier with nowhere to land)
 Blocked by: —
 Relates to: 244 (the slice that surfaced it), 232 (the near-zero value columns), 171 (value-domain
@@ -54,3 +55,45 @@ say so, rather than discard the era's money for a defect it did not introduce.
   pins one of each from a committed fixture.
 - If option 2: the report line exists and its first reading is recorded here — how much of the corpus
   is inclusive, exclusive, and unknown.
+
+
+---
+
+## Decision and what landed (2026-08-20)
+
+**Option 1, with a nullable column.** The reason, stated plainly: refusing to record a figure because
+its basis has nowhere to go is a *larger* silent loss than recording it unlabelled — issue 244's slice 4
+measured that, and slice 5 reversed it. So the column exists, and the honest default is NULL.
+
+    tender_version_amounts.tax_basis TEXT     'incl' | 'excl' | NULL when the source did not say
+
+Every pre-existing row answers NULL, which is the truthful reading: those figures were written without
+anyone knowing which basis the source called them. **NULL now reads as unknown instead of as
+agreement**, which is the whole point.
+
+### How the basis travels
+
+As a **sibling code in the same section**, not as a field on `NoticeValue::Amount`. Widening that enum
+would touch every parser and every value table; a companion field id costs nothing and is already how
+the text era emits it (`TED-VAL_TOTAL_TAX_BASIS`, issue 244 slice 5). The projection builds one map of
+section → basis before its value loop, so pairing is a lookup rather than a rescan per amount.
+
+The vocabulary is closed at `incl`/`excl`: any other code is dropped rather than written, so a typo or
+a future third value cannot become something readers have to guess at.
+
+### Scope, and what is deliberately NOT in it
+
+- **r208/r209 are not paired yet.** Both eras' VAT elements already reach the parse layer, but
+  `EXCLUDING_VAT` is a presence flag and `INCLUDING_VAT` a container — neither is a code carrying
+  `incl`/`excl`, so pairing them needs a payload read of how those elements sit relative to the value
+  element. Named here as the follow-up; the mechanism is in place for them to join.
+- **Option 2, the report line, is a separate unit.** `SELECT tax_basis, COUNT(*) …` over
+  `tender_version_amounts` is a full scan of a table with tens of millions of rows, and issue 243's
+  lesson is that a report query gets an A/B before it is added, not after.
+
+### Tests
+
+`an_amount_carries_the_tax_basis_its_source_stated` pins all four cases from the parse layer through the
+fold: stated exclusive, stated inclusive, not stated (NULL — the shape every existing row has), and an
+undefined code (dropped). `v_tender_amounts` exposes the column, and the SQL surface's own description
+of the view now warns that most rows are NULL so a total over mixed rows is not comparable.

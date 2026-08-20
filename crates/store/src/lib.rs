@@ -516,7 +516,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 6] = [
+const MIGRATIONS: [&str; 7] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -537,6 +537,10 @@ const MIGRATIONS: [&str; 6] = [
     // outstanding, re-using ids the log had already spent. NULL for every
     // pre-existing row, which recovery reads as "no floor from this row".
     "ALTER TABLE job_log ADD COLUMN job_id INTEGER",
+    // The tax basis of an amount (issue 251). Every existing row answers NULL, which is
+    // the honest reading: those figures were written without knowing whether the source
+    // called them inclusive or exclusive, and the column has always held both.
+    "ALTER TABLE tender_version_amounts ADD COLUMN tax_basis TEXT",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

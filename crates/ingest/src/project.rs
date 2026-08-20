@@ -374,6 +374,17 @@ const LEGACY_OWN_NUMBER_FIELDS: &[&str] = &["TED-NO_DOC_OJS", "TXT-ND"];
 
 /// Received-bid count fields (research §5.1) — one legacy statistic, mapped to
 /// the eForms `tenders` received-submission kind.
+/// Field ids whose value states the tax basis of an amount in the same section
+/// (issue 251). One so far: the text era's companion code, emitted beside the price it
+/// qualifies.
+///
+/// The r208/r209 eras also publish a VAT indicator — `EXCLUDING_VAT` as a presence flag
+/// and `INCLUDING_VAT` as a container — and both already reach the parse layer. They are
+/// NOT here yet because neither is a code carrying `incl`/`excl`: pairing them needs
+/// knowing how those elements sit relative to the value element, which is a payload read
+/// of its own. Issue 251 names it as the follow-up.
+const TAX_BASIS_FIELDS: &[&str] = &["TED-VAL_TOTAL_TAX_BASIS"];
+
 const LEGACY_BID_COUNT_FIELDS: &[&str] =
     &["TED-NB_TENDERS_RECEIVED", "TED-OFFERS_RECEIVED_NUMBER"];
 
@@ -2442,6 +2453,24 @@ impl NoticeState {
                 }
             }
         }
+        // The tax basis a value states, keyed by the section that states it (issue 251).
+        // It travels as a SIBLING code rather than a field on the amount, because the
+        // parse layer's `NoticeValue::Amount` has no room for it and widening that enum
+        // would touch every parser. Built before the loop so pairing is a lookup rather
+        // than a rescan per amount.
+        let tax_bases: std::collections::BTreeMap<&str, &str> = parsed
+            .values
+            .iter()
+            .filter_map(|v| match &v.value {
+                NoticeValue::Code { code, .. }
+                    if TAX_BASIS_FIELDS.contains(&v.field_id.as_str())
+                        && (code == "incl" || code == "excl") =>
+                {
+                    Some((v.section_id.as_str(), code.as_str()))
+                }
+                _ => None,
+            })
+            .collect();
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -2449,8 +2478,16 @@ impl NoticeState {
                 NoticeValue::Text { lang, value: v } => canonical_name(TEXTS, field_id)
                     .map(|field| Fact::Text { field, lang: lang.clone(), value: v.clone() }),
                 NoticeValue::Amount { cents, currency } => {
-                    amount_target(field_id, &sections, &value.section_id, has_results)
-                        .map(|field| Fact::Amount { field, cents: *cents, currency: currency.clone() })
+                    amount_target(field_id, &sections, &value.section_id, has_results).map(|field| {
+                        Fact::Amount {
+                            field,
+                            cents: *cents,
+                            currency: currency.clone(),
+                            tax_basis: tax_bases
+                                .get(value.section_id.as_str())
+                                .map(|b| (*b).to_owned()),
+                        }
+                    })
                 }
                 NoticeValue::Classification { scheme, code } => canonical_name(CLASSIFICATIONS, field_id)
                     .map(|field| Fact::Classification {
@@ -3960,7 +3997,12 @@ mod tests {
     fn bucket_row_survives_the_postcard_codec() {
         let mut facts = BTreeSet::new();
         facts.insert(Fact::Text { field: "BT-21".into(), lang: Some("ENG".into()), value: "Title".into() });
-        facts.insert(Fact::Amount { field: "BT-27".into(), cents: 1_234_500, currency: "EUR".into() });
+        facts.insert(Fact::Amount {
+            field: "BT-27".into(),
+            cents: 1_234_500,
+            currency: "EUR".into(),
+            tax_basis: None,
+        });
         facts.insert(Fact::Classification { field: "BT-262".into(), scheme: "CPV".into(), code: "45000000".into() });
         facts.insert(Fact::Date { field: "BT-131".into(), utc_seconds: 700_000_000, offset_minutes: 60, has_time: true });
         facts.insert(Fact::Party { role: "buyer".into(), organization_id: 7, notice_id: 3, section_id: "ORG-1".into() });

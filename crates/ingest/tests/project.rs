@@ -248,6 +248,85 @@ async fn an_r208_contract_notice_projects_its_estimated_value() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 251: an amount records whether the source called it inclusive or exclusive of
+/// tax, when the source says so — and NULL when it does not.
+///
+/// The basis travels from the parse layer as a sibling code in the same section, not as a
+/// field on `NoticeValue::Amount`, so this test is where the pairing is pinned: a stated
+/// basis reaches the column, an amount with no companion stays NULL rather than being
+/// guessed at, and a code outside the `incl`/`excl` vocabulary is dropped rather than
+/// written.
+#[tokio::test]
+async fn an_amount_carries_the_tax_basis_its_source_stated() {
+    let (db, fetch_id, path) = scratch("tax-basis").await;
+
+    let notice = |pub_id: &str, values: Vec<ValueRow>| {
+        let parsed = Parsed { sections: vec![sec("PROCEDURE", "Notice", None)], values };
+        legacy_record(fetch_id, pub_id, R209, parsed)
+    };
+    let basis = |section: &str, code: &str| ValueRow {
+        section_id: section.into(),
+        field_id: "TED-VAL_TOTAL_TAX_BASIS".into(),
+        ordinal: 0,
+        value: NoticeValue::Code { list: None, code: code.into() },
+    };
+
+    // Stated exclusive.
+    let (a, pa) = notice("000001-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Excl"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 5 * 86_400),
+        ted_amount("PROCEDURE", "TED-VAL_TOTAL", 100_000),
+        basis("PROCEDURE", "excl"),
+    ]);
+    // Stated inclusive.
+    let (b, pb) = notice("000002-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Incl"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 6 * 86_400),
+        ted_amount("PROCEDURE", "TED-VAL_TOTAL", 200_000),
+        basis("PROCEDURE", "incl"),
+    ]);
+    // Not stated at all — the shape every pre-existing row in the corpus has.
+    let (c, pc) = notice("000003-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Silent"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 7 * 86_400),
+        ted_amount("PROCEDURE", "TED-VAL_TOTAL", 300_000),
+    ]);
+    for (n, p) in [(&a, &pa), (&b, &pb), (&c, &pc)] {
+        db.record_notice(n, p).await.expect("record");
+    }
+
+    project::project(&db, false).await.expect("project");
+
+    for (cents, want) in [(100_000i64, Some("excl")), (200_000, Some("incl")), (300_000, None)] {
+        let sql = format!("SELECT tax_basis FROM tender_version_amounts WHERE cents = {cents}");
+        let got = match db.scalar(&sql).await.expect("query") {
+            Some(turso::Value::Text(s)) => Some(s),
+            Some(turso::Value::Null) => None,
+            other => panic!("{sql}: expected text or null, got {other:?}"),
+        };
+        assert_eq!(got.as_deref(), want, "cents {cents}");
+    }
+
+    // A code this vocabulary does not define is not a basis: the column holds 'incl',
+    // 'excl' or nothing, so a typo or a future third value stays out rather than becoming
+    // a value readers have to guess at.
+    let (d, pd) = notice("000004-2019", vec![
+        ted_text("PROCEDURE", "TED-TITLE", "Nonsense"),
+        ted_date("PROCEDURE", "TED-DS_DATE_DISPATCH", 8 * 86_400),
+        ted_amount("PROCEDURE", "TED-VAL_TOTAL", 400_000),
+        basis("PROCEDURE", "sometimes"),
+    ]);
+    db.record_notice(&d, &pd).await.expect("record");
+    project::project(&db, false).await.expect("project");
+    let sql = "SELECT tax_basis FROM tender_version_amounts WHERE cents = 400000";
+    assert!(
+        matches!(db.scalar(sql).await.expect("query"), Some(turso::Value::Null) | None),
+        "an undefined basis code must not reach the column"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// The other two readings of the SAME field id, on the committed defence award
 /// (which carries all three shapes at once — issue 177's ambiguity in one
 /// notice): the award block's plain `VALUE_COST` belongs to the results binder

@@ -251,6 +251,15 @@ pub(crate) const SCHEMA: &str = "
         field     TEXT NOT NULL,
         cents     INTEGER NOT NULL,
         currency  TEXT NOT NULL,
+        -- Whether the figure includes tax: 'incl' | 'excl' | NULL when the source did
+        -- not say (issue 251). Nullable and unlabelled-by-default on purpose: the
+        -- corpus has always mixed the two bases in this column, because the text era
+        -- states its basis in prose and the r208/r209 eras publish a VAT indicator that
+        -- is not mapped. Before this column a reader could not tell an inclusive figure
+        -- from an exclusive one, and a sum over the column was meaningless in a way
+        -- nothing warned about. NULL still means unknown — but now unknown reads as
+        -- unknown instead of as agreement.
+        tax_basis TEXT,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_amounts_version ON tender_version_amounts(tender_id, seq);
@@ -663,7 +672,7 @@ pub(crate) const SCHEMA: &str = "
     -- Money amounts of each current Tender (field names the amount; cents+currency).
     DROP VIEW IF EXISTS v_tender_amounts;
     CREATE VIEW v_tender_amounts AS
-    SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency
+    SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency, a.tax_basis
       FROM tenders t
       JOIN tender_version_amounts a ON a.tender_id = t.id AND a.seq = t.current_seq
      WHERE t.current_seq IS NOT NULL;
@@ -821,7 +830,7 @@ impl MinUnionFind {
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Fact {
     Text { field: String, lang: Option<String>, value: String },
-    Amount { field: String, cents: i64, currency: String },
+    Amount { field: String, cents: i64, currency: String, tax_basis: Option<String> },
     Classification { field: String, scheme: String, code: String },
     Date { field: String, utc_seconds: i64, offset_minutes: i64, has_time: bool },
     Party { role: String, organization_id: i64, notice_id: i64, section_id: String },
@@ -4019,8 +4028,16 @@ impl Db {
                 Fact::Text { field, lang, value } => {
                     pending.texts.extend([a, b, c, t(field), opt_text(lang.as_deref()), t(value)]);
                 }
-                Fact::Amount { field, cents, currency } => {
-                    pending.amounts.extend([a, b, c, t(field), Value::Integer(*cents), t(currency)]);
+                Fact::Amount { field, cents, currency, tax_basis } => {
+                    pending.amounts.extend([
+                        a,
+                        b,
+                        c,
+                        t(field),
+                        Value::Integer(*cents),
+                        t(currency),
+                        opt_text(tax_basis.as_deref()),
+                    ]);
                 }
                 Fact::Classification { field, scheme, code } => {
                     pending.classifications.extend([a, b, c, t(field), t(scheme), t(code)]);
@@ -5139,7 +5156,7 @@ impl Pending {
         flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
         flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
-        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency) VALUES ", 6, &mut self.amounts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis) VALUES ", 7, &mut self.amounts).await?;
         flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
         flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
         flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
