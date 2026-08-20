@@ -835,10 +835,37 @@ impl Supervisor {
         Ok((source, package_kind, period))
     }
 
-    /// Remove a still-queued job. Returns false if it is not in the queue
-    /// (already running or finished — the running job cannot be cancelled).
+}
+
+/// Job kinds whose loop actually READS the stop flag (issue 252).
+///
+/// The flag was built for `reparse` (issue 247) and for a while that was the only reader,
+/// which made `cancel` on any other running job answer "asked it to stop" and then do
+/// nothing — measured on prod: a cancelled `data-quality` run advanced ten more queries
+/// over the following six minutes. Naming the readers here is what lets `cancel` refuse
+/// instead of lie, and the next long job added is refused by default rather than
+/// silently ignored.
+const STOPPABLE_KINDS: &[&str] = &["reparse", "data-quality"];
+
+/// What [`Supervisor::cancel`] did.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Cancelled {
+    /// Dropped from the queue before it ever ran; the durable row is gone too.
+    Queued,
+    /// Running, and its kind checks the stop flag — it will end at its next checkpoint.
+    Stopping,
+    /// Running, but nothing in this kind's loop reads the flag, so the honest answer is
+    /// no. Carries the kind so the caller can say which.
+    Unstoppable(String),
+    /// No such job.
+    Unknown,
+}
+
+impl Supervisor {
+    /// Remove a still-queued job, or ask the running one to stop if its kind can
+    /// (issue 252 — and say so plainly when it cannot).
     /// Also drops the durable row so the cancellation survives a restart.
-    pub async fn cancel(&self, id: u64) -> bool {
+    pub async fn cancel(&self, id: u64) -> Cancelled {
         let removed = {
             let mut queue = self.queue.lock().expect("queue lock");
             let before = queue.len();
@@ -849,18 +876,26 @@ impl Supervisor {
             if let Err(e) = self.db.remove_job(id as i64).await {
                 eprintln!("supervisor: remove cancelled job {id}: {e}");
             }
-            return true;
+            return Cancelled::Queued;
         }
         // Not queued: it may be the one RUNNING. Flag it and let the job notice — a
         // cooperative stop, so the job ends its transaction, records a run log saying it
         // was cancelled, and drops its durable row like any concluded job. Killing it
         // mid-transaction would leave the row behind and re-run it on the next start.
-        if self.current_progress().is_some_and(|p| p.id == id) {
-            self.cancel_running.store(id, Ordering::Relaxed);
-            eprintln!("supervisor: job {id} is running — asked it to stop at its next checkpoint");
-            return true;
+        let Some(running) = self.current_progress().filter(|p| p.id == id) else {
+            return Cancelled::Unknown;
+        };
+        if !STOPPABLE_KINDS.contains(&running.kind.as_str()) {
+            eprintln!(
+                "supervisor: job {id} is running as kind {} — nothing in its loop reads the \
+                 stop flag, so it cannot be cancelled (issue 252)",
+                running.kind
+            );
+            return Cancelled::Unstoppable(running.kind);
         }
-        false
+        self.cancel_running.store(id, Ordering::Relaxed);
+        eprintln!("supervisor: job {id} is running — asked it to stop at its next checkpoint");
+        Cancelled::Stopping
     }
 
     /// Whether this running job has been asked to stop (issue 247). Checked at a job's
@@ -1295,7 +1330,7 @@ impl Supervisor {
             // Bounded at last (issue 230): the two killed runs are recorded on
             // `run_data_quality`, which now measures over id windows instead of
             // over the whole corpus in one statement.
-            Spec::DataQuality { confirmed } => self.run_data_quality(*confirmed).await,
+            Spec::DataQuality { confirmed } => self.run_data_quality(job.id, *confirmed).await,
             Spec::Reparse { profiles, packages, after } => {
                 self.run_reparse(job.id, profiles, *packages, *after, job.resume_after.as_deref())
                     .await
@@ -1933,7 +1968,7 @@ impl Supervisor {
     /// holds the serialized queue for the duration — and a dry run now has
     /// something worth reporting: the window count the run would take, from one
     /// indexed `MAX`, having touched no data page.
-    async fn run_data_quality(&self, confirmed: bool) -> Result<String, String> {
+    async fn run_data_quality(&self, job_id: u64, confirmed: bool) -> Result<String, String> {
         use ingest::data_quality::{self, Raw, Rows};
         use std::collections::BTreeMap;
         use std::time::Instant;
@@ -2003,9 +2038,18 @@ impl Supervisor {
         let mut broken: Vec<String> = Vec::new();
         let mut done = 0u64;
         let run_started = Instant::now();
+        // A stop request is honoured between queries (issue 252). This is the longest job
+        // in the system and each query is an independent read holding no transaction, so
+        // stopping here costs nothing — while before this the flag `cancel` set was read
+        // by nobody and the operator was told otherwise.
+        let mut stopped = false;
         for (wi, (lo, hi)) in windows.iter().enumerate() {
             let window_started = Instant::now();
             for query in &queries {
+                if self.cancelled(job_id) {
+                    stopped = true;
+                    break;
+                }
                 self.set_phase(
                     "measuring",
                     Some(done),
@@ -2043,6 +2087,21 @@ impl Supervisor {
                 queries.len(),
                 run_started.elapsed().as_secs_f64(),
             );
+            if stopped {
+                break;
+            }
+        }
+
+        // A partial measurement is NOT stored. Half the windows would render as a report
+        // whose numbers look like a whole corpus, and a stale-but-complete report beats a
+        // fresh-looking wrong one — the same reasoning as the empty-layer guard below.
+        if stopped {
+            let elapsed = run_started.elapsed().as_secs_f64();
+            eprintln!("[data-quality] cancelled after {done}/{units} units, {elapsed:.0}s");
+            return Ok(format!(
+                "data quality: CANCELLED after {done} of {units} measurement(s) in {elapsed:.0}s \
+                 — nothing stored, the previous report stands"
+            ));
         }
 
         // Costliest first: the line an operator reads to decide what to index or
@@ -2856,7 +2915,7 @@ mod tests {
         let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
 
         // Nothing running, nothing queued: cancel finds no such job.
-        assert!(!sup.cancel(1).await, "no job to cancel");
+        assert_eq!(sup.cancel(1).await, Cancelled::Unknown, "no job to cancel");
 
         // A queued job still cancels the old way — removed from the queue outright.
         let queued = sup
@@ -2865,7 +2924,7 @@ mod tests {
                 clear_changes: false,
             })
             .await;
-        assert!(sup.cancel(queued).await, "a queued job is cancellable");
+        assert_eq!(sup.cancel(queued).await, Cancelled::Queued, "a queued job is cancellable");
         assert!(sup.queue.lock().expect("queue lock").is_empty());
         assert!(!sup.cancelled(queued), "a removed job needs no stop flag");
 
@@ -2887,10 +2946,56 @@ mod tests {
             phase: None,
         }));
         assert!(!sup.cancelled(42), "not cancelled until asked");
-        assert!(sup.cancel(42).await, "the running job accepts a stop request");
+        assert_eq!(
+            sup.cancel(42).await,
+            Cancelled::Stopping,
+            "reparse reads the flag, so the running job accepts a stop request"
+        );
         assert!(sup.cancelled(42), "and the job sees it at its next checkpoint");
         // The flag names ONE job: a different id must not stop on someone else's request.
         assert!(!sup.cancelled(43));
+    }
+
+    /// Issue 252: a running job whose kind reads no stop flag must be REFUSED, not told it
+    /// is stopping. Measured on prod: a cancelled `data-quality` run answered
+    /// `{"cancelled": 202}` and then advanced ten more queries over six minutes, because
+    /// `cancelled()` had exactly one caller and it was not that loop.
+    #[tokio::test]
+    async fn cancelling_a_kind_with_no_checkpoint_is_refused_rather_than_promised() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
+
+        let running = |kind: &str| {
+            Some(JobProgress {
+                id: 7,
+                kind: kind.to_owned(),
+                params: String::new(),
+                started_at: 0,
+                package: None,
+                packages_done: 0,
+                packages_total: 0,
+                members_done: 0,
+                members_total: 0,
+                notices: 0,
+                duplicates: 0,
+                phase: None,
+            })
+        };
+
+        // `project` has no checkpoint: refused, and the refusal names the kind so the
+        // caller can say which.
+        sup.set_current(running("project"));
+        assert_eq!(sup.cancel(7).await, Cancelled::Unstoppable("project".to_owned()));
+        assert!(!sup.cancelled(7), "a refused cancel must not leave a flag set");
+
+        // `data-quality` now checks between queries, so it is accepted.
+        sup.set_current(running("data-quality"));
+        assert_eq!(sup.cancel(7).await, Cancelled::Stopping);
+        assert!(sup.cancelled(7));
+
+        // And every kind named stoppable must actually be one — the list is the contract,
+        // so a kind added to it without a checkpoint is the bug this test exists to catch.
+        assert_eq!(STOPPABLE_KINDS, &["reparse", "data-quality"]);
     }
 
     /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is
@@ -3171,7 +3276,7 @@ mod tests {
     #[tokio::test]
     async fn a_data_quality_dry_run_reports_the_plan_and_measures_nothing() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
-        let plan = sup.run_data_quality(false).await.expect("a dry run cannot fail on an empty db");
+        let plan = sup.run_data_quality(1, false).await.expect("a dry run cannot fail on an empty db");
         assert!(plan.starts_with("data-quality dry run:"), "{plan}");
         assert!(plan.contains("0 window(s)"), "an empty corpus plans no windows: {plan}");
         // Whatever cannot be windowed is named in the plan, so a hole in the report
@@ -3189,7 +3294,7 @@ mod tests {
 
         // And a confirmed run over an empty corpus still stores nothing, rather than
         // overwriting a real earlier measurement with zeros.
-        let out = sup.run_data_quality(true).await.expect("an empty confirmed run is not an error");
+        let out = sup.run_data_quality(1, true).await.expect("an empty confirmed run is not an error");
         assert_eq!(out, "data quality: no tender versions to measure");
         assert!(sup.db.latest_report("data-quality").await.unwrap().is_none());
     }
@@ -3384,10 +3489,10 @@ mod tests {
         assert_eq!(sup.queued().len(), 2);
         assert_eq!(sup.queued()[0].id, a[0], "FIFO order");
 
-        assert!(sup.cancel(b[0]).await, "a queued job cancels");
+        assert_eq!(sup.cancel(b[0]).await, Cancelled::Queued, "a queued job cancels");
         assert_eq!(sup.queued().len(), 1);
-        assert!(!sup.cancel(b[0]).await, "cancelling twice is a no-op");
-        assert!(!sup.cancel(9_999).await, "an unknown id cancels nothing");
+        assert_eq!(sup.cancel(b[0]).await, Cancelled::Unknown, "cancelling twice is a no-op");
+        assert_eq!(sup.cancel(9_999).await, Cancelled::Unknown, "an unknown id cancels nothing");
     }
 
     /// Backfill fans a period range into one fetch job per package, then a
@@ -3553,7 +3658,7 @@ mod tests {
         let db = scratch().await;
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         let ids = sup.enqueue_request(&req("project")).await.unwrap();
-        assert!(sup.cancel(ids[0]).await);
+        assert_eq!(sup.cancel(ids[0]).await, Cancelled::Queued);
 
         let restarted = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         restarted.recover().await;

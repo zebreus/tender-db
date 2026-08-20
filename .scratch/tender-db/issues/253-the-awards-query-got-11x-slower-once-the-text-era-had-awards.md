@@ -63,3 +63,42 @@ Issue 252 is the other half of that problem: the run cannot currently be stopped
 - A named cause, or an explicit "measured and it is inherent" finding.
 - If a fix lands: an A/B on one window, and the next full run's total recorded against the 5,566 s
   baseline.
+
+---
+
+## Groundwork done, and one suspect struck off (2026-08-20)
+
+**Version inflation is NOT the mechanism.** The first thing that occurred to me was that each re-parse
+plus fold might APPEND a `tender_versions` row, so 135 packages of campaign would have multiplied the
+rows this query scans. It does not: a version is one row per *Notice* of the Tender, in publication
+order, and a re-fold rewrites the same rows (the fold logs say "13,028 tenders written, 0 verified
+unchanged"). Struck off before it could become a wrong diagnosis.
+
+That also means the query's **row count did not grow**: its denominator is `TXT-TD = '7'`, which the
+text era always had — 4,153 per package. So whatever got slower is per-row cost or page access, not
+population.
+
+**Two candidates, and they are distinguishable by measurement:**
+
+1. **A per-row probe that degraded.** `lot_results` went from holding nothing for legacy tenders to
+   millions of rows in exactly the low `tender_id` ranges the early windows cover, and text-era notices
+   went from ~1 section to 1 + 2 per winner in `notice_sections`. Both probes should still seek, but
+   this engine has twice been measured not using an index the query implies (239, 248).
+2. **Cache and page pressure, with no plan change at all.** The same growth evicts the pages these
+   probes used to hit warm. The box sat at **51 % CPU** while the slow query ran, which is more
+   consistent with waiting on I/O than with a scan burning CPU — so this candidate deserves testing
+   FIRST, and it needs no code change if true, only a window-size or ordering decision.
+
+**The statement is captured.** `cargo run -p ingest --bin data-quality -- --print-sql` emits it
+instantiated (window `tender_id 0..250000` shown); no prod access needed to get it. It is one
+`tender_versions ⋈ notices` scan with three EXISTS families:
+
+- the award predicate: six profile-gated `EXISTS` over `notice_codes(notice_id, section_id, field_id)`,
+  OR'd — a text row therefore evaluates up to five arms that cannot match before reaching its own;
+- `EXISTS lot_results (tender_id, notice_id)`;
+- `NOT EXISTS notice_sections (notice_id, kind)`.
+
+Worth noting for the rewrite option: the six OR'd arms are ordered eForms-first, so **every legacy row
+pays five useless probes**. Ordering the arms by expected population, or dispatching on `n.profile`
+before probing at all, is a cheap change that needs no index — but like everything else here it gets
+timed first.

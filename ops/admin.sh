@@ -58,8 +58,10 @@ cancel)
     # is not destructive in the sense that guard is for — the queue's work is idempotent
     # and re-runnable by design.
     id=${2:?usage: admin.sh cancel <job-id>}
+    # A 409 means the job is running as a kind whose loop reads no stop flag (issue 252):
+    # the honest answer, where this used to return 200 and change nothing.
     curl -sS --max-time 15 -X POST "$base/admin/jobs/$id/cancel" \
-        -H "x-admin-secret: $secret" | jq .
+        -H "x-admin-secret: $secret" -w '\n' | jq .
     ;;
 raw)
     method=${2:?usage: admin.sh raw <METHOD> <path>}

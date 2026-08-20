@@ -235,11 +235,20 @@ curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' 
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \
   -d '{"kind":"project"}' $BASE/admin/jobs
 
-# Cancel a queued job. Two verbs reach the same handler (issue 250) — the POST form
-# exists because a DELETE is unreachable from some operating sessions.
+# Cancel a job. Two verbs reach the same handler (issue 250) — the POST form exists
+# because a DELETE is unreachable from some operating sessions.
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41/cancel
 curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 # …or, on the box: ops/admin.sh cancel 41
+#
+# Four answers (issue 252):
+#   200 {"state":"dropped"}   it was queued and is gone
+#   200 {"state":"stopping"}  it is running and its kind checks the stop flag
+#   409                       it is running as a kind with NO stop checkpoint — the
+#                             honest refusal; only `reparse` and `data-quality` stop
+#   404                       no such job
+# A cancelled data-quality run stores NOTHING: a half-measured report would read like a
+# whole-corpus one, so the previous report stands.
 
 # Backfill a DÖE monthly range (fans into one fetch per month + process + project).
 curl -s -XPOST -H "X-Admin-Secret: $SECRET" -H 'content-type: application/json' \

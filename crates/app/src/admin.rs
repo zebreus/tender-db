@@ -8,7 +8,7 @@
 //! dashboard is public and never carries the secret, so admin actions stay
 //! API-only (the dashboard only *reads* progress, via a server function).
 
-use crate::supervisor::{JobRequest, Supervisor};
+use crate::supervisor::{Cancelled, JobRequest, Supervisor};
 use axum::Router;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
@@ -101,10 +101,25 @@ async fn cancel(
     if let Some(response) = deny(&headers) {
         return response;
     }
-    if sup.cancel(id).await {
-        (StatusCode::OK, axum::Json(json!({ "cancelled": id }))).into_response()
-    } else {
-        error(StatusCode::NOT_FOUND, "no such queued job (already running or finished)")
+    // Four answers, and the third is the point of issue 252: a running job whose kind
+    // reads no stop flag must not be told it is stopping. It was, and a cancelled
+    // data-quality run then advanced ten more queries.
+    match sup.cancel(id).await {
+        Cancelled::Queued => {
+            (StatusCode::OK, axum::Json(json!({ "cancelled": id, "state": "dropped" })))
+                .into_response()
+        }
+        Cancelled::Stopping => {
+            (StatusCode::OK, axum::Json(json!({ "cancelled": id, "state": "stopping" })))
+                .into_response()
+        }
+        Cancelled::Unstoppable(kind) => error(
+            StatusCode::CONFLICT,
+            &format!("job {id} is running as kind {kind:?}, which has no stop checkpoint"),
+        ),
+        Cancelled::Unknown => {
+            error(StatusCode::NOT_FOUND, "no such job (already finished, or never existed)")
+        }
     }
 }
 
