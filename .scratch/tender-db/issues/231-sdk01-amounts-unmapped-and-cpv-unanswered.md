@@ -1,8 +1,10 @@
 # 231 — sdk-0.1 amounts are never mapped, and whether the era carries CPV at all is unanswered
 
-Status: CPV HALF **CLOSED** 2026-08-20 — the acceptance number is in: the era measures **cpv 93.8 %**,
-up from 0.0 %. The value half remains open and its diagnosis is upstream (the amounts never reach the
-parse layer at all)
+Status: CPV HALF **CLOSED** 2026-08-20 (the era measures **cpv 93.8 %**, up from 0.0 %). VALUE HALF
+**FIXED IN CODE** 2026-08-20 — and its recorded diagnosis was WRONG: the amounts DO reach the parse
+layer, under `SDK01-*` ids, so this was a missing canonical destination exactly like the CPV half.
+Three ids added to `AMOUNTS`, gated by a new era-matrix row and falsified. Awaiting deploy + an
+sdk-0.1 refold for the acceptance number
 Kind: projection mapping gap (one era, two fields) + one research question
 Blocked by: —
 Relates to: 29 (the parent gap, now verified closed for title/buyer/deadline), 177 (the same
@@ -141,3 +143,72 @@ asking first is what established that the era does publish it *when it has one*.
 holds zero rows for the era, so there is nothing for an `AMOUNTS` entry to catch. The open question is
 the one recorded above — whether the payload carries a monetary value the parser is not claiming, or
 the dialect publishes none.
+
+
+## The value half — my diagnosis was wrong (2026-08-20)
+
+What this issue recorded, twice, in its own words: *"still not a mapping gap: `notice_amounts` holds
+zero rows for the era, so there is nothing for an `AMOUNTS` entry to catch"*, and the open question was
+*"whether the payload carries a monetary value the parser is not claiming, or the dialect publishes
+none"*.
+
+Neither. The payload carries monetary values AND the parser claims them. I probed every committed DÖE
+fixture through the real parse path and printed each claimed `Amount`:
+
+    doe-sdk01-ple-addinfo      SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount     262 701,78 EUR
+    doe-sdk01-ple-addinfo      SDK01-ProcurementProjectLot-ProcurementProject-…-EstimatedOverallContractAmount  262 701,78 EUR
+    doe-sdk01-subcontract      SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount                         87 000 000,00 EUR
+    doe-sdk01-subcontract-rate SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount                          1 307 200,00 EUR
+    doe-sdk01-subcontract-rate SDK01-TenderResult-AwardedTenderedProject-LegalMonetaryTotal-PayableAmount        7 × per-tender
+    doe-sdk01-subcontract      SDK01-TenderResult-SubcontractTerms-Amount                                         5 366 643,00 EUR
+
+Every one is a `NoticeValue::Amount` in the parse layer. `AMOUNTS` knew `BT-27`, `BT-271`, `BT-161`, the
+legacy `TED-*` ids and two `UBL-*` grafts — and no `SDK01-*` id at all. So `value 0.0 %` was the same
+defect as `cpv 0.0 %`, in the same table family, and the "zero rows in `notice_amounts`" claim that sent
+me looking upstream was simply not true for notices that publish a `RequestedTenderTotal`.
+
+How the wrong claim survived: the era's row in the projection matrix
+(`every_era_projects_its_headline_fields`) has `value: false`, and I read that as "the era has no value
+to project". It means "THIS FIXTURE carries none" — `doe/sdk-0.1-numeric-cn-25599482-1.xml` has no
+`RequestedTenderTotal` at all. The matrix was honest; my reading of it was not, and it is the same
+mistake as reading a missing report row as a zero.
+
+### What landed
+
+Three ids into `AMOUNTS`, all to `estimated_value`:
+
+    SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount
+    SDK01-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount
+    SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount
+
+Both element spellings map to the estimate because the draft-era publishers used them
+interchangeably — `ple-addinfo` carries `EstimatedOverallContractAmount` and no `TotalAmount`,
+`subcontract` carries `TotalAmount` and no `EstimatedOverallContractAmount` — inside the same
+`cac:RequestedTenderTotal` container, which is the request side, never the award. Scope comes from the
+value's section, so the lot-level id lands on the lot with no extra rule.
+
+Two ids deliberately NOT mapped, recorded here so the next reader does not have to re-derive it:
+
+- `SDK01-TenderResult-AwardedTenderedProject-LegalMonetaryTotal-PayableAmount` — the awarded value per
+  tender, which is a results-graph fact (BT-720's shape). Routing it into `AMOUNTS` would file every
+  award value as a tender estimate. It belongs with whatever unit takes on the era's award side, and
+  one number there needs care before anybody calls it a gap: section 1 reads **winner 1.1 %** for this
+  era, but that denominator is ALL versions, and I have not measured what share of the era's 667,084
+  versions are award notices at all. If sdk-0.1 is overwhelmingly contract notices, 1.1 % may be at or
+  near its ceiling — section 3's award-notice count for the era is the number that settles it, and the
+  committed fixture evidence (one CAN whose winner DOES resolve, in
+  `sdk01_projects_title_buyer_and_winner`) is consistent with either reading. Measure before filing.
+- `SDK01-TenderResult-SubcontractTerms-Amount` — the subcontracted share, which has no canonical home
+  in any era (the same shape as the text era's per-contract values, issue 244 slice 8).
+
+Gated by a second sdk-0.1 row in the era matrix, on a fixture that DOES carry the element, with the
+value column true. Falsified: removing the two `EstimatedOverallContractAmount` ids fails that row with
+*"the fixture carries a value and the canonical layer lost it"*.
+
+### What is still needed for the acceptance number
+
+A **refold** of the sdk-0.1 island (not a re-parse — the parse layer already holds the amounts), then
+section 1's `value` column for `DÖE sdk-0.1 island`. The CPV half moved 0.0 % → 93.8 % on exactly that
+path. Unlike CPV, the ceiling here is unknown: I have no measurement of how many of the era's 667,084
+versions publish a `RequestedTenderTotal` at all, and the fixture evidence (two of four sdk-0.1
+fixtures) is far too thin to extrapolate from. The refold's own number is the measurement.

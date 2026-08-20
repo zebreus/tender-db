@@ -1771,6 +1771,12 @@ async fn every_era_projects_its_headline_fields() {
         ("internal-ojs-2008", "ted", "internal_ojs/115908_2008.en", "115908/opoce-input/115908_2008.en", true, true, true, false, true),
         // TI / DT (deadline with clock) / PC
         ("text-2008", "ted", "text/2008-cn-723-2008.txt", "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG", true, true, true, false, true),
+        // sdk-0.1 a second time, for the VALUE column (issue 231's value half): the era's
+        // row above is a fixture that carries no `RequestedTenderTotal`, which is why its
+        // value column reads false and why this gap stayed invisible here. This payload
+        // carries `EstimatedOverallContractAmount` at BOTH scopes, no
+        // `TenderSubmissionDeadlinePeriod`, and its own CPV and ContractingParty.
+        ("doe-sdk01-value", "doe", "eforms/doe-sdk01-ple-addinfo.xml", "eforms/doe-sdk01-ple-addinfo.xml", true, false, true, true, true),
     ];
     for &(era, source, fixture, member, title, deadline, cpv, value, buyer) in matrix {
         let (db, fetch_id, path) = scratch(&format!("matrix-{era}")).await;

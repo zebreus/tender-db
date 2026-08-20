@@ -128,6 +128,31 @@ const AMOUNTS: &[(&str, &str)] = &[
     // ceiling.
     ("UBL-FrameworkMaximumAmount", "framework_maximum"),
     ("UBL-FrameworkEstimatedMaximumValue", "framework_maximum"),
+    // DÖE sdk-0.1 (issue 231's value half). The era measured `value 0.0 %` over 666,671
+    // versions and the issue's recorded diagnosis was that `notice_amounts` holds no rows
+    // for it — so there would be nothing for a mapping to catch. That diagnosis is wrong:
+    // the parse layer claims the era's money as `Amount` under `SDK01-*` ids, verified by
+    // probing every committed DÖE fixture. It was a missing canonical destination, exactly
+    // like the CPV half.
+    //
+    // Both spellings inside `cac:RequestedTenderTotal` map to the estimate, because the
+    // draft-era publishers used them interchangeably: `doe-sdk01-ple-addinfo` carries
+    // `EstimatedOverallContractAmount` and no `TotalAmount`, `doe-sdk01-subcontract`
+    // carries `TotalAmount` and no `EstimatedOverallContractAmount`. Same container, same
+    // fact — the DE-1.x alias table already routes its `EstimatedOverallContractAmount`
+    // to BT-27, and this is that fact under the older element name.
+    ("SDK01-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount", "estimated_value"),
+    (
+        "SDK01-ProcurementProjectLot-ProcurementProject-RequestedTenderTotal-EstimatedOverallContractAmount",
+        "estimated_value",
+    ),
+    ("SDK01-ProcurementProject-RequestedTenderTotal-TotalAmount", "estimated_value"),
+    // NOT mapped, deliberately, and both are recorded in issue 231:
+    // `SDK01-TenderResult-AwardedTenderedProject-LegalMonetaryTotal-PayableAmount` is the
+    // awarded value per tender — a results-graph fact (BT-720's shape), not a tender-scope
+    // amount, and routing it here would file every award value as an estimate;
+    // `SDK01-TenderResult-SubcontractTerms-Amount` is the subcontracted share, which has
+    // no canonical home in any era yet.
 ];
 const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("BT-262", "main"),
