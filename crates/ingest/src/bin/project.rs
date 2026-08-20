@@ -57,10 +57,11 @@ async fn main() -> ExitCode {
         started.elapsed().as_secs_f64()
     );
     println!(
-        "  versions written {}, removed {}; change rows {}; organization mentions {}; \
-         legacy tenders absorbed {}",
+        "  versions written {}, removed {}; entities swept {}; change rows {}; \
+         organization mentions {}; legacy tenders absorbed {}",
         report.applied.versions_written,
         report.applied.versions_removed,
+        report.applied.entities_swept,
         report.applied.changes,
         report.mentions,
         report.absorbed

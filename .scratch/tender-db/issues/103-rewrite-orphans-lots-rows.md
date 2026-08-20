@@ -1,11 +1,10 @@
 # 103 — a shrinking rewrite orphans `lots` / `lot_results` / `bids` / `contracts` rows
 
-Status: open — REACHABLE AS OF 2026-08-20. The "first removed or narrowed mapping" tripwire this issue
-has carried since it was filed has now fired: issue 100's fix stops three DE-1.x reference carriers
-minting phantom bids/contracts, so the refold in flight is the first SHRINKING rewrite. Design is now
-implementable rather than sketched (two constraints found today: the satellite probes are unindexed
-for this shape, and the sweep is only sound when the whole chain was rewritten) — see the bottom.
-Still invisible to the API. Was: KNOWN WART, not reachable today; surfaced while implementing issue 99.
+Status: FIXED 2026-08-20 (owner) — the sweep is implemented on the accumulate-the-written-ids
+formulation this issue's 2026-08-20 note derived, gated on the full-rewrite path (`keep == 0`), with
+both long-specified gates in one red-checked test. NOT YET DEPLOYED (job 289 is mid-fold on the
+pre-sweep build); landing plan at the bottom — the strays 289 creates need one targeted epoch-stale
+refold of the DE-1.x cohort after the sweep deploys.
 Kind: correctness (latent) / data hygiene
 Blocked by: —
 Relates to: 99 (the forced rewrite that made this worth writing down), 93 (`retire_tender_tx`, which
@@ -205,3 +204,47 @@ SELECT COUNT(*) FROM contracts c
 
 Both are whole-table walks with unindexed probes, so they are **not** `/v1/sql` queries — they need a
 quiet box and an offline read, or a `tender_id`-bounded window like the one issue 234 used.
+
+## Implemented (2026-08-20, same day the tripwire fired)
+
+`Db::sweep_orphaned_entities` (crates/store/src/canonical.rs), on the design derived above:
+
+- **Accumulate, don't probe.** `write_version`/`write_round` feed a `WrittenEntities` set as they
+  resolve ids — every resolution site covered: the lots loop, the group-membership pairs, and the
+  three result-entity + two `result_lot` sites. The sweep then does one indexed
+  `SELECT id … WHERE tender_id = ?` per entity table (each table's UNIQUE leads with `tender_id`),
+  diffs in memory, and deletes the strays by id. The satellites are never queried, so their
+  index-shape problem is moot.
+- **Gated on `keep == 0 && !stored.is_empty()`** — only the full-rewrite path has a complete
+  reference set, and the two orphan-free paths that would pay four SELECTs for nothing (fresh
+  Tenders, rebuild-minted Tenders whose chains are empty by construction) skip it.
+- **Every sweep is announced**: one `removed` change row per entity, `append_change` with no seq,
+  matching the retirement path — issue 164's discipline, since the version-diff machinery compares
+  only the NEW chain's versions and structurally cannot see these removals.
+- Surfaced as `Applied::entities_swept`, printed in the fold's done-line and the CLI report, so a
+  narrowing deploy's first refold states its sweep count instead of leaving it to be mined.
+
+**Gates** (`a_shrinking_rewrite_sweeps_the_entities_no_version_references`, store/src/lib.rs, driven
+through the real `apply_tenders` with the rewrite forced the way production forces it —
+`projection_epoch` stamped stale):
+
+1. Shrinking rewrite: 2 bids → 1; exactly one swept, the survivor keeps its original surrogate id,
+   and one `changes` row (`bid`, `removed`) exists. Falsified: with the sweep gate disabled it fails
+   `left: 0, right: 1`.
+2. Unchanged forced rewrite: `entities_swept == 0` and the bid ids are identical before and after —
+   issue 99's byte-identity property asserted directly, not inferred.
+
+## Landing plan
+
+Job 289 (the refold that strands the DE-1.x carriers) is running on the pre-sweep build; deploying
+over it would restart a multi-hour fold, and the sweep does not need to be present when the orphans
+are CREATED — only when the cohort is next rewritten. So:
+
+1. Let 289 drain.
+2. Deploy the sweep build.
+3. Measure the stray population (the bounded windowed count, off-hours).
+4. Stamp the DE-1.x cohort epoch-stale (the reparse path's `mark` machinery, or
+   `stamp_projection_stale` over the 128,005 tender ids) and run one incremental projection: every
+   stamped Tender takes the `keep == 0` path, the sweep fires, and the done-line's
+   `entities swept N` should approximate the step-3 count.
+5. Re-run the step-3 count; it must be ~0 for the cohort.

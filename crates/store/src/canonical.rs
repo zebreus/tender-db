@@ -953,6 +953,22 @@ pub struct LotState {
     pub facts: BTreeSet<Fact>,
 }
 
+/// The entity ids one Tender's rewritten chain references — fed by
+/// [`Db::write_version`] as it resolves them, consumed by the shrinking-rewrite
+/// sweep (issue 103). Collected in memory rather than re-derived from the
+/// satellites afterwards, because the satellite probes are not indexed for that
+/// shape: `tender_version_bids`' primary key is `(tender_id, seq, bid_id)` — the
+/// two columns a per-entity probe needs are separated by `seq`, so they are not
+/// a usable prefix (the trap issue 248 already caught this engine in) — and
+/// `tender_version_bid_parties` carries no index that could serve it at all.
+#[derive(Default)]
+struct WrittenEntities {
+    lots: std::collections::HashSet<i64>,
+    lot_results: std::collections::HashSet<i64>,
+    bids: std::collections::HashSet<i64>,
+    contracts: std::collections::HashSet<i64>,
+}
+
 /// One result notice's contribution to the results layer — a "round" in the
 /// framework/DPS sense (ted-empirical-checks.md §3). Rounds are *additive*:
 /// a later version never supersedes an earlier round's results (the verified
@@ -1096,6 +1112,11 @@ pub struct Applied {
     /// itself misbehaved), and before this split that diagnosis needed someone
     /// who knew both mechanisms reading code under time pressure.
     pub tenders_written: u64,
+    /// Entity rows (lots/lot_results/bids/contracts) deleted by the shrinking-
+    /// rewrite sweep (issue 103): rows no surviving version references after a
+    /// full rewrite produced FEWER entities than the stored chain had. Zero on
+    /// every run whose projection logic did not narrow a mapping.
+    pub entities_swept: u64,
     /// Tenders verified current by the unchanged-chain early return (same
     /// epoch, same causing-notice sequence) — considered, decided, zero writes.
     pub tenders_unchanged: u64,
@@ -1111,6 +1132,7 @@ impl Applied {
         self.changes += other.changes;
         self.tenders_written += other.tenders_written;
         self.tenders_unchanged += other.tenders_unchanged;
+        self.entities_swept += other.entities_swept;
     }
 }
 
@@ -3739,14 +3761,41 @@ impl Db {
             applied.versions_removed += 1;
         }
 
+        let mut written = WrittenEntities::default();
         for (i, version) in p.versions.iter().enumerate().skip(keep) {
             let seq = i as i64 + 1;
             let previous = i.checked_sub(1).map(|j| &p.versions[j]);
-            self.write_version(conn, tender_id, seq, version, stmts, pending).await?;
+            self.write_version(conn, tender_id, seq, version, stmts, pending, &mut written).await?;
             applied.versions_written += 1;
             applied.changes += self
                 .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
                 .await?;
+        }
+
+        // The shrinking-rewrite sweep (issue 103). A full rewrite that produces
+        // FEWER entities than the stored chain had — the first one was issue 100's
+        // fix, which stopped three DE-1.x reference carriers minting phantom
+        // bids/contracts — leaves the extra rows in the entity tables with nothing
+        // referencing them: `delete_version` clears the version-keyed satellites
+        // only, deliberately, so an unchanged rewrite reuses the same surrogate
+        // ids and stays byte-identical.
+        //
+        // Gated on `keep == 0` because only then is `written` the COMPLETE
+        // reference set: a kept prefix's satellite rows were never touched, and
+        // sweeping against a partial set would delete entities those versions
+        // still point at. `!stored.is_empty()` skips the paths that cannot have
+        // orphans and would pay four SELECTs per Tender for nothing — a fresh
+        // Tender, and every Tender of a rebuild (whose chain is empty by
+        // construction after `reset_tender_layer`).
+        //
+        // Under UNCHANGED logic a forced rewrite resolves the same ids, the sweep
+        // finds nothing, and deletes nothing — issue 99's byte-identity property
+        // is preserved by arithmetic, not by luck.
+        if keep == 0 && !stored.is_empty() {
+            let (swept, sweep_changes) =
+                self.sweep_orphaned_entities(conn, tender_id, &written, now).await?;
+            applied.entities_swept += swept;
+            applied.changes += sweep_changes;
         }
 
         // Record the new head (issue 25): the current version is the last of the
@@ -3942,6 +3991,58 @@ impl Db {
         Ok(())
     }
 
+    /// Delete this Tender's entity rows that the just-rewritten chain no longer
+    /// references, announcing each on the change feed (issue 103; the feed
+    /// discipline is issue 164's — a removal a subscriber cannot see leaves them
+    /// holding ghosts). Children first, `lots` last: nothing in the entity
+    /// tables references `lots`, but the order costs nothing and reads as intent.
+    ///
+    /// The per-table read rides each entity table's `tender_id`-leading UNIQUE
+    /// index; the orphan set is computed in memory against [`WrittenEntities`]
+    /// rather than via `NOT EXISTS` probes into the satellites, which are not
+    /// indexed for that shape (see the type's doc).
+    async fn sweep_orphaned_entities(
+        &self,
+        conn: &Connection,
+        tender_id: i64,
+        written: &WrittenEntities,
+        now: i64,
+    ) -> turso::Result<(u64, u64)> {
+        let (mut swept, mut changes) = (0u64, 0u64);
+        for (table, kind, keep) in [
+            ("lot_results", "lot_result", &written.lot_results),
+            ("bids", "bid", &written.bids),
+            ("contracts", "contract", &written.contracts),
+            ("lots", "lot", &written.lots),
+        ] {
+            let mut orphans: Vec<i64> = Vec::new();
+            let mut rows = conn
+                .query(
+                    &format!("SELECT id FROM {table} WHERE tender_id = ?"),
+                    (Value::Integer(tender_id),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let id = int(&row, 0);
+                if !keep.contains(&id) {
+                    orphans.push(id);
+                }
+            }
+            drop(rows);
+            for id in orphans {
+                conn.execute(
+                    &format!("DELETE FROM {table} WHERE id = ?"),
+                    (Value::Integer(id),),
+                )
+                .await?;
+                append_change(conn, kind, id, None, "removed", now).await?;
+                swept += 1;
+                changes += 1;
+            }
+        }
+        Ok((swept, changes))
+    }
+
     async fn write_version(
         &self,
         conn: &Connection,
@@ -3950,6 +4051,7 @@ impl Db {
         v: &TenderVersion,
         stmts: &mut TenderInserts,
         pending: &mut Pending,
+        written: &mut WrittenEntities,
     ) -> turso::Result<()> {
         pending.versions.extend([
             Value::Integer(tender_id),
@@ -3963,6 +4065,7 @@ impl Db {
         self.write_facts(tender_id, seq, None, &v.facts, pending);
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
+            written.lots.insert(lot_id);
             pending.version_lots.extend([
                 Value::Integer(tender_id),
                 Value::Integer(seq),
@@ -3980,6 +4083,8 @@ impl Db {
         for (group_key, member_key) in &v.group_members {
             let group_lot_id = self.lot_identity(conn, tender_id, group_key, stmts).await?;
             let member_lot_id = self.lot_identity(conn, tender_id, member_key, stmts).await?;
+            written.lots.insert(group_lot_id);
+            written.lots.insert(member_lot_id);
             pending.lot_group_members.extend([
                 Value::Integer(tender_id),
                 Value::Integer(seq),
@@ -3988,7 +4093,7 @@ impl Db {
             ]);
         }
         for round in &v.rounds {
-            self.write_round(conn, tender_id, seq, round, stmts, pending).await?;
+            self.write_round(conn, tender_id, seq, round, stmts, pending, written).await?;
         }
         Ok(())
     }
@@ -4001,6 +4106,7 @@ impl Db {
         round: &Round,
         stmts: &mut TenderInserts,
         pending: &mut Pending,
+        written: &mut WrittenEntities,
     ) -> turso::Result<()> {
         let scope = || (Value::Integer(tender_id), Value::Integer(seq));
         for result in &round.lot_results {
@@ -4008,6 +4114,8 @@ impl Db {
                 .result_identity(conn, "lot_results", "result_key", tender_id, round.notice_id, &result.key, stmts)
                 .await?;
             let lot_id = self.result_lot(conn, tender_id, result.lot_key.as_deref(), stmts).await?;
+            written.lot_results.insert(id);
+            written.lots.extend(lot_id);
             let (a, b) = scope();
             pending.lot_results.extend([
                 a,
@@ -4040,6 +4148,8 @@ impl Db {
                 .result_identity(conn, "bids", "bid_key", tender_id, round.notice_id, &bid.key, stmts)
                 .await?;
             let lot_id = self.result_lot(conn, tender_id, bid.lot_key.as_deref(), stmts).await?;
+            written.bids.insert(id);
+            written.lots.extend(lot_id);
             let (a, b) = scope();
             pending.bids.extend([
                 a,
@@ -4066,6 +4176,7 @@ impl Db {
             let id = self
                 .result_identity(conn, "contracts", "contract_key", tender_id, round.notice_id, &contract.key, stmts)
                 .await?;
+            written.contracts.insert(id);
             let (a, b) = scope();
             let stamp = |at: Option<(i64, i64, bool)>| match at {
                 Some((utc, offset, has_time)) => {

@@ -3943,6 +3943,153 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 103, both gates in one place: a forced rewrite that produces FEWER
+    /// entities than the stored chain had must sweep the strays — and one that
+    /// produces the SAME entities must delete nothing, because issue 99's
+    /// epoch-rewrite byte-identity depends on the entity rows (and their
+    /// surrogate ids) surviving an unchanged rewrite untouched.
+    ///
+    /// This became reachable on 2026-08-20: issue 100's fix stopped three DE-1.x
+    /// reference carriers minting phantom bids/contracts, so the very next refold
+    /// was the first shrinking rewrite. `delete_version` deliberately clears only
+    /// the version-keyed satellites, so without the sweep the carriers' rows
+    /// survive with nothing referencing them — invisible to every read path
+    /// (which all join through the satellites) but wrong in `COUNT(*)` and
+    /// permanent.
+    ///
+    /// Driven through the real `apply_tenders`, with the rewrite forced the same
+    /// way production forces it (`projection_epoch` stamped stale), not by a
+    /// hand-run DELETE.
+    #[tokio::test]
+    async fn a_shrinking_rewrite_sweeps_the_entities_no_version_references() {
+        let path = format!("/tmp/tender-db-sweep-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        let bid = |key: &str| canonical::BidState {
+            key: key.into(),
+            lot_key: Some("LOT-0001".into()),
+            cents: Some(1_000),
+            currency: Some("EUR".into()),
+            parties: Vec::new(),
+        };
+        let round = |bids: Vec<canonical::BidState>| canonical::Round {
+            notice_id: 10,
+            logical_notice_id: None,
+            lot_results: vec![canonical::LotResultState {
+                key: "RES-0001".into(),
+                lot_key: Some("LOT-0001".into()),
+                decision: None,
+                reason: None,
+                awarded_cents: None,
+                awarded_currency: None,
+                decided: None,
+                winners: Vec::new(),
+                statistics: Vec::new(),
+            }],
+            bids,
+            contracts: Vec::new(),
+        };
+        let projection = |bids: Vec<canonical::BidState>| canonical::TenderProjection {
+            source: "ted".into(),
+            procedure_key: Some("key:sweep".into()),
+            island_notice_id: None,
+            kind: "procedure".into(),
+            versions: vec![canonical::TenderVersion {
+                caused_by_notice_id: 10,
+                published_at: 100,
+                dispatched_at: None,
+                notice_subtype: None,
+                publication_id: "10-2024".into(),
+                facts: Default::default(),
+                lots: Vec::new(),
+                rounds: vec![round(bids)],
+                group_members: Vec::new(),
+            }],
+        };
+        async fn count(db: &Db, sql: &str) -> i64 {
+            match db.scalar(sql).await.unwrap() {
+                Some(turso::Value::Integer(n)) => n,
+                other => panic!("expected a count, got {other:?}"),
+            }
+        }
+
+        // The old projection logic: one result, TWO bids (one of them the phantom
+        // reference carrier this shape stands in for).
+        db.apply_tenders(&[projection(vec![bid("TEN-0001"), bid("TEN-9999")])], 0, false)
+            .await
+            .expect("the wide chain applies");
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM bids").await, 2);
+
+        // Gate 2 first — the UNCHANGED forced rewrite. Same content, epoch stamped
+        // stale exactly as a deploy with a bumped PROJECTION_EPOCH finds it: the
+        // rewrite must reuse both bid rows and sweep nothing.
+        db.set_projection_epoch_for_test(0).await.unwrap();
+        let ids_before: Vec<i64> = {
+            let conn = db.reader().await.unwrap();
+            let mut rows = conn.query("SELECT id FROM bids ORDER BY id", ()).await.unwrap();
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                if let turso::Value::Integer(n) = row.get_value(0).unwrap() {
+                    out.push(n);
+                }
+            }
+            out
+        };
+        let applied = db
+            .apply_tenders(&[projection(vec![bid("TEN-0001"), bid("TEN-9999")])], 0, false)
+            .await
+            .expect("the unchanged forced rewrite applies");
+        assert_eq!(applied.entities_swept, 0, "an unchanged rewrite must sweep NOTHING");
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM bids").await, 2);
+        let ids_after: Vec<i64> = {
+            let conn = db.reader().await.unwrap();
+            let mut rows = conn.query("SELECT id FROM bids ORDER BY id", ()).await.unwrap();
+            let mut out = Vec::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                if let turso::Value::Integer(n) = row.get_value(0).unwrap() {
+                    out.push(n);
+                }
+            }
+            out
+        };
+        assert_eq!(ids_before, ids_after, "issue 99: same surrogate ids, byte-identical rewrite");
+
+        // Gate 1 — the SHRINKING forced rewrite. The narrowed logic produces one
+        // bid; the stray must be swept and announced on the change feed.
+        db.set_projection_epoch_for_test(0).await.unwrap();
+        let applied = db
+            .apply_tenders(&[projection(vec![bid("TEN-0001")])], 0, false)
+            .await
+            .expect("the shrinking rewrite applies");
+        assert_eq!(applied.entities_swept, 1, "exactly the stray bid is swept");
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM bids").await, 1);
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM tender_version_bids").await,
+            1,
+            "the surviving reference set matches"
+        );
+        // The survivor is the SAME row it always was — the sweep deletes strays,
+        // it never renumbers what stays.
+        assert_eq!(count(&db, "SELECT MIN(id) FROM bids").await, ids_before[0]);
+        assert_eq!(
+            count(
+                &db,
+                "SELECT COUNT(*) FROM changes WHERE entity_kind = 'bid' AND op = 'removed'"
+            )
+            .await,
+            1,
+            "issue 164's discipline: a removal a subscriber cannot see leaves them holding ghosts"
+        );
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 25, the O(page) guarantee: the newest-Tenders list must read the
     /// `tenders_current_published` index in order and stop at the limit, never
     /// materialise-and-sort every tender. Asserting the query plan proves this at
