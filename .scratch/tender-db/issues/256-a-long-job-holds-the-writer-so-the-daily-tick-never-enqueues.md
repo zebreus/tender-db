@@ -157,3 +157,36 @@ So today's notices are landing. The 524,774 re-parsed notices from job 282 are s
 epoch-stale, and the daily's own `project` (job 288) now inherits that fold — the same plan, the same
 step. If it stalls the same way, that is the reproduction this issue needs and the next unit is to
 measure the edge set and the join's plan rather than to guess at them.
+
+
+## Part 2, narrowed by the re-run (2026-08-20 11:50)
+
+Job 288 — the same fold, re-enqueued after the restart — is on the **incremental** path, not the full
+rebuild one. The evidence is the durable phase record: the full path feeds it (`/admin/jobs` shows
+planning / pre-pass / folding) and the incremental path deliberately sets none, and `admin.sh queue`
+reads `CURRENT 288 project rebuild=false | - -/-`. So the `phase 1: n/14,289,308 notices planned`
+heartbeats are `project_incremental`'s own, and the incremental delta really is corpus-sized.
+
+Measured on 288's plan phase:
+
+    11:00:20  chunk 1-2      10,000 notices/chunk, both inside one second
+    11:21:44  7,500,000 / 14,289,308
+    11:42:36  11,000,000 / 14,289,308
+    11:48:38  11,420,000 — ~10 s per 10,000-notice chunk
+
+So it starts instant and settles at ~2,800 notices/s, ~85 minutes for the corpus. Job 283's plan took
+91 minutes for the same walk — the same order, which **kills the WAL-growth explanation I floated
+before measuring it**: 288 started with a fresh WAL after a restart and still degraded the same way.
+The degradation is within the run, as the plan tables fill.
+
+What drives a corpus-sized delta: every `reparse` reports `stamped 2601443 tender(s) epoch-stale` —
+the same 2,601,443 each time, whether it re-parsed one package or twenty. That stamp is what the next
+fold must consider.
+
+**The open question, stated precisely so the next unit does not start from a guess:** jobs 277, 279
+and 281 were folds that FOLLOWED exactly such a stamp and finished in 80-100 s, folding ~30,000
+notices each. Jobs 283 and 288 followed the same kind of stamp and walk all 14.3M. Whatever
+distinguishes those two cases is the whole of part 2 — the candidates are the size of the re-parsed
+set (32,920 notices vs 524,774), the incremental scoping's fallback rules (issue 58 v2's closure walk
+logs "its own decisions… or a named fallback"), and the watermark's state after an interrupted fold.
+The journal's own scoping line for 288 is the first thing to read when it appears.
