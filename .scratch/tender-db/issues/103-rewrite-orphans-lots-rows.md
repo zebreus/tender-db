@@ -248,3 +248,20 @@ are CREATED — only when the cohort is next rewritten. So:
    stamped Tender takes the `keep == 0` path, the sweep fires, and the done-line's
    `entities swept N` should approximate the step-3 count.
 5. Re-run the step-3 count; it must be ~0 for the cohort.
+
+## First live firing — 749,349 entities swept (2026-08-21 00:54)
+
+The refold that carried the sweep's first run (job 289, the issue-100/255/257/259 batch over the
+128,005 epoch-stale DE-1.x tenders plus the ordinary delta) finished:
+
+    [project] done: 14289308 notices → 7903634 tenders (676926 islands), 4439050 versions,
+                    749349 entities swept, 9787850 change rows in 10305.8s
+
+**749,349 strays deleted, each announced with a `removed` change row.** ~5.9 per rewritten DE-1.x
+tender, which fits the mechanism: every award round on the cohort minted two phantom LotTender
+carriers plus one phantom SettledContract carrier, and chains carry multiple rounds. The step-3/4/5
+landing plan above collapsed into this one run — the strays were swept in the same fold that would
+have created them, because the sweep deployed first.
+
+The plan's step 5 (the ~0 residual check) stays worth an offline pass when the box is quiet, but the
+live counter plus the byte-identity gate is the substance of this issue done.
