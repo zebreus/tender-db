@@ -406,3 +406,38 @@ is indistinguishable from silence that means "hung".
 its completion line is the first real elapsed time for 245,955 edges, which is the number this part of
 the issue has been waiting for, and deploying would throw away ~1.5 h of re-projection to learn it a
 different way. Deploy after it drains; the breakdown lands on the next full re-projection.
+
+## Job 288, one hour into the step — facts only (2026-08-20 16:21)
+
+    15:23:18  group step previous-notice: 245955 edge(s) in the plan
+    16:21:00  (no completion line; 57m 42s elapsed in this step)
+    top:      one core at 100.0 %, load 1.00, %wa 0.0
+    RSS:      905 MB at 15:32  ->  2.1 GB at 16:21
+
+CPU-bound, single-threaded, not waiting on I/O, and growing memory the whole time. Every neighbouring
+step in this phase is between 0.3 s and 108 s.
+
+The memory growth suggested a fan-out: `notices` is `UNIQUE(source, publication_id, content_hash)`,
+so in principle one publication can hold SEVERAL notice rows, and the join would then emit one output
+row per stored variant per edge — many more rows than the 245,955 the plan counts, which would
+explain both the time and the RSS. **Refuted, in one bounded query:**
+
+    SELECT COUNT(*), COUNT(DISTINCT source || '|' || publication_id)
+      FROM notices WHERE id BETWEEN 19900000 AND 19950000
+    -> 50001, 50001
+
+One publication, one notice row. No fan-out. That is the fourth explanation for this step retired by
+measurement (batch size, WAL growth, the missing index, now fan-out), and the first three each took
+longer to retire than this one did, because this one was stated as a testable claim before it was
+believed.
+
+What remains unexplained: 245,955 index seeks over an hour is ~14 ms per edge, which is disk-seek
+scale — but `%wa` is 0.0 and the core is pinned, so it is not disk. I do not know what it is, and I am
+deliberately not proposing a fifth mechanism here. The four phase timers committed in `a92207d` split
+this step into read / union / merge-write / relabel; whichever of them holds the hour will say so on
+the next full re-projection, and the 15-second heartbeats mean it will say so while it is happening
+rather than afterwards.
+
+RSS growth is consistent with either the read accumulating `edges`/`rank` or turso's page cache
+growing as the seeks walk a 14.3M-row index; the read timer distinguishes those too, since a slow
+read prints its own elapsed time before the union-find ever starts.
