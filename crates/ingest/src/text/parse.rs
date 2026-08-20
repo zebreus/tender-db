@@ -904,6 +904,7 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
         return Err(Rejected { reason: "empty-record", detail: "no header fields".into() });
     }
     claim_awarded_value(&mut emit);
+    claim_award_date(&mut emit);
     Ok(emit.parsed)
 }
 
@@ -924,6 +925,167 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
 /// can name several winners, so attaching it to the first result would hand one of them a
 /// whole contract. `TED-VAL_TOTAL` at root is already mapped to `result_value` in the
 /// projection's `AMOUNTS`, so this needs no mapping change.
+/// How the era labels the date the contract was awarded (issue 255 slice 3, issue 244).
+///
+/// Two spellings cover both forms, and the shorter one is a prefix of the numbered form's
+/// longer variant, so it matches that too:
+///
+/// ```text
+///     3.  Date of award: 30.3.2001.                    numbered form (prod 1,710,441+)
+///     5.  Date of award of the contract: 11.5.2001.    numbered form, external aid
+///     VI.3)  Date of contract award: 25.11.2004.       sectioned form (2005 CAN fixture)
+/// ```
+///
+/// Both spellings are in the committed fixtures: the 1993 daily uses `Date of award:` in
+/// dozens of its 199 records, and `2005-can-154-2005` uses `Date of contract award:`.
+const AWARD_DATE_LABELS: [&str; 2] = ["DATE OF AWARD", "DATE OF CONTRACT AWARD"];
+
+/// How far past the label the colon and the figure may sit. `Date of award of the
+/// contract:` is 30 characters from the label's end to its colon.
+const AWARD_DATE_WINDOW: usize = 64;
+
+/// The date one text-era award body states, or `None`.
+///
+/// `None` means the same three things it means for [`awarded_value`] and for the same
+/// reason: no date stated, a shape this refuses, or SEVERAL that disagree — a notice
+/// awarding two contracts on two days states no single award date, and picking one would
+/// be a guess recorded as a fact.
+fn award_date(body: &str) -> Option<(i64, i64, bool)> {
+    let flat = flatten(body);
+    let mut found: Option<(i64, i64, bool)> = None;
+    let mut at = 0usize;
+    while at < flat.len() {
+        let Some((start, label)) = AWARD_DATE_LABELS
+            .iter()
+            .filter_map(|l| find_ascii_ci(&flat[at..], l).map(|i| (at + i, *l)))
+            .min_by_key(|(i, _)| *i)
+        else {
+            break;
+        };
+        at = start + label.len();
+        let rest = &flat[at..];
+        let window = &rest[..char_bound(rest, AWARD_DATE_WINDOW)];
+        // The label ends before its colon in every measured shape, so the figure starts
+        // after the colon; without one there is no value to read.
+        let Some(colon) = window.find(':') else { continue };
+        if let Some(stamp) = read_dmy(&window[colon + 1..]) {
+            match found {
+                // Two labels agreeing is one fact stated twice; two disagreeing is a
+                // notice this cannot read.
+                Some(seen) if seen != stamp => return None,
+                Some(_) => {}
+                None => found = Some(stamp),
+            }
+        }
+    }
+    found
+}
+
+/// `30.3.2001` at the head of `text`, as (utc seconds, offset minutes, has_time).
+///
+/// Scanned rather than split, because the era writes the separators with optional spaces
+/// (`2. 11. 1999`) and because whatever follows the year is the next item, not part of the
+/// date. Two-digit day and month, four-digit year, and nothing clever: a two-digit year
+/// would be ambiguous across an era spanning 1993-2010 and is refused.
+fn read_dmy(text: &str) -> Option<(i64, i64, bool)> {
+    let b = text.as_bytes();
+    let mut i = 0usize;
+    let mut number = |i: &mut usize, max: usize| -> Option<String> {
+        while *i < b.len() && b[*i] == b' ' {
+            *i += 1;
+        }
+        let from = *i;
+        while *i < b.len() && b[*i].is_ascii_digit() && *i - from < max {
+            *i += 1;
+        }
+        (*i > from).then(|| String::from_utf8_lossy(&b[from..*i]).into_owned())
+    };
+    let day = number(&mut i, 2)?;
+    let sep = |i: &mut usize| -> Option<()> {
+        while *i < b.len() && b[*i] == b' ' {
+            *i += 1;
+        }
+        (*i < b.len() && b[*i] == b'.').then(|| *i += 1)
+    };
+    sep(&mut i)?;
+    let month = number(&mut i, 2)?;
+    sep(&mut i)?;
+    let year = number(&mut i, 4)?;
+    if year.len() != 4 {
+        return None;
+    }
+    // The parts must be a real calendar date BEFORE they reach the shared parser, because
+    // that parser NORMALISES rather than refuses: `30.13.2001` comes back as 2002-01-30
+    // and `31.2.2001` as 2001-03-03. Rolling a typo into a neighbouring month is exactly
+    // the kind of quiet wrong fact this era's prose can produce at scale.
+    let (d, m, y): (u32, u32, i32) =
+        (day.parse().ok()?, month.parse().ok()?, year.parse().ok()?);
+    if !(1..=12).contains(&m) || d < 1 || d > days_in_month(m, y) {
+        return None;
+    }
+    match value::date_from_parts(&day, &month, &year, None) {
+        Ok(NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+            Some((utc_seconds, offset_minutes, has_time))
+        }
+        _ => None,
+    }
+}
+
+/// Days in a Gregorian month, for the range check [`read_dmy`] does before handing its
+/// parts to a parser that would normalise them instead.
+fn days_in_month(month: u32, year: i32) -> u32 {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 if year % 4 == 0 && (year % 100 != 0 || year % 400 == 0) => 29,
+        2 => 28,
+        _ => 0,
+    }
+}
+
+/// The award date, onto every result block the body yielded (issue 255 slice 3).
+///
+/// `TED-CONTRACT_AWARD_DATE` is the legacy form eras' own field id and the projection
+/// already routes it to `tender_version_lot_results.decided_*` (issue 255 slice 2), so
+/// this reaches the canonical layer with no mapping change — the same trick
+/// [`claim_awarded_value`] plays with `TED-VAL_TOTAL`.
+///
+/// A body with no winner has no result block, and then the date has nowhere to land: the
+/// canonical model hangs an award date on an award, not on a Tender. Those notices keep
+/// the date in their `TXT-TX` prose, retrievable, exactly as before.
+fn claim_award_date(emit: &mut Emit) {
+    let is_award = emit.parsed.values.iter().any(|v| {
+        v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
+    });
+    if !is_award {
+        return;
+    }
+    let stamp = emit
+        .parsed
+        .values
+        .iter()
+        .find_map(|v| match (&v.field_id, &v.value) {
+            (f, NoticeValue::Text { value, .. }) if f == "TXT-TX" => Some(value.as_str()),
+            _ => None,
+        })
+        .and_then(award_date);
+    let Some((utc_seconds, offset_minutes, has_time)) = stamp else { return };
+    let results: Vec<String> = emit
+        .parsed
+        .sections
+        .iter()
+        .filter(|s| s.kind == "LotResult")
+        .map(|s| s.id.clone())
+        .collect();
+    for result in results {
+        emit.push_into(&result, "TED-CONTRACT_AWARD_DATE", NoticeValue::Date {
+            utc_seconds,
+            offset_minutes,
+            has_time,
+        });
+    }
+}
+
 fn claim_awarded_value(emit: &mut Emit) {
     let is_award = emit.parsed.values.iter().any(|v| {
         v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
@@ -2213,6 +2375,84 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
             ),
             Some((1_588_789_700, "NOK".to_owned(), None))
         );
+    }
+
+    /// Issue 255 slice 3 / issue 244: the era's award DATE, read off the same prose the
+    /// price and the winners come from — and landing on `TED-CONTRACT_AWARD_DATE`, the
+    /// legacy form eras' own field id, so slice 2's projection carries it to
+    /// `tender_version_lot_results.decided_*` with no mapping change.
+    #[test]
+    fn the_award_date_is_read_from_the_body_and_lands_on_the_result() {
+        // The numbered form, verbatim from prod (notices 1,710,441-1,710,588): item 3 in
+        // the works/supplies forms, item 5 in the external-aid one.
+        assert_eq!(award_date("3.  Date of award: 30.3.2001."), read_dmy(" 30.3.2001"));
+        assert_eq!(
+            award_date("5.  Date of award of the contract: 11.5.2001."),
+            read_dmy("11.5.2001"),
+            "the longer label is matched by the shorter one it starts with"
+        );
+        // The sectioned form's heading, upper-case and with its own item marker.
+        assert!(award_date("V.1)  DATE OF CONTRACT AWARD DECISION: 14.12.2018").is_some());
+
+        // The separators carry optional spaces in this era (`2. 11. 1999` appears in the
+        // 1999 deadline lines), and whatever follows the year is the next item.
+        assert_eq!(read_dmy(" 2. 11. 1999"), read_dmy("2.11.1999"));
+        assert_eq!(read_dmy(" 30.3.2001. 4.  Award criteria: price."), read_dmy("30.3.2001"));
+
+        // Refusals. A two-digit year is ambiguous across an era spanning 1993-2010; a
+        // missing separator is not a date; an impossible date is not a date.
+        assert_eq!(read_dmy(" 30.3.01"), None, "a two-digit year is not read");
+        assert_eq!(read_dmy(" 3032001"), None);
+        // The shared parser NORMALISES out-of-range parts — `30.13.2001` comes back as
+        // 2002-01-30 and `31.2.2001` as 2001-03-03 — so the range check happens here,
+        // before it. A rolled-over typo would be a wrong fact, not a missing one.
+        assert_eq!(read_dmy(" 30.13.2001"), None, "month 13 is not a month");
+        assert_eq!(read_dmy(" 31.2.2001"), None, "February has no 31st");
+        assert_eq!(read_dmy(" 0.3.2001"), None, "there is no zeroth day");
+        assert!(read_dmy(" 29.2.2000").is_some(), "2000 was a leap year");
+        assert_eq!(read_dmy(" 29.2.1999"), None, "1999 was not");
+        assert_eq!(award_date("3.  Date of award: to be announced."), None);
+        assert_eq!(award_date("6.  Successful contractor(s): ACME Ltd."), None, "no label");
+
+        // Two award dates that disagree is a notice this cannot read — the same rule the
+        // price follows, for the same reason.
+        assert_eq!(
+            award_date("V.1)  Date of award: 30.3.2001. V.1)  Date of award: 2.4.2001."),
+            None
+        );
+        // …and the same date stated twice is one fact stated twice.
+        assert!(
+            award_date("V.1)  Date of award: 30.3.2001. V.1)  Date of award: 30.3.2001.").is_some()
+        );
+
+        // End to end: a TD:7 record with a winner puts the date on the result block, under
+        // the field id the legacy eras use.
+        let body = "3.  Date of award: 30.3.2001.\n\
+                    6.  Successful contractor(s): Gagneraud Construction, F-33000 Bordeaux.\n\
+                    8.  Price: 1 000 000 EUR.";
+        let record = format!(
+            "1.0/000001\nND: 1-2001\nTD: 7 - Contract award\nTX: {}\n",
+            body.replace('\n', "\n    ")
+        );
+        let p = parse(&record).expect("parses");
+        let result = p.sections.iter().find(|s| s.kind == "LotResult").expect("a result block");
+        let date = p
+            .values
+            .iter()
+            .find(|v| v.field_id == "TED-CONTRACT_AWARD_DATE")
+            .expect("the award date is claimed");
+        assert_eq!(date.section_id, result.id, "on the result, not on the root");
+        assert!(matches!(date.value, NoticeValue::Date { has_time: false, .. }));
+
+        // A body with no winner has no result block, so the date has nowhere to land and
+        // nothing is minted for it — the model hangs an award date on an award.
+        let no_winner = format!(
+            "1.0/000001\nND: 2-2001\nTD: 7 - Contract award\nTX: {}\n",
+            "3.  Date of award: 30.3.2001.".replace('\n', "\n    ")
+        );
+        let p = parse(&no_winner).expect("parses");
+        assert!(p.sections.iter().all(|s| s.kind != "LotResult"));
+        assert!(p.values.iter().all(|v| v.field_id != "TED-CONTRACT_AWARD_DATE"));
     }
 
     /// A withheld winner must mint NOTHING. The era fills the item with boilerplate

@@ -299,6 +299,17 @@ fn the_2005_award_record_carries_the_chain_edge() {
     assert_eq!(cpv, ["28216100", "28811200", "40530000"]);
     assert_eq!(values(&rec, "TXT-PN").len(), 3);
 
+    // Issue 255 slice 3: the SECTIONED form spells the label differently —
+    // `VI.3)  Date of contract award: 25.11.2004.` — and the same reader must claim it.
+    //
+    // TWICE, because this notice names two suppliers and so yields two result blocks, and
+    // the date it states is the notice's single award date: each award carries it. The
+    // alternative — putting it on the first block only — would leave the second award
+    // undated for no reason the source gives.
+    let award_date =
+        NoticeValue::Date { utc_seconds: 1_101_340_800, offset_minutes: 0, has_time: false };
+    assert_eq!(values(&rec, "TED-CONTRACT_AWARD_DATE"), [&award_date, &award_date]);
+
     // Award-side facts: dispatch date, winners prose, no tender deadline.
     assert_eq!(
         *value(&rec, "TXT-DS"),
@@ -410,4 +421,51 @@ fn inventory_codes() -> Vec<String> {
         .iter()
         .map(|f| f["code"].as_str().expect("code").to_owned())
         .collect()
+}
+
+/// Issue 255 slice 3: the era's award DATE, gated on the same committed daily the winners
+/// are gated on. `Date of award:` appears in dozens of the 199 records, and every claimed
+/// date must be a real 1992-1993 calendar date on a result block — a rolled-over typo
+/// (`31.2.1993`) or a two-digit year must yield nothing rather than a neighbouring day.
+#[test]
+fn the_1993_daily_yields_its_award_dates() {
+    let records = ingest_fixture(
+        "1993-daily-en-19930102.txt",
+        "EN_19930102_1993001_ISO_ORG.zip!EN_19930102_1993001_ISO_ORG",
+    );
+
+    let mut dates = Vec::new();
+    for (_, parse) in &records {
+        let Parse::Parsed(parsed) = parse else { continue };
+        for row in &parsed.values {
+            if row.field_id == "TED-CONTRACT_AWARD_DATE" {
+                let NoticeValue::Date { utc_seconds, has_time, .. } = &row.value else {
+                    panic!("the award date must be a Date");
+                };
+                assert!(!has_time, "the era states a calendar date, never a clock");
+                dates.push((row.section_id.clone(), *utc_seconds));
+            }
+        }
+    }
+
+    // 72 award dates from 199 records, against the same fixture's 117 winners — the two
+    // differ because a date belongs to the award BLOCK while winners are per-organization,
+    // and because a body can state a winner without a date or the reverse. Exact on
+    // purpose, like the winner count.
+    assert_eq!(dates.len(), 72);
+
+    // Every one lands on a result block, never on the root...
+    assert!(
+        dates.iter().all(|(section, _)| section.starts_with("RES-")),
+        "an award date belongs to an award: {dates:?}"
+    );
+    // ...and every one is a real date in the era of this daily (1993-01-02). A rolled-over
+    // typo or a mis-scanned year would land outside it, which is what makes this a gate
+    // rather than a count: 1990-01-01 .. 1994-01-01.
+    for (section, utc) in &dates {
+        assert!(
+            (631_152_000..757_382_400).contains(utc),
+            "{section}: {utc} is not a date this daily could state"
+        );
+    }
 }

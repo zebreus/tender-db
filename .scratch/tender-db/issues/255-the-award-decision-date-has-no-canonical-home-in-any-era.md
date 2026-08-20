@@ -1,9 +1,11 @@
 # 255 — the award DECISION date has no canonical home, in any era
 
-Status: SLICES 1 AND 2 DONE 2026-08-20 — eForms BT-1451 → `tender_version_contracts.decided_*`, and
-the legacy form eras' `CONTRACT_AWARD_DATE` → `tender_version_lot_results.decided_*` (also exposed
-through `v_lot_results` and `v_awards`). Both migrated, projected, tested and falsified. Slice 3 open:
-the text era's `Date of award:` prose, which now has a destination waiting for it
+Status: ALL THREE SLICES DONE 2026-08-20 — eForms BT-1451 → `tender_version_contracts.decided_*`;
+the legacy form eras' `CONTRACT_AWARD_DATE` → `tender_version_lot_results.decided_*` (also in
+`v_lot_results` and `v_awards`); and the text era's prose date → the same legacy field id, so it rides
+slice 2's projection with no mapping change. All migrated, projected, tested against committed
+fixtures and falsified. What remains is machine time: a refold for the form eras, a re-parse for the
+text era, and then the coverage numbers
 Kind: canonical modelling gap (a published fact with nowhere to land), spanning every era
 Blocked by: —
 Relates to: 244 (the text era's award date, listed there as needing "a canonical destination
@@ -77,9 +79,34 @@ So slice 1's home is wrong for them, and the right one is a `decided_*` triple o
   of the three. Gated by `the_legacy_award_block_carries_its_decision_date` on the r209 defence
   fixture (14.12.2018, offsetless, read through `v_awards` as well as the satellite) and falsified:
   without the projection arm the column reads NULL.
-- **Slice 3, text era**: extract `Date of award:` from the body the way `awarded_value` extracts the
-  price (issue 244 slices 4–9), then set the same `LotResultState.decided`. The destination now
-  exists, so this is a parse-layer slice only.
+- **Slice 3, text era — DONE**: `award_date` + `read_dmy` in `text/parse.rs`, a post-pass gated on
+  `TXT-TD == "7"` exactly like `claim_awarded_value`, emitting **`TED-CONTRACT_AWARD_DATE`** — the
+  legacy eras' own field id — into every result block the body yielded. So it rides slice 2's
+  projection arm to `tender_version_lot_results.decided_*` with no mapping change at all, the same
+  trick the price plays with `TED-VAL_TOTAL`.
+
+  Both label spellings are verified against committed fixtures rather than guessed: the 1993 daily
+  writes `Date of award:` in dozens of its 199 records, and `2005-can-154-2005` writes
+  `VI.3)  Date of contract award: 25.11.2004.` — so one label list covers the numbered and the
+  sectioned form, and the shorter entry is a prefix of `Date of award of the contract:` too.
+
+  Gates: the 1993 daily yields **72 award dates from 199 records**, every one on a `RES-` block and
+  every one inside 1990–1994 (a rolled-over typo or a mis-scanned year lands outside that window,
+  which is what makes the test a gate rather than a count); the 2005 CAN yields its date TWICE,
+  because it names two suppliers and each award carries the notice's single date.
+
+  **The trap here was the shared date parser.** `value::date_from_parts` NORMALISES out-of-range
+  parts instead of refusing them: `30.13.2001` comes back as 2002-01-30 and `31.2.2001` as
+  2001-03-03. Reading dates out of XML that a schema already validated, that leniency never shows;
+  reading them out of 3.8M prose bodies, it would file a typo as a real day in a neighbouring month.
+  So `read_dmy` range-checks day and month (with a leap-year rule) BEFORE handing the parts over, and
+  the test pins all four refusals. Left alone in the shared helper, deliberately: the XML callers
+  rely on nothing here, and tightening a parser five eras use is not this issue's business.
+
+  Two things it deliberately does not do: a two-digit year is refused (ambiguous across an era
+  spanning 1993–2010), and a body stating two DIFFERENT dates claims nothing (the same rule the price
+  follows). A body with no winner has no result block, so its date stays in the prose — the model
+  hangs an award date on an award, not on a Tender.
 
 One more thing the legacy fixture settles for issue 244, recorded here because I found it while
 reading the same block: `<OFFERS_RECEIVED_NUMBER>6</OFFERS_RECEIVED_NUMBER>` sits right beside
