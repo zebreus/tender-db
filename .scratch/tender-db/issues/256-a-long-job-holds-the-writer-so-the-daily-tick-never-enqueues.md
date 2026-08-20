@@ -570,3 +570,24 @@ TENDER_DROP_JOBS restarts made its absence vivid:
 Deploys after the running fold drains. With this, the answer to "this fold is stuck" becomes
 `POST /admin/jobs/<id>/cancel` — the documented route — and the TENDER_DROP_JOBS procedure above
 demotes to the break-glass it should always have been.
+
+## VERIFIED live, both builds in one journal (2026-08-20 23:37)
+
+The kill at 21:53 froze the old build's relabel at batch 13; the fixed build's rerun reached the
+same step at 23:37. Same box, same corpus, same 245,955-edge plan, same 24,528 merge keys:
+
+    old (IN subquery):   batch 13/144 at 2,778.0s — on pace for ~8.3 HOURS
+    fixed (EXISTS):      144/144 batches in 11.6s
+    whole step:          17.4s (read 8.0s + union 0.0s + merge-write 0.2s + relabel 11.6s)
+    fold-index after it: 34.0s
+
+**~2,500× on the relabel; the step that was "silent hours" across four investigations is now
+seventeen itemized seconds.** The operational core of this issue — a fold holding the writer long
+enough to threaten the daily tick — is materially dead: the grouping stage in total now runs in
+about three minutes, and the projection's wall-clock is what phase 1 and phase 2 genuinely cost.
+
+With the stop checkpoint (`0852a1a`) landing alongside, both halves close: folds no longer grind for
+hidden hours, and the one that somehow still does can be cancelled at a checkpoint by the documented
+route. Remaining before this issue closes: deploy `0852a1a`+`b0d59f1` (the stop checkpoint + the org
+merge, post-refold per issue 234's sequencing), confirm `/admin/jobs/<id>/cancel` on a live project
+job answers `Stopping`, and let one daily tick pass clean.
