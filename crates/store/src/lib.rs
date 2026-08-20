@@ -3943,6 +3943,121 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 234: an identifier-less mention REUSES the Organization its
+    /// `(name_norm, country)` already resolved to, instead of minting a fresh
+    /// provisional row per mention — the defect that left 95.30 % of a 24.6M-row
+    /// table provisional and made every legacy buyer rollup mostly fragments.
+    ///
+    /// The acceptance's three-way split, plus the two conservatism edges the
+    /// issue's over-merge evidence demanded: nameless mentions never merge (2,411
+    /// of a window's nameless rows were awarded contractors — distinct unknown
+    /// parties, not one party), and a country-less name never merges (that is
+    /// where platform strings like `tendsign` concentrate). Case-insensitive by
+    /// construction, since the probe key is `name_norm`.
+    #[tokio::test]
+    async fn an_identifierless_mention_reuses_its_named_organization() {
+        let path = format!("/tmp/tender-db-namemerge-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        let mention = |notice: i64, name: &str, country: Option<&str>| Mention {
+            notice_id: notice,
+            section_id: "ORG-1".into(),
+            name: name.into(),
+            country: country.map(Into::into),
+            raw_identifier: None,
+            scheme: None,
+            identifier: None,
+        };
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let ids = db
+            .resolve_mentions(
+                &mut resolver,
+                &[
+                    // The same authority, twice — once with the case the probe must
+                    // fold away. ONE Organization.
+                    mention(1, "Mairie de Paris", Some("FR")),
+                    mention(2, "MAIRIE DE PARIS", Some("FR")),
+                    // The same name in another country: a DIFFERENT body.
+                    mention(3, "Mairie de Paris", Some("US")),
+                    // No country: never merged, even with itself.
+                    mention(4, "Mairie de Paris", None),
+                    mention(5, "Mairie de Paris", None),
+                    // Nameless: never merged, even in one country.
+                    mention(6, "", Some("FR")),
+                    mention(7, "", Some("FR")),
+                ],
+            0,
+            )
+            .await
+            .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+
+        assert_eq!(ids[0], ids[1], "same name + country resolves to ONE organization");
+        assert_ne!(ids[0], ids[2], "the same name in another country stays separate");
+        assert_ne!(ids[3], ids[4], "a country-less name never merges");
+        assert_ne!(ids[5], ids[6], "nameless mentions never merge");
+        match db.scalar("SELECT COUNT(*) FROM organizations").await.unwrap() {
+            Some(turso::Value::Integer(6)) => {}
+            other => panic!("7 mentions must yield exactly 6 organizations, got {other:?}"),
+        }
+
+        // The reuse is durable, not only in-run: a FRESH resolver (new run, empty
+        // caches) probes the table itself and still reuses.
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let again = db
+            .resolve_mentions(&mut resolver, &[mention(8, "mairie de paris", Some("FR"))], 0)
+            .await
+            .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        assert_eq!(again[0], ids[0], "a later run reuses through the (name_norm, country) probe");
+
+        // And a name matching a CANONICAL organization does NOT capture it: the
+        // probe is scoped `identifier IS NULL`, because promoting by bare name is
+        // exactly the over-merge the issue declines (two bodies can share a name
+        // with only one of them registered).
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let with_id = db
+            .resolve_mentions(
+                &mut resolver,
+                &[Mention {
+                    notice_id: 9,
+                    section_id: "ORG-1".into(),
+                    name: "Mairie de Paris".into(),
+                    country: Some("FR".into()),
+                    raw_identifier: Some("123".into()),
+                    scheme: None,
+                    identifier: Some(canonical::Identifier {
+                        country: Some("FR".into()),
+                        kind: "national".into(),
+                        value: "123".into(),
+                    }),
+                }],
+                0,
+            )
+            .await
+            .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        assert_ne!(with_id[0], ids[0], "an identifier-bearing mention keeps its own row");
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let nameless_probe = db
+            .resolve_mentions(&mut resolver, &[mention(10, "Mairie de Paris", Some("FR"))], 0)
+            .await
+            .unwrap();
+        db.finish_mention_resolver(resolver).await.unwrap();
+        assert_eq!(
+            nameless_probe[0], ids[0],
+            "…and the name probe still finds the PROVISIONAL row, not the canonical one"
+        );
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 103, both gates in one place: a forced rewrite that produces FEWER
     /// entities than the stored chain had must sweep the strays — and one that
     /// produces the SAME entities must delete nothing, because issue 99's

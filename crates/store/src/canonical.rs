@@ -781,7 +781,15 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// early-return. A global bump declares 7.9M tenders stale to fix one era and
 /// owes the whole corpus a rewrite on the next full walk — measured at
 /// 6h02m / 14.2M version writes for a 2.69M-notice cohort (issue 179).
-pub const PROJECTION_EPOCH: i64 = 3;
+///
+/// 3 → 4 (issue 234): identifier-less mentions now REUSE their
+/// `(name_norm, country)` Organization instead of minting one per mention.
+/// Genuinely cross-profile — every era has identifier-less parties, the legacy
+/// eras almost nothing else — and it renumbers surrogate Organization ids on a
+/// re-fold, so scoped staleness cannot carry it. The whole-corpus rewrite this
+/// declares IS the deliverable: it is what collapses the 95.30 %-provisional
+/// table.
+pub const PROJECTION_EPOCH: i64 = 4;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
@@ -1155,6 +1163,15 @@ pub struct NoticeRef {
 /// [`Db::resolve_mentions`], close with [`Db::finish_mention_resolver`].
 pub struct MentionResolver {
     org_of: std::collections::HashMap<(Option<String>, String, String), i64>,
+    /// Issue 234: identifier-LESS mentions used to mint a fresh provisional
+    /// Organization every time — measured at 95.30 % of a 24.6M-row table, with
+    /// one review body alone holding 51,388 rows in a single 200k-id window. Now
+    /// a mention with a non-empty name AND a country reuses the first Organization
+    /// with that `(name_norm, country)`. This map is the RUN's cache of those
+    /// lookups, filled lazily (a probe or an insert adds one entry), so a name
+    /// seen a thousand times in one run costs one indexed SELECT — it cannot be
+    /// preloaded like `org_of`, because 24.6M keys do not sit in RAM (issue 57).
+    name_of: std::collections::HashMap<(String, String), i64>,
     created_any: bool,
 }
 
@@ -2002,7 +2019,7 @@ impl Db {
     /// `organizations_identity` is deliberately absent: it is built only when the
     /// table lacks the inline UNIQUE, so a database that HAS the inline constraint
     /// legitimately lacks the index and must not be reported as missing.
-    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 6] = [
+    const DEFERRED_ORG_INDEXES: [(&'static str, &'static str); 7] = [
         ("organization_mentions_org", "organization_mentions(organization_id)"),
         // Issue 247: the re-parse's clear deletes a notice's mentions, and that single
         // statement was 99.6% of a re-parse's writer time — 153 ms per notice, measured
@@ -2035,6 +2052,13 @@ impl Db {
         // the normalised name so the prefix range seeks; ends with `id` so the
         // (name_norm, id) keyset cursor rides the same index (the 216 shape).
         ("organizations_name_norm_id", "organizations(name_norm, id)"),
+        // Issue 234: the identifier-less mention merge's probe. `resolve_one_mention`
+        // looks up `(name_norm, country)` before minting a provisional Organization;
+        // the existing `(name_norm, id)` index can seek the name but then filters
+        // country row by row, which is fine for a rare name and a scan for
+        // `tribunal administratif` at 1,500 rows. Leads with the name (the selective
+        // column); country completes the key.
+        ("organizations_name_country", "organizations(name_norm, country)"),
     ];
 
     /// The notice indexes that are deferred rather than schema-batch.
@@ -3435,7 +3459,7 @@ impl Db {
         while let Some(row) = rows.next().await? {
             org_of.insert((opt_text_of(&row, 1), text(&row, 2), text(&row, 3)), int(&row, 0));
         }
-        Ok(MentionResolver { org_of, created_any: false })
+        Ok(MentionResolver { org_of, name_of: std::collections::HashMap::new(), created_any: false })
     }
 
     /// Resolve one bounded batch of mentions onto canonical Organizations,
@@ -3496,7 +3520,14 @@ impl Db {
                 // The maps are updated as we go, so a later mention in the same
                 // chunk reuses an Organization an earlier one just created.
                 match self
-                    .resolve_one_mention(&conn, m, now, &mut resolver.org_of, &mut mention_of)
+                    .resolve_one_mention(
+                        &conn,
+                        m,
+                        now,
+                        &mut resolver.org_of,
+                        &mut resolver.name_of,
+                        &mut mention_of,
+                    )
                     .await
                 {
                     Ok((id, created)) => {
@@ -3542,6 +3573,7 @@ impl Db {
         m: &Mention,
         now: i64,
         org_of: &mut std::collections::HashMap<(Option<String>, String, String), i64>,
+        name_of: &mut std::collections::HashMap<(String, String), i64>,
         mention_of: &mut std::collections::HashMap<(i64, String), i64>,
     ) -> turso::Result<(i64, bool)> {
         if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
@@ -3574,19 +3606,81 @@ impl Db {
                 }
             }
             None => {
-                conn.execute(
-                    "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                         name_norm, provisional, created_at)
-                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
-                    (
-                        opt_text(m.country.as_deref()),
-                        t(&m.name),
-                        Value::Text(m.name.to_lowercase()),
-                        Value::Integer(now),
-                    ),
-                )
-                .await?;
-                (last_insert_rowid(conn).await?, true)
+                // Issue 234: reuse before minting. Two notices naming the same
+                // authority — byte-identical normalised name, same country — are one
+                // Organization, not two; without this the table measured 95.30 %
+                // provisional (23.46M of 24.6M rows), which makes "canonical
+                // Organization" describe 4.7 % of its own table and every legacy
+                // buyer rollup mostly fragments.
+                //
+                // Scoped DELIBERATELY narrowly, per the over-merge evidence on the
+                // issue: only a NON-EMPTY name (nameless rows are distinct unknown
+                // parties — 2,411 of them are awarded contractors, and merging every
+                // nameless org in a country into one row would be corpus-scale
+                // cross-linking) and only WITH a country (same-name-no-country is
+                // where platform strings like `tendsign` concentrate, and a
+                // country-less merge has no scope to err inside). The row STAYS
+                // `provisional = 1`, so a later identifier can still split or
+                // canonicalise it — the merge is a reuse policy, not a promotion.
+                let name_norm = m.name.to_lowercase();
+                let scope = (!name_norm.is_empty()).then_some(()).and(m.country.clone());
+                if let Some(country) = &scope {
+                    let key = (name_norm.clone(), country.clone());
+                    if let Some(&org_id) = name_of.get(&key) {
+                        (org_id, false)
+                    } else {
+                        let mut rows = conn
+                            .query(
+                                "SELECT id FROM organizations \
+                                  WHERE name_norm = ? AND country = ? AND identifier IS NULL \
+                                  LIMIT 1",
+                                (Value::Text(name_norm.clone()), t(country)),
+                            )
+                            .await?;
+                        let hit = match rows.next().await? {
+                            Some(row) => Some(int(&row, 0)),
+                            None => None,
+                        };
+                        drop(rows);
+                        match hit {
+                            Some(org_id) => {
+                                name_of.insert(key, org_id);
+                                (org_id, false)
+                            }
+                            None => {
+                                conn.execute(
+                                    "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                         name_norm, provisional, created_at)
+                                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                                    (
+                                        opt_text(m.country.as_deref()),
+                                        t(&m.name),
+                                        Value::Text(name_norm.clone()),
+                                        Value::Integer(now),
+                                    ),
+                                )
+                                .await?;
+                                let org_id = last_insert_rowid(conn).await?;
+                                name_of.insert(key, org_id);
+                                (org_id, true)
+                            }
+                        }
+                    }
+                } else {
+                    conn.execute(
+                        "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                             name_norm, provisional, created_at)
+                         VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                        (
+                            opt_text(m.country.as_deref()),
+                            t(&m.name),
+                            Value::Text(name_norm),
+                            Value::Integer(now),
+                        ),
+                    )
+                    .await?;
+                    (last_insert_rowid(conn).await?, true)
+                }
             }
         };
 

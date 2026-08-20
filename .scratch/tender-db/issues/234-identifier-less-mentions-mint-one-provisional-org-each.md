@@ -1,8 +1,12 @@
 # 234 — an identifier-less mention mints a NEW provisional Organization every time, so legacy buyer rollups cannot aggregate
 
-Status: needs-triage, RAISED — SIZED 2026-08-18 at 23,462,294 of 24,618,292 (95.30%) provisional; the
-text-era campaign is now the corpus's dominant growth driver and is on course to add ~11M more (measured
-2026-08-19, below)
+Status: IMPLEMENTED 2026-08-20 (owner), NOT YET DEPLOYED — deploy waits for the in-flight
+issue-100/259 refold's numbers per this issue's own sequencing rule, then ships with
+PROJECTION_EPOCH 3→4 (the whole-corpus rewrite the bump declares IS the deliverable — it is what
+collapses the 95.30 %-provisional table). Option (1) as decided: `(name_norm, country)` reuse for
+identifier-less mentions, scoped `identifier IS NULL`, nameless and country-less mentions never
+merge, rows stay provisional. Red-checked test + the issue-104 golden fired on it (details at the
+bottom). Was: needs-triage, RAISED — SIZED 2026-08-18 at 95.30 % provisional
 Kind: canonical identity gap (correct per-notice, useless per-organization)
 Blocked by: —
 Relates to: 232 (the text-era buyer fix that makes this bite at 3.79M scale), 04 (where provisional
@@ -297,3 +301,47 @@ of rows.
       organization; two same-named bodies in DIFFERENT countries stay separate; and a nameless mention
       never merges with another nameless one.
 - [ ] Land 259's refold first and re-measure the provisional share before implementing.
+
+## Implemented (2026-08-20) — option (1), conservative on every edge the evidence flagged
+
+`resolve_one_mention`'s identifier-less arm now probes `(name_norm, country)` — with a per-run
+lazy cache on the resolver, since 24.6M keys cannot preload the way `org_of`'s 1.16M do (issue 57),
+and one review body alone was 51,388 mentions in a 200k window — and reuses the hit instead of
+minting. The probe rides a new deferred index `organizations(name_norm, country)`; the
+`(name_norm, id)` index could seek the name but then filtered country row by row, a scan for
+`tribunal administratif` at 1,500 rows.
+
+The edges, each from this issue's own measurements:
+
+- **Nameless mentions never merge** — a window's nameless rows included 2,411 awarded contractors;
+  they are distinct unknown parties, and merging every nameless org in a country would be
+  corpus-scale cross-linking.
+- **Country-less names never merge** — that is where the platform strings concentrate
+  (`tendsign` with NULL country, 369 rows in one window).
+- **The probe is scoped `identifier IS NULL`** — a name matching a CANONICAL organization does not
+  capture it; promoting by bare name is the over-merge this issue declines. Two bodies can share a
+  name with only one of them registered.
+- **The reused row stays `provisional = 1`** — the merge is a reuse policy, not a promotion; a
+  later identifier can still split or canonicalise it.
+
+Gate: `an_identifierless_mention_reuses_its_named_organization` (store) — same name+country → ONE
+org (case-folded); same name other country → separate; country-less and nameless → never merged;
+durable across resolver runs (a fresh resolver reuses through the table probe, not the cache); an
+identifier-bearing mention keeps its own row and the probe still finds the provisional one.
+Falsified: with the probe disabled it fails `left: 1, right: 2`.
+
+**The issue-104 golden fired on this, first change since it landed.** `project_golden` went red —
+identifier-less mentions in its corpus now merge and later surrogate ids renumber — which is
+exactly the epoch-discipline prompt it was built to give: the regeneration + `PROJECTION_EPOCH`
+3→4 ride this same commit. And the snapshot's epoch header earned its keep within a minute of
+that: the first regeneration attempt silently missed the bump (a patch text-mismatch), and the
+header reading `3` atop a fold-changing diff is what caught it.
+
+## Deploy plan (blocked on the in-flight refold, per the sequencing rule above)
+
+1. Read the running issue-100/259 refold's numbers first (winner rates, sweep count) — landing this
+   at the same time would make both changes' effects unattributable.
+2. Deploy. The epoch bump stales the whole corpus; enqueue the full re-projection off-hours.
+3. Re-measure: total/provisional organizations (was 24,618,292 / 23,462,294 = 95.30 %), the
+   windowed collapse ratios (2.8×–14.4× predicted), and `provisional per mention` (was 0.568).
+4. The acceptance's before/after pair completes with those numbers recorded here.
