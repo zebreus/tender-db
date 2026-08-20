@@ -440,6 +440,44 @@ impl Supervisor {
 
     // ---------------------------------------------------------------- queueing
 
+    /// How long a queue persist may wait for the writer before the job is queued in
+    /// memory only (issue 256).
+    ///
+    /// 30 s, not 5: an ordinary `process`/`project` chunk holds the writer for seconds at
+    /// a time and a persist that lands mid-chunk must still get its durable row. Nothing
+    /// legitimate holds it for half a minute — the case this exists for held it for hours.
+    const PERSIST_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+
+    /// Await one queue persist, giving up after [`Self::PERSIST_TIMEOUT`] (issue 256).
+    /// Returns whether the durable row exists — the caller queues the job either way, which
+    /// is the whole point: a job that cannot be written down still has to run.
+    ///
+    /// Free function over the future rather than a method on `self`, so the timeout branch
+    /// is testable with a paused clock and a future that never completes. Verifying it
+    /// against a real held writer would mean a public "hold the writer" hook in the store
+    /// for one test; the prod evidence in issue 256 covers that end.
+    async fn persist_queued<F>(id: u64, kind: &str, within: std::time::Duration, persist: F) -> bool
+    where
+        F: std::future::Future<Output = turso::Result<()>>,
+    {
+        match tokio::time::timeout(within, persist).await {
+            Ok(Ok(())) => true,
+            Ok(Err(e)) => {
+                eprintln!("supervisor: persist queued job {id}: {e}");
+                false
+            }
+            Err(_) => {
+                eprintln!(
+                    "supervisor: persist queued job {id} ({kind}) gave up after {}s — a long job \
+                     is holding the writer (issue 256). The job IS queued in memory and will run, \
+                     but a restart before it does will lose it.",
+                    within.as_secs()
+                );
+                false
+            }
+        }
+    }
+
     async fn push(&self, kind: &'static str, params: String, spec: Spec) -> u64 {
         self.enqueue(kind, params, spec, false).await
     }
@@ -467,9 +505,20 @@ impl Supervisor {
         // like the run log — a failed persist still runs this session, it just
         // won't survive a restart.
         let spec_json = serde_json::to_string(&spec).expect("job spec serializes");
-        if let Err(e) = self.db.enqueue_job(id as i64, kind, &params, &spec_json).await {
-            eprintln!("supervisor: persist queued job {id}: {e}");
-        }
+        // …but never for longer than [`Self::PERSIST_TIMEOUT`]. The persist takes the
+        // single writer connection, and a long job holds that writer for its whole run:
+        // on 2026-08-20 a 2.75-hour fold parked the 09:35 daily tick inside this call, so
+        // the day's ingest never happened and NOTHING said so — no log line, no queued
+        // job, because the in-memory push below only happens after the persist returns
+        // (issue 256). Honouring the best-effort contract stated above means giving up on
+        // the row rather than on the job.
+        Self::persist_queued(
+            id,
+            kind,
+            Self::PERSIST_TIMEOUT,
+            self.db.enqueue_job(id as i64, kind, &params, &spec_json),
+        )
+        .await;
         let job = Job { id, kind: kind.to_owned(), params, spec, resume_after: None };
         {
             let mut queue = self.queue.lock().expect("queue lock");
@@ -3553,6 +3602,38 @@ mod tests {
                 want.id
             );
         }
+    }
+
+    /// Issue 256: a queue persist that cannot get the writer must not take the job with
+    /// it. On 2026-08-20 a 2.75-hour fold held the writer and the 09:35 daily tick parked
+    /// inside this call — no log line, no queued job, no ingest for the day, because the
+    /// in-memory push happens only after the persist returns.
+    ///
+    /// Paused clock and a persist that never completes, so the timeout branch is exercised
+    /// in milliseconds and deterministically.
+    #[tokio::test]
+    async fn a_persist_that_cannot_get_the_writer_gives_up_rather_than_parking() {
+        let long = std::time::Duration::from_secs(30);
+        let brief = std::time::Duration::from_millis(20);
+
+        // The happy path is unchanged: a persist that lands says so, and the timeout does
+        // not make it wait.
+        assert!(
+            Supervisor::persist_queued(1, "probe", long, std::future::ready(Ok(()))).await,
+            "a stored row reports durable"
+        );
+        // A persist that FAILS is already tolerated by the caller — it just is not durable.
+        let failed = std::future::ready(Err(turso::Error::Corrupt("boom".into())));
+        assert!(!Supervisor::persist_queued(2, "probe", long, failed).await);
+
+        // And one that never returns gives up rather than parking forever. The timeout is
+        // a parameter precisely so this case costs 20 ms instead of the production 30 s —
+        // without it the test would hang, which is the failure it pins.
+        let never = std::future::pending::<turso::Result<()>>();
+        assert!(
+            !Supervisor::persist_queued(3, "probe", brief, never).await,
+            "a writer held forever must not hold the queue with it"
+        );
     }
 
     /// A restart that finds an EMPTY queue must not restart the id counter, or new
