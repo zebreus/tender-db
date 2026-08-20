@@ -1,7 +1,10 @@
-# 253 — the data-quality `awards` query is ~11× slower now that the text era actually has awards
+# 253 — data-quality cost is U-shaped across the id space, and the "11× slower" claim was measurement error
 
-Status: needs-triage, filed 2026-08-20 (owner) — one measurement, cause NOT yet diagnosed; the
-diagnosis needs a bounded A/B on one window with the queue idle
+Status: CORRECTED AND LARGELY WITHDRAWN 2026-08-20 — the "~11x slower" premise was WRONG. It came
+from timing one query while a local test suite was saturating the box CPU. The run's own per-window
+journal, read once it reached window 24, shows no regression: it is tracking the 5,566 s baseline.
+What is real is a U-shaped cost profile and one cheap optimisation the measurement does support —
+see the correction at the bottom. Reduced from a regression to a sizing observation
 Kind: performance regression in a scheduled job, caused by the data improving
 Blocked by: —
 Relates to: 243 (which merged three award queries into this one and measured its cost), 230 (the
@@ -102,3 +105,66 @@ Worth noting for the rewrite option: the six OR'd arms are ordered eForms-first,
 pays five useless probes**. Ordering the arms by expected population, or dispatching on `n.profile`
 before probing at all, is a cheap change that needs no index — but like everything else here it gets
 timed first.
+
+
+---
+
+## CORRECTION (2026-08-20): the premise was measurement error, and it was mine
+
+This issue was filed on one observation — the phase counter sitting on `window 2 … query awards`
+across two readings about eight minutes apart — and turned into "~11× its measured per-window cost".
+**That was wrong, and wrong in the exact way I criticised on issue 243 four firings ago:** a projection
+filed as if it were a measurement.
+
+Two errors compounded:
+
+1. **The box was not idle.** Between those two readings a full `cargo test -p ingest --tests` run was
+   saturating the CPU. Later readings taken while the box was quiet put the same query at 2–4 minutes
+   per legacy window, not 10–12.
+2. **One query is not the run.** The job already journals per-window elapsed — the design note in
+   `run_data_quality` says so in as many words, "so the next sizing decision is a measurement rather
+   than a third extrapolation" — and reading that journal answers the whole question. I filed before
+   reading it.
+
+### What the journal actually says
+
+    window  1/32 (0..250000]         483.8s        window 17/32 (4.00M..4.25M]     62.0s
+    window  2/32 (250000..500000]    429.4s        window 18/32 (4.25M..4.50M]     83.5s
+    window  3/32 (500000..750000]    551.5s        window 19/32 (4.50M..4.75M]     97.3s
+    window  4/32 (750000..1.00M]     590.8s        window 20/32 (4.75M..5.00M]    113.6s
+    window  5/32 (1.00M..1.25M]      276.1s        window 21/32 (5.00M..5.25M]    116.5s
+    windows 6-16 (1.25M..4.00M]    34-55s each     window 24/32 (5.75M..6.00M]    147.4s
+
+At window 24 the run stood at **3,688.8 s elapsed**, on course for roughly the **5,566 s baseline**.
+There is no regression. The corpus grew and the run did not get slower.
+
+### What IS real, and it is a different shape
+
+The cost profile is **U-shaped**, and the fixed `DQ_WINDOW = 250_000` fits neither end:
+
+- **windows 1–5 cost 2,332 s — 66 % of the run so far, over 16 % of the id space.** The legacy eras
+  are dense in low tender ids, and now carry result content they did not before.
+- windows 6–16 cost 34–55 s each: the sparse middle.
+- windows 17 onward climb steadily to 147 s: the modern eForms eras, dense per-version satellites.
+
+Resizing windows would **not** reduce the total — every version is measured exactly once either way,
+and more windows means marginally more statements. What it would improve is progress granularity and
+worst-case cancellability, which issue 252 has now made matter.
+
+### The one optimisation the measurement does support
+
+The award predicate is six profile-gated `EXISTS` over `notice_codes`, OR'd, ordered **eForms-first**.
+A legacy row therefore evaluates up to five arms that cannot match before reaching its own — and the
+legacy windows are two thirds of the run. Dispatching on `n.profile` before probing, or simply ordering
+the arms by expected population, is cheap and needs no index.
+
+That is worth doing **only if the end-of-run `cost by query` line shows `awards` dominating the legacy
+windows**. That line is emitted when the run finishes and has not been read yet. No code changes until
+it is — which is the point this issue should have started from.
+
+### Acceptance, revised
+
+- The `cost by query` line for this run recorded here.
+- If `awards` dominates: reorder the arms, A/B one legacy window, record both numbers.
+- If it does not: close this as "measured, inherent", and keep the U-shaped profile as the note for
+  whoever next thinks about window sizing.
