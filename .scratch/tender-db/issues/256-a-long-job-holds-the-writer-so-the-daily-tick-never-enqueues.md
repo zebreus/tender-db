@@ -262,3 +262,33 @@ It cannot help the run in flight: deploying restarts the service and this fold i
 plan is a deadline — if 288 has not passed the step by ~13:50 (80 minutes in it, against 283's 2 h 05 m),
 it goes the way of 283: drop, deploy the instrumentation, re-run, and read the edge count when the step
 starts.
+
+
+## The leading hypothesis, and the change that tests it
+
+The step's join is:
+
+    FROM plan_prev_edge e
+    JOIN notices n     ON n.source = e.a_source AND n.publication_id = e.b_publication_id
+    JOIN plan_notice a ON a.notice_id = e.a_notice_id
+    JOIN plan_notice b ON b.notice_id = n.id
+
+Every one of those is an index seek IF the planner drives from `plan_prev_edge`, which is tiny — 563
+resolvable references corpus-wide when ADR-0011 landed. Driving from `plan_notice` instead is a walk
+of 14.3 M rows with three probes each.
+
+And the planner has nothing to choose with. turso keeps no row statistics unless asked, and this same
+function already runs `ANALYZE plan_notice` for that exact reason — with the comment *"its young
+planner has mis-planned at scale"* — but it runs it **after** this step, beside the fold index. So the
+one join in the grouping phase that most needs to know which table is small is the one that runs
+before any stats exist.
+
+So: `ANALYZE plan_prev_edge` and `ANALYZE plan_notice` now run BEFORE the join, timed and non-fatal
+like the later one. Both are 0.0 s on fixture-scale plans; their cost at 14.3 M rows is now logged
+rather than assumed.
+
+**This is a hypothesis, and it is labelled as one in the code.** The verification is whether the step
+completes on the next full re-projection — the same run whose new heartbeats will finally say how many
+edges there were. If it still stalls with stats in place, the next move is to stop guessing at the
+planner and restructure the query (materialise the edge set into a temp table with its own index, or
+resolve the `notices` lookup in a separate pass), not to add another hint.

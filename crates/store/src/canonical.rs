@@ -3033,6 +3033,31 @@ impl Db {
         // `started`, because the earlier passes in this function have already bound `t` to
         // an Instant — which shadows the crate's `t()` text helper for the rest of the
         // body, so the INSERTs below spell their text values out.
+        // Row stats BEFORE the join, not only after the fold index (issue 256).
+        //
+        // turso keeps none unless asked, and this file already says of the LATER `ANALYZE
+        // plan_notice` that "its young planner has mis-planned at scale". The join below
+        // is exactly the shape that needs stats to get right: `plan_prev_edge` is tiny
+        // (563 resolvable references corpus-wide when ADR-0011 landed) and `plan_notice`
+        // is 14.3M rows on a full-corpus plan, and driving from the wrong one turns a few
+        // hundred index seeks into a walk of the whole plan. With no stats the planner has
+        // no way to tell which is which — and this step has twice failed to finish.
+        //
+        // A HYPOTHESIS, not a proven fix: the verification is whether the step completes
+        // on the next full re-projection, which is also the first run whose heartbeats say
+        // how many edges there were. Non-fatal like the later ANALYZE, and timed, so its
+        // own cost at 14.3M rows is on the record rather than assumed.
+        for table in ["plan_prev_edge", "plan_notice"] {
+            let t = std::time::Instant::now();
+            match conn.execute(&format!("ANALYZE {table}"), ()).await {
+                Ok(_) => eprintln!(
+                    "[project] group step analyze {table}: {:.1}s",
+                    t.elapsed().as_secs_f64()
+                ),
+                Err(e) => eprintln!("[project] ANALYZE {table} failed (non-fatal): {e}"),
+            }
+        }
+
         let started = std::time::Instant::now();
         // The input size, printed BEFORE the join runs (issue 256). On a full-corpus
         // re-projection this step has twice gone quiet for over two hours, and from
