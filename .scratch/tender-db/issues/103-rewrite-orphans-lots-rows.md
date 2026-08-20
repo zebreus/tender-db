@@ -1,7 +1,11 @@
 # 103 — a shrinking rewrite orphans `lots` / `lot_results` / `bids` / `contracts` rows
 
-Status: open — KNOWN WART, not reachable today. Surfaced while implementing issue 99; deliberately not
-fixed in that batch.
+Status: open — REACHABLE AS OF 2026-08-20. The "first removed or narrowed mapping" tripwire this issue
+has carried since it was filed has now fired: issue 100's fix stops three DE-1.x reference carriers
+minting phantom bids/contracts, so the refold in flight is the first SHRINKING rewrite. Design is now
+implementable rather than sketched (two constraints found today: the satellite probes are unindexed
+for this shape, and the sweep is only sound when the whole chain was rewritten) — see the bottom.
+Still invisible to the API. Was: KNOWN WART, not reachable today; surfaced while implementing issue 99.
 Kind: correctness (latent) / data hygiene
 Blocked by: —
 Relates to: 99 (the forced rewrite that made this worth writing down), 93 (`retire_tender_tx`, which
@@ -113,3 +117,91 @@ mapping" this issue named as the condition for reachability. The four tender-sco
 which `delete_version` also does not touch — but the shape is identical and the sweep sketched above
 is the same fix. Read 259 before the r208/r209 refold, and decide there whether the orphans are swept
 or left; do not let the refold land while this is still "not reachable today".
+
+## 2026-08-20 — the tripwire fired, and it was my own change that pulled it
+
+This issue has said since it was filed that it "becomes reachable the first time a mapping is **removed
+or narrowed**", and the 2026-08-09 re-check confirmed every change to date had been additive. Today's
+issue-100 fix is the first narrowing one.
+
+The DE-1.x inventory labelled three nested *reference carriers* with *entity* node ids
+(`ND-LotTender`, `ND-SettledContract`), so each carrier opened a result-entity section and
+`read_results` minted a `RawBid`/`RawContract` for it. Renaming them to the SDK's own reference ids
+means the projection now produces, per DE-1.x award notice, **two fewer `bids` rows and one fewer
+`contracts` row**. `delete_version` clears `tender_version_bids`/`tender_version_contracts` but not
+`bids`/`contracts` — which is the wart described above — so the carriers' rows survive with nothing
+referencing them.
+
+Order of magnitude: the DE-1.x cohort is 218,638 notices, of which the award-bearing share carries the
+carriers. The refold in flight (job 289) is the rewrite that strands them.
+
+Still invisible to the API — every read path joins through the version-keyed satellites — so this is
+dead weight and a lying `COUNT(*)`, not a served defect. The urgency is unchanged; what has changed is
+that the population is no longer hypothetical, so the sweep can be **verified against real orphans**
+instead of only against a synthetic fixture.
+
+## Two implementation constraints the fix sketch did not know about
+
+The sketch above proposes `DELETE FROM lots WHERE tender_id = ? AND id NOT IN (SELECT lot_id FROM
+tender_version_lots WHERE tender_id = ?)`. Both halves of that need amending.
+
+**1. The satellite probes are not indexed for this shape.** `tender_version_bids`' primary key is
+`(tender_id, seq, bid_id)` — `seq` sits between the two columns the sweep needs, so `(tender_id,
+bid_id)` is not a prefix, and this engine has already been caught not using a composite index for a
+DELETE (issue 248). Worse, `tender_version_bid_parties` — which also references `bids(id)` and must
+therefore be checked — carries **no primary key and only an `organization_id` index**, so a
+`NOT EXISTS` against it is a full-table scan **per swept tender**. On a whole-corpus refold that is
+not a cost, it is an outage.
+
+The cheap formulation avoids the satellites entirely: `write_version` already resolves every entity id
+it references, so the rewrite can accumulate them and the sweep becomes
+`DELETE FROM <entity> WHERE tender_id = ? AND id NOT IN (<the ids just written>)`, which rides each
+entity table's existing `tender_id`-leading UNIQUE index against an in-memory list.
+
+**2. It is only sound when the WHOLE chain was rewritten.** `apply_tender_tx` keeps a prefix of
+`keep` versions whose satellite rows are untouched by `delete_version`. Their entity references are
+therefore NOT in "the ids just written", and sweeping against that set would delete rows those kept
+versions still point at. So the sweep must be gated on **`keep == 0`** — the forced/epoch-stale
+rewrite path, which is exactly the path that can shrink (and exactly what job 289 is doing to the
+128,005 epoch-stale DE-1.x Tenders).
+
+That gate also preserves issue 99's byte-identity property for free: under unchanged logic a forced
+rewrite writes the same entity ids, the set covers everything, and the DELETE removes nothing.
+
+The reference map, for whoever writes it — an entity may not be deleted while ANY of these name it:
+
+| entity | referenced by |
+|---|---|
+| `lots` | `tender_version_lots`, `tender_version_lot_group_members` (×2), `tender_version_texts`, `_dates`, `_amounts`, `_classifications`, `_parties`, `tender_version_lot_results.lot_id`, `tender_version_bids.lot_id` |
+| `lot_results` | `tender_version_lot_results`, `tender_version_result_stats`, `tender_version_result_winners` |
+| `bids` | `tender_version_bids`, `tender_version_bid_parties` |
+| `contracts` | `tender_version_contracts` |
+
+Under the accumulate-the-ids formulation the map is not queried, but it is what the accumulator has to
+cover: `lots` in particular is reached from nine places, so a `Referenced` set must be fed by
+`lot_identity` AND `result_lot`, not only by the version-lots loop.
+
+**Deliberately not implemented in the same breath as noticing it.** A sweep is a DELETE against
+canonical entity tables; getting it wrong destroys rows rather than leaving spare ones, and the
+existing damage is invisible dead weight. It waits for its own unit with the two gates this issue has
+always specified — a shrinking rewrite leaves no orphan, and a forced rewrite under unchanged logic is
+still byte-identical.
+
+## Measure it first, after job 289 drains
+
+The orphan count is now a real number rather than a prediction, and it should be read before the sweep
+is written so the sweep has something to be checked against:
+
+```sql
+-- orphaned bids: no surviving version references them
+SELECT COUNT(*) FROM bids b
+ WHERE NOT EXISTS (SELECT 1 FROM tender_version_bids v WHERE v.bid_id = b.id)
+   AND NOT EXISTS (SELECT 1 FROM tender_version_bid_parties p WHERE p.bid_id = b.id);
+
+-- and orphaned contracts
+SELECT COUNT(*) FROM contracts c
+ WHERE NOT EXISTS (SELECT 1 FROM tender_version_contracts v WHERE v.contract_id = c.id);
+```
+
+Both are whole-table walks with unindexed probes, so they are **not** `/v1/sql` queries — they need a
+quiet box and an offline read, or a `tender_id`-bounded window like the one issue 234 used.
