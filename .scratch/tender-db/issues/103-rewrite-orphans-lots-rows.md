@@ -104,3 +104,12 @@ epoch-2 refold now running against the whole r208 era — still NOT
 reachable. The mapping change is additive (one date fact); lots/bids/
 contracts structure is identical, so every rewrite is a superset. The
 "first removed/narrowed mapping" tripwire stands.
+
+2026-08-20 (owner): **the tripwire has tripped.** Issue 259 narrows a mapping for the first time —
+two nested Organization sections that used to mint two parties now mint one — so a refold of the
+r208/r209 era will produce FEWER entities for the same notice set. That is the "removed or narrowed
+mapping" this issue named as the condition for reachability. The four tender-scoped entity tables
+(`lots`, `lot_results`, `bids`, `contracts`) are not what 259 shrinks — it shrinks `organizations`,
+which `delete_version` also does not touch — but the shape is identical and the sweep sketched above
+is the same fix. Read 259 before the r208/r209 refold, and decide there whether the orphans are swept
+or left; do not let the refold land while this is still "not reachable today".

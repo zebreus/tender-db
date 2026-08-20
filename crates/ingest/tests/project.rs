@@ -1776,6 +1776,62 @@ async fn sdk01_projects_title_buyer_and_winner() {
     let _ = std::fs::remove_file(&path);
 }
 
+// --------------------- issue 259: two Organization sections for one legacy party
+
+/// A legacy prize winner must resolve to the party that carries its NAME.
+///
+/// `r209/rules.rs` declares both `WINNER` and `ADDRESS_WINNER` as `Rule::Org`, so the
+/// F13 results block opens TWO Organization sections for one party:
+///
+/// ```text
+/// <RESULTS>                       -> LotResult  RES-1
+///   <WINNERS><WINNER>             -> Organization ORG-2  (no values of its own)
+///     <ADDRESS_WINNER>            -> Organization ORG-3  (OFFICIALNAME lives here)
+/// ```
+///
+/// `mentions()` collects a section's values "keyed by the enclosing Organization", and
+/// the nearest enclosing Organization for the name is the INNER one — so ORG-3 gets the
+/// name, ORG-2 gets nothing, and the winner reference (which the results reader takes
+/// from the block) points at ORG-2. The result is an award whose winner is a provisional
+/// Organization with an empty name, while the real name sits on a sibling nobody reads.
+///
+/// Measured on prod before the fix: nameless provisional Organizations run 1,953–5,077
+/// per 200k-row window, and in a sampled window 2,411 of their party rows are
+/// `ADDRESS_CONTRACTOR` and 153 are `winner` — these are awarded contractors, not
+/// harmless empties.
+#[tokio::test]
+async fn a_legacy_prize_winner_resolves_to_the_party_that_has_the_name() {
+    let (db, fetch_id, path) = scratch("r209-prize-winner").await;
+    ingest(&db, fetch_id, "r209/f13-prize-winner-362996-2018.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // The award materialises and names exactly one winner.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lot_results").await, 1);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 1);
+
+    // …and that winner is the company, not an empty wrapper.
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.name FROM tender_version_result_winners w \
+               JOIN organizations o ON o.id = w.organization_id LIMIT 1"
+        )
+        .await
+        .as_deref(),
+        Some("Opal Publicidade, S. A."),
+        "the winner must be the ADDRESS_WINNER party, not the empty WINNER wrapper"
+    );
+
+    // No nameless Organization is minted at all: one party in the block, one row.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM organizations WHERE name = ''").await,
+        0,
+        "an Organization nested inside another Organization is the SAME party, not a second one"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // ------------------------------- issue 257: what this dialect actually publishes
 
 /// The sdk-0.1 award notice as it usually is: a `TenderResult` holding an

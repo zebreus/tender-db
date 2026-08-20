@@ -2435,6 +2435,8 @@ impl BucketRow {
             roles: Vec::new(),
             raw_results: RawResults::default(),
             round: self.round.clone(),
+            // Already bound: no reference is left to alias (issue 259).
+            org_alias: HashMap::new(),
         }
     }
 }
@@ -2466,6 +2468,10 @@ struct NoticeState {
     /// `(group lot key, member lot key)` pairs from this notice's `GroupComposition`
     /// sections (issue 237). Empty for the vast majority of notices.
     group_members: Vec<(String, String)>,
+    /// Nested Organization section id -> the outermost Organization above it
+    /// (issue 259). A role or winner reference may name either end of a nest; both
+    /// must land on the one party. Empty except in the legacy eras.
+    org_alias: HashMap<String, String>,
 }
 
 /// Where a value belongs: the Tender itself, or one of its Lots.
@@ -2689,6 +2695,12 @@ impl NoticeState {
             roles,
             raw_results,
             round: None,
+            // A role or winner reference may name the inner half of a nested party
+            // (issue 259); both halves must bind to the one Organization.
+            org_alias: nested_org_aliases(
+                &sections,
+                if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] },
+            ),
         }
     }
 
@@ -2708,10 +2720,15 @@ impl NoticeState {
         // each carrying its name on its direct Party subtree (issue 29).
         let mention_kinds: &[&str] = if sdk01 { SDK01_PARTY_KINDS } else { &[ORGANIZATION_KIND] };
 
+        // One party, one mention, even when the era's vocabulary opens two nested
+        // Organization sections for it (issue 259). The inner ones are aliases, not
+        // parties of their own.
+        let alias = nested_org_aliases(&sections, mention_kinds);
+
         let mut mentions: BTreeMap<&str, Mention> = parsed
             .sections
             .iter()
-            .filter(|s| mention_kinds.contains(&s.kind.as_str()))
+            .filter(|s| mention_kinds.contains(&s.kind.as_str()) && !alias.contains_key(&s.id))
             .map(|s| {
                 (
                     s.id.as_str(),
@@ -2732,6 +2749,10 @@ impl NoticeState {
             let Some(owner) = enclosing(&sections, &value.section_id, mention_kinds) else {
                 continue;
             };
+            // A value inside a nested Organization belongs to the party the nest is —
+            // which is how `Opal Publicidade, S. A.` reaches the winner rather than
+            // sitting on an unreferenced sibling.
+            let owner = alias.get(owner).map_or(owner, |outer| outer.as_str());
             let Some(mention) = mentions.get_mut(owner) else { continue };
             let field = value.field_id.as_str();
             // Three vocabularies read here: eForms hangs BT-501 off a
@@ -2784,8 +2805,19 @@ impl NoticeState {
     /// Organization. `by_section` maps this notice's Organization section ids to
     /// the canonical Organization ids Phase 1 resolved and recorded.
     fn bind_organizations(&mut self, by_section: &HashMap<String, i64>) {
-        let by_section: HashMap<&str, i64> =
+        let mut by_section: HashMap<&str, i64> =
             by_section.iter().map(|(k, &v)| (k.as_str(), v)).collect();
+        // The inner half of a nested party resolves to the outer half's Organization
+        // (issue 259). Without this a winner reference naming `ADDRESS_WINNER` would
+        // find nothing now that only the outermost section mints a mention — and one
+        // naming `WINNER` would still be the nameless wrapper. Both now bind to the
+        // single party, and the caller's existing sort/dedup collapses an award that
+        // references both ends of the same nest into one winner rather than two.
+        for (inner, outer) in &self.org_alias {
+            if let Some(&id) = by_section.get(outer.as_str()) {
+                by_section.insert(inner.as_str(), id);
+            }
+        }
         self.round = (!self.raw_results.is_empty())
             .then(|| self.raw_results.bind(self.notice_id, self.logical_id.clone(), &by_section));
         for (scope, role, target) in std::mem::take(&mut self.roles) {
@@ -3086,6 +3118,49 @@ fn scope_of(sections: &HashMap<&str, &store::Section>, section_id: &str) -> Scop
 /// walking up the parent chain. This is how a value finds the entity it
 /// describes: eForms hangs values off the deepest node that carries them, and
 /// the canonical scope is the nearest enclosing entity above it.
+/// Map every Organization-kind section that is NESTED inside another one to the
+/// OUTERMOST Organization above it (issue 259). Sections not nested are absent.
+///
+/// One real-world party can open two Organization sections. `r209/rules.rs` declares
+/// both `WINNER` and `ADDRESS_WINNER` as `Rule::Org`, so an F13 prize block nests
+/// `ADDRESS_WINNER` (which carries `OFFICIALNAME`) inside `WINNER` (which carries
+/// nothing). Left alone that is two Organizations for one company: the award's winner
+/// reference points at the empty wrapper, so the winner has no name, and the real party
+/// sits on a sibling row nobody reads. Nesting is the signal that they are the same
+/// party — an Organization is not a container for other Organizations in any era's
+/// vocabulary — so the inner ones alias to the outer.
+///
+/// eForms is unaffected: `efac:Organization` sections are siblings under
+/// `efac:Organizations`, which is not itself an Organization, so nothing nests and the
+/// map comes back empty.
+fn nested_org_aliases(
+    sections: &HashMap<&str, &store::Section>,
+    kinds: &[&str],
+) -> HashMap<String, String> {
+    let mut alias = HashMap::new();
+    for section in sections.values() {
+        if !kinds.contains(&section.kind.as_str()) {
+            continue;
+        }
+        // Walk the whole ancestor chain, keeping the LAST Organization seen: with three
+        // levels of nesting the innermost must land on the outermost, not on its parent.
+        let mut outermost: Option<&str> = None;
+        let mut current = section.parent.as_deref();
+        for _ in 0..sections.len().max(1) {
+            let Some(id) = current else { break };
+            let Some(ancestor) = sections.get(id) else { break };
+            if kinds.contains(&ancestor.kind.as_str()) {
+                outermost = Some(ancestor.id.as_str());
+            }
+            current = ancestor.parent.as_deref();
+        }
+        if let Some(outer) = outermost {
+            alias.insert(section.id.clone(), outer.to_owned());
+        }
+    }
+    alias
+}
+
 fn enclosing<'a>(
     sections: &HashMap<&str, &'a store::Section>,
     section_id: &str,
@@ -4326,6 +4401,82 @@ mod tests {
     /// later. Measured on prod: 1,408 bids across 505 notices reference a `LotsGroup`,
     /// and membership read only from its own notice sits on the one version with no bids
     /// at all. So it carries forward like `lots` and `facts`, superseded per group.
+    /// Issue 259: nesting means "same party", and it means it all the way up.
+    ///
+    /// The corpus case is two levels (`WINNER` > `ADDRESS_WINNER`), which the r209
+    /// fixture covers end to end. This pins the two things a fixture cannot: that a
+    /// THREE-level nest lands the innermost on the OUTERMOST rather than on its parent —
+    /// otherwise two aliases would chain and one would resolve to a section that mints no
+    /// mention — and that a section which merely SITS under a LotResult is untouched,
+    /// since only Organization-inside-Organization is the signal.
+    #[test]
+    fn a_nested_organization_aliases_to_the_outermost_one() {
+        let sections = vec![
+            store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+            store::Section {
+                id: "RES-1".into(),
+                kind: "LotResult".into(),
+                parent: Some("PROCEDURE".into()),
+            },
+            // Three deep: the wrapper, its address block, and a transliterated address
+            // inside that — all three are `Rule::Org` in the legacy vocabulary.
+            store::Section {
+                id: "ORG-2".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("RES-1".into()),
+            },
+            store::Section {
+                id: "ORG-3".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("ORG-2".into()),
+            },
+            store::Section {
+                id: "ORG-4".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("ORG-3".into()),
+            },
+            // A sibling party of its own, under the same result. Not nested, not aliased.
+            store::Section {
+                id: "ORG-5".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("RES-1".into()),
+            },
+        ];
+        let by_id: HashMap<&str, &store::Section> =
+            sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        let alias = nested_org_aliases(&by_id, &[ORGANIZATION_KIND]);
+
+        assert_eq!(alias.get("ORG-3").map(String::as_str), Some("ORG-2"));
+        assert_eq!(
+            alias.get("ORG-4").map(String::as_str),
+            Some("ORG-2"),
+            "the innermost must reach the OUTERMOST, not merely its parent — an alias \
+             pointing at another alias resolves to a section that mints no mention"
+        );
+        assert_eq!(alias.get("ORG-2"), None, "the outermost is the party, not an alias");
+        assert_eq!(alias.get("ORG-5"), None, "a sibling under the result is its own party");
+        assert_eq!(alias.len(), 2);
+
+        // eForms shape: Organizations are siblings under a non-Organization container,
+        // so nothing aliases and this change is a no-op for the modern eras.
+        let flat = vec![
+            store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+            store::Section {
+                id: "ORG-0001".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("PROCEDURE".into()),
+            },
+            store::Section {
+                id: "ORG-0002".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: Some("PROCEDURE".into()),
+            },
+        ];
+        let by_id: HashMap<&str, &store::Section> =
+            flat.iter().map(|s| (s.id.as_str(), s)).collect();
+        assert!(nested_org_aliases(&by_id, &[ORGANIZATION_KIND]).is_empty());
+    }
+
     #[test]
     fn lots_group_membership_carries_forward_and_supersedes_per_group() {
         let state = |notice_id: i64, members: &[(&str, &str)]| NoticeState {
@@ -4341,6 +4492,7 @@ mod tests {
             roles: Vec::new(),
             raw_results: RawResults::default(),
             round: None,
+            org_alias: HashMap::new(), // no parties in this fixture (issue 259)
             group_members: members
                 .iter()
                 .map(|(g, m)| ((*g).to_owned(), (*m).to_owned()))

@@ -199,3 +199,101 @@ Two things follow, and they point the same way:
 The cheapest useful next step is unchanged — measure how much the corpus would actually collapse under a
 `(country, name_norm)` merge before designing one — but the number to measure it against has moved, so
 measure it after the campaign rather than before.
+
+## The tail check the issue asked for — run 2026-08-20, and it changes the conclusion
+
+The over-merge section above ends: *"this is the top 12 by size, which says nothing about the tail. A
+generic string could sit at rank 50 and still merge thousands of unrelated bodies. Before
+implementing, run the same grouping filtered to groups whose name is short or matches a generic
+pattern."* Done. Same `(country, name_norm)` grouping, filtered to SHORT names, over three windows.
+
+**Newest window (ids 23,000,000.., the 14× one):**
+
+     3,433  IE  the high court of ireland          487  PL  krajowa izba odwoławcza
+     2,647  CH  bundesverwaltungsgericht           261  DE  vergabekammer des bundes
+       851  BE  european commission                219  DE  finanzbehörde
+       …                                           100  DE  beschaffungsstelle
+
+**Older windows (ids 12,000,000.. and 2,000,000..):**
+
+     2,051  --  (empty name)                     1,428  NL  (empty name)
+     1,021  FR  tribunal administratif           1,517  FR  tribunal administratif
+       674  FI  markkinaoikeus                     564  SE  tendsign
+       552  DK  klagenævnet for udbud              442  SE  förvaltningsrätten
+
+Three over-merge classes the head check could not see, in descending seriousness:
+
+1. **Empty names.** `name_norm = ''` at 1,953 / 398 / 2,051 / 5,077 per 200k provisional window
+   (0 in the two newest). A `(country, name_norm)` merge collapses every nameless row in a country
+   into ONE organization. That is the worst available over-merge and it is not marginal.
+2. **Class names denoting many real bodies.** `tribunal administratif` (France has ~42),
+   `förvaltningsrätten` (Sweden has 12). Real over-merge, bounded to bodies of one kind.
+3. **Generic role nouns.** `beschaffungsstelle` ("procurement office"), `finanzbehörde`. Genuinely
+   unrelated bodies sharing a common noun.
+
+**So the recorded conclusion — "option (1) is both worthwhile and safe on current evidence" — was
+half right and I should not have written the second half from the head alone.** Worthwhile: yes,
+unchanged. Safe as stated: no.
+
+### But the harm is bounded, and measured rather than assumed
+
+The obvious next question is whether classes 2 and 3 touch the rollups this issue exists to enable.
+They do not. Roles held by the merge groups in question:
+
+    tribunal administratif  ->  review-body 1,035 | APPEAL_PROCEDURE_BODY_RESPONSIBLE 40
+                                ADDRESS_MEDIATION_BODY 39 | … — zero buyer, zero winner
+    beschaffungsstelle      ->  Procedure-SProvider 100 — the eSender, not a buyer
+
+Every one is a review, appeal, mediation or eSender role. **Not a single buyer or winner row.** So a
+`(country, name_norm)` merge over these fragments the *procedural addressee* layer and leaves buyer
+and winner aggregation — the capability issue 232 wanted — untouched. That is a real answer to the
+over-merge risk rather than a hope, and it is why classes 2 and 3 do not block option (1).
+
+### Class 1 is not a merge-policy question at all — it is issue 259
+
+Chasing the empty names to their origin found the mechanism, and it is a defect rather than a
+publisher gap: the legacy vocabulary declares both `WINNER` and `ADDRESS_WINNER` as `Rule::Org`, so
+one party opens two Organization sections — an empty wrapper (which the award references) and an
+inner one carrying `OFFICIALNAME` (which nothing references). The nameless rows are **awarded
+contractors whose name we had and dropped**: in one sampled window, 2,411 of their party rows are
+`ADDRESS_CONTRACTOR` and 153 are `winner`. Filed and fixed as issue 259.
+
+That removes class 1 from this issue's scope entirely: after 259's refold the nameless population
+should approach zero, so there is nothing left for a merge to catastrophically collapse.
+
+## Decision — option (1), with one guard and one sequencing constraint
+
+**Merge identifier-less mentions on `(country, name_norm)`, and never merge a nameless one.** The
+empty-name guard stays permanently even after 259 drains the population: it is one condition, it
+costs nothing, and "every party we failed to name in this country is one organization" must never be
+representable, whatever produces such a row next.
+
+Punctuation and language normalisation stay OUT of the first cut, as the issue already argued — the
+Swiss court appearing as both `bundesverwaltungsgericht` and `tribunal administratif fédéral` means
+the merge under-merges, which is the safe direction.
+
+**Sequence: 259 first, then this.** Not because they conflict, but because 259 changes the input: it
+removes the class-1 population and reduces the row count that this merge would otherwise be measured
+against. Landing them together would make the "how much did it collapse?" number unattributable —
+the same argument this issue already makes for not bundling with the 232 re-parse.
+
+### Implementation note for whoever picks this up
+
+`org_of` is preloaded once per run and holds only identifier-bearing organizations (1.16M — see
+`Db::mention_resolver`). A name map cannot work the same way: 23.5M `(country, name_norm)` keys will
+not sit in RAM. So the lookup has to be a per-mention indexed SELECT, and
+`organizations_name_norm_id` is on `(name_norm, id)` — it can seek by name but then filters country
+row by row, which is fine for a rare name and bad for `tribunal administratif` at 1,500 rows. Add
+`(name_norm, country)` and take the first hit. Net cost is probably NEGATIVE: it replaces an
+unconditional INSERT with a seek that hits 3–14× of the time, and it stops writing tens of millions
+of rows.
+
+## Acceptance, restated against what is now known
+
+- [x] A recorded count of `organizations` (total and provisional) — 24,618,292 / 23,462,294 (95.30%).
+- [x] A decision between (1) and (2), with the over-merge risk addressed explicitly — option (1),
+      above, with the risk measured by role rather than argued.
+- [ ] The red-checked test: two notices naming the same authority in the same country resolve to ONE
+      organization; two same-named bodies in DIFFERENT countries stay separate; and a nameless mention
+      never merges with another nameless one.
+- [ ] Land 259's refold first and re-measure the provisional share before implementing.

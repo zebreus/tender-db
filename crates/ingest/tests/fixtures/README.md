@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 83 fixture files, 2.3 MB (every file under this directory except this README).
+Total: 84 fixture files, 2.3 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -148,7 +148,7 @@ cross-version chaining rather than a same-package coincidence.
 
 ---
 
-## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 10 files, 113 KB
+## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 11 files, 121 KB
 
 From TED daily package **`daily-201900001`** (`20190102_001`, published
 2019-01-02, 1529 notices). That package is itself a useful artefact: it is
@@ -170,6 +170,7 @@ because that is where it is actually found in the wild.
 
 - `f02-co-original-160877-2015.xml` (21,117 B): **issue 201** — Belgian-style bilingual F02 with TWO CATEGORY="ORIGINAL" sections (DE primary, FR co-original carrying a third ORGANISATION). Pins co-original section ADOPTION: the extra org is opened and fully emitted, while a relabelled EN TRANSLATION with the same extra section still rejects.
 - `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
+- `f13-prize-winner-362996-2018.xml` (7,875 B): **issue 259** — F13 design-contest result (PT, from monthly `2018-08`) whose prize block nests `<ADDRESS_WINNER>` inside `<WINNER>`. Both are `Rule::Org`, so ONE company opens TWO Organization sections: the outer empty and referenced as the winner, the inner holding `OFFICIALNAME`. The only `WINNER`/`ADDRESS_WINNER` pair in the corpus — every other award fixture uses `CONTRACTOR` > `ADDRESS_CONTRACTOR`, where the wrapper is a transparent container and nothing nests, which is why the defect was invisible for as long as it was.
 
 ## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 5 files, 281 KB
 

@@ -70,7 +70,7 @@ fn every_r209_fixture_is_consumed_exhaustively() {
         })
         .collect();
     names.sort();
-    assert_eq!(names.len(), 10, "corpus changed; update the expectation");
+    assert_eq!(names.len(), 11, "corpus changed; update the expectation");
 
     for relative in names {
         let (profile, parse) = ingest_fixture(&relative);
