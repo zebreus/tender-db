@@ -3213,11 +3213,21 @@ impl Db {
                 while lo <= max_id {
                     batches += 1;
                     let hi = lo.saturating_add(GROUP_KEY_UPDATE_BATCH - 1).min(max_id);
+                    // `EXISTS`, not `IN (SELECT …)` — measured, not stylistic. turso plans
+                    // the IN form as a LIST SUBQUERY it re-evaluates by SCANNING
+                    // plan_group_merge for every candidate row (EXPLAIN shows the scan
+                    // inside the loop), which at 24,528 merge keys × 200,000 rows per
+                    // batch is ~5 billion comparisons a batch — measured on the bench at
+                    // ~147 s per 20k rows, and live on job 289 at 187 s per batch × 143
+                    // batches ≈ 6 HOURS, which was issue 256's "silent hours" all along.
+                    // The EXISTS form is an indexed probe of plan_group_merge's PRIMARY
+                    // KEY per row; the same bench batch completes in well under a second.
                     conn.execute(
                         "UPDATE plan_notice SET group_key = \
                              (SELECT to_key FROM plan_group_merge m WHERE m.from_key = plan_notice.group_key) \
                           WHERE notice_id BETWEEN ? AND ? \
-                            AND group_key IN (SELECT from_key FROM plan_group_merge)",
+                            AND EXISTS (SELECT 1 FROM plan_group_merge x \
+                                         WHERE x.from_key = plan_notice.group_key)",
                         (Value::Integer(lo), Value::Integer(hi)),
                     )
                     .await?;

@@ -60,6 +60,13 @@ PRUNE
 }
 prune_stale_test_binaries
 
+# Leaked test scratch databases (issue 260 follow-up, found at 26,180 files / 10.2 GB).
+# Every store/ingest test writes /tmp/tender-db-<name>-<pid>.db and removes it on the
+# way out — but a test that PANICS never reaches its remove, and several remove only
+# the bare path while turso leaves an 11 MB -wal beside it. Anything older than two
+# hours cannot belong to a live run (the whole gate takes minutes), so it is leak.
+find /tmp -maxdepth 1 -name 'tender-db-*' -type f -mmin +120 -delete 2>/dev/null || true
+
 started=$(date +%s)
 for args in "test -p model" "test -p store" "test -p ingest" "test-app"; do
     printf '\n\033[1m==> cargo %s\033[0m\n' "$args"
