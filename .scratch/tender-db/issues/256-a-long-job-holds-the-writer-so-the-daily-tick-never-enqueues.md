@@ -234,3 +234,31 @@ about to be attempted again by 288 at ~12:25. If it stalls a second time, the re
 confirmed and the unit is to measure `plan_prev_edge`'s size and the join's plan on a full-corpus
 plan — with the fold's phase record extended to cover the group steps (issue 65), so that an operator
 can see which step is running instead of inferring it from a missing log line.
+
+
+## Reproduced, and instrumented (2026-08-20 12:52)
+
+Job 288 took the full path (the cap fallback above), finished its plan in **5,342.5 s** for
+14,289,308 notices and 47,233,426 mentions — within 2 % of job 283's 5,453.9 s — then:
+
+    12:29:34  group step keyed/island: 23.2s
+    12:29:41  group step union-load: 6.6s (11,007,709 nodes)
+    12:31:28  group step legacy-update: 107.5s (11,003,671 legacy)
+    12:51:57  …20 minutes of silence, 78.8 % CPU, RSS 1.18 GB and flat
+
+Same step, same silence, second run. Two independent attempts is a reproduction.
+
+One difference worth recording because it rules something out: 288 logged
+`WAL after Phase-1 (build_plan): 0 MB` where 283 logged 797 MB. The WAL state going into the step is
+therefore not what makes it slow.
+
+**What landed now:** the step counts its input and reports progress. `SELECT COUNT(*) FROM
+plan_prev_edge` before the join, printed as `group step previous-notice: N edge(s) in the plan`, and a
+heartbeat every 50,000 rows read. That is the one number nobody could get from outside the process —
+an empty edge set and a grinding join look identical when the only line prints on completion. A normal
+run (563 resolvable references when ADR-0011 was measured) prints the count and nothing else.
+
+It cannot help the run in flight: deploying restarts the service and this fold is 1 h 52 m old. So the
+plan is a deadline — if 288 has not passed the step by ~13:50 (80 minutes in it, against 283's 2 h 05 m),
+it goes the way of 283: drop, deploy the instrumentation, re-run, and read the edge count when the step
+starts.

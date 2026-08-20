@@ -785,6 +785,15 @@ pub const PROJECTION_EPOCH: i64 = 3;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
+/// How often the ADR-0011 previous-notice pass reports how far it has read (issue 256).
+///
+/// The step reads one row per publisher-declared previous-notice reference and its own
+/// timing line prints only on completion, so on a full-corpus plan it has twice gone
+/// silent for over two hours with no way — short of `ps -o pcpu` — to tell a grinding
+/// join from an empty edge set. 50,000 is coarse enough that a normal run (563 resolvable
+/// references when ADR-0011 was measured) prints nothing at all beyond the count line.
+const PREV_EDGE_HEARTBEAT: u64 = 50_000;
+
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
 /// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
 /// optimisation), one uncheckpointable statement that balloons the in-RAM
@@ -3025,10 +3034,22 @@ impl Db {
         // an Instant — which shadows the crate's `t()` text helper for the rest of the
         // body, so the INSERTs below spell their text values out.
         let started = std::time::Instant::now();
+        // The input size, printed BEFORE the join runs (issue 256). On a full-corpus
+        // re-projection this step has twice gone quiet for over two hours, and from
+        // outside the process there was no way to tell an empty edge set from a join that
+        // is grinding: the step's only line prints when it FINISHES. One count over a plan
+        // table costs nothing next to what follows it.
+        let mut edge_rows = conn.query("SELECT COUNT(*) FROM plan_prev_edge", ()).await?;
+        let planned_edges = match edge_rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        };
+        eprintln!("[project] group step previous-notice: {planned_edges} edge(s) in the plan");
         let mut edges: Vec<(String, String)> = Vec::new();
         let mut rank: std::collections::HashMap<String, (i64, String)> =
             std::collections::HashMap::new();
         {
+            let mut read = 0u64;
             let mut rows = conn
                 .query(
                     "SELECT a.group_key, a.published_at, a.publication_id, \
@@ -3045,6 +3066,14 @@ impl Db {
                 )
                 .await?;
             while let Some(row) = rows.next().await? {
+                read += 1;
+                if read % PREV_EDGE_HEARTBEAT == 0 {
+                    eprintln!(
+                        "[project] group step previous-notice: {read}/{planned_edges} edge(s) \
+                         read in {:.1}s",
+                        started.elapsed().as_secs_f64()
+                    );
+                }
                 let (a, b) = (text(&row, 0), text(&row, 3));
                 // A key's rank is the earliest publication it is seen carrying, so the
                 // representative below is the procedure's first appearance — the same rule
