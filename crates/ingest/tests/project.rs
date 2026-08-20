@@ -389,6 +389,39 @@ async fn an_amount_carries_the_tax_basis_its_source_stated() {
 /// CONTAINER, not merely its section — and the committed defence award is the notice that
 /// proves the difference matters.
 ///
+/// Issue 255 slice 2: the legacy eras' award date, which lives on the award BLOCK.
+///
+/// `CONTRACT_AWARD_DATE` sits inside `AWARD_OF_CONTRACT_DEFENCE` as separate DAY / MONTH /
+/// YEAR elements — the parse layer has already made that one instant (pinned in
+/// `tests/r209.rs`) — and the block projects as a `lot_results` row. These eras publish no
+/// contract graph at all, so the date has to land on the result rather than beside
+/// eForms' contract-scoped BT-1451.
+#[tokio::test]
+async fn the_legacy_award_block_carries_its_decision_date() {
+    let (db, fetch_id, path) = scratch("legacy-decided").await;
+    ingest(&db, fetch_id, "r209/f18-defence-001420-2019.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // 14.12.2018, offsetless (the form states a calendar date, not an instant).
+    assert_eq!(
+        scalar(&db, "SELECT decided_utc FROM tender_version_lot_results").await,
+        1_544_745_600
+    );
+    assert_eq!(scalar(&db, "SELECT decided_offset FROM tender_version_lot_results").await, 0);
+    assert_eq!(scalar(&db, "SELECT decided_has_time FROM tender_version_lot_results").await, 0);
+    // And it reaches the analyst surface, where "who won what, for how much, when" is
+    // one query rather than a join through the version satellites.
+    assert_eq!(scalar(&db, "SELECT decided_utc FROM v_awards").await, 1_544_745_600);
+    // The offers-received count needs no new column: the legacy reader already files it
+    // as a result statistic, which is what issue 244's text-era count will reuse.
+    assert_eq!(
+        scalar(&db, "SELECT count FROM tender_version_result_stats WHERE kind = 'tenders'").await,
+        6
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Its `AWARD_OF_CONTRACT_DEFENCE` section holds two amounts:
 ///
 ///     <INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT>  VALUE_COST 2 162 630,19   (no marker)

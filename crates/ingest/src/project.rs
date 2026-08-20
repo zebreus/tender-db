@@ -3121,6 +3121,8 @@ struct RawLotResult {
     bid_refs: Vec<String>,       // OPT-320
     contract_refs: Vec<String>,  // OPT-315
     statistics: Vec<(String, i64)>, // BT-760 code, BT-759 count
+    /// The legacy eras' `CONTRACT_AWARD_DATE`, on the award block (issue 255).
+    decided: Option<(i64, i64, bool)>,
     /// Legacy award blocks name their winner(s) directly (inline
     /// `ADDRESS_CONTRACTOR`/`WINNER` → `ORG-n`) and carry the awarded value on
     /// the block itself — there is no bid/contract graph to resolve through
@@ -3322,6 +3324,14 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
             ("TED-VALUE_COST", NoticeValue::Amount { cents, currency }) if r.direct_cents.is_none() => {
                 r.direct_cents = Some(*cents);
                 r.direct_currency = Some(currency.clone());
+            }
+            // When the buyer decided (issue 255). The legacy forms put it inside the
+            // award block, which is this LotResult, and they publish no contract graph
+            // for eForms' contract-scoped BT-1451 to land on. The r209 defence form
+            // splits it into DAY/MONTH/YEAR elements; the parse layer has already made
+            // that one instant.
+            ("TED-CONTRACT_AWARD_DATE", NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+                r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
             }
             ("TED-NO_AWARDED_CONTRACT", _) => r.decision = Some("clos-nw".to_owned()),
             (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
@@ -3540,6 +3550,7 @@ impl RawResults {
                     reason: r.reason.clone(),
                     awarded_cents: cents,
                     awarded_currency: currency,
+                    decided: r.decided,
                     winners,
                     statistics: r.statistics.clone(),
                 }
@@ -4138,6 +4149,7 @@ mod tests {
                 reason: None,
                 awarded_cents: Some(999),
                 awarded_currency: Some("EUR".into()),
+                decided: Some((700_050_000, -60, false)),
                 winners: vec![7, 8],
                 statistics: vec![("t1".into(), 4)],
             }],

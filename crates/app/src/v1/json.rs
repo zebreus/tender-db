@@ -267,6 +267,8 @@ fn lot_result(r: &LotResultRow) -> Value {
         "decision": r.decision,
         "reason": r.reason,
         "awarded": money(r.awarded_cents, r.awarded_currency.as_deref()),
+        // When the buyer decided — the legacy eras' award-block date (issue 255).
+        "decided": stamp(r.decided),
         "winners": r.winners.iter().map(result_org).collect::<Vec<_>>(),
         "statistics": r.statistics.iter()
             .map(|(kind, count)| (kind.clone(), json!(count)))

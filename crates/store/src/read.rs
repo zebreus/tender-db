@@ -385,6 +385,8 @@ pub struct LotResultRow {
     pub reason: Option<String>,
     pub awarded_cents: Option<i64>,
     pub awarded_currency: Option<String>,
+    /// When the buyer decided — the legacy eras' award-block date (issue 255).
+    pub decided: Option<Stamp>,
     pub winners: Vec<ResultOrgRow>,
     pub statistics: Vec<(String, i64)>,
 }
@@ -1576,7 +1578,8 @@ async fn results_of(
         .query(
             &format!(
                 "SELECT s.lot_result_id, r.notice_id, r.result_key, {lot_key},
-                        s.decision, s.reason, s.awarded_cents, s.awarded_currency
+                        s.decision, s.reason, s.awarded_cents, s.awarded_currency,
+                        s.decided_utc, s.decided_offset, s.decided_has_time
                    FROM tender_version_lot_results s
                    JOIN lot_results r ON r.id = s.lot_result_id
                   WHERE s.tender_id = ? AND s.seq = ? ORDER BY s.lot_result_id"
@@ -1596,6 +1599,7 @@ async fn results_of(
             reason: opt_text_of(&row, 5),
             awarded_cents: opt_int_of(&row, 6),
             awarded_currency: opt_text_of(&row, 7),
+            decided: stamp(&row, 8),
             winners: Vec::new(),
             statistics: Vec::new(),
         });

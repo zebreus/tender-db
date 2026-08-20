@@ -516,7 +516,7 @@ pub async fn state() -> Arc<Db> {
 /// answers "duplicate column name" and the statement is skipped. Anything
 /// beyond ADD COLUMN stays out of scope by policy — the canonical layer is
 /// rebuildable, and destructive changes recreate from the archive instead.
-const MIGRATIONS: [&str; 10] = [
+const MIGRATIONS: [&str; 13] = [
     "ALTER TABLE notices ADD COLUMN published_at INTEGER",
     "ALTER TABLE notices ADD COLUMN dispatched_at INTEGER",
     "ALTER TABLE tender_versions ADD COLUMN dispatched_at INTEGER",
@@ -547,6 +547,11 @@ const MIGRATIONS: [&str; 10] = [
     "ALTER TABLE tender_version_contracts ADD COLUMN decided_utc INTEGER",
     "ALTER TABLE tender_version_contracts ADD COLUMN decided_offset INTEGER",
     "ALTER TABLE tender_version_contracts ADD COLUMN decided_has_time INTEGER",
+    // …and on the award block itself, for the eras with no contract graph (issue 255,
+    // slice 2). Same three columns, one table over.
+    "ALTER TABLE tender_version_lot_results ADD COLUMN decided_utc INTEGER",
+    "ALTER TABLE tender_version_lot_results ADD COLUMN decided_offset INTEGER",
+    "ALTER TABLE tender_version_lot_results ADD COLUMN decided_has_time INTEGER",
 ];
 
 async fn migrate(conn: &Connection) -> turso::Result<()> {

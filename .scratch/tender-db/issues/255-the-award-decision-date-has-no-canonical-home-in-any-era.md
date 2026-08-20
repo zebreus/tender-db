@@ -1,9 +1,9 @@
 # 255 — the award DECISION date has no canonical home, in any era
 
-Status: SLICE 1 DONE 2026-08-20 (eForms BT-1451 → `tender_version_contracts.decided_*`, migration +
-projection + tests + falsified). Slices 2 and 3 open: the legacy form eras' `CONTRACT_AWARD_DATE` and
-the text era's `Date of award:` prose, both of which sit on the award BLOCK and want a
-`lot_results`-scope home rather than a contract one
+Status: SLICES 1 AND 2 DONE 2026-08-20 — eForms BT-1451 → `tender_version_contracts.decided_*`, and
+the legacy form eras' `CONTRACT_AWARD_DATE` → `tender_version_lot_results.decided_*` (also exposed
+through `v_lot_results` and `v_awards`). Both migrated, projected, tested and falsified. Slice 3 open:
+the text era's `Date of award:` prose, which now has a destination waiting for it
 Kind: canonical modelling gap (a published fact with nowhere to land), spanning every era
 Blocked by: —
 Relates to: 244 (the text era's award date, listed there as needing "a canonical destination
@@ -70,16 +70,31 @@ neither has a contract graph at all (*"no bid/contract graph in the legacy schem
 So slice 1's home is wrong for them, and the right one is a `decided_*` triple on
 `tender_version_lot_results` — the same shape one table over.
 
-- **Slice 2, r208/r209**: `TED-CONTRACT_AWARD_DATE` into `LotResultState`, which needs the same
-  three columns on the lot-result satellite. Volume: r2.0.9 alone publishes 2,098,599 award notices at
-  100 % result density, so this is the largest cohort of the three.
+- **Slice 2, r208/r209 — DONE**: `TED-CONTRACT_AWARD_DATE` into `RawLotResult.decided` →
+  `LotResultState.decided` → `tender_version_lot_results.decided_utc/offset/has_time`, plus the same
+  three columns in `v_lot_results` and `v_awards` so "who won what, for how much, WHEN" is one query.
+  Volume: r2.0.9 alone publishes 2,098,599 award notices at 100 % result density, the largest cohort
+  of the three. Gated by `the_legacy_award_block_carries_its_decision_date` on the r209 defence
+  fixture (14.12.2018, offsetless, read through `v_awards` as well as the satellite) and falsified:
+  without the projection arm the column reads NULL.
 - **Slice 3, text era**: extract `Date of award:` from the body the way `awarded_value` extracts the
-  price (issue 244 slices 4–9), then route it through the same `LotResultState` field. Deliberately
-  after slice 2, so the destination exists before the extraction does.
+  price (issue 244 slices 4–9), then set the same `LotResultState.decided`. The destination now
+  exists, so this is a parse-layer slice only.
 
 One more thing the legacy fixture settles for issue 244, recorded here because I found it while
 reading the same block: `<OFFERS_RECEIVED_NUMBER>6</OFFERS_RECEIVED_NUMBER>` sits right beside
 `CONTRACT_AWARD_DATE`, and the legacy reader ALREADY projects it as a result statistic
 (`LotResultState.statistics`). So the text era's tenders-received count — the other field issue 244
 lists as needing a destination decision — needs no new column at all: it has a home, and only the
-extraction is missing.
+extraction is missing. Slice 2's test asserts that too rather than trusting my reading of the code:
+`SELECT count FROM tender_version_result_stats WHERE kind = 'tenders'` is 6 on the same fixture.
+
+### Both dates, side by side, and why they are not one column
+
+An eForms CAN states BOTH: BT-1451 on the settled contract and BT-145 beside it. A legacy award
+notice states ONE, on the award block, and has no contract row at all. A reader asking "when was this
+awarded?" therefore looks in `tender_version_lot_results.decided_*` for 1993–2016 and in
+`tender_version_contracts.decided_*` for 2023 onward — which is not a wart but the shape of the
+sources: the legacy form has no notion of a settled contract, and eForms' decision date is a property
+of one. Collapsing them into a single column would have to invent a contract for the legacy eras or
+throw away which contract an eForms decision belongs to.

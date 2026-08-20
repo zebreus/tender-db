@@ -421,6 +421,13 @@ pub(crate) const SCHEMA: &str = "
         reason           TEXT, -- BT-144 non-award justification
         awarded_cents    INTEGER,
         awarded_currency TEXT,
+        -- When the buyer DECIDED (issue 255, slice 2). The legacy form eras put
+        -- this on the award block itself (`CONTRACT_AWARD_DATE` inside
+        -- `AWARD_OF_CONTRACT`) and have no contract graph to hang it on, so it
+        -- lives here rather than beside eForms' contract-scoped BT-1451.
+        decided_utc      INTEGER,
+        decided_offset   INTEGER,
+        decided_has_time INTEGER,
         PRIMARY KEY (tender_id, seq, lot_result_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -620,6 +627,7 @@ pub(crate) const SCHEMA: &str = "
     SELECT r.id, r.tender_id, r.notice_id, r.result_key,
            s.lot_id, (SELECT l.lot_key FROM lots l WHERE l.id = s.lot_id) AS lot_key,
            s.decision, s.reason, s.awarded_cents, s.awarded_currency,
+           s.decided_utc, s.decided_offset, s.decided_has_time,
            w.organization_id AS winner_organization_id,
            o.name AS winner_name, o.provisional AS winner_provisional
       FROM lot_results r
@@ -660,6 +668,7 @@ pub(crate) const SCHEMA: &str = "
     CREATE VIEW v_awards AS
     SELECT r.tender_id, r.notice_id, r.result_key, r.lot_id, r.lot_key,
            r.decision, r.reason, r.awarded_cents, r.awarded_currency,
+           r.decided_utc, r.decided_offset, r.decided_has_time,
            r.winner_organization_id, r.winner_name,
            (SELECT b.buyer_organization_id FROM v_tender_buyers b
              WHERE b.tender_id = r.tender_id LIMIT 1) AS buyer_organization_id,
@@ -942,6 +951,11 @@ pub struct LotResultState {
     pub reason: Option<String>,
     pub awarded_cents: Option<i64>,
     pub awarded_currency: Option<String>,
+    /// When the buyer decided: (utc seconds, offset minutes, has_time). The
+    /// legacy eras' `CONTRACT_AWARD_DATE`, which sits on the award block itself
+    /// (issue 255). eForms states the same fact on its settled contract, where
+    /// it lands on [`ContractState::decided`] instead.
+    pub decided: Option<(i64, i64, bool)>,
     /// Winning Organization ids, resolved through the notice's own graph.
     pub winners: Vec<i64>,
     /// (received-submission-type code, count), from BT-759/BT-760.
@@ -3902,6 +3916,9 @@ impl Db {
                 opt_text(result.reason.as_deref()),
                 opt_int(result.awarded_cents),
                 opt_text(result.awarded_currency.as_deref()),
+                opt_int(result.decided.map(|(utc, _, _)| utc)),
+                opt_int(result.decided.map(|(_, offset, _)| offset)),
+                opt_int(result.decided.map(|(_, _, has_time)| i64::from(has_time))),
             ]);
             for organization_id in &result.winners {
                 let (a, b) = scope();
@@ -5178,7 +5195,7 @@ impl Pending {
         flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
         flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
         flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency) VALUES ", 8, &mut self.lot_results).await?;
+        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time) VALUES ", 11, &mut self.lot_results).await?;
         flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
         flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
         flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency) VALUES ", 6, &mut self.bids).await?;
