@@ -912,3 +912,58 @@ the aggregate with a figure.** The rest are bodies stating no figure at all
 (`Total final value of contract(s): Excluding VAT.`), ranges (`Lowest offer: … / highest
 offer: …`), and multi-contract bodies with no aggregate — which the correctness half now
 refuses on purpose.
+
+
+### The slice-8 A/B, read on the same package
+
+Deployed as `9236267`, `fetch 200` re-parsed and re-folded (jobs 280/281):
+
+    notice_amounts rows, fetch 200            41 → 5,916 → 7,668
+    tax basis captured                        4,853 excl · 2,179 incl   (7,032 of 7,668)
+    value-stating bodies with an amount       5,893 → 7,645 of 9,549   (61.7 % → 80.1 %)
+
+Predicted +1,959, actual **+1,752**. The 207-body difference is the correctness half doing its
+work — bodies whose per-contract claim the guard now drops, and aggregates that state a figure
+this still refuses (below). Predicting a payoff and landing 89 % of it is the right kind of miss:
+the direction and the size were both right, and the shortfall has a cause rather than a shrug.
+
+And the basis reaches the canonical layer, verified over notices 3,870,856-3,875,000:
+
+    tender_version_amounts.tax_basis    excl 504 · incl 178 · NULL 73
+
+So issue 251's column now carries real corpus data, not just fixtures — from the text era, which
+before slice 7 had no money at all.
+
+### What the remaining 1,904 refusals are
+
+Classified, whole package:
+
+    no aggregate figure, one contract     1,111    no figure stated, or a range
+    no aggregate figure, several          644      per-contract parts only — the guard, on purpose
+    aggregate figure, one contract        97       see below
+    aggregate figure, several             52       see below
+
+The 644 are the correctness half's whole point: a notice that states its contracts' values and no
+total does not state a total, and this now says so instead of picking one.
+
+The 149 that DO state an aggregate figure and still refuse are worth a slice, and it is measured
+but not yet written:
+
+    3871298   Value: 0,00 GBP.                          refused, correctly — zero is not a value
+    3871306   Value: 7 015 000 GBP. | SECTION IV: …     the next heading is SECTION **IV**
+    3873797   Value: 99 840 EUR. | SECTION IV: …        same
+    3871371   Value: 33 030 818,1 LTL.                  ONE decimal digit, so `digit_group` refuses
+    3872503   Value: 176 713,2 RON.                     same
+    3872777   Value: 401 320 oltre IVA (per il 3° e 4° lotto) EUR.   prose inside the figure
+
+Two candidate slices, both small and both measured over the package's 1,904 refusals:
+
+- **`SECTION ` rather than `SECTION V` as a stop** — 52 bodies. `II.2.1` sits before section IV, so
+  the heading that follows the aggregate is often `SECTION IV: PROCEDURE`, which the current stop
+  list does not bound. Generalising the stop to any `SECTION ` subsumes the `SECTION V` entry.
+- **A one-digit decimal group as tenths** — 114 bodies. `digit_group` requires exactly two decimal
+  digits, so `33 030 818,1` is refused. One digit after the comma is unambiguous (tenths), and
+  comma-as-thousands stays refused because a thousands group is three digits.
+
+Together ~166 of 1,904, so ~1.7 % of the package's value-stating bodies — worth doing, worth doing
+AFTER the sweep rather than spending a deploy-and-reparse cycle on it while 20 packages wait.
