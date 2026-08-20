@@ -190,3 +190,47 @@ distinguishes those two cases is the whole of part 2 — the candidates are the 
 set (32,920 notices vs 524,774), the incremental scoping's fallback rules (issue 58 v2's closure walk
 logs "its own decisions… or a named fallback"), and the watermark's state after an interrupted fold.
 The journal's own scoping line for 288 is the first thing to read when it appears.
+
+
+## Part 2, ANSWERED by the system's own log (2026-08-20 11:52)
+
+The open question above is answered, and not by me — job 288 printed it at start-up and I had not
+looked in the right three minutes of journal:
+
+    10:59:31  [project] incremental: 497672 changed notices
+    11:00:03  [project] incremental stage pass-1 identity
+              (3408 new keyed keys, 493745 legacy notices, 531036 seed keys): 31.8s
+    11:00:08  [project] INCREMENTAL → FULL fallback: legacy closure exceeds cap
+              (611530 notices > 500000) (issue 58 v2); re-projecting the whole corpus
+
+So the discriminator is a **cap, by design**: issue 58 v2's incremental projection computes the legacy
+closure of the changed set and falls back to a full-corpus re-projection when that closure exceeds
+500,000 notices. One re-parsed package (32,920 notices) stays far under it and folds in 80–100 s.
+Twenty (524,774 changed → 611,530 closure) crosses it, and the fold becomes a whole-corpus rebuild:
+an 85–91 minute plan phase, then the group steps, then the ADR-0011 previous-notice pass where both
+attempts stopped.
+
+Two corrections to what I wrote earlier today, both from guessing ahead of the evidence:
+
+- **"The fold's cost is dominated by corpus-wide steps that do not care how few packages changed"**
+  (issue 244, an hour ago) — wrong. It cares a great deal: below the cap the fold is incremental and
+  cheap, above it the whole corpus is re-projected. The number that matters is the closure size, not
+  the package count.
+- **"WAL growth explains the slow plan"** — already retracted above; the fresh-WAL re-run degraded
+  identically.
+
+### What this changes operationally
+
+The text-era sweep must batch by **changed notices**, not by packages: ~12–15 packages of ~26 k
+notices keeps the closure under 500,000 and the fold incremental. Twenty was over. That is a campaign
+rule, not a defect — the cap exists because a closure that large is genuinely cheaper to re-project
+whole (issue 58 v2's own reasoning), assuming the whole-corpus path terminates, which is now the one
+thing in doubt.
+
+### What remains part 2
+
+The full path's ADR-0011 previous-notice pass, which did not finish in 2 h 05 m on job 283 and is
+about to be attempted again by 288 at ~12:25. If it stalls a second time, the reproduction is
+confirmed and the unit is to measure `plan_prev_edge`'s size and the join's plan on a full-corpus
+plan — with the fold's phase record extended to cover the group steps (issue 65), so that an operator
+can see which step is running instead of inferring it from a missing log line.

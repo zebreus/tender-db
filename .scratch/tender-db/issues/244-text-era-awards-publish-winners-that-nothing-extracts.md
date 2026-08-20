@@ -1017,9 +1017,18 @@ Two numbers for whoever plans the next batch:
     1 package  re-parse ≈ 40-90 s,  fold ≈ 80-100 s
     20 packages re-parse = 28 min,  fold = did not finish in 3 h 38 m
 
-The fold's cost is dominated by corpus-wide steps that do not care how few packages changed — a
-14,285,381-notice plan phase (91 min) and then the ADR-0011 previous-notice pass, which is where it
-stopped. So the batch size that made the RE-PARSE efficient is exactly what made the FOLD unbounded,
-and until issue 256 part 2 is understood the sweep should run in batches whose fold is known to
-complete. The 161 remaining packages are not blocked on parser work — slices 2-9 are all deployed —
-only on a fold that finishes.
+**Corrected an hour later, by the system's own log** (issue 256): the fold's cost is NOT
+insensitive to the batch size — it is a cliff. Issue 58 v2's incremental projection falls back to a
+whole-corpus re-projection when the changed set's legacy closure exceeds 500,000 notices, and the
+20-package batch printed exactly that:
+
+    [project] incremental: 497672 changed notices
+    [project] INCREMENTAL → FULL fallback: legacy closure exceeds cap (611530 notices > 500000)
+
+One package (32,920 notices) stays far under the cap and folds incrementally in 80-100 s. Twenty
+crossed it and bought a whole-corpus rebuild — an 85-91 minute plan phase and then the pass that
+stalled.
+
+**The campaign rule that follows: batch by changed NOTICES, not by packages.** ~12-15 packages of
+~26 k notices keeps the closure under 500,000 and the fold incremental. The 161 remaining packages are
+not blocked on parser work — slices 2-9 are all deployed — only on batching under the cap.
