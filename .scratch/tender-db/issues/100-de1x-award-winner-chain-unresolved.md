@@ -548,3 +548,20 @@ stopped one step short: the **node id itself** decides `kind` (`index.rs` strips
 an entity kind puts the holder inside `RESULT_KINDS`. So the holders were correctly denied an identity
 of their own and still left wearing an entity's name — which is the whole defect. Worth recording
 because the fix was one rename away from an author who had already understood the shape.
+
+### Landed on prod — re-parse 2026-08-20 19:15, clean
+
+Deployed as `45c0a14`, then the cohort re-parsed (job 288):
+
+    reparse ok | re-parsed 218,638 notices across 24 packages (579,159 members walked,
+    0 unmatched, 0 now failing and left untouched); stamped 128,005 tender(s) epoch-stale | 1,298 s
+
+**0 now failing** is the number that matters for an inventory edit: renaming three nodes changed no
+element's claimability, so ADR-0004 exhaustive consumption still holds over 579k members. Corroborated
+from the other side — the newest DE-1.x quarantine row is `first_seen` 2026-07-19, so today's re-parse
+created none.
+
+The follow-on incremental projection (job 289) is folding the 128,005 epoch-stale Tenders. The
+verification stated above — `named` for eforms-de-1.1 moving from ~3 % toward eforms-de-2.1's ~80 %,
+with `bids` and `contracts` FALLING for the cohort as the phantom reference-carrier rows disappear —
+is read from the next data-quality report, not from this run's logs.
