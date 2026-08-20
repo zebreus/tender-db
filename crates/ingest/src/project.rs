@@ -388,10 +388,12 @@ const TAX_BASIS_FIELDS: &[&str] = &["TED-VAL_TOTAL_TAX_BASIS"];
 /// The form eras state the basis as a bare marker element beside the value, inside a
 /// container that groups the two (issue 251):
 ///
+/// ```text
 ///     <COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="RON">
 ///       <VALUE_COST FMTVAL="1681100">1 681 100</VALUE_COST>
 ///       <EXCLUDING_VAT/>
 ///     </COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE>
+/// ```
 ///
 /// Pairing them by SECTION would be wrong, and measurably so: the committed defence
 /// award holds an `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` amount with no marker in the
@@ -402,8 +404,10 @@ const TAX_BASIS_FIELDS: &[&str] = &["TED-VAL_TOTAL_TAX_BASIS"];
 /// `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` is a field-id prefix wrapper and `COSTS_RANGE`
 /// is not — so **the prefix is the container identity**:
 ///
+/// ```text
 ///     TED-VALUE_COST                            ↔  TED-EXCLUDING_VAT
 ///     TED-INITIAL_…_CONTRACT.VALUE_COST         ↔  TED-INITIAL_…_CONTRACT.EXCLUDING_VAT
+/// ```
 ///
 /// Hence the marker id is derived from the amount id by swapping its trailing element,
 /// which is exact rather than heuristic.
