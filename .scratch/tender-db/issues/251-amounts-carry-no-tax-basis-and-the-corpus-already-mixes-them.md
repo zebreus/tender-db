@@ -127,3 +127,87 @@ wrote rather than from an assumption about what era usually means.
    section-keyed map) is in place for them to join.
 2. **The report line** (option 2) — a `GROUP BY tax_basis` over tens of millions of rows, so it gets an
    A/B before it is added. The 2026-08-20 cost table in issue 253 is the baseline to A/B against.
+
+---
+
+## The r208/r209 shape, read from committed fixtures (2026-08-20)
+
+The follow-up above said pairing the form eras "needs a payload read of how those elements sit relative
+to the value element". Done, from three committed fixtures — no prod access needed. It changed the
+design twice, so the reading is worth recording in full.
+
+### The shape
+
+    <COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="EUR">
+      <VALUE_COST FMTVAL="592140">592 140</VALUE_COST>
+      <EXCLUDING_VAT/>
+    </COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE>
+
+`EXCLUDING_VAT` is an empty **sibling** of the value, inside a container that groups the two.
+
+### First reading, and why it was wrong
+
+One section can hold **several** amounts with different bases. From the defence award
+(`f18-defence-001420-2019`), inside a single `AWARD_OF_CONTRACT_DEFENCE` section:
+
+    <CONTRACT_VALUE_INFORMATION>
+      <INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT CURRENCY="RON">
+        <VALUE_COST FMTVAL="2162630.19">2 162 630,19</VALUE_COST>      ← no marker here
+      </INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT>
+      <COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE CURRENCY="RON">
+        <VALUE_COST FMTVAL="1681100">1 681 100</VALUE_COST>
+        <EXCLUDING_VAT/>
+      </COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE>
+    </CONTRACT_VALUE_INFORMATION>
+
+So the section-keyed map the text era uses would have labelled the **initial estimate** `excl` on the
+strength of a marker belonging to the **final value**. That is a wrong fact, of exactly the class this
+whole slice exists to avoid, and it would have been invisible.
+
+### Second reading: the prefix already IS the container
+
+The r208 fixture (`f03-annexd-neg-022211-2011`) shows `EXCLUDING_VAT` inside
+`INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` **as well**:
+
+    …<VALUE_COST FMTVAL="375000.00">375 000</VALUE_COST><EXCLUDING_VAT></EXCLUDING_VAT>
+    </INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT>
+
+And `INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT` is in `FIELD_PREFIX_WRAPPERS`, while
+`COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE` is not. So the parse layer already keeps the pairs apart by
+field id:
+
+    TED-VALUE_COST                                        ↔  TED-EXCLUDING_VAT
+    TED-INITIAL_…_VALUE_CONTRACT.VALUE_COST               ↔  TED-INITIAL_…_VALUE_CONTRACT.EXCLUDING_VAT
+
+**The prefix is the container identity.** The rule is therefore exact rather than heuristic: for an
+amount whose field id ends in `VALUE_COST`, the basis is the marker in the same section whose field id
+is that id with the trailing element swapped for `EXCLUDING_VAT`. No uniqueness guard needed for the
+prefixed cases; the only residual ambiguity is two *unprefixed* `COSTS_RANGE` containers in one section,
+which none of the three fixtures shows and which a "claim nothing when there are two" guard covers for
+free.
+
+### One half is invisible and needs a parser change first
+
+`EXCLUDING_VAT` is `Rule::Marker`, so it emits `Integer(1)` and is readable. **`INCLUDING_VAT` is
+`Rule::Group`** — a Group emits nothing of its own and only recurses, so an inclusive-of-tax value
+currently leaves *no trace at all* in the parse layer; only its `VAT_PRCT` child survives. So:
+
+- the `excl` half is implementable now, purely in the projection;
+- the `incl` half needs `INCLUDING_VAT` moved from `Rule::Group` to `Rule::Marker` in the r209 rules —
+  a parse-layer change across 7.2M notices, which wants its own unit, its own exhaustiveness check
+  (a Group that becomes a Marker still has to consume its children), and an era refold to take effect.
+
+Doing only the `excl` half would populate the column with `excl` and NULL, where some of the NULLs are
+really `incl`. That is not a wrong label — NULL means "the source did not say" and this parse layer
+genuinely does not say — but it is a **biased** NULL, and anyone summing by basis should know it. Both
+halves should land together, or the first must ship with that caveat written into the column's comment.
+
+### Next unit, concretely
+
+1. Move `INCLUDING_VAT` to `Rule::Marker`; confirm its `VAT_PRCT` child still parses and nothing becomes
+   unclaimed. Test on a fixture that carries it.
+2. Derive the marker id from the amount id in the projection; pair within the section; claim nothing
+   when a section holds two unprefixed amounts.
+3. Tests over all three committed fixtures, asserting the *initial estimate* stays NULL while the final
+   value gets its basis — the case the first design got wrong.
+4. Refold r208/r209 and read the split.
