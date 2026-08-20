@@ -605,6 +605,38 @@ pub fn fresh_holds_sql() -> String {
     )
 }
 
+/// The VAT basis of the amounts each era projects (issue 251, option 2).
+///
+/// `tender_version_amounts.tax_basis` is `'incl'`, `'excl'`, or NULL when the source did
+/// not say, and NULL is the honest answer rather than a default — so the useful reading is
+/// three-way and the report prints all three. Two questions it answers that nothing else
+/// does: whether a re-parse actually populated the column for an era (the r208/r209
+/// re-parse this issue still owes), and whether an era's mix is BIASED, which it is until
+/// that re-parse lands — `EXCLUDING_VAT` was mapped before `INCLUDING_VAT` was, so the
+/// form eras will read excl-heavy for reasons that have nothing to do with their notices.
+///
+/// Counts amount ROWS across every version, like section 1 counts every version rather
+/// than only the current one. An amount row belongs to exactly one version, so the count
+/// is additive across windows.
+pub fn amount_basis_sql() -> String {
+    amount_basis_template("")
+}
+
+/// [`amount_basis_sql`] with `win` as its whole `WHERE`, or no `WHERE` at all when `win`
+/// is empty — one builder for the catalog and the windowed form, the same reason
+/// [`awards_template`] has one.
+fn amount_basis_template(win: &str) -> String {
+    let scope = if win.is_empty() { String::new() } else { format!("WHERE {win} ") };
+    format!(
+        "SELECT n.profile, COUNT(*) AS amounts, \
+                SUM(CASE WHEN a.tax_basis = 'excl' THEN 1 ELSE 0 END) AS excl, \
+                SUM(CASE WHEN a.tax_basis = 'incl' THEN 1 ELSE 0 END) AS incl \
+           FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+           JOIN tender_version_amounts a ON a.tender_id = v.tender_id AND a.seq = v.seq \
+          {scope}GROUP BY n.profile"
+    )
+}
+
 /// The queries that measure a population no `tender_id` window can slice, so the
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
@@ -632,6 +664,8 @@ pub fn queries() -> Vec<(String, String)> {
     out.push(("sections_can".to_owned(), SECTIONS_CAN_SQL.to_owned()));
     out.push(("sections_with".to_owned(), SECTIONS_WITH_SQL.to_owned()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
+    // The VAT basis of what the projection wrote (issue 251).
+    out.push(("amount_basis".to_owned(), amount_basis_sql()));
     // Whole-corpus queries last: the bin runs every label in this list, and these
     // are the ones the in-process job runs once rather than per window.
     out.extend(whole_corpus_queries());
@@ -751,6 +785,11 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
         template: MERGE_SQL.replace("WHERE n.source = 'doe'", "WHERE {window} AND n.source = 'doe'"),
         // Spliced into the INNER `SELECT DISTINCT v.tender_id`, where `v` is in scope
         // — windowing the driver, which is what makes the DISTINCT sum exactly.
+        column: "v.tender_id".to_owned(),
+    });
+    out.push(WindowedQuery {
+        label: "amount_basis".to_owned(),
+        template: amount_basis_template("{window}"),
         column: "v.tender_id".to_owned(),
     });
     out
@@ -900,6 +939,23 @@ pub struct DocTypeRow {
     pub untyped: u64,
 }
 
+/// One era's amounts by VAT basis (issue 251, option 2).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BasisRow {
+    pub profile: String,
+    pub amounts: u64,
+    pub excl: u64,
+    pub incl: u64,
+}
+
+impl BasisRow {
+    /// Amounts whose source stated no basis. Derived rather than measured, so it cannot
+    /// disagree with the three counts it is derived from.
+    pub fn unstated(&self) -> u64 {
+        self.amounts.saturating_sub(self.excl).saturating_sub(self.incl)
+    }
+}
+
 /// One quarantine reason's arrival count over the report's fresh-hold window
 /// (issue 246).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -934,6 +990,8 @@ pub struct Report {
     pub merge: Merge,
     /// Quarantine arrivals per reason over the last 30 days (issue 246).
     pub fresh_holds: Vec<FreshHoldRow>,
+    /// Amounts by VAT basis, per era (issue 251).
+    pub amount_basis: Vec<BasisRow>,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
     /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
@@ -983,6 +1041,8 @@ pub struct Raw {
     pub merge: Rows,
     /// Quarantine arrivals per reason over the last 30 days (issue 246).
     pub fresh_holds: Rows,
+    /// Amounts by VAT basis, per era (issue 251).
+    pub amount_basis: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1028,6 +1088,7 @@ impl Raw {
             sections_with: take("sections_with", &mut unmeasured)?,
             merge: take("merge", &mut unmeasured)?,
             fresh_holds: take("fresh_holds", &mut unmeasured)?,
+            amount_basis: take("amount_basis", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1110,6 +1171,18 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         merged: as_u64(r.get(2)),
     });
 
+    let mut amount_basis: Vec<BasisRow> = raw
+        .amount_basis
+        .iter()
+        .map(|r| BasisRow {
+            profile: as_str(r.first()),
+            amounts: as_u64(r.get(1)),
+            excl: as_u64(r.get(2)),
+            incl: as_u64(r.get(3)),
+        })
+        .collect();
+    amount_basis.sort_by(|a, b| a.profile.cmp(&b.profile));
+
     // Arrivals, already ordered by the query (busiest reason first) — kept in that
     // order rather than re-sorted, because "which bucket is being fed" is the
     // question and the SQL answers it.
@@ -1132,6 +1205,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         doc_types,
         merge,
         fresh_holds,
+        amount_basis,
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1382,6 +1456,42 @@ pub fn render_text(report: &Report) -> String {
              distinction ADR-0010's reopen trigger needs and the bucket totals cannot make."
         );
     }
+
+    // Section 6 (issue 251): whether an amount's source said what its figure INCLUDES.
+    // Three-way on purpose — `unstated` is the honest third answer, and reading it as
+    // either basis is the mistake this section exists to prevent.
+    let _ = writeln!(out, "\n== 6. Amount VAT basis (share of projected amounts stating one) ==");
+    if report.unmeasured.iter().any(|l| l == "amount_basis") {
+        let _ = writeln!(out, "  UNMEASURED — the `amount_basis` query did not run.");
+    } else if report.amount_basis.is_empty() {
+        let _ = writeln!(out, "  none — no era projects an amount, which would itself be a finding.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  {:<30} {:>11} {:>10} {:>10} {:>10} {:>8}",
+            "era", "amounts", "excl", "incl", "unstated", "stated"
+        );
+        for r in &report.amount_basis {
+            let stated = r.excl + r.incl;
+            let _ = writeln!(
+                out,
+                "  {:<30} {:>11} {:>10} {:>10} {:>10} {:>8}",
+                display_era(&r.profile),
+                group(r.amounts),
+                group(r.excl),
+                group(r.incl),
+                group(r.unstated()),
+                pct(stated, r.amounts),
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  An era's incl/excl MIX is only meaningful once both markers have been mapped and \
+             the era re-parsed: the form eras recorded `EXCLUDING_VAT` before `INCLUDING_VAT` \
+             existed, so an excl-heavy split there is a parser history, not a procurement fact \
+             (issue 251)."
+        );
+    }
     out
 }
 
@@ -1466,6 +1576,21 @@ pub fn render_json(report: &Report) -> String {
             "untyped": r.untyped,
         }))
         .collect();
+    let amount_basis: Vec<Value> = report
+        .amount_basis
+        .iter()
+        .map(|r| json!({
+            "profile": r.profile,
+            "era": era_of(&r.profile),
+            "amounts": r.amounts,
+            "excl": r.excl,
+            "incl": r.incl,
+            // Derived from the three above, so a consumer cannot compute a different
+            // third answer than the text report prints.
+            "unstated": r.unstated(),
+            "stated_rate": rate(r.excl + r.incl, r.amounts),
+        }))
+        .collect();
     let value = json!({
         "base_url": report.base_url,
         "unit": "tender-version",
@@ -1474,6 +1599,7 @@ pub fn render_json(report: &Report) -> String {
         "results_density": density,
         "sections_to_rows": invariant,
         "doc_type_coverage": doc_types,
+        "amount_vat_basis": amount_basis,
         "ted_doe_merge": {
             "doe_tenders": report.merge.doe_tenders,
             "merged": report.merge.merged,
@@ -1571,9 +1697,53 @@ mod tests {
                 "sections_can",
                 "sections_with",
                 "merge",
+                // The VAT basis of what the projection wrote (issue 251).
+                "amount_basis",
                 "fresh_holds",
             ]
         );
+    }
+
+    /// Issue 251 option 2: the VAT basis section must read three ways, and must say that
+    /// a mix is not yet a fact.
+    #[test]
+    fn the_vat_basis_section_reads_three_ways_and_warns_about_the_bias() {
+        let all = || -> Vec<(String, Option<Rows>)> {
+            queries().into_iter().map(|(l, _)| (l, Some(Vec::new()))).collect()
+        };
+        let mut ran = all();
+        ran.iter_mut().find(|(l, _)| l == "amount_basis").expect("label").1 = Some(vec![
+            // 1,000 amounts, 600 excl, 150 incl — so 250 unstated, which is DERIVED and
+            // must not be a fourth measured column that can disagree with the three.
+            vec![json!("text"), json!(1_000), json!(600), json!(150)],
+            // An era that states nothing at all: the section must show 0 % rather than
+            // omitting the era, because "no basis anywhere" is the finding.
+            vec![json!("ted-export-r208"), json!(400), json!(0), json!(0)],
+        ]);
+        let raw = Raw::from_labelled(ran).expect("labelled");
+        let report = assemble("(t)", &raw);
+
+        assert_eq!(
+            report.amount_basis.iter().map(|r| r.unstated()).collect::<Vec<_>>(),
+            [400, 250],
+            "profile-sorted (r208 before text), and `unstated` is amounts - excl - incl"
+        );
+
+        let text = render_text(&report);
+        assert!(text.contains("== 6. Amount VAT basis"), "the section must exist:\n{text}");
+        // 750 of 1,000 stated.
+        assert!(text.contains("75.0%"), "the stated share:\n{text}");
+        assert!(text.contains("0.0%"), "an era stating none reads 0 %, not blank:\n{text}");
+        assert!(
+            text.contains("parser history, not a procurement fact"),
+            "the mix caveat must travel with the numbers:\n{text}"
+        );
+
+        // And a failed query is UNMEASURED rather than an era-less zero table.
+        let mut failed = all();
+        failed.iter_mut().find(|(l, _)| l == "amount_basis").expect("label").1 = None;
+        let text = render_text(&assemble("(t)", &Raw::from_labelled(failed).expect("labelled")));
+        assert!(text.contains("UNMEASURED — the `amount_basis` query did not run."), "{text}");
     }
 
     /// Issue 246: the arrivals section must say ARRIVALS, and must distinguish a
@@ -1697,6 +1867,7 @@ mod tests {
             ("sections_can".to_owned(), Some(vec![])),
             ("sections_with".to_owned(), Some(vec![])),
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
+            ("amount_basis".to_owned(), Some(vec![])),
             ("fresh_holds".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
@@ -1996,6 +2167,12 @@ mod tests {
             // Column 0 is merge's constant scope label (issue 230) — the shape that
             // lets a single-row result sum across windows like every other one.
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(3), json!(1)]])),
+            // Issue 251: three amounts, one of each basis and one the source left
+            // unstated — so the derived third answer is exercised rather than assumed.
+            (
+                "amount_basis".to_owned(),
+                Some(vec![vec![json!("ted-export-r209"), json!(3), json!(1), json!(1)]]),
+            ),
             (
                 "fresh_holds".to_owned(),
                 Some(vec![

@@ -1,8 +1,10 @@
 # 251 — amounts carry no tax basis, and the corpus already mixes inclusive with exclusive figures
 
-Status: TEXT ERA DONE AND VERIFIED ON PROD; FORM ERAS BUILT 2026-08-20 (INCLUDING_VAT promoted to a
-Marker, container-exact pairing, tests incl. a falsified one) — AWAITING DEPLOY + the r208/r209 refold
-that makes it visible. Option 2, the report line, is still a separate unit with its own A/B
+Status: TEXT ERA DONE AND VERIFIED ON PROD (real rows: 504 excl / 178 incl / 73 NULL over notices
+3,870,856-3,875,000); FORM ERAS DEPLOYED 2026-08-20 as `5a6e676`; OPTION 2 (the report line) BUILT
+2026-08-20 — section 6 of the data-quality report, three-way with the bias caveat. What remains is the
+r208/r209 RE-PARSE (not a refold — `INCLUDING_VAT` is a parse-layer change) that makes the form eras'
+mix real, and the first report run that reads section 6
 Kind: canonical modelling gap (a published qualifier with nowhere to land)
 Blocked by: —
 Relates to: 244 (the slice that surfaced it), 232 (the near-zero value columns), 171 (value-domain
@@ -253,3 +255,40 @@ quietly continuing to prove less than it appears to.
 
 **Step 4 remains:** refold r208/r209 and read the basis split. That is queue work — the era is 7.2M
 notices — and the text-era sweep has the box until it finishes.
+
+
+## Option 2 — the report line (built 2026-08-20)
+
+Section 6 of the data-quality report, `amount_basis`, per era:
+
+    == 6. Amount VAT basis (share of projected amounts stating one) ==
+      era                                amounts       excl       incl   unstated   stated
+
+Four measured columns and one derived: `unstated` is `amounts - excl - incl` rather than a fourth
+`SUM(CASE WHEN tax_basis IS NULL ...)`, so the text and the JSON cannot print a third answer that
+disagrees with the three it came from. Windowed on `v.tender_id` like every other section-1 query, so
+it costs one more statement per window and the existing windowed-equals-unwindowed equivalence test
+covers it without being told to.
+
+Three things it is built to say, and one it deliberately refuses to say:
+
+- **Whether an era's column is populated at all.** The r208/r209 re-parse this issue still owes has no
+  other read: `tender_version_amounts.tax_basis` non-NULL for those profiles is the acceptance test,
+  and before this there was no place to see it.
+- **That an era states no basis anywhere** — an era with 400 amounts and 0 stated renders as `0.0%`
+  rather than dropping out of the table. Tested, because a missing row reads as "no data" and a zero
+  reads as "no basis", and those are different findings.
+- **That a MIX is not yet a fact.** The section prints the caveat next to the numbers: the form eras
+  recorded `EXCLUDING_VAT` before `INCLUDING_VAT` was mapped at all, so an excl-heavy split there is
+  parser history. Printing a ratio without that line would have manufactured a procurement finding out
+  of a deployment order.
+- **What the amounts MEAN together.** It does not sum or average cents across bases, because that is
+  the meaningless operation this whole issue exists to prevent.
+
+Counts amount ROWS across every version, the same way section 1 counts every version rather than only
+the current one. An amount row belongs to exactly one version, which is what makes the windowed sums
+exact.
+
+Noticed while wiring it, not fixed here: `render_json` omits section 5 (`fresh_holds`) entirely, so the
+JSON surface has been a section short since issue 246. Section 6 IS in the JSON (`amount_vat_basis`).
+Worth a small follow-up rather than a silent asymmetry.
