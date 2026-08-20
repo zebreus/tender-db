@@ -220,3 +220,17 @@ here rather than acted on. Anyone picking it up: the A/B is cheap, since a narro
 
 The cost table and the window profile. Everything else in it was me reasoning ahead of the measurement,
 twice in the same issue.
+
+
+### A third correction: the U-shape is real, its attribution to eras is NOT
+
+Above I wrote that windows 1–5 are expensive because "the legacy eras are dense in low tender ids". I do
+not actually know that. `tender_id` is assigned in fold order, not by era — and while verifying issue
+251 an hour later, a **text-era** tender turned up at **2,735,564**, in window 11, one of the cheap ones.
+
+So: the cost profile is measured and stands. The *explanation* for it does not. Anyone acting on this
+should first establish which eras live in which id ranges — one bounded `GROUP BY n.profile` per window
+over `tender_versions` answers it — rather than inheriting my guess.
+
+Three walk-backs in one issue is the lesson, not the footnote: the measurement was available from the
+job's own journal the whole time, and every claim I made before reading it was wrong.

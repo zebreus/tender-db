@@ -1,8 +1,8 @@
 # 251 — amounts carry no tax basis, and the corpus already mixes inclusive with exclusive figures
 
-Status: OPTION 1 BUILT 2026-08-20 (owner) — `tender_version_amounts.tax_basis` exists, nullable, and
-the text era populates it; the r208/r209 VAT indicator is the named follow-up, and option 2 (the
-report line) is a separate unit with its own cost measurement. AWAITING DEPLOY
+Status: OPTION 1 DONE AND VERIFIED ON PROD 2026-08-20 (rev `96d63a2`) — the column exists and the text
+era populates it, checked past the fold. The r208/r209 VAT indicator and the report line (option 2)
+remain the named follow-ups
 Kind: canonical modelling gap (a published qualifier with nowhere to land)
 Blocked by: —
 Relates to: 244 (the slice that surfaced it), 232 (the near-zero value columns), 171 (value-domain
@@ -97,3 +97,33 @@ a future third value cannot become something readers have to guess at.
 fold: stated exclusive, stated inclusive, not stated (NULL — the shape every existing row has), and an
 undefined code (dropped). `v_tender_amounts` exposes the column, and the SQL surface's own description
 of the view now warns that most rows are NULL so a total over mixed rows is not comparable.
+
+
+---
+
+## VERIFIED ON PROD (2026-08-20, rev `96d63a2`)
+
+`fetch 300` re-parsed and folded under the deployed rev; four notices whose prose I had already read,
+followed all the way into `tender_version_amounts`:
+
+    notice      field         cents        currency  tax_basis   the prose it came from
+    1,710,387   result_value  214,300,000  EUR       NULL        "4.  Contract value: 2 143 000 EUR."
+    1,710,441   result_value   68,965,517  DEM       excl        "8.  Price: Auftragssumme (ohne
+    1,710,442   result_value  194,425,500  DEM       excl         Umsatzsteuer): 689 655,17 DEM." etc.
+    1,710,443   result_value   12,066,233  DEM       excl
+
+Every part of the chain holds: the figure parses to the right cents (`689 655,17` → 68,965,517), the
+German sub-label's `ohne Umsatzsteuer` becomes `excl`, and the external-aid notice that states no basis
+correctly gets **NULL** rather than a guess.
+
+So the corpus now has its first labelled money, and the labelling came from what the publisher actually
+wrote rather than from an assumption about what era usually means.
+
+## Follow-ups, unchanged
+
+1. **r208/r209 pairing** — where most of the corpus's money is. `EXCLUDING_VAT` is a presence flag and
+   `INCLUDING_VAT` a container, so neither is a code carrying `incl`/`excl`; pairing needs a payload read
+   of how they sit relative to the value element. The mechanism (`TAX_BASIS_FIELDS` plus the
+   section-keyed map) is in place for them to join.
+2. **The report line** (option 2) — a `GROUP BY tax_basis` over tens of millions of rows, so it gets an
+   A/B before it is added. The 2026-08-20 cost table in issue 253 is the baseline to A/B against.
