@@ -1776,6 +1776,87 @@ async fn sdk01_projects_title_buyer_and_winner() {
     let _ = std::fs::remove_file(&path);
 }
 
+// ------------------------------- issue 257: what this dialect actually publishes
+
+/// The sdk-0.1 award notice as it usually is: a `TenderResult` holding an
+/// `AwardDate` and nothing else — no `TenderResultCode`, no `WinningParty`, no
+/// value. Measured across the DÖE archive, that is the NORM, not an outlier:
+/// every award-type notice in 2023-01 carries a result block (2,895 of 2,895 —
+/// the serializer emits the container unconditionally, which is why the
+/// data-quality report's density for this era is exactly 100.0 %), and only
+/// 13.5 % of them name a winner; by 2024-06 it is 1.9 %. Where a `WinningParty`
+/// IS published we resolve it — every one of the 445 sampled carried a
+/// `PartyName` — so this era's winner shortfall is the publisher's, not ours.
+///
+/// What we must not do is turn that silence into a claim. The projection used to
+/// fall back to `clos-nw` — documented to the SQL sandbox as "closed, no award" —
+/// whenever no winner resolved, which asserted that no contract was awarded on
+/// ~125k notices that state the day the award was made. Now the decision is NULL
+/// (unstated) and the date it does state is kept.
+#[tokio::test]
+async fn an_sdk01_result_that_states_only_a_date_claims_no_award_decision() {
+    let (db, fetch_id, path) = scratch("sdk01_awarddate").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-can-awarddate-only-19191760-1.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    // The result block IS announced, so it materialises — the notice is an award
+    // notice and hiding it would understate the corpus.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM lot_results").await, 1);
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results").await, 1);
+
+    // Nobody is named, because nobody is published.
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 0);
+
+    // And we say nothing about the outcome, rather than saying "no award".
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results WHERE decision IS NULL").await,
+        1,
+        "an unstated winner-selection-status must stay unstated, not become clos-nw"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results WHERE decision = 'clos-nw'").await,
+        0,
+        "`clos-nw` is a positive claim of no award — this notice states an award DATE"
+    );
+
+    // The one fact it does publish reaches the canonical layer: 2023-01-04+01:00.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results WHERE decided_utc IS NOT NULL").await,
+        1,
+        "SDK01-TenderResult-AwardDate must land on the result's decision date"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT strftime('%Y-%m-%d', decided_utc, 'unixepoch') FROM tender_version_lot_results"
+        )
+        .await
+        .as_deref(),
+        Some("2023-01-04"),
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// A named winner still IS a selection — the safe half of the fallback survives.
+/// The uuid-channel CAN publishes a `WinningParty` and no `TenderResultCode`, and
+/// must still read as `selec-w`, or removing the fabricated `clos-nw` would have
+/// cost the inference that was actually justified.
+#[tokio::test]
+async fn a_named_sdk01_winner_is_still_read_as_a_selection() {
+    let (db, fetch_id, path) = scratch("sdk01_selecw").await;
+    ingest_from(&db, fetch_id, "doe", "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await, 1);
+    assert_eq!(
+        query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(),
+        Some("selec-w"),
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 // --------------------------- issue 176: per-era headline-field projection matrix
 
 /// Issue 176 (the issue-174 follow-up): parse coverage is gated exhaustively per

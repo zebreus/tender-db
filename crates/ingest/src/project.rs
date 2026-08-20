@@ -460,6 +460,12 @@ const SDK01_PARTY_COUNTRY_FIELDS: &[&str] = &[
 ];
 /// sdk-0.1's award-decision code, on the `TenderResult` section.
 const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
+/// When the buyer awarded. On this dialect it is very often the ONLY thing the
+/// result block says (issue 257): ~90 % of sdk-0.1 award notices publish a
+/// `TenderResult` carrying an AwardDate and nothing else — no result code, no
+/// winner, no value. `AwardTime` is published beside it and is not merged: the
+/// day is the fact anyone reads, and a half-carried instant is worse than a date.
+const SDK01_AWARD_DATE_FIELD: &str = "SDK01-TenderResult-AwardDate";
 /// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
 /// strong-enough cross-reference to key a Tender on (issue 34); the numeric
 /// channel's non-uuid folder ids are notice-local and stay islands.
@@ -3362,6 +3368,15 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
 /// decision is the `TenderResultCode`. sdk-0.1 carries no notice-internal
 /// bid/contract graph and no lot reference on the result, so those stay empty and
 /// the result is Tender-scoped.
+///
+/// What this dialect mostly publishes is a date and nothing else (issue 257).
+/// Across 2023-01, 2023-06 and 2024-06 of the DÖE archive, every award-type
+/// notice carries a `TenderResult` — the density is exactly 100 %, which is the
+/// serializer, not richness — but only 13.5 %, 15.1 % and 1.9 % of them carry a
+/// `WinningParty`. The rest are `<TenderResult><AwardDate/><AwardTime/></>`: the
+/// day of the award, no code, no winner, no value. So the winner shortfall this
+/// era shows is the publisher's, not ours — where a `WinningParty` IS published
+/// we resolve it, and every one of them carried a `PartyName` to resolve.
 fn read_sdk01_results(parsed: &Parsed) -> RawResults {
     let mut raw = RawResults::default();
     for s in &parsed.sections {
@@ -3372,13 +3387,21 @@ fn read_sdk01_results(parsed: &Parsed) -> RawResults {
     if raw.lot_results.is_empty() {
         return raw;
     }
-    // The decision code hangs on the TenderResult section itself.
+    // The decision code and the award date both hang on the TenderResult section.
     for value in &parsed.values {
-        if value.field_id == SDK01_RESULT_CODE_FIELD
-            && let NoticeValue::Code { code, .. } = &value.value
-            && let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == value.section_id)
-        {
-            r.decision = Some(code.clone());
+        let Some(r) = raw.lot_results.iter_mut().find(|r| r.key == value.section_id) else {
+            continue;
+        };
+        match &value.value {
+            NoticeValue::Code { code, .. } if value.field_id == SDK01_RESULT_CODE_FIELD => {
+                r.decision = Some(code.clone());
+            }
+            NoticeValue::Date { utc_seconds, offset_minutes, has_time }
+                if value.field_id == SDK01_AWARD_DATE_FIELD =>
+            {
+                r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
+            }
+            _ => {}
         }
     }
     // Each WinningParty section is a direct winner of its parent TenderResult.
@@ -3393,8 +3416,16 @@ fn read_sdk01_results(parsed: &Parsed) -> RawResults {
     for r in &mut raw.lot_results {
         r.direct_winners.sort();
         r.direct_winners.dedup();
-        if r.decision.is_none() {
-            r.decision = Some(if r.direct_winners.is_empty() { "clos-nw" } else { "selec-w" }.to_owned());
+        // A named winner IS a selection, so infer that much. The other half of this
+        // fallback used to read the OPPOSITE out of silence — `clos-nw`, documented
+        // to the SQL sandbox as "closed, no award" — and on this dialect silence is
+        // the norm rather than the exception: measured across three months of the
+        // DÖE archive, ~90 % of sdk-0.1 award notices publish a `TenderResult`
+        // carrying an AwardDate and nothing else. That fabricated a positive claim
+        // of "no award" on ~125k notices which state the day the award was made
+        // (issue 257). Unstated is now NULL, and the date it does state is kept.
+        if r.decision.is_none() && !r.direct_winners.is_empty() {
+            r.decision = Some("selec-w".to_owned());
         }
     }
     raw

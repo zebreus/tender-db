@@ -12,7 +12,7 @@ exercises.
 Layout is `<profile>/<notice-type>-<publication-id>.xml`, one profile directory
 per mapping profile in docs/architecture.md ("Notice identity and profiles").
 
-Total: 38 notice files, 1.1 MB.
+Total: 83 fixture files, 2.3 MB (every file under this directory except this README).
 
 ## Selection policy
 
@@ -29,7 +29,7 @@ incidental to what these fixtures test.
 
 ---
 
-## `eforms/` — eForms (TED and DÖE quirk members), 36 files, 743 KB
+## `eforms/` — eForms (TED and DÖE quirk members), 39 files, 903 KB
 
 All but the last six from TED daily package **`daily-202600136`** (`20260717_136`,
 published 2026-07-17, 3722 notices). That day spans three SDK customizations
@@ -88,7 +88,7 @@ grep for `BT-195` over the whole 2026 daily returns zero files. The mechanism is
 
 ---
 
-## `eforms-chain/` — one complete real procedure, 4 files, 77 KB
+## `eforms-chain/` — one complete real procedure, 4 files, 76 KB
 
 Procedure **`32c34097-960e-4d02-b04d-3ceac32cf020`** (Malta), harvested from
 `samples/chains/`. All four notices share that `cbc:ContractFolderID`, and the
@@ -148,7 +148,7 @@ cross-version chaining rather than a same-package coincidence.
 
 ---
 
-## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 8 files, 92 KB
+## `r209/` — TED_EXPORT R2.0.9 (and R2.0.8 members it parses), 10 files, 113 KB
 
 From TED daily package **`daily-201900001`** (`20190102_001`, published
 2019-01-02, 1529 notices). That package is itself a useful artefact: it is
@@ -171,7 +171,7 @@ because that is where it is actually found in the wild.
 - `f02-co-original-160877-2015.xml` (21,117 B): **issue 201** — Belgian-style bilingual F02 with TWO CATEGORY="ORIGINAL" sections (DE primary, FR co-original carrying a third ORGANISATION). Pins co-original section ADOPTION: the extra org is opened and fully emitted, while a relabelled EN TRANSLATION with the same extra section still rejects.
 - `f19-concession-award-criteria-281627-2012.xml` (12,346 B): **issue 194 residue** — F19 sub-contract concession (defence, R2.0.8.S02.E01, EN/BE) whose `AWARD_CRITERIA_DETAIL` carries the award-criteria sentence as BARE TEXT where every other form nests children there. Pins the TextGroup rule (both shapes consumed). One of exactly 2 such members in 30 years of corpus.
 
-## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 3 files, 65 KB
+## `r208/` — TED_EXPORT R2.0.8 (and R2.0.7), 5 files, 281 KB
 
 Mostly from TED daily package **`daily-201400001`** (published 2014-01-01, 1139
 notices, uniformly `R2.0.8.S02.E01`), plus one R2.0.7 file — issue 10 scopes
@@ -187,7 +187,7 @@ difference between the eras.
 
 ---
 
-## `text/` — text era (1993–2010), 4 files, 410 KB
+## `text/` — text era (1993–2010), 6 files, 416 KB
 
 Text-era dailies are **not** one-file-per-notice. Each language ships as a
 single concatenated stream of plain-text records, each record starting at a
@@ -212,7 +212,7 @@ commit (6.2 MB / 11 MB); they remain on the VPS at the paths above, and the
 
 ---
 
-## `doe/` — oeffentlichevergabe.de (DÖE), 3 files, 26 KB
+## `doe/` — oeffentlichevergabe.de (DÖE), 7 files, 65 KB
 
 From `samples/oeffentlichevergabe/`. The DÖE feed carries **three distinct
 encodings** and all three are represented, because issue 12 needs a checklist
@@ -223,10 +223,11 @@ per channel.
 | `eforms-de-2.1-can-15063f7d-…-01.xml` | 16 445 | `eforms-de-2.1` | `<ContractAwardNotice>` | `2026-07-18.eforms.zip` | Above-threshold German profile. Declares `cbc:ProfileID` = `eforms-sdk-1.13`, which is exactly the DE→EU base disambiguation docs/research/eforms-de-profile.md describes (eForms-DE 2.1 maps to *two* EU bases). A result-side subtype (29) was chosen deliberately: DEX statistics fields are only permitted on subtypes 29–35. |
 | `sdk-0.1-numeric-cn-25599482-1.xml` | 3 003 | `eforms-sdk-0.1` | `<ns9:ContractNotice>` | `2026-07-18.eforms.zip` | **Numeric channel.** Legacy below-threshold encoding: numeric file id, fully **prefix-mangled namespaces** (`ns2`…`ns9`, with the *default* namespace bound to the eForms extension basic-components URI rather than UBL) — the hardest namespace case in the corpus. Carries an **empty `<ns3:ContractFolderID/>`**, which is why below-threshold DÖE notices can never match a TED twin and become single-notice Tenders. |
 | `sdk-0.1-uuid-can-427d4645-…-1.xml` | 6 380 | `eforms-sdk-0.1` | `<can:ContractAwardNotice>` | `2023-01.eforms.zip` | **UUID channel** — same `eforms-sdk-0.1` customization, but UUID-named and a *third* prefix scheme (`can:`). Sourced from 2023-01 deliberately: by the 2026-07-18 export the uuid channel has died out (that day is 346 numeric + 221 `eforms-de-2.1`, zero uuid `sdk-0.1`), so this encoding only exists in the older months. 2023-01 holds 1493 uuid-named vs 12807 numeric-named files. |
+| `sdk-0.1-can-awarddate-only-19191760-1.xml` | 4 960 | `eforms-sdk-0.1` | `<ns9:ContractAwardNotice>` | `2023-01.zip` | **The dialect's normal award notice** (issue 257). Its whole result block is `<ns5:TenderResult><ns3:AwardDate/><ns3:AwardTime/></>` — no `TenderResultCode`, no `WinningParty`, no value. Not an outlier: every award-type notice in the month carries a `TenderResult` (2 895 of 2 895 — the serializer, not richness) and only 13.5 % of them name a winner; by 2024-06 it is 1.9 %. Committed because the projection used to read this silence as `clos-nw` ("closed, no award") on a notice that states the day of the award. |
 
 ---
 
-## `doe-ted-pair/` — the verified cross-source pair, 2 files, 79 KB
+## `doe-ted-pair/` — the verified cross-source pair, 2 files, 78 KB
 
 The **same procedure published on both sources**, the concrete case behind
 ADR-0003 (cross-source merge) and issue 12's acceptance criterion. Verified
