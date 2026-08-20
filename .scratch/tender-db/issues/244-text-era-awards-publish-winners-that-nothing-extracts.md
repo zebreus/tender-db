@@ -1002,3 +1002,24 @@ restored `1 000,2 EUR` yields `None`.
 
 Not yet deployed — the 221-240 sweep (jobs 282/283) is running, and a deploy restarts the service,
 which re-runs the running job from the top (issue 245). It goes out when the queue is idle.
+
+
+## Campaign state after the 221-240 sweep (2026-08-20 11:00)
+
+Fetches **221-240 are re-parsed** — job 282, 524,774 notices across 20 packages, 0 unmatched, 0 now
+failing. That is the parse layer only: their fold (job 283) ran for 3 h 38 m without finishing and was
+dropped to unblock the day's ingest (issue 256), so those tenders are still stamped epoch-stale and
+the canonical numbers for those packages have NOT moved yet. Job 288, enqueued 10:59, is the fold that
+owes them.
+
+Two numbers for whoever plans the next batch:
+
+    1 package  re-parse ≈ 40-90 s,  fold ≈ 80-100 s
+    20 packages re-parse = 28 min,  fold = did not finish in 3 h 38 m
+
+The fold's cost is dominated by corpus-wide steps that do not care how few packages changed — a
+14,285,381-notice plan phase (91 min) and then the ADR-0011 previous-notice pass, which is where it
+stopped. So the batch size that made the RE-PARSE efficient is exactly what made the FOLD unbounded,
+and until issue 256 part 2 is understood the sweep should run in batches whose fold is known to
+complete. The 161 remaining packages are not blocked on parser work — slices 2-9 are all deployed —
+only on a fold that finishes.
