@@ -140,3 +140,40 @@ substance (dormant for a month) is unchanged.
   to watch, with the 1,899-renamed / 2,884-in-one-day numbers.
 - **Step 3** is a no-op unless the rate climbs, at which point ADR-0010 names claim-and-store as the
   alternative to reopen first. Nothing to schedule: the report now carries the number that would say so.
+
+
+---
+
+## The watch read, and it is holding (2026-08-20)
+
+Section 5 of the 2026-08-20 run, which is this issue's instrument doing its job:
+
+    reason                          arrivals(30d)  newest
+    unknown-customization               1,198,709  2026-07-29
+    unparsable-xml                        623,756  2026-07-21
+    unknown-field-code                    443,287  2026-07-21
+    unclaimed-content                       4,152  2026-07-21
+    unrepresentable-value                   3,103  2026-08-19
+    not-utf8                                1,492  2026-07-21
+
+The distinction this issue was built to make works exactly as intended: every large bucket has a
+`newest` weeks old — settled residue from the July backfill — while `unrepresentable-value` was fed
+**yesterday**. That is the live one, and it is ADR-0010's.
+
+**Its rate, measured rather than read off the 30-day total:** 8 arrivals in the last 2 days, 13 in the
+last 5 — so **~3–4 per day**, at or slightly below the 5–13/day the ADR amendment records. No reopen
+trigger. And the details are precisely what ADR-0010 describes:
+
+    BT-720-Tender:      amount has more than two frac…    8
+    BT-711-LotResult:   amount has more than two frac…    2
+    BT-161-NoticeResult: amount has more than two f…      2
+    BT-113-Lot:         not an integer: 1000000000000000  1
+
+The last one is not a sub-cent amount at all — a publisher typed a 16-digit integer into a lot count. One
+row, noted rather than filed.
+
+**A trap worth recording, because I nearly fell into it:** the 30-day column read as "3,103 arrivals ≈
+103/day", which would have been an 8–20× breach of the ADR's rate and grounds to reopen it. It is not:
+the window reaches back to the July backfill, so the total is dominated by rows weeks old. The rate has
+to be measured over a recent window, not divided out of the 30-day count. Section 5 gives the arrival
+DATE for exactly this reason and the reader still has to use it.

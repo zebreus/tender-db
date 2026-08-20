@@ -1,8 +1,8 @@
 # 231 — sdk-0.1 amounts are never mapped, and whether the era carries CPV at all is unanswered
 
-Status: CPV half DONE and VERIFIED on prod 2026-08-19 (mapped, fixture-tested, era re-folded); the value
-half is NOT a mapping gap — the amounts never reach the parse layer, so its diagnosis moves upstream and
-stays open
+Status: CPV HALF **CLOSED** 2026-08-20 — the acceptance number is in: the era measures **cpv 93.8 %**,
+up from 0.0 %. The value half remains open and its diagnosis is upstream (the amounts never reach the
+parse layer at all)
 Kind: projection mapping gap (one era, two fields) + one research question
 Blocked by: —
 Relates to: 29 (the parent gap, now verified closed for title/buyer/deadline), 177 (the same
@@ -118,3 +118,26 @@ half.
 Before this the same rows read `nuts place` only. So the era's published CPV now reaches the canonical
 layer at both scopes, and the next data-quality run should move its `cpv` column off 0.0 % — that column is
 the acceptance number and it is the one thing still to read.
+
+
+---
+
+## ACCEPTED (2026-08-20): the era's cpv column, read from a full run
+
+Section 1 of the data-quality run completed 2026-08-20 (5,503 s, 23 eras, 32 windows, 0 labels
+unmeasured):
+
+    era                       versions   title  buyer  value    cpv deadline winner
+    DÖE sdk-0.1 island         667,084  100.0% 100.0%   0.0%  93.8%    77.9%    1.1%
+
+**cpv 0.0 % → 93.8 %.** That is the number this issue said could not move before the era was re-folded,
+and the one thing it was still waiting on. The CPV half is closed.
+
+The remaining 6.2 % is not this issue's business: an sdk-0.1 notice that publishes no
+`CommodityClassification` has no CPV to project, and the presence question this issue insisted on
+asking first is what established that the era does publish it *when it has one*.
+
+**The value half stays open, unchanged.** Still 0.0 %, and still not a mapping gap: `notice_amounts`
+holds zero rows for the era, so there is nothing for an `AMOUNTS` entry to catch. The open question is
+the one recorded above — whether the payload carries a monetary value the parser is not claiming, or
+the dialect publishes none.

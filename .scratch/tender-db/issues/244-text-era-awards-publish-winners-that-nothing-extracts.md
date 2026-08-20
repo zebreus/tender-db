@@ -1,12 +1,10 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: SLICE 4 BUILT 2026-08-19 — the contract price, at notice scope, claimed only from one
-unambiguous shape (one number, one three-letter currency code, nothing else); everything ranged,
-dual-currency, tax-qualified, annualised, sub-cent or withheld is refused rather than guessed.
-No projection change: `TED-VAL_TOTAL` at root is already mapped to `result_value`. Slice 3 is
-DEPLOYED and A/B-verified — winners went 12 → 755 → 3,807 on one package, 0.3% → 18.2% → 91.7% of
-its 4,153 award notices. AWAITING DEPLOY + the value A/B. Still open: the award date and the
-tenders-received count (both need canonical destinations), and the 2010 tail.
+Status: ERA ACCEPTANCE READ 2026-08-20 — section 3 shows the text era at **462,772 of 1,306,514 award
+notices materialised (35.4 %), from 0**, with the fold's own shortfall at 0. Slices 2-6 are deployed;
+the gap to the ~90 % the per-package A/B demonstrates is the redo sweep (task 38), which is now the
+only remaining stage. Still open beyond it: the award date, the tenders-received count, and the 2010
+tail.
 Kind: extraction gap, the largest single cohort in the corpus
 Blocked by: — (wants to ride along with the text-era re-parse already planned for the AU→buyer fix)
 Relates to: 235 (the denominator that made this visible), 242 (the column it landed in), 13 (results
@@ -737,3 +735,37 @@ per-lot (structural), a converted or annualised figure (a different fact), or wi
 arc for this package's money is therefore **0 % → 30.9 %** of its 3,227 price-label bodies, and the rest
 is the refusal set analysed above — per-lot lists, conversions, annualised figures, withheld, prose —
 which is where it should stay until a value can be attributed per LotResult.
+
+
+## THE ERA ACCEPTANCE, read from a full run (2026-08-20)
+
+This issue's stated acceptance was the text era's row in **section 3** of the data-quality report. The
+run finished 2026-08-20 (5,503 s, 32 windows, 0 labels unmeasured):
+
+    era                      award-notices  with lot_results  density  no block parsed
+    text 1993–2010               1,306,514           462,772    35.4%          843,753
+
+**0 → 462,772 award notices now carry a result block, 35.4 % density.** When this issue was filed, that
+column was the 1.3M-notice hole the whole thing is named after.
+
+And the fold is not the constraint: *"Award notices whose result block IS parsed and still did not
+materialise, i.e. the fold's own shortfall: **0**."* Every result block the parse layer holds
+materialises. What is left is parse-layer coverage, which is this issue's own remaining work.
+
+### Why 35.4 % and not 91.7 %
+
+The per-package A/B on `fetch 300` put winner coverage at **91.7 % of award notices** — but that is
+`fetch 300` re-parsed under slice 3. The corpus-wide number mixes packages re-parsed under slices 1, 2,
+3 and 4 at different times, plus ~80 of 216 packages not re-parsed at all yet. The gap between 35.4 %
+and ~90 % is exactly the **redo sweep** (task 38: fetch 186–374), which is the campaign's last stage and
+is now the only thing between this era and its ceiling.
+
+Section 1 moves too, for the same partial reason:
+
+    era                      versions   title  buyer  value    cpv deadline winner
+    text 1993–2010          3,786,955  100.0%  63.0%   0.5%  95.5%    84.4%   13.0%
+
+`winner 13.0 %` against a ~28 % ceiling (91.7 % of awards, awards being ~30 % of the era's versions), and
+`value 0.5 %` because the price slices landed only at the very end of the forward pass. Both rise with
+the sweep. `buyer 63.0 %` is the separate `AU:`→buyer mapping this issue's header has always named as
+riding along with the same re-parse.

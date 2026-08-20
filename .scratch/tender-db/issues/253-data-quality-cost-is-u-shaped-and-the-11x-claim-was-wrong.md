@@ -1,11 +1,10 @@
 # 253 — data-quality cost is U-shaped across the id space, and the "11× slower" claim was measurement error
 
-Status: CORRECTED AND LARGELY WITHDRAWN 2026-08-20 — the "~11x slower" premise was WRONG. It came
-from timing one query while a local test suite was saturating the box CPU. The run's own per-window
-journal, read once it reached window 24, shows no regression: it is tracking the 5,566 s baseline.
-What is real is a U-shaped cost profile and one cheap optimisation the measurement does support —
-see the correction at the bottom. Reduced from a regression to a sizing observation
-Kind: performance regression in a scheduled job, caused by the data improving
+Status: CLOSED 2026-08-20 as **measured and inherent**. The run finished in 5,503 s against a 5,566 s
+baseline — no regression, and the "~11x" premise was my own measurement error. The cost table and the
+U-shaped profile are recorded below as the note for whoever next sizes the windows. The one
+optimisation this issue proposed is ALSO withdrawn, and for a reason worth reading
+Kind: was filed as a performance regression; is a cost-profile note plus a retracted claim
 Blocked by: —
 Relates to: 243 (which merged three award queries into this one and measured its cost), 230 (the
 windowed measurement), 244 (the campaign that gave the era its awards), 235 (the numbers the query
@@ -168,3 +167,56 @@ it is — which is the point this issue should have started from.
 - If `awards` dominates: reorder the arms, A/B one legacy window, record both numbers.
 - If it does not: close this as "measured, inherent", and keep the U-shaped profile as the note for
   whoever next thinks about window sizing.
+
+
+---
+
+## CLOSED: the run finished, and both of this issue's ideas were wrong
+
+    data quality measured: 23 eras over 32 windows in 5503s; 0 label(s) unmeasured
+
+**5,503 s against the 5,566 s baseline.** Not slower. The regression this issue was filed about does not
+exist.
+
+### The cost table, which is the durable output
+
+    awards        2,063s        buyer          162s        winner          56s
+    sections_can  1,093s        cpv            123s        value           38s
+    doc_types       958s        deadline        89s        sections_with   27s
+    title           772s        merge           65s        linkage         27s
+                                                          versions        26s
+
+`awards` is 37.5 % of the run, and `awards` + `sections_can` + `doc_types` + `title` are 89 % of it. For
+scale, issue 243 measured the three pre-merge award queries at 1,346 + 495 + 813 = 2,654 s and predicted
+~1,858 s merged; the actual 2,063 s is ~11 % above that prediction, which is ordinary corpus growth over
+several weeks, not a step change.
+
+### The window profile, U-shaped
+
+    windows  1-5   (id ≤ 1.25M)     2,332s   —  66% of the run, 16% of the id space
+    windows  6-16  (1.25M-4.0M)       477s   —  34-55s each, the sparse middle
+    windows 17-24  (4.0M-6.0M)        733s   —  62s climbing to 147s
+    windows 25-31  (6.0M-7.75M)     1,703s   —  183s to 274s, the dense modern eras
+    window  32     (tail)             109s
+
+The fixed `DQ_WINDOW = 250_000` fits neither end. Resizing would **not** reduce the total — every version
+is measured exactly once either way — but it would even out progress reporting and shorten the
+worst-case wait before a cancel takes effect, which issue 252 has just made matter.
+
+### Withdrawing the optimisation too
+
+This issue proposed reordering the award predicate's six profile-gated arms, on the reasoning that a
+legacy row "pays five useless probes". **That reasoning is wrong.** Each arm is
+`(n.profile LIKE '…') AND EXISTS(…)` — the cheap string test stands *before* its subquery, so a
+non-matching arm costs a `LIKE`, not an index probe. Reordering would save four string comparisons per
+row, which is nothing.
+
+It is possible that this engine does not short-circuit `AND` the way the shape implies — it has
+surprised us twice before (239, 248) — but that is a question to *test*, not a change to make. Recorded
+here rather than acted on. Anyone picking it up: the A/B is cheap, since a narrow window
+(`tender_id 0..25000`) brings the awards query under the `/v1/sql` 10 s cap.
+
+### What this issue is worth keeping for
+
+The cost table and the window profile. Everything else in it was me reasoning ahead of the measurement,
+twice in the same issue.

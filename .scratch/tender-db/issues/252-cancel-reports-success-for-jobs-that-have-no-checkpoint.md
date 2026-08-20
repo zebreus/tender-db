@@ -94,7 +94,28 @@ literally so adding a kind to it without a checkpoint fails here.
 `docs/operations.md` lists all four answers beside the cancel examples, including that a cancelled
 data-quality run stores nothing.
 
-## Still to do
+## VERIFIED ON PROD (2026-08-20, rev `96d63a2`)
 
-The prod acceptance: cancel a real `data-quality` run after the deploy and watch it end within one
-query. The run that exposed this could not be stopped and had to be left going.
+Exercised against a real run, which is the only check that proves a flag is read:
+
+    $ ops/admin.sh enqueue data-quality '{"dry_run":false}'   → job 203
+    $ ops/admin.sh cancel 203
+      {"cancelled": 203, "state": "stopping"}
+
+    203 data-quality ok | data quality: CANCELLED after 2 of 417 measurement(s) in 34s
+                          — nothing stored, the previous report stands
+
+**It stopped after the second of 417 measurements**, and the report from the run that exposed this issue
+is intact. Compare the behaviour that opened the file: `{"cancelled": 202}` followed by ten more queries
+over six minutes.
+
+The queued answer is distinct too, checked in the same pass — cancelling a queued `project` while a
+`reparse` held the worker returned `{"cancelled": 206, "state": "dropped"}`.
+
+**The 409 is NOT prod-verified**, and honestly it may never be by hand: an incremental `project` over an
+idle corpus finishes in under a second, so a cancel aimed at one lands after it has gone and gets the
+404. Two attempts, both 404. The unit test is what pins that path, and it pins it at the level that
+matters — the kind lookup, not the timing.
+
+(That same attempt cost the fetch-300 fold, since the `project` I cancelled to test the 409 was the one
+paired with a re-parse. Re-queued; noted because it is the kind of thing worth not repeating.)
