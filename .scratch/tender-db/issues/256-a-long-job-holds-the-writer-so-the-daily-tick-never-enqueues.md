@@ -116,3 +116,44 @@ and the next long job is the natural place to re-check it with `ops/admin.sh enq
 What part 1 does NOT do: it does not make the day's ingest timely. The jobs still wait for the worker,
 which is busy with the long job. It removes the SILENCE and the loss — the tick's jobs appear in the
 queue, the log says the row was skipped, and the work runs the moment the worker frees.
+
+
+## The step it was stuck in, and how today ended (2026-08-20, 10:53)
+
+The fold never logged again after `group step legacy-update` at 08:44:32. The next step in
+`canonical.rs` is the **ADR-0011 previous-notice pass** (issue 236), and its own timing line —
+`group step previous-notice: …s (… edge(s) resolved, … key(s) merged)` — prints when that step
+FINISHES. It never printed. So the job spent **2 h 05 m inside one step** and was still there when I
+stopped it, at 89 % CPU, RSS flat at 2.55 GB for the last hour (so not accumulating rows), cursor
+static since 08:40 (so not writing).
+
+The step's driver is a four-way join built per run:
+
+    FROM plan_prev_edge e
+    JOIN notices n      ON n.source = e.a_source AND n.publication_id = e.b_publication_id
+    JOIN plan_notice a  ON a.notice_id = e.a_notice_id
+    JOIN plan_notice b  ON b.notice_id = n.id
+    WHERE …
+
+`notices` carries `UNIQUE(source, publication_id, content_hash)`, whose leading columns are exactly
+that join's keys, so it CAN seek — on a plan holding 14.3 M notices it evidently did not, or the edge
+set was far larger than the 563 resolvable references ADR-0011 measured. **Unproven either way**, and
+worth proving before anyone optimises it: the honest statement today is that the step did not complete
+in two hours on a full-corpus plan, not that I know why.
+
+### What I did about it
+
+The daily ingest had not run in 5 hours and the fold's own work was re-runnable, so the fold lost:
+
+1. `TENDER_DROP_JOBS=283` into the systemd drop-in, `systemctl restart tender-db`;
+2. recovery dropped the job (`supervisor: dropping recovered job 283 per TENDER_DROP_JOBS`) instead of
+   re-running it;
+3. issue 245's startup catch-up then did exactly its job — it saw the 09:35 tick had passed unserved
+   and enqueued the daily, which began fetching within four seconds (`284 probe ok | probed 3
+   issue(s), 1 new`);
+4. the drop hatch was cleared again immediately, so the next restart drops nothing.
+
+So today's notices are landing. The 524,774 re-parsed notices from job 282 are still stamped
+epoch-stale, and the daily's own `project` (job 288) now inherits that fold — the same plan, the same
+step. If it stalls the same way, that is the reproduction this issue needs and the next unit is to
+measure the edge set and the join's plan rather than to guess at them.
