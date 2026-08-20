@@ -70,11 +70,13 @@ const AUTHORITY_SECTION: &str = "ORG-1";
 /// different word, which is why the first pre-2004 pass still missed four fifths of
 /// the era's awards. Counted over `fetch 300`'s 13,734 bodies (2001-06), one scan:
 ///
+/// ```text
 ///     …successful contractor…                                785
 ///     …successful tenderer…                                  122
 ///     supplier(s):                                         1,435
 ///     supplier(s), contractor(s) or service provider(s):      410
 ///     contractor(s):                                          735   (mostly the above)
+/// ```
 ///
 /// So `SUPPLIER(S):` alone is the single biggest remaining label. `SERVICE PROVIDER(S):`
 /// is the tail of the long combined heading — matching the tail rather than the whole
@@ -164,9 +166,11 @@ const VALUE_LABELS: [&str; 5] =
 ///
 /// The 2005-2010 vintage writes the award value as prose that continues past the figure:
 ///
+/// ```text
 ///     Total final value of the contract: Value: 791 805 EUR. Excluding VAT.
 ///     Total final value of contract(s): Value: 39 279 748,48 PLN. Including VAT.
 ///                                      VAT rate (%): 22,00 %.
+/// ```
 ///
 /// `next_item_marker` cannot bound that — there is no ` <n>. ` — and the sub-label retry
 /// would strip to after the LAST colon, which in the second body is `VAT rate (%):` and
@@ -182,6 +186,48 @@ const VALUE_STOPS: [(&str, Option<&str>); 5] = [
     ("AWARD OF CONTRACT", None),
 ];
 
+/// The words that mark a total as the NOTICE's rather than one contract's (issue 244
+/// slice 8).
+///
+/// The sectioned form states the same kind of fact at two scopes:
+///
+/// ```text
+///     II.2.1)  Total final value of contract(s): Value: 81 605 403,00 SEK.
+///     ...
+///     CONTRACT NO: 1  V.4)  ... Total final value of the contract: Value: 40 087 596,00 SEK.
+///     CONTRACT NO: 2  V.4)  ... Total final value of the contract: Value: 15 605 000,00 SEK.
+///     CONTRACT NO: 3  V.4)  ... Total final value of the contract: Value: 14 700 772,00 SEK.
+///     CONTRACT NO: 4  V.4)  ... Total final value of the contract: Value: 11 212 035,00 SEK.
+/// ```
+///
+/// That is notice 3871014, and it settles what the relationship is: the four contract
+/// figures sum to 81 605 403 — EXACTLY the `II.2.1` figure. So a body stating both is not
+/// stating one fact twice and contradicting itself; it is stating a total and its parts.
+/// `TED-VAL_TOTAL` is a notice-scope field, so the aggregate is the one to claim, and the
+/// per-contract figures are a `lot_results`-scope fact this does not yet have a home for.
+///
+/// Measured on `fetch 200` after slice 7: of 3,656 bodies that state `Total final value`
+/// and still yield no amount, **1,959 state the aggregate with a figure** — the single
+/// largest remaining class, and every one of them was refused as a self-contradiction.
+///
+/// The plural is the whole signal: `of contract(s)` is II.2.1, `of the contract` is V.4.
+const AGGREGATE_SCOPE: &str = "OF CONTRACT(S)";
+
+/// How the sectioned form heads each contract it awards, and therefore how many contracts
+/// a body awards (issue 244 slice 8). Counting these is what separates a notice whose
+/// single `V.4` figure IS its total from one where that figure is a part.
+///
+/// The leading newline is load-bearing. `CONTRACT NO` is a heading in the sectioned form
+/// but a REFERENCE in the pre-2004 numbered one, which writes it inside item 6 —
+/// `6. Successful contractor(s): Contract No 710-7009: AS Anlegg, Arvid` (notice 1710588)
+/// — and some bodies mention it twice. Counted as a bare substring, that reads as two
+/// contracts and drops the notice's only price: measured over `fetch 300`, 7 of its 996
+/// amounts. Counted at line starts only, the numbered form scores 0 in all 996 bodies,
+/// while the sectioned band still flags 2,154 of `fetch 200`'s 9,549 — against 2,317 for
+/// the bare count, and 159 of that difference are bodies with ONE heading plus a mid-line
+/// mention, i.e. single-contract notices the bare count would have refused.
+const CONTRACT_MARKER: &str = "\nCONTRACT NO";
+
 /// How a monetary value must be written to be claimed at all.
 ///
 /// This is deliberately the strictest reading of the shapes on prod, because a wrong
@@ -189,6 +235,7 @@ const VALUE_STOPS: [(&str, Option<&str>); 5] = [
 /// `result_value` and nothing downstream can tell it from a published figure. The
 /// measured shapes, and what happens to each:
 ///
+/// ```text
 ///     2 143 000 EUR.                                    claimed
 ///     5 301 802,22 FRF TTC.                             refused — `TTC` is a tax basis
 ///     562 680 GBP p.a.                                  refused — annual, not a total
@@ -196,6 +243,7 @@ const VALUE_STOPS: [(&str, Option<&str>); 5] = [
 ///     Minimum/maximum: Lit 2 610/Lit 3 289.             refused — a range
 ///     Lit 1 000 000 000.                                refused — `Lit` is not a code
 ///     Publication of this information would prejudice…  refused — withheld
+/// ```
 ///
 /// So: exactly one number and exactly one three-letter upper-case currency code, in
 /// either order, and NOTHING else in the value but a closing period. A qualifier that
@@ -352,12 +400,14 @@ const LOT_PREFIX_MAX: usize = 24;
 /// shape — the committed `1993-daily-en-19930102` fixture uses it for roughly a third
 /// of its winners, in every one of these spellings:
 ///
+/// ```text
 ///     6.  Supplier(s): A: Apotecnia, Climo
 ///     6.  Supplier(s): 1: Ailsa Truck and Bus Limited, 101 Kelburn Street, …
 ///     6.  Supplier(s): 1/2: Evans MacShaw Leyland DAF Limited, Shefford Road, …
 ///     6.  Supplier(s): 1, 2: Carlier Chaines, 37/41, rue Roger Salengro, …
 ///     6.  Supplier(s): 1, 2, 3 and 4: Dolmen Computer Applications NV, …
 ///     6.  Supplier(s): 1: Baxter Healthcare; 2: B. Braun Medical; 3: Fresenius …
+/// ```
 ///
 /// Taken verbatim these mint `1: Ailsa Truck and Bus Limited` — a second spelling of a
 /// company that also appears unprefixed, and since these winners carry no identifier the
@@ -417,7 +467,9 @@ fn strip_lot_prefix(value: &str) -> &str {
 /// form's (`BP, Hamburg; Thelen, Mainz.`). The supplies form instead ends each entry
 /// with a period and opens the next with its lot reference:
 ///
+/// ```text
 ///     6.  Supplier(s): 1: Discol. 2: Rault. 3: Discol. … 14: Sarl Fuseau
+/// ```
 ///
 /// Fourteen winners in one item. Read as one value that is a 150-character "company"
 /// name; read as fourteen it is fourteen organizations, which is what the payload says.
@@ -576,7 +628,10 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
         return None;
     }
     let flat = flatten(body);
-    let mut found: Option<(i64, String, Option<&'static str>)> = None;
+    // Per scope (0 = one contract, 1 = the whole notice): the claim held there, and
+    // whether two claims at that scope disagreed (issue 244 slice 8).
+    let mut claim: [Option<(i64, String, Option<&'static str>)>; 2] = [None, None];
+    let mut conflict = [false, false];
     let mut at = 0usize;
     while at < flat.len() {
         let Some((start, label)) = VALUE_LABELS
@@ -589,6 +644,9 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
         let value_at = start + label.len();
         let rest = &flat[value_at..];
         let window = &rest[..char_bound(rest, NAME_WINDOW)];
+        // Which scope this occurrence states, read from the words right after the label
+        // and before the colon skip below eats them.
+        let scope = usize::from(find_ascii_ci(window.trim_start(), AGGREGATE_SCOPE) == Some(0));
         // `VALUE OF WINNING AWARD` is matched without its `(s):` tail, since the era writes
         // both the plural and the singular. Skip to just past the colon that ends the
         // heading — by position, so `(s):` and `(S):` behave the same. The bound keeps this
@@ -602,17 +660,32 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
         // bound this. Any numbered item does.
         let end = next_item_marker(window);
         if let Some(money) = read_value_item(&window[..end.unwrap_or(window.len())]) {
-            match &found {
-                // Two labels agreeing is one fact stated twice; two disagreeing is a
-                // notice this cannot read.
-                Some(seen) if *seen != money => return None,
+            match &claim[scope] {
+                // Two labels agreeing is one fact stated twice; two disagreeing AT THE
+                // SAME SCOPE is a notice this cannot read.
+                Some(seen) if *seen != money => conflict[scope] = true,
                 Some(_) => {}
-                None => found = Some(money),
+                None => claim[scope] = Some(money),
             }
         }
         at = value_at;
     }
-    found
+    // A per-contract figure is the NOTICE's total only when the notice awards ONE
+    // contract. With several, one contract's value is a PART: notice 3871014 awards four
+    // and its first V.4 figure is 40 087 596 SEK against a real total of 81 605 403, so
+    // claiming it would understate by half. This drops such a claim rather than record it,
+    // and it cannot touch the pre-2004 numbered form, which never writes `CONTRACT NO`.
+    if count_ascii_ci(body, CONTRACT_MARKER) > 1 {
+        claim[0] = None;
+    }
+    // The widest scope the notice states wins, and a conflict THERE is still a refusal —
+    // a narrower figure is not a fallback for an unreadable total.
+    claim
+        .iter()
+        .enumerate()
+        .rev()
+        .find_map(|(scope, held)| held.as_ref().map(|money| (scope, money)))
+        .and_then(|(scope, money)| (!conflict[scope]).then(|| money.clone()))
 }
 
 /// One value item: the figure it states, whether or not a sub-label stands in front of
@@ -622,7 +695,9 @@ fn awarded_value(body: &str) -> Option<(i64, String, Option<&'static str>)> {
 /// state a price label, and SIX of eight sampled refusals were one shape — a
 /// local-language sub-label ending in a colon before an otherwise perfect figure:
 ///
+/// ```text
 ///     Price: Auftragssumme (ohne Umsatzsteuer): 689 655,17 DEM.
+/// ```
 ///
 /// So a value that does not parse whole is retried after its LAST colon — but only when
 /// the part being skipped **contains no digit**. That guard is the whole safety of this
@@ -723,6 +798,19 @@ fn find_ascii_ci(haystack: &str, needle: &str) -> Option<usize> {
         return None;
     }
     h.windows(n.len()).position(|w| w.eq_ignore_ascii_case(n))
+}
+
+/// How many times `needle` occurs in `haystack`, ASCII-case-insensitively and without
+/// overlap. Slicing past each match is safe because an ASCII needle can only match ASCII
+/// bytes, which are never part of a multi-byte UTF-8 sequence.
+fn count_ascii_ci(haystack: &str, needle: &str) -> usize {
+    let mut n = 0;
+    let mut at = 0;
+    while let Some(i) = find_ascii_ci(&haystack[at..], needle) {
+        n += 1;
+        at += i + needle.len();
+    }
+    n
 }
 
 #[derive(Debug, PartialEq)]
@@ -1938,6 +2026,142 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(
             p.values.iter().find(|v| v.field_id == "TED-VAL_TOTAL_TAX_BASIS").map(|v| &v.value),
             Some(&NoticeValue::Code { list: None, code: "excl".to_owned() })
+        );
+    }
+
+
+    /// Issue 244 slice 8: the sectioned form states its total at TWO scopes, and treating
+    /// the pair as a self-contradiction was discarding the one `TED-VAL_TOTAL` asks for.
+    ///
+    /// After slice 7, `fetch 200` still yielded no amount for 3,656 bodies that state
+    /// `Total final value` — and 1,959 of them state the `II.2.1` aggregate WITH a figure.
+    /// They were refused as disagreements. They are not disagreements.
+    #[test]
+    fn the_notice_scope_total_outranks_one_contracts_share() {
+        // Verbatim from notice 3871014: the aggregate, then its four parts.
+        let four_contracts = "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+             II.2.1)  Total final value of contract(s): Value: 81 605 403,00 SEK.\n\
+             Excluding VAT.\n\
+             SECTION V: AWARD OF CONTRACT\n\
+             CONTRACT NO: 1\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+             Value: 40 087 596,00 SEK.\n\
+             Excluding VAT.\n\
+             CONTRACT NO: 2\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+             Value: 15 605 000,00 SEK.\n\
+             Excluding VAT.\n\
+             CONTRACT NO: 3\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+             Value: 14 700 772,00 SEK.\n\
+             Excluding VAT.\n\
+             CONTRACT NO: 4\n\
+             V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+             Value: 11 212 035,00 SEK.\n\
+             Excluding VAT.";
+        // THE ARGUMENT, in cents: the four parts sum to the aggregate exactly. That is
+        // what makes `II.2.1` a total and the `V.4` figures its parts, rather than five
+        // readings of one fact that happen to disagree.
+        assert_eq!(4_008_759_600i64 + 1_560_500_000 + 1_470_077_200 + 1_121_203_500, 8_160_540_300);
+        assert_eq!(
+            awarded_value(four_contracts),
+            Some((8_160_540_300, "SEK".to_owned(), Some("excl"))),
+            "the notice's own total, not the first contract's share"
+        );
+
+        // Verbatim from notice 3871013, where the two scopes genuinely differ by more than
+        // grouping — 116.25M against 116.0M — and the notice-scope figure still wins.
+        assert_eq!(
+            awarded_value(
+                "II.2)  TOTAL FINAL VALUE OF CONTRACT(S)\n\
+                 II.2.1)  Total final value of contract(s): Value: 116 250 000,00 SEK.\n\
+                 Excluding VAT.\n\
+                 SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 1\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Initial estimated total value of \
+                 the contract:\n\
+                 Value: 110 000 000,00 SEK.\n\
+                 Excluding VAT.\n\
+                 Total final value of the contract:\n\
+                 Value: 116 000 000,00 SEK.\n\
+                 Excluding VAT."
+            ),
+            Some((11_625_000_000, "SEK".to_owned(), Some("excl")))
+        );
+
+        // THE GUARD THIS SLICE OWES. A body awarding several contracts and stating no
+        // aggregate must claim NOTHING, even when its per-contract figures agree — two
+        // contracts of 40 087 596 make a notice total of twice that, and recording one of
+        // them as `TED-VAL_TOTAL` would understate it by half. Before this slice the
+        // agreeing pair read as one fact stated twice, and was claimed.
+        assert_eq!(
+            awarded_value(
+                "SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 1\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                 Value: 40 087 596,00 SEK.\n\
+                 Excluding VAT.\n\
+                 CONTRACT NO: 2\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                 Value: 40 087 596,00 SEK.\n\
+                 Excluding VAT."
+            ),
+            None,
+            "one contract's share is not the notice's total when there are two of them"
+        );
+
+        // And a single-contract body still claims its own figure: the guard counts
+        // contracts, it does not distrust the `V.4` scope.
+        assert_eq!(
+            awarded_value(
+                "SECTION V: AWARD OF CONTRACT\n\
+                 CONTRACT NO: 1\n\
+                 V.4)  INFORMATION ON VALUE OF CONTRACT Total final value of the contract:\n\
+                 Value: 40 087 596,00 SEK.\n\
+                 Excluding VAT."
+            ),
+            Some((4_008_759_600, "SEK".to_owned(), Some("excl")))
+        );
+
+        // Two AGGREGATES disagreeing is still unreadable — the scope rule ranks scopes,
+        // it does not stop a notice from contradicting itself within one.
+        assert_eq!(
+            awarded_value(
+                "II.2.1)  Total final value of contract(s): Value: 81 605 403,00 SEK.\n\
+                 Excluding VAT.\n\
+                 II.2.1)  Total final value of contract(s): Value: 70 000 000,00 SEK.\n\
+                 Excluding VAT."
+            ),
+            None,
+            "a conflict at the widest scope is a refusal, not a reason to look narrower"
+        );
+
+        // The marker is a HEADING, counted at line starts only. The pre-2004 numbered form
+        // writes the winner's contract REFERENCE inside item 6, and a bare substring count
+        // reads that as a second contract — 7 of `fetch 300`'s 996 amounts would have been
+        // dropped, all of them correct.
+        assert_eq!(count_ascii_ci(four_contracts, CONTRACT_MARKER), 4);
+        assert_eq!(
+            count_ascii_ci(
+                "6.  Successful contractor(s): Contract No 710-7009: AS Anlegg, Arvid\n\
+                 8.  Price: 15 887 897 NOK.",
+                CONTRACT_MARKER
+            ),
+            0,
+            "a contract reference inside an item is not a contract heading"
+        );
+        // Modelled on notice 1710588, one of those 7: two mentions, one contract, and a
+        // price that must still be claimed. Item 9's `Approximately 16 000 000 NOK` is
+        // refused by [`parse_money`] as it always was, so the price stands alone.
+        assert_eq!(
+            awarded_value(
+                "3.  Date of award: 24.4.2001.\n\
+                 6.  Successful contractor(s): Contract No 710-7009: AS Anlegg, Arvid\n\
+                 8.  Price: 15 887 897 NOK.\n\
+                 9.  Value of winning award(s): Approximately 16 000 000 NOK. Contract No \
+                 710-7009."
+            ),
+            Some((1_588_789_700, "NOK".to_owned(), None))
         );
     }
 

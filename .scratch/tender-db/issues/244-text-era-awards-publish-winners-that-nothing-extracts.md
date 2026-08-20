@@ -834,3 +834,81 @@ Three things this deliberately does not do:
 
 Falsified rather than assumed: with `VALUE_STOPS` disabled, the new test is the only one in the module
 that fails — so the stops, not some pre-existing path, are what read these bodies.
+
+
+### The slice-7 A/B, and the slice it exposed
+
+Deployed as `8dc4117`, `fetch 200` re-parsed and re-folded (jobs 278/279, 32,920 notices →
+30,379 tenders):
+
+    notice_amounts rows, fetch 200        41 → 5,916      (all TED-VAL_TOTAL)
+    tax basis captured                    3,690 excl · 1,665 incl   (5,355 of the 5,916)
+    bodies stating `Total final value`     9,549, of which 5,893 now carry an amount (61.7 %)
+
+**41 → 5,916.** The first tax-basis data at scale in the corpus, and the first money at all
+for this vintage.
+
+Then I sampled the 3,656 bodies that state a value and still yield none, and the top of the
+sample looked WRONG — `Value: 37 352 983,46 PLN. Excluding VAT.` is exactly the shape slice 7
+reads. Pulling whole bodies explained it, and the explanation is a slice, not a bug.
+
+
+## Slice 8 — a total and its parts are not a contradiction
+
+Notice 3871013 states its value twice:
+
+    II.2.1)  Total final value of contract(s): Value: 116 250 000,00 SEK.   <- the notice
+    V.4)     Total final value of the contract: Value: 116 000 000,00 SEK.  <- one contract
+
+Two `Total final value` claims that disagree, so `awarded_value`'s disagreement rule refused
+the notice — correctly, under the assumption that two claims are two readings of ONE fact.
+That assumption is wrong for this form. Notice 3871014 settles it arithmetically:
+
+    II.2.1)  Total final value of contract(s):     81 605 403,00 SEK
+    CONTRACT NO: 1  V.4)  Total final value:       40 087 596,00 SEK
+    CONTRACT NO: 2  V.4)  Total final value:       15 605 000,00 SEK
+    CONTRACT NO: 3  V.4)  Total final value:       14 700 772,00 SEK
+    CONTRACT NO: 4  V.4)  Total final value:       11 212 035,00 SEK
+                                                   ------------------
+                                                   81 605 403,00 SEK
+
+The four parts sum to the aggregate **exactly**. `II.2.1` is the notice's total and the `V.4`
+figures are its parts, and `TED-VAL_TOTAL` is a notice-scope field — so the aggregate is the
+one to claim. The per-contract figures are a `lot_results`-scope fact with no home yet.
+
+The signal is the plural: `of contract(s)` is II.2.1, `of the contract` is V.4. So each label
+occurrence now carries a scope, the widest scope the body states wins, and a conflict *within*
+a scope is still a refusal — a narrower figure is not a fallback for an unreadable total.
+
+### The correctness half, which matters more than the coverage half
+
+Ranking the scopes exposed a claim that was already wrong. Take a body awarding two contracts
+at 40 087 596 SEK each and stating no aggregate: the old rule saw two claims that AGREE, read
+them as one fact stated twice, and recorded 40 087 596 as the notice's total — half the real
+figure. So a per-contract claim now stands only when the body awards ONE contract.
+
+Counting the contracts took a measurement, and my first rule was wrong. `CONTRACT NO` is a
+HEADING in the sectioned form but a REFERENCE in the numbered one — `6. Successful
+contractor(s): Contract No 710-7009: AS Anlegg, Arvid` (notice 1710588) — and some pre-2004
+bodies mention it twice. Three candidate rules, measured on both bands before choosing:
+
+    rule                         sectioned bodies flagged   pre-2004 amounts dropped
+    bare substring                     2,317 of 9,549              7 of 996
+    requires a colon (`NO:`)           2,100                       0
+    line starts only                   2,154                       0
+
+The bare count drops 7 correct prices per pre-2004 package. Line starts only drops none, and
+still flags 2,154 — and 159 of its 163-body gap to the bare count are bodies with ONE heading
+plus a mid-line mention, i.e. single-contract notices the bare count would ALSO have refused
+wrongly. So the marker is `\nCONTRACT NO`, counted on the raw body rather than the flattened
+one, and the numbered form scores 0 in all 996 of `fetch 300`'s amount-carrying bodies.
+
+Both halves falsified separately: with the scope ranking disabled the new test fails with
+`None`; with the contract count disabled it fails with `Some(4008759600)` — the understated
+claim itself, which is the clearest possible statement of what the guard is for.
+
+Expected payoff, measured before implementing: **1,959 of the 3,656 remaining refusals state
+the aggregate with a figure.** The rest are bodies stating no figure at all
+(`Total final value of contract(s): Excluding VAT.`), ranges (`Lowest offer: … / highest
+offer: …`), and multi-contract bodies with no aggregate — which the correctness half now
+refuses on purpose.
