@@ -1,138 +1,371 @@
+--- projection epoch ---
+3
 --- tenders ---
-1|32c34097-960e-4d02-b04d-3ceac32cf020|-1|procedure|ted|4
-2||5|registration|ted|1
-3||6|procedure|ted|1
+1|1af86e3c-411f-4c2e-aacc-ecac61717472|-1|procedure|ted|2
+2|32c34097-960e-4d02-b04d-3ceac32cf020|-1|procedure|ted|4
+3|469efb81-40de-4d7e-817f-8dd45659eaee|-1|procedure|doe|1
+4|990acec0-88c0-48e2-86d5-92abb2293542|-1|procedure|doe|1
+5||5|registration|ted|1
+6||6|procedure|ted|1
 --- tender_versions ---
-1|1|1|00831374-2025|16|1765753200|1765472418
-1|2|2|00006281-2026|16|1767740400|1767705463
-1|3|3|00018902-2026|16|1768258800|1768045538
-1|4|4|00380868-2026|29|1780437600|1780391852
-2|1|5|00497689-2026|X01|1784239200|1784199584
-3|1|6|00496860-2026|4|1784239200|1784211228
+1|1|7|ebb72363-832d-4cea-8db6-04999414ea8c-01|16|1780264800|1778661993
+1|2|8|00373130-2026|16|1780264800|1778661993
+2|1|1|00831374-2025|16|1765753200|1765472418
+2|2|2|00006281-2026|16|1767740400|1767705463
+2|3|3|00018902-2026|16|1768258800|1768045538
+2|4|4|00380868-2026|29|1780437600|1780391852
+3|1|10|799811c4-2454-414e-b3cc-1d5d55c69690-01|38|1714600800|1714341600
+4|1|9|7d69b0f7-2605-448f-9495-676458dcddc2-01|16|1709161200|1709186986
+5|1|5|00497689-2026|X01|1784239200|1784199584
+6|1|6|00496860-2026|4|1784239200|1784211228
 --- tender_version_lots ---
 1|1|1|Lot
+1|1|2|Lot
 1|2|1|Lot
-1|3|1|Lot
-1|4|1|Lot
-3|1|2|Part
+1|2|2|Lot
+2|1|3|Lot
+2|2|3|Lot
+2|3|3|Lot
+2|4|3|Lot
+3|1|4|Lot
+4|1|5|Lot
+6|1|6|Part
 --- tender_version_texts ---
-1|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-1|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
-1|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|1
-3|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
-3|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|2
-3|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
-3|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|2
+1|1|description|DEU|Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen|2
+1|1|description|DEU|Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches|1
+1|1|description|DEU|Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb|-1
+1|1|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg|-1
+1|1|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches|1
+1|1|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling|2
+1|2|description|DEU|Die folgenden Beschreibungen geben einen kurzen Überblick der auszuführenden
+Leistungen. Herzustellen ist Los 2" Grundinstandsetzung der Helling am Bauhof 
+Würzburg." Die auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Demontage der vorhandenen Hellingwägen einschl. zugehörigem
+  Maschinenbau und Elektrotechnik
+- Abbruch der Betonfläche der vorhandenen Helling
+- Neubau der Hellingfläche aus Stahlbeton
+- Montage der neuen Ausrüstung und Hellingwägen einschl. zugehörigen
+  Maschinenbau und Elektrotechnik
+ Böschungssicherung aus teilvergossenen Wasserbausteinen|2
+1|2|description|DEU|Herzustellen ist die Trockenlegung des Baubereiches als 
+Vorabmaßnahme für die Grundinstandsetzung der Helling am Bauhof Würzburg (LOS 2). Die 
+auszuführende Leistung gliedert sich in folgende Baubereiche:
+- Herstellen der Entlastungsbrunnen
+- Herstellen der Grundwassermessstellen
+- Herstellen der Spundwand mit zugehörigen Bodenaustauschbohrungen zur
+  Trockenlegung
+- Begleitung des Leerpumpen des Baubereiches|1
+1|2|description|DEU|Im Zuge der Grundinstandsetzung soll das Hafenbecken mittels vorgebohrter Spundwand zum Teil trockengelegt werden (LOS 1) sodass die Grundinstandsetzungsarbeiten im trockenen stattfinden können (LOS 2). 
+LOS1:
+- Erstellen einer vorgebohrten, verpressten Spundwand (Ca. 60m)
+LOS 2:
+- Rückbau der vorhandenen Anlage und Entsorgung des Abraums
+- Gleisanlage mit 6 asymmetrisch angeordneten Gleisen (je ca. 75m)
+- Hellingswägen mit 120to Tragfähigkeit und FU-geregelten Einzelantrieben 
+- Ebene Arbeitsfläche von ca. 12m Breite mit Entwässerungsgraben, Pumpensumpf und Sandfang
+- überfahrbare Gleise im OW-Bereich der Helling 
+- geschlossene Betondecke, fugenlos ausgebildet (keine Wartungsfugen)
+- Streifenfundamente im UW-Bereich mit aufgestellten Gleisen mit vollverklammerten Wasserbausteinen zwischen den Fundamenten
+- Probebetrieb|-1
+1|2|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg|-1
+1|2|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 1 Trockenlegung des Baubereiches|1
+1|2|title|DEU|Grundinstandsetzung Hellinganlage am Bauhof Würzburg LOS 2 Grundinstandsetzung der Helling|2
+2|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|1|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|1|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|2|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|2|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|3|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|3|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|4|description|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+2|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|-1
+2|4|title|ENG|CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion|3
+3|1|description|DEU|Austausch Attikableche auf den Lernhäusern B/C/G/H/J des BCR|-1
+3|1|description|DEU|Beschreibung der Beschaffung vor der Änderung:
+Dachabdichtungs- und Spenglerarbeiten, Gründach,
+2 Teillose:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 976 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 280 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 542 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 2 350 lfm,
+— Fallrohre Titanzink – 960 lfm.
+Los 1: Dächer über Erdgeschoß:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 90,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 125,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 5 202,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 610,00 lfm.
+Los 2: Dächer über Obergeschosse:
+— Folienabdichtung FPO auf Wärmedämmung EPS – 10 886,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Schaumglas – 155,00 m²,
+— Folienabdichtung FPO auf Wärmedämmung Mineralwolle – 340,00 m²,
+— Attikakonstruktionen samt Abdichtungs- und Spenglerarbeiten – 1 740,00 lfm,
+— Fallrohr, Titanzink– 960 lfm.
+Beschaffung nach der Änderung:
+Austausch der Attikableche auf den Lernhäusern B/C/G/H/J des BCR|4
+3|1|title|DEU|NA 26a+b Dachabdichtungs- und Spenglerarbeiten|-1
+3|1|title|DEU|NA 26a+b Dachabdichtungs- und Spenglerarbeiten, Gründach|4
+4|1|description|DEU|Erschließung Starkstrom|-1
+4|1|description|DEU|Liefern und Verlegen von ca. 3.550 lfm Starkstrom-Kunststoffkabel
+NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel A-2Y(L)2Y 4 x 2 x 0,8 mm sowie Herstellen von 3 St. Hauseinführungen|5
+4|1|tenderer_requirement|DEU|siehe Formblatt 216|5
+4|1|title|DEU|Erschließung Starkstrom|-1
+4|1|title|DEU|Erschließung Starkstrom|5
+6|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
+6|1|description|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|6
+6|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|-1
+6|1|title|LAV|Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde|6
 --- tender_version_dates ---
-1|1|opening_date|1768986000|60|1|1
-1|1|submission_deadline|1768984200|60|1|1
-1|2|opening_date|1769504400|60|1|1
-1|2|submission_deadline|1769502600|60|1|1
-1|3|opening_date|1770282000|60|1|1
-1|3|submission_deadline|1770280200|60|1|1
-1|4|opening_date|1770282000|60|1|1
-1|4|submission_deadline|1770280200|60|1|1
+1|1|additional_information_deadline|1782723540|120|1|1
+1|1|additional_information_deadline|1782723540|120|1|2
+1|1|duration_end|1801350000|60|0|1
+1|1|duration_end|1827615600|60|0|2
+1|1|duration_start|1788472800|120|0|1
+1|1|duration_start|1801436400|60|0|2
+1|1|opening_date|1783328400|120|1|1
+1|1|opening_date|1783328400|120|1|2
+1|1|submission_deadline|1783328340|120|1|1
+1|1|submission_deadline|1783328340|120|1|2
+1|2|additional_information_deadline|1782723540|120|1|1
+1|2|additional_information_deadline|1782723540|120|1|2
+1|2|duration_end|1801350000|60|0|1
+1|2|duration_end|1827615600|60|0|2
+1|2|duration_start|1788472800|120|0|1
+1|2|duration_start|1801436400|60|0|2
+1|2|opening_date|1783328400|120|1|1
+1|2|opening_date|1783328400|120|1|2
+1|2|submission_deadline|1783328340|120|1|1
+1|2|submission_deadline|1783328340|120|1|2
+2|1|opening_date|1768986000|60|1|3
+2|1|submission_deadline|1768984200|60|1|3
+2|2|opening_date|1769504400|60|1|3
+2|2|submission_deadline|1769502600|60|1|3
+2|3|opening_date|1770282000|60|1|3
+2|3|submission_deadline|1770280200|60|1|3
+2|4|opening_date|1770282000|60|1|3
+2|4|submission_deadline|1770280200|60|1|3
+3|1|duration_end|1722376800|120|0|4
+3|1|duration_start|1715551200|120|0|4
+4|1|opening_date|1712044800|120|1|5
+4|1|submission_deadline|1712044800|120|1|5
 --- tender_version_classifications ---
-1|1|main|cpv|33693100|-1
-1|1|main|cpv|33693100|1
-1|1|place|nuts|MT001|-1
-1|1|place|nuts|MT001|1
-1|2|main|cpv|33693100|-1
-1|2|main|cpv|33693100|1
-1|2|place|nuts|MT001|-1
-1|2|place|nuts|MT001|1
-1|3|main|cpv|33693100|-1
-1|3|main|cpv|33693100|1
-1|3|place|nuts|MT001|-1
-1|3|place|nuts|MT001|1
-1|4|main|cpv|33693100|-1
-1|4|main|cpv|33693100|1
-1|4|place|nuts|MT001|-1
-1|4|place|nuts|MT001|1
-3|1|main|cpv|33000000|-1
-3|1|main|cpv|33000000|2
-3|1|place|nuts|LV00A|-1
-3|1|place|nuts|LV00A|2
+1|1|additional|cpv|44212410|-1
+1|1|additional|cpv|44212410|1
+1|1|additional|cpv|45110000|-1
+1|1|additional|cpv|45110000|2
+1|1|additional|cpv|45223210|-1
+1|1|additional|cpv|45223210|2
+1|1|additional|cpv|45262310|-1
+1|1|additional|cpv|45262310|2
+1|1|main|cpv|45241500|-1
+1|1|main|cpv|45241500|1
+1|1|main|cpv|45241500|2
+1|1|place|nuts|DE263|-1
+1|1|place|nuts|DE263|1
+1|1|place|nuts|DE263|2
+1|2|additional|cpv|44212410|-1
+1|2|additional|cpv|44212410|1
+1|2|additional|cpv|45110000|-1
+1|2|additional|cpv|45110000|2
+1|2|additional|cpv|45223210|-1
+1|2|additional|cpv|45223210|2
+1|2|additional|cpv|45262310|-1
+1|2|additional|cpv|45262310|2
+1|2|main|cpv|45241500|-1
+1|2|main|cpv|45241500|1
+1|2|main|cpv|45241500|2
+1|2|place|nuts|DE263|-1
+1|2|place|nuts|DE263|1
+1|2|place|nuts|DE263|2
+2|1|main|cpv|33693100|-1
+2|1|main|cpv|33693100|3
+2|1|place|nuts|MT001|-1
+2|1|place|nuts|MT001|3
+2|2|main|cpv|33693100|-1
+2|2|main|cpv|33693100|3
+2|2|place|nuts|MT001|-1
+2|2|place|nuts|MT001|3
+2|3|main|cpv|33693100|-1
+2|3|main|cpv|33693100|3
+2|3|place|nuts|MT001|-1
+2|3|place|nuts|MT001|3
+2|4|main|cpv|33693100|-1
+2|4|main|cpv|33693100|3
+2|4|place|nuts|MT001|-1
+2|4|place|nuts|MT001|3
+3|1|additional|cpv|45260000|4
+3|1|additional|cpv|45261200|4
+3|1|additional|cpv|45261300|4
+3|1|additional|cpv|45261320|4
+3|1|additional|cpv|45261410|-1
+3|1|additional|cpv|45261410|4
+3|1|main|cpv|45000000|-1
+3|1|main|cpv|45000000|4
+3|1|place|nuts|DE212|-1
+3|1|place|nuts|DE212|4
+4|1|main|cpv|45310000|-1
+4|1|main|cpv|45310000|5
+4|1|place|nuts|DED2D|-1
+4|1|place|nuts|DED2D|5
+6|1|main|cpv|33000000|-1
+6|1|main|cpv|33000000|6
+6|1|place|nuts|LV00A|-1
+6|1|place|nuts|LV00A|6
 --- tender_version_amounts ---
-1|1|estimated_value|81686300|EUR|-1
-1|1|estimated_value|81686300|EUR|1
-1|2|estimated_value|81686300|EUR|-1
-1|2|estimated_value|81686300|EUR|1
-1|3|estimated_value|81686300|EUR|-1
-1|3|estimated_value|81686300|EUR|1
-1|4|estimated_value|81686300|EUR|-1
-1|4|estimated_value|81686300|EUR|1
-1|4|result_value|23968954|EUR|-1
+2|1|estimated_value|81686300|EUR|-1
+2|1|estimated_value|81686300|EUR|3
+2|2|estimated_value|81686300|EUR|-1
+2|2|estimated_value|81686300|EUR|3
+2|3|estimated_value|81686300|EUR|-1
+2|3|estimated_value|81686300|EUR|3
+2|4|estimated_value|81686300|EUR|-1
+2|4|estimated_value|81686300|EUR|3
+2|4|result_value|23968954|EUR|-1
+3|1|result_value|607480963|EUR|-1
 --- tender_version_parties ---
-1|1|Lot-DocProvider|1|1|ORG-0001|1
-1|1|Lot-ReviewInfo|1|1|ORG-0001|1
-1|1|Lot-ReviewOrg|2|1|ORG-0002|1
-1|1|Lot-TenderEval|1|1|ORG-0001|1
-1|1|Lot-TenderReceipt|1|1|ORG-0001|1
-1|1|Procedure-Buyer|1|1|ORG-0001|-1
-1|1|Procedure-SProvider|3|1|ORG-0003|-1
-1|2|Lot-DocProvider|1|2|ORG-0001|1
-1|2|Lot-ReviewInfo|1|2|ORG-0001|1
-1|2|Lot-ReviewOrg|4|2|ORG-0002|1
-1|2|Lot-TenderEval|1|2|ORG-0001|1
-1|2|Lot-TenderReceipt|1|2|ORG-0001|1
-1|2|Procedure-Buyer|1|2|ORG-0001|-1
-1|2|Procedure-SProvider|3|2|ORG-0003|-1
-1|3|Lot-DocProvider|1|3|ORG-0001|1
-1|3|Lot-ReviewInfo|1|3|ORG-0001|1
-1|3|Lot-ReviewOrg|5|3|ORG-0002|1
-1|3|Lot-TenderEval|1|3|ORG-0001|1
-1|3|Lot-TenderReceipt|1|3|ORG-0001|1
-1|3|Procedure-Buyer|1|3|ORG-0001|-1
-1|3|Procedure-SProvider|3|3|ORG-0003|-1
-1|4|Lot-DocProvider|1|4|ORG-0001|1
-1|4|Lot-ReviewInfo|1|3|ORG-0001|1
-1|4|Lot-ReviewOrg|7|4|ORG-0003|1
-1|4|Lot-TenderEval|1|3|ORG-0001|1
-1|4|Lot-TenderReceipt|1|3|ORG-0001|1
-1|4|Procedure-Buyer|1|4|ORG-0001|-1
-1|4|Procedure-SProvider|3|4|ORG-0004|-1
-1|4|Tenderer|6|4|ORG-0002|1
-3|1|Part-AddInfo|8|6|ORG-0001|2
-3|1|Part-EmployLegis|8|6|ORG-0001|2
-3|1|Part-EnvironLegis|8|6|ORG-0001|2
-3|1|Part-FiscalLegis|8|6|ORG-0001|2
-3|1|Part-ReviewOrg|9|6|ORG-0002|2
-3|1|Procedure-Buyer|8|6|ORG-0001|-1
+1|1|Lot-AddInfo|11|7|ORG-0001|1
+1|1|Lot-AddInfo|11|7|ORG-0001|2
+1|1|Lot-DocProvider|11|7|ORG-0001|1
+1|1|Lot-DocProvider|11|7|ORG-0001|2
+1|1|Lot-EmployLegis|11|7|ORG-0001|2
+1|1|Lot-EnvironLegis|11|7|ORG-0001|2
+1|1|Lot-FiscalLegis|11|7|ORG-0001|1
+1|1|Lot-FiscalLegis|11|7|ORG-0001|2
+1|1|Lot-Mediator|10|7|ORG-0000|2
+1|1|Lot-ReviewOrg|10|7|ORG-0000|1
+1|1|Lot-ReviewOrg|10|7|ORG-0000|2
+1|1|Lot-TenderEval|11|7|ORG-0001|1
+1|1|Lot-TenderEval|11|7|ORG-0001|2
+1|1|Lot-TenderReceipt|11|7|ORG-0001|1
+1|1|Lot-TenderReceipt|11|7|ORG-0001|2
+1|1|Procedure-Buyer|11|7|ORG-0001|-1
+1|2|Lot-AddInfo|11|8|ORG-0001|1
+1|2|Lot-AddInfo|11|8|ORG-0001|2
+1|2|Lot-DocProvider|11|8|ORG-0001|1
+1|2|Lot-DocProvider|11|8|ORG-0001|2
+1|2|Lot-EmployLegis|11|8|ORG-0001|2
+1|2|Lot-EnvironLegis|11|8|ORG-0001|2
+1|2|Lot-FiscalLegis|11|8|ORG-0001|1
+1|2|Lot-FiscalLegis|11|8|ORG-0001|2
+1|2|Lot-Mediator|10|8|ORG-0000|2
+1|2|Lot-ReviewOrg|10|8|ORG-0000|1
+1|2|Lot-ReviewOrg|10|8|ORG-0000|2
+1|2|Lot-TenderEval|11|8|ORG-0001|1
+1|2|Lot-TenderEval|11|8|ORG-0001|2
+1|2|Lot-TenderReceipt|11|8|ORG-0001|1
+1|2|Lot-TenderReceipt|11|8|ORG-0001|2
+1|2|Procedure-Buyer|11|8|ORG-0001|-1
+1|2|Procedure-SProvider|12|8|ORG-0002|-1
+2|1|Lot-DocProvider|1|1|ORG-0001|3
+2|1|Lot-ReviewInfo|1|1|ORG-0001|3
+2|1|Lot-ReviewOrg|2|1|ORG-0002|3
+2|1|Lot-TenderEval|1|1|ORG-0001|3
+2|1|Lot-TenderReceipt|1|1|ORG-0001|3
+2|1|Procedure-Buyer|1|1|ORG-0001|-1
+2|1|Procedure-SProvider|3|1|ORG-0003|-1
+2|2|Lot-DocProvider|1|2|ORG-0001|3
+2|2|Lot-ReviewInfo|1|2|ORG-0001|3
+2|2|Lot-ReviewOrg|4|2|ORG-0002|3
+2|2|Lot-TenderEval|1|2|ORG-0001|3
+2|2|Lot-TenderReceipt|1|2|ORG-0001|3
+2|2|Procedure-Buyer|1|2|ORG-0001|-1
+2|2|Procedure-SProvider|3|2|ORG-0003|-1
+2|3|Lot-DocProvider|1|3|ORG-0001|3
+2|3|Lot-ReviewInfo|1|3|ORG-0001|3
+2|3|Lot-ReviewOrg|5|3|ORG-0002|3
+2|3|Lot-TenderEval|1|3|ORG-0001|3
+2|3|Lot-TenderReceipt|1|3|ORG-0001|3
+2|3|Procedure-Buyer|1|3|ORG-0001|-1
+2|3|Procedure-SProvider|3|3|ORG-0003|-1
+2|4|Lot-DocProvider|1|4|ORG-0001|3
+2|4|Lot-ReviewInfo|1|3|ORG-0001|3
+2|4|Lot-ReviewOrg|7|4|ORG-0003|3
+2|4|Lot-TenderEval|1|3|ORG-0001|3
+2|4|Lot-TenderReceipt|1|3|ORG-0001|3
+2|4|Procedure-Buyer|1|4|ORG-0001|-1
+2|4|Procedure-SProvider|3|4|ORG-0004|-1
+2|4|Tenderer|6|4|ORG-0002|3
+3|1|Contract-Signatory|15|10|ORG-0001|4
+3|1|Lot-ReviewOrg|18|10|ORG-0004|4
+3|1|LotResult-Financing|15|10|ORG-0001|4
+3|1|LotResult-Paying|16|10|ORG-0002|4
+3|1|Procedure-Buyer|15|10|ORG-0001|-1
+3|1|Procedure-SProvider|16|10|ORG-0002|-1
+3|1|Tenderer|17|10|ORG-0003|4
+4|1|Lot-ReviewOrg|14|9|ORG-7004|5
+4|1|Lot-TenderReceipt|13|9|ORG-7001|5
+4|1|Procedure-Buyer|13|9|ORG-7001|-1
+6|1|Part-AddInfo|8|6|ORG-0001|6
+6|1|Part-EmployLegis|8|6|ORG-0001|6
+6|1|Part-EnvironLegis|8|6|ORG-0001|6
+6|1|Part-FiscalLegis|8|6|ORG-0001|6
+6|1|Part-ReviewOrg|9|6|ORG-0002|6
+6|1|Procedure-Buyer|8|6|ORG-0001|-1
 --- lots ---
 1|1|LOT-0001
-2|3|PAR-0000
+2|1|LOT-0002
+3|2|LOT-0001
+4|3|LOT-0001
+5|4|LOT-0000
+6|6|PAR-0000
 --- bids ---
-1|1|4|TEN-0001
+1|2|4|TEN-0001
+2|3|10|TEN-0001
 --- contracts ---
-1|1|4|CON-0001
+1|2|4|CON-0001
+2|3|10|CON-0001
 --- lot_results ---
-1|1|4|RES-0001
+1|2|4|RES-0001
+2|3|10|RES-0001
 --- tender_version_lot_results ---
-1|4|1|1|selec-w||23968954|EUR
+2|4|1|3|selec-w||23968954|EUR
+3|1|2|4|||7333289|EUR
 --- tender_version_result_winners ---
-1|4|1|6
+2|4|1|6
+3|1|2|17
 --- tender_version_result_stats ---
-1|4|1|tenders|11
+2|4|1|tenders|11
 --- tender_version_bids ---
-1|4|1|1|23968954|EUR
+2|4|1|3|23968954|EUR
+3|1|2|4|7333289|EUR
 --- tender_version_bid_parties ---
-1|4|1|tenderer|6|4|ORG-0002
+2|4|1|tenderer|6|4|ORG-0002
+3|1|2|tenderer|17|10|ORG-0003
 --- tender_version_contracts ---
-1|4|1|127804511|1779228000|120|0|23968954|EUR
+2|4|1|127804511|1779228000|120|0|23968954|EUR
+3|1|2|NA 26a +b|1712527200|120|0|7333289|EUR
 --- changes ---
 organization|added|-1|1
 organization|added|-1|2
@@ -143,17 +376,39 @@ organization|added|-1|6
 organization|added|-1|7
 organization|added|-1|8
 organization|added|-1|9
+organization|added|-1|10
+organization|added|-1|11
+organization|added|-1|12
+organization|added|-1|13
+organization|added|-1|14
+organization|added|-1|15
+organization|added|-1|16
+organization|added|-1|17
+organization|added|-1|18
 tender|added|1|1
 lot|added|1|1
+lot|added|1|2
 tender|changed|2|1
 lot|changed|2|1
-tender|changed|3|1
-lot|changed|3|1
-tender|changed|4|1
-lot|changed|4|1
+lot|changed|2|2
+tender|added|1|2
+lot|added|1|3
+tender|changed|2|2
+lot|changed|2|3
+tender|changed|3|2
+lot|changed|3|3
+tender|changed|4|2
+lot|changed|4|3
 lot_result|added|4|1
 bid|added|4|1
 contract|added|4|1
-tender|added|1|2
 tender|added|1|3
-lot|added|1|2
+lot|added|1|4
+lot_result|added|1|2
+bid|added|1|2
+contract|added|1|2
+tender|added|1|4
+lot|added|1|5
+tender|added|1|5
+tender|added|1|6
+lot|added|1|6

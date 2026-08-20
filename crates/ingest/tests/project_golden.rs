@@ -50,8 +50,9 @@ async fn scratch() -> (Db, i64, String) {
 }
 
 /// Ingest a fixture through the real dispatch + parse chain, exactly as `process`
-/// would from an archived package.
-async fn ingest(db: &Db, fetch_id: i64, relative: &str) {
+/// would from an archived package. `source` is the notice's Source identity —
+/// "ted" or "doe" — which is what the ADR-0003 cross-source merge keys on.
+async fn ingest(db: &Db, fetch_id: i64, source: &str, relative: &str) {
     let bytes = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
     let profile::Disposition::Records(records) = profile::dispatch(relative, &bytes) else {
         panic!("{relative}: dispatch skipped a fixture");
@@ -69,7 +70,7 @@ async fn ingest(db: &Db, fetch_id: i64, relative: &str) {
     };
     db.record_notice(
         &Notice {
-            source: SOURCE.into(),
+            source: source.into(),
             publication_id: n.publication_id.clone(),
             content_hash: n.content_hash.clone(),
             profile: n.profile.clone(),
@@ -112,7 +113,11 @@ async fn snapshot(db: &Db) -> String {
         ("tender_version_contracts", "SELECT group_concat(r, x'0a') FROM (SELECT tender_id||'|'||seq||'|'||contract_id||'|'||coalesce(buyer_contract_id,'')||'|'||coalesce(concluded_utc,-1)||'|'||coalesce(concluded_offset,-1)||'|'||coalesce(concluded_has_time,-1)||'|'||coalesce(cents,-1)||'|'||coalesce(currency,'') AS r FROM tender_version_contracts ORDER BY tender_id, seq, contract_id)"),
         ("changes", "SELECT group_concat(r, x'0a') FROM (SELECT entity_kind||'|'||op||'|'||coalesce(version_seq,-1)||'|'||entity_id AS r FROM changes ORDER BY cursor)"),
     ];
-    let mut out = String::new();
+    // The epoch is part of the golden so that regenerating it after a projection-
+    // logic change puts PROJECTION_EPOCH in front of the person doing it (issue
+    // 104): an unchanged epoch in a diff that changes fold output is exactly the
+    // forgotten bump issue 99's discipline exists to prevent.
+    let mut out = format!("--- projection epoch ---\n{}\n", store::canonical::PROJECTION_EPOCH);
     for (name, sql) in digests {
         let part = match db.scalar(sql).await.expect("digest query") {
             Some(turso::Value::Text(s)) => s,
@@ -149,20 +154,63 @@ fn fold_apply_output_matches_the_committed_golden() {
 
 async fn run() {
     let (db, fetch_id, path) = scratch().await;
-    for fixture in [
-        "eforms-chain/1-cn-16-831374-2025.xml",
-        "eforms-chain/2-change-16-6281-2026.xml",
-        "eforms-chain/3-change-16-18902-2026.xml",
-        "eforms-chain/4-can-29-380868-2026.xml",
-        "eforms/brin-x01-00497689-2026.xml",
-        "eforms/pin-4-00496860-2026.xml",
+    for (source, fixture) in [
+        ("ted", "eforms-chain/1-cn-16-831374-2025.xml"),
+        ("ted", "eforms-chain/2-change-16-6281-2026.xml"),
+        ("ted", "eforms-chain/3-change-16-18902-2026.xml"),
+        ("ted", "eforms-chain/4-can-29-380868-2026.xml"),
+        ("ted", "eforms/brin-x01-00497689-2026.xml"),
+        ("ted", "eforms/pin-4-00496860-2026.xml"),
+        // Issue 104: the DE paths were invisible to this golden — `normalise_de1`
+        // is profile-gated, so a DE-only mapping change could not turn it red, and
+        // the epoch-bump prompt this file exists to give never fired for exactly
+        // the change class (issue 98, then issue 100) that kept happening. The
+        // cross-source pair is the cohort's dominant real shape (216,450 of
+        // 218,635 DE notices merged onto TED twins) and gives the fold ORDER a
+        // pinned two-version chain; the two DE-1.x notices put the empirical
+        // inventory's whole mapping surface into the digest.
+        ("doe", "doe-ted-pair/doe-cn-ebb72363-832d-4cea-8db6-04999414ea8c-01.xml"),
+        ("ted", "doe-ted-pair/ted-cn-00373130-2026.xml"),
+        ("doe", "doe/eforms-de-1.1-cn-7d69b0f7.xml"),
+        ("doe", "doe/eforms-de-1.2-can-799811c4.xml"),
     ] {
-        ingest(&db, fetch_id, fixture).await;
+        ingest(&db, fetch_id, source, fixture).await;
     }
 
     project::project_with_progress_phase2(&db, true, 7, Phase2::Buckets { shards: None }, |_| {})
         .await
         .expect("projection");
+
+    // The pair must fold as ONE Tender with TWO versions in published_at order —
+    // asserted structurally, not only via the byte digest, so a failure here says
+    // "the cross-source merge broke" rather than "some bytes differ" (issue 104).
+    let pair_scalar = |sql: &'static str| async {
+        match db.scalar(sql).await.expect("pair query") {
+            Some(turso::Value::Integer(n)) => n,
+            other => panic!("expected an integer, got {other:?}"),
+        }
+    };
+    assert_eq!(
+        pair_scalar(
+            "SELECT COUNT(*) FROM tender_versions v JOIN tenders t ON t.id = v.tender_id \
+              WHERE t.procedure_key = '1af86e3c-411f-4c2e-aacc-ecac61717472'"
+        )
+        .await,
+        2,
+        "the DÖE notice and its TED twin fold into one Tender with two versions"
+    );
+    assert_eq!(
+        pair_scalar(
+            "SELECT COUNT(*) FROM tender_versions a JOIN tender_versions b \
+                 ON b.tender_id = a.tender_id AND b.seq = a.seq + 1 \
+               JOIN tenders t ON t.id = a.tender_id \
+              WHERE t.procedure_key = '1af86e3c-411f-4c2e-aacc-ecac61717472' \
+                AND b.published_at < a.published_at"
+        )
+        .await,
+        0,
+        "the pair's versions are ordered by published_at"
+    );
 
     let got = snapshot(&db).await;
     // Opt-in regeneration for a DELIBERATE, reviewed derived-layer change only —
