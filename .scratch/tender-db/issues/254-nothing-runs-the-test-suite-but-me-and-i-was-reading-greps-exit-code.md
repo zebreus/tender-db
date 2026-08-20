@@ -60,3 +60,27 @@ Option 1 is the one I would take: it needs no new infrastructure, it gates the t
 reaches users, and it cannot be ignored. Filed rather than done because a deploy gate wants its own
 measurement — how long `cargo test --workspace` takes on the box, and whether it can run while the
 job queue is idle without disturbing the serving DB.
+
+
+## A third way the suite lies, hit the same day (2026-08-20)
+
+Checking that section 6 of the report did not break the app crate, I ran
+
+    cargo test -p tender-db --lib
+
+and got `test result: ok. 0 passed; 0 failed` — which I nearly read as a pass. The app crate's
+server-side modules are behind `#[cfg(feature = "server")]`, so that invocation compiles the WASM
+half and finds none of the ~83 tests.
+
+`.cargo/config.toml` documents this trap in a 15-line comment and provides `cargo test-app` for it.
+I had read that file before. I still ran the wrong command, because the wrong command's output looks
+like the right command's output.
+
+That is three green-looking zeros in one session — a pipeline's exit code, a truncated doc-test
+section, and a feature-gated crate — and it settles the shape of the fix in the section above:
+**option 1, a deploy gate**, but the gate must run the SAME commands a person would forget:
+
+    cargo test -p model && cargo test -p store && cargo test -p ingest && cargo test-app
+
+with cargo's own exit code, unpiped. A gate that runs `cargo test --workspace` would reproduce the
+third trap exactly, since `--workspace` compiles the app crate without `server` too.
