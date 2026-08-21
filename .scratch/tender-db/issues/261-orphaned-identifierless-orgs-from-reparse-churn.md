@@ -1,6 +1,13 @@
 # 261 — orphaned identifier-less organizations: the residue re-parse churn left behind
 
-Status: needs-triage — filed 2026-08-21 (owner) out of issue 234's close-out numbers.
+Status: CLOSED 2026-08-21, same day — SIZED at **989 rows**, not worth a job. Measured by the
+step-1 query, windowed into 62 bounded 500k-id `/v1/sql` slices over the full id space (0 →
+30,532,198) on the idle box, ~0.14 s a window. The churn hypothesis was right about the growth and
+wrong about the residue: an org abandoned by a re-parse's clear is, by construction, a
+`(name_norm, country)` DUPLICATE of the org the re-resolve minted in its place — so issue 234's
+merge collapsed the abandoned rows as ordinary losers. Only orphaned SINGLETONS survive, and there
+are 989 of them: dead weight worth exactly nothing. If a future measure wants them gone, fold a
+one-line sweep into whatever next touches the org table; do not build a job for this.
 Kind: canonical layer hygiene / sizing first
 Blocked by: —
 Relates to: 234 (whose merge collapsed the duplicates but not the orphans), 247 (the re-parse
