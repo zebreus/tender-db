@@ -169,6 +169,12 @@ pub fn router(state: AppState) -> Router {
         // The rate limiter's own 429 is emitted as our JSON envelope, not
         // tower_governor's plain-text default (issue 51).
         .layer(GovernorLayer::new(limits).error_handler(governor_json_error))
+        // The whole-request bound (issue 241 gap 2) — outermost of the `/v1`
+        // set so it covers the governor's own wait too, and added BEFORE the
+        // unbounded-by-design routes below (`/health` must answer under any
+        // load; SSE is exempted inside the layer by Accept header, since the
+        // stream shares its path with the JSON collection endpoints).
+        .layer(axum::middleware::from_fn(request_deadline))
         .route("/health", get(health))
         // The deep operational probe an external pinger watches — liveness plus
         // ingest freshness, job failures and disk. Outside the rate limiter, like
@@ -391,6 +397,56 @@ type ApiResult = Result<Response, ApiError>;
 /// never falls through to the dashboard's HTML router or leaks a route name.
 async fn unknown_endpoint() -> ApiError {
     ApiError::not_found("endpoint")
+}
+
+/// The whole-request bound on `/v1` (issue 241, gap 2). Sized far above the
+/// slowest legitimate non-stream response — `/v1/sql`'s in-handler cap is 10 s
+/// — so it can only fire on a request that is already an outage, never on a
+/// slow success. The edge does NOT provide this bound: the nginx vhost sets
+/// `proxy_read_timeout 24h` (for SSE) in the one location block that covers
+/// everything, so a hung request would otherwise hang the caller for a day.
+const REQUEST_DEADLINE: Duration = Duration::from_secs(30);
+
+/// Requests the deadline layer has cut, never reset — the after-the-fact
+/// witness that an unbounded wait happened (issue 241 gap 2's pair to the
+/// writer queue gauges: those say a stall is happening, this says one did).
+static DEADLINE_HITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// The `/v1` whole-request deadline (issue 241, gap 2): every non-stream
+/// request must end in a STATUS CODE, never in silence. Issue 240's outage was
+/// 25 minutes of authenticated requests parked on the writer with nothing
+/// bounding them — `/v1/sql`'s backstop lives inside its handler and cannot
+/// fire for a request that never reaches it, and extractors run inside the
+/// route service, so this layer is the one place that covers them all. An
+/// event-stream request is exempt by intent: a stream is unbounded by design
+/// (the edge's 24h read timeout exists for it).
+async fn deadline_with(
+    deadline: Duration,
+    req: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    if wants_events(req.headers()) {
+        return next.run(req).await;
+    }
+    match tokio::time::timeout(deadline, next.run(req)).await {
+        Ok(response) => response,
+        Err(_) => {
+            DEADLINE_HITS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            ApiError(
+                StatusCode::SERVICE_UNAVAILABLE,
+                format!(
+                    "no response within the {}s service bound — a stalled internal \
+                     wait, not your request; safe to retry",
+                    deadline.as_secs()
+                ),
+            )
+            .into_response()
+        }
+    }
+}
+
+async fn request_deadline(req: axum::extract::Request, next: axum::middleware::Next) -> Response {
+    deadline_with(REQUEST_DEADLINE, req, next).await
 }
 
 /// tower_governor's 429, re-dressed as our error envelope with a `Retry-After`.
@@ -1337,6 +1393,66 @@ impl Drop for StreamSlot {
                 streams.remove(&self.key);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod deadline_tests {
+    use super::*;
+
+    /// A router with one route that never answers — the shape of issue 240,
+    /// where auth parked on the writer for 25 minutes and nothing bounded it.
+    async fn served(deadline: Duration) -> String {
+        let app = Router::new()
+            .route("/hang", get(|| async { std::future::pending::<()>().await; "never" }))
+            .route("/quick", get(|| async { "ok" }))
+            .layer(axum::middleware::from_fn(move |req, next| deadline_with(deadline, req, next)));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let base = format!("http://127.0.0.1:{}", listener.local_addr().unwrap().port());
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+        base
+    }
+
+    /// Issue 241 gap 2's acceptance line: a request that waits on anything
+    /// unbounded ends in a status code rather than in silence — and the cut is
+    /// counted, so the outage stays visible after it ends (the lesson of 240,
+    /// which was over before anyone could look).
+    #[tokio::test]
+    async fn a_stalled_request_ends_in_a_503_not_silence() {
+        let base = served(Duration::from_millis(100)).await;
+        let before = DEADLINE_HITS.load(std::sync::atomic::Ordering::Relaxed);
+
+        let response = reqwest::get(format!("{base}/quick")).await.unwrap();
+        assert_eq!(response.status().as_u16(), 200, "a normal response passes untouched");
+
+        let response = reqwest::get(format!("{base}/hang")).await.unwrap();
+        assert_eq!(response.status().as_u16(), 503);
+        let json: Value = response.json().await.unwrap();
+        assert_eq!(json["error"]["status"].as_i64(), Some(503));
+        assert!(
+            json["error"]["message"].as_str().is_some_and(|m| m.contains("service bound")),
+            "the 503 must say WHY: {json}"
+        );
+        assert!(
+            DEADLINE_HITS.load(std::sync::atomic::Ordering::Relaxed) > before,
+            "the cut must be counted"
+        );
+    }
+
+    /// The SSE exemption: a stream is unbounded by design and shares its path
+    /// with the JSON endpoints, so the exemption keys on Accept — an
+    /// event-stream request must still be in flight long after the deadline.
+    #[tokio::test]
+    async fn an_event_stream_request_is_exempt_from_the_deadline() {
+        let base = served(Duration::from_millis(50)).await;
+        let pending = reqwest::Client::new()
+            .get(format!("{base}/hang"))
+            .header("accept", "text/event-stream")
+            .send();
+        let outcome = tokio::time::timeout(Duration::from_millis(300), pending).await;
+        assert!(outcome.is_err(), "an exempt stream request must NOT be cut at the deadline");
     }
 }
 

@@ -50,6 +50,20 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     // non-zero depth means callers are waiting, whoever holds it. The two totals
     // give the mean wait per acquisition, and `longest_wait_seconds` is a
     // never-reset high-water mark, so a stall stays visible after it ends.
+    // The deadline layer's cut count (issue 241 gap 2): the writer gauges below
+    // say a stall is happening; this says one already turned into a 503.
+    header(
+        &mut out,
+        "tender_db_request_deadline_hits_total",
+        "Requests cut by the /v1 whole-request deadline since open.",
+    );
+    sample(
+        &mut out,
+        "tender_db_request_deadline_hits_total",
+        &[],
+        super::DEADLINE_HITS.load(std::sync::atomic::Ordering::Relaxed) as f64,
+    );
+
     let writer = state.db.writer_stats();
     header(&mut out, "tender_db_writer_queue_depth", "Callers blocked waiting for the writer.");
     sample(&mut out, "tender_db_writer_queue_depth", &[], writer.depth as f64);

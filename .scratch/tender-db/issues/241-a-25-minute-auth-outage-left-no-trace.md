@@ -1,7 +1,8 @@
 # 241 — a 25-minute outage of every authenticated endpoint left no trace in any probe, and nothing bounded the hang
 
-Status: gap 1 DONE and VERIFIED ON PROD 2026-08-19; gap 2 still open — needs the edge's timeout
-behaviour checked first
+Status: BOTH GAPS CLOSED IN CODE 2026-08-21 — gap 1 DONE and VERIFIED ON PROD 2026-08-19; gap 2's
+sizing question answered and the bound built (below). Remaining: deploy (queue busy with the
+issue-234 merge run) and the prod probe during a real long job per the acceptance
 Kind: observability gap + missing bound on the request path
 Blocked by: —
 Relates to: 240 (the outage that exposed both), 61 (`/health` reads the in-memory cursor by design),
@@ -125,3 +126,37 @@ Bounding the request path is a separate change with a real prerequisite this iss
 find out what nginx does with a 25-minute upstream silence before adding a second timeout with
 different semantics. Doing that from logs is blocked on issue 97 (no request timing in the access log),
 so the honest next step is a deliberate probe against the edge, not a tower layer added on assumption.
+
+---
+
+## Gap 2 closed in code (2026-08-21, owner) — the sizing question answered, then the bound
+
+**The edge check the status line demanded, first:** the nginx vhost proxies everything through ONE
+location block, and that block sets `proxy_read_timeout 24h` / `proxy_send_timeout 24h` — put there
+for SSE ("never time out the stream"), but scoped to `/`. So the edge holds a silent upstream for a
+DAY: during 240 nothing would have cut the hang at 60s, because the SSE exemption swallowed the
+default. The first real bound must be in-process, and the SSE exemption must be surgical rather
+than vhost-wide.
+
+**The bound:** `request_deadline` — an axum middleware on the `/v1` set (layered after the
+governor, so it wraps the governor's own wait; `/health`, `/metrics`, `/docs`, `/_source` are
+outside it by registration order, as they are for the limiter). 30 s (`REQUEST_DEADLINE`), far
+above `/v1/sql`'s 10 s in-handler cap, so it can only fire on a request that is already an outage.
+On elapse: 503 in the JSON envelope naming the cause ("no response within the 30s service bound — a
+stalled internal wait, not your request; safe to retry"), which lands in the nginx access log with
+a status — the silent-hang class is gone. Extractors are covered because they run inside the
+wrapped route service — exactly the layer 240 proved unbounded.
+
+**SSE:** exempt by `Accept: text/event-stream` (the stream shares its path with the JSON
+collection endpoints, so a path exemption cannot work). The vhost's 24h read timeout remains
+correct for what actually streams.
+
+**Visibility:** `tender_db_request_deadline_hits_total` on `/metrics`, never reset — the writer
+queue gauges say a stall IS happening; this says one already turned into a 503.
+
+Gates: `a_stalled_request_ends_in_a_503_not_silence` (503 + envelope cause + counter moved; a quick
+request passes untouched), `an_event_stream_request_is_exempt_from_the_deadline` (still in flight
+well past the deadline).
+
+**Still owed for the acceptance:** the prod probe during a real long-running job — hold the writer
+or ride a fold, confirm a stalled `/v1` request answers 503 within ~30 s and the counter moves.
