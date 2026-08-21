@@ -1,6 +1,13 @@
 # 107 — bake a snapshot-freshness witness into de1x_verify.sh (a verify must prove its input is the input it thinks)
 
-Status: open — POST-LANDING follow-up (team-lead, 2026-08-02). Deliberately kept manual during the ship.
+Status: CLOSED 2026-08-21 (owner) — the witness is the suite's first act. `-- W.` runs before any
+section: W1 (snapshot mode, baseline with issue-102 provenance) refuses a file with the SAME
+bytes+mtime as the baseline's own source, and one that PREDATES it; W2 (`TDB_WITNESS_SQL` /
+`TDB_WITNESS_MIN`, default floor 1 — the generalised `--expect-witness`) refuses a layer missing
+the value only the run-under-verification could have written. Every refusal exits 3 IMMEDIATELY
+with `WRONG INPUT`, deliberately not a FAIL line among forty. All four paths exercised live on the
+box (same-file → 3; predates → 3; witness 42<43 → 3; witness met → proceeds into section A).
+Was: open — POST-LANDING follow-up (team-lead, 2026-08-02). Deliberately kept manual during the ship.
 Kind: verification tooling / false-signal prevention
 Blocked by: — (waits only on `issue98-de1x-org-refs` being unfrozen after the ship)
 Relates to: 98, 99, 102 (the same class: an artifact that misstates what it describes)

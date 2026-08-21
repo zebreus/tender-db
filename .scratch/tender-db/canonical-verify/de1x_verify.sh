@@ -8,6 +8,11 @@
 #   BASE_URL   default http://127.0.0.1:8080 (prod app; nginx may still be down)
 #   TDB_TOKEN  API token (tdb_…) — REQUIRED, /v1/sql is account-gated
 #   SAMPLE     notices per window (default 100); 5 windows per minor
+#   TDB_WITNESS_SQL / TDB_WITNESS_MIN
+#              issue 107: a scalar SELECT only the run-under-verification could
+#              have made true (e.g. an epoch-stamp count), and its floor
+#              (default 1). Checked FIRST; a shortfall exits 3 before any
+#              section runs — see the witness block below.
 #
 #   # from the workstation, through a tunnel:
 #   ssh -N -L 8080:127.0.0.1:8080 root@zebreus.click &
@@ -228,6 +233,69 @@ if [ "${TDB_ONLY:-}" = I ]; then
   echo "   This run asserts NOTHING about whether the facts are right — only about"
   echo "   whether the page admits what is still wrong. Do not read it as a layer check."
 else
+
+# ---------------------------------------------------------------------------
+# W. Freshness witness (issue 107) — prove the input IS the input, FIRST.
+#    During the 98/99 ship two ~450 GB snapshots differing only in a unix
+#    timestamp sat side by side; pointing the suite at the stale one produces a
+#    perfect imitation of "the fold did nothing" — every number individually
+#    correct, the conclusion inverted. So before any section reports anything:
+#
+#    W1 (snapshot mode, baseline with snapshot provenance — issue 102 records
+#        bytes+mtime exactly for this): the file under verification must DIFFER
+#        from and POSTDATE the baseline's source. Same bytes+mtime is the
+#        baseline's own "before" file, whatever its path.
+#    W2 (TDB_WITNESS_SQL): a value only the run being verified could have
+#        written, checked against TDB_WITNESS_MIN (default 1). Runs through the
+#        same q() as everything else, so it works in both modes.
+#
+#    A failed witness exits 3 IMMEDIATELY with WRONG INPUT — deliberately not a
+#    FAIL line among forty, which is exactly where it would be misread as a
+#    result rather than as "you gave me the wrong file".
+# ---------------------------------------------------------------------------
+echo "-- W. freshness witness (issue 107)"
+if [ -n "${TDB_SNAPSHOT:-}" ] && [ -r "$BASELINE" ]; then
+  w_src=$(sed -n 's/^# baseline .* from snapshot \([^ ]*\) (\([0-9]*\) bytes, mtime \([^)]*\)).*$/\1|\2|\3/p' "$BASELINE" | head -1)
+  if [ -n "$w_src" ]; then
+    b_bytes=${w_src#*|}; b_bytes=${b_bytes%|*}; b_mtime=${w_src##*|}
+    cur_bytes=$(wc -c < "$TDB_SNAPSHOT")
+    cur_mtime=$(date -u -r "$TDB_SNAPSHOT" +%FT%TZ)
+    if [ "$cur_bytes" = "$b_bytes" ] && [ "$cur_mtime" = "$b_mtime" ]; then
+      echo "WRONG INPUT (issue 107): TDB_SNAPSHOT has the SAME size+mtime as the baseline's own" >&2
+      echo "source ($b_bytes bytes, mtime $b_mtime) — this is the 'before' file. Verifying it" >&2
+      echo "would report the fold did nothing. STOP; point TDB_SNAPSHOT at the post-fold snapshot." >&2
+      exit 3
+    fi
+    if [[ "$cur_mtime" < "$b_mtime" ]]; then
+      echo "WRONG INPUT (issue 107): TDB_SNAPSHOT (mtime $cur_mtime) PREDATES the baseline's" >&2
+      echo "source (mtime $b_mtime) — it cannot contain a fold that happened after the baseline." >&2
+      echo "STOP; do not interpret any output from this file." >&2
+      exit 3
+    fi
+    echo "   W1: snapshot differs from and postdates the baseline's source — OK"
+  else
+    echo "   W1: baseline carries no snapshot provenance (live capture) — nothing to compare"
+  fi
+else
+  echo "   W1: no snapshot+baseline pair — nothing to compare"
+fi
+if [ -n "${TDB_WITNESS_SQL:-}" ]; then
+  w_min="${TDB_WITNESS_MIN:-1}"
+  if ! w_got=$(scalar "$TDB_WITNESS_SQL") || [ -z "$w_got" ]; then
+    echo "WRONG INPUT (issue 107): the witness query failed to answer — cannot prove this input" >&2
+    echo "is the input under verification. STOP." >&2
+    exit 3
+  fi
+  if ! awk -v g="$w_got" -v m="$w_min" 'BEGIN{exit !(g+0>=m+0)}'; then
+    echo "WRONG INPUT (issue 107): witness = $w_got, expected >= $w_min." >&2
+    echo "The layer does NOT contain the run you mean to verify (a value only that run could" >&2
+    echo "have written is absent). STOP; do not interpret any output below this line." >&2
+    exit 3
+  fi
+  echo "   W2: witness = $w_got (>= $w_min) — the input contains the run under verification"
+else
+  echo "   W2: no TDB_WITNESS_SQL set — set one when verifying a specific fold (see header)"
+fi
 
 # ---------------------------------------------------------------------------
 # A. Parse layer must be UNTOUCHED by a projection-only re-fold.
