@@ -1,11 +1,13 @@
 # 265 — the weekly data-quality run has no dashboard surface: headline rates + week-over-week deltas
 
-Status: STORAGE HALF BUILT 2026-08-21 — every weekly run now appends its per-era headline rates
-(factless, value, named, linkage, vat_stated, negative — each as [num, den] so no surface can
-disagree by rounding) to `data-quality-headlines`, bounded to the last 12 runs, best-effort like
-the presence rates. Remaining: the dashboard section (delta table + computed_at + alarm lead) and
-266's gauges, both of which read this. Was: needs-triage — filed 2026-08-21 (owner, requested by
-Lennart: more data-quality monitors on the dashboard).
+Status: BUILT 2026-08-21 (both halves) — storage: every weekly run appends per-era headline rates
+([num, den] pairs) to `data-quality-headlines`, bounded to 12 runs. Surface: a "Data quality"
+dashboard panel (`QualityPanel`, own 10-min poll via `/api/quality`) renders the latest run per
+era — shells / value / named / linkage / VAT stated / negative — with ▲/▼ deltas vs the previous
+run, the measurement age, a loud STALE flag past 8 days, and "measuring" (never zeros) before the
+first run. Remaining: deploy (fold 306 has the box), first-run visual check, the alarm-lead line
+once a step-change fires, and 266's gauges over the same store. Was: needs-triage — filed
+2026-08-21 (owner, requested by Lennart: more data-quality monitors on the dashboard).
 Kind: observability / dashboard
 Blocked by: —
 Relates to: 230 (the report + `/admin/reports/data-quality`), 109 (the presence step-change alarm —

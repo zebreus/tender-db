@@ -30,6 +30,48 @@ pub struct Dashboard {
     pub award_linkage: Option<Vec<AwardLinkage>>,
 }
 
+/// The weekly data-quality headline history (issue 265): the stored runs,
+/// oldest first, plus how stale the newest is. Every rate rides as a
+/// `[numerator, denominator]` pair — the client divides once, its own way, so
+/// the dashboard and any other consumer of the same history can never disagree
+/// by rounding. Field names mirror the JSON the weekly run stores
+/// (`data_quality::headline_history_entry`), which is what makes this a plain
+/// deserialization rather than a translation that could drift.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+pub struct QualityHistory {
+    pub runs: Vec<QualityRun>,
+    /// Seconds since the newest run was computed — filled server-side, so the
+    /// client needs no clock to flag a stale measurement (issue 191's lesson:
+    /// a quality table without its measurement age is a staleness trap).
+    pub age_seconds: Option<i64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QualityRun {
+    /// Unix seconds the run was computed.
+    pub at: i64,
+    pub eras: Vec<QualityEra>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct QualityEra {
+    pub profile: String,
+    pub versions: u64,
+    /// Shell versions (issue 109) over versions.
+    pub factless: [u64; 2],
+    /// Versions carrying an amount over versions.
+    pub value: [u64; 2],
+    /// Results naming a winner over results a winner was possible for (issue 258).
+    pub named: [u64; 2],
+    /// Award Tenders chained to a contract notice over award Tenders.
+    pub linkage: [u64; 2],
+    /// Amounts stating a VAT basis over amounts (issue 251).
+    pub vat_stated: [u64; 2],
+    /// Negative amounts over amounts (issue 267; overwhelmingly source-published
+    /// — the RATE moving is the signal, not the existence).
+    pub negative: [u64; 2],
+}
+
 /// The cheap system-status section: the numbers that need no full-table scan, so
 /// they are the first to land after a restart.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

@@ -117,6 +117,10 @@ pub fn DashboardPage() -> Element {
                         None => rsx! { Measuring { title: "Award linkage" } },
                     }
 
+                    // The weekly quality headlines (issue 265) — its own poll,
+                    // like IngestionPanel: weekly data needs no 5 s refresh.
+                    QualityPanel {}
+
                     match &d.pipeline {
                         Some(rows) => rsx! { PipelinePanel { rows: rows.clone() } },
                         None => rsx! { Measuring { title: "Pipeline" } },
@@ -334,6 +338,87 @@ fn RunRow(run: JobRun) -> Element {
             td { "{run.counts}" }
         }
     }
+}
+
+/// The weekly data-quality headlines (issue 265): the latest run's per-era
+/// rates with a delta against the previous run. Rates arrive as [num, den]
+/// pairs and divide HERE, once. Independent poll like the ingestion panel —
+/// the weekly cadence needs no 5-second refresh.
+#[component]
+fn QualityPanel() -> Element {
+    let data = use_polled(Duration::from_secs(600), api::quality)?;
+    rsx! {
+        match &data {
+            Ok(h) if !h.runs.is_empty() => {
+                let latest = h.runs.last().cloned().unwrap_or_else(|| model::QualityRun { at: 0, eras: vec![] });
+                let previous = (h.runs.len() >= 2).then(|| h.runs[h.runs.len() - 2].clone());
+                let stale = h.age_seconds.is_some_and(|a| a > 8 * 86_400);
+                rsx! {
+                    section { class: "panel",
+                        h2 { "Data quality" }
+                        p { class: "hint",
+                            "Weekly measurement, per era — measured {age(h.age_seconds)}"
+                            if stale {
+                                strong { " — STALE: the weekly run has not stored a report in over 8 days" }
+                            }
+                            if previous.is_some() {
+                                span { " · deltas vs the previous run" }
+                            }
+                        }
+                        table {
+                            thead { tr {
+                                th { "era" } th { "versions" } th { "shells" } th { "value" }
+                                th { "named" } th { "linkage" } th { "VAT stated" } th { "negative" }
+                            } }
+                            tbody {
+                                for era in latest.eras.clone() {
+                                    tr { key: "{era.profile}",
+                                        td { "{era.profile}" }
+                                        td { "{group(era.versions as i64)}" }
+                                        td { "{rate_cell(era.factless, prev_rate(&previous, &era.profile, |e| e.factless))}" }
+                                        td { "{rate_cell(era.value, prev_rate(&previous, &era.profile, |e| e.value))}" }
+                                        td { "{rate_cell(era.named, prev_rate(&previous, &era.profile, |e| e.named))}" }
+                                        td { "{rate_cell(era.linkage, prev_rate(&previous, &era.profile, |e| e.linkage))}" }
+                                        td { "{rate_cell(era.vat_stated, prev_rate(&previous, &era.profile, |e| e.vat_stated))}" }
+                                        td { "{rate_cell(era.negative, prev_rate(&previous, &era.profile, |e| e.negative))}" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Ok(_) => rsx! { Measuring { title: "Data quality" } },
+            Err(e) => rsx! { section { class: "panel", h2 { "Data quality" } p { class: "error", "Could not read: {e}" } } },
+        }
+    }
+}
+
+/// The previous run's [num, den] for a profile, for the delta column.
+fn prev_rate(
+    previous: &Option<model::QualityRun>,
+    profile: &str,
+    pick: impl Fn(&model::QualityEra) -> [u64; 2],
+) -> Option<[u64; 2]> {
+    previous.as_ref()?.eras.iter().find(|e| e.profile == profile).map(pick)
+}
+
+/// "12.3%" with a delta suffix when the previous run has the era and the rate
+/// moved ≥ 0.1 points ("12.3% ▲2.1"). A zero denominator renders "—", never a
+/// fake 0% (issue 230's zero-lie rule).
+fn rate_cell(now: [u64; 2], previous: Option<[u64; 2]>) -> String {
+    let rate = |p: [u64; 2]| (p[1] > 0).then(|| 100.0 * p[0] as f64 / p[1] as f64);
+    let Some(current) = rate(now) else { return "—".to_owned() };
+    let mut out = format!("{current:.1}%");
+    if let Some(prev) = previous.and_then(rate) {
+        let delta = current - prev;
+        if delta >= 0.1 {
+            out.push_str(&format!(" ▲{delta:.1}"));
+        } else if delta <= -0.1 {
+            out.push_str(&format!(" ▼{:.1}", -delta));
+        }
+    }
+    out
 }
 
 /// Award-chaining health per era: how many award Tenders never linked to a

@@ -9,7 +9,9 @@
 
 use dioxus::fullstack::{Json, SetCookie, SetHeader};
 use dioxus::prelude::*;
-use model::{Account, Dashboard, Ingestion, NewToken, NewWebhook, Tender, Token, Webhook};
+use model::{
+    Account, Dashboard, Ingestion, NewToken, NewWebhook, QualityHistory, Tender, Token, Webhook,
+};
 
 /// All tenders, newest first.
 #[get("/api/tenders")]
@@ -24,6 +26,24 @@ pub async fn list_tenders() -> ServerFnResult<Vec<Tender>> {
 #[get("/api/dashboard")]
 pub async fn dashboard() -> ServerFnResult<Dashboard> {
     Ok(tender_db::coverage::latest())
+}
+
+/// The weekly data-quality headline history (issue 265) — the stored
+/// `data-quality-headlines` runs, deserialized, with the newest run's age
+/// computed server-side. A point lookup on the reports table: no measurement
+/// runs on this path, same rule as `/api/dashboard`. Empty (with no age) until
+/// the first weekly run has stored a history — "not measured yet" must render
+/// as exactly that, never as zeros (issue 37).
+#[get("/api/quality")]
+pub async fn quality() -> ServerFnResult<QualityHistory> {
+    let db = store::state().await;
+    match db.latest_report("data-quality-headlines").await.map_err(ServerFnError::new)? {
+        Some((body, computed_at)) => Ok(QualityHistory {
+            runs: serde_json::from_str(&body).unwrap_or_default(),
+            age_seconds: Some(store::now_unix() - computed_at),
+        }),
+        None => Ok(QualityHistory::default()),
+    }
 }
 
 /// The ingestion Supervisor's live state — current job + queue + recent runs.
