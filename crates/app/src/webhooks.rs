@@ -101,10 +101,20 @@ pub fn sign(secret: &str, msg_id: &str, timestamp: i64, payload: &str) -> String
 ///
 /// Note: this resolves at check time; between the check and reqwest's own
 /// resolution a DNS-rebinding attacker could point the name at a private
-/// address (a TOCTOU window). Closing it fully needs connection-pinning to the
-/// vetted IP; for v1 the guard rejects the overwhelming majority of SSRF attempts
-/// and the box holds nothing an internal request could usefully reach.
+/// address (a TOCTOU window). Registration accepts that window — the delivery
+/// path closes it by POSTing through a client PINNED to the addresses this
+/// check vetted ([`vet_url_addrs`] + [`pinned_client`], issue 214's follow-up),
+/// so reqwest never re-resolves the name at all.
 pub async fn vet_url(raw: &str) -> Result<(), String> {
+    vet_url_addrs(raw).await.map(|_| ())
+}
+
+/// [`vet_url`], returning what it vetted: the URL's host and the resolved,
+/// publicly-routable addresses. The delivery path pins its connection to
+/// exactly these, which is what makes the vet meaningful — a check whose
+/// result is thrown away leaves reqwest to resolve the name AGAIN, and that
+/// second resolution is the DNS-rebinding TOCTOU (issue 214).
+pub async fn vet_url_addrs(raw: &str) -> Result<(String, Vec<std::net::SocketAddr>), String> {
     let url = Url::parse(raw).map_err(|e| format!("invalid URL: {e}"))?;
     let insecure_ok = allow_insecure();
     match url.scheme() {
@@ -126,7 +136,23 @@ pub async fn vet_url(raw: &str) -> Result<(), String> {
             }
         }
     }
-    Ok(())
+    Ok((host.to_owned(), addrs.into_iter().map(|ip| std::net::SocketAddr::new(ip, port)).collect()))
+}
+
+/// A one-delivery HTTP client whose connection is PINNED to `addrs` for
+/// `host`: `resolve_to_addrs` replaces DNS for that name, so the socket goes
+/// where the vet looked — TLS still validates against the HOSTNAME (SNI and
+/// certificate checks are unchanged; only address resolution is overridden).
+/// Per-delivery construction costs the connection pool, which is the right
+/// trade: deliveries are sparse and a pooled connection to a formerly-vetted
+/// address would itself be a stale pin.
+fn pinned_client(host: &str, addrs: &[std::net::SocketAddr]) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .timeout(TIMEOUT)
+        .redirect(reqwest::redirect::Policy::none())
+        .resolve_to_addrs(host, addrs)
+        .build()
+        .map_err(|e| format!("could not build the pinned delivery client: {e}"))
 }
 
 async fn resolve(host: &str, port: u16) -> Result<Vec<IpAddr>, String> {
@@ -487,23 +513,39 @@ impl Sweeper {
         // (The residual sub-millisecond TOCTOU between this resolve and reqwest's own
         // is closed only by pinning the connection to the vetted IP; that needs a
         // live delivery to verify and is tracked as the issue-214 follow-up.)
-        if self.revet_on_send
-            && let Err(reason) = vet_url(&endpoint.url).await
-        {
-            return Outcome::Failed {
-                status: None,
-                error: Some(format!("delivery refused: endpoint host failed the SSRF re-check ({reason})")),
-                duration_ms: 0,
-            };
-        }
+        // …and the POST is PINNED to what the re-check vetted (the issue-214
+        // follow-up): `resolve_to_addrs` hands reqwest the vetted sockets, so
+        // the sub-millisecond TOCTOU between our resolve and reqwest's own is
+        // gone — there is no second resolution. TLS still validates the
+        // hostname. Tests (revet off) keep the shared client and today's path.
+        let http = if self.revet_on_send {
+            match vet_url_addrs(&endpoint.url).await {
+                Ok((host, addrs)) => match pinned_client(&host, &addrs) {
+                    Ok(client) => client,
+                    Err(error) => {
+                        return Outcome::Failed { status: None, error: Some(error), duration_ms: 0 };
+                    }
+                },
+                Err(reason) => {
+                    return Outcome::Failed {
+                        status: None,
+                        error: Some(format!(
+                            "delivery refused: endpoint host failed the SSRF re-check ({reason})"
+                        )),
+                        duration_ms: 0,
+                    };
+                }
+            }
+        } else {
+            self.http.clone()
+        };
 
         let msg_id = format!("evt_{}_{}_{}", endpoint.id, from, to);
         let timestamp = store::now_unix();
         let signature = sign(&endpoint.secret, &msg_id, timestamp, &body);
 
         let started = std::time::Instant::now();
-        let result = self
-            .http
+        let result = http
             .post(&endpoint.url)
             .header("content-type", "application/json")
             .header("webhook-id", &msg_id)
@@ -588,6 +630,45 @@ enum Outcome {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 214's follow-up, proven by construction: the POST connects to
+    /// where the PIN points, not where DNS does. `pinned.invalid` can never
+    /// resolve (RFC 2606), so the request reaching the local receiver at all
+    /// is possible only through `resolve_to_addrs` — the same mechanism the
+    /// delivery path hands its vetted sockets. If reqwest re-resolved, this
+    /// request could not even start, let alone land.
+    #[tokio::test]
+    async fn the_pin_routes_the_connection_where_the_vet_looked() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let app = axum::Router::new()
+            .route("/hook", axum::routing::post(|| async { "ok" }));
+        tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+
+        let client = pinned_client("pinned.invalid", &[addr]).expect("pinned client builds");
+        let response = client
+            .post(format!("http://pinned.invalid:{}/hook", addr.port()))
+            .body("x")
+            .send()
+            .await
+            .expect("the pin must route the connection to the vetted socket");
+        assert_eq!(response.status().as_u16(), 200);
+
+        // And WITHOUT the pin the same URL is unreachable — the control that
+        // proves the success above came from the pin, not from ambient DNS.
+        let unpinned = reqwest::Client::builder().timeout(TIMEOUT).build().unwrap();
+        assert!(
+            unpinned
+                .post(format!("http://pinned.invalid:{}/hook", addr.port()))
+                .body("x")
+                .send()
+                .await
+                .is_err(),
+            ".invalid must not resolve without the pin"
+        );
+    }
 
     #[test]
     fn signatures_are_standard_webhooks_shaped_and_stable() {

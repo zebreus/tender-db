@@ -1,6 +1,14 @@
 # 214 — webhook target is vetted only at registration; delivery re-resolves the host with no IP pin (DNS-rebinding SSRF to the Hetzner metadata endpoint)
 
-Status: PRIMARY ATTACK CLOSED — DEPLOYED 2026-08-16 (serving rev `005c617`), pin follow-up open. The
+Status: FULLY CLOSED IN CODE 2026-08-21 — the pin follow-up is built: delivery now POSTs through a
+per-delivery client PINNED to the addresses the SSRF re-check vetted (`vet_url_addrs` +
+`resolve_to_addrs`), so reqwest performs NO second resolution and the sub-millisecond TOCTOU is
+gone; TLS still validates the hostname (only address resolution is overridden). Proven by
+construction: `the_pin_routes_the_connection_where_the_vet_looked` POSTs to `pinned.invalid` —
+unresolvable by RFC 2606 — pinned at a local receiver, and succeeds only through the pin, with the
+unpinned control failing. The original deferral reason (no deploy access to verify) no longer
+applies. Awaiting deploy behind the running r209 fold. Was: PRIMARY ATTACK CLOSED — DEPLOYED
+2026-08-16 (serving rev `005c617`), pin follow-up open. The
 delivery-time re-vet is live in prod (`Sweeper::init` builds with `revet_on_send: true`); its refusal path
 is proven by the unit/integration test `a_rebound_endpoint_is_refused_at_delivery` — a live DNS-rebind probe
 in prod is not run (it needs attacker-controlled DNS on a registered endpoint). Fix in `ec0038f`
