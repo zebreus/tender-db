@@ -1830,12 +1830,20 @@ pub async fn project_incremental_chunked_observed(
                     "[project] INCREMENTAL → FULL fallback: {reason} (issue 58 v2); \
                      re-projecting the whole corpus"
                 );
+                // The caller's sink rides along (issue 262): an era-scale reparse
+                // delta routinely exceeds the closure cap — r208's pulled a 2.9M
+                // closure — so the fallback IS the common path for the biggest
+                // folds, and it must not shed the phase record on the way through.
+                let mut stderr = stderr_progress_sink();
                 return project_with_progress_phase2_stoppable(
                     db,
                     false,
                     APPLY_NOTICE_BATCH,
                     Phase2::Buckets { shards: None },
-                    stderr_progress_sink(),
+                    |p| {
+                        stderr(p);
+                        on_progress(p);
+                    },
                     stop,
                 )
                 .await;

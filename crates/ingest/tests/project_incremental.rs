@@ -1319,3 +1319,54 @@ async fn the_incremental_plan_build_reports_progress_and_stops_within_a_chunk() 
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+
+/// Issue 262's last corner: when the incremental routes to the FULL fallback
+/// (untrusted or over-cap legacy closure — r208's real delta pulled a 2.9M
+/// closure, so this is the common path for the biggest folds), the caller's
+/// progress sink must ride along. Before this, the fallback swapped in a
+/// stderr-only sink and the phase record went dark for the entire ~3h walk.
+#[tokio::test]
+async fn the_full_fallback_still_surfaces_the_callers_progress() {
+    use ingest::project::Progress;
+    use std::sync::Mutex;
+
+    // A legacy notice on a db whose adjacency watermark was NEVER established:
+    // the closure cannot be trusted, so the incremental MUST take the fallback.
+    let (db, fid, path) = scratch("fallbackobs").await;
+    let legacy = Parsed {
+        sections: vec![sec("PROC", "Notice", None)],
+        values: vec![
+            text_val("PROC", "TED-TITLE", "Legacy works"),
+            date_val("PROC", "TED-DS_DATE_DISPATCH", 42),
+        ],
+    };
+    record_p(&db, fid, "100001-2019", "ted-export-r209", legacy).await;
+
+    let events: Mutex<Vec<&'static str>> = Mutex::new(Vec::new());
+    let report = project::project_incremental_observed_stoppable(
+        &db,
+        |p| {
+            events.lock().unwrap().push(match p {
+                Progress::Planning { .. } => "planning",
+                Progress::Grouped { .. } => "grouped",
+                Progress::Applying { .. } => "applying",
+                Progress::PrePass { .. } => "pre-pass",
+            });
+        },
+        &|| false,
+    )
+    .await
+    .expect("fallback run");
+    assert!(!report.stopped);
+    assert!(report.tenders > 0, "the fallback folded the corpus");
+    let seen = events.into_inner().unwrap();
+    assert!(
+        seen.contains(&"planning") && seen.contains(&"applying"),
+        "the fallback must surface the caller's sink, not only stderr: {seen:?}"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
