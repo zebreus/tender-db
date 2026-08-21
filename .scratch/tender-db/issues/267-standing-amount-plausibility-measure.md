@@ -1,7 +1,11 @@
 # 267 — amount plausibility is a one-off analysis, not a standing measure
 
-Status: needs-triage — filed 2026-08-21 (owner, requested by Lennart: investigate data quality +
-more monitors).
+Status: MEASUREMENT BUILT 2026-08-21, same day — `amount_plausibility` is section 8 of the weekly
+run: per-era amounts/negative/zero/>1e12 counts (windowed like every label, auto-covered by the
+equivalence gate), rendered with the 131/132 source-published caveat inline, and in the JSON with
+`negative_rate`. Remaining: deploy (r209 fold has the box), the 131-numbers backtest on the first
+live run, and joining 265's headline history once that lands (the delta is what makes the rate a
+MONITOR rather than a number). Was: needs-triage — filed 2026-08-21 (owner, requested by Lennart).
 Kind: data-quality measurement (new section for the weekly run)
 Blocked by: —
 Relates to: 131/132 (source-published negative amounts, row-by-row diagnosed), 134 (the ratio-form

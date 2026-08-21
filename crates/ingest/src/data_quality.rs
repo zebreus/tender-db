@@ -678,6 +678,26 @@ fn factless_template(scope: &str) -> String {
     )
 }
 
+/// The amount-plausibility probe (issue 267): the standing form of the
+/// negative-amount analyses (131/132/134/136), which established that negatives
+/// are overwhelmingly SOURCE-published and then stopped measuring. The honest
+/// invariant is the per-era RATE (issue 134's form) — a parser regression that
+/// starts fabricating negatives, or a source shipping garbage at scale, moves
+/// the rate; individual negatives do not. `over_1e12` is a deliberately crude
+/// tripwire for the unrepresentable-value class escaping quarantine into the
+/// layer, not a correctness claim about any single amount.
+fn amount_plausibility_template(scope: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS amounts, \
+                SUM(CASE WHEN a.cents < 0 THEN 1 ELSE 0 END) AS negative, \
+                SUM(CASE WHEN a.cents = 0 THEN 1 ELSE 0 END) AS zero, \
+                SUM(CASE WHEN a.cents > 100000000000000 THEN 1 ELSE 0 END) AS over_1e12 \
+           FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+           JOIN tender_version_amounts a ON a.tender_id = v.tender_id AND a.seq = v.seq \
+          {scope}GROUP BY n.profile"
+    )
+}
+
 /// The queries that measure a population no `tender_id` window can slice, so the
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
@@ -709,6 +729,8 @@ pub fn queries() -> Vec<(String, String)> {
     out.push(("amount_basis".to_owned(), amount_basis_sql()));
     // The content-presence probe (issue 109).
     out.push(("factless".to_owned(), factless_template("")));
+    // Amount plausibility (issue 267).
+    out.push(("amount_plausibility".to_owned(), amount_plausibility_template("")));
     // Whole-corpus queries last: the bin runs every label in this list, and these
     // are the ones the in-process job runs once rather than per window.
     out.extend(whole_corpus_queries());
@@ -843,6 +865,13 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
         template: factless_template("{window} AND "),
         column: "v.tender_id".to_owned(),
     });
+    // Amount plausibility (issue 267): drives from `tender_versions v` like
+    // `amount_basis`, so the same range predicate windows it and the counts sum.
+    out.push(WindowedQuery {
+        label: "amount_plausibility".to_owned(),
+        template: amount_plausibility_template("WHERE {window} "),
+        column: "v.tender_id".to_owned(),
+    });
     out
 }
 
@@ -948,6 +977,17 @@ pub struct PresenceRow {
     pub profile: String,
     pub versions: u64,
     pub factless: u64,
+}
+
+/// One era's amount plausibility (issue 267): the standing per-era rates the
+/// negative-amount analyses (131/134) established as the honest invariant.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PlausibilityRow {
+    pub profile: String,
+    pub amounts: u64,
+    pub negative: u64,
+    pub zero: u64,
+    pub over_1e12: u64,
 }
 
 /// One era's award→notice linkage.
@@ -1073,6 +1113,8 @@ pub struct Report {
     pub amount_basis: Vec<BasisRow>,
     /// Factless (shell) versions per era (issue 109).
     pub presence: Vec<PresenceRow>,
+    /// Amount plausibility per era (issue 267).
+    pub plausibility: Vec<PlausibilityRow>,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
     /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
@@ -1126,6 +1168,8 @@ pub struct Raw {
     pub amount_basis: Rows,
     /// Factless versions per era (issue 109).
     pub factless: Rows,
+    /// Amount plausibility per era (issue 267).
+    pub amount_plausibility: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1173,6 +1217,7 @@ impl Raw {
             fresh_holds: take("fresh_holds", &mut unmeasured)?,
             amount_basis: take("amount_basis", &mut unmeasured)?,
             factless: take("factless", &mut unmeasured)?,
+            amount_plausibility: take("amount_plausibility", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1300,6 +1345,19 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         .collect();
     presence.sort_by(|a, b| a.profile.cmp(&b.profile));
 
+    let mut plausibility: Vec<PlausibilityRow> = raw
+        .amount_plausibility
+        .iter()
+        .map(|r| PlausibilityRow {
+            profile: as_str(r.first()),
+            amounts: as_u64(r.get(1)),
+            negative: as_u64(r.get(2)),
+            zero: as_u64(r.get(3)),
+            over_1e12: as_u64(r.get(4)),
+        })
+        .collect();
+    plausibility.sort_by(|a, b| a.profile.cmp(&b.profile));
+
     Report {
         base_url: base_url.to_owned(),
         completeness,
@@ -1311,6 +1369,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         fresh_holds,
         amount_basis,
         presence,
+        plausibility,
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1637,6 +1696,36 @@ pub fn render_text(report: &Report) -> String {
              density legitimately varies."
         );
     }
+
+    let _ = writeln!(out, "\n== 8. Amount plausibility (negative / zero / >1e12 rates — issue 267) ==");
+    if report.unmeasured.iter().any(|l| l == "amount_plausibility") {
+        let _ = writeln!(out, "  UNMEASURED — the `amount_plausibility` query did not run.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  {:<30} {:>11} {:>9} {:>9} {:>9}",
+            "era", "amounts", "negative", "zero", ">1e12"
+        );
+        for r in &report.plausibility {
+            let _ = writeln!(
+                out,
+                "  {:<30} {:>11} {:>9} {:>9} {:>9}",
+                display_era(&r.profile),
+                group(r.amounts),
+                group(r.negative),
+                group(r.zero),
+                group(r.over_1e12),
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  Negatives are overwhelmingly SOURCE-published (131/132: row-by-row diagnosed), so \
+             their existence is not a defect — the RATE moving between runs is the signal, for the \
+             fabricated-negative parser-regression class. >1e12 is a crude tripwire for \
+             unrepresentable values escaping quarantine into the layer, not a claim about any \
+             single amount."
+        );
+    }
     out
 }
 
@@ -1808,6 +1897,19 @@ pub fn render_json(report: &Report) -> String {
             "factless_rate": rate(r.factless, r.versions),
         }))
         .collect();
+    let plausibility: Vec<Value> = report
+        .plausibility
+        .iter()
+        .map(|r| json!({
+            "profile": r.profile,
+            "era": era_of(&r.profile),
+            "amounts": r.amounts,
+            "negative": r.negative,
+            "zero": r.zero,
+            "over_1e12": r.over_1e12,
+            "negative_rate": rate(r.negative, r.amounts),
+        }))
+        .collect();
     let value = json!({
         "base_url": report.base_url,
         "unit": "tender-version",
@@ -1822,6 +1924,7 @@ pub fn render_json(report: &Report) -> String {
         },
         "amount_vat_basis": amount_basis,
         "content_presence": presence,
+        "amount_plausibility": plausibility,
         "ted_doe_merge": {
             "doe_tenders": report.merge.doe_tenders,
             "merged": report.merge.merged,
@@ -1958,6 +2061,8 @@ mod tests {
                 "amount_basis",
                 // Content presence — the shell detector (issue 109).
                 "factless",
+                // Amount plausibility (issue 267).
+                "amount_plausibility",
                 "fresh_holds",
             ]
         );
@@ -2138,6 +2243,7 @@ mod tests {
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
             ("amount_basis".to_owned(), Some(vec![])),
             ("factless".to_owned(), Some(vec![])),
+            ("amount_plausibility".to_owned(), Some(vec![])),
             ("fresh_holds".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
@@ -2557,9 +2663,38 @@ mod tests {
                 ]),
             ),
             ("factless".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
+            (
+                "amount_plausibility".to_owned(),
+                Some(vec![vec![
+                    json!("eforms:eforms-sdk-1.13"),
+                    json!(120),
+                    json!(3),
+                    json!(7),
+                    json!(1),
+                ]]),
+            ),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
+
+        // Issue 267: the plausibility row assembles and renders with its caveat.
+        assert_eq!(
+            report.plausibility,
+            vec![PlausibilityRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                amounts: 120,
+                negative: 3,
+                zero: 7,
+                over_1e12: 1,
+            }]
+        );
+        let text = render_text(&report);
+        assert!(text.contains("== 8. Amount plausibility"), "section 8 must render:\n{text}");
+        assert!(
+            text.contains("RATE moving between runs is the signal"),
+            "the source-published caveat must render — a rate table without it manufactures \
+             a defect out of publisher behaviour:\n{text}"
+        );
 
         // Two eras, sorted by profile.
         assert_eq!(report.completeness.len(), 2);
