@@ -1,9 +1,9 @@
 # 234 — an identifier-less mention mints a NEW provisional Organization every time, so legacy buyer rollups cannot aggregate
 
-Status: IMPLEMENTED 2026-08-20 (owner), NOT YET DEPLOYED — deploy waits for the in-flight
-issue-100/259 refold's numbers per this issue's own sequencing rule, then ships with
-PROJECTION_EPOCH 3→4 (the whole-corpus rewrite the bump declares IS the deliverable — it is what
-collapses the 95.30 %-provisional table). Option (1) as decided: `(name_norm, country)` reuse for
+Status: IMPLEMENTED 2026-08-20 (owner); the merge is DEPLOYED and is **prevention only** — the
+epoch bump that rode the commit was WRONG and was reverted 2026-08-21 (see "The epoch correction"
+below). Remaining deliverable: a separate BACKFILL job to collapse the existing provisional rows —
+no fold, at any epoch, can do it. Option (1) as decided: `(name_norm, country)` reuse for
 identifier-less mentions, scoped `identifier IS NULL`, nameless and country-less mentions never
 merge, rows stay provisional. Red-checked test + the issue-104 golden fired on it (details at the
 bottom). Was: needs-triage, RAISED — SIZED 2026-08-18 at 95.30 % provisional
@@ -337,11 +337,35 @@ exactly the epoch-discipline prompt it was built to give: the regeneration + `PR
 that: the first regeneration attempt silently missed the bump (a patch text-mismatch), and the
 header reading `3` atop a fold-changing diff is what caught it.
 
-## Deploy plan (blocked on the in-flight refold, per the sequencing rule above)
+## The epoch correction (2026-08-21) — the bump was wrong, and why
 
-1. Read the running issue-100/259 refold's numbers first (winner rates, sweep count) — landing this
-   at the same time would make both changes' effects unattributable.
-2. Deploy. The epoch bump stales the whole corpus; enqueue the full re-projection off-hours.
-3. Re-measure: total/provisional organizations (was 24,618,292 / 23,462,294 = 95.30 %), the
-   windowed collapse ratios (2.8×–14.4× predicted), and `provisional per mention` (was 0.568).
-4. The acceptance's before/after pair completes with those numbers recorded here.
+The plan below said the epoch bump's whole-corpus rewrite "IS the deliverable." Its first live
+outing falsified that: job 293 (the post-deploy full projection) walked **0 notices → 0 tenders**,
+because an epoch bump creates no plan delta by itself — and forcing the walk would have achieved
+nothing either. The mechanism: `MentionResolver`'s `(notice, section)` idempotency preload returns
+the already-recorded Organization for every mention that exists in the layer, so a re-fold of a
+stored chain NEVER re-resolves its mentions — output is byte-identical with or without the merge in
+the build. That is the exact definition of "stored chains remain valid state keys," i.e. the
+condition under which PROJECTION_EPOCH must NOT move. Reverted to 3 in `71553d1`; the doc comment
+on the constant now carries the lesson.
+
+Consequence: the shipped merge is **prevention** — it stops NEW mentions (fresh ingests, re-parses)
+from minting duplicates. It cannot retro-collapse the stock of 23.46M provisional rows via any
+fold. That collapse is a **backfill job**, sketched here and to be scoped/filed properly:
+
+- Group provisional orgs (`identifier IS NULL`) by `(name_norm, country)`, both non-empty; elect
+  the smallest id as survivor.
+- Repoint `organization_mentions.org`, `tender_version_parties`, `bid_parties`, `result_winners`
+  (every org-referencing table) from losers to survivor.
+- Delete loser rows; emit `removed` change rows for them (and `updated` for the survivor's
+  new mention count if we surface one).
+- Batched, checkpointed, cancellable — same shape as the other admin jobs; measure with the
+  acceptance numbers below.
+
+## Verification still owed (now tied to the backfill, not a deploy)
+
+- Re-measure after the backfill runs: total/provisional organizations (was 24,618,292 /
+  23,462,294 = 95.30 %), the windowed collapse ratios (2.8×–14.4× predicted), and `provisional
+  per mention` (was 0.568).
+- Interim, prevention-only signal: the provisional-per-mention ratio for mentions recorded AFTER
+  the deploy should sit far below 0.568.
