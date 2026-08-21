@@ -1,8 +1,11 @@
 # 206 — no way to record a manual one-off correction to a field of a specific notice
 
-Status: open — design question, filed 2026-08-15 (owner, prompted by Lennart's question "do we have a
-way to track corrections to wrong data, like a typo in a specific field of a specific notice we found
-manually?"). Needs an owner decision on WHETHER we want this before any build.
+Status: DECIDED 2026-08-21 (owner) — DEFERRED-BY-POLICY, no build now. Decision recorded at the
+bottom: faithful-to-source + fix-in-code stays the deliberate stance; the override layer is built
+the FIRST time a real single-notice correction is actually needed, in the vendored-as-data,
+code-review-gated shape sketched here, correcting the projected value AND recording the source
+erred (both halves of open decision 2), with the stale-override surfacing rule as a hard
+requirement. Until that first real need, this issue is the design's home, not a work item.
 Kind: architecture / data-quality
 Blocked by: —
 Relates to: 40 (quarantine ledger — the pattern to mirror), 173 (takedown/redaction — the same
@@ -53,3 +56,36 @@ Mirror the ledger's philosophy (corrections are reviewable DATA, keyed to what t
    endpoint)? The quarantine-ledger precedent is code-review-gated.
 
 No build until (1) is answered.
+
+---
+
+## Owner decision (2026-08-21)
+
+**(1) Not yet — and not never.** Three facts decide it:
+
+- **Demand is zero so far.** In two-plus months of operating this corpus — quarantine drains,
+  re-parses, campaign sweeps, dashboards read daily — not one concrete "this one field of this one
+  notice is wrong and must be hand-fixed" case has surfaced. Every wrong value found had a CLASS
+  cause (parser gap, mapping alias, inventory mislabel) and the class fix corrected it everywhere.
+  Building override machinery ahead of the first real case would be speculation with a permanent
+  correctness cost attached.
+- **The cost is not hypothetical.** An override is the DB disagreeing with its own archived source.
+  It weakens the strongest property this system has (byte-faithful derivation, ADR-0001/0004) for
+  every future migration, refold, and verification gate — the golden test, the epoch discipline,
+  and issue 99's byte-identity all assume derive-from-source is total.
+- **The gap has a cheap interim.** A source typo is FINDINGS material: it can be recorded on the
+  issue board (as issues 131/132 recorded source-published negative amounts) without touching the
+  layer. If a consumer-facing wrong value ever matters enough, that pressure IS the trigger below.
+
+**Trigger to build:** the first genuine case where a specific notice's specific field is wrong, the
+source will not republish, and the wrongness has a real consumer cost. When it fires, build:
+
+- **Shape (decisions 2+3 pre-answered):** vendored-as-data, code-review-gated (the
+  quarantine-ledger precedent) — corrections are reviewable table edits, not a live admin surface.
+  Apply AFTER projection so overrides survive every rebuild. Correct the projected value AND mark
+  the notice "source states X, corrected to Y, reason, author, date" — both what-to-show and
+  that-the-source-erred, because consumers need the first and audits the second.
+- **Hard requirement:** an override whose recorded `old_value` no longer matches the source
+  surfaces loudly instead of applying — a stale override that silently applies is worse than the
+  typo it fixed.
+- Emit through `/v1/changes` like any version change.
