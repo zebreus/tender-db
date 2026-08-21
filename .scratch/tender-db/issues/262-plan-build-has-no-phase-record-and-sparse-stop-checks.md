@@ -1,6 +1,16 @@
 # 262 — the fold's plan build shows `phase: None` and honours a stop only ~17 min later
 
-Status: needs-triage — filed 2026-08-21 (owner) out of issue 256's live cancel probe.
+Status: FIXED IN CODE 2026-08-21, same day — the incremental's plan-build passes now emit
+`Progress::Planning` per chunk (each pass over its own total) and poll the stop flag per chunk, the
+grouping boundary emits `Grouped`, both phase-2 arms forward `Applying`, and the supervisor maps it
+all into the durable phase record via `project_incremental_observed_stoppable` (the same
+`phase_from_progress` the full path uses). A stop during pass 2 clears the partial plan and — the
+part the new gate caught being wrong on the first cut — does NOT advance the legacy-adjacency
+watermark, whose attestation only a completed build earns. Gate:
+`the_incremental_plan_build_reports_progress_and_stops_within_a_chunk` (three scenarios: progress
+surfaces; immediate stop plans nothing; genuine mid-pass-2 stop leaves the watermark). Awaiting
+deploy (fold 304 has the box); the acceptance's live half — a `planning` phase with moving numbers
+on a real delta, and a cancel honoured within ~a minute — reads on the next big fold after deploy.
 Kind: observability + cancel-latency rough edge
 Blocked by: —
 Relates to: 256 (whose probe measured it), 65 (the phase record this stage never sets), 252

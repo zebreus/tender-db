@@ -1558,10 +1558,24 @@ pub async fn project_incremental_stoppable(
     db: &Db,
     stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Report> {
+    project_incremental_observed_stoppable(db, |_| {}, stop).await
+}
+
+/// [`project_incremental_stoppable`] with the Progress events surfaced (issue
+/// 262): the plan build over a re-parse-scale delta runs for tens of minutes,
+/// and without this the job's phase record read `None` the whole time — a
+/// 2.7M-notice delta was watched as dead air, and a cancel took ~17 minutes to
+/// find a checkpoint. The supervisor maps these to the same durable phase
+/// record the full-projection path earns (issue 65).
+pub async fn project_incremental_observed_stoppable(
+    db: &Db,
+    on_progress: impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
     let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
     let result =
-        project_incremental_chunked_phase2_stoppable(db, INCREMENTAL_CHUNK, None, stop).await;
+        project_incremental_chunked_observed(db, INCREMENTAL_CHUNK, None, on_progress, stop).await;
     let restored = db.set_foreign_keys(true).await;
     let report = result?;
     restored?;
@@ -1723,6 +1737,24 @@ pub async fn project_incremental_chunked_phase2_stoppable(
     phase2: Option<Phase2>,
     stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Report> {
+    project_incremental_chunked_observed(db, chunk_size, phase2, |_| {}, stop).await
+}
+
+/// The chunked incremental with its Progress surfaced and its plan-build loops
+/// stoppable (issue 262). Both passes emit [`Progress::Planning`] per chunk and
+/// poll the stop flag per chunk, so a cancel lands within one chunk's work
+/// (~[`INCREMENTAL_CHUNK`] notices) instead of only at the fold. A stop during
+/// pass 2 abandons the partial plan (cleared; rebuilt from the same delta next
+/// run — mention resolution is idempotent) and deliberately does NOT advance
+/// the legacy-adjacency watermark: that attestation is only true of a COMPLETED
+/// plan build.
+pub async fn project_incremental_chunked_observed(
+    db: &Db,
+    chunk_size: usize,
+    phase2: Option<Phase2>,
+    mut on_progress: impl FnMut(Progress),
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Report> {
     let changed = db.unprojected_parsed_notice_ids().await?;
     if changed.is_empty() {
         return Ok(Report::default());
@@ -1748,7 +1780,15 @@ pub async fn project_incremental_chunked_phase2_stoppable(
     let mut new_keyed_keys: Vec<String> = Vec::new();
     let mut legacy_seed_keys: Vec<i64> = Vec::new();
     let mut legacy_delta = 0usize;
+    let mut scanned = 0u64;
     for chunk in changed.chunks(chunk_size) {
+        // Stop per chunk (issue 262): nothing durable is written in pass 1, so
+        // an immediate return is the checkpoint.
+        if stop() {
+            return Ok(Report { stopped: true, ..Report::default() });
+        }
+        scanned += chunk.len() as u64;
+        on_progress(Progress::Planning { notices: scanned, total: changed.len() as u64 });
         let mut batch = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut batch);
         for (notice, parsed) in &batch {
@@ -1839,7 +1879,17 @@ pub async fn project_incremental_chunked_phase2_stoppable(
     db.reset_plan().await?;
     let mut resolver = db.mention_resolver().await?;
     let mut report = Report::default();
+    let mut planned = 0u64;
     for chunk in all_ids.chunks(chunk_size) {
+        // Stop per chunk (issue 262). The partial plan is abandoned below —
+        // cleared, and rebuilt from the same (unshrunk) delta next run; the
+        // resolver's writes are idempotent, so finishing it loses nothing.
+        if stop() {
+            report.stopped = true;
+            break;
+        }
+        planned += chunk.len() as u64;
+        on_progress(Progress::Planning { notices: planned, total: all_ids.len() as u64 });
         let mut parsed = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut parsed);
         parsed.sort_by_key(|(n, _)| n.id);
@@ -1856,6 +1906,15 @@ pub async fn project_incremental_chunked_phase2_stoppable(
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
     db.finish_mention_resolver(resolver).await?;
+    if report.stopped {
+        // A stopped pass 2 wrote a PARTIAL plan: clear it, and do NOT advance
+        // the adjacency watermark — its attestation ("every parsed notice above
+        // the watermark has durable key rows") is only true of a completed
+        // build (issue 262). Nothing was folded; the whole delta re-enters.
+        db.clear_plan().await?;
+        eprintln!("[project] incremental STOPPED at a checkpoint during plan build (issue 262)");
+        return Ok(report);
+    }
     // issue 58 v2: the delta is ALL unprojected parsed notices, so after this
     // plan build every parsed notice above the old adjacency watermark has its
     // durable key rows (insert_plan wrote them) — advance the attestation. A
@@ -1870,6 +1929,7 @@ pub async fn project_incremental_chunked_phase2_stoppable(
     let (tenders, islands) = db.plan_counts().await?;
     report.tenders = tenders;
     report.islands = islands;
+    on_progress(Progress::Grouped { tenders, islands });
     stage(&format!("grouping ({tenders} Tenders, {islands} islands)"));
 
     // Retire any touched Tender the new plan did not reproduce (island→keyed
@@ -1904,6 +1964,11 @@ pub async fn project_incremental_chunked_phase2_stoppable(
                 after = last.group_key.clone();
                 tenders_done += groups.len() as u64;
                 report.applied.add(apply_plan_batch(db, &groups, now, false).await?);
+                on_progress(Progress::Applying {
+                    tenders: tenders_done,
+                    total: tenders,
+                    versions: report.applied.versions_written,
+                });
                 // Heartbeat per batch: without it a wedged fold is indistinguishable
                 // from a slow one (issue 90).
                 eprintln!(
@@ -1930,6 +1995,7 @@ pub async fn project_incremental_chunked_phase2_stoppable(
                              {versions} versions written"
                         );
                     }
+                    on_progress(p);
                 },
                 stop,
             )

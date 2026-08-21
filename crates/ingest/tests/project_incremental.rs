@@ -1223,3 +1223,99 @@ async fn an_incremental_fold_refuses_a_wiped_layer_a_rebuild_repairs_it() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+
+/// Issue 262: the incremental plan build must be VISIBLE and STOPPABLE. Fold
+/// job 303 (2.7M-notice delta) ran with `phase: None` for its whole plan build
+/// and took ~17 minutes to honour a cancel — the plan-build loops carried no
+/// progress events and no stop checks. Three claims, one scenario each:
+/// the observed run surfaces `Planning` (per pass, over that pass's own total)
+/// and `Grouped`; an immediate stop returns `stopped` having planned nothing;
+/// and a stop that lands during pass 2 does NOT advance the legacy-adjacency
+/// watermark, whose attestation is only true of a COMPLETED plan build.
+#[tokio::test]
+async fn the_incremental_plan_build_reports_progress_and_stops_within_a_chunk() {
+    use ingest::project::Progress;
+    use std::sync::Mutex;
+
+    let (db, fid, path) = scratch("observed").await;
+    establish(&db, fid).await;
+    record(&db, fid, "A-award", keyed("bt04-0001", 3, "Alpha award")).await;
+    record(&db, fid, "ISL2", island("Island two")).await;
+
+    let events: Mutex<Vec<&'static str>> = Mutex::new(Vec::new());
+    let report = project::project_incremental_observed_stoppable(
+        &db,
+        |p| {
+            events.lock().unwrap().push(match p {
+                Progress::Planning { .. } => "planning",
+                Progress::Grouped { .. } => "grouped",
+                Progress::Applying { .. } => "applying",
+                Progress::PrePass { .. } => "pre-pass",
+            });
+        },
+        &|| false,
+    )
+    .await
+    .expect("observed incremental");
+    assert!(!report.stopped);
+    let seen = events.into_inner().unwrap();
+    assert!(
+        seen.iter().filter(|e| **e == "planning").count() >= 2,
+        "both plan-build passes must report: {seen:?}"
+    );
+    assert!(seen.contains(&"grouped"), "the grouping boundary must report: {seen:?}");
+
+    // An immediate stop is honoured in pass 1: nothing planned, nothing folded,
+    // and the report says stopped rather than pretending completion.
+    record(&db, fid, "ISL3", island("Island three")).await;
+    let stopped =
+        project::project_incremental_observed_stoppable(&db, |_| {}, &|| true).await.expect("stop");
+    assert!(stopped.stopped);
+    assert_eq!((stopped.notices, stopped.tenders), (0, 0));
+
+    // A stop DURING pass 2 must not advance the adjacency watermark. The delta
+    // is ISL3 plus a late attach to bt04-0001, so pass 1 scans 2 changed
+    // notices while pass 2 scans those PLUS the touched Tender's existing
+    // notices — pass 2 is the pass whose Planning total exceeds 2, and that is
+    // how the trip detects it. chunk_size = 1 gives pass 2 several chunks, so
+    // the flag set during its first chunk's event is honoured at the second
+    // chunk's stop check — a genuine mid-pass-2 stop, after plan rows were
+    // written and before the build completed.
+    record(&db, fid, "A-late", keyed("bt04-0001", 4, "Alpha late attach")).await;
+    let before = db.legacy_adjacency_watermark().await.expect("watermark");
+    let flag = std::sync::atomic::AtomicBool::new(false);
+    let stop_flag = &flag;
+    db.set_foreign_keys(false).await.expect("fk off");
+    let report = project::project_incremental_chunked_observed(
+        &db,
+        1,
+        None,
+        |p| {
+            if let Progress::Planning { total, .. } = p {
+                if total > 2 {
+                    stop_flag.store(true, std::sync::atomic::Ordering::SeqCst);
+                }
+            }
+        },
+        &|| flag.load(std::sync::atomic::Ordering::SeqCst),
+    )
+    .await
+    .expect("pass-2 stop");
+    db.set_foreign_keys(true).await.expect("fk on");
+    assert!(report.stopped, "the flag tripped mid-build must stop the run");
+    assert_eq!(
+        db.legacy_adjacency_watermark().await.expect("watermark"),
+        before,
+        "a stopped plan build must NOT advance the adjacency attestation"
+    );
+
+    // And the delta is still whole: an unstopped run now converges normally.
+    let done = project::project_incremental(&db).await.expect("resume");
+    assert!(!done.stopped);
+    assert!(done.notices > 0, "the stopped delta re-enters whole");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

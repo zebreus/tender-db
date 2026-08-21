@@ -1479,14 +1479,19 @@ impl Supervisor {
                     )
                     .await
                 } else {
-                    // The incremental daily is seconds-to-minutes; its scoping
-                    // already logs its own decisions (the issue-58 closure line
-                    // or a named fallback). No phase record until one is earned.
-                    // Stop still threads through (issue 256): a small delta stops
-                    // between fold batches, and a delta that routed to the
-                    // whole-corpus fallback carries the flag into the full fold.
-                    project::project_incremental_stoppable(&self.db, &|| self.cancelled(job.id))
-                        .await
+                    // The incremental path earns the same durable phase record as
+                    // the full one (issue 262): a re-parse-scale delta spends tens
+                    // of minutes in the plan build, and `phase: None` for all of it
+                    // is how a cancel was watched grope for a checkpoint for 17
+                    // minutes. A daily-scale delta flashes through `planning` in a
+                    // heartbeat — harmless. Stop threads through per plan-build
+                    // chunk now, not only between fold batches (issues 256 + 262).
+                    project::project_incremental_observed_stoppable(
+                        &self.db,
+                        |p| self.phase_from_progress(p),
+                        &|| self.cancelled(job.id),
+                    )
+                    .await
                 }
                 .map_err(|e| e.to_string())?;
                 self.update(|p| p.notices = report.notices);
