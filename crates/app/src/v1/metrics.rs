@@ -191,6 +191,49 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
     // and finish stamps per kind are the "watch a number trend" series the
     // issue was opened for (a slowing daily `process` shows up here long
     // before it misses the freshness threshold).
+    // Per-era data-quality gauges (issue 266), from the stored headline
+    // history (issue 265) — a point lookup on the reports table, never a
+    // measurement: the weekly run pays the scan, the scrape reads its result.
+    // Absent entirely until the first run stores a history (a gauge that
+    // appears is honest; one that reads 0 before measuring is the issue-230
+    // zero-lie), and a rate whose denominator is 0 is skipped, not emitted as
+    // 0. `dq_report_age_seconds` is what makes a silently-stopped weekly run
+    // alertable — the issue-161 class, where a dead observer reads as
+    // permanently green.
+    if let Ok(Some((body, computed_at))) = state.db.latest_report("data-quality-headlines").await {
+        header(
+            &mut out,
+            "tender_db_dq_report_age_seconds",
+            "Seconds since the newest data-quality headline run.",
+        );
+        sample(
+            &mut out,
+            "tender_db_dq_report_age_seconds",
+            &[],
+            (store::now_unix() - computed_at) as f64,
+        );
+        let runs: Vec<model::QualityRun> = serde_json::from_str(&body).unwrap_or_default();
+        if let Some(latest) = runs.last() {
+            let gauges: [(&str, &str, fn(&model::QualityEra) -> [u64; 2]); 6] = [
+                ("tender_db_dq_factless_rate", "Shell versions / versions (issue 109).", |e| e.factless),
+                ("tender_db_dq_value_completeness", "Versions carrying an amount / versions.", |e| e.value),
+                ("tender_db_dq_winner_named_rate", "Results naming a winner / results a winner was possible for.", |e| e.named),
+                ("tender_db_dq_award_linkage_rate", "Award Tenders chained to a contract notice / award Tenders.", |e| e.linkage),
+                ("tender_db_dq_vat_stated_rate", "Amounts stating a VAT basis / amounts (issue 251).", |e| e.vat_stated),
+                ("tender_db_dq_negative_amount_rate", "Negative amounts / amounts (issue 267; overwhelmingly source-published — the rate MOVING is the signal).", |e| e.negative),
+            ];
+            for (name, help, pick) in gauges {
+                header(&mut out, name, help);
+                for era in &latest.eras {
+                    let [num, den] = pick(era);
+                    if den > 0 {
+                        sample(&mut out, name, &[("era", &era.profile)], num as f64 / den as f64);
+                    }
+                }
+            }
+        }
+    }
+
     if let Ok(runs) = state.db.recent_job_runs(health::JOB_SCAN).await {
         if let Some(at) = health::ingest_last_success(&runs) {
             header(

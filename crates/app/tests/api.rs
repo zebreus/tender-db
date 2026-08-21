@@ -2129,3 +2129,82 @@ async fn the_unauthenticated_surface_is_cors_open() {
         );
     }
 }
+
+
+/// Issue 266: the per-era quality gauges appear only once a headline history
+/// exists, carry the era label, divide the stored [num, den] pairs, and skip a
+/// zero denominator rather than emitting a fake 0 — the issue-230 zero-lie
+/// rule, applied to the scrape surface. `dq_report_age_seconds` rides along so
+/// a silently-stopped weekly run is alertable (the issue-161 class).
+#[tokio::test]
+async fn the_quality_gauges_appear_with_the_history_and_never_lie_a_zero() {
+    let server = Server::start("dqgauges").await;
+
+    let body = server
+        .http
+        .get(format!("{}/metrics", server.base))
+        .send()
+        .await
+        .expect("request")
+        .text()
+        .await
+        .expect("body");
+    assert!(
+        !body.contains("tender_db_dq_"),
+        "no history stored → no quality gauges, not zeros:\n{body}"
+    );
+
+    let history = serde_json::json!([{
+        "at": 1_700_000_000,
+        "eras": [
+            { "profile": "eforms:eforms-sdk-1.13", "versions": 1000,
+              "factless": [5, 1000], "value": [700, 1000], "named": [150, 170],
+              "linkage": [140, 200], "vat_stated": [100, 500], "negative": [2, 500] },
+            // A young era with no awards yet: named/linkage denominators are 0
+            // and must be SKIPPED, not emitted as 0.
+            { "profile": "eforms:eforms-sdk-1.14", "versions": 10,
+              "factless": [0, 10], "value": [4, 10], "named": [0, 0],
+              "linkage": [0, 0], "vat_stated": [0, 0], "negative": [0, 0] },
+        ]
+    }]);
+    server
+        .db
+        .put_report("data-quality-headlines", &history.to_string(), store::now_unix() - 3600)
+        .await
+        .expect("store history");
+
+    let body = server
+        .http
+        .get(format!("{}/metrics", server.base))
+        .send()
+        .await
+        .expect("request")
+        .text()
+        .await
+        .expect("body");
+    assert!(
+        body.contains("tender_db_dq_factless_rate{era=\"eforms:eforms-sdk-1.13\"} 0.005"),
+        "the stored pair must divide exactly once:\n{body}"
+    );
+    assert!(body.contains("tender_db_dq_value_completeness{era=\"eforms:eforms-sdk-1.13\"} 0.7"));
+    assert!(body.contains("tender_db_dq_winner_named_rate{era=\"eforms:eforms-sdk-1.13\"}"));
+    assert!(
+        !body.contains("tender_db_dq_winner_named_rate{era=\"eforms:eforms-sdk-1.14\"}"),
+        "a zero denominator is skipped, never a fake 0:\n{body}"
+    );
+    assert!(
+        body.contains("tender_db_dq_factless_rate{era=\"eforms:eforms-sdk-1.14\"} 0"),
+        "a real zero over a real denominator IS emitted:\n{body}"
+    );
+    let age = body
+        .lines()
+        .find(|l| l.starts_with("tender_db_dq_report_age_seconds "))
+        .and_then(|l| l.split(' ').nth(1))
+        .and_then(|v| v.parse::<f64>().ok())
+        .expect("the age gauge must be present");
+    assert!((3000.0..5000.0).contains(&age), "age ≈ the hour since computed_at: {age}");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{}{s}", server.path));
+    }
+}

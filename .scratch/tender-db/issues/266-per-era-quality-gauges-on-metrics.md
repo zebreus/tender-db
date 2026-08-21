@@ -1,6 +1,13 @@
 # 266 — /metrics carries no data-quality gauges: external alerting cannot watch the corpus
 
-Status: needs-triage — filed 2026-08-21 (owner, requested by Lennart: more data-quality monitors).
+Status: BUILT 2026-08-21, same day — six per-era gauges (`factless_rate`, `value_completeness`,
+`winner_named_rate`, `award_linkage_rate`, `vat_stated_rate`, `negative_amount_rate`) plus
+`dq_report_age_seconds`, read from the stored headline history (a point lookup — the weekly run
+pays the scan, the scrape reads its result). Absent until the first history exists; a
+zero-denominator rate is skipped, never a fake 0; a real 0 over a real denominator IS emitted.
+Gate: `the_quality_gauges_appear_with_the_history_and_never_lie_a_zero` (e2e). Awaiting deploy
+(fold 306 has the box); first live scrape lands with the next weekly run's history. Was:
+needs-triage — filed 2026-08-21 (owner, requested by Lennart: more data-quality monitors).
 Kind: observability / metrics
 Blocked by: — (pairs naturally with 265's headline storage)
 Relates to: 53 (the /metrics endpoint), 230 (the report), 109 (the factless rate this would export)
