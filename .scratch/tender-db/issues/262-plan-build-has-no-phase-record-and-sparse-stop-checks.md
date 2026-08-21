@@ -8,9 +8,13 @@ all into the durable phase record via `project_incremental_observed_stoppable` (
 part the new gate caught being wrong on the first cut — does NOT advance the legacy-adjacency
 watermark, whose attestation only a completed build earns. Gate:
 `the_incremental_plan_build_reports_progress_and_stops_within_a_chunk` (three scenarios: progress
-surfaces; immediate stop plans nothing; genuine mid-pass-2 stop leaves the watermark). Awaiting
-deploy (fold 304 has the box); the acceptance's live half — a `planning` phase with moving numbers
-on a real delta, and a cancel honoured within ~a minute — reads on the next big fold after deploy.
+surfaces; immediate stop plans nothing; genuine mid-pass-2 stop leaves the watermark). COMPLETED
+same day with the fallback corner: the INCREMENTAL → FULL fallback now threads the caller's sink
+alongside stderr (it had swapped in a stderr-only one, so the biggest folds — era-scale deltas
+whose closure exceeds the cap, the r208/r209 shape exactly — would STILL have run dark), gated by
+`the_full_fallback_still_surfaces_the_callers_progress`. Awaiting deploy (the r209 reparse+fold
+have the box); the acceptance's live half — a `planning` phase with moving numbers on a real
+delta, and a cancel honoured within ~a minute — reads on the next big fold after deploy.
 Kind: observability + cancel-latency rough edge
 Blocked by: —
 Relates to: 256 (whose probe measured it), 65 (the phase record this stage never sets), 252
