@@ -254,10 +254,17 @@ if that notice ever starts projecting its second amount, the test asks to be rev
 quietly continuing to prove less than it appears to.
 
 **Step 4 IN FLIGHT (2026-08-21):** the marker fix is a PARSER change (`Rule::Marker`), so this is a
-re-parse, not a refold. Job 302 (`reparse ted-export-r208`, 161 packages, ~2.7M notices) started
-07:55 UTC with its paired fold queued as 303; r209 (~4.5M) follows AFTER r208's split is read, per
-this issue's own one-change-at-a-time sequencing. The read is section 6 of the next data-quality
-run (or a bounded per-era `/v1/sql` count once the fold lands).
+re-parse, not a refold. Job 302 (`reparse ted-export-r208`, 161 packages) ran clean: 2,699,213
+notices re-parsed, 0 unmatched, 0 now failing, 1,455,097 tenders stamped stale.
+
+The fold plan then CHANGED, for a measured reason: r208's delta pulls a legacy closure of
+2,935,319 notices — over the 500k cap — so its paired fold correctly fell back to a WHOLE-CORPUS
+re-projection (~3h, issue 58 v2's designed distrust path). Since any era-scale reparse ends in the
+same full walk, and section 6 reports PER ERA (so r208/r209 attribution is independent — the
+earlier one-era-at-a-time note was about attribution and is moot for two eras sharing one parser
+change), fold 304 was cancelled mid-plan-build and `reparse ted-export-r209` enqueued as 305 with
+its paired fold 306: ONE whole-corpus fold now serves both eras, saving a full ~3h walk. The read
+is section 6 after 306 lands (or bounded per-era `/v1/sql` counts).
 
 
 ## Option 2 — the report line (built 2026-08-20)
