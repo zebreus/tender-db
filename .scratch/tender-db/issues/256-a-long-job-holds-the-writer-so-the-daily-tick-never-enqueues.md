@@ -1,9 +1,12 @@
 # 256 — a long job holds the writer, so the daily tick silently never enqueues
 
-Status: PART 1 DONE 2026-08-20 (the enqueue no longer parks on the writer — it gives up after 30 s
-and queues the job in memory, loudly). PART 2 OPEN: the fold itself, which holds the writer for hours
-and logs nothing for over an hour of it. Awaiting deploy — the very fold that proved the defect is
-still running, and deploying would restart it from the top
+Status: SOLVED AND DEPLOYED; close-out 2/3 done 2026-08-21 — the stop checkpoint + relabel fix are
+live (b42a9c2 and successors) and a daily tick has passed clean on the new build (job 1215). The
+one remaining bar — `/admin/jobs/<id>/cancel` on a LIVE project job answering `Stopping` — has a
+scheduled, zero-waste target: job 303, the fold paired to the r208 re-parse (302), will be
+cancelled a few minutes in, the `Stopping`/`CANCELLED at a checkpoint` pair confirmed, and the
+fold re-run (stop-resume is its own gate, `a_stopped_projection_resumes_to_the_identical_layer`).
+Was: PART 1 DONE 2026-08-20; PART 2 the fold's silent hours
 Kind: operability defect, silent data loss window
 Blocked by: —
 Relates to: 245 (the missed-tick catch-up this defeats), 222 (the weekday catch-up window it also

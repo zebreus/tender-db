@@ -253,8 +253,11 @@ The fixture test now says in the assertion what it does and does not prove, and 
 if that notice ever starts projecting its second amount, the test asks to be revisited rather than
 quietly continuing to prove less than it appears to.
 
-**Step 4 remains:** refold r208/r209 and read the basis split. That is queue work — the era is 7.2M
-notices — and the text-era sweep has the box until it finishes.
+**Step 4 IN FLIGHT (2026-08-21):** the marker fix is a PARSER change (`Rule::Marker`), so this is a
+re-parse, not a refold. Job 302 (`reparse ted-export-r208`, 161 packages, ~2.7M notices) started
+07:55 UTC with its paired fold queued as 303; r209 (~4.5M) follows AFTER r208's split is read, per
+this issue's own one-change-at-a-time sequencing. The read is section 6 of the next data-quality
+run (or a bounded per-era `/v1/sql` count once the fold lands).
 
 
 ## Option 2 — the report line (built 2026-08-20)
