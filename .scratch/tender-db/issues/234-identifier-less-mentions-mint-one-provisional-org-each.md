@@ -374,11 +374,15 @@ fold. That collapse is the **`merge-provisional-orgs` admin job**, implemented 2
 
 ## Run plan + verification still owed
 
-1. Deploy (waits for the in-flight data-quality run — a restart would re-run it from the top).
-2. `{"kind":"merge-provisional-orgs"}` → read the dry run's would-collapse numbers (also the
-   issue's sizing prediction check: 2.8×–14.4× windowed collapse).
-3. `{"kind":"merge-provisional-orgs","dry_run":false}` off-hours.
-4. Re-measure: total/provisional organizations (was 24,618,292 / 23,462,294 = 95.30 %), the
-   windowed collapse ratios, and `provisional per mention` (was 0.568). Record here; then close.
+1. ~~Deploy~~ DONE 2026-08-21 (rev 0913989, after the data-quality run finished).
+2. ~~Dry run~~ DONE 2026-08-21, job 295 (~5 min for the full scan): **890,199 duplicate groups,
+   18,258,668 provisional orgs to remove** — 77.8 % of the provisional stock, org table
+   24.6M → ~6.4M rows. STRONGER than the windowed 2.8×–14.4× prediction (≈21.5× mean within the
+   duplicate set), which is expected: windows cannot see cross-window duplicates, and the heavy
+   names recur across the whole corpus.
+3. Real run LAUNCHED 2026-08-21 ~02:05 UTC as job 296 (`dry_run:false`); scope 20,270,188 rows.
+   Stoppable between batches; restart-safe from `''`.
+4. Re-measure once 296 completes: total/provisional organizations (was 24,618,292 / 23,462,294
+   = 95.30 %) and `provisional per mention` (was 0.568). Record here; then close.
 - Interim, prevention-only signal: the provisional-per-mention ratio for mentions recorded AFTER
   the deploy should sit far below 0.568.
