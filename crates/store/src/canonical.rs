@@ -782,14 +782,17 @@ const CHECKPOINT_EVERY_BATCHES: usize = 32;
 /// owes the whole corpus a rewrite on the next full walk — measured at
 /// 6h02m / 14.2M version writes for a 2.69M-notice cohort (issue 179).
 ///
-/// 3 → 4 (issue 234): identifier-less mentions now REUSE their
-/// `(name_norm, country)` Organization instead of minting one per mention.
-/// Genuinely cross-profile — every era has identifier-less parties, the legacy
-/// eras almost nothing else — and it renumbers surrogate Organization ids on a
-/// re-fold, so scoped staleness cannot carry it. The whole-corpus rewrite this
-/// declares IS the deliverable: it is what collapses the 95.30 %-provisional
-/// table.
-pub const PROJECTION_EPOCH: i64 = 4;
+/// NOT bumped for issue 234's identifier-less mention merge, and the reasoning
+/// is worth keeping because the bump was made and then REVERTED after its first
+/// live no-op: the resolver's `(notice, section)` idempotency preload returns
+/// the already-recorded Organization for every existing mention, so re-folding
+/// a stored chain produces byte-identical output — stored chains remain valid
+/// state keys, which is precisely the condition under which this constant must
+/// NOT move. The merge changes only mentions that have never been recorded
+/// (fresh ingests, re-parses — which is also why the fresh-DB golden legitimately
+/// changed). Collapsing the EXISTING provisional rows is a separate backfill
+/// concern on issue 234, not a fold concern.
+pub const PROJECTION_EPOCH: i64 = 3;
 
 const NODE_WRITE_BATCH: usize = 20_000;
 
