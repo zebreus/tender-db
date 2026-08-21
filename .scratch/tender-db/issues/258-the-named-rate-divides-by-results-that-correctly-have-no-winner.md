@@ -1,7 +1,10 @@
 # 258 — section 3's `named` rate divides by results that correctly have no winner
 
-Status: needs-triage — filed 2026-08-20 out of issue 257's diagnosis. Small, well-understood, and it
-makes an already-useful column truer. Not urgent: the column is directionally right today
+Status: CLOSED 2026-08-21 — the awardable denominator shipped with the DQ column work (`named`
+divides by results a winner was possible for; `closed n/a` shown beside it; gate
+`the_named_rate_divides_by_the_results_a_winner_was_possible_for`) and job 294's report shows it
+behaving across every era (sdk-0.1: 132,600 `closed n/a` excluded, `named` 99.9 %; text era:
+0 closed n/a, 100 % named where parsed). Was: needs-triage — filed 2026-08-20
 Kind: measurement precision / honest denominator
 Blocked by: 257 and 100 (both create NULL-decision populations this must not mis-handle — see the
 sketch correction below, which they falsified before it was built)

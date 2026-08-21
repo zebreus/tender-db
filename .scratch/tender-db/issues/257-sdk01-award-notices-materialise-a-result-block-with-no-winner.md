@@ -1,6 +1,9 @@
 # 257 — sdk-0.1 award notices materialise a result block and ~95 % of them name nobody
 
-Status: DIAGNOSED + FIXED 2026-08-20 — and the diagnosis inverts the issue. The winner gap is the
+Status: CLOSED 2026-08-21 — VERIFIED by data-quality job 294: sdk-0.1's section-3 row now reads
+`with winner 6,434 / closed n/a 132,600 / named 99.9 %` — the publisher's silence is out of the
+denominator and the fabricated `clos-nw` is gone (those rows now carry the award date with a NULL
+decision). Was: DIAGNOSED + FIXED 2026-08-20 — and the diagnosis inverts the issue. The winner gap is the
 PUBLISHER's (~87 % of this dialect's award notices name nobody; where a winner IS published we resolve
 100 % of them). What was ours is the opposite defect the investigation turned up: we read that silence
 as `clos-nw`, "closed, no award", on ~125k notices whose result block states the award DATE. Fixed:

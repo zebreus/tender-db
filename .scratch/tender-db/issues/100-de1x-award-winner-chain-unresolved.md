@@ -1,6 +1,9 @@
 # 100 — eForms-DE 1.x award-winner chain resolves to nothing (synthetic result-section ids vs published-id references)
 
-Status: FIXED 2026-08-20 (owner) — and the 2026-08-15 design was aimed at the wrong thing. The
+Status: CLOSED 2026-08-21 — VERIFIED at corpus scale by the first full data-quality run after the
+refold (job 294): eforms-de-1.1 `named` 92.6 % (was ~3 %), de-1.2 94.8 %, de-2.0/2.1 100 %;
+section-1 winner completeness for de-1.1 35.5 % (was ~3 %); the fold's own shortfall 0. Was:
+FIXED 2026-08-20 (owner) — and the 2026-08-15 design was aimed at the wrong thing. The
 section ids were ALREADY the published ids (`RES-0001`, `TEN-0001`, `CON-0001`, `TPA-0001`); the break
 was that the DE-1.x inventory labelled the three nested REFERENCE positions with the ENTITY node ids,
 so the reference was attributed to the carrier instead of the enclosing LotResult. Renamed to the
