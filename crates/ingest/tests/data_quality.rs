@@ -417,3 +417,77 @@ async fn sdk01_era_completeness_is_no_longer_zero() {
     assert!(sdk01.present[1] > 0, "buyer");
     assert!(sdk01.present[5] > 0, "winner");
 }
+
+
+/// Issue 109's gate, driven the way the incident ran: strip one era's versions
+/// bare — satellite rows deleted, `tender_versions` rows SURVIVING, which is
+/// exactly why G2 and every other row-counting gate stayed green through
+/// 218,635 eForms-DE 1.x shells — and the presence probe must read that era
+/// 100 % factless while the untouched eras stay at zero. The version count
+/// itself must NOT move, restating the blindness this measure exists to cover.
+#[tokio::test]
+async fn a_stripped_cohort_reads_factless_while_every_row_count_stays_green() {
+    let (db, fetch_id, path) = scratch("factless").await;
+    for fixture in
+        ["eforms-chain/1-cn-16-831374-2025.xml", "eforms-chain/4-can-29-380868-2026.xml"]
+    {
+        ingest_from(&db, fetch_id, "ted", fixture).await;
+    }
+    project::project(&db, false).await.expect("project");
+
+    let before = measure(&db, "http://x").await;
+    assert!(!before.presence.is_empty(), "the corpus must have presence rows");
+    assert!(
+        before.presence.iter().all(|r| r.factless == 0),
+        "real fixtures carry facts: {:?}",
+        before.presence
+    );
+
+    // Strip the first era bare — by (tender_id, seq) of ITS versions only, since
+    // a chained tender carries versions from several eras.
+    let victim = before.presence[0].profile.clone();
+    for table in [
+        "tender_version_texts",
+        "tender_version_classifications",
+        "tender_version_dates",
+        "tender_version_parties",
+        "tender_version_amounts",
+        "tender_version_lots",
+    ] {
+        db.execute_for_test(&format!(
+            "DELETE FROM {table} WHERE EXISTS (SELECT 1 FROM tender_versions v \
+               JOIN notices n ON n.id = v.caused_by_notice_id \
+              WHERE n.profile = '{victim}' AND v.tender_id = {table}.tender_id \
+                AND v.seq = {table}.seq)"
+        ))
+        .await
+        .expect("strip");
+    }
+
+    let after = measure(&db, "http://x").await;
+    let row = after.presence.iter().find(|r| r.profile == victim).expect("era still present");
+    assert!(row.versions > 0);
+    assert_eq!(row.factless, row.versions, "every stripped version must read factless");
+    assert_eq!(
+        row.versions, before.presence[0].versions,
+        "the version COUNT must not move — that blindness is what this probe covers"
+    );
+    for r in &after.presence {
+        if r.profile != victim {
+            assert_eq!(r.factless, 0, "untouched eras must stay clean: {r:?}");
+        }
+    }
+    let text = data_quality::render_text(&after);
+    assert!(text.contains("== 7. Content presence"), "the section must render:\n{text}");
+
+    // The cohort floor: fixture-sized eras stay under the alarm's ≥1,000-version
+    // bar, so even a wholesale strip is quiet HERE — the alarm's own unit test
+    // covers the firing shapes at scale.
+    let prev: Vec<(String, u64, u64)> =
+        before.presence.iter().map(|r| (r.profile.clone(), r.versions, r.factless)).collect();
+    assert!(data_quality::presence_step_changes(&prev, &after.presence).is_empty());
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}

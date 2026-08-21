@@ -5079,6 +5079,17 @@ impl Db {
         })
     }
 
+    /// Execute one write statement outside every guarded path — for TESTS that
+    /// need surgical corpus damage no real API produces (issue 109's shell
+    /// reproduction strips a cohort's satellites while its version rows
+    /// survive, which is the incident's exact shape). Sibling of
+    /// [`Db::set_projection_epoch_for_test`]; not an API surface — the guarded
+    /// public SQL endpoint is issue 07.
+    pub async fn execute_for_test(&self, sql: &str) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute(sql, ()).await
+    }
+
     /// How many notices are parsed — the projection's Phase-1 total, read once up
     /// front so it can log a progress fraction over a run that spans many minutes.
     pub async fn parsed_notice_count(&self) -> turso::Result<u64> {

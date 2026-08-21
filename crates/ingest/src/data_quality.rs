@@ -647,6 +647,37 @@ fn amount_basis_template(win: &str) -> String {
     )
 }
 
+/// The content-presence probe (issue 109): versions with NO rows in ANY
+/// version-keyed satellite — a shell has a `tender_versions` row and nothing
+/// else, which is why every row-counting gate stayed green through the 218,635
+/// factless eForms-DE 1.x versions of issue 85. Cause-agnostic by design: it
+/// fires on an epoch skip, a narrowed mapping, a bad alias table, a vendored
+/// inventory regression, and on causes nobody has thought of yet.
+///
+/// The `NOT EXISTS` chain is ordered by fill rate (texts first: title is
+/// ~96–100 % in every era), so for a normal version the FIRST probe finds a row
+/// and the whole predicate short-circuits false — the per-version cost is one
+/// indexed seek, the same as a single field probe. Only genuinely sparse
+/// versions probe deeper.
+fn factless_template(scope: &str) -> String {
+    let absent = [
+        "tender_version_texts",
+        "tender_version_classifications",
+        "tender_version_dates",
+        "tender_version_parties",
+        "tender_version_amounts",
+        "tender_version_lots",
+    ]
+    .map(|t| format!("NOT EXISTS (SELECT 1 FROM {t} s WHERE s.tender_id = v.tender_id AND s.seq = v.seq)"))
+    .join(" AND ");
+    format!(
+        "SELECT n.profile, COUNT(*) AS factless \
+           FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
+          WHERE {scope}{absent} \
+          GROUP BY n.profile"
+    )
+}
+
 /// The queries that measure a population no `tender_id` window can slice, so the
 /// in-process job runs them ONCE against the whole corpus instead of per window
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
@@ -676,6 +707,8 @@ pub fn queries() -> Vec<(String, String)> {
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
     // The VAT basis of what the projection wrote (issue 251).
     out.push(("amount_basis".to_owned(), amount_basis_sql()));
+    // The content-presence probe (issue 109).
+    out.push(("factless".to_owned(), factless_template("")));
     // Whole-corpus queries last: the bin runs every label in this list, and these
     // are the ones the in-process job runs once rather than per window.
     out.extend(whole_corpus_queries());
@@ -802,6 +835,14 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
         template: amount_basis_template("{window}"),
         column: "v.tender_id".to_owned(),
     });
+    // Content presence (issue 109): drives from `tender_versions v` like the six
+    // field probes, so the same range predicate windows it and per-profile counts
+    // sum exactly across disjoint windows.
+    out.push(WindowedQuery {
+        label: "factless".to_owned(),
+        template: factless_template("{window} AND "),
+        column: "v.tender_id".to_owned(),
+    });
     out
 }
 
@@ -897,6 +938,16 @@ pub struct CompletenessRow {
     /// Present-count per field, in [`FIELDS`] order (title, buyer, value, cpv,
     /// deadline, winner).
     pub present: [u64; 6],
+}
+
+/// One era's content presence (issue 109): how many of its versions are
+/// SHELLS — a `tender_versions` row with no rows in any version-keyed
+/// satellite. The rate every row-counting gate is structurally blind to.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PresenceRow {
+    pub profile: String,
+    pub versions: u64,
+    pub factless: u64,
 }
 
 /// One era's award→notice linkage.
@@ -1020,6 +1071,8 @@ pub struct Report {
     pub fresh_holds: Vec<FreshHoldRow>,
     /// Amounts by VAT basis, per era (issue 251).
     pub amount_basis: Vec<BasisRow>,
+    /// Factless (shell) versions per era (issue 109).
+    pub presence: Vec<PresenceRow>,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
     /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
@@ -1071,6 +1124,8 @@ pub struct Raw {
     pub fresh_holds: Rows,
     /// Amounts by VAT basis, per era (issue 251).
     pub amount_basis: Rows,
+    /// Factless versions per era (issue 109).
+    pub factless: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1117,6 +1172,7 @@ impl Raw {
             merge: take("merge", &mut unmeasured)?,
             fresh_holds: take("fresh_holds", &mut unmeasured)?,
             amount_basis: take("amount_basis", &mut unmeasured)?,
+            factless: take("factless", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1226,6 +1282,24 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         })
         .collect();
 
+    // Content presence (issue 109): denominator from the SAME `versions` result
+    // the completeness table uses, numerator absent ⇒ zero shells — an era with
+    // no factless row is the healthy case, not a gap.
+    let shells = count_by_profile(&raw.factless);
+    let mut presence: Vec<PresenceRow> = raw
+        .versions
+        .iter()
+        .map(|r| {
+            let profile = as_str(r.first());
+            PresenceRow {
+                versions: as_u64(r.get(1)),
+                factless: shells.get(&profile).copied().unwrap_or(0),
+                profile,
+            }
+        })
+        .collect();
+    presence.sort_by(|a, b| a.profile.cmp(&b.profile));
+
     Report {
         base_url: base_url.to_owned(),
         completeness,
@@ -1236,6 +1310,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         merge,
         fresh_holds,
         amount_basis,
+        presence,
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1534,7 +1609,75 @@ pub fn render_text(report: &Report) -> String {
              (issue 251)."
         );
     }
+
+    let _ = writeln!(
+        out,
+        "\n== 7. Content presence (versions with NO satellite rows — shells, issue 109) =="
+    );
+    if report.unmeasured.iter().any(|l| l == "factless") {
+        let _ = writeln!(out, "  UNMEASURED — the `factless` query did not run.");
+    } else {
+        let _ = writeln!(out, "  {:<30} {:>11} {:>10} {:>9}", "era", "versions", "factless", "rate");
+        for r in &report.presence {
+            let _ = writeln!(
+                out,
+                "  {:<30} {:>11} {:>10} {:>9}",
+                display_era(&r.profile),
+                group(r.versions),
+                group(r.factless),
+                pct(r.factless, r.versions),
+            );
+        }
+        let _ = writeln!(
+            out,
+            "  A shell HAS a `tender_versions` row, so every row-counting gate (G2, cohort \
+             counts, the projected watermark) stays green while a cohort is 100% stale — \
+             measured in issue 85, where 218,635 eForms-DE 1.x shells sat green for weeks. \
+             The alert is the STEP CHANGE between runs, not an absolute floor: per-era fact \
+             density legitimately varies."
+        );
+    }
     out
+}
+
+/// The step-change alarm on the presence rates (issue 109): compare this run's
+/// per-era factless rate to the previous run's and name every era that went
+/// wholesale stale between them. A JUMP is what the incident actually looked
+/// like (2% → 100% between two mapping changes), so the trigger is a rise of
+/// ≥ 20 percentage points that at least doubled the rate, on a cohort big
+/// enough to mean it (≥ 1,000 versions) — not an absolute floor, which would be
+/// wrong per era on day one and rot after. First run (no previous rates): no
+/// alarms, by construction.
+pub fn presence_step_changes(previous: &[(String, u64, u64)], presence: &[PresenceRow]) -> Vec<String> {
+    let prev: std::collections::BTreeMap<&str, (u64, u64)> =
+        previous.iter().map(|(p, v, f)| (p.as_str(), (*v, *f))).collect();
+    let mut alarms = Vec::new();
+    for r in presence {
+        if r.versions < 1_000 {
+            continue;
+        }
+        let Some(&(pv, pf)) = prev.get(r.profile.as_str()) else { continue };
+        if pv == 0 {
+            continue;
+        }
+        let was = pf as f64 / pv as f64;
+        let now = r.factless as f64 / r.versions as f64;
+        if now - was >= 0.20 && now >= 2.0 * was.max(f64::EPSILON) {
+            // The RAW profile, not `display_era` — an alarm names the exact
+            // cohort to act on, and the era display collapses unmapped profiles
+            // to \"other\".
+            alarms.push(format!(
+                "{}: factless {:.1}% -> {:.1}% ({} of {} versions) — a cohort went content-stale \
+                 between runs (issue 109)",
+                r.profile,
+                100.0 * was,
+                100.0 * now,
+                r.factless,
+                r.versions,
+            ));
+        }
+    }
+    alarms
 }
 
 /// A unix timestamp as `YYYY-MM-DD` (UTC), or `—` for none. Days are the resolution
@@ -1654,6 +1797,17 @@ pub fn render_json(report: &Report) -> String {
             "stated_rate": rate(r.excl + r.incl, r.amounts),
         }))
         .collect();
+    let presence: Vec<Value> = report
+        .presence
+        .iter()
+        .map(|r| json!({
+            "profile": r.profile,
+            "era": era_of(&r.profile),
+            "versions": r.versions,
+            "factless": r.factless,
+            "factless_rate": rate(r.factless, r.versions),
+        }))
+        .collect();
     let value = json!({
         "base_url": report.base_url,
         "unit": "tender-version",
@@ -1667,6 +1821,7 @@ pub fn render_json(report: &Report) -> String {
             "reasons": fresh_holds,
         },
         "amount_vat_basis": amount_basis,
+        "content_presence": presence,
         "ted_doe_merge": {
             "doe_tenders": report.merge.doe_tenders,
             "merged": report.merge.merged,
@@ -1740,6 +1895,41 @@ mod tests {
         }
     }
 
+    /// Issue 109's alarm shape: a cohort going WHOLESALE stale between two runs
+    /// fires; ordinary drift, small cohorts, and eras with no baseline stay
+    /// quiet — the trigger is a step (≥ 20 points AND at least doubled, on
+    /// ≥ 1,000 versions), not a floor, because per-era fact density
+    /// legitimately varies and hand-tuned floors would be wrong on day one.
+    #[test]
+    fn the_step_change_alarm_fires_on_a_jump_and_stays_quiet_on_noise() {
+        let row = |profile: &str, versions: u64, factless: u64| PresenceRow {
+            profile: profile.to_owned(),
+            versions,
+            factless,
+        };
+        let previous = vec![
+            ("stale-era".to_owned(), 100_000u64, 2_000u64),  // 2 %
+            ("noisy-era".to_owned(), 100_000, 2_000),        // 2 %
+            ("small-era".to_owned(), 500, 0),
+        ];
+        let presence = vec![
+            row("stale-era", 100_000, 100_000), // 2 % → 100 %: the incident
+            row("noisy-era", 100_000, 8_000),   // 2 % → 8 %: quadrupled but +6 points — drift
+            row("small-era", 500, 500),         // wholesale stale but under the cohort floor
+            row("new-era", 50_000, 50_000),     // no baseline — first sight, nothing to step from
+        ];
+        let alarms = presence_step_changes(&previous, &presence);
+        assert_eq!(alarms.len(), 1, "exactly the wholesale-stale cohort: {alarms:?}");
+        assert!(alarms[0].contains("stale-era") && alarms[0].contains("100.0%"), "{alarms:?}");
+
+        // First run ever: no baseline at all, no alarms, by construction.
+        assert!(presence_step_changes(&[], &presence).is_empty());
+        // A run identical to its baseline: quiet.
+        let steady: Vec<(String, u64, u64)> =
+            presence.iter().map(|r| (r.profile.clone(), r.versions, r.factless)).collect();
+        assert!(presence_step_changes(&steady, &presence).is_empty());
+    }
+
     #[test]
     fn queries_are_labelled_in_execution_order() {
         let q = queries();
@@ -1766,6 +1956,8 @@ mod tests {
                 "merge",
                 // The VAT basis of what the projection wrote (issue 251).
                 "amount_basis",
+                // Content presence — the shell detector (issue 109).
+                "factless",
                 "fresh_holds",
             ]
         );
@@ -1945,6 +2137,7 @@ mod tests {
             ("sections_with".to_owned(), Some(vec![])),
             ("merge".to_owned(), Some(vec![vec![json!("all"), json!(0), json!(0)]])),
             ("amount_basis".to_owned(), Some(vec![])),
+            ("factless".to_owned(), Some(vec![])),
             ("fresh_holds".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
@@ -2363,6 +2556,7 @@ mod tests {
                     vec![json!("not-utf8"), json!(4), json!(1_784_619_647u64)],
                 ]),
             ),
+            ("factless".to_owned(), Some(vec![vec![json!("eforms:eforms-sdk-1.13"), json!(2)]])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);

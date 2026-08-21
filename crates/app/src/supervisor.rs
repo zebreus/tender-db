@@ -2327,9 +2327,48 @@ impl Supervisor {
 
         let raw = Raw::from_labelled(results).map_err(|e| e.to_string())?;
         let report = data_quality::assemble("(in-process)", &raw);
-        let body = data_quality::render_text(&report);
+
+        // Issue 109: the content-staleness alarm compares THIS run's per-era
+        // factless rates to the PREVIOUS run's, stored as their own tiny report
+        // kind — `reports` keeps one row per kind, and reading it before the
+        // overwrite is exactly the one-run lookback the step change needs. A
+        // fired alarm leads the report body (an operator reading anything reads
+        // the top) and rides the job summary; the rates are stored only on the
+        // path that stores the report, so a cancelled run compares against the
+        // last COMPLETE one, never a partial.
+        let previous: Vec<(String, u64, u64)> =
+            match self.db.latest_report("data-quality-presence").await {
+                Ok(Some((body, _))) => serde_json::from_str(&body).unwrap_or_default(),
+                _ => Vec::new(),
+            };
+        let alarms = data_quality::presence_step_changes(&previous, &report.presence);
+        let mut body = data_quality::render_text(&report);
+        if !alarms.is_empty() {
+            body = format!(
+                "!! CONTENT-STALENESS STEP CHANGE (issue 109) !!\n{}\n\n{body}",
+                alarms.join("\n")
+            );
+        }
         let now = store::now_unix();
         self.db.put_report("data-quality", &body, now).await.map_err(|e| e.to_string())?;
+        let rates: Vec<(String, u64, u64)> = report
+            .presence
+            .iter()
+            .map(|r| (r.profile.clone(), r.versions, r.factless))
+            .collect();
+        match serde_json::to_string(&rates) {
+            Ok(json) => {
+                if let Err(e) = self.db.put_report("data-quality-presence", &json, now).await {
+                    eprintln!("[data-quality] store presence rates: {e}");
+                }
+            }
+            Err(e) => eprintln!("[data-quality] encode presence rates: {e}"),
+        }
+        let alarm_note = if alarms.is_empty() {
+            String::new()
+        } else {
+            format!("; {} CONTENT-STALENESS ALARM(S) — read the report", alarms.len())
+        };
 
         // The summary is the digest; the body is in `reports` for whoever reads it.
         // Unmeasured labels are named in the summary, not just in the body — the job
@@ -2338,7 +2377,7 @@ impl Supervisor {
         if broken.is_empty() {
             Ok(format!(
                 "data quality measured: {} eras over {} windows in {took:.0}s; {} label(s) \
-                 unmeasured ({})",
+                 unmeasured ({}){alarm_note}",
                 report.completeness.len(),
                 windows.len(),
                 report.unmeasured.len(),
