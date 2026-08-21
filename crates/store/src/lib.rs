@@ -21,8 +21,8 @@ pub use accounts::{TokenRecord, User};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
-    LotResultState, LotState, Mention, MentionResolver, NoticeRef, PlanGroup, PlanRow, Round,
-    TenderProjection, TenderVersion,
+    LotResultState, LotState, Mention, MentionResolver, NoticeRef, OrgMergeBatch, PlanGroup, PlanRow,
+    Round, TenderProjection, TenderVersion,
 };
 pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
@@ -4051,6 +4051,291 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert_eq!(
             nameless_probe[0], ids[0],
             "…and the name probe still finds the PROVISIONAL row, not the canonical one"
+        );
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 234's backfill half. The resolver merge only PREVENTS new duplicate
+    /// identifier-less Organizations — no fold can retro-collapse the stock,
+    /// because the mention idempotency preload never re-resolves a recorded
+    /// mention. This walk is what collapses it: each `(name_norm, country)`
+    /// group keeps its minimum id, every referencing row is repointed, losers
+    /// leave a `removed` change row and the survivor an `updated` one. The
+    /// out-of-scope rows the issue's over-merge evidence protects —
+    /// identifier-bearing, nameless, country-less, other-country — must not
+    /// move. The winners PK ends in `organization_id`, so a lot_result already
+    /// naming the survivor must DROP the loser's row rather than collide. Dry
+    /// run counts and writes nothing; a second run finds nothing.
+    #[tokio::test]
+    async fn the_org_merge_backfill_collapses_and_repoints_every_reference() {
+        let path = format!("/tmp/tender-db-orgmerge-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            for (id, country, kind, ident, name) in [
+                (1, Some("DE"), None, None, "Stadt Musterstadt"),
+                (2, Some("DE"), None, None, "STADT MUSTERSTADT"),
+                (3, Some("DE"), None, None, "Stadt Musterstadt"),
+                // The same name in another country: a different body.
+                (4, Some("FR"), None, None, "Stadt Musterstadt"),
+                // Nameless: a distinct unknown party, never merged.
+                (5, Some("DE"), None, None, ""),
+                // Country-less: no scope to err inside, never merged.
+                (6, None, None, None, "Stadt Musterstadt"),
+                // Identifier-bearing: its own canonical row, untouched.
+                (7, Some("DE"), Some("national"), Some("X1"), "Stadt Musterstadt"),
+            ] {
+                conn.execute(
+                    "INSERT INTO organizations(id, country, identifier_kind, identifier, name, \
+                                               name_norm, provisional, created_at) \
+                     VALUES(?, ?, ?, ?, ?, ?, ?, 0)",
+                    (
+                        Value::Integer(id),
+                        opt_text(country),
+                        opt_text(kind),
+                        opt_text(ident),
+                        t(name),
+                        Value::Text(name.to_lowercase()),
+                        Value::Integer(if ident.is_some() { 0 } else { 1 }),
+                    ),
+                )
+                .await
+                .unwrap();
+            }
+            for (notice, org) in [(1, 1), (2, 2), (3, 3)] {
+                conn.execute(
+                    "INSERT INTO organization_mentions(notice_id, section_id, organization_id) \
+                     VALUES(?, 'ORG-1', ?)",
+                    (Value::Integer(notice), Value::Integer(org)),
+                )
+                .await
+                .unwrap();
+            }
+            conn.execute(
+                "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, \
+                                                    mention_notice_id, mention_section_id) \
+                 VALUES(100, 1, NULL, 'buyer', 2, 2, 'ORG-1')",
+                (),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, \
+                                                        organization_id, mention_notice_id, \
+                                                        mention_section_id) \
+                 VALUES(100, 1, 55, 'tenderer', 3, 3, 'ORG-1')",
+                (),
+            )
+            .await
+            .unwrap();
+            for (lot_result, org) in [(77, 1), (77, 2), (88, 3)] {
+                conn.execute(
+                    "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, \
+                                                               organization_id) \
+                     VALUES(100, 1, ?, ?)",
+                    (Value::Integer(lot_result), Value::Integer(org)),
+                )
+                .await
+                .unwrap();
+            }
+        }
+        db.set_foreign_keys(true).await.unwrap();
+
+        let count = |sql: &'static str| {
+            let db = &db;
+            async move {
+                let conn = db.conn().await;
+                let mut rows = conn.query(sql, ()).await.unwrap();
+                rows.next().await.unwrap().map_or(-1, |row| int(&row, 0))
+            }
+        };
+
+        let dry = db.merge_provisional_organizations_batch(1_000, "", true).await.unwrap();
+        assert_eq!((dry.groups, dry.removed), (1, 2), "one group of ids 1+2+3, two losers");
+        assert!(dry.done);
+        assert_eq!(count("SELECT COUNT(*) FROM organizations").await, 7, "dry run writes nothing");
+
+        let r = db.merge_provisional_organizations_batch(1_000, "", false).await.unwrap();
+        assert_eq!((r.groups, r.removed), (1, 2));
+        assert_eq!(r.mentions, 2, "notices 2 and 3's mentions repoint to org 1");
+        assert_eq!(r.parties, 1);
+        assert_eq!(r.bid_parties, 1);
+        assert_eq!(r.winner_dups, 1, "lot_result 77 already names the survivor — loser row dropped");
+        assert_eq!(r.winners, 1, "lot_result 88's row repoints");
+        assert!(r.done);
+
+        assert_eq!(count("SELECT COUNT(*) FROM organizations").await, 5, "losers 2 and 3 deleted");
+        assert_eq!(
+            count("SELECT COUNT(*) FROM organizations WHERE id IN (1, 4, 5, 6, 7)").await,
+            5,
+            "survivor and every out-of-scope row remain"
+        );
+        assert_eq!(
+            count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 1").await,
+            3
+        );
+        assert_eq!(
+            count("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = 1").await,
+            1
+        );
+        assert_eq!(
+            count("SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = 1").await,
+            1
+        );
+        assert_eq!(count("SELECT COUNT(*) FROM tender_version_result_winners").await, 2);
+        assert_eq!(
+            count(
+                "SELECT COUNT(*) FROM tender_version_result_winners \
+                  WHERE organization_id = 1 AND lot_result_id IN (77, 88)"
+            )
+            .await,
+            2,
+            "one winner row per lot_result, both naming the survivor"
+        );
+        assert_eq!(
+            count(
+                "SELECT COUNT(*) FROM changes \
+                  WHERE entity_kind = 'organization' AND op = 'removed' AND entity_id IN (2, 3)"
+            )
+            .await,
+            2
+        );
+        assert_eq!(
+            count(
+                "SELECT COUNT(*) FROM changes \
+                  WHERE entity_kind = 'organization' AND op = 'updated' AND entity_id = 1"
+            )
+            .await,
+            1
+        );
+
+        let again = db.merge_provisional_organizations_batch(1_000, "", false).await.unwrap();
+        assert_eq!((again.groups, again.removed), (0, 0), "the merge is idempotent");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// The merge walk's batch boundary is NAME-aligned: a batch cut mid-name
+    /// drops that whole trailing name and resumes there, so no `(name, country)`
+    /// group is ever split across batches — and a name too large for any batch
+    /// takes the unbounded-refetch path instead of stalling the walk.
+    #[tokio::test]
+    async fn the_org_merge_walk_advances_name_aligned_batches() {
+        let path = format!("/tmp/tender-db-orgmergebatch-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        {
+            let conn = db.conn().await;
+            for name in ["aaa", "aaa", "bbb", "bbb", "bbb", "ccc", "ccc"] {
+                conn.execute(
+                    "INSERT INTO organizations(country, identifier_kind, identifier, name, \
+                                               name_norm, provisional, created_at) \
+                     VALUES('DE', NULL, NULL, ?, ?, 1, 0)",
+                    (t(name), t(name)),
+                )
+                .await
+                .unwrap();
+            }
+        }
+
+        let b1 = db.merge_provisional_organizations_batch(4, "", false).await.unwrap();
+        assert_eq!(b1.cursor, "aaa", "the cut-mid-name trailing 'bbb' rows were dropped");
+        assert_eq!((b1.groups, b1.removed, b1.done), (1, 1, false));
+        let b2 = db.merge_provisional_organizations_batch(4, &b1.cursor, false).await.unwrap();
+        assert_eq!(b2.cursor, "bbb");
+        assert_eq!((b2.groups, b2.removed, b2.done), (1, 2, false));
+        let b3 = db.merge_provisional_organizations_batch(4, &b2.cursor, false).await.unwrap();
+        assert_eq!((b3.groups, b3.removed), (1, 1));
+        assert!(b3.done, "a short scan ends the walk");
+        {
+            let conn = db.conn().await;
+            let mut rows =
+                conn.query("SELECT COUNT(*) FROM organizations", ()).await.unwrap();
+            assert_eq!(rows.next().await.unwrap().map_or(-1, |row| int(&row, 0)), 3);
+        }
+
+        // One name larger than the whole batch: the refetch path.
+        {
+            let conn = db.conn().await;
+            for _ in 0..5 {
+                conn.execute(
+                    "INSERT INTO organizations(country, identifier_kind, identifier, name, \
+                                               name_norm, provisional, created_at) \
+                     VALUES('DE', NULL, NULL, 'zzz', 'zzz', 1, 0)",
+                    (),
+                )
+                .await
+                .unwrap();
+            }
+        }
+        let g = db.merge_provisional_organizations_batch(2, "ccc", false).await.unwrap();
+        assert_eq!((g.groups, g.removed, g.done), (1, 4, false), "refetched complete and merged");
+        assert_eq!(g.cursor, "zzz");
+        assert_eq!(g.scanned, 5, "all five rows, though the batch holds two");
+        let end = db.merge_provisional_organizations_batch(2, &g.cursor, false).await.unwrap();
+        assert!(end.done);
+        assert_eq!(end.scanned, 0);
+        {
+            let conn = db.conn().await;
+            let mut rows = conn
+                .query("SELECT COUNT(*) FROM organizations WHERE name_norm = 'zzz'", ())
+                .await
+                .unwrap();
+            assert_eq!(rows.next().await.unwrap().map_or(-1, |row| int(&row, 0)), 1);
+        }
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// The merge walk's whole cost model is "one ordered pass over
+    /// `organizations_name_country`" — grouping in Rust on index-ordered rows.
+    /// This engine has declined composite-index access before (239: no pushdown
+    /// into views; 248: DELETE ignoring a composite-PK index; 256: a LIST
+    /// SUBQUERY re-scanned per outer row for six hours), so the assumption is a
+    /// gate, asserted against the constant the walk actually runs.
+    #[tokio::test]
+    async fn the_org_merge_scan_walks_the_name_index_in_order() {
+        let path = format!("/tmp/tender-db-orgmergeeqp-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.build_organization_indexes().await.unwrap();
+
+        let conn = db.conn().await;
+        let mut rows = conn
+            .query(
+                &format!("EXPLAIN QUERY PLAN {}", crate::canonical::ORG_MERGE_SCAN_SQL),
+                (Value::Text(String::new()), Value::Integer(10)),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        drop(rows);
+        assert!(
+            plan.contains("organizations_name_country"),
+            "the scan must walk the name index — plan was:\n{plan}"
+        );
+        assert!(
+            !plan.to_uppercase().contains("TEMP B-TREE"),
+            "ordering must come from the index, not a sorter — plan was:\n{plan}"
         );
 
         for s in ["", "-wal", "-shm"] {

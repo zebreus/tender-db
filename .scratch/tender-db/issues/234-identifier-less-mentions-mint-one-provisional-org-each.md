@@ -2,8 +2,9 @@
 
 Status: IMPLEMENTED 2026-08-20 (owner); the merge is DEPLOYED and is **prevention only** — the
 epoch bump that rode the commit was WRONG and was reverted 2026-08-21 (see "The epoch correction"
-below). Remaining deliverable: a separate BACKFILL job to collapse the existing provisional rows —
-no fold, at any epoch, can do it. Option (1) as decided: `(name_norm, country)` reuse for
+below). Remaining deliverable: the `merge-provisional-orgs`
+backfill job (IMPLEMENTED 2026-08-21, see "The epoch correction" below) — deploy, dry-run read,
+execute, re-measure. Option (1) as decided: `(name_norm, country)` reuse for
 identifier-less mentions, scoped `identifier IS NULL`, nameless and country-less mentions never
 merge, rows stay provisional. Red-checked test + the issue-104 golden fired on it (details at the
 bottom). Was: needs-triage, RAISED — SIZED 2026-08-18 at 95.30 % provisional
@@ -351,21 +352,33 @@ on the constant now carries the lesson.
 
 Consequence: the shipped merge is **prevention** — it stops NEW mentions (fresh ingests, re-parses)
 from minting duplicates. It cannot retro-collapse the stock of 23.46M provisional rows via any
-fold. That collapse is a **backfill job**, sketched here and to be scoped/filed properly:
+fold. That collapse is the **`merge-provisional-orgs` admin job**, implemented 2026-08-21:
 
-- Group provisional orgs (`identifier IS NULL`) by `(name_norm, country)`, both non-empty; elect
-  the smallest id as survivor.
-- Repoint `organization_mentions.org`, `tender_version_parties`, `bid_parties`, `result_winners`
-  (every org-referencing table) from losers to survivor.
-- Delete loser rows; emit `removed` change rows for them (and `updated` for the survivor's
-  new mention count if we surface one).
-- Batched, checkpointed, cancellable — same shape as the other admin jobs; measure with the
-  acceptance numbers below.
+- `Db::merge_provisional_organizations_batch` (store): one ordered pass over the
+  `organizations_name_country` index (EQP-gated, per the planner's record — 239/248/256), groups
+  `(name_norm, country)` adjacently in Rust, keeps each group's minimum id, repoints
+  `organization_mentions` / `tender_version_parties` / `tender_version_bid_parties` /
+  `tender_version_result_winners`, deletes the losers. Winners' PK ends in `organization_id`, so a
+  lot_result already naming the survivor DROPS the loser's row instead of colliding
+  (`winner_dups`). Losers get `removed` change rows, survivors `updated`.
+- Batch boundaries are NAME-aligned (a cut-mid-name trailing name is dropped and resumed; a name
+  bigger than the batch is refetched unbounded), so no group is ever split. Restart-safe without a
+  durable cursor: merged groups leave the scan's scope as singletons.
+- Supervisor: `merge-provisional-orgs` kind, `dry_run` default true (destructive-safe-default
+  convention), in `STOPPABLE_KINDS` (stop honoured between batches), TRUNCATE checkpoint per
+  batch, refuses with a remedy when `organizations_name_country` is missing (deferred index —
+  `reindex` builds it; already built on prod by job 292).
+- Gates: `the_org_merge_backfill_collapses_and_repoints_every_reference`,
+  `the_org_merge_walk_advances_name_aligned_batches`,
+  `the_org_merge_scan_walks_the_name_index_in_order` (store).
 
-## Verification still owed (now tied to the backfill, not a deploy)
+## Run plan + verification still owed
 
-- Re-measure after the backfill runs: total/provisional organizations (was 24,618,292 /
-  23,462,294 = 95.30 %), the windowed collapse ratios (2.8×–14.4× predicted), and `provisional
-  per mention` (was 0.568).
+1. Deploy (waits for the in-flight data-quality run — a restart would re-run it from the top).
+2. `{"kind":"merge-provisional-orgs"}` → read the dry run's would-collapse numbers (also the
+   issue's sizing prediction check: 2.8×–14.4× windowed collapse).
+3. `{"kind":"merge-provisional-orgs","dry_run":false}` off-hours.
+4. Re-measure: total/provisional organizations (was 24,618,292 / 23,462,294 = 95.30 %), the
+   windowed collapse ratios, and `provisional per mention` (was 0.568). Record here; then close.
 - Interim, prevention-only signal: the provisional-per-mention ratio for mentions recorded AFTER
   the deploy should sit far below 0.568.

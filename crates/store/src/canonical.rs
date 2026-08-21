@@ -825,6 +825,20 @@ pub(crate) const PREV_EDGE_JOIN_SQL: &str = "SELECT a.group_key, a.published_at,
     AND b.published_at < a.published_at \
     AND a.group_key <> b.group_key";
 
+/// The org-merge backfill's batch scan (issue 234's second half). The resolver
+/// merge only PREVENTS new duplicate identifier-less Organizations; this scan
+/// feeds the job that collapses the standing stock. Ordered by the
+/// `organizations_name_country` index so duplicate `(name_norm, country)`
+/// groups arrive adjacent and the whole walk is ONE pass over the index — the
+/// grouping happens in Rust on the streamed rows, never in a sorter. The
+/// cursor is `name_norm > ?`: `''` both starts the walk and excludes empty
+/// names, which (with `country IS NOT NULL`) is exactly the resolver probe's
+/// scope. Gated by an EXPLAIN QUERY PLAN test against THIS constant, per the
+/// planner's record on composite-index access (issues 239/248/256).
+pub(crate) const ORG_MERGE_SCAN_SQL: &str = "SELECT id, name_norm, country FROM organizations \
+  WHERE identifier IS NULL AND country IS NOT NULL AND name_norm > ? \
+  ORDER BY name_norm, country LIMIT ?";
+
 /// `notice_id`-range width for the batched keyed/island `group_key` UPDATE. A
 /// single whole-corpus UPDATE writes a WAL frame PER ROW (turso has no truncate
 /// optimisation), one uncheckpointable statement that balloons the in-RAM
@@ -1105,6 +1119,33 @@ pub struct Identifier {
     pub country: Option<String>,
     pub kind: String,
     pub value: String,
+}
+
+/// One batch of the issue-234 org-merge backfill: what moved, and where the
+/// name-cursor walk stands. Totals are summed across batches by the job.
+#[derive(Debug, Default, Clone)]
+pub struct OrgMergeBatch {
+    /// In-scope org rows this batch actually processed (post name-alignment).
+    pub scanned: u64,
+    /// Duplicate `(name_norm, country)` groups collapsed.
+    pub groups: u64,
+    /// Loser Organization rows deleted.
+    pub removed: u64,
+    /// `organization_mentions` rows repointed to survivors.
+    pub mentions: u64,
+    /// `tender_version_parties` rows repointed.
+    pub parties: u64,
+    /// `tender_version_bid_parties` rows repointed.
+    pub bid_parties: u64,
+    /// `tender_version_result_winners` rows repointed.
+    pub winners: u64,
+    /// Winner rows DELETED because their lot_result already named the survivor
+    /// (the PK ends in `organization_id`, so the repoint would collide).
+    pub winner_dups: u64,
+    /// `name_norm` watermark: pass as `after` to continue the walk.
+    pub cursor: String,
+    /// The scan ran out of rows — the walk is complete.
+    pub done: bool,
 }
 
 /// What applying a projection did — the numbers the CLI reports.
@@ -4148,6 +4189,166 @@ impl Db {
             }
         }
         Ok((swept, changes))
+    }
+
+    /// One batch of the issue-234 backfill: collapse duplicate identifier-less
+    /// provisional Organizations into their group's minimum id and repoint every
+    /// referencing row. Scans up to `batch_rows` in-scope org rows past the
+    /// `after` name cursor in `(name_norm, country)` index order and merges the
+    /// complete groups it saw; a batch cut mid-name drops that whole trailing
+    /// name (its country-groups may be incomplete) and the next batch resumes
+    /// there — except when ONE name fills the batch alone, which is refetched
+    /// unbounded so it can never stall the walk. Restart-safe without a durable
+    /// cursor: merged groups leave the scan's scope as singletons, so a rescan
+    /// from `''` redoes nothing.
+    ///
+    /// The `tender_version_result_winners` PK ends in `organization_id`, so a
+    /// lot_result already naming the survivor collides with a repointed loser
+    /// row; those loser rows are deleted (`winner_dups`) before the repoint.
+    /// Losers get a `removed` change row and each group's survivor an `updated`
+    /// one — its merged mention set changes what reads return for it.
+    pub async fn merge_provisional_organizations_batch(
+        &self,
+        batch_rows: i64,
+        after: &str,
+        dry_run: bool,
+    ) -> turso::Result<OrgMergeBatch> {
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let mut scanned: Vec<(i64, String, String)> = Vec::new();
+        {
+            let mut rows =
+                conn.query(ORG_MERGE_SCAN_SQL, (t(after), Value::Integer(batch_rows))).await?;
+            while let Some(row) = rows.next().await? {
+                scanned.push((int(&row, 0), text(&row, 1), text(&row, 2)));
+            }
+        }
+        let full = scanned.len() as i64 == batch_rows;
+        let mut report = OrgMergeBatch { done: !full, cursor: after.to_owned(), ..Default::default() };
+        if scanned.is_empty() {
+            return Ok(report);
+        }
+        if full {
+            let last_name = scanned.last().expect("non-empty").1.clone();
+            let cut = scanned.iter().position(|r| r.1 == last_name).expect("last row's name");
+            if cut == 0 {
+                // The whole batch is one name: refetch it complete, unbounded.
+                scanned.clear();
+                let mut rows = conn
+                    .query(
+                        "SELECT id, country FROM organizations \
+                          WHERE identifier IS NULL AND country IS NOT NULL AND name_norm = ? \
+                          ORDER BY country",
+                        (t(&last_name),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    scanned.push((int(&row, 0), last_name.clone(), text(&row, 1)));
+                }
+            } else {
+                scanned.truncate(cut);
+            }
+        }
+        report.scanned = scanned.len() as u64;
+        report.cursor = scanned.last().expect("non-empty").1.clone();
+
+        // The rows arrive in (name_norm, country) order, so groups are adjacent runs.
+        let mut groups: Vec<(i64, Vec<i64>)> = Vec::new();
+        let mut i = 0;
+        while i < scanned.len() {
+            let run = scanned[i..]
+                .iter()
+                .take_while(|r| r.1 == scanned[i].1 && r.2 == scanned[i].2)
+                .count();
+            if run > 1 {
+                let mut ids: Vec<i64> = scanned[i..i + run].iter().map(|r| r.0).collect();
+                ids.sort_unstable();
+                groups.push((ids[0], ids[1..].to_vec()));
+            }
+            i += run;
+        }
+        report.groups = groups.len() as u64;
+        report.removed = groups.iter().map(|(_, l)| l.len() as u64).sum();
+        if dry_run || groups.is_empty() {
+            return Ok(report);
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        for (keep, losers) in &groups {
+            for &loser in losers {
+                report.mentions += conn
+                    .execute(
+                        "UPDATE organization_mentions SET organization_id = ? \
+                          WHERE organization_id = ?",
+                        (Value::Integer(*keep), Value::Integer(loser)),
+                    )
+                    .await?;
+                report.parties += conn
+                    .execute(
+                        "UPDATE tender_version_parties SET organization_id = ? \
+                          WHERE organization_id = ?",
+                        (Value::Integer(*keep), Value::Integer(loser)),
+                    )
+                    .await?;
+                report.bid_parties += conn
+                    .execute(
+                        "UPDATE tender_version_bid_parties SET organization_id = ? \
+                          WHERE organization_id = ?",
+                        (Value::Integer(*keep), Value::Integer(loser)),
+                    )
+                    .await?;
+                report.winner_dups += conn
+                    .execute(
+                        "DELETE FROM tender_version_result_winners \
+                          WHERE organization_id = ? \
+                            AND EXISTS (SELECT 1 FROM tender_version_result_winners w \
+                                         WHERE w.tender_id = tender_version_result_winners.tender_id \
+                                           AND w.seq = tender_version_result_winners.seq \
+                                           AND w.lot_result_id = tender_version_result_winners.lot_result_id \
+                                           AND w.organization_id = ?)",
+                        (Value::Integer(loser), Value::Integer(*keep)),
+                    )
+                    .await?;
+                report.winners += conn
+                    .execute(
+                        "UPDATE tender_version_result_winners SET organization_id = ? \
+                          WHERE organization_id = ?",
+                        (Value::Integer(*keep), Value::Integer(loser)),
+                    )
+                    .await?;
+                conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
+                    .await?;
+                append_change(&conn, "organization", loser, None, "removed", now).await?;
+            }
+            append_change(&conn, "organization", *keep, None, "updated", now).await?;
+        }
+        conn.execute("COMMIT", ()).await?;
+        Ok(report)
+    }
+
+    /// How many org rows are in the merge walk's scope — the progress total for
+    /// the backfill job. One full scan; run it once at job start, not per batch.
+    pub async fn org_merge_scope_count(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM organizations \
+                  WHERE identifier IS NULL AND country IS NOT NULL AND name_norm > ''",
+                (),
+            )
+            .await?;
+        Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// Whether a named index exists — the backfill job's refusal gate: without
+    /// `organizations_name_country` (deferred, issues 62/111; built by `reindex`)
+    /// the merge scan would sort 24.6M rows per batch instead of walking an index.
+    pub async fn has_index(&self, name: &str) -> turso::Result<bool> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?", (t(name),))
+            .await?;
+        Ok(rows.next().await?.is_some())
     }
 
     async fn write_version(

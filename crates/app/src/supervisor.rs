@@ -171,6 +171,11 @@ const MARK_BATCH: i64 = 5_000;
 /// rows while keeping each WAL transaction bounded.
 const BACKFILL_BATCH: i64 = 10_000;
 
+/// Org rows scanned per merge batch (issue 234). Each batch is one bounded
+/// index-range read plus that range's repoints in one transaction, with a
+/// TRUNCATE checkpoint between batches (issue 42's shape).
+const ORG_MERGE_BATCH: i64 = 20_000;
+
 /// Span of `tender_versions.tender_id` measured per data-quality window (issue
 /// 230). The size is chosen against the only numbers anyone actually measured —
 /// the field probes ran 0.37 s over 50k tenders, 1.25 s over 200k and 4.79 s over
@@ -328,6 +333,15 @@ enum Spec {
         #[serde(default)]
         dry_run: bool,
     },
+    /// Collapse the standing stock of duplicate identifier-less provisional
+    /// Organizations into one row per `(name_norm, country)` and repoint every
+    /// referencing row (issue 234's backfill half — the resolver merge only
+    /// PREVENTS new duplicates; no fold can retro-collapse the existing ones,
+    /// because the mention idempotency preload never re-resolves a recorded
+    /// mention). Batched + checkpointed, idempotent (merged groups leave the
+    /// scan's scope), stoppable between batches. `dry_run` counts and writes
+    /// nothing.
+    MergeProvisionalOrgs { dry_run: bool },
     /// Clear a STALE `rebuild_in_progress` flag (the issue-85 interlock's escape
     /// hatch). The flag routes any `project` — including the 09:35 daily tick — into
     /// the salvage branch, which `reset_tender_layer()`s a good layer; a rebuild that
@@ -779,6 +793,21 @@ impl Supervisor {
                         .await,
                 ])
             }
+            // Issue 234's backfill half: collapse duplicate identifier-less
+            // provisional Organizations. Deletes org rows and repoints references,
+            // so the safe default applies: a missing flag means dry-run.
+            "merge-provisional-orgs" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "dry-run".to_owned() } else { "execute".to_owned() };
+                Ok(vec![
+                    self.push(
+                        "merge-provisional-orgs",
+                        params,
+                        Spec::MergeProvisionalOrgs { dry_run },
+                    )
+                    .await,
+                ])
+            }
             // Force the full daily reconciliation now (post-downtime catch-up,
             // issue 69). Always runs both source probes — the TED probe self-heals
             // a multi-day gap and is a cheap no-op walk on a non-publishing day.
@@ -899,7 +928,8 @@ impl Supervisor {
 /// over the following six minutes. Naming the readers here is what lets `cancel` refuse
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
-const STOPPABLE_KINDS: &[&str] = &["reparse", "data-quality", "project"];
+const STOPPABLE_KINDS: &[&str] =
+    &["reparse", "data-quality", "project", "merge-provisional-orgs"];
 
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
@@ -1837,6 +1867,83 @@ impl Supervisor {
                 Ok(format!(
                     "restored {restored} guard-rejected sibling row(s) to outstanding \
                      (found {swept} before the write)"
+                ))
+            }
+            Spec::MergeProvisionalOrgs { dry_run } => {
+                // The scan is one ordered pass over `organizations_name_country`;
+                // without that index (deferred, issues 62/111 — `reindex` builds it)
+                // every batch would sort the whole org table instead. Refuse with
+                // the remedy rather than grind.
+                let indexed = self
+                    .db
+                    .has_index("organizations_name_country")
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if !indexed {
+                    return Err("merge-provisional-orgs needs the organizations_name_country \
+                                index — run a `reindex` job first"
+                        .into());
+                }
+                let total = self.db.org_merge_scope_count().await.map_err(|e| e.to_string())? as u64;
+                let mut totals = store::OrgMergeBatch::default();
+                let mut scanned = 0u64;
+                let mut cursor = String::new();
+                let mut stopped = false;
+                loop {
+                    // A stop is honoured between batches: each batch is its own
+                    // committed transaction and merged groups leave the scan's
+                    // scope, so a restart from `''` redoes nothing (issue 252's
+                    // bar: the flag must be READ, and the log must say so).
+                    if self.cancelled(job.id) {
+                        stopped = true;
+                        break;
+                    }
+                    let b = self
+                        .db
+                        .merge_provisional_organizations_batch(ORG_MERGE_BATCH, &cursor, *dry_run)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    scanned += b.scanned;
+                    totals.groups += b.groups;
+                    totals.removed += b.removed;
+                    totals.mentions += b.mentions;
+                    totals.parties += b.parties;
+                    totals.bid_parties += b.bid_parties;
+                    totals.winners += b.winners;
+                    totals.winner_dups += b.winner_dups;
+                    cursor = b.cursor.clone();
+                    self.update(|p| p.members_done = totals.removed);
+                    self.set_phase(
+                        "merging",
+                        Some(scanned),
+                        Some(total),
+                        format!(
+                            "cursor \"{}\"; {} group(s) collapsed, {} org(s) removed",
+                            cursor, totals.groups, totals.removed
+                        ),
+                    );
+                    if !dry_run {
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after org-merge batch: {e}");
+                        }
+                    }
+                    if b.done {
+                        break;
+                    }
+                }
+                let cancelled = if stopped { "CANCELLED at a checkpoint — " } else { "" };
+                let mode = if *dry_run { "org-merge dry run: would collapse" } else { "org merge: collapsed" };
+                Ok(format!(
+                    "{cancelled}{mode} {} duplicate group(s): {} provisional org(s) removed; \
+                     {} mention(s), {} party row(s), {} bid-party row(s), {} winner row(s) \
+                     repointed, {} duplicate winner row(s) dropped",
+                    totals.groups,
+                    totals.removed,
+                    totals.mentions,
+                    totals.parties,
+                    totals.bid_parties,
+                    totals.winners,
+                    totals.winner_dups
                 ))
             }
             Spec::ClearRebuildFlag => {
@@ -3065,7 +3172,10 @@ mod tests {
 
         // And every kind named stoppable must actually be one — the list is the contract,
         // so a kind added to it without a checkpoint is the bug this test exists to catch.
-        assert_eq!(STOPPABLE_KINDS, &["reparse", "data-quality", "project"]);
+        assert_eq!(
+            STOPPABLE_KINDS,
+            &["reparse", "data-quality", "project", "merge-provisional-orgs"]
+        );
     }
 
     /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is
