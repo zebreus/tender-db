@@ -1,10 +1,13 @@
 # 234 — an identifier-less mention mints a NEW provisional Organization every time, so legacy buyer rollups cannot aggregate
 
-Status: IMPLEMENTED 2026-08-20 (owner); the merge is DEPLOYED and is **prevention only** — the
-epoch bump that rode the commit was WRONG and was reverted 2026-08-21 (see "The epoch correction"
-below). Remaining deliverable: the `merge-provisional-orgs`
-backfill job (IMPLEMENTED 2026-08-21, see "The epoch correction" below) — deploy, dry-run read,
-execute, re-measure. Option (1) as decided: `(name_norm, country)` reuse for
+Status: CLOSED 2026-08-21 — prevention deployed (the resolver merge) AND the stock collapsed (the
+`merge-provisional-orgs` backfill, job 296): **890,199 duplicate groups, 18,258,668 provisional
+orgs removed in 3h40m** — the org table went 30,532,198 → 12,273,530 rows (2.5×), provisional
+share 95.30 % → 90.6 %, provisional-per-mention 0.568 → 0.235. Repointed: 18,258,643 mentions,
+23,857,532 party rows, 156,174 bid-party rows, 43,098,564 winner rows; 325,082 duplicate winner
+rows dropped. Follow-up residue filed as issue 261 (orphaned identifier-less singletons from
+pre-merge re-parse churn). The epoch bump that first rode the merge was WRONG and was reverted
+(see "The epoch correction" below). Option (1) as decided: `(name_norm, country)` reuse for
 identifier-less mentions, scoped `identifier IS NULL`, nameless and country-less mentions never
 merge, rows stay provisional. Red-checked test + the issue-104 golden fired on it (details at the
 bottom). Was: needs-triage, RAISED — SIZED 2026-08-18 at 95.30 % provisional
@@ -386,3 +389,28 @@ fold. That collapse is the **`merge-provisional-orgs` admin job**, implemented 2
    = 95.30 %) and `provisional per mention` (was 0.568). Record here; then close.
 - Interim, prevention-only signal: the provisional-per-mention ratio for mentions recorded AFTER
   the deploy should sit far below 0.568.
+
+---
+
+## Acceptance numbers (2026-08-21, job 296) — and what the baseline had become
+
+The 2026-08-18 sizing (24,618,292 orgs) was already stale by run time: the issue-100 re-parse and
+the text-era campaign each CLEAR and re-resolve their notices' mentions, and every re-resolved
+identifier-less mention minted a FRESH provisional org pre-merge while the old org went
+unreferenced. By merge time the table held **30,532,198** rows.
+
+| measure | before (sized 08-18) | at run | after | 
+|---|---|---|---|
+| organizations total | 24,618,292 | 30,532,198 | **12,273,530** |
+| provisional (= `identifier IS NULL`, exactly — flag and column agree) | 23,462,294 (95.30 %) | — | **11,115,712 (90.6 %)** |
+| provisional per mention (mentions now 47,233,426) | 0.568 | — | **0.235** |
+
+Collapse within the duplicate set: (18,258,668 + 890,199) / 890,199 ≈ **21.5× mean** — stronger
+than the windowed 2.8×–14.4× prediction, as expected (windows cannot see cross-window duplicates).
+Mentions repointed ≈ orgs removed (18,258,643 vs 18,258,668): each loser carried on average
+exactly ONE mention, which is the defect restated as an outcome.
+
+Residue: the provisional share is still 90.6 % because identifier-less SINGLETONS remain — and an
+unknown slice of them are ORPHANS (zero references) left by the same pre-merge re-parse churn that
+grew the table. Sizing that slice needs an offline probe (11.1M NOT-EXISTS probes, over the
+/v1/sql cap) — filed as issue 261.
