@@ -1,6 +1,8 @@
 # 120 — the app has no defence against expensive-query saturation
 
-Status: open — architectural gap, established 2026-08-03 while costing issue 117 Class B.
+Status: open, POSITION RECORDED 2026-08-21 (owner) — the fork stays untaken for now; the layered
+bounds cover the blast radius and the trigger for revisiting is written at the bottom. Was: open —
+architectural gap, established 2026-08-03 while costing issue 117 Class B.
 Kind: availability / architecture
 Blocked by: —
 Blocks: —
@@ -326,3 +328,30 @@ thread, where the defect is inert.
 That is the third instrument in this investigation whose bug would have produced
 evidence AGREEING with the hypothesis, and the second in this one tool. Agreement is
 where nobody looks.
+
+---
+
+## Owner position (2026-08-21): the fork stays untaken, and what would change that
+
+Since this was filed, the defence has become three layers, each attacking a different face of the
+same gap:
+
+1. **The isolation backstop** (`f67aa90`): walk-capable reads run on their own runtime + pool,
+   shedding the (N+1)th with a 503 — an expensive query can no longer take the whole API down.
+2. **The `/v1` whole-request deadline** (issue 241, 30 s → 503 with a cause): the CALLER's wait is
+   bounded even when the work is not — a stall is now a legible error, never a silent hang. It
+   deliberately does not claim to stop the work; the thread still burns until the query ends.
+3. **The ingress rate bound** (117's `limit_req` derivation) for arrival-rate amplification.
+
+What none of them do is stop work already running — that is the cancellability this issue is
+really about, and it still requires reaching `turso_sdk_kit::rsapi` past the public API, i.e.
+vendoring or forking a pinned engine. That is a permanent maintenance obligation on every future
+turso upgrade, taken to convert "a runaway query burns one sandboxed thread for its natural
+lifetime" into "it dies early". With the sandbox capping the damage at 4 threads and the deadline
+making every stall visible, that trade buys little today.
+
+**Triggers that reopen the decision, either one:** (a) `tender_db_request_deadline_hits_total`
+shows deadline cuts recurring in normal operation — meaning real users are hitting stalls and the
+burned threads behind them are a measured cost, not a theory; or (b) turso ships `interrupt()` on
+the public `Connection` (watch its releases — 0.7.x has been pinned since July), at which point
+cancellation stops costing a fork and should be adopted immediately.
