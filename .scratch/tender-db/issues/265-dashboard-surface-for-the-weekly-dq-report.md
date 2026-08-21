@@ -1,7 +1,11 @@
 # 265 — the weekly data-quality run has no dashboard surface: headline rates + week-over-week deltas
 
-Status: needs-triage — filed 2026-08-21 (owner, requested by Lennart: more data-quality monitors
-on the dashboard).
+Status: STORAGE HALF BUILT 2026-08-21 — every weekly run now appends its per-era headline rates
+(factless, value, named, linkage, vat_stated, negative — each as [num, den] so no surface can
+disagree by rounding) to `data-quality-headlines`, bounded to the last 12 runs, best-effort like
+the presence rates. Remaining: the dashboard section (delta table + computed_at + alarm lead) and
+266's gauges, both of which read this. Was: needs-triage — filed 2026-08-21 (owner, requested by
+Lennart: more data-quality monitors on the dashboard).
 Kind: observability / dashboard
 Blocked by: —
 Relates to: 230 (the report + `/admin/reports/data-quality`), 109 (the presence step-change alarm —

@@ -1729,6 +1729,70 @@ pub fn render_text(report: &Report) -> String {
     out
 }
 
+/// One run's per-era headline rates as a compact JSON history entry (issue
+/// 265). Every rate is stored as `[numerator, denominator]` rather than a
+/// float, so a consumer computing deltas divides ONCE, its own way, and two
+/// surfaces can never disagree by rounding. The dashboard renders the last N
+/// of these; the /metrics gauges (issue 266) read the newest.
+pub fn headline_history_entry(report: &Report, computed_at: i64) -> serde_json::Value {
+    let by_profile_linkage: std::collections::BTreeMap<&str, &LinkageRow> =
+        report.linkage.iter().map(|r| (r.profile.as_str(), r)).collect();
+    let by_profile_density: std::collections::BTreeMap<&str, &DensityRow> =
+        report.density.iter().map(|r| (r.profile.as_str(), r)).collect();
+    let by_profile_basis: std::collections::BTreeMap<&str, &BasisRow> =
+        report.amount_basis.iter().map(|r| (r.profile.as_str(), r)).collect();
+    let by_profile_plaus: std::collections::BTreeMap<&str, &PlausibilityRow> =
+        report.plausibility.iter().map(|r| (r.profile.as_str(), r)).collect();
+    // `value` is FIELDS[2] in the completeness present-array.
+    let eras: Vec<serde_json::Value> = report
+        .completeness
+        .iter()
+        .map(|c| {
+            let p = c.profile.as_str();
+            let factless =
+                report.presence.iter().find(|r| r.profile == p).map_or(0, |r| r.factless);
+            let named = by_profile_density
+                .get(p)
+                .map_or([0, 0], |d| [d.with_winner, d.with_awardable]);
+            let linkage = by_profile_linkage
+                .get(p)
+                .map_or([0, 0], |l| [l.awards - l.unchained.min(l.awards), l.awards]);
+            let vat = by_profile_basis.get(p).map_or([0, 0], |b| [b.excl + b.incl, b.amounts]);
+            let neg = by_profile_plaus.get(p).map_or([0, 0], |x| [x.negative, x.amounts]);
+            json!({
+                "profile": p,
+                "versions": c.versions,
+                "factless": [factless, c.versions],
+                "value": [c.present[2], c.versions],
+                "named": named,
+                "linkage": linkage,
+                "vat_stated": vat,
+                "negative": neg,
+            })
+        })
+        .collect();
+    json!({ "at": computed_at, "eras": eras })
+}
+
+/// Append one entry to the stored headline history, keeping the newest
+/// [`HEADLINE_HISTORY_KEEP`] (issue 265). Pure so it is testable without a
+/// store: `existing` is the stored JSON array (or garbage/empty — a corrupt
+/// history is dropped, never fatal, because losing a trend beats failing the
+/// measurement that would extend it).
+pub fn append_headline_history(existing: &str, entry: serde_json::Value) -> String {
+    let mut history: Vec<serde_json::Value> =
+        serde_json::from_str(existing).unwrap_or_default();
+    history.push(entry);
+    if history.len() > HEADLINE_HISTORY_KEEP {
+        let drop = history.len() - HEADLINE_HISTORY_KEEP;
+        history.drain(..drop);
+    }
+    serde_json::to_string(&history).unwrap_or_else(|_| "[]".into())
+}
+
+/// Weekly runs kept in the headline history — a quarter's trend, bounded.
+pub const HEADLINE_HISTORY_KEEP: usize = 12;
+
 /// The step-change alarm on the presence rates (issue 109): compare this run's
 /// per-era factless rate to the previous run's and name every era that went
 /// wholesale stale between them. A JUMP is what the incident actually looked
@@ -2031,6 +2095,81 @@ mod tests {
         let steady: Vec<(String, u64, u64)> =
             presence.iter().map(|r| (r.profile.clone(), r.versions, r.factless)).collect();
         assert!(presence_step_changes(&steady, &presence).is_empty());
+    }
+
+    /// Issue 265: the headline entry carries every rate as [num, den] pulled
+    /// from the section it belongs to, and the history stays bounded while a
+    /// corrupt stored blob degrades to a fresh history rather than an error.
+    #[test]
+    fn the_headline_history_entry_carries_num_den_pairs_and_stays_bounded() {
+        let report = Report {
+            base_url: "x".into(),
+            completeness: vec![CompletenessRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                versions: 1_000,
+                present: [900, 850, 700, 950, 800, 400],
+            }],
+            linkage: vec![LinkageRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                awards: 200,
+                unchained: 60,
+            }],
+            density: vec![DensityRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                award_notices: 200,
+                with_results: 199,
+                no_award_content: 1,
+                with_winner: 150,
+                with_awardable: 170,
+            }],
+            invariant: vec![],
+            doc_types: vec![],
+            merge: Merge::default(),
+            fresh_holds: vec![],
+            amount_basis: vec![BasisRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                amounts: 500,
+                excl: 90,
+                incl: 10,
+            }],
+            presence: vec![PresenceRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                versions: 1_000,
+                factless: 5,
+            }],
+            plausibility: vec![PlausibilityRow {
+                profile: "eforms:eforms-sdk-1.13".into(),
+                amounts: 500,
+                negative: 2,
+                zero: 9,
+                over_1e12: 0,
+            }],
+            unmeasured: vec![],
+        };
+        let entry = headline_history_entry(&report, 1_700_000_000);
+        assert_eq!(entry["at"], 1_700_000_000);
+        let era = &entry["eras"][0];
+        assert_eq!(era["profile"], "eforms:eforms-sdk-1.13");
+        assert_eq!(era["factless"], json!([5, 1_000]));
+        assert_eq!(era["value"], json!([700, 1_000]), "value is FIELDS[2]");
+        assert_eq!(era["named"], json!([150, 170]), "named divides by awardable (issue 258)");
+        assert_eq!(era["linkage"], json!([140, 200]));
+        assert_eq!(era["vat_stated"], json!([100, 500]));
+        assert_eq!(era["negative"], json!([2, 500]));
+
+        // Bounded: KEEP+3 appends leave exactly KEEP, newest last.
+        let mut stored = "[]".to_owned();
+        for i in 0..(HEADLINE_HISTORY_KEEP + 3) {
+            stored = append_headline_history(&stored, json!({ "at": i }));
+        }
+        let history: Vec<serde_json::Value> = serde_json::from_str(&stored).unwrap();
+        assert_eq!(history.len(), HEADLINE_HISTORY_KEEP);
+        assert_eq!(history.last().unwrap()["at"], HEADLINE_HISTORY_KEEP + 2);
+
+        // Corrupt storage degrades to a fresh history, never an error.
+        let recovered = append_headline_history("not json{", json!({ "at": 7 }));
+        let history: Vec<serde_json::Value> = serde_json::from_str(&recovered).unwrap();
+        assert_eq!(history.len(), 1);
     }
 
     #[test]

@@ -2369,6 +2369,22 @@ impl Supervisor {
             }
             Err(e) => eprintln!("[data-quality] encode presence rates: {e}"),
         }
+        // The headline history (issue 265): every run appends its per-era
+        // headline rates, bounded to the last HEADLINE_HISTORY_KEEP runs — one
+        // reports row, read by the dashboard's delta table and the /metrics
+        // gauges (issue 266). Best-effort like the presence rates: losing a
+        // trend point must never fail the measurement that produced it.
+        let existing = match self.db.latest_report("data-quality-headlines").await {
+            Ok(Some((body, _))) => body,
+            _ => "[]".to_owned(),
+        };
+        let history = data_quality::append_headline_history(
+            &existing,
+            data_quality::headline_history_entry(&report, now),
+        );
+        if let Err(e) = self.db.put_report("data-quality-headlines", &history, now).await {
+            eprintln!("[data-quality] store headline history: {e}");
+        }
         let alarm_note = if alarms.is_empty() {
             String::new()
         } else {
