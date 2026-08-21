@@ -10,10 +10,12 @@ health. A breach also exits the oneshot non-zero, so it surfaces in
 |---|---|---|
 | `tender-db-diskwatch` | hourly, `:17` | `/` and `/data` free space vs a used-percent threshold (default 90%). Plain `df`, no call into the server — so it still warns when the disk-full has taken the app down. |
 | `tender-db-jobwatch` | hourly, `:29` | `GET /admin/jobs`: any `.recent[]` run with `outcome != "ok"` finished inside the lookback (default 26 h), and any `.current` job running past the wedged threshold (default 8 h, above the ~5 h a full `project rebuild=true` legitimately takes). |
+| `tender-db-driftwatch` | daily, `06:41` | the public SDK-eforms-de release feed (gitlab.opencode.de): warns and exits non-zero the day a release lands beyond the vendored `1.14.x` line — the eForms-DE 2.1 successor whose acceptance deadline is 2026-12-02 (issue 165). Network failure warns but exits 0, so a flaky mirror never masks a real drift alarm in `systemctl --failed`. |
 
 Thresholds are env-overridable in the unit if needed: `TENDER_DISK_WARN_PCT`,
 `TENDER_JOB_FAIL_LOOKBACK_SECS`, `TENDER_JOB_WEDGED_SECS`, `TENDER_ADMIN_URL`,
-`TENDER_ADMIN_SECRET_FILE`.
+`TENDER_ADMIN_SECRET_FILE`; for the drift watch, `TENDER_DRIFT_KNOWN_PREFIX`
+(bump it when a new SDK-DE line is vendored) and `TENDER_DRIFT_API`.
 
 ## Install / restore
 

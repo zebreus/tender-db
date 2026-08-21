@@ -1,0 +1,9 @@
+[Unit]
+Description=Daily eForms-DE SDK upstream-drift watch (issue 165)
+
+[Timer]
+OnCalendar=*-*-* 06:41:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

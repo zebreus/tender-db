@@ -1,0 +1,6 @@
+[Unit]
+Description=Daily eForms-DE SDK upstream-drift watch (issue 165)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tender-db-driftwatch.sh
