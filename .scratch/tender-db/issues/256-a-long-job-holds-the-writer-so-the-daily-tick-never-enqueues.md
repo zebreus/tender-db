@@ -1,12 +1,16 @@
 # 256 — a long job holds the writer, so the daily tick silently never enqueues
 
-Status: SOLVED AND DEPLOYED; close-out 2/3 done 2026-08-21 — the stop checkpoint + relabel fix are
-live (b42a9c2 and successors) and a daily tick has passed clean on the new build (job 1215). The
-one remaining bar — `/admin/jobs/<id>/cancel` on a LIVE project job answering `Stopping` — has a
-scheduled, zero-waste target: job 303, the fold paired to the r208 re-parse (302), will be
-cancelled a few minutes in, the `Stopping`/`CANCELLED at a checkpoint` pair confirmed, and the
-fold re-run (stop-resume is its own gate, `a_stopped_projection_resumes_to_the_identical_layer`).
-Was: PART 1 DONE 2026-08-20; PART 2 the fold's silent hours
+Status: CLOSED 2026-08-21 — every bar met, the last one live on a real project job. Job 303 (the
+fold paired to the r208 re-parse) was cancelled mid-plan-build: the route answered
+`{"cancelled":303,"state":"stopping"}`, the journal logged "asked it to stop at its next
+checkpoint", and the log row leads `CANCELLED at a checkpoint — 0 notices → 0 tenders … 0
+written` (honest zero tallies; the stop landed before grouping, so nothing was half-done). The
+fold was re-enqueued as 304 and continues 251 step 4 — the cancel cost only its own probe time.
+Deployed builds ✓, one clean daily tick ✓ (job 1215). ONE observation from the probe, filed as
+issue 262: cancel-ack → checkpoint took ~17 min because the plan build over a 2.7M-notice delta
+runs with NO phase record and sparse stop checks — legible cancel latency, but the operator
+watches a `phase: None` job the whole time. Was: PART 1 DONE 2026-08-20; PART 2 the fold's silent
+hours; then SOLVED AND DEPLOYED with 2/3 close bars done
 Kind: operability defect, silent data loss window
 Blocked by: —
 Relates to: 245 (the missed-tick catch-up this defeats), 222 (the weekday catch-up window it also
