@@ -1032,3 +1032,11 @@ stalled.
 **The campaign rule that follows: batch by changed NOTICES, not by packages.** ~12-15 packages of
 ~26 k notices keeps the closure under 500,000 and the fold incremental. The 161 remaining packages are
 not blocked on parser work — slices 2-9 are all deployed — only on batching under the cap.
+
+## Campaign resumed under the cap rule (2026-08-22 05:55 UTC)
+
+The interregnum's full walks (jobs 293/306) already folded every previously-stamped batch, so the
+221-240 canonical numbers are in. The redo sweep resumes as three queued under-cap pairs — jobs
+310/311 (fetches 186-197), 312/313 (198-209), 314/315 (210-220), ~12 packages ≈ ~312k notices per
+batch, each fold staying incremental per the closure-cap rule this file established. Next firings
+continue with `after: 240` for the 241-374 tail, ~12 packages a batch.
