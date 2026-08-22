@@ -1,0 +1,6 @@
+[Unit]
+Description=Weekly tender-db DB snapshot (reflink, issue 269)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tender-db-snapshot.sh

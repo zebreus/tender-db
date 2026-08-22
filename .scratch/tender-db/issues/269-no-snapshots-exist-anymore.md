@@ -1,6 +1,14 @@
 # 269 — zero DB snapshots exist: no offline-read path, no point-in-time artifact
 
-Status: needs-triage — filed 2026-08-22 (owner, noticed during issue 109's backtest attempt).
+Status: CLOSED 2026-08-22, same day — `tender-db-snapshot` is installed and has taken the first
+snapshot: /data/db/snapshots/tender-db-1787374320.db, 472 GB apparent at ZERO additional disk
+(XFS reflink=1 confirmed on /dev/md3; `cp --reflink=always` is instant, blocks shared until the
+live DB diverges). Weekly timer (Sun 05:23 UTC) beside the watchdogs; skips loudly while a job
+runs; the snapshot's WAL is folded+truncated on the copy so the verify suite's snapshot mode
+works against it; prune keeps the newest 2 and can never delete the last. Documented as a
+verification/forensics artifact, NOT disaster recovery — same volume; the raw archive remains
+the rebuild path. Was: needs-triage — filed 2026-08-22 (owner, noticed during issue 109's
+backtest attempt).
 Kind: operational gap (backup / offline reads)
 Blocked by: —
 Relates to: 109 (whose backtest died on this), 102/107 (the verify tooling built AROUND

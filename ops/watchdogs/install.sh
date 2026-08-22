@@ -20,7 +20,8 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh; do
+for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh \
+    tender-db-snapshot.sh; do
     install -m 0755 -o root -g root "$here/$s" "$bin/$s"
     echo "installed $bin/$s"
 done
@@ -28,7 +29,8 @@ done
 for u in \
     tender-db-diskwatch.service tender-db-diskwatch.timer \
     tender-db-jobwatch.service  tender-db-jobwatch.timer \
-    tender-db-driftwatch.service tender-db-driftwatch.timer; do
+    tender-db-driftwatch.service tender-db-driftwatch.timer \
+    tender-db-snapshot.service tender-db-snapshot.timer; do
     install -m 0644 -o root -g root "$here/$u" "$unitdir/$u"
     echo "installed $unitdir/$u"
 done
@@ -37,7 +39,7 @@ systemctl daemon-reload
 systemctl reset-failed tender-db-diskwatch.service tender-db-jobwatch.service \
     tender-db-driftwatch.service 2>/dev/null || true
 systemctl enable --now tender-db-diskwatch.timer tender-db-jobwatch.timer \
-    tender-db-driftwatch.timer
+    tender-db-driftwatch.timer tender-db-snapshot.timer
 echo "timers enabled:"
 systemctl list-timers 'tender-db-*watch.timer' --no-pager || true
 
