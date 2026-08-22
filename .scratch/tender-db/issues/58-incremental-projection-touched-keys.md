@@ -1,6 +1,6 @@
 # 58 — Incremental projection: re-project only the Tenders touched since last run
 
-Status: in-implementation (2026-07-24, proj-fix; team-lead approved all 3 sign-offs) — v1 keyed/island + legacy fallback landed on branch issue62-defer-org-indexes, green; timing curve + supervisor wiring remaining
+Status: done (2026-08-22, owner) — v2 steps 1-3 shipped and step 3's acceptance MET on prod: scoped legacy fold observed at scale (2026-08-19, internal-ojs cohort), cap leg exercised live 12x by the 244 campaign
 Severity: MEDIUM (daily-wall-clock optimization, not an outage) — but it is the
 BIGGEST projection lever: every projection today re-reads+re-plans the whole
 12.4M-notice / 254GB corpus (~5h15m measured), which makes the daily job
@@ -472,3 +472,27 @@ First actions once unblocked: `./deploy.sh`, then `curl -s https://tenders.zebre
 grep legacy_adjacency_watermark` — it must read **28251412**, which is simultaneously the /metrics
 smoke test and the step-2 spot-check that had no query path. Then watch the next legacy-touching
 fold for the closure-size journal line (step 3's acceptance).
+
+### Step 3 acceptance MET — CLOSED (2026-08-22, owner)
+
+The "real legacy delta" this issue was waiting for arrived on its own: the 2026-08-19 08:27 UTC
+fold ran on **exactly the cohort this issue named as the un-exercisable test case** — internal-ojs,
+26,955 changed notices. The journal shows every line the acceptance asked for, at three orders of
+magnitude beyond the 3-5-notice exerciser:
+
+    [project] incremental: 26955 changed notices
+    [project] legacy closure: 35522 seed keys → 63799 notices, 24742 tenders in 2 hops
+    [project] group step union-load: 0.0s (63787 nodes)
+    [project] group step legacy-update: 0.6s (63799 legacy)
+    [project] incremental: 26955 changed → 24742 touched Tenders (0 retired) in 87.6s
+
+N > 0 and M > 0 for the first time on prod; the closure (63,799 notices) stayed far under the 500k
+cap; touched Tenders (24,742) is component-order, not corpus-order (7.9M) — no fallback. A dozen
+further scoped folds ran the same morning (48k-90k-notice closures, 2 hops each, all sub-5s walks).
+
+The OTHER gate leg — cap trip → deliberate full walk — was exercised **12 times** since 2026-08-19
+by issue 244's campaign (`INCREMENTAL → FULL fallback: legacy closure exceeds cap` on every
+over-cap batch), which is also rollout step 4's measurement in the field: under-cap folds cost
+80-100 s, over-cap buys a ~3 h whole-corpus walk, and 244's batching rule v2 is built on precisely
+that curve. Nothing about this issue is unverified or pending; the `refold-notices` bounded
+exerciser remains available as standing tooling but is no longer needed for acceptance.
