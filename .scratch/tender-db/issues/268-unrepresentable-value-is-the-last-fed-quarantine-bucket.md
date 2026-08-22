@@ -1,6 +1,10 @@
 # 268 — `unrepresentable-value` is the last FED quarantine bucket (5,196 held, 3,108 arrivals/30d)
 
-Status: DIAGNOSED AND FIXED IN CODE 2026-08-22, same day — the bucket split cleanly with two
+Status: CLOSED 2026-08-22, filed-to-drained in one day — deployed (845ed54), reprocess job 308
+reclaimed **4,898 of 5,196 (94 %)**, the paired fold wrote 3,740 tenders, and the ledger carries
+the resolution row. The 298 still held are the garbage class (10^50 integers) and hold by design;
+quarantine's outstanding total is now ~306 across the whole corpus, all diagnosed. Was: DIAGNOSED
+AND FIXED IN CODE 2026-08-22, same day — the bucket split cleanly with two
 bounded reads of the held rows' own `detail` strings (no archive sampling needed):
 
 - **3,249 (62 %) "more than two fraction digits"** — publisher mills (`555.242`), float

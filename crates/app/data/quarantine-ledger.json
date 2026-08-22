@@ -1,368 +1,377 @@
 [
-  {
-    "category": "Form copies diverging from their original",
-    "reason": "translation-structure-mismatch",
-    "diagnosis": "The r209/r208 overlay walked secondary form copies as translations that must replicate the primary original's structure, rejecting the member whole on any divergence - 94 members. 92 were bilingual buyers' CO-ORIGINALS (Belgian/Bolzano style) whose second original legitimately carries more: extra organisations, F14 change blocks, lots. The last 2 were TED pipeline defects where the ORIGINAL was the impoverished copy - an ES award notice carrying one award where all 23 translations carry three, an F14 whose original has no CHANGE block at all. Every firing of the guard was recoverable content, so secondary copies now ADOPT missing sections (fully emitted - nothing in them is shared with the primary) and the rejection reason is retired.",
-    "fix": "issue 201 (eb05139 + follow-up)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "2010 records split by quoted reference numbers",
-    "reason": "missing-publication-id",
-    "diagnosis": "The 2010-era structured forms quote the buyer's file reference under 'IV.3.1) reference number' - '3.131/2010', '331.08/01' - alone on an INDENTED line, which matched the <digits>.<digits>/<digits> record-marker shape: each such line split a real notice mid-body and the ND-less tail held as missing-publication-id (110 rows, every one a 2010 member; the bucket was never anything else). Anchoring the marker at column 0 (1,488/1,488 real markers are column-0 in a full 2010 daily; the only 2 indented matches were both false) merges the tails back: the fuller records entered as versions of their publication ids, and the reason is now empty.",
-    "fix": "issue 200 (ac484f5)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "eForms selection criteria inside AppealTerms",
-    "reason": "unclaimed-content",
-    "detail_like": "%AppealTerms/%UBLExtensions",
-    "diagnosis": "A 2022 DOE tool on eforms-sdk-1.0 (9 PINs) writes the SelectionCriteria extension block inside the procedure TenderingTerms' cac:AppealTerms - one mount deeper than any SDK declares. Grafted from the lot TenderingTerms anchor, the same family as the TenderingProcess mount.",
-    "fix": "issue 195 (2d3202f)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "DOE 0.1 subcontracting value leaves",
-    "reason": "unclaimed-content",
-    "profile": "eforms:eforms-sdk-0.1",
-    "detail_like": "%SubcontractTerms%",
-    "diagnosis": "The pre-release result model publishes cac:TenderResult/cac:SubcontractTerms with cbc:Amount (10 members, the BT-553 shape) or cbc:Rate (2, the BT-555 share) beside the conditions code the empirical inventory already knew. Inventory additions - sdk-0.1 has no SDK artifact, so observed paths ARE its inventory.",
-    "fix": "issue 195 (2d3202f)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "DOE 0.1 party registration ids",
-    "reason": "unclaimed-content",
-    "profile": "eforms:eforms-sdk-0.1",
-    "detail_like": "%PartyLegalEntity",
-    "diagnosis": "PartyLegalEntity/cbc:CompanyID under three party mounts the empirical inventory lacked (lot AppealReceiverParty, MediationParty, AdditionalInformationParty) - one member advanced from mount to mount across re-parses, the issue-87 rewrite naming each precisely. Inventory additions.",
-    "fix": "issue 195 (2d3202f)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Additional procurement types under unlisted lists",
-    "reason": "unclaimed-content",
-    "detail_like": "%ProcurementAdditionalType/%ProcurementTypeCode",
-    "diagnosis": "The SDK enumerates ProcurementAdditionalType per listName, so a code under any other list matched no branch and held the member whole: a 2023 eSender's listName=\"supplies\" carrying a contract-nature value (7, sdk-1.8) and BT-775's dead SDK-1.0 social-procurement shape still published in 2024 (3, sdk-1.10). A predicate-free gap-filled branch claims them as published; declared lists keep their BT ids. Deliberately reverses the issue-144 negative control - publisher noise on old minors is not a mapping-decision signal.",
-    "fix": "issue 195 (be4fcb1)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "FieldsPrivacy hoisted to the root extension",
-    "reason": "unclaimed-content",
-    "detail_like": "unclaimed element at /{urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2}UBLExtensions%FieldsPrivacy",
-    "diagnosis": "Four sdk-1.9 members write withheld-field blocks (pro-fea BT-88, pro-typ BT-105, awa-cri-typ BT-539) directly under the root EformsExtension instead of beside the element each suppresses. Grafted from the two anchored families; the published FieldIdentifierCode predicate keeps BT-195..198 ids exact.",
-    "fix": "issue 195 (8a82813)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Framework expected-participant count",
-    "reason": "unclaimed-content",
-    "detail_like": "%ExpectedOperatorQuantity",
-    "diagnosis": "Two sdk-1.10 members publish cbc:ExpectedOperatorQuantity beside the declared BT-113 maximum - no SDK minor or dialect declares the element. Claimed as published (UBL-ExpectedOperatorQuantity); BT-113 keeps its id.",
-    "fix": "issue 195 (8a82813)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "A service provider's own service provider",
-    "reason": "unclaimed-content",
-    "detail_like": "%}ServiceProviderParty",
-    "diagnosis": "Two sdk-1.12 members nest a second, self-referential ServiceProviderParty level under the contracting party (the eSender registering itself as its own provider); the SDK models one level. The declared level grafts onto the nested mount.",
-    "fix": "issue 195 (8a82813)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "CVD flag on an award criterion",
-    "reason": "unclaimed-content",
-    "detail_like": "%AwardingCriterion/%StrategicProcurement",
-    "diagnosis": "Two sdk-1.12 members mount efac:StrategicProcurement (ApplicableLegalBasis, BT-717's leaf) inside the AwardingCriterion extension beside the declared parameter blocks. Grafted from the lot TenderingTerms anchor. Rider: OPT-999 - UBL 2.3's forced DUMMY TenderResult/AwardDate - joined the zoneless-reads-as-UTC relaxation, which one of these members advanced into.",
-    "fix": "issue 195 (8a82813)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "EU-scheme business registration on 1.8",
-    "reason": "unclaimed-content",
-    "detail_like": "%BusinessParty/%RegistrationName",
-    "diagnosis": "An sdk-1.8 BRIN registers its PartyLegalEntity with schemeName='EU' - SDK <=1.8 declares only the 'national' BT-500 branch (the -European twin enters at 1.9), and the AdditionalDocumentReference block without its cbc:ID (OPP-124 enters later). Both later-SDK shapes claimed gap-filled on the early minors.",
-    "fix": "issue 195 (cd0fb1c)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "BT-707 published before its SDK",
-    "reason": "unclaimed-content",
-    "detail_like": "%CallForTendersDocumentReference/%DocumentTypeCode",
-    "diagnosis": "A Romanian sdk-1.6 eSender publishes the lot documents-justification code that enters the vendored line at 1.7.0. Claimed gap-filled with the declared 1.7+ shape.",
-    "fix": "issue 195 (cd0fb1c)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "The organisation inlined under ContractingParty",
-    "reason": "unclaimed-content",
-    "detail_like": "%ContractingParty/%PartyName",
-    "diagnosis": "A Norwegian sdk-1.7 eSender inlines the contracting organisation in full - name, address, website, contact person - under cac:ContractingParty/cac:Party, where the SDK models only the register reference, and fills UBL 2.3's forced TenderResult block with real data (tender count, low/high amounts, zoneless start date, winner reference). Company graft plus UBL- claims, all as published.",
-    "fix": "issue 195 (cd0fb1c)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Notice-subtype free text",
-    "reason": "unclaimed-content",
-    "detail_like": "%SubTypeDescription",
-    "diagnosis": "An Italian sdk-1.12 eSender writes efbc:SubTypeDescription beside the subtype code - declared by no minor or dialect. Claimed as UBL-SubTypeDescription.",
-    "fix": "issue 195 (cd0fb1c)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Inline mediation body (DOE uuid channel)",
-    "reason": "unclaimed-content",
-    "detail_like": "%MediationParty/%WebsiteURI",
-    "diagnosis": "An sdk-1.0 uuid-channel member inlines the mediation body as a full party at BOTH procedure and lot level; the Company graft gains both targets.",
-    "fix": "issue 195 (cd0fb1c)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "eForms CVD statistics at the Lot",
-    "reason": "unclaimed-content",
-    "detail_like": "%eforms-ubl-extension-aggregate-components/1}ProcurementDetails",
-    "diagnosis": "2025 dailies (sdk 1.10-1.13) publish the Clean Vehicles Directive statistics block - BT-723 AssetCategoryCode plus the OPT-155/OPT-156 StatisticsCode/Numeric pairs under StrategicProcurementInformation/ProcurementDetails - inside the LOT's TenderingTerms extension, forward-looking at notice time, while the SDK declares that block only at LotResult. 81 contract-award notices were held whole for the unclaimed lot-level block. An ALIASES graft mirrors the LotResult declarations onto the lot TenderingTerms mount (the mirror of the pre-existing Lot-to-LotResult graft), and the population reclaimed.",
-    "fix": "issue 195 (342f11e)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "eForms selection criteria under TenderingProcess",
-    "reason": "unclaimed-content",
-    "detail_like": "%eforms-ubl-extension-aggregate-components/1}SelectionCriteria",
-    "diagnosis": "Publishers on sdk 1.8-1.13 mount the lot SelectionCriteria extension block (BT-40/747/748/749/750/752 family) under TenderingProcess where the SDK mounts it under TenderingTerms; the sampled publisher duplicates the identical block at BOTH mounts, so the stored duplication is source content, kept as published. 75 members reclaimed via a TenderingTerms-to-TenderingProcess alias; the same graft drained 2 sibling rows held on the nested AwardingCriterionTypeCode and 1 on the nested UBLExtensions wrapper (their keys are not separable from still-open classes, so they ride this entry's story).",
-    "fix": "issue 195 (342f11e)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "eForms framework maximum at the root",
-    "reason": "unclaimed-content",
-    "detail_like": "%eforms-ubl-extension-basic-components/1}FrameworkMaximumAmount",
-    "diagnosis": "84 sdk-1.7 members publish efbc:FrameworkMaximumAmount (BT-271, the framework's ceiling value) directly under the ROOT UBLExtensions/EformsExtension, a mount no SDK minor declares - the field belongs in the lot TenderingTerms extension. Claimed at the root position as published; the tender layer's value routing already prefers the declared positions when both exist.",
-    "fix": "issue 195 (a12422f)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Design-contest shortlist under TenderingProcess",
-    "reason": "unclaimed-content",
-    "detail_like": "%CommonAggregateComponents-2}PreSelectedParty",
-    "diagnosis": "11 sdk-1.7 French design-contest notices publish the EconomicOperatorShortList (BT-47 pre-selected participants) under TenderingProcess, beside the declared shortlist quantities, instead of under TenderingTerms; this publisher also fills the party NAMES with selection-criteria prose. Both quirks are stored as published (the notice-parsed layer keeps the source's own terms): a TenderingTerms-to-TenderingProcess graft claims the block at the sibling mount.",
-    "fix": "issue 195 (c5351fc)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Part-level realized-location descriptions",
-    "reason": "unclaimed-content",
-    "detail_like": "%Address/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Description",
-    "diagnosis": "7 sdk-1.7 Latvian PINs describe the delivery location (RealizedLocation/Address/Description) on planned PARTS. A procedure-level claim for the element existed, and procedure fields alias onto Lots, and Lot fields alias onto Parts - but aliases do not COMPOSE, so the procedure entry never reached Part depth and the members held. The entry is now also written at Lot level, which the existing Lot-to-Part/LotsGroup aliases mirror.",
-    "fix": "issue 195 (c5351fc)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Lot renewals flag from the DE dialect",
-    "reason": "unclaimed-content",
-    "detail_like": "%CommonBasicComponents-2}RenewalsIndicator",
-    "diagnosis": "5 sdk-1.7 German members declare the plain EU customization but carry eForms-DE tailoring: ContractExtension/RenewalsIndicator on the lot (the dialect's BT-58 shape). Claimed as UBL-RenewalsIndicator behind the predicate-free-construct guard, so members declaring a DE customization keep their own DE field ids and only the cross-dialect strays land here.",
-    "fix": "issue 195 (c5351fc)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "2008 concession summaries (INTERNAL_OJS)",
-    "reason": "unclaimed-content",
-    "detail_like": "%INTERNAL_OJS/CONTRACT_CONCESSION%",
-    "diagnosis": "7 INTERNAL_OJS R2.0.5 members publish concession awards under CONTRACT_CONCESSIONAIRE_SUM element names the internal-ojs rule registry lacked (the summary twin of the concessionaire family it already knew). Aliases added from the mined member shapes; the population reclaimed with the 194 defence-form waves.",
-    "fix": "issue 194 (69d869f)",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "Text-era CF companions (UTF-8)",
-    "reason": "unparsable-xml",
-    "detail_like": "unknown token at 1:3",
-    "diagnosis": "The text era ships CF<n> companion files republishing the day's ORG records (plus stragglers the ORG missed). Unrecognised by the member naming, CF fell through to the XML path; the UTF-8-encoded CF members died there on the first text token. 1,900 held members - all real notice records. Recognising the CF delivery class (and the 1999 C<nn> spelling) sent them through the text parser: genuinely-new records reclaimed, the rest confirmed already held via the same day's ORG.",
-    "fix": "issue 181 (9772c3c, 8dd7ebb)",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "Text-era CF meta files ('part' root)",
-    "reason": "unknown-root",
-    "detail_like": "{}part%",
-    "diagnosis": "753 meta_cf members wrap CF bookkeeping in an XML-ish document whose root element is a bare 'part' - no notice content. Held as unknown-root since ingestion; now recognised as part of the CF delivery class and skipped under the meta-variant policy, the same disposition as the other text-era meta members.",
-    "fix": "issue 181 (9772c3c)",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "1999/text-era ISO members held as not-utf8",
-    "reason": "not-utf8",
-    "member_path_like": "%!%",
-    "member_path_unlike": "%ISO_COR%",
-    "diagnosis": "ISO-8859 members (CF companions and early-1999 deliveries) fell past the text dispatcher into the XML path, whose UTF-8 check rejects their bytes wholesale - a profile-level hold with no detail. 1,657 members: English mains and companions reclaimed (the CF drain alone recovered 1,417 notices the ORG files never carried and confirmed ~135k records already held), non-English language siblings skipped by policy as duplicates of the reclaimed English originals.",
-    "fix": "issues 181 + 180 (9772c3c, 8dd7ebb)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "1999 COR corrected re-issues",
-    "reason": "not-utf8",
-    "member_path_like": "%ISO_COR%",
-    "diagnosis": "The 1999-07-10 and 1999-07-22 dailies were re-delivered whole as ISO_COR members - each a corrected re-issue of the day's ORG delivery (623 records with an identical ND set, of which 4 records byte-differ: the actual corrections). Held as not-utf8 like their era-mates. Dispatched as a companion-style class: the 4 corrected records entered as notice VERSIONS of their originals, the ~620 unchanged records deduped as already parsed; English rows reclaimed, sibling languages skipped.",
-    "fix": "issue 180 (bd7eda5)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Monthly 2026-06 inner dailies recorded whole",
-    "reason": "not-utf8",
-    "member_path_unlike": "%!%",
-    "diagnosis": "Fetch 2 (ted monthly 2026-06) was processed 2026-07-19 with the day-one walker, one day before nested-monthly descent landed (1e4df1c) - its 21 inner daily tarballs were recorded as raw binary MEMBERS, one not-utf8 row per whole 06/<day>.tar.gz. Once the walker descended containers those paths never surfaced as members again, so the rows were unreachable by any reprocess. Fixed by dispatching members INSIDE a held container and stamping through a container address: 78,313 records deduped against the daily fetches, 3 notices the dailies never carried were recovered into the corpus, and 164 sub-cent records joined the unrepresentable-value kept class under their own precise rows.",
-    "fix": "issue 196 (fe8979a)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "2008 language siblings (duplicates)",
-    "reason": "unparsable-xml",
-    "detail_like": "XML with DTD detected",
-    "member_path_like": "%.__",
-    "member_path_unlike": "%.en",
-    "diagnosis": "TED's 2008 monthly packages ship each notice once per language, all with a DTD the parser declines. The non-English members are duplicates of an English original we already hold and parsed, so they are not lost data and were never a coverage gap - they are marked skipped-by-policy rather than reclaimed, because reclaiming them would claim ~593k notices entered the corpus that never did. Measured: 592,856 markable, verified against the English original being present AND parsed for every one.",
-    "fix": "issue 84 / #29",
-    "resolved": "2026-08-05"
-  },
-  {
-    "category": "2008 siblings whose original did not parse",
-    "reason": "unparsable-xml",
-    "detail_like": "XML with DTD detected",
-    "member_path_like": "%.__",
-    "member_path_unlike": "%.en",
-    "diagnosis": "154 of the 2008 held siblings had an English original that was held but did NOT parse, so the duplicate argument could not be applied to them: they were tracked as their own OUTSTANDING finding, excluded from the marker by its parsed-original guard (and briefly swept by a guard-free flag pass, repaired same day - issue 190). RESOLVED 2026-08-13: their 7 English originals were the concession summaries issue 194 fixed (six missing _SUM aliases); with the originals parsed and folded, the guard accepts these 154 and the marker recorded them skipped-by-policy - the truthful terminal state, reached through the guard rather than around it.",
-    "fix": "issue 84 / #29 · guard: issue 190 · originals parsed: issue 194",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "2010-03 DTD failures (not siblings)",
-    "reason": "unparsable-xml",
-    "detail_like": "XML with DTD detected",
-    "member_path_like": "%.xml",
-    "diagnosis": "1,898 rows from a single fetch - TED monthly 2010-03 - that are not language siblings at all: one daily (2010-03-10, OJS edition 048) was converted by TED to per-notice TED_EXPORT XML behind an inline DOCTYPE, the only such day in the text era. The dispatcher's XXE-safe DTD strip let them dispatch as notices, but the deep parse fed raw bytes to the parser and re-quarantined every one - the strip is now applied on the deep-parse path too, and the whole day is reclaimed into the tender layer. These were real notices held whole, though never a coverage hole: 2010 is a text-era year the text profile already covers at ~99.5%, so the reclaim is largely language-twin content and honest bookkeeping. Found only by attributing the remainder: every earlier query was scoped to 2008, and that scoping hid them.",
-    "fix": "issue 84 (found) · issue 139 (resolved: r209 deep-parse DTD strip, 145277a)",
-    "resolved": "2026-08-12"
-  },
-  {
-    "category": "r208 award @REASON",
-    "reason": "unclaimed-content",
-    "profile": "ted-export-r208",
-    "detail_like": "%@REASON",
-    "diagnosis": "Annex-D negotiated-procedure awards publish their justification as a @REASON attribute no rule claimed, so the whole award was held; REASON is now a captured attribute.",
-    "fix": "issue 31 · 5858159",
-    "resolved": "2026-07-21"
-  },
-  {
-    "category": "text RP co-financing",
-    "reason": "unclaimed-content",
-    "profile": "text",
-    "detail_like": "%scalar field RP",
-    "diagnosis": "The RP authority code was scalar, but international-financing records list each co-financier on a continuation line; RP is now per-line, so every institution is kept.",
-    "fix": "issue 31 · 5858159",
-    "resolved": "2026-07-21"
-  },
-  {
-    "category": "text OC/ON object CPV",
-    "reason": "unknown-field-code",
-    "profile": "text",
-    "detail_like": "%: OC",
-    "diagnosis": "The 1995-98 text vintages carry the main object CPV as OC (paired with the English description ON), which no rule claimed, quarantining the whole notice; OC is now claimed as CPV codes and ON as its description.",
-    "fix": "issue 35",
-    "resolved": "2026-07-21"
-  },
-  {
-    "category": "2008 OPOCE INTERNAL_OJS (DTD)",
-    "reason": "unparsable-xml",
-    "detail_like": "XML with DTD detected",
-    "member_path_like": "%.en",
-    "diagnosis": "The 2008 OPOCE export is real S-series notices behind a DTD (INTERNAL_OJS R2.0.5) that roxmltree refused wholesale; the DTD is now safely stripped. The era ships each notice ONCE PER LANGUAGE, so the ~593k that remain held are the ~22 non-English duplicate siblings of the ~27k English notices, which are themselves present and parsed — verified row by row, 5,000 of 5,000 sampled, on two snapshots 29h apart. These are duplicates already ingested, NOT missing data, and no reprocess can move them: dispatch skips a non-English sibling by the one-notice-per-language policy, so it yields no record to reclaim. Their outstanding count therefore overstated the remaining work; issue 84 marked them skipped-by-policy, and since issue 186 this row is keyed to the English originals (the reclaimed ~27k plus the 7 still held), while the sibling rows carry the ~593k story under their own key.",
-    "fix": "issue 36 · issue 84",
-    "resolved": "2026-07-21"
-  },
-  {
-    "category": "2008 English originals under the DTD label",
-    "reason": "unparsable-xml",
-    "detail_like": "XML with DTD detected",
-    "member_path_like": "%.en",
-    "diagnosis": "7 rows in the 2008 DTD population were the English originals themselves (member paths carry the .en language code) - the very rows the sibling guard exists to protect from being marked duplicates of themselves. They stayed outstanding under the DTD label until the 2026-08-12 reprocess relabeled them to their true failure (unclaimed CONTRACT_CONCESSIONAIRE_SUM), and issue 194 then mined the six missing internal-ojs _SUM aliases from the real payloads: all 7 parse and are folded into the tender layer (2026-08-13). Their 154 language siblings followed them into guard-accepted skipped-by-policy, closing the 2008 DTD story end to end.",
-    "fix": "issue 84 (protected) · issue 194 (parsed: _SUM aliases)",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "2008 OPOCE INTERNAL_OJS (parser)",
-    "reason": "unmapped-era",
-    "profile": "internal-ojs",
-    "detail_like": "%INTERNAL_OJS R2.0.5%",
-    "diagnosis": "The INTERNAL_OJS R2.0.5 era (~28k opoce-only S-series notices, the whole 2008 coverage gap) had no mapping profile and was held as a tracked unmapped-era. It is now parsed by the internal-ojs profile: a new envelope reader for the BIB_INFO/BIB_DOC_S coded backbone plus an explicit _SUM alias shim that reuses the r209 walker for the 85%-shared form body. Reprocessing the bucket reclaims the era into notices.",
-    "fix": "issue 41",
-    "resolved": "2026-07-23"
-  },
-  {
-    "category": "eForms SDK 1.0-1.11 (unvendored)",
-    "reason": "unknown-customization",
-    "detail_like": "%eforms-sdk-1.%",
-    "diagnosis": "eForms notices declaring an SDK version (1.0-1.11) whose fields.json we had not vendored were held whole as unknown-customization - by far the largest bucket. All versions are now vendored (1.8-1.11 directly; 1.0-1.7 also needed an xpath grammar extension for descendant-axis and boolean-or predicates plus a predicate-free BT-165 binding), and the reprocess mechanism reclaims each held notice from the archive in place. The recovery rebuild (ADR-0009) folds them into the tender layer. The post-vendoring re-parse residue (71,707 rows) was then driven down in four diagnosed waves - the BT-803 transmission stamp (issue 141), OPT-060 on pre-1.7 minors and the bare ProcessJustification (issues 141/142), the 63K tail's five wild constructs (issue 143), and the six mechanical value-era fixes (issue 144) - leaving a tail whose remaining causes are value-domain, not structural. That tail carries stale structural reasons pending the final relabel pass and keep-policy decision, issue 184.",
-    "fix": "issues 71/74/76; re-parse waves 140-144 (d7ba5ec, c6a7382, 0dfe428, 825dd64); tail owned by issue 184",
-    "resolved": "2026-07-29"
-  },
-  {
-    "category": "sub-cent amounts (kept by policy)",
-    "reason": "unrepresentable-value",
-    "detail_like": "%more than two fraction digits%",
-    "diagnosis": "Notices whose published amounts carry more than two fraction digits - sub-cent precision the integer-cents representation cannot hold exactly (ADR-0010 confirmed the representation against exactly this population; rounding was rejected because it would introduce values the source never published, issue 131's line). These are real notices deliberately kept in quarantine: coverage loss by decision, not by defect. They are the dominant share of the reclaim campaign's terminal tail - the 2026-08-11 relabel pass (issues 87/184) drained the stale unknown-customization labels into true current reasons: 1,661 of 1,907 landed here, alongside 206 unclaimed-content, 23 duplicate-section-id, 14 ambiguous-field and 3 genuinely-unknown sdk-1.2 rows. With that pass the campaign is complete in issue 144's sense: everything structural is fixed and reclaimed, and what remains is either owned by this policy or small, precisely named residues. Reopen via claim-and-store (ADR-0010's named alternative) if this population ever grows past a nuisance.",
-    "fix": "ADR-0010 · issues 144/184",
-    "resolved": "2026-08-11"
-  },
-  {
-    "category": "eForms-DE 1.x (German dialect)",
-    "reason": "unknown-customization",
-    "detail_like": "%eforms-de-1.%",
-    "diagnosis": "German eForms-DE 1.0/1.1/1.2 notices were held as unknown-customization: the national 1.x line is spec-and-schematron only, with no published field metadata to parse against. The inventory was rebuilt empirically from the archived corpus (issue 75), with grafts for the DÖE serializer's inlined parties (issue 78), then the cohort was reclaimed and projected. These tenders now carry their German title and description, CPV, NUTS, lots, deadlines and estimated values, the buyer, and the other named organization roles — review body, information and document providers, tender recipient, evaluator, mediator. AWARD WINNERS ARE NOT RESOLVED for this dialect (issue 100): the result graph references sections by their published ids while those sections are keyed synthetically, so the LotResult → LotTender → TenderingParty chain does not link. Award notices therefore show their lots, contracts and awarded values, and bidders where a notice names them, but not which bidder won. That is a parse-layer defect: fixing it requires re-parsing the cohort, so it is deliberately not part of this batch. The residual ~241 that stayed held after this batch was re-run once issue 87 landed (failed reclaims now re-record their CURRENT failure): this key drained to zero outstanding, and the rows that still fail carry their true value-domain reasons under unrepresentable-value (issues 144/184).",
-    "fix": "issues 75/78/76/85/98/99 — award winners pending, issue 100",
-    "resolved": "2026-08-02"
-  },
-  {
-    "category": "2011 US-spelled defence forms (VEAT et al.)",
-    "reason": "unclaimed-content",
-    "profile": "ted-export-r208",
-    "detail_like": "%DEFENSE%",
-    "diagnosis": "The Sept-Dec 2011 dailies publish the defence-form family with US spelling (AWARD_OF_CONTRACT_DEFENSE, CONTRACT_DEFENSE, FD_ wrappers, and 21 descendants) while the mirrored XSDs - and the rule registry built from them - write DEFENCE. Every such notice was held whole as unclaimed-content: 2,380 VEAT (voluntary ex-ante transparency) notices plus ~84 contract/award/prior-information defence forms. 25 S-spelled twins now sit beside their DEFENCE twins in the registry (r208-observed inventory entries, mined from real members), and the population is reclaimed into the tender layer.",
-    "fix": "issue 194 (b97decb + 31c4318)",
-    "resolved": "2026-08-13"
-  },
-  {
-    "category": "Text-era correction sheets (CS files)",
-    "reason": "unparsable-xml",
-    "detail_like": "unknown token at 1:1",
-    "diagnosis": "The 2000-2009 dailies ship per-language CS<n>.TXT members (4,386 CS1 + 44 CS2 + 11 CS3) holding plain-text ND:/FLD:/OLD:/NEW: records - field-level corrections to earlier notices (reference-number renumberings, country fixes, deadline moves), one tiny file duplicated across every language edition, never a notice body. Unrecognised by the text-era naming (no variant token before ~2004, .TXT extension in the member name), every one fell through to the XML path and quarantined as unparsable-xml. Now recognised as a text-era class and skipped by policy (text-era-correction-sheet); the correction content stays reachable in the raw archive - applying it to stored notices would be its own feature.",
-    "fix": "issue 180",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Corrupt zip bundles in the TED archive (EOCD missing)",
-    "reason": "unreadable zip bundle: invalid Zip archive: Could not find EOCD",
-    "diagnosis": "Eight daily-delivery zip bundles across 1996-2009 are truncated in the archived TED distribution - the end-of-central-directory record is missing, so the bundle cannot be opened at all and is held whole. Seven are non-English deliveries (SV 1996-02-08, CS 2005-02-01 + 2005-04-01, ET 2005-06-22, NL 2005-10-06 + 2005-10-08, and the LV companion 2009-06-04) whose records the English-only ingestion policy takes from the English edition of the same days - their content is represented, nothing is lost. The eighth was the English UTF8 MAIN delivery for 2005-04-09, and its mere presence by name made the readable ISO twin skip itself as superseded - losing the whole day. Ledger-held unreadable bundles are now excluded from the supersedence decision, judged per publication day (a monthly carries many days, and one day's corrupt UTF8 must not sweep another day's ISO), and the day's 932 notices are ingested from the ISO copy. The eight rows stay held: they record the unreadable bytes themselves, whose content is covered elsewhere.",
-    "fix": "issue 202 (b4a38c5 + b3f67b6)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "Text-era column-0 wrap artifacts",
-    "reason": "unclaimed-content",
-    "profile": "text",
-    "detail_like": "line %",
-    "diagnosis": "58 records across 1993-2010 held on a line at column 0 the parser could not attach. Extraction of every family showed TED's own line-wrapper emitting a wrapped tail flush-left - after a '!' inside the text ('nicht offnen ! ' then '\" zu versehen...'), a closing parenthesis ('(EXCLUDING FOOTWEAR... OF WOOD' then ')'), a fixed-width mid-word sever ('TELECOMMUNICATI' / 'ON'), or an indent defect on per-line fields (RC: ES511 then 'ES512', RG: BARCELONA then 'GIRONA' - real second values) - plus the correction margin marker '!' and 2010 column-0 boilerplate and award justifications. All wrapped CONTENT, never structure, so a column-0 non-tag line now continues its open field (margin marker stripped; per-line lines are their own values; a scalar still rejects, and a line before any field still holds). The four 1994 mainframe search-command echoes ('.S F=ALL;R=NNNN TO 1;SORT=PD;ND;HC', between fields) are production residue, consumed as layout. All 58 reclaimed.",
-    "fix": "issue 199 (bd6a5bf)",
-    "resolved": "2026-08-14"
-  },
-  {
-    "category": "F19 concession award-criteria sentence",
-    "reason": "unclaimed-content",
-    "profile": "ted-export-r208",
-    "detail_like": "%AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE/AWARD_CRITERIA_DETAIL",
-    "diagnosis": "The F19 sub-contract concession form (defence, 2012) writes the award-criteria sentence as AWARD_CRITERIA_DETAIL's bare text where every other form nests CRITERIA/WEIGHTING children there - exactly 2 members in 30 years of corpus, the last unclaimed TED_EXPORT rows (issue 194's residue). The rule moved from Group to TextGroup so both shapes are consumed; both members reclaimed.",
-    "fix": "issue 194 (23507fb)",
-    "resolved": "2026-08-14"
-  }
+ {
+  "category": "Form copies diverging from their original",
+  "reason": "translation-structure-mismatch",
+  "diagnosis": "The r209/r208 overlay walked secondary form copies as translations that must replicate the primary original's structure, rejecting the member whole on any divergence - 94 members. 92 were bilingual buyers' CO-ORIGINALS (Belgian/Bolzano style) whose second original legitimately carries more: extra organisations, F14 change blocks, lots. The last 2 were TED pipeline defects where the ORIGINAL was the impoverished copy - an ES award notice carrying one award where all 23 translations carry three, an F14 whose original has no CHANGE block at all. Every firing of the guard was recoverable content, so secondary copies now ADOPT missing sections (fully emitted - nothing in them is shared with the primary) and the rejection reason is retired.",
+  "fix": "issue 201 (eb05139 + follow-up)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "2010 records split by quoted reference numbers",
+  "reason": "missing-publication-id",
+  "diagnosis": "The 2010-era structured forms quote the buyer's file reference under 'IV.3.1) reference number' - '3.131/2010', '331.08/01' - alone on an INDENTED line, which matched the <digits>.<digits>/<digits> record-marker shape: each such line split a real notice mid-body and the ND-less tail held as missing-publication-id (110 rows, every one a 2010 member; the bucket was never anything else). Anchoring the marker at column 0 (1,488/1,488 real markers are column-0 in a full 2010 daily; the only 2 indented matches were both false) merges the tails back: the fuller records entered as versions of their publication ids, and the reason is now empty.",
+  "fix": "issue 200 (ac484f5)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "eForms selection criteria inside AppealTerms",
+  "reason": "unclaimed-content",
+  "detail_like": "%AppealTerms/%UBLExtensions",
+  "diagnosis": "A 2022 DOE tool on eforms-sdk-1.0 (9 PINs) writes the SelectionCriteria extension block inside the procedure TenderingTerms' cac:AppealTerms - one mount deeper than any SDK declares. Grafted from the lot TenderingTerms anchor, the same family as the TenderingProcess mount.",
+  "fix": "issue 195 (2d3202f)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "DOE 0.1 subcontracting value leaves",
+  "reason": "unclaimed-content",
+  "profile": "eforms:eforms-sdk-0.1",
+  "detail_like": "%SubcontractTerms%",
+  "diagnosis": "The pre-release result model publishes cac:TenderResult/cac:SubcontractTerms with cbc:Amount (10 members, the BT-553 shape) or cbc:Rate (2, the BT-555 share) beside the conditions code the empirical inventory already knew. Inventory additions - sdk-0.1 has no SDK artifact, so observed paths ARE its inventory.",
+  "fix": "issue 195 (2d3202f)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "DOE 0.1 party registration ids",
+  "reason": "unclaimed-content",
+  "profile": "eforms:eforms-sdk-0.1",
+  "detail_like": "%PartyLegalEntity",
+  "diagnosis": "PartyLegalEntity/cbc:CompanyID under three party mounts the empirical inventory lacked (lot AppealReceiverParty, MediationParty, AdditionalInformationParty) - one member advanced from mount to mount across re-parses, the issue-87 rewrite naming each precisely. Inventory additions.",
+  "fix": "issue 195 (2d3202f)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Additional procurement types under unlisted lists",
+  "reason": "unclaimed-content",
+  "detail_like": "%ProcurementAdditionalType/%ProcurementTypeCode",
+  "diagnosis": "The SDK enumerates ProcurementAdditionalType per listName, so a code under any other list matched no branch and held the member whole: a 2023 eSender's listName=\"supplies\" carrying a contract-nature value (7, sdk-1.8) and BT-775's dead SDK-1.0 social-procurement shape still published in 2024 (3, sdk-1.10). A predicate-free gap-filled branch claims them as published; declared lists keep their BT ids. Deliberately reverses the issue-144 negative control - publisher noise on old minors is not a mapping-decision signal.",
+  "fix": "issue 195 (be4fcb1)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "FieldsPrivacy hoisted to the root extension",
+  "reason": "unclaimed-content",
+  "detail_like": "unclaimed element at /{urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2}UBLExtensions%FieldsPrivacy",
+  "diagnosis": "Four sdk-1.9 members write withheld-field blocks (pro-fea BT-88, pro-typ BT-105, awa-cri-typ BT-539) directly under the root EformsExtension instead of beside the element each suppresses. Grafted from the two anchored families; the published FieldIdentifierCode predicate keeps BT-195..198 ids exact.",
+  "fix": "issue 195 (8a82813)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Framework expected-participant count",
+  "reason": "unclaimed-content",
+  "detail_like": "%ExpectedOperatorQuantity",
+  "diagnosis": "Two sdk-1.10 members publish cbc:ExpectedOperatorQuantity beside the declared BT-113 maximum - no SDK minor or dialect declares the element. Claimed as published (UBL-ExpectedOperatorQuantity); BT-113 keeps its id.",
+  "fix": "issue 195 (8a82813)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "A service provider's own service provider",
+  "reason": "unclaimed-content",
+  "detail_like": "%}ServiceProviderParty",
+  "diagnosis": "Two sdk-1.12 members nest a second, self-referential ServiceProviderParty level under the contracting party (the eSender registering itself as its own provider); the SDK models one level. The declared level grafts onto the nested mount.",
+  "fix": "issue 195 (8a82813)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "CVD flag on an award criterion",
+  "reason": "unclaimed-content",
+  "detail_like": "%AwardingCriterion/%StrategicProcurement",
+  "diagnosis": "Two sdk-1.12 members mount efac:StrategicProcurement (ApplicableLegalBasis, BT-717's leaf) inside the AwardingCriterion extension beside the declared parameter blocks. Grafted from the lot TenderingTerms anchor. Rider: OPT-999 - UBL 2.3's forced DUMMY TenderResult/AwardDate - joined the zoneless-reads-as-UTC relaxation, which one of these members advanced into.",
+  "fix": "issue 195 (8a82813)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "EU-scheme business registration on 1.8",
+  "reason": "unclaimed-content",
+  "detail_like": "%BusinessParty/%RegistrationName",
+  "diagnosis": "An sdk-1.8 BRIN registers its PartyLegalEntity with schemeName='EU' - SDK <=1.8 declares only the 'national' BT-500 branch (the -European twin enters at 1.9), and the AdditionalDocumentReference block without its cbc:ID (OPP-124 enters later). Both later-SDK shapes claimed gap-filled on the early minors.",
+  "fix": "issue 195 (cd0fb1c)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "BT-707 published before its SDK",
+  "reason": "unclaimed-content",
+  "detail_like": "%CallForTendersDocumentReference/%DocumentTypeCode",
+  "diagnosis": "A Romanian sdk-1.6 eSender publishes the lot documents-justification code that enters the vendored line at 1.7.0. Claimed gap-filled with the declared 1.7+ shape.",
+  "fix": "issue 195 (cd0fb1c)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "The organisation inlined under ContractingParty",
+  "reason": "unclaimed-content",
+  "detail_like": "%ContractingParty/%PartyName",
+  "diagnosis": "A Norwegian sdk-1.7 eSender inlines the contracting organisation in full - name, address, website, contact person - under cac:ContractingParty/cac:Party, where the SDK models only the register reference, and fills UBL 2.3's forced TenderResult block with real data (tender count, low/high amounts, zoneless start date, winner reference). Company graft plus UBL- claims, all as published.",
+  "fix": "issue 195 (cd0fb1c)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Notice-subtype free text",
+  "reason": "unclaimed-content",
+  "detail_like": "%SubTypeDescription",
+  "diagnosis": "An Italian sdk-1.12 eSender writes efbc:SubTypeDescription beside the subtype code - declared by no minor or dialect. Claimed as UBL-SubTypeDescription.",
+  "fix": "issue 195 (cd0fb1c)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Inline mediation body (DOE uuid channel)",
+  "reason": "unclaimed-content",
+  "detail_like": "%MediationParty/%WebsiteURI",
+  "diagnosis": "An sdk-1.0 uuid-channel member inlines the mediation body as a full party at BOTH procedure and lot level; the Company graft gains both targets.",
+  "fix": "issue 195 (cd0fb1c)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "eForms CVD statistics at the Lot",
+  "reason": "unclaimed-content",
+  "detail_like": "%eforms-ubl-extension-aggregate-components/1}ProcurementDetails",
+  "diagnosis": "2025 dailies (sdk 1.10-1.13) publish the Clean Vehicles Directive statistics block - BT-723 AssetCategoryCode plus the OPT-155/OPT-156 StatisticsCode/Numeric pairs under StrategicProcurementInformation/ProcurementDetails - inside the LOT's TenderingTerms extension, forward-looking at notice time, while the SDK declares that block only at LotResult. 81 contract-award notices were held whole for the unclaimed lot-level block. An ALIASES graft mirrors the LotResult declarations onto the lot TenderingTerms mount (the mirror of the pre-existing Lot-to-LotResult graft), and the population reclaimed.",
+  "fix": "issue 195 (342f11e)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "eForms selection criteria under TenderingProcess",
+  "reason": "unclaimed-content",
+  "detail_like": "%eforms-ubl-extension-aggregate-components/1}SelectionCriteria",
+  "diagnosis": "Publishers on sdk 1.8-1.13 mount the lot SelectionCriteria extension block (BT-40/747/748/749/750/752 family) under TenderingProcess where the SDK mounts it under TenderingTerms; the sampled publisher duplicates the identical block at BOTH mounts, so the stored duplication is source content, kept as published. 75 members reclaimed via a TenderingTerms-to-TenderingProcess alias; the same graft drained 2 sibling rows held on the nested AwardingCriterionTypeCode and 1 on the nested UBLExtensions wrapper (their keys are not separable from still-open classes, so they ride this entry's story).",
+  "fix": "issue 195 (342f11e)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "eForms framework maximum at the root",
+  "reason": "unclaimed-content",
+  "detail_like": "%eforms-ubl-extension-basic-components/1}FrameworkMaximumAmount",
+  "diagnosis": "84 sdk-1.7 members publish efbc:FrameworkMaximumAmount (BT-271, the framework's ceiling value) directly under the ROOT UBLExtensions/EformsExtension, a mount no SDK minor declares - the field belongs in the lot TenderingTerms extension. Claimed at the root position as published; the tender layer's value routing already prefers the declared positions when both exist.",
+  "fix": "issue 195 (a12422f)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Design-contest shortlist under TenderingProcess",
+  "reason": "unclaimed-content",
+  "detail_like": "%CommonAggregateComponents-2}PreSelectedParty",
+  "diagnosis": "11 sdk-1.7 French design-contest notices publish the EconomicOperatorShortList (BT-47 pre-selected participants) under TenderingProcess, beside the declared shortlist quantities, instead of under TenderingTerms; this publisher also fills the party NAMES with selection-criteria prose. Both quirks are stored as published (the notice-parsed layer keeps the source's own terms): a TenderingTerms-to-TenderingProcess graft claims the block at the sibling mount.",
+  "fix": "issue 195 (c5351fc)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Part-level realized-location descriptions",
+  "reason": "unclaimed-content",
+  "detail_like": "%Address/{urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2}Description",
+  "diagnosis": "7 sdk-1.7 Latvian PINs describe the delivery location (RealizedLocation/Address/Description) on planned PARTS. A procedure-level claim for the element existed, and procedure fields alias onto Lots, and Lot fields alias onto Parts - but aliases do not COMPOSE, so the procedure entry never reached Part depth and the members held. The entry is now also written at Lot level, which the existing Lot-to-Part/LotsGroup aliases mirror.",
+  "fix": "issue 195 (c5351fc)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Lot renewals flag from the DE dialect",
+  "reason": "unclaimed-content",
+  "detail_like": "%CommonBasicComponents-2}RenewalsIndicator",
+  "diagnosis": "5 sdk-1.7 German members declare the plain EU customization but carry eForms-DE tailoring: ContractExtension/RenewalsIndicator on the lot (the dialect's BT-58 shape). Claimed as UBL-RenewalsIndicator behind the predicate-free-construct guard, so members declaring a DE customization keep their own DE field ids and only the cross-dialect strays land here.",
+  "fix": "issue 195 (c5351fc)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "2008 concession summaries (INTERNAL_OJS)",
+  "reason": "unclaimed-content",
+  "detail_like": "%INTERNAL_OJS/CONTRACT_CONCESSION%",
+  "diagnosis": "7 INTERNAL_OJS R2.0.5 members publish concession awards under CONTRACT_CONCESSIONAIRE_SUM element names the internal-ojs rule registry lacked (the summary twin of the concessionaire family it already knew). Aliases added from the mined member shapes; the population reclaimed with the 194 defence-form waves.",
+  "fix": "issue 194 (69d869f)",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "Text-era CF companions (UTF-8)",
+  "reason": "unparsable-xml",
+  "detail_like": "unknown token at 1:3",
+  "diagnosis": "The text era ships CF<n> companion files republishing the day's ORG records (plus stragglers the ORG missed). Unrecognised by the member naming, CF fell through to the XML path; the UTF-8-encoded CF members died there on the first text token. 1,900 held members - all real notice records. Recognising the CF delivery class (and the 1999 C<nn> spelling) sent them through the text parser: genuinely-new records reclaimed, the rest confirmed already held via the same day's ORG.",
+  "fix": "issue 181 (9772c3c, 8dd7ebb)",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "Text-era CF meta files ('part' root)",
+  "reason": "unknown-root",
+  "detail_like": "{}part%",
+  "diagnosis": "753 meta_cf members wrap CF bookkeeping in an XML-ish document whose root element is a bare 'part' - no notice content. Held as unknown-root since ingestion; now recognised as part of the CF delivery class and skipped under the meta-variant policy, the same disposition as the other text-era meta members.",
+  "fix": "issue 181 (9772c3c)",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "1999/text-era ISO members held as not-utf8",
+  "reason": "not-utf8",
+  "member_path_like": "%!%",
+  "member_path_unlike": "%ISO_COR%",
+  "diagnosis": "ISO-8859 members (CF companions and early-1999 deliveries) fell past the text dispatcher into the XML path, whose UTF-8 check rejects their bytes wholesale - a profile-level hold with no detail. 1,657 members: English mains and companions reclaimed (the CF drain alone recovered 1,417 notices the ORG files never carried and confirmed ~135k records already held), non-English language siblings skipped by policy as duplicates of the reclaimed English originals.",
+  "fix": "issues 181 + 180 (9772c3c, 8dd7ebb)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "1999 COR corrected re-issues",
+  "reason": "not-utf8",
+  "member_path_like": "%ISO_COR%",
+  "diagnosis": "The 1999-07-10 and 1999-07-22 dailies were re-delivered whole as ISO_COR members - each a corrected re-issue of the day's ORG delivery (623 records with an identical ND set, of which 4 records byte-differ: the actual corrections). Held as not-utf8 like their era-mates. Dispatched as a companion-style class: the 4 corrected records entered as notice VERSIONS of their originals, the ~620 unchanged records deduped as already parsed; English rows reclaimed, sibling languages skipped.",
+  "fix": "issue 180 (bd7eda5)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Monthly 2026-06 inner dailies recorded whole",
+  "reason": "not-utf8",
+  "member_path_unlike": "%!%",
+  "diagnosis": "Fetch 2 (ted monthly 2026-06) was processed 2026-07-19 with the day-one walker, one day before nested-monthly descent landed (1e4df1c) - its 21 inner daily tarballs were recorded as raw binary MEMBERS, one not-utf8 row per whole 06/<day>.tar.gz. Once the walker descended containers those paths never surfaced as members again, so the rows were unreachable by any reprocess. Fixed by dispatching members INSIDE a held container and stamping through a container address: 78,313 records deduped against the daily fetches, 3 notices the dailies never carried were recovered into the corpus, and 164 sub-cent records joined the unrepresentable-value kept class under their own precise rows.",
+  "fix": "issue 196 (fe8979a)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "2008 language siblings (duplicates)",
+  "reason": "unparsable-xml",
+  "detail_like": "XML with DTD detected",
+  "member_path_like": "%.__",
+  "member_path_unlike": "%.en",
+  "diagnosis": "TED's 2008 monthly packages ship each notice once per language, all with a DTD the parser declines. The non-English members are duplicates of an English original we already hold and parsed, so they are not lost data and were never a coverage gap - they are marked skipped-by-policy rather than reclaimed, because reclaiming them would claim ~593k notices entered the corpus that never did. Measured: 592,856 markable, verified against the English original being present AND parsed for every one.",
+  "fix": "issue 84 / #29",
+  "resolved": "2026-08-05"
+ },
+ {
+  "category": "2008 siblings whose original did not parse",
+  "reason": "unparsable-xml",
+  "detail_like": "XML with DTD detected",
+  "member_path_like": "%.__",
+  "member_path_unlike": "%.en",
+  "diagnosis": "154 of the 2008 held siblings had an English original that was held but did NOT parse, so the duplicate argument could not be applied to them: they were tracked as their own OUTSTANDING finding, excluded from the marker by its parsed-original guard (and briefly swept by a guard-free flag pass, repaired same day - issue 190). RESOLVED 2026-08-13: their 7 English originals were the concession summaries issue 194 fixed (six missing _SUM aliases); with the originals parsed and folded, the guard accepts these 154 and the marker recorded them skipped-by-policy - the truthful terminal state, reached through the guard rather than around it.",
+  "fix": "issue 84 / #29 · guard: issue 190 · originals parsed: issue 194",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "2010-03 DTD failures (not siblings)",
+  "reason": "unparsable-xml",
+  "detail_like": "XML with DTD detected",
+  "member_path_like": "%.xml",
+  "diagnosis": "1,898 rows from a single fetch - TED monthly 2010-03 - that are not language siblings at all: one daily (2010-03-10, OJS edition 048) was converted by TED to per-notice TED_EXPORT XML behind an inline DOCTYPE, the only such day in the text era. The dispatcher's XXE-safe DTD strip let them dispatch as notices, but the deep parse fed raw bytes to the parser and re-quarantined every one - the strip is now applied on the deep-parse path too, and the whole day is reclaimed into the tender layer. These were real notices held whole, though never a coverage hole: 2010 is a text-era year the text profile already covers at ~99.5%, so the reclaim is largely language-twin content and honest bookkeeping. Found only by attributing the remainder: every earlier query was scoped to 2008, and that scoping hid them.",
+  "fix": "issue 84 (found) · issue 139 (resolved: r209 deep-parse DTD strip, 145277a)",
+  "resolved": "2026-08-12"
+ },
+ {
+  "category": "r208 award @REASON",
+  "reason": "unclaimed-content",
+  "profile": "ted-export-r208",
+  "detail_like": "%@REASON",
+  "diagnosis": "Annex-D negotiated-procedure awards publish their justification as a @REASON attribute no rule claimed, so the whole award was held; REASON is now a captured attribute.",
+  "fix": "issue 31 · 5858159",
+  "resolved": "2026-07-21"
+ },
+ {
+  "category": "text RP co-financing",
+  "reason": "unclaimed-content",
+  "profile": "text",
+  "detail_like": "%scalar field RP",
+  "diagnosis": "The RP authority code was scalar, but international-financing records list each co-financier on a continuation line; RP is now per-line, so every institution is kept.",
+  "fix": "issue 31 · 5858159",
+  "resolved": "2026-07-21"
+ },
+ {
+  "category": "text OC/ON object CPV",
+  "reason": "unknown-field-code",
+  "profile": "text",
+  "detail_like": "%: OC",
+  "diagnosis": "The 1995-98 text vintages carry the main object CPV as OC (paired with the English description ON), which no rule claimed, quarantining the whole notice; OC is now claimed as CPV codes and ON as its description.",
+  "fix": "issue 35",
+  "resolved": "2026-07-21"
+ },
+ {
+  "category": "2008 OPOCE INTERNAL_OJS (DTD)",
+  "reason": "unparsable-xml",
+  "detail_like": "XML with DTD detected",
+  "member_path_like": "%.en",
+  "diagnosis": "The 2008 OPOCE export is real S-series notices behind a DTD (INTERNAL_OJS R2.0.5) that roxmltree refused wholesale; the DTD is now safely stripped. The era ships each notice ONCE PER LANGUAGE, so the ~593k that remain held are the ~22 non-English duplicate siblings of the ~27k English notices, which are themselves present and parsed — verified row by row, 5,000 of 5,000 sampled, on two snapshots 29h apart. These are duplicates already ingested, NOT missing data, and no reprocess can move them: dispatch skips a non-English sibling by the one-notice-per-language policy, so it yields no record to reclaim. Their outstanding count therefore overstated the remaining work; issue 84 marked them skipped-by-policy, and since issue 186 this row is keyed to the English originals (the reclaimed ~27k plus the 7 still held), while the sibling rows carry the ~593k story under their own key.",
+  "fix": "issue 36 · issue 84",
+  "resolved": "2026-07-21"
+ },
+ {
+  "category": "2008 English originals under the DTD label",
+  "reason": "unparsable-xml",
+  "detail_like": "XML with DTD detected",
+  "member_path_like": "%.en",
+  "diagnosis": "7 rows in the 2008 DTD population were the English originals themselves (member paths carry the .en language code) - the very rows the sibling guard exists to protect from being marked duplicates of themselves. They stayed outstanding under the DTD label until the 2026-08-12 reprocess relabeled them to their true failure (unclaimed CONTRACT_CONCESSIONAIRE_SUM), and issue 194 then mined the six missing internal-ojs _SUM aliases from the real payloads: all 7 parse and are folded into the tender layer (2026-08-13). Their 154 language siblings followed them into guard-accepted skipped-by-policy, closing the 2008 DTD story end to end.",
+  "fix": "issue 84 (protected) · issue 194 (parsed: _SUM aliases)",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "2008 OPOCE INTERNAL_OJS (parser)",
+  "reason": "unmapped-era",
+  "profile": "internal-ojs",
+  "detail_like": "%INTERNAL_OJS R2.0.5%",
+  "diagnosis": "The INTERNAL_OJS R2.0.5 era (~28k opoce-only S-series notices, the whole 2008 coverage gap) had no mapping profile and was held as a tracked unmapped-era. It is now parsed by the internal-ojs profile: a new envelope reader for the BIB_INFO/BIB_DOC_S coded backbone plus an explicit _SUM alias shim that reuses the r209 walker for the 85%-shared form body. Reprocessing the bucket reclaims the era into notices.",
+  "fix": "issue 41",
+  "resolved": "2026-07-23"
+ },
+ {
+  "category": "eForms SDK 1.0-1.11 (unvendored)",
+  "reason": "unknown-customization",
+  "detail_like": "%eforms-sdk-1.%",
+  "diagnosis": "eForms notices declaring an SDK version (1.0-1.11) whose fields.json we had not vendored were held whole as unknown-customization - by far the largest bucket. All versions are now vendored (1.8-1.11 directly; 1.0-1.7 also needed an xpath grammar extension for descendant-axis and boolean-or predicates plus a predicate-free BT-165 binding), and the reprocess mechanism reclaims each held notice from the archive in place. The recovery rebuild (ADR-0009) folds them into the tender layer. The post-vendoring re-parse residue (71,707 rows) was then driven down in four diagnosed waves - the BT-803 transmission stamp (issue 141), OPT-060 on pre-1.7 minors and the bare ProcessJustification (issues 141/142), the 63K tail's five wild constructs (issue 143), and the six mechanical value-era fixes (issue 144) - leaving a tail whose remaining causes are value-domain, not structural. That tail carries stale structural reasons pending the final relabel pass and keep-policy decision, issue 184.",
+  "fix": "issues 71/74/76; re-parse waves 140-144 (d7ba5ec, c6a7382, 0dfe428, 825dd64); tail owned by issue 184",
+  "resolved": "2026-07-29"
+ },
+ {
+  "category": "sub-cent amounts (kept by policy)",
+  "reason": "unrepresentable-value",
+  "detail_like": "%more than two fraction digits%",
+  "diagnosis": "Notices whose published amounts carry more than two fraction digits - sub-cent precision the integer-cents representation cannot hold exactly (ADR-0010 confirmed the representation against exactly this population; rounding was rejected because it would introduce values the source never published, issue 131's line). These are real notices deliberately kept in quarantine: coverage loss by decision, not by defect. They are the dominant share of the reclaim campaign's terminal tail - the 2026-08-11 relabel pass (issues 87/184) drained the stale unknown-customization labels into true current reasons: 1,661 of 1,907 landed here, alongside 206 unclaimed-content, 23 duplicate-section-id, 14 ambiguous-field and 3 genuinely-unknown sdk-1.2 rows. With that pass the campaign is complete in issue 144's sense: everything structural is fixed and reclaimed, and what remains is either owned by this policy or small, precisely named residues. Reopen via claim-and-store (ADR-0010's named alternative) if this population ever grows past a nuisance.",
+  "fix": "ADR-0010 · issues 144/184",
+  "resolved": "2026-08-11"
+ },
+ {
+  "category": "eForms-DE 1.x (German dialect)",
+  "reason": "unknown-customization",
+  "detail_like": "%eforms-de-1.%",
+  "diagnosis": "German eForms-DE 1.0/1.1/1.2 notices were held as unknown-customization: the national 1.x line is spec-and-schematron only, with no published field metadata to parse against. The inventory was rebuilt empirically from the archived corpus (issue 75), with grafts for the DÖE serializer's inlined parties (issue 78), then the cohort was reclaimed and projected. These tenders now carry their German title and description, CPV, NUTS, lots, deadlines and estimated values, the buyer, and the other named organization roles — review body, information and document providers, tender recipient, evaluator, mediator. AWARD WINNERS ARE NOT RESOLVED for this dialect (issue 100): the result graph references sections by their published ids while those sections are keyed synthetically, so the LotResult → LotTender → TenderingParty chain does not link. Award notices therefore show their lots, contracts and awarded values, and bidders where a notice names them, but not which bidder won. That is a parse-layer defect: fixing it requires re-parsing the cohort, so it is deliberately not part of this batch. The residual ~241 that stayed held after this batch was re-run once issue 87 landed (failed reclaims now re-record their CURRENT failure): this key drained to zero outstanding, and the rows that still fail carry their true value-domain reasons under unrepresentable-value (issues 144/184).",
+  "fix": "issues 75/78/76/85/98/99 — award winners pending, issue 100",
+  "resolved": "2026-08-02"
+ },
+ {
+  "category": "2011 US-spelled defence forms (VEAT et al.)",
+  "reason": "unclaimed-content",
+  "profile": "ted-export-r208",
+  "detail_like": "%DEFENSE%",
+  "diagnosis": "The Sept-Dec 2011 dailies publish the defence-form family with US spelling (AWARD_OF_CONTRACT_DEFENSE, CONTRACT_DEFENSE, FD_ wrappers, and 21 descendants) while the mirrored XSDs - and the rule registry built from them - write DEFENCE. Every such notice was held whole as unclaimed-content: 2,380 VEAT (voluntary ex-ante transparency) notices plus ~84 contract/award/prior-information defence forms. 25 S-spelled twins now sit beside their DEFENCE twins in the registry (r208-observed inventory entries, mined from real members), and the population is reclaimed into the tender layer.",
+  "fix": "issue 194 (b97decb + 31c4318)",
+  "resolved": "2026-08-13"
+ },
+ {
+  "category": "Text-era correction sheets (CS files)",
+  "reason": "unparsable-xml",
+  "detail_like": "unknown token at 1:1",
+  "diagnosis": "The 2000-2009 dailies ship per-language CS<n>.TXT members (4,386 CS1 + 44 CS2 + 11 CS3) holding plain-text ND:/FLD:/OLD:/NEW: records - field-level corrections to earlier notices (reference-number renumberings, country fixes, deadline moves), one tiny file duplicated across every language edition, never a notice body. Unrecognised by the text-era naming (no variant token before ~2004, .TXT extension in the member name), every one fell through to the XML path and quarantined as unparsable-xml. Now recognised as a text-era class and skipped by policy (text-era-correction-sheet); the correction content stays reachable in the raw archive - applying it to stored notices would be its own feature.",
+  "fix": "issue 180",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Corrupt zip bundles in the TED archive (EOCD missing)",
+  "reason": "unreadable zip bundle: invalid Zip archive: Could not find EOCD",
+  "diagnosis": "Eight daily-delivery zip bundles across 1996-2009 are truncated in the archived TED distribution - the end-of-central-directory record is missing, so the bundle cannot be opened at all and is held whole. Seven are non-English deliveries (SV 1996-02-08, CS 2005-02-01 + 2005-04-01, ET 2005-06-22, NL 2005-10-06 + 2005-10-08, and the LV companion 2009-06-04) whose records the English-only ingestion policy takes from the English edition of the same days - their content is represented, nothing is lost. The eighth was the English UTF8 MAIN delivery for 2005-04-09, and its mere presence by name made the readable ISO twin skip itself as superseded - losing the whole day. Ledger-held unreadable bundles are now excluded from the supersedence decision, judged per publication day (a monthly carries many days, and one day's corrupt UTF8 must not sweep another day's ISO), and the day's 932 notices are ingested from the ISO copy. The eight rows stay held: they record the unreadable bytes themselves, whose content is covered elsewhere.",
+  "fix": "issue 202 (b4a38c5 + b3f67b6)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Text-era column-0 wrap artifacts",
+  "reason": "unclaimed-content",
+  "profile": "text",
+  "detail_like": "line %",
+  "diagnosis": "58 records across 1993-2010 held on a line at column 0 the parser could not attach. Extraction of every family showed TED's own line-wrapper emitting a wrapped tail flush-left - after a '!' inside the text ('nicht offnen ! ' then '\" zu versehen...'), a closing parenthesis ('(EXCLUDING FOOTWEAR... OF WOOD' then ')'), a fixed-width mid-word sever ('TELECOMMUNICATI' / 'ON'), or an indent defect on per-line fields (RC: ES511 then 'ES512', RG: BARCELONA then 'GIRONA' - real second values) - plus the correction margin marker '!' and 2010 column-0 boilerplate and award justifications. All wrapped CONTENT, never structure, so a column-0 non-tag line now continues its open field (margin marker stripped; per-line lines are their own values; a scalar still rejects, and a line before any field still holds). The four 1994 mainframe search-command echoes ('.S F=ALL;R=NNNN TO 1;SORT=PD;ND;HC', between fields) are production residue, consumed as layout. All 58 reclaimed.",
+  "fix": "issue 199 (bd6a5bf)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "F19 concession award-criteria sentence",
+  "reason": "unclaimed-content",
+  "profile": "ted-export-r208",
+  "detail_like": "%AWARD_CRITERIA_CONTRACT_NOTICE_INFORMATION_DEFENCE/AWARD_CRITERIA_DETAIL",
+  "diagnosis": "The F19 sub-contract concession form (defence, 2012) writes the award-criteria sentence as AWARD_CRITERIA_DETAIL's bare text where every other form nests CRITERIA/WEIGHTING children there - exactly 2 members in 30 years of corpus, the last unclaimed TED_EXPORT rows (issue 194's residue). The rule moved from Group to TextGroup so both shapes are consumed; both members reclaimed.",
+  "fix": "issue 194 (23507fb)",
+  "resolved": "2026-08-14"
+ },
+ {
+  "category": "Sub-cent amount precision",
+  "reason": "unrepresentable-value",
+  "profile": null,
+  "detail_like": "%more than two fraction digits%",
+  "diagnosis": "The integer-cents policy refused any amount with more than two fraction digits, and that held the last FED quarantine bucket: 3,249 members of publisher mills (555.242), float-serialization artifacts (893513.4400000001) and deep trailing zeros, plus 1,574 pre-fix OPT-999 zoneless dates the issue-195 exception had already made parseable. cents() now rounds half-away-from-zero to the cent (error <= half a cent; the archived member stays byte-faithful, the canonical layer is a projection). Reprocess job 308 reclaimed 4,898 of 5,196; the 298 still held are the genuine garbage class (10^50-magnitude integers, e.g. BT-113 with fifty zeros) and hold by design.",
+  "fix": "issue 268",
+  "resolved": "2026-08-22"
+ }
 ]
