@@ -75,9 +75,16 @@ pub fn convert(
     }))
 }
 
-/// Decimal string → integer cents, exactly. More than two fraction digits is a
-/// value tender-db's money representation cannot hold, so it fails rather than
-/// rounding silently (CONTEXT.md: money is INTEGER cents + currency).
+/// Decimal string → integer cents. Up to two fraction digits convert exactly;
+/// deeper precision rounds HALF-AWAY-FROM-ZERO to the cent (issue 268). This
+/// used to fail instead — "fails rather than rounding silently" — and that
+/// policy held the last live quarantine bucket: 3,249 notices whose publishers
+/// state mills (`555.242`), float-serialization artifacts
+/// (`893513.4400000001`), or unit-price precision. The archived member stays
+/// byte-faithful (ADR-0004 lives there); the canonical layer is a projection,
+/// and a cent-rounded projection of a mills amount is what every consumer of
+/// an INTEGER-cents column reads anyway (CONTEXT.md). Bounded error ≤ half a
+/// cent per amount; junk that is not a decimal at all still fails.
 pub fn cents(text: &str) -> Result<i64, String> {
     let (sign, digits) = match text.strip_prefix('-') {
         Some(rest) => (-1i64, rest),
@@ -96,15 +103,18 @@ pub fn cents(text: &str) -> Result<i64, String> {
     if !whole.bytes().all(|b| b.is_ascii_digit()) || !fraction.bytes().all(|b| b.is_ascii_digit()) {
         return Err(format!("not a decimal amount: {text}"));
     }
-    if fraction.len() > 2 {
-        return Err(format!("amount has more than two fraction digits: {text}"));
-    }
+    // Sub-cent digits round half-away-from-zero (issue 268): the third digit
+    // decides, the rest can only have made it larger — `x.245` and `x.2451`
+    // both round up, `x.2449` down, exactly as the first discarded digit says.
+    let round_up = fraction.len() > 2 && fraction.as_bytes()[2] >= b'5';
+    let fraction = &fraction[..fraction.len().min(2)];
     let whole: i64 =
         if whole.is_empty() { 0 } else { whole.parse().map_err(|_| format!("amount out of range: {text}"))? };
     let fraction: i64 = format!("{fraction:0<2}").parse().expect("two digits");
     whole
         .checked_mul(100)
         .and_then(|c| c.checked_add(fraction))
+        .and_then(|c| c.checked_add(i64::from(round_up)))
         .map(|c| sign * c)
         .ok_or_else(|| format!("amount out of range: {text}"))
 }
@@ -226,8 +236,18 @@ mod tests {
         assert_eq!(cents(".5"), Ok(50));
         assert_eq!(cents("-.5"), Ok(-50));
         // Rounding would silently lose data — quarantine instead (ADR-0004).
-        assert!(cents("1234.567").is_err());
-        assert!(cents(".001").is_err());
+        // Issue 268: sub-cent precision rounds half-away-from-zero — the
+        // classes the last live quarantine bucket actually held: publisher
+        // mills, float-serialization artifacts, deep trailing zeros.
+        assert_eq!(cents("1234.567"), Ok(123_457));
+        assert_eq!(cents("555.242"), Ok(55_524));
+        assert_eq!(cents("3123520.785"), Ok(312_352_079), "x.785 rounds away from zero");
+        assert_eq!(cents("893513.4400000001"), Ok(89_351_344), "float artifact recovers exactly");
+        assert_eq!(cents("669255.99400000"), Ok(66_925_599));
+        assert_eq!(cents("-12.345"), Ok(-1235), "away from zero, respecting sign");
+        assert_eq!(cents("0.995"), Ok(100), "the round can carry into the next unit");
+        assert_eq!(cents(".001"), Ok(0));
+        assert_eq!(cents("1.2449"), Ok(124), "only the third digit decides");
         assert!(cents("1e6").is_err());
         assert!(cents("").is_err());
         assert!(cents(".").is_err());

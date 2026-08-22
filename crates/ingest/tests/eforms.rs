@@ -948,11 +948,15 @@ fn empty_whole_part_amount_is_exact_zero_cents() {
     );
 }
 
-/// The negative control for the issue-144 empty-whole-part fix: sub-cent
-/// precision (cause F) is a deliberate representation policy — integer cents,
-/// quarantined, never rounded — and stays quarantining.
+/// Issue 268 REVERSED the issue-144-era policy this test used to pin: sub-cent
+/// precision no longer quarantines — it rounds half-away-from-zero to the cent
+/// (the archived member stays byte-faithful; the canonical layer is a
+/// projection). The policy flip held the last live quarantine bucket: 3,249
+/// notices of publisher mills and float artifacts, fed daily. This test now
+/// pins the ROUNDING at the payload level: `336.13445` parses and lands as
+/// 33,613 cents.
 #[test]
-fn sub_cent_amounts_still_quarantine() {
+fn sub_cent_amounts_round_to_the_cent() {
     let xml = r#"<?xml version="1.0"?>
 <ContractAwardNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractAwardNotice-2"
     xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
@@ -965,11 +969,18 @@ fn sub_cent_amounts_still_quarantine() {
   </cac:ProcurementProject>
 </ContractAwardNotice>"#;
     match eforms::parse_payload("eforms:eforms-de-1.1", xml.as_bytes()) {
-        Parse::Quarantined { reason, detail } => {
-            assert_eq!(reason, "unrepresentable-value");
-            assert!(detail.unwrap_or_default().contains("more than two fraction digits"));
+        Parse::Parsed(parsed) => {
+            let amount = parsed
+                .values
+                .iter()
+                .find_map(|v| match &v.value {
+                    NoticeValue::Amount { cents, currency } => Some((*cents, currency.clone())),
+                    _ => None,
+                })
+                .expect("the amount must land");
+            assert_eq!(amount, (33_613, "EUR".to_owned()), "336.13445 rounds to 336.13");
         }
-        other => panic!("sub-cent amounts must stay quarantined, got {other:?}"),
+        other => panic!("sub-cent amounts must parse and round, got {other:?}"),
     }
 }
 

@@ -1,6 +1,24 @@
 # 268 — `unrepresentable-value` is the last FED quarantine bucket (5,196 held, 3,108 arrivals/30d)
 
-Status: needs-triage — filed 2026-08-22 (owner, out of Lennart's quarantine question).
+Status: DIAGNOSED AND FIXED IN CODE 2026-08-22, same day — the bucket split cleanly with two
+bounded reads of the held rows' own `detail` strings (no archive sampling needed):
+
+- **3,249 (62 %) "more than two fraction digits"** — publisher mills (`555.242`), float
+  artifacts (`893513.4400000001`), deep trailing zeros. NOT garbage: sub-cent precision the
+  cents policy refused. FIXED: `cents()` now rounds half-away-from-zero to the cent (the archived
+  member stays byte-faithful; the canonical layer is a projection; error ≤ half a cent). Gates:
+  the unit table pins the real held samples; `sub_cent_amounts_round_to_the_cent` pins it at
+  payload level (336.13445 → 33,613). This class was the DAILY FEED.
+- **1,574 (30 %) "OPT-999: no zone offset"** — ALL predate issue 195's OPT-999 exception (newest
+  hold 2026-08-13; the fix deployed ~08-16). Zero code needed: they drain on reprocess under the
+  current parser.
+- **282 (5 %) "not an integer"** — the 10^50-class garbage (e.g. BT-113 with fifty zeros).
+  Verdict: hold forever; this is what the gate is FOR. Remainder (~91) mixed small shapes.
+
+Remaining: deploy, run the reprocess over the bucket, ledger row with the reclaim counts, and the
+282-class verdict note. No epoch move — quarantined members never entered the layer, so stored
+chains are untouched (the 234 rule). Was: needs-triage — filed 2026-08-22 (owner, out of
+Lennart's quarantine question).
 Kind: data-quality investigation → drain or verdict
 Blocked by: —
 Relates to: 40 (the ledger this ends in), 137 (the outstanding-vs-total honesty), 267 (the >1e12
