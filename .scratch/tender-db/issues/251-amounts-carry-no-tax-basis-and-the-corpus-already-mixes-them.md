@@ -1,6 +1,6 @@
 # 251 — amounts carry no tax basis, and the corpus already mixes inclusive with exclusive figures
 
-Status: TEXT ERA DONE AND VERIFIED ON PROD (real rows: 504 excl / 178 incl / 73 NULL over notices
+Status: CLOSED 2026-08-22 — all four steps done; r208 verified (0.7 % → 13.5 % stated), r209 acquitted by probe (the source rarely states a basis). Was: TEXT ERA DONE AND VERIFIED ON PROD (real rows: 504 excl / 178 incl / 73 NULL over notices
 3,870,856-3,875,000); FORM ERAS DEPLOYED 2026-08-20 as `5a6e676`; OPTION 2 (the report line) BUILT
 2026-08-20 — section 6 of the data-quality report, three-way with the bias caveat. What remains is the
 r208/r209 RE-PARSE (not a refold — `INCLUDING_VAT` is a parse-layer change) that makes the form eras'
@@ -271,13 +271,14 @@ is section 6 after 306 lands (or bounded per-era `/v1/sql` counts).
 - **r2.0.8 VERIFIED**: stated 0.7 % → **13.5 %** (453,067 excl / 168,461 incl of 4,596,878
   amounts). Both markers flow, and the incl/excl mix (≈2.7:1) is now a procurement fact rather
   than parser history — the section-6 caveat no longer applies to this era.
-- **r2.0.9 MARGINAL**: 2,029 excl / 726 incl of 11,503,399 (≈0.02 %). It MOVED (×10 from 264/0),
-  so the mechanism works in this era too — but the population is tiny. Two readings, undecided:
-  the r2.0.9 form set (2011+) may genuinely have dropped the VAT indicator from most forms
-  (publication reality), or a dominant r209 mount for the indicator is still unmapped (residual
-  gap, the 195 class). NEEDS the falsification probe: grep a couple of r209 monthly packages for
-  the indicator elements prefix-agnostically and compare hit-rate against the 0.02 % — a big gap
-  convicts the mapping, a match acquits it.
+- **r2.0.9 ACQUITTED (same day)**: 2,029 excl / 726 incl of 11,503,399 (≈0.02 %) — and the probe
+  says that IS the source: grepping the first 300 MB of two r209 monthly packages (2018-06,
+  2020-03; tens of thousands of notices each) finds `EXCLUDING_VAT|INCLUDING_VAT` just 21 and 9
+  times. The r2.0.9 grammar dropped the per-value VAT indicator (it kept `VAT_PRCT` rates in
+  places, which are a different fact). The mapping is right; the near-zero is publication
+  reality. With that, THIS ISSUE IS DONE: every era that publishes a basis has it mapped, the
+  column is measured weekly (section 6), and the caveat line stays for the eras whose mix is
+  parser history.
 
 
 
