@@ -39,7 +39,7 @@ wasm-bindgen = "=0.2.118"
 # and cross-friendly). Exact pin: bumps are deliberate and re-run the probe
 # suite from docs/research/turso-scale.md (the caret req "0.7.0-pre.10" already
 # resolved to the 0.7.0 engine anyway).
-turso = "=0.7.0"
+turso = "=0.7.2"
 tokio = { version = "1", features = ["rt", "macros", "sync"] }
 
 # The Phase-2 bucketed fold (issue 62) spills each resolved notice state to an
@@ -75,7 +75,7 @@ chrono = { version = "0.4", default-features = false, features = ["std"] }
 # docs/research/turso-capabilities.md §2). `governor` is the pure-Rust GCRA
 # limiter behind tower_governor, used directly here for the per-token 300/h
 # keyed quota (api-layer.md §6).
-turso_parser = "=0.7.0"
+turso_parser = "=0.7.2"
 governor = "0.10"
 
 # Fetcher: rustls so the nix build stays free of system TLS deps.
