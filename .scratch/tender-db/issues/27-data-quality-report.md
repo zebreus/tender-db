@@ -1,6 +1,6 @@
 # 27 — Data-quality report: semantic completeness per era
 
-Status: REOPENED-AS-ROTTED (2026-08-18, owner). Verification ATTEMPTED against prod rev `cc0ef20` and
+Status: CLOSED-SUPERSEDED-DELIVERED (2026-08-22, owner) — issue 230's server-side weekly measurement IS this report at today's scale; see closing note at the bottom. Previous state: REOPENED-AS-ROTTED (2026-08-18, owner). Verification ATTEMPTED against prod rev `cc0ef20` and
 the acceptance does NOT hold today: "report runs green against prod" fails — all 11 queries time out on
 the 10s `/v1/sql` cap at full-corpus scale (14.15M tender_versions, 40.9M organization_mentions), so
 every section prints empty. The other two clauses DO hold: the baseline is documented in
@@ -94,3 +94,26 @@ quarantine headline (1.21 M) is mostly benign — 96.7 % text coverage
 coexists with the two big text-era buckets → filed **issue 30** (split the
 metric benign-vs-actionable + field-code top-N, needs token; two concrete
 r2.0.8/text parser gaps captured there).
+
+### CLOSED — superseded and delivered by the 230 line (2026-08-22, owner)
+
+What this issue asked for exists and RUNS, just not through the transport it originally specified.
+The rot note above (2026-08-18) became issue 230, and 230's line delivered the whole acceptance
+server-side, where corpus-scale aggregates are actually computable:
+
+- **"report runs green against prod"** — the weekly `data-quality` supervisor job measures 23 eras
+  over 32 windows (last run: job 307, 4,528s, `0 label(s) unmeasured`), windowed so no query rides
+  the 10s `/v1/sql` cap. Sections 1-8 render server-side; reports are STORED (`put_report` /
+  `latest_report`), the dashboard Quality panel serves them, `/metrics` exports ~130 per-era gauge
+  series, and a presence step-change alarm watches run-over-run deltas (issues 260/265/266/267).
+- **"documented baseline"** — docs/research/data-quality.md holds the 2026-07 baseline as history;
+  the stored `data-quality-headlines` history (12 runs) is the living baseline now.
+- **"anomalies filed as issues"** — the original run filed 100/101/188 among others; the new
+  machinery's first reads filed and resolved 263/264 (value-rate and age-confound investigations,
+  both archive-verified as publication reality, caveats now printed in the report itself).
+
+The `crates/ingest/src/bin/data-quality` CLI stays, deliberately: `--print-sql` is the one honest
+way to read/diff the exact statements the job runs (including the instantiated windowed form), and
+the transport still works against small instances. Its corpus-scale /v1/sql mode remains what the
+2026-08-18 note measured — timing out by design of the cap — and nothing should "fix" that: the
+server-side job is the fix.
