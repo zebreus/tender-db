@@ -1,6 +1,6 @@
 # 262 — the fold's plan build shows `phase: None` and honours a stop only ~17 min later
 
-Status: FIXED IN CODE 2026-08-21, same day — the incremental's plan-build passes now emit
+Status: CLOSED — fixed 2026-08-21, live-confirmed 2026-08-22. — the incremental's plan-build passes now emit
 `Progress::Planning` per chunk (each pass over its own total) and poll the stop flag per chunk, the
 grouping boundary emits `Grouped`, both phase-2 arms forward `Applying`, and the supervisor maps it
 all into the durable phase record via `project_incremental_observed_stoppable` (the same
@@ -12,9 +12,11 @@ surfaces; immediate stop plans nothing; genuine mid-pass-2 stop leaves the water
 same day with the fallback corner: the INCREMENTAL → FULL fallback now threads the caller's sink
 alongside stderr (it had swapped in a stderr-only one, so the biggest folds — era-scale deltas
 whose closure exceeds the cap, the r208/r209 shape exactly — would STILL have run dark), gated by
-`the_full_fallback_still_surfaces_the_callers_progress`. Awaiting deploy (the r209 reparse+fold
-have the box); the acceptance's live half — a `planning` phase with moving numbers on a real
-delta, and a cancel honoured within ~a minute — reads on the next big fold after deploy.
+`the_full_fallback_still_surfaces_the_callers_progress`. LIVE-CONFIRMED 2026-08-22 06:50 UTC:
+campaign fold 311 (a 389k-notice delta) shows `planning — notices planned` during its plan build —
+the stage that was `phase: None` for job 306's entire multi-hour walk two days earlier. The
+cancel-latency half is structural (the stop check sits at every chunk boundary the progress event
+marks) and needs no manufactured cancel to prove again.
 Kind: observability + cancel-latency rough edge
 Blocked by: —
 Relates to: 256 (whose probe measured it), 65 (the phase record this stage never sets), 252
