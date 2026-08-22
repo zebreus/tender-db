@@ -1,6 +1,22 @@
 # 263 — eForms-DE value completeness (30–44 %) lags the EU SDK eras (55–80 %): extraction gap or publication reality?
 
-Status: needs-triage — filed 2026-08-21 (owner, requested by Lennart: investigate data quality).
+Status: CLOSED 2026-08-22 — PUBLICATION REALITY on every sampled prong; the extraction is
+acquitted. Archive-sampled prefix-agnostically (`currencyID=` marks ANY UBL money element):
+
+- **DÖE sdk-0.1**: 0 of 50 sampled members carry any money element — the 667k-version island's
+  0.0 % is the source's own shape (the pre-release tooling never published values).
+- **eforms-de-1.1**: 8 of 50 (16 %) at source vs 30.1 % in the layer — the LAYER READS HIGHER
+  than the raw member rate (version chains merge several notices; CANs state values more often
+  than CNs), which is the opposite of an extraction gap. German buyers simply rarely state
+  estimated values — consistent with national practice.
+- **EU-SDK control**: 40 of 80 (50 %) at source vs 55-71 % in the layer — same layer-above-source
+  shape; the method validates.
+
+Section 1 of the report now carries the caveat with the sampled rates, so the DE-vs-EU value gap
+stops reading as a mapping suspicion. One method note for the record: de-1.1 members do NOT ride
+the TED archive at all (0 found in three TED daily bundles) — German eForms flow exclusively
+through DÖE, which is where the sample had to come from. Was: needs-triage — filed 2026-08-21
+(owner, requested by Lennart: investigate data quality).
 Kind: data-quality investigation (field completeness, `value`)
 Blocked by: —
 Relates to: 230 (the measurement this reads), 195 (the last value-mount campaign — its lesson:

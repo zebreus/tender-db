@@ -1431,6 +1431,14 @@ pub fn render_text(report: &Report) -> String {
         );
     }
 
+    let _ = writeln!(
+        out,
+        "  `value` tracks what publishers STATE, not what we extract (issue 263, archive-sampled \
+         2026-08-22): eforms-de-1.1 members carry a money element at ~16% at source (layer: 30% — \
+         chains merge notices), DÖE sdk-0.1 at 0 of 50, EU-SDK members at ~50-70%. A low value \
+         column is publisher behaviour; the extraction is acquitted for every sampled era."
+    );
+
     let _ = writeln!(out, "\n== 2. Award→notice linkage (award Tenders chained to a contract notice) ==");
     let _ = writeln!(out, "  {:<30} {:>10} {:>10} {:>8}", "era", "awards", "unchained", "linked");
     for row in &report.linkage {
