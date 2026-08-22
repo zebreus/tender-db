@@ -1,8 +1,15 @@
 # 109 — nothing detects content staleness: every production gate counts rows, and shells have rows
 
-Status: BUILT 2026-08-21 (owner) — the gate is in the weekly data-quality run. Remaining: deploy
-(queue busy with the issue-234 merge), then the backtest and the first live report (see "Built"
-at the bottom). Was: open — the gap the eForms-DE 1.x recovery exposed.
+Status: CLOSED 2026-08-22 — built, deployed, and live: two weekly runs have measured the per-era
+factless rate (first live read: ~0 % everywhere, tiny 62-119-row residues in sdk-1.10..1.14),
+the step-change alarm has its stored baseline, the rate is on the dashboard panel (265) and
+/metrics (266). The ORIGINAL acceptance's backtest is permanently impossible: no snapshot from
+the issue-85 window survives (all pruned in the disk cleanups — only the live DB exists), so
+retro-detection is unfalsifiable forever. The closest available evidence stands in its place:
+`a_stripped_cohort_reads_factless_while_every_row_count_stays_green` reproduces the incident's
+exact shape (satellites stripped, version rows surviving) and the probe reads 100 % factless
+while the version count holds still. Was: BUILT 2026-08-21; before that open — the gap the
+eForms-DE 1.x recovery exposed.
 Kind: observability / production invariant
 Blocked by: —
 Relates to: 108 (the watermark whose over-claim this would catch), 99 (the cause the epoch closes),
