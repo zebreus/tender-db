@@ -2164,6 +2164,46 @@ async fn every_era_projects_its_headline_fields() {
     }
 }
 
+/// Issue 232's recorded follow-on, end to end: the text record's `CY:` reaches the
+/// buyer Organization as its country. The payoff is issue 234's reuse scope — a
+/// nameless-identifier mention aggregates by (name, country) but only WITH a
+/// country, so without this the era's next re-parse would mint one provisional
+/// Organization per notice again, the exact fragmentation 234 collapsed.
+#[tokio::test]
+async fn the_text_authoritys_country_reaches_its_organization() {
+    let (db, fetch_id, path) = scratch("text-authority-country").await;
+    ingest_as(
+        &db,
+        fetch_id,
+        "ted",
+        "text/2008-cn-723-2008.txt",
+        "en_20080103_001_utf8_org.zip!EN_20080103_2008001_UTF8_ORG",
+    )
+    .await;
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+    assert_eq!(
+        query_text(&db, "SELECT country FROM organization_mentions WHERE section_id = 'ORG-1'")
+            .await
+            .as_deref(),
+        Some("FR"),
+        "the mention carries the record's CY"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT o.country FROM organizations o \
+             JOIN organization_mentions m ON m.organization_id = o.id \
+             WHERE m.section_id = 'ORG-1'"
+        )
+        .await
+        .as_deref(),
+        Some("FR"),
+        "and the organization inherits it"
+    );
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 233: the 2008 OPOCE era measured 43.7 % title completeness against ≥ 96 %
 /// everywhere else — not because titles were lost, but because whole form families
 /// in that era have no title ELEMENT. `114238_2008.en` is an EEIG registration

@@ -905,7 +905,33 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
     }
     claim_awarded_value(&mut emit);
     claim_award_date(&mut emit);
+    home_authority_descriptors(&mut emit);
     Ok(emit.parsed)
+}
+
+/// `CY` and `TW` describe the awarding authority — the inventory reads "Country
+/// (code)" and "Town of the awarding authority" — so when the record opened an
+/// authority section they belong inside it, beside the `TXT-AU` name (issue 232's
+/// recorded follow-on). `TXT-CY` is already in the projection's
+/// `ORG_COUNTRY_FIELDS`, so homing it gives the buyer mention a country, and a
+/// mention with a country joins the issue-234 reuse scope: the era's authorities
+/// aggregate instead of minting one provisional Organization per notice.
+///
+/// A post-pass rather than a routing decision in `flush`, because the era
+/// publishes the fields in header order — `CY:` arrives BEFORE `AU:` (every
+/// fixture vintage), when the authority section does not exist yet. A record with
+/// no `AU:` keeps both on the root, where they have always sat: a country row
+/// inside an org section that names nobody would make the projection mint a
+/// nameless buyer.
+fn home_authority_descriptors(emit: &mut Emit) {
+    if !emit.parsed.sections.iter().any(|s| s.id == AUTHORITY_SECTION) {
+        return;
+    }
+    for row in &mut emit.parsed.values {
+        if row.section_id == SECTION && (row.field_id == "TXT-CY" || row.field_id == "TXT-TW") {
+            row.section_id = AUTHORITY_SECTION.to_owned();
+        }
+    }
 }
 
 /// The contract's price, claimed after the whole record is read (issue 244).
@@ -1606,6 +1632,39 @@ mod tests {
             .map(|s| (s.id.as_str(), s.parent.as_deref()))
             .collect();
         assert_eq!(orgs, vec![("ORG-2", Some("RES-1")), ("ORG-3", Some("RES-2"))]);
+    }
+
+    /// Issue 232's recorded follow-on: `CY:` and `TW:` describe the awarding
+    /// authority, so a record that opened `ORG-1` carries them there — beside the
+    /// name, where the projection's `ORG_COUNTRY_FIELDS` can reach the country.
+    /// The order matters and is the fixtures' real header order: `CY:` is
+    /// published BEFORE `AU:`, when no authority section exists yet, which is
+    /// what makes this a post-pass rather than routing in `flush`.
+    #[test]
+    fn the_authoritys_country_and_town_land_beside_its_name() {
+        fn homes<'p>(p: &'p Parsed, field: &str) -> Vec<&'p str> {
+            p.values
+                .iter()
+                .filter(|v| v.field_id == field)
+                .map(|v| v.section_id.as_str())
+                .collect()
+        }
+        let record =
+            "1.0/000001\nND: 1-2008\nCY: FR\nAU: ECOLE NATIONALE DES PONTS\nTW: MARNE-LA-VALLEE\n";
+        let p = parse(record).expect("parses");
+        assert_eq!(homes(&p, "TXT-AU"), vec!["ORG-1"]);
+        assert_eq!(homes(&p, "TXT-CY"), vec!["ORG-1"], "the country joins the authority");
+        assert_eq!(homes(&p, "TXT-TW"), vec!["ORG-1"], "the town joins the authority");
+        // Still a Code: the mention reader matches `NoticeValue::Code` only, so a
+        // re-homed country that degraded to text would silently give the org nothing.
+        assert!(p.values.iter().any(|v| v.field_id == "TXT-CY"
+            && matches!(&v.value, NoticeValue::Code { code, .. } if code == "FR")));
+
+        // No `AU:`, no authority section — the descriptors keep their root residence
+        // rather than manufacturing an org section that names nobody.
+        let p = parse("1.0/000001\nND: 2-2008\nCY: DE\nTW: BONN\n").expect("parses");
+        assert_eq!(homes(&p, "TXT-CY"), vec!["PROCEDURE"]);
+        assert_eq!(homes(&p, "TXT-TW"), vec!["PROCEDURE"]);
     }
 
     /// The scan must stay linear in the body, and must refuse a value with no boundary

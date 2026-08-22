@@ -1,6 +1,6 @@
 # 232 — the text era projects titles but almost no buyers, values or winners (3.79M versions)
 
-Status: buyer FIXED in code 2026-08-18 (`0074b61`, awaiting the era re-parse); `value` closed as
+Status: buyer FIXED in code 2026-08-18 (`0074b61`) and riding the 244 redo sweep (section 1 buyer 0.5%→63.0% mid-sweep); CY/TW follow-on LANDED 2026-08-22 (rides the NEXT era pass); `value` closed as
 NOT-A-BUG (the era publishes no amount field); `winner` open, blocked on a `CO` archive study
 Kind: projection mapping gap, largest single era by volume
 Blocked by: —
@@ -188,3 +188,25 @@ The 3,786,955 stored notices keep their old parse layer until the era is re-pars
 scheduled unit and it wants the same rebuild window issue 100's DE-1.x cohort is waiting for
 (`reparse` → one `project --rebuild`, ADR-0009). Until then the data-quality report will keep showing
 0.5 % buyer for the text era, and that is expected rather than a sign the fix did not work.
+
+### The CY/TW follow-on landed (2026-08-22, owner)
+
+The "also evidenced, also deferred" item above is in: `home_authority_descriptors`, a post-pass in
+`text/parse.rs` beside `claim_awarded_value`/`claim_award_date`, re-homes root `TXT-CY`/`TXT-TW`
+into `ORG-1` when the record opened one. A post-pass because the era publishes header order —
+`CY:` arrives BEFORE `AU:` in every fixture vintage, when no authority section exists yet. No
+`AU:` → both stay on the root, unchanged.
+
+The projection needed nothing: `TXT-CY` has sat in `ORG_COUNTRY_FIELDS` since before this issue.
+End-to-end test (`the_text_authoritys_country_reaches_its_organization`) proves the mention AND
+the organization carry `FR` from the 2008 fixture.
+
+Worth more than it looks post-234: the reuse-before-minting scope requires name AND country —
+without a country every text-era buyer mention takes the unconditional-INSERT path and the era's
+next re-parse would re-fragment into ~3.79M provisional organizations, the exact shape 234
+collapsed. With it, the era's authorities aggregate by (name, country) as they fold.
+
+Timing: the 186-374 redo sweep (running tonight) predates this code, so the era's stored parse
+layer gets countries on its NEXT full pass — which should be the one that also carries the
+`winner` fix once the `CO` archive study lands, exactly as buyer+AU rode one pass this time. No
+dedicated re-parse for CY/TW alone.
