@@ -1048,3 +1048,13 @@ packages (~260k) for this range** — or accept that a >cap batch buys one full 
 LARGE deliberately, since one walk amortises over as many re-parsed packages as are stamped when
 it starts. The 241-374 tail should use the deliberate-large shape: 2-3 reparse batches back to
 back, then ONE fold.
+
+## Rule v2 mechanised (2026-08-22 09:55 UTC)
+
+`reclaim_only: true` on the reparse request is the clean form of the deliberate-large shape — it
+suppresses the auto-paired fold, so a batch group needs no queued-fold dropping. Queued for the
+241-376 tail's first tranche: jobs 319/320/321 (`reparse text` after 240/252/264, 12 packages
+each, fold-less) + ONE closing fold 322 that amortises the whole ~1.1M-notice tranche in a single
+walk. They run behind fold 315 (batches 2+3) and the daily tick. Batches 186-220: parsed clean in
+full (310: 389,496 / 312: 372,061 / 314 running), zero unmatched, zero now-failing across all of
+them; fold 311 landed 2,601,526 tenders written.
