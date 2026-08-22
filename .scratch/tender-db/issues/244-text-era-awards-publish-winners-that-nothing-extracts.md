@@ -1036,7 +1036,15 @@ not blocked on parser work — slices 2-9 are all deployed — only on batching 
 ## Campaign resumed under the cap rule (2026-08-22 05:55 UTC)
 
 The interregnum's full walks (jobs 293/306) already folded every previously-stamped batch, so the
-221-240 canonical numbers are in. The redo sweep resumes as three queued under-cap pairs — jobs
-310/311 (fetches 186-197), 312/313 (198-209), 314/315 (210-220), ~12 packages ≈ ~312k notices per
-batch, each fold staying incremental per the closure-cap rule this file established. Next firings
-continue with `after: 240` for the 241-374 tail, ~12 packages a batch.
+221-240 canonical numbers are in. The redo sweep resumed as three queued pairs — jobs
+310/311 (fetches 186-197), 312/313 (198-209), 314/315 (210-220) — and the first fold promptly
+RECALIBRATED the batch rule: 12 packages of this range carried 389,496 notices (32.5k/package, not
+the ~26k the rule assumed) and their closure blew the 500k cap, so fold 311 took the whole-corpus
+fallback (visible immediately in the new `planning` phase record — issue 262 paying for itself on
+day one). Adjustment made mid-flight: queued fold 313 was DROPPED (`{"cancelled":313,
+"state":"dropped"}` — the cancel route handles queued jobs too, worth knowing), so one fold (315)
+covers batches 2+3 together, saving a ~3h walk. **Rule v2: batch by the CHANGED-NOTICE count, ≤8
+packages (~260k) for this range** — or accept that a >cap batch buys one full walk and then batch
+LARGE deliberately, since one walk amortises over as many re-parsed packages as are stamped when
+it starts. The 241-374 tail should use the deliberate-large shape: 2-3 reparse batches back to
+back, then ONE fold.
