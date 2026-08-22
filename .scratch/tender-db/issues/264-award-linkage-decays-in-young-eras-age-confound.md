@@ -1,6 +1,14 @@
 # 264 — award→notice linkage reads WORST in the youngest eras (sdk-1.14: 45.7 %): decay or age confound?
 
-Status: needs-triage — filed 2026-08-21 (owner, requested by Lennart: investigate data quality).
+Status: CLOSED 2026-08-22 — CONFOUND PROVEN with two bounded reads inside one era: sdk-1.13 links
+at **65.6 %** among its oldest-minted Tenders (ids ≤3M: 175,626 awards, 60,440 unchained) and
+**2.3 %** among the newest-minted (ids ≥7.6M: 472 awards, 461 unchained). The mechanism is
+definitional: an award Tender is unchained BY CONSTRUCTION until its contract notice arrives and
+groups — high tender ids ARE recency, so young populations read low and climb for months.
+sdk-1.14's 45.7 % is therefore substantially maturation, not decay; no inventory diff is needed.
+Section 2 of the report now carries the caveat with the measured pair, and the honest comparison
+(an era against its own previous run) is exactly what the 265 delta column shows. Was:
+needs-triage — filed 2026-08-21 (owner, requested by Lennart: investigate data quality).
 Kind: data-quality investigation (measurement honesty — the denominator may be time-biased)
 Blocked by: —
 Relates to: 230 (the measurement), 236/58-v2 (the chaining machinery), 187/188 (the two eras whose

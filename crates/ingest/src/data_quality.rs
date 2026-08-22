@@ -1441,6 +1441,14 @@ pub fn render_text(report: &Report) -> String {
             display_era(&row.profile), group(row.awards), group(row.unchained), pct(linked, row.awards)
         );
     }
+    let _ = writeln!(
+        out,
+        "  A YOUNG era's rate is a maturation curve, not a quality claim (issue 264): an award \
+         Tender is unchained BY CONSTRUCTION until its contract notice arrives and groups, so the \
+         newest rows read low and climb for months. Measured inside one era (sdk-1.13, 2026-08-22): \
+         65.6% linked among its oldest-minted Tenders vs 2.3% among the newest-minted. Compare an \
+         era against its own last run, not against an older era."
+    );
 
     let _ = writeln!(
         out,
