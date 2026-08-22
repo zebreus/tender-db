@@ -266,6 +266,20 @@ change), fold 304 was cancelled mid-plan-build and `reparse ted-export-r209` enq
 its paired fold 306: ONE whole-corpus fold now serves both eras, saving a full ~3h walk. The read
 is section 6 after 306 lands (or bounded per-era `/v1/sql` counts).
 
+**Step 4 READ (2026-08-22, DQ job 307, post-refold):** a split verdict.
+
+- **r2.0.8 VERIFIED**: stated 0.7 % → **13.5 %** (453,067 excl / 168,461 incl of 4,596,878
+  amounts). Both markers flow, and the incl/excl mix (≈2.7:1) is now a procurement fact rather
+  than parser history — the section-6 caveat no longer applies to this era.
+- **r2.0.9 MARGINAL**: 2,029 excl / 726 incl of 11,503,399 (≈0.02 %). It MOVED (×10 from 264/0),
+  so the mechanism works in this era too — but the population is tiny. Two readings, undecided:
+  the r2.0.9 form set (2011+) may genuinely have dropped the VAT indicator from most forms
+  (publication reality), or a dominant r209 mount for the indicator is still unmapped (residual
+  gap, the 195 class). NEEDS the falsification probe: grep a couple of r209 monthly packages for
+  the indicator elements prefix-agnostically and compare hit-rate against the 0.02 % — a big gap
+  convicts the mapping, a match acquits it.
+
+
 
 ## Option 2 — the report line (built 2026-08-20)
 
