@@ -1058,3 +1058,20 @@ each, fold-less) + ONE closing fold 322 that amortises the whole ~1.1M-notice tr
 walk. They run behind fold 315 (batches 2+3) and the daily tick. Batches 186-220: parsed clean in
 full (310: 389,496 / 312: 372,061 / 314 running), zero unmatched, zero now-failing across all of
 them; fold 311 landed 2,601,526 tenders written.
+
+## Final tranche queued — campaign fully enqueued through fetch 374 (2026-08-22 21:00 UTC)
+
+The 241-336 shepherding held the shape all day: 319/320/321 (241-276) folded by 322; 323/324/325
+(277-312) folding via 326; 327/328 (313-336) queued behind it with closing fold 329. Every batch so
+far: **zero unmatched, zero now-failing** — 185k-274k notices each, per-package text-era counts
+falling as the fetch cursor climbs into eforms-era monthlies (389k for 186-197 down to 185k for
+289-300).
+
+The last 38 packages are now queued in the same fold-less `reclaim_only` shape: jobs **330** (after
+336), **331** (after 348), **332** (after 360), **333** (after 372, 2 packages — ends exactly at
+374), and **ONE closing fold 334**. Nothing remains to enqueue — the queue as it stands
+(326→327→328→329→330→331→332→333→334) completes the entire 186-374 redo sweep unattended.
+
+Remaining after fold 334 lands: the acceptance re-read — section 3's text-era award-with-result
+count against the recorded baseline (462,772 of 1,306,514 award notices), record the closing
+numbers here, and fold in the slice-9 notes + AU:→buyer mapping item before closing.
