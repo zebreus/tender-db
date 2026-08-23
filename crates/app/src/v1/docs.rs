@@ -104,6 +104,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
   <a href="#webhooks">Webhooks</a><br>
   <a href="#accounts">Accounts &amp; tokens</a><br>
   <a href="#performance">Performance</a><br>
+  <a href="#caveats">Data caveats</a><br>
   <a href="#meta">Service &amp; licence</a><br>
 </nav></div>
 
@@ -510,6 +511,72 @@ milliseconds.</p>
   <li><code>/v1/sql</code> is bounded by design: one <code>SELECT</code>, a 10-second cap, and its own runtime, so an expensive query returns <code>408</code> instead of degrading the REST surface.</li>
   <li>Rate limit: ~10 requests/second sustained, burst 50, per client &mdash; page within that.</li>
 </ul>
+
+<h2 id="caveats">Data caveats</h2>
+<p>The corpus is served as published. Where the source is wrong, odd, or silent,
+tender-db keeps the published value and documents the pattern here rather than
+&ldquo;fixing&rdquo; data underneath you. These are the measured patterns a consumer
+should know about; the <a href="/">dashboard</a> carries the live per-era quality
+rates and the quarantine resolution ledger.</p>
+
+<h3>Coverage varies by era</h3>
+<ul>
+  <li>The corpus spans 1993&ndash;today across fundamentally different source formats
+  (a plain-text era, several structured-form generations, eForms). Field coverage
+  differs by era &mdash; the dashboard's per-era panel is the live truth, and some
+  historical extraction is still being actively backfilled, so old notices can
+  <em>gain</em> content (arriving on the <a href="#changes">change feed</a> as changes).</li>
+  <li>Award winners exist only where the source names them. In some dialects the
+  publisher is largely silent &mdash; e.g. eForms sdk-0.1 (a 2022 pilot), where ~87%
+  of award notices name nobody; where a winner <em>is</em> published it is resolved.
+  Winner-coverage numbers on the dashboard exclude publisher silence from the
+  denominator rather than reporting it as extraction failure.</li>
+</ul>
+
+<h3>Amounts</h3>
+<ul>
+  <li>Amounts are integer <strong>cents</strong> plus a currency code. A published amount
+  with more than two fraction digits (real practice: unit-price mills, float artifacts)
+  is rounded half-away-from-zero to the cent &mdash; error &le; half a cent; the archived
+  notice keeps the original lexical value.</li>
+  <li><strong>Negative amounts are source-published</strong>, kept as published. A known
+  shape is the <code>-1.00</code> publisher sentinel.</li>
+  <li><strong>Zero often means &ldquo;no value given&rdquo;</strong>, not a free tender:
+  measured at 2.7&ndash;8.9% of EUR amounts depending on era. Filter zeros out of
+  aggregates unless you specifically want them.</li>
+  <li><code>tax_basis</code> is <code>incl</code>, <code>excl</code>, or NULL &mdash; NULL
+  means the source did not say, and the incl/excl mix is era-biased; do not compare raw
+  sums across eras without checking it.</li>
+  <li>No currency normalisation is applied. 26 currency codes occur, including pre-euro
+  national currencies, retired codes, and occasional codelist leaks
+  (e.g. <code>OP_DATPRO</code>) &mdash; published values, kept.</li>
+  <li>Astronomical garbage magnitudes (10<sup>50</sup>-class) are quarantined at
+  ingestion and never enter the corpus.</li>
+</ul>
+
+<h3>Dates</h3>
+<ul>
+  <li>Placeholder instants occur at ~55 per 100k dates: year-0000, 1899-12-31
+  (spreadsheet epoch), year-2100 &mdash; published values, kept.</li>
+  <li>Deadlines <em>before</em> the publication date are a stable 0.2&ndash;0.3%
+  source background across two decades; treat &ldquo;deadline &lt; published_at&rdquo;
+  as published noise, not a data-loss signal.</li>
+</ul>
+
+<h3>Codes and identities</h3>
+<ul>
+  <li>CPV-2003 and CPV-2008 classifications coexist (era-dependent); no cross-era
+  mapping is applied. NUTS carries occasional pseudo-codes.</li>
+  <li>Organizations are aggregated by identifier where the source publishes one, else
+  by (name, country); mentions without either stay <em>provisional</em> single-mention
+  organizations. The <code>provisional</code> flag on
+  <code>/v1/organizations</code> tells you which kind you are looking at.</li>
+</ul>
+
+<p class="muted">Ingestion is strict by design: a notice the parser cannot fully and
+faithfully represent is held in quarantine &mdash; whole, diagnosed, and disclosed on
+the dashboard &mdash; rather than partially parsed. Current outstanding holds are a
+few hundred members out of 2.4M ever held, each with a documented verdict.</p>
 
 <h2 id="meta">Service &amp; licence</h2>
 <table>
