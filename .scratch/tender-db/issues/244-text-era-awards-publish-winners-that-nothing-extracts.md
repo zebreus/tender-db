@@ -1105,3 +1105,38 @@ band, classify, and either close as source-silence or cut slice 9. Section 8 fla
 
 Linkage (§2) reads 53.1% for the era — a chain property (issue 58's world), not this issue's
 extraction; noted so nobody re-derives it as a 244 defect.
+
+## Residue read (2026-08-23, owner) — four bands sampled, slice 9 has a shape
+
+Sampled the 219,907 no-block award notices across four tender-id bands of the era (1.85M/2.5M/
+3.2M/3.9M; the 4.6M band has ZERO no-block rows — the late sectioned form is fully covered).
+One specimen each, prose read via `/v1/notices/{id}/content`:
+
+| notice | year | what the publisher printed | class |
+|---|---|---|---|
+| 17438 | 1993 | date-of-award + `Tenders received: 8` + `Supplier(s): Various.` | REAL award, winner is a NON-NAME |
+| 1422523 | 1999 | date + `Tenders received: 93`, supplier/value headings EMPTY, `83 contracts were let` in prose | REAL award, winner-less |
+| 2368067 | 2003 | `V.1.1 … : Contract No 04/2004/OIL:\nMartin Reinert Sàrl, …` + values + date + count | NAMED WINNER MISSED — a `Contract No …:` prefix line sits between the heading and the name |
+| 3435660 | 2005 | `V.3 NAME AND ADDRESS … : Naročnik je zavrnil vse ponudbe.` (Slovenian: all tenders rejected) | CANCELLATION prose in the winner slot |
+
+Three of four are the SAME defect the sdk-0.1 study (257) named: **publisher winner-silence read
+as "no result"**. The extractor materialises a result only when it finds a winner name, so real
+awards with `Various`/empty/rejected-in-prose winner slots stay no-block — precisely the rows a
+`clos`/winner-less materialisation should carry, with the award DATE and TENDERS-RECEIVED this
+issue already lists as open. The fourth is a plain extractor gap on a named winner (prefix hop).
+
+### Slice 9, therefore
+
+1. **Winner-less result materialisation**: an award-typed notice with an award-section skeleton
+   (date and/or count and/or an explicit rejection/cancellation phrase or a non-name like
+   `Various`) yields a lot_result with NO winner — decision `awarded` (unnamed) or `clos-nw`
+   (rejected) per the prose — never a fabricated organization (the 257 rule).
+2. **The `Contract No …:` prefix hop** in V.1.1-style sections: skip a leading
+   `Contract No <ref>:` line before reading the supplier name.
+3. Claim the award date and tenders-received count while in there — same headings, and §1's
+   deadline/winner columns already show where they land.
+
+Then re-parse the era's no-block set (addressable: award-typed AND no result section — the
+sampling predicate IS the reprocess predicate) + one incremental fold. Expectation: §3 density
+moves 83.2% → near the honest ceiling, and `with winner`'s denominator honesty matches sdk-0.1's
+(silence out of the denominator).
