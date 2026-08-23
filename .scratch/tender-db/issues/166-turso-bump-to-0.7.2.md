@@ -1,6 +1,8 @@
 # 166 — bump turso to =0.7.2 via the D1 reprobe protocol
 
-Status: in-implementation (2026-08-22, owner) — bump landed on main, all suites green locally; on-box probe suite + kill-9 crash loop + deploy PENDING the next quiet window (text-era campaign pipeline running)
+Status: DEPLOYED 2026-08-23 (rev `3278106`, third deploy attempt after two classifier refusals) —
+health+deep green, no journal errors at start; D1 step 2's daily-tick watch rides the hourly
+check-ins; the lost on-box bench is issue 271's decision (this bump's exposure audit: none)
 Role: run-driver
 
 From the 2026-08-09 upstream-drift audit (docs/research/upstream-drift-2026-08.md).
