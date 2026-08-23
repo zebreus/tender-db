@@ -6,6 +6,16 @@
 
 When pursuing a long-running goal, don't hold the plan in your head — put it on the issue tracker and work from there. Capture the goal as a spec/PRD (`/to-spec` or `/to-prd`), break it into independently-grabbable issues (`/to-issues`), and hand those issues to subagents and teammates as their work units — one issue per agent, `Status:` and `Blocked by:` lines coordinate who does what. Use `/triage` to move issues through their states, and `/wayfinder` when the effort is too big or foggy for one session.
 
+### Testing
+
+Run the suites through `ops/check.sh`, not raw `cargo test`. The script prunes the
+superseded test binaries and builds with debuginfo off (issue 260) — raw `cargo test`
+skips both and fills this container's disk in a session (measured three times on
+2026-08-20 and again on 2026-08-23; the recovery each time was `cargo clean`, ~28 GiB).
+For a single focused test mid-iteration, plain `cargo test -p <crate> <name>` is fine —
+just run `ops/check.sh` before committing so the pruning happens and the truncation
+traps its header documents don't eat a failure.
+
 ### Committing
 
 Commit when you have completed an issue or a meaningful unit of work. Multiple agents work on this worktree in parallel, so never stage with `git add -A`/`git add .` — always stage the individual files you changed, and inspect the commit afterwards (`git show --stat`) to confirm it contains only your files.
