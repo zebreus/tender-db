@@ -57,3 +57,22 @@ carries its true value-domain reason, then writes the dashboard disclosure so
 the actionable headline stops counting this decision as a defect. The reclaim
 campaign is declared complete in issue 144's sense: the remaining quarantine is
 ADR-0004 doing its job, with cause F's share explicitly owned by this ADR.
+
+## Amendment, 2026-08-22 (issue 268): REVERSED for the sub-cent class — rounding adopted
+
+The nuisance threshold was crossed, on the instrument the 2026-08-19 amendment installed:
+`unrepresentable-value` became the ONLY quarantine bucket still being fed (3,108 arrivals in 30
+days, 5,196 held), i.e. the whole remaining live cost of quarantine, and sub-cent precision is
+standing practice in live eForms (publisher unit-price mills, float-serialization artifacts) rather
+than an edge. Alternative (2) — rounding — was adopted, not alternative (3): `cents()` now rounds
+half-away-from-zero to the cent (error ≤ half a cent), on the argument that the canonical layer is
+a *projection* of the byte-faithful archived member, so traceability to the Notice is preserved by
+the archive while the projection trades ≤½ cent of precision for the notices' whole content. The
+issue-131 line ("no values the source never published") is re-read accordingly: it barred silent
+fabrication, and a documented, bounded rounding rule in the projection is neither.
+
+What survives of the original decision: genuinely unrepresentable garbage (the "not an integer"
+10^50-magnitude class, 298 rows) holds forever — that is ADR-0004's gate working. Reprocess job
+308 drained the rest (4,898 of 5,196 reclaimed, fold of 3,740 tenders, 2026-08-22); the ledger
+carries the resolution row ("Sub-cent amount precision", issue 268, deploy `845ed54`), and issue
+267's `over_1e12` tripwire watches for this class escaping the gate.
