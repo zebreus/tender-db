@@ -1,6 +1,6 @@
 # 168 — organization identifier landscape across countries and eras
 
-Status: open — research gap #2 (docs/research/research-gaps-2026-08.md), before launch if Organizations stay a headline feature
+Status: ready-for-agent — rig decided 2026-08-23 with 167: on-box bounded reads, no separate authorization needed
 Role: run-driver
 
 CONTEXT promises one profile per real-world entity; the only evidence in the
@@ -24,3 +24,9 @@ country column speaks three vocabularies plus NULL. Validation-rule
 catalog seed in §3 (rules 1-7 feed B8). Remaining for the full study
 (false-merge/split RATES, full fake-country inventory): the snapshot
 machine — folded into issue 167's rig authorization.
+
+## Rig decision (2026-08-23, owner)
+
+Rides 167's decision: the remaining false-merge/false-split-rate measurement and the
+fake-country inventory run as bounded on-box reads under Lennart's 2026-08-23 blanket word for
+the measurement campaign. Queue behind 167's experiments.

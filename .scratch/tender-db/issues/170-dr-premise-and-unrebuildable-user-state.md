@@ -1,6 +1,6 @@
 # 170 — DR premise re-check + unrebuildable user state
 
-Status: open — research gap #4 (docs/research/research-gaps-2026-08.md), before launch; needs a Lennart re-decision
+Status: RESOLVED 2026-08-23 — Lennart re-decided with the real numbers on the table: NO backups
 Role: run-driver
 
 The "no off-box backups, everything rebuildable in roughly a day" decision
@@ -25,3 +25,15 @@ path). Recommendation menu §7: (b) tiny off-box user-state copy is the
 pre-launch minimum (<100KB today, ~€0-4/mo) + two no-regret items (archive
 re-register path, schedule D4). Remaining: Lennart's re-decision (queued in
 bulk questions).
+
+## RESOLVED (2026-08-23) — the re-decision: no backups, risk accepted
+
+Lennart, directly, with the study's numbers presented (honest RTO 1–6 days; <1 MB of
+unrebuildable user state with zero copies; ~180 GB re-download on DB loss): **no backups of any
+kind — "we won't lose our db, so we do NOT need backups; it's fine if prod crashes and we lose
+data."** The off-box user-state copy recommendation (§7b) is DECLINED. That is the owner's
+record of an explicit, informed risk acceptance; the exposure enumeration in
+dr-premise-2026-08.md stays as the statement of what that acceptance covers.
+
+What stands regardless (already landed, not backups): the archive re-register-from-disk path
+(`RegisterArchive`, issue 23) and the weekly D4 re-hash probe (issue 173). No further work.

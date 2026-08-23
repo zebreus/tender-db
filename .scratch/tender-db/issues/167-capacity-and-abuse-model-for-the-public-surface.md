@@ -1,6 +1,6 @@
 # 167 — capacity/abuse model for the public surface
 
-Status: open — research gap #1 (docs/research/research-gaps-2026-08.md), HARD PRE-LAUNCH
+Status: ready-for-agent — rig decided 2026-08-23 (owner): ON-BOX, no scratch hardware; execute post-sweep
 Role: run-driver (measurement campaign needs team-lead's word per prod-box-reads)
 
 Eleven issues (17, 25, 55, 61, 70, 89, 115, 117, 120, 121, 122, 163) fixed
@@ -21,3 +21,20 @@ measurement campaign (rig, 4 experiments, deliverable, ~2 days). What
 remains is EXECUTION, gated on Lennart: authorization for a prod-shaped
 copy per docs/agents/prod-box-reads.md, plus the scratch-hardware cost
 call. Queued as a bulk question.
+
+## Rig decision (2026-08-23, owner) — on-box, aggressive, no money spent
+
+Lennart delegated the rig call with a blanket risk acceptance ("be aggressive; it's fine if
+prod crashes") and asked not to be asked again. Owner decision: the campaign runs ON the
+production box — no scratch hardware. Concretely:
+
+- The four experiments from capacity-model-v0.md run against the LIVE surface in quiet windows
+  (pre-dawn, clear of the 09:35 daily): hostile-SQL saturation via /v1/sql, SSE fan-out cost
+  curve with synthetic subscriptions, per-endpoint worst-case timing, importer-vs-API
+  contention measured during a real fold.
+- Reads that would gate on prod-box-reads.md are covered for THIS campaign by Lennart's
+  2026-08-23 blanket word (recorded here); the standing gate stays for future cases.
+- Degraded service during measurement windows is accepted; the deliverable is the written
+  capacity budget the rate limits derive from.
+
+Execution starts once the slice-9 close-out queue (jobs 363–365) drains.
