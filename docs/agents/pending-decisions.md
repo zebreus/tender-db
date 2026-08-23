@@ -1,7 +1,7 @@
 # Pending decisions — the Lennart queue
 
 The decisions only the team lead can make, assembled from the issues that name them
-(167, 168, 170, 173). Each has its study DONE and a recommendation attached: a
+(167, 168, 170). Each has its study DONE and a recommendation attached: a
 one-word answer unblocks each line. Maintained by the owner; delete an entry when
 its decision lands in the issue it came from.
 
@@ -34,15 +34,13 @@ user-state tables (<100 KB today, ~€0–4/mo) plus the two no-regret items (th
 archive re-register-from-disk path; scheduling D4). The 500 GB corpus stays
 re-derivable, exactly as originally intended.
 
-## 3. The GDPR assessment record (issue 173a)
+## Answered
 
-The lawyer's assessment is the factual basis of a standing design rule, but the
-document was deleted — the repo retains no record of what it covered while the
-system demonstrably stores natural-person data (UBOs, contact persons).
-
-**Ask:** ~1 hour with you (or your lawyer's notes) to restore a one-page dated
-scope record. Nothing else in 173 needs you — the tombstone design note and the
-D4/D5 probes are owner work.
+- **Data-protection record (was §3, issue 173a)** — answered 2026-08-23, Lennart
+  directly: the lawyer confirmed all stored information is public; the topic is
+  closed and the concern language removed from the corpus. The standing rule
+  ("never re-introduce privacy-driven design") stands, with that dated word as
+  its basis (recorded in issue 173).
 
 ## Not queued (deliberately)
 

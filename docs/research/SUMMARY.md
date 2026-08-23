@@ -499,7 +499,8 @@ claims above against upstream and correcting the research docs in place:
 gaps: capacity/abuse model, organization identifiers, storage lifecycle at
 0.5 TB, DR premise + unrebuildable user state, change-feed contract across
 rebuilds, value-domain profile, classification/currency drift, redaction
-path + the deleted GDPR record's scope). Board issues 167–173 track them.
+path). Board issues 167–173 track them; the legal-record half of the redaction
+gap closed 2026-08-23 (Lennart: lawyer confirmed all stored information is public).
 Two corrections it makes to THIS file, recorded rather than rewritten so §5
 stays an honest minute of the 2026-07-19 session:
 
