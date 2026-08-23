@@ -1,6 +1,9 @@
 # 271 — the D1 turso bench/probe suite is gone from the box
 
-Status: needs-triage — filed 2026-08-23 (owner), found preparing issue 166's reprobe
+Status: RESOLVED 2026-08-23, same day — option 1 taken for the leg that mattered: the kill-9
+crash loop is restored IN-REPO (`ops/turso-crash-loop.sh` + `crash_probe` example) and ran clean
+under 0.7.2 (16 rounds, 1,073 acked commits, no torn batch); the throughput leg is retired with
+its reasoning recorded in turso-scale.md §4. The D1 doc now points only at gates that exist
 Kind: operability (a documented gate cannot run)
 Blocked by: —
 Relates to: 166 (whose D1 reprobe step this blocks), 224 (the box-rebuild loss class — same
@@ -35,3 +38,24 @@ Either restore or retire, explicitly:
 Either is fine; the doc and reality must agree. Owner's lean: (1) is a day of work re-deriving
 the suite from turso-scale.md's measurement descriptions; (2) is honest if the EQP gates are
 judged to cover the planner-regression risk the bench existed for. Decide when 166 deploys.
+
+## RESOLVED (2026-08-23, owner) — restore the durability leg, retire the throughput leg
+
+Built and ran the same day:
+
+- `crates/store/examples/crash_probe.rs` — write mode appends fold-shaped batches (tender +
+  version + 5 texts per `BEGIN IMMEDIATE…COMMIT`, TRUNCATE checkpoint every 32) and acks each
+  commit on stdout; verify mode reopens after a kill -9 and holds turso to the WAL contract
+  (every acked commit present, batches whole, no FK orphans).
+- `ops/turso-crash-loop.sh` — N rounds over ONE surviving database (restart-over-existing is
+  prod's real recovery path), kill armed only after the first ack, and a zero-ack round is a
+  FAILURE of the probe (a startup-crashing writer must not sail through against an empty DB —
+  the hollow-pass bug was caught live while building this, exactly that way).
+- First run under turso 0.7.2: **16 rounds, 1,073 acked commits, zero losses/tears** — D1 step
+  1 for issue 166's bump is satisfied in substance.
+- turso-scale.md §4 amended: gates now named are the crash loop + the EQP/view-pushdown plan
+  pins; the throughput numbers stay as historical measurements.
+
+Planner regressions were already covered in-repo; what the box lost and the repo lacked was
+durability-under-kill, and that is what was restored — versioned, so the next box rebuild
+cannot take it.

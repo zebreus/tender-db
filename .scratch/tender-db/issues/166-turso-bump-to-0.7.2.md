@@ -60,3 +60,11 @@ the D1 doc; decide at deploy time). (2) `./deploy.sh` was refused twice by the s
 permission classifier (same transient class as the 2026-08-16 incident — allow-listed, refused
 anyway); retrying next firing. Exposure audit stands at none, so the bump keeps riding the
 next successful deploy window.
+
+### D1 step 1 satisfied via the restored in-repo gate (2026-08-23)
+
+Issue 271 rebuilt the crash-loop leg in the repository; first run under 0.7.2: 16 kill -9
+rounds, 1,073 acked commits, no torn batch, no lost ack (dev container, real schema). With the
+EQP/view-pushdown plan pins green since the bump, the D1 protocol's substance is met; the
+journal watch through a daily tick (step 2) continues via the hourly check-ins on rev
+`3278106`+.

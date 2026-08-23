@@ -221,8 +221,19 @@ and 0.7.0. ~19k changed lines in `turso_core`. Relevant to us:
    regresses.
 3. 0.7.0 contains the corruption/crash fixes listed above and dropped the
    beta label.
-4. Using `=` makes the pin real for the next bump, and future upgrades should
-   re-run `/opt/tender-db/turso-bench/` (probes + crash loop at minimum).
+4. Using `=` makes the pin real for the next bump. Future upgrades re-run the
+   IN-REPO gates (amended 2026-08-23, issue 271 — the on-box
+   `/opt/tender-db/turso-bench/` was lost with the 2026-08-09 box rebuild, the
+   issue-224 loss class):
+   - **durability**: `ops/turso-crash-loop.sh` — kill -9 rounds against the
+     real schema via `crates/store/examples/crash_probe.rs`; every acked
+     commit must survive, no torn parent/satellite batch, no FK orphans.
+     First run under 0.7.2: 16 rounds, 1,073 commits, clean.
+   - **planner**: the EXPLAIN-QUERY-PLAN pin tests and
+     `crates/store/tests/view_pushdown_probe.rs`, which run in every suite.
+   The old bench's throughput leg is retired: its numbers below stand as
+   historical measurements, and a future scale question re-derives its own
+   harness rather than resurrecting box-only scripts.
 
 ## 5. Practical guidance for tender-db
 
