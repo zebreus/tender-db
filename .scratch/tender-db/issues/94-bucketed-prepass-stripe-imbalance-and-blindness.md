@@ -1,7 +1,7 @@
 # 94 — the bucketed pre-pass shards by id WIDTH, runs ~1× parallel, and reports nothing
 
-Status: open — observed live during the issue-85 re-fold, 2026-08-02. Do NOT deploy while a fold is
-in flight. Joins the incremental-projection hardening batch with 93.
+Status: RESOLVED — all three defects fixed in `f4ce4e1` and running live; recorded 2026-08-23 by
+the board-vs-code audit (the file had never been updated, same as 93/64)
 Kind: performance (parallelism) + operability
 Blocked by: —
 Relates to: 66 (the sharded pre-pass this is about), 62 (the bucketed fold), 90 (the same blindness one
@@ -85,3 +85,23 @@ self-evident the first time it runs.
   CPU-bound zero-I/O stretch is **still unexplained** (issue 91). Do not take that path until it is.
   Page-level amplification also blunts it: at ~1-in-30 density a scoped read touches nearly a page per
   notice per table, so the real win is well under 30×.
+
+## RESOLVED (recorded 2026-08-23, owner) — all three defects fixed in `f4ce4e1`, verified live tonight
+
+- **Defect 1 (stripe imbalance):** stripes now hold equally many PARSED notices
+  (`parsed_id_stripes`), not equal id widths — and the sweep is additionally bounded to the
+  PLAN's id range, so a scoped re-fold skips the empty id space entirely
+  (`write_buckets_sharded`, project.rs).
+- **Defect 2 (worker sizing):** `PREPASS_MIN_WORKERS = 8` floors the count independent of cores
+  (the sweep is latency-bound, queue depth is the lever), `TENDER_PREPASS_SHARDS` is the ops
+  valve, and `PREPASS_CHUNK_BUDGET / k` keeps peak RAM flat as k rises.
+- **Defect 3 (blindness):** per-shard stderr heartbeats plus an aggregate swept counter polled
+  into the job's Progress record every 2 s (issue 65's surface), with a closing tick after the
+  join.
+
+Live witness, tonight's campaign fold #326 (2026-08-22 20:51 UTC): `phase 2 pre-pass: 31
+shard(s) over notice ids (0, 28811137] (100% of the id space)` followed by heartbeats every ~10 s
+sweeping ~25K notices/s aggregate — the exact observability and parallelism this issue asked for.
+
+Still open elsewhere: the scoped-read variant this issue's fix list gated on issue 95's
+ParsedFold unknown stays parked with 95.
