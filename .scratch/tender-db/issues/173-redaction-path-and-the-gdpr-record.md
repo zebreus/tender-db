@@ -36,6 +36,15 @@ the point: the original hashes this compares against die with the DB (dr-premise
 probe must accumulate coverage before it is ever needed. Deploys with the next batch; first
 live run next Sunday (or manual: `admin.sh enqueue rehash-probe`).
 
-Still open here: D5 (the BT-198 reveal recheck — its in-DB matching semantics need their own
-design pass; the lost `51_republication.py` is not coming back), the tombstone design note, and
-gap 8a (the lawyer record, with Lennart — see docs/agents/pending-decisions.md).
+### D5 landed in code (2026-08-23, owner) — the reveal recheck, natively
+
+The lost `51_republication.py` is not coming back; the in-DB form replaces it. `reveal-recheck`
+job kind: over `notice_withheld_fields`, count withheld/dated/due, then for the due set (capped
+at 20k, cap reported honestly as `checked`) ask whether a LATER version of the same tender no
+longer withholds the same BT-195 field — kept promise vs standing reveal debt — plus a due-by-
+field breakdown. All drives indexed (`notice_sections_kind`, `tender_versions_notice`). Stored
+as a `reveal-recheck` report; weekly on the Sunday tick behind rehash-probe. Fixture test:
+one revealed, one debt, one not-yet-due.
+
+Still open here: the tombstone design note, and gap 8a (the lawyer record, with Lennart — see
+docs/agents/pending-decisions.md).

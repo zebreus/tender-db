@@ -1028,6 +1028,75 @@ impl Db {
         Ok(out)
     }
 
+    /// The D5 reveal recheck (issue 173 / dr-premise §6): does the corpus keep
+    /// BT-198's promise? A withheld field carries a "publish later" date; once
+    /// that date passes, SOME later notice of the same tender should carry the
+    /// value — visible here as a later version whose own privacy sections no
+    /// longer name the same field. `cap` bounds the correlated-EXISTS pass over
+    /// the due set so a pathological corpus cannot pin a reader for hours; the
+    /// report states how many were checked, never pretending the cap is the
+    /// population. All drives are indexed (`notice_sections_kind`,
+    /// `tender_versions_notice`).
+    pub async fn reveal_recheck(
+        &self,
+        now: i64,
+        cap: usize,
+    ) -> turso::Result<(i64, i64, i64, i64, i64, Vec<(String, i64)>)> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*),
+                        COALESCE(SUM(CASE WHEN publish_after IS NOT NULL THEN 1 ELSE 0 END), 0),
+                        COALESCE(SUM(CASE WHEN publish_after <= ? THEN 1 ELSE 0 END), 0)
+                 FROM notice_withheld_fields",
+                (Value::Integer(now),),
+            )
+            .await?;
+        let (withheld, dated, due) = match rows.next().await? {
+            Some(row) => (int(&row, 0), int(&row, 1), int(&row, 2)),
+            None => (0, 0, 0),
+        };
+        drop(rows);
+
+        let mut rows = conn
+            .query(
+                "SELECT COALESCE(SUM(revealed), 0), COUNT(*) FROM (
+                   SELECT CASE WHEN EXISTS (
+                     SELECT 1 FROM tender_versions tv1
+                     JOIN tender_versions tv2
+                       ON tv2.tender_id = tv1.tender_id AND tv2.seq > tv1.seq
+                     WHERE tv1.caused_by_notice_id = w.notice_id
+                       AND NOT EXISTS (
+                         SELECT 1 FROM notice_withheld_fields w2
+                         WHERE w2.notice_id = tv2.caused_by_notice_id
+                           AND w2.withheld_field IS w.withheld_field)
+                   ) THEN 1 ELSE 0 END AS revealed
+                   FROM notice_withheld_fields w
+                   WHERE w.publish_after <= ? LIMIT ?)",
+                (Value::Integer(now), Value::Integer(cap as i64)),
+            )
+            .await?;
+        let (revealed, checked) = match rows.next().await? {
+            Some(row) => (int(&row, 0), int(&row, 1)),
+            None => (0, 0),
+        };
+        drop(rows);
+
+        let mut rows = conn
+            .query(
+                "SELECT COALESCE(withheld_field, '(none)'), COUNT(*)
+                 FROM notice_withheld_fields WHERE publish_after <= ?
+                 GROUP BY 1 ORDER BY 2 DESC LIMIT 12",
+                (Value::Integer(now),),
+            )
+            .await?;
+        let mut by_field = Vec::new();
+        while let Some(row) = rows.next().await? {
+            by_field.push((text(&row, 0), int(&row, 1)));
+        }
+        Ok((withheld, dated, due, checked, revealed, by_field))
+    }
+
     /// Highest period key with the given prefix, e.g. prefix `2026-` over
     /// zero-padded daily periods yields the newest issue. Periods are
     /// zero-padded exactly so that MAX() is the newest.

@@ -229,6 +229,12 @@ enum Spec {
     /// drift — the re-ingest DR premise's unverified assumption, measurable only
     /// while the original hashes still exist — accumulates coverage weekly.
     RehashProbe { samples: usize },
+    /// The D5 reveal recheck (issue 173): measure whether BT-198 "publish
+    /// later" promises are kept — of the withheld fields whose reveal date has
+    /// passed, how many were actually revealed by a later notice version, and
+    /// how many are the source's standing reveal debt. Read-only; stores a
+    /// report. A unit variant → durable.
+    RevealRecheck,
     /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
     /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
     /// generation for the recovered baseline instead of appending. `#[serde(default)]`
@@ -677,6 +683,9 @@ impl Supervisor {
                     .await,
                 ])
             }
+            "reveal-recheck" => Ok(vec![
+                self.push("reveal-recheck", "reveal recheck".into(), Spec::RevealRecheck).await,
+            ]),
             "backfill-legacy-adjacency" => Ok(vec![
                 self.push(
                     "backfill-legacy-adjacency",
@@ -1522,6 +1531,33 @@ impl Supervisor {
                      {gone} gone, {skipped} skipped{}{alarm}",
                     page.len(),
                     if wrapped { " (registry cycle wrapped)" } else { "" },
+                ))
+            }
+            Spec::RevealRecheck => {
+                // The cap bounds the correlated pass; 20k due rows is far past
+                // today's BT-198 population, and the report carries `checked` so
+                // a capped run reads as capped, not complete.
+                let now = store::now_unix();
+                let (withheld, dated, due, checked, revealed, by_field) =
+                    self.db.reveal_recheck(now, 20_000).await.map_err(|e| e.to_string())?;
+                let report = serde_json::json!({
+                    "withheld_rows": withheld, "with_reveal_date": dated, "due": due,
+                    "checked": checked, "revealed_at_head": revealed,
+                    "still_withheld": checked - revealed,
+                    "due_by_field": by_field
+                        .iter()
+                        .map(|(f, n)| serde_json::json!({ "field": f, "due": n }))
+                        .collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("reveal-recheck", &report, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "reveal recheck: {withheld} withheld field(s), {dated} dated, {due} due; \
+                     of {checked} checked, {revealed} revealed at head, {} still withheld",
+                    checked - revealed,
                 ))
             }
             Spec::ProbeDoe => {
@@ -3037,6 +3073,19 @@ impl Supervisor {
                             "rehash-probe",
                             "rehash probe (weekly, 8 package(s))".into(),
                             Spec::RehashProbe { samples: 8 },
+                        )
+                        .await;
+                    }
+                    // And the D5 reveal recheck (issue 173): read-only aggregates
+                    // over the withheld-fields view, minutes at most, and weekly is
+                    // exactly the cadence a reveal-debt trend needs.
+                    if self.queued().iter().any(|j| j.kind == "reveal-recheck") {
+                        eprintln!("[schedule] reveal-recheck already queued, skipping this week");
+                    } else {
+                        self.push(
+                            "reveal-recheck",
+                            "reveal recheck (weekly)".into(),
+                            Spec::RevealRecheck,
                         )
                         .await;
                     }
