@@ -1,6 +1,7 @@
 # 64 — reset_tender_layer thrashes tender indexes on a resume over a partial layer
 
-Status: open
+Status: RESOLVED structurally by issue 63's DROP+recreate rewrite (and the call order was flipped
+too); recorded 2026-08-23 by the board-vs-code audit — the file had never been updated
 Kind: performance
 Blocked by: —
 
@@ -53,3 +54,21 @@ Not a correctness issue — the reset completes and the fold is byte-identical. 
 is a one-time cost on a resume-over-partial. On a FRESH rebuild the tables are
 already empty so it is free; it only bites a resume that inherited a populated,
 indexed layer.
+
+## RESOLVED (recorded 2026-08-23, owner) — twice over, by later work
+
+The pathology was per-row `DELETE FROM <table>` maintaining still-present random-key indexes.
+Both halves of that premise are gone:
+
+1. `reset_tender_layer` no longer DELETEs anything: issue 63's deadlock fix rewrote it to
+   `DROP TABLE` + recreate bare, for `tenders` and all 17 content tables
+   (canonical.rs `drop_and_recreate`). A DROP takes the table's indexes with it — there is no
+   per-row index maintenance left on this path, whatever state the prior layer was in.
+2. The call order this issue asked for ALSO landed: `project.rs` runs `strip_tender_indexes()`
+   BEFORE `reset_tender_layer()` (project.rs:1022 vs :1029), so even a future DELETE-shaped
+   reset would run unindexed.
+
+The rebuild=true resume over a partial fully-indexed layer — the triggering scenario — has been
+exercised repeatedly since (issue 85 re-fold, the bulk-recovery rebuilds) with no silent
+disk-storm phase; the WAL-before/after diag lines around the reset (project.rs:1023,1030) are
+the witness that would have flagged it.

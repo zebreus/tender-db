@@ -1,6 +1,7 @@
 # 93 — `retire_regrouped_tenders` retires in ONE unbounded transaction, with no heartbeat
 
-Status: open — do NOT deploy while the issue-85 re-fold is in flight (deploying restarts a 7h sweep).
+Status: RESOLVED — fixed same day (`d15f1ae`, 2026-08-02), long deployed and battle-tested; this
+file just never said so (status staleness found by the 2026-08-23 board-vs-code audit)
 Kind: robustness (WAL/RAM bound) + operability
 Blocked by: —
 Relates to: 63 (bounded WAL — the pattern every other bulk writer in canonical.rs already follows),
@@ -133,3 +134,26 @@ crash resilience and observability. Worth it.
 
 **Also settled:** cursor gaps are possible when a chunk rolls back (AUTOINCREMENT advances regardless).
 Harmless — consumers seek with `cursor > last`, so a gap is indistinguishable from a quiet period.
+
+## RESOLVED (recorded 2026-08-23, owner) — the fix landed the same day, the file never said so
+
+`d15f1ae` (2026-08-02, "issue 93: retire Tenders in bounded chunks, and say so") implemented the
+whole Fix section, and both retirement paths now share the bounded body:
+
+- `retire_tenders_chunked` (canonical.rs) — `BEGIN IMMEDIATE` / chunk / `COMMIT` / TRUNCATE
+  checkpoint at `NODE_WRITE_BATCH`, with the per-chunk heartbeat
+  `[project] retire {what}: N/M Tenders retired`. Used by `retire_regrouped_tenders` AND
+  `retire_absorbed_legacy_tenders`.
+- The 17 per-orphan DELETEs became per-chunk `tender_id IN (…)` batches (`retire_chunk_tx`);
+  the change-feed's per-Tender event order is preserved and the code documents why only the
+  DELETEs are batched (a DELETE writes no change row).
+- Chunk boundaries proven byte-identical: `retirement_is_identical_however_it_is_chunked`
+  (crates/ingest/tests/project_incremental.rs) drives chunk=1 vs one pass and compares the
+  canonical layer including the cursor-ordered feed. The accepted partial-visibility decision
+  above is exactly what that test's model encodes.
+- Battle-tested since: the 58-v2 legacy retirements, issue 103's orphan sweeps, and every
+  text-era campaign fold have run through this path with heartbeats.
+
+Deliberately NOT taken, and staying that way unless a fold shows it matters: the scan-loop
+set-based rewrite (2 queries per touched Tender). The issue's own accounting caps it at ~12% of
+the incident's 344.8s, and the touched sets since have been far smaller than the orphan sets.
