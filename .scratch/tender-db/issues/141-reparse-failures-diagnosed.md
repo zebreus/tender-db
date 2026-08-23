@@ -1,5 +1,8 @@
 # Diagnosis: why the sdk-1.3 / sdk-1.7 quarantine tails fail to re-parse (task 39 / issue 140)
 
+Status: closed-diagnosis (historical record) — wave 1 of the unknown-customization drain; every
+verdict acted on (BT-803 fix et al.), counted in the ledger's "eForms SDK 1.0-1.11" entry
+
 Method: 10 members sampled from prod quarantine (3 fetches), extracted from the
 raw archive tars, and fed through the exact reprocess path
 (`ingest::profile::dispatch` → `ingest::process::parse_payload`) via

@@ -1,5 +1,8 @@
 # Diagnosis 4: the 3,571-row eForms residue after the eight parser fixes (rev 0dfe428)
 
+Status: closed-diagnosis (historical record) — wave 4 (nine causes incl. cause F, which became
+ADR-0010 and later issue 268's rounding reversal); acted on, counted in the ledger entry
+
 Method: same as issues 141/142/143. Fifteen outstanding members sampled
 stratified from prod quarantine (`reason='unknown-customization'`,
 `reprocessed_at IS NULL AND skipped_at IS NULL`) across three fetches (26 =

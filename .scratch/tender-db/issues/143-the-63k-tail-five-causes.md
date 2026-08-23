@@ -1,5 +1,8 @@
 # Diagnosis 3: the 63,037-row eForms residue after the three parser fixes (rev c6a7382)
 
+Status: closed-diagnosis (historical record) — wave 3 (the 63K tail's five constructs); acted on,
+counted in the ledger's "eForms SDK 1.0-1.11" entry
+
 Method: same as issues 141/142. Twelve outstanding members sampled stratified
 from prod quarantine (`reason='unknown-customization'`, `reprocessed_at IS NULL
 AND skipped_at IS NULL`) across four fetches, extracted from the archive tars

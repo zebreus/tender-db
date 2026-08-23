@@ -1,5 +1,8 @@
 # Diagnosis 2: the 1,456-row sdk-1.3 residue after the BT-803 fix
 
+Status: closed-diagnosis (historical record) — wave 2 (OPT-060 pre-1.7, bare ProcessJustification);
+acted on, counted in the ledger's "eForms SDK 1.0-1.11" entry
+
 Method: same as issue 141. Six outstanding residue members sampled from prod
 quarantine (`reason='unknown-customization'`, `detail LIKE '%eforms-sdk-1.3%'`,
 `reprocessed_at IS NULL AND skipped_at IS NULL`) across two fetches (36 =
