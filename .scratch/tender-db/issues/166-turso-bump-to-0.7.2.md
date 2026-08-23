@@ -41,3 +41,10 @@ Remaining, per the D1 protocol, when the queue is idle (campaign fold 334 must l
 2. Deploy with the ordinary gates; watch the journal through a daily tick.
 The upsert-corruption fix (#6858) we carry no exposure to, so there is no urgency ordering this
 above campaign work; it rides the next natural deploy window.
+
+### View planning under 0.7.2: unchanged (2026-08-23)
+
+Checked while the bump waits for its quiet-window reprobe: 0.7.2 still pushes no predicate into
+views (`crates/store/tests/view_pushdown_probe.rs`, filed under issue 239). So the deploy changes
+nothing on the `/v1/sql` analyst surface — no regression, and the NOT FILTERABLE guidance stays
+accurate. The probe doubles as the tripwire that will flag the first version where this improves.

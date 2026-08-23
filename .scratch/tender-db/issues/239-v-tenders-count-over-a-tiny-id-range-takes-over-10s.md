@@ -1,6 +1,6 @@
 # 239 — counting 5,000 ids of `v_tenders` takes over 10 seconds
 
-Status: CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
+Status: CAUSE RE-CONFIRMED under turso 0.7.2 (2026-08-23, plan-level tripwire landed); was CAUSE FOUND 2026-08-18 — turso pushes no predicate into ANY view, so the whole `v_*` analyst
 surface is unusable for filtered queries (a single-table view is 1000x slower than its table). The
 `current_title` denormalisation shipped and helps unfiltered reads, but is NOT the fix
 Kind: read-path cost (the headline analyst view is not usable for aggregates)
@@ -259,3 +259,36 @@ idea, and it would also speed every non-aggregate read of the view.
   — and mind the outage risk noted above when doing it.
 - A regression probe alongside the existing `crates/store/tests/*_probe.rs` cost tests, which exist for
   exactly this class.
+
+## Re-measured under turso 0.7.2 (2026-08-23, owner) — the gap persists, now pinned as a plan
+
+Issue 166 bumped turso 0.7.0 → 0.7.2 on main, which made the cheap discriminating measurement this
+issue keeps asking for: does the new planner push predicates into views? Answered locally with
+`EXPLAIN QUERY PLAN` against a scratch DB — no prod probes, so none of the outage risk the
+2026-08-18 note warns about.
+
+**No. Every filtered view query still plans `SCAN <view>`** — the view materialises in full and the
+caller's filter applies afterwards:
+
+    v_tender_current WHERE tender_id = 42   SCAN v_tender_current / SCAN tenders
+    v_tenders        WHERE id = 42          SCAN v_tenders / SCAN tender_versions + per-row PK seek
+    v_tenders count  WHERE id < 5000        same shape
+    v_lots           WHERE tender_id = 42   SCAN v_lots / SCAN lots + subquery machinery
+    v_organizations  WHERE id = 42          SCAN v_organizations / SCAN organizations
+
+Controls behave (base-table point read SEEKs the PK; a seek-defeated filter SCANs), so the plan
+text can say both. Two consequences:
+
+- **The open acceptance item "measure v_lots / v_organizations" is answered at plan level**:
+  identical no-pushdown shape, surface-wide, exactly as hypothesised. No need to burn prod SQL
+  workers proving it with a stopwatch.
+- **Deploying 166 will not move this issue** — same plans either direction, no regression and no
+  improvement. The NOT FILTERABLE docs stand.
+
+The tripwire is `crates/store/tests/view_pushdown_probe.rs`: it asserts today's SCAN-the-view
+plans, so the first turso bump that learns pushdown FAILS the test with instructions to re-measure
+on prod and lift the NOT FILTERABLE warnings. A second test pins the base-table point-read seek —
+the shape `/v1/docs` sends analysts to — as an actual regression guard.
+
+Remaining fix direction is unchanged: materialise the views as fold-maintained tables (the
+`current_*` columns are halfway there), or wait upstream with the tripwire armed.
