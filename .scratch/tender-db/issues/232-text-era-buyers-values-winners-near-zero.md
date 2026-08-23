@@ -210,3 +210,11 @@ Timing: the 186-374 redo sweep (running tonight) predates this code, so the era'
 layer gets countries on its NEXT full pass — which should be the one that also carries the
 `winner` fix once the `CO` archive study lands, exactly as buyer+AU rode one pass this time. No
 dedicated re-parse for CY/TW alone.
+
+### Buyer acceptance: 100.0% (2026-08-23, run #335)
+
+The redo sweep finished and the first full-corpus read shows section-1 buyer at **100.0%** for
+the text era (was 0.5% when this issue was filed, 63.0% mid-sweep). The buyer half of this
+issue is DONE end to end. CY/TW country homing (landed f6d7f76) still awaits the next era pass
++ deploy; `winner` is subsumed by 244's campaign (era winner-named now 100.0% where a result
+materialised — the CO-archive study this issue deferred became 244's slices).

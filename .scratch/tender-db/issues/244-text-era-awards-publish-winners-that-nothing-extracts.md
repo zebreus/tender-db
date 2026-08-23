@@ -1,6 +1,8 @@
 # 244 — 1.3M text-era award notices publish their winners in prose, and nothing extracts them
 
-Status: ERA ACCEPTANCE READ 2026-08-20 — section 3 shows the text era at **462,772 of 1,306,514 award
+Status: CAMPAIGN COMPLETE — post-sweep acceptance read 2026-08-23 (run #335): **83.2% materialised
+(1,086,607/1,306,514), winners named 100.0%, fold shortfall 0**; remaining: the 219,907 no-block
+residue read (slice-9 decision) and issue 270's five >1e12 amounts. Was: ERA ACCEPTANCE READ 2026-08-20 — section 3 shows the text era at **462,772 of 1,306,514 award
 notices materialised (35.4 %), from 0**, with the fold's own shortfall at 0. Slices 2-6 are deployed;
 the gap to the ~90 % the per-package A/B demonstrates is the redo sweep (task 38), which is now the
 only remaining stage. Still open beyond it: the award date, the tenders-received count, and the 2010
@@ -1075,3 +1077,31 @@ The last 38 packages are now queued in the same fold-less `reclaim_only` shape: 
 Remaining after fold 334 lands: the acceptance re-read — section 3's text-era award-with-result
 count against the recorded baseline (462,772 of 1,306,514 award notices), record the closing
 numbers here, and fold in the slice-9 notes + AU:→buyer mapping item before closing.
+
+## Post-campaign acceptance read (2026-08-23, data-quality run #335 — the first full-corpus read after the 186-374 redo sweep + closing fold 334)
+
+The sweep finished tonight: final reparse tranche done ~03:20 UTC, closing fold 334 landed
+458,572 changed notices → 352,196 Tenders (0 retired, shortfall 0, 1172.8s), and run #335
+measured the whole corpus (5,114s, 23 eras × 32 windows, 0 unmeasured).
+
+Text era 1993–2010 (3,786,955 versions), against the 2026-08-20 read:
+
+| metric | before campaign | 08-20 (slices 2-6) | NOW |
+|---|---|---|---|
+| awards materialised (§3) | 0 | 462,772 (35.4%) | **1,086,607 (83.2%)** |
+| winner named where present | — | — | **100.0%** (1,094,664 with winner) |
+| fold shortfall (§3) / invariant (§3b) | — | 0 / — | **0 / 100.0%** |
+| buyer (§1) | 0.5% | 63.0% mid-sweep | **100.0%** |
+| value (§1 versions) | ~0 | — | 11.6% (445,193 amounts projected) |
+| VAT basis stated (§6) | — | — | 76.9% |
+| factless (§7) | — | — | 0 |
+
+Residue: **219,907 award notices with no parsed result block (16.8%)** — the A/B had suggested
+~90% materialisation, so ~7 points of the gap live here. Per §3's own note this is a mix of
+genuinely-unextractable prose (the era's OTH_NOT-analogue bodies) and shapes the extractor still
+misses; splitting that is the slice-9 read (task #46): sample the no-block members per package
+band, classify, and either close as source-silence or cut slice 9. Section 8 flags 5 amounts
+>1e12 from the new money extraction — filed as issue 270, five bounded verdicts.
+
+Linkage (§2) reads 53.1% for the era — a chain property (issue 58's world), not this issue's
+extraction; noted so nobody re-derives it as a 244 defect.

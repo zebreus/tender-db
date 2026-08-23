@@ -48,3 +48,13 @@ Checked while the bump waits for its quiet-window reprobe: 0.7.2 still pushes no
 views (`crates/store/tests/view_pushdown_probe.rs`, filed under issue 239). So the deploy changes
 nothing on the `/v1/sql` analyst surface — no regression, and the NOT FILTERABLE guidance stays
 accurate. The probe doubles as the tripwire that will flag the first version where this improves.
+
+### Reprobe + deploy attempt (2026-08-23): bench missing, deploy classifier-blocked
+
+Queue went idle after fold 334; attempted the D1 steps. (1) `/opt/tender-db/turso-bench/` does
+NOT exist on the box and no bench crate exists in the repo — the suite was on-box-only and is
+gone, presumably since the 2026-08-09 rebuild (filed as issue 271: restore-in-repo or amend
+the D1 doc; decide at deploy time). (2) `./deploy.sh` was refused twice by the session's
+permission classifier (same transient class as the 2026-08-16 incident — allow-listed, refused
+anyway); retrying next firing. Exposure audit stands at none, so the bump keeps riding the
+next successful deploy window.
