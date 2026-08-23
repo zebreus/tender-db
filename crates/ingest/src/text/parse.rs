@@ -475,6 +475,40 @@ fn strip_lot_prefix(value: &str) -> &str {
     }
 }
 
+/// How far into a value a `CONTRACT NO <ref>:` prefix may run before the winner's
+/// name. The measured shape is `Contract No 04/2004/OIL:` — a file reference, well
+/// under this — and the bound is what keeps a stray `CONTRACT NO` mid-sentence from
+/// swallowing half the window hunting for a colon.
+const CONTRACT_NO_PREFIX_MAX: usize = 48;
+
+/// The length of a leading `CONTRACT NO <ref>:` prefix on a winner value, or 0.
+///
+/// The 2004/2005 sectioned form numbers each award INSIDE the value — the residue
+/// read's specimen (notice 2,368,067) prints
+/// `V.1.1) Name and address of the successful … provider: Contract No 04/2004/OIL:
+/// Martin Reinert Sàrl, …` — and `CONTRACT NO` is also an [`ITEM_STOPS`] entry (it is
+/// the boundary BETWEEN awards in the multi-contract shape), so without this hop the
+/// value ends before it begins and a published, extractable winner reads as no winner
+/// at all (issue 244 slice 9). The hop is taken only when the marker OPENS the value:
+/// mid-window occurrences keep their boundary meaning.
+fn contract_no_prefix_len(rest: &str) -> usize {
+    const MARKER: &str = "CONTRACT NO";
+    let spaces = rest.len() - rest.trim_start_matches(' ').len();
+    let after = &rest[spaces..];
+    if after.len() < MARKER.len() || !after.as_bytes()[..MARKER.len()].eq_ignore_ascii_case(MARKER.as_bytes())
+    {
+        return 0;
+    }
+    let tail = &after[MARKER.len()..];
+    let bound = char_bound(tail, CONTRACT_NO_PREFIX_MAX);
+    // The reference runs to a colon and never contains a comma — a comma first means
+    // this is not a reference but prose, and the hop does not apply.
+    match tail[..bound].find(':') {
+        Some(colon) if !tail[..colon].contains(',') => spaces + MARKER.len() + colon + 1,
+        _ => 0,
+    }
+}
+
 /// Split one winner value into one segment per winner.
 ///
 /// Two separators, both measured in the committed 1993 daily. `;` is the utilities
@@ -587,6 +621,9 @@ fn awarded_names(body: &str) -> Vec<String> {
         };
         let value_at = start + label.len();
         let rest = &flat[value_at..];
+        // Hop a leading `Contract No <ref>:` before bounding the value — see
+        // `contract_no_prefix_len` for why this must run before the ITEM_STOPS scan.
+        let rest = &rest[contract_no_prefix_len(rest)..];
         // Look for the value's end in a WINDOW, not in the rest of the notice. Scanning
         // the whole remainder made the function quadratic in (awards × body length), and
         // a notice awarding hundreds of contracts then took minutes: the campaign's
@@ -903,8 +940,10 @@ pub fn parse(text: &str) -> Result<Parsed, Rejected> {
     if emit.parsed.values.is_empty() {
         return Err(Rejected { reason: "empty-record", detail: "no header fields".into() });
     }
+    claim_award_skeleton(&mut emit);
     claim_awarded_value(&mut emit);
     claim_award_date(&mut emit);
+    claim_tenders_received(&mut emit);
     home_authority_descriptors(&mut emit);
     Ok(emit.parsed)
 }
@@ -1079,6 +1118,138 @@ fn days_in_month(month: u32, year: i32) -> u32 {
 /// A body with no winner has no result block, and then the date has nowhere to land: the
 /// canonical model hangs an award date on an award, not on a Tender. Those notices keep
 /// the date in their `TXT-TX` prose, retrievable, exactly as before.
+/// Phrases with which an award body says the procedure ended WITHOUT an award, in
+/// the winner slot or beside it. Literal and short on purpose, like [`NAME_REJECTS`]:
+/// each entry is added with its own evidence, because a broad "sounds cancelled" test
+/// would also match bodies that merely mention a cancelled predecessor.
+const REJECTION_PHRASES: [&str; 3] =
+    ["ALL TENDERS WERE REJECTED", "ALL OFFERS WERE REJECTED", "ALL TENDERS HAVE BEEN REJECTED"];
+
+/// Mint the result a winner-silent award body earns (issue 244 slice 9).
+///
+/// The residue read behind this: of the 219,907 award notices left with no result
+/// block after slices 1-8, three of four sampled bands were REAL awards whose winner
+/// slot the publisher left empty, filled with `Various`, or filled with rejection
+/// prose — the same publisher-silence the sdk-0.1 study (issue 257) taught us never
+/// to read as "no result". The extractor minted results only via a winner name, so
+/// those awards materialised nothing.
+///
+/// So: an award-typed body (`TD: 7`) that minted NO result via its names, but which
+/// states an award date or says outright that every tender was rejected, yields ONE
+/// bare `LotResult` — no Organization is ever invented (the 257 rule). What the
+/// projection then does with the evidence (`read_legacy_results`):
+///
+/// - rejection phrase → `TED-NO_AWARDED_CONTRACT` here → decision `clos-nw`;
+/// - award date, no winner, no result-scoped value → decision stays NULL — an award
+///   the publisher announced and did not detail is silence, not closure;
+///
+/// and `claim_award_date`/`claim_tenders_received` run AFTER this, so the date and
+/// the count land on the section minted here.
+fn claim_award_skeleton(emit: &mut Emit) {
+    let is_award = emit.parsed.values.iter().any(|v| {
+        v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
+    });
+    if !is_award || emit.parsed.sections.iter().any(|s| s.kind == "LotResult") {
+        return;
+    }
+    let Some(body) = emit.parsed.values.iter().find_map(|v| match (&v.field_id, &v.value) {
+        (f, NoticeValue::Text { value, .. }) if f == "TXT-TX" => Some(value.as_str()),
+        _ => None,
+    }) else {
+        return;
+    };
+    // Flattened first: the era wraps at ~72 columns, so a phrase can straddle a
+    // line break — the same reason `awarded_names` flattens before matching.
+    let flat = flatten(body);
+    let rejected = REJECTION_PHRASES.iter().any(|p| find_ascii_ci(&flat, p).is_some());
+    if !rejected && award_date(body).is_none() {
+        return;
+    }
+    emit.root();
+    emit.parsed.sections.push(Section {
+        id: "RES-1".into(),
+        kind: "LotResult".into(),
+        parent: Some(SECTION.into()),
+    });
+    if rejected {
+        emit.push_into("RES-1", "TED-NO_AWARDED_CONTRACT", NoticeValue::Code {
+            list: None,
+            code: "1".into(),
+        });
+    }
+}
+
+/// The labels under which the era states how many tenders the buyer received.
+/// `TENDERS RECEIVED:` is the tail of both the numbered form's `5. Tenders
+/// received:` and the sectioned form's `VI.4) Number of tenders received:`.
+const TENDER_COUNT_LABELS: [&str; 2] = ["TENDERS RECEIVED:", "OFFERS RECEIVED:"];
+
+/// The one tenders-received count an award body states, or `None` — including when
+/// two statements disagree, the same refusal `awarded_value` makes: picking one
+/// would be a guess recorded as a fact.
+fn tenders_received(body: &str) -> Option<i64> {
+    if find_ascii_ci(body, "RECEIVED").is_none() {
+        return None;
+    }
+    let flat = flatten(body);
+    let mut claim: Option<i64> = None;
+    for label in TENDER_COUNT_LABELS {
+        let mut at = 0usize;
+        while let Some(i) = find_ascii_ci(&flat[at..], label) {
+            let rest = flat[at + i + label.len()..].trim_start();
+            let digits: String = rest.chars().take_while(char::is_ascii_digit).collect();
+            at += i + label.len();
+            // At most 6 digits: the biggest real count measured is two digits and a
+            // longer run is a reference number the label does not own.
+            if digits.is_empty() || digits.len() > 6 {
+                continue;
+            }
+            let n: i64 = digits.parse().ok()?;
+            match claim {
+                Some(seen) if seen != n => return None,
+                _ => claim = Some(n),
+            }
+        }
+    }
+    claim
+}
+
+/// Attach the notice's tenders-received count to its result (issue 244 slice 9) —
+/// `TED-NB_TENDERS_RECEIVED` is already in the projection's
+/// `LEGACY_BID_COUNT_FIELDS`, so it lands in the result's statistics with no new
+/// projection code. Only when the notice holds exactly ONE result: the count is
+/// notice-scoped, and copying it onto each of several contracts would state it
+/// several times over.
+fn claim_tenders_received(emit: &mut Emit) {
+    let is_award = emit.parsed.values.iter().any(|v| {
+        v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
+    });
+    if !is_award {
+        return;
+    }
+    let results: Vec<String> = emit
+        .parsed
+        .sections
+        .iter()
+        .filter(|s| s.kind == "LotResult")
+        .map(|s| s.id.clone())
+        .collect();
+    let [result] = results.as_slice() else { return };
+    let count = emit
+        .parsed
+        .values
+        .iter()
+        .find_map(|v| match (&v.field_id, &v.value) {
+            (f, NoticeValue::Text { value, .. }) if f == "TXT-TX" => Some(value.as_str()),
+            _ => None,
+        })
+        .and_then(tenders_received);
+    if let Some(n) = count {
+        let result = result.clone();
+        emit.push_into(&result, "TED-NB_TENDERS_RECEIVED", NoticeValue::Integer(n));
+    }
+}
+
 fn claim_award_date(emit: &mut Emit) {
     let is_award = emit.parsed.values.iter().any(|v| {
         v.field_id == "TXT-TD" && matches!(&v.value, NoticeValue::Code { code, .. } if code == "7")
@@ -1901,6 +2072,120 @@ mod tests {
         assert!(awarded_names(cancelled).is_empty());
     }
 
+    /// Issue 244 slice 9: a `Contract No <ref>:` prefix between the label and the name
+    /// is hopped, so the published winner behind it is read. Verbatim from prod notice
+    /// 2,368,067 (2003), one of the residue read's four specimens — `CONTRACT NO` is
+    /// also an ITEM_STOP, so before the hop this value ended before it began.
+    #[test]
+    fn a_contract_no_prefix_between_label_and_name_is_hopped() {
+        let body = "Section V: Award of contract\n\
+                    V.1.1)  Name and address of the successful supplier, contractor or service \n\
+                    provider: Contract No 04/2004/OIL:\n\
+                    Martin Reinert Sàrl, Mr Martin Reinert, 2, Op Tomm (Zone industrielle), \n\
+                    L-5485 Wormeldange-Haut. Tel.: (352) 76 92 98.\n\
+                    V.1.2)  Information on value of contract: Lowest tender: 268 352,20 EUR.";
+        assert_eq!(awarded_names(body), vec!["Martin Reinert Sàrl".to_owned()]);
+
+        // Mid-window the marker keeps its boundary meaning: the multi-contract shape's
+        // second award is NOT swallowed into the first value.
+        let two = "Award notice V.3) TO WHOM THE CONTRACT HAS BEEN AWARDED: Acme Ltd, Wood Street. \
+                   CONTRACT NO 2: V.3) TO WHOM THE CONTRACT HAS BEEN AWARDED: Bolt GmbH, Ringstr. 1.";
+        assert_eq!(awarded_names(two), vec!["Acme Ltd".to_owned(), "Bolt GmbH".to_owned()]);
+
+        // A comma before the colon means prose, not a reference — no hop, and the
+        // ITEM_STOP still bounds the value to nothing rather than minting the prose.
+        let prose = "Award notice 6.  Supplier(s): Contract no pending, see notes: none. 7.  Goods: X.";
+        assert_eq!(awarded_names(prose), Vec::<String>::new());
+    }
+
+    /// Issue 244 slice 9: a winner-silent award body still yields its RESULT — a bare
+    /// `LotResult` with the date and the count, and NO organization (the issue-257
+    /// rule: publisher silence is never read as "no result", and a non-name is never
+    /// minted as a company). Bodies are the residue read's own specimens.
+    #[test]
+    fn a_winner_silent_award_body_yields_a_bare_result() {
+        // Notice 17,438 (1993): date + count + `Supplier(s): Various.` — a real award
+        // whose winner the era's word for "no single answer" withholds.
+        let record = "1.0/000001\nND: 54814-1992\nTD: 7 - Contract awards\n\
+                      TX: 2. (a)  Award procedure: Restricted.\n    \
+                      3.  Date of award: 1. 12. 1992.\n    \
+                      5.  Tenders received: 8.\n    \
+                      6.  Supplier(s): Various.\n    \
+                      7.  Goods supplied: IV and irrigation fluids.";
+        let p = parse(record).expect("parses");
+        let results: Vec<&str> =
+            p.sections.iter().filter(|s| s.kind == "LotResult").map(|s| s.id.as_str()).collect();
+        assert_eq!(results, vec!["RES-1"], "the award materialises even winner-less");
+        assert!(
+            !p.sections.iter().any(|s| s.kind == "Organization" && s.parent.as_deref() == Some("RES-1")),
+            "no organization is invented for `Various`"
+        );
+        assert!(
+            p.values.iter().any(|v| v.section_id == "RES-1"
+                && v.field_id == "TED-CONTRACT_AWARD_DATE"
+                && matches!(&v.value, NoticeValue::Date { .. })),
+            "the award date lands on the minted result"
+        );
+        assert!(
+            p.values.iter().any(|v| v.section_id == "RES-1"
+                && v.field_id == "TED-NB_TENDERS_RECEIVED"
+                && matches!(&v.value, NoticeValue::Integer(8))),
+            "the tenders-received count lands in the statistics channel"
+        );
+        assert!(
+            !p.values.iter().any(|v| v.field_id == "TED-NO_AWARDED_CONTRACT"),
+            "a dated award with a silent winner is NOT closed-without-award"
+        );
+
+        // An explicit rejection is: the phrase wraps across the era's ~72-column lines
+        // and still reads, and the result carries the closure marker.
+        let rejected = "1.0/000001\nND: 1-2005\nTD: 7 - Contract awards\n\
+                        TX: SECTION V: AWARD OF CONTRACT\n    \
+                        V.3)  NAME AND ADDRESS OF ECONOMIC OPERATOR: All tenders \n    \
+                        were rejected.";
+        let p = parse(rejected).expect("parses");
+        assert!(
+            p.sections.iter().any(|s| s.kind == "LotResult"),
+            "a rejected procedure is a result, not an absence"
+        );
+        assert!(
+            p.values.iter().any(|v| v.field_id == "TED-NO_AWARDED_CONTRACT"),
+            "the rejection reaches the projection's clos-nw mapping"
+        );
+
+        // The guards: a non-award body mints nothing however date-like its text, and a
+        // dateless, phraseless award body still mints nothing (evidence, not type,
+        // earns the skeleton).
+        let non_award = "1.0/000001\nND: 2-1999\nTD: 3 - Invitation to tender\n\
+                         TX: 3.  Date of award: 1. 12. 1992.";
+        assert!(!parse(non_award).expect("parses").sections.iter().any(|s| s.kind == "LotResult"));
+        let bare = "1.0/000001\nND: 3-1999\nTD: 7 - Contract awards\n\
+                    TX: 7.  Goods supplied: Fuel.";
+        assert!(!parse(bare).expect("parses").sections.iter().any(|s| s.kind == "LotResult"));
+    }
+
+    /// Issue 244 slice 9: the count is claimed once, refused on disagreement, and
+    /// never copied onto a multi-result notice.
+    #[test]
+    fn tenders_received_is_one_agreed_fact_on_one_result() {
+        assert_eq!(tenders_received("5.  Tenders received: 8."), Some(8));
+        assert_eq!(tenders_received("VI.4)  Number of tenders received: 4."), Some(4));
+        assert_eq!(tenders_received("Offers received: 12. Tenders received: 12."), Some(12));
+        // Disagreement is refused, not resolved.
+        assert_eq!(tenders_received("Tenders received: 8. Tenders received: 9."), None);
+        // A digit run too long to be a count is a reference the label does not own.
+        assert_eq!(tenders_received("Tenders received: 20040101."), None);
+        // Two results, one notice-scoped count: attaching it to either would state
+        // it twice, so it is attached to neither.
+        let two = "1.0/000001\nND: 4-2005\nTD: 7 - Contract awards\n\
+                   TX: V.3) TO WHOM THE CONTRACT HAS BEEN AWARDED: Acme Ltd, Wood Street. \n    \
+                   CONTRACT NO 2: V.3) TO WHOM THE CONTRACT HAS BEEN AWARDED: Bolt GmbH, Ring 1. \n    \
+                   VI.4) Number of tenders received: 4.";
+        let p = parse(two).expect("parses");
+        assert_eq!(p.sections.iter().filter(|s| s.kind == "LotResult").count(), 2);
+        assert!(!p.values.iter().any(|v| v.field_id == "TED-NB_TENDERS_RECEIVED"));
+    }
+
     /// Issue 244: the money the numbered form states, and the far longer list of shapes
     /// it states money in that this refuses. Every string is from a prod body.
     #[test]
@@ -2503,15 +2788,21 @@ awarded_value("9.  Value of winning award(s): 1 000 000 EUR. 10.  Subcontract: N
         assert_eq!(date.section_id, result.id, "on the result, not on the root");
         assert!(matches!(date.value, NoticeValue::Date { has_time: false, .. }));
 
-        // A body with no winner has no result block, so the date has nowhere to land and
-        // nothing is minted for it — the model hangs an award date on an award.
+        // A dated body with no winner used to mint NOTHING — the date had nowhere to
+        // land. Slice 9 inverted that deliberately: the date is itself the award
+        // evidence, so a bare result is minted and the date lands on it (the
+        // winner-silence rule; see `a_winner_silent_award_body_yields_a_bare_result`
+        // for the full shape).
         let no_winner = format!(
             "1.0/000001\nND: 2-2001\nTD: 7 - Contract award\nTX: {}\n",
             "3.  Date of award: 30.3.2001.".replace('\n', "\n    ")
         );
         let p = parse(&no_winner).expect("parses");
-        assert!(p.sections.iter().all(|s| s.kind != "LotResult"));
-        assert!(p.values.iter().all(|v| v.field_id != "TED-CONTRACT_AWARD_DATE"));
+        let bare = p.sections.iter().find(|s| s.kind == "LotResult").expect("slice 9 mints the result");
+        assert!(
+            p.values.iter().any(|v| v.field_id == "TED-CONTRACT_AWARD_DATE" && v.section_id == bare.id),
+            "the date lands on the minted result"
+        );
     }
 
     /// A withheld winner must mint NOTHING. The era fills the item with boilerplate

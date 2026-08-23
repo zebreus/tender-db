@@ -452,7 +452,14 @@ fn the_1993_daily_yields_its_award_dates() {
     // differ because a date belongs to the award BLOCK while winners are per-organization,
     // and because a body can state a winner without a date or the reverse. Exact on
     // purpose, like the winner count.
-    assert_eq!(dates.len(), 72);
+    //
+    // 72 became 79 with slice 9: seven of this daily's award records are dated but
+    // winner-SILENT — four fill the supplier item with `Various.` (54814/54818/54826/
+    // 54827-1992, the residue read's own 1993 specimen among them) and three print no
+    // supplier heading at all — and each now mints a bare result for its date to land
+    // on instead of vanishing. The winner count below stays 117: silence mints a
+    // result, never an organization.
+    assert_eq!(dates.len(), 79);
 
     // Every one lands on a result block, never on the root...
     assert!(

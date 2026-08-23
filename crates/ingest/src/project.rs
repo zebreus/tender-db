@@ -3653,13 +3653,22 @@ fn read_legacy_results(sections: &HashMap<&str, &store::Section>, parsed: &Parse
         }
     }
 
-    // Decide from the evidence: a named winner or an awarded value is a win.
+    // Decide from the evidence: a named winner or an awarded value is a win. A
+    // result with NEITHER but with an award DATE stays NULL — the publisher
+    // announced an award and withheld its outcome, and reading that silence as
+    // `clos-nw` asserts a closure the source never published (the issue-257 rule,
+    // and what issue 244's slice 9 mints for the era's winner-silent award bodies).
+    // `clos-nw` remains the default only for a result block with no award evidence
+    // at all.
     for r in &mut raw.lot_results {
         r.direct_winners.sort();
         r.direct_winners.dedup();
         if r.decision.is_none() {
-            let awarded = !r.direct_winners.is_empty() || r.direct_cents.is_some();
-            r.decision = Some(if awarded { "selec-w" } else { "clos-nw" }.to_owned());
+            if !r.direct_winners.is_empty() || r.direct_cents.is_some() {
+                r.decision = Some("selec-w".to_owned());
+            } else if r.decided.is_none() {
+                r.decision = Some("clos-nw".to_owned());
+            }
         }
     }
     raw

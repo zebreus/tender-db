@@ -1140,3 +1140,25 @@ Then re-parse the era's no-block set (addressable: award-typed AND no result sec
 sampling predicate IS the reprocess predicate) + one incremental fold. Expectation: §3 density
 moves 83.2% → near the honest ceiling, and `with winner`'s denominator honesty matches sdk-0.1's
 (silence out of the denominator).
+
+### Slice 9 LANDED in code (2026-08-23, owner) — all suites green
+
+Implemented exactly as specified above: `claim_award_skeleton` mints a bare `LotResult` for a
+TD:7 body whose names minted nothing but which states an award date or an explicit
+all-tenders-rejected phrase (`REJECTION_PHRASES`, literal-and-evidenced like `NAME_REJECTS`);
+`contract_no_prefix_len` hops the `Contract No <ref>:` prefix (which is ALSO an ITEM_STOP —
+that collision is exactly why 2368067's published winner read as absent); `tenders_received` +
+`claim_tenders_received` claim the count (single-result notices only, disagreement refused);
+and `read_legacy_results`' decision default now leaves a dated, winner-less, value-less result
+at **NULL decision** (announced-and-withheld is silence, not `clos-nw` — the 257 rule) while a
+no-evidence block still defaults `clos-nw`.
+
+Verified end to end: the 1993 winner-silent fixture (54814-1992 itself) folds to one
+`lot_results` row, decision NULL, decided stamped, `tenders` statistic 8, zero winner rows.
+The 1993-daily corpus pin moved 72 → 79 award dates — the seven new ones are the daily's four
+`Various.` records and three heading-less ones, each now a dated bare result; the winner pin
+stayed 117 (silence never mints an organization).
+
+Remaining: deploy, then re-parse the no-block set (the sampling predicate is the reprocess
+predicate: TD:7 award-typed AND no result section) + one fold, then re-read §3 — expectation
+83.2% → the honest ceiling.

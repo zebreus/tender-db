@@ -2204,6 +2204,58 @@ async fn the_text_authoritys_country_reaches_its_organization() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 244 slice 9: a winner-silent text-era award — real award, `Supplier(s):
+/// Various.`, date and count published — folds to a lot_results row whose decision
+/// is NULL (the issue-257 rule: announced-and-withheld is silence, not `clos-nw`
+/// closure), carrying the decided stamp and the tenders-received statistic, and
+/// minting NO organization for the non-name.
+#[tokio::test]
+async fn a_winner_silent_text_award_folds_to_a_null_decision_result() {
+    let (db, fetch_id, path) = scratch("text-winner-silent").await;
+    ingest_as(
+        &db,
+        fetch_id,
+        "ted",
+        "text/1993-can-winner-silent.txt",
+        "en_19930102_001_utf8_org.zip!EN_19930102_1993001_UTF8_ORG",
+    )
+    .await;
+    let report = project::project(&db, false).await.expect("project");
+    assert_eq!(report.notices, 1);
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM lot_results").await,
+        1,
+        "the winner-silent award materialises a result"
+    );
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT CASE WHEN decision IS NULL THEN 'null' ELSE decision END \
+             FROM tender_version_lot_results"
+        )
+        .await
+        .as_deref(),
+        Some("null"),
+        "publisher silence stays NULL, not clos-nw"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results WHERE decided_utc IS NOT NULL").await,
+        1,
+        "the award date is the decided stamp"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT count FROM tender_version_result_stats WHERE kind = 'tenders'").await,
+        8,
+        "the tenders-received count reaches the statistics"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await,
+        0,
+        "no organization is minted for `Various`"
+    );
+    let _ = std::fs::remove_file(&path);
+}
+
 /// Issue 233: the 2008 OPOCE era measured 43.7 % title completeness against ≥ 96 %
 /// everywhere else — not because titles were lost, but because whole form families
 /// in that era have no title ELEMENT. `114238_2008.en` is an EEIG registration

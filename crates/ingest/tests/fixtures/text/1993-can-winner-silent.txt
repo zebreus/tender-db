@@ -1,0 +1,26 @@
+1.0/000001
+TI: UK-Cardiff: IV and irrigation fluids (with participation by GATT countries)
+PD: 19930102
+ND: 54814-1992
+OJ: 1/1993
+DR: 19921223
+DS: 19921223
+DT: 19930402
+HD: 75
+TD: 7 - Contract awards
+CY: GB
+OL: EN
+AU: WELSH HEALTH COMMON SERVICES AUTHORITY
+TW: CARDIFF
+CT: PHARMACEUTICAL PRODUCTS
+AB:  Goods supplied: IV and irrigation fluids.
+TX:  1.  Awarding authority: Welsh Health Common Services Authority, Heron
+    House, 25/43 Newport Road, UK-Cardiff CF2 1SB.
+     2. (a)  Award procedure: Restricted.
+     (b)
+     3.  Date of award: 1. 12. 1992.
+     4.  Award criteria: Best offer according to quality, delivery, service and
+    price.
+     5.  Tenders received: 8.
+     6.  Supplier(s): Various.
+     7.  Goods supplied: IV and irrigation fluids.
