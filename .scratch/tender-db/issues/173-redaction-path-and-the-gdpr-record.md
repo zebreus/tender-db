@@ -23,3 +23,19 @@ the repo (a D7 fragility). D4 is also a DR input (re-fetchability drift is
 unmeasured and the original hashes die with the DB). Both are small
 scheduled-job features; fold into the next ops batch. Gap 8a (the lawyer
 record) remains with Lennart.
+
+### D4 landed in code (2026-08-23, owner) — the immutability probe is a weekly job
+
+`rehash-probe` job kind: pages DISTINCT packages from the fetch registry by a stored cursor
+(`registry_page` + the `rehash-cursor` report row), re-downloads each with `refetch:true`, and
+lets the existing fetch path's sha256 compare classify — unchanged / DRIFTED (versioned beside
+the original, never overwritten) / GONE / error. Findings land in a stored `rehash-probe`
+report and the job summary carries an alarm line. Scheduled weekly ×8 on the pre-dawn Sunday
+tick behind the data-quality run — cycles today's registry in about a year, and the cadence is
+the point: the original hashes this compares against die with the DB (dr-premise C7), so the
+probe must accumulate coverage before it is ever needed. Deploys with the next batch; first
+live run next Sunday (or manual: `admin.sh enqueue rehash-probe`).
+
+Still open here: D5 (the BT-198 reveal recheck — its in-DB matching semantics need their own
+design pass; the lost `51_republication.py` is not coming back), the tombstone design note, and
+gap 8a (the lawyer record, with Lennart — see docs/agents/pending-decisions.md).

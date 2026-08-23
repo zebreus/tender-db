@@ -1001,6 +1001,33 @@ impl Db {
         }))
     }
 
+    /// One page of DISTINCT registered packages, keyed and ordered by each
+    /// package's newest fetch row id, strictly above `after_id` — the D4 re-hash
+    /// probe's sampling cursor (issue 173 / dr-premise §6). Grouping collapses a
+    /// package's re-fetch versions to one probe target; ordering by the group's
+    /// MAX(id) gives a stable cycle that a stored cursor can walk and wrap. The
+    /// registry is hundreds of rows, so the aggregate is trivially cheap.
+    pub async fn registry_page(
+        &self,
+        after_id: i64,
+        limit: usize,
+    ) -> turso::Result<Vec<(i64, String, String, String)>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT MAX(id) AS newest, source, kind, period
+                 FROM fetches GROUP BY source, kind, period
+                 HAVING MAX(id) > ? ORDER BY newest LIMIT ?",
+                (Value::Integer(after_id), Value::Integer(limit as i64)),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push((int(&row, 0), text(&row, 1), text(&row, 2), text(&row, 3)));
+        }
+        Ok(out)
+    }
+
     /// Highest period key with the given prefix, e.g. prefix `2026-` over
     /// zero-padded daily periods yields the newest issue. Periods are
     /// zero-padded exactly so that MAX() is the newest.

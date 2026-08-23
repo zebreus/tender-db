@@ -220,6 +220,15 @@ enum Spec {
     /// `confirmed` is the operator's explicit "yes, tie the queue up for this" —
     /// see the enqueue arm.
     DataQuality { confirmed: bool },
+    /// The D4 immutability probe (issue 173 / dr-premise §6): re-download a
+    /// SAMPLE of historical packages with `refetch:true` and let the fetch
+    /// path's hash compare say whether upstream still serves what we ingested.
+    /// A drifted package is versioned into the archive (never overwritten) and
+    /// named in the stored report; a vanished one is named too. The sample
+    /// cursor cycles the whole registry over successive runs, so re-fetchability
+    /// drift — the re-ingest DR premise's unverified assumption, measurable only
+    /// while the original hashes still exist — accumulates coverage weekly.
+    RehashProbe { samples: usize },
     /// Re-derive the canonical layer. `clear_changes` (rebuild only, issue 81)
     /// DROP+recreates the CDC feed first, so the rebuild re-emits ONE clean
     /// generation for the recovered baseline instead of appending. `#[serde(default)]`
@@ -653,6 +662,20 @@ impl Supervisor {
                 let params =
                     if confirmed { "data-quality" } else { "data-quality dry-run" }.to_owned();
                 Ok(vec![self.push("data-quality", params, Spec::DataQuality { confirmed }).await])
+            }
+            // The D4 immutability probe (issue 173): `packages` caps the sample
+            // (default 8 — a weekly 8 cycles the whole registry in about a year
+            // at today's size, and the cursor makes any cadence a continuation).
+            "rehash-probe" => {
+                let samples = req.packages.unwrap_or(8).max(1);
+                Ok(vec![
+                    self.push(
+                        "rehash-probe",
+                        format!("rehash probe ({samples} package(s))"),
+                        Spec::RehashProbe { samples },
+                    )
+                    .await,
+                ])
             }
             "backfill-legacy-adjacency" => Ok(vec![
                 self.push(
@@ -1385,6 +1408,121 @@ impl Supervisor {
                     })
                     .count();
                 Ok(format!("probed {} issue(s), {fetched} new", results.len()))
+            }
+            Spec::RehashProbe { samples } => {
+                // Where the cursor stopped last run; a missing or garbled report
+                // restarts the cycle from the oldest package, which only costs
+                // re-probing rows that were probed before — idempotent by design.
+                let after = match self.db.latest_report("rehash-cursor").await {
+                    Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body)
+                        .ok()
+                        .and_then(|v| v["after"].as_i64())
+                        .unwrap_or(0),
+                    _ => 0,
+                };
+                let mut page =
+                    self.db.registry_page(after, *samples).await.map_err(|e| e.to_string())?;
+                let mut wrapped = false;
+                if page.len() < *samples {
+                    // The cursor reached the registry's end: wrap to the oldest
+                    // packages so the cycle never stalls at the tail.
+                    wrapped = true;
+                    let more = self
+                        .db
+                        .registry_page(0, *samples - page.len())
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    page.extend(more.into_iter().filter(|(id, ..)| *id <= after));
+                }
+                self.update(|p| p.packages_total = page.len() as u64);
+                let (mut unchanged, mut drifted, mut gone, mut skipped) = (0, 0, 0, 0);
+                let mut findings: Vec<serde_json::Value> = Vec::new();
+                let mut cursor = after;
+                for (id, source, kind, period) in &page {
+                    self.update(|p| p.package = Some(format!("{source} {kind} {period}")));
+                    let target = match build_target(&self.ted_base, &self.doe_base, source, kind, period)
+                    {
+                        Ok(t) => t,
+                        Err(e) => {
+                            // A registry row no target builder covers is a finding,
+                            // not a crash — record it and keep cycling.
+                            skipped += 1;
+                            findings.push(serde_json::json!({
+                                "package": format!("{source} {kind} {period}"),
+                                "outcome": "unbuildable", "detail": e,
+                            }));
+                            cursor = cursor.max(*id);
+                            self.update(|p| p.packages_done += 1);
+                            continue;
+                        }
+                    };
+                    match fetch::fetch(&self.db, &self.http, &self.archive, &target, true).await {
+                        Ok(fetch::Outcome::Unchanged) => unchanged += 1,
+                        Ok(fetch::Outcome::NewVersion) => {
+                            // Upstream serves different bytes than we ingested. The
+                            // fetch path has already archived the new version BESIDE
+                            // the original — this is the drift D4 exists to see.
+                            drifted += 1;
+                            findings.push(serde_json::json!({
+                                "package": format!("{source} {kind} {period}"),
+                                "outcome": "drifted",
+                            }));
+                        }
+                        Ok(fetch::Outcome::NotFound) => {
+                            gone += 1;
+                            findings.push(serde_json::json!({
+                                "package": format!("{source} {kind} {period}"),
+                                "outcome": "gone",
+                            }));
+                        }
+                        Ok(other) => {
+                            skipped += 1;
+                            findings.push(serde_json::json!({
+                                "package": format!("{source} {kind} {period}"),
+                                "outcome": format!("{other:?}"),
+                            }));
+                        }
+                        Err(e) => {
+                            // One package's transient network failure must not void
+                            // the rest of the sample; it is recorded, not retried.
+                            skipped += 1;
+                            findings.push(serde_json::json!({
+                                "package": format!("{source} {kind} {period}"),
+                                "outcome": "error", "detail": e.to_string(),
+                            }));
+                        }
+                    }
+                    cursor = cursor.max(*id);
+                    self.update(|p| p.packages_done += 1);
+                }
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "probed": page.len(), "unchanged": unchanged, "drifted": drifted,
+                    "gone": gone, "skipped": skipped, "wrapped": wrapped,
+                    "findings": findings,
+                })
+                .to_string();
+                self.db.put_report("rehash-probe", &report, now).await.map_err(|e| e.to_string())?;
+                // The cursor advances even when packages misbehaved: a drifted or
+                // vanished package is REPORTED, and re-probing it every week would
+                // stall the cycle on exactly the rows we already know about. Wrap
+                // resets to the newest id consumed this run.
+                let next = if wrapped { page.iter().map(|(id, ..)| *id).max().unwrap_or(0) } else { cursor };
+                self.db
+                    .put_report("rehash-cursor", &serde_json::json!({ "after": next }).to_string(), now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let alarm = if drifted + gone > 0 {
+                    format!("; {} package(s) DRIFTED/GONE — read the report", drifted + gone)
+                } else {
+                    String::new()
+                };
+                Ok(format!(
+                    "rehash probe: {} probed — {unchanged} unchanged, {drifted} drifted, \
+                     {gone} gone, {skipped} skipped{}{alarm}",
+                    page.len(),
+                    if wrapped { " (registry cycle wrapped)" } else { "" },
+                ))
             }
             Spec::ProbeDoe => {
                 // The last completed T+1 day (DÖE rejects today/future): yesterday UTC.
@@ -2885,6 +3023,23 @@ impl Supervisor {
                         )
                         .await;
                     }
+                    // The D4 immutability probe rides the same pre-dawn Sunday tick,
+                    // queued BEHIND the measurement (the queue serializes them; the
+                    // probe is network-bound and touches the DB only through the
+                    // registry). Weekly ×8 cycles today's registry in about a year —
+                    // re-fetchability drift is a slow question, and the original
+                    // hashes it compares against die with the DB, so the cadence
+                    // matters more than the batch size (issue 173 / dr-premise §6).
+                    if self.queued().iter().any(|j| j.kind == "rehash-probe") {
+                        eprintln!("[schedule] rehash-probe already queued, skipping this week");
+                    } else {
+                        self.push(
+                            "rehash-probe",
+                            "rehash probe (weekly, 8 package(s))".into(),
+                            Spec::RehashProbe { samples: 8 },
+                        )
+                        .await;
+                    }
                 }
 
                 // Step past this tick so the next computation lands on tomorrow.
@@ -3400,6 +3555,24 @@ mod tests {
         );
         let _ = std::fs::remove_file(&path);
         Arc::new(store::Db::open(&path).await.unwrap())
+    }
+
+    /// Issue 173 (D4): the rehash probe enqueues with its sample cap, defaulting
+    /// to the weekly 8, and the params string names the count an operator will
+    /// see in the queue.
+    #[tokio::test]
+    async fn rehash_probe_enqueues_with_its_sample_cap() {
+        let db = scratch().await;
+        let sup = Arc::new(Supervisor::new(db, "archive".into(), reqwest::Client::new()));
+        sup.enqueue_request(&req("rehash-probe")).await.expect("enqueue default");
+        let mut capped = req("rehash-probe");
+        capped.packages = Some(3);
+        sup.enqueue_request(&capped).await.expect("enqueue capped");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 2);
+        assert_eq!(queued[0].params, "rehash probe (8 package(s))");
+        assert_eq!(queued[1].params, "rehash probe (3 package(s))");
+        assert!(queued.iter().all(|j| j.kind == "rehash-probe"));
     }
 
     fn req(kind: &str) -> JobRequest {
