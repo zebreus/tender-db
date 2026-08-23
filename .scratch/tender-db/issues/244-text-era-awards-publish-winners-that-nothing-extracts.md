@@ -1162,3 +1162,13 @@ stayed 117 (silence never mints an organization).
 Remaining: deploy, then re-parse the no-block set (the sampling predicate is the reprocess
 predicate: TD:7 award-typed AND no result section) + one fold, then re-read §3 — expectation
 83.2% → the honest ceiling.
+
+### Slice-9 era pass ENQUEUED (2026-08-23 ~09:00 UTC, owner)
+
+`d50df2e` deployed (health green), then the proven campaign queue shape re-enqueued for the
+whole era: jobs 339-355 (17 fold-less `reparse text` tranches, after 180..372 step 12, 12
+packages each), closing fold 356, data-quality re-read 357. One pass deliberately carries BOTH
+slice 9 and 232's CY/TW country homing into the stored parse layer — the "next era pass" both
+issues were waiting on. Baseline to beat in 357's section 3: 83.2% materialised / winner-named
+denominator honesty; section 1 buyer country lands via 232. ETA ~12-16h; hourly check-ins
+watch the chain.
