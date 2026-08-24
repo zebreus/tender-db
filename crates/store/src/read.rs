@@ -554,7 +554,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 19] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 20] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -588,6 +588,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 19] = [
                      isolates. The REST name-ordered path seeks organizations_name_norm_id \
                      (issue 217-B). Ignored by Tenders/Lots/Notices"),
     ("now", "not a predicate: the reference instant `status` compares against"),
+    ("country_seed", "not a request parameter: the async entries' drive-side decision \
+                      (issue 273 step 2), set AFTER isolation routing consults `walks`, \
+                      so it can never change where a read runs — only how fast it is there"),
 ];
 
 pub fn walks(collection: Collection, f: &Filter) -> bool {
