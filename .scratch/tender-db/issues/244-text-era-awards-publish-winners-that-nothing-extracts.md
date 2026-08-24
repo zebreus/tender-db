@@ -1172,3 +1172,19 @@ slice 9 and 232's CY/TW country homing into the stored parse layer — the "next
 issues were waiting on. Baseline to beat in 357's section 3: 83.2% materialised / winner-named
 denominator honesty; section 1 buyer country lands via 232. ETA ~12-16h; hourly check-ins
 watch the chain.
+
+## Slice-9 acceptance read (2026-08-24, data-quality run #365 — full-corpus, 100% slice-9 sweep)
+
+Section 3, text era: **1,129,215 of 1,306,514 award notices materialised = 86.4%** (baseline
+83.2% / 1,086,607 after slices 7-8) — slice 9 added +42,608, of which 31,758 are the new
+winner-less/cancelled result class (clos-nw) now carried as first-class results, and
+winner-NAMED completeness on result-carrying awards reads **100.0%** in the headlines
+(877,006/877,007). The close-out ran as: capped-chain undershoot caught (17-package tail),
+uncapped re-parse #363 over all 173 qualifying packages (issue 272's trap made aiming
+unreliable; brute idempotence chosen), full fold #364 (14.3M notices → 7.9M tenders, 2.6M
+rewritten), acceptance #365 (23 eras / 32 windows / 0 unmeasured).
+
+The 177,299 residue (13.6%) is the measured honest ceiling: bodies that publish nothing
+extractable (r2.0.8 OTH_NOT prose, empty F06 containers) — per-class residue notes in the
+report. **This issue's campaign is COMPLETE.** Any future gain here is a new, evidence-first
+issue against a named residue class, not this campaign.
