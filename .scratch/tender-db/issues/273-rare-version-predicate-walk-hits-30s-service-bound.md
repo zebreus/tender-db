@@ -95,3 +95,33 @@ two candidate-window shapes against prod via /v1/sql before writing any code:
 
 Not rushed into this firing's deploy on purpose: the D5 regression an hour earlier is the
 argument for landing this deliberately with prod re-validation.
+
+## Refinement (2026-08-24): the common cases need only a SMALL, provably-correct change
+
+Digging into the projection contract changes the plan. `status` is currently a per-row
+version-predicate EXISTS (read.rs:767, over `tender_version_dates`). But `status=open` is
+**provably equivalent** to the head-column range `t.current_deadline > now`:
+- `head_deadline()` (canonical.rs:933) writes `MAX(head submission_deadline)` into
+  `current_deadline` in the projection's head UPDATE.
+- `MAX(deadlines) > now` ⟺ `EXISTS(some deadline > now)` — MAX is the largest, so it exceeds
+  `now` iff at least one does. Exactly the Open predicate. Closed ⟺
+  `current_deadline IS NULL OR current_deadline <= now`.
+
+So converting status to a served head-range predicate on `current_deadline` (indexed by
+`tenders_current_deadline`) is safe AND bounds the scan for the whole combination: the killer
+`status=open&country=LU` stops being "country-EXISTS over all 7.9M" and becomes "country-EXISTS
+over the 36,600 `current_deadline > now` rows" — the 0.13s shape I validated. **This single
+change fixes the most common 273 cases (anything with status) and the mid-class status=open
+cost, with no cursor-contract change.**
+
+### Revised plan, in order
+1. **(small, do first)** In the Tenders query builders, when `status` is set, emit the
+   `current_deadline` head-range predicate and DON'T pass status to `version_predicates`; drop
+   status from `walks()`'s version-predicate set for Tenders so status-only runs on the main
+   pool. Update the 112/117 plan-pin tests to the new shape. Re-validate on prod. This alone
+   retires the common DoS.
+2. **(larger, later)** The general candidate-window + scan-cursor refactor (above) for the
+   residual no-status heavy case (`cpv=…&min_value=…&sort=deadline` with a sparse result).
+   Only needed once (1) lands and re-measurement shows what's left.
+
+Scoped for a focused session with prod re-validation; not rushed into an unattended deploy.
