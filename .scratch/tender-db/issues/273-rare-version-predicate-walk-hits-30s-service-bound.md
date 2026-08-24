@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: RESOLVED pending final deploy+measure — step 2 (sparse-side country seed) landed 2026-08-24 late; prod-validated 0.05–0.11s for the worst shapes
+Status: RESOLVED — deployed rev c4bebb7, closing matrix 2026-08-25 ~00:30 UTC: every status+country shape 0.65–1.3s with correct rows; the 30s→503 class is dead
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -266,3 +266,30 @@ untouched — a seeded read still runs isolated, it is just fast there.
 Prod-validated before landing: seeded CY, both orders, 83 rows in
 **0.05–0.11s** (was 1.8s default / 7.3–12.6s ordered). Deploy + live
 re-measure close the issue.
+
+## CLOSED — final matrix (rev c4bebb7, 2026-08-25 ~00:30 UTC)
+
+| shape | morning | close |
+|---|---|---|
+| status=open&country=LU (default) | 30.0s → 503, 0 rows | 1.07–1.27s, 100 rows |
+| status=open&country=CY (default) | 30.0s → 503, 0 rows | 0.71s, 83 rows |
+| status=open&country=cy (lowercase) | (same class) | 0.70s, 83 rows |
+| status=open&country=CY&sort=published_at | (same class) | 0.65–0.76s, 83 rows |
+| status=open&country=MT | (same class) | 0.72–0.80s, 100 rows |
+| status=open&country=DE | 0.25s | 0.68–0.71s, 100 rows |
+
+Two same-day regressions shipped and were caught landing step 2, both worth
+remembering:
+* The seed first shipped as ONE case-sensitive range — `?country=cy` returned
+  [] where LIKE matches; `tenders_shortcircuit` caught it (the reachability
+  guard's own lesson). Remedy: the seed enumerates `prefix_ranges`' case-variant
+  union.
+* The union then shipped as one OR'd WHERE — turso drops the bounds on OR and
+  row-filters the whole nuts partition, resurrecting the 30s→503 live for ~20
+  minutes until rollback. Remedy: UNION ALL branches, each an index seek, and
+  the rule that what deploys must be the exact statement that was timed.
+
+Residual (minor, not DoS-class): LU's ~1.1–1.2s rides the abundant-country
+wrap path (seed viability keeps LU seeded actually — 1.2s is the id-ordered
+outer join cost on 100 rows + probe; profile only if anyone cares). Step 2's
+machinery (probe + seed) adds ~10ms to dense-country requests.
