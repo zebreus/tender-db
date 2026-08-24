@@ -1,6 +1,6 @@
 # 167 — capacity/abuse model for the public surface
 
-Status: ready-for-agent — rig decided 2026-08-23 (owner): ON-BOX, no scratch hardware; execute post-sweep
+Status: research half DONE 2026-08-24 (on-box campaign, capacity-measured-2026-08.md); the FIX work is issue 273, then a rate-limit change
 Role: run-driver (measurement campaign needs team-lead's word per prod-box-reads)
 
 Eleven issues (17, 25, 55, 61, 70, 89, 115, 117, 120, 121, 122, 163) fixed
@@ -38,3 +38,19 @@ production box — no scratch hardware. Concretely:
   capacity budget the rate limits derive from.
 
 Execution starts once the slice-9 close-out queue (jobs 363–365) drains.
+
+## Campaign run 2026-08-24 (on-box) — research half complete
+
+Ran E1 (per-endpoint worst case), E1-redo (filter vocabularies), E2 (SSE snapshot +
+the walk pool), E3 (hostile-SQL swarm). Full log + the derived capacity budget in
+docs/research/capacity-measured-2026-08.md. Headlines:
+- Three cost classes spanning 5 orders of magnitude; rate limiting must be per-SHAPE.
+- SQL surface is safe (10s budget fires, freed reader, 2-gate sheds, REST-isolated).
+- **The scarce resource is the 4-slot walk pool × hold time** — not any per-IP number.
+- **Real bug found: issue 273** — `status=open` + a low-volume country walks to the 30s
+  bound → 503, uncancellable, so 4 trivial requests brown out all walk traffic.
+- Hardware corrected: 32 vCPU / 62 GB, so the 4-slot pool is policy not cores.
+
+Remaining: 168's identifier false-merge/split RATES + fake-country inventory (bounded
+reads, same on-box authorization); E4 mixed-soak (confirmatory); and the rate-limit
+code change, which is gated on issue 273's fix landing first.
