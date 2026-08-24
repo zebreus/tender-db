@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: step 1 LANDED (status as head-range; pending deploy) — step 2 (candidate-window cursor) open, re-measure after step 1 ships
+Status: step 1 DEPLOYED (2026-08-24) — 503s gone; step 2 (candidate-window) open for the sub-second bar
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -173,3 +173,17 @@ cold worst-case 2.7s is 10× under the service bound.
 Residual (step 2): the no-status sparse combinations (`cpv+min_value` etc.)
 still walk; re-measure once this ships and decide whether the general
 candidate-window refactor is still warranted.
+
+## Step 1 live measurement (2026-08-24, post-deploy 75f3e40)
+
+Live endpoint, warm: `status=open&country=LU` **3.6s / 200 with rows** (was
+30s → 503 with zero rows), CY 5.8s, DE 0.8s. Immediately after restart the
+cold first hits still reached the 30s bound once — cold page cache, not the
+old walk (the same query warm is seconds). The DoS as filed is defanged: a
+walk-pool slot is now held for seconds, not 30s+overrun.
+
+Residual for step 2: the published_at-ordered default plan evaluates the
+satellite SELECT list into the sorter for every WHERE-passing row (slim probe
+0.53s vs full 2.9–3.6s), so the sub-second acceptance bar needs the
+candidate-window shape (ids-only inner query, satellites outside). Re-measure
+CY/LU after that lands; sort=deadline pages already ride the index directly.
