@@ -1412,19 +1412,27 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
             // to the unseeded FROM rather than seeding wrongly.
             (Some(prefix), true) => match prefix_ranges(prefix) {
                 Some(ranges) => {
-                    let ors = ranges
+                    // UNION ALL of per-range branches, never one OR'd WHERE:
+                    // measured 2026-08-24 late, turso serves each branch as an
+                    // index seek (CY 0.09–0.11s) but drops the bounds on the OR
+                    // form and row-filters the whole nuts partition — which
+                    // resurrected the 30s→503 this seed exists to kill, live,
+                    // for the ~20 minutes before the rollback.
+                    let branches = ranges
                         .iter()
-                        .map(|_| "(code >= ? AND code < ?)")
+                        .map(|_| {
+                            "SELECT tender_id FROM tender_version_classifications
+                              WHERE scheme = 'nuts' AND code >= ? AND code < ?"
+                        })
                         .collect::<Vec<_>>()
-                        .join(" OR ");
+                        .join(" UNION ALL ");
                     let params = ranges
                         .into_iter()
                         .flat_map(|(low, high)| [t(&low), t(&high)])
                         .collect();
                     (
                         format!(
-                            "(SELECT DISTINCT tender_id FROM tender_version_classifications
-                               WHERE scheme = 'nuts' AND ({ors})) hits
+                            "(SELECT DISTINCT tender_id FROM ({branches})) hits
                                JOIN tenders t ON t.id = hits.tender_id"
                         ),
                         params,
