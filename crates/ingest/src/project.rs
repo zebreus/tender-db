@@ -245,6 +245,7 @@ const DATES: &[(&str, &str)] = &[
 /// enforces the two-disposition rule: a new graft fails the gate until it is
 /// mapped above or entered here with a reason. Revisit any entry when a
 /// consumer asks for it — that is what the reason strings are for.
+#[cfg(test)]
 const UBL_PARSE_ONLY: &[(&str, &str)] = &[
     // -- no canonical channel for the value type (code/integer/number/plain id).
     ("UBL-AddressFormatCode", "code; org/address satellite, no code fact channel"),

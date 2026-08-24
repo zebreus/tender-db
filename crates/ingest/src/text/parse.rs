@@ -1055,7 +1055,7 @@ fn award_date(body: &str) -> Option<(i64, i64, bool)> {
 fn read_dmy(text: &str) -> Option<(i64, i64, bool)> {
     let b = text.as_bytes();
     let mut i = 0usize;
-    let mut number = |i: &mut usize, max: usize| -> Option<String> {
+    let number = |i: &mut usize, max: usize| -> Option<String> {
         while *i < b.len() && b[*i] == b' ' {
             *i += 1;
         }

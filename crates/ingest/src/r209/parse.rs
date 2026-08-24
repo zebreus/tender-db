@@ -323,7 +323,7 @@ impl Walk {
                 self.children(el, &Ctx { section: ctx.section, parent: name, prefix: child_prefix, lang, currency }, &path)?;
             }
             Rule::Section(kind) => {
-                let id = self.open_section(kind.prefix(), kind.kind(), ctx.section, &path)?;
+                let id = self.open_section(kind.prefix(), kind.kind(), ctx.section)?;
                 self.emit_captures(&id, &field, &captures);
                 if let Some(item) = el.attribute("ITEM") {
                     self.emit(&id, "TED-ITEM", NoticeValue::Id {
@@ -350,7 +350,7 @@ impl Walk {
                 self.children(el, &Ctx { section: &id, parent: name, prefix: child_prefix, lang, currency }, &path)?;
             }
             Rule::Org => {
-                let id = self.open_section("ORG", "Organization", ctx.section, &path)?;
+                let id = self.open_section("ORG", "Organization", ctx.section)?;
                 self.emit_captures(&id, &field, &captures);
                 // The role is the element's own name, except for the generic
                 // defence CONTACT_DATA blocks, whose role lives on the wrapper.
@@ -708,7 +708,6 @@ impl Walk {
         prefix: &'static str,
         kind: &str,
         parent: &str,
-        path: &str,
     ) -> Result<String, Rejected> {
         let n = self.counters.entry(prefix).or_insert(0);
         *n += 1;
