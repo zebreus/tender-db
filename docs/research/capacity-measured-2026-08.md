@@ -93,3 +93,53 @@ prerequisite for any rps budget to mean anything.
 
 Still to run: E4 (mixed soak observing the 09:35 daily), CPU-count recheck, and the
 budget write-up once 273's fix direction is chosen.
+
+## Hardware correction (2026-08-24)
+
+The box is **32 vCPU / 62 GB RAM**, not the 4/8 the model assumed (capacity-model-v0.md
+§B rig line). This MATTERS for interpretation: the earlier "4 cores × 4.7s" framing of
+the un-walkable class is wrong — there are 32 cores. The walk pool is 4 slots by
+**policy** (`isolate.rs` ISOLATED_READERS = SLOTS = 4), not because the box has 4 cores.
+So the binding constraint on walk traffic is a deliberately small pool in front of an
+otherwise-idle 32-core machine — which makes both levers (widen the pool / bound the
+walk) cheap in hardware terms.
+
+## The capacity budget (deliverable, capacity-model-v0.md §5) — derived 2026-08-24
+
+Rate limiting must be **per-shape**, because the measured cost per request spans five
+orders of magnitude. Three classes:
+
+| class | example | cost/req | box capacity | today's posture | verdict |
+|---|---|---|---|---|---|
+| **cheap** (indexed seek / bounded range / cursor page) | default list, `winner=`, `country=DE`, `changes`, cursor walk, prefix org lookup | 2–60 ms | thousands/s (main reader pool, not the walk pool) | 10 rps/IP, burst 50 | **fine** — leave as is |
+| **mid** (bounded-range walk) | `status=open` | 0.55 s warm | 4 walk slots ⇒ ~7 concurrent-req/s steady before the pool saturates | 10 rps/IP | **too generous per-IP**; the pool, not the IP limit, is the real bound |
+| **heavy** (unindexed version-predicate walk) | `cpv=45&min_value=…&sort=deadline`; any 2 version-predicates on a sparse result | 4.7 s → **30 s → 503** (issue 273) | 4 walk slots total for the WHOLE box | 10 rps/IP | **undefended** — 4 requests brown out all walk traffic |
+
+Derived limits (proposal, feeds CONTEXT.md's posture once 273 lands):
+
+- **SQL**: keep. Measured safe — 10 s budget fires (408, reader freed), 2-concurrent
+  gate sheds with 429, fully isolated from REST. 2 concurrent / 300 per hour / 10 s
+  per query needs no change.
+- **Cheap REST**: keep 10 rps/IP + burst 50. The main reader pool absorbs it.
+- **Walk REST is the whole game.** The scarce resource is 4 walk slots × hold time,
+  not any per-IP number. Two things, in order:
+  1. **Bound walk time** (issue 273 fix): no walk may run to the 30 s service bound.
+     Cap scanned rows; return a short result or a fast 422 "narrow your filter." Until
+     this lands, a per-IP rate limit is theatre — 4 requests from 4 IPs still brown out
+     the surface.
+  2. **Meter walk slots, not just IPs**: an admission counter on the isolated pool
+     (e.g. ≤2 of the 4 slots per IP) so one client cannot occupy the whole pool. With
+     32 idle cores the pool can also simply be **widened** (ISOLATED_READERS 4 → e.g.
+     12) — cheap here, and it raises the mid/heavy ceiling proportionally. Widening is
+     not a substitute for (1): an unbounded walk just browns out a bigger pool slower.
+- **SSE**: the snapshot is a walk (≈66 rows/s) and holds a walk-class reader for its
+  whole duration; a large-filter subscription is a minutes-long hold. The 5-streams/IP
+  cap bounds fan-out count but not snapshot cost — so SSE belongs under the SAME walk
+  budget as heavy REST, and (1) applies to snapshots too (issue 55 already paginates
+  them for memory; this is the time dimension).
+
+**Bottom line for launch:** the rate *numbers* are mostly fine; the missing piece is
+that walk-class reads (heavy REST filters + SSE snapshots) share one small uncancellable
+pool with no per-client metering and no time bound. Issue 273 fix 1 is the prerequisite;
+pool metering + optional widening is the follow-up. This closes 167's research half —
+the remaining E4 soak is confirmatory, not blocking.
