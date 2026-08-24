@@ -207,3 +207,26 @@ id-ordered `tenders_query`/lots shapes still evaluate satellites inline, and a
 sparse no-status combination there still walks; those pages are PK-ordered
 (no sorter), so the satellite cost only bites rows that pass — re-measure
 before building anything.
+
+## Step 1b deployed + the residual, sharpened (2026-08-24 ~21:20 UTC, rev 350f98b)
+
+Live after deploy: LU `sort=published_at` 1.4s (was 3.6s), DE default 0.6s;
+worst measured shape CY ordered **12.6s live / 7.3s as the bare statement**
+(and the no-sort default path, which rides the id-ordered `tenders_query`,
+is unwrapped: LU 3.7s). No 503s anywhere, no 30s slot-pinning.
+
+The CY number isolates the true residual: CY's open∩country matches are **83
+— UNDER the page limit** — so the window cannot stop early and exhausts the
+entire open head (~36k candidates), paying the country-EXISTS for every one.
+Dense-or-abundant filters exit at the limit (LU: 100 rows, 0.35s); sparse
+ones pay the whole range. Wrapping cannot fix this class.
+
+Step 2 design candidates, in preference order:
+1. **Drive from the sparse side**: `tender_version_classifications (scheme,
+   code)` holds only thousands of rows for a sparse country — seed tender ids
+   from there, then check deadline-range + head-seq per id. Needs a
+   cheap cardinality probe (or the 117 guard's index) to pick the drive side.
+2. Scan budget + partial-page cursor (the original step-2 shape) — honest
+   sub-second at the cost of the client contract.
+Also: wrap the id-ordered `tenders_query` the same way as 1b (its no-sort
+default is what most clients hit; LU 3.7s there vs 1.4s ordered).
