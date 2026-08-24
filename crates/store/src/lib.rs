@@ -1032,23 +1032,39 @@ impl Db {
     /// BT-198's promise? A withheld field carries a "publish later" date; once
     /// that date passes, SOME later notice of the same tender should carry the
     /// value — visible here as a later version whose own privacy sections no
-    /// longer name the same field. `cap` bounds the correlated-EXISTS pass over
-    /// the due set so a pathological corpus cannot pin a reader for hours; the
+    /// longer name the same field. `cap` bounds the reveal-EXISTS pass to a
+    /// SAMPLE of the due set so a pathological corpus cannot pin a reader; the
     /// report states how many were checked, never pretending the cap is the
-    /// population. All drives are indexed (`notice_sections_kind`,
-    /// `tender_versions_notice`).
+    /// population.
+    ///
+    /// Deliberately hits the BASE tables, never the `notice_withheld_fields`
+    /// VIEW: that view carries a correlated subquery per section (`reason_text`,
+    /// `publish_after`), so any aggregate OVER it — even a bare `COUNT(*)` —
+    /// re-evaluates those per FieldsPrivacy section, and referencing it inside
+    /// the reveal correlation re-materialised it per (due row × later version).
+    /// On prod that ran for >12 min uncancellably (deployed 2026-08-24, caught
+    /// and rewritten same hour). The base-table form below drives entirely on
+    /// `notice_sections_kind`, the section/code/date PK prefixes, and
+    /// `tender_versions_notice`.
     pub async fn reveal_recheck(
         &self,
         now: i64,
         cap: usize,
     ) -> turso::Result<(i64, i64, i64, i64, i64, Vec<(String, i64)>)> {
         let conn = self.reader().await?;
+        // Counts: `withheld` = FieldsPrivacy sections; `dated`/`due` = those
+        // carrying a BT-198 reveal date, respectively any and already-passed.
         let mut rows = conn
             .query(
-                "SELECT COUNT(*),
-                        COALESCE(SUM(CASE WHEN publish_after IS NOT NULL THEN 1 ELSE 0 END), 0),
-                        COALESCE(SUM(CASE WHEN publish_after <= ? THEN 1 ELSE 0 END), 0)
-                 FROM notice_withheld_fields",
+                "SELECT
+                   (SELECT COUNT(*) FROM notice_sections WHERE kind = 'FieldsPrivacy'),
+                   COUNT(*),
+                   COALESCE(SUM(CASE WHEN d.utc_seconds <= ? THEN 1 ELSE 0 END), 0)
+                 FROM notice_sections s
+                 JOIN notice_dates d
+                   ON d.notice_id = s.notice_id AND d.section_id = s.section_id
+                      AND d.field_id LIKE 'BT-198%'
+                 WHERE s.kind = 'FieldsPrivacy'",
                 (Value::Integer(now),),
             )
             .await?;
@@ -1058,6 +1074,11 @@ impl Db {
         };
         drop(rows);
 
+        // Reveal check over a capped sample of the due set. `revealed` = a later
+        // version of the same tender exists whose notice no longer withholds the
+        // same BT-195 field. Every lookup is an index seek: due rows by the kind
+        // index, the version hop by `tender_versions_notice`, the "still
+        // withheld?" test by the section/code PK prefixes.
         let mut rows = conn
             .query(
                 "SELECT COALESCE(SUM(revealed), 0), COUNT(*) FROM (
@@ -1065,14 +1086,27 @@ impl Db {
                      SELECT 1 FROM tender_versions tv1
                      JOIN tender_versions tv2
                        ON tv2.tender_id = tv1.tender_id AND tv2.seq > tv1.seq
-                     WHERE tv1.caused_by_notice_id = w.notice_id
+                     WHERE tv1.caused_by_notice_id = due.notice_id
                        AND NOT EXISTS (
-                         SELECT 1 FROM notice_withheld_fields w2
-                         WHERE w2.notice_id = tv2.caused_by_notice_id
-                           AND w2.withheld_field IS w.withheld_field)
+                         SELECT 1 FROM notice_sections s2
+                         JOIN notice_codes c2
+                           ON c2.notice_id = s2.notice_id AND c2.section_id = s2.section_id
+                              AND c2.field_id LIKE 'BT-195%'
+                         WHERE s2.notice_id = tv2.caused_by_notice_id
+                           AND s2.kind = 'FieldsPrivacy'
+                           AND c2.code = due.field)
                    ) THEN 1 ELSE 0 END AS revealed
-                   FROM notice_withheld_fields w
-                   WHERE w.publish_after <= ? LIMIT ?)",
+                   FROM (
+                     SELECT s.notice_id AS notice_id, c.code AS field
+                     FROM notice_sections s
+                     JOIN notice_codes c
+                       ON c.notice_id = s.notice_id AND c.section_id = s.section_id
+                          AND c.field_id LIKE 'BT-195%'
+                     JOIN notice_dates d
+                       ON d.notice_id = s.notice_id AND d.section_id = s.section_id
+                          AND d.field_id LIKE 'BT-198%'
+                     WHERE s.kind = 'FieldsPrivacy' AND d.utc_seconds <= ?
+                     LIMIT ?) AS due)",
                 (Value::Integer(now), Value::Integer(cap as i64)),
             )
             .await?;
@@ -1084,9 +1118,16 @@ impl Db {
 
         let mut rows = conn
             .query(
-                "SELECT COALESCE(withheld_field, '(none)'), COUNT(*)
-                 FROM notice_withheld_fields WHERE publish_after <= ?
-                 GROUP BY 1 ORDER BY 2 DESC LIMIT 12",
+                "SELECT c.code, COUNT(*)
+                 FROM notice_sections s
+                 JOIN notice_dates d
+                   ON d.notice_id = s.notice_id AND d.section_id = s.section_id
+                      AND d.field_id LIKE 'BT-198%' AND d.utc_seconds <= ?
+                 JOIN notice_codes c
+                   ON c.notice_id = s.notice_id AND c.section_id = s.section_id
+                      AND c.field_id LIKE 'BT-195%'
+                 WHERE s.kind = 'FieldsPrivacy'
+                 GROUP BY c.code ORDER BY 2 DESC LIMIT 12",
                 (Value::Integer(now),),
             )
             .await?;
