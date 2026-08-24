@@ -1,6 +1,6 @@
 # 272 — two enqueue-arm operator traps: reparse "run again to continue" and data-quality's dry-run default
 
-Status: resolved (pending deploy) — both fixes landed 2026-08-24
+Status: resolved — deployed 2026-08-24 (rev 350f98b batch); both messages live
 Kind: operability (the queue does what you said, not what you meant)
 Relates to: 244 (the sweep it bit), 230 (data-quality's confirmed flag), 247 (job cancel/resume work)
 
