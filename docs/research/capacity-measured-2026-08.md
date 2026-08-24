@@ -38,3 +38,33 @@ prefix lookups) are 3 orders of magnitude cheaper and the posture is fine for th
 Redo next pass (my probe shapes were 400s, so unmeasured): `winner=` and `status=`
 filter vocabularies; then E2 (SSE fan-out curve) and E3 (hostile-SQL swarm at the
 2-concurrent cap), E4 (mixed soak during the 09:35 daily).
+
+## E1 redo + E3 — filter vocabularies and the hostile-SQL swarm (2026-08-24 ~05:00 UTC)
+
+E1 redo (the two shapes that 400'd; vocabularies: `status` ∈ open|closed, `winner` = org id):
+
+| shape | result |
+|---|---|
+| `status=open` (the default user view) | 1.73s cold, **0.55s warm** — a real mid-class |
+| `status=closed&country=DE` | 62ms |
+| `winner=<org id>` | ≤3ms (indexed) |
+
+E3 — hostile-SQL swarm at the cap. Two concurrent full-scan `COUNT(*)` over
+`tender_version_amounts`, plus probes during and after:
+
+- Both hostile queries: **HTTP 408 at 11.0s** — the sandbox's 10s budget FIRES.
+- A third SQL during the swarm: **429 in 1ms** — the 2-reader gate rejects instead of
+  queueing. No pile-up surface.
+- REST during the swarm: 18–51ms (idle baseline 17–32ms) — the SQL pool is isolated
+  from the REST readers; hostile SQL cannot starve the API.
+- After the swarm: REST normal, CPU 93% idle — **the 408 frees the reader.** Issue
+  120's cannot-cancel finding applies to REST walks, NOT to the sandbox; the abuse
+  surface the model feared (zombie readers burning after timeout) does not exist for
+  /v1/sql.
+
+Correction to the model's rig assumptions: the box reports 64 GB RAM (buff/cache
+51 GB), not 8 GB. CPU count re-checked next pass.
+
+Remaining: E2 (SSE fan-out driver), E4 (mixed soak — observe the 09:35 daily live),
+and the budget write-up deriving the rate limits (status=open at 0.55s warm needs a
+line of its own: ~7 rps/box saturates on it).
