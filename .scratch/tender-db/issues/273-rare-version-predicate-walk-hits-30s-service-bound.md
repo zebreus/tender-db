@@ -125,3 +125,25 @@ cost, with no cursor-contract change.**
    Only needed once (1) lands and re-measurement shows what's left.
 
 Scoped for a focused session with prod re-validation; not rushed into an unattended deploy.
+
+### Final de-risking (2026-08-24) — change site pinned, one risk to clear
+
+- **Confirmed minimal:** the DoS fix needs ONLY the `version_predicates` SQL change, NOT a
+  `walks()` change. With `country` present the read already isolates (correctly); the
+  head-range just makes it fast. So `walks()` and the isolation_routing tests stay untouched
+  (status still isolates for Tenders — fine, it's fast now). Defer the status-only
+  de-isolation optimisation.
+- **Change site:** add a `deadline_col: Option<&str>` param to `version_predicates`. Tenders
+  builders pass `Some("t.current_deadline")` → emit `t.current_deadline > ?` (Open) /
+  `(t.current_deadline IS NULL OR t.current_deadline <= ?)` (Closed); the three Lots sites pass
+  `None` → keep the existing EXISTS (no head column on lots).
+- **No SQL plan-pin test pins the status EXISTS string** — status is only exercised through
+  functional fixtures that check RESULTS. `api.rs:925` already asserts `current_deadline`
+  equals the served submission_deadline, corroborating the equivalence.
+- **The ONE risk to clear first:** do the tender status fixtures populate `current_deadline`
+  (via the real projection's head_deadline) or hand-insert `tender_version_dates` only? If the
+  latter, the head-range reads them as not-open and those fixtures break — audit + fix the
+  fixtures as part of the change. This is the first thing to check in the focused session.
+
+Estimate: 1–2 h with prod re-validation. Not started in the tail of a firing after today's
+D5 hang; the module is the read-path safety core and deserves fresh context.
