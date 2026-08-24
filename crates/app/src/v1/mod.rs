@@ -580,6 +580,9 @@ impl Params {
             }
         };
         Ok(Filter {
+            // Never set here: the store's async entries decide the drive side
+            // after probing (issue 273 step 2); the API layer has no say.
+            country_seed: false,
             source: self.source.clone(),
             country: self.country.clone(),
             cpv: self.cpv.clone(),

@@ -16,6 +16,12 @@ For a single focused test mid-iteration, plain `cargo test -p <crate> <name>` is
 just run `ops/check.sh` before committing so the pruning happens and the truncation
 traps its header documents don't eat a failure.
 
+Never pipe `ops/check.sh` or a gating `cargo` command through `tail`/`head`/`grep`
+in a background or chained command: the pipeline reports the FILTER's exit code and
+a red suite reads as green (issue 254's trap; it re-bit on 2026-08-24 and a
+non-compiling commit reached main — only the deploy's own nix gate stopped it).
+Redirect to a file and echo `$?` instead.
+
 ### Committing
 
 Commit when you have completed an issue or a meaningful unit of work. Multiple agents work on this worktree in parallel, so never stage with `git add -A`/`git add .` — always stage the individual files you changed, and inspect the commit afterwards (`git show --stat`) to confirm it contains only your files.
