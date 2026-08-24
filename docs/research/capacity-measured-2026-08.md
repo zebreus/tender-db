@@ -68,3 +68,28 @@ Correction to the model's rig assumptions: the box reports 64 GB RAM (buff/cache
 Remaining: E2 (SSE fan-out driver), E4 (mixed soak — observe the 09:35 daily live),
 and the budget write-up deriving the rate limits (status=open at 0.55s warm needs a
 line of its own: ~7 rps/box saturates on it).
+
+## E2 — SSE snapshot + the walk pool, and a real bug (2026-08-24 ~06:00 UTC)
+
+SSE snapshot streams rows as `data:` lines (no `event:` prefix), one per matching
+row, then a `live` marker, then silence/keepalive. Measured snapshot rate for
+`status=open`: ~8,000 rows/120s (~66 rows/s, ~15 KB/s) — the snapshot is itself a
+walk and paces at the walk's row rate, so a large filter's snapshot is a minutes-long
+reader hold. Small filters complete instantly (LU/CY: empty, 3 bytes).
+
+**Bug found and filed as issue 273** (the campaign's highest-value output so far): the
+combination `status=open` + a low-volume `country` walks the whole ordered stream and
+hits the **30s service bound → 503**, on an idle box, while either filter alone is
+fast. It is uncancellable (issue 120) and the isolated walk pool is only **4 slots**,
+so **four trivial requests brown out all walk-capable reads for 30s** — the concrete
+abuse budget this campaign existed to find. The rate posture (10 rps/IP) does not
+defend it. Fix directions in 273; the capacity write-up will fold in per-shape
+admission as the structural answer.
+
+Revised budget picture: the binding constraint is not a global rps number, it is the
+**4 walk slots × their hold time**. A walk that can hit 30s makes the whole
+walk surface a 4-request DoS. Bounding walk time (issue 273 fix 1) is therefore a
+prerequisite for any rps budget to mean anything.
+
+Still to run: E4 (mixed soak observing the 09:35 daily), CPU-count recheck, and the
+budget write-up once 273's fix direction is chosen.
