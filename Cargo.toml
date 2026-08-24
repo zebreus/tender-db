@@ -127,3 +127,15 @@ roxmltree = "0.21"
 [profile.release]
 lto = "thin"
 strip = true
+
+# Line tables only, not full debuginfo (issue 260): this workspace has ~58
+# integration-test binaries, each linking the whole dependency tree, and cargo
+# never removes a superseded one — with full debuginfo that graveyard filled the
+# dev disk five times in one week. Panic backtraces keep file:line (the part we
+# actually read); only variable-level debugger info is dropped. In the profile,
+# not an env var, so RAW `cargo test`/`cargo build` is small by default and
+# ops/check.sh's CARGO_PROFILE_*_DEBUG=0 override is belt-and-braces, not
+# load-bearing. Debugging a specific crate under a full debugger:
+# CARGO_PROFILE_DEV_DEBUG=2 cargo build -p <crate>.
+[profile.dev]
+debug = "line-tables-only" 

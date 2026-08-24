@@ -52,3 +52,14 @@ is one extra link.
 - The `.a`/`.so` pairs for the two turso sdk-kit crates are 1.2 GB together and are current, not
   superseded, so pruning cannot touch them. If headroom gets tight again they are where the next
   GB lives.
+
+## Root-cause fix (2026-08-24, cleanup mandate): debuginfo off in the PROFILE
+
+After the fifth fill in a week (Lennart asked whether new tests caused it — no: three new
+binaries are marginal against ~58 × 200-350 MB × N generations), the load-bearing flaw was
+that small builds depended on HOW you invoked cargo: only check.sh's env vars turned
+debuginfo off, and every raw `cargo test`/`cargo build` paid full price and left the old
+binaries behind. Fixed in Cargo.toml: `[profile.dev] debug = "line-tables-only"` — every
+build small by default, panic backtraces keep file:line, check.sh's env override is now
+belt-and-braces. The pruning in check.sh stays (the graveyard mechanic itself is cargo's,
+only its per-binary cost shrank ~5-10x).
