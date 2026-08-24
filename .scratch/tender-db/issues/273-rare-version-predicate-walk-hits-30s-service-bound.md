@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: steps 1+1b+1c DEPLOYED (2026-08-24, rev 0cb9d95) — worst live shape ~1.9s (was 30s→503); residual to sub-second: drive-from-the-sparse-side for under-limit countries (step 2)
+Status: RESOLVED pending final deploy+measure — step 2 (sparse-side country seed) landed 2026-08-24 late; prod-validated 0.05–0.11s for the worst shapes
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -245,3 +245,24 @@ classifications (scheme, code)`, thousands of rows for a sparse country,
 then deadline+head checks per id) is the next unit, with the drive-side
 choice needing a cheap cardinality probe. The ordered (`sort=published_at`)
 sparse case (CY 12.6s live) gains the most from it.
+
+## Step 2 landed (2026-08-24, night firing): the sparse-side country seed
+
+`tender_from` gained a fourth seed arm (precedence after publication and
+participation): with `Filter.country_seed` set, the read drives from
+`(SELECT DISTINCT tender_id FROM tender_version_classifications WHERE scheme
+= 'nuts' AND code >= ? AND code < ?)` — the issue-223 pattern verbatim. The
+seed is a superset (any version matched); the untouched head-version EXISTS
+still decides membership, pinned by a fixture where a tender's old version
+was CY but its head moved away (it must not leak — and does not).
+
+The flag is set only by the async entries (`tenders`, `tenders_ordered`) via
+`country_seed_viable`: a COUNT capped at 60k over the (scheme, code) index —
+~10 ms warm; sparse prefixes (CY 52,525 rows / 13,735 tenders; LU 18,694;
+MT 13,032 tenders) come in under the cap, DE saturates it and keeps the
+range shape, which is already the right drive side there. Isolation routing
+untouched — a seeded read still runs isolated, it is just fast there.
+
+Prod-validated before landing: seeded CY, both orders, 83 rows in
+**0.05–0.11s** (was 1.8s default / 7.3–12.6s ordered). Deploy + live
+re-measure close the issue.

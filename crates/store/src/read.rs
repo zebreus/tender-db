@@ -190,6 +190,14 @@ pub struct Filter {
     /// [`organizations_by_name`] is the fast name-ordered path.
     pub name_prefix: Option<String>,
     pub now: i64,
+    /// Set by the async entry points (never by callers) when the cardinality
+    /// probe says the country prefix is sparse enough to DRIVE the read from
+    /// `tender_version_classifications` instead of testing an EXISTS per
+    /// deadline-range candidate (issue 273 step 2). The seed is a superset —
+    /// any version of the tender matched — and the untouched head-version
+    /// EXISTS still decides membership, exactly like the issue-223
+    /// participation seeds.
+    pub country_seed: bool,
 }
 
 /// Which slice of the versioned layer a collection query reads.
@@ -603,6 +611,10 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         deadline_before,
         name_prefix,
         now: _,
+        // Not a caller predicate: the async entries decide it AFTER isolation
+        // routing has already run, so it cannot change where a read executes —
+        // a seeded country read still runs isolated, it is just fast there.
+        country_seed: _,
     } = f;
 
     // The `version_predicates` set: `EXISTS` subqueries evaluated PER ROW over the
@@ -1071,6 +1083,7 @@ pub async fn tenders(
     if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Vec::new());
     }
+    let filter = &with_country_seed(conn, filter).await?;
     let q = tenders_query(filter, scope);
     let mut rows = q.rows(conn, tender_row).await?;
     retain_publication_companions(&mut rows, filter);
@@ -1192,6 +1205,7 @@ pub async fn tenders_ordered(
     if !reachable(conn, filter, Collection::Tenders).await? {
         return Ok(Vec::new());
     }
+    let filter = &with_country_seed(conn, filter).await?;
     let q = tenders_ordered_query(filter, order, desc, cursor, limit);
     let mut rows = q.rows(conn, tender_row).await?;
     retain_publication_companions(&mut rows, filter);
@@ -1377,8 +1391,60 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
             ),
             vec![Value::Integer(org)],
         ),
-        None => ("tenders t".to_owned(), vec![]),
+        None => match (&filter.country, filter.country_seed) {
+            // The sparse-country seed (issue 273 step 2): enumerate the prefix's
+            // tenders off the classifications (scheme, code) index — thousands of
+            // rows for a sparse country — instead of testing every open-head row.
+            // The range form mirrors the 117 guard; NUTS codes are uppercase
+            // alphanumeric, so every LIKE-prefix match sorts inside
+            // `[prefix, prefix~)` and the seed stays a superset. Measured on prod
+            // 2026-08-24: status=open&country=CY 1.8s → 0.05–0.11s, both orders.
+            (Some(prefix), true) => (
+                "(SELECT DISTINCT tender_id FROM tender_version_classifications
+                   WHERE scheme = 'nuts' AND code >= ? AND code < ?) hits
+                   JOIN tenders t ON t.id = hits.tender_id"
+                    .to_owned(),
+                vec![t(prefix), t(format!("{prefix}~"))],
+            ),
+            _ => ("tenders t".to_owned(), vec![]),
+        },
     }
+}
+
+/// Should this country prefix drive the read (issue 273 step 2)? A capped count
+/// over the classifications (scheme, code) index — ~10 ms warm, bounded at
+/// [`COUNTRY_SEED_CAP`] entries for dense prefixes. Under the cap ⇒ the seed
+/// enumerates quickly and the read stops paying an EXISTS per deadline-range
+/// candidate; at the cap ⇒ dense country, the range shape is already the right
+/// drive side. Only consulted when no publication/participation seed outranks it.
+const COUNTRY_SEED_CAP: i64 = 60_000;
+pub async fn country_seed_viable(conn: &Connection, prefix: &str) -> turso::Result<bool> {
+    let mut rows = conn
+        .query(
+            "SELECT COUNT(*) FROM (
+               SELECT 1 FROM tender_version_classifications
+                WHERE scheme = 'nuts' AND code >= ? AND code < ? LIMIT ?)",
+            (t(prefix), t(format!("{prefix}~")), Value::Integer(COUNTRY_SEED_CAP)),
+        )
+        .await?;
+    Ok(match rows.next().await? {
+        Some(row) => int(&row, 0) < COUNTRY_SEED_CAP,
+        None => false,
+    })
+}
+
+/// Probe-and-set for the async entries: a filter that qualifies for the country
+/// seed (country present, no higher-precedence seed) comes back with
+/// `country_seed` decided; every other filter passes through unchanged.
+async fn with_country_seed(conn: &Connection, filter: &Filter) -> turso::Result<Filter> {
+    let mut f = filter.clone();
+    f.country_seed = false;
+    if let Some(prefix) = &filter.country {
+        if filter.publication_id.is_none() && participation_seed(filter).is_none() {
+            f.country_seed = country_seed_viable(conn, prefix).await?;
+        }
+    }
+    Ok(f)
 }
 
 /// The identity half of [`tenders`], built but not run.
