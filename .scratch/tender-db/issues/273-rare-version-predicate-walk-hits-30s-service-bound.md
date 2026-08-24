@@ -59,3 +59,39 @@ never fills, and hits the 30s bound.
 Acceptance: `?status=open&country=<any valid low-volume country>` returns in well
 under a second (a real result or an honest "narrow your filter"), and four of them
 in parallel do not brown out unrelated walk traffic.
+
+## Fix design VALIDATED at prod scale (2026-08-24) — and a rejected first attempt
+
+Applying the D5 lesson (validate query shapes on the real corpus before building), I tested
+two candidate-window shapes against prod via /v1/sql before writing any code:
+
+1. **REJECTED — window that keeps a version-predicate inside**: `SELECT … FROM (SELECT t.id …
+   WHERE <status EXISTS> ORDER BY current_deadline LIMIT 500) … WHERE <country EXISTS>` still
+   **408s at 10s**. Bounding the RETURNED candidates does not bound how many are SCANNED:
+   the inner status-EXISTS + correlated MAX(seq) runs per scanned row until 500 pass. Had I
+   built this "obvious" fix and shipped it, it would have been a second non-fix.
+2. **VALIDATED — window with ONLY served head-predicates + ORDER BY**: `SELECT … FROM (SELECT
+   t.id FROM tenders WHERE current_deadline > ? ORDER BY current_deadline LIMIT 500) c WHERE
+   <country EXISTS>` returns in **0.13s**. The window is a pure index range (bounded scan);
+   ALL version-predicate EXISTS move OUTSIDE it.
+
+### The implementation (ready-for-agent, its own focused session + prod re-validation)
+
+- Restructure `tenders_ordered_query` (read.rs): inner window = served head predicates
+  (`current_deadline`/`current_published_at` range, source, kind) + cursor + `ORDER BY key
+  LIMIT scan_budget`; outer applies `version_predicates` EXISTS + `LIMIT page`.
+- **Cursor contract change** (client-visible, handle carefully): a page now returns 0..page
+  matches AND must resume from the last WINDOW candidate's (key,id), not the last match. Add
+  a boundary signal so the client keeps paging until it has `page` rows or the window comes
+  back short of `scan_budget` (= stream truly exhausted). This is the real work; the SQL is
+  the easy half.
+- **Bonus narrow win**: `status=open` ≡ `current_deadline > now` is a HEAD column. Serving it
+  as a range predicate (not the current deadline-EXISTS) fixes the common default-view mid-class
+  outright, and makes it a natural served-window predicate. Consider doing this first — it is
+  smaller and covers the most common walk.
+- Same treatment for the org-named walk and SSE snapshots (they share the walk pool).
+- Re-validate the FULL production query (not just the principle) on the box before deploy,
+  D5-style.
+
+Not rushed into this firing's deploy on purpose: the D5 regression an hour earlier is the
+argument for landing this deliberately with prod re-validation.
