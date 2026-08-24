@@ -1220,49 +1220,67 @@ fn tenders_ordered_query(
     limit: i64,
 ) -> Query {
     let key = order.column();
-    let mut q = Query::default();
+    let dir = if desc { "DESC" } else { "ASC" };
+    // The WINDOW is ids-only: candidates enter the sorter as three integers, and
+    // the satellite SELECT list joins back onto the LIMITed page below. With the
+    // satellites inline they are evaluated for every WHERE-passing row BEFORE
+    // the limit (the sorter materialises full rows), which is where
+    // `status=open&country=LU` spent 3 of its 3.6s on prod — wrapped, the same
+    // page reads in 0.46s (issue 273, measured 2026-08-24).
+    let mut inner = Query::default();
     let (from, seed_param) = tender_from(filter);
-    q.push(&tender_select_head(&from), seed_param);
-    // Always the current head — this list has no At-scope.
-    q.push(
+    inner.push(
         &format!(
-            "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
-             WHERE {key} IS NOT NULL"
+            "SELECT t.id AS wid, v.seq AS wseq, {key} AS wkey
+               FROM {from}
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
+                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+              WHERE {key} IS NOT NULL"
         ),
-        [],
+        seed_param,
     );
     // Same flatten hazard as `tenders_query`: a publication seed must be the only
     // `t.`-column predicate — the companions post-filter in Rust.
     if filter.publication_id.is_none() {
         if let Some(after) = filter.published_after {
-            q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+            inner.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
         }
         if let Some(before) = filter.published_before {
-            q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+            inner.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
         }
         if let Some(after) = filter.deadline_after {
-            q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+            inner.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
         }
         if let Some(before) = filter.deadline_before {
-            q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+            inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
         if let Some(source) = &filter.source {
-            q.push(" AND t.source = ?", [t(source)]);
+            inner.push(" AND t.source = ?", [t(source)]);
         }
         if let Some(kind) = &filter.kind {
-            q.push(" AND t.kind = ?", [t(kind)]);
+            inner.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"));
+    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"));
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
-        q.push(
+        inner.push(
             &format!(" AND {key} {outer} ? AND ({key} {tie} ? OR t.id {tie} ?)"),
             [Value::Integer(value), Value::Integer(value), Value::Integer(id)],
         );
     }
-    let dir = if desc { "DESC" } else { "ASC" };
-    q.push(&format!(" ORDER BY {key} {dir}, t.id {dir} LIMIT ?"), [Value::Integer(limit)]);
+    inner.push(&format!(" ORDER BY {key} {dir}, t.id {dir} LIMIT ?"), [Value::Integer(limit)]);
+
+    // The outer re-joins `t`/`v` by primary key so `tender_select_head` — the one
+    // string that defines WHAT a list row is — applies verbatim; only WHICH rows
+    // changed hands. Ordering re-applies the window's own key: the page is ≤limit
+    // rows, so this sort is trivial.
+    let mut q = Query::default();
+    q.push(
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql)),
+        inner.params,
+    );
+    q.push(&format!("w.wseq ORDER BY w.wkey {dir}, t.id {dir}"), []);
     q
 }
 

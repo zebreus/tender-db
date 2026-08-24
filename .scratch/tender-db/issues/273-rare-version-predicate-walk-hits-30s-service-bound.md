@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: step 1 DEPLOYED (2026-08-24) — 503s gone; step 2 (candidate-window) open for the sub-second bar
+Status: steps 1+1b DEPLOYED/landing (2026-08-24) — 503s gone AND sub-second met on the ordered list; residual: id-ordered no-status sparse walks (original step 2 scope, re-measure first)
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -187,3 +187,23 @@ satellite SELECT list into the sorter for every WHERE-passing row (slim probe
 0.53s vs full 2.9–3.6s), so the sub-second acceptance bar needs the
 candidate-window shape (ids-only inner query, satellites outside). Re-measure
 CY/LU after that lands; sort=deadline pages already ride the index directly.
+
+## Step 1b (2026-08-24, late firing): satellites out of the sorter
+
+The 3s residual decomposed exactly as predicted: the ordered list's satellite
+SELECT list was materialised into the sorter for every WHERE-passing row.
+`tenders_ordered_query` now builds an ids-only inner window (id, seq, key —
+three integers per sorter row) and joins `tender_select_head` back onto the
+LIMITed page by primary key, so WHAT a row is still comes from the one shared
+string and only WHICH rows changed hands. Cursor contract unchanged.
+
+Validated with the exact emitted statement on prod before landing:
+`status=open&country=LU`, published order, 100 rows — **0.35–0.49s** (was
+2.9–3.6s wrapped-less, 30s→503 pre-273). Pin + all 45 api fixtures pass
+unchanged.
+
+Remaining (original step 2 scope, only if re-measurement demands): the
+id-ordered `tenders_query`/lots shapes still evaluate satellites inline, and a
+sparse no-status combination there still walks; those pages are PK-ordered
+(no sorter), so the satellite cost only bites rows that pass — re-measure
+before building anything.
