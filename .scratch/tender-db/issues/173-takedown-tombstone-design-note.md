@@ -44,3 +44,21 @@ as a `reveal-recheck` report; weekly on the Sunday tick behind rehash-probe. Fix
 one revealed, one debt, one not-yet-due.
 
 Still open here: the tombstone design note.
+
+### D4/D5 deployed and verified on prod (2026-08-24) — D5 hit a perf wall, fixed same hour
+
+Deployed rev 76e33cc. Both probes run live:
+- **D4 (rehash-probe)**: verified — re-downloaded 3 real packages, all hashes unchanged
+  (`3 probed — 3 unchanged, 0 drifted, 0 gone`).
+- **D5 (reveal-recheck)**: the FIRST deployed form aggregated over the
+  `notice_withheld_fields` VIEW (per-section correlated subqueries) and pinned a reader
+  **>12 min uncancellably** on prod — my regression, caught within the hour. Rewritten
+  onto base tables + index seeks, reveal pass hard-bounded to a 2000-row sample; now
+  completes in **<1s**. First real numbers: **277,171 withheld fields, 42,932 dated,
+  3,729 due; of 2000 sampled due, 182 revealed at head, 1,818 still withheld.**
+
+Caveat for a future refinement (not blocking): "still withheld" currently includes due
+fields on tenders that have NO later version at all — those cannot reveal by
+construction, so the raw 91% overstates genuine reveal-DEBT. A cleaner metric would
+split "no later notice exists" from "later notice exists and still withholds." Filed as
+a note here; the job is safe and the signal is directionally real.
