@@ -231,7 +231,15 @@ const SCHEMA: &str = "
         parent_section_id TEXT,
         PRIMARY KEY (notice_id, section_id)
     ) STRICT;
-    CREATE INDEX IF NOT EXISTS notice_sections_kind ON notice_sections(kind);
+    -- (kind, notice_id), not bare (kind): the D5 reveal recheck walks one kind's
+    -- cohort in cursor-resumable slices, and turso only serves
+    -- `kind = ? AND notice_id > ? ORDER BY notice_id` as an index range seek off
+    -- the composite — with the bare index it re-scans the cohort from the start
+    -- every slice (measured in reveal_cursor_probe, issue 274). Kind-only scans
+    -- read the same index by prefix, so the bare form has no remaining use and is
+    -- dropped; both statements are no-ops after the first open.
+    CREATE INDEX IF NOT EXISTS notice_sections_kind_notice ON notice_sections(kind, notice_id);
+    DROP INDEX IF EXISTS notice_sections_kind;
 
     -- Free text, including url/phone/email. `lang` is the published
     -- @languageID (eForms notices carry their official language(s) only, so
@@ -768,6 +776,24 @@ fn warn_if_spill_dir_is_ram(db_path: &str) {
     );
 }
 
+/// One completed slice of the D5 reveal recheck — see [`Db::reveal_recheck`].
+/// `after`/`upto` are the processed notice-id range (cursor in / cursor out);
+/// `wrapped` means the cohort is exhausted and the next run restarts at 0.
+/// `withheld_total` is the whole cohort; every other number is slice-scoped.
+#[derive(Debug, Clone)]
+pub struct RevealSlice {
+    pub withheld_total: i64,
+    pub after: i64,
+    pub upto: i64,
+    pub wrapped: bool,
+    pub sections: i64,
+    pub dated: i64,
+    pub due: i64,
+    pub checked: i64,
+    pub revealed: i64,
+    pub by_field: Vec<(String, i64)>,
+}
+
 impl Db {
     pub async fn open(path: &str) -> turso::Result<Db> {
         Db::open_inner(path, std::env::var_os("TENDER_WAL_READ_GATE").is_some()).await
@@ -1028,57 +1054,121 @@ impl Db {
         Ok(out)
     }
 
-    /// The D5 reveal recheck (issue 173 / dr-premise §6): does the corpus keep
-    /// BT-198's promise? A withheld field carries a "publish later" date; once
-    /// that date passes, SOME later notice of the same tender should carry the
-    /// value — visible here as a later version whose own privacy sections no
-    /// longer name the same field. `cap` bounds the reveal-EXISTS pass to a
-    /// SAMPLE of the due set so a pathological corpus cannot pin a reader; the
-    /// report states how many were checked, never pretending the cap is the
-    /// population.
+    /// One cursor-resumable slice of the D5 reveal recheck (issue 173 /
+    /// dr-premise §6): does the corpus keep BT-198's promise? A withheld field
+    /// carries a "publish later" date; once that date passes, SOME later notice
+    /// of the same tender should carry the value — visible here as a later
+    /// version whose own privacy sections no longer name the same field.
     ///
-    /// Deliberately hits the BASE tables, never the `notice_withheld_fields`
-    /// VIEW: that view carries a correlated subquery per section (`reason_text`,
-    /// `publish_after`), so any aggregate OVER it — even a bare `COUNT(*)` —
-    /// re-evaluates those per FieldsPrivacy section, and referencing it inside
-    /// the reveal correlation re-materialised it per (due row × later version).
-    /// On prod that ran for >12 min uncancellably (deployed 2026-08-24, caught
-    /// and rewritten same hour). The base-table form below drives entirely on
-    /// `notice_sections_kind`, the section/code/date PK prefixes, and
-    /// `tender_versions_notice`.
+    /// SLICED, not capped (issue 274): the first capped form bounded only the
+    /// reveal-EXISTS pass, while its population aggregates (`dated`/`due`, the
+    /// by-field group-by) still joined the ENTIRE FieldsPrivacy cohort against
+    /// `notice_dates`/`notice_codes` — 18+ min at one saturated core on prod
+    /// with no cancellation point; the service was restarted twice on
+    /// 2026-08-24 to get rid of one run. Every query below is bounded to the
+    /// `after < notice_id <= upto` range instead, where `upto` is picked so the
+    /// range holds ~`slice` FieldsPrivacy sections (whole notices — the range
+    /// may overshoot by the boundary notice's remaining sections). Consecutive
+    /// runs walk the cohort behind the supervisor's persisted cursor and wrap,
+    /// exactly like D4's re-hash probe. The range is an index seek off
+    /// `notice_sections_kind_notice`; the bare (kind) index re-scans the cohort
+    /// from the start every slice (measured: reveal_cursor_probe).
+    ///
+    /// Still deliberately hits the BASE tables, never the
+    /// `notice_withheld_fields` VIEW: that view carries a correlated subquery
+    /// per section, so any aggregate over it re-evaluates those per row (the
+    /// first D5 form ran >12 min on prod exactly that way, same day).
+    ///
+    /// `withheld_total` is the one whole-cohort number kept per run: a bare
+    /// index-entry count with no joins, cheap at any population.
     pub async fn reveal_recheck(
         &self,
         now: i64,
-        cap: usize,
-    ) -> turso::Result<(i64, i64, i64, i64, i64, Vec<(String, i64)>)> {
+        after: i64,
+        slice: usize,
+    ) -> turso::Result<RevealSlice> {
         let conn = self.reader().await?;
-        // Counts: `withheld` = FieldsPrivacy sections; `dated`/`due` = those
-        // carrying a BT-198 reveal date, respectively any and already-passed.
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM notice_sections WHERE kind = 'FieldsPrivacy'",
+                (),
+            )
+            .await?;
+        let withheld_total = match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        };
+        drop(rows);
+
+        // The slice boundary: the highest notice_id among the next `slice`
+        // cohort rows. The aggregates below use `<= upto`, so the boundary
+        // notice is always processed WHOLE and the cursor can stand on it.
+        let mut rows = conn
+            .query(
+                "SELECT MAX(notice_id), COUNT(*) FROM (
+                   SELECT notice_id FROM notice_sections
+                    WHERE kind = 'FieldsPrivacy' AND notice_id > ?
+                    ORDER BY notice_id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(slice as i64)),
+            )
+            .await?;
+        let (upto, picked) = match rows.next().await? {
+            Some(row) => (opt_int_of(&row, 0), int(&row, 1)),
+            None => (None, 0),
+        };
+        drop(rows);
+        let wrapped = (picked as usize) < slice;
+        let Some(upto) = upto else {
+            // Cursor already past the cohort's end: an empty, wrapped slice.
+            return Ok(RevealSlice {
+                withheld_total,
+                after,
+                upto: after,
+                wrapped: true,
+                sections: 0,
+                dated: 0,
+                due: 0,
+                checked: 0,
+                revealed: 0,
+                by_field: Vec::new(),
+            });
+        };
+        let range = [Value::Integer(after), Value::Integer(upto)];
+
+        // Slice counts: `sections` = FieldsPrivacy sections in range; `dated`/
+        // `due` = their BT-198 date rows, respectively any and already-passed.
         let mut rows = conn
             .query(
                 "SELECT
-                   (SELECT COUNT(*) FROM notice_sections WHERE kind = 'FieldsPrivacy'),
+                   (SELECT COUNT(*) FROM notice_sections
+                     WHERE kind = 'FieldsPrivacy' AND notice_id > ? AND notice_id <= ?),
                    COUNT(*),
                    COALESCE(SUM(CASE WHEN d.utc_seconds <= ? THEN 1 ELSE 0 END), 0)
                  FROM notice_sections s
                  JOIN notice_dates d
                    ON d.notice_id = s.notice_id AND d.section_id = s.section_id
                       AND d.field_id LIKE 'BT-198%'
-                 WHERE s.kind = 'FieldsPrivacy'",
-                (Value::Integer(now),),
+                 WHERE s.kind = 'FieldsPrivacy' AND s.notice_id > ? AND s.notice_id <= ?",
+                (
+                    range[0].clone(),
+                    range[1].clone(),
+                    Value::Integer(now),
+                    range[0].clone(),
+                    range[1].clone(),
+                ),
             )
             .await?;
-        let (withheld, dated, due) = match rows.next().await? {
+        let (sections, dated, due) = match rows.next().await? {
             Some(row) => (int(&row, 0), int(&row, 1), int(&row, 2)),
             None => (0, 0, 0),
         };
         drop(rows);
 
-        // Reveal check over a capped sample of the due set. `revealed` = a later
-        // version of the same tender exists whose notice no longer withholds the
-        // same BT-195 field. Every lookup is an index seek: due rows by the kind
-        // index, the version hop by `tender_versions_notice`, the "still
-        // withheld?" test by the section/code PK prefixes.
+        // Reveal check over every due row in the slice. `revealed` = a later
+        // version of the same tender exists whose notice no longer withholds
+        // the same BT-195 field. Every lookup is an index seek: due rows by the
+        // (kind, notice_id) range, the version hop by `tender_versions_notice`,
+        // the "still withheld?" test by the section/code PK prefixes.
         let mut rows = conn
             .query(
                 "SELECT COALESCE(SUM(revealed), 0), COUNT(*) FROM (
@@ -1106,8 +1196,8 @@ impl Db {
                        ON d.notice_id = s.notice_id AND d.section_id = s.section_id
                           AND d.field_id LIKE 'BT-198%'
                      WHERE s.kind = 'FieldsPrivacy' AND d.utc_seconds <= ?
-                     LIMIT ?) AS due)",
-                (Value::Integer(now), Value::Integer(cap as i64)),
+                       AND s.notice_id > ? AND s.notice_id <= ?) AS due)",
+                (Value::Integer(now), range[0].clone(), range[1].clone()),
             )
             .await?;
         let (revealed, checked) = match rows.next().await? {
@@ -1126,16 +1216,27 @@ impl Db {
                  JOIN notice_codes c
                    ON c.notice_id = s.notice_id AND c.section_id = s.section_id
                       AND c.field_id LIKE 'BT-195%'
-                 WHERE s.kind = 'FieldsPrivacy'
+                 WHERE s.kind = 'FieldsPrivacy' AND s.notice_id > ? AND s.notice_id <= ?
                  GROUP BY c.code ORDER BY 2 DESC LIMIT 12",
-                (Value::Integer(now),),
+                (Value::Integer(now), range[0].clone(), range[1].clone()),
             )
             .await?;
         let mut by_field = Vec::new();
         while let Some(row) = rows.next().await? {
             by_field.push((text(&row, 0), int(&row, 1)));
         }
-        Ok((withheld, dated, due, checked, revealed, by_field))
+        Ok(RevealSlice {
+            withheld_total,
+            after,
+            upto,
+            wrapped,
+            sections,
+            dated,
+            due,
+            checked,
+            revealed,
+            by_field,
+        })
     }
 
     /// Highest period key with the given prefix, e.g. prefix `2026-` over

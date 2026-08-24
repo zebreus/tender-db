@@ -1534,32 +1534,64 @@ impl Supervisor {
                 ))
             }
             Spec::RevealRecheck => {
-                // The cap bounds the reveal pass to a SAMPLE; 2000 index-seek
-                // reveal checks is a few seconds, and the report carries `checked`
-                // so a capped run reads as a sample, not the population. (The
-                // first version ran unbounded over a correlated VIEW and pinned a
-                // reader >12 min on prod — see reveal_recheck's doc.)
+                // One cursor slice per run (issue 274): the capped predecessor
+                // bounded only the reveal-EXISTS pass while its population
+                // aggregates joined the whole FieldsPrivacy cohort — 18+ min at
+                // one saturated core on prod, uncancellable, ended by two
+                // service restarts (2026-08-24). A slice is seconds, so the
+                // job needs no stop-flag plumbing; consecutive nightly runs
+                // walk the cohort and wrap, like D4's re-hash probe. A missing
+                // or garbled cursor report restarts the walk from the oldest
+                // notices — idempotent by design.
+                let after = match self.db.latest_report("reveal-cursor").await {
+                    Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body)
+                        .ok()
+                        .and_then(|v| v["after"].as_i64())
+                        .unwrap_or(0),
+                    _ => 0,
+                };
                 let now = store::now_unix();
-                let (withheld, dated, due, checked, revealed, by_field) =
-                    self.db.reveal_recheck(now, 2_000).await.map_err(|e| e.to_string())?;
+                let sl = self
+                    .db
+                    .reveal_recheck(now, after, 100_000)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 let report = serde_json::json!({
-                    "withheld_rows": withheld, "with_reveal_date": dated, "due": due,
-                    "checked": checked, "revealed_at_head": revealed,
-                    "still_withheld": checked - revealed,
-                    "due_by_field": by_field
-                        .iter()
-                        .map(|(f, n)| serde_json::json!({ "field": f, "due": n }))
-                        .collect::<Vec<_>>(),
+                    "withheld_rows": sl.withheld_total,
+                    "slice": {
+                        "after": sl.after, "upto": sl.upto, "wrapped": sl.wrapped,
+                        "sections": sl.sections, "with_reveal_date": sl.dated,
+                        "due": sl.due, "checked": sl.checked,
+                        "revealed_at_head": sl.revealed,
+                        "still_withheld": sl.checked - sl.revealed,
+                        "due_by_field": sl.by_field
+                            .iter()
+                            .map(|(f, n)| serde_json::json!({ "field": f, "due": n }))
+                            .collect::<Vec<_>>(),
+                    },
                 })
                 .to_string();
                 self.db
                     .put_report("reveal-recheck", &report, now)
                     .await
                     .map_err(|e| e.to_string())?;
+                let next = if sl.wrapped { 0 } else { sl.upto };
+                self.db
+                    .put_report("reveal-cursor", &serde_json::json!({ "after": next }).to_string(), now)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "reveal recheck: {withheld} withheld field(s), {dated} dated, {due} due; \
-                     of {checked} checked, {revealed} revealed at head, {} still withheld",
-                    checked - revealed,
+                    "reveal recheck: {} withheld field(s) in corpus; slice {}..{}: \
+                     {} section(s), {} due, of {} checked {} revealed at head, {} still withheld{}",
+                    sl.withheld_total,
+                    sl.after,
+                    sl.upto,
+                    sl.sections,
+                    sl.due,
+                    sl.checked,
+                    sl.revealed,
+                    sl.checked - sl.revealed,
+                    if sl.wrapped { " (cohort cycle wrapped)" } else { "" },
                 ))
             }
             Spec::ProbeDoe => {
