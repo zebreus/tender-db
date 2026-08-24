@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: DIAGNOSED — found 2026-08-24 in the issue-167 capacity campaign (E1/E2), on the live box, idle
+Status: step 1 LANDED (status as head-range; pending deploy) — step 2 (candidate-window cursor) open, re-measure after step 1 ships
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -147,3 +147,29 @@ Scoped for a focused session with prod re-validation; not rushed into an unatten
 
 Estimate: 1–2 h with prod re-validation. Not started in the tail of a firing after today's
 D5 hang; the module is the read-path safety core and deserves fresh context.
+
+## Step 1 landed (2026-08-24, evening firing)
+
+`version_predicates` gained `deadline_col: Option<&str>`; the two Tenders
+builders pass `Some("t.current_deadline")`, both Lots builders pass `None`.
+The fixture risk cleared: the Tenders status fixtures (api.rs) run the real
+projection, so `current_deadline` is populated; the store-level status
+fixtures are all Lots and keep the EXISTS. Pin test `status_head_range.rs`
+asserts the emitted shapes (range for Tenders, EXISTS for Lots) and prints
+the production SQL.
+
+Prod re-validation of the FULL emitted FROM/WHERE via /v1/sql:
+
+| shape                      | before          | after (cold) | after (warm) |
+|----------------------------|-----------------|--------------|--------------|
+| status=open&country=LU     | 30.00s → 503, 0 rows | 2.69s, 25 rows | 0.14–0.21s |
+| status=open&country=CY     | 30.00s → 503, 0 rows | 0.85s, 25 rows | — |
+| status=open&country=DE     | 0.25s           | 0.02s        | — |
+
+The killer combos now FILL their pages — the old walk 503'd before reaching
+the matches. Acceptance ("well under a second or an honest answer") met warm;
+cold worst-case 2.7s is 10× under the service bound.
+
+Residual (step 2): the no-status sparse combinations (`cpv+min_value` etc.)
+still walk; re-measure once this ships and decide whether the general
+candidate-window refactor is still warranted.

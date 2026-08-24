@@ -720,7 +720,17 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
 /// `l.tender_id` with `seq` recomputed. Writing them twice is the paraphrase hazard
 /// that blocked issue 112's B1 — one edit to a predicate would silently apply to one
 /// shape and not the other.
-fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
+/// `deadline_col`: the head deadline column when the builder's FROM serves one
+/// (`Some("t.current_deadline")` for the Tenders shapes). `status` then becomes a
+/// RANGE predicate on that indexed column instead of a per-row EXISTS — the fix
+/// for issue 273's walk DoS (`status=open&country=LU` walked all ~7.9M rows to
+/// the 30s bound; the range bounds the scan to the open head, 0.13s validated on
+/// prod). Provably equivalent: the projection's head UPDATE writes
+/// `MAX(head submission_deadline)` into `current_deadline` (`head_deadline`,
+/// canonical.rs), and MAX(d) > now ⟺ EXISTS(d > now); a Tender with no deadline
+/// gets NULL, which both forms read as Closed. Lots builders pass `None` — no
+/// head column there — and keep the EXISTS.
+fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str, deadline_col: Option<&str>) {
     if let Some(country) = &f.country {
         q.push(
             &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
@@ -768,12 +778,22 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str) {
         // "Open" is a submission deadline still in the future. A Tender that
         // never published one (award notices) is therefore Closed, which is the
         // useful reading: it cannot be bid on.
-        let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
-                               WHERE d.tender_id = {tid} AND d.seq = {seq}
-                                 AND d.field = 'submission_deadline' AND d.utc_seconds > ?)");
-        match status {
-            Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
-            Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
+        if let Some(col) = deadline_col {
+            match status {
+                Status::Open => q.push(&format!(" AND {col} > ?"), [Value::Integer(f.now)]),
+                Status::Closed => q.push(
+                    &format!(" AND ({col} IS NULL OR {col} <= ?)"),
+                    [Value::Integer(f.now)],
+                ),
+            }
+        } else {
+            let exists = format!("EXISTS (SELECT 1 FROM tender_version_dates d
+                                   WHERE d.tender_id = {tid} AND d.seq = {seq}
+                                     AND d.field = 'submission_deadline' AND d.utc_seconds > ?)");
+            match status {
+                Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
+                Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
+            }
         }
     }
     for (bound, op) in [(f.min_value, ">="), (f.max_value, "<=")] {
@@ -1233,7 +1253,7 @@ fn tenders_ordered_query(
             q.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq");
+    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"));
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         q.push(
@@ -1387,7 +1407,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq");
+    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"));
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -1900,7 +1920,7 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq");
+    version_predicates(&mut q, filter, "t.id", "v.seq", None);
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
@@ -1993,7 +2013,7 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     if let Some(source) = &filter.source {
         q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
     }
-    version_predicates(&mut q, filter, "l.tender_id", SEQ);
+    version_predicates(&mut q, filter, "l.tender_id", SEQ, None);
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
