@@ -1383,6 +1383,16 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
 
 /// The identity half of [`tenders`], built but not run.
 fn tenders_query(filter: &Filter, scope: Scope) -> Query {
+    // The paged shape wraps like the ordered list (issue 273 step 1b): an
+    // ids-only inner query walks/seeks with the predicates and LIMIT, and the
+    // satellite SELECT list joins back onto the ≤limit page rows. Beyond the
+    // sorter argument (which does not apply here — id order streams), the wrap
+    // lets the planner serve a status head-range off `tenders_current_deadline`
+    // and sort the ids, instead of walking the PK testing the range per row.
+    // `Scope::At` stays inline: one row by primary key, nothing to bound.
+    if matches!(scope, Scope::Page { .. }) {
+        return tenders_page_query(filter, scope);
+    }
     let mut q = Query::default();
     // issue 223: an org reverse-lookup (winner/buyer/bidder) drives from the
     // participation table's `organization_id` index instead of walking `tenders`.
@@ -1433,6 +1443,59 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
         ),
         Scope::At { id, .. } => q.push(" AND t.id = ?", [Value::Integer(id)]),
     }
+    q
+}
+
+/// The `Scope::Page` half of [`tenders_query`], wrapped: predicates and the id
+/// cursor bound an ids-only window; `tender_select_head` joins the page by
+/// primary key, so WHAT a row is still comes from the one shared string.
+fn tenders_page_query(filter: &Filter, scope: Scope) -> Query {
+    let Scope::Page { after, limit } = scope else { unreachable!("guarded by the caller") };
+    let mut inner = Query::default();
+    let (from, seed_param) = tender_from(filter);
+    inner.push(
+        &format!(
+            "SELECT t.id AS wid, v.seq AS wseq FROM {from}
+               JOIN tender_versions v ON v.tender_id = t.id AND v.seq =
+                    (SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)
+              WHERE 1 = 1"
+        ),
+        seed_param,
+    );
+    // Same predicate set, same order, same hazards as the inline shape above —
+    // see the issue 217-A comment there for why a publication seed rides alone.
+    if filter.publication_id.is_none() {
+        if let Some(source) = &filter.source {
+            inner.push(" AND t.source = ?", [t(source)]);
+        }
+        if let Some(kind) = &filter.kind {
+            inner.push(" AND t.kind = ?", [t(kind)]);
+        }
+        if let Some(after) = filter.published_after {
+            inner.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.published_before {
+            inner.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+        }
+        if let Some(after) = filter.deadline_after {
+            inner.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+        }
+        if let Some(before) = filter.deadline_before {
+            inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+        }
+    }
+    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"));
+    inner.push(
+        " AND t.id > ? ORDER BY t.id LIMIT ?",
+        [Value::Integer(after), Value::Integer(limit)],
+    );
+
+    let mut q = Query::default();
+    q.push(
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql)),
+        inner.params,
+    );
+    q.push("w.wseq ORDER BY t.id", []);
     q
 }
 
