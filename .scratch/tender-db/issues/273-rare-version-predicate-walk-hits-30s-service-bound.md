@@ -1,6 +1,6 @@
 # 273 — a rare-but-nonzero version-predicate combo walks to the 30s bound → 503 (cheap DoS)
 
-Status: steps 1+1b DEPLOYED/landing (2026-08-24) — 503s gone AND sub-second met on the ordered list; residual: id-ordered no-status sparse walks (original step 2 scope, re-measure first)
+Status: steps 1+1b+1c DEPLOYED (2026-08-24, rev 0cb9d95) — worst live shape ~1.9s (was 30s→503); residual to sub-second: drive-from-the-sparse-side for under-limit countries (step 2)
 Kind: availability + abuse surface (correctness-adjacent: a valid query returns 503, not results)
 Relates to: 117 (Class B version-predicate walks), 120 (walks are uncancellable), 167 (the campaign), 55/163 (SSE snapshot is the same walk)
 
@@ -230,3 +230,18 @@ Step 2 design candidates, in preference order:
    sub-second at the cost of the client contract.
 Also: wrap the id-ordered `tenders_query` the same way as 1b (its no-sort
 default is what most clients hit; LU 3.7s there vs 1.4s ordered).
+
+## Step 1c deployed (2026-08-24 ~22:05 UTC, rev 0cb9d95)
+
+The id-ordered page (the no-sort default and SSE snapshot shape) wraps like
+1b. Live default-path after deploy: LU 1.1–1.2s (was 3.7s), CY 1.8–1.9s (was
+5.7s), DE 0.7–0.9s. Day's arc for `status=open&country=LU`: 30.0s→503 with
+zero rows → 1.1s with a full page.
+
+Still open for the strict sub-second bar: the under-limit sparse case pays
+the open-head exhaustion (~36k candidates × country-EXISTS). The
+drive-from-the-sparse-side design (seed ids from `tender_version_
+classifications (scheme, code)`, thousands of rows for a sparse country,
+then deadline+head checks per id) is the next unit, with the drive-side
+choice needing a cheap cardinality probe. The ordered (`sort=published_at`)
+sparse case (CY 12.6s live) gains the most from it.
