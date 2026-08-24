@@ -2,12 +2,15 @@
   "permissions": {
     "defaultMode": "bypassPermissions",
     "allow": [
+      "Bash",
+      "Bash(*)",
       "Bash(ssh root@zebreus.click *)",
       "Bash(ssh root@zebreus.click*)",
       "Bash(./deploy.sh*)",
       "Bash(./deploy.sh *)",
       "Bash(git push*)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "*"
     ]
   },
   "skipDangerousModePermissionPrompt": true
