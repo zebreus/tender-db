@@ -1402,13 +1402,36 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
             // alphanumeric, so every LIKE-prefix match sorts inside
             // `[prefix, prefix~)` and the seed stays a superset. Measured on prod
             // 2026-08-24: status=open&country=CY 1.8s → 0.05–0.11s, both orders.
-            (Some(prefix), true) => (
-                "(SELECT DISTINCT tender_id FROM tender_version_classifications
-                   WHERE scheme = 'nuts' AND code >= ? AND code < ?) hits
-                   JOIN tenders t ON t.id = hits.tender_id"
-                    .to_owned(),
-                vec![t(prefix), t(format!("{prefix}~"))],
-            ),
+            // The seed set must equal what `LIKE prefix%` would admit, and LIKE
+            // folds ASCII case while a range does not (the reachability guard's
+            // lesson, re-caught by tenders_shortcircuit when this seed first
+            // shipped as one case-sensitive range and returned [] for
+            // `?country=cy`). Same remedy: the union of every case variant's
+            // range IS the LIKE set. `with_country_seed` only sets the flag when
+            // `prefix_ranges` accepts the prefix; a None here still falls back
+            // to the unseeded FROM rather than seeding wrongly.
+            (Some(prefix), true) => match prefix_ranges(prefix) {
+                Some(ranges) => {
+                    let ors = ranges
+                        .iter()
+                        .map(|_| "(code >= ? AND code < ?)")
+                        .collect::<Vec<_>>()
+                        .join(" OR ");
+                    let params = ranges
+                        .into_iter()
+                        .flat_map(|(low, high)| [t(&low), t(&high)])
+                        .collect();
+                    (
+                        format!(
+                            "(SELECT DISTINCT tender_id FROM tender_version_classifications
+                               WHERE scheme = 'nuts' AND ({ors})) hits
+                               JOIN tenders t ON t.id = hits.tender_id"
+                        ),
+                        params,
+                    )
+                }
+                None => ("tenders t".to_owned(), vec![]),
+            },
             _ => ("tenders t".to_owned(), vec![]),
         },
     }
@@ -1422,18 +1445,27 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
 /// drive side. Only consulted when no publication/participation seed outranks it.
 const COUNTRY_SEED_CAP: i64 = 60_000;
 pub async fn country_seed_viable(conn: &Connection, prefix: &str) -> turso::Result<bool> {
-    let mut rows = conn
-        .query(
-            "SELECT COUNT(*) FROM (
-               SELECT 1 FROM tender_version_classifications
-                WHERE scheme = 'nuts' AND code >= ? AND code < ? LIMIT ?)",
-            (t(prefix), t(format!("{prefix}~")), Value::Integer(COUNTRY_SEED_CAP)),
-        )
-        .await?;
-    Ok(match rows.next().await? {
-        Some(row) => int(&row, 0) < COUNTRY_SEED_CAP,
-        None => false,
-    })
+    // The same case-variant union the seed itself enumerates; a prefix the
+    // range machinery declines cannot be seeded at all.
+    let Some(ranges) = prefix_ranges(prefix) else { return Ok(false) };
+    let mut total = 0i64;
+    for (low, high) in ranges {
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM (
+                   SELECT 1 FROM tender_version_classifications
+                    WHERE scheme = 'nuts' AND code >= ? AND code < ? LIMIT ?)",
+                (t(&low), t(&high), Value::Integer(COUNTRY_SEED_CAP - total)),
+            )
+            .await?;
+        if let Some(row) = rows.next().await? {
+            total += int(&row, 0);
+        }
+        if total >= COUNTRY_SEED_CAP {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 /// Probe-and-set for the async entries: a filter that qualifies for the country
