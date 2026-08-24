@@ -2395,8 +2395,12 @@ impl Supervisor {
                     whole.iter().map(|(l, _)| l.as_str()).collect::<Vec<_>>().join(","),
                 )
             };
+            // Screamed, not mentioned (issue 272): queued as an acceptance read,
+            // this line sat in the recent-jobs list looking like a pass while
+            // having stored nothing.
             return Ok(format!(
-                "data-quality dry run: would measure {} window(s) of {DQ_WINDOW} ids up to \
+                "DRY RUN — STORED NOTHING (enqueue with {{\"dry_run\": false}} to measure): \
+                 would measure {} window(s) of {DQ_WINDOW} ids up to \
                  tender_id {max_id}, {} queries each ({} statements){once}{caveat}",
                 windows.len(),
                 queries.len(),
@@ -2752,13 +2756,28 @@ impl Supervisor {
         // A capped run must say what it did NOT do, in the job log where an operator
         // reads it: a summary that looks complete after touching 1 of 215 packages is
         // how a staged pass gets mistaken for the whole era (issue 244).
+        // The continuation cursor an operator can actually USE: resume rides the
+        // job ROW (deleted at completion), so "run again" was a lie for a fresh
+        // enqueue — it starts at its requested floor and re-walks the prefix
+        // (issue 272: job 358 redid 303k notices this way). The honest message
+        // hands over the exact `after` for the next enqueue instead.
+        let next_after = if packages_done == 0 {
+            after
+        } else {
+            packages.get(packages_done - 1).map(|(id, ..)| *id).unwrap_or(after)
+        };
         let remaining = if stopped {
             format!(
-                "; STOPPED at an operator's request after {packages_done} of {} package(s)",
+                "; STOPPED at an operator's request after {packages_done} of {} package(s) — \
+                 continue with a fresh enqueue carrying {{\"after\": {next_after}}}",
                 packages.len()
             )
         } else if held_back > 0 {
-            format!("; {held_back} package(s) held back by the cap — run again to continue")
+            format!(
+                "; {held_back} package(s) held back by the cap — continue with a fresh enqueue \
+                 carrying {{\"after\": {next_after}}} (re-enqueueing the original params \
+                 restarts at their floor)"
+            )
         } else {
             String::new()
         };
@@ -3773,7 +3792,10 @@ mod tests {
     async fn a_data_quality_dry_run_reports_the_plan_and_measures_nothing() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         let plan = sup.run_data_quality(1, false).await.expect("a dry run cannot fail on an empty db");
-        assert!(plan.starts_with("data-quality dry run:"), "{plan}");
+        // Issue 272: the line must be unmistakable in the recent-jobs list — a
+        // dry run queued as an acceptance read sat there reading like a pass.
+        assert!(plan.starts_with("DRY RUN — STORED NOTHING"), "{plan}");
+        assert!(plan.contains("{\"dry_run\": false}"), "the line must carry the enqueue fix: {plan}");
         assert!(plan.contains("0 window(s)"), "an empty corpus plans no windows: {plan}");
         // Whatever cannot be windowed is named in the plan, so a hole in the report
         // is known BEFORE the run rather than discovered in the body. Nothing is

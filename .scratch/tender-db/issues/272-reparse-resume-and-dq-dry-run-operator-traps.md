@@ -1,6 +1,6 @@
 # 272 — two enqueue-arm operator traps: reparse "run again to continue" and data-quality's dry-run default
 
-Status: needs-triage — filed 2026-08-23 (owner), both tripped live during the slice-9 sweep close-out
+Status: resolved (pending deploy) — both fixes landed 2026-08-24
 Kind: operability (the queue does what you said, not what you meant)
 Relates to: 244 (the sweep it bit), 230 (data-quality's confirmed flag), 247 (job cancel/resume work)
 
@@ -40,3 +40,19 @@ Relates to: 244 (the sweep it bit), 230 (data-quality's confirmed flag), 247 (jo
 - A capped reparse chain can be continued by a fresh enqueue (or the message stops
   claiming it can).
 - A dry-run data-quality line is unmistakable in `admin.sh queue` output.
+
+## Resolution (2026-08-24)
+
+Both traps fixed at the message layer — no hidden state, the queue still does
+exactly what you said:
+
+1. The capped (and now also the stopped) reparse completion line carries the
+   ACTUAL continuation: `continue with a fresh enqueue carrying {"after": <last
+   processed fetch_id>}`, and says outright that re-enqueueing the original
+   params restarts at their floor. Cross-row cursor adoption was considered and
+   rejected: job rows die at completion (job_log has no cursor column), and
+   silently overriding an explicit `after:` request would trade this trap for a
+   worse one.
+2. The data-quality dry-run line now leads with `DRY RUN — STORED NOTHING
+   (enqueue with {"dry_run": false} to measure)`, pinned by the existing dry-run
+   unit test so it cannot quietly soften.
