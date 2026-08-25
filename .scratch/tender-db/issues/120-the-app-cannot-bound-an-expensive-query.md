@@ -355,3 +355,17 @@ shows deadline cuts recurring in normal operation — meaning real users are hit
 burned threads behind them are a measured cost, not a theory; or (b) turso ships `interrupt()` on
 the public `Connection` (watch its releases — 0.7.x has been pinned since July), at which point
 cancellation stops costing a fork and should be adopted immediately.
+
+## Trigger re-check (2026-08-25, owner review): both unmet, position stands
+
+- (a) `tender_db_request_deadline_hits_total` = **0** on the serving process.
+  Caveat noted while checking: the gauge counts "since open" and yesterday had
+  eight restarts, so any long-window read must come from these hourly check-ins
+  rather than the counter alone — zero over today's normal traffic is still
+  consistent with no live stalls (and 273's fixes removed the one class that
+  produced them on purpose).
+- (b) turso is iterating 0.8.0-pre (pre.7, 2026-08-21) and its public
+  `Connection` still has no `interrupt()`. Worth re-checking when 0.8.0
+  STABLE ships — an API-freeze point is where such a method would land.
+
+No change to the decision: the fork stays untaken.
