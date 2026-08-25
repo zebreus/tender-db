@@ -53,9 +53,11 @@ the job queue is idle; /health is down for the build's duration.
 
 ## Residue
 
-* The reveal-EXISTS acceptance metric split ("no later version exists" vs
-  "later version still withholds", D5 residue from the campaign) now naturally
-  lands per-slice; unchanged in this issue.
+* ~~The reveal-EXISTS acceptance metric split~~ DONE (e3a1f9a, deployed
+  2026-08-25): the slice report carries `no_later_version` (awaitable) and
+  `later_still_withholds` (broken). First split slice: 1,026 due → 54
+  revealed, 601 awaitable, 371 BROKEN — the campaign's acceptance number now
+  accrues nightly.
 * The supervisor's cancel-refusal message names issue 252; long-job kinds that
   genuinely need mid-run cancel still each need the stop-flag pattern — D5 no
   longer does, by construction.
