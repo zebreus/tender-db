@@ -1,6 +1,13 @@
 # 173 — takedown/redaction tombstone design note
 
-Status: open — only the tombstone design note remains; D4/D5 landed 2026-08-23
+Status: CLOSED (2026-08-25, owner) — the tombstone design note is written as
+ADR-0012 (`docs/adr/0012-takedown-tombstones-dormant-design.md`), a dormant
+design deliberately not built: tombstones table as order-of-record, parsed-layer
+delete + `tombstoned` ledger stamp, targeted re-fold via the issue-99 epoch,
+append-only change log untouched (`removed` rows only — change rows carry no
+content), one-time package repack with the D4-must-consult-tombstones coupling,
+content-hash re-arrival guard, snapshot/backup checklist. Was: open — only the
+tombstone design note remains; D4/D5 landed 2026-08-23
 Role: run-driver
 
 2026-08-23 (Lennart, direct): the lawyer confirmed all stored information is

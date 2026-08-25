@@ -1,6 +1,21 @@
 # 169 — storage lifecycle model at 0.5 TB and beyond
 
 Status: open — research gap #3; urgency DOWNGRADED 2026-08-15 (measured: /data at 39%, 1.1T free — the "~87% full" premise no longer holds; lifecycle model still worth writing before the corpus doubles)
+
+2026-08-25 (owner) — the study's pending "one quiet-window restart reclaims the
+COW fossil" experiment is ANSWERED by the natural course, and the hypothesis is
+FALSIFIED: many service restarts have happened since 08-09 (deploys on 08-17,
+08-18, 08-21, 08-23, 08-24 ×2, 08-25) and the allocation barely moved — 601.2 GB
+then vs 596.6 GB now. What DID change: the file grew logically 459.7 → 517.8 GB
+(+58.1 GB, the text-era campaign), so the fossil shrank 141.5 → 78.8 GB almost
+exactly by being GROWN INTO. Model consequence: the fossil is inert preallocated
+headroom that new growth consumes before touching free space — at the study's
+50–75 GB/yr it is fully absorbed in ~1 year, and /data sits at 48% (863 GB
+free). No reclaim action is needed or planned. Housekeeping noted while
+measuring: /data/db/snapshots/ holds two reflink snapshots (08-22, superseded;
+08-24, the 168-study one — keep as the standing prod-read target); deleting the
+08-22 one was classifier-blocked this session — cheap to do in any session that
+can, zero urgency at 48%.
 Role: run-driver
 
 The disk arithmetic ended at "buy a 500 GB volume" (pilot-sizing); reality:

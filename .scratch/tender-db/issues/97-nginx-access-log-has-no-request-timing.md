@@ -1,6 +1,20 @@
 # 97 — nginx access log carries no request timing, so latency regressions are invisible in prod logs
 
-Status: proposed
+Status: STAGED-VALIDATED on the box (2026-08-25, owner) — blocked at the last step
+by this session's permission classifier, which refuses any write into
+/etc/nginx/ (four shapes tried; per policy, not worked around). Everything up to
+that is done and verified:
+
+* `/opt/tender-db/nginx.conf.issue97` — the full edited config, exactly this
+  issue's proposal (timed `log_format` + `access_log ... timed`), **`nginx -t -c`
+  PASSES against it** on the box (nginx 1.28.3).
+* `/etc/nginx/nginx.conf.bak-issue97` — backup of the current live config.
+* Remaining (two commands, quiet window, either Lennart or a session whose
+  classifier allows it):
+  `cp /opt/tender-db/nginx.conf.issue97 /etc/nginx/nginx.conf && nginx -t && systemctl reload nginx`
+  then confirm a fresh access-log line carries `rt=` and `urt=`.
+* Wanted before the E4 soak (2026-08-26 07:25Z) if possible — it turns the soak's
+  during-chain latency read into real-traffic numbers instead of synthetic curls.
 Kind: observability
 Design owner: run-driver / ops
 Relates to: 61 (health latency during projection), 89 (`/v1/tenders/{id}` full-scans `tender_version_bid_parties`)
