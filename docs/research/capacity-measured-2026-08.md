@@ -143,3 +143,39 @@ that walk-class reads (heavy REST filters + SSE snapshots) share one small uncan
 pool with no per-client metering and no time bound. Issue 273 fix 1 is the prerequisite;
 pool metering + optional widening is the follow-up. This closes 167's research half —
 the remaining E4 soak is confirmatory, not blocking.
+
+## The budget write-up (2026-08-25, post-273) — what the rate limits should be
+
+273's three steps changed the arithmetic this section was waiting for. E1 shapes
+re-measured on rev e3a1f9a (public endpoint, warm-ish):
+
+| shape | pre-273 | now |
+|---|---|---|
+| status=open | 1.73s cold / 0.55s warm | 0.93–0.96s |
+| status=closed&country=DE | 62ms | 0.66–0.71s |
+| status=open&country=CY | 30s → 503 | 0.75–2.0s |
+| country=LU (no status) | (walk class) | 1.0–1.9s |
+
+Derivation:
+
+* **Walk pool (4 slots, shed at the 5th):** worst warm walk-shape now holds a
+  slot ~1–2s (was 30s + overrun). Sustained walk-shaped throughput ≈ 2–4 rps
+  before shedding; a shed is a fast 503, and the slot-hold window shrank ~15×,
+  so shed pressure drains in seconds instead of minutes. The 4-request DoS
+  (four 30s pins) is structurally gone.
+* **Main pool (8 readers):** indexed shapes at ≤3–62ms → hundreds of rps;
+  never the binding constraint.
+* **Per-IP 10 rps + 5 SSE (current nginx):** an IP sending only worst-case
+  walk shapes at its full budget meets the pool shed, not the box — bounded by
+  construction. **Recommendation: keep the limits as they are.** No nginx
+  change; the walk-pool shed is the real admission control, and post-273 its
+  failure mode is polite.
+* The earlier "~7 rps/box saturates on status=open" line is obsolete — struck
+  by this section.
+
+Residual instrumentation note: `isolate` shed counts are visible in /metrics;
+if walk-shed 503s ever recur outside probe traffic, that — not rps tuning — is
+the signal to revisit (it would mean a new walk class escaped 273's treatment).
+
+E4 (mixed soak observing the daily chain live) remains the one unrun
+experiment; it must coincide with the ~07:30 UTC chain and is scheduled.
