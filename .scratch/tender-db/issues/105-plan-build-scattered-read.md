@@ -1,7 +1,7 @@
 # 105 — the incremental PLAN BUILD reads scattered, and is what makes the quarantine reprocess infeasible
 
-Status: DESIGN — awaiting team-lead review before implementation. Next work-unit after Group 1,
-ahead of Group 2.
+Status: CLOSED 2026-08-25 (owner review) — premise no longer reproduces; the PlanRead sweep is
+not built, deliberately. Re-open trigger below.
 Kind: performance (projection Phase 1) — the reprocess blocker
 Renumbered: filed as 97, moved to 105 — 97 collided with the nginx request-timing issue, which keeps the number.
 Blocked by: — (independent of 95; see "Not blocked on the ParsedFold unknown")
@@ -139,3 +139,32 @@ source, profile), yet pass-1 materialises each notice's **entire** parsed form t
 targeted projection of just those field ids would likely beat both read mechanisms for pass-1 by a
 wide margin. That is a larger change with its own correctness surface; noted here so it is not lost,
 but it should not ride along with a mechanical read swap.
+
+## Owner review (2026-08-25): the measured premise no longer reproduces — close without building
+
+The design's floor was the 2026-08-02 stage breakdown: pass-2 at 10.6 ms/notice,
+~107 min of plan build per large fold, ~13 h scaled to the quarantine reprocess.
+That world is gone. The most recent large incremental fold — closing fold 334
+(2026-08-23), 458,572 changed notices → 352,196 Tenders — ran **end to end in
+1,172.8 s ≈ 2.6 ms/notice**, plan build included, on a delta 2.1× the size of
+the run that produced the 10.6 ms figure. The Group-1 line (91/93/94), 243's
+merged reads, and the general read-path work have already collapsed the cost
+this design existed to remove; building the PlanRead selector now would add a
+second read mechanism, a routing threshold, and four byte-identity gates to
+recover time the pipeline no longer spends.
+
+The motivating workload is also mostly behind us: the 2.42M quarantine
+reprocess happened piecewise through the 2026-08 campaigns (100/139/196/244),
+each absorbed at post-Group-1 speeds.
+
+**Re-open trigger, so this closure cannot rot silently:** issue 65's job
+phase/progress record now exposes per-stage timings on every fold. If a future
+large fold's record shows the plan-build phase re-dominating (≳ half of wall
+time on a ≥100k-notice delta), re-open with that breakdown — the design here,
+including the pass-2 ordering constraint and the parse-state divergence remedy,
+remains correct and ready; only its economics failed review.
+
+The out-of-scope note stands on its own merits and is worth keeping visible:
+pass-1 materialises the entire parsed form to read a handful of Ident fields.
+If pass-1 ever dominates a stage breakdown, a targeted field projection is the
+first thing to try — smaller than this design, no byte-identity surface.
