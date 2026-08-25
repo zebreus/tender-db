@@ -1,6 +1,13 @@
 # 69 — DÖE has no fetch walk-forward (missed tick = silent permanent hole) + admin "run daily now" endpoint
 
-Status: in-review
+Status: RESOLVED-VERIFIED (2026-08-25, owner) — both halves are in main, deployed,
+and (a) is visibly live: every daily chain's probe job runs the walk-forward
+(today's job 1287: params `doe daily (probe)`, counts `probed 1 day(s), 1 new` —
+the one-day steady-state case; a gap would report N days, per the
+`doe_walk_forward_catches_up_a_multi_day_gap` test). (b) `POST /admin/jobs
+{"kind":"daily"}` routes to `enqueue_daily(true)` in the deployed supervisor
+(`supervisor.rs`, `"daily"` arm). The in-review wait for a team-lead deploy is
+long since moot — the branch merged and this has been prod's daily path for weeks.
 Kind: correctness (completeness) + ops
 Blocked by: —
 Surfaced by: the 2026-07-28 issue-61 incident recovery (snapshot restore + manual DÖE backfill)

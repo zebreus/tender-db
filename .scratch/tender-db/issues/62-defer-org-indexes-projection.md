@@ -1,6 +1,22 @@
 # 62 — Defer Organization indexes on the full-rebuild projection
 
-Status: in-review
+Status: CLOSED-RESOLVED (2026-08-25, owner) — the "OPTIONS (decide before any 62
+deploy)" fork at the bottom of this file is settled: what shipped is option 2's
+spirit, realized as a **plain-index build**. Current main (`canonical.rs`):
+org-identity uniqueness is the NAMED `organizations_identity` index so a full
+rebuild can drop → bulk-load by sequential id → build once at the end (this
+issue's original point); the turso CREATE-UNIQUE-INDEX-over-NULLs-at-scale hang
+is retired by building it PLAIN — nothing relies on a DB UNIQUE (the in-RAM
+`org_of` map is the run's dedup authority; no `ON CONFLICT` on organizations
+anywhere), and a plain build is bulk-load-safe (measured, per the
+`build_organization_indexes` doc). A pre-62 DB with the inline UNIQUE is
+respected (build skipped; deliberately absent from the issue-111 detector's
+list). Prod evidence 2026-08-25: the issue-111 startup detector is silent at the
+last two restarts (no missing-index warnings, no REFUSING lines) and the journal
+shows "WAL after end-of-run index builds" on the 08-24 fold — the deferred
+discipline IS the production path. Option 1 (drop) didn't happen because
+rebuild-scale needs the pattern anyway; option 3 (upstream turso report) remains
+unfiled — upstream filings are Lennart's call, same as issue 239's draft.
 Severity: HIGH (superlinear Phase-1 at prod scale; disk saturation + health starvation)
 Blocked by: —
 Relates to: 60 (third and final scattered-index sub-fix), 59, 61
