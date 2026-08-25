@@ -16,12 +16,20 @@ fn a_viable_country_drives_the_lots_stream_from_the_classifications_seed() {
     let seeded = Filter { country_seed: true, ..f() };
     let (sql, _) = lots_statement(&seeded, Scope::Page { after: 0, limit: 25 });
     assert!(
-        sql.contains("FROM tender_version_classifications") && sql.contains("hits"),
-        "the seed must drive the lots stream: {sql}"
+        sql.contains("l.tender_id IN (SELECT DISTINCT tender_id")
+            && sql.contains("FROM tender_version_classifications"),
+        "a viable country must seed as an IN semi-join (the JOIN form inverts, measured 2.1s vs 0.32s): {sql}"
     );
-    assert!(sql.contains("JOIN lots l ON l.tender_id = hits.tender_id"), "seed joins lots on the tender id: {sql}");
+    // status=open + an over-cap country (country_seed false): the open-head arm.
     let (sql, _) = lots_statement(&f(), Scope::Page { after: 0, limit: 25 });
-    assert!(!sql.contains("hits"), "unseeded stays unseeded: {sql}");
+    assert!(
+        sql.contains("l.tender_id IN (SELECT t.id FROM tenders t") && sql.contains("t.current_deadline > ?"),
+        "over-cap country with status=open must drive from the open head: {sql}"
+    );
+    // no country at all: no seed of either kind.
+    let bare = Filter { status: Some(Status::Open), now: 1_756_000_000, ..Filter::default() };
+    let (sql, _) = lots_statement(&bare, Scope::Page { after: 0, limit: 25 });
+    assert!(!sql.contains("l.tender_id IN"), "bare status stays unseeded (fills from the dense walk): {sql}");
 }
 
 /// The superset trap, lots edition (the tenders twin lives in
@@ -104,6 +112,37 @@ async fn the_lots_country_seed_stays_a_candidate_set_not_an_answer() {
         let ids: Vec<i64> = rows.iter().map(|r| r.id).collect();
         assert_eq!(ids, want, "?source={source}: the guard must drop nothing that matches");
     }
+    // The open-head arm behaves: on a tiny corpus the viability probe always
+    // arms the country seed, so exercise the over-cap path by running the
+    // statement it would generate (country_seed forced false) directly. The
+    // head pointers and per-lot deadline rows are set so tender 1 is open-CY,
+    // tender 2 open-but-DE at head, tender 3 closed — only lot 1 may return.
+    for id in [1, 2] {
+        exec(format!("UPDATE tenders SET current_deadline = 2000 WHERE id = {id}")).await;
+        exec(format!(
+            "INSERT INTO tender_version_dates (tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time)
+             VALUES ({id}, 2, NULL, 'submission_deadline', 2000, 0, 1)"
+        ))
+        .await;
+    }
+    let over_cap = Filter {
+        status: Some(store::read::Status::Open),
+        country: Some("CY".into()),
+        country_seed: false,
+        now: 1_000,
+        ..Filter::default()
+    };
+    let (sql, params) = store::read::lots_statement(&over_cap, Scope::Page { after: 0, limit: 25 });
+    assert!(sql.contains("t.current_deadline > ?"), "the open-head arm must be in play: {sql}");
+    let mut rows = reader.query(&sql, params).await.expect("open-head statement runs");
+    let mut ids = Vec::new();
+    while let Some(row) = rows.next().await.expect("row") {
+        ids.push(match row.get_value(0).expect("id") {
+            Value::Integer(v) => v,
+            other => panic!("unexpected id value {other:?}"),
+        });
+    }
+    assert_eq!(ids, vec![1], "open-head seed: only the open, head-CY tender's lot");
     drop(db);
     let _ = Value::Integer(0);
     for suffix in ["", "-wal", "-shm"] {

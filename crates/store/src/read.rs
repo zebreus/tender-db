@@ -1430,7 +1430,7 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
             (Some(prefix), true) => match prefix_ranges(prefix) {
                 Some(ranges) => {
                     let (hits, params) = country_seed_hits(ranges);
-                    (format!("{hits}\n                               JOIN tenders t ON t.id = hits.tender_id"), params)
+                    (format!("{hits} hits\n                               JOIN tenders t ON t.id = hits.tender_id"), params)
                 }
                 None => ("tenders t".to_owned(), vec![]),
             },
@@ -1456,7 +1456,7 @@ fn country_seed_hits(ranges: Vec<(String, String)>) -> (String, Vec<Value>) {
         .collect::<Vec<_>>()
         .join(" UNION ALL ");
     let params = ranges.into_iter().flat_map(|(low, high)| [t(&low), t(&high)]).collect();
-    (format!("(SELECT DISTINCT tender_id FROM ({branches})) hits"), params)
+    (format!("(SELECT DISTINCT tender_id FROM ({branches}))"), params)
 }
 
 /// Should this country prefix drive the read (issue 273 step 2)? A capped count
@@ -2174,14 +2174,13 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// See issue 27 for enforcing the invariant, after which this may be revisited.
 /// The seeded FROM clause for the lots stream. issue 223: an org reverse-lookup
 /// drives from the participation table's `organization_id` index rather than
-/// walking `lots`. issue 275: the sparse-country seed (issue 273 step 2)
-/// applies here too — `status=open&country=LU` measured 30s→503 on prod
-/// 2026-08-25 because this endpoint kept walking `lots` with per-row EXISTS
-/// after the tenders fix. Either seed's `hits` set is a candidate SUPERSET
-/// joined on `l.tender_id` (served by `UNIQUE(tender_id, lot_key)`); the
-/// untouched EXISTS probe and version predicates still decide membership, so
-/// the result matches the walk exactly. Publication numbers are a tenders-only
-/// filter — `tender_from`'s exact-seed arm has no mirror here.
+/// walking `lots`. The country/status seeds do NOT live here: on lots they are
+/// `l.tender_id IN (…)` predicates (see `lot_seed_predicates`), because the
+/// join form inverts — measured on prod 2026-08-25: turso drives the
+/// `hits JOIN lots … ORDER BY l.id` shape from `lots` to serve the ORDER BY
+/// and probes `hits` per row (CY 2.1s via JOIN vs 0.32s via IN; LU+open 7.8s
+/// vs 0.48s). Publication numbers are a tenders-only filter — `tender_from`'s
+/// exact-seed arm has no mirror here.
 fn lot_from(filter: &Filter) -> (String, Vec<Value>) {
     match participation_seed(filter) {
         Some((table, extra, org)) => (
@@ -2191,16 +2190,54 @@ fn lot_from(filter: &Filter) -> (String, Vec<Value>) {
             ),
             vec![Value::Integer(org)],
         ),
-        None => match (&filter.country, filter.country_seed) {
-            (Some(prefix), true) => match prefix_ranges(prefix) {
-                Some(ranges) => {
-                    let (hits, params) = country_seed_hits(ranges);
-                    (format!("{hits}\n                   JOIN lots l ON l.tender_id = hits.tender_id"), params)
-                }
-                None => ("lots l".to_owned(), vec![]),
-            },
-            _ => ("lots l".to_owned(), vec![]),
-        },
+        None => ("lots l".to_owned(), vec![]),
+    }
+}
+
+/// Issue 275: the lots-stream seeds, as `l.tender_id IN (…)` predicates — the
+/// form turso executes as a semi-join without the join-order inversion the
+/// doc above records. The seed set is a candidate SUPERSET (or an exact
+/// restatement); the untouched EXISTS/version predicates still decide
+/// membership, so results match the unseeded walk exactly.
+///
+/// Two arms, mutually exclusive:
+/// * A VIABLE sparse country (`country_seed`, issue 273 step 2's probe):
+///   the case-variant UNION ALL enumeration off the classifications index.
+///   Measured on prod: `?country=CY` 0.32s against 30s-class walks.
+/// * An over-cap country WITH `status=open`: drive from the open head —
+///   `t.current_deadline > now` is EXACTLY status-open (273's proven
+///   equivalence, `tenders_current_deadline`-indexed, ~38k tenders), with the
+///   country prefix tested per TENDER at `t.current_seq` so only matching
+///   tenders' lots are ever enumerated. Measured on prod:
+///   `?status=open&country=LU` 0.48s against the 30.5s→503 walk this fixes.
+///   (`current_seq`/`current_deadline` are the same head pointers the whole
+///   tenders endpoint reads; the per-lot predicates still re-decide.)
+///
+/// Not seeded (recorded in issue 275's residuals): bare `status=open` (fills
+/// from the dense walk, 1.1s), over-cap country without status (1.7s), and
+/// `cpv`+`status` (no cpv seed anywhere yet).
+fn lot_seed_predicates(q: &mut Query, filter: &Filter) {
+    if participation_seed(filter).is_some() {
+        return; // the FROM clause already drives from the tighter org seed
+    }
+    match (&filter.country, filter.country_seed) {
+        (Some(prefix), true) => {
+            if let Some(ranges) = prefix_ranges(prefix) {
+                let (hits, params) = country_seed_hits(ranges);
+                q.push(&format!(" AND l.tender_id IN {hits}"), params);
+            }
+        }
+        (Some(country), false) if filter.status == Some(Status::Open) => {
+            q.push(
+                " AND l.tender_id IN (SELECT t.id FROM tenders t
+                       WHERE t.current_deadline > ?
+                         AND EXISTS (SELECT 1 FROM tender_version_classifications c
+                                      WHERE c.tender_id = t.id AND c.seq = t.current_seq
+                                        AND c.scheme = 'nuts' AND c.code LIKE ?))",
+                vec![Value::Integer(filter.now), t(format!("{country}%"))],
+            );
+        }
+        _ => {}
     }
 }
 
@@ -2245,6 +2282,7 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     if let Some(source) = &filter.source {
         q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
     }
+    lot_seed_predicates(&mut q, filter);
     version_predicates(&mut q, filter, "l.tender_id", SEQ, None);
     match scope {
         Scope::Page { after, limit } => q.push(

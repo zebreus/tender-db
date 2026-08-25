@@ -1,9 +1,39 @@
 # 275 — lots: status + sparse country still walks to the 30s shed (273's shape, on the endpoint 273 didn't fix)
 
-Status: FIX BUILT + TESTED (2026-08-25, owner) — gate running, deploy next.
-Scope grew one finding during the same audit: `?source=<absent>` on lots is a
-SECOND live 503 (correlated per-row seek into `tenders`, 13.2M seeks), fixed
-here as a lots-only `reachable()` source leg. Full measured matrix below.
+Status: ROUND-2 FIX BUILT + TESTED (2026-08-25 late, owner) — gate running,
+redeploy next. Scope grew one finding during the audit: `?source=<absent>` on
+lots is a SECOND live 503 (fixed round 1, verified 33.4s → 0.61s on prod).
+
+## Round 2 — the first deploy did NOT fix the headline shape (kept honest by
+## the acceptance probe)
+
+Deployed `4ac4f4b` and `status=open&country=LU` was STILL 503/30.5s. Two causes,
+both found by measuring exact statements in the on-box SQL sandbox:
+
+1. **LU is over the seed cap.** `country_seed_viable` bails at 60,000
+   classification entries; LU has 67,136. The flag never armed. On tenders the
+   over-cap countries are saved by the `current_deadline` head-range (273 step
+   1); lots have no head column, so an over-cap country got NOTHING.
+2. **The JOIN seed form inverts on lots.** Even where the seed arms (CY),
+   `hits JOIN lots l … ORDER BY l.id` makes turso drive from `lots` to serve
+   the ORDER BY and probe `hits` per row. Measured, same rows each pair:
+   CY seed as JOIN 2.1s vs as `l.tender_id IN (…)` **0.32s**; open-head seed
+   as JOIN 7.8s vs as IN **0.48s**. (The tenders JOIN seed survives because it
+   joins on the OUTER table's PK — `t.id = hits.tender_id` — which turso
+   serves hits-first; `l.tender_id` is not the lots PK.)
+
+Round-2 shape (`lot_seed_predicates`, both arms as IN semi-joins, mutually
+exclusive, participation seed still outranks):
+* viable sparse country → the case-variant UNION ALL enumeration, as
+  `l.tender_id IN (SELECT DISTINCT tender_id FROM (…))` — 0.32s CY;
+* over-cap country + `status=open` → `l.tender_id IN (SELECT t.id FROM
+  tenders t WHERE t.current_deadline > ? AND EXISTS(country at
+  t.current_seq))` — 273's proven status≡head-range equivalence bounds the
+  candidates to ~38k open tenders and the tender-level country test keeps the
+  lot explosion to matching tenders only — 0.48s LU.
+
+The per-lot EXISTS/version predicates stay untouched and still decide
+membership in both arms.
 Kind: performance / availability (issue-61 class; unauthenticated, trivially reachable)
 Relates to: 273 (the tenders fix this ports), 70 F3 (the audit that predicted the class), 223 (the participation-seed shape being reused)
 
