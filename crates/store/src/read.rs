@@ -963,6 +963,23 @@ async fn reachable(conn: &Connection, filter: &Filter, collection: Collection) -
             return Ok(false);
         }
     }
+    // Issue 275 (measured 2026-08-25): `?source=<absent>` on LOTS ran 33.4s to
+    // the shed — the lots shape tests source through a correlated seek into
+    // `tenders` PER CANDIDATE ROW, 13.2M seeks for a value no row carries. The
+    // same absent value on TENDERS is a cheap in-row compare along its PK walk
+    // (measured 0.69s), so the guard is lots-only: a bare `WHERE source = ?
+    // LIMIT 1` over `tenders` — unindexed, so the absent case pays one plain
+    // table pass (about what the tenders read itself pays) instead of the
+    // correlated walk, and a real source hits its first row immediately. Same
+    // one-sided hazard as every leg here: it answers matches-nothing only; a
+    // present-but-rare source still walks, dense in practice (ted/doe).
+    if matches!(collection, Collection::Lots) {
+        if let Some(source) = &filter.source {
+            if !exists(conn, "SELECT 1 FROM tenders WHERE source = ? LIMIT 1", vec![t(source)]).await? {
+                return Ok(false);
+            }
+        }
+    }
     // `kind` is `t.kind` (tenders) / `vl.kind` (lots), and NO index covers either — it
     // is precisely why `walks()` routes it to the isolated pool. So an absent value
     // walks the whole driven table INSIDE that pool, holding a reader slot for the
@@ -1412,37 +1429,34 @@ fn tender_from(filter: &Filter) -> (String, Vec<Value>) {
             // to the unseeded FROM rather than seeding wrongly.
             (Some(prefix), true) => match prefix_ranges(prefix) {
                 Some(ranges) => {
-                    // UNION ALL of per-range branches, never one OR'd WHERE:
-                    // measured 2026-08-24 late, turso serves each branch as an
-                    // index seek (CY 0.09–0.11s) but drops the bounds on the OR
-                    // form and row-filters the whole nuts partition — which
-                    // resurrected the 30s→503 this seed exists to kill, live,
-                    // for the ~20 minutes before the rollback.
-                    let branches = ranges
-                        .iter()
-                        .map(|_| {
-                            "SELECT tender_id FROM tender_version_classifications
-                              WHERE scheme = 'nuts' AND code >= ? AND code < ?"
-                        })
-                        .collect::<Vec<_>>()
-                        .join(" UNION ALL ");
-                    let params = ranges
-                        .into_iter()
-                        .flat_map(|(low, high)| [t(&low), t(&high)])
-                        .collect();
-                    (
-                        format!(
-                            "(SELECT DISTINCT tender_id FROM ({branches})) hits
-                               JOIN tenders t ON t.id = hits.tender_id"
-                        ),
-                        params,
-                    )
+                    let (hits, params) = country_seed_hits(ranges);
+                    (format!("{hits}\n                               JOIN tenders t ON t.id = hits.tender_id"), params)
                 }
                 None => ("tenders t".to_owned(), vec![]),
             },
             _ => ("tenders t".to_owned(), vec![]),
         },
     }
+}
+
+/// The sparse-country `hits` set the seeded FROM builders share (issue 273
+/// step 2 on tenders; issue 275 ported it to lots — one construction so the
+/// two cannot drift). UNION ALL of one range branch per case variant, NEVER
+/// one OR'd WHERE: turso serves each branch as an index seek (CY 0.09–0.11s,
+/// measured 2026-08-24) but drops the bounds on the OR form and row-filters
+/// the whole nuts partition — which resurrected the 30s→503 this seed exists
+/// to kill, live, for the ~20 minutes before the rollback.
+fn country_seed_hits(ranges: Vec<(String, String)>) -> (String, Vec<Value>) {
+    let branches = ranges
+        .iter()
+        .map(|_| {
+            "SELECT tender_id FROM tender_version_classifications
+              WHERE scheme = 'nuts' AND code >= ? AND code < ?"
+        })
+        .collect::<Vec<_>>()
+        .join(" UNION ALL ");
+    let params = ranges.into_iter().flat_map(|(low, high)| [t(&low), t(&high)]).collect();
+    (format!("(SELECT DISTINCT tender_id FROM ({branches})) hits"), params)
 }
 
 /// Should this country prefix drive the read (issue 273 step 2)? A capped count
@@ -1963,6 +1977,17 @@ pub async fn lots_identity(
     if matches!(scope, Scope::Page { .. }) && !reachable(conn, filter, Collection::Lots).await? {
         return Ok(Vec::new());
     }
+    // Issue 275: decide the sparse-country drive side (issue 273 step 2's
+    // probe), Page-scoped only — the At and tender-containment paths route to
+    // `lots_query_previous`, which never consults the flag, so probing there
+    // would bill the SSE diff ~10ms per classification for nothing.
+    let seeded;
+    let filter = if matches!(scope, Scope::Page { .. }) && filter.tender.is_none() {
+        seeded = with_country_seed(conn, filter).await?;
+        &seeded
+    } else {
+        filter
+    };
     lots_query(filter, scope)
         .rows(conn, |row| LotRow {
             id: int(row, 0),
@@ -2147,6 +2172,38 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
 /// the data is already wrong — removing a cross-check at the moment it is most needed.
 /// Recomputing costs ~1.9x on the sparse band and nothing on the dense path.
 /// See issue 27 for enforcing the invariant, after which this may be revisited.
+/// The seeded FROM clause for the lots stream. issue 223: an org reverse-lookup
+/// drives from the participation table's `organization_id` index rather than
+/// walking `lots`. issue 275: the sparse-country seed (issue 273 step 2)
+/// applies here too — `status=open&country=LU` measured 30s→503 on prod
+/// 2026-08-25 because this endpoint kept walking `lots` with per-row EXISTS
+/// after the tenders fix. Either seed's `hits` set is a candidate SUPERSET
+/// joined on `l.tender_id` (served by `UNIQUE(tender_id, lot_key)`); the
+/// untouched EXISTS probe and version predicates still decide membership, so
+/// the result matches the walk exactly. Publication numbers are a tenders-only
+/// filter — `tender_from`'s exact-seed arm has no mirror here.
+fn lot_from(filter: &Filter) -> (String, Vec<Value>) {
+    match participation_seed(filter) {
+        Some((table, extra, org)) => (
+            format!(
+                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
+                   JOIN lots l ON l.tender_id = hits.tender_id"
+            ),
+            vec![Value::Integer(org)],
+        ),
+        None => match (&filter.country, filter.country_seed) {
+            (Some(prefix), true) => match prefix_ranges(prefix) {
+                Some(ranges) => {
+                    let (hits, params) = country_seed_hits(ranges);
+                    (format!("{hits}\n                   JOIN lots l ON l.tender_id = hits.tender_id"), params)
+                }
+                None => ("lots l".to_owned(), vec![]),
+            },
+            _ => ("lots l".to_owned(), vec![]),
+        },
+    }
+}
+
 fn lots_query(filter: &Filter, scope: Scope) -> Query {
     let scoped = match scope {
         Scope::Page { .. } => filter.tender,
@@ -2163,22 +2220,7 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
     // version they are reading.
     const SEQ: &str = "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = l.tender_id)";
 
-    // issue 223: an org reverse-lookup drives from the participation table's
-    // `organization_id` index rather than walking `lots`. The `hits` set is the org's
-    // tenders (seek-served, small); `l.tender_id = hits.tender_id` is served by the
-    // `UNIQUE(tender_id, lot_key)` index. The `EXISTS` probe and the untouched version
-    // predicates still decide membership, so the result matches the walk exactly.
-    let seed = participation_seed(filter);
-    let (from, seed_param): (String, Vec<Value>) = match seed {
-        Some((table, extra, org)) => (
-            format!(
-                "(SELECT DISTINCT tender_id FROM {table} WHERE organization_id = ?{extra}) hits
-                   JOIN lots l ON l.tender_id = hits.tender_id"
-            ),
-            vec![Value::Integer(org)],
-        ),
-        None => ("lots l".to_owned(), vec![]),
-    };
+    let (from, seed_param) = lot_from(filter);
     let mut q = Query::default();
     q.push(
         &format!(

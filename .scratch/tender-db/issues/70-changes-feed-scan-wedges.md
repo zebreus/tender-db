@@ -1,6 +1,15 @@
 # 70 — changes-feed turso-scan wedges (oldest_cursor, entity-filtered changes, filtered lists)
 
-Status: F1+F2 fixed (this branch), F3 open
+Status: F1+F2 fixed (this branch); F3 MEASURED 2026-08-25 (owner) — the "measure
+which filters actually scan at prod scale first" step is done. Code audit over
+lots/organizations/notices + serial worst-case probes on prod. Verdict: the two
+DoS-class scans were BOTH on `/v1/lots` (`status=open&country=<sparse>` 30.7s→503,
+`source=<absent>` 33.4s→503) — filed and fixed as issue 275 (country seed ported
+from 273 + a lots-only reachable() source leg). Organizations: every probed combo
+bounded at 1.7–2.0s (the 117 indexes + reachable hold; mediocre, not wedging).
+Notices: reachable's kind leg covers the absent case (0.7s), dense-profile deep
+cursor 1.2s. F3's remaining tail (lots min/max_value, sparse kind) is recorded
+under 275's residuals — isolated-pool, deadline-bound, watch-don't-build.
 Kind: performance / availability (issue-61 class)
 Blocked by: —
 Relates to: 61 (the wedge pattern), the max_cursor O(1) fix (e444f8c), coverage isolation (5c48c5c)
