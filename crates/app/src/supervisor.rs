@@ -3133,19 +3133,10 @@ impl Supervisor {
                         )
                         .await;
                     }
-                    // And the D5 reveal recheck (issue 173): read-only aggregates
-                    // over the withheld-fields view, minutes at most, and weekly is
-                    // exactly the cadence a reveal-debt trend needs.
-                    if self.queued().iter().any(|j| j.kind == "reveal-recheck") {
-                        eprintln!("[schedule] reveal-recheck already queued, skipping this week");
-                    } else {
-                        self.push(
-                            "reveal-recheck",
-                            "reveal recheck (weekly)".into(),
-                            Spec::RevealRecheck,
-                        )
-                        .await;
-                    }
+                    // D5 (reveal recheck) used to ride this weekly tick too; since
+                    // the issue-274 slicing it rides the DAILY chain instead — a
+                    // weekly 100k-section slice stretched one cohort walk to ~3
+                    // weeks (found mis-cadenced 2026-08-25; see enqueue_daily).
                 }
 
                 // Step past this tick so the next computation lands on tomorrow.
@@ -3249,6 +3240,18 @@ impl Supervisor {
         );
         // One projection folds whatever the fetch+process just landed.
         ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
+        // D5 reveal recheck rides the daily chain — issue 274's design intent
+        // ("the nightly cadence walks the cohort and wraps", ~3 slices/cohort).
+        // It sat on the weekly Sunday tick from when a run cost 18 minutes;
+        // since the 274 slicing a run is 5–7s of read-only aggregates over one
+        // 100k-section slice, and weekly stretched a full cohort walk to ~3
+        // weeks (found mis-cadenced 2026-08-25). The queued-guard mirrors the
+        // weekly jobs': never stack two, the report is overwritten anyway.
+        if self.queued().iter().any(|j| j.kind == "reveal-recheck") {
+            eprintln!("[schedule] reveal-recheck already queued, skipping today");
+        } else {
+            ids.push(self.push("reveal-recheck", "reveal recheck (daily slice)".into(), Spec::RevealRecheck).await);
+        }
         ids
     }
 }

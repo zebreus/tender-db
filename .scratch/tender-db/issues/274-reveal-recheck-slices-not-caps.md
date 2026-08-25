@@ -58,6 +58,12 @@ the job queue is idle; /health is down for the build's duration.
   `later_still_withholds` (broken). First split slice: 1,026 due → 54
   revealed, 601 awaitable, 371 BROKEN — the campaign's acceptance number now
   accrues nightly.
+* ~~"Accrues nightly" was aspirational~~ FIXED (2026-08-25 23:48 firing): the
+  scheduler actually had D5 on the WEEKLY Sunday tick (a leftover from the
+  18-minute pre-slicing era), so a cohort walk would have taken ~3 weeks and
+  all three sliced runs so far were manual verification enqueues. Moved to
+  `enqueue_daily` behind the projection (queued-guard kept); this issue's
+  "nightly cadence walks the cohort" is now what the code does.
 * The supervisor's cancel-refusal message names issue 252; long-job kinds that
   genuinely need mid-run cancel still each need the stop-flag pattern — D5 no
   longer does, by construction.
