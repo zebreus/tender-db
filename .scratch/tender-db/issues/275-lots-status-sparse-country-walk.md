@@ -6,6 +6,12 @@ correct rows (LU lots, future deadlines); `source=<absent>` 33.4s/503 →
 **0.46s**; `country=CY` 1.0s warm. Health green on `0fe1d64`. Scope grew one finding during the audit: `?source=<absent>` on
 lots is a SECOND live 503 (fixed round 1, verified 33.4s → 0.61s on prod).
 
+Decline-path regression check (2026-08-25 22:50 UTC firing): the dense shapes
+where the seed probe must DECLINE at the cap and keep the pre-275 plan are
+unregressed — `country=DE` 0.68s, `status=open&country=DE` 1.41s,
+`source=ted` 0.52s; the seeded sparse path holds (`status=open&country=CY`
+1.13s). Verification complete on both sides of the cap.
+
 ## Round 2 — the first deploy did NOT fix the headline shape (kept honest by
 ## the acceptance probe)
 
