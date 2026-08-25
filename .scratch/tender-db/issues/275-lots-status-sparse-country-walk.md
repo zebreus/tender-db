@@ -1,7 +1,9 @@
 # 275 — lots: status + sparse country still walks to the 30s shed (273's shape, on the endpoint 273 didn't fix)
 
-Status: ROUND-2 FIX BUILT + TESTED (2026-08-25 late, owner) — gate running,
-redeploy next. Scope grew one finding during the audit: `?source=<absent>` on
+Status: RESOLVED — deployed `0fe1d64` and VERIFIED on prod (2026-08-25 ~23:59
+UTC): `status=open&country=LU` 30.7s/503 → **1.10s cold / 0.93s warm** with
+correct rows (LU lots, future deadlines); `source=<absent>` 33.4s/503 →
+**0.46s**; `country=CY` 1.0s warm. Health green on `0fe1d64`. Scope grew one finding during the audit: `?source=<absent>` on
 lots is a SECOND live 503 (fixed round 1, verified 33.4s → 0.61s on prod).
 
 ## Round 2 — the first deploy did NOT fix the headline shape (kept honest by
