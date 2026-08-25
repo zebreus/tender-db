@@ -5,8 +5,9 @@ GET /v1/tenders/7161565 now serves lots=2604 with 2,604 unique lot_details
 (was 1,000), 2.0MB in 153ms warm. The completeness cap and cursor behavior
 are gate-tested; prod confirms at the tender that exposed the bug.
 
-Status: fix landed on main (2026-08-09, orchestrator) — awaiting deploy + the prod verification
-below. Exactly the post-115 shrunken form this issue prescribed: `lots_of` now passes
+Status: RESOLVED-VERIFIED (see the paragraph above — the prod verification ran
+2026-08-10; this line was stale until 2026-08-25). Was: fix landed on main
+(2026-08-09, orchestrator) — awaiting deploy + the prod verification below. Exactly the post-115 shrunken form this issue prescribed: `lots_of` now passes
 `TENDER_LOTS_CAP` (20,000 — 549f8f5's constant and doc reasoning) instead of `MAX_PAGE`; the
 in-memory retain/truncate from 549f8f5 was NOT taken (dead weight post-115 — the containment
 shape serves `l.id > ?` from the Tender's own slice in SQL). Test

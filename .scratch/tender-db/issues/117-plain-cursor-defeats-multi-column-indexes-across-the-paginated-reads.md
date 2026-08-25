@@ -1,6 +1,13 @@
 # 117 — a plain `id > ?` cursor defeats every multi-column index across the paginated reads
 
-Status: landed on main (merge `3485e3d`, 2026-08-08) — indexes rebuild via the issue-111 startup builder; prod verification pending. Originally: open — LIVE defect, measured on prod 2026-08-03 at rev `1830d50`. Pre-existing; not caused by
+Status: RESOLVED-VERIFIED (2026-08-25, owner) — live prod timings of the measured
+shapes, all sub-second network-inclusive: `/v1/organizations?country=DE&limit=50`
+0.90s (was 15.16s server-side), `?kind=vat&limit=50` 0.86s (the 99.08s kind-only
+case), `?country=DE&cursor=2000000` 0.75s. The issue-111 detector's silence at the
+last two restarts confirms the `(filter, id)` indexes exist on the live DB. Was:
+landed on main (merge `3485e3d`, 2026-08-08) — indexes rebuild via the issue-111
+startup builder; prod verification pending. Originally: open — LIVE defect, measured
+on prod 2026-08-03 at rev `1830d50`. Pre-existing; not caused by
 `1830d50`, which fixed one instance of this class and left the rest.
 Kind: performance / availability
 Blocked by: —

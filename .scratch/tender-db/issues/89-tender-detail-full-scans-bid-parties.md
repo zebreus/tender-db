@@ -1,6 +1,12 @@
 # 89 — `/v1/tenders/{id}` full-scans `tender_version_bid_parties` on every request
 
-Status: FIXED in working tree (`a572544`), awaiting deploy + reindex — DISCOVERED 2026-08-01 (proj-fix, during the post-recovery verification pass)
+Status: RESOLVED-VERIFIED (2026-08-25, owner) — the awaited deploy and reindex both
+happened long since: job 534's `reindex` built `tender_version_bid_parties_version`
+(recorded in issue 111's refutation section, which also EQP'd the detail satellites —
+no full scan), and today's live probes read `GET /v1/tenders/{93601,4000000,7161565}` at
+0.52–0.76s network-inclusive (the 2,604-lot giant included) against the >60s-every-id
+symptom below. Originally: FIXED in working tree (`a572544`), awaiting deploy + reindex —
+DISCOVERED 2026-08-01 (proj-fix, during the post-recovery verification pass)
 Kind: correctness / performance (missing index — public API outage)
 Blocked by: —
 Relates to: 82 (the same shape on `tenders_current_published`), 83, the `tender_version_parties_version` fix at canonical.rs:205-210

@@ -1,6 +1,11 @@
 # 53 — In-process /metrics endpoint (Prometheus text); defer the server
 
-Status: BUILT 2026-08-17 (owner) — endpoint landed, awaiting deploy. `GET /metrics`
+Status: CLOSED-VERIFIED (2026-08-25, owner) — the remaining "deploy + one live
+scrape" is done: deployed since the post-08-17 releases, and today's live scrape of
+`https://tenders.zebreus.click/metrics` serves well-formed Prometheus text (HELP/TYPE
+pairs, change cursor 434M, RSS 2.27GB, sse_streams 0, deadline_hits_total 0,
+writer_queue_depth 0 — all plausible against the dashboard). Originally: BUILT
+2026-08-17 (owner) — endpoint landed, awaiting deploy. `GET /metrics`
 (`crates/app/src/v1/metrics.rs`) serves Prometheus text: change cursor, RSS, live SSE
 streams, disk + `wal_bytes`, per-kind last-run duration/finish/outcome from the bounded
 job-log window, the freshness clock, import lag, canonical row counts and the quarantine

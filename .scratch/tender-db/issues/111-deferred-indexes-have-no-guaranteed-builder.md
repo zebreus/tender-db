@@ -1,6 +1,12 @@
 # 111 — the deferred indexes have no guaranteed builder: nothing detects or repairs a missing one
 
-Status: landed on main (merge `3485e3d`, 2026-08-08) — detection + background builder at startup (`d018052` line); prod verification pending. Originally: open — **LOW / latent risk. NOT an active incident.** Downgraded 2026-08-03 after
+Status: CLOSED-VERIFIED (2026-08-25, owner) — prod verification done: the startup
+detector is silent at the last two prod restarts (no missing-index warnings, no
+REFUSING lines in the journal), meaning `missing_deferred_indexes` finds the live DB
+fully indexed; the 08-24 fold's "WAL after end-of-run index builds" line shows the
+builder path exercised in production. Was: landed on main (merge `3485e3d`,
+2026-08-08) — detection + background builder at startup (`d018052` line); prod
+verification pending. Originally: open — **LOW / latent risk. NOT an active incident.** Downgraded 2026-08-03 after
 the motivating hypothesis was REFUTED empirically (see "Refutation" below). The general
 class is real and worth closing eventually; there is no live defect behind it. Code work
 STOPPED.

@@ -1,6 +1,12 @@
 # 228 — a chunked backfill's progress counter goes silent for its whole tail scan, and reads as a hang
 
-Status: FIXED on main 2026-08-17 (owner), awaiting deploy — and the fix found a latent
+Status: RESOLVED-DEPLOYED (2026-08-25, owner) — the fix has been on prod since the
+post-08-17 deploys; the correctness half (early-termination watermark hazard) is
+pinned by the gap-crossing test. The live observability confirmation ("the NEXT
+backfill of this shape showing movement throughout") stays latent by nature — no
+legacy-adjacency-shaped backfill has run since, and none is due; whoever runs the
+next one should see progress tick through the tail. Was: FIXED on main 2026-08-17
+(owner), awaiting deploy — and the fix found a latent
 CORRECTNESS bug beside the observability one, see "Resolution" at the bottom. Filed while
 operating the issue-58-v2 step-2 backfill; it cost 40 minutes of operator doubt on its first
 real run.
