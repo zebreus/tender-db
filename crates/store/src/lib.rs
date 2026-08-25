@@ -791,6 +791,10 @@ pub struct RevealSlice {
     pub due: i64,
     pub checked: i64,
     pub revealed: i64,
+    /// Due rows whose tender has NO later version at all — the promise is
+    /// unmet but still awaitable, unlike `checked - revealed - no_later`
+    /// (a later version exists and STILL withholds: the promise broken).
+    pub no_later: i64,
     pub by_field: Vec<(String, i64)>,
 }
 
@@ -1130,6 +1134,7 @@ impl Db {
                 due: 0,
                 checked: 0,
                 revealed: 0,
+                no_later: 0,
                 by_field: Vec::new(),
             });
         };
@@ -1166,12 +1171,16 @@ impl Db {
 
         // Reveal check over every due row in the slice. `revealed` = a later
         // version of the same tender exists whose notice no longer withholds
-        // the same BT-195 field. Every lookup is an index seek: due rows by the
-        // (kind, notice_id) range, the version hop by `tender_versions_notice`,
-        // the "still withheld?" test by the section/code PK prefixes.
+        // the same BT-195 field. `has_later` splits the failures honestly (the
+        // campaign's deferred acceptance metric): a due row with NO later
+        // version yet is a promise still awaitable, while a later version that
+        // STILL withholds is the promise broken. Every lookup is an index
+        // seek: due rows by the (kind, notice_id) range, the version hop by
+        // `tender_versions_notice`, the "still withheld?" test by the
+        // section/code PK prefixes.
         let mut rows = conn
             .query(
-                "SELECT COALESCE(SUM(revealed), 0), COUNT(*) FROM (
+                "SELECT COALESCE(SUM(revealed), 0), COALESCE(SUM(has_later), 0), COUNT(*) FROM (
                    SELECT CASE WHEN EXISTS (
                      SELECT 1 FROM tender_versions tv1
                      JOIN tender_versions tv2
@@ -1185,7 +1194,13 @@ impl Db {
                          WHERE s2.notice_id = tv2.caused_by_notice_id
                            AND s2.kind = 'FieldsPrivacy'
                            AND c2.code = due.field)
-                   ) THEN 1 ELSE 0 END AS revealed
+                   ) THEN 1 ELSE 0 END AS revealed,
+                   CASE WHEN EXISTS (
+                     SELECT 1 FROM tender_versions tv1
+                     JOIN tender_versions tv2
+                       ON tv2.tender_id = tv1.tender_id AND tv2.seq > tv1.seq
+                     WHERE tv1.caused_by_notice_id = due.notice_id
+                   ) THEN 1 ELSE 0 END AS has_later
                    FROM (
                      SELECT s.notice_id AS notice_id, c.code AS field
                      FROM notice_sections s
@@ -1200,9 +1215,9 @@ impl Db {
                 (Value::Integer(now), range[0].clone(), range[1].clone()),
             )
             .await?;
-        let (revealed, checked) = match rows.next().await? {
-            Some(row) => (int(&row, 0), int(&row, 1)),
-            None => (0, 0),
+        let (revealed, with_later, checked) = match rows.next().await? {
+            Some(row) => (int(&row, 0), int(&row, 1), int(&row, 2)),
+            None => (0, 0, 0),
         };
         drop(rows);
 
@@ -1235,6 +1250,7 @@ impl Db {
             due,
             checked,
             revealed,
+            no_later: checked - with_later,
             by_field,
         })
     }

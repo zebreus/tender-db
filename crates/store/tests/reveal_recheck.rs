@@ -89,6 +89,11 @@ async fn reveal_recheck_separates_kept_promises_from_debt() {
     assert!(sl.by_field.iter().any(|(f, n)| f == "win-nam" && *n == 1));
     assert!(sl.wrapped, "an exhaustive slice reports the wrap");
     assert_eq!(sl.upto, 2, "the cursor stands on the last notice");
+    // The failure split (campaign acceptance metric): win-nam's tender HAS a
+    // later version that still withholds — the broken-promise bucket, not the
+    // awaitable one.
+    assert_eq!(sl.no_later, 0, "both due rows sit on a tender with a later version");
+    assert_eq!(sl.checked - sl.revealed - sl.no_later, 1, "win-nam is BROKEN, not awaitable");
 }
 
 /// Issue 274: the walk is sliced. `slice = 1` picks a one-row boundary but the
@@ -117,6 +122,11 @@ async fn reveal_recheck_walks_the_cohort_in_notice_slices() {
     assert_eq!(first.due, 2);
     assert!(!first.wrapped, "notice 2 is still ahead");
     assert_eq!(first.withheld_total, 3, "the cohort total is not slice-scoped");
+
+    // Notice 1's tender has no versions at all in this fixture, so its two due
+    // rows land in the awaitable bucket, not the broken one.
+    assert_eq!(first.no_later, 2, "no later version exists: awaitable, not broken");
+    assert_eq!(first.checked - first.revealed - first.no_later, 0);
 
     let second = db.reveal_recheck(now, first.upto, 1).await.expect("second slice");
     assert_eq!(second.upto, 2);

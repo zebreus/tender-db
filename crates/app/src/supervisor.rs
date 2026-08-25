@@ -1564,6 +1564,8 @@ impl Supervisor {
                         "due": sl.due, "checked": sl.checked,
                         "revealed_at_head": sl.revealed,
                         "still_withheld": sl.checked - sl.revealed,
+                        "no_later_version": sl.no_later,
+                        "later_still_withholds": sl.checked - sl.revealed - sl.no_later,
                         "due_by_field": sl.by_field
                             .iter()
                             .map(|(f, n)| serde_json::json!({ "field": f, "due": n }))
@@ -1582,7 +1584,8 @@ impl Supervisor {
                     .map_err(|e| e.to_string())?;
                 Ok(format!(
                     "reveal recheck: {} withheld field(s) in corpus; slice {}..{}: \
-                     {} section(s), {} due, of {} checked {} revealed at head, {} still withheld{}",
+                     {} section(s), {} due, of {} checked {} revealed at head, \
+                     {} awaiting a later version, {} BROKEN (later version still withholds){}",
                     sl.withheld_total,
                     sl.after,
                     sl.upto,
@@ -1590,7 +1593,8 @@ impl Supervisor {
                     sl.due,
                     sl.checked,
                     sl.revealed,
-                    sl.checked - sl.revealed,
+                    sl.no_later,
+                    sl.checked - sl.revealed - sl.no_later,
                     if sl.wrapped { " (cohort cycle wrapped)" } else { "" },
                 ))
             }
