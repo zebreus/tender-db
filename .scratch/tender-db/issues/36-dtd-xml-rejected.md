@@ -39,7 +39,7 @@ added. The ~28k notices are reclaimed by issue 41, not this.
 
 ## Original framing (overturned — kept for the record)
 
-Status: ready-for-agent
+Status: ready-for-agent (historical, superseded by the header Status — kept only so board greps don't misread this file as open)
 
 Split out of issue 30's quarantine triage (2026-07-21). The `unparsable-xml`
 bucket is 628,204 members and — grouped by `detail` via `/v1/sql` — **621,863

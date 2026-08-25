@@ -1,6 +1,10 @@
 # 31 — Two parser gaps quarantining real notices (r208 awards, text RP)
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-25, owner) — both buckets fully drained on prod.
+Bounded `/v1/sql` counts: `continuation under scalar field RP` 4,861 rows, `unclaimed
+attribute…PROCEDURE` 24 rows — **0 live holds in either** (every row carries
+`reprocessed_at`, sampled stamps ≈ 2026-08-12, the era reprocess passes). The fixes
+below shipped long since; the reprocess step this issue left open has happened.
 
 Found by issue 27's quarantine sampling (2026-07-21) — both quarantine
 REAL notices, so they cost completeness (unlike the benign non-notice

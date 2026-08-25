@@ -1,6 +1,11 @@
 # 34 — sdk-0.1 ContractFolderID as procedure key (island → merge upgrade)
 
-Status: needs-verification
+Status: RESOLVED-VERIFIED (2026-08-25, owner) — the acceptance metric is real and
+plausible. Data-quality section 4 (run of 2026-08-23): **DÖE procedure Tenders
+907,076; merged with TED 235,089 (25.9%)** — vs 0/0 when this was implemented
+pre-backfill. Far-below-100% is expected (DÖE carries under-threshold national
+procedures TED never sees); islands still exist en masse (section 2's sdk-0.1
+island row), so the non-uuid guard holds in the field as in the fixture test.
 
 Scoped out of issue 29: sdk-0.1's `SDK01-ContractFolderID` is not read
 as a procedure key, so uuid-bearing sdk-0.1 CANs stay island Tenders
