@@ -51,3 +51,35 @@ The B8 validation rules the study seeded are confirmed and re-prioritised by sca
 2. Normalize country to ISO-2 (fold ISO-3 and `1A`) — small, mechanical.
 3. The register-prefix→country confusion is largely self-resolved post issue-234; a
    guard against `HR0…`-style TED-internal ids entering the VAT field mops up the 475.
+
+## The offline pass (2026-08-25, snapshot tender-db-1787598039) — false-merge measured
+
+The residual is closed. Full pass over `organization_mentions × organizations`
+(identifier-bearing, non-provisional; 1,161,042 orgs with mentions), impossible
+in the 10s sandbox, minutes on the snapshot:
+
+| distinct mention names per org | raw | lower+trim normalized |
+|---|---|---|
+| ≥2 | 226,897 (19.5%) | 201,714 (**17.4%**) |
+| ≥3 | 107,271 (9.2%) | 87,238 (7.5%) |
+| ≥6 | 28,861 (2.5%) | 21,253 (1.8%) |
+| max | 966 | 947 |
+
+Read it as a BOUND, not a rate: ≥2 distinct normalized names is an upper bound
+on false-merge — renames, department suffixes and abbreviations are legitimate
+single-entity variance. The top specimens split cleanly into the two classes:
+
+* **Placeholder-identifier merges (the true false-merge class):** `123456789`
+  (DE) → 450 distinct names on one org — DE123456789's cousin, exactly B8
+  rule 1's target. These sit throughout the ≥6 tail.
+* **Public-body name-variant noise (true merges, messy names):** Tribunal
+  Administrativo de Recursos Contractuales (ES, 947 names), ELEKTRO
+  PRIMORSKA (SI, 789), Ministères sociaux (FR, 753), Gmina Rzeszów (PL, 588)
+  — stable identifiers correctly unifying decades of spelling/department
+  variants. This is B8's normalization case, not a merge defect.
+
+So the actionable false-merge class stays what the specimen study said —
+placeholder identifiers, now bounded by the ≥6 tail (≤1.8% of orgs, and only
+the placeholder-keyed subset of it) — while the 17.4% ≥2 bound mostly
+measures name variance that mention-level normalization (B8 rules 4-7) would
+fold. B8 rule 1 remains the highest-value fix; nothing here reorders the list.

@@ -1,6 +1,6 @@
 # 168 — organization identifier landscape across countries and eras
 
-Status: empirical half DONE 2026-08-24 (identifier-rates-2026-08.md); residual = corpus-wide false-merge rate (needs offline pass)
+Status: DONE 2026-08-25 — study complete; false-merge bound measured on the snapshot (17.4% ≥2-name upper bound, actionable placeholder class ≤1.8% tail); identifier-rates-2026-08.md carries the full read
 Role: run-driver
 
 CONTEXT promises one profile per real-world entity; the only evidence in the
