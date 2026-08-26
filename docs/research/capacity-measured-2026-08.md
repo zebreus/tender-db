@@ -177,5 +177,34 @@ Residual instrumentation note: `isolate` shed counts are visible in /metrics;
 if walk-shed 503s ever recur outside probe traffic, that — not rps tuning — is
 the signal to revisit (it would mean a new walk class escaped 273's treatment).
 
-E4 (mixed soak observing the daily chain live) remains the one unrun
-experiment; it must coincide with the ~07:30 UTC chain and is scheduled.
+## E4 — mixed soak riding the live daily chain (2026-08-26 07:35–07:38 UTC)
+
+Run against rev `2ec16db` while the real chain executed: TED process (75s,
+3,140 notices), DÖE process (10s, 850), the incremental fold (project, 133s,
+3,876 tenders written), and the first scheduler-driven D5 slice (4s). Load: the
+five E1 shapes cycled at ~3 rps aggregate (200 requests total) plus one SSE
+snapshot stream held 60s through the process phase; /health/deep, WAL size and
+job state sampled every ~15s throughout.
+
+| shape                          | during med | during max | after med (idle) |
+|--------------------------------|-----------:|-----------:|-----------------:|
+| tenders status=open            |     0.559s |     1.335s |           0.525s |
+| tenders closed&country=DE      |     0.557s |     0.872s |           0.653s |
+| tenders open&country=CY        |     0.663s |     0.772s |           0.607s |
+| tender detail (93601)          |     0.446s |     0.608s |           0.427s |
+| lots open&country=CY           |     0.971s |     3.441s |           0.907s |
+
+**Verdict: during-chain degradation is negligible.** Every median sits within
+~10% of the idle baseline (several inside noise), 0 non-200s in 200 requests,
+and the SSE stream completed cleanly. Splitting by phase (process vs fold)
+shows no meaningful difference either — the fold does not displace reads. The
+one outlier is a single 3.4s lots read during process (cold satellite pages
+under ingest I/O; its shape-mates stayed sub-second). /health/deep stayed
+`ok:true` with the canonical-layer check green the whole window; WAL cycled
+0–4MB during process, peaked at ~254MB late in the fold, and drained.
+
+Conclusion for the budget: the daily chain needs NO read-side accommodation —
+the "never run heavy reads during the chain" instinct is calibrated for
+rebuild-scale folds, not the daily incremental. The capacity budget above
+stands unchanged, now with its last experiment run. This closes the issue-167
+campaign matrix (E1–E4 all measured).
