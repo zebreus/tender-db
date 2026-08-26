@@ -1796,15 +1796,8 @@ impl Db {
                     // already resolved by an earlier record of the same run
                     // (the C01 drain fired 17 such lines), so a zero is only
                     // reported when the file has no resolved row either.
-                    if self.stamp_reclaimed(conn, n, id).await? == 0
-                        && !self.member_file_resolved(conn, n).await?
-                    {
-                        eprintln!(
-                            "[store] reclaim stamped NO ledger rows for notice {id} \
-                             (fetch {} member {:?}) — parsed, but no quarantine row \
-                             matched either address (issue 139)",
-                            n.fetch_id, n.member_path
-                        );
+                    if self.stamp_reclaimed(conn, n, id).await? == 0 {
+                        self.log_zero_stamp(conn, n, "parsed arm").await?;
                     }
                     Ok(Reclaim::Reclaimed)
                 }
@@ -1873,13 +1866,8 @@ impl Db {
                     // records that follow (fresh identities, this path) find
                     // nothing left to stamp — four false alarms over a fully
                     // consistent ledger.
-                    if stamped == 0 && !self.member_file_resolved(conn, n).await? {
-                        eprintln!(
-                            "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
-                             (fresh record path) — the member reclaimed but its quarantine rows \
-                             were not addressable (issue 139)",
-                            n.fetch_id, n.member_path
-                        );
+                    if stamped == 0 {
+                        self.log_zero_stamp(conn, n, "fresh record path").await?;
                     }
                     Ok(Reclaim::Reclaimed)
                 } else {
@@ -1926,6 +1914,67 @@ impl Db {
             )
             .await?;
         Ok(rows.next().await?.is_some())
+    }
+
+    /// The complement (issue 289): whether any of the member's family rows — its
+    /// file, container, or a `#<ordinal>` record sibling — is still HELD (neither
+    /// outcome stamp). [`Self::member_file_resolved`] alone blinds the zero-stamp
+    /// alarm for a whole file the moment its FIRST record resolves, so a later
+    /// record whose reclaim genuinely strands its row (an issue-139 address miss)
+    /// went unlogged. The property that separates a real stranding from the three
+    /// documented benign zero shapes (181's resolved file row, 196's container,
+    /// 200's shifted ordinals) is exactly this: a stranding leaves unresolved
+    /// family residue behind; the benign shapes leave none.
+    async fn member_family_still_held(&self, conn: &Connection, n: &Notice) -> turso::Result<bool> {
+        let file = member_file(n.member_path.clone());
+        let container = member_container(&n.member_path).unwrap_or_else(|| file.clone());
+        let siblings = format!("{}#%", like_escape(&file));
+        let mut rows = conn
+            .query(
+                "SELECT 1 FROM quarantine
+                  WHERE fetch_id = ?
+                    AND (member_path IN (?, ?) OR member_path LIKE ? ESCAPE '\\')
+                    AND reprocessed_at IS NULL AND skipped_at IS NULL
+                  LIMIT 1",
+                (Value::Integer(n.fetch_id), t(&file), t(&container), t(&siblings)),
+            )
+            .await?;
+        Ok(rows.next().await?.is_some())
+    }
+
+    /// The zero-stamp verdict shared by both reclaim arms (issue 289): loud when
+    /// the family has no resolved row at all (issue 139's original shape), loud
+    /// WITH a distinguishing marker when the family is partially resolved but
+    /// held residue remains (the shape `member_file_resolved` alone silenced —
+    /// the residue may be exactly the row this reclaim failed to address), and
+    /// silent only when the family is fully resolved (181/196/200's benign
+    /// zeros). The marker keeps the irreducible ambiguity honest: a sibling
+    /// legitimately awaiting its own reclaim also leaves residue, so the second
+    /// line is a "look here", not a verdict. Both lines share the
+    /// `reclaim stamped NO ledger rows` prefix the OPERATE journal grep watches.
+    async fn log_zero_stamp(
+        &self,
+        conn: &Connection,
+        n: &Notice,
+        context: &str,
+    ) -> turso::Result<()> {
+        if !self.member_file_resolved(conn, n).await? {
+            eprintln!(
+                "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
+                 ({context}) — the member reclaimed but its quarantine rows were \
+                 not addressable (issue 139)",
+                n.fetch_id, n.member_path
+            );
+        } else if self.member_family_still_held(conn, n).await? {
+            eprintln!(
+                "[store] reclaim stamped NO ledger rows for fetch {} member {:?} \
+                 ({context}) — zero-stamp under a PARTIALLY-resolved file: held \
+                 sibling rows remain, one may be this member's stranded row \
+                 (issue 289)",
+                n.fetch_id, n.member_path
+            );
+        }
+        Ok(())
     }
 
     /// Flag a member's held ledger rows reclaimed, under BOTH addresses a row can
@@ -6955,6 +7004,74 @@ tmpfs /data/ramcache tmpfs rw 0 0
         assert!(
             db.member_file_resolved(&conn, &merged).await.unwrap(),
             "a resolved record sibling reads as benign"
+        );
+
+        let _ = std::fs::remove_file(&path);
+    }
+
+    /// Issue 289: `member_file_resolved` alone blinds the zero-stamp alarm for a
+    /// whole file the moment its FIRST record resolves — a later record whose
+    /// reclaim genuinely strands its row went unlogged. The discriminator that
+    /// separates a real stranding from the benign 181/196/200 zeros: a stranding
+    /// leaves an UNRESOLVED family row behind. `member_family_still_held` is that
+    /// probe, and the alarm now fires (with a distinguishing marker) when a
+    /// partially-resolved family still holds residue.
+    #[tokio::test]
+    async fn a_zero_stamp_under_a_partially_resolved_file_is_not_silenced() {
+        let path = format!("/tmp/tender-db-partialfam-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        // Sibling #5: resolved (an earlier record's stamp). Sibling #9: still HELD
+        // under a path/hash no current reclaim addresses — the stranded residue.
+        for (ordinal, hash) in [("5", "old-hash-5"), ("9", "drifted-hash-9")] {
+            assert!(db
+                .insert_quarantine(&Quarantined {
+                    fetch_id: 1,
+                    member_path: format!("pkg/EN_FAM.ZIP!EN_FAM#{ordinal}"),
+                    content_hash: hash.to_string(),
+                    profile: Some("text".into()),
+                    reason: "missing-publication-id".into(),
+                    detail: None,
+                    first_seen: 0,
+                })
+                .await
+                .unwrap());
+        }
+        db.conn()
+            .await
+            .execute("UPDATE quarantine SET reprocessed_at = 400 WHERE member_path = 'pkg/EN_FAM.ZIP!EN_FAM#5'", ())
+            .await
+            .unwrap();
+
+        // A fresh record at another ordinal reclaims with zero stamps.
+        let mut fresh = held_notice();
+        fresh.publication_id = "888-2010".into();
+        fresh.content_hash = "fresh-hash".into();
+        fresh.member_path = "pkg/EN_FAM.ZIP!EN_FAM#7".into();
+        fresh.ingested_at = 500;
+        assert_eq!(db.reclaim_notice(&fresh, &Parse::Parsed(tiny_parsed())).await.unwrap(), Reclaim::Reclaimed);
+
+        let conn = db.conn().await;
+        assert!(
+            db.member_file_resolved(&conn, &fresh).await.unwrap(),
+            "the old gate alone reads this as benign — the suppression issue 289 diagnosed"
+        );
+        assert!(
+            db.member_family_still_held(&conn, &fresh).await.unwrap(),
+            "but held residue remains (#9) — the marker line must fire (issue 289)"
+        );
+
+        // Once the residue resolves, the family is fully benign and the probe
+        // goes quiet — the 181/196/200 shapes stay silent. (Reuse the held
+        // writer handle: a second `conn()` while it lives would deadlock the
+        // single-writer pool.)
+        conn.execute("UPDATE quarantine SET skipped_at = 600, skipped_reason = 'policy' WHERE member_path = 'pkg/EN_FAM.ZIP!EN_FAM#9'", ())
+            .await
+            .unwrap();
+        assert!(
+            !db.member_family_still_held(&conn, &fresh).await.unwrap(),
+            "a fully-resolved family leaves nothing to report"
         );
 
         let _ = std::fs::remove_file(&path);

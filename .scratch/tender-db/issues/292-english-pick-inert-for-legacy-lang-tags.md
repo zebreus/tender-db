@@ -56,3 +56,21 @@ for the Tender/Bid vocabulary), then:
 Sizing note before the refold: measure how many legacy tenders actually carry >1
 language variant of the title (bounded snapshot read) — that is the blast radius and
 the acceptance number.
+
+## Backfill sizing (2026-08-26 probe, Aug-24 snapshot — first query in)
+
+The 2-letter population is corpus-scale: PL 28.4M, EN 16.2M, DE 14.4M, FR 11.5M,
+RO 10.7M, HU/BG ~4.7M each, … — ~100M+ tender_version_texts rows carry legacy
+tags (3-letter eForms rows: DEU 8.2M, POL 5.6M, ENG only 570k; NULL 2.5M text-era
+names). Consequences:
+- An in-place batched UPDATE (~30 tag values over ~100M rows) is issue-63
+  WAL-per-row territory — chunked-by-rowid, checkpoint-per-chunk if ever done.
+- A plain `project(rebuild=false)` refold would SKIP every unchanged tender (the
+  chain-as-state-key early return) — the backfill needs an EPOCH-BUMP refold
+  (issue 99/179 machinery), scoped to the legacy eras or full.
+- **Decision: ride the ADR-0014 `eur_cents` refold** — it needs the same epoch
+  bump for the same reason (new derived satellite values on unchanged chains), so
+  ONE epoch-bump refold carries both the lang normalization and the currency
+  column. No separate lang backfill unless the second probe query (tenders
+  actively serving a possibly-wrong-language title — still running in tmux)
+  comes back large enough to justify a dedicated earlier scoped refold.
