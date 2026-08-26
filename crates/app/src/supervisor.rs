@@ -1976,21 +1976,15 @@ impl Supervisor {
                 ))
             }
             Spec::SweepRegroupedGhosts => {
-                // Read-only identification first (the GROUP BY), then requeue. NO
-                // epoch-stale stamp: we want the paired incremental fold to re-derive
-                // the dups' keys and let `retire_regrouped_tenders` drop the stale
-                // ghost of each pair — not to rewrite the kept Tenders (issue 278).
-                let dups = self.db.regrouped_dup_notice_ids().await.map_err(|e| e.to_string())?;
-                if dups.is_empty() {
-                    return Ok("no regrouped ghosts: every notice maps to one Tender".into());
-                }
-                let requeued =
-                    self.db.unmark_projected_by_ids(&dups).await.map_err(|e| e.to_string())?;
-                Ok(format!(
-                    "{} dup-notice(s) under 2+ Tenders: re-queued {requeued} for the paired \
-                     incremental fold to retire the ghost of each pair",
-                    dups.len()
-                ))
+                // DISABLED pending redesign (issue 278 INCIDENT, 2026-08-26). The
+                // identification `regrouped_dup_notice_ids` runs an unbounded
+                // `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`, which is
+                // pathological on turso (40+ min, single-core, uncancellable) though
+                // fine under sqlite3 — so this handler MUST NOT run it. Returning a
+                // no-op here also makes the recover() re-run of the stalled job
+                // complete instantly on the next restart. The cleanup returns as a
+                // cursor-sliced job (issue-274 D5 pattern) or an offline precompute.
+                Ok("sweep-regrouped-ghosts is DISABLED pending redesign (issue 278 turso GROUP BY incident) — no-op".into())
             }
             Spec::RefoldFields { fields, expect } => {
                 let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
