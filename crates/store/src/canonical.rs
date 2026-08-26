@@ -5006,6 +5006,64 @@ impl Db {
         Ok(orphaned.len() as u64)
     }
 
+    /// The full-projection counterpart of [`Db::retire_regrouped_tenders`], for the
+    /// two shapes [`Db::retire_absorbed_legacy_tenders`] does NOT cover (issue 278):
+    /// a **uuid-keyed** tender (`procedure_key` not `ojs:%`) and an **island**
+    /// tender (`procedure_key IS NULL`) whose group_key the freshly-built plan no
+    /// longer produces — a notice that regrouped to another key (BT-04 instability,
+    /// issue 236) leaving its old tender behind. The full non-rebuild path only
+    /// retired `ojs:%` legacy keys, so every reparse-driven regroup that tripped the
+    /// incremental→full fallback left a ghost; the snapshot measured ~45k of them.
+    ///
+    /// Corpus-wide and set-based (NOT the scoped per-tender loop — that would be one
+    /// query per tender over ~8M rows): two `NOT EXISTS` anti-joins seeking
+    /// `plan_notice(group_key, …)` by its leading column. Legacy `ojs:%` is left to
+    /// `retire_absorbed_legacy_tenders`, whose proven behaviour this does not touch;
+    /// the two passes partition the key space (`ojs:%` vs uuid vs NULL). Byte-identity
+    /// with a from-scratch rebuild holds by construction: a rebuild resets the layer
+    /// so a survivor's key is always produced, making this a no-op there, and on the
+    /// non-rebuild path the surviving set becomes exactly {keys in plan} — the rebuild
+    /// set. Retires chunked with `removed` change events, like both siblings.
+    pub async fn retire_regrouped_nonlegacy_tenders(&self, now: i64) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        let mut orphaned = Vec::new();
+        // uuid-keyed (not legacy ojs:%) whose key the plan no longer produces.
+        let mut rows = conn
+            .query(
+                "SELECT t.id FROM tenders t
+                  WHERE t.procedure_key IS NOT NULL
+                    AND t.procedure_key NOT LIKE 'ojs:%'
+                    AND NOT EXISTS (SELECT 1 FROM plan_notice p WHERE p.group_key = t.procedure_key)",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            orphaned.push(int(&row, 0));
+        }
+        drop(rows);
+        // island tenders (no key) whose `island:<notice>` key the plan no longer produces.
+        let mut rows = conn
+            .query(
+                "SELECT t.id FROM tenders t
+                  WHERE t.procedure_key IS NULL
+                    AND NOT EXISTS (
+                      SELECT 1 FROM plan_notice p
+                       WHERE p.group_key = 'island:' || t.island_notice_id)",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            orphaned.push(int(&row, 0));
+        }
+        drop(rows);
+        if orphaned.is_empty() {
+            return Ok(0);
+        }
+        self.retire_tenders_chunked(&conn, &orphaned, now, NODE_WRITE_BATCH, "regrouped non-legacy").await?;
+        self.publish_cursor(&conn).await?;
+        Ok(orphaned.len() as u64)
+    }
+
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the
     /// Tenders that carry an award (any `lot_results`), how many are a single
     /// notice — an award that never chained to its contract notice. The era is

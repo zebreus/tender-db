@@ -1,6 +1,8 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: CONFIRMED LIVE AT SCALE (2026-08-26, owner — measured on the Aug-24 snapshot)
+Status: FIX BUILT + TESTED (2026-08-26, owner) — the code fix (track 1) is in the working
+tree with a red-first test and green byte-identity gates; awaiting the full gate + deploy,
+then the ~45k data cleanup (track 2). Was: CONFIRMED LIVE AT SCALE (measured on the Aug-24 snapshot).
 Kind: correctness (canonical layer integrity + change-feed honesty)
 Severity: HIGH — **~45,108 ghost tenders live on prod right now**, double-counting procedures on `/v1/tenders` and every count/dashboard.
 
@@ -116,7 +118,22 @@ pin is: full-nonrebuild layer == rebuild layer == incremental-to-fixpoint layer)
 Two tracks, in this order — the code fix MUST precede the data cleanup, else a
 cleanup is re-polluted the next time the full fallback fires.
 
-1. **Code fix (next focused unit — byte-identity-critical, not a rushed deploy).**
+1. **Code fix — DONE in the working tree (2026-08-26, awaiting gate+deploy).**
+   `Db::retire_regrouped_nonlegacy_tenders` (canonical.rs) retires the two shapes
+   `retire_absorbed_legacy_tenders` misses — uuid-keyed (`procedure_key NOT LIKE
+   'ojs:%'`) and island — via two `NOT EXISTS` anti-joins against `plan_notice`,
+   wired into the full path at project.rs:1149 right after the legacy retirement
+   (before `clear_plan`, so `plan_notice` is the live produced set). The proven
+   `ojs:%` path is untouched; the three passes partition the key space. Red-first
+   test `a_regroup_reparse_retires_keyed_and_island_ghosts_on_the_full_path`
+   (project_incremental.rs): a reparse regroups a keyed Tender to a new BT-04 and
+   upgrades an island to a key; before the fix the full path's snapshot shows the
+   two ghosts (notice under two Tenders) and differs from the incremental path;
+   after, full == incremental, the old key/island are gone, `removed` events fired,
+   and no notice maps to two Tenders. All five projection byte-identity suites
+   (golden/equivalence/fold_source/incremental/resume) stay green — the fix is a
+   no-op on rebuild (fresh layer) and byte-identity on full-nonrebuild.
+   Original design (as built):
    On the full non-rebuild path, after `build_plan_groups`, retire every tender
    whose group_key `plan_notice` no longer produces — a corpus-wide, set-based
    anti-join (NOT the scoped per-tender loop, which would be 8.1M queries):

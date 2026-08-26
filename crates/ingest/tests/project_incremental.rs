@@ -464,6 +464,97 @@ async fn changes_set(db: &Db) -> String {
     }
 }
 
+/// Reparse an existing notice in place with new parsed content (issue 100's
+/// primitive): clears its parsed rows, inserts the new ones, marks it
+/// unprojected so the next projection re-folds it — the way a real reparse
+/// changes a notice's BT-04 key.
+async fn reparse(db: &Db, fetch_id: i64, pub_id: &str, parsed: Parsed) {
+    // A real reparse re-interprets the SAME raw bytes, so content_hash is stable —
+    // and `notice_state` looks the notice up by (source, publication_id,
+    // content_hash), so this must match what `record_p` wrote (`h-{pub_id}`).
+    let applied = db
+        .reparse_notice(
+            &Notice {
+                source: SOURCE.into(),
+                publication_id: pub_id.into(),
+                content_hash: format!("h-{pub_id}"),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: format!("{pub_id}.xml"),
+                ingested_at: 0,
+                published_at: Some(0),
+                dispatched_at: None,
+            },
+            &parsed,
+        )
+        .await
+        .expect("reparse notice");
+    assert!(applied, "reparse must find and re-parse {pub_id}");
+}
+
+/// Issue 278: a reparse that regroups a keyed Tender to a new BT-04 — or upgrades
+/// an island to a key — leaves the old Tender's key un-produced. The scoped
+/// incremental path retires it via its touched set; the FULL non-rebuild path used
+/// to retire only `ojs:%`, so the old keyed/island Tender survived as a ghost
+/// (~45k measured on prod, 2026-08-26). Both paths must now converge on the same
+/// layer, and the full path must leave NO notice mapped to two Tenders.
+#[tokio::test]
+async fn a_regroup_reparse_retires_keyed_and_island_ghosts_on_the_full_path() {
+    let (full, ff, pf) = scratch("regroupfull").await;
+    let (incr, fi, pi) = scratch("regroupincr").await;
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        record(db, fetch, "A-cn", keyed("bt04-0001", 1, "Alpha CN")).await; // 1-notice keyed
+        record(db, fetch, "B-cn", keyed("bt04-0002", 1, "Beta CN")).await; // untouched keyed
+        record(db, fetch, "ISL", island("Island one")).await; // island
+        project::project(db, false).await.expect("establish");
+    }
+    // Regroup: A moves to a new key, the island gains a key — both orphan their old
+    // Tender (bt04-0001's Tender, and the island Tender).
+    for (db, fetch) in [(&full, ff), (&incr, fi)] {
+        reparse(db, fetch, "A-cn", keyed("bt04-9999", 1, "Alpha CN")).await;
+        reparse(db, fetch, "ISL", keyed("bt04-8888", 5, "Island one")).await;
+    }
+    project::project(&full, false).await.expect("full reproject");
+    project::project_incremental(&incr).await.expect("incremental reproject");
+
+    assert_eq!(
+        snapshot_content(&full).await,
+        snapshot_content(&incr).await,
+        "full non-rebuild must retire the regrouped keyed/island ghosts, matching incremental",
+    );
+    assert_eq!(
+        count(&full, "SELECT COUNT(*) FROM tenders WHERE procedure_key = 'bt04-0001'").await,
+        0,
+        "the regrouped-away keyed Tender is retired",
+    );
+    assert_eq!(
+        count(&full, "SELECT COUNT(*) FROM tenders WHERE island_notice_id IS NOT NULL AND procedure_key IS NULL").await,
+        0,
+        "the upgraded island Tender is retired",
+    );
+    assert_eq!(
+        count(
+            &full,
+            "SELECT COUNT(*) FROM (SELECT caused_by_notice_id FROM tender_versions
+                 GROUP BY caused_by_notice_id HAVING COUNT(DISTINCT tender_id) > 1)",
+        )
+        .await,
+        0,
+        "no notice maps to two Tenders — the issue-278 ghost signature is absent",
+    );
+    assert!(
+        count(&full, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'").await >= 2,
+        "removed change events were emitted for the retired ghosts",
+    );
+
+    for p in [pf, pi] {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{p}{s}"));
+        }
+    }
+}
+
 /// A legacy notice with `pub_id` as its own OJS number, plus `refs` edges.
 fn legacy_notice(title: &str, refs: &[&str]) -> Parsed {
     let mut parsed = Parsed {

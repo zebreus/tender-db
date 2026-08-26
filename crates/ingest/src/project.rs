@@ -1147,6 +1147,13 @@ pub async fn project_with_progress_phase2_stoppable(
     // Retire any legacy Tender a late component-merge absorbed (its rows migrated
     // to the surviving key; here it gets `removed` change events).
     report.absorbed = db.retire_absorbed_legacy_tenders(&legacy_keys, now).await?;
+    // Issue 278: the legacy retirement above scans only `ojs:%`, so a uuid-keyed or
+    // island Tender a reparse regrouped away survived as a ghost on this full path
+    // (the incremental path retires it via its touched set; the full fallback did
+    // not). Retire those two shapes too — a no-op on a rebuild (fresh layer, every
+    // key produced), corpus-wide on a non-rebuild. Runs before `clear_plan` so
+    // `plan_notice` is still the authoritative produced set.
+    report.absorbed += db.retire_regrouped_nonlegacy_tenders(now).await?;
     // Don't leave the transient plan in the durable DB between runs (issue 59).
     db.clear_plan().await?;
     // Rebuild the Organization indexes the bulk load ran without (issue 60) — one
