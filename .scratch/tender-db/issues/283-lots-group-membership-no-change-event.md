@@ -1,8 +1,9 @@
 # 283 — a lots-group membership change emits no change-feed event
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner) — fix + red-first fixture committed, full
-`ops/check.sh` green (64 suites, golden/equivalence unaffected). Deploy pending an idle
-queue. See "Resolution" below.
+Status: RESOLVED-DEPLOYED 2026-08-26 (owner) — fix + red-first fixture committed
+(`fbc974c`), full `ops/check.sh` green (64 suites, golden/equivalence unaffected),
+deployed to prod (rev `fbc974c`, /health green, queue idle). Forward-only: past missed
+events are not retro-emitted (LOW severity). See "Resolution" below.
 Kind: correctness (change-feed completeness)
 Severity: LOW (the feed carries ids/seq only; group membership is a narrow consumer surface)
 Relates to: 237 (projects the membership at all — DONE; this is the change-feed diff gap), 164 (missing events class)
