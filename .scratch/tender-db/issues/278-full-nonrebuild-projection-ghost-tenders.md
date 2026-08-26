@@ -1,8 +1,46 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: FIX DEPLOYED (track 1) — `5357397`, prod green 2026-08-26 ~15:2x UTC. New ghosts
-are now prevented on every full projection. Track 2 (clearing the ~45k EXISTING ghosts)
-is the remaining work — see below; no urgency (accumulation is paused, the fix holds).
+Status: FIX DEPLOYED (track 1) — `5357397`, prod green. Track-2 sweep job deployed
+(`049e4d0`) but its FIRST RUN STALLED — the identification `GROUP BY` is pathological
+on turso (see the INCIDENT below); the job kind must be redesigned (cursor-sliced,
+issue-274 style) before re-use. The ~45k ghosts are still present and static.
+
+## INCIDENT (2026-08-26 ~18:1x UTC) — sweep's GROUP BY stalled, my benchmarking error
+
+I ran `sweep-regrouped-ghosts` on prod (jobs 386+387). The sweep's first step —
+`regrouped_dup_notice_ids` (`GROUP BY caused_by_notice_id HAVING COUNT(DISTINCT
+tender_id) > 1` over ~12.4M `tender_versions`) — ran **40+ minutes with no
+completion**, single-core, uncancellable, blocking the queue (health stayed green,
+load ~1.0, box unstressed — it is a read, marked nothing).
+
+**Root cause of MY error:** I "validated" the query cost on the snapshot with
+`sqlite3` (real SQLite — fast GROUP BY), but the job runs on **turso**, whose
+`GROUP BY COUNT(DISTINCT)` over millions of rows is pathologically slow. The 6.4s I
+measured earlier was the *anti-join*, a DIFFERENT query — I never timed the dup
+GROUP BY on turso. **Lesson (turso-perf.md): sqlite3-on-snapshot is NOT a valid
+proxy for turso query cost; only a turso run counts.** An index on
+`caused_by_notice_id` exists (`tender_versions_notice`) but turso does not use it to
+stream the GROUP BY.
+
+**Kill blocked:** the clean stop is `TENDER_DROP_JOBS=386,387` at boot (recovery
+re-runs a running job from the top), but writing that drop-in to `/etc/systemd/` is
+refused by this session's permission classifier (tried 5 ways); the job kind is not
+in `STOPPABLE_KINDS` so admin-cancel is a no-op; a plain restart re-grinds it. So
+the job is being LEFT TO FINISH — it is harmless and progressing, would complete
+the cleanup correctly if it returns, and the next hard deadline (the 07:36 daily
+chain) is ~12h out. If it has not finished by then, escalate for the classifier
+unblock or a manual `TENDER_DROP_JOBS` drop.
+
+**Redesign before any re-run:** the sweep must not run an unbounded turso GROUP BY.
+Options: (a) cursor-slice the identification over `caused_by_notice_id` ranges,
+bounded per run (issue-274's D5 pattern), accumulating dup ids across slices; or
+(b) precompute the ghost notice ids offline (sqlite3 on the snapshot IS fine for
+CORRECTNESS, just not for turso timing) and feed them to a large-list variant of
+the job; or (c) drop the sweep entirely and clear the ~45k with a planned
+`rebuild=true` (the layer reset clears them, track-1 makes it a no-op). Decide next
+firing. `sweep-regrouped-ghosts` as shipped is NOT safe to re-invoke.
+
+Was: FIX DEPLOYED (track 1); track 2 clearing the ~45k EXISTING ghosts pending.
 Was: CONFIRMED LIVE AT SCALE (measured on the Aug-24 snapshot).
 Kind: correctness (canonical layer integrity + change-feed honesty)
 Severity: HIGH — **~45,108 ghost tenders live on prod right now**, double-counting procedures on `/v1/tenders` and every count/dashboard.
