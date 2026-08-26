@@ -2797,8 +2797,15 @@ impl NoticeState {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
             let fact = match &value.value {
-                NoticeValue::Text { lang, value: v } => canonical_name(TEXTS, field_id)
-                    .map(|field| Fact::Text { field, lang: lang.clone(), value: v.clone() }),
+                NoticeValue::Text { lang, value: v } => {
+                    canonical_name(TEXTS, field_id).map(|field| Fact::Text {
+                        field,
+                        // issue 292: one language vocabulary across eras, or the
+                        // read layer's 'ENG'-wins picks never fire for legacy tags.
+                        lang: normalize_lang(lang.as_deref()),
+                        value: v.clone(),
+                    })
+                }
                 NoticeValue::Amount { cents, currency } => {
                     amount_target(field_id, &sections, &value.section_id, has_results).map(|field| {
                         Fact::Amount {
@@ -2893,7 +2900,11 @@ impl NoticeState {
                 _ => None,
             });
             if let Some((lang, value)) = heading {
-                facts.insert(Fact::Text { field: "title".to_owned(), lang, value });
+                facts.insert(Fact::Text {
+                    field: "title".to_owned(),
+                    lang: normalize_lang(lang.as_deref()),
+                    value,
+                });
             }
         }
 
@@ -3979,6 +3990,61 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
         .map(|(_, name)| (*name).to_owned())
 }
 
+/// The canonical language vocabulary for `Fact::Text.lang` (issue 292): ISO
+/// 639-2/T three-letter uppercase — the form the eForms codelist publishes
+/// (`ENG`, `DEU`, `FRA`, …). The other eras publish other dialects — r208/r209
+/// the raw two-letter `LG` attribute (`EN`, `DE`), the text era `EN` — and
+/// before this mapping every "English wins" pick in the read layer compared the
+/// literal `'ENG'` and was inert for the whole pre-eForms corpus: title choice
+/// fell to scan order, so a bilingual legacy tender could serve its non-English
+/// title. Importers translate at the boundary (CONTEXT.md); this is that
+/// boundary for language, applied once where parse-layer text becomes a fact,
+/// so every era — and every future portal's dialect — funnels through one map.
+/// An unknown tag passes through UPPERCASED: it fails visible (a tag the picks
+/// simply ignore) instead of silently splitting one language across spellings.
+fn normalize_lang(lang: Option<&str>) -> Option<String> {
+    let up = lang?.to_ascii_uppercase();
+    Some(
+        match up.as_str() {
+            // ISO 639-1 → 639-2/T for the languages the TED corpus publishes.
+            "BG" => "BUL",
+            "CS" => "CES",
+            "DA" => "DAN",
+            "DE" => "DEU",
+            "EL" => "ELL",
+            "EN" => "ENG",
+            "ES" => "SPA",
+            "ET" => "EST",
+            "FI" => "FIN",
+            "FR" => "FRA",
+            "GA" => "GLE",
+            "HR" => "HRV",
+            "HU" => "HUN",
+            "IS" => "ISL",
+            "IT" => "ITA",
+            "LT" => "LIT",
+            "LV" => "LAV",
+            "MK" => "MKD",
+            "MT" => "MLT",
+            "NL" => "NLD",
+            "NO" => "NOR",
+            "PL" => "POL",
+            "PT" => "POR",
+            "RO" => "RON",
+            "RU" => "RUS",
+            "SK" => "SLK",
+            "SL" => "SLV",
+            "SQ" => "SQI",
+            "SR" => "SRP",
+            "SV" => "SWE",
+            "TR" => "TUR",
+            "UK" => "UKR",
+            _ => return Some(up),
+        }
+        .to_owned(),
+    )
+}
+
 /// The canonical target of one parsed amount. Everything except r208's plain
 /// `VALUE_COST` maps by field id alone ([`AMOUNTS`]). `VALUE_COST` is three
 /// facts in one field id (issue 177), told apart only by context:
@@ -4467,6 +4533,23 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 292: one language vocabulary across eras. The legacy two-letter tags
+    /// map to the eForms three-letter form the read layer's 'ENG'-wins picks
+    /// compare against; already-canonical and unknown tags pass through
+    /// uppercased; absent stays absent.
+    #[test]
+    fn lang_tags_normalize_to_one_vocabulary() {
+        assert_eq!(normalize_lang(Some("EN")), Some("ENG".into()), "r209/text-era English");
+        assert_eq!(normalize_lang(Some("DE")), Some("DEU".into()), "r209 German");
+        assert_eq!(normalize_lang(Some("FR")), Some("FRA".into()));
+        assert_eq!(normalize_lang(Some("CS")), Some("CES".into()), "T-form, not B-form CZE");
+        assert_eq!(normalize_lang(Some("en")), Some("ENG".into()), "case-insensitive");
+        assert_eq!(normalize_lang(Some("ENG")), Some("ENG".into()), "eForms passthrough");
+        assert_eq!(normalize_lang(Some("DEU")), Some("DEU".into()));
+        assert_eq!(normalize_lang(Some("XX")), Some("XX".into()), "unknown passes visible");
+        assert_eq!(normalize_lang(None), None, "untagged stays untagged");
+    }
 
     #[test]
     fn vm_hwm_is_parsed_from_a_proc_status_block() {

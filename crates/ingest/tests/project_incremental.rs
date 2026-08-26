@@ -1714,3 +1714,66 @@ async fn a_partial_rewrite_sweeps_the_dropped_tails_orphaned_lot() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+/// Issue 292: legacy notices carry two-letter lang tags (`EN`, `DE` — the raw
+/// r208/r209 `LG` attribute), but every "English wins" pick in the read layer
+/// compares the literal `'ENG'` — so before fold-time normalization the English
+/// preference never fired for the pre-eForms corpus and the title fell to scan
+/// order. `DE` sorts before `EN` in the facts BTreeSet, so this fixture's
+/// first-seen title is the German one: without normalization `current_title`
+/// reads "Dacharbeiten"; with it, the tags land as `DEU`/`ENG` and the English
+/// pick fires.
+#[tokio::test]
+async fn legacy_two_letter_lang_tags_normalize_so_the_english_pick_fires() {
+    let (db, fetch_id, path) = scratch("lang-norm").await;
+
+    let mut parsed = Parsed {
+        sections: vec![sec("PROC", "Procedure", None)],
+        values: vec![
+            id_val("PROC", "BT-04-notice", "bt04-lang"),
+            date_val("PROC", "BT-05(a)-notice", 1),
+        ],
+    };
+    for (i, (lang, title)) in [("DE", "Dacharbeiten"), ("EN", "Roof works")].iter().enumerate() {
+        parsed.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: "BT-21-Procedure".into(),
+            ordinal: i as i64,
+            value: NoticeValue::Text { lang: Some((*lang).into()), value: (*title).into() },
+        });
+    }
+    record(&db, fetch_id, "LANG", parsed).await;
+    project::project(&db, false).await.expect("project");
+
+    // The stored tags are the canonical three-letter vocabulary…
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_texts WHERE field='title' AND lang IN ('DEU','ENG')"
+        )
+        .await,
+        2,
+        "both language variants stored under normalized tags"
+    );
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_texts WHERE lang IN ('DE','EN')"
+        )
+        .await,
+        0,
+        "no raw two-letter tag survives the fold"
+    );
+    // …so the English preference actually fires (the bug: German, by scan order).
+    let title = match db
+        .scalar("SELECT current_title FROM tenders WHERE procedure_key='bt04-lang'")
+        .await
+        .expect("title")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        other => panic!("no title: {other:?}"),
+    };
+    assert_eq!(title, "Roof works", "the English variant wins the current_title pick (issue 292)");
+
+    let _ = std::fs::remove_file(&path);
+}

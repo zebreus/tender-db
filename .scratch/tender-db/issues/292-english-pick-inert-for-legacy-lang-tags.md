@@ -1,7 +1,14 @@
 # 292 — the "English wins" title pick is inert for the whole pre-eForms corpus (lang-tag vocabulary never normalized)
 
-Status: DIAGNOSED 2026-08-26 (owner — found by the issue-291 multilanguage survey;
-every location owner-verified against the code)
+Status: FIX LANDED 2026-08-26 (owner) — fold-boundary normalization (`normalize_lang`,
+project.rs: ISO 639-1 → 639-2/T map, unknown tags pass through uppercased, None stays
+None) applied at both `Fact::Text` creation sites; unit test + red-first integration
+fixture (`legacy_two_letter_lang_tags_normalize_so_the_english_pick_fires`: DE+EN
+two-letter variants → stored as DEU/ENG, English wins current_title; proven RED with
+the normalization bypassed). Full `ops/check.sh` green (65 suites). FORWARD-ONLY until
+the backfill: stored legacy rows keep `EN`/2-letter tags until an era refold — the
+bounded sizing probe (how many legacy tenders carry >1 title language) decides
+refold-vs-batched-UPDATE as the next unit.
 Kind: correctness (title/language selection on the read + fold surfaces)
 Severity: MEDIUM (wrong-language titles served for legacy-era tenders whenever a
 non-English variant sorts first; silent — nothing errors)
