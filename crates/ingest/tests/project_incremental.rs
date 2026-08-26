@@ -1647,3 +1647,70 @@ async fn a_group_composition_change_emits_a_tender_changed_event() {
         let _ = std::fs::remove_file(format!("{path}{s}"));
     }
 }
+
+/// Issue 279: a partial chain rewrite (`keep > 0`) drops the tail's versions but
+/// the entity-table rows the departed notice introduced are not swept and no
+/// `removed` event is emitted — the `keep == 0` full-rewrite sweep (issue 103)
+/// does not cover the kept-prefix case. Reproduced with a lot: notice B (a later
+/// notice under the same key) introduces LOT-2; B is then reparsed to a different
+/// key and regroups away, leaving T's chain `[A]` (keep=1). LOT-2 in `lots` is now
+/// referenced by no surviving `tender_version_lots` row — an orphan the sweep must
+/// remove and announce.
+#[tokio::test]
+async fn a_partial_rewrite_sweeps_the_dropped_tails_orphaned_lot() {
+    let (db, fetch_id, path) = scratch("partial-tail").await;
+
+    // A: CN under bt04-tail with LOT-1. B: a later notice under the SAME key adding
+    // LOT-2 (so LOT-2 exists only because of B).
+    record(&db, fetch_id, "T-cn", keyed("bt04-tail", 1, "Tail CN")).await;
+    let mut b = keyed("bt04-tail", 2, "Tail follow-up");
+    b.sections.push(sec("LOT-2", "Lot", Some("PROC")));
+    b.values.push(date_val("LOT-2", "BT-131(d)-Lot", 700_000_222));
+    record(&db, fetch_id, "T-b", b).await;
+    project::project(&db, false).await.expect("initial projection");
+
+    let tid = "(SELECT id FROM tenders WHERE procedure_key='bt04-tail')";
+    assert_eq!(
+        count(&db, &format!("SELECT COUNT(*) FROM tender_versions WHERE tender_id={tid}")).await,
+        2,
+        "two versions before the regroup",
+    );
+    assert_eq!(
+        count(&db, &format!("SELECT COUNT(*) FROM lots WHERE tender_id={tid} AND lot_key='LOT-2'")).await,
+        1,
+        "B introduced LOT-2",
+    );
+
+    // Reparse B to a DIFFERENT key: it regroups away, so T's chain shrinks to [A].
+    reparse(&db, fetch_id, "T-b", keyed("bt04-moved", 2, "Tail follow-up")).await;
+    project::project_incremental(&db).await.expect("incremental reproject");
+
+    // T is down to its single CN version — the tail dropped (keep=1).
+    assert_eq!(
+        count(&db, &format!("SELECT COUNT(*) FROM tender_versions WHERE tender_id={tid}")).await,
+        1,
+        "the tail version is gone",
+    );
+
+    // THE BUG (issue 279): LOT-2 must not survive as an orphan — no surviving
+    // tender_version_lots row references it, and a `removed` event must be emitted.
+    assert_eq!(
+        count(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM lots l WHERE l.tender_id={tid} AND l.lot_key='LOT-2' \
+                   AND NOT EXISTS (SELECT 1 FROM tender_version_lots tvl \
+                                    WHERE tvl.tender_id=l.tender_id AND tvl.lot_id=l.id)"
+            ),
+        )
+        .await,
+        0,
+        "the dropped tail's orphaned LOT-2 was swept (issue 279)",
+    );
+    assert!(
+        count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind='lot' AND op='removed'").await >= 1,
+        "a removed event announced the swept lot",
+    );
+
+    let _ = std::fs::remove_file(&path);
+}

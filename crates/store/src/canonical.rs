@@ -3934,18 +3934,25 @@ impl Db {
         // only, deliberately, so an unchanged rewrite reuses the same surrogate
         // ids and stays byte-identical.
         //
-        // Gated on `keep == 0` because only then is `written` the COMPLETE
-        // reference set: a kept prefix's satellite rows were never touched, and
-        // sweeping against a partial set would delete entities those versions
-        // still point at. `!stored.is_empty()` skips the paths that cannot have
-        // orphans and would pay four SELECTs per Tender for nothing — a fresh
-        // Tender, and every Tender of a rebuild (whose chain is empty by
-        // construction after `reset_tender_layer`).
-        //
-        // Under UNCHANGED logic a forced rewrite resolves the same ids, the sweep
-        // finds nothing, and deletes nothing — issue 99's byte-identity property
-        // is preserved by arithmetic, not by luck.
-        if keep == 0 && !stored.is_empty() {
+        // Run whenever the chain SHRANK — `keep < stored.len()` — so a partial
+        // rewrite that kept a prefix (`keep > 0`) sweeps its dropped tail too
+        // (issue 279), not just the `keep == 0` full rewrite (issue 103). The
+        // sweep deletes a Tender's entity rows absent from the keep-set, so that
+        // set must be COMPLETE: for `keep > 0` the kept prefix's rows were never
+        // re-written into `written`, so augment it with them first — otherwise the
+        // sweep would delete entities the surviving versions still point at.
+        // `!stored.is_empty()` skips the paths that cannot have orphans and would
+        // pay SELECTs for nothing — a fresh Tender, and every Tender of a rebuild
+        // (empty chain by construction after `reset_tender_layer`). `keep == 0`
+        // adds nothing (empty prefix) and stays byte-identical to issue 103, so
+        // issue 99's forced-rewrite byte-identity holds by arithmetic as before.
+        if !stored.is_empty() && keep < stored.len() {
+            if keep > 0 {
+                let kept_notices: Vec<i64> =
+                    p.versions[..keep].iter().map(|v| v.caused_by_notice_id).collect();
+                self.extend_keep_with_kept_prefix(conn, tender_id, &kept_notices, &mut written)
+                    .await?;
+            }
             let (swept, sweep_changes) =
                 self.sweep_orphaned_entities(conn, tender_id, &written, now).await?;
             applied.entities_swept += swept;
@@ -4141,6 +4148,56 @@ impl Db {
                 (Value::Integer(tender_id), Value::Integer(seq)),
             )
             .await?;
+        }
+        Ok(())
+    }
+
+    /// Add the KEPT prefix's still-valid entity ids to `written`, so the orphan
+    /// sweep can run on a partial rewrite (`keep > 0`) without deleting rows the
+    /// surviving versions still reference (issue 279). `write_version` only records
+    /// the versions it re-wrote (seq `keep+1..`), so on a pure tail-drop `written`
+    /// is empty and a sweep against it would delete the whole Tender.
+    ///
+    /// `lots` accumulate and are keyed by `(tender_id, lot_key)`, not by notice, so
+    /// a surviving `tender_version_lots` reference — kept prefix OR freshly written —
+    /// is the ground truth for which lots are still valid. `lot_results`/`bids`/
+    /// `contracts` are keyed by their origin notice, so the kept prefix's are exactly
+    /// those under a kept notice (the prefix's content is unchanged — that is why the
+    /// chain-as-state-key match kept it).
+    async fn extend_keep_with_kept_prefix(
+        &self,
+        conn: &Connection,
+        tender_id: i64,
+        kept_notices: &[i64],
+        written: &mut WrittenEntities,
+    ) -> turso::Result<()> {
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT DISTINCT lot_id FROM tender_version_lots WHERE tender_id = ?",
+                    (Value::Integer(tender_id),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                written.lots.insert(int(&row, 0));
+            }
+        }
+        for &notice in kept_notices {
+            for (table, set) in [
+                ("lot_results", &mut written.lot_results),
+                ("bids", &mut written.bids),
+                ("contracts", &mut written.contracts),
+            ] {
+                let mut rows = conn
+                    .query(
+                        &format!("SELECT id FROM {table} WHERE tender_id = ? AND notice_id = ?"),
+                        (Value::Integer(tender_id), Value::Integer(notice)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    set.insert(int(&row, 0));
+                }
+            }
         }
         Ok(())
     }
