@@ -1,10 +1,10 @@
 # 286 — provisional-org merge repoints party/winner rows in place but emits no tender change event, so org-scoped tender subscribers miss/keep-stale events
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner) — implemented as planned (in-place emission,
-bounded per batch), red-first store test, full `ops/check.sh` green (65 suites). Deploy
-pending an idle queue. Forward-only: already-merged tenders are not retro-emitted (the
-merge stock was collapsed by issue 234; this covers future merge runs). See
-"Implementation" below.
+Status: RESOLVED-DEPLOYED 2026-08-26 (owner) — implemented as planned (in-place emission,
+bounded per batch), red-first store test, full `ops/check.sh` green (65 suites), deployed
+to prod (rev `cdcaf18`, /health green, queue idle). Forward-only: already-merged tenders
+are not retro-emitted (the merge stock was collapsed by issue 234; this covers future
+merge runs). See "Implementation" below.
 Kind: correctness (change-feed completeness) — the 191 in-place-write-invisible class, on the merge path
 Severity: MEDIUM
 Relates to: 234 (the merge), 191 (in-place reclaim writes invisible to the change gate), 164 (missing removal events), 285 (the same merge's org-op bug)
