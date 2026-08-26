@@ -1,8 +1,9 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: FIX BUILT + TESTED (2026-08-26, owner) — the code fix (track 1) is in the working
-tree with a red-first test and green byte-identity gates; awaiting the full gate + deploy,
-then the ~45k data cleanup (track 2). Was: CONFIRMED LIVE AT SCALE (measured on the Aug-24 snapshot).
+Status: FIX DEPLOYED (track 1) — `5357397`, prod green 2026-08-26 ~15:2x UTC. New ghosts
+are now prevented on every full projection. Track 2 (clearing the ~45k EXISTING ghosts)
+is the remaining work — see below; no urgency (accumulation is paused, the fix holds).
+Was: CONFIRMED LIVE AT SCALE (measured on the Aug-24 snapshot).
 Kind: correctness (canonical layer integrity + change-feed honesty)
 Severity: HIGH — **~45,108 ghost tenders live on prod right now**, double-counting procedures on `/v1/tenders` and every count/dashboard.
 
@@ -149,13 +150,19 @@ cleanup is re-polluted the next time the full fallback fires.
    after a full non-rebuild pass, `COUNT(DISTINCT tender_id) per caused_by_notice_id`
    is ≤ 1 everywhere (the invariant this bug violates).
 
-2. **Data cleanup of the ~45k existing ghosts (after the fix deploys).** Cheapest
-   correct option: a full `rebuild=true` projection resets the layer and
-   re-projects each notice under its single group_key — zero ghosts by
-   construction. Alternative if a full rebuild's downtime is unwanted: a targeted
-   retirement sweep of the ghost set (the surplus tender per dup notice), reusing
-   `retire_tenders_chunked`. Decide at fix-deploy time; a rebuild is simplest and
-   also validates track 1's byte-identity claim.
+2. **Data cleanup of the ~45k existing ghosts — PENDING (track 1 deployed).**
+   Now that the fix is live, ANY full projection clears them: a full
+   `project(rebuild=false)` re-derives the whole plan and the new retirement pass
+   sweeps the ghosts (no layer reset, no index rebuild); a full `rebuild=true`
+   does it via a fresh layer AND validates the byte-identity claim end to end.
+   Both are heavy (whole-corpus fold, multi-hour, /health downtime for a rebuild),
+   so run in a deliberately chosen quiet window, NOT bundled with a routine deploy.
+   A lighter targeted sweep (retire just the identified surplus tender per dup
+   notice) is possible but needs care picking the right member of each pair; the
+   full-projection route is safer and self-validating. Decision deferred to a
+   dedicated firing — the ~45k is static (double-counting on `/v1/tenders`, not
+   growing), so there is no rush. Re-measure the dup-notice count on the next
+   snapshot before AND after to confirm the sweep landed.
 
 No emergency mitigation is needed tonight: the accumulation is paused (the full
 fallback only fires on a ≥100k reparse, none scheduled), so the ~45k is static
