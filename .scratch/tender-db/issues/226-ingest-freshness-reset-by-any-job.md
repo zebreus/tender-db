@@ -1,6 +1,6 @@
 # 226 — `/health/deep` ingest_freshness was reset by ANY successful job, so a maintenance run masks a stalled ingest
 
-Status: RESOLVED — committed, awaiting deploy. Found during the ownership check-in: a manual `reindex`
+Status: RESOLVED-DEPLOYED (be4c96c, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27); needs-prod-check: on the next reindex, confirm /health/deep ingest_freshness.last_success_at stays the last daily-pipeline run. Found during the ownership check-in: a manual `reindex`
 (217-B, job 703) reset `ingest_freshness.last_success_at` to its own finish time even though it is not an
 ingest. `deep()` now filters `last_success` to the daily-pipeline kinds (probe/process/project); a
 maintenance job can no longer report the box "fresh."

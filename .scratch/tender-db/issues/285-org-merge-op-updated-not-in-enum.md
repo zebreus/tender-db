@@ -1,6 +1,6 @@
 # 285 — org-merge survivor emits op="updated", outside the documented change enum; poll/webhook and SSE disagree
 
-Status: FIXED in working tree (2026-08-26, owner), awaiting gate+deploy
+Status: RESOLVED-DEPLOYED (9b12d4e, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27). Survivor op is the documented 'changed'; all three transports agree.
 Kind: correctness (change-feed contract)
 Severity: LOW
 Relates to: 234 (the merge that emits it), 46 (change-feed protocol)

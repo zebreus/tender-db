@@ -1,6 +1,6 @@
 # 280 — the supervisor's fetch client has no timeout, so a stalled download wedges the whole job queue with no watchdog
 
-Status: FIXED in working tree (2026-08-26, owner), awaiting gate+deploy
+Status: RESOLVED-DEPLOYED (0bdebd2, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27). Fetch client now has connect_timeout(30s)+read_timeout(120s).
 Kind: operational / availability (silent hang of the ingestion queue)
 Severity: HIGH
 Relates to: 241 (bounded the /v1 REQUEST path's hang; this is the ingestion queue, never bounded), 252/247 (cancel plumbing — which cannot rescue this)

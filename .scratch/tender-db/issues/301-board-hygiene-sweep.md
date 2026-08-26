@@ -1,6 +1,6 @@
 # 301 — board hygiene: stale status lines + CONTEXT.md drift
 
-Status: BACKLOG (filed 2026-08-26; flagged by the 291 deferred-inventory sweep)
+Status: DONE 2026-08-27 (owner, ultracode loop) — every item verified against git ancestry (deployed rev ae31cbd) by an adversarial agent, then corrected: 280/281/282/284/285 -> RESOLVED-DEPLOYED (commits 0bdebd2/6e36ddf/9b12d4e); 71 -> RESOLVED (mooted by 201's drained bucket + 15's rebuild); 221 -> RESOLVED-DEPLOYED; 226/235 -> RESOLVED-DEPLOYED with named needs-prod-check residuals (226: next reindex vs ingest_freshness; 235: section 3 of the next weekly DQ run); 23 -> CLOSED-SUPERSEDED by 170's NO-backups re-decision; CONTEXT.md service.bund.de line corrected to the C22 do-not-ingest verdict.
 Kind: operational (the board is the source of truth — keep it true)
 
 Verified-stale items to correct:

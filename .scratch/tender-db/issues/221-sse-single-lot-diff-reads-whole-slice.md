@@ -1,6 +1,6 @@
 # 221 — SSE single-lot diff (Scope::At) re-reads the whole tender-version lot slice via summarise (quadratic per version bump)
 
-Status: RESOLVED — committed `cb80e60`, awaiting deploy. The diff no longer decorates to classify. Split
+Status: RESOLVED-DEPLOYED (cb80e60, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27) — correctness pinned in-repo by lot_summary_equivalence; the Verification query below quantified the OLD cost, not a post-deploy bar. The diff no longer decorates to classify. Split
 `read::lots` into `lots_identity` (the match set, no `summarise`) + decoration; added `read_matches` over
 it; the diff loop now classifies added/changed/removed by PRESENCE on each side and decorates only the
 NEW side, only under `?include_data=true`. A lot change costs at most one `summarise` (down from up to

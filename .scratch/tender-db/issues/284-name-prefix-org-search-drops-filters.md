@@ -1,6 +1,6 @@
 # 284 — the REST name-prefix org search silently drops `identifier` and `buyer` while reporting them honoured
 
-Status: FIXED in working tree (2026-08-26, owner), awaiting gate+deploy
+Status: RESOLVED-DEPLOYED (6e36ddf, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27). identifier/buyer honoured on the name path.
 Kind: correctness / API honesty
 Severity: MEDIUM (unauthenticated; a confidently over-broad result)
 Relates to: 217-B (the name-ordered builder), 216 (the index)

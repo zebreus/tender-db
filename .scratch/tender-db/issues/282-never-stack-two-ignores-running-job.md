@@ -1,6 +1,6 @@
 # 282 — the scheduler's "never stack two" guards inspect only the queue, not the running job, so a tick during a run enqueues a duplicate
 
-Status: FIXED in working tree (2026-08-26, owner), awaiting gate+deploy
+Status: RESOLVED-DEPLOYED (0bdebd2, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27). All three scheduler guards route through already_pending() (queued OR running).
 Kind: operational (duplicate scheduled work)
 Severity: LOW
 Relates to: 280/241 (a wedged/slow running instance widens the duplication window), 274 (the daily reveal-recheck guard is one of the three)

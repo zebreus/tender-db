@@ -1,6 +1,6 @@
 # 281 — heavy_write_in_progress() omits the long batched-write jobs, so the coverage refresher's WAL-pinning scan runs during them
 
-Status: FIXED in working tree (2026-08-26, owner), awaiting gate+deploy
+Status: RESOLVED-DEPLOYED (0bdebd2, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27). heavy_write_kind() single source of truth covers every batched writer.
 Kind: operational / WAL-growth risk (extends issue 53)
 Severity: MEDIUM (bounded to ~one scan per transition by the change-gate)
 Relates to: 53 (the 70 GB WAL / 5 n/s collapse this belt exists to prevent), 191 (the change-gate that partly masks the hole), 247/234/228 (the omitted job kinds)

@@ -101,7 +101,9 @@ One appearance of an organization in one Notice (the eForms ORG- entity, whose I
   Einkauf) as the German Source — anonymous CC0 bulk exports (eForms-DE XML,
   OCDS, CSV) back to 2022-12; chosen after a full portal survey
   (docs/research/german-portals.md) specifically to keep the model
-  source-agnostic. service.bund.de is a possible later stress-test Source.
+  source-agnostic. service.bund.de was deep-dived and REJECTED as a Source —
+  "do not ingest — not now, and probably not later either"
+  (docs/research/service-bund-de.md §9, decision C22).
 - TED history spans three format eras (tagged text 1993–2010, TED_EXPORT XML
   2011–2024, eForms 2023→, mixed per-file during the transition); importers
   dispatch a mapping profile per file (text / r208 / r209 / eforms, plus

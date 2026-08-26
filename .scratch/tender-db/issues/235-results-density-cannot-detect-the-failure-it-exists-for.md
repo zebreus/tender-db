@@ -1,6 +1,6 @@
 # 235 — results-materialisation density measures the projection against itself, so it cannot see an award notice with no results
 
-Status: resolved-in-code — fix committed 2026-08-19 (d483f1a + NAT_NOTICE follow-up); DEPLOY PENDING, then the first real run
+Status: RESOLVED-DEPLOYED (d483f1a + acb3877, live on prod rev ae31cbd; board-hygiene sweep 301, 2026-08-27); needs-prod-check: read section 3 of the next weekly data-quality run — DE-1.x cohort %, per-era materialisation gaps, unclassified/untyped coverage.
 Kind: metric definition defect (a green that cannot go red)
 Blocked by: —
 Relates to: 27 (the report), 230 (the measurement that made this visible), 13 (results layer), 100
