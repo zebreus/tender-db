@@ -1,11 +1,10 @@
 # 286 — provisional-org merge repoints party/winner rows in place but emits no tender change event, so org-scoped tender subscribers miss/keep-stale events
 
-Status: CONFIRMED (2026-08-26, owner) — the UNCERTAIN half is resolved: the
-`merge-provisional-orgs` handler (supervisor.rs ~2140) runs the batched in-place
-repoint loop and returns; it enqueues NO follow-on `project`, so nothing re-emits the
-tender events. The gap is real. Fix DEFERRED to a dedicated firing (batched write path
-over ~30M orgs — the turso-cost-sensitive category that caused the 2026-08-26 sweep
-incident; not to be rushed at the tail of another unit). Plan below.
+Status: RESOLVED-IN-CODE 2026-08-26 (owner) — implemented as planned (in-place emission,
+bounded per batch), red-first store test, full `ops/check.sh` green (65 suites). Deploy
+pending an idle queue. Forward-only: already-merged tenders are not retro-emitted (the
+merge stock was collapsed by issue 234; this covers future merge runs). See
+"Implementation" below.
 Kind: correctness (change-feed completeness) — the 191 in-place-write-invisible class, on the merge path
 Severity: MEDIUM
 Relates to: 234 (the merge), 191 (in-place reclaim writes invisible to the change gate), 164 (missing removal events), 285 (the same merge's org-op bug)
@@ -83,3 +82,24 @@ drops merged groups from scope, so the touched set is naturally per-run).
 Pin with a fixture: a tender matching `winner=keep` ONLY after a merge produces a `tender`
 `changed` row; a `winner=loser` subscriber sees the same tender's `changed` (its cue to
 re-evaluate and drop it). Assert dry_run emits no change rows.
+
+## Implementation (2026-08-26, owner)
+
+`merge_provisional_organizations_batch` (canonical.rs) now, inside its existing
+transaction: before repointing each loser, collects the DISTINCT `tender_id`s the loser
+touches via a UNION over `tender_version_parties` / `tender_version_bid_parties` /
+`tender_version_result_winners` `WHERE organization_id = ?` — three index probes on the
+`*_org` indexes, bounded by the loser's few references (never a table scan, so it stays
+cheap on the batched merge path — the incident lesson honoured). After the repoints it
+emits one `tender` `changed` per touched Tender, `version_seq` NULL (matching the
+retirement path's in-place tender change), and returns the count in a new
+`OrgMergeBatch::tender_changes` field, which the supervisor surfaces in the job summary
+("… N tender change event(s)"). A Tender reached through several legs/losers of one batch
+is deduped by a `BTreeSet` to a single change row.
+
+Tests (`crates/store/tests/org_merge_change_events.rs`, red-first — proven to read
+`tender_changes = 0` before the emission): a loser referenced by a party on T100 and
+winners on T100+T200 collapses into the survivor and emits exactly two seq-less `tender`
+`changed` rows (T100 deduped across legs), the survivor `changed`/loser `removed` org
+rows still fire, and the references now name the survivor; a **dry run** emits zero
+change rows and moves nothing.

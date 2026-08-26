@@ -2179,6 +2179,7 @@ impl Supervisor {
                     totals.bid_parties += b.bid_parties;
                     totals.winners += b.winners;
                     totals.winner_dups += b.winner_dups;
+                    totals.tender_changes += b.tender_changes;
                     cursor = b.cursor.clone();
                     self.update(|p| p.members_done = totals.removed);
                     self.set_phase(
@@ -2204,14 +2205,15 @@ impl Supervisor {
                 Ok(format!(
                     "{cancelled}{mode} {} duplicate group(s): {} provisional org(s) removed; \
                      {} mention(s), {} party row(s), {} bid-party row(s), {} winner row(s) \
-                     repointed, {} duplicate winner row(s) dropped",
+                     repointed, {} duplicate winner row(s) dropped, {} tender change event(s)",
                     totals.groups,
                     totals.removed,
                     totals.mentions,
                     totals.parties,
                     totals.bid_parties,
                     totals.winners,
-                    totals.winner_dups
+                    totals.winner_dups,
+                    totals.tender_changes
                 ))
             }
             Spec::ClearRebuildFlag => {

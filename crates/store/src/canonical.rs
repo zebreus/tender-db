@@ -1142,6 +1142,12 @@ pub struct OrgMergeBatch {
     /// Winner rows DELETED because their lot_result already named the survivor
     /// (the PK ends in `organization_id`, so the repoint would collide).
     pub winner_dups: u64,
+    /// Distinct Tenders that had a party/bid-party/winner row repointed and so got
+    /// a `tender` `changed` change-feed row (issue 286): the merge rewrites org
+    /// references in place on current-version rows, changing what the `buyer` /
+    /// `winner` / `bidder` org-role filters return, and this is the event that tells
+    /// a `/v1/changes` or SSE subscriber to re-evaluate the Tender.
+    pub tender_changes: u64,
     /// `name_norm` watermark: pass as `after` to continue the walk.
     pub cursor: String,
     /// The scan ran out of rows — the walk is complete.
@@ -4205,8 +4211,15 @@ impl Db {
     /// The `tender_version_result_winners` PK ends in `organization_id`, so a
     /// lot_result already naming the survivor collides with a repointed loser
     /// row; those loser rows are deleted (`winner_dups`) before the repoint.
-    /// Losers get a `removed` change row and each group's survivor an `updated`
-    /// one — its merged mention set changes what reads return for it.
+    ///
+    /// Change feed: each loser gets a `removed` row and each group's survivor a
+    /// `changed` one (issue 285 — its merged mention set changes what reads return).
+    /// AND every Tender whose party/bid/winner row was repointed gets a `tender`
+    /// `changed` row (issue 286): the repoints hit current-version rows and move what
+    /// the `buyer`/`winner`/`bidder` org-role filters return, so a subscriber must be
+    /// told to re-evaluate the Tender. Without it, a `/v1/tenders?winner=<survivor>`
+    /// subscriber never learns a merged-in Tender now matches, and a
+    /// `winner=<loser>` one keeps a Tender that no longer does.
     pub async fn merge_provisional_organizations_batch(
         &self,
         batch_rows: i64,
@@ -4274,8 +4287,33 @@ impl Db {
         }
 
         conn.execute("BEGIN IMMEDIATE", ()).await?;
+        // Tenders whose party/bid/winner rows this batch repoints — collected so the
+        // change feed learns of the in-place rewrite (issue 286). A BTreeSet across
+        // the whole batch dedups a Tender referenced by several losers of one group.
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
         for (keep, losers) in &groups {
             for &loser in losers {
+                // BEFORE the repoints, while these rows still point at the loser:
+                // which Tenders does it touch? Each leg is an index probe on the
+                // loser's `*_org` index (bounded by the loser's few references), never
+                // a table scan — so this stays cheap on the batched merge path.
+                {
+                    let mut trows = conn
+                        .query(
+                            "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                            (
+                                Value::Integer(loser),
+                                Value::Integer(loser),
+                                Value::Integer(loser),
+                            ),
+                        )
+                        .await?;
+                    while let Some(row) = trows.next().await? {
+                        touched.insert(int(&row, 0));
+                    }
+                }
                 report.mentions += conn
                     .execute(
                         "UPDATE organization_mentions SET organization_id = ? \
@@ -4329,6 +4367,15 @@ impl Db {
             // documented, correct value and makes all three agree.
             append_change(&conn, "organization", *keep, None, "changed", now).await?;
         }
+        // The Tender-side events (issue 286): one `changed` per touched Tender, seq
+        // NULL like the retirement path's in-place tender change — it is not tied to a
+        // new version, it re-points existing ones. It tells a `buyer`/`winner`/`bidder`
+        // subscriber to re-evaluate the Tender (add it if it now matches the survivor,
+        // drop it if it no longer matches the deleted loser).
+        for &tid in &touched {
+            append_change(&conn, "tender", tid, None, "changed", now).await?;
+        }
+        report.tender_changes = touched.len() as u64;
         conn.execute("COMMIT", ()).await?;
         Ok(report)
     }
