@@ -5064,6 +5064,33 @@ impl Db {
         Ok(orphaned.len() as u64)
     }
 
+    /// The notices whose `caused_by_notice_id` appears under 2+ distinct Tenders —
+    /// the issue-278 ghost signature. `plan_notice.notice_id` is a PK, so a notice
+    /// keys to exactly ONE group; a notice under two Tenders means one of them is a
+    /// stale ghost the full non-rebuild path failed to retire (the ~45k measured on
+    /// prod). The cleanup (`sweep-regrouped-ghosts`) marks these unprojected so an
+    /// ordinary incremental fold re-derives each under its single current key and
+    /// its `retire_regrouped_tenders` drops whichever member is no longer produced.
+    /// One `GROUP BY` over `tender_versions` — bounded result (~45k), ~6s at prod
+    /// scale (measured); run once per sweep, not on any hot path.
+    pub async fn regrouped_dup_notice_ids(&self) -> turso::Result<Vec<i64>> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT caused_by_notice_id FROM tender_versions
+                  WHERE caused_by_notice_id IS NOT NULL
+                  GROUP BY caused_by_notice_id
+                 HAVING COUNT(DISTINCT tender_id) > 1",
+                (),
+            )
+            .await?;
+        let mut ids = Vec::new();
+        while let Some(row) = rows.next().await? {
+            ids.push(int(&row, 0));
+        }
+        Ok(ids)
+    }
+
     /// Award-linkage per era (docs/research/ted-legacy-mapping.md §3): of the
     /// Tenders that carry an award (any `lot_results`), how many are a single
     /// notice — an award that never chained to its contract notice. The era is

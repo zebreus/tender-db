@@ -172,12 +172,20 @@ choices are:
   multi-hour, `/health` DOWN through the reset + org/tender index rebuild, and if
   interrupted it enters the issue-60 salvage state (the 2026-07-28 incident
   nuked a 6.96M-tender layer into a ~15h re-fold). Not a casual afternoon action.
-* **Targeted sweep (RECOMMENDED, own code unit)** — a new admin job over just the
-  ~90k dup-pair candidate tenders: re-derive each one's head-notice key via
-  `Ident::read` and retire (via `retire_tenders_chunked`, with `removed` events)
-  exactly those whose re-derived key ≠ their stored key. Health stays up, no full
-  fold, correct by the notice→group_key 1:1 invariant, and cheap (~90k parses of
-  already-stored parsed data). This is the lowest-risk correct cleanup.
+* **Targeted sweep — BUILT (2026-08-26, awaiting gate+deploy+run).** Realized even
+  more cleanly than the re-derive-keys sketch, by reusing the PROVEN incremental
+  retirement instead of new key logic: admin kind `sweep-regrouped-ghosts` →
+  `Spec::SweepRegroupedGhosts` computes the dup-notice set
+  (`Db::regrouped_dup_notice_ids`, the GROUP BY), marks them unprojected
+  (`unmark_projected_by_ids`, NO epoch-stale stamp — the kept Tenders must not be
+  rewritten), and pairs an ordinary incremental `project`. That fold re-derives
+  each dup under its ONE current key and `retire_regrouped_tenders` drops whichever
+  member is no longer produced — correct regardless of which is the ghost. 45k <
+  the 100k full-fallback threshold, so it stays on the scoped path; health stays
+  up. Test `the_ghost_sweep_finds_and_retires_a_duplicated_tender`
+  (project_incremental.rs): inject a ghost (a notice under two Tenders), sweep,
+  assert the ghost retired, the real Tender kept, no notice under two Tenders, a
+  `removed` event fired, and a re-run is a no-op (idempotent).
 * **Piggyback a natural rebuild** — whenever a `rebuild=true` is next needed for
   another reason, it clears these for free.
 

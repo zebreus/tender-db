@@ -303,6 +303,13 @@ enum Spec {
     /// structural rather than statistical (`expect`-style slack is meaningless for
     /// a list you typed): the list is capped, and a list over the cap is refused.
     RefoldNotices { notices: Vec<i64> },
+    /// Issue 278 track-2 cleanup: mark every notice whose `caused_by` appears under
+    /// 2+ Tenders (the ghost signature) unprojected, so the paired incremental fold
+    /// re-derives each under its one current key and retires the stale ghost member
+    /// via `retire_regrouped_tenders`. No epoch-stale stamp — the kept Tenders must
+    /// not be rewritten, only the ghosts retired. Self-scoping (no id list): the job
+    /// computes the set. Idempotent — a second run finds no dups and re-queues zero.
+    SweepRegroupedGhosts,
     /// Re-project the notices whose PARSE LAYER carries any of these field ids —
     /// the FIELD-scoped refold (issue 88 follow-up): a new mapping for a grafted
     /// id affects exactly its carriers, a set no profile names. Sweeps the value
@@ -811,6 +818,15 @@ impl Supervisor {
                         .await,
                 ])
             }
+            // Issue 278 track-2: retire the ~45k ghost Tenders the pre-fix full path
+            // left behind. Self-scoping (computes the dup-notice set), paired with an
+            // ordinary incremental project so the scoped retirement runs. No id list.
+            "sweep-regrouped-ghosts" => Ok(vec![
+                self.push("sweep-regrouped-ghosts", "sweep-regrouped-ghosts".into(), Spec::SweepRegroupedGhosts)
+                    .await,
+                self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                    .await,
+            ]),
             // Issue 84: mark the 2008 language siblings skipped-by-policy. NOT
             // paired with a projection — this touches only quarantine bookkeeping,
             // no notice enters or leaves the corpus, so there is nothing to fold.
@@ -1957,6 +1973,23 @@ impl Supervisor {
                 Ok(format!(
                     "{} notice(s) named: re-queued {requeued}, stamped {stamped} tender(s)                      epoch-stale for the incremental fold",
                     notices.len()
+                ))
+            }
+            Spec::SweepRegroupedGhosts => {
+                // Read-only identification first (the GROUP BY), then requeue. NO
+                // epoch-stale stamp: we want the paired incremental fold to re-derive
+                // the dups' keys and let `retire_regrouped_tenders` drop the stale
+                // ghost of each pair — not to rewrite the kept Tenders (issue 278).
+                let dups = self.db.regrouped_dup_notice_ids().await.map_err(|e| e.to_string())?;
+                if dups.is_empty() {
+                    return Ok("no regrouped ghosts: every notice maps to one Tender".into());
+                }
+                let requeued =
+                    self.db.unmark_projected_by_ids(&dups).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "{} dup-notice(s) under 2+ Tenders: re-queued {requeued} for the paired \
+                     incremental fold to retire the ghost of each pair",
+                    dups.len()
                 ))
             }
             Spec::RefoldFields { fields, expect } => {

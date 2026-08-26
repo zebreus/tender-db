@@ -555,6 +555,78 @@ async fn a_regroup_reparse_retires_keyed_and_island_ghosts_on_the_full_path() {
     }
 }
 
+/// Issue 278 track-2 sweep: given a ghost Tender (a notice under two Tenders — the
+/// pre-fix state the full path used to leave), `regrouped_dup_notice_ids` finds the
+/// shared notice, and marking it unprojected + an incremental project retires the
+/// ghost via `retire_regrouped_tenders` while keeping the real Tender.
+#[tokio::test]
+async fn the_ghost_sweep_finds_and_retires_a_duplicated_tender() {
+    let (db, fetch, path) = scratch("ghostsweep").await;
+    record(&db, fetch, "A-cn", keyed("bt04-0001", 1, "Alpha CN")).await;
+    record(&db, fetch, "B-cn", keyed("bt04-0002", 1, "Beta CN")).await;
+    project::project(&db, false).await.expect("establish");
+
+    // Inject the ghost by hand: a second Tender under a DIFFERENT key holding
+    // A-cn's notice, exactly the pre-fix duplication (a notice under two Tenders).
+    let nid = count(&db, "SELECT id FROM notices WHERE publication_id = 'A-cn'").await;
+    let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO tenders (id, source, procedure_key, kind, created_at)
+         VALUES (9999, 'ted', 'bt04-GHOST', 'procedure', 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+         VALUES (9999, 1, ?, 0, 'ghost')",
+        (store::turso::Value::Integer(nid),),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(db.regrouped_dup_notice_ids().await.unwrap(), vec![nid], "the shared notice is the only dup");
+
+    // The sweep: mark the dup unprojected, then an incremental project retires the
+    // ghost of the pair (the un-produced key) and keeps the real Tender.
+    let requeued = db.unmark_projected_by_ids(&[nid]).await.unwrap();
+    assert_eq!(requeued, 1, "the dup notice was re-queued");
+    project::project_incremental(&db).await.expect("sweep project");
+
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key = 'bt04-GHOST'").await,
+        0,
+        "the ghost Tender is retired",
+    );
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tenders WHERE procedure_key = 'bt04-0001'").await,
+        1,
+        "the real Tender is kept",
+    );
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM (SELECT caused_by_notice_id FROM tender_versions
+                 GROUP BY caused_by_notice_id HAVING COUNT(DISTINCT tender_id) > 1)",
+        )
+        .await,
+        0,
+        "no notice maps to two Tenders after the sweep",
+    );
+    assert!(
+        count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'").await >= 1,
+        "the ghost's retirement announced itself",
+    );
+    // An idempotent second pass finds nothing to do.
+    assert!(db.regrouped_dup_notice_ids().await.unwrap().is_empty(), "no dups remain — a re-run is a no-op");
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
 /// A legacy notice with `pub_id` as its own OJS number, plus `refs` edges.
 fn legacy_notice(title: &str, refs: &[&str]) -> Parsed {
     let mut parsed = Parsed {
