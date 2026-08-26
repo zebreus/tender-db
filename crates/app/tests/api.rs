@@ -1878,6 +1878,79 @@ async fn a_retirement_reaches_the_stream_as_removed() {
     assert_eq!(ev.data["op"], "removed");
 }
 
+/// Issue 287: the org-merge writes a seq-less `tender changed` row (issue 286)
+/// because it repoints party/winner rows IN PLACE — and the SSE diff used to
+/// probe such a row at seq 0, miss on both sides, and drop it. A subscriber on
+/// `winner=<survivor>` never learned the Tender now matches; one on
+/// `winner=<loser>` kept a ghost forever. The diff now probes the CURRENT head
+/// for a seq-less `changed`, so the survivor-side subscriber gets its `added`
+/// and the loser-side one its (over-delivered) `removed`.
+#[tokio::test]
+async fn an_org_merge_membership_move_reaches_the_stream() {
+    let server = Server::start("merge-sse").await;
+    server.ingest_chain().await;
+
+    // Seed the merge inputs directly: two provisional orgs of one
+    // (name_norm, country) group, the LOSER named by a winner row on the
+    // ingested Tender's head version. FKs off — the winner row's lot_result is
+    // not the subject here.
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.expect("fk off");
+    for id in [9001i64, 9002] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', NULL, NULL, 'Zzz Merge Sse', 'zzz merge sse', 1, 1700000000)",
+            (store::turso::Value::Integer(id),),
+        )
+        .await
+        .expect("insert org");
+    }
+    let mut rows = conn
+        .query("SELECT tender_id, MAX(seq) FROM tender_versions GROUP BY tender_id LIMIT 1", ())
+        .await
+        .expect("head query");
+    let row = rows.next().await.expect("head row").expect("one tender");
+    let (tid, head) = (
+        row.get_value(0).unwrap().as_integer().copied().unwrap(),
+        row.get_value(1).unwrap().as_integer().copied().unwrap(),
+    );
+    drop(rows);
+    conn.execute(
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
+         VALUES (?, ?, 9100, 9002)",
+        (store::turso::Value::Integer(tid), store::turso::Value::Integer(head)),
+    )
+    .await
+    .expect("insert winner");
+
+    // Survivor-side subscriber: matches nothing yet. Loser-side: holds the Tender.
+    let mut survivor = Tape::open(&server, "/v1/tenders?winner=9001", None).await;
+    let (none, _) = survivor.until_live().await;
+    assert!(none.is_empty(), "nothing names the survivor before the merge");
+    let mut loser = Tape::open(&server, "/v1/tenders?winner=9002", None).await;
+    let (held, _) = loser.until_live().await;
+    assert_eq!(held.len(), 1, "the loser-side subscriber holds the Tender");
+
+    // The real merge path: collapses 9002 into 9001, repoints the winner row in
+    // place, and emits the seq-less `tender changed` row (issue 286).
+    let report =
+        server.db.merge_provisional_organizations_batch(100, "", false).await.expect("merge");
+    assert_eq!(report.removed, 1, "the loser org is collapsed");
+    assert!(report.tender_changes >= 1, "the merge announced the touched Tender");
+
+    // The membership move reaches both subscribers (the bug: both stayed silent).
+    let ev = survivor.next().await.expect("the survivor-side subscriber must hear the move");
+    assert_eq!(ev.name, "change");
+    assert_eq!(ev.data["op"], "added", "the Tender changed INTO the survivor's set");
+    assert_eq!(ev.data["id"].as_i64(), Some(tid));
+    assert!(ev.data["version"].is_null(), "in-place rows carry no version");
+
+    let ev = loser.next().await.expect("the loser-side subscriber must hear the move");
+    assert_eq!(ev.data["op"], "removed", "the Tender changed OUT of the loser's set");
+    assert_eq!(ev.data["id"].as_i64(), Some(tid));
+}
+
 /// Issue 163: snapshot pages carry the same unauthenticated filters as the
 /// list endpoint, so a walk-shaped filter must page on the isolated pool
 /// (issue 120's routing) instead of pinning a main-pool reader page after

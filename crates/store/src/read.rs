@@ -2801,6 +2801,37 @@ pub async fn feed_generation(conn: &Connection) -> turso::Result<i64> {
     })
 }
 
+/// The head (newest) version seq of one Tender, or `None` when it has no
+/// versions (retired/absent). The SSE diff's probe point for a seq-less
+/// in-place `changed` row (issue 287): the write repointed CURRENT rows, so
+/// current state is the only side left to evaluate. Bounded: the PK is
+/// `(tender_id, seq)`, and even a scan of the slice is one Tender's chain —
+/// a handful of rows (deliberately NOT `MAX(seq)`, which turso 0.7 does not
+/// short-circuit; see `oldest_cursor`).
+pub async fn tender_head_seq(conn: &Connection, tender_id: i64) -> turso::Result<Option<i64>> {
+    let mut rows = conn
+        .query(
+            "SELECT seq FROM tender_versions WHERE tender_id = ? ORDER BY seq DESC LIMIT 1",
+            (Value::Integer(tender_id),),
+        )
+        .await?;
+    Ok(rows.next().await?.map(|row| int(&row, 0)))
+}
+
+/// The head version seq of the Tender owning one lot, or `None` when the lot
+/// (or its Tender's chain) is gone. Companion to [`tender_head_seq`] for lot
+/// rows on the same seq-less diff arm.
+pub async fn lot_head_seq(conn: &Connection, lot_id: i64) -> turso::Result<Option<i64>> {
+    let mut rows = conn
+        .query(
+            "SELECT v.seq FROM lots l JOIN tender_versions v ON v.tender_id = l.tender_id \
+              WHERE l.id = ? ORDER BY v.seq DESC LIMIT 1",
+            (Value::Integer(lot_id),),
+        )
+        .await?;
+    Ok(rows.next().await?.map(|row| int(&row, 0)))
+}
+
 fn stamp(row: &turso::Row, idx: usize) -> Option<Stamp> {
     Some(Stamp {
         utc_seconds: opt_int_of(row, idx)?,

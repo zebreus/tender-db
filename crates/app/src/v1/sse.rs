@@ -375,7 +375,26 @@ async fn diff(
 
     let mut events = Vec::new();
     for change in &rows {
-        let seq = change.version_seq.unwrap_or(0);
+        // A seq-carrying row probes its own version. A seq-LESS `changed` is an
+        // in-place rewrite of EXISTING versions (issue 287: the org-merge
+        // repoints party/winner rows, moving what the org-role filters return) —
+        // seq 0 matches nothing, so before this arm such a row fell into
+        // (false, false) below and was silently dropped, defeating exactly the
+        // event issue 286 wrote it to carry. Probe the CURRENT head instead;
+        // organizations ignore seq entirely (unversioned), and a missing head
+        // (entity gone) reads as non-matching.
+        let in_place_changed = change.version_seq.is_none() && change.op == "changed";
+        let seq = match (change.version_seq, in_place_changed) {
+            (Some(seq), _) => seq,
+            (None, true) => match kind {
+                "tender" => {
+                    read::tender_head_seq(&reader, change.entity_id).await?.unwrap_or(0)
+                }
+                "lot" => read::lot_head_seq(&reader, change.entity_id).await?.unwrap_or(0),
+                _ => 0,
+            },
+            (None, false) => 0,
+        };
         // Classify by PRESENCE on each side, not by the decorated row: the diff
         // only needs whether a matching entity exists at each seq, and the `old`
         // side's display fields were never emitted at all. Decorating either side
@@ -393,6 +412,11 @@ async fn diff(
                 })
                 .await?
             }
+            // An unversioned entity's "old" probe is the same current-row query,
+            // so an in-place organization change diffs as changed-in-place, not
+            // re-`added` — keeping SSE's op in agreement with the poll and
+            // webhook transports (issue 285's three-feed contract; issue 287).
+            false if in_place_changed && kind == "organization" => new_matches,
             false => false,
         };
         // The subscription's own view of what happened, which is not always the
@@ -410,8 +434,11 @@ async fn diff(
             // evaluated against what the subscriber saw; the log row's own op
             // is the only witness. Over-deliver `removed` — clients treat it
             // as an idempotent delete — rather than let a subscriber keep a
-            // ghost of a retired Tender forever (issue 164).
-            (false, false) if change.op == "removed" => "removed",
+            // ghost of a retired Tender forever (issue 164). An in-place
+            // `changed` whose current state matches nothing lands here too
+            // (issue 287): the pre-rewrite state is equally unevaluable and the
+            // subscriber may hold the entity under it — same over-delivery.
+            (false, false) if change.op == "removed" || in_place_changed => "removed",
             (false, false) => continue,
         };
         // Decorate ONLY the payload actually delivered: the new side, only when the

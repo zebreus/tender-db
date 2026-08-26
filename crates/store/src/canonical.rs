@@ -4434,6 +4434,10 @@ impl Db {
         }
         report.tender_changes = touched.len() as u64;
         conn.execute("COMMIT", ()).await?;
+        // Ring the doorbell for the just-committed change rows (issue 287): without
+        // it an SSE subscriber only learns of the merge's events when some LATER
+        // write publishes — retirement's `publish_cursor` after-COMMIT pattern.
+        self.publish_cursor(&conn).await?;
         Ok(report)
     }
 
