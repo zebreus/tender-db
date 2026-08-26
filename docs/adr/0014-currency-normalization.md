@@ -97,3 +97,44 @@ extraction, not the conversion.
 - New-portal onboarding gains one line: "your currencies must resolve in
   `currency_rates` or your values are NULL-normalized — check coverage."
 - Storage cost: negligible (one INTEGER + one date per money row; rates ~MB).
+
+## Amendment 2026-08-26 — full-history rates + arbitrary-target conversion (Lennart)
+
+On Lennart's question ("real multi/original currency support — tracking all the
+currencies, historical daily rates since the first tender — too much?"): not too
+much, and mostly a sharpening of D2/D5. Three additions:
+
+### D2a — The rate series covers the WHOLE corpus via the ECU chain
+
+Pre-1999 (corpus start 1993 → 1998-12-31): the official daily **ECU** rates (the
+Commission's Official Journal series, carried by Eurostat) — ECU→EUR converted
+1:1 by law on 1999-01-01, so `rate_to_eur` is a single continuous, citable pivot
+series from the first tender to today. Cross-check source: the Bundesbank daily
+fixings (via the fixed 1.95583 DEM/EUR conversion). The 172 validation pass
+verifies the fetched ECU series against a sample of real pre-1999 canonical rows
+before the backfill refold (this was already the ADR's open gate; it now
+explicitly includes the ECU dataset).
+
+Size, for the record: ~280k rows (ECB era) + ~25k (ECU era) ≈ a few MB — the
+cheapest reference table in the DB. Daily granularity is kept (the sources are
+daily; monthly would just add an averaging policy to argue about). Missing days
+(weekends/holidays) resolve to the nearest PREVIOUS business day.
+
+### D6 — Arbitrary target currencies via pivot arithmetic, read-time only
+
+`rate(A→B, date) = rate(A→EUR, date) / rate(B→EUR, date)`. No cross-currency
+matrix is ever materialized; `eur_cents` remains the ONLY stored derived value
+(it is the filter/index/comparison column). Any other target (`?convert=USD`)
+is computed at read time from the pivot — two lookups per row, cacheable, and
+additive to the API (`{cents, currency, eur_cents?, converted?}`). Value-bound
+filters in a non-EUR currency convert the BOUND once per query at the latest
+rate while rows carry EUR-at-publication — documented explicitly in /docs
+(the user thinks in today's units; the corpus is valued at publication).
+
+### Noted out of scope, by design slot-in-able
+
+Inflation adjustment (CPI-deflated purchasing-power columns) is the real
+cross-era comparability elephant and is explicitly NOT built here — but the
+derived-beside pattern means a `eur_cents_real` column with its own reference
+series slots in later with zero model change. That, not any speculative schema,
+is this ADR's flexibility guarantee.
