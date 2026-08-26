@@ -1,6 +1,6 @@
 # 289 — the "reclaim stamped NO ledger rows" tripwire is suppressed for any per-record stranding inside a partially-resolved member file
 
-Status: DIAGNOSED (2026-08-26, owner — adversarial reclaim review; not yet re-verified line-by-line by the owner)
+Status: DIAGNOSED-VERIFIED (pre-verified for build — see Pre-verification below) (2026-08-26, owner — adversarial reclaim review; not yet re-verified line-by-line by the owner)
 Kind: observability (the monitoring signal this bug family is caught by)
 Severity: LOW (no data corruption; degrades the standing OPERATE check)
 Relates to: 139 (the address-miss class the tripwire exists to catch), 288 (same review)
@@ -35,3 +35,32 @@ re-introducing the noise the gate was built to remove. Verify the gate's
 original purpose (what noise it suppressed) before choosing; then pin with a
 test: a zero-stamp reclaim for an unresolved record inside a partially-resolved
 file MUST log.
+## Pre-verification (2026-08-26, owner — ultracode loop, adversarial agent + owner read)
+
+CONFIRMED at both alarm sites (lib.rs:1799-1808 parsed arm, :1876-1883 fresh-record
+arm; gate fn `member_file_resolved` :1904-1929). The suppression is FAMILY-level and
+permanent: the gate's query returns true if ANY of (file row, container row, any
+`#<ordinal>` sibling) carries either outcome stamp, and resolved rows are terminal —
+so the first resolved record blinds the alarm for every later record of that file,
+forever. `stamp_reclaimed` discards per-address counts (sums into one u64), so the
+sites cannot currently tell WHICH addresses matched.
+
+**Key constraint for the fix:** checking only the attempted addresses would regress
+issue 200 (post-segmentation ordinals resolve at addresses the reclaim never
+attempts — the reason the `LIKE 'file#%'` clause exists, 106 false alarms). The
+property that separates a genuine stranding (this issue) from the three documented
+benign shapes (181 COR file row / 196 container / 200 shifted ordinals): **a
+stranding leaves an UNRESOLVED family row behind; the benign shapes leave none.**
+
+**Fix sketch (next unit):** add `member_family_still_held` (same family clause as
+`member_file_resolved`, inverted filter: both stamps NULL), and split the guard
+three ways at both sites: unresolved family → the existing loud line; resolved
+family BUT held residue remains → the same `reclaim stamped NO ledger` prefix (so
+the OPERATE grep still catches it) with a distinguishing `(partially-resolved
+file — held siblings remain, issue 289)` marker; fully resolved, nothing held →
+silent (the benign shapes). The marker keeps the irreducible ambiguity honest: a
+sibling legitimately awaiting its own reclaim can make a benign zero look stranded.
+Red-first test: in-module tests (lib.rs test mod — helpers `seed_fetch`/
+`tiny_parsed`/`held_notice`; model tests at :6855/:6908/:6969), asserting the gate
+predicates directly (the alarm is an eprintln). Companion assertion on the COR-shape
+test pins that 181/196/200 stay silent.

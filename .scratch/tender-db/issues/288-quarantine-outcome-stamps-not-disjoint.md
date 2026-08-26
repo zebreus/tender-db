@@ -1,6 +1,6 @@
 # 288 — quarantine outcome stamps are not disjoint: a row can carry BOTH `reprocessed_at` and `skipped_at`, and `quarantine_resolution` double-counts it
 
-Status: DIAGNOSED (2026-08-26, owner — adversarial reclaim review; write-side crux verified against the code by the owner)
+Status: RESOLVED-IN-CODE 2026-08-26 (owner) — all three edges fixed, red-first proven (0/3 tests pass without the fixes, 3/3 with), full gate pending. DECISION: reclaimed WINS — see Resolution below. Deploy next.
 Kind: correctness (ledger honesty — dashboard surfaces disagree)
 Severity: LOW-MEDIUM (no data loss; the resolution card and the header can contradict each other)
 Relates to: 87 (stale-state-after-partial-reclaim class), 190 (skip flags), 196/181 (whole-file rows this shape needs)
@@ -51,3 +51,37 @@ Make the write side enforce the invariant AND the read side tolerate history:
 
 Pin with tests: a row stamped reclaimed then hit by flag_skipped_members stays
 reclaimed-only; resolution == split counts on a mixed fixture.
+
+## Resolution (2026-08-26, owner — ultracode loop)
+
+**Decision on the open question: reclaimed WINS.** A skip is a policy statement
+("we chose not to process this"); a reclaim is the fact that the content now lives
+in the parsed layer. So a later genuine reclaim of a skipped row flips it to
+reclaimed, clearing the stale skip — a missing skip marker is honest, a skip marker
+on restored content is not.
+
+Three edges landed (crates/store/src/lib.rs):
+1. `flag_skipped_members`: `AND q.reprocessed_at IS NULL` — the skip path never
+   stamps a reclaimed row.
+2. All SEVEN reclaim stamps (stamp_reclaimed's four addresses + the None-arm's
+   three) now `SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL` —
+   the flip, in the same statement.
+3. `quarantine_resolution`: disjoint CASE arms, reprocessed wins — identical rule to
+   `quarantine_counts_by_reason_split`, so the resolution card and the dashboard
+   header can never disagree, INCLUDING about historical both-stamped rows (which
+   makes a data backfill unnecessary — display is consistent without one).
+
+Red-first tests (`crates/store/tests/quarantine_outcome_disjoint.rs`): the skip
+guard, the reclaim flip (driven through the real `reclaim_notice` None-arm with a
+real fetch row), and resolution counting a both-stamped row once — all three fail
+without the fixes, pass with them.
+
+**Completeness sweep (adversarial agent, verified conclusions):** every other write
+to `reprocessed_at`/`skipped_at` in the codebase is safe — `mark_skipped_siblings`
+guards both columns (SKIPPED_SIBLING_SCOPE), the two quarantine INSERTs never
+pre-set stamps, `stamp_still_held`/`record_reclaim_attempt` write neither column,
+`repair_swept_siblings`/`unmark_skipped_siblings` are clear-only, and no
+delete/re-insert/upsert path exists that could resurrect a cleared stamp. With this
+unit, every writer preserves the disjointness invariant. (One nugget for the
+record: `repair_swept_siblings` skips both-stamped rows — irrelevant now that reads
+are disjoint.)

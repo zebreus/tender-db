@@ -1833,7 +1833,7 @@ impl Db {
                 if matches!(parse, Parse::Parsed(_)) {
                     let mut stamped = conn
                         .execute(
-                            "UPDATE quarantine SET reprocessed_at = ?
+                            "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                               WHERE fetch_id = ? AND member_path = ? AND reprocessed_at IS NULL",
                             (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
                         )
@@ -1845,7 +1845,7 @@ impl Db {
                     if file != n.member_path {
                         stamped += conn
                             .execute(
-                                "UPDATE quarantine SET reprocessed_at = ?
+                                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                                   WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
                                     AND reprocessed_at IS NULL",
                                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&file)),
@@ -1857,7 +1857,7 @@ impl Db {
                     if let Some(container) = member_container(&n.member_path) {
                         stamped += conn
                             .execute(
-                                "UPDATE quarantine SET reprocessed_at = ?
+                                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                                   WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
                                     AND reprocessed_at IS NULL",
                                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&container)),
@@ -1931,7 +1931,15 @@ impl Db {
     /// Flag a member's held ledger rows reclaimed, under BOTH addresses a row can
     /// live at: parse-level (`notice_id = ?`) and profile-level
     /// (`fetch_id`/`member_path` with `notice_id IS NULL`) — disjoint by
-    /// construction, so no row is stamped twice. Returns rows stamped: on the
+    /// construction, so no row is stamped twice.
+    ///
+    /// Reclaimed WINS over skipped (issue 288): a skip is a policy statement, a
+    /// reclaim is the fact that the content now lives in the parsed layer — so
+    /// every stamp here (and the None-arm's three) clears `skipped_at`/
+    /// `skipped_reason` as it sets `reprocessed_at`, keeping the three ledger
+    /// outcomes (outstanding / reclaimed / skipped) disjoint in the data. The
+    /// mirror guard lives in `flag_skipped_members`, which never stamps a
+    /// reclaimed row. Returns rows stamped: on the
     /// RECLAIMED path zero is issue 139's failure shape (the member came off the
     /// held list, so a row must exist) and the caller logs it loudly; on the
     /// ALREADY-PARSED path zero is the ordinary case (a text member's co-resident
@@ -1940,14 +1948,14 @@ impl Db {
     async fn stamp_reclaimed(&self, conn: &Connection, n: &Notice, id: i64) -> turso::Result<u64> {
         let by_notice = conn
             .execute(
-                "UPDATE quarantine SET reprocessed_at = ?
+                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                   WHERE notice_id = ? AND reprocessed_at IS NULL",
                 (Value::Integer(n.ingested_at), Value::Integer(id)),
             )
             .await?;
         let by_member = conn
             .execute(
-                "UPDATE quarantine SET reprocessed_at = ?
+                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                   WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
                     AND reprocessed_at IS NULL",
                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&n.member_path)),
@@ -1962,7 +1970,7 @@ impl Db {
         let file = member_file(n.member_path.clone());
         let by_file = if file != n.member_path {
             conn.execute(
-                "UPDATE quarantine SET reprocessed_at = ?
+                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                   WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
                     AND reprocessed_at IS NULL",
                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&file)),
@@ -1975,7 +1983,7 @@ impl Db {
         // row, when its path shows a nested archive. See [`member_container`].
         let by_container = if let Some(container) = member_container(&n.member_path) {
             conn.execute(
-                "UPDATE quarantine SET reprocessed_at = ?
+                "UPDATE quarantine SET reprocessed_at = ?, skipped_at = NULL, skipped_reason = NULL
                   WHERE fetch_id = ? AND member_path = ? AND notice_id IS NULL
                     AND reprocessed_at IS NULL",
                 (Value::Integer(n.ingested_at), Value::Integer(n.fetch_id), t(&container)),
@@ -2644,11 +2652,17 @@ impl Db {
             } else {
                 String::new()
             };
+            // `reprocessed_at IS NULL` keeps the three outcomes disjoint (issue
+            // 288): a row a reclaim already restored is RECLAIMED — the stronger,
+            // factual outcome — and a later policy skip of its file must not
+            // stamp over it (the bulk backfill's SKIPPED_SIBLING_SCOPE already
+            // guards this; the reprocess-time path did not).
             let sql = format!(
                 "UPDATE quarantine SET skipped_at = ?, skipped_reason = ?
                   WHERE id IN (SELECT q.id FROM quarantine q
                                 WHERE q.fetch_id = ?
                                   AND q.skipped_at IS NULL
+                                  AND q.reprocessed_at IS NULL
                                   AND q.member_path IN ({places}){guard})"
             );
             let mut params = vec![
@@ -2946,8 +2960,13 @@ impl Db {
         let conn = self.reader().await?;
         let mut rows = conn
             .query(
+                // Disjoint arms, reprocessed wins (issue 288) — the same rule
+                // `quarantine_counts_by_reason_split` applies, so this card and
+                // the dashboard header can never disagree about a row that
+                // historically carried both stamps.
                 "SELECT SUM(CASE WHEN reprocessed_at IS NOT NULL THEN 1 ELSE 0 END),
-                        SUM(CASE WHEN skipped_at     IS NOT NULL THEN 1 ELSE 0 END),
+                        SUM(CASE WHEN reprocessed_at IS NULL
+                                  AND skipped_at     IS NOT NULL THEN 1 ELSE 0 END),
                         SUM(CASE WHEN reprocessed_at IS NULL
                                   AND skipped_at     IS NULL     THEN 1 ELSE 0 END)
                    FROM quarantine
