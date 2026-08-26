@@ -89,7 +89,7 @@ pub async fn init(db: Arc<store::Db>) -> Arc<Supervisor> {
         .get_or_init(|| async {
             let archive: PathBuf =
                 std::env::var("TENDER_ARCHIVE").unwrap_or_else(|_| "archive".into()).into();
-            let sup = Arc::new(Supervisor::new(db, archive, reqwest::Client::new()));
+            let sup = Arc::new(Supervisor::new(db, archive, Supervisor::fetch_client()));
             sup.recover().await;
             // Issue 111: notice a missing deferred index and ask the existing Reindex
             // job to build it. After `recover`, so an already-queued Reindex is seen.
@@ -441,6 +441,24 @@ impl Supervisor {
     /// write.
     pub fn db(&self) -> &store::Db {
         &self.db
+    }
+
+    /// The production fetch client for every TED/DÖE/rehash download. Unlike the
+    /// webhook client (a flat 10s total `.timeout()` — deliveries are tiny), a
+    /// package download legitimately streams for many minutes, so a total timeout
+    /// is wrong: it would abort a healthy large monthly. Instead bound the two
+    /// failure modes a large steady download never hits — connection setup, and a
+    /// stall between bytes (issue 280: `reqwest::Client::new()` had neither, so a
+    /// half-open or slow-loris upstream on `send()`/`chunk()` in `download_once`
+    /// hung the single serialized worker forever, with no watchdog and no cancel
+    /// path for the un-stoppable probe/fetch/rehash kinds). `read_timeout` resets
+    /// on each successful read, so it caps only idle gaps, never total transfer.
+    fn fetch_client() -> reqwest::Client {
+        reqwest::Client::builder()
+            .connect_timeout(std::time::Duration::from_secs(30))
+            .read_timeout(std::time::Duration::from_secs(120))
+            .build()
+            .expect("static fetch-client config cannot fail to build")
     }
 
     pub fn new(db: Arc<store::Db>, archive: PathBuf, http: reqwest::Client) -> Supervisor {
@@ -1200,6 +1218,17 @@ impl Supervisor {
         self.current.read().expect("progress lock").clone()
     }
 
+    /// Is a job of this kind already queued OR currently running? The scheduler's
+    /// "never stack two" guards need this: `queued()` alone misses the running
+    /// instance, because a popped job lives in `current`, not the queue (issue
+    /// 282). Without the `current` leg a tick firing during the ~40-minute window
+    /// a prior data-quality/rehash/reveal run is EXECUTING sees an empty queue and
+    /// enqueues a duplicate — the exact double the guard exists to prevent.
+    fn already_pending(&self, kind: &str) -> bool {
+        self.current_progress().is_some_and(|p| p.kind == kind)
+            || self.queued().iter().any(|j| j.kind == kind)
+    }
+
     fn update<F: FnOnce(&mut JobProgress)>(&self, f: F) {
         if let Some(p) = self.current.write().expect("progress lock").as_mut() {
             f(p);
@@ -1266,12 +1295,7 @@ impl Supervisor {
             .read()
             .expect("progress lock")
             .as_ref()
-            .is_some_and(|p| {
-                matches!(
-                    p.kind.as_str(),
-                    "process" | "project" | "reprocess" | "reindex" | "refold" | "refold-fields"
-                )
-            })
+            .is_some_and(|p| heavy_write_kind(p.kind.as_str()))
     }
 
     fn queued(&self) -> Vec<QueuedJob> {
@@ -3106,8 +3130,8 @@ impl Supervisor {
                     // Never stack two: if last week's run is still waiting behind
                     // something long, a second one would double a 36-minute job for
                     // one report that gets overwritten anyway.
-                    if self.queued().iter().any(|j| j.kind == "data-quality") {
-                        eprintln!("[schedule] data-quality already queued, skipping this week");
+                    if self.already_pending("data-quality") {
+                        eprintln!("[schedule] data-quality already queued or running, skipping this week");
                     } else {
                         self.push(
                             "data-quality",
@@ -3123,8 +3147,8 @@ impl Supervisor {
                     // re-fetchability drift is a slow question, and the original
                     // hashes it compares against die with the DB, so the cadence
                     // matters more than the batch size (issue 173 / dr-premise §6).
-                    if self.queued().iter().any(|j| j.kind == "rehash-probe") {
-                        eprintln!("[schedule] rehash-probe already queued, skipping this week");
+                    if self.already_pending("rehash-probe") {
+                        eprintln!("[schedule] rehash-probe already queued or running, skipping this week");
                     } else {
                         self.push(
                             "rehash-probe",
@@ -3247,13 +3271,52 @@ impl Supervisor {
         // 100k-section slice, and weekly stretched a full cohort walk to ~3
         // weeks (found mis-cadenced 2026-08-25). The queued-guard mirrors the
         // weekly jobs': never stack two, the report is overwritten anyway.
-        if self.queued().iter().any(|j| j.kind == "reveal-recheck") {
-            eprintln!("[schedule] reveal-recheck already queued, skipping today");
+        if self.already_pending("reveal-recheck") {
+            eprintln!("[schedule] reveal-recheck already queued or running, skipping today");
         } else {
             ids.push(self.push("reveal-recheck", "reveal recheck (daily slice)".into(), Spec::RevealRecheck).await);
         }
         ids
     }
+}
+
+/// Job kinds whose per-batch / per-package TRUNCATE checkpoint (issue 42) needs a
+/// reader-free window to reclaim the WAL, so the coverage refresher's
+/// multi-minute full-table scan must stand down while one runs (issue 53's 70 GB
+/// balloon). This is the allowlist behind [`Supervisor::heavy_write_in_progress`].
+///
+/// Issue 281: the original list named only `process`/`project`/`reprocess`/
+/// `reindex`/`refold`/`refold-fields` and silently omitted every OTHER batched
+/// writer — `reparse` (the longest job), `merge-provisional-orgs` (~30M orgs),
+/// `mark-skipped-siblings`, the `backfill-*` walks, `refold-notices`/
+/// `refold-sections`, `repair-swept-siblings` — each of which TRUNCATEs per
+/// batch just the same. Over-inclusion is cheap here (a read-only job listed by
+/// mistake only makes coverage skip one refresh — a staleness, not a fault),
+/// while under-inclusion is the actual WAL hazard, so the belt covers every job
+/// that writes canonical/parsed rows in checkpointed batches. Read-only or
+/// trivial-write kinds stay off it (`probe`, `data-quality`, `reveal-recheck`,
+/// `register-archive`, `clear-rebuild-flag`) so coverage still refreshes during
+/// them.
+fn heavy_write_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "process"
+            | "project"
+            | "reprocess"
+            | "reindex"
+            | "refold"
+            | "refold-fields"
+            | "refold-notices"
+            | "refold-sections"
+            | "reparse"
+            | "merge-provisional-orgs"
+            | "mark-skipped-siblings"
+            | "repair-swept-siblings"
+            | "backfill-deadlines"
+            | "backfill-titles"
+            | "backfill-org-names"
+            | "backfill-legacy-adjacency"
+    )
 }
 
 /// How many leading packages a resumed process job skips: the period-ordered
@@ -3990,10 +4053,45 @@ mod tests {
         assert!(sup.heavy_write_in_progress(), "a package walk holds the WAL");
         sup.set_current(Some(progress("project")));
         assert!(sup.heavy_write_in_progress(), "a projection holds the WAL");
-        sup.set_current(Some(progress("fetch")));
-        assert!(!sup.heavy_write_in_progress(), "a fetch is light — coverage may scan");
+        // Issue 281: every other batched writer must pin the WAL too, not just the
+        // original six — a reparse/merge/backfill checkpoints per batch the same way.
+        for kind in [
+            "reparse",
+            "merge-provisional-orgs",
+            "mark-skipped-siblings",
+            "repair-swept-siblings",
+            "backfill-deadlines",
+            "backfill-titles",
+            "backfill-org-names",
+            "backfill-legacy-adjacency",
+            "refold-notices",
+            "refold-sections",
+        ] {
+            sup.set_current(Some(progress(kind)));
+            assert!(sup.heavy_write_in_progress(), "{kind} checkpoints per batch — coverage must stand down");
+        }
+        // Read-only / trivial-write kinds stay off the belt so coverage still refreshes.
+        for kind in ["fetch", "probe", "data-quality", "reveal-recheck", "register-archive", "clear-rebuild-flag"] {
+            sup.set_current(Some(progress(kind)));
+            assert!(!sup.heavy_write_in_progress(), "{kind} does not pin the WAL — coverage may scan");
+        }
         sup.set_current(None);
         assert!(!sup.heavy_write_in_progress(), "idle again");
+    }
+
+    /// Issue 282: the scheduler's "never stack two" guard must see a RUNNING
+    /// instance, not only a queued one — a popped job lives in `current`.
+    #[tokio::test]
+    async fn already_pending_sees_the_running_job_not_only_the_queue() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        assert!(!sup.already_pending("data-quality"), "idle: nothing pending");
+        sup.set_current(Some(progress("data-quality")));
+        assert!(
+            sup.already_pending("data-quality"),
+            "a running instance counts as pending — else the tick stacks a duplicate"
+        );
+        assert!(!sup.already_pending("rehash-probe"), "a different running kind is not pending");
+        sup.set_current(None);
     }
 
     /// Enqueue, inspect the queue, and cancel — all without a running worker, so
