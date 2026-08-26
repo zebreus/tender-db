@@ -1,8 +1,43 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: DIAGNOSED (2026-08-26, owner — exploratory review, adversarially verified end-to-end)
+Status: CONFIRMED LIVE AT SCALE (2026-08-26, owner — measured on the Aug-24 snapshot)
 Kind: correctness (canonical layer integrity + change-feed honesty)
-Severity: HIGH — reachable, mints duplicates in bulk, persists until the next full rebuild
+Severity: HIGH — **~45,108 ghost tenders live on prod right now**, double-counting procedures on `/v1/tenders` and every count/dashboard.
+
+## Measured on prod (snapshot `tender-db-1787598039.db`, 2026-08-26)
+
+`plan_notice.notice_id` is a PRIMARY KEY — a notice maps to exactly ONE
+group_key, so a `caused_by_notice_id` may legitimately appear under exactly ONE
+tender. Reality:
+
+* **45,108 notices** have their `caused_by_notice_id` under **2+ distinct
+  tenders**, across **90,216 tender refs** — exactly 2.0 per notice, i.e. ≈45,108
+  surplus (ghost) tenders. There is NO legitimate multi-procedure explanation
+  (the PK rules it out).
+* Sampled pairs are the SAME procedure fragmented across two tenders — verified
+  by identical title AND publication_id, differing only in BT-04 uuid:
+  - 260507 / 473438: "Neubau … Kindertagesstätte …", pub `00495481-2026`, keys
+    `384ffd32…` vs `676b83f0…`.
+  - 457837 / 1081988: Czech DPS "Dynamický nákupní systém …", pub `00532135-2026`,
+    keys `63f97c14…` vs `ed3c7fd8…`, 200 vs 198 versions.
+  Both shapes present: keyed+island (islands 25645486/25770088/25012236 beside
+  their keyed twin) AND keyed+keyed (same procedure, two uuids). Both members of
+  each pair are live-served by the API (fetched both).
+* Mechanism confirmed as THIS issue's full-path gap, not the incremental path:
+  the incremental `retire_regrouped_tenders` retires via
+  `touched_existing_tender_ids` (`caused_by IN changed` ∪ `new_keyed_keys`), so a
+  reparse of notice N (N ∈ changed) finds N's old tender and retires it. But the
+  large reparse campaigns (DE-1.x/r208/r209, 218k+ notices) trip the ≥100k
+  incremental→full FALLBACK (project.rs:1839), and the full path retires only
+  `ojs:%` — so every keyed/island tender a reparse regrouped survived. That is
+  where the ~45k came from.
+
+Because notice→group_key is 1:1, the fix (retire every regrouped tender on the
+full path) is well-defined and a from-scratch rebuild resets to zero ghosts — so
+"full-nonrebuild layer == rebuild layer" is the exact byte-identity invariant.
+
+Was: DIAGNOSED (2026-08-26, exploratory review, verified end-to-end). Originally
+HIGH — reachable, mints duplicates in bulk, persists until the next full rebuild.
 Relates to: 58 (its tracking NOTE assumes the full path is correct under a now-obsolete premise), 236 (the OPP-090 island edge that supplies the inputs), 46 (feed_generation), 164 (removal-event visibility), 103 (the sibling sweep gap — see issue 279-partial-rewrite below)
 Found by: the 2026-08-26 fresh-eyes projection review; verified against project.rs / canonical.rs line-by-line.
 
@@ -75,3 +110,36 @@ pin is: full-nonrebuild layer == rebuild layer == incremental-to-fixpoint layer)
 * Prod: after deploy, a targeted probe for duplicated `caused_by_notice_id`
   across two live tenders (bounded `/v1/sql`) to size any already-minted ghosts,
   then a scoped re-projection or the next rebuild clears them.
+
+## Remediation plan (owner, 2026-08-26)
+
+Two tracks, in this order — the code fix MUST precede the data cleanup, else a
+cleanup is re-polluted the next time the full fallback fires.
+
+1. **Code fix (next focused unit — byte-identity-critical, not a rushed deploy).**
+   On the full non-rebuild path, after `build_plan_groups`, retire every tender
+   whose group_key `plan_notice` no longer produces — a corpus-wide, set-based
+   anti-join (NOT the scoped per-tender loop, which would be 8.1M queries):
+   - keyed: `tenders t WHERE t.procedure_key IS NOT NULL AND NOT EXISTS
+     (SELECT 1 FROM plan_notice p WHERE p.group_key = t.procedure_key)`
+   - island: `t.procedure_key IS NULL AND NOT EXISTS (… p.group_key =
+     'island:' || t.island_notice_id)`
+   - legacy `ojs:%` stays as-is (already covered) or folds into the same anti-join.
+   Route through `retire_tenders_chunked` so it emits `removed` change rows and
+   checkpoints. Gate: the projection golden/equivalence suites, plus a new test —
+   full-nonrebuild of a corpus with a regrouped keyed+island pair leaves ONE
+   tender and emits `removed` for the other; and a whole-corpus assertion that
+   after a full non-rebuild pass, `COUNT(DISTINCT tender_id) per caused_by_notice_id`
+   is ≤ 1 everywhere (the invariant this bug violates).
+
+2. **Data cleanup of the ~45k existing ghosts (after the fix deploys).** Cheapest
+   correct option: a full `rebuild=true` projection resets the layer and
+   re-projects each notice under its single group_key — zero ghosts by
+   construction. Alternative if a full rebuild's downtime is unwanted: a targeted
+   retirement sweep of the ghost set (the surplus tender per dup notice), reusing
+   `retire_tenders_chunked`. Decide at fix-deploy time; a rebuild is simplest and
+   also validates track 1's byte-identity claim.
+
+No emergency mitigation is needed tonight: the accumulation is paused (the full
+fallback only fires on a ≥100k reparse, none scheduled), so the ~45k is static
+until the next big reparse. The fix lands as its own gated unit.
