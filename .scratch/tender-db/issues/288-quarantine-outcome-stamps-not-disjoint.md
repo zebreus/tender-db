@@ -1,6 +1,6 @@
 # 288 — quarantine outcome stamps are not disjoint: a row can carry BOTH `reprocessed_at` and `skipped_at`, and `quarantine_resolution` double-counts it
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner) — all three edges fixed, red-first proven (0/3 tests pass without the fixes, 3/3 with), full gate pending. DECISION: reclaimed WINS — see Resolution below. Deploy next.
+Status: RESOLVED-IN-CODE 2026-08-26 (owner) — all three edges fixed, red-first proven (0/3 tests pass without the fixes, 3/3 with), full gate green (66 suites). DECISION: reclaimed WINS — see Resolution below. DEPLOYED to prod (rev 89f6e4e, /health green, queue idle). Unblocks 303.
 Kind: correctness (ledger honesty — dashboard surfaces disagree)
 Severity: LOW-MEDIUM (no data loss; the resolution card and the header can contradict each other)
 Relates to: 87 (stale-state-after-partial-reclaim class), 190 (skip flags), 196/181 (whole-file rows this shape needs)
