@@ -63,7 +63,9 @@ the job queue is idle; /health is down for the build's duration.
   18-minute pre-slicing era), so a cohort walk would have taken ~3 weeks and
   all three sliced runs so far were manual verification enqueues. Moved to
   `enqueue_daily` behind the projection (queued-guard kept); this issue's
-  "nightly cadence walks the cohort" is now what the code does.
+  "nightly cadence walks the cohort" is now what the code does. Deployed
+  `2ec16db` 2026-08-26 00:10 UTC, health green — the 07:36 chain runs the
+  first scheduled daily slice (cursor 26788048; the cohort wraps on it).
 * The supervisor's cancel-refusal message names issue 252; long-job kinds that
   genuinely need mid-run cancel still each need the stop-flag pattern — D5 no
   longer does, by construction.
