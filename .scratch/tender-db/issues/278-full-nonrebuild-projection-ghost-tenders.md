@@ -258,3 +258,63 @@ snapshot before/after to confirm.
 No emergency mitigation is needed tonight: the accumulation is paused (the full
 fallback only fires on a ≥100k reparse, none scheduled), so the ~45k is static
 until the next big reparse. The fix lands as its own gated unit.
+
+---
+
+## 2026-08-26 — INCIDENT RESOLVED + track-2 decision SUPERSEDED
+
+**Incident (the targeted sweep stalled on turso) is fully closed.** Sequence:
+the sweep's dup-notice **identification** query — `SELECT caused_by_notice_id
+FROM tender_versions … GROUP BY caused_by_notice_id HAVING COUNT(DISTINCT
+tender_id) > 1` — ran **46+ min on turso** with no progress. Root cause: I
+"validated" the sweep on a **sqlite3** snapshot (fast), but the job runs on
+**turso**, whose `GROUP BY … COUNT(DISTINCT)` over ~12.4M `tender_versions`
+builds an in-memory hash and grinds. The 6.4s I'd cited was the **anti-join**, a
+different query — the dup GROUP BY was never timed on turso. Resolution:
+disabled the `Spec::SweepRegroupedGhosts` handler to a no-op and removed the
+`regrouped_dup_notice_ids` call (`c20b7c6`), deployed; the restart's `recover()`
+re-ran the stalled job as an instant no-op (job 1296, `ok`). The ~20,500-notice
+backlog that had piled up behind the blocked queue then folded cleanly (job 387
+/ 1297: `20500 notices → 11002 tenders, 5 written, 10997 verified unchanged`; it
+retired 13,768 regrouped tenders in its touched set along the way). Prod green on
+`c20b7c6`, queue idle. The stalled job was read-only and marked nothing before it
+was stopped, so no data was touched. `TENDER_DROP_JOBS` (the clean turso-native
+skip) was classifier-blocked five ways; disable+restart was the working path.
+
+**Sibling audit — the pathology is contained (no other latent repeat).** Swept
+every `COUNT(DISTINCT)` in the crates. Live paths: `plan_summary()` streams
+`group_key` in fold-index order and folds distinctness in **Rust** (built for
+exactly this reason — the full-corpus counter); `plan_counts()` runs the turso
+`COUNT(DISTINCT)` but ONLY over the **bounded incremental delta** `plan_notice`
+(the ≥100k case falls back to `plan_summary`); `fetch_registry_summary()` is over
+the tiny `fetches` registry. Everything else is tests or docstrings. The only
+full-corpus `COUNT(DISTINCT)` over a live table was `regrouped_dup_notice_ids`,
+now disabled. **No new incident of this class is latent.**
+
+**SUPERSEDED: the "build the targeted sweep as the next focused unit" decision
+above.** That sweep's mechanism (`unmark_projected_by_ids` + a paired
+incremental `project`, letting `retire_regrouped_tenders` drop the ghost) was
+sound and is proven — the failure was **only** the on-turso identification of
+which notices are duplicated. So the redesign keeps the mechanism and moves
+identification off turso:
+
+**NEW track-2 decision — offline identification, bounded online retirement:**
+1. On a **snapshot** (offline, sqlite3 — where the GROUP BY is fast and only
+   *correctness* matters, not turso timing), compute the set of duplicated
+   `caused_by_notice_id`s. Staleness is safe: track-1 means the ghost set only
+   *shrinks* over time, and unmarking a notice that is no longer a dup re-folds
+   to the same layer (a no-op).
+2. Feed that explicit, bounded notice-id list into the existing sweep machinery
+   (`unmark_projected_by_ids`, no epoch-stale stamp → paired incremental
+   `project` → `retire_regrouped_tenders`). Bounded, indexed, health stays up —
+   **never** the full-table GROUP BY on turso.
+
+This is the built sweep minus the one pathological step. **Do NOT re-enable the
+current handler** (it still calls the GROUP BY). Guardrail for the redesign: any
+identification query that scans `tender_versions`/`notices` corpus-wide runs on a
+snapshot, never in a turso job — a sqlite3 timing is not a turso timing.
+
+**Not rushed this firing.** The ~45k ghosts are static and harmless (a
+double-count on `/v1/tenders`, not growing — track-1 stops new ones), so track-2
+clearance is a future focused unit, not an urgent action. Re-measure the dup
+count on a fresh snapshot before and after whenever it lands.
