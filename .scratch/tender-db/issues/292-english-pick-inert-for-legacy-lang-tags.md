@@ -74,3 +74,9 @@ names). Consequences:
   column. No separate lang backfill unless the second probe query (tenders
   actively serving a possibly-wrong-language title — still running in tmux)
   comes back large enough to justify a dedicated earlier scoped refold.
+
+**Probe complete (2026-08-26): 92,076 tenders carry >1 title language** — the
+population actively at risk of serving a non-English title (~1.1%% of the corpus).
+Small enough to CONFIRM the ride-the-ADR-0014-refold decision: no dedicated early
+backfill; the shared epoch-bump refold normalizes all ~100M legacy-tagged rows and
+fixes these 92k titles in the same pass. tmux probe torn down.
