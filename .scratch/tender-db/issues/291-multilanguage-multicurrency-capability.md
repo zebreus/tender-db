@@ -121,3 +121,33 @@ designs.
    text-era non-EN re-dispatch — each behind a measured capacity check.
 6. THEN portal expansion, with the normalization layers as the entry contract for
    every new source.
+
+## 2026-08-26 — Lennart's follow-up: decisions made, backlog materialized
+
+Lennart (direct, 2026-08-26): file issues for all the smaller deferrals + remaining
+quarantine work, and make the ADR-sized decisions with maintainability, scalability
+and flexibility in mind. Done:
+
+- **ADR-0013 (language model)**: canonical vocabulary ISO 639-2/T mapped once at the
+  fold boundary (292's `normalize_lang`); supersession stays WHOLESALE per field —
+  per-language carry-forward rejected because variants are translations of one value
+  and a carried-forward old translation would serve stale content as current;
+  fallback chain `requested → ENG → original → deterministic`; org names via one
+  additive satellite with merge semantics unchanged; coverage widening stays a
+  per-era storage decision.
+- **ADR-0014 (currency normalization / C10)**: EUR-at-PUBLICATION-date derived
+  `eur_cents` beside (never replacing) published values in all four money loci; ECB
+  reference rates + fixed irrevocable pre-euro conversions in a `currency_rates`
+  reference table (the first non-notice ingestion source); unconvertible → NULL with
+  a per-era `eur_convertible_rate` gauge; `?currency=` filter + eur-based min/max.
+  One open validation step: the 172 research pass validates pre-1999/accession
+  cutovers BEFORE the backfill refold.
+- **Backlog filed** (293-301): text-era body extraction, sdk-1.0 chain check,
+  Reviews/E5 entities, document attachments, buyer-side previous-pub edge, C14
+  search decision, C15 SQL-dialect promise, org fuzzy-matcher design, board-hygiene
+  sweep. **Quarantine** (302-303): not-utf8 last-residue naming; terminal-state
+  ledger + growth tripwire (gated on 288).
+
+Sequencing update: step 1 (292) DEPLOYED (rev 5036a09, forward-only pending the
+sized backfill); steps 2-3 (the ADRs) MADE — remaining before build: the 172/ADR-0014
+validation pass, then the additive build units.

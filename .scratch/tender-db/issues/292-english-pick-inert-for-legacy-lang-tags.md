@@ -1,6 +1,6 @@
 # 292 — the "English wins" title pick is inert for the whole pre-eForms corpus (lang-tag vocabulary never normalized)
 
-Status: FIX LANDED 2026-08-26 (owner) — fold-boundary normalization (`normalize_lang`,
+Status: FIX DEPLOYED 2026-08-26 (owner, rev 5036a09, /health green) — fold-boundary normalization (`normalize_lang`,
 project.rs: ISO 639-1 → 639-2/T map, unknown tags pass through uppercased, None stays
 None) applied at both `Fact::Text` creation sites; unit test + red-first integration
 fixture (`legacy_two_letter_lang_tags_normalize_so_the_english_pick_fires`: DE+EN
