@@ -86,6 +86,39 @@ async fn the_prefix_search_is_unicode_case_insensitive_and_tie_safe() {
 }
 
 #[tokio::test]
+async fn the_name_search_honours_identifier_and_buyer_filters() {
+    // Issue 284: the name-ordered builder used to apply only country/kind, so a
+    // `name_prefix=…&identifier=…` (or `&buyer=…`) silently returned the whole
+    // prefix slice while the handler reported the filter as honoured.
+    let (_db, conn) = open("idfilter").await;
+    for (id, name, ident) in
+        [(10, "Siemens AG", "DE811"), (11, "Siemens Energy", "DE999"), (12, "Siement Foods", "DE811")]
+    {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', 'vat', ?, ?, ?, 0, 0)",
+            (
+                Value::Integer(id),
+                Value::Text(ident.into()),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    let f = Filter::default();
+    // Prefix alone: every siemens* (12 "siement" is inside the "sieme" slice but not "siemens").
+    assert_eq!(ids(&conn, &f, "siemens", None, 100).await, vec![10, 11], "prefix alone");
+    // identifier narrows to the one siemens* carrying DE811 — 12 shares DE811 but is not siemens*.
+    let by_ident = Filter { identifier: Some("DE811".into()), ..f.clone() };
+    assert_eq!(ids(&conn, &by_ident, "siemens", None, 100).await, vec![10], "identifier must be applied");
+    // buyer (= o.id) narrows to exactly that org within the slice.
+    let by_buyer = Filter { buyer: Some(11), ..f.clone() };
+    assert_eq!(ids(&conn, &by_buyer, "siemens", None, 100).await, vec![11], "buyer id must be applied");
+}
+
+#[tokio::test]
 async fn the_backfill_stamps_unicode_lowercase_in_batches() {
     let (db, conn) = open("backfill").await;
     // Rows WITHOUT name_norm — the pre-migration population.

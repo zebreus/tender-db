@@ -2545,6 +2545,17 @@ pub async fn organizations_by_name(
     if let Some(kind) = &filter.kind {
         q.push(" AND o.identifier_kind = ?", [t(kind)]);
     }
+    // Issue 284: `identifier` and `buyer` are both in Organizations.honoured_params,
+    // so the handler reports them as applied — but the name-ordered builder used to
+    // apply only country/kind, silently widening the result while `ignored_filters`
+    // stayed empty. Apply them exactly as `organizations_query` does, so the two org
+    // paths agree on what the honoured set means (pinned by the equivalence test).
+    if let Some(identifier) = &filter.identifier {
+        q.push(" AND o.identifier = ?", [t(identifier)]);
+    }
+    if let Some(buyer) = filter.buyer {
+        q.push(" AND o.id = ?", [Value::Integer(buyer)]);
+    }
     if let Some((norm, id)) = cursor {
         q.push(
             " AND o.name_norm >= ? AND (o.name_norm > ? OR o.id > ?)",
