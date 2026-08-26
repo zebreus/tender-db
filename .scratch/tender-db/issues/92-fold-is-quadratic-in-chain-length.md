@@ -1,8 +1,11 @@
 # 92 — `fold()` is O(chain² × state): latent, harmless today, fatal on a long chain
 
-Status: open — LATENT. Confirmed quadratic by measurement 2026-08-02 (proj-fix), but costs ~0.1 s on
-today's worst real cohort. Deliberately NOT fixed during the issue-85 re-fold: zero measured gain, and
-`fold()` is byte-identity-critical (ADR-0001). Fix before a genuine 5k+ chain can reach it.
+Status: open — LATENT, ON THE CLOCK (owner re-measured 2026-08-26 — see the decision at the bottom).
+The worst real chain has grown to **3,282** (a DPS carrying 6,468 accumulating results — the quadratic
+shape), so the "~0.1s worst cohort" deferral basis is stale; margin to the fatal 5k+ zone is closing and
+a DPS grows unbounded. Rewrite still deferred (byte-identity-critical, ADR-0001; still seconds not
+minutes today), now with a measure-then-decide step and a weekly tripwire. Was: LATENT, confirmed
+quadratic 2026-08-02, ~0.1s on the then-worst cohort.
 Kind: performance (latent) / robustness
 Blocked by: —
 Relates to: 91 (where this was investigated and ruled out), 85, ADR-0001 (byte-identity), ADR-0003
@@ -83,3 +86,46 @@ term alone.
 id depends on it. `project_golden`, `project_equivalence`, `project_fold_source` and
 `incremental_bucketed_fold_matches_parsed_fold_and_full` must all stay green, and the fix should add a
 perf assertion in the shape of the table above (cost per doubling must stay ~1.0, not ~2.0).
+
+## Owner re-measurement + decision (2026-08-26)
+
+Re-measured the trigger against the LIVE corpus (bounded `/v1/sql`, prod
+`2ec16db`) — the deferral rested on "~0.1s on today's worst real cohort", and
+that number has moved:
+
+* **Longest chain is now `current_seq` = 3,282** (tender 5785085, a TED DPS,
+  "Junior Financieel Adviseur"), up from the sub-thousand cohort this issue was
+  filed against. 3 tenders ≥ 2,000, 15 ≥ 1,000, 47 ≥ 500; mean 1.81.
+* That tender's **head version carries 6,468 accumulated `lot_results`** (≈1.97
+  per version, monotone) — this IS the `rounds`-accumulate quadratic shape, not
+  the bounded facts/lots shape. A full fold of it clones ≈ Σ2i ≈ 3,282² ≈ **10.8M
+  result-copies** for one tender.
+* It is a **DPS/framework**: a new mini-competition notice arrives periodically
+  and grows the chain without bound. When one lands, the daily incremental
+  re-folds this tender's *entire* chain at O(N²) (the Buckets path calls
+  `fold()` on the full touched chain — 90/91). So the cost is real, per-arrival,
+  and strictly increasing.
+
+**Decision (owner): STILL DEFER the fold rewrite, but the posture changes from
+"latent, forget it" to "latent, on the clock, instrumented."** Rationale:
+
+1. The rewrite is byte-identity-critical (ADR-0001; four golden/equivalence gates)
+   and touches the hot apply path — not a 03:00 speculative change, and a
+   3,282-fold is still seconds, not the minutes that would threaten the daily
+   chain today. Building it now trades a real regression risk against a latent
+   one. No.
+2. BUT "wait for a signal" had no signal-producer. The missing number is the
+   REAL fold time for the 3,282 tender (everything above is modelled from the
+   synthetic table). **Next concrete step:** measure `fold()` wall-time for
+   tender 5785085 against the `/data/db/snapshots` copy in a dedicated window
+   (not the serving DB) — that single number decides build-vs-defer with
+   confidence and replaces the extrapolation.
+3. **Cheap tripwire to add:** a "longest chain" line in the weekly data-quality
+   report (it already full-scans; one `MAX(current_seq)` aggregate is ~free
+   there) that flags at ≥ 4,000, so the approach to the fatal zone is visible
+   weekly instead of discovered inside a slow fold. Filed as the follow-up
+   rather than built here so the DQ-report change lands as one reviewed unit.
+
+The fix sketch below is unchanged and correct; option (2) (persistent/`Arc`
+`rounds` list) is the smaller byte-identity-safe lever and remains the
+recommended first cut when the measured number says build.
