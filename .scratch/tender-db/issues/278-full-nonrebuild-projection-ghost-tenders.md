@@ -150,6 +150,43 @@ cleanup is re-polluted the next time the full fallback fires.
    after a full non-rebuild pass, `COUNT(DISTINCT tender_id) per caused_by_notice_id`
    is ≤ 1 everywhere (the invariant this bug violates).
 
+### Track-2 mechanics — measured + decided (2026-08-26)
+
+**Anti-join cost validated at scale.** On the Aug-24 snapshot, a faithful
+`plan_notice` proxy (14,348,528 rows, one per version, real group_key
+duplication) with the composite `(group_key, notice_id)` index: the **keyed
+anti-join runs in 6.4s**, the island one in **0.35s** — turso uses the index, no
+pathological scan. Orphan vs non-orphan is the same per-row index probe, so ~7s
+is representative when it finds the real ~45k. The retirement my fix adds to the
+full path is negligible against the fold. Good.
+
+**But there is no admin trigger for a full non-rebuild fold.** The supervisor
+routes `Spec::Project{rebuild:false}` to the INCREMENTAL path (which already
+retires correctly via its touched set) and `rebuild:true` to the full
+layer-reset rebuild. My track-1 fix runs ONLY on the full non-rebuild path, which
+is reachable solely via the ≥100k incremental→full fallback. So the cleanup
+choices are:
+
+* **`rebuild=true`** — resets the layer, so it clears the ~45k by construction
+  (my fix is a no-op there). Correct and blessed, but the HEAVIEST option:
+  multi-hour, `/health` DOWN through the reset + org/tender index rebuild, and if
+  interrupted it enters the issue-60 salvage state (the 2026-07-28 incident
+  nuked a 6.96M-tender layer into a ~15h re-fold). Not a casual afternoon action.
+* **Targeted sweep (RECOMMENDED, own code unit)** — a new admin job over just the
+  ~90k dup-pair candidate tenders: re-derive each one's head-notice key via
+  `Ident::read` and retire (via `retire_tenders_chunked`, with `removed` events)
+  exactly those whose re-derived key ≠ their stored key. Health stays up, no full
+  fold, correct by the notice→group_key 1:1 invariant, and cheap (~90k parses of
+  already-stored parsed data). This is the lowest-risk correct cleanup.
+* **Piggyback a natural rebuild** — whenever a `rebuild=true` is next needed for
+  another reason, it clears these for free.
+
+**Decision: build the targeted sweep as the next focused unit; do NOT trigger a
+`rebuild=true` casually.** The ghosts are static and non-urgent (double-count,
+not growing), so the lower-risk sweep is worth the small code investment over a
+multi-hour health-down rebuild. Re-measure the dup-notice count on a fresh
+snapshot before/after to confirm.
+
 2. **Data cleanup of the ~45k existing ghosts — PENDING (track 1 deployed).**
    Now that the fix is live, ANY full projection clears them: a full
    `project(rebuild=false)` re-derives the whole plan and the new retirement pass
