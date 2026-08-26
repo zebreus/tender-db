@@ -1,9 +1,17 @@
 # 278 — the full non-rebuild projection retires only `ojs:%` keys, so a regrouped island/keyed tender survives as a ghost (double-count, no `removed` event)
 
-Status: FIX DEPLOYED (track 1) — `5357397`, prod green. Track-2 sweep job deployed
-(`049e4d0`) but its FIRST RUN STALLED — the identification `GROUP BY` is pathological
-on turso (see the INCIDENT below); the job kind must be redesigned (cursor-sliced,
-issue-274 style) before re-use. The ~45k ghosts are still present and static.
+Status: FIX DEPLOYED (track 1) — `5357397`, prod green. Track-2 sweep STALLED on first
+run then DISABLED (`c20b7c6`, deployed — grind stopped, prod green); the ~45k ghosts
+remain static, cleanup deferred to a redesigned (cursor-sliced) job. INCIDENT below.
+
+**Resolution (2026-08-26 ~17:0x UTC):** disabled the `SweepRegroupedGhosts` handler to
+a no-op and deployed. The deploy's restart made `recover()` re-run the stalled job
+(recovered as job 1296) with the new no-op handler — it completed instantly ("DISABLED
+pending redesign — no-op"), stopping the 46-minute grind without the classifier-blocked
+`TENDER_DROP_JOBS` drop. The paired project (387) then ran a normal incremental fold of
+the ~20.5k unprojected backlog that had accumulated behind the blocked queue. Health
+green throughout. The sweep marked NOTHING before it stalled (it hung in identification,
+before the unmark), so no partial state to undo.
 
 ## INCIDENT (2026-08-26 ~18:1x UTC) — sweep's GROUP BY stalled, my benchmarking error
 
