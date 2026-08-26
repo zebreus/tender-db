@@ -135,6 +135,50 @@ fn island(title: &str) -> Parsed {
     }
 }
 
+/// A keyed notice that always publishes lots LOT-1..LOT-3 and a sole LotsGroup
+/// GLO-1, with a `GroupComposition` making GLO-1 contain `members` (issue 237's
+/// sole-group inference resolves the group, so no BT-330 is needed). Title and
+/// lot facts are FIXED across calls, so the ONLY thing that can differ between
+/// two versions is the group composition — which is exactly issue 283's scenario.
+/// `pub_at` varies the notice's dispatch instant (a version field, not a fact),
+/// only to order the versions.
+fn grouped(key: &str, pub_at: i64, members: &[&str]) -> Parsed {
+    let mut parsed = Parsed {
+        sections: vec![
+            sec("PROC", "Procedure", None),
+            sec("LOT-1", "Lot", Some("PROC")),
+            sec("LOT-2", "Lot", Some("PROC")),
+            sec("LOT-3", "Lot", Some("PROC")),
+            sec("GLO-1", "LotsGroup", Some("PROC")),
+            sec("COMP", "GroupComposition", None),
+        ],
+        values: vec![
+            id_val("PROC", "BT-04-notice", key),
+            date_val("PROC", "BT-05(a)-notice", pub_at),
+            text_val("PROC", "BT-21-Procedure", "Grouped procedure"),
+            // Fixed lot facts (NOT pub_at-derived): the lots must be byte-identical
+            // across versions so only the composition moves.
+            date_val("LOT-1", "BT-131(d)-Lot", 700_000_001),
+            date_val("LOT-2", "BT-131(d)-Lot", 700_000_002),
+            date_val("LOT-3", "BT-131(d)-Lot", 700_000_003),
+        ],
+    };
+    for (i, m) in members.iter().enumerate() {
+        // BT-1375-Procedure on the GroupComposition section — one ref per member.
+        parsed.values.push(ValueRow {
+            section_id: "COMP".into(),
+            field_id: "BT-1375-Procedure".into(),
+            ordinal: i as i64,
+            value: NoticeValue::Id { scheme: None, value: (*m).into(), is_ref: true },
+        });
+    }
+    // Deliberately NO buyer: a `Fact::Party` carries the notice_id it came from, so
+    // a republished party differs every version and would mask the composition as
+    // the sole delta. With no party, the tender-level facts are just the (constant)
+    // title — leaving group composition as the only thing that can move.
+    parsed
+}
+
 /// Build the SAME established corpus on `db`: a 2-notice keyed Tender, an
 /// unrelated 1-notice keyed Tender, and an island — then project it fully.
 async fn establish(db: &Db, fetch_id: i64) {
@@ -1527,6 +1571,76 @@ async fn the_full_fallback_still_surfaces_the_callers_progress() {
     assert!(
         seen.contains(&"planning") && seen.contains(&"applying"),
         "the fallback must surface the caller's sink, not only stderr: {seen:?}"
+    );
+
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 283: a version whose ONLY delta is lots-group composition must still emit
+/// a `tender changed` event. `fold` carries `group_members` forward with per-group
+/// supersession and writes the new membership rows, but `append_version_changes`
+/// used to diff only `facts` and `rounds` — so a composition-only version wrote
+/// membership rows yet appended zero `changes` rows, and a `/v1/changes` or SSE
+/// subscriber never learned which lots a group (and thus a group-scoped bid) now
+/// covers.
+#[tokio::test]
+async fn a_group_composition_change_emits_a_tender_changed_event() {
+    let (db, fetch_id, path) = scratch("group-change-event").await;
+
+    // One Tender, three versions of it. Everything is byte-identical between
+    // versions EXCEPT the composition of GLO-1: v1 = {LOT-1, LOT-2}, v2 moves it to
+    // {LOT-1, LOT-3}, v3 republishes v2's composition unchanged.
+    record(&db, fetch_id, "G1", grouped("bt04-grp", 1, &["LOT-1", "LOT-2"])).await;
+    record(&db, fetch_id, "G2", grouped("bt04-grp", 2, &["LOT-1", "LOT-3"])).await;
+    record(&db, fetch_id, "G3", grouped("bt04-grp", 3, &["LOT-1", "LOT-3"])).await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(count(&db, "SELECT COUNT(*) FROM tenders").await, 1, "one grouped Tender");
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tender_versions").await,
+        3,
+        "three versions"
+    );
+
+    // Sanity: the delta the change feed SHOULD reflect is real — both compositions
+    // materialised, so GLO-1 has covered LOT-2 (v1) and LOT-3 (v2/v3) across seqs.
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(DISTINCT m.lot_key) FROM tender_version_lot_group_members x
+               JOIN lots g ON g.id = x.group_lot_id
+               JOIN lots m ON m.id = x.member_lot_id
+              WHERE g.lot_key = 'GLO-1' AND m.lot_key IN ('LOT-2','LOT-3')"
+        )
+        .await,
+        2,
+        "GLO-1's composition genuinely moved from LOT-2 to LOT-3 across versions"
+    );
+
+    // The Tender is `added` once (v1) and `changed` exactly once — the composition
+    // move at v2. Before the fix this count was 0 (the bug). v3 republishes the same
+    // composition, so it must NOT add a second `changed` (no false positive).
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind='tender' AND op='added'").await,
+        1,
+        "the Tender is added once"
+    );
+    // The Tender is `added` once (v1) and `changed` exactly once — the composition
+    // move at v2. Before the fix this `changed` count was 0 (the bug). v3 republishes
+    // v2's composition unchanged, so it must add no second `changed` (no false
+    // positive on a byte-identical re-fold).
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind='tender' AND op='added'").await,
+        1,
+        "the Tender is added once"
+    );
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM changes WHERE entity_kind='tender' AND op='changed'").await,
+        1,
+        "a composition-only change is visible on the feed (issue 283), and an \
+         identical re-publish adds no spurious change"
     );
 
     for s in ["", "-wal", "-shm"] {

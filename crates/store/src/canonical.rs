@@ -4668,7 +4668,17 @@ impl Db {
                 append_change(conn, "tender", tender_id, Some(seq), "added", now).await?;
                 count += 1;
             }
-            Some(prev) if prev.facts != v.facts || prev.rounds != v.rounds => {
+            // group_members too (issue 283): a version whose only delta is
+            // lots-group composition writes new membership rows but was otherwise
+            // invisible to the change feed. The fold keeps group_members in
+            // canonical sorted order (project.rs sort_unstable+dedup; silent
+            // versions clone the already-sorted prev), so a Vec compare is a set
+            // compare — no spurious change on a byte-identical re-fold.
+            Some(prev)
+                if prev.facts != v.facts
+                    || prev.rounds != v.rounds
+                    || prev.group_members != v.group_members =>
+            {
                 append_change(conn, "tender", tender_id, Some(seq), "changed", now).await?;
                 count += 1;
             }
