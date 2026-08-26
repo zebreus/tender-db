@@ -1,8 +1,9 @@
 # 287 — the SSE diff drops seq-less in-place `changed` events (the org-merge membership move never reaches a stream)
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner — found by the SSE adversarial review minutes
+Status: RESOLVED-DEPLOYED 2026-08-26 (owner — found by the SSE adversarial review minutes
 after 286 deployed; verified by the owner against sse.rs; all three defects fixed, api
-test green end-to-end, full `ops/check.sh` green 65 suites). Deploy pending idle queue.
+test green end-to-end, full `ops/check.sh` green 65 suites; deployed to prod, rev
+`7e3e4db`, /health green, queue idle).
 Kind: correctness (change-feed delivery — SSE only; poll and webhooks were correct)
 Severity: HIGH (defeats exactly the event issue 286 was built to carry)
 Relates to: 286 (emits the row this drops), 285 (three-transport op agreement), 164 (over-delivery contract), 191 (in-place-write class)
