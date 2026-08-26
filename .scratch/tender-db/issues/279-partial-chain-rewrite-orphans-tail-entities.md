@@ -1,11 +1,11 @@
 # 279 — a partial chain rewrite (keep>0) drops the tail's result entities without sweeping them or emitting `removed`
 
-Status: RESOLVED-IN-CODE 2026-08-26 (owner) — UNCERTAIN verdict resolved (reachability
+Status: RESOLVED-DEPLOYED 2026-08-26 (owner) — UNCERTAIN verdict resolved (reachability
 CONFIRMED by a red-first fixture: keep=1 leaves an orphaned lot), fix implemented, full
-`ops/check.sh` green (65 suites, golden + full-vs-incremental equivalence unaffected).
-Deploy pending an idle queue. Forward-only: pre-existing orphans from past partial
-rewrites are not retro-swept (sizing them is a deferred read-only prod probe). See
-"Implementation" below.
+`ops/check.sh` green (65 suites, golden + full-vs-incremental equivalence unaffected),
+deployed to prod (rev `fe37451`, /health green, queue idle). Forward-only: pre-existing
+orphans from past partial rewrites are not retro-swept (sizing them is a deferred
+read-only prod probe — see Follow-up). See "Implementation" below.
 Kind: correctness (storage leak + change-feed honesty)
 Severity: MEDIUM
 Relates to: 103 (fixed the keep==0 full-rewrite orphan case; this is the distinct keep>0 case), 164 (missing `removed` events), 236 (BT-04 instability is the trigger)
