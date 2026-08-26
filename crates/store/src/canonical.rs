@@ -4320,7 +4320,14 @@ impl Db {
                     .await?;
                 append_change(&conn, "organization", loser, None, "removed", now).await?;
             }
-            append_change(&conn, "organization", *keep, None, "updated", now).await?;
+            // Issue 285: the survivor's mention set grew, which is a `changed` — NOT
+            // "updated", an op outside the documented `added | changed | removed` enum
+            // (schema comment above; docs.rs public contract). SSE reclassifies by
+            // match-state so it was unaffected, but /v1/changes poll and webhooks pass
+            // the raw op through, so an "updated" reached those two transports while SSE
+            // showed "added" — three feeds disagreeing on one event. `changed` is the
+            // documented, correct value and makes all three agree.
+            append_change(&conn, "organization", *keep, None, "changed", now).await?;
         }
         conn.execute("COMMIT", ()).await?;
         Ok(report)

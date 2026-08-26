@@ -4461,10 +4461,12 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .await,
             2
         );
+        // Issue 285: the survivor's change is `changed` (documented enum), not the
+        // former out-of-enum `updated`.
         assert_eq!(
             count(
                 "SELECT COUNT(*) FROM changes \
-                  WHERE entity_kind = 'organization' AND op = 'updated' AND entity_id = 1"
+                  WHERE entity_kind = 'organization' AND op = 'changed' AND entity_id = 1"
             )
             .await,
             1
