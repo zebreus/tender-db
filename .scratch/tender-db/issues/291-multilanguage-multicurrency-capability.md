@@ -168,3 +168,19 @@ validation pass, then the additive build units.
   /v1/sql allow-list — public exposure is a 299 (C15 contract) question.
 - 231's sdk-0.1 value refold ran (658,646 tenders, 34 min); acceptance number
   rides today's weekly DQ run.
+
+## Build progress (2026-08-27, 03:4x — unit 3 live)
+
+**eur_cents derivation SHIPPED + DEPLOYED (rev f676874)**: the four money loci
+carry the nullable derived column (O(1) ALTERs ran at boot); the projection
+loads one rates snapshot per run and every version converts at its publication
+date through a per-version EurContext; unresolvable → NULL; equivalence/golden
+suites green with the derivation on both sides. New daily folds populate
+eur_cents from now on; existing rows stay NULL until the epoch-bump refold.
+
+**Remaining currency units**: (a) ECU 1993-1998 series (172 validation pass —
+also validates pre-1999 cutovers); (b) THE epoch-bump refold — one deliberately
+scheduled run carrying eur_cents backfill + 292's lang normalization + 278's
+~45k ghosts; check issue 92 (fold O(chain²)) before scheduling; (c) D5 read
+surface (?currency= filter, eur-based min/max + index) + eur_convertible_rate
+gauge + /docs. Then the language read-path units (ADR-0013 D3/D4).
