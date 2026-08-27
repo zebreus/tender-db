@@ -320,3 +320,25 @@ ONLY after job 402's fold completes. In order, whichever firing catches it:
 Fold telemetry 13:48: 839,906/7,915,164 tenders, 1.9M version rows, ~163/s,
 WAL 76MB (bounded), 601G free (trend watched per firing; earlier drop was the
 plan build).
+
+## LANDED (2026-08-27 18:5x UTC — the runbook executed to the letter)
+
+THE epoch refold completed (job 402/1312: 14,314,613 notices → 7,915,164
+tenders, 679,294 islands, 14,314,613 versions, 0 verified unchanged — the
+exact epoch-forced shape; ~10.5h wall for the fold proper). Then, in order:
+batch deployed as `7e498cc` (health green); reindex 1313 built
+`tenders_current_value_eur`; `backfill-values` 1314 stamped
+**current_value_eur_cents over ALL 7,915,164 tenders**; acceptance DQ run
+enqueued (job 405 — read its report next firing).
+
+Prod probes, all green: `?currency=SEK` answers with published-SEK rows;
+`min_value=100000000` (EUR cents) returns rows against the head column;
+`?lang=de` flips tender 7800188's title ("Roll-to-roll printing machine" →
+"Rolle-zu-Rolle-Druckanlage"); legacy texts carry normalized three-letter
+tags (292's backfill materialized); /metrics shows quarantine outstanding 308
+matching the 303 ledger exactly, with the terminal-exceeded gauge live.
+
+**ADR-0014 is now fully built and live** (D1-D6 except D6's read-time pivot
+arithmetic, which was decided as read-time-only and has no consumer yet).
+Remaining on 291: the language coverage campaigns (304 stages), the org-name
+satellite (ADR-0013 D5), and the measured min/max de-isolation (88d876a).
