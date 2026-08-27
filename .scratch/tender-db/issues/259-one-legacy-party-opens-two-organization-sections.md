@@ -1,8 +1,30 @@
 # 259 — one legacy party opens TWO Organization sections, so the winner has no name
 
-Status: DIAGNOSED + FIXED 2026-08-20 (owner). Found while running issue 234's pre-implementation
-tail check; it turned out to be the mechanism BEHIND 234's nameless provisional rows rather than a
-merge-policy question. Not deployed — the fold is running; needs an r208/r209 refold to land
+Status: HALF-LANDED (acceptance checked 2026-08-27 ~23:0x against THE epoch
+refold): the WINNER DEDUP half landed — exemplar 362996-2018 now has ONE
+winner row (was two; satellites are rewritten per version on refold). The
+NAME half did NOT land: the winner still points at the nameless provisional
+org (12000087), because `resolve_mentions`' idempotency map keeps an
+already-recorded (notice, section) on its Organization on re-projection BY
+DESIGN — the refold never re-routes stale mention bindings, and the old
+inner-section (ORG-3) mention rows persist. The "Landing: needs a refold, not
+a re-parse" analysis below was wrong about the mention layer. Corpus check:
+1,432,504 nameless provisional organizations still stand.
+NEXT (BUILT 2026-08-27 ~23:3x, pending deploy + run): `repair-nested-orgs`
+admin job (`Db::repair_nested_org_mentions_batch`) — walks the 1.43M nameless
+provisionals; where one is the single-mention outer wrapper of a nested party
+pair (ancestor-chain membership like `nested_org_aliases`, so any depth,
+non-party intermediates, and sdk-0.1's ContractingParty/WinningParty kinds all
+match) whose descendants name exactly ONE distinct org, it repoints every
+reference onto that named org via the merge machinery (winner dedup included),
+deletes the empty row, and emits removed/changed/tender-changed events.
+`dry_run` defaults TRUE (preview first, on prod too). Skips are counted, so
+the residue is measurable. Adversarially reviewed (5 findings fixed: rollback
+discipline, chain-walk coverage, sdk-0.1 kinds, shared repoint helper with the
+234 merge, dry-run). RUN ORDER on prod: dry-run preview → read counts →
+confirmed run → re-check the exemplar (362996-2018 winner must read "Opal
+Publicidade, S. A.") and the nameless count. Original status: DIAGNOSED +
+FIXED 2026-08-20 (owner), found under 234's tail check.
 Kind: canonical identity defect (winner names lost, winner counts inflated)
 Blocked by: —
 Relates to: 234 (whose nameless population this creates — read 234's decision note first), 100/257

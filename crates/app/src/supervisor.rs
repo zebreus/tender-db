@@ -291,6 +291,15 @@ enum Spec {
     /// content did not change, only the derived-beside layer. Run
     /// `backfill-values` after so the head column follows.
     RederiveEur,
+    /// Repair the stale nested-org mention layer (issue 259 landing): the
+    /// 2026-08-20 alias fix changed what `mentions()` emits, but the resolver's
+    /// idempotency keeps recorded (notice, section) bindings, so refolds never
+    /// re-route them. Walks nameless provisional orgs; where one is the outer
+    /// wrapper of a nested Organization pair, repoints its references to the
+    /// named inner org (merge machinery shape) and deletes the empty row.
+    /// `dry_run` counts and writes nothing — the safe default, like the other
+    /// org-mutating jobs.
+    RepairNestedOrgs { dry_run: bool },
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -769,6 +778,23 @@ impl Supervisor {
                 self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
                 self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
             ]),
+            // Issue 259 landing: repair the stale nested-org mention layer.
+            // Deletes org rows and emits change events, so it asks to be meant:
+            // `dry_run` defaults to TRUE (the data-quality convention — a
+            // forgotten flag must mean the harmless thing).
+            "repair-nested-orgs" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "repair-nested-orgs dry-run"
+                } else {
+                    "repair-nested-orgs"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push("repair-nested-orgs", params, Spec::RepairNestedOrgs { dry_run })
+                        .await,
+                ])
+            }
             // Escape hatch for a stale rebuild watermark (issue 85 interlock). No-op
             // safe: it reports whether the flag was actually set.
             "clear-rebuild-flag" => {
@@ -2027,6 +2053,49 @@ impl Supervisor {
                     "eur_cents re-derived from {cached} cached rates: {updated} of {scanned} \
                      money rows changed ({}) — follow with backfill-values (issue 306)",
                     per_locus.join(", ")
+                ))
+            }
+            Spec::RepairNestedOrgs { dry_run } => {
+                let dry_run = *dry_run;
+                let mut totals = store::NestedOrgRepair::default();
+                let mut watermark = 0i64;
+                loop {
+                    let (batch, next) = self
+                        .db
+                        .repair_nested_org_mentions_batch(BACKFILL_BATCH, watermark, dry_run)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if batch.scanned == 0 {
+                        break;
+                    }
+                    totals.scanned += batch.scanned;
+                    totals.repaired += batch.repaired;
+                    totals.skipped += batch.skipped;
+                    totals.winner_dups += batch.winner_dups;
+                    totals.tender_changes += batch.tender_changes;
+                    watermark = next;
+                    self.set_phase(
+                        if dry_run { "previewing" } else { "repairing" },
+                        Some(totals.scanned),
+                        None,
+                        format!("{} repaired, {} skipped", totals.repaired, totals.skipped),
+                    );
+                    if !dry_run {
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after nested-org batch: {e}");
+                        }
+                    }
+                }
+                Ok(format!(
+                    "nested-org mention repair (issue 259){}: {} nameless provisionals scanned, \
+                     {} repaired onto their named inner org (empty row deleted), {} skipped by \
+                     guards, {} duplicate winner rows removed, {} tenders touched",
+                    if dry_run { " DRY RUN — nothing written" } else { "" },
+                    totals.scanned,
+                    totals.repaired,
+                    totals.skipped,
+                    totals.winner_dups,
+                    totals.tender_changes
                 ))
             }
             Spec::Refold { profiles, expect } => {
@@ -3656,6 +3725,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
             | "rederive-eur"
+            | "repair-nested-orgs"
             | "fetch-rates"
             | "fetch-rates-ecu"
     )

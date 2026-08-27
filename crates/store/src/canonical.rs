@@ -1179,6 +1179,86 @@ pub struct Identifier {
     pub value: String,
 }
 
+/// What one org repoint moved — shared by the issue-234 merge and the
+/// issue-259 repair.
+#[derive(Debug, Default, Clone)]
+struct RepointCounts {
+    mentions: u64,
+    parties: u64,
+    bid_parties: u64,
+    winners: u64,
+    winner_dups: u64,
+}
+
+/// Repoint every reference from `loser` to `keep`: mentions, parties, bid
+/// parties, and winners — deleting first any winner row whose
+/// (tender, seq, lot_result) already stands on `keep`, so the PK survives and
+/// a doubled award collapses to one row. Deleting the loser org row and the
+/// change events stay with the caller — the merge and the repair group them
+/// differently.
+async fn repoint_org_references(
+    conn: &Connection,
+    keep: i64,
+    loser: i64,
+) -> turso::Result<RepointCounts> {
+    let mut counts = RepointCounts::default();
+    counts.mentions = conn
+        .execute(
+            "UPDATE organization_mentions SET organization_id = ? WHERE organization_id = ?",
+            (Value::Integer(keep), Value::Integer(loser)),
+        )
+        .await?;
+    counts.parties = conn
+        .execute(
+            "UPDATE tender_version_parties SET organization_id = ? WHERE organization_id = ?",
+            (Value::Integer(keep), Value::Integer(loser)),
+        )
+        .await?;
+    counts.bid_parties = conn
+        .execute(
+            "UPDATE tender_version_bid_parties SET organization_id = ? \
+              WHERE organization_id = ?",
+            (Value::Integer(keep), Value::Integer(loser)),
+        )
+        .await?;
+    counts.winner_dups = conn
+        .execute(
+            "DELETE FROM tender_version_result_winners \
+              WHERE organization_id = ? \
+                AND EXISTS (SELECT 1 FROM tender_version_result_winners w \
+                             WHERE w.tender_id = tender_version_result_winners.tender_id \
+                               AND w.seq = tender_version_result_winners.seq \
+                               AND w.lot_result_id = tender_version_result_winners.lot_result_id \
+                               AND w.organization_id = ?)",
+            (Value::Integer(loser), Value::Integer(keep)),
+        )
+        .await?;
+    counts.winners = conn
+        .execute(
+            "UPDATE tender_version_result_winners SET organization_id = ? \
+              WHERE organization_id = ?",
+            (Value::Integer(keep), Value::Integer(loser)),
+        )
+        .await?;
+    Ok(counts)
+}
+
+/// One batch of the issue-259 nested-org mention repair. Totals are summed
+/// across batches by the job.
+#[derive(Debug, Default, Clone)]
+pub struct NestedOrgRepair {
+    /// Nameless provisional org rows this batch visited.
+    pub scanned: u64,
+    /// Rows repaired: references repointed to the named inner org, empty row deleted.
+    pub repaired: u64,
+    /// Rows skipped by a guard (multi-mention, no single named child, self-ref).
+    pub skipped: u64,
+    /// Winner rows deleted because keep+loser both stood on one award.
+    pub winner_dups: u64,
+    /// Tenders whose references moved (one `changed` event each).
+    pub tender_changes: u64,
+}
+
 /// One batch of the issue-234 org-merge backfill: what moved, and where the
 /// name-cursor walk stands. Totals are summed across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -4461,46 +4541,12 @@ impl Db {
                         touched.insert(int(&row, 0));
                     }
                 }
-                report.mentions += conn
-                    .execute(
-                        "UPDATE organization_mentions SET organization_id = ? \
-                          WHERE organization_id = ?",
-                        (Value::Integer(*keep), Value::Integer(loser)),
-                    )
-                    .await?;
-                report.parties += conn
-                    .execute(
-                        "UPDATE tender_version_parties SET organization_id = ? \
-                          WHERE organization_id = ?",
-                        (Value::Integer(*keep), Value::Integer(loser)),
-                    )
-                    .await?;
-                report.bid_parties += conn
-                    .execute(
-                        "UPDATE tender_version_bid_parties SET organization_id = ? \
-                          WHERE organization_id = ?",
-                        (Value::Integer(*keep), Value::Integer(loser)),
-                    )
-                    .await?;
-                report.winner_dups += conn
-                    .execute(
-                        "DELETE FROM tender_version_result_winners \
-                          WHERE organization_id = ? \
-                            AND EXISTS (SELECT 1 FROM tender_version_result_winners w \
-                                         WHERE w.tender_id = tender_version_result_winners.tender_id \
-                                           AND w.seq = tender_version_result_winners.seq \
-                                           AND w.lot_result_id = tender_version_result_winners.lot_result_id \
-                                           AND w.organization_id = ?)",
-                        (Value::Integer(loser), Value::Integer(*keep)),
-                    )
-                    .await?;
-                report.winners += conn
-                    .execute(
-                        "UPDATE tender_version_result_winners SET organization_id = ? \
-                          WHERE organization_id = ?",
-                        (Value::Integer(*keep), Value::Integer(loser)),
-                    )
-                    .await?;
+                let moved = repoint_org_references(&conn, *keep, loser).await?;
+                report.mentions += moved.mentions;
+                report.parties += moved.parties;
+                report.bid_parties += moved.bid_parties;
+                report.winner_dups += moved.winner_dups;
+                report.winners += moved.winners;
                 conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
                     .await?;
                 append_change(&conn, "organization", loser, None, "removed", now).await?;
@@ -4543,6 +4589,229 @@ impl Db {
             )
             .await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// One batch of the issue-259 landing repair. The 2026-08-20 nested-org fix
+    /// changed what `mentions()` EMITS, but `resolve_mentions`' idempotency map
+    /// keeps an already-recorded (notice, section) on its Organization by
+    /// design — so THE epoch refold re-folded every satellite yet left the
+    /// pre-fix mention layer standing: the award references a nameless
+    /// provisional minted from the outer wrapper section, while the party's
+    /// name sits on the org of a nested inner section. This walk repairs the
+    /// stored layer directly, one nameless org at a time, using the merge
+    /// machinery's shape (repoint, dedup winners, delete the empty row, change
+    /// events): the nameless outer org is the LOSER, the named descendant's
+    /// org the KEEP. Guards make it surgical — the loser must be provisional,
+    /// nameless, carry EXACTLY ONE mention, and the party sections DESCENDING
+    /// from its section (the ancestor-chain walk `nested_org_aliases` does, so
+    /// depth and non-party intermediates don't matter, across the same kind
+    /// families incl. sdk-0.1's) must name exactly ONE distinct non-empty org.
+    /// Everything else is skipped and counted. `dry_run` counts and writes
+    /// nothing. Idempotent: a repaired org is deleted, so a re-run skips it.
+    /// Returns `(report, watermark)`; `report.scanned == 0` ends the walk.
+    pub async fn repair_nested_org_mentions_batch(
+        &self,
+        batch: i64,
+        after: i64,
+        dry_run: bool,
+    ) -> turso::Result<(NestedOrgRepair, i64)> {
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let mut losers: Vec<i64> = Vec::new();
+        let mut report = NestedOrgRepair::default();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT id FROM organizations \
+                      WHERE id > ? AND provisional = 1 AND name = '' \
+                      ORDER BY id LIMIT ?",
+                    (Value::Integer(after), Value::Integer(batch)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                losers.push(int(&row, 0));
+            }
+        }
+        report.scanned = losers.len() as u64;
+        let Some(&last) = losers.last() else { return Ok((report, after)) };
+        let watermark = after.max(last);
+
+        if !dry_run {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+        }
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        match self
+            .repair_nested_losers(&conn, &losers, now, dry_run, &mut report, &mut touched)
+            .await
+        {
+            Ok(()) => {}
+            Err(e) => {
+                // The single shared writer connection must never be left with an
+                // open transaction (CONTEXT.md's rollback discipline).
+                if !dry_run {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                }
+                return Err(e);
+            }
+        }
+        report.tender_changes = touched.len() as u64;
+        if !dry_run {
+            for &tid in &touched {
+                if let Err(e) = append_change(&conn, "tender", tid, None, "changed", now).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            conn.execute("COMMIT", ()).await?;
+            if report.repaired > 0 {
+                self.publish_cursor(&conn).await?;
+            }
+        }
+        Ok((report, watermark))
+    }
+
+    /// The per-loser half of [`Self::repair_nested_org_mentions_batch`],
+    /// separated so the caller can ROLLBACK on any error.
+    async fn repair_nested_losers(
+        &self,
+        conn: &Connection,
+        losers: &[i64],
+        now: i64,
+        dry_run: bool,
+        report: &mut NestedOrgRepair,
+        touched: &mut BTreeSet<i64>,
+    ) -> turso::Result<()> {
+        // The party-wrapper kind families a nest can span — the same sets
+        // ingest's `nested_org_aliases` walks (ORGANIZATION_KIND for the legacy
+        // and eForms vocabularies, ContractingParty/WinningParty for sdk-0.1).
+        // Keep in sync with ingest.
+        const PARTY_KINDS: [&str; 3] = ["Organization", "ContractingParty", "WinningParty"];
+        for &loser in losers {
+            // Guard 1: exactly one mention — a nameless org with several
+            // mentions is not the single-wrapper shape this repairs.
+            let mut mentions = Vec::new();
+            {
+                let mut rows = conn
+                    .query(
+                        "SELECT notice_id, section_id FROM organization_mentions \
+                          WHERE organization_id = ?",
+                        (Value::Integer(loser),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    mentions.push((int(&row, 0), text(&row, 1)));
+                    if mentions.len() > 2 {
+                        break;
+                    }
+                }
+            }
+            let [(notice_id, ref outer_section)] = mentions[..] else {
+                report.skipped += 1;
+                continue;
+            };
+            // Load the notice's whole section tree once (a notice has few
+            // sections; PK-prefix scan) and find the party sections whose
+            // ancestor chain passes through the loser's section — the exact
+            // membership `nested_org_aliases` computes, so a nest of any depth
+            // and with non-party intermediate sections still repairs.
+            let mut sections: std::collections::HashMap<String, (String, Option<String>)> =
+                std::collections::HashMap::new();
+            {
+                let mut rows = conn
+                    .query(
+                        "SELECT section_id, kind, parent_section_id FROM notice_sections \
+                          WHERE notice_id = ?",
+                        (Value::Integer(notice_id),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    sections.insert(text(&row, 0), (text(&row, 1), opt_text_of(&row, 2)));
+                }
+            }
+            let mut members: Vec<&str> = Vec::new();
+            for (sid, (kind, _)) in &sections {
+                if sid == outer_section || !PARTY_KINDS.contains(&kind.as_str()) {
+                    continue;
+                }
+                let mut current = sections.get(sid).and_then(|(_, p)| p.as_deref());
+                for _ in 0..sections.len().max(1) {
+                    let Some(id) = current else { break };
+                    if id == outer_section {
+                        members.push(sid.as_str());
+                        break;
+                    }
+                    current = sections.get(id).and_then(|(_, p)| p.as_deref());
+                }
+            }
+            // Guard 2: the members' mentions must name exactly ONE distinct
+            // non-empty org (that is not the loser itself).
+            let mut named: Vec<i64> = Vec::new();
+            for sid in &members {
+                let mut rows = conn
+                    .query(
+                        "SELECT m.organization_id, o.name FROM organization_mentions m \
+                          JOIN organizations o ON o.id = m.organization_id \
+                         WHERE m.notice_id = ? AND m.section_id = ?",
+                        (Value::Integer(notice_id), t(*sid)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    let org = int(&row, 0);
+                    if org != loser && !text(&row, 1).is_empty() {
+                        named.push(org);
+                    }
+                }
+            }
+            named.sort_unstable();
+            named.dedup();
+            let [keep] = named[..] else {
+                report.skipped += 1;
+                continue;
+            };
+
+            // Touched Tenders BEFORE the repoints, exactly like the merge —
+            // collected in dry-run too, so the preview reports the blast radius.
+            {
+                let mut trows = conn
+                    .query(
+                        "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                   UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                   UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                        (Value::Integer(loser), Value::Integer(loser), Value::Integer(loser)),
+                    )
+                    .await?;
+                while let Some(row) = trows.next().await? {
+                    touched.insert(int(&row, 0));
+                }
+            }
+            if dry_run {
+                let mut rows = conn
+                    .query(
+                        "SELECT COUNT(*) FROM tender_version_result_winners \
+                          WHERE organization_id = ? \
+                            AND EXISTS (SELECT 1 FROM tender_version_result_winners w \
+                                         WHERE w.tender_id = tender_version_result_winners.tender_id \
+                                           AND w.seq = tender_version_result_winners.seq \
+                                           AND w.lot_result_id = tender_version_result_winners.lot_result_id \
+                                           AND w.organization_id = ?)",
+                        (Value::Integer(loser), Value::Integer(keep)),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    report.winner_dups += int(&row, 0) as u64;
+                }
+                report.repaired += 1;
+                continue;
+            }
+            let moved = repoint_org_references(conn, keep, loser).await?;
+            report.winner_dups += moved.winner_dups;
+            conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
+                .await?;
+            append_change(conn, "organization", loser, None, "removed", now).await?;
+            append_change(conn, "organization", keep, None, "changed", now).await?;
+            report.repaired += 1;
+        }
+        Ok(())
     }
 
     /// Whether a named index exists — the backfill job's refusal gate: without

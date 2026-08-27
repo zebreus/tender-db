@@ -1,0 +1,253 @@
+//! Issue 259 landing repair: the stale pre-fix mention layer — an award's
+//! winner bound to a nameless provisional minted from the outer wrapper of a
+//! nested Organization pair while the name sits on the inner section's org —
+//! is repaired in place: references repoint to the named inner org, the empty
+//! row is deleted, the change feed hears about all of it.
+
+use store::turso::Value;
+
+async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    conn.execute("BEGIN", ()).await.unwrap();
+
+    // Organizations: 10 = the nameless outer wrapper (the repair target),
+    // 11 = the named inner party, 13 = nameless with TWO mentions (guard),
+    // 14 = nameless whose only child is also nameless (guard), 15 = that child,
+    // 20/21 = the outer and middle of a THREE-level sdk-0.1 nest, 22 = its
+    // named innermost party.
+    for (id, name, provisional) in [
+        (10, "", 1),
+        (11, "Opal Publicidade, S. A.", 1),
+        (13, "", 1),
+        (14, "", 1),
+        (15, "", 1),
+        (20, "", 1),
+        (21, "", 1),
+        (22, "Drei Ebenen GmbH", 1),
+    ] {
+        conn.execute(
+            "INSERT INTO organizations (id, name, name_norm, provisional, created_at)
+             VALUES (?, ?, ?, ?, 0)",
+            (
+                Value::Integer(id),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+                Value::Integer(provisional),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
+    // The exemplar topology (notice 100): RES-1 > ORG-2 > ORG-3.
+    for (nid, sid, kind, parent) in [
+        (100, "RES-1", "LotResult", None),
+        (100, "ORG-2", "Organization", Some("RES-1")),
+        (100, "ORG-3", "Organization", Some("ORG-2")),
+        // Guard case: OG-1 > OG-2, both orgs nameless.
+        (103, "OG-1", "Organization", None),
+        (103, "OG-2", "Organization", Some("OG-1")),
+        // A THREE-level sdk-0.1 nest with a non-party section in the middle of
+        // the chain: P1 > MID > X > INN. Both P1's and MID's nameless orgs
+        // must land on INN's named org — depth and the non-party intermediate
+        // must not matter (the `nested_org_aliases` semantics).
+        (105, "P1", "WinningParty", None),
+        (105, "MID", "WinningParty", Some("P1")),
+        (105, "X", "Address", Some("MID")),
+        (105, "INN", "WinningParty", Some("X")),
+    ] {
+        conn.execute(
+            "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+             VALUES (?, ?, ?, ?)",
+            (
+                Value::Integer(nid),
+                Value::Text(sid.into()),
+                Value::Text(kind.into()),
+                match parent {
+                    Some(p) => Value::Text(p.into()),
+                    None => Value::Null,
+                },
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
+    for (nid, sid, org) in [
+        (100, "ORG-2", 10),
+        (100, "ORG-3", 11),
+        // Org 13 carries two mentions — not the single-wrapper shape.
+        (101, "A", 13),
+        (102, "B", 13),
+        // Org 14's only child mention names a nameless org.
+        (103, "OG-1", 14),
+        (103, "OG-2", 15),
+        // The three-level nest's mentions.
+        (105, "P1", 20),
+        (105, "MID", 21),
+        (105, "INN", 22),
+    ] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id)
+             VALUES (?, ?, ?)",
+            (Value::Integer(nid), Value::Text(sid.into()), Value::Integer(org)),
+        )
+        .await
+        .unwrap();
+    }
+
+    // The pre-fix doubled award: both ends of the nest stand on one lot_result.
+    for org in [10, 11] {
+        conn.execute(
+            "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
+             VALUES (500, 1, 900, ?)",
+            (Value::Integer(org),),
+        )
+        .await
+        .unwrap();
+    }
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (500, 1, 'winner', 10, 100, 'ORG-2')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute("COMMIT", ()).await.unwrap();
+    (db, conn)
+}
+
+#[tokio::test]
+async fn the_nested_org_repair_repoints_dedups_and_deletes_with_guards() {
+    let path = format!("/tmp/tender-db-nestedorg-{}.db", std::process::id());
+    let (db, conn) = seed(&path).await;
+
+    let walk = |dry_run: bool, batch_size: i64| {
+        let db = &db;
+        async move {
+            let mut totals = store::NestedOrgRepair::default();
+            let mut watermark = 0i64;
+            loop {
+                let (batch, next) = db
+                    .repair_nested_org_mentions_batch(batch_size, watermark, dry_run)
+                    .await
+                    .expect("batch");
+                if batch.scanned == 0 {
+                    break;
+                }
+                totals.scanned += batch.scanned;
+                totals.repaired += batch.repaired;
+                totals.skipped += batch.skipped;
+                totals.winner_dups += batch.winner_dups;
+                totals.tender_changes += batch.tender_changes;
+                watermark = next;
+            }
+            totals
+        }
+    };
+
+    // The dry run previews the same numbers and writes NOTHING.
+    let preview = walk(true, 2).await;
+    assert_eq!(
+        (preview.scanned, preview.repaired, preview.skipped, preview.winner_dups),
+        (6, 3, 3, 1),
+        "the preview predicts the repair"
+    );
+    {
+        let mut rows = conn
+            .query("SELECT COUNT(*) FROM organizations WHERE id IN (10, 20, 21)", ())
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().unwrap();
+        assert_eq!(row.get_value(0).unwrap(), Value::Integer(3), "the dry run deleted nothing");
+    }
+
+    // batch=2 forces the watermark loop to iterate.
+    let totals = walk(false, 2).await;
+    assert_eq!(totals.scanned, 6, "the six nameless provisionals are visited");
+    assert_eq!(
+        totals.repaired, 3,
+        "the exemplar pair and both levels of the three-level nest repair"
+    );
+    assert_eq!(totals.skipped, 3, "multi-mention (13), nameless child (14), childless (15)");
+    assert_eq!(totals.winner_dups, 1, "the doubled award collapses");
+    assert_eq!(totals.tender_changes, 1, "tender 500 is told");
+
+    // The winner is the named party, exactly once.
+    let mut rows = conn
+        .query(
+            "SELECT organization_id FROM tender_version_result_winners
+              WHERE tender_id = 500 AND seq = 1 AND lot_result_id = 900",
+            (),
+        )
+        .await
+        .unwrap();
+    let mut winners = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        winners.push(match row.get_value(0).unwrap() {
+            Value::Integer(i) => i,
+            other => panic!("unexpected {other:?}"),
+        });
+    }
+    drop(rows);
+    assert_eq!(winners, vec![11], "one winner, the named org");
+
+    // The empty row is gone; the guarded rows survive; references repointed.
+    let count = |sql: &'static str| {
+        let conn = &conn;
+        async move {
+            let mut rows = conn.query(sql, ()).await.unwrap();
+            match rows.next().await.unwrap().unwrap().get_value(0).unwrap() {
+                Value::Integer(i) => i,
+                other => panic!("unexpected {other:?}"),
+            }
+        }
+    };
+    assert_eq!(count("SELECT COUNT(*) FROM organizations WHERE id IN (10, 20, 21)").await, 0);
+    assert_eq!(count("SELECT COUNT(*) FROM organizations WHERE id IN (13, 14, 15)").await, 3);
+    assert_eq!(
+        count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 11").await,
+        2,
+        "the outer mention now stands on the named org beside the inner one"
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 22").await,
+        3,
+        "both nest levels' mentions landed on the innermost named org"
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = 11").await,
+        1,
+        "the party row repointed"
+    );
+
+    // The change feed heard: loser removed, keep changed, tender changed.
+    assert_eq!(
+        count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 10 AND op = 'removed'").await,
+        1
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 11 AND op = 'changed'").await,
+        1
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 500 AND op = 'changed'").await,
+        1
+    );
+
+    // Idempotent: a second full walk repairs nothing further.
+    let second = walk(false, 100).await;
+    assert_eq!(second.repaired, 0, "a second walk is a no-op");
+
+    drop(conn);
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
