@@ -568,8 +568,10 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 21] = [
     ("bidder", "EXISTS per row -> isolates. Issue 223 seeds the driver from the org index \
                 for speed, but a present org still routes to isolation"),
     ("status", "EXISTS over tender_version_dates per row -> isolates"),
-    ("min_value", "EXISTS over tender_version_amounts per row -> isolates"),
-    ("max_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("min_value", "head column current_value_eur_cents (EUR cents, ADR-0014 D5); still \
+                    isolates pending a prod measurement (88d876a rule) — \
+                    tenders_current_value_eur is the precondition, not the verdict"),
+    ("max_value", "same as min_value"),
     ("currency", "EXISTS over tender_version_amounts per row -> isolates (ADR-0014 D5)"),
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
@@ -753,7 +755,14 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
 /// canonical.rs), and MAX(d) > now ⟺ EXISTS(d > now); a Tender with no deadline
 /// gets NULL, which both forms read as Closed. Lots builders pass `None` — no
 /// head column there — and keep the EXISTS.
-fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str, deadline_col: Option<&str>) {
+fn version_predicates(
+    q: &mut Query,
+    f: &Filter,
+    tid: &str,
+    seq: &str,
+    deadline_col: Option<&str>,
+    value_col: &str,
+) {
     if let Some(country) = &f.country {
         q.push(
             &format!(" AND EXISTS (SELECT 1 FROM tender_version_classifications c
@@ -819,15 +828,16 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str, deadline_
             }
         }
     }
+    // The value bounds compare the fold-maintained head column (ADR-0014 D5):
+    // EUR cents against the head version's MAX derived amount. NULL — no
+    // amount, nothing converts, or the row predates the backfill — fails both
+    // comparisons, so an unconvertible Tender never matches a value bound
+    // (the same one-sided honesty as every filter guard). The raw-cents
+    // comparison this replaces mixed currencies numerically; its retirement
+    // is CHANGELOG.md's first entry.
     for (bound, op) in [(f.min_value, ">="), (f.max_value, "<=")] {
-        if let Some(cents) = bound {
-            q.push(
-                &format!(
-                    " AND (SELECT MAX(a.cents) FROM tender_version_amounts a
-                            WHERE a.tender_id = {tid} AND a.seq = {seq}) {op} ?"
-                ),
-                [Value::Integer(cents)],
-            );
+        if let Some(eur_cents) = bound {
+            q.push(&format!(" AND {value_col} {op} ?"), [Value::Integer(eur_cents)]);
         }
     }
     if let Some(currency) = &f.currency {
@@ -1314,7 +1324,7 @@ fn tenders_ordered_query(
             inner.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"));
+    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         inner.push(
@@ -1577,7 +1587,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"));
+    version_predicates(&mut q, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -1626,7 +1636,7 @@ fn tenders_page_query(filter: &Filter, scope: Scope) -> Query {
             inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"));
+    version_predicates(&mut inner, filter, "t.id", "v.seq", Some("t.current_deadline"), "t.current_value_eur_cents");
     inner.push(
         " AND t.id > ? ORDER BY t.id LIMIT ?",
         [Value::Integer(after), Value::Integer(limit)],
@@ -2154,7 +2164,7 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", None);
+    version_predicates(&mut q, filter, "t.id", "v.seq", None, "t.current_value_eur_cents");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
@@ -2302,7 +2312,8 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
         q.push(" AND (SELECT tt.source FROM tenders tt WHERE tt.id = l.tender_id) = ?", [t(source)]);
     }
     lot_seed_predicates(&mut q, filter);
-    version_predicates(&mut q, filter, "l.tender_id", SEQ, None);
+    version_predicates(&mut q, filter, "l.tender_id", SEQ, None,
+        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",

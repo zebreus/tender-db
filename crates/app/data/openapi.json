@@ -722,13 +722,13 @@
       "min_value": {
         "name": "min_value",
         "in": "query",
-        "description": "Minimum value in cents.",
+        "description": "Minimum value in EUR cents, compared against the tender's highest amount converted to EUR at its publication date (derived eur_cents; rows with no convertible amount never match).",
         "schema": { "type": "integer", "format": "int64" }
       },
       "max_value": {
         "name": "max_value",
         "in": "query",
-        "description": "Maximum value in cents.",
+        "description": "Maximum value in EUR cents — same comparison basis as min_value.",
         "schema": { "type": "integer", "format": "int64" }
       },
       "currency": {

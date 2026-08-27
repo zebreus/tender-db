@@ -669,6 +669,11 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     add_column(conn, "ALTER TABLE tender_version_lot_results ADD COLUMN awarded_eur_cents INTEGER").await?;
     add_column(conn, "ALTER TABLE tender_version_bids ADD COLUMN eur_cents INTEGER").await?;
     add_column(conn, "ALTER TABLE tender_version_contracts ADD COLUMN eur_cents INTEGER").await?;
+    // ADR-0014 D5: the head version's MAX derived-EUR amount, fold-maintained
+    // like current_deadline/current_title; backfilled by `backfill-values`.
+    // ALSO in reset_tender_layer's hardcoded CREATE — a column added here
+    // alone is missing for a whole rebuild (the current_deadline lesson).
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_eur_cents INTEGER").await?;
     // Issue 87: a failed re-parse stamps its attempt and rewrites the row's
     // reason/detail to the CURRENT failure (the first-ingest pair is preserved
     // once in first_reason/first_detail). Nullable and absent by default, so
@@ -2918,6 +2923,47 @@ impl Db {
                      AND x.field = 'title'
                    ORDER BY (x.lot_id IS NULL) DESC, (x.lang = 'ENG') DESC
                    LIMIT 1)
+              WHERE id > ? AND id <= ?",
+            (Value::Integer(after), Value::Integer(watermark)),
+        )
+        .await?;
+        Ok((count, watermark))
+    }
+
+    /// One batch of the `current_value_eur_cents` backfill (ADR-0014 D5): stamp
+    /// the next `batch` tenders past the watermark with their head version's
+    /// MAX derived-EUR amount, straight from `tender_version_amounts.eur_cents`
+    /// (the `tender_version_amounts_version` index serves the correlated MAX).
+    /// The aggregate mirrors `head_value_eur_cents` exactly — same population,
+    /// already-derived values, so the two can never disagree on a rate. Run
+    /// AFTER the eur_cents refold: before it the satellite is NULL and this
+    /// walk just stamps NULLs. Batched, checkpointed by the caller, idempotent
+    /// — the [`Self::backfill_current_deadline`] contract.
+    pub async fn backfill_current_value_eur(
+        &self,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64)> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((0, after));
+        }
+        conn.execute(
+            "UPDATE tenders SET current_value_eur_cents =
+                 (SELECT MAX(a.eur_cents) FROM tender_version_amounts a
+                   WHERE a.tender_id = tenders.id AND a.seq = tenders.current_seq)
               WHERE id > ? AND id <= ?",
             (Value::Integer(after), Value::Integer(watermark)),
         )

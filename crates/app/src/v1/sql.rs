@@ -619,6 +619,13 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          until the ECU series lands, unknown codes) or the row predates the backfill refold.",
     ),
     (
+        "tenders",
+        "current_value_eur_cents",
+        "The head version's highest amount as derived EUR cents (ADR-0014 D5) — what \
+         min_value/max_value compare against. NULL = no amount converts (or the row \
+         predates the backfill).",
+    ),
+    (
         "*",
         "awarded_eur_cents",
         "Derived EUR at the version's publication date (ADR-0014) for awarded_cents — same \

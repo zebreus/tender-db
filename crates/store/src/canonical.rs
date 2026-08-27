@@ -132,6 +132,15 @@ pub(crate) const SCHEMA: &str = "
         -- planner could not push a filter down and the view materialised the whole
         -- corpus for every query — a primary-key point read measured >10s.
         current_title        TEXT,
+        -- The head version's highest amount as derived EUR cents (ADR-0014 D5):
+        -- MAX over the version's Amount facts converted at its publication date
+        -- — the eur_cents twin of the read layer's old MAX(a.cents), fold-
+        -- maintained like the pointers above so the value bounds compare an
+        -- indexed head column instead of a correlated aggregate. NULL when the
+        -- version publishes no amount or none converts (D4 honesty). Also
+        -- ALTERed in by migrate() for pre-D5 files; backfilled by the
+        -- `backfill-values` job.
+        current_value_eur_cents INTEGER,
         -- Which PROJECTION LOGIC this Tender's content was last folded under
         -- (issue 99). The fold's early-return keys on the chain of causing
         -- notices, which is a state key only while the logic is fixed: a mapping
@@ -976,6 +985,25 @@ pub fn head_title(head: &TenderVersion) -> Option<String> {
     pick(&mut head.facts.iter())
         .or_else(|| pick(&mut head.lots.iter().flat_map(|l| l.facts.iter())))
         .map(|(_, value)| value)
+}
+
+/// The head version's highest amount as derived EUR cents (ADR-0014 D5) — the
+/// eur_cents twin of the read layer's old `MAX(a.cents)`: MAX over the
+/// version's Amount facts, tender-level AND lot-level (the same population
+/// `tender_version_amounts` stores for the version), each converted at the
+/// version's publication date. `None` when no amount converts — an
+/// unconvertible or amount-less head is "not in the value ordering", the same
+/// honesty as [`head_deadline`]'s `None`.
+pub fn head_value_eur_cents(head: &TenderVersion, rates: &crate::rates::RatesLookup) -> Option<i64> {
+    let date = crate::rates::civil_date(head.published_at);
+    head.facts
+        .iter()
+        .chain(head.lots.iter().flat_map(|l| l.facts.iter()))
+        .filter_map(|f| match f {
+            Fact::Amount { cents, currency, .. } => rates.eur_cents(*cents, currency, &date),
+            _ => None,
+        })
+        .max()
 }
 
 /// A Lot as one version publishes it.
@@ -2296,7 +2324,7 @@ impl Db {
     /// is the measured-safe kind — not the org-identity NULL-unique hang (issue 62);
     /// the identity indexes are non-unique because a rebuild's group_keys are
     /// distinct by construction and the incremental probe guards otherwise.
-    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 16] = [
+    const DEFERRED_TENDER_INDEXES: [(&'static str, &'static str); 17] = [
         ("tender_versions_published", "tender_versions(published_at)"),
         ("tender_versions_notice", "tender_versions(caused_by_notice_id)"),
         // Issue 217-A: `/v1/tenders?publication_id=` seeds its FROM with "the
@@ -2347,6 +2375,12 @@ impl Db {
         // ORDER BY on one index. The column is fold-maintained and was backfilled
         // by job 706 (7.92M rows), so the index is correct from its first build.
         ("tenders_current_deadline", "tenders(current_deadline, id)"),
+        // ADR-0014 D5: the value bounds compare the fold-maintained
+        // `current_value_eur_cents` head column; `(column, id)` like the two
+        // head-date indexes above, so a bounded range can seek and paginate.
+        // The bounds stay ISOLATED until de-isolation is measured on prod
+        // (the 88d876a rule) — the index is the precondition, not the verdict.
+        ("tenders_current_value_eur", "tenders(current_value_eur_cents, id)"),
         // Issue 117: the paginated reads' `(filter, id)` indexes. Each one exists so
         // that `WHERE <filter> = ? AND id > ? ORDER BY id LIMIT ?` can use BOTH the
         // filter and the cursor as index bounds — the shape `tenders_current_published`
@@ -2447,6 +2481,7 @@ impl Db {
                  kind TEXT NOT NULL, created_at INTEGER NOT NULL,
                  current_seq INTEGER, current_published_at INTEGER,
                  current_deadline INTEGER, current_title TEXT,
+                 current_value_eur_cents INTEGER,
                  projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
@@ -4003,6 +4038,9 @@ impl Db {
                     Value::Integer(PROJECTION_EPOCH),
                     head_deadline(head).map(Value::Integer).unwrap_or(Value::Null),
                     head_title(head).map(Value::Text).unwrap_or(Value::Null),
+                    head_value_eur_cents(head, &self.rates_lookup())
+                        .map(Value::Integer)
+                        .unwrap_or(Value::Null),
                     Value::Integer(tender_id),
                 ))
                 .await?;
@@ -5916,7 +5954,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ?, current_value_eur_cents = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")

@@ -153,7 +153,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline).</td></tr>
-  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>cents</strong>, compared against the tender's highest published amount as published — across mixed currencies, no conversion (see <a href="#caveats">caveats</a>).</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the tender's highest amount converted to EUR at its publication date (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em>.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag; on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
@@ -550,12 +550,12 @@ rates and the quarantine resolution ledger.</p>
   sums across eras without checking it.</li>
   <li>Served values are <strong>as published</strong> &mdash; 26 currency codes occur,
   including pre-euro national currencies, retired codes, and occasional codelist leaks
-  (e.g. <code>OP_DATPRO</code>); no conversion is applied to anything this API returns.
-  A derived EUR-at-publication-date column (<code>eur_cents</code>, NULL where no
-  official rate resolves) is being backfilled <em>beside</em> the published values and
-  is visible today via <a href="#sql">/v1/sql</a>; <code>min_value</code>/<code>max_value</code>
-  still compare published cents across mixed currencies until that backfill completes
-  (the switch will be announced in these docs).</li>
+  (e.g. <code>OP_DATPRO</code>); nothing this API returns is converted. A derived
+  EUR-at-publication-date column lives <em>beside</em> the published values
+  (<code>eur_cents</code> via <a href="#sql">/v1/sql</a>; official ECB/ECU daily series
+  plus the irrevocable euro conversion rates; NULL where no official rate resolves)
+  and is what <code>min_value</code>/<code>max_value</code> compare against &mdash;
+  see the filter table and CHANGELOG.md in the repository.</li>
   <li>Astronomical garbage magnitudes (10<sup>50</sup>-class) are quarantined at
   ingestion and never enter the corpus.</li>
 </ul>

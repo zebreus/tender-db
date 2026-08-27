@@ -1829,6 +1829,13 @@ async fn the_fold_derives_eur_cents_beside_published_amounts() {
         1,
         "an unresolvable currency stays honestly NULL (D4)"
     );
+    // The head column (D5): MAX over the head version's derived amounts — the
+    // convertible 500 wins, the unconvertible 777 contributes nothing.
+    assert_eq!(
+        count(&db, "SELECT COUNT(*) FROM tenders WHERE current_value_eur_cents = 500").await,
+        1,
+        "the fold stamps the head's MAX derived-EUR value beside the other head pointers"
+    );
 
     let _ = std::fs::remove_file(&path);
 }

@@ -85,10 +85,13 @@ async fn seed(path: &str) -> store::turso::Connection {
             ).await.unwrap();
             // Value bounds: current versions straddle a threshold, superseded do not.
             let cents = if current { if t % 6 == 0 { 5_000_00 } else { 100_00 } } else { 9_999_999_00 };
+            // EUR rows derive eur_cents = cents (identity, ADR-0014) — written here
+            // the way the fold writes it, because the value bounds compare the
+            // derived column now, not the published cents.
             conn.execute(
-                "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency)
-                 VALUES (?, ?, NULL, 'estimated', ?, 'EUR')",
-                (Value::Integer(t), Value::Integer(seq), Value::Integer(cents)),
+                "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents)
+                 VALUES (?, ?, NULL, 'estimated', ?, 'EUR', ?)",
+                (Value::Integer(t), Value::Integer(seq), Value::Integer(cents), Value::Integer(cents)),
             ).await.unwrap();
             // Deadlines: some in the past, some in the future, so Open and Closed both
             // select proper subsets rather than everything or nothing.
@@ -121,6 +124,22 @@ async fn seed(path: &str) -> store::turso::Connection {
         }
     }
     conn.execute("COMMIT", ()).await.unwrap();
+
+    // Stamp `tenders.current_value_eur_cents` through the REAL backfill walk
+    // (ADR-0014 D5) rather than a hand-rolled UPDATE: the value bounds compare
+    // the head column, so the fixture needs it stamped exactly the way prod
+    // stamps it — and this doubles as the walk's integration coverage. A small
+    // batch size forces the watermark loop to actually iterate.
+    let sdb = store::Db::open(path).await.unwrap();
+    let mut after = 0;
+    loop {
+        let (rows, next) = sdb.backfill_current_value_eur(17, after).await.unwrap();
+        if rows == 0 {
+            break;
+        }
+        after = next;
+    }
+    drop(sdb);
     conn
 }
 

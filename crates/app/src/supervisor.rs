@@ -275,6 +275,13 @@ enum Spec {
     /// the fold maintains the column for Tenders it touches, so without a one-time
     /// walk every pre-239 row reads NULL and `v_tenders` shows no title.
     BackfillTitles,
+    /// Stamp `tenders.current_value_eur_cents` from each head version's amounts
+    /// (ADR-0014 D5). The `BackfillDeadlines` twin: the fold maintains the
+    /// column for Tenders it touches, so without a one-time walk every
+    /// pre-D5-fold row reads NULL and the value bounds match nothing. Run AFTER
+    /// the eur_cents backfill refold — it aggregates the satellite's derived
+    /// column, so stamping before the refold just writes NULLs.
+    BackfillValues,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -741,6 +748,11 @@ impl Supervisor {
             "backfill-deadlines" => Ok(vec![
                 self.push("backfill-deadlines", "backfill-deadlines".into(), Spec::BackfillDeadlines)
                     .await,
+            ]),
+            // ADR-0014 D5: stamp the head-value EUR column (run after the
+            // eur_cents backfill refold).
+            "backfill-values" => Ok(vec![
+                self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
             ]),
             // Escape hatch for a stale rebuild watermark (issue 85 interlock). No-op
             // safe: it reports whether the flag was actually set.
@@ -1923,6 +1935,32 @@ impl Supervisor {
                 Ok(format!(
                     "current_title stamped over {stamped} tenders (head-version title, \
                      Tender's own before a lot's; NULL where none is published)"
+                ))
+            }
+            Spec::BackfillValues => {
+                // The `BackfillDeadlines` walk exactly: bounded batch per transaction,
+                // WAL checkpoint between batches (issue 42), progress as members_done.
+                let mut stamped = 0i64;
+                let mut watermark = 0i64;
+                loop {
+                    let (rows, next) = self
+                        .db
+                        .backfill_current_value_eur(BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows == 0 {
+                        break;
+                    }
+                    stamped += rows;
+                    watermark = next;
+                    self.update(|p| p.members_done = stamped as u64);
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after value batch: {e}");
+                    }
+                }
+                Ok(format!(
+                    "current_value_eur_cents stamped over {stamped} tenders (head-version \
+                     MAX derived-EUR amount; NULL where none converts — ADR-0014 D4)"
                 ))
             }
             Spec::Refold { profiles, expect } => {
@@ -3506,6 +3544,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "repair-swept-siblings"
             | "backfill-deadlines"
             | "backfill-titles"
+            | "backfill-values"
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
             | "fetch-rates"
