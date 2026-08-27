@@ -532,6 +532,10 @@ pub struct Params {
     status: Option<String>,
     min_value: Option<i64>,
     max_value: Option<i64>,
+    /// Exact-match a PUBLISHED currency code (ISO 4217, case-insensitive input,
+    /// e.g. `EUR`) on any amount of the current version (ADR-0014 D5).
+    /// Tenders/Lots.
+    currency: Option<String>,
     kind: Option<String>,
     tender: Option<i64>,
     /// Official notice number (`publication_id`); exact-match on `/v1/notices` (issue 217).
@@ -592,6 +596,25 @@ impl Params {
             status,
             min_value: self.min_value,
             max_value: self.max_value,
+            // Uppercased HERE, once — the canonical layer stores ISO-4217 codes
+            // uppercase, so `?currency=eur` matches without the store layer
+            // growing a case-folding clause. Shape-checked because a stray
+            // value would otherwise silently match nothing: three ASCII
+            // letters is the whole ISO-4217 alphabet. The one observed
+            // non-code (`OP_DATPRO`, a codelist leak the source published as a
+            // currency) is deliberately unreachable — it is junk to diagnose
+            // via /v1/sql, not a population to filter for.
+            currency: match self.currency.as_deref().map(str::trim) {
+                None => None,
+                Some(c) if c.len() == 3 && c.chars().all(|ch| ch.is_ascii_alphabetic()) => {
+                    Some(c.to_ascii_uppercase())
+                }
+                Some(other) => {
+                    return Err(ApiError::bad_request(format!(
+                        "currency must be a three-letter ISO 4217 code (e.g. EUR), not {other:?}"
+                    )));
+                }
+            },
             kind: self.kind.clone(),
             tender: self.tender,
             publication_id: self.publication_id.clone(),
@@ -669,6 +692,9 @@ impl Params {
         }
         if self.max_value.is_some() {
             out.push("max_value");
+        }
+        if self.currency.is_some() {
+            out.push("currency");
         }
         if self.kind.is_some() {
             out.push("kind");

@@ -156,6 +156,11 @@ pub struct Filter {
     pub status: Option<Status>,
     pub min_value: Option<i64>,
     pub max_value: Option<i64>,
+    /// Exact-match a PUBLISHED currency code (ISO-4217 uppercase, e.g. `EUR`) on
+    /// any amount row of the current version (ADR-0014 D5). Published, not
+    /// normalized: `HRK` finds the tenders that were published in kuna, however
+    /// they convert. Tenders/Lots; the other collections name it ignored.
+    pub currency: Option<String>,
     /// `procedure` | `registration` for Tenders; `Lot` | `LotsGroup` | `Part`
     /// for Lots; the mapping profile for Notices.
     pub kind: Option<String>,
@@ -503,14 +508,14 @@ impl Collection {
             // no meaning.
             Collection::Tenders => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "kind", "publication_id", "published_after",
-                "published_before", "deadline_after", "deadline_before",
+                "min_value", "max_value", "currency", "kind", "publication_id",
+                "published_after", "published_before", "deadline_after", "deadline_before",
             ],
             // `lots_query` adds the `tender` containment shape (issue 115) to the same
             // version predicates, so the whole vocabulary applies here.
             Collection::Lots => &[
                 "source", "country", "cpv", "buyer", "winner", "bidder", "status",
-                "min_value", "max_value", "kind", "tender",
+                "min_value", "max_value", "currency", "kind", "tender",
             ],
             // `organizations_query`: the identity-shaped predicates. `identifier` is
             // the official id value (issue 217), paired with `kind` for the scheme. The
@@ -554,7 +559,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 20] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 21] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -565,6 +570,7 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 20] = [
     ("status", "EXISTS over tender_version_dates per row -> isolates"),
     ("min_value", "EXISTS over tender_version_amounts per row -> isolates"),
     ("max_value", "EXISTS over tender_version_amounts per row -> isolates"),
+    ("currency", "EXISTS over tender_version_amounts per row -> isolates (ADR-0014 D5)"),
     ("kind", "Tenders: t.kind, NO index -> isolates. Lots: vl.kind, JOINED -> isolates. \
               Organizations/Notices: index-served"),
     ("tender", "the containment shape (issue 115), index-served -> never isolates"),
@@ -604,6 +610,7 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         status,
         min_value,
         max_value,
+        currency,
         kind,
         tender,
         publication_id,
@@ -632,7 +639,8 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         || bidder.is_some()
         || status.is_some()
         || min_value.is_some()
-        || max_value.is_some();
+        || max_value.is_some()
+        || currency.is_some();
 
     // `identifier` (issue 217) is served by `organizations_identifier_id (identifier,
     // id)` on the one collection that reads it, so it seeks on the main pool exactly
@@ -821,6 +829,17 @@ fn version_predicates(q: &mut Query, f: &Filter, tid: &str, seq: &str, deadline_
                 [Value::Integer(cents)],
             );
         }
+    }
+    if let Some(currency) = &f.currency {
+        // The PUBLISHED currency (ADR-0014 D5): any amount row of the current
+        // version in that currency, tender-level or lot-level — the same
+        // population the value bounds aggregate over.
+        q.push(
+            &format!(" AND EXISTS (SELECT 1 FROM tender_version_amounts a
+                           WHERE a.tender_id = {tid} AND a.seq = {seq}
+                             AND a.currency = ?)"),
+            [t(currency.clone())],
+        );
     }
 }
 

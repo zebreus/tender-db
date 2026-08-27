@@ -126,6 +126,15 @@ that number has moved:
    weekly instead of discovered inside a slow fold. Filed as the follow-up
    rather than built here so the DQ-report change lands as one reviewed unit.
 
+   → **BUILT 2026-08-27** (rode the ADR-0014 D5 read-surface unit): a
+   `longest_chain` whole-corpus query in the DQ run (streaming MAX over
+   `tenders`, no hash state), report section 9 with the ≥ 4,000 FLAG line,
+   `longest_chain` in the headline history, and a `tender_db_dq_longest_chain`
+   gauge on /metrics (absent for pre-field stored runs, never a fake 0). First
+   number lands with the first post-deploy weekly run. Step 2 (the real fold
+   wall-time for tender 5785085 on a snapshot) remains open and is still the
+   build-vs-defer decider.
+
 The fix sketch below is unchanged and correct; option (2) (persistent/`Arc`
 `rounds` list) is the smaller byte-identity-safe lever and remains the
 recommended first cut when the measured number says build.

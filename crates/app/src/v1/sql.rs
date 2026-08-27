@@ -582,9 +582,11 @@ const TABLE_NOTES: &[(&str, &str)] = &[
     ("v_tender_classifications", "CPV and NUTS codes of each current Tender (see scheme)."),
     (
         "v_tender_amounts",
-        "Money amounts of each current Tender (field, cents, currency, tax_basis). \
-         tax_basis is 'incl', 'excl' or NULL when the source did not say — and NULL is \
-         most of the corpus, so a total over mixed rows is not comparable (issue 251).",
+        "Money amounts of each current Tender (field, cents, currency, tax_basis, \
+         eur_cents). tax_basis is 'incl', 'excl' or NULL when the source did not say — and \
+         NULL is most of the corpus, so a total over mixed rows is not comparable (issue \
+         251). eur_cents is the derived EUR at publication date (ADR-0014), NULL where no \
+         official rate resolves or the row predates the backfill refold.",
     ),
     ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes)."),
     ("v_tender_notices", "The notices that caused each Tender version — the ADR-0001 chain, \
@@ -607,6 +609,21 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     ("*", "utc_seconds", EPOCH_NOTE),
     // Enum / coded columns.
     ("notices", "parse_state", "One of: pending, parsed, quarantined (ADR-0004)."),
+    // The derived-EUR columns (ADR-0014): visible through PRAGMA introspection
+    // the moment the migration lands, so the note must land with them.
+    (
+        "*",
+        "eur_cents",
+        "Derived EUR at the version's publication date (ADR-0014), beside the published \
+         cents+currency — never replacing them. NULL = no official rate resolves (pre-1999 \
+         until the ECU series lands, unknown codes) or the row predates the backfill refold.",
+    ),
+    (
+        "*",
+        "awarded_eur_cents",
+        "Derived EUR at the version's publication date (ADR-0014) for awarded_cents — same \
+         contract as eur_cents: beside the published value, NULL where no rate resolves.",
+    ),
     ("tender_version_classifications", "scheme", "One of: cpv, nuts."),
     (
         "tender_version_parties",

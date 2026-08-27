@@ -220,6 +220,9 @@ passed at 669,265 notices vs ~650k estimate): refold 1298 re-queued 669,265
 notices + stamped 658,646 tenders epoch-stale; the paired incremental fold
 completed in 2,022s — 658,646/658,646 Tenders folded, 671,105 versions written,
 0 retired, health green throughout. The acceptance number (section 1's `value`
-column for the DÖE sdk-0.1 island) rides TODAY's scheduled weekly data-quality
-run — read it when the run lands and close the VALUE half against it. The
-ceiling remains unknown by design (the refold's own number is the measurement).
+column for the DÖE sdk-0.1 island) rides the next weekly data-quality run — the
+"TODAY's" here was WRONG about the schedule (`REPORT_TICK` is SUNDAY 03:10
+Berlin, not Thursday; corrected 2026-08-27), so rather than wait four days the
+owner enqueued the run manually (job 392, started 03:54 UTC 2026-08-27). Read
+section 1 when it lands and close the VALUE half against it. The ceiling
+remains unknown by design (the refold's own number is the measurement).

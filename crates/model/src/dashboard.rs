@@ -51,6 +51,11 @@ pub struct QualityRun {
     /// Unix seconds the run was computed.
     pub at: i64,
     pub eras: Vec<QualityEra>,
+    /// The longest version chain in the corpus — the fold-cost tripwire (issue
+    /// 92; flag threshold 4,000). `default` because stored runs predate the
+    /// field, and one unreadable old entry would blank the whole history.
+    #[serde(default)]
+    pub longest_chain: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -70,6 +75,11 @@ pub struct QualityEra {
     /// Negative amounts over amounts (issue 267; overwhelmingly source-published
     /// — the RATE moving is the signal, not the existence).
     pub negative: [u64; 2],
+    /// Amounts whose `eur_cents` derivation resolved a rate, over amounts
+    /// (ADR-0014 D4: unresolvable is NULL, never a guess). `default` because
+    /// stored runs predate the field — an old entry must still deserialize.
+    #[serde(default)]
+    pub eur_convertible: [u64; 2],
 }
 
 /// The cheap system-status section: the numbers that need no full-table scan, so

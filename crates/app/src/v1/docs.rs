@@ -153,7 +153,8 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot.</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id that submitted a bid on at least one Lot — won or not, a superset of <code>winner</code>.</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline).</td></tr>
-  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>cents</strong>.</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>cents</strong>, compared against the tender's highest published amount as published — across mixed currencies, no conversion (see <a href="#caveats">caveats</a>).</td></tr>
+  <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em>.</td></tr>
   <tr><td class="ep">kind</td><td>Tender/Lot kind flag; on <code>/v1/organizations</code>, the identifier scheme (e.g. <code>VAT</code>).</td></tr>
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
   <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices (e.g. a TED OJS number) — exact match. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
@@ -178,10 +179,10 @@ filtered, every list response names the filters it dropped in
 <code>ignored_filters</code>; an empty array means all of them applied. The full map:</p>
 <table>
   <tr><th>Collection</th><th>Applies</th><th>Accepted but ignored</th></tr>
-  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, publication_id, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, identifier, name_prefix</td></tr>
-  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
-  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, tender, publication_id, the date bounds</td></tr>
-  <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, identifier, name_prefix, the date bounds</td></tr>
+  <tr><td class="ep">/v1/tenders</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, kind, publication_id, published_after/_before, deadline_after/_before (+ sort/order)</td><td>tender, identifier, name_prefix</td></tr>
+  <tr><td class="ep">/v1/lots</td><td>source, country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, kind, tender</td><td>publication_id, identifier, name_prefix, the date bounds</td></tr>
+  <tr><td class="ep">/v1/organizations</td><td>country, kind, buyer, identifier, name_prefix</td><td>source, cpv, winner, bidder, status, min_value, max_value, currency, tender, publication_id, the date bounds</td></tr>
+  <tr><td class="ep">/v1/notices</td><td>source, kind, publication_id, tender</td><td>country, cpv, buyer, winner, bidder, status, min_value, max_value, currency, identifier, name_prefix, the date bounds</td></tr>
 </table>
 <p>So <code>GET /v1/notices?country=DE</code> returns
 <em>every</em> notice with <code>"ignored_filters": ["country"]</code> in the
@@ -547,9 +548,14 @@ rates and the quarantine resolution ledger.</p>
   <li><code>tax_basis</code> is <code>incl</code>, <code>excl</code>, or NULL &mdash; NULL
   means the source did not say, and the incl/excl mix is era-biased; do not compare raw
   sums across eras without checking it.</li>
-  <li>No currency normalisation is applied. 26 currency codes occur, including pre-euro
-  national currencies, retired codes, and occasional codelist leaks
-  (e.g. <code>OP_DATPRO</code>) &mdash; published values, kept.</li>
+  <li>Served values are <strong>as published</strong> &mdash; 26 currency codes occur,
+  including pre-euro national currencies, retired codes, and occasional codelist leaks
+  (e.g. <code>OP_DATPRO</code>); no conversion is applied to anything this API returns.
+  A derived EUR-at-publication-date column (<code>eur_cents</code>, NULL where no
+  official rate resolves) is being backfilled <em>beside</em> the published values and
+  is visible today via <a href="#sql">/v1/sql</a>; <code>min_value</code>/<code>max_value</code>
+  still compare published cents across mixed currencies until that backfill completes
+  (the switch will be announced in these docs).</li>
   <li>Astronomical garbage magnitudes (10<sup>50</sup>-class) are quarantined at
   ingestion and never enter the corpus.</li>
 </ul>

@@ -46,12 +46,13 @@ Service info (also the AGPL §13 source offer):
 curl -s https://tenders.zebreus.click/v1
 ```
 
-**List tenders**, with filters (`source`, `country` ISO-3, `cpv` prefix,
-`buyer`/`winner` organization id, `status=open|closed`, `min_value`/`max_value`
-in cents, `kind`). Page with `limit` (max 500) and the returned `next_cursor`:
+**List tenders**, with filters (`source`, `country` NUTS prefix (alpha-2 at the
+country level, e.g. `DE`), `cpv` prefix, `buyer`/`winner` organization id,
+`status=open|closed`, `min_value`/`max_value` in cents, `currency` ISO-4217,
+`kind`). Page with `limit` (max 1000) and the returned `next_cursor`:
 
 ```sh
-curl -s "https://tenders.zebreus.click/v1/tenders?country=DEU&status=open&limit=5"
+curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&status=open&limit=5"
 curl -s "https://tenders.zebreus.click/v1/tenders?cpv=45&min_value=100000000&limit=20"
 ```
 

@@ -691,7 +691,8 @@ fn amount_plausibility_template(scope: &str) -> String {
         "SELECT n.profile, COUNT(*) AS amounts, \
                 SUM(CASE WHEN a.cents < 0 THEN 1 ELSE 0 END) AS negative, \
                 SUM(CASE WHEN a.cents = 0 THEN 1 ELSE 0 END) AS zero, \
-                SUM(CASE WHEN a.cents > 100000000000000 THEN 1 ELSE 0 END) AS over_1e12 \
+                SUM(CASE WHEN a.cents > 100000000000000 THEN 1 ELSE 0 END) AS over_1e12, \
+                SUM(CASE WHEN a.eur_cents IS NOT NULL THEN 1 ELSE 0 END) AS convertible \
            FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
            JOIN tender_version_amounts a ON a.tender_id = v.tender_id AND a.seq = v.seq \
           {scope}GROUP BY n.profile"
@@ -703,7 +704,16 @@ fn amount_plausibility_template(scope: &str) -> String {
 /// (issue 246). Distinct from [`unwindowed_labels`], which is for a query that
 /// cannot be measured at all.
 pub fn whole_corpus_queries() -> Vec<(String, String)> {
-    vec![("fresh_holds".to_owned(), fresh_holds_sql())]
+    vec![
+        ("fresh_holds".to_owned(), fresh_holds_sql()),
+        // The fold-cost tripwire (issue 92): fold() is O(chain²), the worst real
+        // chain was 3,282 on 2026-08-26 and a DPS grows without bound, so the
+        // approach to the fatal zone must be VISIBLE weekly rather than
+        // discovered inside a slow fold. One streaming MAX over `tenders` —
+        // no GROUP BY, no hash state (the 278 turso lesson), and per-window
+        // maxima don't SUM so this cannot ride the windowed machinery.
+        ("longest_chain".to_owned(), "SELECT MAX(current_seq) FROM tenders".to_owned()),
+    ]
 }
 
 /// Every query the report runs, as `(label, sql)` — the order the bin executes
@@ -988,6 +998,11 @@ pub struct PlausibilityRow {
     pub negative: u64,
     pub zero: u64,
     pub over_1e12: u64,
+    /// Amounts whose `eur_cents` derivation resolved (ADR-0014 D4): the honest
+    /// convertibility gauge — NULL is the policy for an unresolvable rate, so
+    /// the RATE per era is the number that says how much of the corpus the
+    /// EUR-normalized read surface actually covers.
+    pub convertible: u64,
 }
 
 /// One era's award→notice linkage.
@@ -1115,6 +1130,10 @@ pub struct Report {
     pub presence: Vec<PresenceRow>,
     /// Amount plausibility per era (issue 267).
     pub plausibility: Vec<PlausibilityRow>,
+    /// The longest version chain in the corpus (`MAX(tenders.current_seq)`) —
+    /// the fold-cost tripwire (issue 92). 0 when unmeasured or the layer is
+    /// empty; the render distinguishes the two via [`Report::unmeasured`].
+    pub longest_chain: u64,
     /// Query labels that did NOT run (issue 230). A failed query used to arrive
     /// as empty rows, indistinguishable from a query that legitimately returned
     /// none — so the render printed real-looking zeros ("DÖE procedure Tenders:
@@ -1170,6 +1189,8 @@ pub struct Raw {
     pub factless: Rows,
     /// Amount plausibility per era (issue 267).
     pub amount_plausibility: Rows,
+    /// The single-row `MAX(current_seq)` fold-cost tripwire (issue 92).
+    pub longest_chain: Rows,
     /// Labels whose query never ran (issue 230), in the order collected.
     pub unmeasured: Vec<String>,
 }
@@ -1218,6 +1239,7 @@ impl Raw {
             amount_basis: take("amount_basis", &mut unmeasured)?,
             factless: take("factless", &mut unmeasured)?,
             amount_plausibility: take("amount_plausibility", &mut unmeasured)?,
+            longest_chain: take("longest_chain", &mut unmeasured)?,
             unmeasured,
         })
     }
@@ -1354,9 +1376,12 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
             negative: as_u64(r.get(2)),
             zero: as_u64(r.get(3)),
             over_1e12: as_u64(r.get(4)),
+            convertible: as_u64(r.get(5)),
         })
         .collect();
     plausibility.sort_by(|a, b| a.profile.cmp(&b.profile));
+
+    let longest_chain = raw.longest_chain.first().map(|r| as_u64(r.first())).unwrap_or(0);
 
     Report {
         base_url: base_url.to_owned(),
@@ -1370,6 +1395,7 @@ pub fn assemble(base_url: &str, raw: &Raw) -> Report {
         amount_basis,
         presence,
         plausibility,
+        longest_chain,
         unmeasured: raw.unmeasured.clone(),
     }
 }
@@ -1719,18 +1745,19 @@ pub fn render_text(report: &Report) -> String {
     } else {
         let _ = writeln!(
             out,
-            "  {:<30} {:>11} {:>9} {:>9} {:>9}",
-            "era", "amounts", "negative", "zero", ">1e12"
+            "  {:<30} {:>11} {:>9} {:>9} {:>9} {:>9}",
+            "era", "amounts", "negative", "zero", ">1e12", "eur-conv"
         );
         for r in &report.plausibility {
             let _ = writeln!(
                 out,
-                "  {:<30} {:>11} {:>9} {:>9} {:>9}",
+                "  {:<30} {:>11} {:>9} {:>9} {:>9} {:>9}",
                 display_era(&r.profile),
                 group(r.amounts),
                 group(r.negative),
                 group(r.zero),
                 group(r.over_1e12),
+                pct(r.convertible, r.amounts),
             );
         }
         let _ = writeln!(
@@ -1739,11 +1766,34 @@ pub fn render_text(report: &Report) -> String {
              their existence is not a defect — the RATE moving between runs is the signal, for the \
              fabricated-negative parser-regression class. >1e12 is a crude tripwire for \
              unrepresentable values escaping quarantine into the layer, not a claim about any \
-             single amount."
+             single amount. eur-conv is the share of amounts whose `eur_cents` derivation \
+             resolved a rate (ADR-0014 D4: unresolvable is NULL, never a guess) — near-zero \
+             per era until that era's backfill refold has run."
+        );
+    }
+
+    let _ = writeln!(out, "\n== 9. Fold-cost tripwire (longest version chain — issue 92) ==");
+    if report.unmeasured.iter().any(|l| l == "longest_chain") {
+        let _ = writeln!(out, "  UNMEASURED — the `longest_chain` query did not run.");
+    } else {
+        let _ = writeln!(
+            out,
+            "  longest chain: {}{}",
+            group(report.longest_chain),
+            if report.longest_chain >= LONGEST_CHAIN_FLAG {
+                " — FLAG: >= 4,000. fold() is O(chain^2) (issue 92); the measured decision \
+                 point is here. Measure the real fold wall-time and decide the rewrite."
+            } else {
+                " (flag threshold 4,000; fold() is O(chain^2), issue 92)"
+            },
         );
     }
     out
 }
+
+/// The chain length at which the weekly report flags the approach to the fold's
+/// quadratic-cost fatal zone (issue 92's "on the clock" decision).
+pub const LONGEST_CHAIN_FLAG: u64 = 4_000;
 
 /// One run's per-era headline rates as a compact JSON history entry (issue
 /// 265). Every rate is stored as `[numerator, denominator]` rather than a
@@ -1775,6 +1825,7 @@ pub fn headline_history_entry(report: &Report, computed_at: i64) -> serde_json::
                 .map_or([0, 0], |l| [l.awards - l.unchained.min(l.awards), l.awards]);
             let vat = by_profile_basis.get(p).map_or([0, 0], |b| [b.excl + b.incl, b.amounts]);
             let neg = by_profile_plaus.get(p).map_or([0, 0], |x| [x.negative, x.amounts]);
+            let eur = by_profile_plaus.get(p).map_or([0, 0], |x| [x.convertible, x.amounts]);
             json!({
                 "profile": p,
                 "versions": c.versions,
@@ -1784,10 +1835,11 @@ pub fn headline_history_entry(report: &Report, computed_at: i64) -> serde_json::
                 "linkage": linkage,
                 "vat_stated": vat,
                 "negative": neg,
+                "eur_convertible": eur,
             })
         })
         .collect();
-    json!({ "at": computed_at, "eras": eras })
+    json!({ "at": computed_at, "eras": eras, "longest_chain": report.longest_chain })
 }
 
 /// Append one entry to the stored headline history, keeping the newest
@@ -1988,6 +2040,8 @@ pub fn render_json(report: &Report) -> String {
             "zero": r.zero,
             "over_1e12": r.over_1e12,
             "negative_rate": rate(r.negative, r.amounts),
+            "eur_convertible": r.convertible,
+            "eur_convertible_rate": rate(r.convertible, r.amounts),
         }))
         .collect();
     let value = json!({
@@ -2010,6 +2064,7 @@ pub fn render_json(report: &Report) -> String {
             "merged": report.merge.merged,
             "rate": rate(report.merge.merged, report.merge.doe_tenders),
         },
+        "longest_chain": report.longest_chain,
     });
     serde_json::to_string_pretty(&value).unwrap_or_else(|_| "{}".into())
 }
@@ -2159,11 +2214,14 @@ mod tests {
                 negative: 2,
                 zero: 9,
                 over_1e12: 0,
+                convertible: 480,
             }],
+            longest_chain: 3_282,
             unmeasured: vec![],
         };
         let entry = headline_history_entry(&report, 1_700_000_000);
         assert_eq!(entry["at"], 1_700_000_000);
+        assert_eq!(entry["longest_chain"], 3_282, "the fold-cost tripwire rides along (issue 92)");
         let era = &entry["eras"][0];
         assert_eq!(era["profile"], "eforms:eforms-sdk-1.13");
         assert_eq!(era["factless"], json!([5, 1_000]));
@@ -2172,6 +2230,7 @@ mod tests {
         assert_eq!(era["linkage"], json!([140, 200]));
         assert_eq!(era["vat_stated"], json!([100, 500]));
         assert_eq!(era["negative"], json!([2, 500]));
+        assert_eq!(era["eur_convertible"], json!([480, 500]), "ADR-0014's convertibility gauge");
 
         // Bounded: KEEP+3 appends leave exactly KEEP, newest last.
         let mut stored = "[]".to_owned();
@@ -2219,6 +2278,8 @@ mod tests {
                 // Amount plausibility (issue 267).
                 "amount_plausibility",
                 "fresh_holds",
+                // The fold-cost tripwire (issue 92).
+                "longest_chain",
             ]
         );
     }
@@ -2400,6 +2461,7 @@ mod tests {
             ("factless".to_owned(), Some(vec![])),
             ("amount_plausibility".to_owned(), Some(vec![])),
             ("fresh_holds".to_owned(), Some(vec![])),
+            ("longest_chain".to_owned(), Some(vec![])),
         ])
         .expect("labelled");
         let text = render_text(&assemble("http://x", &raw));
@@ -2826,8 +2888,11 @@ mod tests {
                     json!(3),
                     json!(7),
                     json!(1),
+                    json!(96),
                 ]]),
             ),
+            // Issue 92: the single-cell whole-corpus MAX, as the runner delivers it.
+            ("longest_chain".to_owned(), Some(vec![vec![json!(3_282)]])),
         ];
         let raw = Raw::from_labelled(results).expect("labelled");
         let report = assemble("http://x", &raw);
@@ -2841,6 +2906,7 @@ mod tests {
                 negative: 3,
                 zero: 7,
                 over_1e12: 1,
+                convertible: 96,
             }]
         );
         let text = render_text(&report);
@@ -2849,6 +2915,24 @@ mod tests {
             text.contains("RATE moving between runs is the signal"),
             "the source-published caveat must render — a rate table without it manufactures \
              a defect out of publisher behaviour:\n{text}"
+        );
+        assert!(
+            text.contains("80.0%"),
+            "the eur-conv column renders 96/120 as a rate:\n{text}"
+        );
+
+        // Issue 92: the tripwire line renders un-flagged below the threshold and
+        // FLAGS at it — the whole point is that the approach is visible, so both
+        // sides of the threshold are pinned here.
+        assert_eq!(report.longest_chain, 3_282);
+        assert!(
+            text.contains("longest chain: 3,282") && !text.contains("FLAG: >= 4,000"),
+            "3,282 is on the clock but below the flag threshold:\n{text}"
+        );
+        let flagged = render_text(&Report { longest_chain: 4_000, ..report.clone() });
+        assert!(
+            flagged.contains("FLAG: >= 4,000"),
+            "at the threshold the line must flag, not murmur:\n{flagged}"
         );
 
         // Two eras, sorted by profile.

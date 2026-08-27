@@ -350,7 +350,7 @@ fn QualityPanel() -> Element {
     rsx! {
         match &data {
             Ok(h) if !h.runs.is_empty() => {
-                let latest = h.runs.last().cloned().unwrap_or_else(|| model::QualityRun { at: 0, eras: vec![] });
+                let latest = h.runs.last().cloned().unwrap_or_else(|| model::QualityRun { at: 0, eras: vec![], longest_chain: 0 });
                 let previous = (h.runs.len() >= 2).then(|| h.runs[h.runs.len() - 2].clone());
                 let stale = h.age_seconds.is_some_and(|a| a > 8 * 86_400);
                 rsx! {
@@ -369,6 +369,7 @@ fn QualityPanel() -> Element {
                             thead { tr {
                                 th { "era" } th { "versions" } th { "shells" } th { "value" }
                                 th { "named" } th { "linkage" } th { "VAT stated" } th { "negative" }
+                                th { "EUR conv" }
                             } }
                             tbody {
                                 for era in latest.eras.clone() {
@@ -381,6 +382,7 @@ fn QualityPanel() -> Element {
                                         td { "{rate_cell(era.linkage, prev_rate(&previous, &era.profile, |e| e.linkage))}" }
                                         td { "{rate_cell(era.vat_stated, prev_rate(&previous, &era.profile, |e| e.vat_stated))}" }
                                         td { "{rate_cell(era.negative, prev_rate(&previous, &era.profile, |e| e.negative))}" }
+                                        td { "{rate_cell(era.eur_convertible, prev_rate(&previous, &era.profile, |e| e.eur_convertible))}" }
                                     }
                                 }
                             }

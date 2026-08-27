@@ -664,6 +664,22 @@ async fn the_filters_narrow_the_same_way_on_every_collection() {
         assert!(items(&server.get(&format!("/v1/tenders?max_value={}", cents - 1)).await).is_empty());
     }
 
+    // The published-currency filter (ADR-0014 D5): exact match on any amount of
+    // the current version; lowercase input normalizes; junk is a 400, never a
+    // silent empty page.
+    let currency = detail["value"]["currency"].as_str().map(str::to_owned);
+    if let Some(code) = currency {
+        assert_eq!(items(&server.get(&format!("/v1/tenders?currency={code}")).await).len(), 1);
+        assert_eq!(
+            items(&server.get(&format!("/v1/tenders?currency={}", code.to_lowercase())).await).len(),
+            1,
+            "case-insensitive input — the layer uppercases once"
+        );
+        assert!(items(&server.get("/v1/tenders?currency=XXX").await).is_empty());
+    }
+    assert_eq!(server.status("/v1/tenders?currency=euros").await, 400);
+    assert_eq!(server.status("/v1/tenders?currency=E2R").await, 400);
+
     // Status is evaluated against the submission deadline: this procedure's
     // deadline is long past, so it is closed and not open.
     assert_eq!(items(&server.get("/v1/tenders?status=closed").await).len(), 1);
@@ -2227,12 +2243,18 @@ async fn the_quality_gauges_appear_with_the_history_and_never_lie_a_zero() {
         "no history stored → no quality gauges, not zeros:\n{body}"
     );
 
+    // The 1.13 era carries the ADR-0014 convertibility pair and the issue-92
+    // chain scalar; the 1.14 era deliberately OMITS both — the stored prod
+    // history predates the fields, so an old-shape entry must still deserialize
+    // (serde defaults) and its zero denominators must be skipped, not lied.
     let history = serde_json::json!([{
         "at": 1_700_000_000,
+        "longest_chain": 3282,
         "eras": [
             { "profile": "eforms:eforms-sdk-1.13", "versions": 1000,
               "factless": [5, 1000], "value": [700, 1000], "named": [150, 170],
-              "linkage": [140, 200], "vat_stated": [100, 500], "negative": [2, 500] },
+              "linkage": [140, 200], "vat_stated": [100, 500], "negative": [2, 500],
+              "eur_convertible": [250, 500] },
             // A young era with no awards yet: named/linkage denominators are 0
             // and must be SKIPPED, not emitted as 0.
             { "profile": "eforms:eforms-sdk-1.14", "versions": 10,
@@ -2268,6 +2290,18 @@ async fn the_quality_gauges_appear_with_the_history_and_never_lie_a_zero() {
     assert!(
         body.contains("tender_db_dq_factless_rate{era=\"eforms:eforms-sdk-1.14\"} 0"),
         "a real zero over a real denominator IS emitted:\n{body}"
+    );
+    assert!(
+        body.contains("tender_db_dq_eur_convertible_rate{era=\"eforms:eforms-sdk-1.13\"} 0.5"),
+        "the ADR-0014 convertibility pair divides once:\n{body}"
+    );
+    assert!(
+        !body.contains("tender_db_dq_eur_convertible_rate{era=\"eforms:eforms-sdk-1.14\"}"),
+        "an old-shape era without the pair defaults to a 0 denominator and is skipped:\n{body}"
+    );
+    assert!(
+        body.contains("tender_db_dq_longest_chain 3282"),
+        "the issue-92 chain tripwire rides the headline history:\n{body}"
     );
     let age = body
         .lines()

@@ -184,3 +184,33 @@ scheduled run carrying eur_cents backfill + 292's lang normalization + 278's
 ~45k ghosts; check issue 92 (fold O(chain²)) before scheduling; (c) D5 read
 surface (?currency= filter, eur-based min/max + index) + eur_convertible_rate
 gauge + /docs. Then the language read-path units (ADR-0013 D3/D4).
+
+## Build progress (2026-08-27, 04:4x — D5's refold-independent half)
+
+Shipped this firing (ADR build order kept — the min/max→eur_cents FLIP and the
+head-column materialization deliberately wait until AFTER the backfill refold,
+because flipping on a mostly-NULL corpus would break the public filter):
+
+- **`?currency=` published-currency filter** on Tenders/Lots: exact ISO-4217
+  match (case-insensitive input, uppercased once at the API layer; junk 400s),
+  an EXISTS over `tender_version_amounts` beside the value bounds — classified
+  isolating, honoured-params/classification/isolation gates all extended.
+- **`eur_convertible_rate` per-era gauge** riding the 265/266 pattern end to
+  end: a `convertible` column on the amount-plausibility DQ query → headline
+  `[num,den]` pair (serde-default so stored runs keep deserializing) →
+  `tender_db_dq_eur_convertible_rate` on /metrics → an "EUR conv" dashboard
+  column → an eur-conv rate column in report section 8.
+- **Issue 92's longest-chain tripwire** in the same DQ unit (section 9, FLAG at
+  ≥ 4,000, headline scalar + /metrics gauge).
+- **Docs told the truth everywhere**: /docs caveat rewritten (as-published
+  serving + eur_cents visible via /v1/sql + the pending flip announced), filter
+  table + applies matrix + OpenAPI param + README; `v_tender_amounts` now
+  carries `eur_cents`; /v1/sql column notes for `eur_cents`/`awarded_eur_cents`
+  (they were already PRAGMA-visible with no note — gap found by the doc
+  survey); README's stale `country` ISO-3 and `limit` max-500 claims fixed.
+
+Remaining: (a) ECU series + 172 validation pass; (b) the epoch-bump refold;
+(c') post-refold: min/max flip to eur_cents + materialized head column
+(`tenders.current_value_eur_cents` + deferred index, the `current_deadline`
+pattern) + the de-isolation MEASURED per the 88d876a rule + the CHANGELOG
+surface (none exists yet — the flip entry creates it).

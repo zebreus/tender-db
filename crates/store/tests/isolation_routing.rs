@@ -38,6 +38,7 @@ fn every_version_predicate_isolates_on_the_collections_that_apply_them() {
         ("status", Filter { status: Some(store::read::Status::Open), ..f() }),
         ("min_value", Filter { min_value: Some(1), ..f() }),
         ("max_value", Filter { max_value: Some(1), ..f() }),
+        ("currency", Filter { currency: Some("EUR".into()), ..f() }),
     ];
     for (name, filter) in &cases {
         assert!(walks(Collection::Tenders, filter), "tenders?{name}= must isolate");

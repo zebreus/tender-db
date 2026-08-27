@@ -692,10 +692,12 @@ pub(crate) const SCHEMA: &str = "
       JOIN tender_version_classifications x ON x.tender_id = t.id AND x.seq = t.current_seq
      WHERE t.current_seq IS NOT NULL;
 
-    -- Money amounts of each current Tender (field names the amount; cents+currency).
+    -- Money amounts of each current Tender (field names the amount; cents+currency,
+    -- plus the derived EUR-at-publication-date beside them — ADR-0014).
     DROP VIEW IF EXISTS v_tender_amounts;
     CREATE VIEW v_tender_amounts AS
-    SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency, a.tax_basis
+    SELECT t.id AS tender_id, a.lot_id, a.field, a.cents, a.currency, a.tax_basis,
+           a.eur_cents
       FROM tenders t
       JOIN tender_version_amounts a ON a.tender_id = t.id AND a.seq = t.current_seq
      WHERE t.current_seq IS NOT NULL;

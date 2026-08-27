@@ -214,13 +214,14 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         );
         let runs: Vec<model::QualityRun> = serde_json::from_str(&body).unwrap_or_default();
         if let Some(latest) = runs.last() {
-            let gauges: [(&str, &str, fn(&model::QualityEra) -> [u64; 2]); 6] = [
+            let gauges: [(&str, &str, fn(&model::QualityEra) -> [u64; 2]); 7] = [
                 ("tender_db_dq_factless_rate", "Shell versions / versions (issue 109).", |e| e.factless),
                 ("tender_db_dq_value_completeness", "Versions carrying an amount / versions.", |e| e.value),
                 ("tender_db_dq_winner_named_rate", "Results naming a winner / results a winner was possible for.", |e| e.named),
                 ("tender_db_dq_award_linkage_rate", "Award Tenders chained to a contract notice / award Tenders.", |e| e.linkage),
                 ("tender_db_dq_vat_stated_rate", "Amounts stating a VAT basis / amounts (issue 251).", |e| e.vat_stated),
                 ("tender_db_dq_negative_amount_rate", "Negative amounts / amounts (issue 267; overwhelmingly source-published — the rate MOVING is the signal).", |e| e.negative),
+                ("tender_db_dq_eur_convertible_rate", "Amounts with a derived eur_cents / amounts (ADR-0014 D4: unresolvable is NULL, never a guess).", |e| e.eur_convertible),
             ];
             for (name, help, pick) in gauges {
                 header(&mut out, name, help);
@@ -230,6 +231,17 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
                         sample(&mut out, name, &[("era", &era.profile)], num as f64 / den as f64);
                     }
                 }
+            }
+            // The fold-cost tripwire (issue 92): a whole-corpus scalar, not a
+            // per-era rate. 0 means the run predates the measurement (serde
+            // default) — absent beats a fake zero, same rule as the rates.
+            if latest.longest_chain > 0 {
+                header(
+                    &mut out,
+                    "tender_db_dq_longest_chain",
+                    "Longest version chain in the corpus (issue 92; fold() is O(chain^2), flag threshold 4000).",
+                );
+                sample(&mut out, "tender_db_dq_longest_chain", &[], latest.longest_chain as f64);
             }
         }
     }
