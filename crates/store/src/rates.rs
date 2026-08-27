@@ -95,6 +95,7 @@ impl Db {
         currency: &str,
         date: &str,
     ) -> turso::Result<Option<ResolvedRate>> {
+        let currency = canonical_currency(currency);
         if currency == "EUR" {
             return Ok(Some(ResolvedRate {
                 rate_to_eur: 1.0,
@@ -126,6 +127,42 @@ impl Db {
     }
 }
 
+/// The ISO-4217 series a published currency code resolves against. The rate
+/// SERIES are keyed by ISO codes, but pre-1997 TED notices publish the OJ's own
+/// legacy codes — measured on the 2026-08-24 snapshot (issue 172 validation
+/// pass, 2026-08-27): 1993–1996 amounts are almost entirely LIT/UKL/DKR/HFL/
+/// SKR/NKR/BFR/PTA/LFR/FMK/ESC/FFR…, flipping to ISO mid-1997 with stragglers
+/// after. Without this map the whole early corpus would derive NULL against a
+/// series that covers every one of these currencies. The PUBLISHED code stays
+/// verbatim in the row (ADR-0014: served as published) — only the lookup
+/// translates. ECU/XEU resolve as EUR identity: the ECU converted 1:1 by law
+/// (Council Regulation 1103/97), and the pre-1999 daily series is ECU-based
+/// anyway. An unknown code (e.g. the one observed `GPB` typo) passes through
+/// and honestly resolves to nothing.
+pub fn canonical_currency(code: &str) -> &str {
+    match code {
+        "ECU" | "XEU" => "EUR",
+        "LIT" => "ITL",
+        "UKL" => "GBP",
+        "DKR" => "DKK",
+        "HFL" | "NFL" => "NLG",
+        "SKR" => "SEK",
+        "NKR" => "NOK",
+        "BFR" => "BEF",
+        "PTA" => "ESP",
+        "LFR" => "LUF",
+        "FMK" => "FIM",
+        "ESC" => "PTE",
+        "FFR" => "FRF",
+        "IKR" => "ISK",
+        "SFR" => "CHF",
+        "YEN" => "JPY",
+        "IRL" => "IEP",
+        "CND" => "CAD",
+        other => other,
+    }
+}
+
 /// The whole rates table as an in-memory lookup — what the projection derives
 /// `eur_cents` from (ADR-0014). Loaded once per projection run (and after a
 /// `fetch-rates` load), so fold-time conversion is pure memory: ~85k rows,
@@ -142,6 +179,7 @@ pub struct RatesLookup {
 impl RatesLookup {
     /// Units of `currency` per 1 EUR on `date`, or `None` (unconvertible).
     pub fn rate(&self, currency: &str, date: &str) -> Option<f64> {
+        let currency = canonical_currency(currency);
         if currency == "EUR" {
             return Some(1.0);
         }

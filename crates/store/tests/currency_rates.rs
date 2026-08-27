@@ -88,6 +88,23 @@ async fn lookup_honours_the_window_and_the_irrevocable_exemption() {
         "the adoption-era resolution is unchanged by the ECU load"
     );
 
+    // The legacy-code aliases (issue 172 validation pass, 2026-08-27):
+    // 1993-1996 notices publish the OJ's own codes (UKL/LIT/DKR/…), which must
+    // resolve against the ISO-keyed series; ECU is EUR identity by law; a
+    // published typo (`GPB`, observed once) stays honestly unconvertible.
+    db.upsert_currency_rates(&[(
+        "GBP".into(),
+        "1993-09-20".into(),
+        0.77436,
+        "eurostat-ecu".into(),
+    )])
+    .await
+    .expect("gbp row");
+    let ukl = db.rate_to_eur("UKL", "1993-09-21").await.unwrap().expect("UKL rides GBP");
+    assert_eq!((ukl.rate_to_eur, ukl.source.as_str()), (0.77436, "eurostat-ecu"));
+    assert_eq!(db.rate_to_eur("ECU", "1995-05-05").await.unwrap().unwrap().rate_to_eur, 1.0);
+    assert_eq!(db.rate_to_eur("GPB", "1998-06-01").await.unwrap(), None);
+
     drop(db);
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));

@@ -240,6 +240,15 @@ The 172 validation half of (a) — sampling real pre-1999/cutover canonical rows
 against the loaded series on a snapshot — remains open, and stays the gate
 before the epoch refold.
 
+**172 validation pass RAN (2026-08-27 07:1x, snapshot census + samples): PASS
+with one real find** — 1993–1996 publishes TED-legacy currency codes
+(LIT/UKL/DKR/…, plus ECU itself), fixed by a `canonical_currency()` alias map
+at lookup (published codes stay verbatim; ECU/XEU = EUR identity). Magnitudes
+validated against the fetched series. **The ADR's refold gate is OPEN** once
+the alias fix deploys; the epoch refold is the next deliberate prod step
+(carries eur_cents backfill + 292 lang + 278 ghosts; issue 92 says seconds per
+worst chain, precedent ~3h corpus-wide).
+
 **Prod run (2026-08-27 05:53 UTC, rev fb4feb6)**: deploy green; job 1303
 `fetch-rates-ecu` ok in 3s — **56,706 rows upserted, exactly the local
 prediction** (ert_h_eur_d 29,468 + ert_bil_eur_d 27,238; the 48 confidential
