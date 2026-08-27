@@ -89,6 +89,40 @@ pub fn entry_names(archive: &Path) -> Result<Vec<String>, Error> {
     Ok(names)
 }
 
+/// The one text file inside a plain ZIP. The ECB ships `eurofxref-hist.zip`
+/// holding exactly one CSV — issue 306 moved the rates fetch onto it because
+/// the bare CSV URL serves a frozen defective artifact. Refuses an archive
+/// with any other member count rather than guessing which one is meant.
+pub fn zip_single_text(archive: &Path) -> Result<String, Error> {
+    let file = std::fs::File::open(archive)?;
+    let mut zip = zip::ZipArchive::new(file)
+        .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
+    let mut names = Vec::new();
+    let mut content: Option<String> = None;
+    for i in 0..zip.len() {
+        let mut entry = zip
+            .by_index(i)
+            .map_err(|e| Error::Zip(format!("{}: {e}", archive.display())))?;
+        if !entry.is_file() {
+            continue;
+        }
+        names.push(entry.name().to_owned());
+        if content.is_none() {
+            let mut text = String::new();
+            entry.read_to_string(&mut text)?;
+            content = Some(text);
+        }
+    }
+    match (content, names.len()) {
+        (Some(text), 1) => Ok(text),
+        (_, n) => Err(Error::Zip(format!(
+            "{}: expected exactly one file, found {n} [{}]",
+            archive.display(),
+            names.join(", ")
+        ))),
+    }
+}
+
 /// Visit every payload file in the package at `archive`, in archive order.
 pub fn walk(archive: &Path, mut visit: impl FnMut(Member<'_>)) -> Result<(), Error> {
     match open(archive)? {
@@ -387,5 +421,36 @@ mod tests {
 
         assert!(result.is_ok(), "{result:?}");
         assert_eq!(seen, ["day/bundle.zip!EN.xml"], "one level unwrapped: {seen:?}");
+    }
+
+    /// The rates-zip reader (issue 306): exactly one member comes back as text,
+    /// any other count is a refusal that names what it found.
+    #[test]
+    fn zip_single_text_reads_one_member_and_refuses_more() {
+        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let opts: zip::write::FileOptions<()> = zip::write::FileOptions::default();
+        zip.start_file("eurofxref-hist.csv", opts).expect("start");
+        std::io::Write::write_all(&mut zip, b"Date, USD\n2026-08-26, 1.1645\n").expect("write");
+        let bytes = zip.finish().expect("finish").into_inner();
+        let path =
+            std::env::temp_dir().join(format!("pkgtest-{}-single.zip", std::process::id()));
+        std::fs::write(&path, &bytes).expect("write scratch zip");
+        let text = zip_single_text(&path);
+        std::fs::remove_file(&path).ok();
+        assert_eq!(text.expect("reads"), "Date, USD\n2026-08-26, 1.1645\n");
+
+        let mut zip = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let opts: zip::write::FileOptions<()> = zip::write::FileOptions::default();
+        zip.start_file("a.csv", opts).expect("start");
+        std::io::Write::write_all(&mut zip, b"a").expect("write");
+        zip.start_file("b.csv", opts).expect("start");
+        std::io::Write::write_all(&mut zip, b"b").expect("write");
+        let bytes = zip.finish().expect("finish").into_inner();
+        let path = std::env::temp_dir().join(format!("pkgtest-{}-two.zip", std::process::id()));
+        std::fs::write(&path, &bytes).expect("write scratch zip");
+        let err = zip_single_text(&path);
+        std::fs::remove_file(&path).ok();
+        let msg = err.expect_err("two members refused").to_string();
+        assert!(msg.contains("found 2") && msg.contains("b.csv"), "names the members: {msg}");
     }
 }

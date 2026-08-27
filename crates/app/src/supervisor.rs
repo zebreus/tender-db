@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 
-use ingest::{doe, fetch, process, project, ted};
+use ingest::{doe, fetch, package, process, project, ted};
 use model::ingestion::{Ingestion, JobProgress, JobRun, Phase, QueuedJob};
 use serde::{Deserialize, Serialize};
 use store::turso;
@@ -282,6 +282,15 @@ enum Spec {
     /// the eur_cents backfill refold — it aggregates the satellite's derived
     /// column, so stamping before the refold just writes NULLs.
     BackfillValues,
+    /// Re-derive `eur_cents` across all four money loci from the CURRENT rates
+    /// table (issue 306): a rowid-windowed walk per locus recomputing each
+    /// row's EUR sibling from (cents, currency, version publication date) via
+    /// the in-memory lookup, updating only rows whose value changes. The
+    /// repair for a poisoned/incomplete rates load — hours cheaper than a
+    /// whole-corpus refold and quiet on the change feed, because the corpus
+    /// content did not change, only the derived-beside layer. Run
+    /// `backfill-values` after so the head column follows.
+    RederiveEur,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -752,6 +761,12 @@ impl Supervisor {
             // ADR-0014 D5: stamp the head-value EUR column (run after the
             // eur_cents backfill refold).
             "backfill-values" => Ok(vec![
+                self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
+            ]),
+            // Issue 306: re-derive the four loci's eur_cents from the current
+            // rates table, then follow with backfill-values for the head column.
+            "rederive-eur" => Ok(vec![
+                self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
                 self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
             ]),
             // Escape hatch for a stale rebuild watermark (issue 85 interlock). No-op
@@ -1970,6 +1985,50 @@ impl Supervisor {
                      MAX derived-EUR amount; NULL where none converts — ADR-0014 D4)"
                 ))
             }
+            Spec::RederiveEur => {
+                // Reload FIRST: the walk must see the rates table as repaired,
+                // not whatever snapshot the last projection cached.
+                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
+                let rates = self.db.rates_lookup();
+                let mut scanned = 0i64;
+                let mut updated = 0i64;
+                let mut per_locus = Vec::new();
+                for (locus, (table, ..)) in store::rates::EUR_LOCI.iter().enumerate() {
+                    let mut locus_scanned = 0i64;
+                    let mut locus_updated = 0i64;
+                    let mut watermark = 0i64;
+                    loop {
+                        let (rows, changed, next) = self
+                            .db
+                            .rederive_eur_batch(locus, &rates, BACKFILL_BATCH, watermark)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                        if rows == 0 {
+                            break;
+                        }
+                        locus_scanned += rows;
+                        locus_updated += changed;
+                        watermark = next;
+                        self.set_phase(
+                            table,
+                            Some((scanned + locus_scanned) as u64),
+                            None,
+                            format!("{} updated", updated + locus_updated),
+                        );
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after rederive batch: {e}");
+                        }
+                    }
+                    scanned += locus_scanned;
+                    updated += locus_updated;
+                    per_locus.push(format!("{table}: {locus_updated}/{locus_scanned}"));
+                }
+                Ok(format!(
+                    "eur_cents re-derived from {cached} cached rates: {updated} of {scanned} \
+                     money rows changed ({}) — follow with backfill-values (issue 306)",
+                    per_locus.join(", ")
+                ))
+            }
             Spec::Refold { profiles, expect } => {
                 let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
                 // Count BEFORE writing: a mistyped profile string matching a far larger
@@ -2045,14 +2104,19 @@ impl Supervisor {
                 ))
             }
             Spec::FetchRates => {
-                const URL: &str = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.csv";
+                // The ZIP, not the bare CSV: the bare
+                // `eurofxref-hist.csv` URL serves a frozen defective artifact
+                // (2010-02-12 rates plus one garbage row the CDN has pinned for
+                // sixteen years) while the zip at the same path carries the
+                // real live series. Issue 306.
+                const URL: &str = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip";
                 let period = store::rates::civil_date(store::now_unix());
                 let target = fetch::Target {
                     source: "ecb",
                     kind: "rates",
                     period: period.clone(),
                     url: URL.to_owned(),
-                    rel_path: format!("rates/eurofxref-hist-{period}.csv"),
+                    rel_path: format!("rates/eurofxref-hist-{period}.zip"),
                 };
                 // refetch=true: a same-day re-run re-downloads and lands as
                 // Unchanged when the content hash matches — the registry and the
@@ -2066,8 +2130,8 @@ impl Supervisor {
                     .await
                     .map_err(|e| e.to_string())?
                     .ok_or_else(|| format!("rates fetch {outcome:?} but no registry row"))?;
-                let csv = std::fs::read_to_string(self.archive.join(&row.path))
-                    .map_err(|e| format!("read archived rates csv {}: {e}", row.path))?;
+                let csv = package::zip_single_text(&self.archive.join(&row.path))
+                    .map_err(|e| format!("read archived rates zip {}: {e}", row.path))?;
                 let rows = store::rates::parse_ecb_history_csv(&csv);
                 if rows.is_empty() {
                     return Err(format!(
@@ -2075,6 +2139,10 @@ impl Supervisor {
                         row.bytes
                     ));
                 }
+                // The issue-306 tripwire: a live daily series whose newest row
+                // is stale means the SOURCE is defective — refuse before any
+                // write, so this failure mode is a red job, not silent NULLs.
+                store::rates::assert_fresh(&rows, &period, 10)?;
                 let seeded =
                     self.db.seed_irrevocable_euro_rates().await.map_err(|e| e.to_string())?;
                 let total = rows.len();
@@ -2092,12 +2160,22 @@ impl Supervisor {
                         eprintln!("supervisor: checkpoint after rates chunk: {e}");
                     }
                 }
+                // REPLACE can only overwrite, never remove: a poisoned stored
+                // row on a date the real file doesn't have (the garbage Sunday
+                // 2010-02-14 row) would survive every re-fetch. The file is the
+                // authority for its own source — delete what it disowns.
+                let removed = self
+                    .db
+                    .reconcile_currency_dates("ecb", &rows)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 // The running process folds with an in-memory snapshot — refresh
                 // it so the NEXT projection uses what was just loaded.
                 let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
-                     {seeded} irrevocable conversion rates seeded; {cached} rows cached",
+                     {seeded} irrevocable conversion rates seeded; {removed} stale rows \
+                     reconciled away; {cached} rows cached",
                     outcome, row.bytes
                 ))
             }
@@ -2118,6 +2196,7 @@ impl Supervisor {
                     [("ert_h_eur_d", "rates-ecu-h"), ("ert_bil_eur_d", "rates-ecu-bil")];
                 let mut upserted = 0u64;
                 let mut summary = Vec::new();
+                let mut all_rows = Vec::new();
                 for (dataset, kind) in datasets {
                     let target = fetch::Target {
                         source: "eurostat",
@@ -2148,6 +2227,18 @@ impl Supervisor {
                             row.bytes
                         ));
                     }
+                    // The issue-306 guard, closed-series form: this series ENDS
+                    // 1998-12-31 (the euro replaced the ECU), so freshness means
+                    // coverage reaches December 1998, not today. A file stopping
+                    // earlier is truncated/defective — refuse before writing.
+                    let newest = store::rates::newest_date(&rows).unwrap_or("").to_owned();
+                    if newest.as_str() < "1998-12-01" {
+                        return Err(format!(
+                            "{dataset} coverage ends {newest} — the closed ECU series must \
+                             reach 1998-12; truncated or defective file, nothing written \
+                             (issue 306)"
+                        ));
+                    }
                     let total = rows.len();
                     for (i, chunk) in rows.chunks(50_000).enumerate() {
                         upserted +=
@@ -2163,10 +2254,20 @@ impl Supervisor {
                         }
                     }
                     summary.push(format!("{dataset}: {total} rows ({:?}, {} bytes)", outcome, row.bytes));
+                    all_rows.extend(rows);
                 }
+                // Reconcile against the UNION of both datasets — they share the
+                // 'eurostat-ecu' source tag, so either file alone would disown
+                // the other's dates (issue 306's REPLACE-can't-delete lesson).
+                let removed = self
+                    .db
+                    .reconcile_currency_dates("eurostat-ecu", &all_rows)
+                    .await
+                    .map_err(|e| e.to_string())?;
                 let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "ecu rates 1993-1998: {upserted} rows upserted — {}; {cached} rows cached",
+                    "ecu rates 1993-1998: {upserted} rows upserted — {}; {removed} stale rows \
+                     reconciled away; {cached} rows cached",
                     summary.join("; ")
                 ))
             }
@@ -3554,6 +3655,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-values"
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
+            | "rederive-eur"
             | "fetch-rates"
             | "fetch-rates-ecu"
     )

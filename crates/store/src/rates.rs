@@ -300,6 +300,156 @@ pub fn parse_eurostat_sdmx_csv(csv: &str) -> Vec<(String, String, f64, String)> 
     out
 }
 
+/// The newest `rate_date` among parsed upsert rows — the input to the
+/// freshness assertion below.
+pub fn newest_date(rows: &[(String, String, f64, String)]) -> Option<&str> {
+    rows.iter().map(|(_, d, _, _)| d.as_str()).max()
+}
+
+/// The incident-306 tripwire: a rates file that parses cleanly can still be
+/// WRONG — the ECB's bare hist.csv served a 2010-frozen artifact with one
+/// garbage row for months of silence-shaped failure. A live daily series must
+/// end near today; a file whose newest row is older than `max_age_days` is
+/// refused as defective/stale BEFORE anything is written.
+pub fn assert_fresh(
+    rows: &[(String, String, f64, String)],
+    today: &str,
+    max_age_days: i64,
+) -> Result<(), String> {
+    let newest = newest_date(rows).ok_or("no rows parsed")?;
+    let age = day_gap(newest, today);
+    if age > max_age_days {
+        return Err(format!(
+            "rates file is STALE or defective: newest row {newest} is {age} day(s) old \
+             (limit {max_age_days}) — refusing to load (issue 306)"
+        ));
+    }
+    Ok(())
+}
+
+impl Db {
+    /// Reconcile one source's daily rows against the freshly parsed file: any
+    /// stored row of `source` whose `rate_date` does not appear in the file at
+    /// all is deleted. REPLACE-only loading can never REMOVE a poisoned row
+    /// (the issue-306 garbage 2010-02-14 Sunday row survives every re-fetch
+    /// otherwise); the fetched file is the authority for its own source, so
+    /// reconciliation deletes by date, chunked per year to keep statements
+    /// bounded. Same-date same-currency corrections are REPLACE's job.
+    pub async fn reconcile_currency_dates(
+        &self,
+        source: &str,
+        rows: &[(String, String, f64, String)],
+    ) -> turso::Result<u64> {
+        let dates: std::collections::BTreeSet<&str> =
+            rows.iter().map(|(_, d, _, _)| d.as_str()).collect();
+        let conn = self.conn().await;
+        // Walk the STORED years, not the file's: a poisoned row in a year the
+        // file doesn't cover at all must still be swept (its year then has an
+        // empty keep-list and the whole year goes).
+        let mut years = Vec::new();
+        let mut year_rows = conn
+            .query(
+                "SELECT DISTINCT substr(rate_date, 1, 4) FROM currency_rates \
+                  WHERE source = ?",
+                [t(source)],
+            )
+            .await?;
+        while let Some(row) = year_rows.next().await? {
+            years.push(crate::text(&row, 0));
+        }
+        drop(year_rows);
+        let mut removed = 0u64;
+        for year in years {
+            let in_year: Vec<&str> =
+                dates.iter().copied().filter(|d| d.starts_with(&year)).collect();
+            let sql = if in_year.is_empty() {
+                "DELETE FROM currency_rates WHERE source = ? AND rate_date LIKE ?".to_owned()
+            } else {
+                let placeholders = vec!["?"; in_year.len()].join(",");
+                format!(
+                    "DELETE FROM currency_rates WHERE source = ? AND rate_date LIKE ? \
+                     AND rate_date NOT IN ({placeholders})"
+                )
+            };
+            let mut params: Vec<Value> = vec![t(source), t(format!("{year}-%"))];
+            params.extend(in_year.iter().map(|d| t(*d)));
+            removed += conn.execute(&sql, params).await?;
+        }
+        Ok(removed)
+    }
+
+    /// One batch of the issue-306 repair walk: re-derive one money locus's EUR
+    /// sibling for the next `batch` rows past the `rowid` watermark, from
+    /// (cents, currency, version publication date) via the in-memory lookup —
+    /// the exact `EurContext` derivation the fold itself uses, so a re-run
+    /// after repair writes nothing. Only rows whose derived value CHANGES are
+    /// updated: garbage-rate values corrected, newly convertible NULLs filled,
+    /// no-longer-derivable values honestly NULLed. Deliberately quiet on the
+    /// change feed — the derived-beside layer moved, the corpus did not.
+    /// Returns `(scanned, updated, watermark)`; `scanned == 0` ends the locus.
+    pub async fn rederive_eur_batch(
+        &self,
+        locus: usize,
+        rates: &RatesLookup,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(i64, i64, i64)> {
+        let (table, cents_col, currency_col, eur_col) = EUR_LOCI[locus];
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                &format!(
+                    "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
+                            v.published_at \
+                       FROM {table} a \
+                       JOIN tender_versions v \
+                         ON v.tender_id = a.tender_id AND v.seq = a.seq \
+                      WHERE a.rowid > ? ORDER BY a.rowid LIMIT ?"
+                ),
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let mut scanned = 0i64;
+        let mut watermark = after;
+        let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
+        while let Some(row) = rows.next().await? {
+            scanned += 1;
+            let rowid = crate::int(&row, 0);
+            watermark = rowid;
+            let stored = crate::opt_int_of(&row, 3);
+            let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2)) {
+                (Some(cents), Some(currency)) => {
+                    rates.eur_cents(cents, &currency, &civil_date(crate::int(&row, 4)))
+                }
+                _ => None,
+            };
+            if derived != stored {
+                pending.push((rowid, derived));
+            }
+        }
+        drop(rows);
+        let updated = pending.len() as i64;
+        if !pending.is_empty() {
+            let mut stmt = conn
+                .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
+                .await?;
+            for (rowid, value) in pending {
+                stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
+            }
+        }
+        Ok((scanned, updated, watermark))
+    }
+}
+
+/// The four ADR-0014 money loci: (table, cents column, currency column,
+/// derived-EUR column). The order is the rederive walk's locus index.
+pub const EUR_LOCI: [(&str, &str, &str, &str); 4] = [
+    ("tender_version_amounts", "cents", "currency", "eur_cents"),
+    ("tender_version_lot_results", "awarded_cents", "awarded_currency", "awarded_eur_cents"),
+    ("tender_version_bids", "cents", "currency", "eur_cents"),
+    ("tender_version_contracts", "cents", "currency", "eur_cents"),
+];
+
 /// `'YYYY-MM-DD'` (UTC) for an epoch-seconds instant — the fetch job's period
 /// key. Hinnant's civil-from-days, the inverse of [`day_number`].
 pub fn civil_date(epoch_seconds: i64) -> String {
@@ -411,6 +561,28 @@ mod tests {
             assert_eq!(civil_date(n * 86_400), d, "round-trip {d}");
             assert_eq!(civil_date(n * 86_400 + 86_399), d, "last second of {d}");
         }
+    }
+
+    #[test]
+    fn the_stale_rates_tripwire_refuses_a_frozen_file() {
+        // The issue-306 shape exactly: a file whose newest row is years old
+        // parses cleanly and must still be refused. Ten days tolerates
+        // weekends and holiday runs of the real business-day series.
+        let frozen = vec![
+            ("USD".to_owned(), "2010-02-12".to_owned(), 1.3572, "ecb".to_owned()),
+            ("USD".to_owned(), "2010-02-14".to_owned(), 2.0, "ecb".to_owned()),
+        ];
+        assert_eq!(newest_date(&frozen), Some("2010-02-14"));
+        let err = assert_fresh(&frozen, "2026-08-27", 10).unwrap_err();
+        assert!(err.contains("STALE or defective"), "says what it refused: {err}");
+        assert!(err.contains("2010-02-14"), "names the newest row: {err}");
+
+        let live = vec![("USD".to_owned(), "2026-08-25".to_owned(), 1.1645, "ecb".to_owned())];
+        assert!(assert_fresh(&live, "2026-08-27", 10).is_ok(), "a fresh file passes");
+        assert!(
+            assert_fresh(&[], "2026-08-27", 10).is_err(),
+            "an empty parse is refused, not silently fresh"
+        );
     }
 
     #[test]

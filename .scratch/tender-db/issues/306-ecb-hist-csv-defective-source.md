@@ -1,8 +1,11 @@
 # 306 — INCIDENT: ECB's bare eurofxref-hist.csv is a defective artifact; rates stop at 2010 + one garbage row loaded
 
-Status: OPEN — fix in progress (found 2026-08-27 20:5x reading the post-refold
-acceptance DQ: modern eras' eur-conv rates were impossibly low — sdk-1.8 17.4%,
-r208 32.8%, r209 39.2% — while text-era converted at 96.9%)
+Status: OPEN — fix BUILT (all four pieces below + tests green), pending deploy
+and the prod repair sequence: fetch-rates (zip) → rederive-eur (chains
+backfill-values) → verify per-currency MAX(rate_date) ≈ today → gauges on the
+next DQ run. (Found 2026-08-27 20:5x reading the post-refold acceptance DQ:
+modern eras' eur-conv rates were impossibly low — sdk-1.8 17.4%, r208 32.8%,
+r209 39.2% — while text-era converted at 96.9%)
 Kind: data-correctness incident (bounded) + source fix + repair job
 Relates to: 291/ADR-0014 (the derivation line), 305 (ops honesty), the runbook.
 
@@ -31,18 +34,27 @@ Relates to: 291/ADR-0014 (the derivation line), 305 (ops honesty), the runbook.
    money loci and possibly `current_value_eur_cents`. Published values
    untouched. Must be re-derived, not just backfilled.
 
-## Fix (one unit)
+## Fix (one unit — BUILT 2026-08-27 ~21:3x, tests green)
 
-- `fetch-rates` switches to the ZIP (reuse the ingest zip machinery), keeps
-  the registry archive of the zip + extracted CSV.
-- **Staleness tripwire**: the job hard-errors unless the newest parsed date is
-  within 10 days of the fetch date — this exact failure becomes a red job at
-  the first fetch instead of silent NULLs discovered via a gauge.
-- New `rederive-eur` job: windowed walk over the four money loci recomputing
-  `eur_cents` for EVERY row from (cents, currency, version published_at) via
-  the in-memory lookup — idempotent, fixes class 2 and fills class 1, quiet on
+- `fetch-rates` switched to the ZIP (`package::zip_single_text`, a new pub
+  helper on the ingest zip machinery that refuses any member count ≠ 1);
+  the registry archives the zip; parse unchanged.
+- **Staleness tripwire** (`store::rates::assert_fresh`): the job hard-errors
+  unless the newest parsed date is within 10 days of the fetch date — this
+  exact failure becomes a red job at the first fetch instead of silent NULLs
+  discovered via a gauge. Eurostat-ECU twin: the closed series must reach
+  1998-12 or the load refuses.
+- **Reconcile** (`Db::reconcile_currency_dates`): REPLACE can never REMOVE a
+  poisoned row, so after each load the file's source has any stored date the
+  file disowns deleted (walked over STORED years, so an orphaned year sweeps
+  clean too). Removes the garbage Sunday 2010-02-14 row.
+- New `rederive-eur` admin kind (`Db::rederive_eur_batch`): rowid-windowed
+  walk per money locus recomputing `eur_cents` for EVERY row from
+  (cents, currency, version published_at) via the in-memory lookup —
+  idempotent (second pass writes 0), fixes class 2 and fills class 1, quiet on
   the change feed (derived-beside layer; the corpus content did not change).
-  Then re-run `backfill-values`; gauges correct on the next DQ run.
+  The dispatch chains `backfill-values` automatically; gauges correct on the
+  next DQ run. Turso rowid SELECT/UPDATE addressing pinned by the test.
 
 ## Lesson
 
