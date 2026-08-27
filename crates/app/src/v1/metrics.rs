@@ -300,6 +300,18 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         for c in &q.by_reason {
             sample(&mut out, "tender_db_quarantine_reason_members", &[("reason", &c.label)], c.value as f64);
         }
+        // Issue 303: the terminal tripwire. 0 is the steady state; any reason
+        // above its curated terminal policy counts here, so "quarantine is
+        // done" stays an alertable fact instead of a memory — a new era
+        // quarantining under a NEW reason trips this too (unknown reasons
+        // default to a zero baseline by design).
+        let exceeded = model::dashboard::quarantine_terminal_exceeded(&q.by_reason);
+        header(
+            &mut out,
+            "tender_db_quarantine_terminal_exceeded",
+            "Reasons whose outstanding count exceeds the curated terminal ledger (issue 303; 0 = terminal state holds).",
+        );
+        sample(&mut out, "tender_db_quarantine_terminal_exceeded", &[], exceeded.len() as f64);
     }
 
     (

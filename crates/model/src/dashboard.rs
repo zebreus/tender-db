@@ -259,6 +259,54 @@ pub fn quarantine_class(reason: &str) -> QuarantineClass {
     }
 }
 
+/// What the documented TERMINAL state allows a reason's outstanding count to be
+/// (issue 303). The quarantine drain campaigns ended with exactly two classes
+/// legitimately holding rows; everything else was driven to zero and diagnosed
+/// on the board — so any other reason with outstanding rows is a REGRESSION
+/// (a new era quarantining a new way), not history, and the tripwire exists so
+/// that accretes loudly instead of silently between weekly reads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TerminalPolicy {
+    /// A static residue: outstanding above this baseline trips the wire.
+    Fixed(i64),
+    /// Held-by-design garbage that keeps arriving with ingestion (the
+    /// astronomical-magnitude class): outstanding legitimately grows, so the
+    /// wire watches ARRIVAL rate elsewhere (the weekly report's section 5),
+    /// never the total.
+    AcceptedInflow,
+}
+
+/// The curated terminal ledger (issue 303), measured 2026-08-27 against the
+/// live table: `unrepresentable-value` at 300 and growing by design (~162
+/// arrivals/30d — ADR-0010's unrepresentable class, quarantined at ingestion);
+/// the EOCD-corrupt zip residue fixed at 8 (benign, issue-268 era); every
+/// other reason fully resolved (not-utf8's last residue closed as issue 302).
+/// A reason not named here defaults to `Fixed(0)` DELIBERATELY — new reasons
+/// must either stay at zero or earn a ledger entry with an issue behind it.
+pub fn quarantine_terminal_policy(reason: &str) -> TerminalPolicy {
+    if reason.starts_with("unreadable zip") {
+        return TerminalPolicy::Fixed(8);
+    }
+    match reason {
+        "unrepresentable-value" => TerminalPolicy::AcceptedInflow,
+        _ => TerminalPolicy::Fixed(0),
+    }
+}
+
+/// The reasons among `by_reason` (still-held counts) exceeding their terminal
+/// policy — empty is the healthy answer. Pure over the already-measured counts
+/// so the dashboard, /metrics and any test agree by construction.
+pub fn quarantine_terminal_exceeded(by_reason: &[Count]) -> Vec<String> {
+    by_reason
+        .iter()
+        .filter(|c| match quarantine_terminal_policy(&c.label) {
+            TerminalPolicy::Fixed(baseline) => c.value > baseline,
+            TerminalPolicy::AcceptedInflow => false,
+        })
+        .map(|c| c.label.clone())
+        .collect()
+}
+
 /// Notices held for one (source, profile, year) against what that year is known
 /// to have published.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -340,5 +388,37 @@ mod tests {
         assert_eq!(quarantine_class("unknown-root"), Benign);
         assert_eq!(quarantine_class("missing-publication-id"), Benign);
         assert_eq!(quarantine_class("unreadable zip bundle: invalid Zip archive"), Benign);
+    }
+
+    /// Issue 303: the terminal tripwire trips on a Fixed class above its
+    /// baseline and on ANY unknown reason with rows — never on the
+    /// accepted-inflow class, however big it grows.
+    #[test]
+    fn the_terminal_tripwire_trips_on_growth_and_unknowns_only() {
+        use super::{Count, quarantine_terminal_exceeded};
+        let count = |label: &str, value: i64| Count { label: label.into(), value };
+        // The documented terminal state, verbatim: healthy.
+        assert!(
+            quarantine_terminal_exceeded(&[
+                count("unrepresentable-value", 300),
+                count("unreadable zip bundle: invalid Zip archive: Could not find EOCD", 8),
+            ])
+            .is_empty()
+        );
+        // Accepted inflow may grow arbitrarily without tripping.
+        assert!(quarantine_terminal_exceeded(&[count("unrepresentable-value", 5_000)]).is_empty());
+        // A fixed residue above its baseline trips.
+        assert_eq!(
+            quarantine_terminal_exceeded(&[count("unreadable zip bundle: whatever", 9)]),
+            vec!["unreadable zip bundle: whatever".to_owned()]
+        );
+        // A NEW reason with any rows trips — zero is the default ledger entry,
+        // so a regression cannot hide behind an unrecognized name.
+        assert_eq!(
+            quarantine_terminal_exceeded(&[count("some-new-era-reason", 1)]),
+            vec!["some-new-era-reason".to_owned()]
+        );
+        // ...but a new reason at zero is not a finding.
+        assert!(quarantine_terminal_exceeded(&[count("some-new-era-reason", 0)]).is_empty());
     }
 }

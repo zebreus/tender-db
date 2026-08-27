@@ -683,9 +683,24 @@ fn QuarantinePanel(
     // count into a bigger wrong one, which is the defect this panel is being
     // changed to remove (issue 137).
     let benign = outstanding - actionable - suspected;
+    // Issue 303: the terminal ledger's verdict, computed from the same counts
+    // this panel already shows so the two can never disagree.
+    let exceeded = model::dashboard::quarantine_terminal_exceeded(
+        &reasons
+            .iter()
+            .map(|(label, value)| model::dashboard::Count { label: label.clone(), value: *value })
+            .collect::<Vec<_>>(),
+    );
     rsx! {
         section { class: "panel",
             h2 { "Quarantine" }
+            if exceeded.is_empty() {
+                p { class: "muted", "Terminal state holds (issue 303): every reason within its curated ledger." }
+            } else {
+                p { class: "error",
+                    "TERMINAL STATE EXCEEDED (issue 303): {exceeded.join(\", \")} — a reason grew past its documented ledger; investigate before it accretes."
+                }
+            }
             p { class: "muted",
                 "A notice with content no profile maps is held whole, never partly imported "
                 "(ADR-0004). The headline counts only confirmed real-notice loss; two large "
