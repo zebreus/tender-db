@@ -271,3 +271,14 @@ design — the ONE planned whole-corpus refold). The hourly firings monitor;
 after it lands: the D5 flip unit (min/max→eur_cents + head column + CHANGELOG)
 and the eur_convertible_rate gauge gets its first real numbers on Sunday's DQ
 run (or an earlier manual one for the acceptance read).
+
+## Build progress (2026-08-27, 09:2x — ADR-0013 D3 shipped in code)
+
+`?lang=` landed (7f89576): requested → ENG → labelled → unlabelled at every
+read-time pick (list all sorts, detail header + lot titles, /v1/lots, SSE
+include_data), 639-1/639-2 input normalized through the fold's own map,
+selector-not-filter semantics classified and documented, detail endpoint now
+validates its query string. ADR-0013 amended: the "original" leg has no
+persisted data source — needs an additive column + refold if wanted. Deploys
+with the post-refold batch (6da6d96 flip + this). Remaining language units:
+org-name satellite (D5), coverage widening (per-era storage decisions).
