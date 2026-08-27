@@ -10,6 +10,7 @@ pub mod accounts;
 pub mod canonical;
 pub mod checkpoint;
 pub mod jobs;
+pub mod rates;
 pub mod read;
 pub mod webhooks;
 
@@ -405,6 +406,22 @@ const SCHEMA: &str = "
         -- transition, and the age of the damage. NULL while populated.
         went_empty_at  INTEGER,
         observed_at    INTEGER NOT NULL
+    ) STRICT;
+
+    -- Daily EUR-pivot exchange rates (ADR-0014): one row per (currency, day),
+    -- the ECU daily series 1993-1998 chained to the ECB reference rates 1999-,
+    -- plus the irrevocable euro conversion rates as 'irrevocable' rows valid
+    -- from each currency's adoption date FOREVER (the currency is frozen).
+    -- rate_to_eur: units of `currency` per 1 EUR (the ECB quoting convention).
+    -- A REFERENCE table, deliberately notice-layer: it must survive
+    -- reset_tender_layer and every rebuild. Dates are TEXT 'YYYY-MM-DD' — the
+    -- source datasets' own key, human-auditable, and lexicographically ordered.
+    CREATE TABLE IF NOT EXISTS currency_rates (
+        currency    TEXT NOT NULL,
+        rate_date   TEXT NOT NULL,
+        rate_to_eur REAL NOT NULL,
+        source      TEXT NOT NULL, -- 'ecb' | 'ecu' | 'irrevocable'
+        PRIMARY KEY (currency, rate_date)
     ) STRICT;
 ";
 

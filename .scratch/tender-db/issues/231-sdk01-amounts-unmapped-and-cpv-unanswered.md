@@ -212,3 +212,14 @@ section 1's `value` column for `DÖE sdk-0.1 island`. The CPV half moved 0.0 % �
 path. Unlike CPV, the ceiling here is unknown: I have no measurement of how many of the era's 667,084
 versions publish a `RequestedTenderTotal` at all, and the fixture evidence (two of four sdk-0.1
 fixtures) is far too thin to extrapolate from. The refold's own number is the measurement.
+
+## 2026-08-27 — the value refold RAN (owner, overnight window)
+
+Jobs 388/389 (admin `refold` kind, profile `eforms:eforms-sdk-0.1`, expect guard
+passed at 669,265 notices vs ~650k estimate): refold 1298 re-queued 669,265
+notices + stamped 658,646 tenders epoch-stale; the paired incremental fold
+completed in 2,022s — 658,646/658,646 Tenders folded, 671,105 versions written,
+0 retired, health green throughout. The acceptance number (section 1's `value`
+column for the DÖE sdk-0.1 island) rides TODAY's scheduled weekly data-quality
+run — read it when the run lands and close the VALUE half against it. The
+ceiling remains unknown by design (the refold's own number is the measurement).

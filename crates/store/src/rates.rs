@@ -1,0 +1,171 @@
+//! The EUR-pivot exchange-rate reference table (ADR-0014).
+//!
+//! One row per (currency, day): the ECU daily series 1993–1998 chained 1:1 to
+//! the ECB reference rates 1999→, plus the irrevocable euro conversion rates as
+//! `'irrevocable'` rows valid from each adoption date forever. `rate_to_eur` is
+//! units of currency per 1 EUR (the ECB quoting convention), so
+//! `eur = amount / rate`. This unit ships the table, the seed, and the lookup —
+//! all DORMANT: nothing in the serving path calls [`Db::rate_to_eur`] until the
+//! `eur_cents` derivation lands (ADR-0014 build order).
+
+use crate::{Db, t, text};
+use turso::Value;
+
+/// How far back a DAILY rate may satisfy a lookup (weekends, holidays, and the
+/// occasional source gap). Beyond it the answer is honest absence (ADR-0014 D4:
+/// unconvertible → NULL), never a stale rate. `'irrevocable'` rows are exempt —
+/// a frozen conversion rate has no staleness.
+const DAILY_WINDOW_DAYS: i64 = 7;
+
+/// The irrevocable euro conversion rates, per EU Council regulation — exact by
+/// definition. `(currency, adoption_date, units_per_eur)`. Each seeds one
+/// `'irrevocable'` row at its adoption date; the lookup treats such a row as
+/// valid for every later date (the national currency is frozen from then on —
+/// legacy notices kept quoting DEM/FRF/… for a while after 1999). Dates BEFORE
+/// adoption are served by the daily ECU/ECB series, not by these.
+pub const IRREVOCABLE_EURO_RATES: &[(&str, &str, f64)] = &[
+    ("ATS", "1999-01-01", 13.7603),
+    ("BEF", "1999-01-01", 40.3399),
+    ("DEM", "1999-01-01", 1.95583),
+    ("ESP", "1999-01-01", 166.386),
+    ("FIM", "1999-01-01", 5.94573),
+    ("FRF", "1999-01-01", 6.55957),
+    ("IEP", "1999-01-01", 0.787564),
+    ("ITL", "1999-01-01", 1936.27),
+    ("LUF", "1999-01-01", 40.3399),
+    ("NLG", "1999-01-01", 2.20371),
+    ("PTE", "1999-01-01", 200.482),
+    ("GRD", "2001-01-01", 340.750),
+    ("SIT", "2007-01-01", 239.640),
+    ("CYP", "2008-01-01", 0.585274),
+    ("MTL", "2008-01-01", 0.429300),
+    ("SKK", "2009-01-01", 30.1260),
+    ("EEK", "2011-01-01", 15.6466),
+    ("LVL", "2014-01-01", 0.702804),
+    ("LTL", "2015-01-01", 3.45280),
+    ("HRK", "2023-01-01", 7.53450),
+    ("BGN", "2026-01-01", 1.95583),
+];
+
+/// A resolved rate: units of the requested currency per 1 EUR, plus the row's
+/// date and source for provenance (`eur_rate_date` in the derivation).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResolvedRate {
+    pub rate_to_eur: f64,
+    pub rate_date: String,
+    pub source: String,
+}
+
+impl Db {
+    /// Upsert a batch of daily rate rows — the rates fetch job's write path.
+    /// REPLACE, not IGNORE: a source correcting a published day must win.
+    pub async fn upsert_currency_rates(
+        &self,
+        rows: &[(String, String, f64, String)],
+    ) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        for (currency, date, rate, source) in rows {
+            conn.execute(
+                "INSERT OR REPLACE INTO currency_rates(currency, rate_date, rate_to_eur, source)
+                 VALUES (?, ?, ?, ?)",
+                (t(currency), t(date), Value::Real(*rate), t(source)),
+            )
+            .await?;
+        }
+        conn.execute("COMMIT", ()).await?;
+        Ok(rows.len() as u64)
+    }
+
+    /// Seed the irrevocable conversion rates. Idempotent (REPLACE of constants).
+    pub async fn seed_irrevocable_euro_rates(&self) -> turso::Result<u64> {
+        let rows: Vec<(String, String, f64, String)> = IRREVOCABLE_EURO_RATES
+            .iter()
+            .map(|(c, d, r)| ((*c).to_owned(), (*d).to_owned(), *r, "irrevocable".to_owned()))
+            .collect();
+        self.upsert_currency_rates(&rows).await
+    }
+
+    /// The EUR-pivot rate for `currency` on `date` (`'YYYY-MM-DD'`): the nearest
+    /// row at-or-before the date — within [`DAILY_WINDOW_DAYS`] for a daily
+    /// source, unbounded for an `'irrevocable'` one. `EUR` is identity. `None`
+    /// is the honest unconvertible answer (ADR-0014 D4).
+    pub async fn rate_to_eur(
+        &self,
+        currency: &str,
+        date: &str,
+    ) -> turso::Result<Option<ResolvedRate>> {
+        if currency == "EUR" {
+            return Ok(Some(ResolvedRate {
+                rate_to_eur: 1.0,
+                rate_date: date.to_owned(),
+                source: "identity".to_owned(),
+            }));
+        }
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT rate_to_eur, rate_date, source FROM currency_rates
+                  WHERE currency = ? AND rate_date <= ?
+                  ORDER BY rate_date DESC LIMIT 1",
+                (t(currency), t(date)),
+            )
+            .await?;
+        let Some(row) = rows.next().await? else { return Ok(None) };
+        let rate = match row.get_value(0)? {
+            Value::Real(r) => r,
+            Value::Integer(i) => i as f64,
+            _ => return Ok(None),
+        };
+        let found = ResolvedRate { rate_to_eur: rate, rate_date: text(&row, 1), source: text(&row, 2) };
+        if found.source == "irrevocable" || day_gap(&found.rate_date, date) <= DAILY_WINDOW_DAYS {
+            Ok(Some(found))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+/// Whole days between two `'YYYY-MM-DD'` strings (`later - earlier`), computed
+/// with a civil-date to day-number conversion — no clock, no timezone (the
+/// table's dates are calendar days by construction). A malformed date yields
+/// `i64::MAX`, which fails the window check — honest absence over a guess.
+fn day_gap(earlier: &str, later: &str) -> i64 {
+    match (day_number(earlier), day_number(later)) {
+        (Some(a), Some(b)) => b - a,
+        _ => i64::MAX,
+    }
+}
+
+/// Days since the civil epoch for `'YYYY-MM-DD'` (Howard Hinnant's
+/// days-from-civil algorithm — exact over the table's whole range).
+fn day_number(date: &str) -> Option<i64> {
+    let mut parts = date.split('-');
+    let y: i64 = parts.next()?.parse().ok()?;
+    let m: i64 = parts.next()?.parse().ok()?;
+    let d: i64 = parts.next()?.parse().ok()?;
+    if parts.next().is_some() || !(1..=12).contains(&m) || !(1..=31).contains(&d) {
+        return None;
+    }
+    let y = if m <= 2 { y - 1 } else { y };
+    let era = if y >= 0 { y } else { y - 399 } / 400;
+    let yoe = y - era * 400;
+    let mp = (m + 9) % 12;
+    let doy = (153 * mp + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    Some(era * 146097 + doe - 719468)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn day_gap_counts_calendar_days() {
+        assert_eq!(day_gap("1999-01-01", "1999-01-04"), 3);
+        assert_eq!(day_gap("1998-12-31", "1999-01-01"), 1, "across a year boundary");
+        assert_eq!(day_gap("2024-02-28", "2024-03-01"), 2, "leap year");
+        assert_eq!(day_gap("2023-02-28", "2023-03-01"), 1, "non-leap year");
+        assert_eq!(day_gap("bogus", "2023-03-01"), i64::MAX, "malformed fails the window");
+    }
+}
