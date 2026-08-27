@@ -56,6 +56,38 @@ async fn lookup_honours_the_window_and_the_irrevocable_exemption() {
     let n = db.seed_irrevocable_euro_rates().await.expect("reseed");
     assert_eq!(n as usize, store::rates::IRREVOCABLE_EURO_RATES.len());
 
+    // The ECU era (ADR-0014 D2a): once the eurostat-ecu daily series is
+    // loaded, a pre-adoption DEM date resolves via the DAILY row inside its
+    // 7-day window — while dates before the series' local coverage stay
+    // honestly absent, and post-adoption dates keep resolving irrevocable.
+    db.upsert_currency_rates(&[(
+        "DEM".into(),
+        "1997-06-02".into(),
+        1.96438,
+        "eurostat-ecu".into(),
+    )])
+    .await
+    .expect("ecu row");
+    let ecu = db.rate_to_eur("DEM", "1997-06-04").await.unwrap().expect("daily ECU resolves");
+    assert_eq!(
+        ecu,
+        store::rates::ResolvedRate {
+            rate_to_eur: 1.96438,
+            rate_date: "1997-06-02".into(),
+            source: "eurostat-ecu".into()
+        }
+    );
+    assert_eq!(
+        db.rate_to_eur("DEM", "1996-01-15").await.unwrap(),
+        None,
+        "outside the daily window and before adoption — absence, not the irrevocable rate"
+    );
+    assert_eq!(
+        db.rate_to_eur("DEM", "1999-03-01").await.unwrap().unwrap().source,
+        "irrevocable",
+        "the adoption-era resolution is unchanged by the ECU load"
+    );
+
     drop(db);
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));

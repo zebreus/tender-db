@@ -214,3 +214,28 @@ Remaining: (a) ECU series + 172 validation pass; (b) the epoch-bump refold;
 (`tenders.current_value_eur_cents` + deferred index, the `current_deadline`
 pattern) + the de-isolation MEASURED per the 88d876a rule + the CHANGELOG
 surface (none exists yet — the flip entry creates it).
+
+## Build progress (2026-08-27, 05:1x — ECU series loader + the stale-rates gap)
+
+Unit (a)'s load half BUILT (prod run pending deploy): source verified by live
+fetches — Eurostat splits the Commission's official daily ECU series across
+`ert_h_eur_d` (former national currencies: DEM/FRF/ITL/ATS/…) and
+`ert_bil_eur_d` (GBP/DKK/USD/…), both daily back to 1974, OBS_VALUE = national
+units per 1 ECU (DEM closes 1998-12-31 on the irrevocable 1.95583 EXACTLY; ITL
+1936.27 — the two constants cross-confirm), CC BY 4.0, keyless. New
+`fetch-rates-ecu` admin job fetches both through the registry (source
+`eurostat`), parses SDMX-CSV (header-driven, CRLF, confidential empty-value
+rows skipped — 48 RSD rows measured in the real file), re-filters to
+< 1999-01-01 (the ECB series is the authority from there; 1:1 by Council Reg
+1103/97), REPLACE-upserts as `eurostat-ecu`. Expected prod load: 56,706 rows.
+Real downloaded files validated against the parser's assumptions locally.
+
+**Stale-rates gap found and fixed in the same unit**: nothing scheduled
+`fetch-rates`, so with a 7-day daily window every fold more than a week after
+the last manual run would have derived NULL eur_cents for non-EUR amounts —
+new folds would have silently regressed within days of unit 3 going live. The
+daily chain now runs `fetch-rates` before the projection (queued-guarded).
+
+The 172 validation half of (a) — sampling real pre-1999/cutover canonical rows
+against the loaded series on a snapshot — remains open, and stays the gate
+before the epoch refold.

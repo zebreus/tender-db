@@ -315,6 +315,14 @@ enum Spec {
     /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
     /// irrevocable euro conversion rates, and chunk-upsert the daily rows.
     FetchRates,
+    /// Fetch the pre-1999 daily ECU series (ADR-0014 D2a) — the Commission's
+    /// Official Journal rates as Eurostat carries them, split across TWO
+    /// datasets (`ert_h_eur_d`: the former national currencies; `ert_bil_eur_d`:
+    /// the rest) — and load 1993-1998 into `currency_rates` as `eurostat-ecu`
+    /// rows. One-time historical load: the series is closed (ECU→EUR 1:1 on
+    /// 1999-01-01, Council Regulation 1103/97), so a re-run is hash-idempotent
+    /// through the fetch registry and REPLACE-idempotent in the table.
+    FetchRatesEcu,
     /// Re-project the notices whose PARSE LAYER carries any of these field ids —
     /// the FIELD-scoped refold (issue 88 follow-up): a new mapping for a grafted
     /// id affects exactly its carriers, a set no profile names. Sweeps the value
@@ -749,6 +757,11 @@ impl Supervisor {
                     self.push("fetch-rates", "ecb eurofxref-hist".into(), Spec::FetchRates).await,
                 ])
             }
+            // ADR-0014 D2a: load the closed 1993-1998 daily ECU series.
+            "fetch-rates-ecu" => Ok(vec![
+                self.push("fetch-rates-ecu", "eurostat ecu 1993-1998".into(), Spec::FetchRatesEcu)
+                    .await,
+            ]),
             "refold" => {
                 let profiles = req.profiles.clone().unwrap_or_default();
                 if profiles.is_empty() {
@@ -2041,6 +2054,75 @@ impl Supervisor {
                     "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
                      {seeded} irrevocable conversion rates seeded; {cached} rows cached",
                     outcome, row.bytes
+                ))
+            }
+            Spec::FetchRatesEcu => {
+                // Eurostat splits the official daily ECU series in two: the
+                // former euro-area national currencies (DEM/FRF/ITL/… — the
+                // ones pre-1999 tenders actually publish in) live in
+                // `ert_h_eur_d`, everything else (GBP/DKK/USD/SEK/…) in
+                // `ert_bil_eur_d`. Both verified 2026-08-27: daily back to
+                // 1974, OBS_VALUE = national units per 1 ECU (DEM closes
+                // 1998-12-31 on the irrevocable 1.95583 exactly), CC BY 4.0,
+                // no key. `endPeriod` caps at 1998-12-31 in the URL, and the
+                // loader re-filters below, because from 1999 the ECB series is
+                // the authority and the two must not overlap.
+                const BASE: &str = "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data";
+                const RANGE: &str = "format=SDMX-CSV&startPeriod=1993-01-01&endPeriod=1998-12-31";
+                let datasets =
+                    [("ert_h_eur_d", "rates-ecu-h"), ("ert_bil_eur_d", "rates-ecu-bil")];
+                let mut upserted = 0u64;
+                let mut summary = Vec::new();
+                for (dataset, kind) in datasets {
+                    let target = fetch::Target {
+                        source: "eurostat",
+                        kind,
+                        period: "1993-1998".to_owned(),
+                        url: format!("{BASE}/{dataset}?{RANGE}"),
+                        rel_path: format!("rates/ecu-{dataset}-1993-1998.csv"),
+                    };
+                    let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
+                        .await
+                        .map_err(|e| format!("{dataset} fetch: {e:?}"))?;
+                    let row = self
+                        .db
+                        .latest_fetch("eurostat", kind, "1993-1998")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| format!("{dataset} fetch {outcome:?} but no registry row"))?;
+                    let csv = std::fs::read_to_string(self.archive.join(&row.path))
+                        .map_err(|e| format!("read archived {dataset} csv {}: {e}", row.path))?;
+                    let rows: Vec<_> = store::rates::parse_eurostat_sdmx_csv(&csv)
+                        .into_iter()
+                        .filter(|(_, date, _, _)| date.as_str() < "1999-01-01")
+                        .collect();
+                    if rows.is_empty() {
+                        return Err(format!(
+                            "{dataset} parsed to ZERO rows ({} bytes) — format drift? nothing \
+                             written",
+                            row.bytes
+                        ));
+                    }
+                    let total = rows.len();
+                    for (i, chunk) in rows.chunks(50_000).enumerate() {
+                        upserted +=
+                            self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
+                        self.set_phase(
+                            "loading",
+                            Some(upserted),
+                            None,
+                            format!("{dataset} chunk {} upserted", i + 1),
+                        );
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after ecu rates chunk: {e}");
+                        }
+                    }
+                    summary.push(format!("{dataset}: {total} rows ({:?}, {} bytes)", outcome, row.bytes));
+                }
+                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "ecu rates 1993-1998: {upserted} rows upserted — {}; {cached} rows cached",
+                    summary.join("; ")
                 ))
             }
             Spec::SweepRegroupedGhosts => {
@@ -3359,6 +3441,19 @@ impl Supervisor {
             )
             .await,
         );
+        // Refresh the ECB reference rates BEFORE the fold (ADR-0014): the
+        // derivation's daily window is 7 days, so without a standing refresh
+        // every fold more than a week after the last manual fetch-rates run
+        // would silently derive NULL eur_cents for non-EUR amounts (found
+        // 2026-08-27 — the table had only ever been loaded by hand). Riding
+        // the daily chain keeps the newest rate at most one business day
+        // behind a version's publication date. Queued-guard like the reveal
+        // recheck: never stack two, the table is REPLACE-idempotent anyway.
+        if self.already_pending("fetch-rates") {
+            eprintln!("[schedule] fetch-rates already queued or running, skipping today");
+        } else {
+            ids.push(self.push("fetch-rates", "ecb eurofxref-hist (daily)".into(), Spec::FetchRates).await);
+        }
         // One projection folds whatever the fetch+process just landed.
         ids.push(self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false }).await);
         // D5 reveal recheck rides the daily chain — issue 274's design intent
@@ -3414,6 +3509,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
             | "fetch-rates"
+            | "fetch-rates-ecu"
     )
 }
 

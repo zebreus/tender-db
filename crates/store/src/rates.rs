@@ -224,6 +224,44 @@ pub fn parse_ecb_history_csv(csv: &str) -> Vec<(String, String, f64, String)> {
     out
 }
 
+/// Parse a Eurostat SDMX-CSV rates file (`ert_h_eur_d` / `ert_bil_eur_d` — the
+/// Commission's official daily ECU series, ADR-0014 D2a) into upsert rows
+/// tagged `'eurostat-ecu'`. Header-driven: the `currency`, `TIME_PERIOD` and
+/// `OBS_VALUE` columns are located by name, so a re-ordered export keeps
+/// parsing. Lines are CRLF-terminated in the wild; `\r` is trimmed before
+/// splitting. A row with an empty `OBS_VALUE` (confidential cells carry
+/// `CONF_STATUS=C` and no value) or a non-positive/non-finite rate is skipped —
+/// absence over a guess, per ADR-0014 D4. `OBS_VALUE` is national units per
+/// 1 ECU, the same direction as the ECB series' units-per-EUR (ECU→EUR was 1:1
+/// by Council Regulation 1103/97), so it IS `rate_to_eur` verbatim.
+pub fn parse_eurostat_sdmx_csv(csv: &str) -> Vec<(String, String, f64, String)> {
+    let mut lines = csv.lines().map(|l| l.trim_end_matches('\r'));
+    let Some(header) = lines.next() else { return Vec::new() };
+    let columns: Vec<&str> = header.split(',').map(str::trim).collect();
+    let col = |name: &str| columns.iter().position(|c| c.eq_ignore_ascii_case(name));
+    let (Some(currency), Some(date), Some(value)) =
+        (col("currency"), col("TIME_PERIOD"), col("OBS_VALUE"))
+    else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for line in lines {
+        let cells: Vec<&str> = line.split(',').map(str::trim).collect();
+        let (Some(cur), Some(day)) = (cells.get(currency), cells.get(date)) else { continue };
+        if cur.is_empty() || day_number(day).is_none() {
+            continue;
+        }
+        if let Some(cell) = cells.get(value)
+            && let Ok(rate) = cell.parse::<f64>()
+            && rate > 0.0
+            && rate.is_finite()
+        {
+            out.push(((*cur).to_owned(), (*day).to_owned(), rate, "eurostat-ecu".to_owned()));
+        }
+    }
+    out
+}
+
 /// `'YYYY-MM-DD'` (UTC) for an epoch-seconds instant — the fetch job's period
 /// key. Hinnant's civil-from-days, the inverse of [`day_number`].
 pub fn civil_date(epoch_seconds: i64) -> String {
@@ -273,6 +311,40 @@ fn day_number(date: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn eurostat_sdmx_csv_parses_both_dataset_flavours_and_skips_confidential_cells() {
+        // Verbatim shapes from the verified 2026-08-27 fetches: CRLF line ends,
+        // `NAT` (ert_h_eur_d) and `NAC` (ert_bil_eur_d) unit codes, an
+        // empty-OBS_VALUE confidential row (RSD 1995-96 carries CONF_STATUS=C
+        // and no value), and DEM closing 1998 on the irrevocable 1.95583.
+        let csv = "DATAFLOW,LAST UPDATE,freq,statinfo,unit,currency,TIME_PERIOD,OBS_VALUE,OBS_FLAG,CONF_STATUS\r\n\
+                   ESTAT:ERT_H_EUR_D(1.0),08/01/26 11:00:00,D,AVG,NAT,DEM,1993-01-04,1.95268,,\r\n\
+                   ESTAT:ERT_H_EUR_D(1.0),08/01/26 11:00:00,D,AVG,NAT,DEM,1998-12-31,1.95583,,\r\n\
+                   ESTAT:ERT_BIL_EUR_D(1.0),26/08/26 11:00:00,D,AVG,NAC,USD,1993-01-04,1.1932,,\r\n\
+                   ESTAT:ERT_BIL_EUR_D(1.0),26/08/26 11:00:00,D,AVG,NAC,RSD,1995-01-31,,,C\r\n\
+                   not,a,data,row,at,all,nope,,,\r\n";
+        let rows = parse_eurostat_sdmx_csv(csv);
+        assert_eq!(
+            rows,
+            vec![
+                ("DEM".to_owned(), "1993-01-04".to_owned(), 1.95268, "eurostat-ecu".to_owned()),
+                ("DEM".to_owned(), "1998-12-31".to_owned(), 1.95583, "eurostat-ecu".to_owned()),
+                ("USD".to_owned(), "1993-01-04".to_owned(), 1.1932, "eurostat-ecu".to_owned()),
+            ],
+            "confidential empty-value rows and non-date rows are skipped; \
+             both unit codes parse; the CR never leaks into a cell"
+        );
+        // A reordered export still parses — the columns are found by name.
+        let reordered = "TIME_PERIOD,OBS_VALUE,currency\r\n1997-06-02,6.57,FRF\r\n";
+        assert_eq!(
+            parse_eurostat_sdmx_csv(reordered),
+            vec![("FRF".to_owned(), "1997-06-02".to_owned(), 6.57, "eurostat-ecu".to_owned())]
+        );
+        // A header without the needed columns parses to nothing, loudly zero —
+        // the job turns that into a hard error rather than an empty success.
+        assert!(parse_eurostat_sdmx_csv("a,b,c\r\n1,2,3\r\n").is_empty());
+    }
 
     #[test]
     fn ecb_history_csv_parses_with_gaps_and_trailing_commas() {
