@@ -1,10 +1,8 @@
 # 231 — sdk-0.1 amounts are never mapped, and whether the era carries CPV at all is unanswered
 
-Status: CPV HALF **CLOSED** 2026-08-20 (the era measures **cpv 93.8 %**, up from 0.0 %). VALUE HALF
-**FIXED IN CODE** 2026-08-20 — and its recorded diagnosis was WRONG: the amounts DO reach the parse
-layer, under `SDK01-*` ids, so this was a missing canonical destination exactly like the CPV half.
-Three ids added to `AMOUNTS`, gated by a new era-matrix row and falsified. Awaiting deploy + an
-sdk-0.1 refold for the acceptance number
+Status: **CLOSED** 2026-08-27 — both halves. CPV closed 2026-08-20 (93.8%, from 0.0%); VALUE
+closed 2026-08-27 against job 392's post-refold measurement (**0.6%**, from 0.0%; 5,194
+projected amounts; agrees with the issue-263 archive sample — see the closing section).
 Kind: projection mapping gap (one era, two fields) + one research question
 Blocked by: —
 Relates to: 29 (the parent gap, now verified closed for title/buyer/deadline), 177 (the same
@@ -226,3 +224,15 @@ Berlin, not Thursday; corrected 2026-08-27), so rather than wait four days the
 owner enqueued the run manually (job 392, started 03:54 UTC 2026-08-27). Read
 section 1 when it lands and close the VALUE half against it. The ceiling
 remains unknown by design (the refold's own number is the measurement).
+
+## 2026-08-27 — VALUE half CLOSED (job 392's report, measured post-refold)
+
+Section 1, DÖE sdk-0.1 island: `value` **0.0% → 0.6%** over 669,265 versions;
+section 6 now counts **5,194 projected amounts** for the island (from zero).
+0.6% is the publisher's rate, not an extraction shortfall: the issue-263
+archive sample found 0 of 50 island members carrying a money element at source
+— a 50-draw sample misses a 0.6% phenomenon three times out of four, so the
+two measurements agree. The two deliberately-unmapped amount ids stay
+unmapped (that decision is recorded above); this number is the mapping's
+measured ceiling. Both halves of this issue are now closed (CPV closed
+2026-08-20 at 93.8%).

@@ -239,3 +239,13 @@ daily chain now runs `fetch-rates` before the projection (queued-guarded).
 The 172 validation half of (a) — sampling real pre-1999/cutover canonical rows
 against the loaded series on a snapshot — remains open, and stays the gate
 before the epoch refold.
+
+**Prod run (2026-08-27 05:53 UTC, rev fb4feb6)**: deploy green; job 1303
+`fetch-rates-ecu` ok in 3s — **56,706 rows upserted, exactly the local
+prediction** (ert_h_eur_d 29,468 + ert_bil_eur_d 27,238; the 48 confidential
+RSD rows skipped as designed); lookup cache now 142,173 rows = 85,446 ECB +
+56,706 ECU + 21 irrevocable, reconciling exactly. The rates series is now
+CONTINUOUS from 1993-01-04 to today. Same deploy carried the D5
+refold-independent half live (currency filter, gauges, docs) and put
+fetch-rates on the daily chain — first scheduled run rides today's 07:35
+chain. 231 closed both halves off job 392's report (value 0.0% → 0.6%).
