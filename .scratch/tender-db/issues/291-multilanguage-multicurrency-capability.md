@@ -290,3 +290,33 @@ org-name satellite (D5), coverage widening (per-era storage decisions).
 Addendum 09:5x: ADR-0015 (issue 299/C15) settled the `currency_rates`
 exposure — allow-listed as reference data with attribution and a policy note;
 a dialect canary now pins the analyst query shapes at gate time.
+
+## Tonight's landing runbook (written 13:5x; the fold projects to ~02:00 UTC)
+
+The parked batch on main (`6da6d96` flip + `9dcb5d6` phase label + `47f8ca2`
+ADR-0015/currency_rates + `7e81354` 303 tripwire + `7f89576` ?lang=) deploys
+ONLY after job 402's fold completes. In order, whichever firing catches it:
+
+1. Verify job 402's outcome: counts vs expect (14,314,613 planned; 7,915,164
+   tenders; "0 verified unchanged" expected — epoch-forced rewrite), health
+   green, journal clean, disk ≥ ~350G free.
+2. Queue idle → bundle-deploy main tip (box repo.git rev .. main, full SHA
+   from `git rev-parse`, not a guessed one). Boot runs the tenders ALTER
+   (O(1)) and registers `tenders_current_value_eur` — `ensure_deferred_indexes`
+   enqueues a reindex; let it run (minutes; /health may dip during builds).
+3. Run `backfill-values` (admin kind) — the 7.9M walk stamping
+   current_value_eur_cents from the refolded satellite (~30-60 min, batched).
+4. Enqueue `data-quality` (dry_run:false) — the acceptance read: per-era
+   `eur_convertible_rate` first real numbers, `longest_chain` first number,
+   post-refold `value` columns, and 292's lang backfill visible in section 1.
+5. Prod probes: `?currency=SEK`-style filter answers; `?lang=de` flips a
+   title on a bilingual tender; `min_value` returns rows again (it matches
+   ~nothing between deploy and step 3 — that ordering is why 2→3 are one
+   operation); the quarantine panel says "terminal state holds".
+6. Board: 291/92 acceptance numbers; watch `tenders_current_value_eur`
+   built; then the de-isolation MEASUREMENT for min/max (88d876a rule) as its
+   own later step.
+
+Fold telemetry 13:48: 839,906/7,915,164 tenders, 1.9M version rows, ~163/s,
+WAL 76MB (bounded), 601G free (trend watched per firing; earlier drop was the
+plan build).
