@@ -258,3 +258,16 @@ CONTINUOUS from 1993-01-04 to today. Same deploy carried the D5
 refold-independent half live (currency filter, gauges, docs) and put
 fetch-rates on the daily chain — first scheduled run rides today's 07:35
 chain. 231 closed both halves off job 392's report (value 0.0% → 0.6%).
+
+## THE epoch refold ENQUEUED (2026-08-27 07:44 UTC, jobs 401 refold + 402 project)
+
+All 23 profiles, expect 14,300,000 (±25% vs 14,328,899 headline versions),
+enqueued behind today's completed daily chain on rev 668a399 (alias fix live).
+Carries: the corpus-wide eur_cents backfill (rates continuous 1993→today, ECU
+aliases in), 292's lang-tag normalization backfill (~100M rows), and 278's
+~45k regrouped ghosts via the 279 sweep gates. Expected ~10-14h at the sdk-0.1
+fold rate (331 notices/s); the change feed will carry the full rewrite (by
+design — the ONE planned whole-corpus refold). The hourly firings monitor;
+after it lands: the D5 flip unit (min/max→eur_cents + head column + CHANGELOG)
+and the eur_convertible_rate gauge gets its first real numbers on Sunday's DQ
+run (or an earlier manual one for the acceptance read).
