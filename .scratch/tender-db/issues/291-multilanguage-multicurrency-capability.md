@@ -40,10 +40,14 @@ What is missing is everything ON TOP, none of which changes the spine's shape:
    false-merge study in hand.
 4. **Coverage beyond "EN + original"**: r208/r209 translation copies live INSIDE the
    already-stored raw XML → parser-policy change + re-parse + refold (machinery
-   proven by the DE-1.x/251 campaigns). Text-era non-EN deliveries are dispatch-time
-   policy skips → recoverable by re-dispatch. Both are STORAGE decisions, not model
-   ones: multilingual text measured ~86% of parsed size; all-language ≈188 GB
-   (ted-access-channels.md) — needs a capacity check against the 1 TB volume first.
+   proven by the DE-1.x/251 campaigns). ~~Text-era non-EN deliveries are dispatch-time
+   policy skips → recoverable by re-dispatch~~ **CORRECTED 2026-08-27 (Lennart's
+   catch, filed as issue 304)**: the text era's language editions are one zip per
+   language per daily and v1 fetched EN ONLY — the other editions were never
+   downloaded (only mixed-package stragglers were dispatch-skipped), and the EN
+   edition is often itself a translation (`OL:` marks the original). Real
+   acquisition campaign, staged in 304; the "≈188 GB does not fit" premise is
+   stale (721 GB free of 1.7 TB measured 2026-08-27).
 5. **The one spine-level decision — supersession semantics**: `Fact::key()` replaces
    ALL language variants of a field as one unit, so a monolingual corrigendum erases
    the other languages from the head version (tested behavior). If the product wants
@@ -282,3 +286,7 @@ validates its query string. ADR-0013 amended: the "original" leg has no
 persisted data source — needs an additive column + refold if wanted. Deploys
 with the post-refold batch (6da6d96 flip + this). Remaining language units:
 org-name satellite (D5), coverage widening (per-era storage decisions).
+
+Addendum 09:5x: ADR-0015 (issue 299/C15) settled the `currency_rates`
+exposure — allow-listed as reference data with attribution and a policy note;
+a dialect canary now pins the analyst query shapes at gate time.
