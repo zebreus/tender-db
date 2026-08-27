@@ -669,6 +669,9 @@ const REGISTRATION_SUBTYPE: &str = "X01";
 /// layer's content is dropped first and re-derived from scratch — the change
 /// log is kept and appended to, never renumbered.
 pub async fn project(db: &Db, rebuild: bool) -> turso::Result<Report> {
+    // ADR-0014: one rates snapshot per run — every version's eur_cents derives
+    // from the same table state, and an empty table means honest NULLs.
+    db.reload_rates_lookup().await?;
     let pre_populated = wipe_guard_pre(db, rebuild).await?;
     // The projection writes a self-consistent graph by construction, so it runs
     // with FK enforcement off (issue 19) — the per-row FK check on millions of
@@ -1580,6 +1583,7 @@ pub async fn project_incremental_observed_stoppable(
     on_progress: impl FnMut(Progress),
     stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Report> {
+    db.reload_rates_lookup().await?; // ADR-0014: one rates snapshot per run
     let pre_populated = wipe_guard_pre(db, false).await?;
     db.set_foreign_keys(false).await?;
     let result =

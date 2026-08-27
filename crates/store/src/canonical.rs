@@ -260,6 +260,9 @@ pub(crate) const SCHEMA: &str = "
         -- nothing warned about. NULL still means unknown — but now unknown reads as
         -- unknown instead of as agreement.
         tax_basis TEXT,
+        -- ADR-0014: the derived EUR-at-publication-date value BESIDE the
+        -- published one; NULL = unconvertible or not-yet-refolded.
+        eur_cents INTEGER,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS tender_version_amounts_version ON tender_version_amounts(tender_id, seq);
@@ -428,6 +431,7 @@ pub(crate) const SCHEMA: &str = "
         decided_utc      INTEGER,
         decided_offset   INTEGER,
         decided_has_time INTEGER,
+        awarded_eur_cents INTEGER, -- ADR-0014 derived sibling of awarded_cents
         PRIMARY KEY (tender_id, seq, lot_result_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -465,6 +469,7 @@ pub(crate) const SCHEMA: &str = "
         lot_id    INTEGER REFERENCES lots(id),
         cents     INTEGER,
         currency  TEXT,
+        eur_cents INTEGER, -- ADR-0014 derived sibling
         PRIMARY KEY (tender_id, seq, bid_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -508,6 +513,7 @@ pub(crate) const SCHEMA: &str = "
         decided_has_time   INTEGER,
         cents              INTEGER,
         currency           TEXT,
+        eur_cents          INTEGER, -- ADR-0014 derived sibling
         PRIMARY KEY (tender_id, seq, contract_id),
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -986,6 +992,28 @@ pub struct LotState {
 /// two columns a per-entity probe needs are separated by `seq`, so they are not
 /// a usable prefix (the trap issue 248 already caught this engine in) — and
 /// `tender_version_bid_parties` carries no index that could serve it at all.
+/// Per-version EUR conversion context (ADR-0014): the rates snapshot + the
+/// version's publication date. Every money write derives its EUR sibling
+/// through this one pair, so a version's rows are mutually consistent and a
+/// re-fold with the same rates is byte-identical.
+struct EurContext {
+    rates: std::sync::Arc<crate::rates::RatesLookup>,
+    date: String,
+}
+
+impl EurContext {
+    fn cents(&self, cents: i64, currency: &str) -> Value {
+        opt_int(self.rates.eur_cents(cents, currency, &self.date))
+    }
+
+    fn opt(&self, cents: Option<i64>, currency: Option<&str>) -> Value {
+        match (cents, currency) {
+            (Some(c), Some(cur)) => self.cents(c, cur),
+            _ => Value::Null,
+        }
+    }
+}
+
 #[derive(Default)]
 struct WrittenEntities {
     lots: std::collections::HashSet<i64>,
@@ -4485,7 +4513,14 @@ impl Db {
             opt_text(v.notice_subtype.as_deref()),
             t(&v.publication_id),
         ]);
-        self.write_facts(tender_id, seq, None, &v.facts, pending);
+        // ADR-0014: one conversion context per version — the rates snapshot plus
+        // the version's publication date — so every money row derives its EUR
+        // sibling from the same instant (D3).
+        let eur = EurContext {
+            rates: self.rates_lookup(),
+            date: crate::rates::civil_date(v.published_at),
+        };
+        self.write_facts(tender_id, seq, None, &v.facts, pending, &eur);
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
             written.lots.insert(lot_id);
@@ -4495,7 +4530,7 @@ impl Db {
                 Value::Integer(lot_id),
                 t(&lot.kind),
             ]);
-            self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending);
+            self.write_facts(tender_id, seq, Some(lot_id), &lot.facts, pending, &eur);
         }
         // After the lots loop on purpose: both ends of a membership pair are lots this
         // same version publishes, so by here they are already in `lots` and
@@ -4516,7 +4551,7 @@ impl Db {
             ]);
         }
         for round in &v.rounds {
-            self.write_round(conn, tender_id, seq, round, stmts, pending, written).await?;
+            self.write_round(conn, tender_id, seq, round, stmts, pending, written, &eur).await?;
         }
         Ok(())
     }
@@ -4530,6 +4565,7 @@ impl Db {
         stmts: &mut TenderInserts,
         pending: &mut Pending,
         written: &mut WrittenEntities,
+        eur: &EurContext,
     ) -> turso::Result<()> {
         let scope = || (Value::Integer(tender_id), Value::Integer(seq));
         for result in &round.lot_results {
@@ -4552,6 +4588,7 @@ impl Db {
                 opt_int(result.decided.map(|(utc, _, _)| utc)),
                 opt_int(result.decided.map(|(_, offset, _)| offset)),
                 opt_int(result.decided.map(|(_, _, has_time)| i64::from(has_time))),
+                eur.opt(result.awarded_cents, result.awarded_currency.as_deref()),
             ]);
             for organization_id in &result.winners {
                 let (a, b) = scope();
@@ -4581,6 +4618,7 @@ impl Db {
                 opt_int(lot_id),
                 opt_int(bid.cents),
                 opt_text(bid.currency.as_deref()),
+                eur.opt(bid.cents, bid.currency.as_deref()),
             ]);
             for party in &bid.parties {
                 let (a, b) = scope();
@@ -4622,6 +4660,7 @@ impl Db {
                 opt_int(d_has_time),
                 opt_int(contract.cents),
                 opt_text(contract.currency.as_deref()),
+                eur.opt(contract.cents, contract.currency.as_deref()),
             ]);
         }
         Ok(())
@@ -4691,6 +4730,7 @@ impl Db {
         lot_id: Option<i64>,
         facts: &BTreeSet<Fact>,
         pending: &mut Pending,
+        eur: &EurContext,
     ) {
         let scope = || (Value::Integer(tender_id), Value::Integer(seq), opt_int(lot_id));
         for fact in facts {
@@ -4708,6 +4748,7 @@ impl Db {
                         Value::Integer(*cents),
                         t(currency),
                         opt_text(tax_basis.as_deref()),
+                        eur.cents(*cents, currency),
                     ]);
                 }
                 Fact::Classification { field, scheme, code } => {
@@ -5933,16 +5974,16 @@ impl Pending {
         flush_rows(conn, "INSERT INTO tender_version_lots(tender_id, seq, lot_id, kind) VALUES ", 4, &mut self.version_lots).await?;
         flush_rows(conn, "INSERT INTO tender_version_lot_group_members(tender_id, seq, group_lot_id, member_lot_id) VALUES ", 4, &mut self.lot_group_members).await?;
         flush_rows(conn, "INSERT INTO tender_version_texts(tender_id, seq, lot_id, field, lang, value) VALUES ", 6, &mut self.texts).await?;
-        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis) VALUES ", 7, &mut self.amounts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_amounts(tender_id, seq, lot_id, field, cents, currency, tax_basis, eur_cents) VALUES ", 8, &mut self.amounts).await?;
         flush_rows(conn, "INSERT INTO tender_version_classifications(tender_id, seq, lot_id, field, scheme, code) VALUES ", 6, &mut self.classifications).await?;
         flush_rows(conn, "INSERT INTO tender_version_dates(tender_id, seq, lot_id, field, utc_seconds, offset_minutes, has_time) VALUES ", 7, &mut self.dates).await?;
         flush_rows(conn, "INSERT INTO tender_version_parties(tender_id, seq, lot_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time) VALUES ", 11, &mut self.lot_results).await?;
+        flush_rows(conn, "INSERT INTO tender_version_lot_results(tender_id, seq, lot_result_id, lot_id, decision, reason, awarded_cents, awarded_currency, decided_utc, decided_offset, decided_has_time, awarded_eur_cents) VALUES ", 12, &mut self.lot_results).await?;
         flush_rows(conn, "INSERT INTO tender_version_result_winners(tender_id, seq, lot_result_id, organization_id) VALUES ", 4, &mut self.result_winners).await?;
         flush_rows(conn, "INSERT INTO tender_version_result_stats(tender_id, seq, lot_result_id, kind, count) VALUES ", 5, &mut self.result_stats).await?;
-        flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency) VALUES ", 6, &mut self.bids).await?;
+        flush_rows(conn, "INSERT INTO tender_version_bids(tender_id, seq, bid_id, lot_id, cents, currency, eur_cents) VALUES ", 7, &mut self.bids).await?;
         flush_rows(conn, "INSERT INTO tender_version_bid_parties(tender_id, seq, bid_id, role, organization_id, mention_notice_id, mention_section_id) VALUES ", 7, &mut self.bid_parties).await?;
-        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency) VALUES ", 12, &mut self.contracts).await?;
+        flush_rows(conn, "INSERT INTO tender_version_contracts(tender_id, seq, contract_id, buyer_contract_id, concluded_utc, concluded_offset, concluded_has_time, decided_utc, decided_offset, decided_has_time, cents, currency, eur_cents) VALUES ", 13, &mut self.contracts).await?;
         Ok(())
     }
 }

@@ -506,6 +506,10 @@ pub struct Db {
     /// The database file path, kept so [`Db::snapshot`] (issue 23) knows which
     /// file to copy — turso exposes no path accessor.
     path: String,
+    /// The in-memory EUR-pivot rates lookup (ADR-0014), swapped whole on
+    /// [`Db::reload_rates_lookup`]. Empty until first loaded — derivations are
+    /// honestly absent, never stale.
+    rates: std::sync::RwLock<std::sync::Arc<rates::RatesLookup>>,
     /// The pool backing `Db`'s own read-only accessors. Reads run over WAL in
     /// parallel with the writer, so a dashboard/admin query never queues behind
     /// an ingestion job that is holding the writer for the length of its
@@ -658,6 +662,13 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // deliberate run of the marker.
     add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_at INTEGER").await?;
     add_column(conn, "ALTER TABLE quarantine ADD COLUMN skipped_reason TEXT").await?;
+    // ADR-0014: the derived EUR value BESIDE each published amount — nullable,
+    // populated by the projection from `currency_rates`; NULL = unconvertible
+    // (honest absence) or not-yet-refolded. Never touches the published value.
+    add_column(conn, "ALTER TABLE tender_version_amounts ADD COLUMN eur_cents INTEGER").await?;
+    add_column(conn, "ALTER TABLE tender_version_lot_results ADD COLUMN awarded_eur_cents INTEGER").await?;
+    add_column(conn, "ALTER TABLE tender_version_bids ADD COLUMN eur_cents INTEGER").await?;
+    add_column(conn, "ALTER TABLE tender_version_contracts ADD COLUMN eur_cents INTEGER").await?;
     // Issue 87: a failed re-parse stamps its attempt and rewrites the row's
     // reason/detail to the CURRENT failure (the first-ingest pair is preserved
     // once in first_reason/first_detail). Nullable and absent by default, so
@@ -851,10 +862,20 @@ impl Db {
             writer: WriterContention::default(),
             reparse: ReparsePhases::default(),
             path: path.to_owned(),
+            rates: std::sync::RwLock::new(std::sync::Arc::new(rates::RatesLookup::default())),
             read_pool,
             wal_gate,
             cursor,
         })
+    }
+
+    /// The current rates lookup (cheap Arc clone; empty until first reloaded).
+    pub fn rates_lookup(&self) -> std::sync::Arc<rates::RatesLookup> {
+        self.rates.read().expect("rates lock poisoned").clone()
+    }
+
+    pub(crate) fn set_rates_lookup(&self, lookup: rates::RatesLookup) {
+        *self.rates.write().expect("rates lock poisoned") = std::sync::Arc::new(lookup);
     }
 
     async fn conn(&self) -> MutexGuard<'_, Connection> {

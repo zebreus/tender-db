@@ -126,6 +126,76 @@ impl Db {
     }
 }
 
+/// The whole rates table as an in-memory lookup — what the projection derives
+/// `eur_cents` from (ADR-0014). Loaded once per projection run (and after a
+/// `fetch-rates` load), so fold-time conversion is pure memory: ~85k rows,
+/// a few MB. Mirrors [`Db::rate_to_eur`]'s semantics exactly — nearest row
+/// at-or-before the date, [`DAILY_WINDOW_DAYS`] for daily sources, unbounded
+/// for `'irrevocable'`, EUR identity, `None` for the unconvertible (D4) — and a
+/// test pins the two against each other.
+#[derive(Debug, Default)]
+pub struct RatesLookup {
+    /// currency → (rate_date, rate_to_eur, is_irrevocable), sorted by date.
+    by_currency: std::collections::HashMap<String, Vec<(String, f64, bool)>>,
+}
+
+impl RatesLookup {
+    /// Units of `currency` per 1 EUR on `date`, or `None` (unconvertible).
+    pub fn rate(&self, currency: &str, date: &str) -> Option<f64> {
+        if currency == "EUR" {
+            return Some(1.0);
+        }
+        let series = self.by_currency.get(currency)?;
+        let at = series.partition_point(|(d, _, _)| d.as_str() <= date);
+        let (found_date, rate, irrevocable) = series.get(at.checked_sub(1)?)?;
+        if *irrevocable || day_gap(found_date, date) <= DAILY_WINDOW_DAYS {
+            Some(*rate)
+        } else {
+            None
+        }
+    }
+
+    /// `cents` of `currency` on `date` as EUR cents, half-up-rounded, or `None`.
+    pub fn eur_cents(&self, cents: i64, currency: &str, date: &str) -> Option<i64> {
+        let rate = self.rate(currency, date)?;
+        Some(((cents as f64) / rate).round() as i64)
+    }
+}
+
+impl Db {
+    /// Reload the in-memory rates lookup from the table. Called at the start of
+    /// every projection run and after a `fetch-rates` load; until first called,
+    /// the lookup is empty and every derivation is honestly `None`.
+    pub async fn reload_rates_lookup(&self) -> turso::Result<usize> {
+        let conn = self.reader().await?;
+        let mut by_currency: std::collections::HashMap<String, Vec<(String, f64, bool)>> =
+            Default::default();
+        let mut rows = conn
+            .query(
+                "SELECT currency, rate_date, rate_to_eur, source FROM currency_rates
+                  ORDER BY currency, rate_date",
+                (),
+            )
+            .await?;
+        let mut n = 0usize;
+        while let Some(row) = rows.next().await? {
+            let rate = match row.get_value(2)? {
+                Value::Real(r) => r,
+                Value::Integer(i) => i as f64,
+                _ => continue,
+            };
+            by_currency.entry(text(&row, 0)).or_default().push((
+                text(&row, 1),
+                rate,
+                text(&row, 3) == "irrevocable",
+            ));
+            n += 1;
+        }
+        self.set_rates_lookup(RatesLookup { by_currency });
+        Ok(n)
+    }
+}
+
 /// Parse the ECB `eurofxref-hist.csv` (header `Date,USD,JPY,…`; one row per
 /// business day, values = units per EUR, missing cells `N/A`; rows carry a
 /// trailing comma) into upsert rows tagged `'ecb'`. Unparseable or non-positive

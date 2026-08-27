@@ -1777,3 +1777,58 @@ async fn legacy_two_letter_lang_tags_normalize_so_the_english_pick_fires() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+/// ADR-0014: the fold derives `eur_cents` beside every published amount from the
+/// run-start rates snapshot — at the version's publication date, NULL when no
+/// rate resolves (honest absence, D4). The published cents/currency are
+/// untouched either way (D1).
+#[tokio::test]
+async fn the_fold_derives_eur_cents_beside_published_amounts() {
+    let (db, fetch_id, path) = scratch("eur-cents").await;
+    // The fixture versions' publication instant is epoch ~0 → 1970-01-01; seed a
+    // rate there (2 USD per EUR) so the derivation has something to resolve.
+    db.upsert_currency_rates(&[("USD".into(), "1970-01-01".into(), 2.0, "ecb".into())])
+        .await
+        .expect("seed rate");
+
+    let mut parsed = Parsed {
+        sections: vec![sec("PROC", "Procedure", None)],
+        values: vec![
+            id_val("PROC", "BT-04-notice", "bt04-eur"),
+            date_val("PROC", "BT-05(a)-notice", 1),
+        ],
+    };
+    for (i, (cents, currency)) in [(1000, "USD"), (777, "XXX")].iter().enumerate() {
+        parsed.values.push(ValueRow {
+            section_id: "PROC".into(),
+            field_id: "BT-27-Procedure".into(),
+            ordinal: i as i64,
+            value: NoticeValue::Amount { cents: *cents, currency: (*currency).into() },
+        });
+    }
+    record(&db, fetch_id, "EUR1", parsed).await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_amounts
+              WHERE currency='USD' AND cents=1000 AND eur_cents=500"
+        )
+        .await,
+        1,
+        "1000 USD cents at 2 USD/EUR derive 500 eur_cents; published value untouched"
+    );
+    assert_eq!(
+        count(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_amounts
+              WHERE currency='XXX' AND cents=777 AND eur_cents IS NULL"
+        )
+        .await,
+        1,
+        "an unresolvable currency stays honestly NULL (D4)"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}

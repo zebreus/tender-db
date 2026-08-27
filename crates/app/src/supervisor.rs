@@ -2034,9 +2034,12 @@ impl Supervisor {
                         eprintln!("supervisor: checkpoint after rates chunk: {e}");
                     }
                 }
+                // The running process folds with an in-memory snapshot — refresh
+                // it so the NEXT projection uses what was just loaded.
+                let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
-                     {seeded} irrevocable conversion rates seeded",
+                     {seeded} irrevocable conversion rates seeded; {cached} rows cached",
                     outcome, row.bytes
                 ))
             }
