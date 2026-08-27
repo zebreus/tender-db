@@ -1658,6 +1658,28 @@ impl Db {
         Ok(())
     }
 
+    /// How much of the un-projected change-set is LEGACY (chains by OJS
+    /// closure) — the issue-305 pre-check's cheap upper bound, read BEFORE the
+    /// identity pass so a whole-corpus refold doesn't spend 98 minutes
+    /// discovering a fallback a COUNT already implies. The predicate mirrors
+    /// ingest's `is_legacy_profile` (text / internal-ojs / ted-export*); keep
+    /// the two in sync.
+    pub async fn unprojected_legacy_notice_count(&self) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*) FROM notices
+                  WHERE parse_state = 'parsed' AND projected = 0
+                    AND (profile IN ('text', 'internal-ojs') OR profile LIKE 'ted-export%')",
+                (),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        })
+    }
+
     /// The incremental-projection change-set (issue 58): parsed notices not yet
     /// folded into the canonical layer since their last (re)parse. Bounded by the
     /// daily delta via the `notices_unprojected` partial index, not the corpus.

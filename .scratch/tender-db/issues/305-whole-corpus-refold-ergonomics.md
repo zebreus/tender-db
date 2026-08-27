@@ -1,7 +1,15 @@
 # 305 — whole-corpus refold ergonomics: mislabeled identity pass + predictable fallback
 
-Status: OPEN (filed 2026-08-27 from watching job 402 — THE epoch refold's paired
-projection)
+Status: RESOLVED in code (both halves), pending deploy on the next window.
+Half 1 (Identity phase label) landed in commit 668a399's batch (Progress::Identity).
+Half 2 landed 2026-08-27 ~22:0x: `unprojected_legacy_notice_count` (store) +
+a pre-check in `project_incremental_chunked_observed` that goes straight to the
+full path when the un-projected LEGACY count alone exceeds the closure cap —
+the 98-minute identity pass is skipped for whole-corpus-shaped deltas. Not a
+strict theorem (keyless legacy notices seed no closure) but the full path is
+always correct, and a >500k legacy delta is whole-corpus-shaped work either
+way. (Filed 2026-08-27 from watching job 402 — THE epoch refold's paired
+projection.)
 Kind: operability (progress honesty) + one avoidable 98-minute pass
 Relates to: 58 v2 (the closure cap + fallback, working as designed), 65 (phase
 records exist to prevent exactly this misreading), 291 (the refold this bit).

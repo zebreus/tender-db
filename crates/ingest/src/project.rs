@@ -1783,6 +1783,34 @@ pub async fn project_incremental_chunked_observed(
     if changed.is_empty() {
         return Ok(Report::default());
     }
+    // Issue 305: when the change-set's LEGACY portion alone already exceeds the
+    // closure cap, the identity pass can only discover the fallback the COUNT
+    // below implies (the epoch refold paid a 98-minute pass-1 for that
+    // discovery). Not a strict theorem — a keyless legacy notice seeds no
+    // closure — but the full path is always correct, and a >cap legacy delta
+    // is whole-corpus-shaped work either way. One indexed COUNT, negligible on
+    // the daily delta.
+    let legacy_changed = db.unprojected_legacy_notice_count().await?;
+    if legacy_changed as usize > LEGACY_CLOSURE_CAP {
+        eprintln!(
+            "[project] INCREMENTAL → FULL fallback BEFORE identity pass: {legacy_changed} \
+             un-projected legacy notices exceed the closure cap ({LEGACY_CLOSURE_CAP}) \
+             (issue 305); re-projecting the whole corpus"
+        );
+        let mut stderr = stderr_progress_sink();
+        return project_with_progress_phase2_stoppable(
+            db,
+            false,
+            APPLY_NOTICE_BATCH,
+            Phase2::Buckets { shards: None },
+            |p| {
+                stderr(p);
+                on_progress(p);
+            },
+            stop,
+        )
+        .await;
+    }
     let chunk_size = chunk_size.max(1);
     let now = store::now_unix();
     let t0 = std::time::Instant::now();

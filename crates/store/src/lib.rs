@@ -6698,6 +6698,33 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 305: the incremental pre-check's cheap upper bound counts exactly
+    /// the LEGACY profiles (text / internal-ojs / ted-export*) still in the
+    /// un-projected set — the SQL predicate must mirror ingest's
+    /// `is_legacy_profile`.
+    #[tokio::test]
+    async fn unprojected_legacy_count_matches_the_profile_predicate() {
+        let path = format!("/tmp/tender-db-legacy-count-{}.db", std::process::id());
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).await.unwrap();
+        seed_fetch(&db).await;
+        let mut n = held_notice();
+        let profiles =
+            ["text", "internal-ojs", "ted-export-r208", "ted-export-r209", "eforms:eforms-sdk-1.13", "doe"];
+        for (i, profile) in profiles.iter().enumerate() {
+            n.publication_id = format!("p{i}");
+            n.content_hash = format!("h{i}");
+            n.profile = (*profile).into();
+            assert!(db.record_notice(&n, &Parse::Parsed(tiny_parsed())).await.unwrap());
+        }
+        assert_eq!(db.unprojected_legacy_notice_count().await.unwrap(), 4);
+        // Projecting a legacy notice removes it from the pre-check's count.
+        let id = int_of(&db, "SELECT id FROM notices WHERE profile = 'text'").await.unwrap();
+        db.mark_projected(&[id]).await.unwrap();
+        assert_eq!(db.unprojected_legacy_notice_count().await.unwrap(), 3);
+        let _ = std::fs::remove_file(&path);
+    }
+
     async fn int_of(db: &Db, sql: &str) -> Option<i64> {
         match db.scalar(sql).await.unwrap() {
             Some(Value::Integer(i)) => Some(i),
