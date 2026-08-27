@@ -117,7 +117,7 @@ const PER_HOUR: u32 = 300;
 /// re-opened whenever a private table was added. Each entry is public business
 /// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
 /// registry are deliberately absent (see the note below the list).
-const ALLOWED: [&str; 46] = [
+const ALLOWED: [&str; 47] = [
     // Current-state views — the analyst entry points (docs/architecture.md).
     "v_tenders",         // current version of each Tender
     "v_lots",            // current Lots
@@ -170,6 +170,9 @@ const ALLOWED: [&str; 46] = [
     // Raw-ingest quality + the public change feed.
     "quarantine",        // whole raw notices that failed to map — public payloads
     "changes",           // the change cursor log, served verbatim by /v1/changes
+    // Reference data (ADR-0015 D4): the EUR-pivot rate series behind eur_cents,
+    // exposed so analysts can convert published amounts their own way.
+    "currency_rates",    // ECB daily + ECU 1993-1998 + irrevocable conversions
     // Deliberately NOT allowed:
     //  * users, api_tokens, sessions — credentials.
     //  * webhook_endpoints, webhook_delivery_log — per-user signing secrets +
@@ -548,6 +551,16 @@ const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
 /// One-line descriptions for the tables/views worth explaining in
 /// `/v1/sql/schema` (issue 50); the rest are self-describing.
 const TABLE_NOTES: &[(&str, &str)] = &[
+    (
+        "currency_rates",
+        "The EUR-pivot rate series behind eur_cents (ADR-0014/0015): rate_to_eur = units of \
+         `currency` per 1 EUR on `rate_date`. source = 'ecb' (daily reference rates, 1999→), \
+         'eurostat-ecu' (the Commission's daily ECU series 1993-1998, 1:1 EUR by law; data \
+         CC BY 4.0 — Source: Eurostat), or 'irrevocable' (the fixed euro conversion rates, \
+         valid from each adoption date forever). The derivation resolves the nearest row \
+         at-or-before a date — within 7 days for daily sources, unbounded for irrevocable — \
+         and pre-1997 TED legacy codes (UKL, LIT, DKR, …) alias to their ISO series.",
+    ),
     ("v_tenders", "Current version of each Tender (one row per Tender). NOT FILTERABLE: a \
       WHERE on a view is applied AFTER the whole view is built, so even `WHERE id = ?` scans \
       the corpus and exceeds the time limit (issue 239, measured). Use it for small unfiltered \

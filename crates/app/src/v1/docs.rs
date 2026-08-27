@@ -383,6 +383,17 @@ against a view that cannot answer it at all.</p>
   <li>Dialect gaps (Turso): no <code>WITH RECURSIVE</code>; window functions are partial (<code>row_number</code> and aggregate <code>OVER</code> work; <code>rank</code>/<code>lead</code>/<code>lag</code> and custom frames do not). A dialect or column error comes back as <code>400</code> with the engine's message.</li>
 </ul>
 <p>Response: <code>{"columns": [ … ], "rows": [[ … ]], "row_count": N, "truncated": false}</code>.</p>
+<p><strong>What you may build on</strong> (ADR-0015): the allow-listed table and
+view <em>names</em>, their existing columns, and this envelope are the contract —
+new columns and tables appear without notice, but nothing is renamed or removed
+without an entry in the repository's <code>CHANGELOG.md</code>. The SQL dialect
+itself is described, not promised: it is whatever the current embedded engine
+implements (the gaps above), and a representative set of query shapes is tested
+against every build so a dialect change is caught before it ships. The
+<code>currency_rates</code> table carries the full EUR-pivot rate series behind
+<code>eur_cents</code> (ECB daily 1999&rarr;, the daily ECU series 1993&ndash;1998
+&mdash; data CC&nbsp;BY&nbsp;4.0, Source: Eurostat &mdash; and the irrevocable
+euro conversion rates), so you can convert published amounts your own way.</p>
 
 <h2 id="webhooks">Webhooks</h2>
 <p>Account holders register https URLs that receive change batches as signed

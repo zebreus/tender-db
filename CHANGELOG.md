@@ -17,5 +17,16 @@ are unchanged and still served exactly as published — the conversion layers
 beside them, never over them.
 
 Also new on the same surface: the `currency` filter (published ISO-4217 code),
-and `eur_cents`/`awarded_eur_cents` columns on the `/v1/sql` tables and the
+the `lang` selector (preferred language for picked titles), and
+`eur_cents`/`awarded_eur_cents` columns on the `/v1/sql` tables and the
 `v_tender_amounts` view.
+
+## 2026-08-27 — /v1/sql surface promise stated; `currency_rates` queryable
+
+ADR-0015 states what the SQL endpoint promises: allow-listed names, existing
+columns and the response envelope are contract (renames/removals only with an
+entry here); the dialect is described, not promised, and a canary test suite
+pins representative query shapes against every build. `currency_rates` — the
+full EUR-pivot rate series behind `eur_cents` (ECB daily 1999→, daily ECU
+1993–1998 via Eurostat CC BY 4.0, irrevocable conversions) — joins the
+allow-list as reference data.

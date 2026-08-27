@@ -1,7 +1,10 @@
 # 299 — the /v1/sql dialect promise (C15) — re-register the vanished decision
 
-Status: BACKLOG (filed 2026-08-26; research-gaps-2026-08.md: C15 "appears in no
-decision list, no ADR, no design doc")
+Status: CLOSED 2026-08-27 — decided as ADR-0015: names/columns/envelope are the
+contract (breaks only with a CHANGELOG.md entry), the dialect is described not
+promised and pinned by a gate-time canary suite (12 shapes incl. the promised
+row_number() OVER), v_* views are the stable analyst API, and currency_rates
+joined the allow-list as reference data (the 291 exposure question).
 Kind: API contract decision
 Relates to: 210 (sandbox), 239 (v_* views), the OpenAPI/docs surface.
 

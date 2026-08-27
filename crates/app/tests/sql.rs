@@ -602,3 +602,41 @@ async fn sql_execution_does_not_starve_the_api() {
         assert!(status == 200 || status == 408, "the query ran to a normal result: {status}");
     }
 }
+
+/// The dialect canary (ADR-0015 D2): representative analyst query shapes that
+/// must keep running on the exact engine we ship. The /v1/sql contract is
+/// names and shapes, not the engine — so when a turso upgrade breaks one of
+/// these, THIS test turns the gate red before the deploy does it to an
+/// analyst's saved query, and the resolution (carry the break with a
+/// CHANGELOG entry, or hold the upgrade) becomes a decision instead of a
+/// surprise. Shapes the docs DOCUMENT as unsupported (WITH RECURSIVE,
+/// rank/lead/lag) are deliberately absent; `row_number() OVER ()` is present
+/// because the docs promise it works.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_dialect_canary_shapes_all_run() {
+    let server = Server::start("dialect_canary").await;
+    let shapes: [(&str, &str); 12] = [
+        ("join", "SELECT t.id FROM tenders t JOIN tender_versions v ON v.tender_id = t.id AND v.seq = t.current_seq LIMIT 5"),
+        ("group-by-having", "SELECT source, COUNT(*) AS n FROM notices GROUP BY source HAVING COUNT(*) >= 0 ORDER BY n DESC LIMIT 5"),
+        ("cte", "WITH recent AS (SELECT id FROM notices ORDER BY id DESC LIMIT 5) SELECT COUNT(*) FROM recent"),
+        ("strftime", "SELECT strftime('%Y', published_at, 'unixepoch') AS y, COUNT(*) FROM tender_versions GROUP BY y LIMIT 5"),
+        ("case", "SELECT CASE WHEN cents < 0 THEN 'neg' WHEN cents = 0 THEN 'zero' ELSE 'pos' END AS b, COUNT(*) FROM tender_version_amounts GROUP BY b"),
+        ("correlated-subquery", "SELECT id, (SELECT COUNT(*) FROM tender_versions v WHERE v.tender_id = t.id) FROM tenders t LIMIT 5"),
+        ("like", "SELECT COUNT(*) FROM notices WHERE profile LIKE 'eforms%'"),
+        ("in-subquery", "SELECT COUNT(*) FROM tenders WHERE id IN (SELECT tender_id FROM tender_versions LIMIT 10)"),
+        ("union", "SELECT 'a' AS k UNION ALL SELECT 'b' ORDER BY k"),
+        ("cast-coalesce", "SELECT COALESCE(CAST(NULL AS INTEGER), 42)"),
+        ("row-number-over", "SELECT id, row_number() OVER () FROM tenders LIMIT 3"),
+        ("rates-lookup", "SELECT rate_to_eur, source FROM currency_rates WHERE currency = 'DEM' AND rate_date <= '1999-06-01' ORDER BY rate_date DESC LIMIT 1"),
+    ];
+    for (label, query) in shapes {
+        let response = server.sql(query).await;
+        assert_eq!(
+            response.status(),
+            200,
+            "dialect canary `{label}` no longer runs — a turso upgrade changed the dialect; \
+             carry it with a CHANGELOG entry or hold the upgrade (ADR-0015 D2): {}",
+            response.text().await.unwrap_or_default()
+        );
+    }
+}
