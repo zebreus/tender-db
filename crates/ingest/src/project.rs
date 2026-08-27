@@ -804,6 +804,12 @@ const PLAN_HEARTBEAT: u64 = 500_000;
 pub enum Progress {
     /// Phase 1: `notices` of `total` parsed notices planned so far.
     Planning { notices: u64, total: u64 },
+    /// The incremental fold's pass-1 identity scan: `notices` of `total`
+    /// CHANGED notices scanned for keys/adjacency. Its own variant (issue 305):
+    /// it used to borrow `Planning`, so a 98-minute identity pass read as
+    /// "planning" and the 58-v2 fallback's real plan build then restarted the
+    /// same-named counter from zero — indistinguishable from a crash-restart.
+    Identity { notices: u64, total: u64 },
     /// Phase 1 → 2 transition: the plan grouped into `tenders` (`islands` of them
     /// single-notice).
     Grouped { tenders: u64, islands: u64 },
@@ -874,6 +880,12 @@ pub fn stderr_progress_sink() -> impl FnMut(Progress) {
         Progress::Planning { notices, total } => {
             if notices - last_plan_log >= PLAN_HEARTBEAT || notices == total {
                 eprintln!("[project] phase 1: {notices}/{total} notices planned");
+                last_plan_log = notices;
+            }
+        }
+        Progress::Identity { notices, total } => {
+            if notices - last_plan_log >= PLAN_HEARTBEAT || notices == total {
+                eprintln!("[project] pass-1 identity: {notices}/{total} changed notices scanned");
                 last_plan_log = notices;
             }
         }
@@ -1800,7 +1812,7 @@ pub async fn project_incremental_chunked_observed(
             return Ok(Report { stopped: true, ..Report::default() });
         }
         scanned += chunk.len() as u64;
-        on_progress(Progress::Planning { notices: scanned, total: changed.len() as u64 });
+        on_progress(Progress::Identity { notices: scanned, total: changed.len() as u64 });
         let mut batch = db.parsed_by_ids(chunk).await?;
         normalise_de1(&mut batch);
         for (notice, parsed) in &batch {

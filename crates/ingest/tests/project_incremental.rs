@@ -1456,6 +1456,7 @@ async fn the_incremental_plan_build_reports_progress_and_stops_within_a_chunk() 
         |p| {
             events.lock().unwrap().push(match p {
                 Progress::Planning { .. } => "planning",
+                Progress::Identity { .. } => "identity",
                 Progress::Grouped { .. } => "grouped",
                 Progress::Applying { .. } => "applying",
                 Progress::PrePass { .. } => "pre-pass",
@@ -1467,9 +1468,12 @@ async fn the_incremental_plan_build_reports_progress_and_stops_within_a_chunk() 
     .expect("observed incremental");
     assert!(!report.stopped);
     let seen = events.into_inner().unwrap();
+    // Issue 305: pass 1 reports under its OWN name now — the two passes are
+    // distinguishable in the record instead of one "planning" counter that
+    // resets midway.
     assert!(
-        seen.iter().filter(|e| **e == "planning").count() >= 2,
-        "both plan-build passes must report: {seen:?}"
+        seen.contains(&"identity") && seen.contains(&"planning"),
+        "both passes must report, each under its own name: {seen:?}"
     );
     assert!(seen.contains(&"grouped"), "the grouping boundary must report: {seen:?}");
 
@@ -1556,6 +1560,7 @@ async fn the_full_fallback_still_surfaces_the_callers_progress() {
         |p| {
             events.lock().unwrap().push(match p {
                 Progress::Planning { .. } => "planning",
+                Progress::Identity { .. } => "identity",
                 Progress::Grouped { .. } => "grouped",
                 Progress::Applying { .. } => "applying",
                 Progress::PrePass { .. } => "pre-pass",

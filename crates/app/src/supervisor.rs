@@ -1296,6 +1296,13 @@ impl Supervisor {
             Progress::Planning { notices, total } => {
                 self.set_phase("planning", Some(notices), Some(total), "notices planned".into());
             }
+            // Its own phase name (issue 305): the identity scan used to borrow
+            // "planning", so a long pass-1 plus the 58-v2 fallback's real plan
+            // build read as one phase whose counter reset — a crash-restart
+            // look-alike on a healthy run.
+            Progress::Identity { notices, total } => {
+                self.set_phase("identity", Some(notices), Some(total), "changed notices scanned".into());
+            }
             // No total, honestly: the sweep is bounded by an id RANGE, and
             // counting its rows up front would pay the very scan the pre-pass
             // exists to do once. Movement alone is the signal (issue 228).
