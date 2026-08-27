@@ -310,6 +310,11 @@ enum Spec {
     /// not be rewritten, only the ghosts retired. Self-scoping (no id list): the job
     /// computes the set. Idempotent — a second run finds no dups and re-queues zero.
     SweepRegroupedGhosts,
+    /// Fetch the ECB daily reference-rate history and load `currency_rates`
+    /// (ADR-0014 unit 2): archive the CSV under the ordinary fetch registry
+    /// (source `ecb`, kind `rates`, period = fetch date), parse, seed the
+    /// irrevocable euro conversion rates, and chunk-upsert the daily rows.
+    FetchRates,
     /// Re-project the notices whose PARSE LAYER carries any of these field ids —
     /// the FIELD-scoped refold (issue 88 follow-up): a new mapping for a grafted
     /// id affects exactly its carriers, a set no profile names. Sweeps the value
@@ -738,6 +743,12 @@ impl Supervisor {
             // watermark, then fold it incrementally. Two jobs like `reprocess`, so the
             // fold is a normal queued projection; if the guard aborts the mark, that
             // projection simply finds an empty change-set and returns.
+            // ADR-0014 unit 2: load/refresh the EUR-pivot exchange-rate table.
+            "fetch-rates" => {
+                Ok(vec![
+                    self.push("fetch-rates", "ecb eurofxref-hist".into(), Spec::FetchRates).await,
+                ])
+            }
             "refold" => {
                 let profiles = req.profiles.clone().unwrap_or_default();
                 if profiles.is_empty() {
@@ -1973,6 +1984,60 @@ impl Supervisor {
                 Ok(format!(
                     "{} notice(s) named: re-queued {requeued}, stamped {stamped} tender(s)                      epoch-stale for the incremental fold",
                     notices.len()
+                ))
+            }
+            Spec::FetchRates => {
+                const URL: &str = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.csv";
+                let period = store::rates::civil_date(store::now_unix());
+                let target = fetch::Target {
+                    source: "ecb",
+                    kind: "rates",
+                    period: period.clone(),
+                    url: URL.to_owned(),
+                    rel_path: format!("rates/eurofxref-hist-{period}.csv"),
+                };
+                // refetch=true: a same-day re-run re-downloads and lands as
+                // Unchanged when the content hash matches — the registry and the
+                // archived file are the durable record either way (ADR-0004).
+                let outcome = fetch::fetch(&self.db, &self.http, &self.archive, &target, true)
+                    .await
+                    .map_err(|e| format!("rates fetch: {e:?}"))?;
+                let row = self
+                    .db
+                    .latest_fetch("ecb", "rates", &period)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| format!("rates fetch {outcome:?} but no registry row"))?;
+                let csv = std::fs::read_to_string(self.archive.join(&row.path))
+                    .map_err(|e| format!("read archived rates csv {}: {e}", row.path))?;
+                let rows = store::rates::parse_ecb_history_csv(&csv);
+                if rows.is_empty() {
+                    return Err(format!(
+                        "rates csv parsed to ZERO rows ({} bytes) — format drift? nothing written",
+                        row.bytes
+                    ));
+                }
+                let seeded =
+                    self.db.seed_irrevocable_euro_rates().await.map_err(|e| e.to_string())?;
+                let total = rows.len();
+                let mut upserted = 0u64;
+                for (i, chunk) in rows.chunks(50_000).enumerate() {
+                    upserted +=
+                        self.db.upsert_currency_rates(chunk).await.map_err(|e| e.to_string())?;
+                    self.set_phase(
+                        "loading",
+                        Some(upserted),
+                        Some(total as u64),
+                        format!("chunk {} upserted", i + 1),
+                    );
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after rates chunk: {e}");
+                    }
+                }
+                Ok(format!(
+                    "rates: {upserted} daily rows upserted from {period} ({:?}, {} bytes) + \
+                     {seeded} irrevocable conversion rates seeded",
+                    outcome, row.bytes
                 ))
             }
             Spec::SweepRegroupedGhosts => {
@@ -3345,6 +3410,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-titles"
             | "backfill-org-names"
             | "backfill-legacy-adjacency"
+            | "fetch-rates"
     )
 }
 

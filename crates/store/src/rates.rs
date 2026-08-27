@@ -126,6 +126,50 @@ impl Db {
     }
 }
 
+/// Parse the ECB `eurofxref-hist.csv` (header `Date,USD,JPY,…`; one row per
+/// business day, values = units per EUR, missing cells `N/A`; rows carry a
+/// trailing comma) into upsert rows tagged `'ecb'`. Unparseable or non-positive
+/// cells are skipped — absence over a guess, per ADR-0014 D4.
+pub fn parse_ecb_history_csv(csv: &str) -> Vec<(String, String, f64, String)> {
+    let mut lines = csv.lines();
+    let Some(header) = lines.next() else { return Vec::new() };
+    let currencies: Vec<&str> = header.split(',').map(str::trim).collect();
+    let mut out = Vec::new();
+    for line in lines {
+        let mut cells = line.split(',');
+        let Some(date) = cells.next().map(str::trim) else { continue };
+        if day_number(date).is_none() {
+            continue; // not a data row
+        }
+        for (i, cell) in cells.enumerate() {
+            let Some(currency) = currencies.get(i + 1).filter(|c| !c.is_empty()) else { continue };
+            if let Ok(rate) = cell.trim().parse::<f64>()
+                && rate > 0.0
+                && rate.is_finite()
+            {
+                out.push(((*currency).to_owned(), date.to_owned(), rate, "ecb".to_owned()));
+            }
+        }
+    }
+    out
+}
+
+/// `'YYYY-MM-DD'` (UTC) for an epoch-seconds instant — the fetch job's period
+/// key. Hinnant's civil-from-days, the inverse of [`day_number`].
+pub fn civil_date(epoch_seconds: i64) -> String {
+    let z = epoch_seconds.div_euclid(86_400) + 719_468;
+    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let y = yoe + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    format!("{y:04}-{m:02}-{d:02}")
+}
+
 /// Whole days between two `'YYYY-MM-DD'` strings (`later - earlier`), computed
 /// with a civil-date to day-number conversion — no clock, no timezone (the
 /// table's dates are calendar days by construction). A malformed date yields
@@ -159,6 +203,35 @@ fn day_number(date: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ecb_history_csv_parses_with_gaps_and_trailing_commas() {
+        let csv = "Date, USD, JPY, HRK,\n\
+                   2026-08-26, 1.1623, 171.83, N/A,\n\
+                   2026-08-25, 1.1608, , 7.5345,\n\
+                   not-a-date, 9.9, 9.9, 9.9,\n";
+        let rows = parse_ecb_history_csv(csv);
+        assert_eq!(
+            rows,
+            vec![
+                ("USD".to_owned(), "2026-08-26".to_owned(), 1.1623, "ecb".to_owned()),
+                ("JPY".to_owned(), "2026-08-26".to_owned(), 171.83, "ecb".to_owned()),
+                ("USD".to_owned(), "2026-08-25".to_owned(), 1.1608, "ecb".to_owned()),
+                ("HRK".to_owned(), "2026-08-25".to_owned(), 7.5345, "ecb".to_owned()),
+            ],
+            "N/A and empty cells skipped, the trailing comma's phantom column ignored, \
+             a non-date row dropped"
+        );
+    }
+
+    #[test]
+    fn civil_date_inverts_day_number() {
+        for d in ["1993-01-04", "1998-12-31", "1999-01-01", "2024-02-29", "2026-08-27"] {
+            let n = day_number(d).expect("valid");
+            assert_eq!(civil_date(n * 86_400), d, "round-trip {d}");
+            assert_eq!(civil_date(n * 86_400 + 86_399), d, "last second of {d}");
+        }
+    }
 
     #[test]
     fn day_gap_counts_calendar_days() {
