@@ -308,11 +308,12 @@ change the architecture):
 
 **API / product**
 
-- C14. FTS strategy: native turso FTS in main file (loses sqlite3 escape
-  hatch) vs separate search DB file vs LIKE-only v1. Research-recommended:
-  separate file, or LIKE for v1. [turso-capabilities]
-- C15. SQL-endpoint dialect promise: document as "turso SQL" (no recursive
-  CTEs, partial window functions) or restrict further. [turso-capabilities]
+- C14. FTS strategy — **DECIDED 2026-08-27 as ADR-0016**: no in-file FTS
+  (FTS5 absent; native FTS forfeits the sqlite3 escape hatch); v1 search =
+  the structured surface, with named revisit triggers. [turso-capabilities]
+- C15. SQL-endpoint dialect promise — **DECIDED 2026-08-27 as ADR-0015**:
+  names/columns/envelope are contract, dialect described not promised,
+  canary-pinned at gate time. [turso-capabilities]
 - C16. Anonymous SSE: allowed (matches "basic endpoints unauthenticated")?
   Per-IP connection cap? [api-layer]
 - C17. Change-log retention: promise "forever" or reserve pruning
@@ -507,6 +508,8 @@ stays an honest minute of the 2026-07-19 session:
 - §5's "All §2.C user decisions are now resolved" **overclaims**: C10
   (currency normalization), C14 (FTS strategy) and C15 (SQL dialect promise)
   were never decided anywhere — they are open again, queued for Lennart.
+  *(Resolved since: C10 → ADR-0014 (2026-08-26), C15 → ADR-0015 and C14 →
+  ADR-0016 (both 2026-08-27) — the trio is re-registered and decided.)*
 - §1's index is missing **data-quality.md** (the per-era field-presence
   measurement tool and findings; it postdates the index).
 
