@@ -957,7 +957,7 @@ async fn the_award_notice_yields_lot_results_bids_and_contracts() {
     assert!(rows.is_empty());
 
     // The detail payload carries the results layer.
-    let detail = store::read::tender_detail(&reader, 1).await.expect("detail").expect("tender 1");
+    let detail = store::read::tender_detail(&reader, 1, None).await.expect("detail").expect("tender 1");
     assert_eq!(detail.lot_results.len(), 1);
     assert_eq!(detail.lot_results[0].winners.len(), 1);
     assert_eq!(detail.bids.len(), 1);

@@ -161,6 +161,13 @@ pub struct Filter {
     /// normalized: `HRK` finds the tenders that were published in kuna, however
     /// they convert. Tenders/Lots; the other collections name it ignored.
     pub currency: Option<String>,
+    /// Preferred language for the PICKED text values (ADR-0013 D3): ISO
+    /// 639-2/T uppercase (`DEU`), normalized by the caller. A PROJECTION
+    /// selector, not a predicate — it changes which title a row serves, never
+    /// which rows match — so it is not in `honoured_params`, never appears in
+    /// `ignored_filters`, and never affects isolation routing. The chain the
+    /// picks implement: requested → ENG → any labelled → unlabelled.
+    pub lang: Option<String>,
     /// `procedure` | `registration` for Tenders; `Lot` | `LotsGroup` | `Part`
     /// for Lots; the mapping profile for Notices.
     pub kind: Option<String>,
@@ -559,7 +566,7 @@ impl Collection {
 /// enumerates the real fields off `Filter`'s own `Debug` output and fails if any is
 /// absent here, so a field added with `..` is caught by a test even though it compiled.
 #[cfg(test)]
-pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 21] = [
+pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 22] = [
     ("source", "Tenders/Notices: index-served. Lots: t.source, a JOINED table -> isolates"),
     ("country", "EXISTS per row on Tenders/Lots -> isolates. Organizations: index-served"),
     ("cpv", "EXISTS per row -> isolates. Ignored by Organizations/Notices"),
@@ -595,6 +602,9 @@ pub(crate) const FILTER_CLASSIFICATION: [(&str, &str); 21] = [
     ("name_prefix", "Organizations, id-ordered shape: a sparse prefix filters the PK walk -> \
                      isolates. The REST name-ordered path seeks organizations_name_norm_id \
                      (issue 217-B). Ignored by Tenders/Lots/Notices"),
+    ("lang", "not a predicate: a projection selector (ADR-0013 D3) — changes which title a \
+              row serves, never which rows match, so it never isolates and is not in \
+              honoured_params"),
     ("now", "not a predicate: the reference instant `status` compares against"),
     ("country_seed", "not a request parameter: the async entries' drive-side decision \
                       (issue 273 step 2), set AFTER isolation routing consults `walks`, \
@@ -615,6 +625,11 @@ pub fn walks(collection: Collection, f: &Filter) -> bool {
         currency,
         kind,
         tender,
+        // A projection selector, not a predicate (ADR-0013 D3): it changes
+        // which title a matching row serves, never which rows match — and the
+        // pick's per-row subquery runs identically with or without it, so it
+        // cannot change a query's cost class either.
+        lang: _,
         publication_id,
         identifier,
         published_after,
@@ -891,6 +906,21 @@ fn participation_seed(f: &Filter) -> Option<(&'static str, &'static str, i64)> {
         Some(("tender_version_parties", " AND role LIKE '%Buyer%'", org))
     } else {
         None
+    }
+}
+
+/// The title pick's ORDER BY rank for an optional requested language
+/// (ADR-0013 D3). `lang` is inlined as a literal, which is safe ONLY because
+/// the guard here re-verifies the shape the API layer already validated —
+/// exactly three ASCII uppercase letters (the fold's ISO 639-2/T vocabulary,
+/// `ingest::project::normalize_lang`); anything else falls back to the
+/// default rank rather than reaching the SQL.
+fn title_rank(lang: Option<&str>) -> String {
+    match lang {
+        Some(l) if l.len() == 3 && l.bytes().all(|b| b.is_ascii_uppercase()) => {
+            format!("(s.lot_id IS NULL) DESC, (s.lang = '{l}') DESC, (s.lang = 'ENG') DESC")
+        }
+        _ => "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC".to_owned(),
     }
 }
 
@@ -1340,7 +1370,7 @@ fn tenders_ordered_query(
     // rows, so this sort is trivial.
     let mut q = Query::default();
     q.push(
-        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql)),
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), filter.lang.as_deref()),
         inner.params,
     );
     q.push(&format!("w.wseq ORDER BY w.wkey {dir}, t.id {dir}"), []);
@@ -1367,14 +1397,18 @@ pub(crate) fn tenders_statement(filter: &Filter, scope: Scope) -> (String, Vec<V
 /// the id-ordered [`tenders_query`] and the published-ordered
 /// [`tenders_by_published_query`], so the two shapes cannot drift in WHAT a row is
 /// — they may only differ in which rows and in what order.
-fn tender_select_head(from: &str) -> String {
+fn tender_select_head(from: &str, lang: Option<&str>) -> String {
     let title = pick(
         "tender_version_texts",
         "value",
         Some("title"),
         // The Tender's own title wins; a lot-only title stands in for the many
         // notices that title their lots and not the procedure (v_tenders).
-        "(s.lot_id IS NULL) DESC, (s.lang = 'ENG') DESC",
+        // A requested language (ADR-0013 D3) outranks the ENG default; both
+        // legs below keep the deterministic tail, so the chain is
+        // requested → ENG → any labelled → unlabelled (SQLite sorts NULL
+        // below 0 and 1 under DESC).
+        &title_rank(lang),
         "1 = 1",
     );
     let deadline = |column| {
@@ -1551,7 +1585,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // The `hits` set is the org's tenders (a superset of the matches); the untouched
     // `EXISTS` predicates below still decide membership, so the result is identical.
     let (from, seed_param) = tender_from(filter);
-    q.push(&tender_select_head(&from), seed_param);
+    q.push(&tender_select_head(&from, filter.lang.as_deref()), seed_param);
     let seq = seq_expr(scope, "t", &mut q.params);
     q.push(&format!("{seq} WHERE 1 = 1"), []);
 
@@ -1644,7 +1678,7 @@ fn tenders_page_query(filter: &Filter, scope: Scope) -> Query {
 
     let mut q = Query::default();
     q.push(
-        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql)),
+        &tender_select_head(&format!("({}) w JOIN tenders t ON t.id = w.wid", inner.sql), filter.lang.as_deref()),
         inner.params,
     );
     q.push("w.wseq ORDER BY t.id", []);
@@ -1684,8 +1718,12 @@ pub async fn tender_version_notice_ids(conn: &Connection, tender_id: i64) -> tur
 
 /// One Tender's full current state: the version chain, the satellites, the
 /// parties — everything `/v1/tenders/{id}` answers.
-pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<TenderDetail>> {
-    let filter = Filter::default();
+pub async fn tender_detail(
+    conn: &Connection,
+    id: i64,
+    lang: Option<&str>,
+) -> turso::Result<Option<TenderDetail>> {
+    let filter = Filter { lang: lang.map(str::to_owned), ..Filter::default() };
     let Some(tender) = tenders(conn, &filter, Scope::Page { after: id - 1, limit: 1 })
         .await?
         .into_iter()
@@ -1800,7 +1838,7 @@ pub async fn tender_detail(conn: &Connection, id: i64) -> turso::Result<Option<T
         });
     }
 
-    let lots = lots_of(conn, id).await?;
+    let lots = lots_of(conn, id, lang).await?;
     let (lot_results, bids, contracts) = results_of(conn, id, tender.seq).await?;
     Ok(Some(TenderDetail {
         tender,
@@ -1979,7 +2017,7 @@ fn blank() -> FactRow {
 /// does on `/v1/tenders`.
 pub async fn lots(conn: &Connection, filter: &Filter, scope: Scope) -> turso::Result<Vec<LotRow>> {
     let mut rows = lots_identity(conn, filter, scope).await?;
-    summarise(conn, &mut rows).await?;
+    summarise(conn, &mut rows, filter.lang.as_deref()).await?;
     Ok(rows)
 }
 
@@ -2053,7 +2091,7 @@ pub async fn lots_previous_shape(conn: &Connection, filter: &Filter, scope: Scop
             deadline: None,
         })
         .await?;
-    summarise(conn, &mut rows).await?;
+    summarise(conn, &mut rows, filter.lang.as_deref()).await?;
     Ok(rows)
 }
 
@@ -2352,7 +2390,7 @@ fn lots_query(filter: &Filter, scope: Scope) -> Query {
 ///     to the SAME row, so one max-cents row serves both.
 ///   * deadline — the three columns were three subqueries sharing
 ///     `ORDER BY utc_seconds DESC LIMIT 1`, so one max-utc row serves all three.
-async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> {
+async fn summarise(conn: &Connection, rows: &mut [LotRow], lang: Option<&str>) -> turso::Result<()> {
     // Lot ids are unique across the result, so one map resolves a satellite row's
     // `lot_id` to the row it decorates — and drops any lot outside this page.
     // Keyed on the WHOLE of what the correlated subquery matched on —
@@ -2388,7 +2426,11 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
             .await?;
         while let Some(row) = got.next().await? {
             let Some(&i) = opt_int_of(&row, 0).and_then(|id| at.get(&(tender_id, seq, id))) else { continue };
+            // ADR-0013 D3: a requested language outranks the ENG default; the
+            // rest of the ladder is unchanged, and strict `>` keeps first-seen
+            // winning ties — the same stability the SQL `LIMIT 1` oracle pins.
             let rank = match opt_text_of(&row, 1).as_deref() {
+                l if lang.is_some() && l == lang => 3,
                 Some("ENG") => 2,
                 Some(_) => 1,
                 None => 0,
@@ -2445,8 +2487,9 @@ async fn summarise(conn: &Connection, rows: &mut [LotRow]) -> turso::Result<()> 
 /// truncated the 16 Tenders (of 4.26M) that carry more than 1,000 lots — reporting
 /// `"lots": 2604` while shipping 1,000 `lot_details`, a response that contradicted
 /// itself about its own data (issue 116).
-async fn lots_of(conn: &Connection, tender_id: i64) -> turso::Result<Vec<LotRow>> {
-    let filter = Filter { tender: Some(tender_id), ..Filter::default() };
+async fn lots_of(conn: &Connection, tender_id: i64, lang: Option<&str>) -> turso::Result<Vec<LotRow>> {
+    let filter =
+        Filter { tender: Some(tender_id), lang: lang.map(str::to_owned), ..Filter::default() };
     lots(conn, &filter, Scope::Page { after: 0, limit: TENDER_LOTS_CAP }).await
 }
 

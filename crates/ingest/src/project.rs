@@ -4006,7 +4006,7 @@ fn canonical_name(table: &[(&str, &str)], field_id: &str) -> Option<String> {
 /// so every era — and every future portal's dialect — funnels through one map.
 /// An unknown tag passes through UPPERCASED: it fails visible (a tag the picks
 /// simply ignore) instead of silently splitting one language across spellings.
-fn normalize_lang(lang: Option<&str>) -> Option<String> {
+pub fn normalize_lang(lang: Option<&str>) -> Option<String> {
     let up = lang?.to_ascii_uppercase();
     Some(
         match up.as_str() {

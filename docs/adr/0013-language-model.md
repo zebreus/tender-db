@@ -96,3 +96,20 @@ check — never implied by this ADR.
   `normalize_lang`."
 - /docs gains a language paragraph (what `?lang=` does, the fallback chain, the
   wholesale-supersession behavior on corrections).
+
+## Amendment 2026-08-27 — D3 shipped; the "original" leg awaits a data source
+
+The `?lang=` selector shipped with the chain **requested → ENG → any labelled →
+unlabelled**, applied at the read-time picks (the tender list's and detail's
+title, lot titles, SSE `include_data`) — the survey that preceded the build
+found the REST list computes its title per request, so no denormalized
+per-language columns were needed. The fold-time surfaces (`v_tenders`/`v_lots`
+on /v1/sql, `current_title`) deliberately keep the deterministic default.
+
+The decided chain's third leg — the notice's ORIGINAL language — turned out to
+have no persisted data source: `tender_version_texts.lang` records each
+variant's own tag, and nothing marks which was the original (the r209 parser
+sees the `LG` attribute but never stores it). Honoring that leg needs one
+additive column at parse/fold time plus a refold; until someone wants it, the
+chain skips from ENG to the deterministic tail, and `lang` is documented as a
+projection SELECTOR (never a predicate, never in `ignored_filters`).

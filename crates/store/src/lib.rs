@@ -5502,7 +5502,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         drop(w);
         let conn = db.reader().await.unwrap();
 
-        let detail = read::tender_detail(&conn, 1).await.unwrap().expect("tender 1");
+        let detail = read::tender_detail(&conn, 1, None).await.unwrap().expect("tender 1");
         assert_eq!(
             detail.lots.len(),
             1200,

@@ -692,6 +692,61 @@ async fn the_filters_narrow_the_same_way_on_every_collection() {
     assert!(!items(&server.get(&format!("/v1/lots?tender={id}")).await).is_empty());
 }
 
+/// ADR-0013 D3: `?lang=` prefers a language for the picked titles (list and
+/// detail), normalizes ISO 639-1 input through the fold's own vocabulary map,
+/// falls back down the chain when the language is absent, and rejects junk
+/// with a 400 — never a silent default.
+#[tokio::test]
+async fn the_lang_selector_prefers_a_language_and_rejects_junk() {
+    let server = Server::start("langsel").await;
+    server.ingest_chain().await;
+
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    let default_title = detail["title"].as_str().map(str::to_owned);
+
+    // If the fixture stores a non-English tender-level title variant, requesting
+    // its language must serve it; otherwise the chain must fall back to the
+    // default pick unchanged. Either way the branch taken asserts something.
+    let variant = detail["texts"]
+        .as_array()
+        .expect("texts")
+        .iter()
+        .find(|t| {
+            t["field"] == "title"
+                && t["lot"].is_null()
+                && t["lang"].as_str().is_some_and(|l| l != "ENG")
+        })
+        .map(|t| {
+            (t["lang"].as_str().unwrap().to_owned(), t["value"].as_str().unwrap().to_owned())
+        });
+    match variant {
+        Some((lang, value)) => {
+            let picked = server.get(&format!("/v1/tenders/{id}?lang={lang}")).await;
+            assert_eq!(picked["title"].as_str(), Some(value.as_str()), "requested language wins");
+        }
+        None => {
+            let same = server.get(&format!("/v1/tenders/{id}?lang=isl")).await;
+            assert_eq!(
+                same["title"].as_str().map(str::to_owned),
+                default_title,
+                "an absent language falls back down the chain to the default pick"
+            );
+        }
+    }
+
+    // 639-1 input normalizes through the fold's map: `de` and `DEU` answer
+    // identically, on the list as well as the detail.
+    let a = server.get(&format!("/v1/tenders/{id}?lang=de")).await;
+    let b = server.get(&format!("/v1/tenders/{id}?lang=DEU")).await;
+    assert_eq!(a["title"], b["title"], "639-1 and 639-2 spellings answer identically");
+    assert_eq!(items(&server.get("/v1/tenders?lang=de").await).len(), items(&server.get("/v1/tenders").await).len(), "a selector never narrows the list");
+
+    // Junk shapes are a 400 on both surfaces.
+    assert_eq!(server.status("/v1/tenders?lang=german").await, 400);
+    assert_eq!(server.status(&format!("/v1/tenders/{id}?lang=x")).await, 400);
+}
+
 /// Issue 49: the ids a tender detail hands out — `caused_by_notice_id` and
 /// `parties[].organization_id` — must be fetchable, so the ADR-0001 chain does
 /// not dead-end at the API.

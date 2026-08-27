@@ -536,6 +536,10 @@ pub struct Params {
     /// e.g. `EUR`) on any amount of the current version (ADR-0014 D5).
     /// Tenders/Lots.
     currency: Option<String>,
+    /// Preferred language for picked text values (ADR-0013 D3): ISO 639-1 or
+    /// 639-2 code, case-insensitive (`de`, `DEU`). A projection selector, not
+    /// a filter — it changes which title a row serves, never which rows match.
+    lang: Option<String>,
     kind: Option<String>,
     tender: Option<i64>,
     /// Official notice number (`publication_id`); exact-match on `/v1/notices` (issue 217).
@@ -612,6 +616,28 @@ impl Params {
                 Some(other) => {
                     return Err(ApiError::bad_request(format!(
                         "currency must be a three-letter ISO 4217 code (e.g. EUR), not {other:?}"
+                    )));
+                }
+            },
+            // Normalized HERE through the fold's own vocabulary map
+            // (ISO 639-2/T uppercase — `ingest::project::normalize_lang`), so
+            // `?lang=de`, `?lang=DE` and `?lang=deu` all reach the store as
+            // `DEU` and the picks compare one spelling. An unknown-but-shaped
+            // code passes through uppercased and simply outranks nothing —
+            // the fallback chain answers; junk is a 400, never a silent
+            // default.
+            lang: match self.lang.as_deref().map(str::trim) {
+                None => None,
+                Some(l)
+                    if (l.len() == 2 || l.len() == 3)
+                        && l.chars().all(|c| c.is_ascii_alphabetic()) =>
+                {
+                    ingest::project::normalize_lang(Some(l))
+                }
+                Some(other) => {
+                    return Err(ApiError::bad_request(format!(
+                        "lang must be an ISO 639 code of two or three letters (e.g. de, DEU), \
+                         not {other:?}"
                     )));
                 }
             },
@@ -1168,9 +1194,18 @@ async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
     collection(Collection::Notices, s, h, p).await
 }
 
-async fn tender(State(state): State<AppState>, ApiPath(id): ApiPath<i64>) -> ApiResult {
+async fn tender(
+    State(state): State<AppState>,
+    ApiPath(id): ApiPath<i64>,
+    ApiQuery(params): ApiQuery<Params>,
+) -> ApiResult {
+    // `?lang=` (ADR-0013 D3) picks the header title and lot titles; `texts[]`
+    // still carries every variant. Going through `filter()` also means an
+    // unknown query parameter is a 400 here like everywhere else — before this
+    // extractor the detail endpoint silently ignored its query string.
+    let lang = params.filter(store::now_unix())?.lang;
     let reader = state.readers.get().await?;
-    match read::tender_detail(&reader, id).await? {
+    match read::tender_detail(&reader, id, lang.as_deref()).await? {
         Some(detail) => Ok(axum::Json(json::detail(&detail)).into_response()),
         None => Err(ApiError::not_found("tender")),
     }

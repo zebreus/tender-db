@@ -49,8 +49,9 @@ curl -s https://tenders.zebreus.click/v1
 **List tenders**, with filters (`source`, `country` NUTS prefix (alpha-2 at the
 country level, e.g. `DE`), `cpv` prefix, `buyer`/`winner` organization id,
 `status=open|closed`, `min_value`/`max_value` in EUR cents (compared against
-the derived EUR-at-publication-date value), `currency` ISO-4217, `kind`). Page
-with `limit` (max 1000) and the returned `next_cursor`:
+the derived EUR-at-publication-date value), `currency` ISO-4217, `kind`; plus
+`lang=de` to prefer a language for the picked titles). Page with `limit` (max
+1000) and the returned `next_cursor`:
 
 ```sh
 curl -s "https://tenders.zebreus.click/v1/tenders?country=DE&status=open&limit=5"

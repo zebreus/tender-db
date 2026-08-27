@@ -420,6 +420,25 @@ async fn set_based_lot_summary_agrees_with_the_correlated_subqueries() {
         title: None, value_cents: None, currency: None, deadline: None,
     });
     assert_eq!(expected[7].title.as_deref(), Some("acht-sv"), "a Tender-level title is not a lot's");
+    // ADR-0013 D3: a requested language outranks the ENG default in the same
+    // ladder — asserted against the SAME fixture so the default path above
+    // stays byte-pinned by the oracle while the requested path is pinned here.
+    // Lot 1 flips to its DEU variant; lot 2 (no DEU variant) keeps its
+    // labelled-beats-NULL answer; lot 8 keeps its only (SWE) title.
+    let with_lang: Vec<Summary> = read::lots(
+        &conn,
+        &Filter { tender: Some(TENDER), lang: Some("DEU".into()), ..Filter::default() },
+        Scope::Page { after: 0, limit: 1000 },
+    )
+    .await
+    .unwrap()
+    .into_iter()
+    .map(summary)
+    .collect();
+    assert_eq!(with_lang[0].title.as_deref(), Some("eins-de"), "requested DEU outranks ENG");
+    assert_eq!(with_lang[1].title.as_deref(), Some("zwei-fr"), "no DEU variant — chain falls back");
+    assert_eq!(with_lang[7].title.as_deref(), Some("acht-sv"), "single-language lots unchanged");
+
     assert!(
         !got.iter().any(|s| s.lot_key == "FOREIGN-LOT"),
         "another Tender's Lot reached this Tender's answer — the \
