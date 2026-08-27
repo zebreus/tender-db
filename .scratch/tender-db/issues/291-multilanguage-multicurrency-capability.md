@@ -151,3 +151,20 @@ and flexibility in mind. Done:
 Sequencing update: step 1 (292) DEPLOYED (rev 5036a09, forward-only pending the
 sized backfill); steps 2-3 (the ADRs) MADE — remaining before build: the 172/ADR-0014
 validation pass, then the additive build units.
+
+## Build progress (2026-08-27, owner)
+
+- **Step 4 currency, units 1+2 SHIPPED + LIVE**: the `currency_rates` reference
+  table (notice-layer, survives rebuilds), the 21 irrevocable euro conversion
+  rates, the EUR-pivot lookup (7-day daily window, irrevocable exemption, EUR
+  identity, honest-absence), and the `fetch-rates` admin job (ECB
+  eurofxref-hist.csv through the ordinary fetch registry, chunk-upserted).
+  First prod run: job 1300 `ok` — 85,446 daily rows (1999→today) + 21
+  irrevocable rates loaded, raw CSV archived (rev d42c3e5).
+- Remaining currency units: the ECU 1993-1998 series (sourcing = part of the
+  172 validation pass), `eur_cents` migration + projection derivation (4 loci),
+  the shared epoch-bump refold (carries 292's lang backfill + 278's ghosts),
+  filters + `eur_convertible_rate` gauge + docs. `currency_rates` is NOT in the
+  /v1/sql allow-list — public exposure is a 299 (C15 contract) question.
+- 231's sdk-0.1 value refold ran (658,646 tenders, 34 min); acceptance number
+  rides today's weekly DQ run.
