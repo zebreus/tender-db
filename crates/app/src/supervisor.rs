@@ -2016,43 +2016,37 @@ impl Supervisor {
                 // not whatever snapshot the last projection cached.
                 let cached = self.db.reload_rates_lookup().await.map_err(|e| e.to_string())?;
                 let rates = self.db.rates_lookup();
+                let mut tenders = 0i64;
                 let mut scanned = 0i64;
                 let mut updated = 0i64;
-                let mut per_locus = Vec::new();
-                for (locus, (table, ..)) in store::rates::EUR_LOCI.iter().enumerate() {
-                    let mut locus_scanned = 0i64;
-                    let mut locus_updated = 0i64;
-                    let mut watermark = 0i64;
-                    loop {
-                        let (rows, changed, next) = self
-                            .db
-                            .rederive_eur_batch(locus, &rates, BACKFILL_BATCH, watermark)
-                            .await
-                            .map_err(|e| e.to_string())?;
-                        if rows == 0 {
-                            break;
-                        }
-                        locus_scanned += rows;
-                        locus_updated += changed;
-                        watermark = next;
-                        self.set_phase(
-                            table,
-                            Some((scanned + locus_scanned) as u64),
-                            None,
-                            format!("{} updated", updated + locus_updated),
-                        );
-                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
-                            eprintln!("supervisor: checkpoint after rederive batch: {e}");
-                        }
+                let mut watermark = 0i64;
+                loop {
+                    let (t, rows, changed, next) = self
+                        .db
+                        .rederive_eur_window(&rates, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if t == 0 {
+                        break;
                     }
-                    scanned += locus_scanned;
-                    updated += locus_updated;
-                    per_locus.push(format!("{table}: {locus_updated}/{locus_scanned}"));
+                    tenders += t;
+                    scanned += rows;
+                    updated += changed;
+                    watermark = next;
+                    self.set_phase(
+                        "walking",
+                        Some(tenders as u64),
+                        None,
+                        format!("{scanned} money rows scanned, {updated} updated"),
+                    );
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after rederive window: {e}");
+                    }
                 }
                 Ok(format!(
-                    "eur_cents re-derived from {cached} cached rates: {updated} of {scanned} \
-                     money rows changed ({}) — follow with backfill-values (issue 306)",
-                    per_locus.join(", ")
+                    "eur_cents re-derived from {cached} cached rates over {tenders} tenders: \
+                     {updated} of {scanned} money rows changed — follow with backfill-values \
+                     (issue 306)"
                 ))
             }
             Spec::RepairNestedOrgs { dry_run } => {

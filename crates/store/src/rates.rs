@@ -378,66 +378,89 @@ impl Db {
         Ok(removed)
     }
 
-    /// One batch of the issue-306 repair walk: re-derive one money locus's EUR
-    /// sibling for the next `batch` rows past the `rowid` watermark, from
-    /// (cents, currency, version publication date) via the in-memory lookup —
-    /// the exact `EurContext` derivation the fold itself uses, so a re-run
-    /// after repair writes nothing. Only rows whose derived value CHANGES are
-    /// updated: garbage-rate values corrected, newly convertible NULLs filled,
-    /// no-longer-derivable values honestly NULLed. Deliberately quiet on the
-    /// change feed — the derived-beside layer moved, the corpus did not.
-    /// Returns `(scanned, updated, watermark)`; `scanned == 0` ends the locus.
-    pub async fn rederive_eur_batch(
+    /// One window of the issue-306 repair walk: re-derive ALL FOUR money
+    /// loci's EUR siblings for the next `batch` tenders past the id watermark,
+    /// from (cents, currency, version publication date) via the in-memory
+    /// lookup — the exact `EurContext` derivation the fold itself uses, so a
+    /// re-run after repair writes nothing. Only rows whose derived value
+    /// CHANGES are updated: garbage-rate values corrected, newly convertible
+    /// NULLs filled, no-longer-derivable values honestly NULLed. Deliberately
+    /// quiet on the change feed — the derived-beside layer moved, the corpus
+    /// did not.
+    ///
+    /// The window drives on the `tenders` PK and each locus filters
+    /// `a.tender_id > ? AND a.tender_id <= ?` — a PK/`*_version`-index prefix
+    /// range, the walk shape every backfill already proved on turso. The first
+    /// cut windowed on `a.rowid > ? ORDER BY a.rowid LIMIT ?` instead, and on
+    /// prod that shape COLLAPSED ~55M rows in: from ~30k rows/s to a 100%-CPU
+    /// zero-IO spin (the issue-274 seek lesson resurfacing on a bare rowid
+    /// range). Updates stay rowid-addressed; only the WINDOWING changed.
+    /// Returns `(tenders, rows_scanned, updated, watermark)`; `tenders == 0`
+    /// ends the walk.
+    pub async fn rederive_eur_window(
         &self,
-        locus: usize,
         rates: &RatesLookup,
         batch: i64,
         after: i64,
-    ) -> turso::Result<(i64, i64, i64)> {
-        let (table, cents_col, currency_col, eur_col) = EUR_LOCI[locus];
+    ) -> turso::Result<(i64, i64, i64, i64)> {
         let conn = self.conn().await;
         let mut rows = conn
             .query(
-                &format!(
-                    "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
-                            v.published_at \
-                       FROM {table} a \
-                       JOIN tender_versions v \
-                         ON v.tender_id = a.tender_id AND v.seq = a.seq \
-                      WHERE a.rowid > ? ORDER BY a.rowid LIMIT ?"
-                ),
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM tenders WHERE id > ? ORDER BY id LIMIT ?)",
                 (Value::Integer(after), Value::Integer(batch)),
             )
             .await?;
-        let mut scanned = 0i64;
-        let mut watermark = after;
-        let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
-        while let Some(row) = rows.next().await? {
-            scanned += 1;
-            let rowid = crate::int(&row, 0);
-            watermark = rowid;
-            let stored = crate::opt_int_of(&row, 3);
-            let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2)) {
-                (Some(cents), Some(currency)) => {
-                    rates.eur_cents(cents, &currency, &civil_date(crate::int(&row, 4)))
-                }
-                _ => None,
-            };
-            if derived != stored {
-                pending.push((rowid, derived));
-            }
-        }
+        let (tenders, watermark) = match rows.next().await? {
+            Some(row) => (crate::int(&row, 0), crate::opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
         drop(rows);
-        let updated = pending.len() as i64;
-        if !pending.is_empty() {
-            let mut stmt = conn
-                .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
+        if tenders == 0 {
+            return Ok((0, 0, 0, after));
+        }
+        let mut scanned = 0i64;
+        let mut updated = 0i64;
+        for (table, cents_col, currency_col, eur_col) in EUR_LOCI {
+            let mut rows = conn
+                .query(
+                    &format!(
+                        "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
+                                v.published_at \
+                           FROM {table} a \
+                           JOIN tender_versions v \
+                             ON v.tender_id = a.tender_id AND v.seq = a.seq \
+                          WHERE a.tender_id > ? AND a.tender_id <= ?"
+                    ),
+                    (Value::Integer(after), Value::Integer(watermark)),
+                )
                 .await?;
-            for (rowid, value) in pending {
-                stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
+            let mut pending: Vec<(i64, Option<i64>)> = Vec::new();
+            while let Some(row) = rows.next().await? {
+                scanned += 1;
+                let stored = crate::opt_int_of(&row, 3);
+                let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2)) {
+                    (Some(cents), Some(currency)) => {
+                        rates.eur_cents(cents, &currency, &civil_date(crate::int(&row, 4)))
+                    }
+                    _ => None,
+                };
+                if derived != stored {
+                    pending.push((crate::int(&row, 0), derived));
+                }
+            }
+            drop(rows);
+            updated += pending.len() as i64;
+            if !pending.is_empty() {
+                let mut stmt = conn
+                    .prepare(&format!("UPDATE {table} SET {eur_col} = ? WHERE rowid = ?"))
+                    .await?;
+                for (rowid, value) in pending {
+                    stmt.execute((crate::opt_int(value), Value::Integer(rowid))).await?;
+                }
             }
         }
-        Ok((scanned, updated, watermark))
+        Ok((tenders, scanned, updated, watermark))
     }
 }
 

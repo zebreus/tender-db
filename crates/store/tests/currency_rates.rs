@@ -205,13 +205,14 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
 
     let mut total_scanned = 0i64;
     let mut total_updated = 0i64;
-    for locus in 0..store::rates::EUR_LOCI.len() {
+    {
         let mut watermark = 0i64;
         loop {
-            // batch=2 forces the amounts locus through multiple windows.
-            let (scanned, updated, next) =
-                db.rederive_eur_batch(locus, &rates, 2, watermark).await.expect("batch");
-            if scanned == 0 {
+            // batch=1 (one tender per window) forces the watermark loop to
+            // iterate; the fixture's single tender means one full window.
+            let (tenders, scanned, updated, next) =
+                db.rederive_eur_window(&rates, 1, watermark).await.expect("window");
+            if tenders == 0 {
                 break;
             }
             total_scanned += scanned;
@@ -246,12 +247,12 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
 
     // Idempotence: the repaired layer re-derives to itself.
     let mut second_pass = 0i64;
-    for locus in 0..store::rates::EUR_LOCI.len() {
+    {
         let mut watermark = 0i64;
         loop {
-            let (scanned, updated, next) =
-                db.rederive_eur_batch(locus, &rates, 100, watermark).await.expect("batch");
-            if scanned == 0 {
+            let (tenders, _, updated, next) =
+                db.rederive_eur_window(&rates, 100, watermark).await.expect("window");
+            if tenders == 0 {
                 break;
             }
             second_pass += updated;

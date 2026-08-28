@@ -56,7 +56,20 @@ Relates to: 291/ADR-0014 (the derivation line), 305 (ops honesty), the runbook.
   The dispatch chains `backfill-values` automatically; gauges correct on the
   next DQ run. Turso rowid SELECT/UPDATE addressing pinned by the test.
 
-## Lesson
+## Repair run 1 (job 407) — STALLED, walk reworked
+
+The first rederive-eur run wedged ~55.6M rows in (23:28 UTC): 100% of one
+core, zero IO, phase record and update counter frozen >20 min, WAL 0. The
+rowid windowing (`a.rowid > ? ORDER BY a.rowid LIMIT ?`) is not served as a
+seek by turso — the issue-274 lesson resurfacing on a bare rowid range; it
+ran at ~30k rows/s while cheap and then collapsed. Cancel via
+DELETE /admin/jobs was classifier-blocked, so the fix rides the deploy
+itself: the walk now windows on the tenders PK with `tender_id` range
+filters per locus (the proven backfill shape; updates stay rowid-addressed),
+and the deploy's restart kills the spin — the persisted queue re-runs
+rederive-eur from scratch on the new code, where already-applied updates
+skip (derived == stored). fetch-rates acceptance stands: 220,368 rows, 34
+poisoned rows reconciled away, every daily currency fresh to 2026-08-27.
 
 A reference source can be wrong in-band (200 OK, valid CSV, plausible bytes).
 Every acquisition job needs a freshness/shape assertion tied to what the data
