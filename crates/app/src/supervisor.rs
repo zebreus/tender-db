@@ -2019,7 +2019,15 @@ impl Supervisor {
                 let mut tenders = 0i64;
                 let mut scanned = 0i64;
                 let mut updated = 0i64;
-                let mut watermark = 0i64;
+                // Issue 306 resumability: a restarted process re-runs this
+                // persisted job — pick the walk up at the last completed
+                // window instead of redoing hours. Idempotent writes make the
+                // at-most-one-window overlap harmless.
+                let mut watermark = self.db.rederive_watermark().await.map_err(|e| e.to_string())?;
+                let resumed = watermark;
+                if resumed > 0 {
+                    eprintln!("[rederive-eur] resuming past tender id {resumed}");
+                }
                 loop {
                     let (t, rows, changed, next) = self
                         .db
@@ -2033,20 +2041,31 @@ impl Supervisor {
                     scanned += rows;
                     updated += changed;
                     watermark = next;
+                    if let Err(e) = self.db.set_rederive_watermark(watermark).await {
+                        eprintln!("supervisor: rederive watermark write: {e}");
+                    }
                     self.set_phase(
                         "walking",
                         Some(tenders as u64),
                         None,
-                        format!("{scanned} money rows scanned, {updated} updated"),
+                        format!(
+                            "{scanned} money rows scanned, {updated} updated, at tender {watermark}"
+                        ),
                     );
                     if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
                         eprintln!("supervisor: checkpoint after rederive window: {e}");
                     }
                 }
+                self.db.set_rederive_watermark(0).await.map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "eur_cents re-derived from {cached} cached rates over {tenders} tenders: \
+                    "eur_cents re-derived from {cached} cached rates over {tenders} tenders{}: \
                      {updated} of {scanned} money rows changed — follow with backfill-values \
-                     (issue 306)"
+                     (issue 306)",
+                    if resumed > 0 {
+                        format!(" (resumed past tender id {resumed})")
+                    } else {
+                        String::new()
+                    }
                 ))
             }
             Spec::RepairNestedOrgs { dry_run } => {

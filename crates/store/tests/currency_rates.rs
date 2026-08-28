@@ -245,6 +245,13 @@ async fn rederive_walks_all_four_loci_by_rowid_and_only_writes_changes() {
         assert_eq!(got, want, "{table} WHERE {cond}");
     }
 
+    // The persisted resume point (issue 306): survives round-trips, clears to 0.
+    assert_eq!(db.rederive_watermark().await.unwrap(), 0, "no walk in flight");
+    db.set_rederive_watermark(42).await.unwrap();
+    assert_eq!(db.rederive_watermark().await.unwrap(), 42);
+    db.set_rederive_watermark(0).await.unwrap();
+    assert_eq!(db.rederive_watermark().await.unwrap(), 0);
+
     // Idempotence: the repaired layer re-derives to itself.
     let mut second_pass = 0i64;
     {

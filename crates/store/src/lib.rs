@@ -618,6 +618,13 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // NULL rather than a wrong title in the meantime — a title that is absent for an
     // hour beats a view nobody can query.
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_title TEXT").await?;
+    // Issue 306 repair resumability: the rederive-eur walk's persisted
+    // watermark (see the projection_state schema comment).
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN rederive_eur_watermark INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
     // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
     // open; the 82/83 + issue-42 lessons, same as current_deadline above).

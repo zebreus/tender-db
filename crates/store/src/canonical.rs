@@ -565,7 +565,12 @@ pub(crate) const SCHEMA: &str = "
     -- Single row, id pinned to 0.
     CREATE TABLE IF NOT EXISTS projection_state (
         id                  INTEGER PRIMARY KEY CHECK (id = 0),
-        rebuild_in_progress INTEGER NOT NULL DEFAULT 0
+        rebuild_in_progress INTEGER NOT NULL DEFAULT 0,
+        -- Issue 306 repair resumability: the rederive-eur walk's last completed
+        -- tender-id window. A restarted process re-runs the persisted job and
+        -- RESUMES here instead of redoing hours (the walk wedged twice ~2h in;
+        -- worst case a restart now costs one window). 0 = no walk in flight.
+        rederive_eur_watermark INTEGER NOT NULL DEFAULT 0
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 

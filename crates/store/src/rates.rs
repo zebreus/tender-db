@@ -397,6 +397,29 @@ impl Db {
     /// range). Updates stay rowid-addressed; only the WINDOWING changed.
     /// Returns `(tenders, rows_scanned, updated, watermark)`; `tenders == 0`
     /// ends the walk.
+    /// The rederive walk's persisted resume point (issue 306): the last
+    /// COMPLETED window's tender-id watermark, 0 when no walk is in flight.
+    pub async fn rederive_watermark(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT rederive_eur_watermark FROM projection_state WHERE id = 0", ())
+            .await?;
+        Ok(rows.next().await?.map_or(0, |row| crate::int(&row, 0)))
+    }
+
+    /// Persist the walk's resume point; write 0 on completion. Written AFTER a
+    /// window's updates commit, so a crash between the two redoes at most one
+    /// window (idempotent writes make the redo harmless).
+    pub async fn set_rederive_watermark(&self, watermark: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE projection_state SET rederive_eur_watermark = ? WHERE id = 0",
+            (Value::Integer(watermark),),
+        )
+        .await?;
+        Ok(())
+    }
+
     pub async fn rederive_eur_window(
         &self,
         rates: &RatesLookup,
