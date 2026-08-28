@@ -47,8 +47,8 @@ async fn seed(path: &str) -> store::Db {
         (13, Some("180014045"), "CNFPT"),
     ] {
         conn.execute(
-            "INSERT INTO organizations (id, name, name_norm, provisional, identifier_kind, identifier, created_at)
-             VALUES (?, ?, ?, 0, CASE WHEN ? IS NULL THEN NULL ELSE 'national' END, ?, 0)",
+            "INSERT INTO organizations (id, country, name, name_norm, provisional, identifier_kind, identifier, created_at)
+             VALUES (?, 'CZ', ?, ?, 0, CASE WHEN ? IS NULL THEN NULL ELSE 'national' END, ?, 0)",
             (
                 Value::Integer(id),
                 Value::Text(name.into()),
@@ -102,12 +102,20 @@ async fn the_census_counts_distinct_n2_names_for_identifier_bearing_orgs_only() 
     let mut after = 0i64;
     let mut rounds = 0;
     loop {
-        let (counts, next) = db.org_merge_health_batch(n2, 1, after).await.expect("batch");
-        if counts.is_empty() {
+        let (rows, next) = db.org_merge_health_batch(n2, 1, after).await.expect("batch");
+        if rows.is_empty() {
             break;
         }
-        assert_eq!(counts.len(), 1, "batch=1 yields one org per round");
-        all.extend(counts);
+        assert_eq!(rows.len(), 1, "batch=1 yields one org per round");
+        for r in rows {
+            // The identity triple rides along for the gate census.
+            assert!(!r.identifier.is_empty(), "walked orgs carry their identifier");
+            if r.org_id == 10 {
+                assert_eq!(r.country.as_deref(), Some("CZ"));
+                assert_eq!(r.kind.as_deref(), Some("national"));
+            }
+            all.push((r.org_id, r.distinct_names));
+        }
         assert!(next > after, "watermark must advance");
         after = next;
         rounds += 1;

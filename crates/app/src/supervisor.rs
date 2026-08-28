@@ -2201,30 +2201,63 @@ impl Supervisor {
                 // Top-100 by distinct-name count: a min-heap of (count, org).
                 let mut top: std::collections::BinaryHeap<std::cmp::Reverse<(u64, i64)>> =
                     std::collections::BinaryHeap::with_capacity(101);
+                // The Stage-1 gate census, riding the same walk: per-scheme
+                // populations + checksum pass/fail (the §2.1 enablement
+                // input — a scheme may hard-reject only at a measured ≥97%
+                // pass rate, which also adjudicates the validator
+                // implementations themselves) and the placeholder-class
+                // counters.
+                #[derive(Default)]
+                struct SchemeTally {
+                    pop: u64,
+                    pass: u64,
+                    fail: u64,
+                }
+                let mut schemes: std::collections::HashMap<&'static str, SchemeTally> =
+                    std::collections::HashMap::new();
+                let (mut lexicon, mut sequence, mut letter_run, mut short_vat) =
+                    (0u64, 0u64, 0u64, 0u64);
                 loop {
                     if self.cancelled(job.id) {
                         return Ok(
                             "org-merge-health stopped by cancel — no report stored".to_owned()
                         );
                     }
-                    let (counts, next) = self
+                    let (rows, next) = self
                         .db
                         .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
                         .await
                         .map_err(|e| e.to_string())?;
-                    if counts.is_empty() {
+                    if rows.is_empty() {
                         break;
                     }
-                    for &(org, n) in &counts {
+                    for r in &rows {
+                        let n = r.distinct_names;
                         orgs += 1;
                         if n >= 2 { ge2 += 1; }
                         if n >= 6 { ge6 += 1; }
                         if n >= 20 { ge20 += 1; }
-                        if n > max.0 { max = (n, org); }
-                        top.push(std::cmp::Reverse((n, org)));
+                        if n > max.0 { max = (n, r.org_id); }
+                        top.push(std::cmp::Reverse((n, r.org_id)));
                         if top.len() > 100 {
                             top.pop();
                         }
+                        let c = ingest::idgate::census(
+                            r.country.as_deref(),
+                            r.kind.as_deref(),
+                            &r.identifier,
+                        );
+                        let t = schemes.entry(c.scheme).or_default();
+                        t.pop += 1;
+                        match c.checksum {
+                            ingest::idgate::Checksum::Pass => t.pass += 1,
+                            ingest::idgate::Checksum::Fail => t.fail += 1,
+                            ingest::idgate::Checksum::Unknown => {}
+                        }
+                        if c.lexicon { lexicon += 1; }
+                        if c.sequence { sequence += 1; }
+                        if c.letter_run { letter_run += 1; }
+                        if c.short_vat { short_vat += 1; }
                     }
                     watermark = next;
                     self.set_phase(
@@ -2244,10 +2277,20 @@ impl Supervisor {
                 let by_id: std::collections::HashMap<i64, _> =
                     meta.into_iter().map(|m| (m.0, m)).collect();
                 let now = store::now_unix();
+                let mut scheme_rows: Vec<(&str, SchemeTally)> = schemes.into_iter().collect();
+                scheme_rows.sort_by(|a, b| b.1.pop.cmp(&a.1.pop));
+                let placeholder_total = lexicon.max(sequence);
                 let report = serde_json::json!({
                     "identifier_bearing": orgs,
                     "ge2": ge2, "ge6": ge6, "ge20": ge20,
                     "max": max.0, "max_org": max.1,
+                    "gate": {
+                        "lexicon": lexicon, "sequence": sequence,
+                        "letter_run": letter_run, "short_vat": short_vat,
+                        "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
+                            "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
+                        })).collect::<Vec<_>>(),
+                    },
                     "top": ranked.iter().map(|&(n, id)| {
                         let m = by_id.get(&id);
                         serde_json::json!({
@@ -2267,7 +2310,9 @@ impl Supervisor {
                 Ok(format!(
                     "org-merge-health census (issue 300): {orgs} identifier-bearing orgs, \
                      {ge2} with >=2 distinct mention names, {ge6} >=6, {ge20} >=20, \
-                     max {} (org {})",
+                     max {} (org {}); gate census: {lexicon} lexicon, {sequence} sequence, \
+                     {letter_run} letter-run, {short_vat} short-vat hits \
+                     (~{placeholder_total}+ placeholder-keyed)",
                     max.0, max.1
                 ))
             }

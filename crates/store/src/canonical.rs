@@ -1294,6 +1294,19 @@ pub struct OrgNameBackfill {
     pub written: u64,
 }
 
+/// One identifier-bearing org as the issue-300 census walk sees it: the
+/// distinct-N2-mention-name count plus the identity triple, so the caller
+/// can run the gate census (lexicon/sequence/checksum classing) over the
+/// same single walk.
+#[derive(Debug, Clone)]
+pub struct OrgHealthRow {
+    pub org_id: i64,
+    pub distinct_names: u64,
+    pub country: Option<String>,
+    pub kind: Option<String>,
+    pub identifier: String,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -5011,29 +5024,39 @@ impl Db {
     /// IN_CHUNK probes, and counts distinct `norm(name)` Rust-side — `norm` is
     /// the matcher's N2 key, injected from ingest like the 307 backfill's
     /// normalizer (dependency direction: store never depends on ingest).
-    /// Returns per-org counts plus the watermark; an empty vec ends the walk.
-    /// Reads only — no transaction, no events, safe beside any queue state.
+    /// Returns per-org rows — (id, distinct N2 names, country, kind,
+    /// identifier), the identity triple riding along so the caller can also
+    /// run the issue-300 gate census over the same walk — plus the
+    /// watermark; an empty vec ends the walk. Reads only — no transaction,
+    /// no events, safe beside any queue state.
     pub async fn org_merge_health_batch(
         &self,
         norm: fn(&str) -> String,
         batch: i64,
         after: i64,
-    ) -> turso::Result<(Vec<(i64, u64)>, i64)> {
+    ) -> turso::Result<(Vec<OrgHealthRow>, i64)> {
         let conn = self.reader().await?;
-        let mut ids: Vec<i64> = Vec::new();
+        let mut orgs: Vec<OrgHealthRow> = Vec::new();
         {
             let mut rows = conn
                 .query(
-                    "SELECT id FROM organizations \
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
                       WHERE id > ? AND identifier IS NOT NULL \
                       ORDER BY id LIMIT ?",
                     (Value::Integer(after), Value::Integer(batch)),
                 )
                 .await?;
             while let Some(row) = rows.next().await? {
-                ids.push(int(&row, 0));
+                orgs.push(OrgHealthRow {
+                    org_id: int(&row, 0),
+                    distinct_names: 0,
+                    country: opt_text_of(&row, 1),
+                    kind: opt_text_of(&row, 2),
+                    identifier: text(&row, 3),
+                });
             }
         }
+        let ids: Vec<i64> = orgs.iter().map(|o| o.org_id).collect();
         let Some(&last) = ids.last() else { return Ok((Vec::new(), after)) };
 
         let mut names: std::collections::HashMap<i64, std::collections::HashSet<String>> =
@@ -5053,15 +5076,16 @@ impl Db {
                 }
             }
         }
-        let counts = ids
-            .iter()
-            .map(|&id| (id, names.get(&id).map_or(0, |s| s.len() as u64)))
-            .collect();
-        Ok((counts, after.max(last)))
+        for org in &mut orgs {
+            org.distinct_names = names.get(&org.org_id).map_or(0, |s| s.len() as u64);
+        }
+        Ok((orgs, after.max(last)))
     }
 
     /// Identity detail for the census report's top rows — a bounded IN read,
     /// called once per run with ~100 ids.
+    ///
+    /// (See also [`OrgHealthRow`], the per-walk row shape above.)
     pub async fn org_health_meta(
         &self,
         ids: &[i64],
