@@ -84,12 +84,26 @@ design working. Refined class sizes: letter-run 140,244 → **27,781**
 platform hex ids — merge-inert singletons, not junk to dissolve),
 compound 3,332 (recoverable via the splitter).
 
-Next unit (the gate flip tranche): compound splitter + label-prefix strip
-in `normalise_identifier`, THEN the v2 gate flip (lexicon + sequence +
-short-VAT + HARD checksums per the decision above), the [16%,25%]
-replayed-window band, and `repair-placeholder-orgs` (dissolve) with the
-pinned exemplar panel (15176, 15566 + the 17 other buckets, the NIMAT
-family, PL823) — dry-run first, allowlist untouched.
+**THE v2 GATE IS LIVE (58e4d24, deployed 2026-08-28 ~19:0x, health green):**
+`normalise_identifier` refuses lexicon/sequence/short-VAT/HARD-checksum
+classes to the provisional path. Scope discipline held: NO value reshaping
+(rejection cannot create prevention-vs-stock splits; the compound splitter
+stays Stage-2 match-time work), and rule 4 (letter-run) stays census-only
+pending composition. New condemned mentions mint provisionals instead of
+joining stock false-merge orgs — accepted transitional cost until the
+dissolve erases the stock side. Two junk-valued test fixtures replaced
+with real-shaped ids. Verification note: the planned adversarial workflow
+died on a temporary model-usage cap; the two lenses were closed solo with
+deterministic checks instead (live call site passes alpha-2 — verified at
+project.rs:3108; the green 70-suite gate proves no fixture identifier
+shifts; each replacement fixture hand-computed through the gate) — the
+checksum arithmetic itself was already triple-verified in the previous
+unit.
+
+Remaining Stage-1 pieces: `repair-placeholder-orgs` (the dissolve — next
+unit), the [16%,25%] replayed-window band (measure at the dissolve's
+dry-run), first-post-flip daily-chain read (tomorrow ~07:4x: provisional
+mint rate should tick up by the condemned share, nothing else moves).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
