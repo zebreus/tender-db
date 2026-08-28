@@ -5,9 +5,16 @@ walked, 40,241,608 mentions visited, **38,706,271 labelled variants
 written** into organization_names — far above the eForms-only estimate,
 because legacy r208/r209 AA_NAME/ML_TI_DOC buyer-name copies in the kept
 languages (EN + original) are labelled and were harvested too. Sample
-verified (POL/FIN/FRA/ITA rows on real orgs). Corpus-wide COUNT exceeds the
-/v1/sql 10s cap — the satellite is ~38.7M rows; issue 300's matcher has its
-multilingual input. Re-run after 304's campaign widens legacy languages.
+verified (POL/FIN/FRA/ITA rows on real orgs). Re-run after 304's campaign
+widens legacy languages.
+
+CORRECTION (2026-08-28, the 300 design's probes): "the satellite is ~38.7M
+rows" was wrong — 38,706,271 counted REPLACE **write-ops**; the PK
+(org_id, lang) collapses repeat mentions of one org, and disjoint 4M-id
+window sums measure the table exactly at **4,403,039 rows over 4,306,297
+orgs, 70,598 with ≥2 languages** (top langs FRA 1.71M / DEU 583k / POL 468k
+/ ENG 434k). Cross-language matcher reach is bounded by the 70,598, not by
+row volume. docs/research/org-matcher-probes-2026-08.md carries the read.
 Kind: one-time backfill walk
 Relates to: ADR-0013 D4 (the satellite, built 2026-08-28), 259 (the
 mention-idempotency lesson that makes this walk necessary), 300 (the
