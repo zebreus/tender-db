@@ -8,6 +8,18 @@ cross-walk study), judged by a three-lens panel (false-merge safety,
 implementability, evidence fidelity). The evidence-ladder draft won 2 of 3
 lenses and is the skeleton; the panel's convergent grafts from the other two
 are folded in below and marked ⊕. Stage 0 is the first buildable unit.
+
+Stage-0 progress (2026-08-28, same day): exemplar sheet checked in
+(300-exemplars.md) with every probe specimen re-verified live by hand; the
+CNFPT determination is MADE — the satellite pair is acronym↔expansion (E4),
+so CNFPT is must-FLAG, no corroboration-weakening pressure; the satellite
+contamination specimen's mechanism is FOUND — the source notice itself
+crosses multilingual BT-500 slots between ORG sections (25038532; publisher
+authoring error, our capture faithful), so contamination is a SOURCE-data
+property to weight, not a capture bug to fix; first bounded census of the
+class: ~10.6% of BT-500 notices carry a same-lang duplicate value across
+sections (upper bound; wrong-name subset unmeasured — the sharper census is
+specified in the exemplar sheet). org-merge-health is the next unit.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

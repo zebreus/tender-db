@@ -7,8 +7,10 @@ rolls a completed wrap (final slice included) into a `reveal-wrap` report;
 from that report ONLY, so a partial wrap never moves the gauges. Legacy
 `{"after": N}` cursor bodies read as zero running totals. Unit-tested
 (accumulate → wrap-roll → reset → legacy tolerance); full gate green.
-Awaiting deploy + first completed wrap (~3 nights) for the acceptance
-hand-sum check.
+DEPLOYED 2026-08-28 (rev 46d0cf6, health green). Awaiting the first
+completed wrap (~3 nights; the walk is mid-cohort, so the first wrap lands
+~2026-08-30's slice) for the acceptance hand-sum check — gauges stay
+absent until then, by design.
 Kind: observability gap (small)
 Relates to: 274 (the sliced reveal recheck; its residue declared this number
 "the campaign's acceptance metric, accrues nightly"), ADR-0013 D5.
