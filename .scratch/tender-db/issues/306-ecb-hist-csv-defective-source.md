@@ -107,3 +107,25 @@ resumes past it on re-run, and the phase detail now names the current
 watermark ("at tender N") — so a restart costs one window, and a recurring
 wedge names its exact tender-id window for snapshot dissection (a turso
 reproducer candidate; recheck against 0.8.0 per issue 166's watch).
+
+## Wedge ROOT CAUSE (2026-08-28 05:3x) — the JOIN, at one window
+
+Run 3 froze at "at tender 2814446" — the SAME logical position as run 2's
+death (~2.79M tenders), proving the wedge position-deterministic. The
+watermark pinpointed the window; dissection via bounded reads: (2814446,
+2824446] holds 10,000 tenders, ONE 2,983-version legacy mega-chain, and
+**8,866,248 tender_version_lot_results rows** (additive result rounds ×
+versions), against only 17k version rows, 86k amounts, 0 bids/contracts.
+The bare PK-range COUNT of those 8.9M rows returns in seconds on the reader;
+the job's only difference was `JOIN tender_versions ON (tender_id, seq)` —
+turso's evaluation of that join at this volume spins at 100% CPU, zero IO,
+indefinitely (both runs, fresh process each). Run 1's rowid-walk death at
+55M rows was almost certainly the same rows reached in rowid order — one
+diagnosis covers all three wedges.
+
+Fix: the join moved to Rust — the window's versions (17k rows) load into a
+HashMap first, each locus scans join-free (pure PK/index range), dates
+resolve in memory. Strictly better for every window. Turso-lesson for the
+board: 274 (composite seek), the bare-rowid range (this issue, run 1), and
+now equi-JOIN at volume — the planner's failure modes on this engine are a
+growing catalogue; prefer Rust-side joins on windowed walks.
