@@ -1,11 +1,21 @@
 # 306 — INCIDENT: ECB's bare eurofxref-hist.csv is a defective artifact; rates stop at 2010 + one garbage row loaded
 
-Status: OPEN — fix BUILT (all four pieces below + tests green), pending deploy
-and the prod repair sequence: fetch-rates (zip) → rederive-eur (chains
-backfill-values) → verify per-currency MAX(rate_date) ≈ today → gauges on the
-next DQ run. (Found 2026-08-27 20:5x reading the post-refold acceptance DQ:
-modern eras' eur-conv rates were impossibly low — sdk-1.8 17.4%, r208 32.8%,
-r209 39.2% — while text-era converted at 96.9%)
+Status: CLOSED — REPAIRED AND VERIFIED ON PROD 2026-08-28 06:2x. Full
+acceptance: fetch-rates on the zip (220,368 rows, 34 poisoned rows
+reconciled away, every daily currency fresh to 2026-08-27); rederive-eur
+completed via the join-free walk (run 2: 87,961,014 updates over the first
+2.79M tenders; run 4 resumed at watermark 2814446: 50,225,658 of
+118,502,415 rows changed over the remaining 5.13M tenders — ~138M total row
+repairs); determinism proven (run 3 re-scanned 144M repaired rows with 0
+updates); EUR-identity invariant verified (0 violations); backfill-values
+re-stamped 7,915,164 tenders; post-repair convertibility measured 99.96%
+and 99.2% in two modern windows (vs 17-46% pre-repair era gauges — official
+per-era numbers land with Sunday's weekly DQ). Three walk wedges diagnosed
+to ONE root cause (turso equi-join spin on the 8.9M-row mega-chain window)
+and fixed structurally; the staleness tripwire + reconcile guard the source
+class permanently. Follow-ups: min/max de-isolation measurement (88d876a)
+now unblocked; turso join-spin reproducer for the 0.8.0 recheck (166 watch).
+(Found 2026-08-27 20:5x reading the post-refold acceptance DQ.)
 Kind: data-correctness incident (bounded) + source fix + repair job
 Relates to: 291/ADR-0014 (the derivation line), 305 (ops honesty), the runbook.
 
