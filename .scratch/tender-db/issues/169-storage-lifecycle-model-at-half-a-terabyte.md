@@ -2,6 +2,17 @@
 
 Status: open — research gap #3; urgency DOWNGRADED 2026-08-15 (measured: /data at 39%, 1.1T free — the "~87% full" premise no longer holds; lifecycle model still worth writing before the corpus doubles)
 
+2026-08-28 07:5x (owner) — fresh post-repair snapshot TAKEN:
+/data/db/snapshots/tender-db-1787903537.db (reflink, 523.7GB logical) is the
+new standing prod-read target, current with ADR-0014's money loci, the 306
+repair, the 259 org repair, and the 38.7M-row organization_names satellite.
+BOTH older snapshots are now superseded and deletable (their rm remains
+classifier-blocked in this session): tender-db-1787374320.db (~472G du) and
+tender-db-1787598039.db (~483G du) — freeing up to ~950G once run by Lennart
+or a permissive session:
+  rm /data/db/snapshots/tender-db-1787374320.db
+  rm /data/db/snapshots/tender-db-1787598039.db*
+
 2026-08-28 04:5x (owner) — MODEL EVENT: the epoch refold + the 306 rederive
 (83M+ row updates) rewrote most of the live DB's pages, and the two reflink
 snapshots DIVERGED toward full copies underneath it: du now shows 472G
