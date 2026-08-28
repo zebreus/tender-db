@@ -139,3 +139,13 @@ resolve in memory. Strictly better for every window. Turso-lesson for the
 board: 274 (composite seek), the bare-rowid range (this issue, run 1), and
 now equi-JOIN at volume — the planner's failure modes on this engine are a
 growing catalogue; prefer Rust-side joins on windowed walks.
+
+## Final acceptance datum (2026-08-28 09:1x, DQ job 1329 — the corrected gauges)
+
+Per-era eur-conv after the repair (pre-repair figures in parentheses):
+TED_EXPORT r2.0.8 **99.7%** (32.8%) over 4,598,235 amounts; TED_EXPORT
+r2.0.9 **99.9%** (39.2%) over 11,503,410; eforms-sdk-1.8 **100.0%** (17.4%);
+eforms-sdk-1.13 **99.8%** (46.3%); text 1993–2010 **100.0%** (96.9%);
+every measured era ≥97.9%, eforms-de eras at 100.0%. The
+tender_db_dq_eur_convertible_rate gauges and the dashboard QualityPanel now
+carry these numbers. The incident record is complete.

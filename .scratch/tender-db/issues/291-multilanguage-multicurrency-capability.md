@@ -354,3 +354,18 @@ rebuilds recreate the satellite with the org layer; /v1/sql allow-lists the
 table with notes (additive — no CHANGELOG entry per its own policy). The
 standing-corpus backfill is issue 307 (READY). Issue 300's matcher now has
 its multilingual input once 307 runs.
+
+## 2026-08-28 — the 306 repair landed; ADR-0014 measured at corpus quality
+
+Overnight the 306 incident (defective frozen ECB source) was repaired
+end-to-end: ~138M derived-EUR row fixes, determinism proven, and DQ job 1329
+measured the corrected per-era eur-conv — r208 99.7%, r209 99.9%, sdk-1.8
+100.0%, sdk-1.13 99.8%, text 100.0%, all eras ≥97.9%. The multicurrency
+capability is now REAL at corpus scale. Same night: the D4 org-name
+satellite went live with 38,706,271 backfilled labelled variants (307), 259
+fully landed (17,289 winners named), and 304's stage-1 TranslationPolicy
+shipped inert. NEXT UNIT on this line: the min/max de-isolation measurement
+(88d876a rule) — the value bounds still route ISOLATED; with repaired data
+and the tenders_current_value_eur index live, measure the bounded-window
+cost on prod and de-isolate if it holds. After that: 304 stage-1
+measurement month, then Lennart's breadth decision.
