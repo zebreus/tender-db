@@ -130,6 +130,53 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
     out
 }
 
+/// Whether a scheme's checksum is HARD — allowed to reject an identifier to
+/// the provisional path. THE STANDING ENABLEMENT DECISION (issue 300, census
+/// runs 1331/1332, stable across both): only schemes with a measured ≥97%
+/// corpus pass rate. FR:siret/siren/vat, PL:nip, PL:regon9, BE:kbo and
+/// HR:vat (tiny population) stay SOFT — their failures are typo load the
+/// checksum must not convert into rejections. Changing this list requires a
+/// fresh census re-measurement, not judgement.
+pub fn hard_scheme(scheme: &str) -> bool {
+    matches!(
+        scheme,
+        "DE:vat"
+            | "SE:orgnr"
+            | "SE:vat"
+            | "CZ:ico"
+            | "CZ:dic-ico"
+            | "IT:piva"
+            | "IT:vat"
+            | "FI:ytunnus"
+            | "FI:vat"
+            | "NO:orgnr"
+            | "HR:oib"
+            | "PT:nif"
+            | "PT:vat"
+            | "GR:afm"
+            | "PL:vat-nip"
+            | "BE:vat"
+    )
+}
+
+/// The Stage-1 gate flip's verdict: does this identifier lose merge-key
+/// status (⇒ the mention goes provisional)? TRUE for the measured
+/// false-merge classes only: the placeholder lexicon, suspicious digit
+/// runs, short VAT stubs, and a HARD-scheme checksum failure. Letter-run
+/// and hex/compound classes deliberately stay census-only — the letter-run
+/// composition is not fully sampled and the compound class is RECOVERABLE
+/// (Stage 2's canonical_key splits it at match time; rejecting it here
+/// would discard real identifier evidence). Rejection can never create a
+/// false SPLIT against the standing stock: the repair job dissolves the
+/// stock twins with this same predicate.
+pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
+    let c = census(country, Some(kind), value);
+    c.lexicon
+        || c.sequence
+        || c.short_vat
+        || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
+}
+
 /// The placeholder lexicon, seeded from the measured top-30 (probe §2) and
 /// the census run-1330 findings: NIMATn (SI e-procurement family — 794
 /// measured strangers on one id), ORGnnn/ORG-0001 (eForms technical ids),

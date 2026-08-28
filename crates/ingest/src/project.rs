@@ -4560,6 +4560,23 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         value: value.clone(),
     };
 
+    // Issue 300 Stage 1 — the v2 gate: an identifier in a measured
+    // false-merge class must never become a merge key. The predicate is
+    // `idgate::condemns` (placeholder lexicon, suspicious digit runs, short
+    // VAT stubs, HARD-scheme checksum failures per the standing enablement
+    // decision), applied to the same (country, kind, value) shape the
+    // census measured, so prevention and the census read one ruler. The
+    // raw published value survives untouched on the mention
+    // (`raw_identifier`); only merge-key status is refused — the mention
+    // takes the provisional path, exactly like a value the v1 gate already
+    // rejected. Rejection cannot create prevention-vs-stock splits; value
+    // RESHAPING could, which is why none happens here (compounds and
+    // labelled prefixes are Stage-2 match-time work).
+    let condemned = |id: &Identifier| {
+        crate::idgate::condemns(id.country.as_deref(), &id.kind, &id.value)
+    };
+    let gated = |id: Identifier| if condemned(&id) { None } else { Some(id) };
+
     // A known register scheme is national — its prefix is a scheme tag, not a
     // country, so it must not reach the VAT sniffer (issue 86). `HRB22388` and
     // `HRBDRESDEN4115` (court name inline) both start with `HRB`, not the country
@@ -4571,7 +4588,7 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         None => false,
     });
     if starts_register {
-        return Some(national());
+        return gated(national());
     }
 
     // Otherwise a leading two-letter VAT country (Austrian `ATU…` keeps its `U`)
@@ -4581,9 +4598,9 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
     let is_vat = VAT_COUNTRIES.contains(&vat_prefix.as_str())
         && value[2..].chars().any(|c| c.is_ascii_digit());
     if is_vat {
-        Some(Identifier { country: Some(vat_prefix), kind: "vat".into(), value })
+        gated(Identifier { country: Some(vat_prefix), kind: "vat".into(), value })
     } else {
-        Some(national())
+        gated(national())
     }
 }
 
@@ -5313,6 +5330,39 @@ mod tests {
         assert_eq!(normalise_identifier("12", None), None); // too short
     }
 
+    /// Issue 300 Stage 1 — the v2 gate flip: the MEASURED false-merge classes
+    /// lose merge-key status (the mention goes provisional); soft-scheme
+    /// checksum failures and the recoverable classes keep it. The exemplar
+    /// panel is 300-exemplars.md, every id live-verified on prod.
+    #[test]
+    fn the_v2_gate_condemns_measured_false_merge_classes_only() {
+        // Live: org 15176 (DE123456789, 144+ merged strangers), org 15566
+        // (bare 123456789, 425), the NIMAT family (org 211, 794), PL823
+        // (org 10583053, 418), eForms technical ids, zero-pad stubs.
+        assert_eq!(normalise_identifier("DE123456789", Some("DE")), None);
+        assert_eq!(normalise_identifier("123456789", Some("DE")), None);
+        assert_eq!(normalise_identifier("NIMAT500", Some("SI")), None);
+        assert_eq!(normalise_identifier("ORG-0003", Some("SE")), None);
+        assert_eq!(normalise_identifier("BT501", None), None);
+        assert_eq!(normalise_identifier("PL823", Some("PL")), None);
+        assert_eq!(normalise_identifier("00001", None), None);
+        // HARD checksum (standing enablement decision): a real CZ IČO
+        // survives, its single-digit mutation is condemned; same for a pure
+        // DE VAT mutation that is neither lexicon nor sequence.
+        assert!(normalise_identifier("00006947", Some("CZ")).is_some());
+        assert_eq!(normalise_identifier("00006948", Some("CZ")), None);
+        assert_eq!(normalise_identifier("DE136695977", None), None);
+        // SOFT schemes keep typo load merge-usable: PL:nip measured 95.6%,
+        // below the HARD bar, so a NIP-checksum-failing value still merges
+        // (its failure is evidence, not a rejection).
+        assert!(normalise_identifier("5262239326", Some("PL")).is_some());
+        // Recoverable classes stay census-only: labelled and compound forms
+        // carry REAL ids for Stage 2's splitter; platform hex hashes are
+        // merge-inert but not junk.
+        assert!(normalise_identifier("REGON470850645", Some("PL")).is_some());
+        assert!(normalise_identifier("NIP5262239325REGON010828091", Some("PL")).is_some());
+    }
+
     /// Issue 86: a national register prefix must NOT mint a country. The German
     /// `HRB`/`HRA` numbers begin with letters that spell the ISO code `HR`
     /// (Croatia), so the naive sniffer flagged ~50,700 German companies Croatian.
@@ -5326,10 +5376,12 @@ mod tests {
         for (raw, note) in [
             ("HRB 22388", "German HRB"),
             ("HRA2104", "German HRA"),
-            ("FN 123456 a", "Austrian Firmenbuch — FN is not a country"),
+            ("FN 75109 p", "Austrian Firmenbuch — FN is not a country"),
             ("KRS 0000123456", "Polish KRS"),
             ("NIP 1234567890", "Polish NIP"),
-            ("REGON 12345678", "Polish REGON"),
+            // A live-measured REGON — the old "12345678" sample is now a
+            // condemned ascending run under the issue-300 v2 gate.
+            ("REGON 470850645", "Polish REGON"),
             ("OIB 12345678901", "Croatian OIB — starts with 'OI', not a country"),
         ] {
             let id = normalise_identifier(raw, Some("XX")).unwrap_or_else(|| panic!("{note}: {raw}"));
@@ -5343,8 +5395,12 @@ mod tests {
     /// the VAT-country set never mints a country.
     #[test]
     fn real_vat_ids_keep_their_country_prefix() {
+        // Checksum-clean specimens: the v2 gate (issue 300) condemns
+        // ascending-run and HARD-checksum-failing samples, so the fixtures
+        // are real-shaped ids (DE is the canonical valid USt-IdNr, EL is
+        // OTE's real AFM).
         for (raw, country) in
-            [("ATU12345678", "AT"), ("DE254473301", "DE"), ("EL123456789", "EL"), ("FR12345678901", "FR")]
+            [("ATU37675002", "AT"), ("DE136695976", "DE"), ("EL094019245", "EL"), ("FR12345678901", "FR")]
         {
             let id = normalise_identifier(raw, Some("ignored")).expect("a VAT id");
             assert_eq!(id.kind, "vat", "{raw} is a VAT id");
