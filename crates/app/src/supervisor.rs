@@ -312,6 +312,12 @@ enum Spec {
     /// identifier merging strangers shows up as one org accreting distinct
     /// names (DE123456789 reached 144 before it was caught by hand).
     OrgMergeHealth,
+    /// Issue 300 Stage 1, the repair half: dissolve organizations whose
+    /// identifier the (now live) v2 gate condemns — placeholder-keyed
+    /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
+    /// recorded mention through the post-234 provisional path. `dry_run`
+    /// counts and writes nothing (the default, like every org-mutating job).
+    RepairPlaceholderOrgs { dry_run: bool },
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -806,6 +812,25 @@ impl Supervisor {
                 self.push("org-merge-health", "org-merge-health".into(), Spec::OrgMergeHealth)
                     .await,
             ]),
+            // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
+            // Deletes org rows and emits change events: dry_run defaults TRUE.
+            "repair-placeholder-orgs" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "repair-placeholder-orgs dry-run"
+                } else {
+                    "repair-placeholder-orgs"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push(
+                        "repair-placeholder-orgs",
+                        params,
+                        Spec::RepairPlaceholderOrgs { dry_run },
+                    )
+                    .await,
+                ])
+            }
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -2180,6 +2205,73 @@ impl Supervisor {
                     totals.scanned,
                     totals.repaired,
                     totals.skipped,
+                    totals.winner_dups,
+                    totals.tender_changes
+                ))
+            }
+            Spec::RepairPlaceholderOrgs { dry_run } => {
+                let dry_run = *dry_run;
+                let mut totals = store::OrgDissolve::default();
+                let mut watermark = 0i64;
+                loop {
+                    let (batch, next) = self
+                        .db
+                        .repair_placeholder_orgs_batch(
+                            ingest::idgate::condemns,
+                            BACKFILL_BATCH,
+                            watermark,
+                            dry_run,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if batch.scanned == 0 {
+                        break;
+                    }
+                    totals.scanned += batch.scanned;
+                    totals.condemned += batch.condemned;
+                    totals.dissolved += batch.dissolved;
+                    totals.skipped += batch.skipped;
+                    totals.mentions += batch.mentions;
+                    totals.fresh += batch.fresh;
+                    totals.reused += batch.reused;
+                    totals.parties += batch.parties;
+                    totals.bid_parties += batch.bid_parties;
+                    totals.winners += batch.winners;
+                    totals.winner_dups += batch.winner_dups;
+                    totals.tender_changes += batch.tender_changes;
+                    watermark = next;
+                    self.set_phase(
+                        if dry_run { "previewing" } else { "dissolving" },
+                        Some(totals.scanned),
+                        None,
+                        format!(
+                            "{} condemned, {} dissolved, {} skipped",
+                            totals.condemned, totals.dissolved, totals.skipped
+                        ),
+                    );
+                    if !dry_run {
+                        if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                            eprintln!("supervisor: checkpoint after dissolve batch: {e}");
+                        }
+                    }
+                }
+                Ok(format!(
+                    "placeholder dissolve (issue 300){}: {} identifier-bearing orgs scanned, \
+                     {} condemned by the v2 gate, {} dissolved, {} skipped (unresolvable winner), \
+                     {} mentions re-resolved ({} fresh provisionals, {} reused), \
+                     {} party rows, {} bid-party rows, {} winner rows ({} duplicates removed), \
+                     {} tenders touched",
+                    if dry_run { " DRY RUN — nothing written" } else { "" },
+                    totals.scanned,
+                    totals.condemned,
+                    totals.dissolved,
+                    totals.skipped,
+                    totals.mentions,
+                    totals.fresh,
+                    totals.reused,
+                    totals.parties,
+                    totals.bid_parties,
+                    totals.winners,
                     totals.winner_dups,
                     totals.tender_changes
                 ))
@@ -3957,6 +4049,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-legacy-adjacency"
             | "rederive-eur"
             | "repair-nested-orgs"
+            | "repair-placeholder-orgs"
             | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"

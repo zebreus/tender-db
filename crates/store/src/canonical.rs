@@ -1307,6 +1307,35 @@ pub struct OrgHealthRow {
     pub identifier: String,
 }
 
+/// One batch of the issue-300 placeholder dissolve. Totals are summed across
+/// batches by the job.
+#[derive(Debug, Default, Clone)]
+pub struct OrgDissolve {
+    /// Identifier-bearing org rows the window visited.
+    pub scanned: u64,
+    /// Rows the injected v2 gate condemned.
+    pub condemned: u64,
+    /// Condemned orgs fully dissolved (mentions re-resolved, rows moved, row
+    /// deleted).
+    pub dissolved: u64,
+    /// Condemned orgs skipped whole because a winner row could not be
+    /// resolved to exactly one mention on its causing notice.
+    pub skipped: u64,
+    /// Mentions re-resolved through the post-234 provisional path.
+    pub mentions: u64,
+    /// Fresh provisional rows minted for re-resolved mentions.
+    pub fresh: u64,
+    /// Mentions that reused an existing (name_norm, country) provisional.
+    pub reused: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    /// Winner repoints whose target row already stood (the duplicate is
+    /// removed rather than doubled).
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -5114,6 +5143,356 @@ impl Db {
             }
         }
         Ok(out)
+    }
+
+    /// One batch of the issue-300 Stage-1 placeholder dissolve: organizations
+    /// whose identifier the injected v2 gate condemns (placeholder lexicon,
+    /// suspicious runs, short VAT stubs, HARD-checksum failures) are 1→N
+    /// SPLITS — the one direction `repoint_org_references` cannot do. Each
+    /// recorded mention of a condemned org re-resolves through the post-234
+    /// provisional path ((name_norm, country) reuse; nameless or country-less
+    /// mentions mint fresh rows), its binding is rewritten, and its
+    /// party/bid-party rows follow it exactly via their
+    /// (mention_notice_id, mention_section_id) columns. Winner rows carry no
+    /// mention link, so they follow their version's `caused_by_notice_id` —
+    /// resolvable only when the condemned org has exactly ONE mention on that
+    /// notice. An org with any unresolvable winner row is SKIPPED WHOLE
+    /// (counted, untouched — the 259 guard discipline: fully dissolved or
+    /// not at all, never half). The org's satellite rows die with it; the
+    /// idempotent `backfill-org-name-variants` walk repopulates variants for
+    /// the new bindings afterwards (the 307 re-run note). This deliberate
+    /// binding rewrite is a REPAIR under the 259 precedent — merges never
+    /// re-route mentions. Dissolved orgs leave the scan's scope, so a rerun
+    /// redoes nothing. `dry_run` counts and writes nothing.
+    pub async fn repair_placeholder_orgs_batch(
+        &self,
+        condemns: fn(Option<&str>, &str, &str) -> bool,
+        batch: i64,
+        after: i64,
+        dry_run: bool,
+    ) -> turso::Result<(OrgDissolve, i64)> {
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let mut report = OrgDissolve::default();
+        let mut condemned: Vec<i64> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL \
+                      ORDER BY id LIMIT ?",
+                    (Value::Integer(after), Value::Integer(batch)),
+                )
+                .await?;
+            let mut last = after;
+            while let Some(row) = rows.next().await? {
+                let id = int(&row, 0);
+                last = id;
+                report.scanned += 1;
+                let country = opt_text_of(&row, 1);
+                let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
+                if condemns(country.as_deref(), &kind, &text(&row, 3)) {
+                    condemned.push(id);
+                }
+            }
+            if report.scanned == 0 {
+                return Ok((report, after));
+            }
+            drop(rows);
+            let watermark = after.max(last);
+            if condemned.is_empty() {
+                return Ok((report, watermark));
+            }
+            report.condemned = condemned.len() as u64;
+
+            if !dry_run {
+                conn.execute("BEGIN IMMEDIATE", ()).await?;
+            }
+            let mut touched: BTreeSet<i64> = BTreeSet::new();
+            let mut changed_targets: BTreeSet<i64> = BTreeSet::new();
+            match self
+                .dissolve_condemned(
+                    &conn,
+                    &condemned,
+                    now,
+                    dry_run,
+                    &mut report,
+                    &mut touched,
+                    &mut changed_targets,
+                )
+                .await
+            {
+                Ok(()) => {}
+                Err(e) => {
+                    // The single shared writer connection must never be left
+                    // with an open transaction (CONTEXT.md's discipline).
+                    if !dry_run {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                    }
+                    return Err(e);
+                }
+            }
+            report.tender_changes = touched.len() as u64;
+            if !dry_run {
+                for &tid in &touched {
+                    if let Err(e) = append_change(&conn, "tender", tid, None, "changed", now).await
+                    {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+                for &org in &changed_targets {
+                    if let Err(e) =
+                        append_change(&conn, "organization", org, None, "changed", now).await
+                    {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+                conn.execute("COMMIT", ()).await?;
+                if report.dissolved > 0 {
+                    self.publish_cursor(&conn).await?;
+                }
+            }
+            Ok((report, watermark))
+        }
+    }
+
+    /// The per-org half of [`Self::repair_placeholder_orgs_batch`], separated
+    /// so the caller can ROLLBACK on any error.
+    #[allow(clippy::too_many_arguments)]
+    async fn dissolve_condemned(
+        &self,
+        conn: &Connection,
+        condemned: &[i64],
+        now: i64,
+        dry_run: bool,
+        report: &mut OrgDissolve,
+        touched: &mut BTreeSet<i64>,
+        changed_targets: &mut BTreeSet<i64>,
+    ) -> turso::Result<()> {
+        for &loser in condemned {
+            // The org's recorded mentions, and its winner rows up front — the
+            // skip decision needs both before anything writes.
+            let mut mentions: Vec<(i64, String, String, Option<String>)> = Vec::new();
+            {
+                let mut rows = conn
+                    .query(
+                        "SELECT notice_id, section_id, name, country \
+                           FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(loser),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    mentions.push((int(&row, 0), text(&row, 1), text(&row, 2), opt_text_of(&row, 3)));
+                }
+            }
+            let mut mentions_per_notice: std::collections::HashMap<i64, u32> =
+                std::collections::HashMap::new();
+            for (n, ..) in &mentions {
+                *mentions_per_notice.entry(*n).or_default() += 1;
+            }
+
+            // Winner rows resolve through their version's causing notice; any
+            // row whose notice holds ≠1 mention of this org is unresolvable
+            // and skips the WHOLE org.
+            let mut winners: Vec<(i64, i64, i64, i64)> = Vec::new(); // (tender, seq, lot_result, notice)
+            let mut resolvable = true;
+            {
+                let mut rows = conn
+                    .query(
+                        "SELECT w.tender_id, w.seq, w.lot_result_id, v.caused_by_notice_id \
+                           FROM tender_version_result_winners w \
+                           JOIN tender_versions v \
+                             ON v.tender_id = w.tender_id AND v.seq = w.seq \
+                          WHERE w.organization_id = ?",
+                        (Value::Integer(loser),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    let notice = int(&row, 3);
+                    if mentions_per_notice.get(&notice).copied().unwrap_or(0) != 1 {
+                        resolvable = false;
+                    }
+                    winners.push((int(&row, 0), int(&row, 1), int(&row, 2), notice));
+                }
+            }
+            if !resolvable {
+                report.skipped += 1;
+                continue;
+            }
+
+            // Touched tenders, collected while rows still point at the loser.
+            for sql in [
+                "SELECT DISTINCT tender_id FROM tender_version_parties WHERE organization_id = ?",
+                "SELECT DISTINCT tender_id FROM tender_version_bid_parties WHERE organization_id = ?",
+                "SELECT DISTINCT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+            ] {
+                let mut rows = conn.query(sql, (Value::Integer(loser),)).await?;
+                while let Some(row) = rows.next().await? {
+                    touched.insert(int(&row, 0));
+                }
+            }
+
+            // Re-resolve each mention through the post-234 provisional path
+            // and move its rows. `notice_target` feeds the winner repoint.
+            let mut notice_target: std::collections::HashMap<i64, i64> =
+                std::collections::HashMap::new();
+            for (notice, section, name, country) in &mentions {
+                let name_norm = name.to_lowercase();
+                let target: i64 = if !name_norm.is_empty() && country.is_some() {
+                    let c = country.clone().unwrap_or_default();
+                    let mut rows = conn
+                        .query(
+                            "SELECT id FROM organizations \
+                              WHERE name_norm = ? AND country = ? AND identifier IS NULL \
+                              LIMIT 1",
+                            (Value::Text(name_norm.clone()), t(&c)),
+                        )
+                        .await?;
+                    let hit = match rows.next().await? {
+                        Some(row) => Some(int(&row, 0)),
+                        None => None,
+                    };
+                    drop(rows);
+                    match hit {
+                        Some(id) => {
+                            report.reused += 1;
+                            changed_targets.insert(id);
+                            id
+                        }
+                        None => {
+                            report.fresh += 1;
+                            if dry_run {
+                                0
+                            } else {
+                                conn.execute(
+                                    "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                         name_norm, provisional, created_at)
+                                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                                    (
+                                        opt_text(country.as_deref()),
+                                        t(name),
+                                        Value::Text(name_norm),
+                                        Value::Integer(now),
+                                    ),
+                                )
+                                .await?;
+                                let id = last_insert_rowid(conn).await?;
+                                append_change(conn, "organization", id, None, "added", now).await?;
+                                id
+                            }
+                        }
+                    }
+                } else {
+                    report.fresh += 1;
+                    if dry_run {
+                        0
+                    } else {
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                 name_norm, provisional, created_at)
+                             VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                            (
+                                opt_text(country.as_deref()),
+                                t(name),
+                                Value::Text(name_norm),
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        let id = last_insert_rowid(conn).await?;
+                        append_change(conn, "organization", id, None, "added", now).await?;
+                        id
+                    }
+                };
+                notice_target.insert(*notice, target);
+                report.mentions += 1;
+                if !dry_run {
+                    conn.execute(
+                        "UPDATE organization_mentions SET organization_id = ? \
+                          WHERE notice_id = ? AND section_id = ?",
+                        (Value::Integer(target), Value::Integer(*notice), t(section)),
+                    )
+                    .await?;
+                    report.parties += conn
+                        .execute(
+                            "UPDATE tender_version_parties SET organization_id = ? \
+                              WHERE mention_notice_id = ? AND mention_section_id = ? \
+                                AND organization_id = ?",
+                            (
+                                Value::Integer(target),
+                                Value::Integer(*notice),
+                                t(section),
+                                Value::Integer(loser),
+                            ),
+                        )
+                        .await?;
+                    report.bid_parties += conn
+                        .execute(
+                            "UPDATE tender_version_bid_parties SET organization_id = ? \
+                              WHERE mention_notice_id = ? AND mention_section_id = ? \
+                                AND organization_id = ?",
+                            (
+                                Value::Integer(target),
+                                Value::Integer(*notice),
+                                t(section),
+                                Value::Integer(loser),
+                            ),
+                        )
+                        .await?;
+                }
+            }
+
+            // Winner rows: PK ends in organization_id, so a target row may
+            // already stand — insert-or-ignore then delete, counting dups
+            // (the repoint_org_references shape).
+            for (tender, seq, lot_result, notice) in &winners {
+                let target = notice_target.get(notice).copied().unwrap_or(0);
+                report.winners += 1;
+                if dry_run {
+                    continue;
+                }
+                let inserted = conn
+                    .execute(
+                        "INSERT OR IGNORE INTO tender_version_result_winners \
+                             (tender_id, seq, lot_result_id, organization_id) \
+                         VALUES (?, ?, ?, ?)",
+                        (
+                            Value::Integer(*tender),
+                            Value::Integer(*seq),
+                            Value::Integer(*lot_result),
+                            Value::Integer(target),
+                        ),
+                    )
+                    .await?;
+                if inserted == 0 {
+                    report.winner_dups += 1;
+                }
+                conn.execute(
+                    "DELETE FROM tender_version_result_winners \
+                      WHERE tender_id = ? AND seq = ? AND lot_result_id = ? \
+                        AND organization_id = ?",
+                    (
+                        Value::Integer(*tender),
+                        Value::Integer(*seq),
+                        Value::Integer(*lot_result),
+                        Value::Integer(loser),
+                    ),
+                )
+                .await?;
+            }
+
+            report.dissolved += 1;
+            if !dry_run {
+                conn.execute("DELETE FROM organization_names WHERE org_id = ?", (Value::Integer(loser),))
+                    .await?;
+                conn.execute("DELETE FROM organizations WHERE id = ?", (Value::Integer(loser),))
+                    .await?;
+                append_change(conn, "organization", loser, None, "removed", now).await?;
+            }
+        }
+        Ok(())
     }
 
     /// Whether a named index exists — the backfill job's refusal gate: without
