@@ -1,6 +1,14 @@
 # 134 — the negative-amount invariant is a RATIO, not a magnitude
 
-Status: DESIGN — **the delta hypothesis below is FALSIFIED (issue 136); the ratio form survives.** The
+Status: RATE-FORM LIVE / row-level re-spec remains with the 33/37 line
+(owner sweep 2026-08-28). The scale-free RATE this issue argued for ships in
+the weekly DQ: section 8 measures the negative-amount rate per era every
+Sunday (data_quality.rs cites 131/132/134/136 — "a parser fabricating
+negatives, or a source shipping garbage at scale, moves the rate; individual
+negatives do not"), with headline gauges on /metrics. What stays open here is
+only the ROW-LEVEL correction invariant (negative small relative to the
+positive it adjusts) for check #37's re-spec — the parameter must come from
+row-level data per the original owner note. Was: DESIGN — **the delta hypothesis below is FALSIFIED (issue 136); the ratio form survives.** The
 form of the re-spec for #37 (`bids.cents`, `awarded_cents`) and, on the same
 argument, for #132's 51. **Proposes the shape of the invariant, not the number**: the parameter has to
 come from the row-level data, which sdk-vendor holds.

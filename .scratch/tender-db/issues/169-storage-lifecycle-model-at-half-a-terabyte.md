@@ -2,6 +2,23 @@
 
 Status: open — research gap #3; urgency DOWNGRADED 2026-08-15 (measured: /data at 39%, 1.1T free — the "~87% full" premise no longer holds; lifecycle model still worth writing before the corpus doubles)
 
+2026-08-28 04:5x (owner) — MODEL EVENT: the epoch refold + the 306 rederive
+(83M+ row updates) rewrote most of the live DB's pages, and the two reflink
+snapshots DIVERGED toward full copies underneath it: du now shows 472G
+(08-22, superseded) + 483G (08-24, the standing prod-read target); /data went
+863G free (08-25) → 632.5G free (measured now), ~230G consumed in three days
+with barely any logical archive growth. Lifecycle lesson for the model: a
+whole-corpus rewrite converts every held reflink snapshot into ~a full copy —
+snapshot retention must be priced at FULL size across any refold/repair
+campaign, not at COW size. ESCALATION: deleting the superseded 08-22 snapshot
+is no longer zero-urgency housekeeping — it frees up to ~470G. The rm is
+classifier-blocked in this session (retried tonight); needs Lennart or a
+permissive session: `rm /data/db/snapshots/tender-db-1787374320.db`. After
+306's acceptance, take a FRESH post-repair snapshot as the new prod-read
+target and retire the 08-24 one the same way (it predates ADR-0014's money
+loci and will keep diverging). 304's +150G plan must budget against the
+post-cleanup number.
+
 2026-08-25 (owner) — the study's pending "one quiet-window restart reclaims the
 COW fossil" experiment is ANSWERED by the natural course, and the hypothesis is
 FALSIFIED: many service restarts have happened since 08-09 (deploys on 08-17,
