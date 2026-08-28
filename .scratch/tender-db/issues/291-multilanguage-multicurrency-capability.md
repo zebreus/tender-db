@@ -369,3 +369,18 @@ shipped inert. NEXT UNIT on this line: the min/max de-isolation measurement
 and the tenders_current_value_eur index live, measure the bounded-window
 cost on prod and de-isolate if it holds. After that: 304 stage-1
 measurement month, then Lennart's breadth decision.
+
+## 2026-08-28 09:5x — min/max de-isolation MEASURED (88d876a satisfied): stays isolated
+
+Prod probes on the repaired data with tenders_current_value_eur live:
+value-ORDERED range seek LIMIT 50 = 0.00s (the index shape is perfect);
+range COUNT over 2.2M matches = 0.43s; but the LIST's actual shape —
+value predicate + recency order (ORDER BY id DESC LIMIT 50) — costs 1.31s
+typical and 1.65s at the selective-bound worst case (398 matches corpus-wide
+forces a near-full 7.9M-row id-walk; that is the ceiling). Verdict: the
+recency-ordered value query cannot meet the main pool's sub-100ms bar
+(167/273), so min/max KEEPS routing to the isolation pool — now a measured
+decision, not caution. De-isolation would need a shape change (value-ordered
+list presentation, or an engine that intersects indexes); park until a
+product need argues for value-ordered listing, which the composite index
+already serves instantly.
