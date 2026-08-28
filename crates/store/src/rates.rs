@@ -442,6 +442,31 @@ impl Db {
         if tenders == 0 {
             return Ok((0, 0, 0, after));
         }
+        // The versions' publication dates, joined IN RUST: the SQL join
+        // (`JOIN tender_versions ON (tender_id, seq)`) is what wedged BOTH
+        // prod repair runs at the same window — a legacy mega-chain
+        // (2,983 versions) whose additive result rounds put 8.9M
+        // lot_result rows in one 10k-tender window, and turso's evaluation
+        // of the join at that volume spun at 100% CPU indefinitely, while
+        // the bare PK-range scan of the same rows returns in seconds. Two
+        // indexed range scans + an O(1) map lookup replace it.
+        let mut date_of: std::collections::HashMap<(i64, i64), String> =
+            std::collections::HashMap::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT tender_id, seq, published_at FROM tender_versions \
+                      WHERE tender_id > ? AND tender_id <= ?",
+                    (Value::Integer(after), Value::Integer(watermark)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                date_of.insert(
+                    (crate::int(&row, 0), crate::int(&row, 1)),
+                    civil_date(crate::int(&row, 2)),
+                );
+            }
+        }
         let mut scanned = 0i64;
         let mut updated = 0i64;
         for (table, cents_col, currency_col, eur_col) in EUR_LOCI {
@@ -449,10 +474,8 @@ impl Db {
                 .query(
                     &format!(
                         "SELECT a.rowid, a.{cents_col}, a.{currency_col}, a.{eur_col}, \
-                                v.published_at \
+                                a.tender_id, a.seq \
                            FROM {table} a \
-                           JOIN tender_versions v \
-                             ON v.tender_id = a.tender_id AND v.seq = a.seq \
                           WHERE a.tender_id > ? AND a.tender_id <= ?"
                     ),
                     (Value::Integer(after), Value::Integer(watermark)),
@@ -462,9 +485,11 @@ impl Db {
             while let Some(row) = rows.next().await? {
                 scanned += 1;
                 let stored = crate::opt_int_of(&row, 3);
-                let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2)) {
-                    (Some(cents), Some(currency)) => {
-                        rates.eur_cents(cents, &currency, &civil_date(crate::int(&row, 4)))
+                let date = date_of.get(&(crate::int(&row, 4), crate::int(&row, 5)));
+                let derived = match (crate::opt_int_of(&row, 1), crate::opt_text_of(&row, 2), date)
+                {
+                    (Some(cents), Some(currency), Some(date)) => {
+                        rates.eur_cents(cents, &currency, date)
                     }
                     _ => None,
                 };
