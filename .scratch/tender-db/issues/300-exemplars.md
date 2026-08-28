@@ -110,12 +110,30 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
   kind=national): NIMAT3-10, ORG0001-0003/ORG001-003, BT501, 123456789,
   12345678, 1234567, 123456, 12345, 1234, 0001-0004, 00001, 000000001.
 
-## Must-NOT-TOUCH (protected allowlist, freeze at Stage 0)
+## Must-NOT-TOUCH (protected allowlist — CLASSIFIED, not blanket-frozen)
 
-- Tribunal Administrativo de Recursos Contractuales (ES, 947 distinct
-  names), ELEKTRO PRIMORSKA (SI, 789), Ministères sociaux (FR, 753), Gmina
-  Rzeszów (PL, 588), ⚙ + the rest of the Stage-0 top-100 census. No stage's
-  dry-run may condemn, split, or merge-away any allowlist member.
+The first census run (2026-08-28, run 1330) proved the top of the
+distribution is a MIX, so the allowlist is per-org classified, never
+"top-100 as legitimate":
+
+- **Legitimate (allowlist):** Tribunal Administrativo de Recursos
+  Contractuales — org 2660 (ES, NIF S4111001F, 700 N2-distinct names);
+  Ministères sociaux — org 2861 (FR, SIRET 11000201100044, 660);
+  Ondernemingsrechtbank Leuven — org 45 (BE, 0308357753, 347); Osakidetza —
+  org 1031 (ES, S5100023J, 338); Krajowa Izba Odwoławcza — org 36 (PL, NIP
+  5262239325, 303). ⚙ classify the rest of the top-100 in Stage 0 proper.
+- **RECLASSIFIED must-CONDEMN — the NIMAT family (2026-08-28):** the 168
+  study called "ELEKTRO PRIMORSKA (SI, 789)" legitimate name-variance; the
+  census's first run showed its identifier is `NIMAT500` and a mention
+  sample on org 211 contains STRANGERS (Elektro Primorska, Elektro
+  Ljubljana, the SI Interior Ministry, Pošta Slovenije, Luka Koper,
+  Generali…). Five NIMAT orgs sit in the top-12 alone: 211/NIMAT500 (794),
+  378/NIMAT501 (532), 1229/NIMAT502 (365), 22683098/NIMAT100 (320),
+  2791/NIMAT503 (295). `NIMAT\d+` is a placeholder id family (SI
+  e-procurement), lexicon entry confirmed at top priority.
+- **Also condemned by the census:** org 10583053 (PL, vat `PL823`, 418
+  names) — a 5-char VAT stub; short-VAT stubs (<6 digits after the country
+  prefix) join the lexicon.
 
 ## Satellite contamination (must surface as edge ONLY)
 

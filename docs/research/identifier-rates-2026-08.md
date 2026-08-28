@@ -78,6 +78,17 @@ single-entity variance. The top specimens split cleanly into the two classes:
   — stable identifiers correctly unifying decades of spelling/department
   variants. This is B8's normalization case, not a merge defect.
 
+  **CORRECTION (2026-08-28, first org-merge-health census):** the ELEKTRO
+  PRIMORSKA specimen was misclassified — its "stable identifier" is
+  `NIMAT500`, a Slovenian e-procurement placeholder family, and a mention
+  sample on that org (211) contains strangers (Elektro Ljubljana, the SI
+  Interior Ministry, Pošta Slovenije, Luka Koper, Generali…). Five
+  `NIMAT\d+` orgs sit in the census top-12; the family belongs to the
+  placeholder false-merge class above, not this one. The Tribunal,
+  Ministères sociaux, and KIO specimens re-verified as genuinely
+  identifier-anchored (real NIF/SIRET/NIP). Gmina Rzeszów's top row is
+  `PL823` — a truncated VAT stub, also reclassified placeholder.
+
 So the actionable false-merge class stays what the specimen study said —
 placeholder identifiers, now bounded by the ≥6 tail (≤1.8% of orgs, and only
 the placeholder-keyed subset of it) — while the 17.4% ≥2 bound mostly

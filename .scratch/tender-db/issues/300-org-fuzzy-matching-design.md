@@ -19,7 +19,18 @@ authoring error, our capture faithful), so contamination is a SOURCE-data
 property to weight, not a capture bug to fix; first bounded census of the
 class: ~10.6% of BT-500 notices carry a same-lang duplicate value across
 sections (upper bound; wrong-name subset unmeasured — the sharper census is
-specified in the exemplar sheet). org-merge-health is the next unit.
+specified in the exemplar sheet). org-merge-health BUILT, DEPLOYED
+(63ce9c9), and RUN the same day — first baseline (run 1330, ~2 min):
+1,164,430 identifier-bearing orgs; ≥2 distinct N2 names 168,905 (14.5%);
+≥6: 12,291 (1.06%); ≥20: 1,065; max 794 — all tighter than the [rates]
+lower+trim figures, as N2's punctuation folding predicts. The census's
+first run already earned its keep: the top of the distribution is a MIX,
+so Stage 0's "freeze the top-100 allowlist" is corrected to "CLASSIFY the
+top-100" — five of the top twelve are the `NIMAT\d+` placeholder family
+(org 211's 794 names are measured STRANGERS: ministries, utilities, an
+insurer under one id), reversing the 168 study's "legitimate variance"
+call on ELEKTRO PRIMORSKA, and `PL823` (a 5-char VAT stub, 418 names)
+joins the lexicon. See the exemplar sheet's reclassified section.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
