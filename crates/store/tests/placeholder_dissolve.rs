@@ -34,6 +34,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (54, Some("BAD"), "Carried", 0),
         (55, Some("BAD"), "Two Names", 0),
         (56, Some("BAD"), "Chain Names", 0),
+        (57, Some("BAD"), "Sibling Pair", 0),
         (60, None, "Alpha City", 1),
     ] {
         conn.execute(
@@ -76,6 +77,11 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         // exactly ONE mention per origin notice (tier 4b).
         (600, "ORG-1", 56, "Name Alpha", Some("SI")),
         (601, "ORG-1", 56, "Name Beta", Some("SI")),
+        // Org 57 — the eForms multi-mention origin (org 15176's measured
+        // blocking shape): buyer and winner BOTH placeholder-merged as
+        // sibling sections; only the party roles pin the winner (tier 4c).
+        (700, "S-1", 57, "Buyer Sib", Some("DE")),
+        (700, "S-2", 57, "Winner Sib", Some("DE")),
     ] {
         conn.execute(
             "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country)
@@ -97,7 +103,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     // Versions: tender 1 caused by notice 100 (org 50's winner context),
     // tender 2 caused by notice 200 (org 51's — ambiguous).
     for (t, seq, n) in
-        [(1i64, 1i64, 100i64), (2, 1, 200), (3, 1, 300), (4, 1, 400), (4, 2, 401), (5, 1, 500), (6, 1, 600), (6, 2, 601)]
+        [(1i64, 1i64, 100i64), (2, 1, 200), (3, 1, 300), (4, 1, 400), (4, 2, 401), (5, 1, 500), (6, 1, 600), (6, 2, 601), (7, 1, 701)]
     {
         conn.execute(
             "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, publication_id, published_at)
@@ -132,6 +138,39 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     conn.execute(
         "INSERT INTO lot_results (id, tender_id, notice_id, result_key)
          VALUES (16, 6, 600, 'RES-0001')",
+        (),
+    )
+    .await
+    .unwrap();
+    // Org 57's winner originates on 700; the causing notice 701 mentions
+    // nothing (carried), the origin holds TWO sibling mentions.
+    conn.execute(
+        "INSERT INTO lot_results (id, tender_id, notice_id, result_key)
+         VALUES (17, 7, 700, 'RES-0001')",
+        (),
+    )
+    .await
+    .unwrap();
+    for (sid, kind) in [("RES-0001", "LotResult"), ("S-1", "Organization"), ("S-2", "Organization")] {
+        conn.execute(
+            "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+             VALUES (700, ?, ?, NULL)",
+            (Value::Text(sid.into()), Value::Text(kind.into())),
+        )
+        .await
+        .unwrap();
+    }
+    // The role signal on the ORIGIN notice: S-1 buyer-family, S-2 winner.
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (7, 1, 'Procedure-Buyer', 57, 700, 'S-1')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (7, 1, 'winner', 57, 700, 'S-2')",
         (),
     )
     .await
@@ -202,6 +241,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         // Carried onto seq 2 (caused by 601, where org 56 is "Name Beta" —
         // two distinct chain names): only tier 4b resolves, via origin 600.
         (6, 2, 16, 56),
+        (7, 1, 17, 57),
     ] {
         conn.execute(
             "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
@@ -228,26 +268,26 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
 
     // Dry-run: full preview, nothing written.
     let (dry, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, true).await.expect("dry");
-    assert_eq!((dry.scanned, dry.condemned), (7, 6), "50, 51, 53, 54, 55, 56 condemned");
-    assert_eq!((dry.parties, dry.bid_parties), (3, 1), "dry run previews the blast radius");
+    assert_eq!((dry.scanned, dry.condemned), (8, 7), "50, 51, 53-57 condemned, 52 clean");
+    assert_eq!((dry.parties, dry.bid_parties), (5, 1), "dry run previews the blast radius");
     assert_eq!(
         (dry.dissolved, dry.skipped),
-        (5, 1),
-        "51 skipped; 53 tier 2; 54 tier 3; 55 tier-4 descent; 56 tier-4b origin"
+        (6, 1),
+        "51 skipped; 53 t2; 54 t3; 55 t4 descent; 56 t4b origin; 57 t4c roles"
     );
-    assert_eq!(dry.mentions, 10, "50:3 + 53:2 + 54:1 + 55:2 + 56:2");
-    assert_eq!((dry.fresh, dry.reused), (9, 1), "all named fresh but Alpha City reuses 60");
+    assert_eq!(dry.mentions, 12, "50:3 + 53:2 + 54:1 + 55:2 + 56:2 + 57:2");
+    assert_eq!((dry.fresh, dry.reused), (11, 1), "all named fresh but Alpha City reuses 60");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 1);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 8, "dry run minted nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 9, "dry run minted nothing");
 
     // Wet run.
     let (wet, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("wet");
-    assert_eq!((wet.dissolved, wet.skipped), (5, 1));
-    assert_eq!((wet.fresh, wet.reused), (9, 1));
-    assert_eq!((wet.parties, wet.bid_parties), (3, 1));
-    assert_eq!(wet.winners, 7, "50:2 + 53:1 + 54:2 + 55:1 + 56:1");
+    assert_eq!((wet.dissolved, wet.skipped), (6, 1));
+    assert_eq!((wet.fresh, wet.reused), (11, 1));
+    assert_eq!((wet.parties, wet.bid_parties), (5, 1));
+    assert_eq!(wet.winners, 8, "50:2 + 53:1 + 54:2 + 55:1 + 56:1 + 57:1");
     assert_eq!(wet.winner_dups, 1, "lot_result 11 already stood on org 60");
-    assert_eq!(wet.tender_changes, 5, "tenders 1, 3, 4, 5, 6; tender 2 skipped");
+    assert_eq!(wet.tender_changes, 6, "tenders 1, 3, 4, 5, 6, 7; tender 2 skipped");
 
     // Org 50 is gone; 51 untouched; the Alpha City mention sits on 60; Beta
     // Corp and the nameless mention sit on fresh provisionals.
@@ -341,6 +381,14 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
         alpha
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 56").await, 0);
+
+    // Tier 4c: the sibling-pair winner followed the winner-role section.
+    let winner_sib = count(&conn, "SELECT id FROM organizations WHERE name = 'Winner Sib'").await;
+    assert_eq!(
+        count(&conn, "SELECT organization_id FROM tender_version_result_winners WHERE lot_result_id = 17").await,
+        winner_sib
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 57").await, 0);
 
     // A rerun finds the dissolved org gone: only 51 (still skipped) remains.
     let (again, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("rerun");

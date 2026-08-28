@@ -5417,6 +5417,47 @@ impl Db {
                                 if under_res.len() == 1 {
                                     pick = Some((origin_notice, under_res.remove(0)));
                                 }
+                                // Multi-mention eForms origins (sibling org
+                                // sections — descent finds nothing): the
+                                // party layer already pins the winner side
+                                // notice-scoped. Non-buyer party rows and
+                                // tenderer bid-party rows on the origin
+                                // notice's mentions of this org name the
+                                // winner-side section; exactly one distinct
+                                // section resolves (measured: org 15176's 9
+                                // blocking origins are this shape).
+                                if pick.is_none() {
+                                    let mut role_sections: BTreeSet<String> = BTreeSet::new();
+                                    for sql in [
+                                        "SELECT DISTINCT mention_section_id \
+                                           FROM tender_version_parties \
+                                          WHERE organization_id = ? AND mention_notice_id = ? \
+                                            AND role NOT LIKE '%uyer%'",
+                                        "SELECT DISTINCT mention_section_id \
+                                           FROM tender_version_bid_parties \
+                                          WHERE organization_id = ? AND mention_notice_id = ? \
+                                            AND role = 'tenderer'",
+                                    ] {
+                                        let mut rows = conn
+                                            .query(
+                                                sql,
+                                                (
+                                                    Value::Integer(loser),
+                                                    Value::Integer(origin_notice),
+                                                ),
+                                            )
+                                            .await?;
+                                        while let Some(row) = rows.next().await? {
+                                            role_sections.insert(text(&row, 0));
+                                        }
+                                    }
+                                    if role_sections.len() == 1 {
+                                        pick = Some((
+                                            origin_notice,
+                                            role_sections.into_iter().next().unwrap_or_default(),
+                                        ));
+                                    }
+                                }
                             }
                         }
                         lr_pick.insert(lr, pick.clone());
