@@ -112,12 +112,25 @@ allowlist is untouched by construction (soft schemes). The first preview
 under-reported party rows (wet-only counting); fixed with org-level
 dry-run counts before the wet run.
 
-Remaining Stage-1 sequence: wet run (tier 1, 6,490 orgs) → verify
-exemplars + re-run org-merge-health (the ≥6 tail must shrink by the
-placeholder share) → re-run backfill-org-name-variants (satellite rows
-for rebound mentions) → issue 309 (tier-2 winner disambiguation, rescues
-the skip set incl. 15566) → first-post-flip daily-chain read (tomorrow
-~07:4x: provisional mint rate ticks up by the condemned share).
+**THE STAGE-1 CAMPAIGN RAN 2026-08-28 (jobs 1335 tier-1 + 1337 tiers-2/3,
+both preview-exact): 7,414 of 7,865 condemned orgs dissolved (94.3%)** —
+143,032 mentions re-resolved (dominantly onto reused provisionals: the
+wet runs' cross-mention memory collapses same-name strangers onto one
+row), 229,013 party + 314,087 bid-party rows moved, 386,768 winner rows
+(81,975 duplicate-collapses — placeholder double-counting erased),
+~61k tenders on the change feed. Post-campaign census (run 1338): the
+condemned classes drained 94% (lexicon 2,152→362, sequence 680→33,
+short-VAT 1,917→58 — the ~453 remainder IS the 451 residual), org table
+shrank by exactly 7,414. The PL823 org dissolved; the seven flagship
+mega-orgs (NIMAT family, 15176, 15566) sit in the residual — their
+tenders mention them under DIFFERENT names within one chain, and tier-4
+(lot-result origin + parse-layer section descent, designed in issue 309)
+is the per-row-precise fix. Satellite backfill re-run enqueued (job 429).
+
+Still open on Stage 1: issue 309 tier-4 (the 451 residual incl.
+flagships); first-post-flip daily-chain read (~07:4x: provisional mint
+rate ticks up by the condemned share); the gate-invariant tripwire reads
+451 until tier-4 lands (a known TODO, not a leak).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
