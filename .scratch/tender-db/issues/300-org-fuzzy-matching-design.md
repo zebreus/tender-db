@@ -127,10 +127,20 @@ tenders mention them under DIFFERENT names within one chain, and tier-4
 (lot-result origin + parse-layer section descent, designed in issue 309)
 is the per-row-precise fix. Satellite backfill re-run enqueued (job 429).
 
-Still open on Stage 1: issue 309 tier-4 (the 451 residual incl.
-flagships); first-post-flip daily-chain read (~07:4x: provisional mint
-rate ticks up by the condemned share); the gate-invariant tripwire reads
-451 until tier-4 lands (a known TODO, not a leak).
+**STAGE 1 ACCEPTANCE (2026-08-28 ~23:5x, closing census run 1343):**
+cumulative 7,774 of 7,865 dissolved (98.8%) across three preview-exact wet
+runs; 168,440 mentions re-resolved; **557,130 duplicate winner rows
+erased** (served award double-counting); the NIMAT family fully dissolved,
+allowlist intact, and the corpus's top distinct-name org is now the
+TRIBUNAL (700 — legitimate) instead of a placeholder: the distribution's
+head is honest for the first time. Winner resolution ended ORIGIN-FIRST
+(issue 309's record has the full mechanism story — three prod-measured
+course corrections in one night, each caught by preview-vs-exemplar
+discipline). Residual 91 (incl. 15176/15566, legacy descent ties) — the
+gate-invariant tripwire reads 91 until their per-org diagnosis lands.
+Still due: first-post-flip daily-chain read (~07:4x: provisional mint
+rate ticks up by the condemned share; new placeholder mentions no longer
+merge).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

@@ -1,4 +1,23 @@
-# 309 — dissolve tier-2 winner disambiguation: rescue the 1,375 skipped orgs
+# 309 — dissolve winner disambiguation (tiers 2-4): rescue the skipped orgs
+
+FINAL (2026-08-28 ~23:5x, rev c2b9411, wet runs 1335/1337/1342, every one
+preview-exact): **7,774 of 7,865 condemned orgs dissolved (98.8%)**.
+The decisive last piece was ORIGIN-FIRST winner resolution: the
+lot_result's origin notice (where the result was published) names the
+winner — a single mention there IS the winner side (the eForms shape:
+org sections are siblings, never RES descendants — measured on the NIMAT
+flagships), with the RES-descent walk for multi-mention legacy origins,
+and causing-notice tiers as fallback only (a carried row's causing notice
+can name a DIFFERENT real entity under the same condemned platform id).
+Cumulative: 168,440 mentions re-resolved; **557,130 duplicate winner rows
+erased** (placeholder rows standing beside the real winner — served award
+double-counting, gone); the whole NIMAT family dissolved; every allowlist
+member intact; closing census (run 1343): the corpus's top distinct-name
+org is now the Tribunal (700, legitimate) — no placeholder remains at the
+top of the distribution. **Residual: 91 orgs** (lexicon 38 / sequence 26
+/ short-vat 41 per the census), incl. flagships 15176 (DE123456789) and
+15566 (bare 123456789): legacy multi-mention origins where the descent
+ties — per-org diagnosis is the remaining unit.
 
 Status: TIERS 2+3 LANDED AND RUN 2026-08-28 (12de6f3; wet run job 1337) —
 **924 of the 1,375 rescued** (334,783 winner rows, 300,503 bid-party rows,
