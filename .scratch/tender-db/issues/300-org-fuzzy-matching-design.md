@@ -164,14 +164,28 @@ re-backfill on a lexicon tweak, and Stage-4 blocking walks a real index.
 
 ### 3.1 canonical_key(country, kind, value), by corpus payoff
 
-FR (SIRET→SIREN truncate-9; VAT key arithmetic unifies FR-VAT↔SIREN), PL
-(VAT↔NIP; REGON-14→9), IT (VAT↔P.IVA; CF==P.IVA ⇒ same org, CF≠P.IVA ⇒ NO
-signal either way), ES (VAT↔NIF), RO (VAT↔CUI, prefix-insensitive digits), CZ
-(DIČ↔IČO + zero-pad-8), BE, SE (strip SE + trailing 01), DK, FI (hyphen;
-legacy 6-digit pad), PT, HR, NL (VAT↔RSIN legal entities only), HU (first-8),
-BG (VAT↔EIK), LV, SK (IČ-DPH↔DIČ only — NEVER to IČO), NO, SI, GR (EL≡GR).
-Explicitly no cross-walk: DE (court-scoped registers, zero arithmetic yield),
-AT, IE, LU, CY, MT, EE (VAT and registrikood are separate series), LT.
+FR (SIRET→SIREN truncate-9; VAT key arithmetic unifies FR-VAT↔SIREN; strip
+left-zero padding first — 14-char zero-padded forms are live), PL (VAT↔NIP;
+REGON-14→9), IT (VAT↔P.IVA; CF==P.IVA ⇒ same org, CF≠P.IVA ⇒ NO signal
+either way), ES (VAT↔NIF), RO (VAT↔CUI, prefix-insensitive digits), CZ
+(DIČ↔IČO), BE, SE (strip SE + trailing 01), DK, FI (hyphen), PT, HR, NL
+(VAT↔RSIN legal entities only), HU (first-8), BG (VAT↔EIK), LV, SK
+(IČ-DPH↔DIČ only — NEVER to IČO), NO, SI, GR (EL≡GR). Explicitly no
+cross-walk: DE (court-scoped registers, zero arithmetic yield), AT, IE, LU,
+CY, MT, EE (VAT and registrikood are separate series), LT.
+
+**Zero-padding is demoted (exemplar-driven amendment, 2026-08-28):**
+prefix-strips (RO/FI VAT, CZ DIČ→IČO at full length) delete redundant
+information and stay E1; **padding a short digit string MANUFACTURES
+information** and is live-measured unsafe: CZ `0002542` (a corrupted id on
+Ministerstvo spravedlnosti, org 2364406) pads onto `00002542`, the REAL
+IČO of Puncovní úřad (org 2905864) — a false merge R2 would have executed,
+and the checksum cannot catch it because the collided value is genuinely
+valid. So pad-derived canonical keys (CZ 7→8, FI legacy 6-digit, FR
+left-zero forms, and any future pad rule) are **E2, not E1**: they merge
+only under R3's full corroboration stack. The Ministerstvo financí pad
+family (7-digit 1864578 + 8-digit 4229 + NULL-country 1924720, identical
+names) still merges — corroborated; the Justice/Assay collision flags.
 
 ### 3.2 Denial list (checked before ANY E1/E2 auto-merge)
 

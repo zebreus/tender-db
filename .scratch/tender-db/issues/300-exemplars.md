@@ -45,8 +45,23 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
   stays FLAGGED; the GP typo row shares no N2 key either — it tests that a
   typo blocks corroboration and lands as an edge, not a merge. The
   establishment ids survive only in raw_identifier.
-- ⚙ still to pin in Stage 0: an RO bare/prefixed CUI pair, a CZ zero-pad
-  IČO pair.
+- **RO bare/prefixed CUI pairs (pinned 2026-08-28, 5/6 sampled had twins):**
+  Societatea de Transport București — 1932 (national 1589886) + 19250363
+  (vat RO1589886); Registrul Auto Român — 4177/4176 (adjacent ids!); RAJA
+  Constanța — 1666/13031830; Apavital Iași — 2360/15237; and Regia
+  Națională a Pădurilor — 3224 (national 1590120, mention-named after its
+  legal office "Oficiul Juridic al Direcției Silvice…") + 3223 (vat
+  RO1590120): same CUI = same legal person, department-name variance —
+  R2's no-corroboration design merging what names never could.
+- **CZ pad family (pinned 2026-08-28):** must-MERGE — Ministerstvo financí
+  3-way: 1864578 (7-digit `0006947`) + 4229 (`00006947`) + 1924720
+  (NULL-country `00006947`), identical names, the corroborated-pad case.
+  **must-NOT-merge — the pad collision that demoted padding to E2:**
+  2364406 (CZ `0002542`, Ministerstvo spravedlnosti — corrupted id) vs
+  2905864 (CZ `00002542`, Puncovní úřad — its REAL, checksum-valid IČO).
+  Zero-padding manufactures information; see the design §3.1 amendment.
+  Also must-merge: Ministerstvo zemědělství 1442788 (`0020478`) + 1414739
+  (`00020478`) — corroborated (matching names).
 - **FR zero-padded id note (2026-08-28):** FR national ids at length 14
   include left-zero-padded forms ("00000219740248") — canonical_key's FR
   arm must strip leading-zero padding before the SIRET/SIREN split; and
