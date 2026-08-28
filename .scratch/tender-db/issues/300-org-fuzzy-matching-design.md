@@ -67,6 +67,29 @@ scoring now excludes lexicon/sequence-condemned ids, FR pads score the id
 under the padding (`FR:siren-padded`), and the census gains hex_hash +
 compound counters — next run re-reads the enablement bar on clean
 denominators.
+
+**ENABLEMENT DECISION (run 1332, rev 782dfb9 — measured twice, stable, so
+this is the standing input to the gate flip):** HARD (≥97%, checksum may
+reject → provisional): DE:vat 97.4, SE:orgnr 98.8, CZ:ico 98.3, IT:piva
+98.6, FI:ytunnus 98.9, NO:orgnr 97.2, HR:oib 99.8, PT:nif 97.1, GR:afm
+97.9, PL:vat-nip 98.7, CZ:dic-ico 99.6, and the FI/BE/IT/PT/SE VAT forms
+(97.6-99.8). SOFT (advisory only — failures recorded as evidence, never
+rejecting): FR:siret 95.8, FR:siren 92.0, FR:vat 87.3, PL:nip 95.6,
+PL:regon9 89.8, BE:kbo 96.8, HR:vat (pop 52, too small). The
+condemned-exclusion refinement moved these rates by ≤0.2 points —
+honestly refuting the "junk depresses them" hypothesis: the FR/PL fails
+are inherent typo/corruption load, and the bar keeping them SOFT is the
+design working. Refined class sizes: letter-run 140,244 → **27,781**
+(structure-aware), hex-hash **273,982** (23.5% of id-bearing orgs carry
+platform hex ids — merge-inert singletons, not junk to dissolve),
+compound 3,332 (recoverable via the splitter).
+
+Next unit (the gate flip tranche): compound splitter + label-prefix strip
+in `normalise_identifier`, THEN the v2 gate flip (lexicon + sequence +
+short-VAT + HARD checksums per the decision above), the [16%,25%]
+replayed-window band, and `repair-placeholder-orgs` (dissolve) with the
+pinned exemplar panel (15176, 15566 + the 17 other buckets, the NIMAT
+family, PL823) — dry-run first, allowlist untouched.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
