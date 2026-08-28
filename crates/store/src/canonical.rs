@@ -5155,8 +5155,11 @@ impl Db {
     /// party/bid-party rows follow it exactly via their
     /// (mention_notice_id, mention_section_id) columns. Winner rows carry no
     /// mention link, so they follow their version's `caused_by_notice_id` —
-    /// resolvable only when the condemned org has exactly ONE mention on that
-    /// notice. An org with any unresolvable winner row is SKIPPED WHOLE
+    /// directly when the condemned org has exactly ONE mention on that
+    /// notice, and through the tier-2 party-role disambiguation (issue 309)
+    /// when it has several: the mention with the version's sole non-buyer
+    /// party row is the winner side. An org with any unresolvable winner row
+    /// is SKIPPED WHOLE
     /// (counted, untouched — the 259 guard discipline: fully dissolved or
     /// not at all, never half). The org's satellite rows die with it; the
     /// idempotent `backfill-org-name-variants` walk repopulates variants for
@@ -5293,10 +5296,21 @@ impl Db {
                 *mentions_per_notice.entry(*n).or_default() += 1;
             }
 
-            // Winner rows resolve through their version's causing notice; any
-            // row whose notice holds ≠1 mention of this org is unresolvable
-            // and skips the WHOLE org.
-            let mut winners: Vec<(i64, i64, i64, i64)> = Vec::new(); // (tender, seq, lot_result, notice)
+            let mut section_of_notice: std::collections::HashMap<i64, String> =
+                std::collections::HashMap::new();
+            for (n, s, ..) in &mentions {
+                section_of_notice.entry(*n).or_insert_with(|| s.clone());
+            }
+
+            // Winner rows resolve through their version's causing notice.
+            // Tier 1: the notice holds exactly one mention of this org.
+            // Tier 2 (issue 309): with several mentions, the party rows on
+            // the SAME version disambiguate — mentions whose every party row
+            // is buyer-family ('%uyer%', the read-views' own idiom) are the
+            // buyer side; if exactly one mention has a non-buyer party row,
+            // the winner follows it. Anything still ambiguous skips the
+            // WHOLE org (fully dissolved or untouched).
+            let mut winners: Vec<(i64, i64, i64, i64, String)> = Vec::new();
             let mut resolvable = true;
             {
                 let mut rows = conn
@@ -5310,11 +5324,44 @@ impl Db {
                     )
                     .await?;
                 while let Some(row) = rows.next().await? {
-                    let notice = int(&row, 3);
-                    if mentions_per_notice.get(&notice).copied().unwrap_or(0) != 1 {
-                        resolvable = false;
+                    winners.push((int(&row, 0), int(&row, 1), int(&row, 2), int(&row, 3), String::new()));
+                }
+            }
+            for w in &mut winners {
+                let (tender, seq, _, notice) = (w.0, w.1, w.2, w.3);
+                match mentions_per_notice.get(&notice).copied().unwrap_or(0) {
+                    1 => {
+                        w.4 = section_of_notice.get(&notice).cloned().unwrap_or_default();
                     }
-                    winners.push((int(&row, 0), int(&row, 1), int(&row, 2), notice));
+                    0 => {
+                        resolvable = false;
+                        break;
+                    }
+                    _ => {
+                        let mut non_buyer: Vec<String> = Vec::new();
+                        let mut rows = conn
+                            .query(
+                                "SELECT DISTINCT mention_section_id FROM tender_version_parties \
+                                  WHERE tender_id = ? AND seq = ? AND organization_id = ? \
+                                    AND mention_notice_id = ? AND role NOT LIKE '%uyer%'",
+                                (
+                                    Value::Integer(tender),
+                                    Value::Integer(seq),
+                                    Value::Integer(loser),
+                                    Value::Integer(notice),
+                                ),
+                            )
+                            .await?;
+                        while let Some(row) = rows.next().await? {
+                            non_buyer.push(text(&row, 0));
+                        }
+                        if non_buyer.len() == 1 {
+                            w.4 = non_buyer.remove(0);
+                        } else {
+                            resolvable = false;
+                            break;
+                        }
+                    }
                 }
             }
             if !resolvable {
@@ -5356,8 +5403,8 @@ impl Db {
             }
 
             // Re-resolve each mention through the post-234 provisional path
-            // and move its rows. `notice_target` feeds the winner repoint.
-            let mut notice_target: std::collections::HashMap<i64, i64> =
+            // and move its rows. `section_target` feeds the winner repoint.
+            let mut section_target: std::collections::HashMap<(i64, String), i64> =
                 std::collections::HashMap::new();
             for (notice, section, name, country) in &mentions {
                 let name_norm = name.to_lowercase();
@@ -5427,7 +5474,7 @@ impl Db {
                         id
                     }
                 };
-                notice_target.insert(*notice, target);
+                section_target.insert((*notice, section.clone()), target);
                 report.mentions += 1;
                 if !dry_run {
                     conn.execute(
@@ -5468,8 +5515,9 @@ impl Db {
             // Winner rows: PK ends in organization_id, so a target row may
             // already stand — insert-or-ignore then delete, counting dups
             // (the repoint_org_references shape).
-            for (tender, seq, lot_result, notice) in &winners {
-                let target = notice_target.get(notice).copied().unwrap_or(0);
+            for (tender, seq, lot_result, notice, section) in &winners {
+                let target =
+                    section_target.get(&(*notice, section.clone())).copied().unwrap_or(0);
                 report.winners += 1;
                 if dry_run {
                     continue;
