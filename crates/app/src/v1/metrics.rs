@@ -246,6 +246,30 @@ pub async fn metrics(State(state): State<AppState>) -> Response {
         }
     }
 
+    // D5 wrap totals (issue 308). The reveal recheck walks its cohort in ~3
+    // nightly slices, so per-slice numbers cannot be trended; only a COMPLETED
+    // wrap lands in the `reveal-wrap` report, so these gauges never show a
+    // partial sum and consecutive scrapes compare like for like. Absent until
+    // the first wrap completes — same absence-over-fake-zero rule as the DQ
+    // gauges above. `broken` is the campaign's acceptance number: a later
+    // version exists past the promised BT-198 reveal date and still withholds.
+    if let Ok(Some((body, _))) = state.db.latest_report("reveal-wrap").await {
+        if let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) {
+            let gauges = [
+                ("tender_db_dq_reveal_due_total", "due", "Withheld BT-198 fields whose promised reveal date has passed, last completed D5 wrap (issue 308)."),
+                ("tender_db_dq_reveal_revealed_total", "revealed", "Due fields actually revealed by the head version, last completed D5 wrap."),
+                ("tender_db_dq_reveal_awaiting_total", "awaiting", "Due fields still awaiting any later version, last completed D5 wrap."),
+                ("tender_db_dq_reveal_broken_total", "broken", "Due fields a later version STILL withholds — the source's standing reveal debt, last completed D5 wrap."),
+            ];
+            for (name, key, help) in gauges {
+                if let Some(n) = v[key].as_i64() {
+                    header(&mut out, name, help);
+                    sample(&mut out, name, &[], n as f64);
+                }
+            }
+        }
+    }
+
     if let Ok(runs) = state.db.recent_job_runs(health::JOB_SCAN).await {
         if let Some(at) = health::ingest_last_success(&runs) {
             header(

@@ -57,7 +57,8 @@ the job queue is idle; /health is down for the build's duration.
   2026-08-25): the slice report carries `no_later_version` (awaitable) and
   `later_still_withholds` (broken). First split slice: 1,026 due → 54
   revealed, 601 awaitable, 371 BROKEN — the campaign's acceptance number now
-  accrues nightly.
+  accrues nightly. → Cohort-wide visibility (per-wrap totals + gauges) is
+  issue 308: the per-slice numbers were unwatchable across the ~3-night wrap.
 * ~~"Accrues nightly" was aspirational~~ FIXED (2026-08-25 23:48 firing): the
   scheduler actually had D5 on the WEEKLY Sunday tick (a leftover from the
   18-minute pre-slicing era), so a cohort walk would have taken ~3 weeks and

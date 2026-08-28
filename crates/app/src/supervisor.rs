@@ -1681,13 +1681,15 @@ impl Supervisor {
                 // walk the cohort and wrap, like D4's re-hash probe. A missing
                 // or garbled cursor report restarts the walk from the oldest
                 // notices — idempotent by design.
-                let after = match self.db.latest_report("reveal-cursor").await {
-                    Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body)
-                        .ok()
-                        .and_then(|v| v["after"].as_i64())
-                        .unwrap_or(0),
-                    _ => 0,
+                let cursor_body = match self.db.latest_report("reveal-cursor").await {
+                    Ok(Some((body, _))) => Some(body),
+                    _ => None,
                 };
+                let after = cursor_body
+                    .as_deref()
+                    .and_then(|b| serde_json::from_str::<serde_json::Value>(b).ok())
+                    .and_then(|v| v["after"].as_i64())
+                    .unwrap_or(0);
                 let now = store::now_unix();
                 let sl = self
                     .db
@@ -1715,9 +1717,15 @@ impl Supervisor {
                     .put_report("reveal-recheck", &report, now)
                     .await
                     .map_err(|e| e.to_string())?;
-                let next = if sl.wrapped { 0 } else { sl.upto };
+                let (cursor_next, wrap_done) = roll_reveal_wrap(cursor_body.as_deref(), &sl, now);
+                if let Some(wrap) = wrap_done {
+                    self.db
+                        .put_report("reveal-wrap", &wrap, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
                 self.db
-                    .put_report("reveal-cursor", &serde_json::json!({ "after": next }).to_string(), now)
+                    .put_report("reveal-cursor", &cursor_next, now)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(format!(
@@ -3796,6 +3804,43 @@ fn heavy_write_kind(kind: &str) -> bool {
     )
 }
 
+/// Issue 308: the D5 cohort walk wraps every ~3 nightly slices, so per-slice
+/// numbers cannot be watched — the BROKEN count (the campaign's acceptance
+/// metric) existed only in job-counts lines. The `reveal-cursor` report
+/// carries running per-wrap totals alongside the cursor; a slice that wraps
+/// rolls them (final slice included) into a `reveal-wrap` report and resets.
+/// `/metrics` reads ONLY `reveal-wrap`, so a partial wrap never moves the
+/// gauges and consecutive values are comparable wrap to wrap. A missing or
+/// legacy `{"after": N}` cursor body counts as zero running totals — the
+/// walk restarts honestly rather than inventing history.
+fn roll_reveal_wrap(prev_cursor: Option<&str>, sl: &store::RevealSlice, now: i64) -> (String, Option<String>) {
+    let running = prev_cursor
+        .and_then(|b| serde_json::from_str::<serde_json::Value>(b).ok())
+        .map(|v| v["wrap"].clone())
+        .unwrap_or(serde_json::Value::Null);
+    let pick = |k: &str| running[k].as_i64().unwrap_or(0);
+    let due = pick("due") + sl.due;
+    let revealed = pick("revealed") + sl.revealed;
+    let awaiting = pick("awaiting") + sl.no_later;
+    let broken = pick("broken") + (sl.checked - sl.revealed - sl.no_later);
+    let slices = pick("slices") + 1;
+    if sl.wrapped {
+        let wrap = serde_json::json!({
+            "due": due, "revealed": revealed, "awaiting": awaiting, "broken": broken,
+            "slices": slices, "withheld_rows": sl.withheld_total, "completed_at": now,
+        })
+        .to_string();
+        (serde_json::json!({ "after": 0 }).to_string(), Some(wrap))
+    } else {
+        let cursor = serde_json::json!({
+            "after": sl.upto,
+            "wrap": { "due": due, "revealed": revealed, "awaiting": awaiting, "broken": broken, "slices": slices },
+        })
+        .to_string();
+        (cursor, None)
+    }
+}
+
 /// How many leading packages a resumed process job skips: the period-ordered
 /// prefix at or before the cursor (issue 32). `None` (a fresh job) skips nothing.
 fn resume_skip(packages: &[store::Package], resume_after: Option<&str>) -> usize {
@@ -3946,6 +3991,72 @@ fn last_sunday(year: u16, month: u8) -> i64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 308: the reveal-cursor report accumulates per-wrap totals and only a
+    /// COMPLETED wrap rolls them into the `reveal-wrap` report the gauges read.
+    #[test]
+    fn reveal_wrap_totals_accumulate_and_roll_only_on_wrap() {
+        let slice = |due, revealed, no_later, upto, wrapped| store::RevealSlice {
+            withheld_total: 279_483,
+            after: 0,
+            upto,
+            wrapped,
+            sections: 100_000,
+            dated: due + 10,
+            due,
+            checked: due,
+            revealed,
+            no_later,
+            by_field: vec![],
+        };
+
+        // Fresh start (no cursor report): the first slice seeds the running totals.
+        let (cursor, wrap) = roll_reveal_wrap(None, &slice(2606, 252, 1221, 25_535_052, false), 100);
+        assert!(wrap.is_none(), "a partial wrap must not publish");
+        let c: serde_json::Value = serde_json::from_str(&cursor).expect("cursor json");
+        assert_eq!(c["after"].as_i64(), Some(25_535_052));
+        assert_eq!(c["wrap"]["due"].as_i64(), Some(2606));
+        assert_eq!(c["wrap"]["broken"].as_i64(), Some(2606 - 252 - 1221));
+        assert_eq!(c["wrap"]["slices"].as_i64(), Some(1));
+
+        // Second slice accumulates on top of the first.
+        let (cursor, wrap) =
+            roll_reveal_wrap(Some(&cursor), &slice(1029, 54, 601, 26_788_048, false), 200);
+        assert!(wrap.is_none());
+        let c: serde_json::Value = serde_json::from_str(&cursor).expect("cursor json");
+        assert_eq!(c["wrap"]["due"].as_i64(), Some(2606 + 1029));
+        assert_eq!(c["wrap"]["broken"].as_i64(), Some(1133 + 374));
+        assert_eq!(c["wrap"]["slices"].as_i64(), Some(2));
+
+        // The wrapping slice rolls the sum (itself included) into the wrap report
+        // and resets the cursor to a bare restart — no stale totals carry over.
+        let (cursor, wrap) = roll_reveal_wrap(Some(&cursor), &slice(40, 10, 20, 27_000_000, true), 300);
+        let w: serde_json::Value =
+            serde_json::from_str(&wrap.expect("a wrapped slice publishes")).expect("wrap json");
+        assert_eq!(w["due"].as_i64(), Some(2606 + 1029 + 40));
+        assert_eq!(w["revealed"].as_i64(), Some(252 + 54 + 10));
+        assert_eq!(w["awaiting"].as_i64(), Some(1221 + 601 + 20));
+        assert_eq!(w["broken"].as_i64(), Some(1133 + 374 + 10));
+        assert_eq!(w["slices"].as_i64(), Some(3));
+        assert_eq!(w["withheld_rows"].as_i64(), Some(279_483));
+        assert_eq!(w["completed_at"].as_i64(), Some(300));
+        let c: serde_json::Value = serde_json::from_str(&cursor).expect("cursor json");
+        assert_eq!(c["after"].as_i64(), Some(0));
+        assert!(c["wrap"].is_null(), "the running totals reset with the wrap");
+
+        // A legacy pre-308 cursor body ({"after": N} only) reads as zero running
+        // totals rather than failing or fabricating.
+        let (cursor, wrap) = roll_reveal_wrap(
+            Some(r#"{"after": 25535052}"#),
+            &slice(100, 30, 50, 26_000_000, false),
+            400,
+        );
+        assert!(wrap.is_none());
+        let c: serde_json::Value = serde_json::from_str(&cursor).expect("cursor json");
+        assert_eq!(c["wrap"]["due"].as_i64(), Some(100));
+        assert_eq!(c["wrap"]["broken"].as_i64(), Some(20));
+        assert_eq!(c["wrap"]["slices"].as_i64(), Some(1));
+    }
 
     /// Issue 247: `cancel` must reach the RUNNING job, not only queued ones.
     #[tokio::test]

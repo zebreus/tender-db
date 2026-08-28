@@ -1,6 +1,14 @@
 # 308 — D5's BROKEN reveal count has no cohort-wide accumulator or gauge
 
-Status: open (filed 2026-08-28 during the hourly audit slot)
+Status: BUILT 2026-08-28 (same firing it was filed) — `roll_reveal_wrap` in
+supervisor.rs accumulates per-wrap totals in the reveal-cursor report and
+rolls a completed wrap (final slice included) into a `reveal-wrap` report;
+/metrics emits `tender_db_dq_reveal_{due,revealed,awaiting,broken}_total`
+from that report ONLY, so a partial wrap never moves the gauges. Legacy
+`{"after": N}` cursor bodies read as zero running totals. Unit-tested
+(accumulate → wrap-roll → reset → legacy tolerance); full gate green.
+Awaiting deploy + first completed wrap (~3 nights) for the acceptance
+hand-sum check.
 Kind: observability gap (small)
 Relates to: 274 (the sliced reveal recheck; its residue declared this number
 "the campaign's acceptance metric, accrues nightly"), ADR-0013 D5.
