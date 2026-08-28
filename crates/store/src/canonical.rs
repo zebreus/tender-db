@@ -5348,6 +5348,82 @@ impl Db {
             for w in &mut winners {
                 let (tender, seq, _, notice) = (w.0, w.1, w.2, w.3);
                 let mut chosen: Option<(i64, String)> = None;
+                // ORIGIN FIRST (issue 309): the lot_result's ORIGIN pins the
+                // winner side per ROW — `lot_results` carries (notice_id,
+                // result_key), the notice and RES section where the result
+                // was published, independent of how far the row was carried
+                // forward. A single mention of the org on that notice IS the
+                // winner (the eForms shape); with several, the section whose
+                // ancestor chain reaches the RES section is (the 259 walk,
+                // the legacy shape). Strictly more faithful than any
+                // causing-notice heuristic — a carried row's causing notice
+                // can mention a DIFFERENT real entity under the same
+                // condemned platform id. Causing-notice tiers remain as
+                // fallback for rows whose origin path cannot decide.
+                {
+                    let lr = w.2;
+                    if let Some(cached) = lr_pick.get(&lr) {
+                        chosen = cached.clone();
+                    } else {
+                        let mut origin: Option<(i64, String)> = None;
+                        let mut rows = conn
+                            .query(
+                                "SELECT notice_id, result_key FROM lot_results WHERE id = ?",
+                                (Value::Integer(lr),),
+                            )
+                            .await?;
+                        if let Some(row) = rows.next().await? {
+                            origin = Some((int(&row, 0), text(&row, 1)));
+                        }
+                        drop(rows);
+                        let mut pick: Option<(i64, String)> = None;
+                        if let Some((origin_notice, res_key)) = origin {
+                            let cand_sections: Vec<String> =
+                                sections_of.get(&origin_notice).cloned().unwrap_or_default();
+                            // A single mention on the origin notice IS the
+                            // winner-side one — the notice that published the
+                            // result names the org exactly once (the eForms
+                            // shape: org sections are siblings under
+                            // efac:Organizations, never RES descendants, so
+                            // containment can't fire there — measured on the
+                            // NIMAT flagships' origin notices).
+                            if cand_sections.len() == 1 {
+                                pick = Some((origin_notice, cand_sections[0].clone()));
+                            } else if !cand_sections.is_empty() {
+                                let mut tree: std::collections::HashMap<String, Option<String>> =
+                                    std::collections::HashMap::new();
+                                let mut rows = conn
+                                    .query(
+                                        "SELECT section_id, parent_section_id \
+                                           FROM notice_sections WHERE notice_id = ?",
+                                        (Value::Integer(origin_notice),),
+                                    )
+                                    .await?;
+                                while let Some(row) = rows.next().await? {
+                                    tree.insert(text(&row, 0), opt_text_of(&row, 1));
+                                }
+                                let mut under_res: Vec<String> = Vec::new();
+                                for sid in &cand_sections {
+                                    let mut current = tree.get(sid).and_then(|p| p.as_deref());
+                                    for _ in 0..tree.len().max(1) {
+                                        let Some(id) = current else { break };
+                                        if id == res_key {
+                                            under_res.push(sid.clone());
+                                            break;
+                                        }
+                                        current = tree.get(id).and_then(|p| p.as_deref());
+                                    }
+                                }
+                                if under_res.len() == 1 {
+                                    pick = Some((origin_notice, under_res.remove(0)));
+                                }
+                            }
+                        }
+                        lr_pick.insert(lr, pick.clone());
+                        chosen = pick;
+                    }
+                }
+                if chosen.is_none() {
                 match mentions_per_notice.get(&notice).copied().unwrap_or(0) {
                     1 => {
                         chosen = Some((
@@ -5378,6 +5454,7 @@ impl Db {
                             chosen = Some((notice, non_buyer.remove(0)));
                         }
                     }
+                }
                 }
                 if chosen.is_none() {
                     if let Some(cached) = chain_pick.get(&tender) {
@@ -5415,69 +5492,6 @@ impl Db {
                             _ => None,
                         };
                         chain_pick.insert(tender, pick.clone());
-                        chosen = pick;
-                    }
-                }
-                // Tier 4 (issue 309): the lot_result's ORIGIN pins the winner
-                // side per ROW — `lot_results` carries (notice_id, result_key),
-                // the notice and RES section where the result was published,
-                // independent of how far the row was carried forward. Among
-                // the org's mentions on that origin notice, the one whose
-                // section's ancestor chain reaches the RES section (the 259
-                // walk) is the winner-side mention. This is what resolves the
-                // flagship mega-orgs, whose chains mention them under several
-                // different names.
-                if chosen.is_none() {
-                    let lr = w.2;
-                    if let Some(cached) = lr_pick.get(&lr) {
-                        chosen = cached.clone();
-                    } else {
-                        let mut origin: Option<(i64, String)> = None;
-                        let mut rows = conn
-                            .query(
-                                "SELECT notice_id, result_key FROM lot_results WHERE id = ?",
-                                (Value::Integer(lr),),
-                            )
-                            .await?;
-                        if let Some(row) = rows.next().await? {
-                            origin = Some((int(&row, 0), text(&row, 1)));
-                        }
-                        drop(rows);
-                        let mut pick: Option<(i64, String)> = None;
-                        if let Some((origin_notice, res_key)) = origin {
-                            let cand_sections: Vec<String> =
-                                sections_of.get(&origin_notice).cloned().unwrap_or_default();
-                            if !cand_sections.is_empty() {
-                                let mut tree: std::collections::HashMap<String, Option<String>> =
-                                    std::collections::HashMap::new();
-                                let mut rows = conn
-                                    .query(
-                                        "SELECT section_id, parent_section_id \
-                                           FROM notice_sections WHERE notice_id = ?",
-                                        (Value::Integer(origin_notice),),
-                                    )
-                                    .await?;
-                                while let Some(row) = rows.next().await? {
-                                    tree.insert(text(&row, 0), opt_text_of(&row, 1));
-                                }
-                                let mut under_res: Vec<String> = Vec::new();
-                                for sid in &cand_sections {
-                                    let mut current = tree.get(sid).and_then(|p| p.as_deref());
-                                    for _ in 0..tree.len().max(1) {
-                                        let Some(id) = current else { break };
-                                        if id == res_key {
-                                            under_res.push(sid.clone());
-                                            break;
-                                        }
-                                        current = tree.get(id).and_then(|p| p.as_deref());
-                                    }
-                                }
-                                if under_res.len() == 1 {
-                                    pick = Some((origin_notice, under_res.remove(0)));
-                                }
-                            }
-                        }
-                        lr_pick.insert(lr, pick.clone());
                         chosen = pick;
                     }
                 }
