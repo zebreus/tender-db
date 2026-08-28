@@ -26,9 +26,32 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
   identical generic name. Decides BY CHECKSUM: CZ IČO mod-11 pass ⇒ merge;
   fail ⇒ edge. Whichever way the checksum lands, the decision path is the
   exemplar. Stage 3.
-- ⚙ Stage-2 same-country pairs (pin concrete ids in the Stage-0 census):
-  an FI Y-tunnus/VAT pair, an RO bare/prefixed CUI pair, a CZ zero-pad IČO
-  pair, an FR SIRET/SIREN pair.
+- **FI Y-tunnus/VAT pairs (pinned 2026-08-28, 8/8 of a sample had twins):**
+  Telinekataja Oy — 21795788 (vat FI01003158) + 14218031 (national
+  01003158), clean same-name R2. Ramboll — 2008748 (FI vat FI01011975) +
+  2859694 (FI national 01011975) + 2261535 (NULL national 01011975): R2
+  then R3 in one cluster. **Rename pairs — the case name evidence can never
+  merge and identifier evidence must:** Linde/AGA — 16949417 (vat
+  FI01003465, "Oy Linde Gas Ab") + 1741827 (national 01003465, "Oy Aga
+  Ab"); ASSA ABLOY/Cardo — 16173732 (vat FI01010649) + 1691168 (national
+  01010649). R2 requires no name corroboration precisely for these.
+- **The CNFPT family (pinned 2026-08-28) — one entity, five rule paths:**
+  SIREN 180014045 on 5599259 (FR, "CNFPT") + 5599260 (NULL, expansion);
+  SIRET 18001404501577 on 3134661 (FR) + 3153628 (GP, name "CNFPF…" — a
+  TYPO) + 3153629 (NULL); SIRET 18001404502245 on 3498493 (FR) + 3507716
+  (NULL); SIRET 18001404501825 on 4404773 (FR). SIRET→SIREN truncation
+  makes them one canonical key: FR-side rows merge via R2; NULL rows with
+  N2-equal names corroborate via R3; 5599260 (expansion, no shared key)
+  stays FLAGGED; the GP typo row shares no N2 key either — it tests that a
+  typo blocks corroboration and lands as an edge, not a merge. The
+  establishment ids survive only in raw_identifier.
+- ⚙ still to pin in Stage 0: an RO bare/prefixed CUI pair, a CZ zero-pad
+  IČO pair.
+- **FR zero-padded id note (2026-08-28):** FR national ids at length 14
+  include left-zero-padded forms ("00000219740248") — canonical_key's FR
+  arm must strip leading-zero padding before the SIRET/SIREN split; and
+  "00000000000001" (Tribunal Judiciaire de Paris!) is live proof the
+  repeated-digit-with-≤1-exception placeholder rule is needed.
 
 ## Must-FLAG (edges only; auto-merge forbidden)
 
@@ -59,8 +82,15 @@ Ids not yet pinned are Stage-0 census items, marked ⚙.
 - **org 15176** — (DE, vat, DE123456789), canonical, name "Land
   Baden-Württemberg, vertreten durch das Ministerium für Kultus, Jugend und
   Sport", 144+ distinct mention names. Re-verified live 2026-08-28.
-- ⚙ the bare-`123456789` org carrying 450 distinct names (id pin: Stage-0
-  census).
+- **the bare-`123456789` buckets (pinned 2026-08-28):** 18 org rows, one
+  per country — the resolver key's country scoping splits the placeholder
+  into per-country stranger-mergers. The DE bucket is org 15566 ("Immobilien
+  Bremen…", the 450-name candidate — the census's top-100 will confirm);
+  every one of the 18 is condemned (15566, 8901735, 13183829, 13867390,
+  13867392 (VA!), 14014373, 15464496, 20072700, 20078858, 20833217,
+  22155931, 22298600, 22523324, 22540472, 22843472, 23324113, 23444156,
+  23584728 (ARE)). Two carry garbage countries — the dissolve must not
+  stumble on those.
 - Placeholder lexicon seeds (all in the measured top-30 [M28] §2, every one
   kind=national): NIMAT3-10, ORG0001-0003/ORG001-003, BT501, 123456789,
   12345678, 1234567, 123456, 12345, 1234, 0001-0004, 00001, 000000001.
