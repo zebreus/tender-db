@@ -388,6 +388,21 @@ pub(crate) const SCHEMA: &str = "
     ) STRICT;
     CREATE INDEX IF NOT EXISTS organization_mentions_org ON organization_mentions(organization_id);
 
+    -- ADR-0013 D4: every language variant of an Organization's name, ONE
+    -- satellite beside the single designated `organizations.name` head. Grows
+    -- with orgs × languages actually published. Written by the mention
+    -- resolver for newly recorded mentions; latest variant per language wins
+    -- (org names are current-state, not versioned — the value-first
+    -- supersession bar applies to tender texts, not here). Issue 300's
+    -- cross-language matcher reads this; nothing else does yet.
+    CREATE TABLE IF NOT EXISTS organization_names (
+        org_id    INTEGER NOT NULL REFERENCES organizations(id),
+        lang      TEXT NOT NULL, -- ISO 639-2/T uppercase (ADR-0013 D1)
+        name      TEXT NOT NULL,
+        name_norm TEXT NOT NULL, -- Unicode-lowercased in Rust (issue 217-B)
+        PRIMARY KEY (org_id, lang)
+    ) STRICT;
+
     -- ------------------------------------------------------------- results
     -- The tendering-results half (issue 13): what happened after submission.
     -- eForms publishes results as notice-local sections (RES-/TEN-/CON-), and
@@ -1169,6 +1184,11 @@ pub struct Mention {
     /// The normalised official identifier, if it passed the plausibility gate.
     /// `None` ⇒ a provisional profile of this mention alone.
     pub identifier: Option<Identifier>,
+    /// ADR-0013 D4: every LABELLED language variant of the party's name this
+    /// mention published, `(canonical lang, name)`, deduped per lang. `name`
+    /// above stays the designated single head (first seen — unchanged
+    /// semantics); these feed the `organization_names` satellite only.
+    pub variants: Vec<(String, String)>,
 }
 
 /// A normalised official identifier that is allowed to merge mentions.
@@ -1240,6 +1260,20 @@ async fn repoint_org_references(
             (Value::Integer(keep), Value::Integer(loser)),
         )
         .await?;
+    // ADR-0013 D4: the loser's name variants ride along; the keep's existing
+    // variant wins a language collision (IGNORE), and the loser's rows go so
+    // its org-row delete leaves no orphans.
+    conn.execute(
+        "INSERT OR IGNORE INTO organization_names(org_id, lang, name, name_norm) \
+         SELECT ?, lang, name, name_norm FROM organization_names WHERE org_id = ?",
+        (Value::Integer(keep), Value::Integer(loser)),
+    )
+    .await?;
+    conn.execute(
+        "DELETE FROM organization_names WHERE org_id = ?",
+        (Value::Integer(loser),),
+    )
+    .await?;
     Ok(counts)
 }
 
@@ -2121,6 +2155,7 @@ impl Db {
     /// db still has the old inline-`UNIQUE` auto-index or the new named index.
     pub async fn strip_organization_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
+        conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;
         conn.execute(
@@ -2139,6 +2174,18 @@ impl Db {
                  country TEXT, raw_identifier TEXT, scheme TEXT,
                  PRIMARY KEY (notice_id, section_id),
                  FOREIGN KEY (notice_id, section_id) REFERENCES notice_sections(notice_id, section_id)
+             ) STRICT",
+            (),
+        )
+        .await?;
+        // The D4 satellite is rebuilt WITH the org layer: its org_ids are this
+        // build's mints, so stale rows would silently attach old names to new
+        // ids. Same column list as the schema block — keep them agreeing.
+        conn.execute(
+            "CREATE TABLE organization_names (
+                 org_id INTEGER NOT NULL REFERENCES organizations(id), lang TEXT NOT NULL,
+                 name TEXT NOT NULL, name_norm TEXT NOT NULL,
+                 PRIMARY KEY (org_id, lang)
              ) STRICT",
             (),
         )
@@ -3916,6 +3963,25 @@ impl Db {
             ),
         )
         .await?;
+        // ADR-0013 D4: record the labelled language variants of the party's
+        // name in the satellite. Latest variant per language wins (REPLACE) —
+        // org names are current-state, not versioned. Deliberately only on
+        // this newly-recorded-mention path, so re-folds stay write-free here
+        // (the idempotency contract above); the standing corpus needs its own
+        // backfill walk, exactly like issue 259's mention-layer lesson.
+        for (lang, name) in &m.variants {
+            conn.execute(
+                "INSERT OR REPLACE INTO organization_names(org_id, lang, name, name_norm)
+                 VALUES(?, ?, ?, ?)",
+                (
+                    Value::Integer(org_id),
+                    t(lang),
+                    t(name),
+                    Value::Text(name.to_lowercase()),
+                ),
+            )
+            .await?;
+        }
         mention_of.insert((m.notice_id, m.section_id.clone()), org_id);
         if created {
             append_change(conn, "organization", org_id, None, "added", now).await?;

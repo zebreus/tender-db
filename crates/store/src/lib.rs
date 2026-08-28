@@ -4360,6 +4360,59 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// parties, not one party), and a country-less name never merges (that is
     /// where platform strings like `tendsign` concentrate). Case-insensitive by
     /// construction, since the probe key is `name_norm`.
+    /// ADR-0013 D4: a newly recorded mention's labelled name variants land in
+    /// the `organization_names` satellite (name_norm Unicode-lowercased); the
+    /// idempotent re-resolve path writes nothing more.
+    #[tokio::test]
+    async fn name_variants_land_in_the_satellite_once() {
+        let path = format!("/tmp/tender-db-orgnames-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        let m = Mention {
+            notice_id: 5,
+            section_id: "ORG-1".into(),
+            name: "Stadt Brüssel".into(),
+            country: Some("BE".into()),
+            raw_identifier: None,
+            scheme: None,
+            identifier: None,
+            variants: vec![
+                ("DEU".into(), "Stadt Brüssel".into()),
+                ("FRA".into(), "Ville de Bruxelles".into()),
+            ],
+        };
+        let mut resolver = db.mention_resolver().await.unwrap();
+        let org = db.resolve_mentions(&mut resolver, &[m.clone()], 100).await.unwrap()[0];
+        let count = int_of(&db, "SELECT COUNT(*) FROM organization_names").await;
+        assert_eq!(count, Some(2), "both labelled variants recorded");
+        assert_eq!(
+            text_of(
+                &db,
+                "SELECT name_norm FROM organization_names WHERE lang = 'DEU'"
+            )
+            .await
+            .as_deref(),
+            Some("stadt brüssel"),
+            "Unicode-lowercased in Rust, umlaut intact"
+        );
+        assert_eq!(
+            int_of(&db, "SELECT org_id FROM organization_names WHERE lang = 'FRA'").await,
+            Some(org),
+            "rows key to the resolved org"
+        );
+        // Re-resolving the same mention hits the idempotency map: no new rows.
+        let again = db.resolve_mentions(&mut resolver, &[m], 100).await.unwrap()[0];
+        assert_eq!(again, org);
+        assert_eq!(int_of(&db, "SELECT COUNT(*) FROM organization_names").await, Some(2));
+        drop(db);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     #[tokio::test]
     async fn an_identifierless_mention_reuses_its_named_organization() {
         let path = format!("/tmp/tender-db-namemerge-{}.db", std::process::id());
@@ -4377,6 +4430,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             raw_identifier: None,
             scheme: None,
             identifier: None,
+            variants: Vec::new(),
         };
         let mut resolver = db.mention_resolver().await.unwrap();
         let ids = db
@@ -4441,6 +4495,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                         kind: "national".into(),
                         value: "123".into(),
                     }),
+                    variants: Vec::new(),
                 }],
                 0,
             )
@@ -6495,6 +6550,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 raw_identifier: None,
                 scheme: None,
                 identifier: None,
+                variants: Vec::new(),
             }],
             100,
         )
@@ -6588,6 +6644,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             raw_identifier: None,
             scheme: None,
             identifier: None,
+            variants: Vec::new(),
         }];
         db.resolve_mentions(&mut resolver, &mentions, 100).await.unwrap();
         db.finish_mention_resolver(resolver).await.unwrap();

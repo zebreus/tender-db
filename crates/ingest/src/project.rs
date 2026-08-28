@@ -3031,6 +3031,7 @@ impl NoticeState {
                         raw_identifier: None,
                         scheme: None,
                         identifier: None,
+                        variants: Vec::new(),
                     },
                 )
             })
@@ -3061,8 +3062,19 @@ impl NoticeState {
                 )
             };
             match &value.value {
-                NoticeValue::Text { value, .. } if is_name && mention.name.is_empty() => {
-                    mention.name.clone_from(value);
+                NoticeValue::Text { value, lang } if is_name => {
+                    // The designated single head keeps its first-seen semantics.
+                    if mention.name.is_empty() {
+                        mention.name.clone_from(value);
+                    }
+                    // ADR-0013 D4: every LABELLED variant feeds the
+                    // organization_names satellite, first-seen per language
+                    // (eForms multilingual notices publish BT-500 per language).
+                    if let Some(lang) = normalize_lang(lang.as_deref()) {
+                        if !mention.variants.iter().any(|(l, _)| *l == lang) {
+                            mention.variants.push((lang, value.clone()));
+                        }
+                    }
                 }
                 NoticeValue::Code { code, .. } if is_country => {
                     mention.country.get_or_insert_with(|| code.clone());
@@ -4859,6 +4871,74 @@ mod tests {
         let by_id: HashMap<&str, &store::Section> =
             flat.iter().map(|s| (s.id.as_str(), s)).collect();
         assert!(nested_org_aliases(&by_id, &[ORGANIZATION_KIND]).is_empty());
+    }
+
+    /// ADR-0013 D4: `mentions()` keeps every LABELLED language variant of the
+    /// party's name for the `organization_names` satellite — while the single
+    /// designated `name` keeps its first-seen semantics untouched.
+    #[test]
+    fn mention_capture_keeps_labelled_name_variants_per_language() {
+        let parsed = Parsed {
+            sections: vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section {
+                    id: "ORG-0001".into(),
+                    kind: ORGANIZATION_KIND.into(),
+                    parent: Some("PROCEDURE".into()),
+                },
+            ],
+            values: vec![
+                // eForms multilingual shape: BT-500 repeated per language.
+                text_value("ORG-0001", ORG_NAME_FIELD, 0, Some("DE"), "Stadt Brüssel"),
+                text_value("ORG-0001", ORG_NAME_FIELD, 1, Some("FR"), "Ville de Bruxelles"),
+                // A repeat of an already-seen language: first wins.
+                text_value("ORG-0001", ORG_NAME_FIELD, 2, Some("DEU"), "Stadt Bruessel (dupe)"),
+                // Unlabelled: feeds the designated head only, never the satellite.
+                text_value("ORG-0001", ORG_NAME_FIELD, 3, None, "City of Brussels"),
+            ],
+        };
+        let mentions = NoticeState::mentions(false, 7, &parsed);
+        assert_eq!(mentions.len(), 1);
+        let m = &mentions[0];
+        assert_eq!(m.name, "Stadt Brüssel", "the head keeps first-seen semantics");
+        assert_eq!(
+            m.variants,
+            vec![
+                ("DEU".to_owned(), "Stadt Brüssel".to_owned()),
+                ("FRA".to_owned(), "Ville de Bruxelles".to_owned()),
+            ],
+            "labelled variants canonicalised and deduped per language; unlabelled excluded"
+        );
+
+        // The legacy unlabelled shape stays variant-free.
+        let legacy = Parsed {
+            sections: vec![store::Section {
+                id: "ORG-1".into(),
+                kind: ORGANIZATION_KIND.into(),
+                parent: None,
+            }],
+            values: vec![text_value("ORG-1", "TED-OFFICIALNAME", 0, None, "Mairie de Paris")],
+        };
+        let m = &NoticeState::mentions(false, 8, &legacy)[0];
+        assert_eq!((m.name.as_str(), m.variants.len()), ("Mairie de Paris", 0));
+    }
+
+    fn text_value(
+        section: &str,
+        field: &str,
+        ordinal: i64,
+        lang: Option<&str>,
+        value: &str,
+    ) -> store::ValueRow {
+        store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal,
+            value: store::NoticeValue::Text {
+                lang: lang.map(Into::into),
+                value: value.into(),
+            },
+        }
     }
 
     #[test]

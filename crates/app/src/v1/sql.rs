@@ -117,7 +117,7 @@ const PER_HOUR: u32 = 300;
 /// re-opened whenever a private table was added. Each entry is public business
 /// data (CONTEXT.md); the account/webhook/operator tables and the raw-fetch
 /// registry are deliberately absent (see the note below the list).
-const ALLOWED: [&str; 47] = [
+const ALLOWED: [&str; 48] = [
     // Current-state views — the analyst entry points (docs/architecture.md).
     "v_tenders",         // current version of each Tender
     "v_lots",            // current Lots
@@ -139,6 +139,7 @@ const ALLOWED: [&str; 47] = [
     "lots",
     "organizations",
     "organization_mentions",
+    "organization_names",
     "lot_results",
     "bids",
     "contracts",
@@ -551,6 +552,15 @@ const EPOCH_NOTE: &str = "Unix epoch seconds — NOT ISO (the REST API returns \
 /// One-line descriptions for the tables/views worth explaining in
 /// `/v1/sql/schema` (issue 50); the rest are self-describing.
 const TABLE_NOTES: &[(&str, &str)] = &[
+    (
+        "organization_names",
+        "Language variants of an Organization's name (ADR-0013 D4): one row per \
+         (org_id, lang), lang in ISO 639-2/T uppercase, name_norm Unicode-lowercased. \
+         `organizations.name` stays the designated single head; this satellite carries \
+         the labelled variants multilingual notices publish (populated for newly \
+         ingested notices from 2026-08-28; the standing corpus backfills later). \
+         Join organizations on org_id.",
+    ),
     (
         "currency_rates",
         "The EUR-pivot rate series behind eur_cents (ADR-0014/0015): rate_to_eur = units of \

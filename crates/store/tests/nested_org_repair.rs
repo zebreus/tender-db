@@ -102,6 +102,27 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         .unwrap();
     }
 
+    // Satellite rows (ADR-0013 D4): the loser carries a language the keep
+    // lacks (moves over) and one the keep has (keep's wins).
+    for (org, lang, name) in [
+        (10, "NLD", "Stad Brussel"),
+        (10, "POR", "loser variant that must lose"),
+        (11, "POR", "Opal Publicidade, S. A."),
+    ] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm)
+             VALUES (?, ?, ?, ?)",
+            (
+                Value::Integer(org),
+                Value::Text(lang.into()),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+
     // The pre-fix doubled award: both ends of the nest stand on one lot_result.
     for org in [10, 11] {
         conn.execute(
@@ -225,6 +246,19 @@ async fn the_nested_org_repair_repoints_dedups_and_deletes_with_guards() {
         count("SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = 11").await,
         1,
         "the party row repointed"
+    );
+
+    // The satellite moved with the repoint: the loser's unique language rides
+    // over, a language collision keeps the keep's row, no loser rows remain.
+    assert_eq!(count("SELECT COUNT(*) FROM organization_names WHERE org_id = 10").await, 0);
+    assert_eq!(
+        count("SELECT COUNT(*) FROM organization_names WHERE org_id = 11 AND lang = 'NLD' AND name = 'Stad Brussel'").await,
+        1
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM organization_names WHERE org_id = 11 AND lang = 'POR' AND name = 'Opal Publicidade, S. A.'").await,
+        1,
+        "the keep's existing variant wins the collision"
     );
 
     // The change feed heard: loser removed, keep changed, tender changed.
