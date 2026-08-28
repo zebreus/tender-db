@@ -52,11 +52,21 @@ but its composition MUST be sampled before rule-4 ever enforces).
 `other` = 763,964 (65.6%) — tranche 2's target: ES letter-NIFs, RO CUI
 lengths, DK CVR, NL KvK, AT FN.
 
-Census refinements for the next tranche (before any flip): (a) exclude
-lexicon/sequence-condemned ids from checksum scoring — they are removed by
-the earlier gate stage regardless, and their inclusion depresses PL:nip /
-FR:siret below a bar they may genuinely clear; (b) sample the letter-run
-140k composition; (c) FR left-zero-pad strip before scoring.
+Census refinements (a)+(c) BUILT same day; (b) SAMPLED — the letter-run
+140k class decomposes into RECOVERABLE STRUCTURE, not junk (live sample):
+`REGON470850645` / `NIP…REGON…` label-prefixed and compound fields carrying
+real ids (the B8 splitter's target — "REGON" at 5 letters sat past the ≤4
+prefix strip, now ≤6); HU `EKRSZ\d+` platform ids (rule-7 scoped scheme);
+32-40-char platform hex hashes (FR/BE — now their own census class);
+`HRB2320STRALSUND` — the DE court-scope embedded IN the value, raw
+material for the court-scoping fix; spelled-out labels
+(`FISCALCODENO…`). Consequence recorded: rule 4 must run AFTER the
+compound splitter and label-prefix strip, never as a blanket ≥4-letter
+reject — the gate-flip tranche implements the splitter first. Checksum
+scoring now excludes lexicon/sequence-condemned ids, FR pads score the id
+under the padding (`FR:siren-padded`), and the census gains hex_hash +
+compound counters — next run re-reads the enablement bar on clean
+denominators.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
