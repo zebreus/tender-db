@@ -50,3 +50,27 @@ docs/research/ted-access-channels.md (the per-era channel map).
 Not in scope: the CO archive (232's winner-half study) — a different corpus
 question. Sequencing: after the running epoch refold lands and its deploy
 batch (D5 flip + backfill-values + ?lang=) is out.
+
+## Stage-1 design (owner, 2026-08-28 — code-read of r209/parse.rs)
+
+The parser already contains ALL the machinery; stage 1 is a policy widening
+at exactly one choice point. `form_section` (r209/parse.rs ~559) sorts the
+FORM_SECTION copies: ≥1 ORIGINAL (several for bilingual buyers — Belgium
+FR+NL, Bolzano DE+IT) + one TRANSLATION per language. Today the primary
+ORIGINAL walks fully; the other ORIGINALs and ONLY the English translation
+contribute texts via the positional `translating` walk; every other
+TRANSLATION copy is a translation-copy skip. The `kept_languages` gate
+(~201) drops multilingual `ML_TI_DOC`/`AA_NAME` copies the same way.
+
+Build: a `TranslationPolicy` (EnOnly | All | Langs(set)) threaded to the two
+gates — `form_section`'s `english` pick becomes a filtered set of TRANSLATION
+copies, `kept_languages` widens identically; default stays EnOnly so the
+build deploys inert. The campaign is then: flip policy → one-month re-parse
+(the 251/DE-1.x machinery) → measure parsed-layer growth (predict texts ×
+~kept-language count for that month) → Lennart decides breadth for the
+corpus run. The positional text-matching path is already exercised by the
+bilingual-buyer fixtures; new tests: a TRANSLATION-kept fixture asserting
+labelled texts land per language, and an inert-default test pinning that
+EnOnly parses byte-identically to today.
+
+r208 shares the FORM_SECTION shape (verify its parse.rs twin when building).
