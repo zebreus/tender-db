@@ -5336,7 +5336,14 @@ impl Db {
             // they re-resolve to ONE target by construction, and any of them
             // may carry the winner row. Cached per (tender) for multi-lot
             // tenders.
+            let mut sections_of: std::collections::HashMap<i64, Vec<String>> =
+                std::collections::HashMap::new();
+            for (n, s, ..) in &mentions {
+                sections_of.entry(*n).or_default().push(s.clone());
+            }
             let mut chain_pick: std::collections::HashMap<i64, Option<(i64, String)>> =
+                std::collections::HashMap::new();
+            let mut lr_pick: std::collections::HashMap<i64, Option<(i64, String)>> =
                 std::collections::HashMap::new();
             for w in &mut winners {
                 let (tender, seq, _, notice) = (w.0, w.1, w.2, w.3);
@@ -5408,6 +5415,69 @@ impl Db {
                             _ => None,
                         };
                         chain_pick.insert(tender, pick.clone());
+                        chosen = pick;
+                    }
+                }
+                // Tier 4 (issue 309): the lot_result's ORIGIN pins the winner
+                // side per ROW — `lot_results` carries (notice_id, result_key),
+                // the notice and RES section where the result was published,
+                // independent of how far the row was carried forward. Among
+                // the org's mentions on that origin notice, the one whose
+                // section's ancestor chain reaches the RES section (the 259
+                // walk) is the winner-side mention. This is what resolves the
+                // flagship mega-orgs, whose chains mention them under several
+                // different names.
+                if chosen.is_none() {
+                    let lr = w.2;
+                    if let Some(cached) = lr_pick.get(&lr) {
+                        chosen = cached.clone();
+                    } else {
+                        let mut origin: Option<(i64, String)> = None;
+                        let mut rows = conn
+                            .query(
+                                "SELECT notice_id, result_key FROM lot_results WHERE id = ?",
+                                (Value::Integer(lr),),
+                            )
+                            .await?;
+                        if let Some(row) = rows.next().await? {
+                            origin = Some((int(&row, 0), text(&row, 1)));
+                        }
+                        drop(rows);
+                        let mut pick: Option<(i64, String)> = None;
+                        if let Some((origin_notice, res_key)) = origin {
+                            let cand_sections: Vec<String> =
+                                sections_of.get(&origin_notice).cloned().unwrap_or_default();
+                            if !cand_sections.is_empty() {
+                                let mut tree: std::collections::HashMap<String, Option<String>> =
+                                    std::collections::HashMap::new();
+                                let mut rows = conn
+                                    .query(
+                                        "SELECT section_id, parent_section_id \
+                                           FROM notice_sections WHERE notice_id = ?",
+                                        (Value::Integer(origin_notice),),
+                                    )
+                                    .await?;
+                                while let Some(row) = rows.next().await? {
+                                    tree.insert(text(&row, 0), opt_text_of(&row, 1));
+                                }
+                                let mut under_res: Vec<String> = Vec::new();
+                                for sid in &cand_sections {
+                                    let mut current = tree.get(sid).and_then(|p| p.as_deref());
+                                    for _ in 0..tree.len().max(1) {
+                                        let Some(id) = current else { break };
+                                        if id == res_key {
+                                            under_res.push(sid.clone());
+                                            break;
+                                        }
+                                        current = tree.get(id).and_then(|p| p.as_deref());
+                                    }
+                                }
+                                if under_res.len() == 1 {
+                                    pick = Some((origin_notice, under_res.remove(0)));
+                                }
+                            }
+                        }
+                        lr_pick.insert(lr, pick.clone());
                         chosen = pick;
                     }
                 }

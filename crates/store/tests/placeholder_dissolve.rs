@@ -32,6 +32,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (52, Some("49371185"), "Gymnázium", 0),
         (53, Some("BAD"), "Tier Two", 0),
         (54, Some("BAD"), "Carried", 0),
+        (55, Some("BAD"), "Two Names", 0),
         (60, None, "Alpha City", 1),
     ] {
         conn.execute(
@@ -66,6 +67,8 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (300, "S-1", 53, "Buyer Org", Some("CZ")),
         (300, "S-2", 53, "Winner Co", Some("CZ")),
         (400, "S-1", 54, "Carried Co", Some("CZ")),
+        (500, "S-1", 55, "Buyer B", Some("CZ")),
+        (500, "S-2", 55, "Winner W", Some("CZ")),
     ] {
         conn.execute(
             "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country)
@@ -87,7 +90,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     // Versions: tender 1 caused by notice 100 (org 50's winner context),
     // tender 2 caused by notice 200 (org 51's — ambiguous).
     for (t, seq, n) in
-        [(1i64, 1i64, 100i64), (2, 1, 200), (3, 1, 300), (4, 1, 400), (4, 2, 401)]
+        [(1i64, 1i64, 100i64), (2, 1, 200), (3, 1, 300), (4, 1, 400), (4, 2, 401), (5, 1, 500)]
     {
         conn.execute(
             "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, publication_id, published_at)
@@ -104,6 +107,34 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
             "INSERT INTO lot_results (id, tender_id, notice_id, result_key)
              VALUES (?, 1, 100, ?)",
             (Value::Integer(lr), Value::Text(format!("RES-{lr}"))),
+        )
+        .await
+        .unwrap();
+    }
+    // Org 55's lot_result carries its ORIGIN (notice 500, RES-1) — tier 4's
+    // input. The origin notice's section tree: S-2 sits UNDER RES-1, S-1
+    // (the buyer) does not.
+    conn.execute(
+        "INSERT INTO lot_results (id, tender_id, notice_id, result_key)
+         VALUES (15, 5, 500, 'RES-1')",
+        (),
+    )
+    .await
+    .unwrap();
+    for (sid, kind, parent) in
+        [("RES-1", "LotResult", None), ("S-1", "Organization", None), ("S-2", "Organization", Some("RES-1"))]
+    {
+        conn.execute(
+            "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+             VALUES (500, ?, ?, ?)",
+            (
+                Value::Text(sid.into()),
+                Value::Text(kind.into()),
+                match parent {
+                    Some(x) => Value::Text(x.into()),
+                    None => Value::Null,
+                },
+            ),
         )
         .await
         .unwrap();
@@ -152,6 +183,7 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (3, 1, 13, 53),
         (4, 1, 14, 54),
         (4, 2, 14, 54),
+        (5, 1, 15, 55),
     ] {
         conn.execute(
             "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
@@ -178,26 +210,26 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
 
     // Dry-run: full preview, nothing written.
     let (dry, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, true).await.expect("dry");
-    assert_eq!((dry.scanned, dry.condemned), (5, 4), "50, 51, 53, 54 condemned, 52 clean");
+    assert_eq!((dry.scanned, dry.condemned), (6, 5), "50, 51, 53, 54, 55 condemned, 52 clean");
     assert_eq!((dry.parties, dry.bid_parties), (3, 1), "dry run previews the blast radius");
     assert_eq!(
         (dry.dissolved, dry.skipped),
-        (3, 1),
-        "51 skipped (no signal); 53 via tier 2; 54 via tier 3 (carried winner)"
+        (4, 1),
+        "51 skipped (no signal); 53 tier 2; 54 tier 3; 55 tier 4 (lot-result origin)"
     );
-    assert_eq!(dry.mentions, 6, "50's three + 53's two + 54's one");
-    assert_eq!((dry.fresh, dry.reused), (5, 1), "Beta/nameless/Buyer/Winner Co/Carried fresh; Alpha City reuses 60");
+    assert_eq!(dry.mentions, 8, "50's three + 53's two + 54's one + 55's two");
+    assert_eq!((dry.fresh, dry.reused), (7, 1), "all named fresh but Alpha City reuses 60");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 1);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 6, "dry run minted nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 7, "dry run minted nothing");
 
     // Wet run.
     let (wet, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("wet");
-    assert_eq!((wet.dissolved, wet.skipped), (3, 1));
-    assert_eq!((wet.fresh, wet.reused), (5, 1));
+    assert_eq!((wet.dissolved, wet.skipped), (4, 1));
+    assert_eq!((wet.fresh, wet.reused), (7, 1));
     assert_eq!((wet.parties, wet.bid_parties), (3, 1));
-    assert_eq!(wet.winners, 5, "50's two + 53's tier-2 row + 54's two (one carried)");
+    assert_eq!(wet.winners, 6, "50's two + 53's + 54's two + 55's tier-4 row");
     assert_eq!(wet.winner_dups, 1, "lot_result 11 already stood on org 60");
-    assert_eq!(wet.tender_changes, 3, "tenders 1, 3, 4; tender 2's org was skipped");
+    assert_eq!(wet.tender_changes, 4, "tenders 1, 3, 4, 5; tender 2's org was skipped");
 
     // Org 50 is gone; 51 untouched; the Alpha City mention sits on 60; Beta
     // Corp and the nameless mention sit on fresh provisionals.
@@ -273,6 +305,15 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
         "no lot_result-14 rows remain on the dissolved org"
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 54").await, 0);
+
+    // Tier 4: the winner followed the RES-descendant section's target
+    // ("Winner W"), not the buyer's.
+    let winner_w = count(&conn, "SELECT id FROM organizations WHERE name = 'Winner W'").await;
+    assert_eq!(
+        count(&conn, "SELECT organization_id FROM tender_version_result_winners WHERE lot_result_id = 15").await,
+        winner_w
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 55").await, 0);
 
     // A rerun finds the dissolved org gone: only 51 (still skipped) remains.
     let (again, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("rerun");
