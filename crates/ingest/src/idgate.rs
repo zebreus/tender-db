@@ -35,6 +35,14 @@ pub struct GateCensus {
     /// VAT-kind value with fewer than 6 digits after the country prefix —
     /// the `PL823` stub class (census run 1330, 418 strangers on one org).
     pub short_vat: bool,
+    /// ≥16 chars, all hex, at least one A-F — platform-internal hashes (the
+    /// FR/BE 32-40-char class from the letter-run sample): never merge-grade,
+    /// but not "name-derived" either.
+    pub hex_hash: bool,
+    /// Contains both NIP and REGON label prefixes — a compound field holding
+    /// TWO real ids (B8 catalog rule 4's splitter target), recoverable, not
+    /// junk.
+    pub compound: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -50,10 +58,16 @@ pub enum Checksum {
 /// organization row's stored values; `value` its stored identifier.
 pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCensus {
     let digits: Vec<u8> = value.bytes().filter(u8::is_ascii_digit).map(|b| b - b'0').collect();
+    let hex_hash = value.len() >= 16
+        && value.bytes().all(|b| b.is_ascii_digit() || (b'A'..=b'F').contains(&b))
+        && value.bytes().any(|b| b.is_ascii_alphabetic());
     let mut out = GateCensus {
         lexicon: lexicon_hit(value),
         sequence: suspicious_digit_run(&digits),
-        letter_run: letter_run_after_prefix(value) >= 4,
+        // Hex hashes are their own class, not "name-derived letters".
+        letter_run: !hex_hash && letter_run_after_prefix(value) >= 4,
+        hex_hash,
+        compound: value.contains("NIP") && value.contains("REGON"),
         ..GateCensus::default()
     };
     let is_vat = kind == Some("vat");
@@ -67,6 +81,17 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
     let (scheme, checksum) = match (cc, is_vat, digits.len()) {
         (Some("DE"), true, 9) => ("DE:vat", mod_11_10(&digits)),
         (Some("FR"), _, 9) => (if is_vat { "FR:vat" } else { "FR:siren" }, luhn(&digits)),
+        // Left-zero-padded FR forms ("00000219740248", measured live): the
+        // real id sits under the padding — score IT, don't Luhn the literal
+        // 14 digits (run-1331 refinement c).
+        (Some("FR"), false, 14) if digits[0] == 0 => {
+            let stripped = &digits[digits.iter().take_while(|&&d| d == 0).count()..];
+            if stripped.len() == 9 {
+                ("FR:siren-padded", luhn(stripped))
+            } else {
+                ("FR:siret", luhn(&digits))
+            }
+        }
         (Some("FR"), false, 14) => ("FR:siret", luhn(&digits)),
         // Full FR VAT: FR + 2-char key + SIREN; the key is arithmetically
         // derived from the SIREN, so both halves check (verifier catch: the
@@ -162,14 +187,17 @@ pub fn suspicious_digit_run(digits: &[u8]) -> bool {
 }
 
 /// Longest run of consecutive ASCII letters after stripping one leading
-/// register prefix (HRB, KRS, …) — reusing the live gate's prefix list would
-/// couple modules, so the census strips ANY leading alphabetic run of ≤4
-/// chars as "the prefix" and measures the rest. `ORG0001MUNICPIO…` counts
-/// its 8+-letter run; `HRB12345` counts zero.
+/// label/register prefix (HRB, KRS, REGON, EKRSZ, …) — reusing the live
+/// gate's prefix list would couple modules, so the census strips ANY leading
+/// alphabetic run of ≤6 chars (when digits follow) as "the prefix" and
+/// measures the rest. `ORG0001MUNICPIO…` counts its 8+-letter run;
+/// `HRB12345`, `REGON470850645`, and `EKRSZ40664534` count zero — the
+/// letter-run sample (2026-08-28) showed those are PREFIXED real ids, not
+/// name-derived junk, and the ≤4 cut was misclassifying them.
 pub fn letter_run_after_prefix(value: &str) -> usize {
     let rest = {
         let lead = value.bytes().take_while(u8::is_ascii_alphabetic).count();
-        if lead <= 4 { &value[lead..] } else { value }
+        if lead <= 6 && value.len() > lead { &value[lead..] } else { value }
     };
     let mut best = 0usize;
     let mut run = 0usize;
@@ -452,12 +480,27 @@ mod tests {
         // Name-derived junk (live: Alvaiázere's ORG0001… id, the Força Aérea id).
         assert!(letter_run_after_prefix("ORG0001MUNICPIODEALVAIZERE") >= 4);
         assert!(letter_run_after_prefix("AVDAFORAAREAPORTUGUESA1") >= 4);
-        // Register prefixes and short letter content survive.
+        // Register/label prefixes and short letter content survive — incl.
+        // the 5-6-char label prefixes the live sample showed are REAL ids
+        // (REGON…, EKRSZ…), not name-derived junk.
         assert!(letter_run_after_prefix("HRB12345") == 0);
         assert!(letter_run_after_prefix("KRS0000123456") == 0);
+        assert!(letter_run_after_prefix("REGON470850645") == 0);
+        assert!(letter_run_after_prefix("EKRSZ40664534") == 0);
         assert_eq!(census(Some("PL"), Some("vat"), "PL823").short_vat, true);
         assert_eq!(census(Some("PL"), Some("vat"), "PL8230001234").short_vat, false);
         // Letter-bearing nationals never get a digit checksum verdict.
         assert_eq!(census(Some("DE"), Some("national"), "HRB12345").checksum, Checksum::Unknown);
+        // Platform hex hashes are their own class, not letter runs.
+        let hex = census(Some("FR"), Some("national"), "FD23B55BFB334ADFECD9B45A735FE4B8");
+        assert!(hex.hex_hash && !hex.letter_run);
+        // Compound NIP+REGON fields are recoverable, flagged as such.
+        let comp = census(Some("PL"), Some("national"), "NIP5262239325REGON010828091");
+        assert!(comp.compound);
+        // Left-zero-padded FR forms score the id UNDER the padding: a real
+        // padded SIREN passes where the literal 14 digits would fail Luhn.
+        let padded = census(Some("FR"), Some("national"), "00000219740248");
+        assert_eq!(padded.scheme, "FR:siren-padded");
+        assert_eq!(padded.checksum, Checksum::Pass);
     }
 }

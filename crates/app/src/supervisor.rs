@@ -2217,6 +2217,7 @@ impl Supervisor {
                     std::collections::HashMap::new();
                 let (mut lexicon, mut sequence, mut letter_run, mut short_vat) =
                     (0u64, 0u64, 0u64, 0u64);
+                let (mut hex_hash, mut compound) = (0u64, 0u64);
                 loop {
                     if self.cancelled(job.id) {
                         return Ok(
@@ -2249,15 +2250,25 @@ impl Supervisor {
                         );
                         let t = schemes.entry(c.scheme).or_default();
                         t.pop += 1;
-                        match c.checksum {
-                            ingest::idgate::Checksum::Pass => t.pass += 1,
-                            ingest::idgate::Checksum::Fail => t.fail += 1,
-                            ingest::idgate::Checksum::Unknown => {}
+                        // Lexicon/sequence-condemned ids are removed by the
+                        // EARLIER gate stage regardless of checksum, so they
+                        // must not depress the enablement rate the ≥97% bar
+                        // reads (the run-1331 refinement: PL:nip and
+                        // FR:siret sat just under the bar with junk
+                        // included in the denominator).
+                        if !c.lexicon && !c.sequence {
+                            match c.checksum {
+                                ingest::idgate::Checksum::Pass => t.pass += 1,
+                                ingest::idgate::Checksum::Fail => t.fail += 1,
+                                ingest::idgate::Checksum::Unknown => {}
+                            }
                         }
                         if c.lexicon { lexicon += 1; }
                         if c.sequence { sequence += 1; }
                         if c.letter_run { letter_run += 1; }
                         if c.short_vat { short_vat += 1; }
+                        if c.hex_hash { hex_hash += 1; }
+                        if c.compound { compound += 1; }
                     }
                     watermark = next;
                     self.set_phase(
@@ -2287,6 +2298,7 @@ impl Supervisor {
                     "gate": {
                         "lexicon": lexicon, "sequence": sequence,
                         "letter_run": letter_run, "short_vat": short_vat,
+                        "hex_hash": hex_hash, "compound": compound,
                         "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
                             "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
                         })).collect::<Vec<_>>(),
@@ -2311,8 +2323,9 @@ impl Supervisor {
                     "org-merge-health census (issue 300): {orgs} identifier-bearing orgs, \
                      {ge2} with >=2 distinct mention names, {ge6} >=6, {ge20} >=20, \
                      max {} (org {}); gate census: {lexicon} lexicon, {sequence} sequence, \
-                     {letter_run} letter-run, {short_vat} short-vat hits \
-                     (~{placeholder_total}+ placeholder-keyed)",
+                     {letter_run} letter-run, {short_vat} short-vat, {hex_hash} hex-hash, \
+                     {compound} compound hits (~{placeholder_total}+ placeholder-keyed; \
+                     checksum rates now exclude condemned ids)",
                     max.0, max.1
                 ))
             }
