@@ -300,6 +300,11 @@ enum Spec {
     /// `dry_run` counts and writes nothing — the safe default, like the other
     /// org-mutating jobs.
     RepairNestedOrgs { dry_run: bool },
+    /// Populate the `organization_names` satellite for the standing corpus
+    /// (issue 307): the resolver writes variants only for NEWLY recorded
+    /// mentions, so everything mentioned before the D4 deploy needs this one
+    /// notice-windowed walk. Idempotent (REPLACE, stable row count).
+    BackfillOrgNameVariants,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -777,6 +782,15 @@ impl Supervisor {
             "rederive-eur" => Ok(vec![
                 self.push("rederive-eur", "rederive-eur".into(), Spec::RederiveEur).await,
                 self.push("backfill-values", "backfill-values".into(), Spec::BackfillValues).await,
+            ]),
+            // Issue 307: one-time satellite population for the standing corpus.
+            "backfill-org-name-variants" => Ok(vec![
+                self.push(
+                    "backfill-org-name-variants",
+                    "backfill-org-name-variants".into(),
+                    Spec::BackfillOrgNameVariants,
+                )
+                .await,
             ]),
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
@@ -2066,6 +2080,43 @@ impl Supervisor {
                     } else {
                         String::new()
                     }
+                ))
+            }
+            Spec::BackfillOrgNameVariants => {
+                let mut totals = store::OrgNameBackfill::default();
+                let mut watermark = 0i64;
+                loop {
+                    let (batch, next) = self
+                        .db
+                        .backfill_org_name_variants_batch(
+                            ingest::project::ORG_NAME_FIELD_IDS,
+                            ingest::project::normalize_lang,
+                            BACKFILL_BATCH,
+                            watermark,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if batch.notices == 0 {
+                        break;
+                    }
+                    totals.notices += batch.notices;
+                    totals.mentions += batch.mentions;
+                    totals.written += batch.written;
+                    watermark = next;
+                    self.set_phase(
+                        "walking",
+                        Some(totals.notices),
+                        None,
+                        format!("{} mentions, {} variants written", totals.mentions, totals.written),
+                    );
+                    if let Err(e) = self.db.checkpoint(store::CheckpointMode::Truncate).await {
+                        eprintln!("supervisor: checkpoint after org-name window: {e}");
+                    }
+                }
+                Ok(format!(
+                    "organization_names backfilled over {} notices: {} mentions visited, \
+                     {} labelled variants written (issue 307)",
+                    totals.notices, totals.mentions, totals.written
                 ))
             }
             Spec::RepairNestedOrgs { dry_run } => {
@@ -3739,6 +3790,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-legacy-adjacency"
             | "rederive-eur"
             | "repair-nested-orgs"
+            | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"
     )

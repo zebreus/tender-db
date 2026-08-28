@@ -22,7 +22,7 @@ pub use accounts::{TokenRecord, User};
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
-    LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgMergeBatch,
+    LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgMergeBatch, OrgNameBackfill,
     PlanGroup, PlanRow, Round, TenderProjection, TenderVersion,
 };
 pub use jobs::QueuedJobRow;

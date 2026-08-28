@@ -1282,6 +1282,18 @@ async fn repoint_org_references(
     Ok(counts)
 }
 
+/// One window of the issue-307 satellite backfill. Totals are summed across
+/// windows by the job.
+#[derive(Debug, Default, Clone)]
+pub struct OrgNameBackfill {
+    /// Notices the window covered.
+    pub notices: u64,
+    /// Recorded mentions visited.
+    pub mentions: u64,
+    /// Satellite rows written (REPLACE — a re-run rewrites the same rows).
+    pub written: u64,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -4883,6 +4895,110 @@ impl Db {
             report.repaired += 1;
         }
         Ok(())
+    }
+
+    /// One window of the issue-307 backfill: populate the `organization_names`
+    /// satellite for the STANDING corpus. The resolver writes variants only
+    /// for newly recorded mentions (the idempotency contract), so everything
+    /// mentioned before the D4 deploy needs this one walk: for each recorded
+    /// mention in the notice-id window, the LABELLED name-field texts on its
+    /// exact section (the caller passes the field list and the lang
+    /// normaliser — both live in ingest) REPLACE into the satellite. Exact
+    /// section match covers eForms and sdk-0.1, the labelled populations;
+    /// legacy texts are unlabelled until 304's campaign, and its re-parse
+    /// feeds the resolver path anyway. No change events: the fold-path
+    /// satellite write emits none either — the satellite is 300's matcher
+    /// input, not a versioned entity surface. Idempotent (REPLACE, stable
+    /// row count). Windows drive on the notices PK, the proven walk shape.
+    pub async fn backfill_org_name_variants_batch(
+        &self,
+        fields: &[&str],
+        normalize: fn(Option<&str>) -> Option<String>,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(OrgNameBackfill, i64)> {
+        let conn = self.conn().await;
+        let mut report = OrgNameBackfill::default();
+        let mut rows = conn
+            .query(
+                "SELECT COUNT(*), MAX(id) FROM
+                   (SELECT id FROM notices WHERE id > ? ORDER BY id LIMIT ?)",
+                (Value::Integer(after), Value::Integer(batch)),
+            )
+            .await?;
+        let (count, watermark) = match rows.next().await? {
+            Some(row) => (int(&row, 0), opt_int_of(&row, 1).unwrap_or(after)),
+            None => (0, after),
+        };
+        drop(rows);
+        if count == 0 {
+            return Ok((report, after));
+        }
+        report.notices = count as u64;
+
+        // Labelled name texts in the window, keyed by (notice, section),
+        // first-seen per language — mirroring `mentions()` capture.
+        let mut names: std::collections::HashMap<(i64, String), Vec<(String, String)>> =
+            std::collections::HashMap::new();
+        {
+            let placeholders = placeholders(fields.len());
+            let sql = format!(
+                "SELECT notice_id, section_id, lang, value FROM notice_texts \
+                  WHERE notice_id > ? AND notice_id <= ? AND lang IS NOT NULL \
+                    AND field_id IN ({placeholders})"
+            );
+            let mut params: Vec<Value> =
+                vec![Value::Integer(after), Value::Integer(watermark)];
+            params.extend(fields.iter().map(|f| t(*f)));
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let Some(lang) = normalize(opt_text_of(&row, 2).as_deref()) else { continue };
+                let entry =
+                    names.entry((int(&row, 0), text(&row, 1))).or_default();
+                if !entry.iter().any(|(l, _)| *l == lang) {
+                    entry.push((lang, text(&row, 3)));
+                }
+            }
+        }
+        if names.is_empty() {
+            return Ok((report, watermark));
+        }
+
+        let mut pending: Vec<(i64, String, String)> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT notice_id, section_id, organization_id \
+                       FROM organization_mentions \
+                      WHERE notice_id > ? AND notice_id <= ?",
+                    (Value::Integer(after), Value::Integer(watermark)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                report.mentions += 1;
+                if let Some(variants) = names.get(&(int(&row, 0), text(&row, 1))) {
+                    let org = int(&row, 2);
+                    for (lang, name) in variants {
+                        pending.push((org, lang.clone(), name.clone()));
+                    }
+                }
+            }
+        }
+        report.written = pending.len() as u64;
+        if !pending.is_empty() {
+            let mut stmt = conn
+                .prepare(
+                    "INSERT OR REPLACE INTO organization_names(org_id, lang, name, name_norm) \
+                     VALUES(?, ?, ?, ?)",
+                )
+                .await?;
+            for (org, lang, name) in pending {
+                let norm = name.to_lowercase();
+                stmt.execute((Value::Integer(org), t(&lang), t(&name), Value::Text(norm)))
+                    .await?;
+            }
+        }
+        Ok((report, watermark))
     }
 
     /// Whether a named index exists — the backfill job's refusal gate: without

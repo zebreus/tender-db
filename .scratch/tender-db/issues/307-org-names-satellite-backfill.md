@@ -1,7 +1,11 @@
 # 307 — organization_names satellite: backfill the standing corpus
 
-Status: READY (filed 2026-08-28 with the D4 build; blocked only by the 306
-repair queue for its prod run)
+Status: BUILT 2026-08-28 ~03:3x (admin kind `backfill-org-name-variants`,
+`Db::backfill_org_name_variants_batch` — notice-PK windows, exact-section
+labelled name texts via ingest's ORG_NAME_FIELD_IDS + normalize_lang fn
+pointer, REPLACE idempotent, no change events like the fold path; test:
+DEU+FRA land, unlabelled/non-name/mention-less stay out, re-run count
+stable). Prod run waits for the 306 repair queue to drain.
 Kind: one-time backfill walk
 Relates to: ADR-0013 D4 (the satellite, built 2026-08-28), 259 (the
 mention-idempotency lesson that makes this walk necessary), 300 (the

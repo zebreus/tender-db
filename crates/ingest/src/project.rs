@@ -462,6 +462,18 @@ const SDK01_RESULT_KIND: &str = "TenderResult";
 const SDK01_PARTY_KINDS: &[&str] = &[SDK01_BUYER_KIND, SDK01_WINNER_KIND];
 const SDK01_PARTY_NAME_FIELDS: &[&str] =
     &["SDK01-ContractingParty-Party-PartyName-Name", "SDK01-TenderResult-WinningParty-Party-PartyName-Name"];
+
+/// Every field id that carries a party's NAME, across all vocabularies — the
+/// issue-307 backfill walk's probe list (the union of what `mentions()`
+/// treats as `is_name`). Pub because the walk lives in the store (dependency
+/// direction) and the supervisor hands it this list.
+pub const ORG_NAME_FIELD_IDS: &[&str] = &[
+    "BT-500-Organization-Company",
+    "TED-OFFICIALNAME",
+    "TXT-AU",
+    "SDK01-ContractingParty-Party-PartyName-Name",
+    "SDK01-TenderResult-WinningParty-Party-PartyName-Name",
+];
 const SDK01_PARTY_COUNTRY_FIELDS: &[&str] = &[
     "SDK01-ContractingParty-Party-PostalAddress-Country-IdentificationCode",
     "SDK01-TenderResult-WinningParty-Party-PostalAddress-Country-IdentificationCode",
