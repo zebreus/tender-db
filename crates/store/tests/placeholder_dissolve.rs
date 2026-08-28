@@ -146,6 +146,7 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
     // Dry-run: full preview, nothing written.
     let (dry, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, true).await.expect("dry");
     assert_eq!((dry.scanned, dry.condemned), (3, 2), "50 and 51 condemned, 52 clean");
+    assert_eq!((dry.parties, dry.bid_parties), (1, 1), "dry run previews the blast radius");
     assert_eq!((dry.dissolved, dry.skipped), (1, 1), "51 skipped: 2 mentions on notice 200");
     assert_eq!(dry.mentions, 3, "50's three mentions previewed");
     assert_eq!((dry.fresh, dry.reused), (2, 1), "Beta Corp + nameless fresh; Alpha City reuses 60");

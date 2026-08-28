@@ -5333,6 +5333,27 @@ impl Db {
                     touched.insert(int(&row, 0));
                 }
             }
+            // Dry-run blast-radius honesty (the first prod preview reported 0
+            // party rows because only wet UPDATEs counted): the org-level
+            // count IS what will move — the org is dissolved whole or not at
+            // all — so two bounded index counts per org preview it exactly.
+            if dry_run {
+                for (sql, slot) in [
+                    (
+                        "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
+                        &mut report.parties,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
+                        &mut report.bid_parties,
+                    ),
+                ] {
+                    let mut rows = conn.query(sql, (Value::Integer(loser),)).await?;
+                    if let Some(row) = rows.next().await? {
+                        *slot += int(&row, 0) as u64;
+                    }
+                }
+            }
 
             // Re-resolve each mention through the post-234 provisional path
             // and move its rows. `notice_target` feeds the winner repoint.
