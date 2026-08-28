@@ -31,6 +31,32 @@ top-100" — five of the top twelve are the `NIMAT\d+` placeholder family
 insurer under one id), reversing the 168 study's "legitimate variance"
 call on ELEKTRO PRIMORSKA, and `PL823` (a 5-char VAT stub, 418 names)
 joins the lexicon. See the exemplar sheet's reclassified section.
+
+Stage-1 tranche 1 BUILT + DEPLOYED (164a7a6, same day): `ingest::idgate` —
+lexicon/sequence/letter-run/short-VAT rules + 16 checksum validators, all
+adversarially verified by three independent workflow agents (one blocking
+catch: La Poste establishment SIRETs use INSEE digit-sum-mod-5, not Luhn —
+a class the ≥97% census could NOT have caught, proving the verify-first
+discipline) — riding the census walk, still zero live-path changes. First
+enablement census (run 1331): **≥97% and HARD-eligible:** HR:oib 99.8,
+FI:ytunnus 98.9, SE:orgnr 98.8, PL:vat-nip 98.8, BE:vat 98.7, IT:piva
+98.6, CZ:ico 98.3, GR:afm 97.9, SE:vat 97.6, DE:vat 97.4, NO:orgnr 97.2,
+PT:nif 97.1 (+ FI/IT/PT vat twins ≥99, CZ:dic-ico 99.6). **Below the bar,
+stay SOFT:** FR:siret 95.8 (3,536 fails — the measured left-zero-padded
+forms fail literal Luhn; canonical_key's pad-strip rescues them), PL:nip
+95.6, BE:kbo 96.7 (pre-2008 9-digit base suspected), FR:siren 92.0,
+PL:regon9 89.6, FR:vat 87.3 (small bucket, sample before trusting).
+Placeholder counters: 2,152 lexicon, 680 sequence, 1,917 short-vat,
+140,244 letter-run (12% — consistent with the 16% legacy junk baseline
+but its composition MUST be sampled before rule-4 ever enforces).
+`other` = 763,964 (65.6%) — tranche 2's target: ES letter-NIFs, RO CUI
+lengths, DK CVR, NL KvK, AT FN.
+
+Census refinements for the next tranche (before any flip): (a) exclude
+lexicon/sequence-condemned ids from checksum scoring — they are removed by
+the earlier gate stage regardless, and their inclusion depresses PL:nip /
+FR:siret below a bar they may genuinely clear; (b) sample the letter-run
+140k composition; (c) FR left-zero-pad strip before scoring.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
