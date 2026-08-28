@@ -81,3 +81,20 @@ labelled texts land per language, and an inert-default test pinning that
 EnOnly parses byte-identically to today.
 
 r208 shares the FORM_SECTION shape (verify its parse.rs twin when building).
+
+## Stage-1 growth measurement (2026-08-28 10:5x, 2018-08 sample, n=400)
+
+Sampled 400 of 48,210 notices from the archived 2018-08 monthly (regex copy
+census over FORM_SECTION): EnOnly keeps 410 form copies; All keeps 611 —
+**1.5× copies, 1.57× form-copy bytes**. Correction to the premise: the
+r208/r209 bulk packages do NOT carry all-language translations — a notice
+ships its ORIGINAL(s) + an EN translation (for non-EN originals) +
+occasionally one more; the full per-language renderings live in TED's
+interface, not the bulk XML. So the stage-1 flip is CHEAP (+~57% legacy
+form bytes ≈ a few GB parsed growth era-wide) and recovers every translation
+we actually hold, but legacy language BREADTH beyond that is bounded by the
+packages themselves — the wider question folds into the text-era acquisition
+stages (which fetch per-language editions that DO exist as separate zips).
+Numbers ready for the breadth decision; the flip itself needs no decision
+gate at this cost and can ride any future re-parse campaign (e.g. 251-style)
+rather than warranting its own.
