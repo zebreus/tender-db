@@ -341,4 +341,16 @@ matching the 303 ledger exactly, with the terminal-exceeded gauge live.
 **ADR-0014 is now fully built and live** (D1-D6 except D6's read-time pivot
 arithmetic, which was decided as read-time-only and has no consumer yet).
 Remaining on 291: the language coverage campaigns (304 stages), the org-name
-satellite (ADR-0013 D5), and the measured min/max de-isolation (88d876a).
+satellite (ADR-0013 D4), and the measured min/max de-isolation (88d876a).
+
+**Org-name satellite (ADR-0013 D4) BUILT 2026-08-28 ~02:1x** (while the 306
+rederive ran): `organization_names(org_id, lang, name, name_norm)` PK
+(org_id, lang); `mentions()` collects labelled name variants (eForms BT-500
+publishes them today — 14 multi-lang sections verified in the newest ~12k
+notices); the resolver writes variants on the newly-recorded-mention path
+only (the 259 idempotency contract, stated in code); repoints (234 merge +
+259 repair, via the shared helper) move satellite rows keep-wins; full
+rebuilds recreate the satellite with the org layer; /v1/sql allow-lists the
+table with notes (additive — no CHANGELOG entry per its own policy). The
+standing-corpus backfill is issue 307 (READY). Issue 300's matcher now has
+its multilingual input once 307 runs.
