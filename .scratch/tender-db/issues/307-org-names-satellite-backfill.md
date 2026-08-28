@@ -1,11 +1,13 @@
 # 307 — organization_names satellite: backfill the standing corpus
 
-Status: BUILT 2026-08-28 ~03:3x (admin kind `backfill-org-name-variants`,
-`Db::backfill_org_name_variants_batch` — notice-PK windows, exact-section
-labelled name texts via ingest's ORG_NAME_FIELD_IDS + normalize_lang fn
-pointer, REPLACE idempotent, no change events like the fold path; test:
-DEU+FRA land, unlabelled/non-name/mention-less stay out, re-run count
-stable). Prod run waits for the 306 repair queue to drain.
+Status: CLOSED — RAN ON PROD 2026-08-28 (job 1321): 14,314,913 notices
+walked, 40,241,608 mentions visited, **38,706,271 labelled variants
+written** into organization_names — far above the eForms-only estimate,
+because legacy r208/r209 AA_NAME/ML_TI_DOC buyer-name copies in the kept
+languages (EN + original) are labelled and were harvested too. Sample
+verified (POL/FIN/FRA/ITA rows on real orgs). Corpus-wide COUNT exceeds the
+/v1/sql 10s cap — the satellite is ~38.7M rows; issue 300's matcher has its
+multilingual input. Re-run after 304's campaign widens legacy languages.
 Kind: one-time backfill walk
 Relates to: ADR-0013 D4 (the satellite, built 2026-08-28), 259 (the
 mention-idempotency lesson that makes this walk necessary), 300 (the
