@@ -28,7 +28,7 @@ pub mod parse;
 pub mod rules;
 pub mod value;
 
-pub use parse::{Rejected, parse};
+pub use parse::{Rejected, TranslationPolicy, parse};
 
 /// The era completeness checklist: every element and attribute the mirrored
 /// XSDs declare (R2.0.9 S01+S05 and R2.0.8 S03+S05 unions) plus the
@@ -37,7 +37,11 @@ pub use parse::{Rejected, parse};
 pub const INVENTORY_JSON: &str = include_str!("../../sdk/ted-export-inventory.json");
 
 /// Parse a notice payload for a TED_EXPORT profile.
-pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
+pub fn parse_payload(
+    profile: &str,
+    bytes: &[u8],
+    policy: TranslationPolicy,
+) -> store::Parse {
     if !matches!(profile, "ted-export-r209" | "ted-export-r208") {
         return store::Parse::Pending;
     }
@@ -49,7 +53,7 @@ pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
     // root; the deep parse must strip the same way or those members pass
     // dispatch and then re-quarantine here. Same XXE-safe strip as internal-ojs.
     let stripped = crate::profile::strip_doctype(xml);
-    match parse(&stripped) {
+    match parse(&stripped, policy) {
         Ok(parsed) => store::Parse::Parsed(parsed),
         Err(Rejected { reason, detail }) => {
             store::Parse::Quarantined { reason: reason.into(), detail: Some(detail) }

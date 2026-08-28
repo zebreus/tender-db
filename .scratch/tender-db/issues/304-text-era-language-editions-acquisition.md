@@ -1,8 +1,15 @@
 # 304 — acquire the text era's missing language editions (the un-downloaded TED zips)
 
-Status: READY (filed 2026-08-27 on Lennart's question "we were missing some TED
-download for historical multi language — what do we do?"; supersedes the WRONG
-line in 291 gap #4 that called text-era non-EN "recoverable by re-dispatch")
+Status: STAGE-1 CODE BUILT 2026-08-28 ~03:2x (inert — TranslationPolicy::EnOnly
+stays the dispatch default; the campaign act is the flip + a measured one-month
+re-parse). r208 needs no twin: both ted-export profiles run the same r209
+module, so form_section is the single change site. The policy test pins both
+directions (All keeps labelled FR texts + adopts the FR copy's extra
+organisation via the 201 path; EnOnly parses with zero FR texts). Next:
+stage-1 measurement month (pick 2018-08), then Lennart's breadth decision.
+(Filed 2026-08-27 on Lennart's question "we were missing some TED download
+for historical multi language — what do we do?"; supersedes the WRONG line in
+291 gap #4 that called text-era non-EN "recoverable by re-dispatch")
 Kind: acquisition campaign (staged, capacity-gated)
 Relates to: 291 (language capability), ADR-0013 (supersession stays wholesale —
 safe under more languages), 232 (the CO archive study is a separate question),

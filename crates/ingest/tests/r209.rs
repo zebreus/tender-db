@@ -505,6 +505,61 @@ fn co_original_extra_sections_are_adopted() {
     }
 }
 
+/// Issue 304 stage 1: `TranslationPolicy::All` keeps every translation copy's
+/// texts, labelled per language, through the same positional machinery — and
+/// the shipped `EnOnly` default stays inert (non-EN translations skipped),
+/// pinned here so the policy flip is a deliberate campaign act, not a drift.
+#[test]
+fn translation_policy_all_keeps_non_english_texts_and_enonly_stays_inert() {
+    let bytes = std::fs::read("tests/fixtures/r209/f02-co-original-160877-2015.xml").unwrap();
+    let xml = String::from_utf8(bytes).unwrap();
+    // The FR co-original becomes a genuine FR TRANSLATION copy.
+    let mutated = xml.replacen(
+        r#"CATEGORY="ORIGINAL" FORM="2" LG="FR""#,
+        r#"CATEGORY="TRANSLATION" FORM="2" LG="FR""#,
+        1,
+    );
+    assert_ne!(xml, mutated, "the FR co-original was found and relabelled");
+
+    let fr_texts = |p: &Parsed| {
+        p.values
+            .iter()
+            .filter(|v| {
+                matches!(&v.value, NoticeValue::Text { lang: Some(l), .. } if l.eq_ignore_ascii_case("FR"))
+            })
+            .count()
+    };
+
+    // Shipped default: the FR translation is a translation-copy skip.
+    let en_only = match parse_payload("ted-export-r208", mutated.as_bytes()) {
+        Parse::Parsed(p) => p,
+        other => panic!("EnOnly parse: {other:?}"),
+    };
+    assert_eq!(fr_texts(&en_only), 0, "EnOnly stays inert — no FR-labelled texts");
+
+    // The stage-1 policy: FR texts land, labelled, on the same structure.
+    let all = match r209::parse_payload(
+        "ted-export-r208",
+        mutated.as_bytes(),
+        r209::TranslationPolicy::All,
+    ) {
+        Parse::Parsed(p) => p,
+        other => panic!("All parse: {other:?}"),
+    };
+    assert!(fr_texts(&all) > 0, "All keeps the FR translation's texts");
+    // The FR copy carries this fixture's extra ORGANISATION: under All the
+    // issue-201 adoption path recovers it exactly as it does for EN today —
+    // kept sections only ever GROW, and the growth is recovered content.
+    assert!(
+        all.sections.len() >= en_only.sections.len(),
+        "kept sections only grow under a wider policy"
+    );
+    assert!(
+        all.sections.iter().any(|s| s.id == "ORG-3"),
+        "the FR translation's extra organisation is adopted under All"
+    );
+}
+
 /// The F19 sub-contract concession form (issue 194's last residue) writes the
 /// award-criteria sentence as AWARD_CRITERIA_DETAIL's BARE TEXT, where every
 /// other form nests children there — both shapes are consumed (TextGroup).

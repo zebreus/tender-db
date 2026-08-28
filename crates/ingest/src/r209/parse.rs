@@ -86,8 +86,20 @@ pub struct Rejected {
     pub detail: String,
 }
 
+/// Which TRANSLATION copies of a legacy notice contribute their texts
+/// (issue 304 stage 1). `EnOnly` is v1's shipped behavior — the English
+/// translation plus the original(s); `All` keeps every translation copy the
+/// stored XML carries, labelled per language, feeding the ADR-0013 fallback
+/// chain. The dispatch default stays `EnOnly` until the 304 campaign flips it
+/// era-wide behind a measured re-parse (parsed-layer growth first, one month).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TranslationPolicy {
+    EnOnly,
+    All,
+}
+
 /// Parse one TED_EXPORT notice into the notice-parsed layer.
-pub fn parse(xml: &str) -> Result<Parsed, Rejected> {
+pub fn parse(xml: &str, policy: TranslationPolicy) -> Result<Parsed, Rejected> {
     let doc = roxmltree::Document::parse(xml)
         .map_err(|e| Rejected { reason: "unparsable-xml", detail: e.to_string() })?;
     let root = doc.root_element();
@@ -106,6 +118,7 @@ pub fn parse(xml: &str) -> Result<Parsed, Rejected> {
         ordinals: HashMap::new(),
         counters: HashMap::new(),
         keep_langs: kept_languages(&doc),
+        policy,
         translating: false,
         adopted: Default::default(),
         alias: no_alias,
@@ -161,6 +174,7 @@ pub fn parse_internal_ojs(
         ordinals: HashMap::new(),
         counters: HashMap::new(),
         keep_langs: kept_languages(&doc),
+        policy: TranslationPolicy::EnOnly,
         translating: false,
         adopted: Default::default(),
         alias,
@@ -234,6 +248,8 @@ struct Walk {
     /// Per-prefix section counters (`LOT`, `RES`, `CHG`, `MOD`, `ORG`).
     counters: HashMap<&'static str, u32>,
     keep_langs: Vec<String>,
+    /// Which TRANSLATION copies contribute texts (issue 304 stage 1).
+    policy: TranslationPolicy,
     /// Translation mode: sections are matched positionally (not created) and
     /// only text values are emitted, in the copy's language.
     translating: bool,
@@ -561,7 +577,7 @@ impl Walk {
     /// original is not English). Remaining copies are translation-copy skips.
     fn form_section(&mut self, el: roxmltree::Node<'_, '_>) -> Result<(), Rejected> {
         let mut originals = Vec::new();
-        let mut english = None;
+        let mut translations: Vec<roxmltree::Node<'_, '_>> = Vec::new();
         for child in el.children().filter(|c| c.is_element()) {
             let name = child.tag_name().name();
             if name == "NOTICE_UUID" {
@@ -580,11 +596,27 @@ impl Walk {
             }
             match child.attribute("CATEGORY") {
                 Some("ORIGINAL") => originals.push(child),
-                Some("TRANSLATION") => {
-                    if child.attribute("LG").is_some_and(|lg| lg.eq_ignore_ascii_case("EN")) {
-                        english.get_or_insert(child);
+                // Issue 304 stage 1: which translation copies contribute is
+                // the POLICY's call — EnOnly keeps v1's first-English pick,
+                // All keeps one copy per language (first wins), each walked
+                // by the same positional text-only machinery below.
+                Some("TRANSLATION") => match self.policy {
+                    TranslationPolicy::EnOnly => {
+                        if child.attribute("LG").is_some_and(|lg| lg.eq_ignore_ascii_case("EN"))
+                            && translations.is_empty()
+                        {
+                            translations.push(child);
+                        }
                     }
-                }
+                    TranslationPolicy::All => {
+                        let lg = child.attribute("LG").unwrap_or_default();
+                        if !translations.iter().any(|t| {
+                            t.attribute("LG").unwrap_or_default().eq_ignore_ascii_case(lg)
+                        }) {
+                            translations.push(child);
+                        }
+                    }
+                },
                 other => {
                     return Err(Rejected {
                         reason: "form-without-category",
@@ -618,7 +650,12 @@ impl Walk {
             .enumerate()
             .filter(|&(i, _)| i != primary)
             .map(|(_, form)| *form)
-            .chain(english.filter(|_| !primary_lang.eq_ignore_ascii_case("EN")));
+            .chain(translations.into_iter().filter(|t| {
+                // A translation in the primary's own language would re-walk
+                // what the full walk already claimed (EnOnly's EN-primary
+                // guard, generalised for All).
+                !t.attribute("LG").unwrap_or_default().eq_ignore_ascii_case(primary_lang)
+            }));
         for form in secondaries {
             self.counters = snapshot.clone();
             self.translating = true;
@@ -742,7 +779,8 @@ impl Walk {
     }
 
     fn keeps(&self, lang: &str) -> bool {
-        self.keep_langs.iter().any(|k| k.eq_ignore_ascii_case(lang))
+        matches!(self.policy, TranslationPolicy::All)
+            || self.keep_langs.iter().any(|k| k.eq_ignore_ascii_case(lang))
     }
 
     /// Emit a non-text value — suppressed in translation mode, where only the

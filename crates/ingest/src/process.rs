@@ -19,7 +19,9 @@ pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
     if profile.starts_with("eforms:") {
         eforms::parse_payload(profile, bytes)
     } else if profile.starts_with("ted-export-") {
-        r209::parse_payload(profile, bytes)
+        // Issue 304 stage 1: EnOnly is the shipped policy; the language
+        // campaign flips this behind a measured one-month re-parse.
+        r209::parse_payload(profile, bytes, r209::TranslationPolicy::EnOnly)
     } else if profile == internal_ojs::PROFILE {
         internal_ojs::parse_payload(profile, bytes)
     } else {
