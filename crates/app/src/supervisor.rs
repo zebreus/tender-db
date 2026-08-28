@@ -305,6 +305,13 @@ enum Spec {
     /// mentions, so everything mentioned before the D4 deploy needs this one
     /// notice-windowed walk. Idempotent (REPLACE, stable row count).
     BackfillOrgNameVariants,
+    /// Issue 300 Stage 0: the org-merge-health census — distinct N2 mention
+    /// names per identifier-bearing org, whole corpus, read-only. Its report
+    /// is the matcher's baseline (distribution + top-100 allowlist input) and,
+    /// from Stage 1 on, the bad-merge tripwire's weekly input: a placeholder
+    /// identifier merging strangers shows up as one org accreting distinct
+    /// names (DE123456789 reached 144 before it was caught by hand).
+    OrgMergeHealth,
     /// Re-queue a profile cohort for the incremental fold (issue 85): clear its
     /// `projected` watermark so the trailing `project rebuild=false` re-derives just
     /// those Tenders. For a cohort the projection MIS-READ (unmapped field ids) —
@@ -792,6 +799,13 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            // Issue 300 Stage 0: read-only distinct-name census per
+            // identifier-bearing org — the matcher baseline + standing
+            // bad-merge tripwire input.
+            "org-merge-health" => Ok(vec![
+                self.push("org-merge-health", "org-merge-health".into(), Spec::OrgMergeHealth)
+                    .await,
+            ]),
             // Issue 259 landing: repair the stale nested-org mention layer.
             // Deletes org rows and emits change events, so it asks to be meant:
             // `dry_run` defaults to TRUE (the data-quality convention — a
@@ -1086,7 +1100,7 @@ impl Supervisor {
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
 const STOPPABLE_KINDS: &[&str] =
-    &["reparse", "data-quality", "project", "merge-provisional-orgs"];
+    &["reparse", "data-quality", "project", "merge-provisional-orgs", "org-merge-health"];
 
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
@@ -2168,6 +2182,93 @@ impl Supervisor {
                     totals.skipped,
                     totals.winner_dups,
                     totals.tender_changes
+                ))
+            }
+            Spec::OrgMergeHealth => {
+                // Issue 300 Stage 0. Read-only: no transactions, no events, no
+                // checkpoints — the walk is ~58 batches over the 1.16M
+                // identifier-bearing orgs and their mentions. The report is
+                // the baseline the matcher stages gate on and the standing
+                // distinct-name tripwire input; a run is cheap enough to ride
+                // any cadence later. Stop flag honoured between batches
+                // (issue 252's bar) — a stopped run stores nothing, because a
+                // partial census would undercount the tail and a later reader
+                // would trust it (the 230 zero-lie class).
+                let mut watermark = 0i64;
+                let mut orgs = 0u64;
+                let (mut ge2, mut ge6, mut ge20) = (0u64, 0u64, 0u64);
+                let mut max: (u64, i64) = (0, 0);
+                // Top-100 by distinct-name count: a min-heap of (count, org).
+                let mut top: std::collections::BinaryHeap<std::cmp::Reverse<(u64, i64)>> =
+                    std::collections::BinaryHeap::with_capacity(101);
+                loop {
+                    if self.cancelled(job.id) {
+                        return Ok(
+                            "org-merge-health stopped by cancel — no report stored".to_owned()
+                        );
+                    }
+                    let (counts, next) = self
+                        .db
+                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if counts.is_empty() {
+                        break;
+                    }
+                    for &(org, n) in &counts {
+                        orgs += 1;
+                        if n >= 2 { ge2 += 1; }
+                        if n >= 6 { ge6 += 1; }
+                        if n >= 20 { ge20 += 1; }
+                        if n > max.0 { max = (n, org); }
+                        top.push(std::cmp::Reverse((n, org)));
+                        if top.len() > 100 {
+                            top.pop();
+                        }
+                    }
+                    watermark = next;
+                    self.set_phase(
+                        "censusing",
+                        Some(orgs),
+                        None,
+                        format!("{ge2} orgs >=2 names, {ge6} >=6, max {}", max.0),
+                    );
+                }
+                let ranked: Vec<(u64, i64)> = {
+                    let mut v: Vec<_> = top.into_iter().map(|r| r.0).collect();
+                    v.sort_unstable_by(|a, b| b.cmp(a));
+                    v
+                };
+                let ids: Vec<i64> = ranked.iter().map(|&(_, id)| id).collect();
+                let meta = self.db.org_health_meta(&ids).await.map_err(|e| e.to_string())?;
+                let by_id: std::collections::HashMap<i64, _> =
+                    meta.into_iter().map(|m| (m.0, m)).collect();
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "identifier_bearing": orgs,
+                    "ge2": ge2, "ge6": ge6, "ge20": ge20,
+                    "max": max.0, "max_org": max.1,
+                    "top": ranked.iter().map(|&(n, id)| {
+                        let m = by_id.get(&id);
+                        serde_json::json!({
+                            "org_id": id, "distinct_names": n,
+                            "country": m.and_then(|m| m.1.clone()),
+                            "identifier_kind": m.and_then(|m| m.2.clone()),
+                            "identifier": m.and_then(|m| m.3.clone()),
+                            "name": m.map(|m| m.4.clone()),
+                        })
+                    }).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("org-merge-health", &report, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "org-merge-health census (issue 300): {orgs} identifier-bearing orgs, \
+                     {ge2} with >=2 distinct mention names, {ge6} >=6, {ge20} >=20, \
+                     max {} (org {})",
+                    max.0, max.1
                 ))
             }
             Spec::Refold { profiles, expect } => {
@@ -4147,9 +4248,11 @@ mod tests {
 
         // And every kind named stoppable must actually be one — the list is the contract,
         // so a kind added to it without a checkpoint is the bug this test exists to catch.
+        // org-merge-health reads the flag at the top of every census batch and stores
+        // nothing when stopped (issue 300 Stage 0).
         assert_eq!(
             STOPPABLE_KINDS,
-            &["reparse", "data-quality", "project", "merge-provisional-orgs"]
+            &["reparse", "data-quality", "project", "merge-provisional-orgs", "org-merge-health"]
         );
     }
 

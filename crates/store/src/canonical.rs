@@ -5001,6 +5001,97 @@ impl Db {
         Ok((report, watermark))
     }
 
+    /// One read-only batch of the issue-300 Stage-0 `org-merge-health` census:
+    /// distinct N2 mention names per IDENTIFIER-BEARING org — the standing
+    /// bad-merge tripwire's engine (a placeholder-keyed org shows up as one id
+    /// carrying dozens-to-hundreds of distinct names; DE123456789 carried 144
+    /// and would have been caught on day one). Walks the organizations PK with
+    /// an SQL residual filter (the 259 repair's proven shape), loads the
+    /// window's mention names via the `organization_mentions_org` index in
+    /// IN_CHUNK probes, and counts distinct `norm(name)` Rust-side — `norm` is
+    /// the matcher's N2 key, injected from ingest like the 307 backfill's
+    /// normalizer (dependency direction: store never depends on ingest).
+    /// Returns per-org counts plus the watermark; an empty vec ends the walk.
+    /// Reads only — no transaction, no events, safe beside any queue state.
+    pub async fn org_merge_health_batch(
+        &self,
+        norm: fn(&str) -> String,
+        batch: i64,
+        after: i64,
+    ) -> turso::Result<(Vec<(i64, u64)>, i64)> {
+        let conn = self.reader().await?;
+        let mut ids: Vec<i64> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT id FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL \
+                      ORDER BY id LIMIT ?",
+                    (Value::Integer(after), Value::Integer(batch)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                ids.push(int(&row, 0));
+            }
+        }
+        let Some(&last) = ids.last() else { return Ok((Vec::new(), after)) };
+
+        let mut names: std::collections::HashMap<i64, std::collections::HashSet<String>> =
+            std::collections::HashMap::with_capacity(ids.len());
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT organization_id, name FROM organization_mentions \
+                  WHERE organization_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let key = norm(&text(&row, 1));
+                if !key.is_empty() {
+                    names.entry(int(&row, 0)).or_default().insert(key);
+                }
+            }
+        }
+        let counts = ids
+            .iter()
+            .map(|&id| (id, names.get(&id).map_or(0, |s| s.len() as u64)))
+            .collect();
+        Ok((counts, after.max(last)))
+    }
+
+    /// Identity detail for the census report's top rows — a bounded IN read,
+    /// called once per run with ~100 ids.
+    pub async fn org_health_meta(
+        &self,
+        ids: &[i64],
+    ) -> turso::Result<Vec<(i64, Option<String>, Option<String>, Option<String>, String)>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let conn = self.reader().await?;
+        let mut out = Vec::with_capacity(ids.len());
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT id, country, identifier_kind, identifier, name \
+                  FROM organizations WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                out.push((
+                    int(&row, 0),
+                    opt_text_of(&row, 1),
+                    opt_text_of(&row, 2),
+                    opt_text_of(&row, 3),
+                    text(&row, 4),
+                ));
+            }
+        }
+        Ok(out)
+    }
+
     /// Whether a named index exists — the backfill job's refusal gate: without
     /// `organizations_name_country` (deferred, issues 62/111; built by `reindex`)
     /// the merge scan would sort 24.6M rows per batch instead of walking an index.

@@ -4113,6 +4113,33 @@ pub fn normalize_lang(lang: Option<&str>) -> Option<String> {
     )
 }
 
+/// The matcher's N2 name key (issue 300 §2.3): Unicode lowercase, every
+/// non-alphanumeric character folded to a space, runs collapsed. This is
+/// deliberately NOT `organizations.name_norm` (the 234 reuse key, bare
+/// `to_lowercase`) — changing that would silently re-key the provisional
+/// probe. Folding through the alphanumeric filter subsumes the design's
+/// punctuation/quote/dash/whitespace classes in one rule; NFKC is deferred
+/// until something measured demands it (fullwidth/ligature forms — the same
+/// nothing-measured-demands-it line the design draws for diacritics, which
+/// are intentionally preserved: "gymnázium" must not collide with
+/// "gymnazium" across languages).
+pub fn match_norm(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    let mut gap = false;
+    for c in name.chars() {
+        if c.is_alphanumeric() {
+            if gap && !out.is_empty() {
+                out.push(' ');
+            }
+            gap = false;
+            out.extend(c.to_lowercase());
+        } else {
+            gap = true;
+        }
+    }
+    out
+}
+
 /// The canonical target of one parsed amount. Everything except r208's plain
 /// `VALUE_COST` maps by field id alone ([`AMOUNTS`]). `VALUE_COST` is three
 /// facts in one field id (issue 177), told apart only by context:
@@ -4601,6 +4628,21 @@ fn first_date(parsed: &Parsed, field_id: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 300 §2.3: the N2 key folds case, punctuation, and spacing — and
+    /// nothing else. Diacritics survive (cross-language collision safety);
+    /// legal forms survive as tokens (N3's job, not N2's).
+    #[test]
+    fn the_n2_match_key_folds_punctuation_but_keeps_diacritics() {
+        assert_eq!(match_norm("Ernst  & Young Advisory Services"), "ernst young advisory services");
+        assert_eq!(match_norm("VERBRAEKEN INFRA n.v."), match_norm("Verbraeken Infra n v"));
+        assert_eq!(match_norm("s.r.o."), match_norm("s. r. o."));
+        assert_eq!(match_norm("„Sp. z o.o.”"), "sp z o o", "typographic quotes fold");
+        assert_ne!(match_norm("Softronic AB"), match_norm("Softronic Aktiebolag"), "forms differ at N2");
+        assert_eq!(match_norm("Gymnázium"), "gymnázium", "diacritics preserved");
+        assert_ne!(match_norm("gymnázium"), match_norm("gymnazium"));
+        assert_eq!(match_norm("  --  "), "", "all-punctuation collapses to empty");
+    }
 
     /// Issue 292: one language vocabulary across eras. The legacy two-letter tags
     /// map to the eForms three-letter form the read layer's 'ENG'-wins picks
