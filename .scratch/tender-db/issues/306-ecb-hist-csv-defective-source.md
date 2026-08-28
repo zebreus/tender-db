@@ -92,3 +92,18 @@ tens of millions — low tender ids are the FIRST-INGESTED (modern eForms)
 corpus, published post-2010, whose non-EUR rows were all NULL until now.
 Determinism proof at acceptance: re-run rederive-eur after completion — the
 first windows must report ~0 updates.
+
+## Repair run 2 — wedged again (02:02 UTC, ~2.79M tenders in); watermark resumability built
+
+The tender-PK windowed walk ALSO wedged: phase frozen at 2,790,000 tenders /
+143,949,218 rows / 87,961,014 updated since 02:02 (53+ min), same signature
+(100% of one core, ~30KB/s reads, zero writes; perf shows a tight loop on the
+job-exec thread inside the stripped binary — no symbols). Both walks died
+~2h into their runs at different logical positions, which fits either a
+data-region pathology or per-connection accumulation in turso. Response:
+`projection_state.rederive_eur_watermark` persists the last completed window
+(written post-commit, cleared on completion; ALTER-migrated), the handler
+resumes past it on re-run, and the phase detail now names the current
+watermark ("at tender N") — so a restart costs one window, and a recurring
+wedge names its exact tender-id window for snapshot dissection (a turso
+reproducer candidate; recheck against 0.8.0 per issue 166's watch).
