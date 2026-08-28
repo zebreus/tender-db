@@ -5327,16 +5327,28 @@ impl Db {
                     winners.push((int(&row, 0), int(&row, 1), int(&row, 2), int(&row, 3), String::new()));
                 }
             }
+            // Tier 3 (the carried-forward-winner case): rounds ACCUMULATE, so
+            // a later version's winner row was caused by a notice that never
+            // mentions the org at all — the whole NIMAT/DE123456789 flagship
+            // set skipped tier 1 this way. Resolution is tender-chain-scoped:
+            // gather the org's mentions across every notice in the tender's
+            // chain; if they all share one non-empty (name_norm, country)
+            // they re-resolve to ONE target by construction, and any of them
+            // may carry the winner row. Cached per (tender) for multi-lot
+            // tenders.
+            let mut chain_pick: std::collections::HashMap<i64, Option<(i64, String)>> =
+                std::collections::HashMap::new();
             for w in &mut winners {
                 let (tender, seq, _, notice) = (w.0, w.1, w.2, w.3);
+                let mut chosen: Option<(i64, String)> = None;
                 match mentions_per_notice.get(&notice).copied().unwrap_or(0) {
                     1 => {
-                        w.4 = section_of_notice.get(&notice).cloned().unwrap_or_default();
+                        chosen = Some((
+                            notice,
+                            section_of_notice.get(&notice).cloned().unwrap_or_default(),
+                        ));
                     }
-                    0 => {
-                        resolvable = false;
-                        break;
-                    }
+                    0 => {}
                     _ => {
                         let mut non_buyer: Vec<String> = Vec::new();
                         let mut rows = conn
@@ -5356,11 +5368,57 @@ impl Db {
                             non_buyer.push(text(&row, 0));
                         }
                         if non_buyer.len() == 1 {
-                            w.4 = non_buyer.remove(0);
-                        } else {
-                            resolvable = false;
-                            break;
+                            chosen = Some((notice, non_buyer.remove(0)));
                         }
+                    }
+                }
+                if chosen.is_none() {
+                    if let Some(cached) = chain_pick.get(&tender) {
+                        chosen = cached.clone();
+                    } else {
+                        let mut cands: Vec<(i64, String, String, Option<String>)> = Vec::new();
+                        let mut rows = conn
+                            .query(
+                                "SELECT m.notice_id, m.section_id, m.name, m.country \
+                                   FROM organization_mentions m \
+                                  WHERE m.organization_id = ? AND m.notice_id IN \
+                                        (SELECT caused_by_notice_id FROM tender_versions \
+                                          WHERE tender_id = ?)",
+                                (Value::Integer(loser), Value::Integer(tender)),
+                            )
+                            .await?;
+                        while let Some(row) = rows.next().await? {
+                            cands.push((
+                                int(&row, 0),
+                                text(&row, 1),
+                                text(&row, 2).to_lowercase(),
+                                opt_text_of(&row, 3),
+                            ));
+                        }
+                        let pick = match cands.first() {
+                            Some(first)
+                                if !first.2.is_empty()
+                                    && first.3.is_some()
+                                    && cands
+                                        .iter()
+                                        .all(|c| c.2 == first.2 && c.3 == first.3) =>
+                            {
+                                Some((first.0, first.1.clone()))
+                            }
+                            _ => None,
+                        };
+                        chain_pick.insert(tender, pick.clone());
+                        chosen = pick;
+                    }
+                }
+                match chosen {
+                    Some((n, s)) => {
+                        w.3 = n;
+                        w.4 = s;
+                    }
+                    None => {
+                        resolvable = false;
+                        break;
                     }
                 }
             }
