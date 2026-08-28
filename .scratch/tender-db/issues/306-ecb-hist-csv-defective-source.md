@@ -75,3 +75,20 @@ A reference source can be wrong in-band (200 OK, valid CSV, plausible bytes).
 Every acquisition job needs a freshness/shape assertion tied to what the data
 CLAIMS, not just parse success — the eurostat-ecu loader gets the equivalent
 guard (its series is closed: assert coverage ends 1998-12-31).
+
+## Refined diagnosis (2026-08-28 01:5x, archived-artifact value diff)
+
+Value-level diff of the frozen CSV against the real zip (both archived on the
+box): 85,410 shared (currency, date) cells, **235 differ, on exactly 9
+dates** — 2009-06-30, 2009-10-16, 2009-11-20, 2009-12-07..09, 2010-01-05,
+2010-01-06, 2010-02-12 — plus the frozen-only garbage Sunday 2010-02-14
+(reconciled away; the 9 shared dates were REPLACE-corrected by the zip
+load). The frozen artifact is an old column-vintage (41 columns, no ILS)
+whose other historical values are byte-identical to the live series. So
+class 2 (wrong derived values) is bounded to derivations dated in the 7-day
+windows after those 10 dates; the dominant repair volume is class-1 fills
+(post-2010 NULL → value), which is why the rederive's update counts run to
+tens of millions — low tender ids are the FIRST-INGESTED (modern eForms)
+corpus, published post-2010, whose non-EUR rows were all NULL until now.
+Determinism proof at acceptance: re-run rederive-eur after completion — the
+first windows must report ~0 updates.
