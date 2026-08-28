@@ -100,10 +100,24 @@ shifts; each replacement fixture hand-computed through the gate) — the
 checksum arithmetic itself was already triple-verified in the previous
 unit.
 
-Remaining Stage-1 pieces: `repair-placeholder-orgs` (the dissolve — next
-unit), the [16%,25%] replayed-window band (measure at the dissolve's
-dry-run), first-post-flip daily-chain read (tomorrow ~07:4x: provisional
-mint rate should tick up by the condemned share, nothing else moves).
+The dissolve is BUILT and its first prod DRY-RUN is read (job 1333, rev
+418699f, ~4 min over the whole corpus): 7,865 condemned by the live gate
+(0.68% — matching the census prediction), **6,490 dissolvable** re-resolving
+111,369 mentions (79,353 reuse standing provisionals / 32,016 fresh),
+51,985 winner rows, 54,091 tenders touched; **1,375 skipped whole** on the
+one-mention-per-notice winner guard — org 211/NIMAT dissolves clean (0
+multi-mention notices, 7,804 winners), org 15566 (723 multi-mention
+notices) waits for tier-2 disambiguation (filed as issue 309). The
+allowlist is untouched by construction (soft schemes). The first preview
+under-reported party rows (wet-only counting); fixed with org-level
+dry-run counts before the wet run.
+
+Remaining Stage-1 sequence: wet run (tier 1, 6,490 orgs) → verify
+exemplars + re-run org-merge-health (the ≥6 tail must shrink by the
+placeholder share) → re-run backfill-org-name-variants (satellite rows
+for rebound mentions) → issue 309 (tier-2 winner disambiguation, rescues
+the skip set incl. 15566) → first-post-flip daily-chain read (tomorrow
+~07:4x: provisional mint rate ticks up by the condemned share).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
