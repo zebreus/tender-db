@@ -1,11 +1,12 @@
 # 92 — `fold()` is O(chain² × state): latent, harmless today, fatal on a long chain
 
-Status: open — LATENT, ON THE CLOCK (owner re-measured 2026-08-26 — see the decision at the bottom).
-The worst real chain has grown to **3,282** (a DPS carrying 6,468 accumulating results — the quadratic
-shape), so the "~0.1s worst cohort" deferral basis is stale; margin to the fatal 5k+ zone is closing and
-a DPS grows unbounded. Rewrite still deferred (byte-identity-critical, ADR-0001; still seconds not
-minutes today), now with a measure-then-decide step and a weekly tripwire. Was: LATENT, confirmed
-quadratic 2026-08-02, ~0.1s on the then-worst cohort.
+Status: open — LATENT, INSTRUMENTED, DEFER CONFIRMED BY MEASUREMENT (step 2 answered
+2026-08-28 from the epoch refold's real execution — see the bottom section). The worst real
+chain (3,282 versions, tender 5785085) folded inside a 50k-version chunk that took 488s vs a
+52s median — minutes, not the fatal zone; absolute worst chunk anywhere in the corpus was
+999s. The `longest_chain` ≥ 4,000 weekly tripwire is the standing signal-producer; the
+rewrite stays deferred until it flags. Was: LATENT ON THE CLOCK (2026-08-26 re-measure:
+chain 3,282, 6,468 accumulating results); before that ~0.1s worst cohort (2026-08-02).
 Kind: performance (latent) / robustness
 Blocked by: —
 Relates to: 91 (where this was investigated and ruled out), 85, ADR-0001 (byte-identity), ADR-0003
@@ -138,3 +139,38 @@ that number has moved:
 The fix sketch below is unchanged and correct; option (2) (persistent/`Arc`
 `rounds` list) is the smaller byte-identity-safe lever and remains the
 recommended first cut when the measured number says build.
+
+## Step 2 ANSWERED (2026-08-28) — measured from the epoch refold's real execution
+
+Instead of a dedicated snapshot fold of tender 5785085, the number came free from
+production: the 2026-08-27 epoch refold's journal prints a phase-2 heartbeat every
+50,000 versions written, so inter-heartbeat wall-time gaps ARE per-chunk fold+write
+cost on the real corpus, real hardware, real chains. Analysis over 286 intervals:
+
+```
+median gap: 52s
+worst gaps (sec, tender-id range covered):
+  999s   tenders   928,821 -> 951,038
+  488s   tenders 5,756,578 -> 5,779,585   <- the chunk whose fold reaches tender 5785085
+  411s   tenders 2,785,371 -> 2,820,075   <- the 8.9M-lot_results mega-chain window (306)
+  301s   tenders   241,525 -> 263,507
+  285s / 254s / 239s ...
+```
+
+Reading:
+
+* The chunk containing the 3,282-version exemplar (5785085) cost **488s ≈ 9× median**
+  for its 50k versions — the worst chunk anywhere was **999s ≈ 19× median**. Even the
+  heaviest chain-cohorts are **minutes per 50k-version chunk**, comfortably inside the
+  issue's own bar ("seconds-to-minutes, not minutes-threatening-the-daily-chain").
+* These gaps CONFLATE fold CPU with satellite write volume — the 411s window writes
+  8.9M lot_results rows (see 306) — so attributing the whole gap to fold() OVERSTATES
+  the quadratic's cost. The true fold share is smaller than these numbers.
+* The daily incremental re-folds one touched chain, not a 50k chunk; its worst case is
+  a fraction of 488s. No observed daily-chain latency incident has implicated fold.
+
+**Verdict: DEFER stands, now on a measured production number rather than synthetic
+extrapolation.** The build trigger is unchanged and instrumented: the weekly DQ
+`longest_chain` line flags at ≥ 4,000 (current 3,282). When it flags, option (2)
+(`Arc`/persistent `rounds`) is the first cut, behind the four byte-identity gates.
+Step 2 is closed; nothing on this issue is actionable until the tripwire fires.
