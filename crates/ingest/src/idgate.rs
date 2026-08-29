@@ -361,6 +361,35 @@ fn fi_ytunnus(digits: &[u8]) -> Checksum {
     }
 }
 
+/// DK CVR (8): weights 2,7,6,5,4,3,2,1 over ALL eight digits, weighted sum
+/// divisible by 11. Verified live against 400 DK-country rows: 380 pass, and
+/// the 20 failures are visibly mis-filed foreign numbers (a UK company
+/// number, a P-nummer-shaped row). Anchor-path only — NOT wired into the
+/// census gate (Stage-1 condemnation policy is a separate decision).
+fn dk_cvr(digits: &[u8]) -> Checksum {
+    const W: [u32; 8] = [2, 7, 6, 5, 4, 3, 2, 1];
+    let sum: u32 = W.iter().zip(digits).map(|(w, &d)| w * u32::from(d)).sum();
+    to_checksum(sum % 11 == 0)
+}
+
+/// SI davčna številka (8): weights 8,7,6,5,4,3,2 over the first 7; check =
+/// 11 − rem, with BOTH 10 and 11 mapping to 0 — the 10→0 variant is the
+/// issued rule, verified live 60/60 on SI-prefixed VAT bodies (the
+/// "10 = not issued" variant circulating in some references fails exactly
+/// the rem-1 numbers, e.g. 11022680, which is real). Same weight vector as
+/// CZ IČO with check rules differing only at rem 0 — SI- and CZ-valid
+/// 8-digit values therefore usually co-anchor and stay ambiguous, which is
+/// the honest reading. Anchor-path only, like dk_cvr.
+fn si_davcna(digits: &[u8]) -> Checksum {
+    const W: [u32; 7] = [8, 7, 6, 5, 4, 3, 2];
+    let sum: u32 = W.iter().zip(digits).map(|(w, &d)| w * u32::from(d)).sum();
+    let check = match 11 - sum % 11 {
+        r if r >= 10 => 0,
+        r => r,
+    };
+    to_checksum(check == u32::from(digits[7]))
+}
+
 /// PT NIF (9): weights 9..2 over the first 8; check = 0 when 11 − rem ≥ 10,
 /// else 11 − rem. Verified live: 506605949 (Município de Alvaiázere).
 fn pt_nif(digits: &[u8]) -> Checksum {
@@ -443,16 +472,25 @@ pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
     let mut out: Vec<(&'static str, String)> = Vec::new();
     match digits.len() {
         8 => {
+            // All four 8-digit register schemes are checksummed (dk_cvr and
+            // si_davcna landed in the Stage-3 8-digit slice, validated on
+            // live rows), so 8-digit anchors are real probes now, unique
+            // only when exactly one scheme's arithmetic accepts. The old
+            // blanket DK|SI ambiguity marker is gone — SI/CZ still co-anchor
+            // most of the time by construction (near-identical mod-11), and
+            // that shows up honestly as a multi-anchor skip.
             if cz_ico(&digits) == Checksum::Pass {
                 out.push(("CZ:ico", key.clone()));
             }
             if fi_ytunnus(&digits) == Checksum::Pass {
                 out.push(("FI:ytunnus", key.clone()));
             }
-            // DK CVR and SI davčna have no implemented checksum here: an
-            // 8-digit value can always be either, so an 8-digit anchor is
-            // NEVER unique — record the ambiguity by construction.
-            out.push(("DK|SI:8-digit", key));
+            if dk_cvr(&digits) == Checksum::Pass {
+                out.push(("DK:cvr", key.clone()));
+            }
+            if si_davcna(&digits) == Checksum::Pass {
+                out.push(("SI:davcna", key));
+            }
         }
         9 => {
             if luhn(&digits) == Checksum::Pass {
@@ -516,9 +554,20 @@ mod tests {
     fn checksum_anchors_classify_the_null_country_shapes() {
         let anchors = checksum_anchors("18001404501577");
         assert_eq!(anchors, vec![("FR:siren", "180014045".to_owned())]);
-        let fi = checksum_anchors("01003158");
-        assert!(fi.iter().any(|(s, _)| *s == "FI:ytunnus"));
-        assert!(fi.len() >= 2, "8-digit is never a unique anchor");
+        // 8-digit anchors are real probes since the Stage-3 8-digit slice:
+        // Telinekataja's and Maintpartner's Y-tunnus values pass ONLY the FI
+        // arithmetic (CZ/DK/SI all reject) — the unique-anchor rescue shape.
+        assert_eq!(checksum_anchors("01003158"), vec![("FI:ytunnus", "01003158".to_owned())]);
+        assert_eq!(checksum_anchors("20445111"), vec![("FI:ytunnus", "20445111".to_owned())]);
+        // A live CVR (Tømrer, Murer & Kloakmester John A. Laursen A/S)
+        // anchors uniquely DK; the SI 10→0 rem-1 specimen anchors SI but
+        // co-anchors CZ (near-identical mod-11) — ambiguous, correctly.
+        assert_eq!(checksum_anchors("10006511"), vec![("DK:cvr", "10006511".to_owned())]);
+        let si = checksum_anchors("11022680");
+        assert!(si.iter().any(|(s, _)| *s == "SI:davcna"), "the 10->0 rule must accept rem-1");
+        assert!(si.len() >= 2, "SI/CZ co-anchor by construction: {si:?}");
+        // A mis-filed UK company number under a DK row: every scheme rejects.
+        assert!(checksum_anchors("00971289").is_empty(), "foreign noise anchors nowhere");
         assert!(checksum_anchors("180014045").iter().any(|(s, _)| *s == "FR:siren"));
         assert!(checksum_anchors("HRB 12345").is_empty(), "letters are the register path");
         // The crosswalk's leading-zero judgment, mirrored (verification

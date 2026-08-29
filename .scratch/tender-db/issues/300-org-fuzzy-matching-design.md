@@ -453,6 +453,30 @@ Remaining Stage-3 material: the 8-digit name-decides slice (2,093,
 next-slice design above), 880 anchored-uncorroborated (edge material,
 Stage 4), 358 register-prefixed, 83 no-target, 14 multi-target
 deliberate skips.
+
+**8-DIGIT SLICE OPENED (2026-08-29 ~17:0x): real DK/SI checksums
+instead of the blanket marker.** The census's "name corroboration
+decides" turned out to under-sell what arithmetic can do: DK CVR and
+SI davčna BOTH have real mod-11 checks — idgate simply never
+implemented them. Validated on live corpus before landing: dk_cvr
+(weights 2,7,6,5,4,3,2,1, full sum ≡ 0 mod 11) passes 380/400 of the
+DK bucket and the 20 failures are visibly mis-filed foreign numbers
+(a UK company number, a P-nummer shape — the checksum is a noise
+filter, observed); si_davcna (weights 8,7,6,5,4,3,2, check 11−rem
+with BOTH 10 and 11 → 0) passes 60/60 SI-prefixed VAT bodies — the
+"10 = not issued" variant in circulation is WRONG for issued numbers
+(rem-1 specimens like 11022680 are real; measured). Structural
+finding: si_davcna and cz_ico share the weight vector and differ only
+at rem 0, so SI/CZ-valid values co-anchor ~91% of the time → honest
+multi-anchor skip; the rescue yield is FI-unique/DK-unique/CZ-unique
+passes (Maintpartner's 20445111 → UNIQUE FI anchor, computed and
+pinned in test). checksum_anchors' 8-digit arm now emits four real
+probes, no marker; census + merge consume it by injection, no other
+code change. Anchor-path ONLY — deliberately NOT wired into the
+census gate/condemns (Stage-1 condemnation policy expansion is a
+separate decision; noted for a future issue). NEXT: gate → deploy →
+r3-census re-run (measures the 8-digit decomposition) → R3 dry →
+refuter panel on the checksum implementations → capped wet.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
