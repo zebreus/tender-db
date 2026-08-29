@@ -97,6 +97,18 @@ across **393 tenders** (834 notices to requeue); 10,236 tenders touched.
 The ambiguous fraction is 1.7% of the flagships' winner rows — origin-
 first resolution carries the rest even inside the residual set.
 
+WET RUN (job 436, 1128s): preview-exact on every deterministic count —
+**91 dissolved, 0 skipped**, 25,850 mentions, 64,409 parties, 37,739
+bid-parties, 59,581 winner repoints, 1,046 tier-5 deletes, 393 tenders
+stamped. Two expected dry/wet divergences, both dry-run simulation
+limits (dry cannot observe its own writes): fresh/reused split
+6,554/19,296 → 1,412/24,438 (wet reuses the orgs the first mention
+mints; the 25,850 sum is invariant) and refold_notices 834 → 819 (a
+notice shared by two scan batches' refold sets counts once when the
+first batch actually writes projected=0). Incremental fold enqueued
+(job 437) to re-derive the 393 tenders' winner sets; closing census
+after.
+
 ## Tier 4 (landed): lot-result origin resolution
 
 `lot_results` rows carry their ORIGIN (tender_id, notice_id, result_key) —
