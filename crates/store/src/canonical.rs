@@ -403,6 +403,21 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (org_id, lang)
     ) STRICT;
 
+    -- Issue 300 §6: every matcher auto-merge, auditable and targetable for
+    -- undo. `evidence` is JSON naming the rule's exact inputs (scheme,
+    -- canonical key, both literal identifiers), so one bad merge class is
+    -- findable and ONLY its merges unwound. The loser id no longer exists in
+    -- `organizations` after the merge — deliberately no FK.
+    CREATE TABLE IF NOT EXISTS org_merge_log (
+        keep     INTEGER NOT NULL,
+        loser    INTEGER NOT NULL,
+        rule     TEXT NOT NULL,    -- 'r2' | 'r3' | …
+        evidence TEXT NOT NULL,    -- JSON
+        job_id   INTEGER,
+        at       INTEGER NOT NULL, -- unix seconds
+        PRIMARY KEY (loser, at)
+    ) STRICT;
+
     -- ------------------------------------------------------------- results
     -- The tendering-results half (issue 13): what happened after submission.
     -- eForms publishes results as notice-local sections (RES-/TEN-/CON-), and
@@ -1348,6 +1363,66 @@ pub struct OrgDissolve {
     /// the stamped tenders' full chains (the pair's requeue half).
     pub refold_notices: u64,
     pub tender_changes: u64,
+}
+
+/// Inputs to the issue-300 Stage-2 R2 merge — the ingest-side rules injected
+/// as plain fns (the supervisor.rs:2091 pattern: store owns the walk and the
+/// writes, ingest owns identifier knowledge).
+pub struct R2MergeArgs<'a> {
+    /// `crosswalk::canonical_key`, flattened: (scheme, key, is_e1).
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    /// The v2 gate (denial rule 5 — gate-failure poisons the cluster).
+    pub condemns: fn(Option<&str>, &str, &str) -> bool,
+    /// Consortium/groupement name detection (the census finding).
+    pub consortium: fn(&str) -> bool,
+    /// Legal-form family of a name (denial rule 7).
+    pub legal_form: fn(&str) -> Option<&'static str>,
+    pub dry_run: bool,
+    /// Merge at most this many groups (the design's capped first prod run).
+    pub max_groups: Option<u64>,
+    /// T4 parity: the dry run's recorded plan-group count; a wet recompute
+    /// diverging beyond max(2%, 50) aborts before any write.
+    pub expect_groups: Option<u64>,
+    /// Recorded into org_merge_log rows.
+    pub job_id: Option<i64>,
+    /// Cooperative stop, polled between preload windows and merge txns.
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// What the R2 merge (or its dry-run) found and did.
+#[derive(Debug, Default, Clone)]
+pub struct R2MergeReport {
+    /// Identifier-bearing org rows preloaded.
+    pub scanned: u64,
+    /// Rows carrying a same-country E1 canonical key.
+    pub keyed: u64,
+    /// Key groups with >=2 members before denials.
+    pub groups: u64,
+    /// Groups denied: >8 members on one literal identifier, or >200 members.
+    pub denied_cap: u64,
+    /// Groups denied: a member's identifier fails the v2 gate.
+    pub denied_gate: u64,
+    /// Groups denied: a member name hits the consortium lexicon.
+    pub denied_consortium: u64,
+    /// Groups denied: two members carry different legal-form families.
+    pub denied_legal_form: u64,
+    /// Groups denied: conflicting mention-evidence register keys (VAT-group
+    /// wall).
+    pub denied_group_vat: u64,
+    /// Groups surviving every denial — the merge plan.
+    pub plan_groups: u64,
+    /// Groups actually merged (<= plan under a cap or a stop).
+    pub merged_groups: u64,
+    /// Loser org rows deleted.
+    pub removed: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    /// The cooperative stop fired; counts cover the committed prefix only.
+    pub stopped: bool,
 }
 
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
@@ -4728,6 +4803,355 @@ impl Db {
             )
             .await?;
         Ok(rows.next().await?.map_or(0, |row| int(&row, 0)))
+    }
+
+    /// The issue-300 Stage-2 R2 merge (same-country canonical-key groups),
+    /// design §4.2 R2 + §3.2 denial list + the census-informed refinements
+    /// (2026-08-29). One whole-corpus preload (the B-ID block), in-RAM
+    /// groups, then per-group denial stack and WRITE_BATCH merge
+    /// transactions via [`repoint_org_references`]; merged groups become
+    /// singletons, so a re-run redoes nothing (restart-safe without a
+    /// durable cursor).
+    ///
+    /// Denials, in evaluation order (each counted):
+    /// 1. literal-cap — >8 members sharing ONE literal identifier is the
+    ///    placeholder signature (the census re-read: group SIZE is not — 271
+    ///    of 272 over-cap groups were legitimate FR establishment families
+    ///    whose literals all differ); a >200-member group is refused
+    ///    outright (nothing legitimate measured beyond 165).
+    /// 2. gate-poison — any member's identifier condemned by the v2 gate
+    ///    disqualifies the whole group (§3.2 rule 5).
+    /// 3. consortium veto — any member NAME hitting the injected consortium
+    ///    lexicon (groupement/UTE class: the grouping publishes its lead
+    ///    member's id; merging them is wrong) routes the group out.
+    /// 4. legal-form veto — two members carrying DIFFERENT legal-form
+    ///    families (§3.2 rule 7, the Organschaft signature).
+    /// 5. VAT-group wall (§3.2 rule 1, mention-evidence form) — members
+    ///    whose MENTIONS carry conflicting register keys within one scheme
+    ///    share a group VAT, not an identity (the SK/NL/HU group-id class
+    ///    that has no syntactic marker).
+    ///
+    /// Survivor: non-provisional over provisional, then min id (the 234
+    /// precedent; R2 groups share one country, so the design's
+    /// country-validates clause is R3's concern). Every merge writes an
+    /// `org_merge_log` row (§6). Dry-run counts everything and writes
+    /// nothing; `expect_groups` is the T4 parity guard — a wet run whose
+    /// recomputed plan diverges from the recorded dry-run plan beyond
+    /// max(2%, 50) aborts BEFORE any write (never force past a divergence).
+    pub async fn match_org_identifiers_r2(
+        &self,
+        args: R2MergeArgs<'_>,
+    ) -> turso::Result<R2MergeReport> {
+        const LITERAL_CAP: usize = 8;
+        const GROUP_CEILING: usize = 200;
+        const MERGE_TXN_GROUPS: usize = 50;
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let mut report = R2MergeReport::default();
+
+        // The B-ID preload: every identifier-bearing org, keyed in Rust.
+        struct Member {
+            id: i64,
+            literal: String,
+            country: Option<String>,
+            kind: String,
+            provisional: bool,
+        }
+        let mut groups: std::collections::HashMap<(String, &'static str, String), Vec<Member>> =
+            std::collections::HashMap::new();
+        {
+            let mut after = 0i64;
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT id, country, identifier_kind, identifier, provisional \
+                           FROM organizations WHERE id > ? AND identifier IS NOT NULL \
+                          ORDER BY id LIMIT 20000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                let mut any = false;
+                while let Some(row) = rows.next().await? {
+                    any = true;
+                    let id = int(&row, 0);
+                    after = id;
+                    report.scanned += 1;
+                    let country = opt_text_of(&row, 1);
+                    let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
+                    let literal = text(&row, 3);
+                    let Some((scheme, key, e1)) =
+                        (args.key)(country.as_deref(), &kind, &literal)
+                    else {
+                        continue;
+                    };
+                    if !e1 {
+                        continue;
+                    }
+                    let Some(c) = country.as_deref() else { continue };
+                    let c = if c == "EL" { "GR" } else { c };
+                    if kind == "vat" && !scheme.starts_with(c) {
+                        continue;
+                    }
+                    report.keyed += 1;
+                    groups.entry((c.to_owned(), scheme, key)).or_default().push(Member {
+                        id,
+                        literal,
+                        country,
+                        kind,
+                        provisional: int(&row, 4) != 0,
+                    });
+                }
+                if !any {
+                    break;
+                }
+            }
+        }
+        groups.retain(|_, m| m.len() >= 2);
+        report.groups = groups.len() as u64;
+
+        // The denial stack. Names arrive per group (org_health_meta), so the
+        // preload never holds 1.16M name strings.
+        let mut plan: Vec<((String, &'static str, String), Vec<Member>)> = Vec::new();
+        'group: for (gk, members) in groups {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            // 1. literal-cap + ceiling.
+            let mut per_literal: std::collections::HashMap<&str, usize> =
+                std::collections::HashMap::new();
+            for m in &members {
+                *per_literal.entry(m.literal.as_str()).or_default() += 1;
+            }
+            if members.len() > GROUP_CEILING
+                || per_literal.values().any(|&n| n > LITERAL_CAP)
+            {
+                report.denied_cap += 1;
+                continue;
+            }
+            // 2. gate-poison.
+            for m in &members {
+                if (args.condemns)(m.country.as_deref(), &m.kind, &m.literal) {
+                    report.denied_gate += 1;
+                    continue 'group;
+                }
+            }
+            // 3 + 4. name vetoes.
+            let ids: Vec<i64> = members.iter().map(|m| m.id).collect();
+            let meta = self.org_health_meta(&ids).await?;
+            let mut family: Option<&'static str> = None;
+            for (_, _, _, _, name) in &meta {
+                if (args.consortium)(name) {
+                    report.denied_consortium += 1;
+                    continue 'group;
+                }
+                if let Some(f) = (args.legal_form)(name) {
+                    if let Some(prev) = family
+                        && prev != f
+                    {
+                        report.denied_legal_form += 1;
+                        continue 'group;
+                    }
+                    family = Some(f);
+                }
+            }
+            // 5. VAT-group wall: per-member canonical keys from MENTION raw
+            // evidence; two members with non-empty, disjoint key sets in one
+            // scheme carry conflicting register numbers.
+            let mut member_keys: std::collections::HashMap<
+                i64,
+                std::collections::HashMap<&'static str, BTreeSet<String>>,
+            > = std::collections::HashMap::new();
+            for chunk in ids.chunks(512) {
+                let sql = format!(
+                    "SELECT organization_id, country, raw_identifier \
+                       FROM organization_mentions \
+                      WHERE organization_id IN ({}) AND raw_identifier IS NOT NULL",
+                    placeholders(chunk.len())
+                );
+                let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+                let mut rows = conn.query(&sql, params).await?;
+                while let Some(row) = rows.next().await? {
+                    let org = int(&row, 0);
+                    let mcountry = opt_text_of(&row, 1);
+                    let raw = text(&row, 2);
+                    // Kind inference for raw evidence: a two-letter lead is
+                    // VAT-shaped, anything else a national under the
+                    // mention's (else the org's) country.
+                    let vat_shaped = raw.len() >= 2
+                        && raw.as_bytes()[..2].iter().all(u8::is_ascii_alphabetic);
+                    let kind = if vat_shaped { "vat" } else { "national" };
+                    let country = mcountry
+                        .as_deref()
+                        .or_else(|| {
+                            members.iter().find(|m| m.id == org).and_then(|m| m.country.as_deref())
+                        });
+                    if let Some((scheme, key, true)) = (args.key)(country, kind, &raw) {
+                        member_keys
+                            .entry(org)
+                            .or_default()
+                            .entry(scheme)
+                            .or_default()
+                            .insert(key);
+                    }
+                }
+            }
+            let mks: Vec<&std::collections::HashMap<&'static str, BTreeSet<String>>> =
+                member_keys.values().collect();
+            for i in 0..mks.len() {
+                for j in i + 1..mks.len() {
+                    for (scheme, a) in mks[i] {
+                        if let Some(b) = mks[j].get(scheme)
+                            && !a.is_empty()
+                            && !b.is_empty()
+                            && a.is_disjoint(b)
+                        {
+                            report.denied_group_vat += 1;
+                            continue 'group;
+                        }
+                    }
+                }
+            }
+            plan.push((gk, members));
+        }
+        // Deterministic order: merges land smallest-key-first, so a capped
+        // run and its continuation cover a stable prefix.
+        plan.sort_by(|a, b| a.0.cmp(&b.0));
+        report.plan_groups = plan.len() as u64;
+
+        // T4 parity: the wet run recomputed the plan from live data; if it
+        // moved beyond tolerance since the recorded dry run, the ground
+        // shifted — abort before any write, never force past it.
+        if let Some(expect) = args.expect_groups {
+            let tolerance = (expect / 50).max(50);
+            if report.plan_groups.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "r2 parity abort: plan has {} groups, dry-run recorded {expect} \
+                     (tolerance {tolerance}) — nothing was written",
+                    report.plan_groups
+                )));
+            }
+        }
+        if args.dry_run {
+            return Ok(report);
+        }
+
+        let cap = args.max_groups.unwrap_or(u64::MAX);
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        for txn in plan.chunks(MERGE_TXN_GROUPS) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            if report.merged_groups >= cap {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
+            let result: turso::Result<()> = async {
+                for ((_, scheme, key), members) in txn {
+                    if report.merged_groups >= cap {
+                        break;
+                    }
+                    // Survivor: non-provisional first, then min id.
+                    let keep = members
+                        .iter()
+                        .min_by_key(|m| (m.provisional, m.id))
+                        .expect("non-empty group")
+                        .id;
+                    let keep_literal = &members
+                        .iter()
+                        .find(|m| m.id == keep)
+                        .expect("keep is a member")
+                        .literal;
+                    for m in members {
+                        if m.id == keep {
+                            continue;
+                        }
+                        let mut trows = conn
+                            .query(
+                                "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                           UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                                (
+                                    Value::Integer(m.id),
+                                    Value::Integer(m.id),
+                                    Value::Integer(m.id),
+                                ),
+                            )
+                            .await?;
+                        while let Some(row) = trows.next().await? {
+                            txn_touched.insert(int(&row, 0));
+                        }
+                        drop(trows);
+                        let moved = repoint_org_references(&conn, keep, m.id).await?;
+                        report.mentions += moved.mentions;
+                        report.parties += moved.parties;
+                        report.bid_parties += moved.bid_parties;
+                        report.winners += moved.winners;
+                        report.winner_dups += moved.winner_dups;
+                        conn.execute(
+                            "DELETE FROM organizations WHERE id = ?",
+                            (Value::Integer(m.id),),
+                        )
+                        .await?;
+                        // JSON by hand (store carries no serde): every field
+                        // is normalised alphanumerics except the literals —
+                        // escape the two characters JSON cares about.
+                        let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
+                        conn.execute(
+                            "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
+                             VALUES(?, ?, 'r2', ?, ?, ?)",
+                            (
+                                Value::Integer(keep),
+                                Value::Integer(m.id),
+                                Value::Text(format!(
+                                    "{{\"scheme\":\"{scheme}\",\"key\":\"{}\",\"keep_id\":\"{}\",\"loser_id\":\"{}\"}}",
+                                    esc(key),
+                                    esc(keep_literal),
+                                    esc(&m.literal)
+                                )),
+                                match args.job_id {
+                                    Some(j) => Value::Integer(j),
+                                    None => Value::Null,
+                                },
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        append_change(&conn, "organization", m.id, None, "removed", now).await?;
+                        report.removed += 1;
+                    }
+                    append_change(&conn, "organization", keep, None, "changed", now).await?;
+                    report.merged_groups += 1;
+                }
+                for &tid in &txn_touched {
+                    append_change(&conn, "tender", tid, None, "changed", now).await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    conn.execute("COMMIT", ()).await?;
+                    touched.extend(txn_touched);
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        }
+        report.tender_changes = touched.len() as u64;
+        if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
     }
 
     /// One batch of the issue-259 landing repair. The 2026-08-20 nested-org fix

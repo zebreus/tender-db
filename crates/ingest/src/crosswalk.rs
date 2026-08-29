@@ -480,3 +480,98 @@ mod tests {
         assert_eq!(key(Some("BE"), "national", "0123456789").unwrap().2, Tier::E1);
     }
 }
+
+/// Consortium / temporary-grouping detection over an org NAME (the census
+/// finding, 2026-08-29): FR groupements publish the LEAD MEMBER's SIRET
+/// ("groupement colas / Barthelemy" carries Colas's establishment id — org
+/// 10207212, the live specimen), the FR analog of the ES UTE class. Merging
+/// the grouping INTO its lead member is wrong the way UTE merges are wrong,
+/// so a name hit routes the group to the edge path, never auto-merge.
+/// Token-boundary matching on the lowercased name: "gpt" the token, not
+/// "egypt"; the list stays deliberately short and measured — the Stage-2
+/// precision review grows it, guesses do not.
+pub fn consortium_name(name: &str) -> bool {
+    let lower = name.to_lowercase();
+    let mut tokens = lower.split(|c: char| !c.is_alphanumeric());
+    tokens.any(|t| matches!(t, "groupement" | "gpt" | "consortium" | "mandataire" | "ute" | "arge"))
+}
+
+/// The legal-form FAMILY named in an org name, when one is unambiguous — the
+/// input to denial rule 7 (the legal-form-contradiction veto): two orgs whose
+/// names carry DIFFERENT families ("X GmbH" vs "X AG" sharing a VAT — the
+/// Organschaft signature) must not auto-merge; the miss is recoverable, the
+/// merge is not. Same-country matching only (R2), so cross-country token
+/// collisions ("a.s." CZ vs "AS" NO) never meet. Returns the FIRST family
+/// token found; names with none return None and never veto.
+pub fn legal_form_family(name: &str) -> Option<&'static str> {
+    let lower = name.to_lowercase();
+    // Dotted forms ("s.r.o.", "a/s", "sp. z o.o.") collapse once separators
+    // die; tokenising the raw lowercase on non-alphanumerics yields their
+    // letters as consecutive tokens, so match on the JOINED stream too.
+    let joined: String = lower.chars().filter(char::is_ascii_alphanumeric).collect();
+    for t in lower.split(|c: char| !c.is_alphanumeric()) {
+        let fam = match t {
+            "gmbh" | "mbh" => Some("gmbh"),
+            "ag" => Some("ag"),
+            "sarl" | "eurl" => Some("sarl"),
+            "sas" | "sasu" => Some("sas"),
+            // Oy/Ab/Oyj/Abp are language and listing variants of ONE
+            // Nordic legal form (aktiebolag/osakeyhtiö) — "X Oy" and
+            // "X Ab" name the same company class, so they share one family
+            // and never veto each other.
+            "oy" | "oyj" | "ab" | "abp" | "uab" => Some("aktiebolag"),
+            "aps" => Some("aps"),
+            "bv" => Some("bv"),
+            "nv" => Some("nv"),
+            "kft" => Some("kft"),
+            "zrt" | "nyrt" => Some("zrt"),
+            "spa" => Some("spa"),
+            "srl" => Some("srl"),
+            "sia" => Some("sia"),
+            _ => None,
+        };
+        if fam.is_some() {
+            return fam;
+        }
+    }
+    // The dotted multi-token forms, whole-name scoped: rare enough that a
+    // substring probe on the alphanumeric stream is honest (an embedded
+    // "sro" inside a WORD cannot happen — the stream only collapses across
+    // separators the name actually printed).
+    for (needle, fam) in [("spzoo", "spzoo"), ("sro", "sro")] {
+        if joined.ends_with(needle) {
+            return Some(fam);
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod veto_tests {
+    use super::*;
+
+    #[test]
+    fn consortium_names_flag_and_plain_names_do_not() {
+        assert!(consortium_name("groupement colas / Barthelemy"));
+        assert!(consortium_name("GPT SNBR / EHTP"));
+        assert!(consortium_name("Consortium Stabile Arcale"));
+        assert!(consortium_name("Bouygues Énergies & Services (mandataire)"));
+        assert!(consortium_name("UTE Acciona-Sacyr"));
+        assert!(!consortium_name("Colas Centre Ouest"));
+        assert!(!consortium_name("Egyptian Trading Co"), "gpt must match as a token only");
+    }
+
+    #[test]
+    fn legal_form_families_split_and_agree() {
+        assert_eq!(legal_form_family("Siemens GmbH"), Some("gmbh"));
+        assert_eq!(legal_form_family("Siemens AG"), Some("ag"));
+        assert_eq!(legal_form_family("Alfa s.r.o."), Some("sro"));
+        assert_eq!(legal_form_family("Beta Sp. z o.o."), Some("spzoo"));
+        assert_eq!(legal_form_family("Ministerstvo financí"), None);
+        // Oy/Ab/Oyj are ONE Nordic family: naming variants of the same
+        // company ("X Oy" vs "X Ab") and the rename exemplars (Linde/AGA)
+        // must never veto each other.
+        assert_eq!(legal_form_family("Oy Linde Gas Ab"), legal_form_family("Telinekataja Oy"));
+        assert_eq!(legal_form_family("Ramboll Ab"), legal_form_family("Ramboll Oyj"));
+    }
+}

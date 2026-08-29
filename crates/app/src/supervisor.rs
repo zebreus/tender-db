@@ -313,6 +313,7 @@ enum Spec {
     /// names (DE123456789 reached 144 before it was caught by hand).
     OrgMergeHealth,
     R2Census,
+    MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -496,6 +497,10 @@ pub struct JobRequest {
     /// Naming the number is the whole point — an operator has to state what they
     /// already know is there, and cannot proceed past a set they have not looked at.
     pub expect_gaps: Option<u64>,
+    /// `match-org-identifiers` wet runs only: merge at most this many groups —
+    /// the design's capped first prod run (issue 300 Stage 2). Omitted means
+    /// the whole plan.
+    pub max_groups: Option<u64>,
 }
 
 impl Supervisor {
@@ -819,6 +824,27 @@ impl Supervisor {
             "r2-census" => {
                 Ok(vec![self.push("r2-census", "r2-census".into(), Spec::R2Census).await])
             }
+            // Issue 300 Stage 2: the R2 same-country canonical-key merge.
+            // Deletes org rows: dry_run defaults TRUE, and a wet run REQUIRES
+            // a stored dry-run plan (the T4 parity input) — there is no way
+            // to run it un-previewed.
+            "match-org-identifiers" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let max_groups = req.max_groups;
+                let params = match (dry_run, max_groups) {
+                    (true, _) => "match-org-identifiers r2 dry-run".to_owned(),
+                    (false, Some(cap)) => format!("match-org-identifiers r2 cap={cap}"),
+                    (false, None) => "match-org-identifiers r2".to_owned(),
+                };
+                Ok(vec![
+                    self.push(
+                        "match-org-identifiers",
+                        params,
+                        Spec::MatchOrgIdentifiersR2 { dry_run, max_groups },
+                    )
+                    .await,
+                ])
+            }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
             "repair-placeholder-orgs" => {
@@ -1138,6 +1164,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "merge-provisional-orgs",
     "org-merge-health",
     "r2-census",
+    "match-org-identifiers",
 ];
 
 /// What [`Supervisor::cancel`] did.
@@ -2645,6 +2672,114 @@ impl Supervisor {
                      keys; {null_country_keyed} NULL-country keyed (R3 pool), \
                      {prefix_contradictions} country/prefix contradictions; denials: \
                      {es_ute} ES-UTE, {cz699} CZ699"
+                ))
+            }
+            Spec::MatchOrgIdentifiersR2 { dry_run, max_groups } => {
+                let dry_run = *dry_run;
+                // The ingest-side rules, handed across as plain fns (the
+                // idgate/dissolve pattern).
+                fn key_fn(
+                    c: Option<&str>,
+                    k: &str,
+                    v: &str,
+                ) -> Option<(&'static str, String, bool)> {
+                    ingest::crosswalk::canonical_key(c, k, v)
+                        .map(|ck| (ck.scheme, ck.key, ck.tier == ingest::crosswalk::Tier::E1))
+                }
+                // A wet run REQUIRES the recorded dry plan: the T4 parity
+                // input, and the ladder's guarantee that nothing merges
+                // un-previewed.
+                let expect_groups = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("r2-merge-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored r2-merge-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["plan_groups"]
+                            .as_u64()
+                            .ok_or_else(|| "r2-merge-plan lacks plan_groups".to_owned())?,
+                    )
+                };
+                self.set_phase(
+                    if dry_run { "planning" } else { "merging" },
+                    None,
+                    None,
+                    "preloading the identifier-bearing org layer".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .match_org_identifiers_r2(store::R2MergeArgs {
+                        key: key_fn,
+                        condemns: ingest::idgate::condemns,
+                        consortium: ingest::crosswalk::consortium_name,
+                        legal_form: ingest::crosswalk::legal_form_family,
+                        dry_run,
+                        max_groups: *max_groups,
+                        expect_groups,
+                        job_id: Some(job_id),
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(format!(
+                        "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
+                         groups merged before the stop — a re-run continues (merged groups \
+                         left scope)",
+                        r.merged_groups, r.plan_groups
+                    ));
+                }
+                if dry_run {
+                    // The recorded plan the wet run's parity check reads.
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "plan_groups": r.plan_groups,
+                        "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
+                        "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
+                        "denied_consortium": r.denied_consortium,
+                        "denied_legal_form": r.denied_legal_form,
+                        "denied_group_vat": r.denied_group_vat,
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("r2-merge-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(format!(
+                    "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
+                     {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium, \
+                     {} legal-form, {} vat-group-wall; plan {} groups; merged {} groups \
+                     ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
+                     {} winners repointed, {} winner dups deleted, {} tenders touched)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.scanned,
+                    r.keyed,
+                    r.groups,
+                    r.denied_cap,
+                    r.denied_gate,
+                    r.denied_consortium,
+                    r.denied_legal_form,
+                    r.denied_group_vat,
+                    r.plan_groups,
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes
                 ))
             }
             Spec::Refold { profiles, expect } => {
@@ -4276,6 +4411,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "rederive-eur"
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
+            | "match-org-identifiers"
             | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"
@@ -4626,7 +4762,9 @@ mod tests {
         // And every kind named stoppable must actually be one — the list is the contract,
         // so a kind added to it without a checkpoint is the bug this test exists to catch.
         // org-merge-health and r2-census read the flag at the top of every census batch
-        // and store nothing when stopped (issue 300 Stages 0 and 2).
+        // and store nothing when stopped (issue 300 Stages 0 and 2);
+        // match-org-identifiers polls it between preload windows and merge
+        // transactions, and a stopped run reports its committed prefix.
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -4635,7 +4773,8 @@ mod tests {
                 "project",
                 "merge-provisional-orgs",
                 "org-merge-health",
-                "r2-census"
+                "r2-census",
+                "match-org-identifiers"
             ]
         );
     }

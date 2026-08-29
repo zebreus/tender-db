@@ -206,6 +206,28 @@ Two findings for the merge job, from the sample itself:
   groupement/consortium name veto (groupement/gpt/mandataire tokens →
   edge, not merge); the 100-sample precision review must classify the
   class's size.
+
+**MERGE JOB BUILT (2026-08-29 ~04:1x): `match-org-identifiers` (r2).**
+Store fn `match_org_identifiers_r2`: whole-corpus preload → same-country
+E1 groups → the denial stack in order — literal-cap (>8 members on ONE
+literal id, the census-refined semantic; hard ceiling 200), gate-poison
+(rule 5), consortium name veto (the census finding), legal-form veto
+(rule 7; crosswalk::legal_form_family with Oy/Ab/Oyj folded to ONE
+Nordic family so naming variants and the Linde/AGA renames never veto),
+VAT-group mention wall (rule 1: per-member canonical keys from mention
+raw_identifier evidence; disjoint same-scheme key sets across members =
+conflicting registers = deny — the SK/NL/HU group-id defense) →
+survivor non-provisional-then-min-id → WRITE_BATCH merge txns via
+repoint_org_references (names satellite rides along) + `org_merge_log`
+rows (new §6 table) + the 234-shape change events. Job wiring: dry_run
+default TRUE; a WET RUN REQUIRES the stored dry plan
+(put_report("r2-merge-plan")) and aborts on >max(2%,50) divergence (T4
+parity) — nothing can merge un-previewed; `max_groups` caps the first
+prod run; STOPPABLE + heavy_write registered. Store test drives every
+denial class once + survivor policy + merge log + feed + rerun
+idempotence. Adversarial verification running; then gate → commit →
+deploy → prod dry-run → 100-sample precision review of the plan BEFORE
+any capped wet run.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
