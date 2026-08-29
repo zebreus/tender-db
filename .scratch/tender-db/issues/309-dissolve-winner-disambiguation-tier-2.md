@@ -1,7 +1,20 @@
-# 309 — dissolve winner disambiguation (tiers 2-4): rescue the skipped orgs
+# 309 — dissolve winner disambiguation (tiers 2-5): rescue the skipped orgs
 
-FINAL (2026-08-28 ~23:5x, rev c2b9411, wet runs 1335/1337/1342, every one
-preview-exact): **7,774 of 7,865 condemned orgs dissolved (98.8%)**.
+CLOSED (2026-08-29 ~02:1x, rev 93eeb29, wet run 436 + fold 437 + census
+438): **7,865 of 7,865 condemned orgs dissolved (100%)** — tier 5
+(dissolve-then-refold) took the final 91. Closing census: **0 lexicon, 0
+sequence, 0 short-vat** — the condemned classes are gone from the org
+layer. The tier-5 fold (16s) rewrote 385 tenders / 819 versions; zero
+epoch-stale tenders remain; the measured specimen (origin 26730615) now
+attributes each of its five lots to its own real winner (Delta Services /
+Francesco's Hausmeisterservice / Enrico Buziol) across both versions —
+per-lot truth the canonical layer could never have guessed, re-derived by
+the fold from the re-bound mentions. The gate-invariant tripwire returns
+to 0. Journal clean throughout.
+
+Previous milestone (2026-08-28 ~23:5x, rev c2b9411, wet runs
+1335/1337/1342, every one preview-exact): **7,774 of 7,865 condemned orgs
+dissolved (98.8%)**.
 The decisive last piece was ORIGIN-FIRST winner resolution: the
 lot_result's origin notice (where the result was published) names the
 winner — a single mention there IS the winner side (the eForms shape:

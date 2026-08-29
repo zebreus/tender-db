@@ -136,13 +136,14 @@ TRIBUNAL (700 — legitimate) instead of a placeholder: the distribution's
 head is honest for the first time. Winner resolution ended ORIGIN-FIRST
 (issue 309's record has the full mechanism story — three prod-measured
 course corrections in one night, each caught by preview-vs-exemplar
-discipline). Residual 91 (incl. 15176/15566, legacy descent ties) — the
-gate-invariant tripwire reads 91 until their per-org diagnosis lands.
-Tier 5 (dissolve-then-refold, 2026-08-29) BUILT for the 91: precondition
-verified and pinned in tests (epoch-stale refold rewrites winner sets
-wholesale from re-bound mentions), the dissolve now deletes unresolvable
-winner rows and stamps+requeues their tenders — see issue 309's tier-5
-section for the rollout ladder.
+discipline). **STAGE 1 COMPLETE (2026-08-29 ~02:1x, rev 93eeb29): 7,865
+of 7,865 dissolved — 100%.** Tier 5 (dissolve-then-refold) took the final
+91: winner rows are derived state, so the honestly ambiguous 1,046 rows
+were deleted, their 385 tenders stamped epoch-stale, and the incremental
+fold (job 437, 16s) re-derived every winner set from the re-bound
+mentions — the specimen CAN's five lots now each name their own real
+winner. Closing census (438): **0 lexicon / 0 sequence / 0 short-vat**;
+the gate-invariant tripwire returns to 0.
 Still due: first-post-flip daily-chain read (~07:4x: provisional mint
 rate ticks up by the condemned share; new placeholder mentions no longer
 merge).
