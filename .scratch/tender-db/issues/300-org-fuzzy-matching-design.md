@@ -354,16 +354,22 @@ fit; checksum anchoring is the discriminator and several schemes can
 pass simultaneously → these need the EBSCO flag-first treatment unless
 name corroboration decides), 1,388×14-digit (SIRET-shaped,
 Luhn-anchorable — the CNFPT NULL class, the cleanest rescue),
-782×9-digit (SIREN/NO/GR/PT shapes). NEXT UNIT (fresh firing): r3-census
-job — per NULL-country row, enumerate scheme-shape fits + checksum
-anchors + N2/N3 name-key overlap with the anchored country's standing
-org (satellite langs included), classify into
-anchored-corroborated (R3 merge candidates) / anchored-uncorroborated
-(edges) / unanchored (EBSCO flag-first); then the R3 merge arm with the
-full §4.2 stack (court-prefix exclusion, stoplist+hard-checksum,
-group cap, walls), exemplar tests (Maintpartner, Philips 3-way, Grand
-Port, CNFPT SIRET rows, Kærunefnd, EBSCO must-FLAG), adversarial
-verify, capped rollout.
+782×9-digit (SIREN/NO/GR/PT shapes). **R3-CENSUS BUILT + FIRST RUN (2026-08-29 ~13:3x, rev f5abcc4, job 454,
+36s).** `idgate::checksum_anchors` (unique-anchor probe; 8-digit never
+unique — DK/SI have no checksum to exclude; Luhn-valid 14-digit anchors
+to its truncated SIREN) + the read-only census with cross-language N2
+corroboration against the anchored standing org. THE POOL DECOMPOSES:
+**903 anchored+corroborated (R3 MERGE CANDIDATES)**, 888 anchored
+without name corroboration (edges), 83 anchored/no standing target,
+2,135 multi-scheme ambiguous (EBSCO flag-first class), 449 unanchored,
+358 register-prefixed (the separate R3 alternative — court-scope
+exclusion applies there). Sample of 40 candidates in the r3-census
+report for the review. NEXT UNIT: the R3 merge arm consuming the 903
+with the full §4.2 stack (denial walls incl. VAT-group mention wall,
+group cap, survivor = the anchored-country row), exemplar tests
+(Maintpartner, Philips 3-way, Grand Port, CNFPT SIRET rows, Kærunefnd
+must-not-merge-uncorroborated, EBSCO must-FLAG), adversarial verify,
+precision review of the candidate sample, capped rollout.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
