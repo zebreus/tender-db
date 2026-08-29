@@ -407,6 +407,52 @@ reclassification ("name corroboration decides"). NEXT-SLICE CANDIDATE
 (the largest R3 class, 2,093 rows): admit 8-digit when exactly one of
 {CZ ičo, FI ytunnus} checksum passes AND the name corroborates exactly
 — the DK/SI ambiguity resolved by the name, Maintpartner's shape.
+
+**VERIFICATION ROUND COMPLETE (2026-08-29 ~16:1x, ultracode workflow:
+3 adversarial reviewers × 3-skeptic refuter panels + 4 sample judges,
+48 agents).** 13 candidate findings; 3 CONFIRMED, 10 refuted. The
+confirmed three: (1) FALSE-MERGE — co-anchored candidates were walled
+only against their target, never each other, so two VAT-group members
+sharing one anchored number could fold into an evidence-empty keep in
+one run (the refuters sharpened it: the wall's verdict even depended
+on chunk boundaries — C2 would be denied on a re-run after C1's
+mentions repointed; SK:dic is unreachable from anchors, but IT:piva /
+BE:kbo / NO:orgnr / SE:orgnr group regimes are live); (2) zero-padded
+14-digit forms mis-anchored to a wrong first-9 SIREN while the
+crosswalk itself demotes the strip==9 shape to E2; (3) a cancelled run
+clobbered the reviewed plan with plan_groups 0 (R2 handler had the
+same bug). **HARDENING LANDED (16572b8, gate 74 suites green):**
+group-atomic pairwise wall over co-anchored candidates + 8-candidate
+co-anchor cap; checksum_anchors mirrors the crosswalk's strip==9
+no-anchor judgment; classify-phase cancel no longer records a plan
+(both handlers, honest stop messages); plus deny-direction near-misses
+from the refuted set — candidate mention evidence keyed under the
+target's country (was silently unkeyable ⇒ evidence-less), legal-form
+veto head-vs-head (satellite corroboration across a family conflict =
+the cross-country twin shape), consortium veto over candidate
+satellites, R2's vat prefix/country agreement in the target map,
+blast radius counted over the FINAL plan only. **PRECISION REVIEW:
+40/40 census-sample candidates adjudicated SAME-entity** (2 initial
+suspicions — a generic 'cité administrative' name and one
+multi-target row the merge already skips — both dropped by the
+skeptic pass). Acceptance evidence for the wet run: census
+reconciliation exact + exemplar gates deny-direction + 40/40 sample.
+
+**R3 WET RUNS EXECUTED, PREVIEW-EXACT (2026-08-29 ~16:2x, rev
+16572b8, jobs 456/457/458).** Hardened dry run recomputed plan 891 —
+IDENTICAL to the pre-hardening plan, every new denial firing zero
+times on the live pool (the defenses are real; the pool contains no
+instance — the strongest acceptance signal). Capped wet (100) then
+the remainder (791) under parity: **891 NULL-country orgs merged into
+their checksum-anchored standing rows — 5,588 mentions, 9,860
+parties, 123 winners repointed, 2,557 tenders touched — matching the
+dry blast radius TO THE ROW.** Pool 4,816 → 3,925. org_merge_log
+rule='r3' carries anchor+n2 evidence per merge. Journal clean, health
+green. **THE ANCHORED+CORROBORATED SLICE OF STAGE 3 IS COMPLETE.**
+Remaining Stage-3 material: the 8-digit name-decides slice (2,093,
+next-slice design above), 880 anchored-uncorroborated (edge material,
+Stage 4), 358 register-prefixed, 83 no-target, 14 multi-target
+deliberate skips.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
