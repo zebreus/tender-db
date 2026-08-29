@@ -510,11 +510,17 @@ pub fn consortium_name(name: &str) -> bool {
     // Portuguese groupement. Deliberately NOT "konsorcjum": the same review
     // measured it appearing in MEMBER labels ("OPEGIEKA — członek
     // konsorcjum"), where the row IS the member and the merge is right.
+    // "biege"/"bietergemeinschaft" (DE/AT Bietergemeinschaft — Lennart's
+    // catch, 2026-08-29): measured 620 BIEGE-prefixed + 8,658 spelled-out
+    // rows, 822 of the class identifier-bearing (the Colas shape in German).
+    // Token matching keeps "Thoman Biegemaschinen GbR" (a bending-machine
+    // builder — the live counter-case) clean: "biegemaschinen" is one token.
+    // "arbeitsgemeinschaft" is "arge" spelled out (67 identifier-bearing).
     tokens.any(|t| {
         matches!(
             t,
             "groupement" | "gpt" | "consortium" | "mandataire" | "ute" | "arge" | "consórcio"
-                | "consorcio"
+                | "consorcio" | "biege" | "bietergemeinschaft" | "arbeitsgemeinschaft"
         )
     })
 }
@@ -590,6 +596,17 @@ mod veto_tests {
         );
         assert!(!consortium_name("Colas Centre Ouest"));
         assert!(!consortium_name("Egyptian Trading Co"), "gpt must match as a token only");
+        // The German Bietergemeinschaft class (Lennart's catch): both the
+        // BIEGE abbreviation and the spelled-out forms, plus arge's
+        // spelled-out sibling.
+        assert!(consortium_name("BIEGE: Bernard Ingenieure ZT GmbH"));
+        assert!(consortium_name("BIEGE VE Wärme AG:Zechbau GmbH, Umweltschutz Ost GmbH"));
+        assert!(consortium_name("Bietergemeinschaft Müller Bau / Schulz Tiefbau"));
+        assert!(consortium_name("Arbeitsgemeinschaft Tunnelbau Nord"));
+        assert!(
+            !consortium_name("Thoman Biegemaschinen GbR"),
+            "a bending-machine builder is not a Bietergemeinschaft — token match only"
+        );
     }
 
     #[test]

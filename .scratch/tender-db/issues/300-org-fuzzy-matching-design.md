@@ -519,6 +519,22 @@ health green. Residual Stage-3 material: 987 anchored-uncorroborated
 values — rescue needs a corroboration-decides multi-anchor design),
 441 unanchored, 358 register-prefixed, 14 multi-target.
 
+**STAGE 4 OPENED (2026-08-29 ~19:4x): implementation plan of record
+landed** — see `300-stage4-implementation-plan.md` (workflow-drafted:
+2 mappers → planner → 2 attackers; 6 units across ~4 sessions, with
+23 grounded attacker findings as MANDATORY AMENDMENTS — walk
+termination, bind-ceiling arithmetic, crash-resume honesty, Sunday
+budget, index sizing among them). CONSUMER DECISION (Lennart, same
+evening): the edge store feeds the **issue-311 per-case AI review
+loop** — rules are the deny-direction floor, not the detector;
+ambiguous cases get individual agent review with recorded verdicts
+applied only through the verified repair machinery. Same evening:
+Lennart's BIEGE catch — the German Bietergemeinschaft class (620
+BIEGE-prefixed + 8,658 spelled-out, 822 identifier-bearing) was
+missing from the consortium lexicon; tokens biege/bietergemeinschaft/
+arbeitsgemeinschaft landed with the Biegemaschinen counter-case
+pinned (the class becomes issue 311's first review cohort).
+
 **REFOLD CANARY PASSED (2026-08-29 ~17:5x, tripwire 7, jobs
 465/466):** refolded notice 17910103 (the Maintpartner canary — its
 mention is country-less with raw "2044511-1"); the mention stayed
