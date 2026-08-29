@@ -1,6 +1,11 @@
 # 310 — Stage-3 prevention: country-less identifier mentions keep minting NULL-country twins
 
-Status: BUILT 2026-08-29 ~19:0x — panel-hardened, gated, pending deploy.
+Status: DEPLOYED 2026-08-29 ~19:2x (rev fa0aa11, health green, journal
+clean) — prevention is LIVE for the daily chain. ACCEPTANCE WATCH: the
+NULL-country pool (3,529 at deploy) should stop growing week-over-week;
+read it alongside the r2-census acceptance (2026-08-30) and the Sunday
+cadence decision (fold rule=r3 into the periodic sweep for the residue
+prevention deliberately declines).
 The refold canary passed first (see issue 300 board). The probe landed in
 resolve_one_mention with the sketch's bar, then a 3-lens adversarial panel
 (~405k tokens) grounded THREE gaps where prevention would have been MORE
