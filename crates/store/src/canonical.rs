@@ -6521,6 +6521,53 @@ impl Db {
         Ok(())
     }
 
+    /// The Stage-3 rescue pool: every identifier-bearing org with NO country
+    /// — `(id, kind, identifier, name)`. Small by measurement (4,816 rows,
+    /// 2026-08-29), so one unbatched read.
+    pub async fn null_country_ident_orgs(
+        &self,
+    ) -> turso::Result<Vec<(i64, String, String, String)>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        let mut rows = conn
+            .query(
+                "SELECT id, identifier_kind, identifier, name FROM organizations \
+                  WHERE identifier IS NOT NULL AND country IS NULL",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.push((
+                int(&row, 0),
+                opt_text_of(&row, 1).unwrap_or_else(|| "national".into()),
+                text(&row, 2),
+                text(&row, 3),
+            ));
+        }
+        Ok(out)
+    }
+
+    /// An org's head name plus every satellite language variant — the R3
+    /// corroboration read (name-key overlap across languages, ADR-0013 D4).
+    pub async fn org_all_names(&self, id: i64) -> turso::Result<Vec<String>> {
+        let conn = self.reader().await?;
+        let mut out = Vec::new();
+        let mut rows = conn
+            .query("SELECT name FROM organizations WHERE id = ?", (Value::Integer(id),))
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.push(text(&row, 0));
+        }
+        drop(rows);
+        let mut rows = conn
+            .query("SELECT name FROM organization_names WHERE org_id = ?", (Value::Integer(id),))
+            .await?;
+        while let Some(row) = rows.next().await? {
+            out.push(text(&row, 0));
+        }
+        Ok(out)
+    }
+
     /// Whether a named index exists — the backfill job's refusal gate: without
     /// `organizations_name_country` (deferred, issues 62/111; built by `reindex`)
     /// the merge scan would sort 24.6M rows per batch instead of walking an index.

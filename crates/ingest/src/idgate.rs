@@ -419,9 +419,102 @@ fn gr_afm(digits: &[u8]) -> Checksum {
     to_checksum((sum % 11) % 10 == u32::from(digits[8]))
 }
 
+/// Issue 300 Stage 3: which national schemes' checksums a COUNTRY-LESS digit
+/// string satisfies — the anchoring probe for the NULL-country rescue pool.
+/// Returns the `(scheme, canonical key)` pairs whose length fits AND whose
+/// checksum PASSES. Exactly one anchor makes the value R3-attributable to a
+/// country (the design's "hard-checksum pass" condition); several make it the
+/// EBSCO class (a bare digit string is not single-country evidence — a
+/// 10-digit Luhn pass could be a SE orgnr or match PL:nip's shape); zero
+/// leaves it unanchored. Only HARD-checksum schemes anchor: a SOFT scheme's
+/// pass proves little (its own corpus fails it ~3%+ of the time), and the FR
+/// 14-digit SIRET is deliberately included via its SOFT Luhn because its key
+/// is the TRUNCATED SIREN and the design treats a Luhn-passing 14-digit as
+/// SIRET-shaped-with-country (the CNFPT NULL class — Stage 3's cleanest
+/// rescue; the R3 stack still demands name corroboration on top).
+pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
+    let digits: Vec<u8> = value.bytes().filter(u8::is_ascii_digit).map(|b| b - b'0').collect();
+    if value.bytes().any(|b| b.is_ascii_alphabetic()) || digits.is_empty() {
+        // Letter-bearing values are register-prefixed forms — the design's
+        // OTHER R3 alternative, out of this probe's scope.
+        return Vec::new();
+    }
+    let key: String = digits.iter().map(|d| (d + b'0') as char).collect();
+    let mut out: Vec<(&'static str, String)> = Vec::new();
+    match digits.len() {
+        8 => {
+            if cz_ico(&digits) == Checksum::Pass {
+                out.push(("CZ:ico", key.clone()));
+            }
+            if fi_ytunnus(&digits) == Checksum::Pass {
+                out.push(("FI:ytunnus", key.clone()));
+            }
+            // DK CVR and SI davčna have no implemented checksum here: an
+            // 8-digit value can always be either, so an 8-digit anchor is
+            // NEVER unique — record the ambiguity by construction.
+            out.push(("DK|SI:8-digit", key));
+        }
+        9 => {
+            if luhn(&digits) == Checksum::Pass {
+                out.push(("FR:siren", key.clone()));
+            }
+            if no_orgnr(&digits) == Checksum::Pass {
+                out.push(("NO:orgnr", key.clone()));
+            }
+            if pt_nif(&digits) == Checksum::Pass {
+                out.push(("PT:nif", key.clone()));
+            }
+            if gr_afm(&digits) == Checksum::Pass {
+                out.push(("GR:afm", key));
+            }
+        }
+        10 => {
+            if luhn(&digits) == Checksum::Pass {
+                out.push(("SE:orgnr", key.clone()));
+            }
+            if pl_nip(&digits) == Checksum::Pass {
+                out.push(("PL:nip", key.clone()));
+            }
+            if be_kbo(&digits) == Checksum::Pass {
+                out.push(("BE:kbo", key));
+            }
+        }
+        11 => {
+            if it_piva(&digits) == Checksum::Pass {
+                out.push(("IT:piva", key.clone()));
+            }
+            if mod_11_10(&digits) == Checksum::Pass {
+                out.push(("HR:oib", key));
+            }
+        }
+        14 => {
+            if luhn(&digits) == Checksum::Pass {
+                out.push(("FR:siren", key[..9].to_owned()));
+            }
+        }
+        _ => {}
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Stage 3's anchoring probe: a Luhn-valid 14-digit anchors uniquely to
+    /// its truncated SIREN (the CNFPT NULL class); an 8-digit value is NEVER
+    /// unique (DK/SI have no checksum to exclude them); bare digit strings
+    /// with several passing schemes stay EBSCO-class ambiguous.
+    #[test]
+    fn checksum_anchors_classify_the_null_country_shapes() {
+        let anchors = checksum_anchors("18001404501577");
+        assert_eq!(anchors, vec![("FR:siren", "180014045".to_owned())]);
+        let fi = checksum_anchors("01003158");
+        assert!(fi.iter().any(|(s, _)| *s == "FI:ytunnus"));
+        assert!(fi.len() >= 2, "8-digit is never a unique anchor");
+        assert!(checksum_anchors("180014045").iter().any(|(s, _)| *s == "FR:siren"));
+        assert!(checksum_anchors("HRB 12345").is_empty(), "letters are the register path");
+    }
 
     /// Every specimen marked (live) was read from this corpus and
     /// hand-verified in the issue-300 exemplar sheet.

@@ -313,6 +313,7 @@ enum Spec {
     /// names (DE123456789 reached 144 before it was caught by hand).
     OrgMergeHealth,
     R2Census,
+    R3Census,
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
@@ -824,6 +825,12 @@ impl Supervisor {
             "r2-census" => {
                 Ok(vec![self.push("r2-census", "r2-census".into(), Spec::R2Census).await])
             }
+            // Issue 300 Stage 3 opening census: classify the NULL-country
+            // rescue pool by checksum anchoring + name corroboration.
+            // Read-only.
+            "r3-census" => {
+                Ok(vec![self.push("r3-census", "r3-census".into(), Spec::R3Census).await])
+            }
             // Issue 300 Stage 2: the R2 same-country canonical-key merge.
             // Deletes org rows: dry_run defaults TRUE, and a wet run REQUIRES
             // a stored dry-run plan (the T4 parity input) — there is no way
@@ -1164,6 +1171,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "merge-provisional-orgs",
     "org-merge-health",
     "r2-census",
+    "r3-census",
     "match-org-identifiers",
 ];
 
@@ -2672,6 +2680,130 @@ impl Supervisor {
                      keys; {null_country_keyed} NULL-country keyed (R3 pool), \
                      {prefix_contradictions} country/prefix contradictions; denials: \
                      {es_ute} ES-UTE, {cz699} CZ699"
+                ))
+            }
+            Spec::R3Census => {
+                // Issue 300 Stage 3 opening census, read-only: classify the
+                // NULL-country identifier pool by checksum anchoring, standing
+                // target existence, and cross-language name corroboration —
+                // the exact conditions the R3 merge will demand, measured
+                // before the merge exists (the campaign's standing pattern).
+                self.set_phase("censusing", None, None, "preloading canonical keys".to_owned());
+                // Standing (country-ful) orgs' E1 canonical keys — the
+                // rescue's target map.
+                let mut canon: std::collections::HashMap<(&'static str, String), Vec<i64>> =
+                    std::collections::HashMap::new();
+                let mut watermark = 0i64;
+                loop {
+                    if self.cancelled(job.id) {
+                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
+                    }
+                    let (rows, next) = self
+                        .db
+                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows.is_empty() {
+                        break;
+                    }
+                    for r in &rows {
+                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
+                        if r.country.is_none() {
+                            continue;
+                        }
+                        if let Some((scheme, key, true)) = ingest::crosswalk::canonical_key_flat(
+                            r.country.as_deref(),
+                            &kind,
+                            &r.identifier,
+                        ) {
+                            canon.entry((scheme, key)).or_default().push(r.org_id);
+                        }
+                    }
+                    watermark = next;
+                }
+                let pool = self.db.null_country_ident_orgs().await.map_err(|e| e.to_string())?;
+                let total = pool.len() as u64;
+                let (mut anchored_corr, mut anchored_uncorr, mut anchored_no_target) =
+                    (0u64, 0u64, 0u64);
+                let (mut unanchored_none, mut unanchored_multi, mut register_prefixed) =
+                    (0u64, 0u64, 0u64);
+                let mut samples: Vec<serde_json::Value> = Vec::new();
+                for (id, _kind, value, name) in &pool {
+                    if self.cancelled(job.id) {
+                        return Ok("r3-census stopped by cancel — no report stored".to_owned());
+                    }
+                    if value.bytes().any(|b| b.is_ascii_alphabetic()) {
+                        register_prefixed += 1;
+                        continue;
+                    }
+                    let anchors = ingest::idgate::checksum_anchors(value);
+                    // The DK|SI marker is ambiguity-by-construction, never an
+                    // anchor of its own.
+                    let real: Vec<_> =
+                        anchors.iter().filter(|(s, _)| !s.contains('|')).collect();
+                    let ambiguous = anchors.len() > real.len() || real.len() > 1;
+                    match (real.len(), ambiguous) {
+                        (0, _) => unanchored_none += 1,
+                        (_, true) => unanchored_multi += 1,
+                        (1, false) => {
+                            let (scheme, key) = real[0];
+                            let Some(targets) = canon.get(&(scheme, key.clone())) else {
+                                anchored_no_target += 1;
+                                continue;
+                            };
+                            // Cross-language N2 corroboration against every
+                            // target name (head + satellite).
+                            let n2 = ingest::project::match_norm(name);
+                            let mut corroborated = false;
+                            'targets: for &t in targets {
+                                for tn in
+                                    self.db.org_all_names(t).await.map_err(|e| e.to_string())?
+                                {
+                                    if !n2.is_empty()
+                                        && ingest::project::match_norm(&tn) == n2
+                                    {
+                                        corroborated = true;
+                                        break 'targets;
+                                    }
+                                }
+                            }
+                            if corroborated {
+                                anchored_corr += 1;
+                                if samples.len() < 40 {
+                                    samples.push(serde_json::json!({
+                                        "org_id": id, "identifier": value, "name": name,
+                                        "scheme": scheme, "key": key,
+                                        "targets": targets,
+                                    }));
+                                }
+                            } else {
+                                anchored_uncorr += 1;
+                            }
+                        }
+                        _ => unreachable!("covered above"),
+                    }
+                }
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "pool": total,
+                    "anchored_corroborated": anchored_corr,
+                    "anchored_uncorroborated": anchored_uncorr,
+                    "anchored_no_target": anchored_no_target,
+                    "unanchored_none": unanchored_none,
+                    "unanchored_multi": unanchored_multi,
+                    "register_prefixed": register_prefixed,
+                    "sample": samples,
+                })
+                .to_string();
+                self.db.put_report("r3-census", &report, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "r3-census (issue 300 Stage 3): {total} NULL-country identifier orgs — \
+                     {anchored_corr} anchored+corroborated (R3 merge candidates), \
+                     {anchored_uncorr} anchored without name corroboration (edges), \
+                     {anchored_no_target} anchored with no standing target, \
+                     {unanchored_multi} multi-scheme ambiguous (EBSCO class), \
+                     {unanchored_none} unanchored, {register_prefixed} register-prefixed \
+                     (the separate R3 alternative)"
                 ))
             }
             Spec::MatchOrgIdentifiersR2 { dry_run, max_groups } => {
@@ -4796,6 +4928,7 @@ mod tests {
                 "merge-provisional-orgs",
                 "org-merge-health",
                 "r2-census",
+                "r3-census",
                 "match-org-identifiers"
             ]
         );
