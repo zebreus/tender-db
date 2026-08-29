@@ -138,6 +138,11 @@ head is honest for the first time. Winner resolution ended ORIGIN-FIRST
 course corrections in one night, each caught by preview-vs-exemplar
 discipline). Residual 91 (incl. 15176/15566, legacy descent ties) — the
 gate-invariant tripwire reads 91 until their per-org diagnosis lands.
+Tier 5 (dissolve-then-refold, 2026-08-29) BUILT for the 91: precondition
+verified and pinned in tests (epoch-stale refold rewrites winner sets
+wholesale from re-bound mentions), the dissolve now deletes unresolvable
+winner rows and stamps+requeues their tenders — see issue 309's tier-5
+section for the rollout ladder.
 Still due: first-post-flip daily-chain read (~07:4x: provisional mint
 rate ticks up by the condemned share; new placeholder mentions no longer
 merge).

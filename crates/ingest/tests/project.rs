@@ -3057,3 +3057,141 @@ async fn a_uuid_de1_folder_id_still_merges_the_procedure() {
 
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------- issue 309 tier 5: the dissolve-then-refold contract
+
+/// The tier-5 precondition, pinned end to end: an epoch-stale refold rewrites a
+/// version's winner set WHOLESALE from the CURRENT mentions.
+///
+/// The placeholder dissolve (issue 300 Stage 1) meets winner rows it cannot
+/// honestly attribute — several real winners published one condemned id on a
+/// single origin notice, and the per-lot linkage that would split them is
+/// flattened at fold time. Tier 5's answer: winner rows are DERIVED state, so
+/// rewrite the mentions (deterministic, per-section), delete the ambiguous
+/// rows and the org, stamp the tender epoch-stale, requeue its notices — and
+/// let the fold re-derive the truth. That is only sound if three mechanisms
+/// hold together, and this test drives all three through the production entry
+/// points:
+///
+/// - the delta planner expands a requeued notice to its Tender's full chain;
+/// - a stale stored epoch forces `keep = 0`, so `delete_version` +
+///   `write_version` rewrite every version satellite, winners included;
+/// - the fold binds sections through `organization_mentions` as they stand
+///   (the resolver's idempotency map keeps a recorded mention on its org), so
+///   the rewritten bindings — not the raw payload's condemned identifier —
+///   decide the new winner rows.
+#[tokio::test]
+async fn a_stamped_refold_rederives_winners_from_rewritten_mentions() {
+    let (db, fetch_id, path) = scratch("tier5-refold").await;
+    ingest_from(&db, fetch_id, "doe", "doe/eforms-de-1.2-can-799811c4.xml").await;
+    project::project(&db, false).await.expect("project");
+
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await,
+        1,
+        "premise: the fixture folds to exactly one winner row"
+    );
+    let old = scalar(&db, "SELECT organization_id FROM tender_version_result_winners").await;
+    let notice = scalar(&db, "SELECT id FROM notices").await;
+    assert_eq!(
+        query_text(&db, &format!("SELECT name FROM organizations WHERE id = {old}")).await.as_deref(),
+        Some("Gebrüder Schneller GmbH & Co. KG"),
+        "the fixture's winner resolved as expected"
+    );
+
+    // The dissolve's writes, mimicked minimally on a raw connection: mint the
+    // replacement org, rewrite the old org's mention bindings and party rows
+    // per-section, delete its winner rows and the org itself.
+    let raw = turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute(
+        "INSERT INTO organizations (country, name, name_norm, provisional, created_at)
+         VALUES ('DEU', 'Rederived Winner Co', 'rederived winner co', 1, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    let mut rows = conn.query("SELECT last_insert_rowid()", ()).await.unwrap();
+    let turso::Value::Integer(new) = rows.next().await.unwrap().unwrap().get_value(0).unwrap()
+    else {
+        panic!("new org id")
+    };
+    drop(rows);
+    for sql in [
+        "UPDATE organization_mentions SET organization_id = ? WHERE organization_id = ?",
+        "UPDATE tender_version_parties SET organization_id = ? WHERE organization_id = ?",
+        "UPDATE tender_version_bid_parties SET organization_id = ? WHERE organization_id = ?",
+    ] {
+        conn.execute(sql, (turso::Value::Integer(new), turso::Value::Integer(old)))
+            .await
+            .unwrap();
+    }
+    conn.execute(
+        "DELETE FROM tender_version_result_winners WHERE organization_id = ?",
+        (turso::Value::Integer(old),),
+    )
+    .await
+    .unwrap();
+    conn.execute("DELETE FROM organization_names WHERE org_id = ?", (turso::Value::Integer(old),))
+        .await
+        .unwrap();
+    conn.execute("DELETE FROM organizations WHERE id = ?", (turso::Value::Integer(old),))
+        .await
+        .unwrap();
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await,
+        0,
+        "the ambiguous winner set is deleted, awaiting re-derivation"
+    );
+
+    // The issue-179 pair through the production functions the job calls.
+    assert_eq!(db.unmark_projected_by_ids(&[notice]).await.expect("requeue"), 1);
+    assert_eq!(db.stamp_stale_for_notices(&[notice]).await.expect("stamp"), 1);
+
+    let report = project::project_incremental(&db).await.expect("refold");
+    assert!(report.applied.versions_written > 0, "the stale epoch forced the rewrite");
+
+    // The winner set is re-derived — wholesale — onto the rewritten mention's
+    // org, and nothing resurrects the deleted one.
+    assert_eq!(
+        scalar(&db, "SELECT COUNT(*) FROM tender_version_result_winners").await,
+        1,
+        "the refold re-derived the winner row"
+    );
+    assert_eq!(
+        scalar(&db, "SELECT organization_id FROM tender_version_result_winners").await,
+        new,
+        "…onto the re-bound mention's target"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {old}"
+            )
+        )
+        .await,
+        0,
+        "the resolver's idempotency kept the rewritten binding — the raw payload's \
+         identifier did not re-mint the dissolved org"
+    );
+    assert_eq!(
+        scalar(&db, &format!("SELECT COUNT(*) FROM organizations WHERE id = {old}")).await,
+        0,
+        "the dissolved org stays dissolved through the refold"
+    );
+    assert_eq!(
+        scalar(
+            &db,
+            &format!(
+                "SELECT COUNT(*) FROM tenders WHERE projection_epoch <> {}",
+                store::canonical::PROJECTION_EPOCH
+            )
+        )
+        .await,
+        0,
+        "the rewritten Tender is re-stamped with the current epoch"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}

@@ -1319,7 +1319,9 @@ pub struct OrgDissolve {
     /// deleted).
     pub dissolved: u64,
     /// Condemned orgs skipped whole because a winner row could not be
-    /// resolved to exactly one mention on its causing notice.
+    /// resolved to exactly one mention on its causing notice. Since tier 5
+    /// (issue 309) no shape skips — the field stays for report continuity and
+    /// as a tripwire: nonzero means a new unhandled shape appeared.
     pub skipped: u64,
     /// Mentions re-resolved through the post-234 provisional path.
     pub mentions: u64,
@@ -1333,6 +1335,18 @@ pub struct OrgDissolve {
     /// Winner repoints whose target row already stood (the duplicate is
     /// removed rather than doubled).
     pub winner_dups: u64,
+    /// Tier 5 (issue 309): honestly ambiguous winner rows DELETED for the
+    /// follow-up fold to re-derive — the per-lot linkage that disambiguates
+    /// them is flattened at fold time, so winner rows are derived, never
+    /// guessed.
+    pub winners_deleted: u64,
+    /// Tenders stamped epoch-stale (`projection_epoch = 0`) so the next
+    /// incremental fold rewrites their winner sets from the re-bound mentions
+    /// (the issue-179 pair's stamp half).
+    pub refold_tenders: u64,
+    /// Causing notices re-queued (`projected = 0`) so the delta planner pulls
+    /// the stamped tenders' full chains (the pair's requeue half).
+    pub refold_notices: u64,
     pub tender_changes: u64,
 }
 
@@ -5213,6 +5227,7 @@ impl Db {
             }
             let mut touched: BTreeSet<i64> = BTreeSet::new();
             let mut changed_targets: BTreeSet<i64> = BTreeSet::new();
+            let mut refold: BTreeSet<i64> = BTreeSet::new();
             match self
                 .dissolve_condemned(
                     &conn,
@@ -5222,6 +5237,7 @@ impl Db {
                     &mut report,
                     &mut touched,
                     &mut changed_targets,
+                    &mut refold,
                 )
                 .await
             {
@@ -5236,6 +5252,56 @@ impl Db {
                 }
             }
             report.tender_changes = touched.len() as u64;
+            // Tier 5 (issue 309): the issue-179 pair for the tenders whose
+            // ambiguous winner rows were deleted — the requeue puts their
+            // chains in the next incremental fold's delta (the planner expands
+            // one unprojected notice to the tender's FULL notice set), and the
+            // epoch stamp makes that fold rewrite them (the requeue alone
+            // leaves chains identical and the fold early-returns). Runs inside
+            // the same transaction as the deletes, so the stamp and the
+            // deleted rows land together or not at all.
+            report.refold_tenders = refold.len() as u64;
+            if !refold.is_empty() {
+                let ids: Vec<i64> = refold.iter().copied().collect();
+                for chunk in ids.chunks(500) {
+                    let placeholders_list = placeholders(chunk.len());
+                    let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+                    let requeued = if dry_run {
+                        let sql = format!(
+                            "SELECT COUNT(*) FROM notices \
+                              WHERE parse_state = 'parsed' AND projected <> 0 AND id IN \
+                                    (SELECT caused_by_notice_id FROM tender_versions \
+                                      WHERE tender_id IN ({placeholders_list}))"
+                        );
+                        let mut rows = conn.query(&sql, params).await?;
+                        match rows.next().await? {
+                            Some(row) => int(&row, 0).max(0) as u64,
+                            None => 0,
+                        }
+                    } else {
+                        let sql = format!(
+                            "UPDATE notices SET projected = 0 \
+                              WHERE parse_state = 'parsed' AND projected <> 0 AND id IN \
+                                    (SELECT caused_by_notice_id FROM tender_versions \
+                                      WHERE tender_id IN ({placeholders_list}))"
+                        );
+                        match conn.execute(&sql, params).await {
+                            Ok(n) => n,
+                            Err(e) => {
+                                let _ = conn.execute("ROLLBACK", ()).await;
+                                return Err(e);
+                            }
+                        }
+                    };
+                    report.refold_notices += requeued;
+                }
+                if !dry_run
+                    && let Err(e) = Self::stamp_tenders_stale(&conn, ids).await
+                {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
             if !dry_run {
                 for &tid in &touched {
                     if let Err(e) = append_change(&conn, "tender", tid, None, "changed", now).await
@@ -5273,6 +5339,7 @@ impl Db {
         report: &mut OrgDissolve,
         touched: &mut BTreeSet<i64>,
         changed_targets: &mut BTreeSet<i64>,
+        refold: &mut BTreeSet<i64>,
     ) -> turso::Result<()> {
         for &loser in condemned {
             // The org's recorded mentions, and its winner rows up front — the
@@ -5308,10 +5375,12 @@ impl Db {
             // the SAME version disambiguate — mentions whose every party row
             // is buyer-family ('%uyer%', the read-views' own idiom) are the
             // buyer side; if exactly one mention has a non-buyer party row,
-            // the winner follows it. Anything still ambiguous skips the
-            // WHOLE org (fully dissolved or untouched).
+            // the winner follows it. Anything still ambiguous goes to tier 5:
+            // the row is DELETED and its tender stamped epoch-stale for the
+            // fold to re-derive (winner rows are derived state — see below).
             let mut winners: Vec<(i64, i64, i64, i64, String)> = Vec::new();
-            let mut resolvable = true;
+            let mut unresolved: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
             {
                 let mut rows = conn
                     .query(
@@ -5345,9 +5414,10 @@ impl Db {
                 std::collections::HashMap::new();
             let mut lr_pick: std::collections::HashMap<i64, Option<(i64, String)>> =
                 std::collections::HashMap::new();
-            for w in &mut winners {
+            for (wi, w) in winners.iter_mut().enumerate() {
                 let (tender, seq, _, notice) = (w.0, w.1, w.2, w.3);
-                let mut chosen: Option<(i64, String)> = None;
+                // Assigned by both arms of the origin block below.
+                let mut chosen: Option<(i64, String)>;
                 // ORIGIN FIRST (issue 309): the lot_result's ORIGIN pins the
                 // winner side per ROW — `lot_results` carries (notice_id,
                 // result_key), the notice and RES section where the result
@@ -5541,15 +5611,23 @@ impl Db {
                         w.3 = n;
                         w.4 = s;
                     }
+                    // Tier 5 (issue 309): winner rows are DERIVED — the fold
+                    // flattens the per-lot linkage (LotResult → SettledContract
+                    // → LotTender → TenderingParty) into them on every rewrite,
+                    // reading the section→org bindings from the mentions this
+                    // very dissolve rewrites. An honestly ambiguous row (the
+                    // measured residual shape: several DIFFERENT real winners
+                    // published the same condemned id on one multi-lot origin
+                    // CAN) is therefore deleted below, its tender stamped
+                    // epoch-stale, and the next incremental fold re-derives the
+                    // whole winner set from the re-bound mentions.
+                    // Org-atomicity keeps its meaning: the org disappears in
+                    // one transaction; the winner TRUTH arrives with the
+                    // refold, derived rather than guessed.
                     None => {
-                        resolvable = false;
-                        break;
+                        unresolved.insert(wi);
                     }
                 }
-            }
-            if !resolvable {
-                report.skipped += 1;
-                continue;
             }
 
             // Touched tenders, collected while rows still point at the loser.
@@ -5697,8 +5775,29 @@ impl Db {
 
             // Winner rows: PK ends in organization_id, so a target row may
             // already stand — insert-or-ignore then delete, counting dups
-            // (the repoint_org_references shape).
-            for (tender, seq, lot_result, notice, section) in &winners {
+            // (the repoint_org_references shape). Tier-5 rows (no resolved
+            // section) are deleted outright and their tender queued for the
+            // epoch-stale refold that re-derives the winner set.
+            for (wi, (tender, seq, lot_result, notice, section)) in winners.iter().enumerate() {
+                if unresolved.contains(&wi) {
+                    report.winners_deleted += 1;
+                    refold.insert(*tender);
+                    if !dry_run {
+                        conn.execute(
+                            "DELETE FROM tender_version_result_winners \
+                              WHERE tender_id = ? AND seq = ? AND lot_result_id = ? \
+                                AND organization_id = ?",
+                            (
+                                Value::Integer(*tender),
+                                Value::Integer(*seq),
+                                Value::Integer(*lot_result),
+                                Value::Integer(loser),
+                            ),
+                        )
+                        .await?;
+                    }
+                    continue;
+                }
                 let target =
                     section_target.get(&(*notice, section.clone())).copied().unwrap_or(0);
                 report.winners += 1;

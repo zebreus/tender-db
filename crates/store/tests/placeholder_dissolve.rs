@@ -3,9 +3,12 @@
 //! re-resolving each mention through the post-234 provisional path, moving
 //! party/bid-party rows by their exact (mention_notice_id,
 //! mention_section_id), repointing winner rows via caused_by_notice_id with
-//! the one-mention-per-notice guard, and deleting the org. An org with an
-//! unresolvable winner row is skipped whole. Dry-run counts and writes
-//! nothing; a second wet run finds nothing (dissolved orgs left scope).
+//! the one-mention-per-notice guard, and deleting the org. A winner row no
+//! tier resolves goes to tier 5 (issue 309): the row is deleted, its tender
+//! stamped epoch-stale and its causing notices re-queued, so the next
+//! incremental fold re-derives the winner set from the re-bound mentions.
+//! Dry-run counts and writes nothing; a second wet run finds nothing
+//! (dissolved orgs left scope).
 
 use store::turso::Value;
 
@@ -23,8 +26,9 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
     conn.execute("BEGIN", ()).await.unwrap();
 
-    // 50 = condemned stranger-merger with three mentions; 51 = condemned but
-    // winner-ambiguous (two mentions on one notice); 52 = clean identifier;
+    // 50 = condemned stranger-merger with three mentions; 51 = condemned and
+    // winner-ambiguous (two mentions on one notice, no role signal — the
+    // tier-5 dissolve-then-refold case); 52 = clean identifier;
     // 60 = standing provisional the "Alpha City" mention must REUSE.
     for (id, ident, name, prov) in [
         (50, Some("BAD"), "Stranger Merger", 0),
@@ -100,6 +104,26 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         .await
         .unwrap();
     }
+    // Tier 5 needs the stamp+requeue observable: tender 2's row (stamped
+    // epoch-stale) and its causing notice 200 (re-queued, projected 1 → 0).
+    conn.execute(
+        &format!(
+            "INSERT INTO tenders (id, source, kind, created_at, projection_epoch)
+             VALUES (2, 'ted', 'procedure', 0, {})",
+            store::canonical::PROJECTION_EPOCH
+        ),
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                              member_path, ingested_at, parse_state, projected)
+         VALUES (200, 'ted', 'pub-200', 'h200', 'eforms:test', 1, 'p', 0, 'parsed', 1)",
+        (),
+    )
+    .await
+    .unwrap();
     // Versions: tender 1 caused by notice 100 (org 50's winner context),
     // tender 2 caused by notice 200 (org 51's — ambiguous).
     for (t, seq, n) in
@@ -263,7 +287,7 @@ async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
 }
 
 #[tokio::test]
-async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
+async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_refold() {
     let (db, conn) = seed("test-dissolve.db").await;
 
     // Dry-run: full preview, nothing written.
@@ -272,27 +296,43 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
     assert_eq!((dry.parties, dry.bid_parties), (5, 1), "dry run previews the blast radius");
     assert_eq!(
         (dry.dissolved, dry.skipped),
-        (6, 1),
-        "51 skipped; 53 t2; 54 t3; 55 t4 descent; 56 t4b origin; 57 t4c roles"
+        (7, 0),
+        "51 t5 refold; 53 t2; 54 t3; 55 t4 descent; 56 t4b origin; 57 t4c roles"
     );
-    assert_eq!(dry.mentions, 12, "50:3 + 53:2 + 54:1 + 55:2 + 56:2 + 57:2");
-    assert_eq!((dry.fresh, dry.reused), (11, 1), "all named fresh but Alpha City reuses 60");
+    assert_eq!(dry.mentions, 14, "50:3 + 51:2 + 53:2 + 54:1 + 55:2 + 56:2 + 57:2");
+    assert_eq!((dry.fresh, dry.reused), (13, 1), "all named fresh but Alpha City reuses 60");
+    assert_eq!(
+        (dry.winners_deleted, dry.refold_tenders, dry.refold_notices),
+        (1, 1, 1),
+        "tier 5 previews the ambiguous row, its tender, and the requeue"
+    );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 9, "dry run minted nothing");
+    assert_eq!(count(&conn, "SELECT projected FROM notices WHERE id = 200").await, 1);
+    assert_eq!(
+        count(&conn, "SELECT projection_epoch FROM tenders WHERE id = 2").await,
+        store::canonical::PROJECTION_EPOCH,
+        "dry run stamped nothing"
+    );
 
     // Wet run.
     let (wet, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("wet");
-    assert_eq!((wet.dissolved, wet.skipped), (6, 1));
-    assert_eq!((wet.fresh, wet.reused), (11, 1));
+    assert_eq!((wet.dissolved, wet.skipped), (7, 0));
+    assert_eq!((wet.fresh, wet.reused), (13, 1));
     assert_eq!((wet.parties, wet.bid_parties), (5, 1));
     assert_eq!(wet.winners, 8, "50:2 + 53:1 + 54:2 + 55:1 + 56:1 + 57:1");
     assert_eq!(wet.winner_dups, 1, "lot_result 11 already stood on org 60");
-    assert_eq!(wet.tender_changes, 6, "tenders 1, 3, 4, 5, 6, 7; tender 2 skipped");
+    assert_eq!(
+        (wet.winners_deleted, wet.refold_tenders, wet.refold_notices),
+        (1, 1, 1),
+        "preview-exact: the wet tier-5 counts match the dry ones"
+    );
+    assert_eq!(wet.tender_changes, 7, "tenders 1-7 all touched — 2 via the tier-5 delete");
 
-    // Org 50 is gone; 51 untouched; the Alpha City mention sits on 60; Beta
-    // Corp and the nameless mention sit on fresh provisionals.
+    // Org 50 is gone; 51 dissolved via tier 5; the Alpha City mention sits on
+    // 60; Beta Corp and the nameless mention sit on fresh provisionals.
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 51").await, 1);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 51").await, 0);
     assert_eq!(
         count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 100").await,
         60
@@ -313,7 +353,7 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
         beta
     );
     // Winners: lot_result 10 moved to 60; 11 deduped to ONE row on 60; the
-    // ambiguous tender-2 row still stands on 51.
+    // ambiguous tender-2 row is DELETED (tier 5) — the refold re-derives it.
     assert_eq!(
         count(&conn, "SELECT organization_id FROM tender_version_result_winners WHERE lot_result_id = 10").await,
         60
@@ -323,8 +363,27 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
         1
     );
     assert_eq!(
-        count(&conn, "SELECT organization_id FROM tender_version_result_winners WHERE lot_result_id = 12").await,
-        51
+        count(&conn, "SELECT COUNT(*) FROM tender_version_result_winners WHERE lot_result_id = 12").await,
+        0,
+        "the honestly ambiguous winner row is gone, not guessed"
+    );
+    // The tier-5 mentions re-resolved per-section like any other: two fresh
+    // provisionals carry tender 2's notice-200 bindings for the refold to read.
+    let one = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 200 AND section_id = 'S-1'").await;
+    let two = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 200 AND section_id = 'S-2'").await;
+    assert!(one > 60 && two > 60 && one != two, "per-section fresh provisionals ({one}, {two})");
+    // The issue-179 pair landed: tender 2 epoch-stale, notice 200 re-queued —
+    // the next incremental fold rewrites tender 2's winner set wholesale from
+    // the re-bound mentions (delete_version + write_version, keep = 0).
+    assert_eq!(
+        count(&conn, "SELECT projection_epoch FROM tenders WHERE id = 2").await,
+        0,
+        "tender 2 stamped epoch-stale"
+    );
+    assert_eq!(
+        count(&conn, "SELECT projected FROM notices WHERE id = 200").await,
+        0,
+        "causing notice 200 re-queued for the delta"
     );
     // The change feed heard about all of it.
     assert_eq!(
@@ -338,6 +397,16 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 1 AND op = 'changed'").await,
         1
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 51 AND op = 'removed'").await,
+        1,
+        "the tier-5 org's removal reached the feed"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 2 AND op = 'changed'").await,
+        1,
+        "the tier-5 tender's winner change reached the feed"
     );
 
     // The tier-2 winner followed S-2's target, not the buyer's.
@@ -390,7 +459,7 @@ async fn the_dissolve_splits_condemned_orgs_and_skips_ambiguous_winners() {
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 57").await, 0);
 
-    // A rerun finds the dissolved org gone: only 51 (still skipped) remains.
+    // A rerun finds every dissolved org gone: only clean 52 stays in scope.
     let (again, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("rerun");
-    assert_eq!((again.condemned, again.dissolved, again.skipped), (1, 0, 1));
+    assert_eq!((again.condemned, again.dissolved, again.skipped), (0, 0, 0));
 }

@@ -2238,6 +2238,9 @@ impl Supervisor {
                     totals.bid_parties += batch.bid_parties;
                     totals.winners += batch.winners;
                     totals.winner_dups += batch.winner_dups;
+                    totals.winners_deleted += batch.winners_deleted;
+                    totals.refold_tenders += batch.refold_tenders;
+                    totals.refold_notices += batch.refold_notices;
                     totals.tender_changes += batch.tender_changes;
                     watermark = next;
                     self.set_phase(
@@ -2245,8 +2248,11 @@ impl Supervisor {
                         Some(totals.scanned),
                         None,
                         format!(
-                            "{} condemned, {} dissolved, {} skipped",
-                            totals.condemned, totals.dissolved, totals.skipped
+                            "{} condemned, {} dissolved, {} skipped, {} queued for refold",
+                            totals.condemned,
+                            totals.dissolved,
+                            totals.skipped,
+                            totals.refold_tenders
                         ),
                     );
                     if !dry_run {
@@ -2260,7 +2266,9 @@ impl Supervisor {
                      {} condemned by the v2 gate, {} dissolved, {} skipped (unresolvable winner), \
                      {} mentions re-resolved ({} fresh provisionals, {} reused), \
                      {} party rows, {} bid-party rows, {} winner rows ({} duplicates removed), \
-                     {} tenders touched",
+                     {} ambiguous winner rows deleted for refold ({} tenders stamped epoch-stale, \
+                     {} notices re-queued — the next incremental fold re-derives their winner \
+                     sets), {} tenders touched",
                     if dry_run { " DRY RUN — nothing written" } else { "" },
                     totals.scanned,
                     totals.condemned,
@@ -2273,6 +2281,9 @@ impl Supervisor {
                     totals.bid_parties,
                     totals.winners,
                     totals.winner_dups,
+                    totals.winners_deleted,
+                    totals.refold_tenders,
+                    totals.refold_notices,
                     totals.tender_changes
                 ))
             }

@@ -53,6 +53,41 @@ rewrites a version's winner set wholesale. Org-atomicity keeps its
 meaning: the org disappears in one transaction; the winner TRUTH arrives
 with the refold, minutes later, derived rather than guessed.
 
+### Tier 5 BUILT (2026-08-29 01:xx) — precondition verified, then pinned
+
+Precondition verified at every link before writing a line, all from the
+production code paths: (1) the delta planner expands a requeued notice to
+its Tender's FULL notice set (`touched_existing_tender_ids` →
+`notice_ids_for_tenders`, project.rs pass-1/expansion) so a partial
+requeue never folds a truncated chain; (2) a stale stored epoch forces
+`keep = 0` and `delete_version` + `write_version` rewrite EVERY version
+satellite, winners included (canonical.rs `apply_tender_tx`, the issue-99
+branch); (3) winner rows derive from `organization_mentions` as they
+stand (`mentions_by_ids` → `bind_organizations` → `raw_results.bind`) and
+the resolver's `(notice, section)` idempotency map keeps a rewritten
+binding on re-projection — the raw payload's condemned identifier cannot
+re-mint the dissolved org.
+
+Landed: `dissolve_condemned` no longer skips — a winner row no tier
+resolves is DELETED (`winners_deleted`), its tender collected, and after
+the per-org loop the batch applies the issue-179 pair inside the same
+transaction: `stamp_tenders_stale` (`refold_tenders`) + a causing-notice
+requeue UPDATE (`refold_notices`), dry-run previewing all three counts
+exactly (COUNT with the identical predicate). `skipped` stays as a
+tripwire — nonzero now means a NEW unhandled shape. Tests: the store test
+drives org 51 through tier 5 (row deleted, epoch 0, notice requeued,
+change feed rows); new ingest test
+`a_stamped_refold_rederives_winners_from_rewritten_mentions` pins the
+whole contract end-to-end on the Gebrüder Schneller fixture — dissolve
+writes mimicked, `unmark_projected_by_ids` + `stamp_stale_for_notices`,
+then `project_incremental` re-derives the winner row onto the re-bound
+mention's org and the dissolved org stays dissolved.
+
+Rollout: gate → deploy → preview (expect condemned 91, winners_deleted >
+0, refold_tenders ≈ affected CANs, skipped 0) → wet run → enqueue an
+incremental fold (or let the scheduled cycle take it) → closing census
+(expect condemned 0) → the gate-invariant tripwire returns to 0.
+
 ## Tier 4 (landed): lot-result origin resolution
 
 `lot_results` rows carry their ORIGIN (tender_id, notice_id, result_key) —
