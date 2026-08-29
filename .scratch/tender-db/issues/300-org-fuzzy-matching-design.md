@@ -251,9 +251,28 @@ ceiling + gate-poison are the active guards), 0 vat-group-wall
 (plausible: twins' evidence reduces to the stripped group key; true
 group-VAT shapes are rare same-country). Blast radius: 480,622
 mentions, 1,024,472 parties, 2,075,662 bid-parties, 2,532,976 winner
-repoints across ~36k losers. NEXT: dry-run re-run with the new
-plan-sample output → ultracode 100-sample precision review at 100% →
-capped wet run (max_groups 1000) → residual continuation.
+repoints across ~36k losers.
+
+**100-SAMPLE PRECISION REVIEW (2026-08-29 ~05:3x, sample from job 441 —
+three independent passes: owner + two adversarial lenses): 99/100.**
+The single FAIL, unanimous with the name lens: sample group 91 —
+"Consórcio E.I.P. Serviços _ CME" shares lead member E.I.P.'s NIF (a
+regular 5xx company-series NIF, per the identifier lens) — the PT
+groupement vehicle, missed because the consortium lexicon lacked
+"consórcio". RULE-FIXED (5b15041) + test-pinned; the same sample also
+pinned the counter-case ("członek konsorcjum" is a MEMBER label — bare
+"konsorcjum" stays OUT of the lexicon). Identifier lens validated every
+scheme checksum in the sample (all 5 FR VAT keys arithmetically
+correct; no placeholders; no wrong truncations). Two UNSUREs
+adjudicated PASS: groups 65/79 each carry one SIRET with a corrupt
+establishment-NIC, but the merge keys on the checksum-valid SIREN half
+(which truncation preserves) and the names corroborate — the exact typo
+load that keeps FR a SOFT scheme. G42 (Berkshire Hathaway
+European/Specialty/BHSI on ONE SIREN) passed both lenses: one SIREN is
+one French legal unit; the register is the ground truth R2 trusts.
+NEXT: gate → deploy 5b15041 → re-dry-run (consórcio class must land in
+denied_consortium; plan shrinks below 24,915) → CAPPED WET RUN
+(max_groups 1000) → residual continuations → Stage-2 close-out census.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
