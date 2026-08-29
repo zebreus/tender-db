@@ -1,0 +1,602 @@
+[
+ {
+  "org_id": 1572,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Daphos GmbH",
+   "Solgenium GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip FN576377P to NULL (it is Daphos GmbH's own Firmenbuch number), and re-point the standalone DAPHOS GmbH mention (notice 23803601) to a Daphos GmbH member organization rather than this vehicle.",
+  "rationale": "The name is a genuine two-member Austrian Bietergemeinschaft (Daphos GmbH und Solgenium GmbH), so the vehicle itself is sound as an entity. However, the identifier FN576377p is also published in notice 23803601 for \"DAPHOS GmbH\" alone; a GmbH necessarily carries its own FN, so the number is Daphos's corporate registration, not an FN the temporary vehicle obtained. Austrian BIEGEs (GesbR form) are typically not Firmenbuch-registered, and the solo-member reuse of the literal settles whose number it is. The standalone Daphos mention appears to be attached to this row only via the shared identifier and belongs to the member company.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 7149,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "R & K Ingenieure GmbH",
+   "Thost Projektmanagement GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip DE307468639 to NULL (it is R & K Ingenieure GmbH's own VAT), and re-home the seven solo \"R & K Ingenieure GmbH\" mentions to that member company's own org row so the vehicle and the standing firm are no longer fused.",
+  "rationale": "DE307468639 is a single well-formed German VAT (DE + 9 digits), so it is somebody's real number, not garbage or a concatenation. Seven of the eight mentions publish this exact VAT under \"R & K Ingenieure GmbH\" alone across independent notices, while only one mention uses the consortium name — the number is therefore the lead member's VAT reused on the consortium bid, not a registration of the vehicle itself. The name clearly denotes a genuine two-member Bietergemeinschaft (R&K Ingenieure / Thost Projektmanagement), but the shared identifier has merged the temporary vehicle with the standing member company into one org row.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 8177393,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "garbage-not-an-identifier",
+  "members": [
+   "Ingenieurbüro Dr. Lang ZT-GmbH"
+  ],
+  "rationale": "The identifier \"SCHNBERGSTRAE28\" is the street address \"Schönbergstraße 28\" (published verbatim as the raw identifier on notice 18782355) with umlaut/ß and whitespace stripped; it matches no Austrian FN, GLN-style national number, or VAT format, so it is not anyone's registration — it is an address shoved into the identifier field. The published name asserts a Bietergemeinschaft, and nothing in the evidence contradicts that, but it names only one member (Ingenieurbüro Dr. Lang ZT-GmbH) and the single mention plus the unusable identifier leave no way to cross-reference whether further members exist or whether this is really the lead firm alone. The garbage diagnosis is certain; the vehicle-vs-lone-member question rests solely on the published name.",
+  "recommended_handling": "Keep the row standing as the published consortium vehicle but strip the address-derived identifier to NULL; flag at apply time that only one member is named, in case later notices reveal it is Ingenieurbüro Dr. Lang ZT-GmbH alone.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 9610149,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Dobler GmbH & Co. KG Bauunternehmung",
+   "Oberall (full company name not in evidence)"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle for notice 19222354 but strip DE128660317 to NULL (it is Dobler's own VAT), and re-home the seven solo Dobler GmbH & Co. KG mentions to a proper Dobler member row that carries that VAT.",
+  "rationale": "The name \"Bietergemeinschaft Dobler / Oberall\" is a genuine consortium form and one mention (notice 19222354) was published under that name, so the vehicle itself appears real. The identifier DE128660317 is a valid single DE VAT (DE + exactly 9 digits — one company's number, not a concatenation), and seven independent mentions across notices 24248749–25683562 publish the identical VAT under the standalone \"Dobler GmbH & Co. KG (Bauunternehmung)\". That establishes mechanically that the number is the lead member Dobler's own VAT, wrongly attached to the vehicle, and that the shared literal has pulled Dobler's solo appearances into this consortium row. The second member is known only as \"Oberall\" from the consortium name; no identifier or full name for it appears in the evidence.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 12195328,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "concatenated-member-identifiers",
+  "members": [
+   "J. Friedrich Storz Verkehrswegebau GmbH & Co. KG",
+   "Baresel GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the concatenated identifier to NULL; the two member VAT ids (DE232901575, DE231871970) belong on member links, not on the vehicle, though which id maps to which member is not verifiable from this evidence.",
+  "rationale": "The name is an explicit two-member Bietergemeinschaft (Storz Verkehrswegebau und Baresel), and both mentions (notices 20025435, 20031552) are of the consortium itself, so the vehicle is real. The stored identifier DE232901575DE231871970 is 22 characters, i.e. two exactly-valid DE VAT ids (DE + 9 digits each) run together; the raw published value \"DE 232901575 / DE 231871970\" shows the notices listed two separate member VAT numbers that ingestion concatenated. A consortium cannot hold this string as its own registration — it is two members' VAT ids, matching the two members named. The zero-collision measurement is consistent: the concatenated literal is an artifact that no other row would carry.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 12414013,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "112Store",
+   "Deva"
+  ],
+  "rationale": "The name \"Bietergemeinschaft 112Store/Deva\" is a clear two-member bidding-consortium name, and the sole mention (notice 20095100) publishes exactly this name with the identifier, so the row itself is a genuine vehicle, not a mislabelled member. DE815048675 is a mechanically valid single German VAT id (DE + exactly 9 digits) — not a concatenation and not garbage. A Bietergemeinschaft as GbR can legitimately hold its own USt-IdNr, and unlike the Dobler/Oberall or R&K/Thost cases there is no corpus mention tying this number to a single member company, so nothing contradicts vehicle ownership — but with one mention and zero corroborating uses, whether the VAT is the vehicle's own or the lead member's cannot be established from the evidence.",
+  "recommended_handling": "Keep the row standing as a consortium vehicle and keep the identifier as plausibly the vehicle's own VAT registration, flagging it unverified; revisit (strip to NULL) only if a member company later surfaces in the corpus using DE815048675 as its own.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 12524925,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Wolff (name fragment only; full member company names not published)"
+  ],
+  "rationale": "The name is explicitly a Bietergemeinschaft and both mentions (single notice 20130908) carry the consortium name, with no standalone member mention tying the number to a member firm, so the vehicle framing itself is credible. The stored identifier \"D1633830016\" is mechanically invalid: a German VAT is DE + exactly 9 digits, and D + 10 digits matches no VAT, Firmenbuch, or Handelsregister format — it is number-shaped (plausibly a mangled VAT or a Steuernummer) but unverifiable as to what it is or whose. Sibling row org_id 12524926 holds the same name on the same notice with the variant \"DE1633830016\" (DE + 10 digits, also invalid), showing one published value was ingested twice in two corrupted forms and this row carries the worse variant. Only the fragment \"Wolff\" is extractable as a member name.",
+  "recommended_handling": "Merge this row into its duplicate org 12524926 (same name, same notice, same underlying digits) keeping a single vehicle row, and strip the malformed identifier to NULL or mark it unverifiable since neither variant is a valid DE VAT or registration format.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 12524926,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Wolff (surname only; full member company name(s) not published)"
+  ],
+  "rationale": "The published name in notice 20130908 is explicitly \"Bietergemeinschaft Wolff\" and no mention shows a bare member firm under this identifier, so the row stands as a consortium vehicle rather than a mislabelled member. The recorded identifier DE1633830016 is DE plus 10 digits, which fails the German VAT format (DE + exactly 9 digits), so as a vat-kind identifier it is wrong regardless of whose number it was meant to be; it is identifier-shaped rather than garbage, and could be a mistyped VAT or a different national number, but with a single source notice, zero corpus collisions, and only the surname Wolff named, it cannot be attributed to the vehicle or a member. Note also that org_id 12524925 is a duplicate row minted from the variant spelling D1633830016 of the same string in the same notice.",
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the format-invalid vat identifier to NULL (or re-key it as an unverified national value), and merge it with duplicate row org_id 12524925 which was minted from the D1633830016 spelling variant in the same notice.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 13011025,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Dipl. Ing. Wilhelm Sedlak Ges.m.b.H.",
+   "Zinglbau GmbH"
+  ],
+  "rationale": "The row's name is a genuine two-member Bietergemeinschaft (Sedlak / Zinglbau), but only one of eight mentions carries the consortium name; the other seven, across six unrelated notices, are Dipl. Ing. Wilhelm Sedlak Ges.m.b.H. bidding alone under the identical identifier 9110015672060. A temporary bidding vehicle would not appear solo as Sedlak on later notices, so the number is mechanically the lead member's own Austrian registration (13-digit 9110... e-procurement/GLN-style id), not the vehicle's. The measured absence of collisions fits identifier-keyed ingest having merged all of Sedlak's solo mentions into this consortium-named row rather than proving the id belongs to the vehicle.",
+  "recommended_handling": "Keep the row standing as the consortium vehicle for notice 20281136 but strip the identifier to NULL (it is Sedlak's), and re-point the seven Sedlak-only mentions to a separate Dipl. Ing. Wilhelm Sedlak Ges.m.b.H. organization that legitimately owns 9110015672060.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 13543800,
+  "verdict": "member-row-mislabelled",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "FWB Architekten ZT GmbH"
+  ],
+  "rationale": "The published name is \"Mitglied der Bietergemeinschaft: FWB Architekten ZT GmbH\" — explicitly a single MEMBER of some consortium, with the role prefix absorbed into the name field; no vehicle name and no other members appear in the sole mention (notice 20462352). The identifier 9110016767284 is one well-formed 13-digit Austrian 911...-format company number (the GLN-style identifiers used for individual AT companies throughout this corpus), not a concatenation and not garbage, so mechanically it reads as the named member company's own number rather than a vehicle registration — though its mapping to FWB Architekten cannot be externally verified from the file. The row therefore describes the member company, not a consortium vehicle.",
+  "recommended_handling": "Relabel the row as the single member company FWB Architekten ZT GmbH (strip the \"Mitglied der Bietergemeinschaft:\" prefix), keep the identifier attached to it, and do not treat this row as a consortium vehicle; the actual consortium and its other members are unknown from this evidence.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 13881137,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "concatenated-member-identifiers",
+  "members": [
+   "Matthäi Bauunternehmen",
+   "Wolfgang Heineking Bauunternehmen"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the concatenated identifier to NULL; the two embedded VAT ids (DE290956229, DE114535681) are member-level identifiers that could be re-attributed to the members only after external verification of which id belongs to which company.",
+  "rationale": "The stored identifier DE290956229DE114535681 violates the DE VAT format (DE + exactly 9 digits) and parses cleanly as two well-formed VAT ids back to back; the raw published value on notice 20574924 was \"DE 290956229; DE 114535681\", showing the source listed two separate ids that normalization concatenated. The two-id raw value matches the two-member name (Matthäi Bauunternehmen und Wolfgang Heineking Bauunternehmen), so these are almost certainly the members' own VAT ids, not a registration of the vehicle. The consortium itself appears real (a single construction-bid mention under the full BIEGE name), so only the identifier is defective. The measured absence of corpus collisions is expected for an artificial concatenation and does not legitimize it.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 14061757,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Pittel + Brausewetter GmbH",
+   "Bauunternehmung Granit Gesellschaft m.b.H."
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier — it is a single well-formed Austrian administrative GLN (valid check digit, AT 911 prefix) plausibly the vehicle's own ERsB/register number — but flag it for register verification at the apply stage rather than treating ownership as confirmed.",
+  "rationale": "The name explicitly denotes a two-member Bietergemeinschaft of Pittel + Brausewetter GmbH and Bauunternehmung Granit GmbH, and the single AT mention publishes the row under exactly that consortium name. The identifier 9110015681604 is not an FN number, not a VAT id, and not a concatenation of member identifiers; it is a structurally valid 13-digit GLN in the Austrian 91x administrative range with a correct GS1 check digit, the identifier type Austrian entities (including ERsB-registered consortia/GesbRs) carry in procurement data. It collides with no other organization in the corpus, so there is no evidence it belongs to a member; whether it is the vehicle's own registration or the lead member's GLN cannot be verified from this evidence alone.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 14440157,
+  "verdict": "member-row-mislabelled",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Schleich Bau GmbH",
+   "Schleich Via GmbH"
+  ],
+  "rationale": "The name's head entity is a single company, Schleich Bau GmbH, with the consortium relegated to a parenthetical annotation (\"Bietergemeinschaft mit Schleich Via GmbH\") — the publishing pattern of a lead member named as the bidder, not of a distinct ARGE/BIEGE vehicle with its own identity. The identifier 9110020847002 is a single well-formed Austrian GLN (valid GS1 mod-10 check digit, GS1-Austria prefix 911), i.e. one registered entity's number, not concatenated member ids and not garbage; attached to a name headed by the lead member, it mechanically reads as the lead's own registration. A residual possibility that the GLN is an ErsB registration of the Bietergemeinschaft itself cannot be excluded from the single mention in evidence, which is why confidence is medium rather than high.",
+  "recommended_handling": "Normalize this row to plain Schleich Bau GmbH keeping the GLN, and record the Bietergemeinschaft with Schleich Via GmbH as a consortium link on notice 20764150 rather than as this org's identity — subject to a registry check confirming the GLN is Schleich Bau GmbH's and not an ErsB registration of the consortium.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 14509146,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "ASZ - Das arbeitsmedizinische und sicherheitstechnische Zentrum in Linz GmbH (ASZ-Linz GmbH)",
+   "AMD (full legal name not present in evidence)"
+  ],
+  "rationale": "The row names a real BieGe/ArGe for occupational medicine (members abbreviated ASZ and AMD), so the vehicle itself is plausible. However, the identifier 156895d is an Austrian Firmenbuch-number-shaped value that the same notice 20786923 also publishes under 'ASZ- Das arbeitsmedizinische und sicherheitstechnische Zentrum in Linz GmbH', and notice 24129270 shows 'ASZ-Linz GmbH' bidding alone under the identical number four times. A temporary consortium's own registration would not be reused by one member acting solo on a different procurement, so 156895d is ASZ-Linz GmbH's own FN, i.e. the lead member's identifier attached to the vehicle row. The second member AMD is only ever an abbreviation; no identifier or full name for it is in evidence.",
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the identifier to NULL (it is ASZ-Linz GmbH's own FN), and re-point the ASZ-only mentions (notice 24129270 and the ASZ mention in 20786923) to the ASZ-Linz GmbH member organization.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 14534468,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Neue Raumpflege GmbH (Salzburg)",
+   "Neue Raumpflege GmbH (Linz)",
+   "Neue Raumpflege GmbH (Graz)"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the FN to NULL (or reattach it to the specific member once verified against the Firmenbuch), since a single early-1990s FN cannot be the ad-hoc vehicle's own registration and the mentions never pin it to one member.",
+  "rationale": "The published name unambiguously describes a BieGe/ArGe of three sister cleaning companies, so the row is a real consortium vehicle. The identifier is a single well-formed Firmenbuch number, not concatenated member numbers or garbage, and an ad-hoc Bietergemeinschaft (typically a GesbR) holds no FN; the sequentially assigned number 68394 dates to the early 1990s, which fits an established member GmbH but not a temporary bid vehicle. All eight mentions are the consortium name from one notice, so the corpus never ties the FN to a specific member; it is most plausibly the lead (first-listed Salzburg) company's registration, but which member holds it is unverifiable from the evidence.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 14534470,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Simacek Facility GesmbH",
+   "Simacek Facility Management Group GesmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the FN 049474g to NULL (it is SIMACEK FACILITY GmbH's own Firmenbuch number), and re-point the standalone SIMACEK FACILITY GmbH mention (notice 20992533) to that member company's own org row.",
+  "rationale": "The name is a clear BieGe/ArGe of two named Simacek-group companies, so the row is a genuine consortium vehicle. The identifier 049474g is in Austrian Firmenbuch format (six digits plus check letter, FN prefix omitted), and notice 20992533 publishes the identical number for \"SIMACEK FACILITY GmbH\" alone — i.e. the FN belongs to the first-named (lead) member, not to the vehicle, which as a typical GesbR-form BIEGE would not share a member GmbH's registration. The shared number has also caused a standalone member mention to be conflated into this vehicle row.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 14813535,
+  "verdict": "unclear-escalate",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "JHP GmbH"
+  ],
+  "recommended_handling": "Escalate: do not strip the identifier (it is a structurally valid Austrian 9110-prefix GLN with correct GS1 check digit, unique in the corpus) — resolve at apply stage by looking up GLN 9110016807652 in the Unternehmensregister/ERsB to determine whether it names JHP GmbH (then relabel the row as that member company) or an ERsB-registered consortium (then keep as a sound vehicle).",
+  "rationale": "The identifier is a valid GLN-13 (check digit verifies) with the 9110 prefix Austrian registers issue, but in Austria both a Firmenbuch GmbH and an ERsB-registered Bietergemeinschaft/GesbR can hold such a GLN, so the number's holder is mechanically undecidable from the evidence. The name 'Bietergemeinschaft JHP GmbH' is self-contradictory: a Bietergemeinschaft cannot itself be a GmbH, so this is either the single company JHP GmbH prefixed with 'Bietergemeinschaft' by the notice publisher (mislabelled member holding its own GLN) or a consortium shorthand whose own ERsB GLN this legitimately is. With a single mention, no member list in any published name, and no identifier collisions to triangulate, neither reading can be confirmed; the only extractable member candidate, 'JHP GmbH', may in fact be the whole entity rather than a member.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 15053079,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Held & Francke Baugesellschaft m.b.H.",
+   "Habau Hoch- und Tiefbaugesellschaft m.b.H.",
+   "Gebrüder Haider Bauunternehmung GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the identifier to NULL, and re-home the six mentions published under \"Held & Francke Baugesellschaft m.b.H.\" alone to that member company's own organization.",
+  "rationale": "The name attests a real three-member Austrian Bietergemeinschaft (Held & Francke, Habau, Gebrüder Haider). The identifier 9110016217901 is a 13-digit GS1-Austria-prefixed number (GLN format used in AT notices), not an FN registration or ATU VAT id a consortium vehicle would plausibly hold as its own. Decisively, six of the eight mentions carry this exact literal under the name of Held & Francke alone across five other notices, so the number is the lead member's own identifier that was also published for the consortium bid on notice 20972972; the zero-collision measurement shows the standalone member mentions were conflated into this vehicle row via the shared literal.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 15501192,
+  "verdict": "member-row-mislabelled",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Sodexo Service Solutions Austria GmbH"
+  ],
+  "rationale": "Seven of eight mentions across four notices publish the plain name \"Sodexo Service Solutions Austria GmbH\" with the identical raw identifier 9110015269239; only one notice (21136186) adds the \"Bietergemeinschaft\" prefix, and no second member company is named anywhere. The 13-digit 9110-prefixed value is the shape of an Austrian GLN used as a single company's e-procurement identifier, and its consistent reuse for the plain GmbH shows it is Sodexo's own number, not a vehicle registration or concatenation. The row therefore represents the single member company that inherited a consortium-prefixed name variant from one notice, rather than a distinct consortium vehicle.",
+  "recommended_handling": "Rename the row to the plain company name \"Sodexo Service Solutions Austria GmbH\" and keep the identifier as the company's own; if notice 21136186 documents a real consortium, that vehicle would need its own row without this identifier.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 15800778,
+  "verdict": "member-row-mislabelled",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "M+G Ingenieure Dipl.-Ing. Josef Galehr Ziviltechniker-GmbH"
+  ],
+  "recommended_handling": "Re-label this row as the single member company (drop the \"Bietergemeinschaft\" prefix from the canonical name, merging with any future row for the plain firm) and keep the identifier, which is the company's own 13-digit Austrian national number.",
+  "rationale": "The name contains only one company with a single legal-form suffix and no member separator, and mention 22038444 publishes the same organization without the Bietergemeinschaft prefix (\"M+G INGENIEURE - Dipl. Ing. Josef Galehr Ziviltechniker\") under the identical raw identifier 9110015910384 — so the number is the single firm's own, not a vehicle registration. The 13-digit value is neither an FN nor a DE VAT but matches Austrian 13-digit national/GLN-style identifiers, and no second member company is visible in any mention. Most plausibly one notice prefixed the lone published bidder with \"Bietergemeinschaft\"; the row is really the member firm itself. Confidence is medium rather than high only because \"M+G Ingenieure\" and the Galehr GmbH could in principle be two firms, though the mention formatting argues against it.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 15858566,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "convelop cooperative knowledge design GmbH",
+   "ÖIR GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier as plausibly the vehicle's own AT registration (well-formed 9110-prefixed 13-digit number, no corpus collision, never seen under a member's name), but mark it unverified rather than confirmed.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft composed of two named firms (convelop cooperative knowledge design GmbH and ÖIR GmbH), so this is a genuine consortium vehicle, not a mislabelled member. The identifier 9110016992518 is a well-formed 13-digit 9110-prefixed Austrian registry-style number of the kind seen corpus-wide, and Austrian BIEGE/ARGE vehicles can legitimately hold their own registration of this shape. Unlike the condemned sibling cases (e.g. Sedlak, Held & Francke, Sodexo), the number never appears under any single member's name and has zero collisions in the corpus, so there is no evidence it is a lead member's identifier; however, with only one self-mention the vehicle-own reading cannot be positively verified from the evidence.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 15888586,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "vehicle-own-registration",
+  "members": [
+   "Mark Hofstetter",
+   "David Schmidt",
+   "Thomas Klausner"
+  ],
+  "recommended_handling": "Keep the row standing as a consortium vehicle with its identifier intact — the 13-digit value is plausibly the vehicle's own Austrian ERsB/GLN registration; optionally confirm against the ERsB at the apply stage.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft (KOHA-HKS) and enumerates three natural-person members, so this is a genuine consortium, not a mislabelled single company. The identifier is one coherent 13-digit number with a valid GS1/GLN-13 check digit and the 9110 prefix typical of Austrian ERsB-issued GLNs — the registration form an Austrian GesbR of natural persons (which cannot hold an FN) would obtain to bid; it matches no member-company format (not ATU VAT, not FN, not DE VAT) and is not a concatenation. The sole mention publishes exactly this identifier under the consortium's own name, and it collides with nothing else in the corpus, consistent with a registration created for the vehicle itself. Confidence is medium rather than high only because the ERsB register itself cannot be consulted to prove the GLN was issued to the consortium rather than to one member personally.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 16232653,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Mayer Ingenieurleistungen ZT GmbH",
+   "Schimetta Consult Ziviltechniker GmbH"
+  ],
+  "rationale": "The name is a textbook two-member Austrian Bietergemeinschaft (Mayer Ingenieurleistungen ZT GmbH + Schimetta Consult Ziviltechniker GmbH), so a vehicle genuinely exists for notice 21389535. However the identifier 9110016786940 is a valid 13-digit GS1/GLN-format number (9110 prefix, the GS1-Austria company-GLN range used as national id in AT e-procurement), and four of the five recorded mentions publish that exact number under the standalone name \"MAYER Ingenieurleistungen ZT GmbH\" — proving mechanically that it is the lead member's own company number, not a registration of the temporary vehicle. Because the corpus collapses on the identifier literal, those four single-company mentions have been wrongly merged into the consortium row.",
+  "recommended_handling": "Split the row: keep the consortium vehicle standing for the one Bietergemeinschaft mention with its identifier stripped to NULL, and move the identifier plus the four MAYER-only mentions to a separate org row for MAYER Ingenieurleistungen ZT GmbH.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 16429437,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Hydrophil GmbH",
+   "ILF Consulting Engineers Austria GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip FN260405Z to NULL, reattaching it to Hydrophil GmbH only after a Firmenbuch lookup confirms it is that company's registration.",
+  "rationale": "The name explicitly describes a two-member Bietergemeinschaft in the unregistered GesbR form (\"bestehend aus ... vertreten durch das federfuehrende Unternehmen Hydrophil GmbH\"), so the row is a genuine consortium vehicle, and under Austrian law a GesbR cannot hold its own Firmenbuch number — a registered ARGE would carry a firm form such as OG in its name. The identifier is a single well-formed FN (FN 260405z), not concatenated member numbers and not garbage, so it belongs to some registered company; the overwhelmingly likely source is the designated lead Hydrophil GmbH, whose registration data typically populates the winner block for a BIEGE. The single mention repeats the same consortium name and FN, and the corpus offers no collision to cross-confirm ownership, so the attribution to Hydrophil is a strong structural inference rather than a verified fact.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 16444550,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Muenet GmbH",
+   "epcan GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the Muenet/epcan consortium vehicle but strip DE269205351 to NULL (it is MUENET's own VAT), and split off the mentions belonging to solo MUENET GmbH (notice 23013049) and the distinct MN Glasfaser/MUENET GmbH & Co. KG consortium (notices 25436917, 26833389) into their own organization rows.",
+  "rationale": "DE269205351 is a syntactically valid single German VAT id (DE + 9 digits), so it is one entity's number, not a concatenation or garbage. The mentions show the same literal published for MUENET GmbH alone and for two consortia with different member compositions (Muenet+epcan vs. MN Glasfaser+MUENET GmbH & Co. KG); two distinct Bietergemeinschaften cannot share one VAT registration, so the number cannot be this vehicle's own. The solo-company mention identifies it as the lead member Muenet's VAT, reused on consortium filings. The shared identifier has additionally conflated mentions of three distinct entities under this single org row.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 17217850,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Riegger",
+   "Metzler",
+   "Schelling"
+  ],
+  "recommended_handling": "Keep the row standing as a consortium vehicle and keep the identifier: it is a well-formed 13-digit AT national identifier (GLN-shaped, 9110 prefix) that is plausibly the ARGE's own registration, but flag it for register verification rather than treating ownership as confirmed.",
+  "rationale": "The name \"Arbeitsgemeinschaft Riegger, Metzler, Schelling\" is the canonical ARGE form naming three member parties, so the row is a real consortium vehicle, not a mislabelled single company. The identifier is mechanically sound: 13 digits matching the Austrian 9110-prefixed GLN pattern used as a national registration identifier in AT procurement notices — it is not an FN, not a DE VAT, not a concatenation of member VATs, and not garbage. An ARGE (GesbR) can legitimately hold its own such registration, and the measured absence of any identifier collision in the corpus is consistent with it belonging to the vehicle rather than a member; however, with only one mention and no register access, I cannot rule out that it is actually the lead member's number published under the ARGE name.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 17732717,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Christine Berghammer Coaching Unternehmensentwicklung",
+   "Viehböck Evelyn"
+  ],
+  "recommended_handling": "Keep the row standing as a consortium vehicle, but flag the identifier for external verification (Firmenbuch/VIES) at apply stage: ATU62726140 fails the Austrian UID check-digit test (valid form would be ATU62726143), so correct it if a match is found or strip it to NULL.",
+  "rationale": "The name explicitly reads 'Bietergemeinschaft' with two clearly separable members (a coaching sole proprietorship and an individual), so this is a genuine AT bidding consortium, not a mislabelled single company. The identifier is a single ATU-shaped value with no corpus collisions, so it is neither concatenated member numbers nor a member's number reused elsewhere; an Austrian GesbR could in principle hold its own UID. However, the published value fails the Austrian UID check-digit algorithm (verified against two known-valid reference UIDs; expected check digit 3, published 0), so as stored it cannot be anyone's valid UID — most plausibly a one-digit transcription error whose true owner (vehicle vs lead member) the single mention cannot resolve.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 17942429,
+  "verdict": "unclear-escalate",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "CATRO Personalberatung und Media GmbH"
+  ],
+  "recommended_handling": "Escalate: cannot distinguish the vehicle from its lead (and only named) member — if the row is confirmed as the consortium vehicle, strip FN 324761s to NULL and attach it to the CATRO GmbH member; if it is really the single company, relabel the row and keep the identifier.",
+  "rationale": "The identifier 324761s is a single, well-formed Austrian Firmenbuch number (six digits plus check letter), and under Austrian law a GmbH always holds an FN while a Bietergemeinschaft in its usual GesbR form cannot be Firmenbuch-registered — so the number is mechanically most plausible as CATRO Personalberatung und Media GmbH's own registration, not the vehicle's. The name conflates that one GmbH with a consortium named after it (\"X GmbH / Bietergemeinschaft X\"), and no second member company appears anywhere. Both mentions are identical rows from a single notice, giving no independent evidence that a multi-member consortium actually existed versus the GmbH bidding alone under a Bietergemeinschaft label. The row is therefore either a vehicle carrying its lead member's FN or a mislabelled single member with a correct FN, and the evidence cannot separate the two.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18074367,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "FCP",
+   "PCD",
+   "iC"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle; keep the identifier but flag it for verification (it may be a Firmenbuch number published without the FN prefix and check letter, or a buyer-internal number) rather than stripping it, since it is unique in the corpus and consistently published.",
+  "rationale": "The name \"Arbeitsgemeinschaft FCP-PCD-iC\" is unambiguously an ARGE whose name concatenates three member abbreviations, so the row is a genuine consortium vehicle, not a mislabelled single member. The identifier \"20162\" matches no standard format: it is not an ATU VAT, not a DE VAT (so not a member's VAT or a concatenation of member VATs), and lacks the FN prefix and check letter of a canonical Firmenbuch number — but as a bare 5-digit number it is plausibly a truncated FN registration of the vehicle itself (registered ARGEs exist, though GesbR-form ARGEs usually hold no FN) or an internal number. With a single self-consistent mention and zero identifier collisions in the corpus, there is no evidence it belongs to a member or is garbage, so the honest diagnosis is plausible-but-unverifiable.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18147710,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Alltech Projektmanagement und Planung GmbH",
+   "Linienreich Generalplanung & Projektmanagement GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip 9110016630199 to NULL (it is the lead member's number), and re-home the three Alltech-solo mentions (notices 23832690, 23919586, 24225137) to a standalone Alltech Projektmanagement und Planung GmbH org that should carry that identifier.",
+  "rationale": "The name is a textbook two-member Austrian Bietergemeinschaft (Alltech / Linienreich, both GmbHs), so the vehicle itself is real. The identifier 9110016630199 is a 13-digit GS1-Austria-style GLN, not an FN Firmenbuch registration a GbR/ARGE vehicle would hold as its own. Mechanically it is the lead member's number: three of the six mentions publish exactly this identifier for ALLTECH Projektmanagement und Planung GmbH bidding alone, which is only consistent with the number belonging to Alltech and being reused on the consortium's notices. The identifier-keyed merge has therefore also mis-attached Alltech's solo appearances to this consortium row.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 18147717,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Arch. DI David Schinerl",
+   "S Hoch 2 ZT GmbH",
+   "Schorn Architektur ZT GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip 9110007546225 to NULL, and re-point the solo \"Arch. DI David Schinerl\" mentions (notices 24474336, 28926656) to a distinct member-company org that carries that identifier.",
+  "rationale": "The name unambiguously describes a real three-member Bietergemeinschaft (Schinerl / S Hoch 2 ZT GmbH / Schorn Architektur ZT GmbH), so this is a genuine vehicle, not a mislabelled single company. The identifier is a well-formed Austrian 9110-prefix (GLN-style) national number, but the identical literal is published in two other notices for \"Arch. DI David Schinerl\" alone, showing it is the lead member's own number rather than a registration of the temporary vehicle. Since the literal collides with nothing else in the corpus, the lead member's solo activity has been merged into the vehicle row via this shared identifier.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 18245381,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Rhomberg Bau GmbH",
+   "i+R Bau GmbH"
+  ],
+  "rationale": "The name explicitly declares a Bietergemeinschaft for a named project (Festspielhaus Bregenz) with two delimited members, so the row is a genuine consortium vehicle, not a mislabelled single company. The identifier 9110025880356 is a structurally valid GLN (13 digits, correct GS1 checksum, prefix 911 in GS1 Austria's 900-919 range) — a single coherent Austrian national identifier, not concatenated member numbers or garbage. Austrian ARGEs/BIEGEs can legitimately hold their own GLN/ERsB registration for e-procurement, and no other org in the corpus carries this literal, so vehicle-own registration is plausible; however, the single mention cannot rule out that the GLN belongs to the lead member Rhomberg Bau GmbH.",
+  "recommended_handling": "Keep the row standing as a consortium vehicle and keep the identifier as plausibly the vehicle's own GLN registration, but flag it for verification against GS1 Austria/ERsB before treating it as authoritative.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18347179,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "vehicle-own-registration",
+  "members": [
+   "WIFI Kärnten GmbH",
+   "BFI Kärnten GmbH"
+  ],
+  "rationale": "The name explicitly declares a two-member Bietergemeinschaft (WIFI Kärnten GmbH und BFI Kärnten GmbH) and the single mention publishes the same name, country and identifier, so this is a real consortium vehicle, not a mislabelled member. The identifier 9110031220672 is a structurally valid GS1 GLN-13 (check digit verifies) in the Austrian 9110 public-administration GLN range, which is the identifier form assigned via the Ergänzungsregister (ERsB) to entities without a Firmenbuch number — precisely what an Austrian Bietergemeinschaft (a GesbR) receives as its own registration. It is a single identifier, not two concatenated member numbers, not an FN or ATU/DE VAT of a member, and it collides with no other org in the corpus. That the GLN belongs to the vehicle rather than a member cannot be confirmed offline, but everything mechanical about it is consistent with the vehicle's own ERsB GLN.",
+  "recommended_handling": "Keep the row standing as a consortium vehicle with its identifier — it is plausibly the vehicle's own 9110-range ERsB GLN; an ERsB/USP lookup at apply stage can confirm ownership before any change.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18480636,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Böhm Stadtbaumeister+Gebäudetechnik GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip FN 228135v to NULL (or reassign it to the member GmbH's org row), and flag for member resolution since only the lead member is named.",
+  "rationale": "The identifier 228135v is a single well-formed Austrian Firmenbuch number, but an Austrian Bietergemeinschaft is normally a GesbR, which cannot hold an FN registration — while the name ends in \"GmbH\", a legal form the vehicle itself cannot have, so the FN almost certainly belongs to the one embedded member company, Böhm Stadtbaumeister+Gebäudetechnik GmbH (\"Stadtbaumeister+Gebäudetechnik\" reads as one firm's trade combination, with a single legal-form suffix). This matches the common pattern of a consortium published under its lead member's name and registration. Confidence is medium rather than high because there is only one mention, no second member is extractable (the double space after \"Böhm\" may mark dropped text), and the alternative reading — a single GmbH mislabelled with a \"Bietergemeinschaft\" prefix — cannot be excluded from this evidence; in either reading the FN is the GmbH's, not the vehicle's.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18854960,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "ÖSB Consulting GmbH",
+   "bit management Beratung GmbH"
+  ],
+  "rationale": "The name is the canonical Austrian consortium form \"Bietergemeinschaft A und B\" with two clearly identifiable GmbH members, so the row is a genuine bidding-consortium vehicle, not a mislabelled single company. The identifier 9110031144299 is a structurally valid 13-digit GLN (GS1 check digit verifies: weighted sum 71 requires check digit 9, which matches) — the standard identifier shape in Austrian e-procurement — and is neither a DE VAT, an FN, nor a concatenation of member identifiers. Austrian consortia can register in the Ergänzungsregister and hold their own GLN, and the literal collides with no other org in the corpus, so it is plausibly the vehicle's own number; however, with a single mention and no register lookup permitted, I cannot rule out that it is the lead member's GLN.",
+  "recommended_handling": "Keep the row standing as a consortium vehicle with its identifier intact — it is a checksum-valid Austrian GLN with no corpus collisions, plausibly the vehicle's own registration — but flag it for an ERsB/GS1 lookup at apply time to confirm it is not the lead member's GLN.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 18926887,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Verein zur FAB",
+   "Comino Unternehmensberatung GmbH"
+  ],
+  "rationale": "The name explicitly declares a two-member Austrian Bietergemeinschaft (Verein zur FAB and Comino Unternehmensberatung GmbH), so the row is a genuine consortium vehicle, not a mislabelled single company. The identifier 9110031118061 is a 13-digit number in the Austrian GS1 range (prefix 911) with a valid GS1 mod-10 check digit, i.e. a well-formed GLN — the identifier type Austrian procurement assigns to entities including non-Firmenbuch vehicles via the Ergänzungsregister; it is neither a member FN/ATU number, nor a concatenation, nor garbage. Whether the GLN belongs to the vehicle itself or to the lead member cannot be established from the single mention, though the measured absence of any corpus collision is consistent with it being the vehicle's own registration.",
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier as plausibly the vehicle's own Austrian GLN/ERsB registration; optionally verify against the Ergänzungsregister at the apply stage before treating it as confirmed.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19010777,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "the update training GmbH",
+   "ABZ*AUSTRIA"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier as plausibly the vehicle's own Austrian registration (13-digit 9110-prefixed GLN/ERsB-style number), but mark it unverified rather than confirmed, since the single mention cannot rule out that it is a member's number.",
+  "rationale": "The name is an explicit two-member Bietergemeinschaft (\"the update training GmbH und ABZ*AUSTRIA\"), so this is not a mislabelled single company. The identifier 9110031117569 is a single well-formed 13-digit value in the shape of an Austrian GLN as used in e-procurement — not a DE VAT, not a concatenation of two identifiers, and not garbage like an address; Austrian consortia without Firmenbuch entry can hold such a registration via the Ergänzungsregister, so it may legitimately be the vehicle's own. However, with only one mention repeating the same literal, no corpus collisions, and no member identifiers in evidence, it is impossible to verify whether the number belongs to the vehicle or to one member.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19053384,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "ABZ*AUSTRIA",
+   "Berufsförderungsinstitut Wien"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier: it is a single mechanically valid Austrian GLN-13 plausibly issued to the vehicle itself (ERsB-style registration), pending optional register confirmation.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft of two distinct, real Austrian organizations, and both recorded mentions publish the identical name and identifier, so this is not a mislabelled single member. The identifier 9110031144534 is exactly one valid GLN-13 (check digit verifies) in the GS1 Austria prefix range 911 — the identifier form Austrian procurement uses for ERsB/USP-registered entities, including unregistered vehicles like a GesbR consortium — and it is not an FN number, not an ATU VAT id, not a concatenation of two member numbers, and not garbage. The literal is unique in the corpus and only ever attached to the consortium name, consistent with the vehicle's own registration rather than a member's number. However, the evidence in the file cannot confirm to whom the GLN was issued (vehicle vs. lead member), so ownership stays plausible but unverified.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19104425,
+  "verdict": "unclear-escalate",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Dr. Fidelius Krammel (lead member)",
+   "Huber (surname only published)",
+   "Maizik (surname only published)"
+  ],
+  "rationale": "The row is a genuine consortium bid entity: the published name names a Bietergemeinschaft of three persons (Krammel/Huber/Maizik) with Dr. Fidelius Krammel fronting it as lead member. The identifier 9110022376135 is a single, well-formed Austrian 9110-prefixed ERsB/GLN-style number — the register family where both unregistered vehicles (BIEGEs/ARGEs) and individual practitioners legitimately hold numbers — so it is neither concatenated member VAT ids nor garbage. But with exactly one mention and no identifier collision anywhere in the corpus, nothing distinguishes the vehicle's own registration from Dr. Krammel's personal number; corpus precedent cuts both ways (identical-format numbers on Sedlak 13011025 and Held & Francke 15053079 rows proved to be lead-member numbers via later solo mentions, but no such solo mention exists here). Escalation is the honest call rather than stripping a possibly-correct own registration.",
+  "recommended_handling": "Escalate: cannot distinguish the vehicle's own ERsB/GLN registration from the lead member Dr. Krammel's number on one mention — verify 9110022376135 against the Austrian ERsB/lead member before deciding to keep or NULL it.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19158773,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "Murad & Murad GmbH",
+   "Weidinger & Partner"
+  ],
+  "recommended_handling": "Keep standing as consortium vehicle with the identifier retained — it is plausibly the vehicle's own ERsB/USP-issued GLN (valid GS1 check digit, Austrian prefix); optionally verify GLN ownership against the Austrian registry at the apply stage before treating it as authoritative.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft of two members (Murad & Murad GmbH; Weidinger & Partner), and the single AT mention matches the row verbatim, so this is a real consortium vehicle, not a mislabelled member. The identifier 9110031686799 is a 13-digit number with a valid GS1 mod-10 check digit in the Austrian GS1 prefix range — i.e. a well-formed GLN, the identifier type Austrian ARGEs/GesbR without a Firmenbuch number receive via the Ergänzungsregister and use in e-procurement; it is mechanically neither an FN, an ATU VAT, a concatenation of member numbers, nor garbage. No other corpus organization holds the literal, consistent with a vehicle-specific registration. What cannot be verified from the evidence is whether this GLN was issued to the vehicle itself rather than to a member, hence the diagnosis stops at plausible-but-unverifiable.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19165940,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "BFI (Berufsförderungsinstitut)",
+   "WIFI (Wirtschaftsförderungsinstitut)",
+   "ÖSB"
+  ],
+  "rationale": "The name unambiguously names a three-member Austrian bidding consortium (BFI - WIFI - ÖSB), and the single AT mention repeats the same name and identifier consistently. The identifier is a 13-digit number in the 9110... Austrian public-register GLN range with a passing GS1 check digit (computed 2 = published 2), i.e. exactly the form of an Ergänzungsregister GLN that a GesbR/Bietergemeinschaft may legitimately hold as its own registration; it is mechanically neither a Firmenbuch number, an ATU VAT id, concatenated member ids, nor garbage. No other organization in the corpus holds this literal, which is consistent with a vehicle-own registration rather than a member's number, but the register entry itself is not in evidence, so ownership (vehicle vs. lead member) cannot be confirmed from the corpus alone.",
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier as plausibly the vehicle's own ERsB GLN registration; verify against the Austrian register at the apply stage before treating it as authoritative.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19282423,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "BFI der AK Vorarlberg GmbH",
+   "ibis acam Bildungs GmbH"
+  ],
+  "recommended_handling": "Keep standing as consortium vehicle with its identifier intact; the 13-digit 9110-prefixed value is shaped like a single Austrian administrative GLN (ERsB-style) that a Bietergemeinschaft can legitimately hold itself, so do not strip it — optionally flag for register lookup at apply stage to confirm it is the vehicle's rather than the lead member's.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft of two identifiable Austrian companies, and both mentions (same notice 22472318) publish the identical name and identifier, so the row is a genuine consortium vehicle, not a mislabelled member. The identifier 9110032089100 is mechanically a single well-formed 13-digit number — not a DE VAT, not an FN, and not a concatenation of two member identifiers — and its 9110 prefix matches the Austrian Unternehmensregister/ERsB GLN scheme under which an unregistered GesbR consortium can hold its own number. With zero identifier collisions in the corpus there is no evidence it was copied from a member, but the file alone cannot prove whether it belongs to the vehicle or to the lead member, hence plausible-but-unverifiable rather than vehicle-own-registration.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19317240,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "koup architekten ZT gmbh",
+   "kosaplaner gmbh"
+  ],
+  "recommended_handling": "Split the row: reassign the four bare \"koup architekten ZT gmbh\" mentions (notices 23699944, 23974364, 25577645, 25692590) together with identifier 9110017486900 to a standalone koup architekten ZT gmbh organization, and keep the consortium vehicle standing for notice 22485132 only, with its identifier stripped to NULL.",
+  "rationale": "The identifier 9110017486900 is a 13-digit Austrian 9110-prefixed company number (Unternehmensregister/GLN style), a form that identifies a registered firm rather than a temporary bidding consortium. Four of the five recorded mentions publish exactly this identifier under the single company name \"koup architekten ZT gmbh\" with no consortium wording, so mechanically the number belongs to the lead member, not the vehicle. Only notice 22485132 names the actual Bietergemeinschaft (koup architekten + kosaplaner), reusing the lead member's number — the classic pattern of a consortium notice filled in with a member's identifier. The measured absence of identifier collisions is an artifact of this merge: the member's own mentions were absorbed into the vehicle row via the shared identifier.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 19317242,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "TM3 Baumanagement GmbH",
+   "Architekturbüro Karl ZT GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip identifier 9110028981098 from it (it is the lead member's number, plausibly TM3's GLN), and detach the notice-25544530 mention to a standalone TM3 Baumanagement GmbH organization where that identifier belongs.",
+  "rationale": "The name is a textbook two-member Austrian Bietergemeinschaft (TM3 Baumanagement GmbH and Architekturbüro Karl ZT GmbH), so the row is a genuine consortium vehicle. The identifier 9110028981098 is not an FN registration (FN format is digits plus a check letter) — its 13-digit 91x shape matches a GS1-Austria GLN, and notice 25544530 publishes the very same number under TM3 Baumanagement GmbH's name alone, which mechanically marks it as the lead member's identifier rather than the vehicle's own. The zero-collision measurement fits: the solo-TM3 mention was merged onto this row, so no second organization holds the literal. Residual doubt only because the solo mention could be a truncated rendering of the consortium name, hence medium confidence.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19670539,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "the update training GmbH",
+   "ZIB Training GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle with its identifier intact — it is a checksum-valid Austrian 91-prefix GLN used identically in all six mentions with zero corpus collisions, plausibly the vehicle's own registration; if ownership must be certain, verify against the Austrian ERsB/USP register at apply stage rather than stripping it.",
+  "rationale": "All six mentions name the same two-member Bietergemeinschaft (the update training GmbH + ZIB Training GmbH, AT), so this is a genuine consortium vehicle, not a mislabelled single member. The identifier is a single 13-digit value with a valid GS1/EAN-13 check digit and the Austrian 91 prefix — the GLN form Austrian procurement platforms publish as organization identifier, and one a BIEGE-GesbR can legitimately hold via the Ergänzungsregister; it is mechanically neither an FN number, an ATU VAT, a concatenation of member identifiers, nor garbage. It is stable across all notices and collides with no other org in the corpus, which argues against it being a member's number copied onto the vehicle, but the in-corpus evidence cannot prove whether the GLN belongs to the vehicle itself or to a lead member, hence the identifier ownership stays unverifiable.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19670643,
+  "verdict": "consortium-vehicle-wrong-identifier",
+  "identifier_diagnosis": "lead-member-identifier",
+  "members": [
+   "Mentor GmbH & Co OG",
+   "die Berater Unternehmensberatungs GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle but strip the identifier (likely the lead member Mentor GmbH & Co OG's GLN, not a vehicle registration) to NULL, and at apply time review whether the notice-22656219 mention under the bare lead-member name should be re-linked to a member row.",
+  "rationale": "The name is a textbook two-member Austrian Bietergemeinschaft, so the row itself is a genuine consortium vehicle. The identifier 9110031107430 is mechanically not a Firmenbuch number (FN format is FN + digits + check letter) nor a VAT id; it matches the 13-digit Austrian GLN format used in AT e-procurement and carries a valid GS1 check digit, so it is a real identifier rather than garbage — but not a vehicle's own FN registration. The same raw identifier is published on notice 22656219 under the bare name \"Mentor GmbH & Co OG\", which indicates the number belongs to the lead member rather than to the ad-hoc vehicle. Confidence is medium rather than high because that lone bare-name mention could alternatively be a truncated publication of the consortium name, and GLN ownership cannot be verified from the in-file evidence alone.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19670653,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "vehicle-own-registration",
+  "members": [
+   "bit schulungscenter GmbH",
+   "ipcenter.at GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as a consortium vehicle with its identifier intact — the value is plausibly the vehicle's own Austrian ERsB GLN registration, not a member's number.",
+  "rationale": "The name explicitly declares a Bietergemeinschaft of two named Austrian GmbHs, published identically with the identical raw identifier across four separate AT notices, and the literal collides with no other org in the corpus. The identifier is not an FN number (FN + 6 digits + check letter) nor an ATU VAT id nor a DE VAT, so it is mechanically not a member's registration; it is a 13-digit value starting 9110 with a valid GS1 GLN-13 check digit (computed: expected 3, given 3), the exact shape of an entry in Austria's Ergänzungsregister für sonstige Betroffene — the register that issues identifiers to entities without Firmenbuch registration, which is exactly what a bidding consortium organised as a GesbR is. A member GmbH would be Firmenbuch-registered and could not be the holder of an ERsB GLN, so the identifier plausibly belongs to the vehicle itself. I could not consult the ERsB register directly (no external access permitted), but every offline check is consistent with a legitimately registered consortium vehicle.",
+  "confidence": "high"
+ },
+ {
+  "org_id": 19670693,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "plausible-but-unverifiable",
+  "members": [
+   "bit schulungscenter GmbH",
+   "die Berater Unternehmensberatungs GmbH"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier — it is a check-digit-valid Austrian administrative GLN (9110 ERsB range) plausibly the vehicle's own registration — but verify it against the ERsB at the apply stage before treating it as authoritative.",
+  "rationale": "The name explicitly reads \"Bietergemeinschaft X und Y\" and both mentions (notices 22613088, 24479780) repeat the same name and identifier, so this is a real two-member Austrian bidding consortium, not a mislabelled single company. The identifier 9110031225066 is a single structurally valid GLN-13 (GS1 check digit passes) in the 9110 administrative range that Austria's Ergänzungsregister für sonstige Betroffene issues to entities without a Firmenbuch entry — exactly how a GesbR-form Bietergemeinschaft gets its own e-procurement identifier; it matches no member-identifier format (FN, ATU/DE VAT) and is not a concatenation or garbage. No other organization in the corpus holds the literal, consistent with a vehicle-specific registration. Ownership by this specific consortium cannot be confirmed from the evidence file alone, hence plausible-but-unverifiable rather than confirmed vehicle-own-registration.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19670775,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "vehicle-own-registration",
+  "members": [
+   "ZIB Training GmbH",
+   "Weidinger & Partner Gesellschaft mbH"
+  ],
+  "rationale": "The identifier is a single well-formed 13-digit GLN (GS1 mod-10 check digit verified: computed 0, matches) beginning 9110, the format Austrian ERsB registrations issue to entities outside the Firmenbuch — exactly how a GesbR/ARGE bidding consortium legitimately holds its own registration; it is mechanically not an FN, not an ATU VAT, not two concatenated member numbers, and not garbage. Two independent notices publish the identical full consortium name with this identical identifier, and no other organization in the corpus holds the literal, so nothing ties the number to either member. The one thing the evidence cannot settle is register ownership itself (a member's own GLN would have the same shape), which caps confidence at medium.",
+  "recommended_handling": "Keep the row standing as a consortium vehicle with its identifier intact — it is plausibly the vehicle's own ERsB GLN registration; optionally confirm ownership against the ERsB at apply time before treating it as authoritative.",
+  "confidence": "medium"
+ },
+ {
+  "org_id": 19703829,
+  "verdict": "consortium-vehicle-sound",
+  "identifier_diagnosis": "vehicle-own-registration",
+  "members": [
+   "die Berater Unternehmensberatungs GmbH",
+   "BEST GmbH",
+   "BFI Wien"
+  ],
+  "recommended_handling": "Keep the row standing as the consortium vehicle and keep the identifier, which is plausibly the vehicle's own Austrian register GLN (ERsB-style), pending optional register confirmation at apply time.",
+  "rationale": "The name is an explicit Austrian Bietergemeinschaft of three named training providers, so the row is a genuine consortium vehicle, not a mislabelled single member. The identifier 9110031264522 is one single, well-formed 13-digit GS1/GLN number (check digit validates) with the 9110 prefix used for Austrian public-register GLNs — exactly the identifier class an ERsB-registered GesbR/ARGE-type consortium holds, whereas the GmbH members would carry FN Firmenbuch numbers instead. It is mechanically not a DE VAT, not concatenated member numbers, and not garbage, and the literal collides with no other organization in the corpus, consistent with it belonging to the vehicle itself. External confirmation in the ERsB was not possible within the evidence, so ownership by the vehicle is strongly indicated by format but not register-verified.",
+  "confidence": "medium"
+ }
+]
