@@ -1,6 +1,23 @@
 # 310 — Stage-3 prevention: country-less identifier mentions keep minting NULL-country twins
 
-Status: ready-for-agent
+Status: BUILT 2026-08-29 ~19:0x — panel-hardened, gated, pending deploy.
+The refold canary passed first (see issue 300 board). The probe landed in
+resolve_one_mention with the sketch's bar, then a 3-lens adversarial panel
+(~405k tokens) grounded THREE gaps where prevention would have been MORE
+aggressive than the verified merge arm — all fixed before deploy: (1) the
+legal-form head-vs-head veto was missing (satellite corroboration across a
+family conflict — the merge's own hardening comment named the hole; a wrong
+BIND is worse than a wrong mint: no NULL twin left to arbitrate, no
+merge-log trail, and the D4 variant write-back would ratchet the wrong
+names into the owner's satellites); (2) the consortium veto was one-sided —
+now the OWNER's head+satellite names and the mention's VARIANTS are all
+checked; (3) the raw-triple cache let byte-identical repeats with different
+names ride E0 past corroboration — anchor binds are no longer cached, every
+country-less repeat re-earns the full bar. Panel verified clean: scheme-
+prefix/GR-fold agreement, condemns unreachable (extraction pre-gates with
+the identical predicate), vat-without-country unreachable, no canon_of
+drift, no iterator/txn hazard, indexed cost, no panic path. Tests pin all
+eight denial shapes + the bind.
 Kind: capability (organization layer quality)
 Relates to: 300 (Stage 3), 234 (provisional line), the Stage-2 prevention
 precedent (resolver pre-probe canonicalization)

@@ -4392,7 +4392,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 ("FRA".into(), "Ville de Bruxelles".into()),
             ],
         };
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let org = db.resolve_mentions(&mut resolver, &[m.clone()], 100).await.unwrap()[0];
         let count = int_of(&db, "SELECT COUNT(*) FROM organization_names").await;
         assert_eq!(count, Some(2), "both labelled variants recorded");
@@ -4440,7 +4440,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             identifier: None,
             variants: Vec::new(),
         };
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let ids = db
             .resolve_mentions(
                 &mut resolver,
@@ -4475,7 +4475,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
         // The reuse is durable, not only in-run: a FRESH resolver (new run, empty
         // caches) probes the table itself and still reuses.
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let again = db
             .resolve_mentions(&mut resolver, &[mention(8, "mairie de paris", Some("FR"))], 0)
             .await
@@ -4487,7 +4487,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // probe is scoped `identifier IS NULL`, because promoting by bare name is
         // exactly the over-merge the issue declines (two bodies can share a name
         // with only one of them registered).
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let with_id = db
             .resolve_mentions(
                 &mut resolver,
@@ -4511,7 +4511,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             .unwrap();
         db.finish_mention_resolver(resolver).await.unwrap();
         assert_ne!(with_id[0], ids[0], "an identifier-bearing mention keeps its own row");
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let nameless_probe = db
             .resolve_mentions(&mut resolver, &[mention(10, "Mairie de Paris", Some("FR"))], 0)
             .await
@@ -6547,7 +6547,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
 
         // A mention on `PROCEDURE`, the section `tiny_parsed` declares — and the section
         // the re-parse below declares again.
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         db.resolve_mentions(
             &mut resolver,
             &[Mention {
@@ -6643,7 +6643,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
         // A mention on the OLD section id — the shape prod actually had, and the
         // FK that made the first real re-parse run fail. The projection writes
         // these, so they reference sections the re-parse is about to delete.
-        let mut resolver = db.mention_resolver(None, None).await.unwrap();
+        let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
         let mentions = vec![Mention {
             notice_id: id,
             section_id: "PROCEDURE".into(),

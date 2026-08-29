@@ -1633,6 +1633,22 @@ pub struct MentionResolver {
     /// lead member's identifier must NOT canon-bind to the lead (the census's
     /// live Colas specimen); it mints separately and poisons the key.
     consortium: Option<fn(&str) -> bool>,
+    /// Issue 310, the Stage-3 PREVENTION half: `idgate::checksum_anchors`,
+    /// injected. A COUNTRY-LESS identifier whose digits pass exactly ONE
+    /// register checksum probes that scheme's standing owner instead of
+    /// minting the NULL-country twin the R3 merge job would later collapse.
+    /// `None` disables the probe (pre-310 behavior, byte-identical).
+    anchors: Option<fn(&str) -> Vec<(&'static str, String)>>,
+    /// `project::match_norm` — the R3 bar's corroboration key: an anchor
+    /// binding additionally requires exact cross-language N2 name equality
+    /// with the standing owner, the SAME discipline the merge arm enforces
+    /// (prevention must never be more aggressive than the verified merge).
+    norm: Option<fn(&str) -> String>,
+    /// `crosswalk::legal_form_family` — the merge arm's head-vs-head veto,
+    /// carried into the probe (panel catch: corroboration can ride a
+    /// SATELLITE across a family conflict, and without this veto prevention
+    /// would BIND what the merge arm counts denied_legal_form).
+    legal_form: Option<fn(&str) -> Option<&'static str>>,
 }
 
 /// The same-country E1 canonical key for an identifier, under the merge job's
@@ -3980,6 +3996,9 @@ impl Db {
         &self,
         canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
         consortium: Option<fn(&str) -> bool>,
+        anchors: Option<fn(&str) -> Vec<(&'static str, String)>>,
+        norm: Option<fn(&str) -> String>,
+        legal_form: Option<fn(&str) -> Option<&'static str>>,
     ) -> turso::Result<MentionResolver> {
         use std::collections::HashMap;
         let conn = self.conn().await;
@@ -4019,6 +4038,9 @@ impl Db {
             poisoned,
             canon_key,
             consortium,
+            anchors,
+            norm,
+            legal_form,
         })
     }
 
@@ -4162,10 +4184,117 @@ impl Db {
                         }
                         _ => None,
                     };
-                    if let Some(org_id) = canon_hit {
-                        // Register the raw triple too, so repeats of THIS
-                        // representation stay one map probe.
-                        org_of.insert(key, org_id);
+                    // Stage-3 prevention (issue 310): a COUNTRY-LESS
+                    // identifier whose digits pass exactly ONE register
+                    // checksum probes the anchored scheme's standing owner —
+                    // at the R3 merge arm's own bar: unique anchor, sole
+                    // un-poisoned owner, the consortium veto, and exact
+                    // cross-language N2 name corroboration. The scheme
+                    // prefix carries the country ("FI:ytunnus" → FI), so
+                    // the Stage-2 maps serve unchanged. Anything short of
+                    // the full bar mints the provisional as today — the
+                    // periodic R3 merge, with its full stack, arbitrates.
+                    // The anchor path's mention-side veto covers the
+                    // VARIANTS too (panel catch: a mention whose other-
+                    // language name is groupement-labelled while the head is
+                    // clean must not anchor-bind).
+                    let variant_vetoed = resolver
+                        .consortium
+                        .is_some_and(|f| m.variants.iter().any(|(_, v)| f(v)));
+                    let anchor_hit = match (canon_hit, id.country.as_deref(), resolver.anchors, resolver.norm, vetoed || variant_vetoed) {
+                        (None, None, Some(anchors_fn), Some(norm_fn), false) => {
+                            let anchors = anchors_fn(&id.value);
+                            let real: Vec<_> =
+                                anchors.iter().filter(|(s, _)| !s.contains('|')).collect();
+                            if real.len() == 1 && anchors.len() == real.len() {
+                                let (scheme, akey) = real[0];
+                                let ck = (
+                                    scheme.get(..2).unwrap_or_default().to_owned(),
+                                    *scheme,
+                                    akey.clone(),
+                                );
+                                match resolver.canon_of.get(&ck).copied() {
+                                    Some(org_id) if !resolver.poisoned.contains(&ck) => {
+                                        // Owner-name reads ride the WRITER
+                                        // conn: the standing owner may have
+                                        // been minted earlier in THIS batch's
+                                        // open transaction, invisible to a
+                                        // reader snapshot. The HEAD name
+                                        // comes first (UNION ALL preserves
+                                        // branch order) — the legal-form
+                                        // veto is head-vs-head, the merge
+                                        // arm's rule.
+                                        let n2 = norm_fn(&m.name);
+                                        let mut corroborated = false;
+                                        let mut owner_vetoed = false;
+                                        let mut head_family: Option<&'static str> = None;
+                                        if !n2.is_empty() {
+                                            let mut first = true;
+                                            let mut rows = conn
+                                                .query(
+                                                    "SELECT name FROM organizations WHERE id = ? \
+                                                     UNION ALL \
+                                                     SELECT name FROM organization_names WHERE org_id = ?",
+                                                    (Value::Integer(org_id), Value::Integer(org_id)),
+                                                )
+                                                .await?;
+                                            while let Some(row) = rows.next().await? {
+                                                let tn = text(&row, 0);
+                                                // Panel catch: the OWNER's
+                                                // names are evidence too — a
+                                                // consortium-named owner (or
+                                                // satellite) never captures
+                                                // new mentions here; the
+                                                // merge job arbitrates.
+                                                if resolver.consortium.is_some_and(|f| f(&tn)) {
+                                                    owner_vetoed = true;
+                                                    break;
+                                                }
+                                                if first {
+                                                    first = false;
+                                                    head_family = resolver
+                                                        .legal_form
+                                                        .and_then(|f| f(&tn));
+                                                }
+                                                if norm_fn(&tn) == n2 {
+                                                    corroborated = true;
+                                                }
+                                            }
+                                        }
+                                        // Panel catch: corroboration can
+                                        // ride a SATELLITE across a family
+                                        // conflict (the cross-country twin
+                                        // shape) — head-vs-head legal-form
+                                        // families must agree, exactly the
+                                        // merge arm's denied_legal_form.
+                                        let family_conflict = match (
+                                            resolver.legal_form.and_then(|f| f(&m.name)),
+                                            head_family,
+                                        ) {
+                                            (Some(mf), Some(hf)) => mf != hf,
+                                            _ => false,
+                                        };
+                                        (corroborated && !owner_vetoed && !family_conflict)
+                                            .then_some(org_id)
+                                    }
+                                    _ => None,
+                                }
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+                    if let Some(org_id) = canon_hit.or(anchor_hit) {
+                        // Register the raw triple on CANON binds only, so
+                        // repeats of that representation stay one map probe.
+                        // An ANCHOR bind is name-conditional (panel catch:
+                        // caching it would let a byte-identical repeat with a
+                        // DIFFERENT name ride E0 past the corroboration bar)
+                        // — every country-less repeat re-earns the full bar.
+                        if canon_hit.is_some() {
+                            org_of.insert(key, org_id);
+                        }
                         (org_id, false)
                     } else {
                         conn.execute(
