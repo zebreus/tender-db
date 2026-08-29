@@ -273,6 +273,20 @@ one French legal unit; the register is the ground truth R2 trusts.
 NEXT: gate → deploy 5b15041 → re-dry-run (consórcio class must land in
 denied_consortium; plan shrinks below 24,915) → CAPPED WET RUN
 (max_groups 1000) → residual continuations → Stage-2 close-out census.
+
+**WET MERGES RUNNING (2026-08-29 ~06:0x, rev 99452e1).** Post-fix
+dry-run (442): denied_consortium 566→570, plan 24,911 — the consórcio
+class denies exactly as reviewed. SLICE 1 (443, capped 1,000, 422s):
+merged 1,000 groups / 1,000 losers, 9,856 mentions + 26,168 parties +
+4,870 bid-parties + 5,168 winners repointed, 5,519 tenders touched, 0
+dups; parity held; residual plan re-recorded 23,911. Tripwires green
+(journal clean; Gemeente Westerlo twin spot-checked: survivor holds the
+VAT row, loser gone). UNCAPPED CONTINUATION enqueued (job 444, ~23,911
+groups, est ~2.5-3h at the measured 0.42s/group). After it: closing
+census (expect mixed-kind twins collapsed; distinct-name tail moves),
+the residual dashboard read, Stage-2 acceptance line (false-split floor
+re-measure below 1.55% is the design's post-metric — needs the 168
+study's method re-run, a follow-up unit).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
