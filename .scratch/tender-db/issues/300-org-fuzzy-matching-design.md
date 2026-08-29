@@ -518,6 +518,19 @@ health green. Residual Stage-3 material: 987 anchored-uncorroborated
 (edges), 296 no-target, 1,435 multi-scheme (incl. all genuine SI
 values — rescue needs a corroboration-decides multi-anchor design),
 441 unanchored, 358 register-prefixed, 14 multi-target.
+
+**REFOLD CANARY PASSED (2026-08-29 ~17:5x, tripwire 7, jobs
+465/466):** refolded notice 17910103 (the Maintpartner canary — its
+mention is country-less with raw "2044511-1"); the mention stayed
+bound to keep 2476219 and the pool stayed 3,529 — zero re-minting,
+refold-invariance holds for the R3 merges (the resolver's idempotency
+map keeps recorded bindings by design, the issue-259 line). The open
+gap is FUTURE ingest only: country-less identifier mentions on NEW
+notices still mint NULL-country twins — Stage 3 has repair without
+prevention. Filed as **issue 310** (resolver anchor-probe prevention
+at the merge arm's own bar: unique anchor + sole owner + exact N2
+corroboration; needs its own panel round). Interim: fold rule=r3
+into the pending Sunday match-org-identifiers cadence decision.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
