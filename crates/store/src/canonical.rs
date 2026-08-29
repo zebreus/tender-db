@@ -1441,6 +1441,10 @@ pub struct R3MergeArgs<'a> {
     pub anchors: fn(&str) -> Vec<(&'static str, String)>,
     pub condemns: fn(Option<&str>, &str, &str) -> bool,
     pub consortium: fn(&str) -> bool,
+    /// Legal-form family (the R2 veto, head-vs-head here — verification-round
+    /// hardening: a satellite name can corroborate across a family conflict,
+    /// the FI/SE-twin false-merge shape).
+    pub legal_form: fn(&str) -> Option<&'static str>,
     /// `project::match_norm` — the N2 corroboration key.
     pub norm: fn(&str) -> String,
     pub dry_run: bool,
@@ -1467,10 +1471,17 @@ pub struct R3MergeReport {
     pub uncorroborated: u64,
     /// Skipped: the candidate's identifier fails the v2 gate.
     pub denied_gate: u64,
-    /// Skipped: a consortium-named side.
+    /// Skipped: a consortium-named side (either head or satellite).
     pub denied_consortium: u64,
-    /// Skipped: conflicting mention-evidence register keys (the wall).
+    /// Skipped: candidate and target head names carry different legal-form
+    /// families (verification-round hardening).
+    pub denied_legal_form: u64,
+    /// Skipped: conflicting mention-evidence register keys (the wall) —
+    /// candidate-vs-target, or pairwise among co-anchored candidates.
     pub denied_group_vat: u64,
+    /// Skipped: more than 8 candidates share one key (the stamped-literal
+    /// pattern, R2's literal cap transplanted).
+    pub denied_cap: u64,
     /// Candidates surviving every condition — the merge plan.
     pub plan_groups: u64,
     pub merged_groups: u64,
@@ -5515,6 +5526,14 @@ impl Db {
                     if let Some((scheme, key, true)) =
                         (args.key)(Some(&country), &kind, &literal)
                     {
+                        // R2's vat scheme/row-country agreement check
+                        // (verification-round hardening): a row whose VAT
+                        // prefix contradicts its own country is mis-countried
+                        // evidence and must not serve as a merge target.
+                        let c = if country == "EL" { "GR" } else { country.as_str() };
+                        if kind == "vat" && !scheme.starts_with(c) {
+                            continue;
+                        }
                         canon.entry((scheme, key)).or_default().push(Target {
                             id,
                             country,
@@ -5576,6 +5595,9 @@ impl Db {
             n2: String,
             keep: i64,
             keep_literal: String,
+            /// Mention-evidence keys, retained for the co-anchored pairwise
+            /// wall pass below.
+            keys: std::collections::HashMap<&'static str, BTreeSet<String>>,
         }
         let pool = self.null_country_ident_orgs().await?;
         report.pool = pool.len() as u64;
@@ -5626,15 +5648,46 @@ impl Db {
                 report.denied_gate += 1;
                 continue;
             }
-            // Consortium veto, both sides: a groupement-named row publishes
-            // the lead's identifier (the Stage-2 census finding); with only
-            // two rows in play there is no remainder to salvage.
-            if (args.consortium)(name) || target_names.iter().any(|tn| (args.consortium)(tn)) {
+            // Consortium veto, both sides and BOTH name layers
+            // (verification-round hardening: the candidate's satellites are
+            // evidence too): a groupement-named row publishes the lead's
+            // identifier; with only two rows in play there is no remainder to
+            // salvage.
+            let cand_names = self.org_all_names(*id).await?;
+            if (args.consortium)(name)
+                || cand_names.iter().any(|cn| (args.consortium)(cn))
+                || target_names.iter().any(|tn| (args.consortium)(tn))
+            {
                 report.denied_consortium += 1;
                 continue;
             }
-            // VAT-group mention wall, pairwise on the single pair.
-            let a = evidence_keys(&conn, *id, None, args.key, (scheme, key)).await?;
+            // Legal-form veto, head-vs-head (verification-round hardening):
+            // corroboration can ride a SATELLITE name across a family
+            // conflict — "X Oy" corroborating against an "X AB" org that
+            // carries an "X Oy" satellite is the cross-country twin shape,
+            // two entities by R2's own rule.
+            if let (Some(cf), Some(tf)) = (
+                (args.legal_form)(name),
+                target_names.first().and_then(|tn| (args.legal_form)(tn)),
+            ) && cf != tf
+            {
+                report.denied_legal_form += 1;
+                continue;
+            }
+            // VAT-group mention wall, candidate vs target. The candidate's
+            // fallback country is the TARGET's (verification-round hardening:
+            // None disarmed the wall — a national-shaped raw mention on a
+            // country-less row could never key, so its conflicts went
+            // unseen; the pair's register country is what its evidence
+            // should be read under).
+            let a = evidence_keys(
+                &conn,
+                *id,
+                Some(&target.country),
+                args.key,
+                (scheme, key),
+            )
+            .await?;
             let b = evidence_keys(
                 &conn,
                 target.id,
@@ -5658,8 +5711,69 @@ impl Db {
                 report.denied_group_vat += 1;
                 continue;
             }
-            // Dry-run blast-radius honesty (the R2 block verbatim).
-            if args.dry_run {
+            plan.push(Candidate {
+                id: *id,
+                literal: value.clone(),
+                scheme,
+                key: key.clone(),
+                n2,
+                keep: target.id,
+                keep_literal: target.literal.clone(),
+                keys: a,
+            });
+        }
+        // Keep-group passes (verification-round hardening). Candidates
+        // sharing one key all merge into one keep, so the group is judged as
+        // a group: (1) R2's cap transplanted — more than 8 co-anchored
+        // candidates on one key is the stamped-literal placeholder pattern,
+        // not eight establishments; (2) the wall runs PAIRWISE among the
+        // co-anchored candidates too — each one passed candidate-vs-target,
+        // but two candidates carrying conflicting register numbers are two
+        // different entities and folding both into the keep merges them with
+        // each other. Both denials drop the whole group (deny direction).
+        {
+            const CO_ANCHOR_CAP: usize = 8;
+            let mut by_key: std::collections::HashMap<(&'static str, &str), Vec<usize>> =
+                std::collections::HashMap::new();
+            for (i, c) in plan.iter().enumerate() {
+                by_key.entry((c.scheme, c.key.as_str())).or_default().push(i);
+            }
+            let mut drop: std::collections::HashSet<usize> = std::collections::HashSet::new();
+            for idxs in by_key.values() {
+                if idxs.len() > CO_ANCHOR_CAP {
+                    report.denied_cap += idxs.len() as u64;
+                    drop.extend(idxs);
+                    continue;
+                }
+                'pairs: for (n, &i) in idxs.iter().enumerate() {
+                    for &j in &idxs[n + 1..] {
+                        for (s, ka) in &plan[i].keys {
+                            if let Some(kb) = plan[j].keys.get(s)
+                                && !ka.is_empty()
+                                && !kb.is_empty()
+                                && ka.is_disjoint(kb)
+                            {
+                                report.denied_group_vat += idxs.len() as u64;
+                                drop.extend(idxs);
+                                break 'pairs;
+                            }
+                        }
+                    }
+                }
+            }
+            if !drop.is_empty() {
+                let mut i = 0;
+                plan.retain(|_| {
+                    let keep = !drop.contains(&i);
+                    i += 1;
+                    keep
+                });
+            }
+        }
+        // Dry-run blast-radius honesty (the R2 lesson), over the FINAL plan
+        // so the preview counts exactly what a wet run would move.
+        if args.dry_run {
+            for c in &plan {
                 for (sql, slot) in [
                     (
                         "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
@@ -5678,21 +5792,12 @@ impl Db {
                         &mut report.winners,
                     ),
                 ] {
-                    let mut rows = conn.query(sql, (Value::Integer(*id),)).await?;
+                    let mut rows = conn.query(sql, (Value::Integer(c.id),)).await?;
                     if let Some(row) = rows.next().await? {
                         *slot += int(&row, 0).max(0) as u64;
                     }
                 }
             }
-            plan.push(Candidate {
-                id: *id,
-                literal: value.clone(),
-                scheme,
-                key: key.clone(),
-                n2,
-                keep: target.id,
-                keep_literal: target.literal.clone(),
-            });
         }
         // Deterministic order: a capped run and its continuation cover a
         // stable prefix.

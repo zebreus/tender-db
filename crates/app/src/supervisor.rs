@@ -2872,8 +2872,12 @@ impl Supervisor {
                 // stale figure until someone re-ran the dry run — discarding
                 // the reviewed plan). A dry run records its full plan; a wet
                 // run re-records the RESIDUAL, so the next capped slice
-                // continues under parity without ceremony.
-                {
+                // continues under parity without ceremony. EXCEPT a stop
+                // during classification (stopped, empty plan): it computed
+                // nothing, and recording plan_groups 0 would clobber a
+                // reviewed plan (the R3 verification round's catch, mirrored
+                // here).
+                if !(r.stopped && r.plan_groups == 0) {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
@@ -2910,12 +2914,19 @@ impl Supervisor {
                         .map_err(|e| e.to_string())?;
                 }
                 if r.stopped {
-                    return Ok(format!(
-                        "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
-                         groups merged before the stop; the residual plan was re-recorded, \
-                         so a re-run continues under parity",
-                        r.merged_groups, r.plan_groups
-                    ));
+                    return Ok(if r.plan_groups == 0 {
+                        "match-org-identifiers r2 STOPPED during classification: nothing \
+                         was planned or written, and the previously recorded plan was \
+                         left untouched"
+                            .to_owned()
+                    } else {
+                        format!(
+                            "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
+                             groups merged before the stop; the residual plan was re-recorded, \
+                             so a re-run continues under parity",
+                            r.merged_groups, r.plan_groups
+                        )
+                    });
                 }
                 Ok(format!(
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
@@ -2985,6 +2996,7 @@ impl Supervisor {
                         anchors: ingest::idgate::checksum_anchors,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
+                        legal_form: ingest::crosswalk::legal_form_family,
                         norm: ingest::project::match_norm,
                         dry_run,
                         max_groups: *max_groups,
@@ -2996,10 +3008,14 @@ impl Supervisor {
                     .map_err(|e| e.to_string())?;
                 // Keep the recorded plan current (the R2 lesson): a dry run
                 // records the full plan, a wet run the residual, so a capped
-                // continuation runs under parity without a fresh dry run. No
-                // sample here — the r3-census's 40-candidate sample is the
-                // precision-review material and stays put.
-                {
+                // continuation runs under parity without a fresh dry run.
+                // EXCEPT a stop during classification (stopped with an empty
+                // plan): it computed nothing, and recording plan_groups 0
+                // would clobber a reviewed plan (verification-round catch).
+                // No sample here — the r3-census's 40-candidate sample is
+                // the precision-review material and stays put.
+                let classify_stopped = r.stopped && r.plan_groups == 0;
+                if !classify_stopped {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
                         "plan_groups": r.plan_groups - r.merged_groups,
@@ -3011,7 +3027,9 @@ impl Supervisor {
                         "uncorroborated": r.uncorroborated,
                         "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
+                        "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
+                        "denied_cap": r.denied_cap,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         "mentions": r.mentions, "parties": r.parties,
@@ -3024,18 +3042,26 @@ impl Supervisor {
                         .map_err(|e| e.to_string())?;
                 }
                 if r.stopped {
-                    return Ok(format!(
-                        "match-org-identifiers r3 STOPPED at a checkpoint: {} of {} plan \
-                         candidates merged before the stop; the residual plan was \
-                         re-recorded, so a re-run continues under parity",
-                        r.merged_groups, r.plan_groups
-                    ));
+                    return Ok(if classify_stopped {
+                        "match-org-identifiers r3 STOPPED during classification: nothing \
+                         was planned or written, and the previously recorded plan was \
+                         left untouched"
+                            .to_owned()
+                    } else {
+                        format!(
+                            "match-org-identifiers r3 STOPPED at a checkpoint: {} of {} plan \
+                             candidates merged before the stop; the residual plan was \
+                             re-recorded, so a re-run continues under parity",
+                            r.merged_groups, r.plan_groups
+                        )
+                    });
                 }
                 Ok(format!(
                     "match-org-identifiers r3 (issue 300 Stage 3){}: pool {}; skipped: \
                      {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
                      {} multi-target, {} uncorroborated; denied: {} gate, {} consortium, \
-                     {} vat-group-wall; plan {} candidates; merged {} \
+                     {} legal-form, {} vat-group-wall, {} co-anchor-cap; plan {} \
+                     candidates; merged {} \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
@@ -3047,7 +3073,9 @@ impl Supervisor {
                     r.uncorroborated,
                     r.denied_gate,
                     r.denied_consortium,
+                    r.denied_legal_form,
                     r.denied_group_vat,
+                    r.denied_cap,
                     r.plan_groups,
                     r.merged_groups,
                     r.removed,

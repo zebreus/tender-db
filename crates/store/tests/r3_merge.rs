@@ -49,6 +49,17 @@ fn consortium(name: &str) -> bool {
     name.to_lowercase().contains("groupement")
 }
 
+fn legal_form(name: &str) -> Option<&'static str> {
+    let l = name.to_lowercase();
+    if l.ends_with("gmbh") {
+        Some("gmbh")
+    } else if l.ends_with(" ag") {
+        Some("ag")
+    } else {
+        None
+    }
+}
+
 fn norm(s: &str) -> String {
     s.to_lowercase().chars().filter(char::is_ascii_alphanumeric).collect()
 }
@@ -78,6 +89,14 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (17, "FR", "national", "444555666", "Groupement Alpha"),
         // The wall pair's keep side.
         (18, "FR", "national", "777888999", "Wall Corp"),
+        // Legal-form trap: the head is a GmbH, but a SATELLITE name (seeded
+        // below) matches the candidate's AG name exactly — corroboration
+        // rides the satellite across the family conflict.
+        (19, "FR", "national", "888999000", "Beta GmbH"),
+        // The stamped-literal keep: nine candidates share its key.
+        (23, "FR", "national", "555666777", "Stamp Co"),
+        // The co-anchored pairwise-wall keep: no mentions of its own.
+        (26, "FR", "national", "111222333", "Twin Hold"),
     ];
     for (id, c, k, v, n) in &targets {
         conn.execute(
@@ -107,6 +126,9 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         (107, "444555666", "Groupement Alpha"),  // corroborates, consortium veto
         (108, "777888999", "Wall Corp"),         // corroborates, wall denies
         (109, "732829320", "RENAULT SA"),        // the plan: merges into 15
+        (110, "888999000", "Beta AG"),           // satellite corroborates, family differs
+        (130, "111222333", "Twin Hold"),         // co-anchored pair with conflicting
+        (131, "111222333", "Twin Hold"),         // evidence: pairwise wall drops both
     ];
     for (id, v, n) in &pool {
         conn.execute(
@@ -122,20 +144,47 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         .await
         .unwrap();
     }
+    // The stamped-literal class: NINE candidates all publishing target 23's
+    // key with corroborating names — the co-anchor cap must drop the group.
+    for i in 0..9i64 {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, 'national', '555666777', 'Stamp Co', 'stamp co', 1, 0)",
+            (Value::Integer(120 + i),),
+        )
+        .await
+        .unwrap();
+    }
+    // Target 19's satellite: the exact name the candidate carries, so
+    // corroboration passes while the HEAD families conflict.
+    conn.execute(
+        "INSERT INTO organization_names (org_id, lang, name, name_norm)
+         VALUES (19, 'de', 'Beta AG', 'beta ag')",
+        (),
+    )
+    .await
+    .unwrap();
     // Wall evidence — the MASK shape (the R2 verifier's F1 catch, pinned
     // here too): BOTH sides' mentions carry the pair-forming key itself,
     // which must be stripped as evidence, plus each side's OWN different
     // register number in the SAME scheme. Without the strip the shared value
-    // makes the sets intersect and the conflict never denies.
+    // makes the sets intersect and the conflict never denies. The mention
+    // COUNTRY is NULL on every row: keying rides the fallback (the
+    // verification round's candidate-side disarm fix — the candidate falls
+    // back to the TARGET's country, the target to its own).
     for (nid, org, raw_id) in [
         (904i64, 108i64, "777888999"),
         (905, 108, "123456782"),
         (906, 18, "777888999"),
         (907, 18, "987654329"),
+        // The co-anchored pair's conflicting evidence (clean vs their
+        // mention-less target, dirty against each other).
+        (908, 130, "444000111"),
+        (909, 131, "444000222"),
     ] {
         conn.execute(
             "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
-             VALUES (?, 'S-1', ?, 'x', 'FR', ?)",
+             VALUES (?, 'S-1', ?, 'x', NULL, ?)",
             (Value::Integer(nid), Value::Integer(org), Value::Text(raw_id.into())),
         )
         .await
@@ -187,6 +236,7 @@ fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R3MergeArgs<'static
         anchors,
         condemns,
         consortium,
+        legal_form,
         norm,
         dry_run,
         max_groups: None,
@@ -202,30 +252,36 @@ async fn the_r3_merge_classifies_the_pool_and_merges_the_anchored_survivors() {
 
     // Dry-run: the census ladder recomputed, nothing written.
     let dry = db.match_org_null_country_r3(args(true, None)).await.expect("dry");
-    assert_eq!(dry.pool, 10);
+    assert_eq!(dry.pool, 22);
     assert_eq!(
         (dry.register_prefixed, dry.unanchored, dry.no_target, dry.multi_target, dry.uncorroborated),
         (1, 2, 1, 1, 1),
         "each census rung fires once (unanchored: the 8-digit marker AND the two-anchor value)"
     );
     assert_eq!(
-        (dry.denied_gate, dry.denied_consortium, dry.denied_group_vat),
+        (dry.denied_gate, dry.denied_consortium, dry.denied_legal_form),
         (1, 1, 1),
-        "each denial fires once — the wall only because the pair-forming key was stripped"
+        "gate, consortium, and the satellite-corroborated family conflict each fire once"
     );
+    assert_eq!(
+        dry.denied_group_vat, 3,
+        "the candidate-vs-target wall (key stripped, NULL mention country keyed via \
+         the target-country fallback) plus the co-anchored pair's pairwise conflict"
+    );
+    assert_eq!(dry.denied_cap, 9, "the stamped-literal group falls to the co-anchor cap");
     assert_eq!(dry.plan_groups, 1, "only the corroborated clean candidate survives");
     assert_eq!(dry.merged_groups, 0);
     assert_eq!(
         (dry.mentions, dry.parties, dry.bid_parties, dry.winners),
         (1, 1, 0, 1),
-        "the preview reports the loser's blast radius"
+        "the preview reports the FINAL plan's blast radius only"
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 17, "dry run wrote nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 32, "dry run wrote nothing");
 
     // The parity guard: a wet run whose recorded plan disagrees aborts.
     let err = db.match_org_null_country_r3(args(false, Some(400))).await;
     assert!(err.is_err(), "divergence beyond tolerance must abort");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 17, "abort wrote nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 32, "abort wrote nothing");
 
     // Wet run under the recorded plan.
     let wet = db.match_org_null_country_r3(args(false, Some(1))).await.expect("wet");
@@ -263,14 +319,15 @@ async fn the_r3_merge_classifies_the_pool_and_merges_the_anchored_survivors() {
         count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 2 AND op = 'changed'").await,
         1
     );
-    // Every skipped candidate stands untouched.
+    // Every skipped candidate stands untouched — the census rungs, the
+    // denials, the family conflict, the stamped nine, the co-anchored pair.
     assert_eq!(
-        count(&conn, "SELECT COUNT(*) FROM organizations WHERE id >= 100 AND id <= 108").await,
-        9
+        count(&conn, "SELECT COUNT(*) FROM organizations WHERE id >= 100 AND id <= 131 AND id <> 109").await,
+        21
     );
 
     // Restart safety: the merged candidate is gone; a re-run plans nothing.
     let again = db.match_org_null_country_r3(args(false, None)).await.expect("rerun");
     assert_eq!((again.plan_groups, again.merged_groups, again.removed), (0, 0, 0));
-    assert_eq!(again.pool, 9);
+    assert_eq!(again.pool, 21);
 }

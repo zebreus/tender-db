@@ -488,7 +488,14 @@ pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
             }
         }
         14 => {
-            if luhn(&digits) == Checksum::Pass {
+            // Mirror the crosswalk's leading-zero judgment (verification
+            // round): a 14-digit value whose zero-strip is EXACTLY 9 digits
+            // is ambiguous — a zero-padded 9-digit national as plausibly as a
+            // low-SIREN SIRET — and the crosswalk demotes it to E2. An
+            // anchor must not be more confident than the key it anchors to.
+            let ambiguous_pad =
+                key.starts_with('0') && key.trim_start_matches('0').len() == 9;
+            if luhn(&digits) == Checksum::Pass && !ambiguous_pad {
                 out.push(("FR:siren", key[..9].to_owned()));
             }
         }
@@ -514,6 +521,20 @@ mod tests {
         assert!(fi.len() >= 2, "8-digit is never a unique anchor");
         assert!(checksum_anchors("180014045").iter().any(|(s, _)| *s == "FR:siren"));
         assert!(checksum_anchors("HRB 12345").is_empty(), "letters are the register path");
+        // The crosswalk's leading-zero judgment, mirrored (verification
+        // round): zero-strip == 9 is a plausible zero-padded 9-digit national
+        // — no anchor, matching the crosswalk's E2 demotion. Leading zeros
+        // are Luhn-invariant, so 00000 + a valid SIREN is Luhn-valid 14.
+        assert!(
+            checksum_anchors("00000732829320").is_empty(),
+            "zero-strip==9 must not anchor"
+        );
+        // A genuine 0-leading SIRET (live: RDT 13) whose strip is NOT 9
+        // still anchors to its truncated SIREN.
+        assert_eq!(
+            checksum_anchors("06880164600040"),
+            vec![("FR:siren", "068801646".to_owned())]
+        );
     }
 
     /// Every specimen marked (live) was read from this corpus and
