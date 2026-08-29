@@ -65,9 +65,14 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         // Both provisional: min id survives.
         (12, "FI", "national", "01011975", "Ramboll Oy", 1),
         (13, "FI", "vat", "FI01011975", "Ramboll", 1),
-        // Consortium veto: the grouping publishes the lead member's SIRET.
+        // Member-scoped consortium veto: the groupement (21) is EXCLUDED and
+        // the two establishment rows (20, 22) merge without it.
         (20, "FR", "national", "18001404501577", "CNFPT Etablissement", 0),
         (21, "FR", "national", "180014045", "groupement CNFPT / X", 1),
+        (22, "FR", "national", "18001404502245", "CNFPT Etablissement 2", 1),
+        // …and a pair where exclusion leaves fewer than two: whole-group deny.
+        (24, "FR", "national", "999888777", "groupement solo / x", 1),
+        (25, "FR", "national", "99988877700011", "Solo Est", 1),
         // Legal-form veto (names carry conflicting families).
         (30, "FI", "national", "10773381", "Alpha GmbH", 1),
         (31, "FI", "vat", "FI10773381", "Alpha AG", 1),
@@ -184,34 +189,44 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
     // Dry-run: the full plan, nothing written.
     let dry = db.match_org_identifiers_r2(args(true, None)).await.expect("dry");
     assert_eq!(
-        dry.groups, 7,
-        "01003158, 01011975, 180014045, 10773381, 11111111, 20445111, 2021005448"
+        dry.groups, 8,
+        "01003158, 01011975, 180014045, 999888777, 10773381, 11111111, 20445111, 2021005448"
     );
     assert_eq!(
         (dry.denied_cap, dry.denied_gate, dry.denied_consortium, dry.denied_legal_form, dry.denied_group_vat),
         (1, 1, 1, 1, 1),
-        "every denial class fires exactly once"
+        "every denial class fires exactly once (consortium: the remainder-below-two pair)"
     );
-    assert_eq!(dry.plan_groups, 2, "only the two clean FI twins survive the stack");
+    assert_eq!(dry.consortium_excluded, 2, "both groupement members were excluded");
+    assert_eq!(
+        dry.plan_groups, 3,
+        "the two FI twins plus the CNFPT establishments minus their groupement"
+    );
     assert_eq!(dry.merged_groups, 0);
     assert_eq!(
         (dry.mentions, dry.parties, dry.bid_parties, dry.winners),
         (0, 1, 0, 1),
         "the preview reports the losers' blast radius (the Stage-1 lesson)"
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 21, "dry run wrote nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 24, "dry run wrote nothing");
 
     // The parity guard: a wet run whose recorded plan disagrees aborts.
     let err = db.match_org_identifiers_r2(args(false, Some(4000))).await;
     assert!(err.is_err(), "divergence beyond tolerance must abort");
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 21, "abort wrote nothing");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 24, "abort wrote nothing");
 
     // Wet run under the recorded plan.
-    let wet = db.match_org_identifiers_r2(args(false, Some(2))).await.expect("wet");
-    assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed), (2, 2, 2));
-    // Survivors: 10 (non-provisional beats min id 10<11 anyway) and 12 (min id).
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (11, 13)").await, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (10, 12)").await, 2);
+    let wet = db.match_org_identifiers_r2(args(false, Some(3))).await.expect("wet");
+    assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed), (3, 3, 3));
+    // Survivors: 10 (non-provisional beats min id 10<11 anyway), 12 (min id),
+    // and 20 (non-provisional) — with 22 its loser and 21 left STANDING.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (11, 13, 22)").await, 0);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (10, 12, 20, 21)").await, 4);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE keep = 20 AND loser = 22").await,
+        1,
+        "the establishments merged around their excluded groupement"
+    );
     // The rows followed their orgs.
     assert_eq!(
         count(&conn, "SELECT organization_id FROM tender_version_parties WHERE tender_id = 1").await,
@@ -222,8 +237,8 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
         12
     );
     assert_eq!(wet.tender_changes, 1, "tender 1 was touched by both repoints");
-    // The merge log records both, auditable and targetable.
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'r2'").await, 2);
+    // The merge log records every merge, auditable and targetable.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE rule = 'r2'").await, 3);
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM org_merge_log WHERE keep = 10 AND loser = 11").await,
         1
@@ -245,10 +260,10 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
         count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = 1 AND op = 'changed'").await,
         1
     );
-    // The denied groups stand untouched: the strangers, the consortium pair,
-    // the legal-form pair, the poisoned pair, the SK wall pair.
+    // The denied groups stand untouched: the strangers, the solo-groupement
+    // pair, the legal-form pair, the poisoned pair, the SK wall pair.
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id >= 40 AND id < 49").await, 9);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (20, 21, 30, 31, 35, 36, 50, 51)").await, 8);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (21, 24, 25, 30, 31, 35, 36, 50, 51)").await, 9);
 
     // Restart safety: merged groups are singletons; a re-run plans nothing.
     let again = db.match_org_identifiers_r2(args(false, None)).await.expect("rerun");

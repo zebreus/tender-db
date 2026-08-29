@@ -328,10 +328,15 @@ REMAINING Stage-2 units (filed here, next firings):
    split the design REQUIRES pending R3-grade corroboration, not a
    failure of the key. The Stage-2 post-metric bar (<1.55%) is passed
    by any reading. **STAGE 2 ACCEPTANCE COMPLETE.**
-3. Groupement member-scoped veto: the group-atomic veto denied the
-   whole 165-member Colas family for ONE "groupement"-named member —
-   safe but costs 164 legitimate establishment merges (measured live).
-   Route the flagged MEMBER to an edge; merge the remainder.
+3. Groupement member-scoped veto: **BUILT 2026-08-29 ~12:0x.** The
+   consortium veto now EXCLUDES the flagged member (left standing for
+   the edge path) and merges the remainder when ≥2 survive; a remainder
+   below two keeps the whole-group deny. The legal-form veto stays
+   group-atomic (a family conflict is pairwise evidence with no
+   resolution). New `consortium_excluded` counter in report + plan.
+   Test pins both paths (3-member family merges around its groupement;
+   2-member pair still denies). After deploy: re-dry (plan grows by the
+   recovered families — Colas +164-class), wet the recovered remainder.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

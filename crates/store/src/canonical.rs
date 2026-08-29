@@ -1402,8 +1402,12 @@ pub struct R2MergeReport {
     pub denied_cap: u64,
     /// Groups denied: a member's identifier fails the v2 gate.
     pub denied_gate: u64,
-    /// Groups denied: a member name hits the consortium lexicon.
+    /// Groups denied: after excluding consortium-named members, fewer than
+    /// two remained.
     pub denied_consortium: u64,
+    /// Consortium-named MEMBERS excluded from otherwise-merging groups (the
+    /// member-scoped veto): left standing for the edge path.
+    pub consortium_excluded: u64,
     /// Groups denied: two members carry different legal-form families.
     pub denied_legal_form: u64,
     /// Groups denied: conflicting mention-evidence register keys (VAT-group
@@ -5056,14 +5060,36 @@ impl Db {
                     continue 'group;
                 }
             }
-            // 3 + 4. name vetoes.
+            // 3. Consortium veto, MEMBER-scoped (the 2026-08-29 census
+            // refinement): a groupement-named row publishing the lead's id is
+            // EXCLUDED — left standing for the edge path — and the remainder
+            // merges normally. The first cut denied the whole family, which
+            // cost the Colas group its 164 legitimate establishment merges
+            // for one flagged member (measured live). A remainder below two
+            // is the old whole-group deny.
+            let mut members = members;
             let ids: Vec<i64> = members.iter().map(|m| m.id).collect();
             let meta = self.org_health_meta(&ids).await?;
-            let mut family: Option<&'static str> = None;
-            for (_, _, _, _, name) in &meta {
-                if (args.consortium)(name) {
+            let flagged: std::collections::HashSet<i64> = meta
+                .iter()
+                .filter(|m| (args.consortium)(&m.4))
+                .map(|m| m.0)
+                .collect();
+            if !flagged.is_empty() {
+                report.consortium_excluded += flagged.len() as u64;
+                members.retain(|m| !flagged.contains(&m.id));
+                if members.len() < 2 {
                     report.denied_consortium += 1;
                     continue 'group;
+                }
+            }
+            // 4. Legal-form veto, still GROUP-atomic: a family conflict is
+            // pairwise evidence of distinct entities, and nothing says which
+            // side is wrong — exclusion cannot resolve it.
+            let mut family: Option<&'static str> = None;
+            for (id, _, _, _, name) in &meta {
+                if flagged.contains(id) {
+                    continue;
                 }
                 if let Some(f) = (args.legal_form)(name) {
                     if let Some(prev) = family
@@ -5075,6 +5101,7 @@ impl Db {
                     family = Some(f);
                 }
             }
+            let ids: Vec<i64> = members.iter().map(|m| m.id).collect();
             // 5. VAT-group wall: per-member canonical keys from MENTION raw
             // evidence; two members with non-empty, disjoint key sets in one
             // scheme carry conflicting register numbers. TWO verifier

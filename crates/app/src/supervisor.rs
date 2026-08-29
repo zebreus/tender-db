@@ -2739,6 +2739,7 @@ impl Supervisor {
                         "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
                         "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
+                        "consortium_excluded": r.consortium_excluded,
                         "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
                         "merged_this_run": r.merged_groups,
@@ -2777,7 +2778,8 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \
-                     {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium, \
+                     {} E1-keyed, {} groups >=2; denied: {} cap, {} gate, {} consortium \
+                     ({} members excluded member-scoped), \
                      {} legal-form, {} vat-group-wall; plan {} groups; merged {} groups \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
                      {} winners repointed, {} winner dups deleted, {} tenders touched)",
@@ -2788,6 +2790,7 @@ impl Supervisor {
                     r.denied_cap,
                     r.denied_gate,
                     r.denied_consortium,
+                    r.consortium_excluded,
                     r.denied_legal_form,
                     r.denied_group_vat,
                     r.plan_groups,
