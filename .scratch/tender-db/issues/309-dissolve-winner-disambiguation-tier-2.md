@@ -88,6 +88,15 @@ Rollout: gate → deploy → preview (expect condemned 91, winners_deleted >
 incremental fold (or let the scheduled cycle take it) → closing census
 (expect condemned 0) → the gate-invariant tripwire returns to 0.
 
+Gate 71/71 green; deployed rev 93eeb29 2026-08-29 ~01:2x. PREVIEW (job
+435, 1213s): 91 condemned, **91 dissolved, 0 skipped**; 25,850 mentions
+re-resolved (6,554 fresh + 19,296 reused); 64,409 parties, 37,739
+bid-parties, 59,581 winner rows still deterministically repointed by the
+origin/causing tiers; **1,046 ambiguous winner rows → tier-5 delete**
+across **393 tenders** (834 notices to requeue); 10,236 tenders touched.
+The ambiguous fraction is 1.7% of the flagships' winner rows — origin-
+first resolution carries the rest even inside the residual set.
+
 ## Tier 4 (landed): lot-result origin resolution
 
 `lot_results` rows carry their ORIGIN (tender_id, notice_id, result_key) —
