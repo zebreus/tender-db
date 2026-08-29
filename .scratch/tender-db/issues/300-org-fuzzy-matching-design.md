@@ -345,6 +345,25 @@ REMAINING Stage-2 units (filed here, next firings):
    deliberate holds: 328 remainder-below-two consortium groups + 63
    legal-form groups + the 661 excluded members — all edge material
    for Stages 3/4.
+
+**STAGE 3 OPENED (2026-08-29 ~12:5x) — pool measured.** NULL-country
+identifier-bearing rows: **4,816** (the design's pre-campaign 8,420
+estimate shrank under Stage 1+2). Length shape: 2,093×8-digit
+(MULTI-scheme ambiguous — FI ytunnus / CZ ičo / DK cvr / SI davčna all
+fit; checksum anchoring is the discriminator and several schemes can
+pass simultaneously → these need the EBSCO flag-first treatment unless
+name corroboration decides), 1,388×14-digit (SIRET-shaped,
+Luhn-anchorable — the CNFPT NULL class, the cleanest rescue),
+782×9-digit (SIREN/NO/GR/PT shapes). NEXT UNIT (fresh firing): r3-census
+job — per NULL-country row, enumerate scheme-shape fits + checksum
+anchors + N2/N3 name-key overlap with the anchored country's standing
+org (satellite langs included), classify into
+anchored-corroborated (R3 merge candidates) / anchored-uncorroborated
+(edges) / unanchored (EBSCO flag-first); then the R3 merge arm with the
+full §4.2 stack (court-prefix exclusion, stoplist+hard-checksum,
+group cap, walls), exemplar tests (Maintpartner, Philips 3-way, Grand
+Port, CNFPT SIRET rows, Kærunefnd, EBSCO must-FLAG), adversarial
+verify, capped rollout.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
