@@ -73,12 +73,26 @@ Findings the rules could never have made:
   digits): "D1633830016"-style manglings are detectable, whose number
   they are is not.
 
-NEXT (the apply stage): (1) `org_case_reviews` table + verdict loader;
-(2) the apply machinery for the two dominant handlings — identifier
-strip-to-NULL (with the raw preserved in mentions, nothing lost) and
-solo-mention re-homing to a member row (dissolve-adjacent, needs its
-own panel round before any write); (3) then batch the remaining 772
-identifier-bearing cases and the escalations queue.
+## APPLY STAGE LIVE, FIRST WET RUN DONE (2026-08-29 ~22:0x, rev 679369c)
+
+Built + panel-hardened + deployed in one evening: `org_case_reviews`
+(verdicts via POST /admin/case-reviews, one standing verdict per
+org+cohort, re-record NEVER touches an applied stamp or its pre-image —
+panel catch), `apply-case-reviews` job (dry default; dry records the
+CONCRETE strip list as a case-apply-plan report — panel catch: counts
+alone can't surface a hallucinated org id). First cohort executed:
+50 verdicts recorded, dry plan matched the expected 14 strips EXACTLY
+(zero strangers), wet stripped all 14 wrong identifiers (11 lead-member
+numbers incl. the fused R&K/Dobler rows, 2 concatenated member-VAT
+pairs, 1 address) with pre-images in applied_action and raw values
+untouched in mentions. Journal clean.
+
+REMAINING: (1) solo-mention re-homing to member rows (the fusion
+repair — dissolve-adjacent machinery, own panel round); (2) batch the
+remaining ~772 identifier-bearing Bietergemeinschaft cases through
+review (cost calibrated: ~55k tokens/case incl. audit share); (3) the
+escalations queue + medium-confidence re-review policy; (4) widening
+the case sources beyond the org layer if Lennart wants (offered).
 
 ## Notes
 
