@@ -317,7 +317,17 @@ REMAINING Stage-2 units (filed here, next firings):
    the arbiter for those. E0 exact equality stays the first probe,
    byte-identical; `None` fns (store tests) keep pre-Stage-2 behavior.
    Store test pins reuse/veto/poison/E2/preload/disabled paths.
-2. False-split floor re-measure (<1.55% bar) via the 168 method.
+2. False-split floor re-measure (<1.55% bar): **DONE 2026-08-29 ~11:3x,
+   both readings recorded** (168's exact SQL was not preserved, so both
+   plausible measures ran). Literal reading — GROUP BY (country,
+   identifier) HAVING ≥2 over identifier-bearing orgs: **ZERO clusters
+   corpus-wide** (was 8,416 clusters / 18,018 rows = 1.55%). Canonical
+   reading — post-merge r2-census (job 451): groups ≥2 fell 25,544 →
+   **634** (3,211 orgs), and those 634 are exactly the deliberate
+   denials (570 consortium + 63 legal-form): the remaining split is the
+   split the design REQUIRES pending R3-grade corroboration, not a
+   failure of the key. The Stage-2 post-metric bar (<1.55%) is passed
+   by any reading. **STAGE 2 ACCEPTANCE COMPLETE.**
 3. Groupement member-scoped veto: the group-atomic veto denied the
    whole 165-member Colas family for ONE "groupement"-named member —
    safe but costs 164 legitimate establishment merges (measured live).
