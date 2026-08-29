@@ -305,7 +305,9 @@ fn luhn(digits: &[u8]) -> Checksum {
 
 /// Full FR VAT (11 digits: 2-digit key + SIREN): the key is
 /// (12 + 3·(SIREN mod 97)) mod 97 and the SIREN must itself pass Luhn.
-fn fr_vat_key(digits: &[u8]) -> Checksum {
+/// `pub(crate)` for the crosswalk: the FR VAT→SIREN E1 key exists only when
+/// this arithmetic PROVES the mapping (issue 300 Stage 2).
+pub(crate) fn fr_vat_key(digits: &[u8]) -> Checksum {
     let key = u64::from(digits[0]) * 10 + u64::from(digits[1]);
     let siren_digits = &digits[2..];
     let siren = siren_digits.iter().fold(0u64, |acc, &d| acc * 10 + u64::from(d));

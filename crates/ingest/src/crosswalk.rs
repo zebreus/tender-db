@@ -1,0 +1,482 @@
+//! Issue 300 Stage 2: deterministic scheme cross-walks (E1) — the canonical
+//! identifier key that unifies representations of ONE registration under ONE
+//! country's rules (design §3.1). Two org rows whose canonical keys agree are
+//! the same legal entity as far as the scheme's arithmetic can prove it:
+//! `FI0100315​8` (VAT) and `01003158` (Y-tunnus) are one Finnish company,
+//! `18001404501577` (SIRET) is an establishment of SIREN `180014045`.
+//!
+//! The E1/E2 split (the 2026-08-28 pad amendment, exemplar-driven):
+//! transformations that DELETE redundant information — prefix strips,
+//! establishment→legal-unit truncations — stay E1 (auto-merge material under
+//! R2's remaining conditions). Transformations that MANUFACTURE information —
+//! zero-padding a short digit string — are E2: candidate-edge material only,
+//! never auto-merged, because the live CZ collision proved padding unsafe
+//! (`0002542`, a corrupted id on Ministerstvo spravedlnosti, pads onto
+//! `00002542`, the REAL checksum-valid IČO of Puncovní úřad).
+//!
+//! This module computes KEYS ONLY. The R2 merge rule's other conditions —
+//! same normalized row country, both rows pass the v2 gate, the denial list
+//! (VAT-group wall, UTE exclusion, group cap, gate-poison, legal-form veto),
+//! group ≤ cap — live with the matcher, not here. The one exception is
+//! denials that make the KEY ITSELF meaningless: CZ699 group VATs and ES UTE
+//! NIFs identify ephemeral/group constructs, so they get no key at all.
+//!
+//! Countries with NO cross-walk (design §3.1): DE (court-scoped registers,
+//! zero arithmetic yield), AT, IE, LU, CY, MT, EE (VAT and registrikood are
+//! separate series), LT — `canonical_key` returns `None`; E0 exact-key
+//! equality remains their only merge path.
+
+use crate::idgate::{fr_vat_key, Checksum};
+
+/// How much the key's derivation is allowed to prove (design §3.1 amendment).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Tier {
+    /// Information-deleting derivation: eligible for R2 auto-merge.
+    E1,
+    /// Pad-derived (information-manufacturing): candidate edges only; merges
+    /// require R3's full corroboration stack.
+    E2,
+}
+
+/// A canonical identifier key: `scheme` names the national series the key
+/// lives in (two keys unify ONLY within one scheme), `key` is the canonical
+/// digit/character string, `tier` how the derivation may be used.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CanonKey {
+    pub scheme: &'static str,
+    pub key: String,
+    pub tier: Tier,
+}
+
+impl CanonKey {
+    fn e1(scheme: &'static str, key: impl Into<String>) -> Option<Self> {
+        Some(CanonKey { scheme, key: key.into(), tier: Tier::E1 })
+    }
+    fn e2(scheme: &'static str, key: impl Into<String>) -> Option<Self> {
+        Some(CanonKey { scheme, key: key.into(), tier: Tier::E2 })
+    }
+}
+
+/// The canonical key for an org identifier, or `None` when the scheme offers
+/// no cross-walk (the identifier then matches by E0 exact equality only).
+///
+/// `country` is the org row's country (alpha-2, as stored post-canonicalise);
+/// for `kind = "vat"` the value's own prefix is the scheme authority (the
+/// idgate census precedent) — the matcher checks row-country agreement
+/// separately, so a contradictory row surfaces as an anomaly rather than
+/// silently keying into the wrong country's series.
+pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<CanonKey> {
+    // Only the two kinds the resolver mints today. Anything else — a future
+    // GLN/DIR3/platform-id kind, say — must NOT ride the national arms into
+    // an E1 key (verifier catch: a 13-digit GLN under BG would have keyed as
+    // an EIK, which denial rule 2 forbids).
+    if kind != "vat" && kind != "national" {
+        return None;
+    }
+    // Normalise: uppercase, strip every separator (spaces, dots, hyphens,
+    // slashes) — `1234567-8`, `556 649-0192` and `CZ 699 000 797` all carry
+    // their identity in the alphanumerics alone.
+    let norm: String =
+        value.chars().filter(char::is_ascii_alphanumeric).map(|c| c.to_ascii_uppercase()).collect();
+    if norm.is_empty() {
+        return None;
+    }
+    let is_vat = kind == "vat";
+    // Scheme country: the VAT prefix. A vat value WITHOUT its prefix gets no
+    // key at all (verifier catch: the idgate census scores prefix-less vats
+    // as scheme "other" — Checksum::Unknown, so the hard-checksum gate never
+    // sees them — and letting them key E1 through a row-country fallback
+    // would build merges from an entirely ungated value class; the two
+    // modules must resolve schemes identically).
+    let (cc, body): (&str, &str) = if is_vat {
+        match norm.get(..2) {
+            Some(p) if p.bytes().all(|b| b.is_ascii_alphabetic()) => (
+                match p {
+                    // EL ≡ GR (design §3.1).
+                    "EL" => "GR",
+                    other => other,
+                },
+                norm.get(2..).unwrap_or(""),
+            ),
+            _ => return None,
+        }
+    } else {
+        (
+            match country {
+                Some("EL") => "GR",
+                Some(c) => c,
+                None => return None,
+            },
+            norm.as_str(),
+        )
+    };
+    let digits_only = body.bytes().all(|b| b.is_ascii_digit());
+    let d = body.len();
+
+    match cc {
+        // FR — SIREN is the legal-unit key. SIRET (14 = SIREN + NIC
+        // establishment counter) truncates to it (denial-list rule 2:
+        // establishment ≠ entity; the fine id survives in raw_identifier).
+        // A full FR VAT's 2-digit key is arithmetic over the SIREN — the E1
+        // key exists only when that arithmetic PROVES the mapping.
+        // Left-zero-padded 14-char forms are live ("00000219740248"): the
+        // stripped 9-digit SIREN is a PAD-derived key ⇒ E2. Letter-bearing
+        // FR VAT keys (real but rare) are deliberately refused by the
+        // digits_only guard — a narrowing in the safe direction.
+        "FR" if digits_only => {
+            if is_vat {
+                if d == 11 {
+                    let digits: Vec<u8> = body.bytes().map(|b| b - b'0').collect();
+                    return match fr_vat_key(&digits) {
+                        Checksum::Pass => CanonKey::e1("FR:siren", &body[2..]),
+                        _ => None,
+                    };
+                }
+                return None;
+            }
+            match d {
+                9 => CanonKey::e1("FR:siren", body),
+                // A 14-digit leading-zero value whose zero-strip is EXACTLY 9
+                // digits is genuinely ambiguous: a bare SIREN left-padded to
+                // 14 (live: "00000219740248") — or a real SIRET of a very
+                // low SIREN, whose true key would be the 0-leading first 9.
+                // The strip reading gets the key, at E2: ambiguity is an
+                // information gap only R3's corroboration may close.
+                // Any OTHER leading-zero 14 is just a SIRET whose SIREN
+                // happens to start with 0 (0-leading SIRENs exist —
+                // verifier catch): plain truncation, E1.
+                14 if body.starts_with('0') => {
+                    let stripped = body.trim_start_matches('0');
+                    if stripped.len() == 9 {
+                        CanonKey::e2("FR:siren", stripped)
+                    } else {
+                        CanonKey::e1("FR:siren", &body[..9])
+                    }
+                }
+                14 => CanonKey::e1("FR:siren", &body[..9]),
+                _ => None,
+            }
+        }
+        // PL — VAT ↔ NIP (10 digits); leading-zero 10-digit nationals are
+        // zero-padded KRS serials, not NIPs (idgate precedent). REGON-14
+        // truncates to the REGON-9 legal unit — its OWN series, never
+        // cross-walked to NIP.
+        "PL" if digits_only => match (is_vat, d) {
+            (_, 10) if !body.starts_with('0') => CanonKey::e1("PL:nip", body),
+            (false, 14) => CanonKey::e1("PL:regon", &body[..9]),
+            (false, 9) => CanonKey::e1("PL:regon", body),
+            _ => None,
+        },
+        // IT — VAT ↔ Partita IVA (11 digits). The 16-char Codice Fiscale is
+        // NO signal either way (design §3.1): no key.
+        "IT" if digits_only && d == 11 => CanonKey::e1("IT:piva", body),
+        // ES — VAT ↔ NIF, literal key, demoted whole to E2 (verifier catch,
+        // the DIR3 collision): Spanish public bodies are pervasively
+        // identified by DIR3 codes (letter + 8 digits, e.g. "L01280796"),
+        // which share their exact shape with letter-check CIFs ("A01002820"
+        // is a valid CIF shape AND a valid DIR3 shape), and both arrive as
+        // kind="national". An E1 key here could auto-merge a company with a
+        // public administration; no syntactic test separates the series, so
+        // the ambiguity is an information gap — E2, R3's corroboration
+        // stack only. A pure-digit 9-char body is NEITHER series (a NIF
+        // always carries a letter — and bare "123456789" is the pinned
+        // placeholder): no key. UTE NIFs (letter U) are ephemeral
+        // per-procedure constructs: never a key (denial rule 3).
+        "ES" if d == 9 => {
+            if body.starts_with('U') || !body.bytes().any(|b| b.is_ascii_alphabetic()) {
+                return None;
+            }
+            CanonKey::e2("ES:nif", body)
+        }
+        // RO — CUI is prefix-insensitive digits (2-10 of them). No zero
+        // games: the digits ARE the key, as stored.
+        "RO" if digits_only && (2..=10).contains(&d) => CanonKey::e1("RO:cui", body),
+        // CZ — DIČ = CZ + the 8-digit IČO: prefix strip at FULL length is
+        // E1. CZ699… group DIČs identify VAT GROUPS, not entities (denial
+        // rule 1): no key. A 9/10-digit DIČ body is a birth-number
+        // (individual): no cross-walk. A 7-digit national is a lost leading
+        // zero — pad-derived ⇒ E2 (the Justice/Assay collision exemplar);
+        // a 7-digit VAT body deliberately gets NO pad (a mis-stored DIČ is
+        // less trustworthy than a mis-stored national — narrower than the
+        // amendment, in the safe direction).
+        "CZ" if digits_only => {
+            if body.starts_with("699") && is_vat {
+                return None;
+            }
+            match d {
+                8 => CanonKey::e1("CZ:ico", body),
+                7 if !is_vat => CanonKey::e2("CZ:ico", format!("0{body}")),
+                _ => None,
+            }
+        }
+        // BE — KBO/BCE ↔ VAT at 10 digits, ENTERPRISE numbers only (leading
+        // 0/1): establishment-unit numbers lead 2-8 and are location-scoped
+        // (denial rule 2 — establishment ≠ entity; no arithmetic reaches the
+        // parent enterprise, so no key at all). The pre-2008 9-digit legacy
+        // form gains a leading zero: pad-derived ⇒ E2.
+        "BE" if digits_only => match d {
+            10 if body.starts_with('0') || body.starts_with('1') => CanonKey::e1("BE:kbo", body),
+            9 => CanonKey::e2("BE:kbo", format!("0{body}")),
+            _ => None,
+        },
+        // SE — VAT = organisationsnummer + literal "01" suffix; the strip is
+        // E1 only when the suffix really is "01" (else the value is not the
+        // documented VAT shape and proves nothing).
+        "SE" if digits_only => match (is_vat, d) {
+            (true, 12) if body.ends_with("01") => CanonKey::e1("SE:orgnr", &body[..10]),
+            (false, 10) => CanonKey::e1("SE:orgnr", body),
+            _ => None,
+        },
+        // DK — CVR ↔ VAT (8 digits). The 10-digit P-nummer (establishment)
+        // has no arithmetic relation to its CVR: no key (denial rule 2).
+        "DK" if digits_only && d == 8 => CanonKey::e1("DK:cvr", body),
+        // FI — Y-tunnus ↔ VAT (8 digits; the hyphen died in normalisation).
+        // The legacy 6-digit series needs a pad whose position is not
+        // recoverable from the value — no key at all (narrower than the
+        // design's E2 note, deliberately: an unprovable pad is not a key).
+        "FI" if digits_only && d == 8 => CanonKey::e1("FI:ytunnus", body),
+        // PT — NIF ↔ VAT (9 digits).
+        "PT" if digits_only && d == 9 => CanonKey::e1("PT:nif", body),
+        // HR — OIB ↔ VAT (11 digits).
+        "HR" if digits_only && d == 11 => CanonKey::e1("HR:oib", body),
+        // NL — VAT → RSIN head, demoted whole to E2 (verifier catches): the
+        // design's "legal entities only" qualifier has no enforceable
+        // syntactic test here — post-2020 sole-trader btw-ids carry a
+        // generated 9-digit head that is NOT an RSIN, and a fiscale-eenheid
+        // (VAT group) btw-id looks exactly like a member's. So a VAT-derived
+        // head is candidate-edge material only; R3's corroboration stack
+        // decides. A bare 9-digit national RSIN keeps E1 — that key is the
+        // identity itself, no derivation. The 8-digit KvK number is a
+        // DIFFERENT register: no cross-walk.
+        "NL" => {
+            if is_vat && d == 12 && body.as_bytes()[9] == b'B' {
+                let (head, tail) = (&body[..9], &body[10..]);
+                if head.bytes().all(|b| b.is_ascii_digit())
+                    && tail.bytes().all(|b| b.is_ascii_digit())
+                {
+                    return CanonKey::e2("NL:rsin", head);
+                }
+                return None;
+            }
+            if !is_vat && digits_only && d == 9 {
+                return CanonKey::e1("NL:rsin", body);
+            }
+            None
+        }
+        // HU — the 8-digit törzsszám heads every form: adószám (8-1-2) and
+        // VAT (HU + 8) both truncate to it (design §3.1 "first-8") — EXCEPT
+        // a group id: áfakód 5 (the 9th digit) marks a VAT GROUP's
+        // csoportazonosító szám, whose törzsszám names the group, not any
+        // member (verifier catch — two members publishing it must not key
+        // together): no key.
+        "HU" if digits_only && (d == 8 || d == 11) => {
+            if d == 11 && body.as_bytes()[8] == b'5' {
+                return None;
+            }
+            CanonKey::e1("HU:torzsszam", &body[..8])
+        }
+        // BG — EIK ↔ VAT at 9 digits, the design's listed pair. (A 13-digit
+        // branch UIC is EIK + 4 and truncation would be rule-2-shaped, but
+        // §3.1 does not enumerate it — an unratified auto-merge path stays
+        // out until the board ratifies it.)
+        "BG" if digits_only && d == 9 => CanonKey::e1("BG:eik", body),
+        // LV — the 11-digit register number is the VAT body verbatim.
+        "LV" if digits_only && d == 11 => CanonKey::e1("LV:regnr", body),
+        // SK — IČ-DPH (SK + 10) ↔ DIČ (10 digits) ONLY. The 8-digit IČO is
+        // a different register and NEVER cross-walks (design §3.1; the
+        // must-FLAG panel). KNOWN HAZARD with no syntactic test: Slovak
+        // group VAT registration issues ONE shared IČ DPH to every member —
+        // the mention-evidence VAT-group wall (denial rule 1) is the ONLY
+        // defense, so the Stage-2 merge job MUST implement it before any SK
+        // wet run.
+        "SK" if digits_only => match d {
+            10 => CanonKey::e1("SK:dic", body),
+            8 if !is_vat => CanonKey::e1("SK:ico", body),
+            _ => None,
+        },
+        // NO — organisasjonsnummer ↔ VAT (9 digits; a trailing "MVA" died in
+        // normalisation? No — MVA is alphabetic and survives; strip it here).
+        "NO" => {
+            let stripped = body.strip_suffix("MVA").unwrap_or(body);
+            if stripped.len() == 9 && stripped.bytes().all(|b| b.is_ascii_digit()) {
+                CanonKey::e1("NO:orgnr", stripped)
+            } else {
+                None
+            }
+        }
+        // SI — davčna številka ↔ VAT (8 digits).
+        "SI" if digits_only && d == 8 => CanonKey::e1("SI:davcna", body),
+        // GR — AFM ↔ VAT (9 digits), EL folded to GR above.
+        "GR" if digits_only && d == 9 => CanonKey::e1("GR:afm", body),
+        // DE, AT, IE, LU, CY, MT, EE, LT, and everything unlisted: no
+        // cross-walk. E0 exact equality is the only merge path.
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(String, String, Tier)> {
+        canonical_key(country, kind, value)
+            .map(|k| (k.scheme.to_owned(), k.key.clone(), k.tier))
+    }
+
+    /// The pinned Stage-2 positive panel (300-exemplars.md): representations
+    /// of one registration MUST share one E1 key.
+    #[test]
+    fn pinned_e1_pairs_unify() {
+        // Telinekataja Oy — FI vat FI01003158 ↔ FI national 01003158.
+        assert_eq!(key(Some("FI"), "vat", "FI01003158"), key(Some("FI"), "national", "01003158"));
+        // The hyphenated storage form (Telinekataja's real Y-tunnus shape)
+        // is the same key — the separator dies in normalisation.
+        assert_eq!(key(Some("FI"), "national", "0100315-8"), key(Some("FI"), "vat", "FI01003158"));
+        // Ramboll — the rename pairs merge on identifier evidence alone.
+        assert_eq!(key(Some("FI"), "vat", "FI01011975"), key(Some("FI"), "national", "01011975"));
+        // RO CUI — bare ↔ prefixed (Societatea de Transport București).
+        assert_eq!(key(Some("RO"), "national", "1589886"), key(Some("RO"), "vat", "RO1589886"));
+        // CNFPT — SIRET establishments truncate onto the SIREN, and the full
+        // FR VAT's key arithmetic proves the same SIREN (79 is 180014045's
+        // real key).
+        let siren = key(Some("FR"), "national", "180014045");
+        assert_eq!(key(Some("FR"), "national", "18001404501577"), siren);
+        assert_eq!(key(Some("FR"), "national", "18001404502245"), siren);
+        assert_eq!(key(Some("FR"), "vat", "FR79180014045"), siren);
+        assert_eq!(siren, Some(("FR:siren".into(), "180014045".into(), Tier::E1)));
+        // A WRONG FR VAT key proves nothing: no key at all.
+        assert_eq!(key(Some("FR"), "vat", "FR12180014045"), None);
+        // SE — Softronic's orgnr ↔ its VAT form (orgnr + "01").
+        assert_eq!(
+            key(Some("SE"), "vat", "SE556249019201"),
+            key(Some("SE"), "national", "5562490192")
+        );
+        // A VAT tail that is not "01" is not the documented shape.
+        assert_eq!(key(Some("SE"), "vat", "SE556249019299"), None);
+        // CZ — DIČ ↔ IČO at full 8-digit length (Ministerstvo financí).
+        assert_eq!(key(Some("CZ"), "vat", "CZ00006947"), key(Some("CZ"), "national", "00006947"));
+        // GR/EL fold.
+        assert_eq!(key(Some("GR"), "vat", "EL094019245"), key(Some("GR"), "national", "094019245"));
+        // PL — VAT ↔ NIP; REGON-14 → REGON-9 stays its own series.
+        assert_eq!(key(Some("PL"), "vat", "PL5262239325"), key(Some("PL"), "national", "5262239325"));
+        assert_eq!(
+            key(Some("PL"), "national", "47085064500000"),
+            key(Some("PL"), "national", "470850645")
+        );
+        assert_ne!(
+            key(Some("PL"), "national", "470850645"),
+            key(Some("PL"), "national", "4708506450"),
+            "REGON-9 and a 10-digit NIP-shaped value never share a series"
+        );
+        // HU — first-8 heads the 11-digit adószám and the row form.
+        assert_eq!(
+            key(Some("HU"), "national", "10773381-2-07"),
+            key(Some("HU"), "vat", "HU10773381")
+        );
+        // NO — MVA suffix strips.
+        assert_eq!(key(Some("NO"), "vat", "NO974760673MVA"), key(Some("NO"), "national", "974760673"));
+        // FR — a genuine SIRET of a 0-leading SIREN truncates at E1: only
+        // the strip-to-exactly-9 shape is pad-ambiguous (verifier catch).
+        assert_eq!(
+            key(Some("FR"), "national", "05548012300012"),
+            Some(("FR:siren".into(), "055480123".into(), Tier::E1))
+        );
+        // BE — enterprise numbers (leading 0/1) key E1.
+        assert_eq!(key(Some("BE"), "vat", "BE0123456749"), key(Some("BE"), "national", "0123456749"));
+    }
+
+    /// The pinned must-NOT panel: pairs the walk must REFUSE to unify at E1.
+    #[test]
+    fn pinned_negatives_refuse() {
+        // SK — DIČ never cross-walks to IČO: different schemes.
+        let dic = key(Some("SK"), "national", "2021853504").unwrap();
+        let ico = key(Some("SK"), "national", "31364501").unwrap();
+        assert_ne!(dic.0, ico.0, "SK DIČ and IČO are separate registers");
+        // CZ699 group VATs identify VAT groups, not entities.
+        assert_eq!(key(Some("CZ"), "vat", "CZ699000797"), None);
+        // ES UTE NIFs are ephemeral per-procedure constructs.
+        assert_eq!(key(Some("ES"), "national", "U12345678"), None);
+        // DE has no cross-walk at all — court-scoped registers.
+        assert_eq!(key(Some("DE"), "vat", "DE136695976"), None);
+        assert_eq!(key(Some("DE"), "national", "HRB 12345"), None);
+        // EE VAT and registrikood are separate series.
+        assert_eq!(key(Some("EE"), "vat", "EE100931558"), None);
+        assert_eq!(key(Some("EE"), "national", "10913146"), None);
+        // NULL-country nationals cannot resolve a scheme.
+        assert_eq!(key(None, "national", "12345678"), None);
+        // IT Codice Fiscale is no signal either way.
+        assert_eq!(key(Some("IT"), "national", "RSSMRA85T10A562S"), None);
+        // NL KvK (8 digits) is not the RSIN register.
+        assert_eq!(key(Some("NL"), "national", "12345678"), None);
+        // A kind the resolver does not mint gets no key — a future GLN/DIR3
+        // kind must not ride the national arms (verifier catch).
+        assert_eq!(key(Some("BE"), "gln", "0123456789"), None);
+        // A prefix-less VAT is an UNGATED value class (the idgate census
+        // scores it "other"): no key, matching the gate's own blindness.
+        assert_eq!(key(Some("FI"), "vat", "01003158"), None);
+        // HU áfakód 5 marks a VAT GROUP's id: the group's törzsszám names
+        // no member.
+        assert_eq!(key(Some("HU"), "national", "12345678-5-02"), None);
+        // BE establishment-unit numbers (leading 2-8) are location-scoped.
+        assert_eq!(key(Some("BE"), "national", "2123456789"), None);
+        // BG 13-digit branch UICs stay unkeyed until the board ratifies the
+        // truncation (§3.1 lists only VAT↔EIK).
+        assert_eq!(key(Some("BG"), "national", "1234567890123"), None);
+        // A bare-digit 9-char ES body is neither a NIF nor a DIR3 shape —
+        // and "123456789" is the pinned placeholder.
+        assert_eq!(key(Some("ES"), "national", "123456789"), None);
+    }
+
+    /// The DIR3 demotion (verifier catch): Spanish DIR3 authority codes
+    /// share their exact shape with letter-check CIFs, so ES keys are E2 —
+    /// present as candidate edges, NEVER auto-merge material — and the NL
+    /// VAT head is E2 for its own reasons (sole-trader heads and
+    /// fiscale-eenheid group ids are not RSINs).
+    #[test]
+    fn ambiguous_series_demote_to_e2() {
+        // A company CIF (vat) and a public body's DIR3 (national) with the
+        // same characters: both key, both E2 — the collision becomes an
+        // edge for R3, never an auto-merge.
+        let cif = key(Some("ES"), "vat", "ESA01002820").unwrap();
+        let dir3 = key(Some("ES"), "national", "A01002820").unwrap();
+        assert_eq!(cif.1, dir3.1, "the shapes really do collide — that is the danger");
+        assert_eq!((cif.2, dir3.2), (Tier::E2, Tier::E2));
+        // NL: the VAT-derived head is E2; the bare national RSIN keeps E1.
+        assert_eq!(key(Some("NL"), "vat", "NL003660564B01").unwrap().2, Tier::E2);
+        assert_eq!(key(Some("NL"), "national", "003660564").unwrap().2, Tier::E1);
+        assert_eq!(
+            key(Some("NL"), "vat", "NL003660564B01").unwrap().1,
+            key(Some("NL"), "national", "003660564").unwrap().1,
+            "the head still names the same key — as an edge"
+        );
+    }
+
+    /// The pad amendment (design §3.1): pad-derived keys are E2 — candidate
+    /// edges only. The live CZ collision is the reason.
+    #[test]
+    fn pad_derived_keys_are_e2_only() {
+        // The Justice/Assay collision: 0002542 (corrupted, 7 digits) pads
+        // onto 00002542 (Puncovní úřad's REAL IČO). The keys collide — but
+        // at E2, so R2/E1 never merges them; R3's corroboration stack (which
+        // the mismatched names fail) is the only path.
+        let padded = key(Some("CZ"), "national", "0002542").unwrap();
+        let real = key(Some("CZ"), "national", "00002542").unwrap();
+        assert_eq!(padded.1, real.1, "the pad does collide — that is the danger");
+        assert_eq!(padded.2, Tier::E2, "…so the pad-derived key must be E2");
+        assert_eq!(real.2, Tier::E1, "the full-length form is the real key");
+        // The corroborated Ministerstvo financí family rides the same rails:
+        // 0006947 (7-digit) keys E2 onto 00006947's E1 key.
+        assert_eq!(key(Some("CZ"), "national", "0006947").unwrap().2, Tier::E2);
+        assert_eq!(
+            key(Some("CZ"), "national", "0006947").unwrap().1,
+            key(Some("CZ"), "national", "00006947").unwrap().1
+        );
+        // FR left-zero-padded 14-char forms (live: "00000219740248").
+        let fr = key(Some("FR"), "national", "00000219740248").unwrap();
+        assert_eq!((fr.1.as_str(), fr.2), ("219740248", Tier::E2));
+        // BE 9-digit legacy pads onto the 10-digit KBO.
+        let be = key(Some("BE"), "national", "123456789").unwrap();
+        assert_eq!((be.1.as_str(), be.2), ("0123456789", Tier::E2));
+        assert_eq!(key(Some("BE"), "national", "0123456789").unwrap().2, Tier::E1);
+    }
+}

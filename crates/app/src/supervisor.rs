@@ -312,6 +312,7 @@ enum Spec {
     /// identifier merging strangers shows up as one org accreting distinct
     /// names (DE123456789 reached 144 before it was caught by hand).
     OrgMergeHealth,
+    R2Census,
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -812,6 +813,12 @@ impl Supervisor {
                 self.push("org-merge-health", "org-merge-health".into(), Spec::OrgMergeHealth)
                     .await,
             ]),
+            // Issue 300 Stage 2 opening census: read-only canonical-key
+            // grouping preview — what the R2 same-country merge WOULD find,
+            // measured before any merge code exists.
+            "r2-census" => {
+                Ok(vec![self.push("r2-census", "r2-census".into(), Spec::R2Census).await])
+            }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
             "repair-placeholder-orgs" => {
@@ -1124,8 +1131,14 @@ impl Supervisor {
 /// over the following six minutes. Naming the readers here is what lets `cancel` refuse
 /// instead of lie, and the next long job added is refused by default rather than
 /// silently ignored.
-const STOPPABLE_KINDS: &[&str] =
-    &["reparse", "data-quality", "project", "merge-provisional-orgs", "org-merge-health"];
+const STOPPABLE_KINDS: &[&str] = &[
+    "reparse",
+    "data-quality",
+    "project",
+    "merge-provisional-orgs",
+    "org-merge-health",
+    "r2-census",
+];
 
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
@@ -2430,6 +2443,208 @@ impl Supervisor {
                      {compound} compound hits (~{placeholder_total}+ placeholder-keyed; \
                      checksum rates now exclude condemned ids)",
                     max.0, max.1
+                ))
+            }
+            Spec::R2Census => {
+                // Issue 300 Stage 2, the opening census. Read-only preview of
+                // the R2 same-country merge: canonical keys over the whole
+                // identifier-bearing org layer, grouped in RAM (the B-ID
+                // block, §4.1) — measured BEFORE any merge code exists, the
+                // same discipline that sized Stage 1. Rides the org-merge-
+                // health walk; a stopped run stores nothing (issue 230's
+                // zero-lie bar).
+                use std::collections::HashMap;
+                #[derive(Default)]
+                struct Group {
+                    // E1 members as (org_id, is_vat_kind).
+                    e1: Vec<(i64, bool)>,
+                    // Pad-derived attachments (E2): counted, never merged.
+                    e2: u64,
+                }
+                let mut watermark = 0i64;
+                let mut scanned = 0u64;
+                let (mut keyed_e1, mut keyed_e2, mut unkeyed) = (0u64, 0u64, 0u64);
+                let (mut es_ute, mut cz699) = (0u64, 0u64);
+                let (mut null_country_keyed, mut prefix_contradictions) = (0u64, 0u64);
+                let mut groups: HashMap<(String, &'static str, String), Group> = HashMap::new();
+                loop {
+                    if self.cancelled(job.id) {
+                        return Ok("r2-census stopped by cancel — no report stored".to_owned());
+                    }
+                    let (rows, next) = self
+                        .db
+                        .org_merge_health_batch(ingest::project::match_norm, BACKFILL_BATCH, watermark)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if rows.is_empty() {
+                        break;
+                    }
+                    for r in &rows {
+                        scanned += 1;
+                        let kind = r.kind.clone().unwrap_or_else(|| "national".into());
+                        let is_vat = kind == "vat";
+                        // Denial-class counters (the key fn returns None for
+                        // these; the census names them so the report shows
+                        // the walls working, not silent gaps).
+                        let norm: String = r
+                            .identifier
+                            .chars()
+                            .filter(char::is_ascii_alphanumeric)
+                            .map(|c| c.to_ascii_uppercase())
+                            .collect();
+                        if is_vat && norm.starts_with("CZ699") {
+                            cz699 += 1;
+                        }
+                        let es_body = if is_vat {
+                            norm.strip_prefix("ES")
+                        } else if r.country.as_deref() == Some("ES") {
+                            Some(norm.as_str())
+                        } else {
+                            None
+                        };
+                        if es_body.is_some_and(|b| b.starts_with('U')) {
+                            es_ute += 1;
+                        }
+                        let Some(k) = ingest::crosswalk::canonical_key(
+                            r.country.as_deref(),
+                            &kind,
+                            &r.identifier,
+                        ) else {
+                            unkeyed += 1;
+                            continue;
+                        };
+                        // R2 is SAME-COUNTRY: a NULL-country row's key is
+                        // Stage-3 (R3) material — counted, not grouped. A row
+                        // whose country contradicts its VAT prefix is an
+                        // anomaly — counted, not grouped (GR/EL fold applied).
+                        let Some(country) = r.country.as_deref() else {
+                            null_country_keyed += 1;
+                            continue;
+                        };
+                        let country = if country == "EL" { "GR" } else { country };
+                        if is_vat && !k.scheme.starts_with(country) {
+                            prefix_contradictions += 1;
+                            continue;
+                        }
+                        let g = groups
+                            .entry((country.to_owned(), k.scheme, k.key))
+                            .or_default();
+                        match k.tier {
+                            ingest::crosswalk::Tier::E1 => {
+                                keyed_e1 += 1;
+                                g.e1.push((r.org_id, is_vat));
+                            }
+                            ingest::crosswalk::Tier::E2 => {
+                                keyed_e2 += 1;
+                                g.e2 += 1;
+                            }
+                        }
+                    }
+                    watermark = next;
+                    self.set_phase(
+                        "censusing",
+                        Some(scanned),
+                        None,
+                        format!("{keyed_e1} E1-keyed, {} key groups", groups.len()),
+                    );
+                }
+                // Per-scheme tallies over the E1 groups.
+                #[derive(Default)]
+                struct SchemeStat {
+                    groups_ge2: u64,
+                    orgs_in_groups: u64,
+                    mixed_kind: u64,
+                    over_cap: u64,
+                    max_group: u64,
+                }
+                const GROUP_CAP: usize = 8;
+                let mut per_scheme: HashMap<&'static str, SchemeStat> = HashMap::new();
+                let (mut e2_attached, mut e2_orphan_keys) = (0u64, 0u64);
+                let mut sample: Vec<(&(String, &'static str, String), usize)> = Vec::new();
+                for (key, g) in &groups {
+                    if g.e2 > 0 {
+                        if g.e1.is_empty() {
+                            e2_orphan_keys += 1;
+                        } else {
+                            e2_attached += g.e2;
+                        }
+                    }
+                    if g.e1.len() < 2 {
+                        continue;
+                    }
+                    let s = per_scheme.entry(key.1).or_default();
+                    s.groups_ge2 += 1;
+                    s.orgs_in_groups += g.e1.len() as u64;
+                    s.max_group = s.max_group.max(g.e1.len() as u64);
+                    if g.e1.iter().any(|m| m.1) && g.e1.iter().any(|m| !m.1) {
+                        s.mixed_kind += 1;
+                    }
+                    if g.e1.len() > GROUP_CAP {
+                        s.over_cap += 1;
+                    }
+                    sample.push((key, g.e1.len()));
+                }
+                // The largest 30 groups become the report's inspection sample
+                // (the precision review's raw material).
+                sample.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
+                sample.truncate(30);
+                let sample_ids: Vec<i64> = sample
+                    .iter()
+                    .flat_map(|(k, _)| groups[*k].e1.iter().map(|m| m.0))
+                    .collect();
+                let meta =
+                    self.db.org_health_meta(&sample_ids).await.map_err(|e| e.to_string())?;
+                let by_id: HashMap<i64, _> = meta.into_iter().map(|m| (m.0, m)).collect();
+                let mut scheme_rows: Vec<(&str, SchemeStat)> = per_scheme.into_iter().collect();
+                scheme_rows.sort_by(|a, b| b.1.groups_ge2.cmp(&a.1.groups_ge2));
+                let (total_groups, total_orgs, total_mixed, total_over_cap) =
+                    scheme_rows.iter().fold((0u64, 0u64, 0u64, 0u64), |acc, (_, s)| {
+                        (
+                            acc.0 + s.groups_ge2,
+                            acc.1 + s.orgs_in_groups,
+                            acc.2 + s.mixed_kind,
+                            acc.3 + s.over_cap,
+                        )
+                    });
+                let now = store::now_unix();
+                let report = serde_json::json!({
+                    "scanned": scanned,
+                    "keyed_e1": keyed_e1, "keyed_e2": keyed_e2, "unkeyed": unkeyed,
+                    "groups_ge2": total_groups, "orgs_in_groups": total_orgs,
+                    "mixed_kind_groups": total_mixed, "over_cap_groups": total_over_cap,
+                    "e2_attached": e2_attached, "e2_orphan_keys": e2_orphan_keys,
+                    "null_country_keyed": null_country_keyed,
+                    "prefix_contradictions": prefix_contradictions,
+                    "denials": { "es_ute": es_ute, "cz699": cz699 },
+                    "group_cap": GROUP_CAP,
+                    "schemes": scheme_rows.iter().map(|(k, s)| serde_json::json!({
+                        "scheme": k, "groups_ge2": s.groups_ge2,
+                        "orgs_in_groups": s.orgs_in_groups, "mixed_kind": s.mixed_kind,
+                        "over_cap": s.over_cap, "max_group": s.max_group,
+                    })).collect::<Vec<_>>(),
+                    "sample": sample.iter().map(|(key, n)| serde_json::json!({
+                        "country": key.0, "scheme": key.1, "key": key.2, "size": n,
+                        "members": groups[*key].e1.iter().map(|(id, is_vat)| {
+                            let m = by_id.get(id);
+                            serde_json::json!({
+                                "org_id": id, "vat_kind": is_vat,
+                                "identifier": m.and_then(|m| m.3.clone()),
+                                "name": m.map(|m| m.4.clone()),
+                            })
+                        }).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("r2-census", &report, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "r2-census (issue 300 Stage 2): {scanned} identifier-bearing orgs, \
+                     {keyed_e1} E1-keyed / {keyed_e2} E2 (pad) / {unkeyed} no key; \
+                     {total_groups} same-country groups >=2 holding {total_orgs} orgs \
+                     ({total_mixed} mixed vat+national, {total_over_cap} over cap {GROUP_CAP}); \
+                     {e2_attached} pad rows attach to keyed groups, {e2_orphan_keys} pad-only \
+                     keys; {null_country_keyed} NULL-country keyed (R3 pool), \
+                     {prefix_contradictions} country/prefix contradictions; denials: \
+                     {es_ute} ES-UTE, {cz699} CZ699"
                 ))
             }
             Spec::Refold { profiles, expect } => {
@@ -4410,11 +4625,18 @@ mod tests {
 
         // And every kind named stoppable must actually be one — the list is the contract,
         // so a kind added to it without a checkpoint is the bug this test exists to catch.
-        // org-merge-health reads the flag at the top of every census batch and stores
-        // nothing when stopped (issue 300 Stage 0).
+        // org-merge-health and r2-census read the flag at the top of every census batch
+        // and store nothing when stopped (issue 300 Stages 0 and 2).
         assert_eq!(
             STOPPABLE_KINDS,
-            &["reparse", "data-quality", "project", "merge-provisional-orgs", "org-merge-health"]
+            &[
+                "reparse",
+                "data-quality",
+                "project",
+                "merge-provisional-orgs",
+                "org-merge-health",
+                "r2-census"
+            ]
         );
     }
 

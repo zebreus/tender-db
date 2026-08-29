@@ -147,6 +147,38 @@ the gate-invariant tripwire returns to 0.
 Still due: first-post-flip daily-chain read (~07:4x: provisional mint
 rate ticks up by the condemned share; new placeholder mentions no longer
 merge).
+
+**STAGE 2 OPENED (2026-08-29 ~03:0x): canonical_key + r2-census built,
+adversarially verified.** `ingest::crosswalk::canonical_key` implements
+§3.1 with an explicit E1/E2 tier on every key (prefix-strips/truncations
+E1; pads E2 per the amendment) and a read-only `r2-census` job (rides the
+org-merge-health walk; same-country E1 grouping, per-scheme stats, cap-8
+counter, denial counters, 30-group inspection sample to
+put_report("r2-census")). Two adversarial verifiers ran before commit;
+both catches folded in:
+- **ES DIR3 collision (the La-Poste-class catch):** DIR3 authority codes
+  (letter+8 digits) share their exact shape with letter-check CIFs, both
+  arriving kind=national — an E1 key could auto-merge a company with a
+  public administration. ES is DEMOTED WHOLE to E2 (edges only; R3
+  corroboration decides); pure-digit 9-char ES bodies refused (the bare
+  123456789 placeholder shape).
+- **NL demoted to E2** for VAT-derived heads: "legal entities only" has
+  no enforceable syntactic test (post-2020 sole-trader heads are not
+  RSINs; fiscale-eenheid group ids look like member ids).
+- **HU áfakód-5 group ids refused** (csoportazonosító szám names the
+  group, not a member). **SK group IČ-DPH has NO syntactic marker** — the
+  merge job MUST implement denial rule 1 (mention-evidence VAT-group
+  wall) before any SK wet run; recorded in-code.
+- Unknown identifier kinds hard-refused (future GLN/DIR3 kinds must not
+  ride national arms); prefix-less VATs refused (census scores them
+  "other" — ungated class must not key E1); BE establishment range
+  (leading 2-8) refused; BG 13→9 truncation kept OUT until ratified;
+  FR 0-leading genuine SIRETs restored to E1 (only strip-to-exactly-9 is
+  pad-ambiguous → E2).
+Deliberate safe narrowings recorded in-code: FI legacy 6-digit no key,
+CZ 7-digit vat no pad, FR letter-VAT refused, DK P-nummer no key.
+NEXT: deploy + first prod r2-census read → sizes the match-org-identifiers
+--r2 merge job (which needs denial rules 1/4/5/7 before any wet run).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

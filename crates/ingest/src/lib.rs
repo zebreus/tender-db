@@ -8,6 +8,7 @@ pub mod data_quality;
 pub mod doe;
 pub mod eforms;
 pub mod fetch;
+pub mod crosswalk;
 pub mod idgate;
 pub mod internal_ojs;
 pub mod orgid;
