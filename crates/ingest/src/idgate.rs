@@ -372,22 +372,24 @@ fn dk_cvr(digits: &[u8]) -> Checksum {
     to_checksum(sum % 11 == 0)
 }
 
-/// SI davčna številka (8): weights 8,7,6,5,4,3,2 over the first 7; check =
-/// 11 − rem, with BOTH 10 and 11 mapping to 0 — the 10→0 variant is the
-/// issued rule, verified live 60/60 on SI-prefixed VAT bodies (the
-/// "10 = not issued" variant circulating in some references fails exactly
-/// the rem-1 numbers, e.g. 11022680, which is real). Same weight vector as
-/// CZ IČO with check rules differing only at rem 0 — SI- and CZ-valid
-/// 8-digit values therefore usually co-anchor and stay ambiguous, which is
-/// the honest reading. Anchor-path only, like dk_cvr.
+/// SI davčna številka (8): weights 8,7,6,5,4,3,2 over the first 7; rem 0 ⇒
+/// NEVER issued (the stdnum/jsvat rule — an adversarial panel caught the
+/// first cut folding rem 0 to check 0, and since SI's and CZ's check rules
+/// agree at every rem ≥ 1, that made every UNIQUE SI anchor a phantom of
+/// the never-issued class); rem 1 ⇒ check 0 (the 10→0 half, live-mandated:
+/// rem-1 specimens like 11022680 are real, verified 60/60 on SI-prefixed
+/// VAT bodies where the "10 = not issued" variant fails exactly those ten);
+/// else check = 11 − rem. SI-valid values therefore ALWAYS co-anchor CZ and
+/// stay ambiguous — the honest reading. Anchor-path only, like dk_cvr.
 fn si_davcna(digits: &[u8]) -> Checksum {
     const W: [u32; 7] = [8, 7, 6, 5, 4, 3, 2];
     let sum: u32 = W.iter().zip(digits).map(|(w, &d)| w * u32::from(d)).sum();
-    let check = match 11 - sum % 11 {
-        r if r >= 10 => 0,
-        r => r,
-    };
-    to_checksum(check == u32::from(digits[7]))
+    let check = u32::from(digits[7]);
+    match sum % 11 {
+        0 => Checksum::Fail,
+        1 => to_checksum(check == 0),
+        r => to_checksum(11 - r == check),
+    }
 }
 
 /// PT NIF (9): weights 9..2 over the first 8; check = 0 when 11 − rem ≥ 10,
@@ -455,10 +457,11 @@ fn gr_afm(digits: &[u8]) -> Checksum {
 /// country (the design's "hard-checksum pass" condition); several make it the
 /// EBSCO class (a bare digit string is not single-country evidence — a
 /// 10-digit Luhn pass could be a SE orgnr or match PL:nip's shape); zero
-/// leaves it unanchored. Only HARD-checksum schemes anchor: a SOFT scheme's
-/// pass proves little (its own corpus fails it ~3%+ of the time), and the FR
-/// 14-digit SIRET is deliberately included via its SOFT Luhn because its key
-/// is the TRUNCATED SIREN and the design treats a Luhn-passing 14-digit as
+/// leaves it unanchored. Anchor schemes are checksum probes, not the census
+/// hard/soft roster: the 8-digit arm's dk_cvr/si_davcna are anchor-path-only
+/// arithmetic (validated live, DK own-bucket 95%), and the FR 14-digit SIRET
+/// is deliberately included via its SOFT Luhn because its key is the
+/// TRUNCATED SIREN and the design treats a Luhn-passing 14-digit as
 /// SIRET-shaped-with-country (the CNFPT NULL class — Stage 3's cleanest
 /// rescue; the R3 stack still demands name corroboration on top).
 pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
@@ -547,8 +550,9 @@ mod tests {
     use super::*;
 
     /// Stage 3's anchoring probe: a Luhn-valid 14-digit anchors uniquely to
-    /// its truncated SIREN (the CNFPT NULL class); an 8-digit value is NEVER
-    /// unique (DK/SI have no checksum to exclude them); bare digit strings
+    /// its truncated SIREN (the CNFPT NULL class); an 8-digit value anchors
+    /// uniquely when exactly one of the four register checksums accepts
+    /// (the 8-digit slice — SI/CZ co-anchor by construction); bare digit strings
     /// with several passing schemes stay EBSCO-class ambiguous.
     #[test]
     fn checksum_anchors_classify_the_null_country_shapes() {
@@ -568,6 +572,15 @@ mod tests {
         assert!(si.len() >= 2, "SI/CZ co-anchor by construction: {si:?}");
         // A mis-filed UK company number under a DK row: every scheme rejects.
         assert!(checksum_anchors("00971289").is_empty(), "foreign noise anchors nowhere");
+        // The panel's phantom class: prefix-rem-0 values are NEVER-ISSUED
+        // davčna numbers, and since SI ≡ CZ at every rem ≥ 1, a rem-0
+        // acceptor would make every unique SI anchor a phantom. 10000070 is
+        // rem-0-check-0 (uniquely-SI under the defective first cut): it must
+        // anchor NOWHERE.
+        assert!(
+            checksum_anchors("10000070").is_empty(),
+            "rem-0 davcna values are never issued"
+        );
         assert!(checksum_anchors("180014045").iter().any(|(s, _)| *s == "FR:siren"));
         assert!(checksum_anchors("HRB 12345").is_empty(), "letters are the register path");
         // The crosswalk's leading-zero judgment, mirrored (verification

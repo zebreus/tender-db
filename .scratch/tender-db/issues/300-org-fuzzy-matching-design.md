@@ -474,9 +474,35 @@ pinned in test). checksum_anchors' 8-digit arm now emits four real
 probes, no marker; census + merge consume it by injection, no other
 code change. Anchor-path ONLY — deliberately NOT wired into the
 census gate/condemns (Stage-1 condemnation policy expansion is a
-separate decision; noted for a future issue). NEXT: gate → deploy →
-r3-census re-run (measures the 8-digit decomposition) → R3 dry →
-refuter panel on the checksum implementations → capped wet.
+separate decision; noted for a future issue). First deploy (32c9cd6):
+census re-run on the post-merge pool (3,925) decomposed the 8-digit
+class into **407 anchored+corroborated / 987 uncorroborated / 293
+no-target / 1,439 multi-scheme**; dry run recorded plan 395.
+
+**PANEL ROUND (3 lenses, ~370k tokens): CONFIRMED ARITHMETIC DEFECT,
+fixed before any wet.** Two lenses independently grounded the same
+bug: si_davcna's `r >= 10 => 0` collapse also accepted prefix-rem-0
+values, but rem-0 davčna numbers are NEVER ISSUED (stdnum's si/ddv
+deliberately leaves check 11 unmatchable; jsvat guards total != 11; 0
+of 107 live specimens are rem-0, p≈3.7e-5 under the defective rule) —
+and since SI ≡ CZ at every rem ≥ 1, EVERY unique SI anchor was a
+phantom of that class (measured: 0.75% of random 8-digit strings,
+100% of unique-SI anchors in a 200k simulation; ~15 phantom rows in
+the pool). Fixed: rem 0 → Fail (fi_ytunnus's match shape); the
+unique-SI pathway is now structurally EMPTY and SI rescue correctly
+waits for a corroboration-decides multi-anchor design. Panel also
+verified dk_cvr exact vs stdnum (380/400 reproduced; zero
+wrong-country unique anchors among the 20 DK-bucket failures),
+proved the false-merge residual of real 8-digit anchors is the
+TIGHTEST of all arms (16.1% spurious-unique for a foreign number vs
+28.6%/17.9%/18.0% for the 9/10/11-digit arms), flagged the SK-IČO
+exposure (SK shares CZ's arithmetic; 92.5% masked by SI/CZ
+co-anchoring pre-fix — post-fix SK rem-0-check-1 values DO
+unique-anchor CZ; the name-equality wall is the standing defense,
+expected false merges well under one — accepted residual, same class
+as FR/IT/BE), and caught three doc rots (fixed). Degenerates safe:
+00000000 → triple co-anchor, repdigits anchor nowhere. rem-0 phantom
+pinned in test (10000070 anchors nowhere).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
