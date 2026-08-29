@@ -2726,7 +2726,7 @@ impl Supervisor {
                         dry_run,
                         max_groups: *max_groups,
                         expect_groups,
-                        job_id: Some(job_id),
+                        job_id: Some(job_id as i64),
                         stop: &stop,
                     })
                     .await
