@@ -35,7 +35,25 @@ Relates to: 300 Stage 1 (the dissolve whose skip set this is), 259 (the
 guard discipline it inherits — and whose section-walk machinery tier 4
 reuses).
 
-## Tier 4 (next unit): lot-result origin resolution
+## Tier 5 (the residual-91 design, 2026-08-29 00:1x): dissolve-then-refold
+
+Tier 4c rescued zero: the true residual shape (measured on 15176's origin
+26730615) is a multi-lot CAN where SEVERAL DIFFERENT real winners all
+published the placeholder id — three Tenderer sections, one condemned org,
+one lot each. The per-lot linkage (LotResult → SettledContract → LotTender
+→ TenderingParty) is FLATTENED at fold time and not persisted; winner rows
+are its product. So the canonical layer cannot disambiguate — but it does
+not need to: winner rows are DERIVED. For the 91: rewrite mentions and
+party/bid-party rows per-section (fully deterministic), DELETE the
+ambiguous winner rows and the org, and stamp the affected tenders
+epoch-stale (the issue-179 refold mechanism) — the next fold re-derives
+every winner row correctly from the re-bound mentions via
+bind_organizations. Precondition to verify in tests: an epoch-stale refold
+rewrites a version's winner set wholesale. Org-atomicity keeps its
+meaning: the org disappears in one transaction; the winner TRUTH arrives
+with the refold, minutes later, derived rather than guessed.
+
+## Tier 4 (landed): lot-result origin resolution
 
 `lot_results` rows carry their ORIGIN (tender_id, notice_id, result_key) —
 the notice and RES-section where the result was published, independent of
