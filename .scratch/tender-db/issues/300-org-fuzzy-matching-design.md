@@ -503,6 +503,21 @@ expected false merges well under one — accepted residual, same class
 as FR/IT/BE), and caught three doc rots (fixed). Degenerates safe:
 00000000 → triple co-anchor, repdigits anchor nowhere. rem-0 phantom
 pinned in test (10000070 anchors nowhere).
+
+**8-DIGIT SLICE WET, PREVIEW-EXACT (2026-08-29 ~17:5x, rev 1a34949,
+jobs 461-464).** Post-fix census: 408 anchored+corroborated (motion
+from the pre-fix 407 exactly as the panel predicted — phantom-SI
+gone, a few co-anchors became legitimate uniques). Dry plan 396;
+capped 100 + remainder 296 under parity: **396 more NULL-country orgs
+merged — 578 mentions, 815 parties, 580 winners repointed, 293
+tenders touched, matching the dry blast radius to the row.**
+**MAINTPARTNER GATE MET**: NULL row 5276790 merged into FI standing
+org 2476219 via its unique FI anchor (verified live). Pool overall:
+4,816 → 3,529 (891 + 396 = 1,287 R3 merges total). Journal clean,
+health green. Residual Stage-3 material: 987 anchored-uncorroborated
+(edges), 296 no-target, 1,435 multi-scheme (incl. all genuine SI
+values — rescue needs a corroboration-decides multi-anchor design),
+441 unanchored, 358 register-prefixed, 14 multi-target.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
