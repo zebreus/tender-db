@@ -493,7 +493,18 @@ mod tests {
 pub fn consortium_name(name: &str) -> bool {
     let lower = name.to_lowercase();
     let mut tokens = lower.split(|c: char| !c.is_alphanumeric());
-    tokens.any(|t| matches!(t, "groupement" | "gpt" | "consortium" | "mandataire" | "ute" | "arge"))
+    // "consórcio"/"consorcio" (PT/ES/IT): the precision review's live catch —
+    // "Consórcio E.I.P. Serviços _ CME…" shares the lead member's NIF, the
+    // Portuguese groupement. Deliberately NOT "konsorcjum": the same review
+    // measured it appearing in MEMBER labels ("OPEGIEKA — członek
+    // konsorcjum"), where the row IS the member and the merge is right.
+    tokens.any(|t| {
+        matches!(
+            t,
+            "groupement" | "gpt" | "consortium" | "mandataire" | "ute" | "arge" | "consórcio"
+                | "consorcio"
+        )
+    })
 }
 
 /// The legal-form FAMILY named in an org name, when one is unambiguous — the
@@ -557,6 +568,14 @@ mod veto_tests {
         assert!(consortium_name("Consortium Stabile Arcale"));
         assert!(consortium_name("Bouygues Énergies & Services (mandataire)"));
         assert!(consortium_name("UTE Acciona-Sacyr"));
+        assert!(
+            consortium_name("Consórcio E.I.P. Serviços, S.A. _ CME"),
+            "the precision review's PT catch"
+        );
+        assert!(
+            !consortium_name("OPEGIEKA Sp. z o.o. - członek konsorcjum"),
+            "a MEMBER labelled as such is not the vehicle"
+        );
         assert!(!consortium_name("Colas Centre Ouest"));
         assert!(!consortium_name("Egyptian Trading Co"), "gpt must match as a token only");
     }
