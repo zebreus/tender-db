@@ -364,12 +364,28 @@ without name corroboration (edges), 83 anchored/no standing target,
 2,135 multi-scheme ambiguous (EBSCO flag-first class), 449 unanchored,
 358 register-prefixed (the separate R3 alternative — court-scope
 exclusion applies there). Sample of 40 candidates in the r3-census
-report for the review. NEXT UNIT: the R3 merge arm consuming the 903
-with the full §4.2 stack (denial walls incl. VAT-group mention wall,
-group cap, survivor = the anchored-country row), exemplar tests
-(Maintpartner, Philips 3-way, Grand Port, CNFPT SIRET rows, Kærunefnd
-must-not-merge-uncorroborated, EBSCO must-FLAG), adversarial verify,
-precision review of the candidate sample, capped rollout.
+report for the review. **R3 MERGE ARM BUILT (2026-08-29 ~14:4x).**
+`store::match_org_null_country_r3` recomputes the census ladder
+verbatim (register-prefix skip → unique real anchor, the DK|SI marker
+never unique → exactly ONE standing target, several = the families R2
+deliberately declined, skipped as multi_target → exact cross-language
+N2 corroboration via org_all_names) then hardens with the R2 stack:
+gate-poison BOTH sides, consortium veto both sides (two rows — no
+remainder to salvage), VAT-group mention wall with the pair-forming
+key stripped (the F1 mask rule) and every tier admitted as conflict
+evidence. Candidate = loser, anchored standing row = keep;
+org_merge_log rule='r3' with anchor+n2 evidence; same T4 ladder as R2
+(dry-run records "r3-merge-plan", wet REQUIRES it, parity max(2%,50),
+capped, stoppable, chunked txns, wet re-records the residual).
+Supervisor: `match-org-identifiers` gained a `rule` param (r2
+default / r3; unknown rejected at enqueue). Store test pins every
+census rung + each denial (incl. the wall's mask shape) + parity abort
++ wet merge with blast radius + rerun idempotence. NEXT (this firing):
+gate, deploy, prod DRY run. NEXT FIRING: adversarial verify +
+precision review of the 40-candidate census sample + capped wet run —
+the exemplar gates (§8): Maintpartner/Philips/Grand Port/CNFPT merge,
+Kærunefnd must-not-merge-uncorroborated, EBSCO must-flag (its class
+lands in multi-scheme/unanchored, structurally unmergeable here).
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

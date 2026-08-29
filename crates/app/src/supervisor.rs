@@ -315,6 +315,7 @@ enum Spec {
     R2Census,
     R3Census,
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
+    MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -502,6 +503,11 @@ pub struct JobRequest {
     /// the design's capped first prod run (issue 300 Stage 2). Omitted means
     /// the whole plan.
     pub max_groups: Option<u64>,
+    /// `match-org-identifiers` only: which merge rule to run — `r2` (the
+    /// Stage-2 same-country canonical-key merge, the default) or `r3` (the
+    /// Stage-3 NULL-country checksum-anchor rescue). Anything else is
+    /// rejected at enqueue.
+    pub rule: Option<String>,
 }
 
 impl Supervisor {
@@ -838,19 +844,22 @@ impl Supervisor {
             "match-org-identifiers" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 let max_groups = req.max_groups;
-                let params = match (dry_run, max_groups) {
-                    (true, _) => "match-org-identifiers r2 dry-run".to_owned(),
-                    (false, Some(cap)) => format!("match-org-identifiers r2 cap={cap}"),
-                    (false, None) => "match-org-identifiers r2".to_owned(),
+                let rule = req.rule.as_deref().unwrap_or("r2");
+                let spec = match rule {
+                    "r2" => Spec::MatchOrgIdentifiersR2 { dry_run, max_groups },
+                    "r3" => Spec::MatchOrgIdentifiersR3 { dry_run, max_groups },
+                    other => {
+                        return Err(format!(
+                            "match-org-identifiers: unknown rule '{other}' (r2 or r3)"
+                        ));
+                    }
                 };
-                Ok(vec![
-                    self.push(
-                        "match-org-identifiers",
-                        params,
-                        Spec::MatchOrgIdentifiersR2 { dry_run, max_groups },
-                    )
-                    .await,
-                ])
+                let params = match (dry_run, max_groups) {
+                    (true, _) => format!("match-org-identifiers {rule} dry-run"),
+                    (false, Some(cap)) => format!("match-org-identifiers {rule} cap={cap}"),
+                    (false, None) => format!("match-org-identifiers {rule}"),
+                };
+                Ok(vec![self.push("match-org-identifiers", params, spec).await])
             }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
@@ -2924,6 +2933,120 @@ impl Supervisor {
                     r.denied_consortium,
                     r.consortium_excluded,
                     r.denied_legal_form,
+                    r.denied_group_vat,
+                    r.plan_groups,
+                    r.merged_groups,
+                    r.removed,
+                    r.mentions,
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tender_changes
+                ))
+            }
+            Spec::MatchOrgIdentifiersR3 { dry_run, max_groups } => {
+                // Issue 300 Stage 3: the NULL-country rescue merge — the
+                // r3-census's ladder recomputed live, hardened with the R2
+                // denial stack. Same T4 ladder as R2: a wet run REQUIRES the
+                // recorded r3-merge-plan, and re-records the residual.
+                let dry_run = *dry_run;
+                let expect_groups = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("r3-merge-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored r3-merge-plan — run the dry run first".to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["plan_groups"]
+                            .as_u64()
+                            .ok_or_else(|| "r3-merge-plan lacks plan_groups".to_owned())?,
+                    )
+                };
+                self.set_phase(
+                    if dry_run { "planning" } else { "merging" },
+                    None,
+                    None,
+                    "preloading the canonical target map".to_owned(),
+                );
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let r = self
+                    .db
+                    .match_org_null_country_r3(store::R3MergeArgs {
+                        key: ingest::crosswalk::canonical_key_flat,
+                        anchors: ingest::idgate::checksum_anchors,
+                        condemns: ingest::idgate::condemns,
+                        consortium: ingest::crosswalk::consortium_name,
+                        norm: ingest::project::match_norm,
+                        dry_run,
+                        max_groups: *max_groups,
+                        expect_groups,
+                        job_id: Some(job_id as i64),
+                        stop: &stop,
+                    })
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // Keep the recorded plan current (the R2 lesson): a dry run
+                // records the full plan, a wet run the residual, so a capped
+                // continuation runs under parity without a fresh dry run. No
+                // sample here — the r3-census's 40-candidate sample is the
+                // precision-review material and stays put.
+                {
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "plan_groups": r.plan_groups - r.merged_groups,
+                        "pool": r.pool,
+                        "register_prefixed": r.register_prefixed,
+                        "unanchored": r.unanchored,
+                        "no_target": r.no_target,
+                        "multi_target": r.multi_target,
+                        "uncorroborated": r.uncorroborated,
+                        "denied_gate": r.denied_gate,
+                        "denied_consortium": r.denied_consortium,
+                        "denied_group_vat": r.denied_group_vat,
+                        "merged_this_run": r.merged_groups,
+                        "residual_of_wet_run": !dry_run,
+                        "mentions": r.mentions, "parties": r.parties,
+                        "bid_parties": r.bid_parties, "winners": r.winners,
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("r3-merge-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                if r.stopped {
+                    return Ok(format!(
+                        "match-org-identifiers r3 STOPPED at a checkpoint: {} of {} plan \
+                         candidates merged before the stop; the residual plan was \
+                         re-recorded, so a re-run continues under parity",
+                        r.merged_groups, r.plan_groups
+                    ));
+                }
+                Ok(format!(
+                    "match-org-identifiers r3 (issue 300 Stage 3){}: pool {}; skipped: \
+                     {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
+                     {} multi-target, {} uncorroborated; denied: {} gate, {} consortium, \
+                     {} vat-group-wall; plan {} candidates; merged {} \
+                     ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
+                     {} winners repointed, {} winner dups deleted, {} tenders touched)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.pool,
+                    r.register_prefixed,
+                    r.unanchored,
+                    r.no_target,
+                    r.multi_target,
+                    r.uncorroborated,
+                    r.denied_gate,
+                    r.denied_consortium,
                     r.denied_group_vat,
                     r.plan_groups,
                     r.merged_groups,

@@ -1433,6 +1433,57 @@ pub struct R2MergeReport {
     pub plan_sample: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
 }
 
+/// Inputs to the issue-300 Stage-3 R3 merge (NULL-country rescue).
+pub struct R3MergeArgs<'a> {
+    /// `crosswalk::canonical_key_flat` — keys the standing target map.
+    pub key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+    /// `idgate::checksum_anchors` — the unique-anchor probe.
+    pub anchors: fn(&str) -> Vec<(&'static str, String)>,
+    pub condemns: fn(Option<&str>, &str, &str) -> bool,
+    pub consortium: fn(&str) -> bool,
+    /// `project::match_norm` — the N2 corroboration key.
+    pub norm: fn(&str) -> String,
+    pub dry_run: bool,
+    pub max_groups: Option<u64>,
+    pub expect_groups: Option<u64>,
+    pub job_id: Option<i64>,
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+}
+
+/// What the R3 merge (or its dry-run) found and did.
+#[derive(Debug, Default, Clone)]
+pub struct R3MergeReport {
+    /// NULL-country identifier-bearing rows considered.
+    pub pool: u64,
+    /// Skipped: letter-bearing values (the register-prefix alternative).
+    pub register_prefixed: u64,
+    /// Skipped: zero or several checksum anchors (the EBSCO class).
+    pub unanchored: u64,
+    /// Skipped: unique anchor but no standing target on the key.
+    pub no_target: u64,
+    /// Skipped: several standing targets share the key (ambiguous).
+    pub multi_target: u64,
+    /// Skipped: no exact cross-language N2 name match with the target.
+    pub uncorroborated: u64,
+    /// Skipped: the candidate's identifier fails the v2 gate.
+    pub denied_gate: u64,
+    /// Skipped: a consortium-named side.
+    pub denied_consortium: u64,
+    /// Skipped: conflicting mention-evidence register keys (the wall).
+    pub denied_group_vat: u64,
+    /// Candidates surviving every condition — the merge plan.
+    pub plan_groups: u64,
+    pub merged_groups: u64,
+    pub removed: u64,
+    pub mentions: u64,
+    pub parties: u64,
+    pub bid_parties: u64,
+    pub winners: u64,
+    pub winner_dups: u64,
+    pub tender_changes: u64,
+    pub stopped: bool,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -5379,6 +5430,386 @@ impl Db {
                     // an open transaction (the §7 poisoned-transaction trap —
                     // verifier catch), and committed earlier chunks still owe
                     // subscribers their doorbell before the error surfaces.
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        if report.removed > 0 {
+                            let _ = self.publish_cursor(&conn).await;
+                        }
+                        return Err(e);
+                    }
+                    touched.extend(txn_touched);
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    if report.removed > 0 {
+                        let _ = self.publish_cursor(&conn).await;
+                    }
+                    return Err(e);
+                }
+            }
+            let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        }
+        report.tender_changes = touched.len() as u64;
+        if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// The issue-300 Stage-3 R3 merge: rescue NULL-country identifier orgs by
+    /// UNIQUE checksum anchor + standing-target lookup + exact cross-language
+    /// N2 name corroboration — the r3-census's classification recomputed
+    /// verbatim, then hardened with the R2 denial stack (gate-poison,
+    /// consortium veto on BOTH sides, VAT-group mention wall). Candidate =
+    /// loser, the anchored country-ful standing row = keep; a key with
+    /// SEVERAL standing targets is skipped outright — those are exactly the
+    /// families R2 deliberately declined to merge, and picking a side here
+    /// would overrule that denial. Same T4 shape as R2: dry-run records the
+    /// plan, wet demands `expect_groups` parity within max(2%, 50), capped
+    /// and stoppable, chunked txns with COMMIT-failure rollback.
+    pub async fn match_org_null_country_r3(
+        &self,
+        args: R3MergeArgs<'_>,
+    ) -> turso::Result<R3MergeReport> {
+        const MERGE_TXN_GROUPS: usize = 50;
+        let conn = self.conn().await;
+        let now = crate::now_unix();
+        let mut report = R3MergeReport::default();
+
+        // The target map: every COUNTRY-FUL identifier-bearing org's E1
+        // canonical key (the census's canon preload — crosswalk folds EL→GR
+        // itself). Values keep the target's identity so the denial stack can
+        // interrogate the keep side without re-reading the row.
+        struct Target {
+            id: i64,
+            country: String,
+            kind: String,
+            literal: String,
+        }
+        let mut canon: std::collections::HashMap<(&'static str, String), Vec<Target>> =
+            std::collections::HashMap::new();
+        {
+            let mut after = 0i64;
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    return Ok(report);
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT id, country, identifier_kind, identifier \
+                           FROM organizations \
+                          WHERE id > ? AND identifier IS NOT NULL AND country IS NOT NULL \
+                          ORDER BY id LIMIT 20000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                let mut any = false;
+                while let Some(row) = rows.next().await? {
+                    any = true;
+                    let id = int(&row, 0);
+                    after = id;
+                    let Some(country) = opt_text_of(&row, 1) else { continue };
+                    let kind = opt_text_of(&row, 2).unwrap_or_else(|| "national".into());
+                    let literal = text(&row, 3);
+                    if let Some((scheme, key, true)) =
+                        (args.key)(Some(&country), &kind, &literal)
+                    {
+                        canon.entry((scheme, key)).or_default().push(Target {
+                            id,
+                            country,
+                            kind,
+                            literal,
+                        });
+                    }
+                }
+                if !any {
+                    break;
+                }
+            }
+        }
+
+        // Per-side mention-evidence canonical keys for the wall — the R2
+        // block's shape for a single org, with the PAIR-FORMING key stripped
+        // (the F1 mask lesson: the shared value is exculpatory-looking noise,
+        // never evidence) and every tier admitted (a deny is the safe
+        // direction).
+        async fn evidence_keys(
+            conn: &Connection,
+            org: i64,
+            org_country: Option<&str>,
+            key_fn: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+            pair: (&'static str, &str),
+        ) -> turso::Result<std::collections::HashMap<&'static str, BTreeSet<String>>> {
+            let mut out: std::collections::HashMap<&'static str, BTreeSet<String>> =
+                std::collections::HashMap::new();
+            let mut rows = conn
+                .query(
+                    "SELECT country, raw_identifier FROM organization_mentions \
+                      WHERE organization_id = ? AND raw_identifier IS NOT NULL",
+                    (Value::Integer(org),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let mcountry = opt_text_of(&row, 0);
+                let raw = text(&row, 1);
+                let vat_shaped =
+                    raw.len() >= 2 && raw.as_bytes()[..2].iter().all(u8::is_ascii_alphabetic);
+                let kind = if vat_shaped { "vat" } else { "national" };
+                let country = mcountry.as_deref().or(org_country);
+                if let Some((scheme, key, _)) = key_fn(country, kind, &raw) {
+                    if scheme == pair.0 && key == pair.1 {
+                        continue;
+                    }
+                    out.entry(scheme).or_default().insert(key);
+                }
+            }
+            Ok(out)
+        }
+
+        // Classify the pool — the census's ladder, then the denial stack.
+        struct Candidate {
+            id: i64,
+            literal: String,
+            scheme: &'static str,
+            key: String,
+            n2: String,
+            keep: i64,
+            keep_literal: String,
+        }
+        let pool = self.null_country_ident_orgs().await?;
+        report.pool = pool.len() as u64;
+        let mut plan: Vec<Candidate> = Vec::new();
+        for (id, kind, value, name) in &pool {
+            if (args.stop)() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            if value.bytes().any(|b| b.is_ascii_alphabetic()) {
+                report.register_prefixed += 1;
+                continue;
+            }
+            let anchors = (args.anchors)(value);
+            let real: Vec<_> = anchors.iter().filter(|(s, _)| !s.contains('|')).collect();
+            if real.len() != 1 || anchors.len() > real.len() {
+                report.unanchored += 1;
+                continue;
+            }
+            let (scheme, key) = real[0];
+            let Some(targets) = canon.get(&(scheme, key.clone())) else {
+                report.no_target += 1;
+                continue;
+            };
+            if targets.len() != 1 {
+                report.multi_target += 1;
+                continue;
+            }
+            let target = &targets[0];
+            // Exact cross-language N2 corroboration against every target
+            // name (head + satellites). The names double as the keep side's
+            // consortium probe.
+            let n2 = (args.norm)(name);
+            let target_names = self.org_all_names(target.id).await?;
+            let corroborated =
+                !n2.is_empty() && target_names.iter().any(|tn| (args.norm)(tn) == n2);
+            if !corroborated {
+                report.uncorroborated += 1;
+                continue;
+            }
+            // Gate-poison, both sides: the candidate country-less (the
+            // dissolve's own view of it), the target under its country. A
+            // standing gate-failing target shouldn't exist post-Stage-1 —
+            // checking anyway costs one call and catches drift.
+            if (args.condemns)(None, kind, value)
+                || (args.condemns)(Some(&target.country), &target.kind, &target.literal)
+            {
+                report.denied_gate += 1;
+                continue;
+            }
+            // Consortium veto, both sides: a groupement-named row publishes
+            // the lead's identifier (the Stage-2 census finding); with only
+            // two rows in play there is no remainder to salvage.
+            if (args.consortium)(name) || target_names.iter().any(|tn| (args.consortium)(tn)) {
+                report.denied_consortium += 1;
+                continue;
+            }
+            // VAT-group mention wall, pairwise on the single pair.
+            let a = evidence_keys(&conn, *id, None, args.key, (scheme, key)).await?;
+            let b = evidence_keys(
+                &conn,
+                target.id,
+                Some(&target.country),
+                args.key,
+                (scheme, key),
+            )
+            .await?;
+            let mut walled = false;
+            for (s, ka) in &a {
+                if let Some(kb) = b.get(s)
+                    && !ka.is_empty()
+                    && !kb.is_empty()
+                    && ka.is_disjoint(kb)
+                {
+                    walled = true;
+                    break;
+                }
+            }
+            if walled {
+                report.denied_group_vat += 1;
+                continue;
+            }
+            // Dry-run blast-radius honesty (the R2 block verbatim).
+            if args.dry_run {
+                for (sql, slot) in [
+                    (
+                        "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                        &mut report.mentions,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
+                        &mut report.parties,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
+                        &mut report.bid_parties,
+                    ),
+                    (
+                        "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = ?",
+                        &mut report.winners,
+                    ),
+                ] {
+                    let mut rows = conn.query(sql, (Value::Integer(*id),)).await?;
+                    if let Some(row) = rows.next().await? {
+                        *slot += int(&row, 0).max(0) as u64;
+                    }
+                }
+            }
+            plan.push(Candidate {
+                id: *id,
+                literal: value.clone(),
+                scheme,
+                key: key.clone(),
+                n2,
+                keep: target.id,
+                keep_literal: target.literal.clone(),
+            });
+        }
+        // Deterministic order: a capped run and its continuation cover a
+        // stable prefix.
+        plan.sort_by(|a, b| (a.scheme, &a.key, a.id).cmp(&(b.scheme, &b.key, b.id)));
+        report.plan_groups = plan.len() as u64;
+
+        // T4 parity, the R2 rule verbatim.
+        if let Some(expect) = args.expect_groups {
+            let tolerance = (expect / 50).max(50);
+            if report.plan_groups.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "r3 parity abort: plan has {} candidates, dry-run recorded {expect} \
+                     (tolerance {tolerance}) — nothing was written",
+                    report.plan_groups
+                )));
+            }
+        }
+        if args.dry_run {
+            return Ok(report);
+        }
+
+        let cap = args.max_groups.unwrap_or(u64::MAX);
+        let mut touched: BTreeSet<i64> = BTreeSet::new();
+        for txn in plan.chunks(MERGE_TXN_GROUPS) {
+            if (args.stop)() {
+                report.stopped = true;
+                break;
+            }
+            if report.merged_groups >= cap {
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let mut txn_touched: BTreeSet<i64> = BTreeSet::new();
+            // Several candidates can anchor to ONE keep — its changed event
+            // lands once per txn.
+            let mut txn_keeps: BTreeSet<i64> = BTreeSet::new();
+            let result: turso::Result<()> = async {
+                for c in txn {
+                    if report.merged_groups >= cap {
+                        break;
+                    }
+                    let mut trows = conn
+                        .query(
+                            "SELECT tender_id FROM tender_version_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_bid_parties WHERE organization_id = ? \
+                       UNION SELECT tender_id FROM tender_version_result_winners WHERE organization_id = ?",
+                            (
+                                Value::Integer(c.id),
+                                Value::Integer(c.id),
+                                Value::Integer(c.id),
+                            ),
+                        )
+                        .await?;
+                    while let Some(row) = trows.next().await? {
+                        txn_touched.insert(int(&row, 0));
+                    }
+                    drop(trows);
+                    let moved = repoint_org_references(&conn, c.keep, c.id).await?;
+                    report.mentions += moved.mentions;
+                    report.parties += moved.parties;
+                    report.bid_parties += moved.bid_parties;
+                    report.winners += moved.winners;
+                    report.winner_dups += moved.winner_dups;
+                    conn.execute(
+                        "DELETE FROM organizations WHERE id = ?",
+                        (Value::Integer(c.id),),
+                    )
+                    .await?;
+                    let esc = |s: &str| -> String {
+                        s.chars()
+                            .filter(|c| !c.is_control())
+                            .flat_map(|c| match c {
+                                '\\' => vec!['\\', '\\'],
+                                '"' => vec!['\\', '"'],
+                                c => vec![c],
+                            })
+                            .collect()
+                    };
+                    conn.execute(
+                        "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
+                         VALUES(?, ?, 'r3', ?, ?, ?)",
+                        (
+                            Value::Integer(c.keep),
+                            Value::Integer(c.id),
+                            Value::Text(format!(
+                                "{{\"scheme\":\"{}\",\"key\":\"{}\",\"keep_id\":\"{}\",\
+                                 \"loser_id\":\"{}\",\"anchor\":\"checksum\",\"n2\":\"{}\"}}",
+                                c.scheme,
+                                esc(&c.key),
+                                esc(&c.keep_literal),
+                                esc(&c.literal),
+                                esc(&c.n2)
+                            )),
+                            match args.job_id {
+                                Some(j) => Value::Integer(j),
+                                None => Value::Null,
+                            },
+                            Value::Integer(now),
+                        ),
+                    )
+                    .await?;
+                    append_change(&conn, "organization", c.id, None, "removed", now).await?;
+                    txn_keeps.insert(c.keep);
+                    report.removed += 1;
+                    report.merged_groups += 1;
+                }
+                for &keep in &txn_keeps {
+                    append_change(&conn, "organization", keep, None, "changed", now).await?;
+                }
+                for &tid in &txn_touched {
+                    append_change(&conn, "tender", tid, None, "changed", now).await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
                     if let Err(e) = conn.execute("COMMIT", ()).await {
                         let _ = conn.execute("ROLLBACK", ()).await;
                         if report.removed > 0 {
