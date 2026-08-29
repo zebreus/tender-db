@@ -2677,15 +2677,9 @@ impl Supervisor {
             Spec::MatchOrgIdentifiersR2 { dry_run, max_groups } => {
                 let dry_run = *dry_run;
                 // The ingest-side rules, handed across as plain fns (the
-                // idgate/dissolve pattern).
-                fn key_fn(
-                    c: Option<&str>,
-                    k: &str,
-                    v: &str,
-                ) -> Option<(&'static str, String, bool)> {
-                    ingest::crosswalk::canonical_key(c, k, v)
-                        .map(|ck| (ck.scheme, ck.key, ck.tier == ingest::crosswalk::Tier::E1))
-                }
+                // idgate/dissolve pattern); the flat crosswalk is the SAME fn
+                // the resolver's prevention hook injects, so repair and
+                // prevention cannot drift apart.
                 // A wet run REQUIRES the recorded dry plan: the T4 parity
                 // input, and the ladder's guarantee that nothing merges
                 // un-previewed.
@@ -2719,7 +2713,7 @@ impl Supervisor {
                 let r = self
                     .db
                     .match_org_identifiers_r2(store::R2MergeArgs {
-                        key: key_fn,
+                        key: ingest::crosswalk::canonical_key_flat,
                         condemns: ingest::idgate::condemns,
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,

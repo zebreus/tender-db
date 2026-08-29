@@ -481,6 +481,18 @@ mod tests {
     }
 }
 
+/// [`canonical_key`] flattened to the fn-pointer shape the store's injected
+/// rule slots take: `(scheme, key, is_e1)`. One definition, used by the
+/// resolver's Stage-2 prevention hook and the R2 merge job alike — the two
+/// MUST share one crosswalk, or prevention and repair drift apart.
+pub fn canonical_key_flat(
+    country: Option<&str>,
+    kind: &str,
+    value: &str,
+) -> Option<(&'static str, String, bool)> {
+    canonical_key(country, kind, value).map(|ck| (ck.scheme, ck.key, ck.tier == Tier::E1))
+}
+
 /// Consortium / temporary-grouping detection over an org NAME (the census
 /// finding, 2026-08-29): FR groupements publish the LEAD MEMBER's SIRET
 /// ("groupement colas / Barthelemy" carries Colas's establishment id — org

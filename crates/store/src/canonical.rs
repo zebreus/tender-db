@@ -1547,6 +1547,49 @@ pub struct MentionResolver {
     /// preloaded like `org_of`, because 24.6M keys do not sit in RAM (issue 57).
     name_of: std::collections::HashMap<(String, String), i64>,
     created_any: bool,
+    /// Issue 300 Stage 2, the PREVENTION half: same-country E1 canonical key
+    /// → org, preloaded beside `org_of`, so an EQUIVALENT representation of a
+    /// standing registration (`FI01003158` after `01003158`) reuses its
+    /// Organization instead of minting the twin the R2 merge job would later
+    /// have to collapse. E0 exact equality stays the first probe, untouched.
+    canon_of: std::collections::HashMap<(String, &'static str, String), i64>,
+    /// Canonical keys with SEVERAL standing owners — the merge job's denied
+    /// families (a consortium sharing its lead's id, a legal-form pair, a
+    /// group VAT). New mentions on a poisoned key fall through to today's
+    /// exact-or-mint behavior; the periodic merge job, with its full denial
+    /// stack, is the arbiter for those.
+    poisoned: std::collections::HashSet<(String, &'static str, String)>,
+    /// The injected crosswalk, `(scheme, key, is_e1)` — `None` disables the
+    /// prevention entirely (store-level callers that predate it keep today's
+    /// byte-identical behavior).
+    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+    /// The consortium name veto: a groupement-named mention publishing its
+    /// lead member's identifier must NOT canon-bind to the lead (the census's
+    /// live Colas specimen); it mints separately and poisons the key.
+    consortium: Option<fn(&str) -> bool>,
+}
+
+/// The same-country E1 canonical key for an identifier, under the merge job's
+/// exact discipline: injected crosswalk, E1 tier only, a real row country
+/// (EL folded to GR), and for VAT kinds the scheme's own country must agree
+/// with the row's — anything else gets no prevention key.
+fn resolver_canon_key(
+    canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+    country: Option<&str>,
+    kind: &str,
+    value: &str,
+) -> Option<(String, &'static str, String)> {
+    let f = canon_key?;
+    let c = country?;
+    let c = if c == "EL" { "GR" } else { c };
+    let (scheme, key, e1) = f(country, kind, value)?;
+    if !e1 {
+        return None;
+    }
+    if kind == "vat" && !scheme.starts_with(c) {
+        return None;
+    }
+    Some((c.to_owned(), scheme, key))
 }
 
 /// One notice's grouping identity, as written to the on-disk plan (issue 59).
@@ -3861,10 +3904,23 @@ impl Db {
     /// `(country, identifier_kind, identifier) → id` **once** for the whole run.
     /// On `--rebuild` the organizations table was just cleared, so the scan is
     /// empty and the map fills as the run proceeds. See [`MentionResolver`].
-    pub async fn mention_resolver(&self) -> turso::Result<MentionResolver> {
+    ///
+    /// `canon_key`/`consortium` are the Stage-2 prevention's injected rules
+    /// (`ingest::crosswalk`); `None` keeps the pre-Stage-2 behavior exactly.
+    /// The same preload walk fills the canonical-key map; a key already owned
+    /// by another standing org is POISONED — the stock's unmerged families
+    /// (denied by the merge job's stack) must not capture new mentions.
+    pub async fn mention_resolver(
+        &self,
+        canon_key: Option<fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>>,
+        consortium: Option<fn(&str) -> bool>,
+    ) -> turso::Result<MentionResolver> {
         use std::collections::HashMap;
         let conn = self.conn().await;
         let mut org_of: HashMap<(Option<String>, String, String), i64> = HashMap::new();
+        let mut canon_of: HashMap<(String, &'static str, String), i64> = HashMap::new();
+        let mut poisoned: std::collections::HashSet<(String, &'static str, String)> =
+            std::collections::HashSet::new();
         let mut rows = conn
             .query(
                 "SELECT id, country, identifier_kind, identifier FROM organizations
@@ -3873,9 +3929,31 @@ impl Db {
             )
             .await?;
         while let Some(row) = rows.next().await? {
-            org_of.insert((opt_text_of(&row, 1), text(&row, 2), text(&row, 3)), int(&row, 0));
+            let id = int(&row, 0);
+            let country = opt_text_of(&row, 1);
+            let kind = text(&row, 2);
+            let value = text(&row, 3);
+            if let Some(ck) =
+                resolver_canon_key(canon_key, country.as_deref(), &kind, &value)
+                && !poisoned.contains(&ck)
+            {
+                if canon_of.remove(&ck).is_some() {
+                    poisoned.insert(ck);
+                } else {
+                    canon_of.insert(ck, id);
+                }
+            }
+            org_of.insert((country, kind, value), id);
         }
-        Ok(MentionResolver { org_of, name_of: std::collections::HashMap::new(), created_any: false })
+        Ok(MentionResolver {
+            org_of,
+            name_of: std::collections::HashMap::new(),
+            created_any: false,
+            canon_of,
+            poisoned,
+            canon_key,
+            consortium,
+        })
     }
 
     /// Resolve one bounded batch of mentions onto canonical Organizations,
@@ -3935,17 +4013,7 @@ impl Db {
             for m in chunk {
                 // The maps are updated as we go, so a later mention in the same
                 // chunk reuses an Organization an earlier one just created.
-                match self
-                    .resolve_one_mention(
-                        &conn,
-                        m,
-                        now,
-                        &mut resolver.org_of,
-                        &mut resolver.name_of,
-                        &mut mention_of,
-                    )
-                    .await
-                {
+                match self.resolve_one_mention(&conn, m, now, resolver, &mut mention_of).await {
                     Ok((id, created)) => {
                         chunk_ids.push(id);
                         resolver.created_any |= created;
@@ -3988,10 +4056,11 @@ impl Db {
         conn: &Connection,
         m: &Mention,
         now: i64,
-        org_of: &mut std::collections::HashMap<(Option<String>, String, String), i64>,
-        name_of: &mut std::collections::HashMap<(String, String), i64>,
+        resolver: &mut MentionResolver,
         mention_of: &mut std::collections::HashMap<(i64, String), i64>,
     ) -> turso::Result<(i64, bool)> {
+        let org_of = &mut resolver.org_of;
+        let name_of = &mut resolver.name_of;
         if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
             return Ok((org_id, false));
         }
@@ -4002,23 +4071,66 @@ impl Db {
                 if let Some(&org_id) = org_of.get(&key) {
                     (org_id, false)
                 } else {
-                    conn.execute(
-                        "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                             name_norm, provisional, created_at)
-                         VALUES(?, ?, ?, ?, ?, 0, ?)",
-                        (
-                            opt_text(id.country.as_deref()),
-                            t(&id.kind),
-                            t(&id.value),
-                            t(&m.name),
-                            Value::Text(m.name.to_lowercase()),
-                            Value::Integer(now),
-                        ),
-                    )
-                    .await?;
-                    let org_id = last_insert_rowid(conn).await?;
-                    org_of.insert(key, org_id);
-                    (org_id, true)
+                    // Stage-2 prevention (issue 300): an EQUIVALENT
+                    // representation of a standing registration — the FI VAT
+                    // after its Y-tunnus, a SIRET after its SIREN — reuses the
+                    // standing Organization instead of minting the twin the R2
+                    // merge job would later collapse. E0 exact equality above
+                    // stays the first probe, byte-identical. Guards mirror the
+                    // merge job's: E1 tier only, same-country with vat-prefix
+                    // agreement (resolver_canon_key), a consortium-named
+                    // mention never canon-binds (the groupement publishes its
+                    // LEAD MEMBER's id — the live Colas specimen), and a
+                    // poisoned key (several standing owners: a denied family)
+                    // falls through to today's behavior.
+                    let canon = resolver_canon_key(
+                        resolver.canon_key,
+                        id.country.as_deref(),
+                        &id.kind,
+                        &id.value,
+                    );
+                    let vetoed = resolver.consortium.is_some_and(|f| f(&m.name));
+                    let canon_hit = match (&canon, vetoed) {
+                        (Some(ck), false) if !resolver.poisoned.contains(ck) => {
+                            resolver.canon_of.get(ck).copied()
+                        }
+                        _ => None,
+                    };
+                    if let Some(org_id) = canon_hit {
+                        // Register the raw triple too, so repeats of THIS
+                        // representation stay one map probe.
+                        org_of.insert(key, org_id);
+                        (org_id, false)
+                    } else {
+                        conn.execute(
+                            "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                                 name_norm, provisional, created_at)
+                             VALUES(?, ?, ?, ?, ?, 0, ?)",
+                            (
+                                opt_text(id.country.as_deref()),
+                                t(&id.kind),
+                                t(&id.value),
+                                t(&m.name),
+                                Value::Text(m.name.to_lowercase()),
+                                Value::Integer(now),
+                            ),
+                        )
+                        .await?;
+                        let org_id = last_insert_rowid(conn).await?;
+                        org_of.insert(key, org_id);
+                        if let Some(ck) = canon {
+                            // Claim the canonical key — or poison one that now
+                            // has two owners (the veto path minted beside the
+                            // key's standing owner; future mentions must
+                            // exact-match, and the merge job arbitrates).
+                            if resolver.canon_of.remove(&ck).is_some() {
+                                resolver.poisoned.insert(ck);
+                            } else if !resolver.poisoned.contains(&ck) {
+                                resolver.canon_of.insert(ck, org_id);
+                            }
+                        }
+                        (org_id, true)
+                    }
                 }
             }
             None => {

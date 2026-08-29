@@ -305,11 +305,18 @@ read (satisfied, late behind the merge): 411 new orgs today — 410
 provisional, 1 identifier-keyed canonical; no placeholder-keyed
 canonical minted — prevention holds in the live stream.
 REMAINING Stage-2 units (filed here, next firings):
-1. **Resolver pre-probe canonicalization (the prevention half):** new
-   mentions with equivalent representations (FI vat/national etc.)
-   still mint twins today; the resolver preload must key by canonical
-   form. Without it the stock re-accumulates at mint rate (slow — the
-   day minted ONE canonical org).
+1. **Resolver pre-probe canonicalization (the prevention half): BUILT
+   2026-08-29 ~10:5x.** MentionResolver gains a canonical-key map
+   preloaded beside org_of (same walk), with the merge job's exact
+   discipline injected as the SAME `crosswalk::canonical_key_flat` fn
+   (prevention and repair cannot drift): E1 only, same-country with
+   vat-prefix agreement, consortium-named mentions never canon-bind
+   (they mint and POISON the key), and a key with several standing
+   owners (a denied family — Colas) is poisoned on preload so new
+   mentions fall through to exact-or-mint; the periodic merge job stays
+   the arbiter for those. E0 exact equality stays the first probe,
+   byte-identical; `None` fns (store tests) keep pre-Stage-2 behavior.
+   Store test pins reuse/veto/poison/E2/preload/disabled paths.
 2. False-split floor re-measure (<1.55% bar) via the 168 method.
 3. Groupement member-scoped veto: the group-atomic veto denied the
    whole 165-member Colas family for ONE "groupement"-named member —
