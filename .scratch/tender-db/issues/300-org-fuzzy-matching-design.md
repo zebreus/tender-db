@@ -380,8 +380,16 @@ capped, stoppable, chunked txns, wet re-records the residual).
 Supervisor: `match-org-identifiers` gained a `rule` param (r2
 default / r3; unknown rejected at enqueue). Store test pins every
 census rung + each denial (incl. the wall's mask shape) + parity abort
-+ wet merge with blast radius + rerun idempotence. NEXT (this firing):
-gate, deploy, prod DRY run. NEXT FIRING: adversarial verify +
++ wet merge with blast radius + rerun idempotence. **DEPLOYED (rev f27ab63) + PROD DRY RUN (2026-08-29 ~14:2x, job 455,
+ok): plan 891 candidates.** The census's 903 decompose under the
+stricter merge exactly: 891 plan + 6 consortium-denied + 6
+corroborated-but-multi-target; census's 888 uncorroborated = dry's 880
++ 8 uncorroborated-multi-target (multi_target=14 total skips before
+corroboration; several standing targets = an R2-declined family, never
+picked between). 0 gate, 0 wall. Blast radius: 5,588 mentions, 9,860
+parties, 123 winners across the 891 (all non-provisional NULL-country
+rows — measured, pool drift zero since census). "r3-merge-plan"
+recorded. NEXT FIRING: adversarial verify +
 precision review of the 40-candidate census sample + capped wet run —
 the exemplar gates (§8): Maintpartner/Philips/Grand Port/CNFPT merge,
 Kærunefnd must-not-merge-uncorroborated, EBSCO must-flag (its class
