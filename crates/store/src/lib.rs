@@ -626,6 +626,18 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
         "ALTER TABLE projection_state ADD COLUMN rederive_eur_watermark INTEGER NOT NULL DEFAULT 0",
     )
     .await?;
+    // Issue 300 Stage 4: the key-build resume watermark and the edge store's
+    // monotone-growth baseline (see the projection_state schema comment).
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN org_match_keys_watermark INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN org_edge_total INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,
     // backfilled by the batched `backfill-org-names` job (24.6M rows — never at
     // open; the 82/83 + issue-42 lessons, same as current_deadline above).

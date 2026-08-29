@@ -444,6 +444,42 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (case_org_id, cohort)
     ) STRICT;
 
+    -- Issue 300 §2.3 (Stage 4): REBUILDABLE scratch satellite — name keys
+    -- for the E3/E4 candidate scans. Not an entity table: no change events,
+    -- no FK (org ids may dangle after merges — org_merge_log precedent),
+    -- rebuilt wholesale by build-org-match-keys whenever key semantics
+    -- change. No PK on purpose: the bulk load is index-free (the issue-60/62
+    -- thrash rule) and the (key_kind, key, org_id) covering index is built
+    -- POST-LOAD by the build job — NEVER add it to this batch (the
+    -- organizations_identity boot-hang lesson above).
+    CREATE TABLE IF NOT EXISTS org_match_keys (
+        org_id   INTEGER NOT NULL,
+        key_kind TEXT    NOT NULL CHECK (key_kind IN ('n2','n3','n3s')),
+        key      TEXT    NOT NULL
+    ) STRICT;
+
+    -- Issue 300 §6 (Stage 4): candidate edges. E3 = exact name-key equality
+    -- (incl. cross-language via organization_names), E4 = weaker relations.
+    -- NEITHER EVER MERGES — evidence accumulation only; the consumer is the
+    -- issue-311 per-case review loop. state='approved' reserves a future
+    -- review-gated path. No FK on org ids (merged-away losers may be
+    -- referenced). No index beyond the PK: expected 1e5-1e6 rows, and the
+    -- PK serves org_a-prefix probes.
+    CREATE TABLE IF NOT EXISTS org_candidate_edges (
+        org_a      INTEGER NOT NULL,           -- lower org id (CHECK below)
+        org_b      INTEGER NOT NULL,
+        rule       TEXT    NOT NULL,           -- 'e3-name' | 'e3-xlang' | 'e4-stripped'
+        tier       TEXT    NOT NULL,           -- 'E3' | 'E4'
+        score      REAL    NOT NULL,           -- ordinal per rule, not probabilistic
+        evidence   TEXT    NOT NULL,           -- JSON, hand-built (merge-log esc style)
+        first_seen INTEGER NOT NULL,
+        last_seen  INTEGER NOT NULL,
+        state      TEXT    NOT NULL DEFAULT 'open',
+        job_id     INTEGER,
+        PRIMARY KEY (org_a, org_b, rule),
+        CHECK (org_a < org_b)
+    ) STRICT;
+
     -- ------------------------------------------------------------- results
     -- The tendering-results half (issue 13): what happened after submission.
     -- eForms publishes results as notice-local sections (RES-/TEN-/CON-), and
@@ -611,7 +647,12 @@ pub(crate) const SCHEMA: &str = "
         -- tender-id window. A restarted process re-runs the persisted job and
         -- RESUMES here instead of redoing hours (the walk wedged twice ~2h in;
         -- worst case a restart now costs one window). 0 = no walk in flight.
-        rederive_eur_watermark INTEGER NOT NULL DEFAULT 0
+        rederive_eur_watermark INTEGER NOT NULL DEFAULT 0,
+        -- Issue 300 Stage 4: the org_match_keys build's last completed org-id
+        -- window (0 = no build in flight; the build resumes here) and the
+        -- edge store's monotone-growth baseline (tripwire 6).
+        org_match_keys_watermark INTEGER NOT NULL DEFAULT 0,
+        org_edge_total INTEGER NOT NULL DEFAULT 0
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 
@@ -2487,8 +2528,38 @@ impl Db {
     /// [`Db::build_organization_indexes`] at the end. Runs with FK off (the
     /// projection disables it), and drops the whole table so it works whether the
     /// db still has the old inline-`UNIQUE` auto-index or the new named index.
+    /// Issue 300 Stage 4: empty the rebuildable key satellite at O(1) WAL —
+    /// index dropped FIRST so the sqlite_master replay recreates only the
+    /// bare table (the build job re-creates the index post-load; carrying it
+    /// through the bulk insert is the issue-60/62 thrash). Called by the
+    /// build job at a from-zero wet start, and by the org-layer rebuild path
+    /// below.
+    pub async fn reset_org_match_keys(&self) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute("DROP INDEX IF EXISTS org_match_keys_kk", ()).await?;
+        Self::drop_and_recreate(&conn, "org_match_keys").await?;
+        conn.execute("UPDATE projection_state SET org_match_keys_watermark = 0 WHERE id = 0", ())
+            .await?;
+        Ok(())
+    }
+
     pub async fn strip_organization_indexes(&self) -> turso::Result<()> {
         let conn = self.conn().await;
+        // Issue 300 Stage 4: a from-archive rebuild renumbers org ids, so the
+        // name-key satellite AND the candidate-edge store both dangle
+        // wholesale — drop both (DDL replayed from sqlite_master, never
+        // hand-copied) and zero the build watermark plus the edge tripwire
+        // baseline: this is the one LEGITIMATE wholesale reset the
+        // monotone-growth alarm must not fire on.
+        conn.execute("DROP INDEX IF EXISTS org_match_keys_kk", ()).await?;
+        Self::drop_and_recreate(&conn, "org_match_keys").await?;
+        Self::drop_and_recreate(&conn, "org_candidate_edges").await?;
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 0, org_edge_total = 0 \
+              WHERE id = 0",
+            (),
+        )
+        .await?;
         conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;
