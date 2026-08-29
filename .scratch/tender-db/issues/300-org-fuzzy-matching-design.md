@@ -335,8 +335,16 @@ REMAINING Stage-2 units (filed here, next firings):
    group-atomic (a family conflict is pairwise evidence with no
    resolution). New `consortium_excluded` counter in report + plan.
    Test pins both paths (3-member family merges around its groupement;
-   2-member pair still denies). After deploy: re-dry (plan grows by the
-   recovered families — Colas +164-class), wet the recovered remainder.
+   2-member pair still denies). **RECOVERY EXECUTED (2026-08-29 ~12:4x,
+   rev 0c7f0d4, jobs 452/453, preview-exact):** 243 recovered groups
+   merged, **1,829 more duplicate orgs removed** (the establishment
+   families — 7.5 losers/group), 10,685 winners repointed, 7,116
+   tenders touched; 661 groupement members left standing for the edge
+   path. **STAGE-2 GRAND TOTALS: 25,154 groups merged, 34,995
+   duplicate org rows removed.** The R2 residual is now EXACTLY the
+   deliberate holds: 328 remainder-below-two consortium groups + 63
+   legal-form groups + the 661 excluded members — all edge material
+   for Stages 3/4.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
