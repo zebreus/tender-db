@@ -418,6 +418,32 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (loser, at)
     ) STRICT;
 
+    -- Issue 311: per-case AI review verdicts — the auditable record of the
+    -- review loop (Lennart's direction: rule-undetectable data errors get
+    -- individual agent review). Verdicts land via POST /admin/case-reviews;
+    -- the apply-case-reviews job executes the SAFE subset and stamps
+    -- applied_at/applied_action (JSON incl. the pre-image, so every apply
+    -- is reversible from this row alone). One standing verdict per
+    -- (org, cohort): a re-review updates the verdict fields but NEVER the
+    -- applied stamp or its pre-image — an applied row's history stands
+    -- (panel catch: a re-POST must not destroy the only record of an
+    -- executed action). No FK — a reviewed org can later be merged away
+    -- (org_merge_log precedent).
+    CREATE TABLE IF NOT EXISTS org_case_reviews (
+        case_org_id    INTEGER NOT NULL,
+        cohort         TEXT    NOT NULL,
+        verdict        TEXT    NOT NULL,
+        diagnosis      TEXT    NOT NULL,
+        handling       TEXT    NOT NULL,
+        rationale      TEXT    NOT NULL,
+        confidence     TEXT    NOT NULL CHECK (confidence IN ('high','medium','low')),
+        reviewed_at    INTEGER NOT NULL,
+        applied_at     INTEGER,
+        applied_action TEXT,
+        job_id         INTEGER,
+        PRIMARY KEY (case_org_id, cohort)
+    ) STRICT;
+
     -- ------------------------------------------------------------- results
     -- The tendering-results half (issue 13): what happened after submission.
     -- eForms publishes results as notice-local sections (RES-/TEN-/CON-), and
@@ -1493,6 +1519,37 @@ pub struct R3MergeReport {
     pub winner_dups: u64,
     pub tender_changes: u64,
     pub stopped: bool,
+}
+
+/// One issue-311 per-case review verdict, as the admin surface hands it to
+/// the store (the app crate owns the serde shape; store stays serde-free).
+#[derive(Debug, Clone)]
+pub struct CaseReview {
+    pub case_org_id: i64,
+    pub verdict: String,
+    pub diagnosis: String,
+    pub handling: String,
+    pub rationale: String,
+    pub confidence: String,
+}
+
+/// What the issue-311 apply job did (or would do, dry).
+#[derive(Debug, Default, Clone)]
+pub struct CaseApplyReport {
+    /// Unapplied verdicts considered.
+    pub pending: u64,
+    /// Verdicts in the appliable set (wrong-identifier, high confidence).
+    pub eligible: u64,
+    /// Identifiers stripped to NULL (wet) / that would be (dry).
+    pub stripped: u64,
+    /// Eligible rows whose org no longer exists or already has no
+    /// identifier — stamped as no-ops so they leave the pending set.
+    pub noop: u64,
+    /// Dry-run only: the CONCRETE strip list — (org id, name, identifier) —
+    /// so the plan is reviewable before any wet run (panel catch: a
+    /// counts-only preview cannot surface a hallucinated org id in a
+    /// verdict batch).
+    pub plan: Vec<(i64, String, String)>,
 }
 
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
@@ -6065,6 +6122,218 @@ impl Db {
         }
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// Issue 311: record one cohort's review verdicts. One standing verdict
+    /// per (org, cohort). Re-recording UPDATES the verdict fields but NEVER
+    /// touches the applied stamp or its pre-image (panel catch: an operator
+    /// re-POST after an apply must not destroy the only record of what was
+    /// done — an applied row's history stands; re-actioning a changed
+    /// verdict on an applied case is a future un-apply path, not a silent
+    /// re-arm). The whole batch is one transaction, so a failed upload
+    /// leaves nothing partial and a retry re-sends the same batch safely.
+    pub async fn record_case_reviews(
+        &self,
+        cohort: &str,
+        reviews: &[CaseReview],
+        now: i64,
+    ) -> turso::Result<u64> {
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<u64> = async {
+            let mut n = 0u64;
+            for r in reviews {
+                conn.execute(
+                    "INSERT INTO org_case_reviews \
+                       (case_org_id, cohort, verdict, diagnosis, handling, rationale, \
+                        confidence, reviewed_at, applied_at, applied_action, job_id) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL) \
+                     ON CONFLICT(case_org_id, cohort) DO UPDATE SET \
+                        verdict = excluded.verdict, diagnosis = excluded.diagnosis, \
+                        handling = excluded.handling, rationale = excluded.rationale, \
+                        confidence = excluded.confidence, reviewed_at = excluded.reviewed_at",
+                    (
+                        Value::Integer(r.case_org_id),
+                        t(cohort),
+                        t(&r.verdict),
+                        t(&r.diagnosis),
+                        t(&r.handling),
+                        t(&r.rationale),
+                        t(&r.confidence),
+                        Value::Integer(now),
+                    ),
+                )
+                .await?;
+                n += 1;
+            }
+            Ok(n)
+        }
+        .await;
+        match result {
+            Ok(n) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+                Ok(n)
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                Err(e)
+            }
+        }
+    }
+
+    /// Issue 311: apply the SAFE subset of recorded verdicts — today that is
+    /// exactly one action: STRIP a wrong identifier to NULL on a
+    /// high-confidence `consortium-vehicle-wrong-identifier` verdict. The
+    /// pre-image (kind + value) goes into `applied_action`, so the apply is
+    /// reversible from the review row alone; the raw published value also
+    /// survives untouched in `organization_mentions`. Everything else the
+    /// reviewers recommended (mention re-homing, member minting) is
+    /// deliberately NOT here — those are entity-restructuring actions that
+    /// get their own machinery and panel round. Idempotent: applied rows
+    /// leave the pending set via the applied_at stamp.
+    pub async fn apply_case_reviews(
+        &self,
+        dry_run: bool,
+        job_id: Option<i64>,
+        now: i64,
+    ) -> turso::Result<CaseApplyReport> {
+        let conn = self.conn().await;
+        let mut report = CaseApplyReport::default();
+        struct Pending {
+            org: i64,
+            cohort: String,
+            eligible: bool,
+        }
+        let mut pending: Vec<Pending> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT case_org_id, cohort, verdict, confidence \
+                       FROM org_case_reviews WHERE applied_at IS NULL",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let verdict = text(&row, 2);
+                let confidence = text(&row, 3);
+                pending.push(Pending {
+                    org: int(&row, 0),
+                    cohort: text(&row, 1),
+                    eligible: verdict == "consortium-vehicle-wrong-identifier"
+                        && confidence == "high",
+                });
+            }
+        }
+        report.pending = pending.len() as u64;
+        report.eligible = pending.iter().filter(|p| p.eligible).count() as u64;
+        if dry_run {
+            // The dry pass mirrors what wet would do, org-state included,
+            // and returns the CONCRETE strip list for review.
+            for p in pending.iter().filter(|p| p.eligible) {
+                let mut rows = conn
+                    .query(
+                        "SELECT identifier, name FROM organizations WHERE id = ?",
+                        (Value::Integer(p.org),),
+                    )
+                    .await?;
+                match rows.next().await? {
+                    Some(row) if !matches!(row.get_value(0), Ok(Value::Null)) => {
+                        report.stripped += 1;
+                        report.plan.push((p.org, text(&row, 1), text(&row, 0)));
+                    }
+                    _ => report.noop += 1,
+                }
+            }
+            return Ok(report);
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for p in pending.iter().filter(|p| p.eligible) {
+                let mut rows = conn
+                    .query(
+                        "SELECT identifier_kind, identifier FROM organizations WHERE id = ?",
+                        (Value::Integer(p.org),),
+                    )
+                    .await?;
+                let pre = match rows.next().await? {
+                    Some(row) => match row.get_value(1) {
+                        Ok(Value::Null) | Err(_) => None,
+                        Ok(_) => Some((opt_text_of(&row, 0), text(&row, 1))),
+                    },
+                    None => None,
+                };
+                drop(rows);
+                let action = match pre {
+                    Some((kind, value)) => {
+                        conn.execute(
+                            "UPDATE organizations \
+                                SET identifier = NULL, identifier_kind = NULL WHERE id = ?",
+                            (Value::Integer(p.org),),
+                        )
+                        .await?;
+                        append_change(&conn, "organization", p.org, None, "changed", now)
+                            .await?;
+                        report.stripped += 1;
+                        let esc = |s: &str| -> String {
+                            s.chars()
+                                .filter(|c| !c.is_control())
+                                .flat_map(|c| match c {
+                                    '\\' => vec!['\\', '\\'],
+                                    '"' => vec!['\\', '"'],
+                                    c => vec![c],
+                                })
+                                .collect()
+                        };
+                        format!(
+                            "{{\"action\":\"identifier-stripped\",\"was_kind\":\"{}\",\"was_value\":\"{}\"}}",
+                            esc(kind.as_deref().unwrap_or("")),
+                            esc(&value)
+                        )
+                    }
+                    None => {
+                        report.noop += 1;
+                        "{\"action\":\"noop-missing-or-already-null\"}".to_owned()
+                    }
+                };
+                conn.execute(
+                    "UPDATE org_case_reviews SET applied_at = ?, applied_action = ?, job_id = ? \
+                      WHERE case_org_id = ? AND cohort = ? AND applied_at IS NULL",
+                    (
+                        Value::Integer(now),
+                        Value::Text(action),
+                        match job_id {
+                            Some(j) => Value::Integer(j),
+                            None => Value::Null,
+                        },
+                        Value::Integer(p.org),
+                        t(&p.cohort),
+                    ),
+                )
+                .await?;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        if report.stripped > 0 {
             self.publish_cursor(&conn).await?;
         }
         Ok(report)

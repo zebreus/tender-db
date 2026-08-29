@@ -316,6 +316,7 @@ enum Spec {
     R3Census,
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
+    ApplyCaseReviews { dry_run: bool },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -860,6 +861,22 @@ impl Supervisor {
                     (false, None) => format!("match-org-identifiers {rule}"),
                 };
                 Ok(vec![self.push("match-org-identifiers", params, spec).await])
+            }
+            // Issue 311: apply the safe subset of recorded per-case review
+            // verdicts (identifier strips). Entity-writing: dry_run defaults
+            // TRUE; verdicts land beforehand via POST /admin/case-reviews.
+            "apply-case-reviews" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "apply-case-reviews dry-run"
+                } else {
+                    "apply-case-reviews"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push("apply-case-reviews", params, Spec::ApplyCaseReviews { dry_run })
+                        .await,
+                ])
             }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
@@ -3085,6 +3102,47 @@ impl Supervisor {
                     r.winners,
                     r.winner_dups,
                     r.tender_changes
+                ))
+            }
+            Spec::ApplyCaseReviews { dry_run } => {
+                let dry_run = *dry_run;
+                self.set_phase(
+                    if dry_run { "planning" } else { "applying" },
+                    None,
+                    None,
+                    "walking unapplied case-review verdicts".to_owned(),
+                );
+                let r = self
+                    .db
+                    .apply_case_reviews(dry_run, Some(job.id as i64), store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if dry_run {
+                    // The CONCRETE strip list, recorded for review before
+                    // any wet run (panel catch: counts alone cannot surface
+                    // a hallucinated org id in a verdict batch).
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "pending": r.pending, "eligible": r.eligible,
+                        "would_strip": r.stripped, "noop": r.noop,
+                        "strips": r.plan.iter().map(|(id, name, ident)| {
+                            serde_json::json!({ "org_id": id, "name": name, "identifier": ident })
+                        }).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("case-apply-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(format!(
+                    "apply-case-reviews (issue 311){}: {} pending verdicts, {} eligible \
+                     (wrong-identifier + high confidence); {} identifiers stripped, {} no-ops",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.pending,
+                    r.eligible,
+                    r.stripped,
+                    r.noop
                 ))
             }
             Spec::Refold { profiles, expect } => {

@@ -37,7 +37,71 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         // rewrites 2.6M rows can already do far more than cancel one.
         .route("/admin/jobs/{id}/cancel", post(cancel))
         .route("/admin/reports/{kind}", axum::routing::get(report))
+        .route("/admin/case-reviews", post(record_case_reviews))
         .with_state(supervisor)
+}
+
+/// The issue-311 verdict upload shape. The store stays serde-free, so the
+/// wire shape lives here and converts.
+#[derive(serde::Deserialize)]
+struct CaseReviewsBody {
+    cohort: String,
+    reviews: Vec<CaseReviewIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct CaseReviewIn {
+    org_id: i64,
+    verdict: String,
+    diagnosis: String,
+    handling: String,
+    rationale: String,
+    confidence: String,
+}
+
+/// `POST /admin/case-reviews` — record one cohort's per-case AI review
+/// verdicts (issue 311). Recording only: nothing is applied here; the
+/// `apply-case-reviews` job executes the safe subset, dry-run first.
+async fn record_case_reviews(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<CaseReviewsBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.reviews.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and reviews are required");
+    }
+    if let Some(bad) =
+        req.reviews.iter().find(|r| !matches!(r.confidence.as_str(), "high" | "medium" | "low"))
+    {
+        return error(
+            StatusCode::BAD_REQUEST,
+            &format!("org {}: confidence must be high|medium|low", bad.org_id),
+        );
+    }
+    let reviews: Vec<store::CaseReview> = req
+        .reviews
+        .into_iter()
+        .map(|r| store::CaseReview {
+            case_org_id: r.org_id,
+            verdict: r.verdict,
+            diagnosis: r.diagnosis,
+            handling: r.handling,
+            rationale: r.rationale,
+            confidence: r.confidence,
+        })
+        .collect();
+    match sup.db().record_case_reviews(&req.cohort, &reviews, store::now_unix()).await {
+        Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
 }
 
 /// Gate a request on the operator secret, returning the denial response when it
