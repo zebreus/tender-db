@@ -287,6 +287,34 @@ census (expect mixed-kind twins collapsed; distinct-name tail moves),
 the residual dashboard read, Stage-2 acceptance line (false-split floor
 re-measure below 1.55% is the design's post-metric — needs the 168
 study's method re-run, a follow-up unit).
+
+**STAGE 2 STOCK REPAIR COMPLETE (2026-08-29 ~10:2x).** Job 444: ok in
+3.6h — all 23,911 residual groups merged, cross-run parity EXACT.
+Campaign totals (slices 1+2): **24,911 groups merged, 33,166 duplicate
+org rows removed**; 480,610 mentions, 1,024,460 parties, 2,075,648
+bid-parties, 2,532,542 winner rows repointed; 422 winner-dup award
+double-counts erased; 171,265 tenders touched. Journal clean across the
+whole window; the daily chain ran green behind the merge (1,042 notices
+→ 1,035 tenders). Closing census (450): identifier-bearing orgs
+1,156,565 → **1,123,400 (−33,165 — the losers, exactly)**; gate
+tripwire holds 0/0/0. NOTE: distinct-name tail GREW (≥6: 11,734→12,230,
+≥20: 926→980) — the union effect of merging twins (survivors carry both
+rows' name sets), NOT a bad-merge signal; **tripwire 2's weekly
+baseline re-anchors at census run 450.** First-post-flip daily-chain
+read (satisfied, late behind the merge): 411 new orgs today — 410
+provisional, 1 identifier-keyed canonical; no placeholder-keyed
+canonical minted — prevention holds in the live stream.
+REMAINING Stage-2 units (filed here, next firings):
+1. **Resolver pre-probe canonicalization (the prevention half):** new
+   mentions with equivalent representations (FI vat/national etc.)
+   still mint twins today; the resolver preload must key by canonical
+   form. Without it the stock re-accumulates at mint rate (slow — the
+   day minted ONE canonical org).
+2. False-split floor re-measure (<1.55% bar) via the 168 method.
+3. Groupement member-scoped veto: the group-atomic veto denied the
+   whole 165-member Colas family for ONE "groupement"-named member —
+   safe but costs 164 legitimate establishment merges (measured live).
+   Route the flagged MEMBER to an edge; merge the remainder.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
