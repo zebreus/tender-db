@@ -1423,6 +1423,10 @@ pub struct R2MergeReport {
     pub tender_changes: u64,
     /// The cooperative stop fired; counts cover the committed prefix only.
     pub stopped: bool,
+    /// Dry-run only: a pseudo-random sample of plan groups for the
+    /// 100-sample precision review — (country, scheme, key, members as
+    /// (org_id, kind, literal identifier, name)).
+    pub plan_sample: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
 }
 
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
@@ -5066,6 +5070,38 @@ impl Db {
                             *slot += int(&row, 0).max(0) as u64;
                         }
                     }
+                }
+            }
+            // Dry-run precision-review sample (the stage gate's raw
+            // material): a cheap pseudo-random ~1-in-199 acceptance keyed on
+            // the canonical key's own bytes — content-stable, not
+            // largest-first, so the review sees the plan's typical shape —
+            // capped at 100 groups. Names ride along from the veto stage's
+            // meta fetch.
+            if args.dry_run && report.plan_sample.len() < 100 {
+                let h = gk
+                    .2
+                    .bytes()
+                    .fold(0u64, |a, b| a.wrapping_mul(131).wrapping_add(u64::from(b)));
+                if h % 199 == 0 {
+                    let name_of: std::collections::HashMap<i64, String> =
+                        meta.iter().map(|m| (m.0, m.4.clone())).collect();
+                    report.plan_sample.push((
+                        gk.0.clone(),
+                        gk.1,
+                        gk.2.clone(),
+                        members
+                            .iter()
+                            .map(|m| {
+                                (
+                                    m.id,
+                                    m.kind.clone(),
+                                    m.literal.clone(),
+                                    name_of.get(&m.id).cloned().unwrap_or_default(),
+                                )
+                            })
+                            .collect(),
+                    ));
                 }
             }
             plan.push((gk, members));

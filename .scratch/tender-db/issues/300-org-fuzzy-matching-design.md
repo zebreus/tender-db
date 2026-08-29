@@ -225,9 +225,35 @@ default TRUE; a WET RUN REQUIRES the stored dry plan
 parity) — nothing can merge un-previewed; `max_groups` caps the first
 prod run; STOPPABLE + heavy_write registered. Store test drives every
 denial class once + survivor policy + merge log + feed + rerun
-idempotence. Adversarial verification running; then gate → commit →
-deploy → prod dry-run → 100-sample precision review of the plan BEFORE
-any capped wet run.
+idempotence.
+
+**Adversarial verification (2026-08-29 ~04:4x) — the campaign's third
+CONFIRMED catch:** the canonical key that FORMED a group is itself
+mention evidence on every member, so the VAT-group wall's disjoint-set
+test always intersected on the shared value and same-scheme register
+conflicts (the SK DIČ class — the design's named "only defense" case)
+could never deny. Fixed: the group's own key is stripped from evidence
+sets before the test; E2 keys admitted as CONFLICT evidence (deny-safe);
+the mask shape test-pinned. Same review: wet runs re-record the RESIDUAL
+plan so capped/stopped continuations pass parity (was: abort against the
+stale dry figure); dry runs preview the losers' full blast radius;
+failed COMMIT rolls back; committed chunks ring the doorbell on later
+errors; evidence JSON drops control chars. Recorded narrowings: name
+vetoes read the head name only (satellite variants not consulted — the
+precision review covers; an enhancement for Stage 3), per-batch parity
+implemented as one whole-plan pre-write check.
+
+**FIRST PROD DRY-RUN (job 440, 17s, rev b9295ac): plan 24,915 of 25,544
+groups.** Denials at corpus scale: 566 consortium, 63 legal-form, 0
+gate (post-Stage-1, expected), 0 cap (the literal-cap is structurally
+near-vestigial — E0 already collapses same-literal rows; the 200
+ceiling + gate-poison are the active guards), 0 vat-group-wall
+(plausible: twins' evidence reduces to the stripped group key; true
+group-VAT shapes are rare same-country). Blast radius: 480,622
+mentions, 1,024,472 parties, 2,075,662 bid-parties, 2,532,976 winner
+repoints across ~36k losers. NEXT: dry-run re-run with the new
+plan-sample output → ultracode 100-sample precision review at 100% →
+capped wet run (max_groups 1000) → residual continuation.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013

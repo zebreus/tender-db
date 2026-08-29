@@ -2753,6 +2753,19 @@ impl Supervisor {
                         // what the plan's merges would move.
                         "mentions": r.mentions, "parties": r.parties,
                         "bid_parties": r.bid_parties, "winners": r.winners,
+                        // The precision-review sample (dry runs only; empty
+                        // on wet re-records).
+                        "sample": r.plan_sample.iter().map(|(country, scheme, key, members)| {
+                            serde_json::json!({
+                                "country": country, "scheme": scheme, "key": key,
+                                "members": members.iter().map(|(id, kind, literal, name)| {
+                                    serde_json::json!({
+                                        "org_id": id, "kind": kind,
+                                        "identifier": literal, "name": name,
+                                    })
+                                }).collect::<Vec<_>>(),
+                            })
+                        }).collect::<Vec<_>>(),
                     })
                     .to_string();
                     self.db
