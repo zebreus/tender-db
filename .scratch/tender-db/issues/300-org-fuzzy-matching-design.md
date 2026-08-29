@@ -389,11 +389,24 @@ corroboration; several standing targets = an R2-declined family, never
 picked between). 0 gate, 0 wall. Blast radius: 5,588 mentions, 9,860
 parties, 123 winners across the 891 (all non-provisional NULL-country
 rows — measured, pool drift zero since census). "r3-merge-plan"
-recorded. NEXT FIRING: adversarial verify +
-precision review of the 40-candidate census sample + capped wet run —
-the exemplar gates (§8): Maintpartner/Philips/Grand Port/CNFPT merge,
-Kærunefnd must-not-merge-uncorroborated, EBSCO must-flag (its class
-lands in multi-scheme/unanchored, structurally unmergeable here).
+recorded. **EXEMPLAR GATES READ AGAINST PROD (2026-08-29 ~14:5x,
+bounded selects):** every deviation is deny-direction. EBSCO
+must-flag ✓ (NULL shapes live in multi-scheme/unanchored). Grand Port
+✓ and the strongest evidence for the checksum defense: the Havre
+family's NULL rows include 77370019800010 — a one-digit corruption of
+the true SIRET 77570019800010 — which FAILS Luhn and lands unanchored,
+plus a 12-digit deformed row with no anchor length; only well-formed
+SIRETs anchor. Kærunefnd ✓ moot (its NULL twins carry no identifier —
+outside this pool, Stage-5 material). Philips moot likewise. CNFPT:
+NULL SIRET rows anchor to the post-R2 standing org, merge only on
+exact satellite-name corroboration (per Stage-0 determination).
+Maintpartner ✗-as-written: its NULL twin is 8-DIGIT (20445111), and
+the DK|SI marker makes every 8-digit value structurally unanchorable —
+conservative; the design gate predates the census's 8-digit
+reclassification ("name corroboration decides"). NEXT-SLICE CANDIDATE
+(the largest R3 class, 2,093 rows): admit 8-digit when exactly one of
+{CZ ičo, FI ytunnus} checksum passes AND the name corroborates exactly
+— the DK/SI ambiguity resolved by the name, Maintpartner's shape.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
