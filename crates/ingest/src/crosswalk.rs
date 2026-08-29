@@ -532,6 +532,48 @@ pub fn consortium_name(name: &str) -> bool {
 /// merge is not. Same-country matching only (R2), so cross-country token
 /// collisions ("a.s." CZ vs "AS" NO) never meet. Returns the FIRST family
 /// token found; names with none return None and never veto.
+/// One legal-form TOKEN's family, shared by the veto (`legal_form_family`)
+/// and the Stage-4 N3 key builder (`n3_key`) — one table, so the veto and
+/// the edge keys can never disagree about what a form token means.
+fn family_token(t: &str) -> Option<&'static str> {
+    match t {
+        "gmbh" | "mbh" => Some("gmbh"),
+        "ag" => Some("ag"),
+        "sarl" | "eurl" => Some("sarl"),
+        "sas" | "sasu" => Some("sas"),
+        // Oy/Ab/Oyj/Abp are language and listing variants of ONE
+        // Nordic legal form (aktiebolag/osakeyhtiö) — "X Oy" and
+        // "X Ab" name the same company class, so they share one family
+        // and never veto each other.
+        "oy" | "oyj" | "ab" | "abp" | "uab" => Some("aktiebolag"),
+        "aps" => Some("aps"),
+        "bv" => Some("bv"),
+        "nv" => Some("nv"),
+        "kft" => Some("kft"),
+        "zrt" | "nyrt" => Some("zrt"),
+        "spa" => Some("spa"),
+        "srl" => Some("srl"),
+        "sia" => Some("sia"),
+        // The undotted single-token spellings of the dotted forms ("Alfa
+        // sro", "Beta spzoo") — the joined-stream probe caught these for
+        // the veto; the shared table catches them for both consumers.
+        "sro" => Some("sro"),
+        "spzoo" => Some("spzoo"),
+        _ => None,
+    }
+}
+
+/// The dotted multi-token forms as they appear in a `match_norm` token
+/// stream ("s.r.o." → `s r o`, "spol. s r.o." → `spol s r o`,
+/// "Ges.m.b.H." → `ges m b h`, "Sp. z o.o." → `sp z o o`). Longest first —
+/// the scanner takes the first sequence that matches at a position.
+const FAMILY_SEQUENCES: [(&[&str], &str); 4] = [
+    (&["spol", "s", "r", "o"], "sro"),
+    (&["ges", "m", "b", "h"], "gmbh"),
+    (&["sp", "z", "o", "o"], "spzoo"),
+    (&["s", "r", "o"], "sro"),
+];
+
 pub fn legal_form_family(name: &str) -> Option<&'static str> {
     let lower = name.to_lowercase();
     // Dotted forms ("s.r.o.", "a/s", "sp. z o.o.") collapse once separators
@@ -539,26 +581,7 @@ pub fn legal_form_family(name: &str) -> Option<&'static str> {
     // letters as consecutive tokens, so match on the JOINED stream too.
     let joined: String = lower.chars().filter(char::is_ascii_alphanumeric).collect();
     for t in lower.split(|c: char| !c.is_alphanumeric()) {
-        let fam = match t {
-            "gmbh" | "mbh" => Some("gmbh"),
-            "ag" => Some("ag"),
-            "sarl" | "eurl" => Some("sarl"),
-            "sas" | "sasu" => Some("sas"),
-            // Oy/Ab/Oyj/Abp are language and listing variants of ONE
-            // Nordic legal form (aktiebolag/osakeyhtiö) — "X Oy" and
-            // "X Ab" name the same company class, so they share one family
-            // and never veto each other.
-            "oy" | "oyj" | "ab" | "abp" | "uab" => Some("aktiebolag"),
-            "aps" => Some("aps"),
-            "bv" => Some("bv"),
-            "nv" => Some("nv"),
-            "kft" => Some("kft"),
-            "zrt" | "nyrt" => Some("zrt"),
-            "spa" => Some("spa"),
-            "srl" => Some("srl"),
-            "sia" => Some("sia"),
-            _ => None,
-        };
+        let fam = family_token(t);
         if fam.is_some() {
             return fam;
         }
@@ -573,6 +596,41 @@ pub fn legal_form_family(name: &str) -> Option<&'static str> {
         }
     }
     None
+}
+
+/// Issue 300 Stage 4 (§2.3), the N3 name key: the N2 key
+/// ([`crate::project::match_norm`] — the plan's fidelity round pinned that
+/// match_norm IS N2; N3 never forks it) with legal-form tokens
+/// CANONICALIZED to a `§family` marker in place — never stripped (stripping
+/// is E4 material, a later unit). `s.r.o.` / `s. r. o.` / `spol. s r.o.`
+/// all become one `§sro` token; `GmbH` / `Ges.m.b.H.` / `mbH` one `§gmbh`.
+/// The `§` marker cannot collide with real content: match_norm folds every
+/// non-alphanumeric away, so no N2 token ever contains it. Names with no
+/// recognized form come out EXACTLY equal to their N2 key (the documented
+/// invariant, pinned in test). Over-recognition costs only an edge key —
+/// N3 feeds candidate EDGES, never merges — while the family table itself
+/// is shared with the R2/R3 legal-form veto via [`family_token`], so keys
+/// and vetoes cannot drift apart.
+pub fn n3_key(name: &str) -> String {
+    let n2 = crate::project::match_norm(name);
+    let tokens: Vec<&str> = n2.split(' ').filter(|t| !t.is_empty()).collect();
+    let mut out: Vec<String> = Vec::with_capacity(tokens.len());
+    let mut i = 0;
+    'scan: while i < tokens.len() {
+        for (seq, fam) in FAMILY_SEQUENCES {
+            if tokens[i..].starts_with(seq) {
+                out.push(format!("§{fam}"));
+                i += seq.len();
+                continue 'scan;
+            }
+        }
+        match family_token(tokens[i]) {
+            Some(fam) => out.push(format!("§{fam}")),
+            None => out.push(tokens[i].to_owned()),
+        }
+        i += 1;
+    }
+    out.join(" ")
 }
 
 #[cfg(test)]
@@ -607,6 +665,31 @@ mod veto_tests {
             !consortium_name("Thoman Biegemaschinen GbR"),
             "a bending-machine builder is not a Bietergemeinschaft — token match only"
         );
+    }
+
+    #[test]
+    fn n3_keys_canonicalize_forms_and_leave_formless_names_as_n2() {
+        // Punctuation-variant forms of ONE company collapse to one key.
+        assert_eq!(n3_key("Alfa s.r.o."), "alfa §sro");
+        assert_eq!(n3_key("Alfa s. r. o."), n3_key("Alfa s.r.o."));
+        assert_eq!(n3_key("Alfa spol. s r.o."), n3_key("Alfa sro"));
+        assert_eq!(n3_key("Siemens GmbH"), "siemens §gmbh");
+        assert_eq!(n3_key("Siemens Ges.m.b.H."), n3_key("Siemens GmbH"));
+        assert_eq!(n3_key("Siemens Gesellschaft mbH"), "siemens gesellschaft §gmbh");
+        assert_eq!(n3_key("Beta Sp. z o.o."), "beta §spzoo");
+        // The Nordic family folds to one token, so the Linde/AGA rename
+        // shape keys equal across the Oy/Ab spellings.
+        assert_eq!(n3_key("Telinekataja Oy"), "telinekataja §aktiebolag");
+        assert_eq!(n3_key("Telinekataja Ab"), n3_key("Telinekataja Oy"));
+        // The documented invariant: no recognized form ⇒ n3 == n2 exactly.
+        for name in ["Ministerstvo financí", "Ville de Calais", "OPAC du Rhône"] {
+            assert_eq!(n3_key(name), crate::project::match_norm(name), "{name}");
+        }
+        // The marker cannot collide: a literal § in the INPUT is folded
+        // away by match_norm before the scan ever runs (the surviving
+        // "sro" token then canonicalizes like any undotted form).
+        assert_eq!(n3_key("Weird §sro Name"), "weird §sro name");
+        assert_eq!(n3_key("Weird§Name"), "weird name");
     }
 
     #[test]
