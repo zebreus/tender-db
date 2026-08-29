@@ -179,6 +179,33 @@ Deliberate safe narrowings recorded in-code: FI legacy 6-digit no key,
 CZ 7-digit vat no pad, FR letter-VAT refused, DK P-nummer no key.
 NEXT: deploy + first prod r2-census read → sizes the match-org-identifiers
 --r2 merge job (which needs denial rules 1/4/5/7 before any wet run).
+
+**FIRST R2-CENSUS (job 439, 39s, rev f474d40, 2026-08-29 ~03:2x):**
+1,156,565 identifier-bearing orgs → 401,761 E1-keyed / 44,916 E2 /
+709,888 no key (DE+AT+unlisted). **25,544 same-country E1 groups ≥2
+holding 61,286 orgs (~35,700 duplicate rows to collapse), 12,815 mixed
+vat+national** — merges E0 could never make. Denials firing: 6,399
+ES-UTE, 9 CZ699; 0 country/prefix contradictions, 0 NULL-country keyed
+vats (resolver derives country from prefix at mint — consistent).
+Per-scheme: FR:siren 12,837 groups (SIRET truncation, max 165);
+FI 3,294 / BE 2,158 / PL:nip 1,820 / RO 1,613 / IT 798 — every
+prefix-strip scheme max-2 all-mixed (the pinned twin shape, clean);
+SK just 7 groups (group-IČ-DPH hazard surface tiny).
+Two findings for the merge job, from the sample itself:
+- **The group cap must count DISTINCT LITERAL identifiers, not rows:**
+  271 of 272 over-cap groups are FR:siren establishment families
+  (Colas 165, Onet 68, Bouygues 58, OTIS 54 — one entity each). The
+  placeholder signature the cap guards is many strangers on ONE literal
+  id; in truncation groups the literals all DIFFER. Cap on
+  distinct-literal-count keeps the tripwire and frees the legitimate
+  establishment shape.
+- **FR groupement class (the UTE analog):** org 10207212 "groupement
+  colas / Barthelemy" publishes Colas's establishment SIRET — a
+  consortium identified by its lead member's id. Auto-merging it INTO
+  Colas is wrong the way UTE merges are wrong. Merge job needs a
+  groupement/consortium name veto (groupement/gpt/mandataire tokens →
+  edge, not merge); the 100-sample precision review must classify the
+  class's size.
 Kind: capability (organization layer quality) — design
 Relates to: 168 (measured landscape — the empirical input), 234 (provisional
 collapse, done), 259 (repair shape + refold-invariance lesson), 307/ADR-0013
