@@ -2731,30 +2731,42 @@ impl Supervisor {
                     })
                     .await
                     .map_err(|e| e.to_string())?;
-                if r.stopped {
-                    return Ok(format!(
-                        "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
-                         groups merged before the stop — a re-run continues (merged groups \
-                         left scope)",
-                        r.merged_groups, r.plan_groups
-                    ));
-                }
-                if dry_run {
-                    // The recorded plan the wet run's parity check reads.
+                // Keep the recorded plan CURRENT (verifier catch: a capped or
+                // stopped wet run leaves merged groups out of the next
+                // recompute, so a continuation would parity-abort against the
+                // stale figure until someone re-ran the dry run — discarding
+                // the reviewed plan). A dry run records its full plan; a wet
+                // run re-records the RESIDUAL, so the next capped slice
+                // continues under parity without ceremony.
+                {
                     let now = store::now_unix();
                     let plan = serde_json::json!({
-                        "plan_groups": r.plan_groups,
+                        "plan_groups": r.plan_groups - r.merged_groups,
                         "scanned": r.scanned, "keyed": r.keyed, "groups": r.groups,
                         "denied_cap": r.denied_cap, "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
                         "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
+                        "merged_this_run": r.merged_groups,
+                        "residual_of_wet_run": !dry_run,
+                        // Dry-run blast-radius preview (the Stage-1 lesson):
+                        // what the plan's merges would move.
+                        "mentions": r.mentions, "parties": r.parties,
+                        "bid_parties": r.bid_parties, "winners": r.winners,
                     })
                     .to_string();
                     self.db
                         .put_report("r2-merge-plan", &plan, now)
                         .await
                         .map_err(|e| e.to_string())?;
+                }
+                if r.stopped {
+                    return Ok(format!(
+                        "match-org-identifiers r2 STOPPED at a checkpoint: {} of {} plan \
+                         groups merged before the stop; the residual plan was re-recorded, \
+                         so a re-run continues under parity",
+                        r.merged_groups, r.plan_groups
+                    ));
                 }
                 Ok(format!(
                     "match-org-identifiers r2 (issue 300 Stage 2){}: {} orgs scanned, \

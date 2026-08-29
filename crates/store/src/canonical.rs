@@ -4961,7 +4961,16 @@ impl Db {
             }
             // 5. VAT-group wall: per-member canonical keys from MENTION raw
             // evidence; two members with non-empty, disjoint key sets in one
-            // scheme carry conflicting register numbers.
+            // scheme carry conflicting register numbers. TWO verifier
+            // catches shape this block: (a) the key that FORMED the group is
+            // itself mention evidence on every member — an org minted on a
+            // group VAT has mentions carrying that very value — so it must
+            // be STRIPPED from the sets before the disjointness test, or the
+            // shared value masks every same-scheme conflict (the SK DIČ
+            // case, where the wall is the design's only defense); (b) E2
+            // (pad-derived) keys are inadmissible as MERGE evidence but fine
+            // as CONFLICT evidence — a deny is the safe direction — so the
+            // wall accepts any tier.
             let mut member_keys: std::collections::HashMap<
                 i64,
                 std::collections::HashMap<&'static str, BTreeSet<String>>,
@@ -4990,7 +4999,12 @@ impl Db {
                         .or_else(|| {
                             members.iter().find(|m| m.id == org).and_then(|m| m.country.as_deref())
                         });
-                    if let Some((scheme, key, true)) = (args.key)(country, kind, &raw) {
+                    if let Some((scheme, key, _)) = (args.key)(country, kind, &raw) {
+                        // The group's own key is exculpatory-looking noise,
+                        // never evidence (catch (a) above).
+                        if scheme == gk.1 && key == gk.2 {
+                            continue;
+                        }
                         member_keys
                             .entry(org)
                             .or_default()
@@ -5012,6 +5026,44 @@ impl Db {
                         {
                             report.denied_group_vat += 1;
                             continue 'group;
+                        }
+                    }
+                }
+            }
+            // Dry-run blast-radius honesty (the Stage-1 preview lesson,
+            // re-learned by a verifier here): the org-level counts ARE what
+            // will move, so the preview reports them.
+            if args.dry_run {
+                let keep = members
+                    .iter()
+                    .min_by_key(|m| (m.provisional, m.id))
+                    .expect("non-empty group")
+                    .id;
+                for m in &members {
+                    if m.id == keep {
+                        continue;
+                    }
+                    for (sql, slot) in [
+                        (
+                            "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                            &mut report.mentions,
+                        ),
+                        (
+                            "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = ?",
+                            &mut report.parties,
+                        ),
+                        (
+                            "SELECT COUNT(*) FROM tender_version_bid_parties WHERE organization_id = ?",
+                            &mut report.bid_parties,
+                        ),
+                        (
+                            "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = ?",
+                            &mut report.winners,
+                        ),
+                    ] {
+                        let mut rows = conn.query(sql, (Value::Integer(m.id),)).await?;
+                        if let Some(row) = rows.next().await? {
+                            *slot += int(&row, 0).max(0) as u64;
                         }
                     }
                 }
@@ -5101,8 +5153,19 @@ impl Db {
                         .await?;
                         // JSON by hand (store carries no serde): every field
                         // is normalised alphanumerics except the literals —
-                        // escape the two characters JSON cares about.
-                        let esc = |s: &str| s.replace('\\', "\\\\").replace('"', "\\\"");
+                        // escape the two characters JSON cares about and drop
+                        // control characters (a stray one would corrupt the
+                        // undo tooling's parse — verifier note).
+                        let esc = |s: &str| -> String {
+                            s.chars()
+                                .filter(|c| !c.is_control())
+                                .flat_map(|c| match c {
+                                    '\\' => vec!['\\', '\\'],
+                                    '"' => vec!['\\', '"'],
+                                    c => vec![c],
+                                })
+                                .collect()
+                        };
                         conn.execute(
                             "INSERT INTO org_merge_log(keep, loser, rule, evidence, job_id, at) \
                              VALUES(?, ?, 'r2', ?, ?, ?)",
@@ -5137,11 +5200,24 @@ impl Db {
             .await;
             match result {
                 Ok(()) => {
-                    conn.execute("COMMIT", ()).await?;
+                    // A failed COMMIT must not leave the shared writer inside
+                    // an open transaction (the §7 poisoned-transaction trap —
+                    // verifier catch), and committed earlier chunks still owe
+                    // subscribers their doorbell before the error surfaces.
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        if report.removed > 0 {
+                            let _ = self.publish_cursor(&conn).await;
+                        }
+                        return Err(e);
+                    }
                     touched.extend(txn_touched);
                 }
                 Err(e) => {
                     let _ = conn.execute("ROLLBACK", ()).await;
+                    if report.removed > 0 {
+                        let _ = self.publish_cursor(&conn).await;
+                    }
                     return Err(e);
                 }
             }

@@ -111,8 +111,17 @@ async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
         .await
         .unwrap();
     }
-    // Mention evidence for the wall: each SK member's own IČO.
-    for (nid, org, raw_id) in [(900i64, 50i64, "31364501"), (901, 51, "36723098")] {
+    // Mention evidence for the wall — the MASK shape a verifier caught: both
+    // members' mentions carry the SHARED group IČ-DPH (the very value the
+    // group formed on), which must be stripped as evidence, plus each
+    // member's OWN DIČ in the SAME scheme. Without the strip the shared
+    // value makes the sets intersect and the conflict never denies.
+    for (nid, org, raw_id) in [
+        (900i64, 50i64, "SK2021005448"),
+        (901, 50, "2020000001"),
+        (902, 51, "SK2021005448"),
+        (903, 51, "2020000002"),
+    ] {
         conn.execute(
             "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
              VALUES (?, 'S-1', ?, 'x', 'SK', ?)",
@@ -185,6 +194,11 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
     );
     assert_eq!(dry.plan_groups, 2, "only the two clean FI twins survive the stack");
     assert_eq!(dry.merged_groups, 0);
+    assert_eq!(
+        (dry.mentions, dry.parties, dry.bid_parties, dry.winners),
+        (0, 1, 0, 1),
+        "the preview reports the losers' blast radius (the Stage-1 lesson)"
+    );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 21, "dry run wrote nothing");
 
     // The parity guard: a wet run whose recorded plan disagrees aborts.
