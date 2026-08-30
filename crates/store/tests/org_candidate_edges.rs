@@ -458,3 +458,67 @@ async fn chase_merged_org_follows_the_loser_chain_to_the_standing_id() {
     assert_eq!(db.chase_merged_org(10).await.unwrap(), 10, "standing id resolves to itself");
     assert_eq!(db.chase_merged_org(7777).await.unwrap(), 7777, "never merged");
 }
+
+/// Issue 314: the edge census. Components (not edges) are review cases, so
+/// the census counts them over LIVE endpoints only, splits them by whether
+/// a merge verdict could ever act on them, and notices when a component
+/// spans countries.
+#[tokio::test]
+async fn the_edge_census_counts_components_not_edges() {
+    let (db, conn) = open("test-org-edge-census.db").await;
+    // Component 1: a canonical CHAIN of three (1-2, 2-3) — one case, not two.
+    org(&conn, 1, "Alfa", Some("A1")).await;
+    org(&conn, 2, "Alfa", Some("A2")).await;
+    org(&conn, 3, "Alfa", Some("A3")).await;
+    // Component 2: mixed canonical + provisional, and it spans countries.
+    org(&conn, 4, "Beta", Some("B1")).await;
+    org(&conn, 5, "Beta", None).await;
+    conn.execute("UPDATE organizations SET country = 'FR' WHERE id = 5", ()).await.unwrap();
+    // Component 3: provisional-only — nothing a merge verdict could act on.
+    org(&conn, 6, "Gamma", None).await;
+    org(&conn, 7, "Gamma", None).await;
+    // An edge to an org that has since been merged away: NOT a component.
+    org(&conn, 8, "Delta", Some("D1")).await;
+    for (a, b, rule) in [
+        (1i64, 2i64, "e3-name"),
+        (2, 3, "e3-name"),
+        (4, 5, "e3-xlang"),
+        (6, 7, "e3-name"),
+        (8, 9999, "e3-name"),
+    ] {
+        conn.execute(
+            "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+             VALUES (?, ?, ?, 'E3', 1.0, '{}', 1, 1, NULL)",
+            (Value::Integer(a), Value::Integer(b), Value::Text(rule.into())),
+        )
+        .await
+        .unwrap();
+    }
+    let never = || false;
+    let r = db.census_org_candidate_edges(1, &never).await.unwrap();
+    assert_eq!((r.edges, r.e3_name, r.e3_xlang), (5, 4, 1));
+    assert_eq!(r.orgs_touched, 9, "8 live rows + the merged-away 9999 endpoint");
+    assert_eq!(r.dangling_orgs, 1, "…and as dangling, since its row is gone");
+    assert_eq!(r.components, 3, "the 8-9999 edge is no component; the 1-2-3 chain is ONE");
+    assert_eq!(r.max_component, 3);
+    assert_eq!(
+        (r.canonical_only_components, r.mixed_components, r.provisional_only_components),
+        (1, 1, 1)
+    );
+    assert_eq!(r.multi_country_components, 1, "beta spans DE and FR");
+    assert_eq!(r.country_pairs, vec![("DE-FR".to_owned(), 1)]);
+    let two = r.size_buckets.iter().find(|(k, _)| *k == "2").unwrap().1;
+    let three_five = r.size_buckets.iter().find(|(k, _)| *k == "3-5").unwrap().1;
+    assert_eq!((two, three_five), (2, 1));
+    assert_eq!(r.sample.len(), 3, "sample_every=1 shows every component");
+
+    // Read-only: the census writes nothing at all.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 5);
+
+    // Cancel is honest: no partial numbers.
+    let always = || true;
+    let stopped = db.census_org_candidate_edges(1, &always).await.unwrap();
+    assert!(stopped.stopped);
+    assert_eq!((stopped.edges, stopped.components), (0, 0));
+}

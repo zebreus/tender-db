@@ -1616,6 +1616,42 @@ pub struct CaseUnapplyReport {
     pub plan: Vec<(i64, String, String)>,
 }
 
+/// What the issue-314 edge census measured. Read-only: the candidate-edge
+/// store sits outside the public SQL surface (the org_merge_log class), so
+/// a job is the only way to size it before a review campaign commits to a
+/// cohort.
+#[derive(Debug, Default, Clone)]
+pub struct EdgeCensusReport {
+    pub edges: u64,
+    pub e3_name: u64,
+    pub e3_xlang: u64,
+    /// Distinct org ids appearing on either side of an edge.
+    pub orgs_touched: u64,
+    /// Endpoints whose org row is gone — merged away since the scan wrote
+    /// the edge (the store carries no FK by design).
+    pub dangling_orgs: u64,
+    /// Connected components over the edge graph, counting only LIVE
+    /// endpoints: a component is one review case.
+    pub components: u64,
+    /// (label, count) over component sizes: "2", "3-5", "6-10", "11-50", "51+".
+    pub size_buckets: Vec<(&'static str, u64)>,
+    pub max_component: u64,
+    /// Every live member identifier-bearing — the only components a merge
+    /// verdict could act on today.
+    pub canonical_only_components: u64,
+    pub mixed_components: u64,
+    pub provisional_only_components: u64,
+    /// Components whose live members span more than one country — the
+    /// cross-border slice the contamination exemplar belongs to.
+    pub multi_country_components: u64,
+    /// Top country pairs among multi-country components, heaviest first.
+    pub country_pairs: Vec<(String, u64)>,
+    /// A deterministic spread sample for hand review: (component root,
+    /// size, "country:name" per member, capped).
+    pub sample: Vec<(i64, u64, Vec<String>)>,
+    pub stopped: bool,
+}
+
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
 #[derive(Debug, Default, Clone)]
@@ -7508,6 +7544,154 @@ impl Db {
         if report.restored > 0 {
             self.publish_cursor(&conn).await?;
         }
+        Ok(report)
+    }
+
+    /// Issue 314: size the candidate-edge store before anything reviews it.
+    ///
+    /// Stage 4 built 1.5M advisory edges to feed the issue-311 review loop
+    /// and then nothing read them, so the first question a consumer must
+    /// answer is what it would be consuming. Edges are pairs; a review CASE
+    /// is a connected component, and the component distribution — not the
+    /// edge count — is what decides whether a campaign is 10^3 or 10^6
+    /// cases.
+    ///
+    /// Read-only, reader pool, no writes of any kind. Walks the PK in
+    /// keyset windows, unions live endpoints, then bulk-probes the touched
+    /// orgs for existence / identifier / country / name in `IN_CHUNK`
+    /// batches — the same shape the scan uses, for the same reason (a
+    /// per-component probe over 10^5 components is a point-read storm).
+    pub async fn census_org_candidate_edges(
+        &self,
+        sample_every: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<EdgeCensusReport> {
+        let reader = self.reader().await?;
+        let mut report = EdgeCensusReport::default();
+        let mut uf = MinUnionFind::default();
+        let mut edges: Vec<(i64, i64)> = Vec::new();
+        let (mut last_a, mut last_b, mut last_rule) = (0i64, 0i64, String::new());
+        loop {
+            if stop() {
+                report.stopped = true;
+                return Ok(report);
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT org_a, org_b, rule FROM org_candidate_edges \
+                      WHERE (org_a, org_b, rule) > (?, ?, ?) \
+                      ORDER BY org_a, org_b, rule LIMIT 200000",
+                    (Value::Integer(last_a), Value::Integer(last_b), t(&last_rule)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let (a, b, rule) = (int(&row, 0), int(&row, 1), text(&row, 2));
+                report.edges += 1;
+                page += 1;
+                match rule.as_str() {
+                    "e3-xlang" => report.e3_xlang += 1,
+                    _ => report.e3_name += 1,
+                }
+                edges.push((a, b));
+                (last_a, last_b, last_rule) = (a, b, rule);
+            }
+            if page == 0 {
+                break;
+            }
+        }
+
+        // Which endpoints still exist, and what they are.
+        let mut ids: Vec<i64> = edges.iter().flat_map(|&(a, b)| [a, b]).collect();
+        ids.sort_unstable();
+        ids.dedup();
+        report.orgs_touched = ids.len() as u64;
+        let mut live: std::collections::HashMap<i64, (bool, String, String)> =
+            std::collections::HashMap::new();
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT id, identifier, country, name FROM organizations WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = reader.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                live.insert(
+                    int(&row, 0),
+                    (
+                        !matches!(row.get_value(1), Ok(Value::Null)),
+                        opt_text_of(&row, 2).unwrap_or_else(|| "??".into()),
+                        text(&row, 3),
+                    ),
+                );
+            }
+        }
+        report.dangling_orgs = report.orgs_touched - live.len() as u64;
+
+        // Components over LIVE endpoints only: an edge to a merged-away row
+        // is not a case anybody can review.
+        for &(a, b) in &edges {
+            if live.contains_key(&a) && live.contains_key(&b) {
+                uf.union(a, b);
+            }
+        }
+        let mut members: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+        for &id in live.keys() {
+            let root = uf.find(id);
+            if uf.parent.contains_key(&id) {
+                members.entry(root).or_default().push(id);
+            }
+        }
+
+        let mut buckets = [("2", 0u64), ("3-5", 0), ("6-10", 0), ("11-50", 0), ("51+", 0)];
+        let mut pairs: std::collections::HashMap<String, u64> = std::collections::HashMap::new();
+        let mut roots: Vec<&i64> = members.keys().collect();
+        roots.sort();
+        for (n, root) in roots.iter().enumerate() {
+            let ms = &members[root];
+            let size = ms.len() as u64;
+            report.components += 1;
+            report.max_component = report.max_component.max(size);
+            let slot = match size {
+                0 | 1 | 2 => 0,
+                3..=5 => 1,
+                6..=10 => 2,
+                11..=50 => 3,
+                _ => 4,
+            };
+            buckets[slot].1 += 1;
+            let canon = ms.iter().filter(|id| live[id].0).count();
+            if canon == ms.len() {
+                report.canonical_only_components += 1;
+            } else if canon == 0 {
+                report.provisional_only_components += 1;
+            } else {
+                report.mixed_components += 1;
+            }
+            let mut countries: std::collections::BTreeSet<&str> =
+                ms.iter().map(|id| live[id].1.as_str()).collect();
+            if countries.len() > 1 {
+                report.multi_country_components += 1;
+                let label = countries.iter().copied().collect::<Vec<_>>().join("-");
+                *pairs.entry(label).or_default() += 1;
+            }
+            countries.clear();
+            if sample_every > 0 && n % sample_every == 0 && report.sample.len() < 40 {
+                let mut show: Vec<String> = ms
+                    .iter()
+                    .take(6)
+                    .map(|id| format!("{}:{}", live[id].1, live[id].2))
+                    .collect();
+                show.sort();
+                report.sample.push((**root, size, show));
+            }
+        }
+        report.size_buckets = buckets.to_vec();
+        let mut top: Vec<(String, u64)> = pairs.into_iter().collect();
+        top.sort_by(|x, y| y.1.cmp(&x.1).then_with(|| x.0.cmp(&y.0)));
+        top.truncate(20);
+        report.country_pairs = top;
         Ok(report)
     }
 

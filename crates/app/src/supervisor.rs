@@ -326,6 +326,10 @@ enum Spec {
     OrgMergeHealth,
     R2Census,
     R3Census,
+    /// Issue 314: size the candidate-edge store — components, not edges,
+    /// are review cases, so a campaign cannot be scoped without this.
+    /// Read-only.
+    OrgEdgeCensus,
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
@@ -860,6 +864,11 @@ impl Supervisor {
             "r2-census" => {
                 Ok(vec![self.push("r2-census", "r2-census".into(), Spec::R2Census).await])
             }
+            // Issue 314: the candidate-edge store's own census. Read-only,
+            // and the measure-first gate on any review campaign over edges.
+            "org-edge-census" => {
+                Ok(vec![self.push("org-edge-census", "org-edge-census".into(), Spec::OrgEdgeCensus).await])
+            }
             // Issue 300 Stage 3 opening census: classify the NULL-country
             // rescue pool by checksum anchoring + name corroboration.
             // Read-only.
@@ -1291,6 +1300,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "match-org-identifiers",
     "build-org-match-keys",
     "scan-org-match-keys",
+    "org-edge-census",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3320,6 +3330,58 @@ impl Supervisor {
                     r.winners,
                     r.winner_dups,
                     r.tender_changes
+                ))
+            }
+            Spec::OrgEdgeCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("censusing", None, None, "walking the candidate-edge store".to_owned());
+                // Sample every 500th component, capped at 40 in-store.
+                let r = self
+                    .db
+                    .census_org_candidate_edges(500, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("org-edge-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "edges": r.edges, "e3_name": r.e3_name, "e3_xlang": r.e3_xlang,
+                    "orgs_touched": r.orgs_touched, "dangling_orgs": r.dangling_orgs,
+                    "components": r.components,
+                    "size_buckets": r.size_buckets.iter().map(|(k, v)| {
+                        serde_json::json!({ "size": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "max_component": r.max_component,
+                    "canonical_only_components": r.canonical_only_components,
+                    "mixed_components": r.mixed_components,
+                    "provisional_only_components": r.provisional_only_components,
+                    "multi_country_components": r.multi_country_components,
+                    "country_pairs": r.country_pairs.iter().map(|(k, v)| {
+                        serde_json::json!({ "pair": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "sample": r.sample.iter().map(|(root, size, members)| {
+                        serde_json::json!({ "root": root, "size": size, "members": members })
+                    }).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("org-edge-census", &body, now).await.map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang) over \
+                     {} orgs ({} dangling); {} components, max {}; {} canonical-only, \
+                     {} mixed, {} provisional-only; {} span >1 country",
+                    r.edges,
+                    r.e3_name,
+                    r.e3_xlang,
+                    r.orgs_touched,
+                    r.dangling_orgs,
+                    r.components,
+                    r.max_component,
+                    r.canonical_only_components,
+                    r.mixed_components,
+                    r.provisional_only_components,
+                    r.multi_country_components
                 ))
             }
             Spec::ApplyCaseReviews { dry_run } => {
@@ -5861,7 +5923,8 @@ mod tests {
                 "r3-census",
                 "match-org-identifiers",
                 "build-org-match-keys",
-                "scan-org-match-keys"
+                "scan-org-match-keys",
+                "org-edge-census"
             ]
         );
     }
