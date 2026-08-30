@@ -318,6 +318,11 @@ enum Spec {
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
+    /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
+    /// E3 name-equality edges into `org_candidate_edges`, advisory only
+    /// (never merges; the consumer is the issue-311 review loop). Census
+    /// dry-first with T4 parity; `max_edges` is the capped first prod run.
+    ScanOrgMatchKeys { dry_run: bool, max_edges: Option<u64> },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -510,6 +515,11 @@ pub struct JobRequest {
     /// Stage-3 NULL-country checksum-anchor rescue). Anything else is
     /// rejected at enqueue.
     pub rule: Option<String>,
+    /// `scan-org-match-keys` wet runs only: write at most this many edges —
+    /// the design's capped first prod run (issue 300 Stage 4). The census
+    /// still runs whole, so parity stays a whole-plan check. Omitted means
+    /// everything the census found.
+    pub max_edges: Option<u64>,
 }
 
 impl Supervisor {
@@ -895,6 +905,32 @@ impl Supervisor {
                         .await,
                 ])
             }
+            // Issue 300 Stage 4: the candidate-edge scan. Advisory edges
+            // only — it never merges — but dry_run still defaults TRUE:
+            // the census IS the reviewed pre-estimate the T4 ladder gates
+            // wet runs on. Params carry the keys-build epoch (audit line).
+            "scan-org-match-keys" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let max_edges = req.max_edges;
+                let params = format!(
+                    "scan-org-match-keys{}{} stoplist={} epoch={}",
+                    if dry_run { " dry-run" } else { "" },
+                    match max_edges {
+                        Some(cap) => format!(" cap={cap}"),
+                        None => String::new(),
+                    },
+                    SCAN_STOPLIST_CAP,
+                    ingest::crosswalk::NAME_KEY_EPOCH
+                );
+                Ok(vec![
+                    self.push(
+                        "scan-org-match-keys",
+                        params,
+                        Spec::ScanOrgMatchKeys { dry_run, max_edges },
+                    )
+                    .await,
+                ])
+            }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
             "repair-placeholder-orgs" => {
@@ -1217,7 +1253,21 @@ const STOPPABLE_KINDS: &[&str] = &[
     "r3-census",
     "match-org-identifiers",
     "build-org-match-keys",
+    "scan-org-match-keys",
 ];
+
+/// Issue 300 decision 5: a key shared by more organizations than this is a
+/// generic name (the "Gymnázium" / "Centre hospitalier" class) — its O(n²)
+/// pairs would be noise, so the scan counts and samples it instead of
+/// emitting. Must stay far under [`store::SCAN_KEY_WINDOW`]: the walk's
+/// fills-page guard stoplists on that ordering.
+const SCAN_STOPLIST_CAP: usize = 20;
+
+/// The Stage-0 exemplar sheet's contamination case: an org that carried a
+/// foreign satellite name (the Dutch-MoD shape). Chased through
+/// org_merge_log to its standing id and probed on EVERY scan run — the
+/// acceptance gate wants it surfacing as an edge and nothing else.
+const SCAN_EXEMPLAR_ORG: i64 = 23294544;
 
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
@@ -3290,6 +3340,235 @@ impl Supervisor {
                     started.elapsed().as_secs()
                 ))
             }
+            Spec::ScanOrgMatchKeys { dry_run, max_edges } => {
+                let dry_run = *dry_run;
+                let started = std::time::Instant::now();
+                // Preconditions, refuse-with-remedy (the has_index precheck
+                // precedent): the covering index, a FINISHED build, and a
+                // keys epoch matching this binary's key fns — scanning old-
+                // epoch keys with new fns would mislabel rules silently.
+                if !self.db.has_index("org_match_keys_kk").await.map_err(|e| e.to_string())? {
+                    return Err(
+                        "scan-org-match-keys refused: no org_match_keys_kk index — \
+                         run build-org-match-keys (wet) first"
+                            .to_owned(),
+                    );
+                }
+                let (wm, epoch) =
+                    self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                if wm != 0 {
+                    return Err(format!(
+                        "scan-org-match-keys refused: keys build in flight \
+                         (watermark {wm}) — let it finish or rerun build-org-match-keys"
+                    ));
+                }
+                if epoch != ingest::crosswalk::NAME_KEY_EPOCH {
+                    return Err(format!(
+                        "scan-org-match-keys refused: keys built under epoch {epoch:?}, \
+                         this binary keys under {:?} — rerun build-org-match-keys (wet) \
+                         first",
+                        ingest::crosswalk::NAME_KEY_EPOCH
+                    ));
+                }
+                let (build_body, _) = self
+                    .db
+                    .latest_report("org-match-keys-build")
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or_else(|| {
+                        "scan-org-match-keys refused: no org-match-keys-build report — \
+                         run build-org-match-keys (wet) first"
+                            .to_owned()
+                    })?;
+                let build: serde_json::Value =
+                    serde_json::from_str(&build_body).map_err(|e| e.to_string())?;
+                let built_at = build["built_at"]
+                    .as_i64()
+                    .ok_or_else(|| "org-match-keys-build lacks built_at".to_owned())?;
+                // T4 ladder: a wet run REQUIRES the census recorded against
+                // the SAME keys build, in bounds; parity itself is checked
+                // whole-plan in-store, before any write.
+                let expect_edges = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("org-edge-scan-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored org-edge-scan-plan — run the dry scan first"
+                                .to_owned()
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["keys_built_at"].as_i64() != Some(built_at) {
+                        return Err(
+                            "org-edge-scan-plan predates the current keys build — \
+                             rerun the dry scan and review it"
+                                .to_owned(),
+                        );
+                    }
+                    if v["bounds_ok"].as_bool() != Some(true) {
+                        return Err(
+                            "org-edge-scan-plan bounds_ok is false — an out-of-bounds \
+                             census means the semantics are wrong; re-plan, there is \
+                             no override"
+                                .to_owned(),
+                        );
+                    }
+                    Some(
+                        v["would_emit"]
+                            .as_u64()
+                            .ok_or_else(|| "org-edge-scan-plan lacks would_emit".to_owned())?,
+                    )
+                };
+                let exemplar = self
+                    .db
+                    .chase_merged_org(SCAN_EXEMPLAR_ORG)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                let phase = if dry_run { "censusing" } else { "emitting" };
+                self.set_phase(phase, None, None, "walking the key index".to_owned());
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase(phase, Some(done), None, detail.to_owned());
+                };
+                let r = self
+                    .db
+                    .scan_org_match_keys(
+                        store::OrgEdgeScanArgs {
+                            n2: ingest::project::match_norm,
+                            n3: ingest::crosswalk::n3_key,
+                            stoplist_cap: SCAN_STOPLIST_CAP,
+                            key_window: store::SCAN_KEY_WINDOW,
+                            max_edges: *max_edges,
+                            expect_edges,
+                            exemplar_org: Some(exemplar),
+                            dry_run,
+                            job_id: Some(job.id as i64),
+                            stop: &stop,
+                            progress: &progress,
+                        },
+                        store::now_unix(),
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    // Honest cancel: NO report (the issue-230 zero-lie bar).
+                    // Wet keeps any committed edge batches — an idempotent
+                    // refresh a re-run heals.
+                    return Ok(format!(
+                        "scan-org-match-keys STOPPED by cancel: census had {} edges, \
+                         {} written before the stop; NO report was recorded",
+                        r.would_emit, r.edges_written
+                    ));
+                }
+                let now = store::now_unix();
+                let census = serde_json::json!({
+                    "keys_walked": r.keys_walked,
+                    "groups_ge2": r.groups_ge2,
+                    "groups_emitting": r.groups_emitting,
+                    "provisional_only_groups": r.provisional_only_groups,
+                    "stoplist_skipped_n2": r.stoplist_skipped_n2,
+                    "stoplist_skipped_n3": r.stoplist_skipped_n3,
+                    "stoplist_top": r.stoplist_top,
+                    "dangling_members": r.dangling_members,
+                    "stale_pairs": r.stale_pairs,
+                    "pairs_considered": r.pairs_considered,
+                    "would_emit": r.would_emit,
+                    "e3_name": r.e3_name,
+                    "e3_xlang": r.e3_xlang,
+                    "max_group": r.max_group,
+                    "bounds_ok": r.bounds_ok,
+                    "ceiling_truncated": r.ceiling_truncated,
+                    "keys_built_at": built_at,
+                    "keys_build_epoch": ingest::crosswalk::NAME_KEY_EPOCH,
+                    "exemplar": {
+                        "org": r.exemplar_org,
+                        "edges": r.exemplar_edges,
+                        "rules": r.exemplar_rules,
+                        "peers": r.exemplar_peers,
+                    },
+                    "capped": r.capped,
+                    "elapsed_seconds": started.elapsed().as_secs(),
+                });
+                if dry_run {
+                    self.db
+                        .put_report("org-edge-scan-plan", &census.to_string(), now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    return Ok(format!(
+                        "scan-org-match-keys DRY RUN — STORED NOTHING: {} keys walked, \
+                         {} groups >=2, {} emitting; would emit {} edges ({} e3-name + \
+                         {} e3-xlang); stoplist skipped {} n2 + {} n3 (max group {}); \
+                         {} provisional-only groups, {} pairs, {} dangling, {} stale; \
+                         exemplar org {} has {} edge(s); bounds_ok={} in {}s",
+                        r.keys_walked,
+                        r.groups_ge2,
+                        r.groups_emitting,
+                        r.would_emit,
+                        r.e3_name,
+                        r.e3_xlang,
+                        r.stoplist_skipped_n2,
+                        r.stoplist_skipped_n3,
+                        r.max_group,
+                        r.provisional_only_groups,
+                        r.pairs_considered,
+                        r.dangling_members,
+                        r.stale_pairs,
+                        exemplar,
+                        r.exemplar_edges,
+                        r.bounds_ok,
+                        started.elapsed().as_secs()
+                    ));
+                }
+                let mut wet = census.clone();
+                wet["edges_written"] = r.edges_written.into();
+                wet["edges_new"] = r.edges_new.into();
+                wet["edges_refreshed"] = r.edges_refreshed.into();
+                wet["total_edges_after"] = r.total_edges_after.into();
+                self.db
+                    .put_report("org-edge-scan", &wet.to_string(), now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // Re-anchor the plan after a COMPLETED, UNCAPPED wet run
+                // (the R2 residual-plan lesson, mandatory amendment):
+                // without this, the weekly wet drifts from one aging dry
+                // plan until every scheduled run parity-aborts — a silently
+                // stopped tripwire. A capped run leaves the reviewed plan
+                // standing: the rollout ladder still points at it.
+                if !r.capped {
+                    self.db
+                        .put_report("org-edge-scan-plan", &census.to_string(), now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(format!(
+                    "scan-org-match-keys (issue 300 Stage 4){}: {} keys walked, \
+                     {} groups >=2, {} emitting; {} edges written ({} new, \
+                     {} refreshed) of a {} census ({} e3-name + {} e3-xlang); \
+                     stoplist skipped {} n2 + {} n3; exemplar org {} has {} edge(s); \
+                     {} edges stand, in {}s",
+                    if r.capped { " CAPPED" } else { "" },
+                    r.keys_walked,
+                    r.groups_ge2,
+                    r.groups_emitting,
+                    r.edges_written,
+                    r.edges_new,
+                    r.edges_refreshed,
+                    r.would_emit,
+                    r.e3_name,
+                    r.e3_xlang,
+                    r.stoplist_skipped_n2,
+                    r.stoplist_skipped_n3,
+                    exemplar,
+                    r.exemplar_edges,
+                    r.total_edges_after,
+                    started.elapsed().as_secs()
+                ))
+            }
             Spec::Refold { profiles, expect } => {
                 let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
                 // Count BEFORE writing: a mistyped profile string matching a far larger
@@ -4921,6 +5200,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "repair-placeholder-orgs"
             | "match-org-identifiers"
             | "build-org-match-keys"
+            | "scan-org-match-keys"
             | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"
@@ -5276,7 +5556,9 @@ mod tests {
         // transactions, and a stopped run reports its committed prefix.
         // build-org-match-keys reads it at the top of every 10k-org window,
         // and a stopped wet build leaves its watermark standing so the next
-        // run resumes (issue 300 Stage 4).
+        // run resumes (issue 300 Stage 4). scan-org-match-keys reads it
+        // between index pages, between classification groups, and between
+        // edge-write batches; a stopped run records no report.
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -5288,7 +5570,8 @@ mod tests {
                 "r2-census",
                 "r3-census",
                 "match-org-identifiers",
-                "build-org-match-keys"
+                "build-org-match-keys",
+                "scan-org-match-keys"
             ]
         );
     }
@@ -5769,6 +6052,47 @@ mod tests {
         assert_eq!((phase.name.as_str(), phase.done, phase.total), ("pre-pass", Some(7), None));
     }
 
+    /// Issue 300 Stage 4: the candidate-edge scan defaults to a DRY census —
+    /// the T4 ladder's reviewable pre-estimate — and its params line names
+    /// the cap, the stoplist and the keys epoch, so a job-log reader can
+    /// audit WHICH key semantics a scan ran under.
+    #[tokio::test]
+    async fn scan_org_match_keys_defaults_dry_and_names_its_knobs() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup.enqueue_request(&req("scan-org-match-keys")).await.expect("enqueues");
+        let queued = sup.queued();
+        assert_eq!(queued[0].kind, "scan-org-match-keys");
+        assert_eq!(
+            queued[0].params,
+            format!(
+                "scan-org-match-keys dry-run stoplist=20 epoch={}",
+                ingest::crosswalk::NAME_KEY_EPOCH
+            )
+        );
+        assert!(matches!(
+            queued[0].spec,
+            Spec::ScanOrgMatchKeys { dry_run: true, max_edges: None }
+        ));
+        sup.enqueue_request(&JobRequest {
+            kind: "scan-org-match-keys".into(),
+            dry_run: Some(false),
+            max_edges: Some(200_000),
+            ..Default::default()
+        })
+        .await
+        .expect("wet with a cap enqueues");
+        let queued = sup.queued();
+        assert!(
+            queued[1].params.starts_with("scan-org-match-keys cap=200000"),
+            "a wet run's params name the cap: {}",
+            queued[1].params
+        );
+        assert!(matches!(
+            queued[1].spec,
+            Spec::ScanOrgMatchKeys { dry_run: false, max_edges: Some(200_000) }
+        ));
+    }
+
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only
     /// the jobs that write the store heavily and checkpoint it — `process` and
     /// `project` — count; a light `fetch`/`probe` or an idle supervisor does not,
@@ -5794,6 +6118,8 @@ mod tests {
             "backfill-legacy-adjacency",
             "refold-notices",
             "refold-sections",
+            "build-org-match-keys",
+            "scan-org-match-keys",
         ] {
             sup.set_current(Some(progress(kind)));
             assert!(sup.heavy_write_in_progress(), "{kind} checkpoints per batch — coverage must stand down");

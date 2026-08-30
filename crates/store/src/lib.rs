@@ -23,8 +23,10 @@ pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
-    CaseApplyReport, CaseReview, MatchKeyBuildWindow, PlanGroup, PlanRow, R2MergeArgs,
+    CaseApplyReport, CaseReview, MatchKeyBuildWindow, OrgEdgeScanArgs, OrgEdgeScanReport,
+    PlanGroup, PlanRow, R2MergeArgs,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
+    EDGE_VOLUME_CEILING, SCAN_KEY_WINDOW,
 };
 pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};

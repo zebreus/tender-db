@@ -1616,6 +1616,96 @@ pub struct MatchKeyBuildWindow {
     pub rows_written: u64,
 }
 
+/// Arguments for the Stage-4 candidate-edge scan (issue 300 §7). The key
+/// fns are injected from ingest — linguistics stay out of store — and MUST
+/// be the same pair the build ran under (the caller guards the epoch).
+pub struct OrgEdgeScanArgs<'a> {
+    /// The N2 name key: `ingest::project::match_norm`, the ONE shared keyspace.
+    pub n2: fn(&str) -> String,
+    /// The N3 canonicalized-form key: `ingest::crosswalk::n3_key`.
+    pub n3: fn(&str) -> String,
+    /// Groups larger than this are generic names (decision 5) — counted and
+    /// sampled, never emitted. Must be smaller than `key_window`: the
+    /// same-key-fills-page guard stoplists on that invariant.
+    pub stoplist_cap: usize,
+    /// Rows per index page. [`SCAN_KEY_WINDOW`] in prod; small in tests to
+    /// exercise the same-key-fills-page walk-termination guard.
+    pub key_window: i64,
+    /// Wet only: write at most this many edges (the capped first prod run).
+    /// The CENSUS always runs to completion, so parity stays whole-plan —
+    /// the cap bounds the write phase, whose walk order is deterministic
+    /// (kind, key, org_id), so a continuation covers a stable prefix.
+    pub max_edges: Option<u64>,
+    /// T4 parity: the recorded plan's `would_emit`; a wet recompute diverging
+    /// beyond max(2%, 500) aborts before any write.
+    pub expect_edges: Option<u64>,
+    /// The contamination exemplar (org 23294544 chased through org_merge_log
+    /// by the caller): probed against the would-emit set AND the standing
+    /// edge table, so even the first DRY census can confirm it surfaces.
+    pub exemplar_org: Option<i64>,
+    pub dry_run: bool,
+    pub job_id: Option<i64>,
+    /// Read between windows, between classification groups, and between
+    /// write batches (issue 252's stop-latency bar).
+    pub stop: &'a (dyn Fn() -> bool + Sync),
+    /// Called once per index page and per write batch with (keys walked or
+    /// edges written, detail line) — the supervisor's phase feed.
+    pub progress: &'a (dyn Fn(u64, &str) + Sync),
+}
+
+/// What the Stage-4 candidate-edge scan saw and did. On a dry run the
+/// census fields are the whole story (`edges_written` stays 0); a wet run
+/// adds the write-phase counts. `would_emit` is the parity/bounds number.
+#[derive(Debug, Default, Clone)]
+pub struct OrgEdgeScanReport {
+    /// Distinct keys visited (complete groups, singletons included).
+    pub keys_walked: u64,
+    /// Groups of 2+ orgs (raw size, before dangling members drop out).
+    pub groups_ge2: u64,
+    /// Groups that emitted at least one edge.
+    pub groups_emitting: u64,
+    /// Groups whose live members are all provisional — decision 4's "the
+    /// 234 line": provisional×provisional never pairs.
+    pub provisional_only_groups: u64,
+    pub stoplist_skipped_n2: u64,
+    pub stoplist_skipped_n3: u64,
+    /// The heaviest stoplisted keys, (key, org count), heaviest first —
+    /// the R2Census denial-sample discipline: an operator can read WHICH
+    /// generic names the wall caught.
+    pub stoplist_top: Vec<(String, i64)>,
+    /// Key rows whose org id no longer resolves (merged away since the
+    /// build — they dangle by design; members are the probe results).
+    pub dangling_members: u64,
+    /// Pairs skipped because a side had NO name reaching the shared key
+    /// any more (names moved since the build): no evidence, no edge.
+    pub stale_pairs: u64,
+    pub pairs_considered: u64,
+    /// Distinct (org_a, org_b, rule) edges the census found — what a wet
+    /// run writes, and what parity and bounds are measured on.
+    pub would_emit: u64,
+    pub edges_written: u64,
+    pub edges_new: u64,
+    pub edges_refreshed: u64,
+    pub e3_name: u64,
+    pub e3_xlang: u64,
+    /// Largest group seen, stoplisted ones included.
+    pub max_group: u64,
+    pub exemplar_org: Option<i64>,
+    pub exemplar_edges: u64,
+    pub exemplar_rules: Vec<String>,
+    pub exemplar_peers: Vec<i64>,
+    pub total_edges_after: u64,
+    /// False when `would_emit` crossed [`EDGE_VOLUME_CEILING`] — a wet run
+    /// refuses on it (no override: out-of-bounds means the semantics are
+    /// wrong, re-plan).
+    pub bounds_ok: bool,
+    /// The census walk stopped AT the ceiling (RAM guard): `would_emit` is
+    /// a lower bound, and `bounds_ok` is already conclusively false.
+    pub ceiling_truncated: bool,
+    pub capped: bool,
+    pub stopped: bool,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -2725,6 +2815,538 @@ impl Db {
             Some(row) => Ok(int(&row, 0)),
             None => Ok(0),
         }
+    }
+
+    /// Follow loser→keep hops in `org_merge_log` to the standing org id
+    /// (the Stage-4 exemplar probe's resolver): chains happen when a keep
+    /// later loses a merge itself. Loser rows are deleted at merge time so
+    /// the corpus has no cycles; the 32-hop belt is against a corrupted log
+    /// only. An id with no loser row — never merged away — resolves to
+    /// itself.
+    pub async fn chase_merged_org(&self, id: i64) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut cur = id;
+        for _ in 0..32 {
+            let mut rows = conn
+                .query(
+                    "SELECT keep FROM org_merge_log WHERE loser = ? ORDER BY at DESC LIMIT 1",
+                    (Value::Integer(cur),),
+                )
+                .await?;
+            match rows.next().await? {
+                Some(row) => cur = int(&row, 0),
+                None => break,
+            }
+        }
+        Ok(cur)
+    }
+
+    /// The Stage-4 candidate-edge scan (issue 300 §7): one walk over the
+    /// `org_match_keys_kk` covering index per key kind, emitting E3 edges
+    /// into `org_candidate_edges`. Design §7 named TWO scans (B-NAME /
+    /// B-XLANG), but the key satellite already unified the key space —
+    /// satellite names are IN `org_match_keys`, so cross-language equality
+    /// IS key equality on this index (§4.1); the split survives as the
+    /// per-pair rule label (`e3-name` vs `e3-xlang`), decided from which
+    /// name ROWS reach the shared key. Edges NEVER merge — evidence
+    /// accumulation for the issue-311 review loop; NO change events, NO
+    /// cursor (decision 6).
+    ///
+    /// Shape: census first (steps 1-5, all in RAM), then ONE whole-plan
+    /// parity/bounds check, then the write phase — the R2 T4 ladder. A dry
+    /// run is the census alone. The walk trims the trailing possibly-
+    /// partial key group from each full page so groups never straddle
+    /// windows, and a single key filling a WHOLE page — no complete group
+    /// to trim against, the watermark could never advance — is counted via
+    /// one COUNT probe, stoplisted (it is over `stoplist_cap` by the
+    /// `stoplist_cap < key_window` invariant), and stepped past: the
+    /// infinite-loop-on-the-serving-box guard.
+    pub async fn scan_org_match_keys(
+        &self,
+        args: OrgEdgeScanArgs<'_>,
+        now: i64,
+    ) -> turso::Result<OrgEdgeScanReport> {
+        debug_assert!(
+            (args.stoplist_cap as i64) < args.key_window,
+            "the fills-page guard stoplists on this invariant"
+        );
+        let reader = self.reader().await?;
+        let mut report = OrgEdgeScanReport { bounds_ok: true, ..Default::default() };
+        report.exemplar_org = args.exemplar_org;
+
+        struct Edge {
+            a: i64,
+            b: i64,
+            rule: &'static str,
+            score: f64,
+            evidence: String,
+        }
+        let mut edges: Vec<Edge> = Vec::new();
+        let mut emitted: std::collections::HashSet<(i64, i64, &'static str)> =
+            std::collections::HashSet::new();
+        // Min-heap of (count, key), capped at 20 entries: the heaviest
+        // stoplisted keys, so the report shows the wall working.
+        let mut stop_top: std::collections::BinaryHeap<std::cmp::Reverse<(i64, String)>> =
+            std::collections::BinaryHeap::new();
+        // JSON by hand (store carries no serde): escape the two characters
+        // JSON cares about, drop control characters (merge-log discipline).
+        let esc = |s: &str| -> String {
+            s.chars()
+                .filter(|c| !c.is_control())
+                .flat_map(|c| match c {
+                    '\\' => vec!['\\', '\\'],
+                    '"' => vec!['\\', '"'],
+                    c => vec![c],
+                })
+                .collect()
+        };
+
+        'kinds: for kind in ["n2", "n3"] {
+            let keyfn = if kind == "n2" { args.n2 } else { args.n3 };
+            let mut after = String::new();
+            loop {
+                if (args.stop)() {
+                    report.stopped = true;
+                    break 'kinds;
+                }
+                let win_started = std::time::Instant::now();
+                // One index page: equality on kind + range on key over the
+                // named covering index — never a bare rowid range (§7).
+                let mut page: Vec<(String, i64)> = Vec::new();
+                {
+                    let mut rows = reader
+                        .query(
+                            "SELECT key, org_id FROM org_match_keys \
+                              WHERE key_kind = ? AND key > ? \
+                              ORDER BY key, org_id LIMIT ?",
+                            (t(kind), t(&after), Value::Integer(args.key_window)),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        page.push((text(&row, 0), int(&row, 1)));
+                    }
+                }
+                if page.is_empty() {
+                    break;
+                }
+                let full = page.len() as i64 == args.key_window;
+                // Split into key groups; rows arrive key-ordered.
+                let mut groups: Vec<(String, Vec<i64>)> = Vec::new();
+                for (key, org) in page {
+                    match groups.last_mut() {
+                        Some((k, ids)) if *k == key => ids.push(org),
+                        _ => groups.push((key, vec![org])),
+                    }
+                }
+                if full {
+                    if groups.len() == 1 {
+                        // The walk-termination guard (mandatory amendment):
+                        // ONE key fills the whole page. Count it exactly
+                        // once, sample it, step the watermark past it.
+                        let (key, _) = groups.pop().expect("one group");
+                        let mut rows = reader
+                            .query(
+                                "SELECT COUNT(*) FROM org_match_keys \
+                                  WHERE key_kind = ? AND key = ?",
+                                (t(kind), t(&key)),
+                            )
+                            .await?;
+                        let n = match rows.next().await? {
+                            Some(row) => int(&row, 0),
+                            None => 0,
+                        };
+                        report.keys_walked += 1;
+                        report.groups_ge2 += 1;
+                        report.max_group = report.max_group.max(n as u64);
+                        if kind == "n2" {
+                            report.stoplist_skipped_n2 += 1;
+                        } else {
+                            report.stoplist_skipped_n3 += 1;
+                        }
+                        stop_top.push(std::cmp::Reverse((n, key.clone())));
+                        if stop_top.len() > 20 {
+                            stop_top.pop();
+                        }
+                        after = key;
+                        continue;
+                    }
+                    // Trim the trailing possibly-partial key group; the next
+                    // page re-reads that key from its first row.
+                    groups.pop();
+                    after = groups.last().expect("len >= 1 after pop").0.clone();
+                }
+
+                // Census the page's complete groups; collect classification
+                // candidates (2..=cap live-size pending the probes below).
+                let mut cand: Vec<(String, Vec<i64>)> = Vec::new();
+                for (key, ids) in groups {
+                    report.keys_walked += 1;
+                    let n = ids.len();
+                    if n < 2 {
+                        continue;
+                    }
+                    report.groups_ge2 += 1;
+                    report.max_group = report.max_group.max(n as u64);
+                    if n > args.stoplist_cap {
+                        if kind == "n2" {
+                            report.stoplist_skipped_n2 += 1;
+                        } else {
+                            report.stoplist_skipped_n3 += 1;
+                        }
+                        stop_top.push(std::cmp::Reverse((n as i64, key)));
+                        if stop_top.len() > 20 {
+                            stop_top.pop();
+                        }
+                        continue;
+                    }
+                    cand.push((key, ids));
+                }
+
+                // Per-WINDOW bulk probes, never per group (the point-read-
+                // storm amendment): existence + canonicality + head name in
+                // one pass, satellite (lang, name) rows in a second.
+                let mut ids: Vec<i64> =
+                    cand.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
+                ids.sort_unstable();
+                ids.dedup();
+                let mut org_row: std::collections::HashMap<i64, (String, bool)> =
+                    std::collections::HashMap::new();
+                let mut sats: std::collections::HashMap<i64, Vec<(String, String)>> =
+                    std::collections::HashMap::new();
+                for chunk in ids.chunks(IN_CHUNK) {
+                    let params: Vec<Value> =
+                        chunk.iter().map(|&id| Value::Integer(id)).collect();
+                    // Canonical = identifier-bearing: the R2 preload
+                    // predicate, reused not re-derived (decision 4).
+                    let sql = format!(
+                        "SELECT id, name, identifier FROM organizations WHERE id IN ({})",
+                        placeholders(chunk.len())
+                    );
+                    let mut rows = reader.query(&sql, params).await?;
+                    while let Some(row) = rows.next().await? {
+                        org_row.insert(
+                            int(&row, 0),
+                            (text(&row, 1), opt_text_of(&row, 2).is_some()),
+                        );
+                    }
+                }
+                for chunk in ids.chunks(IN_CHUNK) {
+                    let params: Vec<Value> =
+                        chunk.iter().map(|&id| Value::Integer(id)).collect();
+                    let sql = format!(
+                        "SELECT org_id, lang, name FROM organization_names WHERE org_id IN ({})",
+                        placeholders(chunk.len())
+                    );
+                    let mut rows = reader.query(&sql, params).await?;
+                    while let Some(row) = rows.next().await? {
+                        sats.entry(int(&row, 0))
+                            .or_default()
+                            .push((text(&row, 1), text(&row, 2)));
+                    }
+                }
+
+                for (key, raw_ids) in cand {
+                    if (args.stop)() {
+                        report.stopped = true;
+                        break 'kinds;
+                    }
+                    let live: Vec<i64> = raw_ids
+                        .iter()
+                        .copied()
+                        .filter(|id| org_row.contains_key(id))
+                        .collect();
+                    report.dangling_members += (raw_ids.len() - live.len()) as u64;
+                    if live.len() < 2 {
+                        continue;
+                    }
+                    if !live.iter().any(|id| org_row[id].1) {
+                        report.provisional_only_groups += 1;
+                        continue;
+                    }
+                    // Reach provenance per member, once: WHICH name row
+                    // reaches the shared key — the head (no lang) or a
+                    // satellite (its stored ISO 639-2/T lang). Corroboration
+                    // provenance (§4.2 T7): a contaminated satellite row
+                    // must be findable from its edges.
+                    let mut reach: std::collections::HashMap<
+                        i64,
+                        (String, Option<String>, String),
+                    > = std::collections::HashMap::new();
+                    for &id in &live {
+                        let head = &org_row[&id].0;
+                        if keyfn(head) == key {
+                            reach.insert(id, ("head".to_owned(), None, head.clone()));
+                            continue;
+                        }
+                        if let Some(vs) = sats.get(&id) {
+                            if let Some((lang, name)) =
+                                vs.iter().find(|(_, n)| keyfn(n) == key)
+                            {
+                                reach.insert(
+                                    id,
+                                    (format!("lang:{lang}"), Some(lang.clone()), name.clone()),
+                                );
+                            }
+                        }
+                    }
+                    let mut group_emitted = false;
+                    for i in 0..live.len() {
+                        for j in (i + 1)..live.len() {
+                            // live is org_id-ascending (index order), so
+                            // (a, b) already satisfies org_a < org_b.
+                            let (a, b) = (live[i], live[j]);
+                            let (ca, cb) = (org_row[&a].1, org_row[&b].1);
+                            if !ca && !cb {
+                                continue; // provisional×provisional never (decision 4)
+                            }
+                            report.pairs_considered += 1;
+                            let (Some(ra), Some(rb)) = (reach.get(&a), reach.get(&b)) else {
+                                report.stale_pairs += 1;
+                                continue;
+                            };
+                            // Both sides via head → e3-name. Any satellite
+                            // involvement with DIFFERING provenance langs —
+                            // head-vs-foreign-satellite included (the
+                            // PostAuto/CarPostal shape; amendment) —
+                            // → e3-xlang; satellite-same-lang → e3-name.
+                            let rule: &'static str =
+                                if ra.1 == rb.1 { "e3-name" } else { "e3-xlang" };
+                            if !emitted.insert((a, b, rule)) {
+                                continue; // n2+n3 double-discovery: one row
+                            }
+                            group_emitted = true;
+                            if rule == "e3-name" {
+                                report.e3_name += 1;
+                            } else {
+                                report.e3_xlang += 1;
+                            }
+                            let evidence = format!(
+                                "{{\"kind\":\"{kind}\",\"key\":\"{}\",\"group\":{},\
+                                 \"a\":{{\"src\":\"{}\",\"name\":\"{}\"}},\
+                                 \"b\":{{\"src\":\"{}\",\"name\":\"{}\"}}}}",
+                                esc(&key),
+                                live.len(),
+                                esc(&ra.0),
+                                esc(&ra.2),
+                                esc(&rb.0),
+                                esc(&rb.2)
+                            );
+                            edges.push(Edge {
+                                a,
+                                b,
+                                rule,
+                                score: if rule == "e3-name" { 1.0 } else { 0.9 },
+                                evidence,
+                            });
+                            if edges.len() as u64 > EDGE_VOLUME_CEILING {
+                                // RAM guard: the census is already
+                                // conclusively out of bounds.
+                                report.bounds_ok = false;
+                                report.ceiling_truncated = true;
+                                break 'kinds;
+                            }
+                        }
+                    }
+                    if group_emitted {
+                        report.groups_emitting += 1;
+                    }
+                }
+                // Char-boundary-safe truncation: keys are unicode.
+                let show: String = after.chars().take(32).collect();
+                (args.progress)(
+                    report.keys_walked,
+                    &format!(
+                        "kind={kind} key>{show} window {}ms, {} edges so far",
+                        win_started.elapsed().as_millis(),
+                        edges.len()
+                    ),
+                );
+                if !full {
+                    break;
+                }
+            }
+        }
+        report.would_emit = edges.len() as u64;
+        let mut top: Vec<(String, i64)> = stop_top
+            .into_iter()
+            .map(|std::cmp::Reverse((n, key))| (key, n))
+            .collect();
+        top.sort_by(|x, y| y.1.cmp(&x.1).then_with(|| x.0.cmp(&y.0)));
+        report.stoplist_top = top;
+
+        // A cancelled census planned nothing trustworthy: the caller
+        // records NO report (the issue-230 zero-lie bar); wet has written
+        // nothing yet.
+        if report.stopped {
+            return Ok(report);
+        }
+
+        // T4 parity, the R2 rule verbatim (tolerance max(2%, 500)): the wet
+        // run recomputed the census from live data; if it moved beyond
+        // tolerance since the recorded dry plan, the ground shifted — abort
+        // before any write, never force past it.
+        if let Some(expect) = args.expect_edges {
+            let tolerance = (expect / 50).max(500);
+            if report.would_emit.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "org-edge-scan parity abort: census found {} edges, the recorded \
+                     plan {expect} (tolerance {tolerance}) — nothing was written",
+                    report.would_emit
+                )));
+            }
+        }
+        if !args.dry_run && !report.bounds_ok {
+            return Err(turso::Error::Error(format!(
+                "org-edge-scan bounds abort: census crossed {EDGE_VOLUME_CEILING} \
+                 edges — out-of-bounds semantics, re-plan; nothing was written"
+            )));
+        }
+
+        if args.dry_run {
+            // The dry probe consults the WOULD-EMIT set plus the standing
+            // table (amendment: the pre-wet exemplar review must not be
+            // vacuous on an empty edge store).
+            self.probe_exemplar(&reader, &mut report, |x| {
+                edges
+                    .iter()
+                    .filter(|e| e.a == x || e.b == x)
+                    .map(|e| (e.a, e.b, e.rule.to_owned()))
+                    .collect()
+            })
+            .await?;
+            return Ok(report);
+        }
+
+        let conn = self.conn().await;
+        let before = {
+            let mut rows = conn.query("SELECT COUNT(*) FROM org_candidate_edges", ()).await?;
+            match rows.next().await? {
+                Some(row) => int(&row, 0),
+                None => 0,
+            }
+        };
+        let cap = args.max_edges.unwrap_or(u64::MAX);
+        let to_write: &[Edge] =
+            &edges[..edges.len().min(usize::try_from(cap).unwrap_or(usize::MAX))];
+        if (to_write.len() as u64) < report.would_emit {
+            report.capped = true;
+        }
+        let mut written = 0u64;
+        for batch in to_write.chunks(EDGE_WRITE_BATCH) {
+            if (args.stop)() {
+                // Committed batches stand — an idempotent refresh a re-run
+                // heals; the caller records no report.
+                report.stopped = true;
+                break;
+            }
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+            let result: turso::Result<()> = async {
+                for e in batch {
+                    // Single-row upsert, the put_report construct: preserves
+                    // first_seen and state by leaving them out of the SET
+                    // list — a re-scan refreshes evidence, it never resets
+                    // a review decision.
+                    conn.execute(
+                        "INSERT INTO org_candidate_edges \
+                             (org_a, org_b, rule, tier, score, evidence, \
+                              first_seen, last_seen, state, job_id) \
+                         VALUES (?, ?, ?, 'E3', ?, ?, ?, ?, 'open', ?) \
+                         ON CONFLICT(org_a, org_b, rule) DO UPDATE SET \
+                             last_seen = excluded.last_seen, \
+                             evidence = excluded.evidence, \
+                             score = excluded.score, \
+                             job_id = excluded.job_id",
+                        (
+                            Value::Integer(e.a),
+                            Value::Integer(e.b),
+                            t(e.rule),
+                            Value::Real(e.score),
+                            t(&e.evidence),
+                            Value::Integer(now),
+                            Value::Integer(now),
+                            match args.job_id {
+                                Some(j) => Value::Integer(j),
+                                None => Value::Null,
+                            },
+                        ),
+                    )
+                    .await?;
+                }
+                Ok(())
+            }
+            .await;
+            match result {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            written += batch.len() as u64;
+            // Reclaim the batch's WAL tail; never fatal (issue 42).
+            let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+            (args.progress)(written, &format!("wrote {written} of {} edges", to_write.len()));
+        }
+        report.edges_written = written;
+        let after_count = {
+            let mut rows = conn.query("SELECT COUNT(*) FROM org_candidate_edges", ()).await?;
+            match rows.next().await? {
+                Some(row) => int(&row, 0),
+                None => 0,
+            }
+        };
+        report.edges_new = (after_count - before).max(0) as u64;
+        report.edges_refreshed = written.saturating_sub(report.edges_new);
+        report.total_edges_after = after_count as u64;
+        self.probe_exemplar(&reader, &mut report, |x| {
+            edges
+                .iter()
+                .filter(|e| e.a == x || e.b == x)
+                .map(|e| (e.a, e.b, e.rule.to_owned()))
+                .collect()
+        })
+        .await?;
+        Ok(report)
+    }
+
+    /// Fill the report's exemplar block: distinct (a, b, rule) edges
+    /// touching the resolved exemplar org, unioned across the in-RAM
+    /// would-emit set (`ram`, so a DRY census is non-vacuous) and the
+    /// standing edge table (one bounded scan of a ≤10^6-row table).
+    async fn probe_exemplar(
+        &self,
+        reader: &Connection,
+        report: &mut OrgEdgeScanReport,
+        ram: impl Fn(i64) -> Vec<(i64, i64, String)>,
+    ) -> turso::Result<()> {
+        let Some(x) = report.exemplar_org else { return Ok(()) };
+        let mut seen: std::collections::HashSet<(i64, i64, String)> =
+            ram(x).into_iter().collect();
+        let mut rows = reader
+            .query(
+                "SELECT org_a, org_b, rule FROM org_candidate_edges \
+                  WHERE org_a = ? OR org_b = ?",
+                (Value::Integer(x), Value::Integer(x)),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            seen.insert((int(&row, 0), int(&row, 1), text(&row, 2)));
+        }
+        let mut rules: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+        let mut peers: std::collections::BTreeSet<i64> = std::collections::BTreeSet::new();
+        report.exemplar_edges = seen.len() as u64;
+        for (a, b, rule) in seen {
+            rules.insert(rule);
+            peers.insert(if a == x { b } else { a });
+        }
+        report.exemplar_rules = rules.into_iter().collect();
+        report.exemplar_peers = peers.into_iter().take(16).collect();
+        Ok(())
     }
 
     pub async fn strip_organization_indexes(&self) -> turso::Result<()> {
@@ -9358,6 +9980,22 @@ pub(crate) fn placeholders(n: usize) -> String {
 /// SQLite's default bind-variable ceiling is 999; stay well under it so an
 /// `IN (…)` read of a batch's ids never overflows a single statement.
 const IN_CHUNK: usize = 512;
+
+/// One index page of the Stage-4 candidate-edge scan (issue 300 §7):
+/// ~40 B/row ⇒ ~8 MB in RAM per page, well inside the read-side
+/// WINDOW=500_000 precedent above.
+pub const SCAN_KEY_WINDOW: i64 = 200_000;
+
+/// Order-of-magnitude tripwire only (issue 300 decision 8): the a-priori
+/// pools — AT 46.9% / CZ 49.2% / PT 25.2% name-dup rates over ~1.12M
+/// canonical rows, and the 70,598 multi-lang satellite orgs bounding
+/// xlang — both point at 10^5-10^6 pairs; the REAL bound is the reviewed
+/// dry-run number. A census crossing this refuses to write, no override.
+pub const EDGE_VOLUME_CEILING: u64 = 3_000_000;
+
+/// Edge upserts per write transaction: small rows + indexed-PK maintenance
+/// at 10^5-10^6 total sits inside the NODE_WRITE_BATCH band.
+const EDGE_WRITE_BATCH: usize = 10_000;
 
 #[cfg(test)]
 mod tests {
