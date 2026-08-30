@@ -38,6 +38,7 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         .route("/admin/jobs/{id}/cancel", post(cancel))
         .route("/admin/reports/{kind}", axum::routing::get(report))
         .route("/admin/case-reviews", post(record_case_reviews))
+        .route("/admin/rehoming", post(record_rehoming))
         .with_state(supervisor)
 }
 
@@ -57,6 +58,91 @@ struct CaseReviewIn {
     handling: String,
     rationale: String,
     confidence: String,
+}
+
+#[derive(serde::Deserialize)]
+struct RehomingBody {
+    cohort: String,
+    verdicts: Vec<RehomingIn>,
+}
+
+#[derive(serde::Deserialize)]
+struct RehomingIn {
+    org_id: i64,
+    notice_id: i64,
+    section_id: String,
+    action: String,
+    #[serde(default)]
+    target_org_id: Option<i64>,
+    #[serde(default)]
+    target_name: Option<String>,
+    rationale: String,
+    confidence: String,
+}
+
+/// `POST /admin/rehoming` — record one cohort's per-MENTION re-homing
+/// verdicts (issue 317 Unit A). Recording only; `apply-rehoming` executes
+/// the safe subset, dry-run first.
+async fn record_rehoming(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    body: Result<axum::Json<RehomingBody>, axum::extract::rejection::JsonRejection>,
+) -> Response {
+    if let Some(response) = deny(&headers) {
+        return response;
+    }
+    let req = match body {
+        Ok(axum::Json(b)) => b,
+        Err(e) => return error(StatusCode::BAD_REQUEST, &e.to_string()),
+    };
+    if req.cohort.is_empty() || req.verdicts.is_empty() {
+        return error(StatusCode::BAD_REQUEST, "cohort and verdicts are required");
+    }
+    for v in &req.verdicts {
+        if !matches!(v.confidence.as_str(), "high" | "medium" | "low") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("{}/{}: confidence must be high|medium|low", v.notice_id, v.section_id),
+            );
+        }
+        if !matches!(v.action.as_str(), "rehome" | "keep") {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!("{}/{}: action must be rehome|keep", v.notice_id, v.section_id),
+            );
+        }
+        // A `rehome` with nowhere to go is a recording error, not a verdict
+        // the apply job should have to reason about later.
+        if v.action == "rehome" && v.target_org_id.is_none() && v.target_name.is_none() {
+            return error(
+                StatusCode::BAD_REQUEST,
+                &format!(
+                    "{}/{}: a rehome needs target_org_id (appliable) or at least \
+                     target_name (recorded, counted as missing_target)",
+                    v.notice_id, v.section_id
+                ),
+            );
+        }
+    }
+    let verdicts: Vec<store::RehomingVerdict> = req
+        .verdicts
+        .into_iter()
+        .map(|v| store::RehomingVerdict {
+            case_org_id: v.org_id,
+            notice_id: v.notice_id,
+            section_id: v.section_id,
+            action: v.action,
+            target_org_id: v.target_org_id,
+            target_name: v.target_name,
+            rationale: v.rationale,
+            confidence: v.confidence,
+        })
+        .collect();
+    match sup.db().record_rehoming(&req.cohort, &verdicts, store::now_unix()).await {
+        Ok(n) => (StatusCode::OK, axum::Json(json!({ "recorded": n, "cohort": req.cohort })))
+            .into_response(),
+        Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
+    }
 }
 
 /// `POST /admin/case-reviews` — record one cohort's per-case AI review

@@ -346,6 +346,8 @@ enum Spec {
     /// Issue 317 Unit A: which reviewed vehicle rows hold mentions naming
     /// somebody else. Read-only.
     FusionCensus,
+    /// Issue 317 Unit A: move reviewed mentions to the row they describe.
+    ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
     /// E3 name-equality edges into `org_candidate_edges`, advisory only
@@ -939,6 +941,20 @@ impl Supervisor {
                         "unapply-case-reviews",
                         params,
                         Spec::UnapplyCaseReviews { dry_run },
+                    )
+                    .await,
+                ])
+            }
+            // Issue 317 Unit A: the re-homing apply. Moves entity
+            // references, so dry_run defaults TRUE.
+            "apply-rehoming" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "apply-rehoming",
+                        if dry_run { "apply-rehoming dry-run" } else { "apply-rehoming" }
+                            .to_owned(),
+                        Spec::ApplyRehoming { dry_run },
                     )
                     .await,
                 ])
@@ -3534,6 +3550,59 @@ impl Supervisor {
                         None => String::new(),
                     },
                     r.vat_scope_skipped.len()
+                ))
+            }
+            Spec::ApplyRehoming { dry_run } => {
+                let dry_run = *dry_run;
+                self.set_phase(
+                    if dry_run { "planning" } else { "rehoming" },
+                    None,
+                    None,
+                    "walking unapplied re-homing verdicts".to_owned(),
+                );
+                let r = self
+                    .db
+                    .apply_rehoming(dry_run, Some(job.id as i64), store::now_unix())
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if dry_run {
+                    // The CONCRETE move list, not counts: a destination org id
+                    // is exactly the thing a counts-only preview cannot show
+                    // to be wrong (the issue-311 panel's lesson).
+                    let now = store::now_unix();
+                    let body = serde_json::json!({
+                        "pending": r.pending, "eligible": r.eligible, "moves": r.moved,
+                        "noop": r.noop, "missing_target": r.missing_target,
+                        "plan": r.plan.iter().map(|(n, s, from, to, name)| {
+                            serde_json::json!({
+                                "notice": n, "section": s, "from": from, "to": to,
+                                "target_name": name,
+                            })
+                        }).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("rehoming-plan", &body, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(format!(
+                    "apply-rehoming (issue 317 Unit A){}: {} pending verdicts, {} eligible; \
+                     {} mentions {} ({} parties, {} bid-parties, {} winners repointed, \
+                     {} winner dups, {} tenders touched); {} no-ops, {} name a target org \
+                     that does not exist (v1 never mints one)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.pending,
+                    r.eligible,
+                    r.moved,
+                    if dry_run { "would move" } else { "moved" },
+                    r.parties,
+                    r.bid_parties,
+                    r.winners,
+                    r.winner_dups,
+                    r.tenders,
+                    r.noop,
+                    r.missing_target
                 ))
             }
             Spec::FusionCensus => {
