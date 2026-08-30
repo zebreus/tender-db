@@ -26,7 +26,7 @@
 //! separate series), LT — `canonical_key` returns `None`; E0 exact-key
 //! equality remains their only merge path.
 
-use crate::idgate::{fr_vat_key, Checksum};
+use crate::idgate::{fr_vat_key, uuid_v4, Checksum};
 
 /// How much the key's derivation is allowed to prove (design §3.1 amendment).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -71,6 +71,21 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
     // an E1 key (verifier catch: a 13-digit GLN under BG would have keyed as
     // an EIK, which denial rule 2 forbids).
     if kind != "vat" && kind != "national" {
+        return None;
+    }
+    // A submission platform's own v4-UUID record key is never a register
+    // identity, whatever kind the row happens to carry (issue 312). It stays
+    // a perfectly good LINK — the resolver binds mentions on the raw
+    // (country, kind, value) triple, which this does not touch — but it must
+    // never become a MERGE key.
+    //
+    // Measured before adding this, because the class had already fooled one
+    // design pass: 75,555 corpus rows carry a v4 GUID, and 1 FR specimen in
+    // 400 happens to hold exactly 14 digit characters, so roughly 8 rows
+    // corpus-wide were riding the FR:siret arm into an E1 key. Nothing has
+    // collided (the values are 75,548-distinct), so this closes a
+    // conceptual hole, not an incident.
+    if uuid_v4(value) {
         return None;
     }
     // Normalise: uppercase, strip every separator (spaces, dots, hyphens,
@@ -316,6 +331,44 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
 
 #[cfg(test)]
 mod tests {
+    /// Issue 312: a platform's v4-UUID record key never becomes a merge
+    /// key, in any country, under either kind — while remaining untouched
+    /// as a LINK (the resolver binds on the raw triple, not on this).
+    ///
+    /// The FR specimen is the shape the measurement found: exactly 14 digit
+    /// characters, which is what the SIRET arm keys on, so before this
+    /// guard it produced an E1 key.
+    #[test]
+    fn platform_guids_are_never_a_merge_key() {
+        // A REAL specimen from the corpus (an FR row, measured 2026-08-30):
+        // exactly 14 digit characters, which is what the SIRET arm keys on,
+        // so before this guard it produced an E1 key.
+        let siret_shaped = "0EC1CA3FA1F94A4FAF1F8EB4DC20CC01";
+        assert_eq!(
+            siret_shaped.chars().filter(char::is_ascii_digit).count(),
+            14,
+            "the specimen is the siret-shaped case this guard exists for"
+        );
+        assert_eq!(canonical_key(Some("FR"), "national", siret_shaped), None);
+        for (country, kind) in
+            [(Some("FR"), "national"), (Some("DE"), "vat"), (Some("BE"), "national"), (None, "national")]
+        {
+            assert_eq!(
+                canonical_key(country, kind, "DA23095600854B59BC39FE71D8AF0A7C"),
+                None,
+                "{country:?}/{kind} must not key a platform GUID"
+            );
+        }
+        // The dashed form too, and a non-v4 32-hex value is NOT swept in.
+        assert_eq!(canonical_key(Some("FR"), "national", "da230956-0085-4b59-bc39-fe71d8af0a7c"), None);
+        // Real identifiers are untouched — the guard is narrow.
+        assert!(canonical_key(Some("FR"), "national", "180014045").is_some(), "a real SIREN still keys");
+        assert!(
+            canonical_key(Some("FI"), "national", "01003158").is_some(),
+            "a real FI Y-tunnus still keys"
+        );
+    }
+
     use super::*;
 
     fn key(country: Option<&str>, kind: &str, value: &str) -> Option<(String, String, Tier)> {
