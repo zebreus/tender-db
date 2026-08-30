@@ -3560,9 +3560,44 @@ impl Supervisor {
                     None,
                     "walking unapplied re-homing verdicts".to_owned(),
                 );
+                // The T4 ladder: a wet run executes the move list a person
+                // read, compared tuple-wise — the destination org is exactly
+                // what a reviewer of this plan is checking, and a count
+                // cannot show that it changed.
+                let expect: Option<Vec<(i64, String, i64, i64)>> = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("rehoming-plan")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| "no stored rehoming-plan — run the dry pass first")?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    let moves = v["plan"].as_array().ok_or_else(|| "plan lacks moves")?;
+                    Some(
+                        moves
+                            .iter()
+                            .map(|m| {
+                                (
+                                    m["notice"].as_i64().unwrap_or(-1),
+                                    m["section"].as_str().unwrap_or_default().to_owned(),
+                                    m["from"].as_i64().unwrap_or(-1),
+                                    m["to"].as_i64().unwrap_or(-1),
+                                )
+                            })
+                            .collect(),
+                    )
+                };
                 let r = self
                     .db
-                    .apply_rehoming(dry_run, Some(job.id as i64), store::now_unix())
+                    .apply_rehoming(
+                        dry_run,
+                        expect.as_deref(),
+                        Some(job.id as i64),
+                        store::now_unix(),
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 if dry_run {
@@ -3588,9 +3623,10 @@ impl Supervisor {
                 }
                 Ok(format!(
                     "apply-rehoming (issue 317 Unit A){}: {} pending verdicts, {} eligible; \
-                     {} mentions {} ({} parties, {} bid-parties, {} winners repointed, \
-                     {} winner dups, {} tenders touched); {} no-ops, {} name a target org \
-                     that does not exist (v1 never mints one)",
+                     {} mentions {} ({} party and {} bid-party rows follow them across \
+                     {} tenders, whose {} notices are re-queued so the fold re-derives \
+                     the winners); {} no-ops, {} name a target org that does not exist \
+                     or no target at all (v1 never mints one)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.pending,
                     r.eligible,
@@ -3598,9 +3634,8 @@ impl Supervisor {
                     if dry_run { "would move" } else { "moved" },
                     r.parties,
                     r.bid_parties,
-                    r.winners,
-                    r.winner_dups,
                     r.tenders,
+                    r.refold_notices,
                     r.noop,
                     r.missing_target
                 ))

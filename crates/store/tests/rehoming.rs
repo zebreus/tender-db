@@ -71,8 +71,8 @@ async fn a_reviewed_mention_moves_with_its_derived_rows_and_nothing_else_does() 
     .unwrap();
     for notice in [900i64, 901, 902, 903] {
         conn.execute(
-            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at)
-             VALUES (?, 'ted', 'pub-' || ?, 'h', 'eforms', 1, 'm', 0)",
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at, parse_state, projected)
+             VALUES (?, 'ted', 'pub-' || ?, 'h', 'eforms', 1, 'm', 0, 'parsed', 1)",
             (Value::Integer(notice), Value::Integer(notice)),
         )
         .await
@@ -139,7 +139,7 @@ async fn a_reviewed_mention_moves_with_its_derived_rows_and_nothing_else_does() 
     .unwrap();
 
     // DRY: the concrete move list, nothing written.
-    let dry = db.apply_rehoming(true, Some(1), 20).await.unwrap();
+    let dry = db.apply_rehoming(true, None, Some(1), 20).await.unwrap();
     assert_eq!(
         (dry.pending, dry.eligible),
         (4, 2),
@@ -158,21 +158,37 @@ async fn a_reviewed_mention_moves_with_its_derived_rows_and_nothing_else_does() 
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0, "a dry run is silent");
 
     // WET.
-    let wet = db.apply_rehoming(false, Some(2), 30).await.unwrap();
-    assert_eq!((wet.moved, wet.parties, wet.bid_parties, wet.winners), (1, 1, 1, 1));
+    let wet = db.apply_rehoming(false, None, Some(2), 30).await.unwrap();
+    assert_eq!((wet.moved, wet.parties, wet.bid_parties), (1, 1, 1));
     assert_eq!(wet.tenders, 1);
+    assert!(wet.refold_notices >= 1, "the tender's notices are re-queued for the fold");
     assert_eq!(
         count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await,
         2,
         "the mention moved to the member"
     );
+    // NOTHING derived is hand-moved — party, bid-party and winner rows all
+    // still point at the origin org, and the fold rebuilds them from the
+    // corrected mention. Hand-rolling those rules is what the panel found
+    // wrong twice (winners collected across other mentions of the same org;
+    // party rows on nested inner sections left behind).
     for (table, sql) in [
         ("party", "SELECT organization_id FROM tender_version_parties WHERE tender_id = 7"),
         ("bid party", "SELECT organization_id FROM tender_version_bid_parties WHERE tender_id = 7"),
         ("winner", "SELECT organization_id FROM tender_version_result_winners WHERE tender_id = 7"),
     ] {
-        assert_eq!(count(&conn, sql).await, 2, "the {table} row followed the mention");
+        assert_eq!(count(&conn, sql).await, 1, "the {table} row is re-derived, not moved");
     }
+    assert_eq!(
+        count(&conn, "SELECT projection_epoch FROM tenders WHERE id = 7").await,
+        0,
+        "…and the tender is stamped stale so the next fold does that"
+    );
+    assert_eq!(
+        count(&conn, "SELECT projected FROM notices WHERE id = 900").await,
+        0,
+        "…with its notice re-queued"
+    );
     // The other three mentions stand exactly where they were.
     for notice in [901i64, 902, 903] {
         assert_eq!(
@@ -208,7 +224,7 @@ async fn a_reviewed_mention_moves_with_its_derived_rows_and_nothing_else_does() 
     }
 
     // Idempotent: the applied verdict has left the pending set.
-    let again = db.apply_rehoming(false, Some(3), 40).await.unwrap();
+    let again = db.apply_rehoming(false, None, Some(3), 40).await.unwrap();
     assert_eq!((again.pending, again.moved), (3, 0));
     assert_eq!(again.missing_target, 1, "the missing-target verdict stays pending — it is fixable");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 3, "no second wave");
@@ -247,7 +263,7 @@ async fn a_mention_that_moved_since_the_review_is_a_stamped_noop() {
     .unwrap();
     db.record_rehoming("fusion", &[verdict(1, 900, Some(2), "high")], 10).await.unwrap();
 
-    let r = db.apply_rehoming(false, Some(1), 20).await.unwrap();
+    let r = db.apply_rehoming(false, None, Some(1), 20).await.unwrap();
     assert_eq!((r.eligible, r.moved, r.noop), (1, 0, 1));
     assert_eq!(
         count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await,
@@ -255,7 +271,7 @@ async fn a_mention_that_moved_since_the_review_is_a_stamped_noop() {
         "the mention stays where it actually is — the verdict's premise is stale"
     );
     // Stamped, so it does not come back forever.
-    let again = db.apply_rehoming(false, Some(2), 30).await.unwrap();
+    let again = db.apply_rehoming(false, None, Some(2), 30).await.unwrap();
     assert_eq!((again.pending, again.noop), (0, 0));
     let mut rows = conn
         .query("SELECT applied_action FROM org_mention_rehoming WHERE notice_id = 900", ())
@@ -295,7 +311,7 @@ async fn re_recording_never_erases_an_applied_stamp() {
     .await
     .unwrap();
     db.record_rehoming("fusion", &[verdict(1, 900, Some(2), "high")], 10).await.unwrap();
-    db.apply_rehoming(false, Some(1), 20).await.unwrap();
+    db.apply_rehoming(false, None, Some(1), 20).await.unwrap();
 
     // A second review of the same mention, with a different rationale.
     db.record_rehoming(
@@ -327,6 +343,185 @@ async fn re_recording_never_erases_an_applied_stamp() {
     );
     drop(rows);
     // And the re-record did not put it back in the pending set.
-    let r = db.apply_rehoming(true, None, 60).await.unwrap();
+    let r = db.apply_rehoming(true, None, None, 60).await.unwrap();
     assert_eq!(r.pending, 0);
+}
+
+/// The panel's data-loss catch: a verdict pointing a mention at the org it is
+/// ALREADY on. Before the guard, the move degenerated to from == to and the
+/// winner dance — insert-or-ignore, then delete the origin's row — deleted
+/// the award outright.
+#[tokio::test]
+async fn a_self_targeted_verdict_is_a_noop_and_never_touches_the_award() {
+    let path = "test-rehoming-self.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (1, 'DE', NULL, NULL, 'n', 'n', 0, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+         VALUES (900, 'ORG-1', 1, 'x', NULL, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id)
+         VALUES (7, 1, 11, 1)",
+        (),
+    )
+    .await
+    .unwrap();
+    // target == case org.
+    db.record_rehoming("fusion", &[verdict(1, 900, Some(1), "high")], 10).await.unwrap();
+
+    let r = db.apply_rehoming(false, None, Some(1), 20).await.unwrap();
+    assert_eq!((r.eligible, r.moved, r.noop), (1, 0, 1), "eligible by shape, refused by identity");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM tender_version_result_winners WHERE tender_id = 7").await,
+        1,
+        "THE AWARD SURVIVES — this assertion is the whole point of the test"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0, "nothing moved, nothing published");
+}
+
+/// Moving ONE mention must move exactly that mention. An implementation that
+/// re-points the whole org — which is what a merge does, and what this must
+/// not do — passes every single-mention fixture.
+#[tokio::test]
+async fn only_the_reviewed_mention_moves_not_the_org() {
+    let path = "test-rehoming-per-mention.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    for id in [1i64, 2] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', NULL, NULL, 'n', 'n', 0, 0)",
+            (Value::Integer(id),),
+        )
+        .await
+        .unwrap();
+    }
+    // THREE sections of the SAME notice on org 1, with different section ids
+    // — the other half of the mention key, which a fixture using only 'ORG-1'
+    // everywhere never exercises (panel catch).
+    for section in ["ORG-1", "ORG-2", "ORG-3"] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+             VALUES (900, ?, 1, 'x', NULL, NULL)",
+            (Value::Text(section.into()),),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+             VALUES (7, 1, 'winner', 1, 900, ?)",
+            (Value::Text(section.into()),),
+        )
+        .await
+        .unwrap();
+    }
+    db.record_rehoming(
+        "fusion",
+        &[RehomingVerdict { section_id: "ORG-2".into(), ..verdict(1, 900, Some(2), "high") }],
+        10,
+    )
+    .await
+    .unwrap();
+
+    let r = db.apply_rehoming(false, None, Some(1), 20).await.unwrap();
+    assert_eq!(
+        (r.moved, r.parties),
+        (1, 3),
+        "one mention moves; the blast radius is all THREE party rows of that notice on \
+         the origin org, because a nested section's party row is anchored to an inner \
+         section id the mention's own key never names"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 1").await,
+        2,
+        "the two unreviewed mentions stay on the vehicle"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 2").await,
+        1,
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM tender_version_parties WHERE organization_id = 1").await,
+        3,
+        "no party row is hand-moved at all — the refold rebuilds them from the mentions"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_mentions \
+                      WHERE organization_id = 2 AND section_id = 'ORG-2'").await,
+        1,
+        "and it is the section the verdict named — not just SOME section of that notice"
+    );
+}
+
+/// A NO-OP stamp is a report that the verdict's premise was stale, not a
+/// decision — so a corrected verdict must be appliable. A real move's stamp
+/// still never clears.
+#[tokio::test]
+async fn a_corrected_verdict_clears_a_noop_stamp_but_not_a_real_move() {
+    let path = "test-rehoming-correct.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    for id in [1i64, 2, 3] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'DE', NULL, NULL, 'n', 'n', 0, 0)",
+            (Value::Integer(id),),
+        )
+        .await
+        .unwrap();
+    }
+    // The mention is on org 3; the verdict wrongly says org 1.
+    conn.execute(
+        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+         VALUES (900, 'ORG-1', 3, 'x', NULL, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+    db.record_rehoming("round-1", &[verdict(1, 900, Some(2), "high")], 10).await.unwrap();
+    let first = db.apply_rehoming(false, None, Some(1), 20).await.unwrap();
+    assert_eq!(first.noop, 1);
+
+    // The reviewer corrects the premise: the mention is on org 3.
+    db.record_rehoming("round-2", &[verdict(3, 900, Some(2), "high")], 30).await.unwrap();
+    let second = db.apply_rehoming(false, None, Some(2), 40).await.unwrap();
+    assert_eq!(
+        (second.pending, second.moved),
+        (1, 1),
+        "the corrected verdict is pending again and applies — a no-op stamp is not a tombstone"
+    );
+    assert_eq!(
+        count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await,
+        2,
+    );
+    // And the REAL move's stamp survives a later re-record, as before.
+    db.record_rehoming("round-3", &[verdict(3, 900, Some(2), "medium")], 50).await.unwrap();
+    let third = db.apply_rehoming(true, None, None, 60).await.unwrap();
+    assert_eq!(third.pending, 0, "an applied move stays applied");
 }
