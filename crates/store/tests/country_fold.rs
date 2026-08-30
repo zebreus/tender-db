@@ -9,15 +9,23 @@ use store::turso::Value;
 /// the corpus — an alpha-3, a country NAME, the two non-ISO specials — plus
 /// junk that must survive untouched.
 fn fold(raw: &str) -> String {
-    let up = raw.trim().to_ascii_uppercase();
+    let up = raw.trim().to_uppercase();
     match up.as_str() {
         "GRL" => "GL".into(),
+        "GRD" => "GD".into(),
         "SEN" => "SN".into(),
         "DEU" => "DE".into(),
         "LUXEMBOURG" => "LU".into(),
+        "LËTZEBUERG" => "LU".into(),
+        "EL" => "GR".into(),
         "UK" => "GB".into(),
         _ => up,
     }
+}
+
+/// `countries::is_alpha2`'s shape: the real codes this fixture uses.
+fn known(code: &str) -> bool {
+    matches!(code.trim(), "GL" | "SN" | "LU" | "DE" | "GB" | "GR" | "GD" | "XI")
 }
 
 async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
@@ -57,21 +65,42 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
     // 5: junk that nothing maps ('1A0' is real, 3 rows on prod).
     // 6: already canonical — must not be touched, and must not be counted.
     // 7: NULL country — the R3 pool's shape, invisible to this job.
-    for (id, country, ident, name) in [
-        (1i64, Some("GL"), Some("18440202"), "Nukissiorfiit"),
-        (2, Some("GRL"), Some("18440202"), "Nukissiorfiit"),
-        (3, Some("SEN"), Some("SN12345"), "Dakar Port Authority"),
-        (4, Some("LUXEMBOURG"), Some("LU9999"), "Ville de Luxembourg"),
-        (5, Some("1A0"), Some("X1"), "Mystery Ltd"),
-        (6, Some("DE"), Some("DE811111111"), "Berlin GmbH"),
-        (7, None, Some("999"), "Country-less"),
+    for (id, country, kind, ident, name) in [
+        (1i64, Some("GL"), "national", Some("18440202"), "Nukissiorfiit"),
+        (2, Some("GRL"), "national", Some("18440202"), "Nukissiorfiit"),
+        (3, Some("SEN"), "national", Some("SN12345"), "Dakar Port Authority"),
+        (4, Some("LUXEMBOURG"), "national", Some("LU9999"), "Ville de Luxembourg"),
+        (5, Some("1A0"), "national", Some("X1"), "Mystery Ltd"),
+        (6, Some("DE"), "national", Some("DE811111111"), "Berlin GmbH"),
+        (7, None, "national", Some("999"), "Country-less"),
+        // SEN carries THREE rows, so `rows` and `plan.len()` cannot be
+        // confused (panel catch: every value had exactly one row, which made
+        // both numbers 3 for different reasons).
+        (8, Some("SEN"), "national", Some("SN22222"), "Dakar Water"),
+        (9, Some("SEN"), "national", Some("SN33333"), "Dakar Rail"),
+        // A SECOND spelling of Luxembourg, colliding with row 4's identity
+        // only AFTER both fold onto LU — a collision between two rows this
+        // run moves, which a per-source probe against the target cannot see.
+        (10, Some("LËTZEBUERG"), "national", Some("LU9999"), "Ville de Luxembourg"),
+        // The VAT scope labels: folding these would fragment the resolver's
+        // binding key, so the job must SKIP them and say so.
+        (11, Some("EL"), "vat", Some("EL094019245"), "Hellenic Post"),
+        (12, Some("UK"), "vat", Some("GB123456789"), "Royal Mail"),
+        // Two characters and no country at all: the residue test is "is this
+        // a real code", not "is it two characters", so this must be LISTED.
+        (13, Some("ZZ"), "national", Some("Z9"), "Nowhere Ltd"),
+        // A NATIONAL-kind row spelled 'EL': not a VAT scope prefix, so this
+        // one DOES fold to GR. Excluding by kind rather than by value is
+        // exactly what buys this.
+        (14, Some("EL"), "national", Some("123456"), "Greek Municipality"),
     ] {
         conn.execute(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
-             VALUES (?, ?, 'national', ?, ?, ?, 0, 0)",
+             VALUES (?, ?, ?, ?, ?, ?, 0, 0)",
             (
                 Value::Integer(id),
                 match country { Some(c) => Value::Text(c.into()), None => Value::Null },
+                Value::Text(kind.into()),
                 match ident { Some(v) => Value::Text(v.into()), None => Value::Null },
                 Value::Text(name.into()),
                 Value::Text(name.to_lowercase()),
@@ -83,63 +112,103 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
 
     let never = || false;
     // DRY: the whole plan, nothing written.
-    let dry = db.fold_org_countries(fold, true, 100, &never).await.unwrap();
-    assert_eq!(dry.values, 6, "six distinct non-NULL values; the NULL row is not one");
+    let dry = db.fold_org_countries(fold, known, true, None, 100, &never).await.unwrap();
+    assert_eq!(
+        dry.values, 10,
+        "ten DISTINCT non-NULL values — 'EL' appears under two kinds and is still one value"
+    );
     assert_eq!(
         dry.plan,
         vec![
-            ("1A0".to_owned(), "1A0".to_owned(), 1),
+            ("SEN".to_owned(), "SN".to_owned(), 3),
+            ("EL".to_owned(), "GR".to_owned(), 1),
             ("GRL".to_owned(), "GL".to_owned(), 1),
             ("LUXEMBOURG".to_owned(), "LU".to_owned(), 1),
-            ("SEN".to_owned(), "SN".to_owned(), 1),
-        ]
-        .into_iter()
-        .filter(|(f, t, _)| f != t)
-        .collect::<Vec<_>>(),
-        "only values the fold actually changes are planned"
+            ("LËTZEBUERG".to_owned(), "LU".to_owned(), 1),
+        ],
+        "planned values only, biggest first — and 1A0 is absent because it folds to itself"
     );
-    assert_eq!(dry.rows, 3);
+    assert_eq!(dry.rows, 7, "SEVEN rows over FIVE values — the two numbers are not the same");
+    assert_ne!(dry.rows as usize, dry.plan.len());
     assert_eq!(
-        dry.collisions, 1,
-        "org 2 folds onto org 1's identity — one pair, handed to R2, not merged here"
+        dry.collisions, 2,
+        "org 2 lands on org 1's standing identity, AND rows 4 and 10 collide with each \
+         other only because this same run moves both onto LU — the case a per-source \
+         probe against the target cannot see"
     );
-    assert_eq!(dry.unmapped, vec![("1A0".to_owned(), 1)], "the residue is NAMED, not just counted");
+    assert_eq!(
+        dry.unmapped,
+        vec![("1A0".to_owned(), 1), ("ZZ".to_owned(), 1)],
+        "the residue is NAMED, not just counted — and 'ZZ' proves the test is code \
+         validity, not string length"
+    );
+    assert_eq!(
+        dry.vat_scope_skipped,
+        vec![("EL".to_owned(), 1), ("UK".to_owned(), 1)],
+        "the VAT-kind rows are skipped ON PURPOSE and reported, not silently folded — \
+         while the NATIONAL-kind 'EL' row beside them is planned"
+    );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE country = 'GRL'").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0, "a dry run is silent");
 
-    // WET.
-    let wet = db.fold_org_countries(fold, false, 200, &never).await.unwrap();
-    assert_eq!((wet.rows, wet.collisions), (3, 1), "the wet run reports the same plan it ran");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 2").await, "GL");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 3").await, "SN");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 4").await, "LU");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 5").await, "1A0", "junk stands");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 6").await, "DE");
-    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 7").await, "NULL");
+    // WET. The parity gate: a run whose plan disagrees with the reviewed
+    // one aborts before touching a row.
+    let err = db.fold_org_countries(fold, known, false, Some(400), 200, &never).await;
+    assert!(err.is_err(), "plan divergence beyond tolerance must abort");
+    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 2").await, "GRL");
+
+    let wet = db.fold_org_countries(fold, known, false, Some(7), 200, &never).await.unwrap();
+    assert_eq!((wet.rows, wet.collisions), (7, 2), "the wet run reports the plan it ran");
+    for (id, want) in [
+        (2i64, "GL"),
+        (3, "SN"),
+        (4, "LU"),
+        (5, "1A0"),   // junk stands
+        (6, "DE"),    // already canonical
+        (7, "NULL"),  // country-less
+        (8, "SN"),
+        (9, "SN"),
+        (10, "LU"),
+        (11, "EL"),   // VAT scope label: NOT folded, or the resolver loses it
+        (12, "UK"),
+    ] {
+        assert_eq!(
+            one(&conn, &format!("SELECT country FROM organizations WHERE id = {id}")).await,
+            want,
+            "org {id}"
+        );
+    }
 
     // Identity is untouched: same rows, same identifiers, nothing merged or
-    // deleted — including the colliding pair, which is R2's to decide.
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 7);
+    // deleted — including the colliding pairs, which are R2's to decide.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 14);
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = '18440202'").await,
         2,
-        "the collision is left standing for the merge arm"
+        "the pre-existing collision is left standing for the merge arm"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = 'LU9999'").await,
+        2,
+        "and so is the one this run created by folding two spellings onto LU"
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
 
-    // The change feed carries one 'changed' per moved row — country is a
+    // The change feed carries one 'changed' per MOVED row — country is a
     // published field, so a consumer filtering on it must see the correction.
+    // SEN alone moves three rows, so this cannot be read as one per VALUE.
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'changed'").await,
-        3
+        7
     );
-    for id in [2i64, 3, 4] {
+    for id in [2i64, 3, 4, 8, 9, 10, 14] {
         assert_eq!(
             count(&conn, &format!("SELECT COUNT(*) FROM changes WHERE entity_id = {id}")).await,
-            1
+            1,
+            "org {id} moved, exactly once"
         );
     }
-    for id in [1i64, 5, 6, 7] {
+    for id in [1i64, 5, 6, 7, 11, 12, 13] {
         assert_eq!(
             count(&conn, &format!("SELECT COUNT(*) FROM changes WHERE entity_id = {id}")).await,
             0,
@@ -148,13 +217,45 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
     }
 
     // Idempotent: a second run finds nothing to do and publishes nothing.
-    let again = db.fold_org_countries(fold, false, 300, &never).await.unwrap();
+    let again = db.fold_org_countries(fold, known, false, Some(0), 300, &never).await.unwrap();
     assert_eq!((again.rows, again.plan.len()), (0, 0));
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 3, "no second wave of events");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 7, "no second wave of events");
 
     // Cancel is honest: no partial plan.
     let always = || true;
-    let stopped = db.fold_org_countries(fold, true, 400, &always).await.unwrap();
+    let stopped = db.fold_org_countries(fold, known, true, None, 400, &always).await.unwrap();
     assert!(stopped.stopped);
     assert_eq!((stopped.values, stopped.rows), (0, 0));
+}
+
+/// The WET path honours cancellation too (panel catch: the kind is in
+/// STOPPABLE_KINDS, and the first version checked the flag only while
+/// planning — a stoppable kind that ignores the flag is issue 252's
+/// dishonest-cancel bug).
+#[tokio::test]
+async fn a_cancelled_wet_fold_stops_and_says_so() {
+    let path = "test-country-fold-cancel.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    for (id, country) in [(1i64, "GRL"), (2, "SEN"), (3, "DEU")] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, ?, 'national', 'X', 'n', 'n', 0, 0)",
+            (Value::Integer(id), Value::Text(country.into())),
+        )
+        .await
+        .unwrap();
+    }
+    // Stops on the FIRST wet value, before any update: the flag is read at
+    // the top of the loop, so nothing is written and the report says stopped.
+    let always = || true;
+    let r = db.fold_org_countries(fold, known, false, Some(3), 100, &always).await.unwrap();
+    assert!(r.stopped, "a cancelled wet run must report it");
+    assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 1").await, "GRL");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0);
 }

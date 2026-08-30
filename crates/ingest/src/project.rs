@@ -4505,7 +4505,12 @@ const VAT_COUNTRIES: &[&str] = &[
 /// (1,344 org rows) to pass through, so `GRL` sat beside `GL` and the merge
 /// arm — which keys on country — could never close the pair.
 pub fn canonical_country(raw: &str) -> String {
-    let up = raw.trim().to_ascii_uppercase();
+    // UNICODE uppercase, not ASCII (panel catch): eight ISO names carry
+    // accents — CURAÇAO, CÔTE D'IVOIRE, TÜRKIYE, RÉUNION, ÅLAND ISLANDS —
+    // and `to_ascii_uppercase` leaves their lowercase forms half-cased, so
+    // they would miss the table AND be written back mangled, since this
+    // function returns the cased value when nothing matches.
+    let up = raw.trim().to_uppercase();
     match up.as_str() {
         "UK" => return "GB".into(),   // TED writes UK, ISO is GB
         "EL" => return "GR".into(),   // eurostat/NUTS Greece is EL, ISO is GR
@@ -5452,6 +5457,13 @@ mod tests {
         assert_eq!(canonical_country("LUXEMBOURG"), "LU");
         assert_eq!(canonical_country("luxembourg"), "LU");
         assert_eq!(canonical_country("Netherlands"), "NL");
+        // Accented names fold, and — the part that matters for the backfill —
+        // do not come back half-uppercased.
+        assert_eq!(canonical_country("Curaçao"), "CW");
+        assert_eq!(canonical_country("Côte d'Ivoire"), "CI");
+        assert_eq!(canonical_country("Réunion"), "RE");
+        assert_eq!(canonical_country("Åland Islands"), "AX");
+        assert_eq!(canonical_country("Türkiye"), "TR");
         // Junk that is neither: preserved, so it stays visible to the census
         // rather than being laundered into a plausible-looking code. '1A0'
         // is a real value on 3 prod rows.
@@ -5480,7 +5492,17 @@ mod tests {
         for (name, a2) in NAME_TO_ALPHA2 {
             assert!(name.len() > 3, "a name shorter than 4 would shadow a code: {name}");
             assert_eq!(a2.len(), 2, "{name} → {a2}");
+            // UNICODE uppercase, because eight entries are accented and the
+            // lookup upper-cases its input the same way. An ASCII-only
+            // assertion here would have passed while CURAÇAO stayed
+            // unreachable — which is exactly what happened (panel catch).
+            assert_eq!(*name, name.to_uppercase(), "the table must be pre-uppercased: {name}");
         }
+        assert!(
+            NAME_TO_ALPHA2.iter().any(|(n, _)| !n.is_ascii()),
+            "the accented entries are the ones that regress silently; if this ever \
+             becomes false the casing assertion above has stopped testing anything"
+        );
     }
 
     #[test]

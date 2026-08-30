@@ -1630,6 +1630,10 @@ pub struct CountryFoldReport {
     /// are the honest residue — '1A0' and friends — and they are LISTED, not
     /// just counted, because an unmappable country code is a finding.
     pub unmapped: Vec<(String, u64)>,
+    /// Values the fold COULD rewrite but deliberately does not, because they
+    /// are VAT scope labels the resolver binds on (EL/UK/XI). Listed with
+    /// their row counts so the skip is visible rather than silent.
+    pub vat_scope_skipped: Vec<(String, u64)>,
     /// Rows that, after folding, share `(country, identifier_kind,
     /// identifier)` with a row that already stood under the target code —
     /// the duplicate pairs this fix hands to R2. Not merged here: this job
@@ -7017,29 +7021,66 @@ impl Db {
     pub async fn fold_org_countries(
         &self,
         fold: fn(&str) -> String,
+        known_code: fn(&str) -> bool,
         dry_run: bool,
+        // Wet only: the row count the reviewed dry plan recorded. `None`
+        // skips the parity check, which is what a dry run passes.
+        expect_rows: Option<u64>,
         now: i64,
         stop: &(dyn Fn() -> bool + Sync),
     ) -> turso::Result<CountryFoldReport> {
+        // A VAT row's country is the identifier's own scheme prefix, not a
+        // country label, and the resolver keys on it. Every query below that
+        // counts or moves ROWS carries this predicate.
+        const NON_VAT: &str = "(identifier_kind IS NULL OR identifier_kind <> 'vat')";
         let mut report = CountryFoldReport::default();
         let mut plan: Vec<(String, String, u64)> = Vec::new();
+        // ONE index-served aggregate, kept, because everything below is a
+        // question about these same counts.
+        let mut counts: Vec<(String, u64)> = Vec::new();
         {
             let reader = self.reader().await?;
+            // Split by VAT-ness, because on a VAT row the country column is
+            // NOT a country label — see NON_VAT below.
             let mut rows = reader
                 .query(
-                    "SELECT country, COUNT(*) FROM organizations \
-                      WHERE country IS NOT NULL GROUP BY country",
+                    "SELECT country, identifier_kind = 'vat', COUNT(*) FROM organizations \
+                      WHERE country IS NOT NULL GROUP BY country, identifier_kind = 'vat'",
                     (),
                 )
                 .await?;
+            let mut seen: std::collections::BTreeSet<String> = Default::default();
             while let Some(row) = rows.next().await? {
                 if stop() {
                     return Ok(CountryFoldReport { stopped: true, ..Default::default() });
                 }
-                let (from, n) = (text(&row, 0), int(&row, 1) as u64);
-                report.values += 1;
+                let (from, is_vat, n) = (text(&row, 0), int(&row, 1) == 1, int(&row, 2) as u64);
+                if seen.insert(from.clone()) {
+                    report.values += 1;
+                }
+                counts.push((from.clone(), n));
                 let to = fold(&from);
                 if to == from {
+                    continue;
+                }
+                // THE ONE ROW CLASS THIS JOB MUST NOT TOUCH (panel catch —
+                // the verifier reproduced it end to end against the real
+                // resolver). `normalise_identifier` scopes a VAT id by the
+                // value's OWN two-letter prefix, so an org minted from
+                // 'UK874457528' carries country 'UK', and the resolver binds
+                // later mentions on that exact (country, kind, value) triple.
+                // Fold it to 'GB' and the next notice carrying that VAT id
+                // finds nothing and MINTS A SECOND ROW — which R2 can never
+                // merge, because R2 keys on country too. That is the
+                // permanent-duplicate class this issue exists to close,
+                // recreated by its own fix. Measured on prod: 262 such rows
+                // (222 EL, 38 UK, 2 XI), every one identifier_kind='vat'.
+                //
+                // Excluding by KIND rather than by value is deliberate: a
+                // genuine national-kind row spelled 'EL' still folds to 'GR',
+                // which is correct, while no VAT row is ever touched.
+                if is_vat {
+                    report.vat_scope_skipped.push((from, n));
                     continue;
                 }
                 plan.push((from, to, n));
@@ -7047,49 +7088,82 @@ impl Db {
         }
         plan.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
         report.rows = plan.iter().map(|(_, _, n)| n).sum();
+        report.vat_scope_skipped.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
         // The residue, listed rather than counted: a value that survives the
-        // fold and is not a live alpha-2 is either junk or a code nothing
-        // models yet, and both are worth a name.
-        {
-            let reader = self.reader().await?;
-            let mut rows = reader
-                .query(
-                    "SELECT country, COUNT(*) FROM organizations \
-                      WHERE country IS NOT NULL AND LENGTH(country) <> 2 GROUP BY country",
-                    (),
-                )
-                .await?;
-            while let Some(row) = rows.next().await? {
-                let (v, n) = (text(&row, 0), int(&row, 1) as u64);
-                if fold(&v) == v {
-                    report.unmapped.push((v, n));
-                }
-            }
-            report.unmapped.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-        }
+        // fold and is NOT alpha-2-shaped is either junk or a code nothing
+        // models yet, and both are worth a name rather than a tally.
+        //
+        // Derived from the counts already read above — NOT from a second
+        // query. The obvious `WHERE LENGTH(country) <> 2` cannot use the
+        // country index (a function of the column), so it degrades to a scan
+        // of 12.6M rows; the same predicate against /v1/sql times out at 10 s
+        // while the plain GROUP BY returns, which is how that was measured.
+        //
+        // The test is "is this a real code", NOT "is it two characters"
+        // (panel catch: the length version and the fold have disjoint blind
+        // spots that meet exactly on two-character junk like 'ZZ', which
+        // neither folds nor gets listed). A well-formed but WRONG code —
+        // prod files Bulgarian bodies under 'VU' — is invisible to any shape
+        // test by construction; that class is issue 319's per-case half.
+        report.unmapped = counts
+            .iter()
+            .filter(|(v, _)| fold(v) == **v && !known_code(v))
+            .map(|(v, n)| ((*v).clone(), *n))
+            .collect();
+        report.unmapped.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
-        // Collisions: identifier-bearing rows whose folded identity already
-        // exists. Counted per plan entry with an indexed probe on each side.
+        // Collisions: identifier-bearing rows that, once folded, share
+        // `(country, identifier_kind, identifier)` with another row.
+        //
+        // TWO sources, and the second is the one a per-plan-entry probe
+        // misses (panel catch): a row can collide with a row that ALREADY
+        // stands under the target code, and it can collide with a row moved
+        // by THIS SAME RUN from a different source value — 'GRL' and 'GRD'
+        // both landing on 'GD', or two spellings of one country. So the probe
+        // asks about the whole folded population per target, not per source.
         {
             let reader = self.reader().await?;
+            let mut targets: std::collections::BTreeMap<&str, Vec<&str>> = Default::default();
             for (from, to, _) in &plan {
+                targets.entry(to.as_str()).or_default().push(from.as_str());
+            }
+            for (to, froms) in targets {
                 if stop() {
                     return Ok(CountryFoldReport { stopped: true, ..Default::default() });
                 }
-                let mut rows = reader
+                // Every row that will stand under `to` after the fold: the
+                // ones already there, plus every source folding onto it.
+                let mut codes: Vec<&str> = froms.clone();
+                codes.push(to);
+                let list = placeholders(codes.len());
+                let sql = format!(
+                    "SELECT COUNT(*) FROM (\
+                       SELECT identifier_kind, identifier FROM organizations \
+                        WHERE country IN ({list}) AND identifier IS NOT NULL AND {NON_VAT} \
+                        GROUP BY identifier_kind, identifier HAVING COUNT(*) > 1)"
+                );
+                let params: Vec<Value> = codes.iter().map(|c| t(*c)).collect();
+                let mut rows = reader.query(&sql, params).await?;
+                if let Some(row) = rows.next().await? {
+                    // Identities that end up held by more than one row. The
+                    // pre-existing duplicates under `to` are not this fold's
+                    // doing, so they are subtracted below.
+                    report.collisions += int(&row, 0) as u64;
+                }
+                let mut before = reader
                     .query(
-                        "SELECT COUNT(*) FROM organizations a \
-                          WHERE a.country = ? AND a.identifier IS NOT NULL \
-                            AND EXISTS (SELECT 1 FROM organizations b \
-                                         WHERE b.country = ? \
-                                           AND b.identifier_kind = a.identifier_kind \
-                                           AND b.identifier = a.identifier)",
-                        (t(from), t(to)),
+                        &format!(
+                            "SELECT COUNT(*) FROM (\
+                               SELECT identifier_kind, identifier FROM organizations \
+                                WHERE country = ? AND identifier IS NOT NULL AND {NON_VAT} \
+                                GROUP BY identifier_kind, identifier HAVING COUNT(*) > 1)"
+                        ),
+                        (t(to),),
                     )
                     .await?;
-                if let Some(row) = rows.next().await? {
-                    report.collisions += int(&row, 0) as u64;
+                if let Some(row) = before.next().await? {
+                    report.collisions = report.collisions.saturating_sub(int(&row, 0) as u64);
                 }
             }
         }
@@ -7097,25 +7171,67 @@ impl Db {
         if dry_run || report.rows == 0 {
             return Ok(report);
         }
+        // T4 parity, the ladder every other writer in this file runs: a wet
+        // run executes the plan a PERSON reviewed, or it aborts. `expect_rows`
+        // is the row count from the stored dry plan; drift beyond max(2%, 5)
+        // means the corpus moved under the review and the plan is no longer
+        // the thing that was cleared.
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "country fold ABORTED: the reviewed plan moved {expect} rows, this run \
+                     computes {} — beyond the max(2%, 5) tolerance. Re-run the dry pass and \
+                     review the new plan.",
+                    report.rows
+                )));
+            }
+        }
 
         // Wet: one indexed range update per value, plus a change event per
         // moved row — `country` is a published field, so a consumer that
         // filters on it has to be able to see the correction go by.
+        //
+        // ONE transaction for the whole plan, which is a deliberate choice
+        // and not an oversight: the plan is bounded by the parity gate above
+        // (a run that computes wildly more rows than the reviewed plan aborts
+        // before this point), and a half-applied country fold is worse than
+        // an aborted one — it would leave a country split across three
+        // spellings instead of two. Prod's plan is ~1,345 rows over 151
+        // values; if that ever grows by orders of magnitude, chunk per value
+        // and accept the partial-application semantics knowingly.
         let conn = self.conn().await;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let result: turso::Result<()> = async {
             for (from, to, _) in &report.plan {
+                // Cancel is honoured BETWEEN values, not inside one (a single
+                // indexed range update is atomic and short). The kind is in
+                // STOPPABLE_KINDS, and a stoppable kind that ignores the flag
+                // is the dishonest-cancel bug issue 252 exists for: the
+                // committed prefix stands, the rest is left, and the caller
+                // is told which by `stopped`.
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
                 let mut ids: Vec<i64> = Vec::new();
                 {
                     let mut rows = conn
-                        .query("SELECT id FROM organizations WHERE country = ?", (t(from),))
+                        .query(
+                            &format!(
+                                "SELECT id FROM organizations WHERE country = ? AND {NON_VAT}"
+                            ),
+                            (t(from),),
+                        )
                         .await?;
                     while let Some(row) = rows.next().await? {
                         ids.push(int(&row, 0));
                     }
                 }
                 conn.execute(
-                    "UPDATE organizations SET country = ? WHERE country = ?",
+                    &format!(
+                        "UPDATE organizations SET country = ? WHERE country = ? AND {NON_VAT}"
+                    ),
                     (t(to), t(from)),
                 )
                 .await?;

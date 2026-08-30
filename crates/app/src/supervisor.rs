@@ -3452,10 +3452,38 @@ impl Supervisor {
                     None,
                     "reading the distinct country values".to_owned(),
                 );
+                // The T4 ladder: a wet run executes the plan a person read.
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("country-fold")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| "no stored country-fold plan — run the dry pass first")?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored country-fold report is from a WET run, not a \
+                                    reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(
+                        v["rows"].as_u64().ok_or_else(|| "country-fold plan lacks rows")?,
+                    )
+                };
                 let now = store::now_unix();
                 let r = self
                     .db
-                    .fold_org_countries(ingest::project::canonical_country, dry_run, now, &stop)
+                    .fold_org_countries(
+                        ingest::project::canonical_country,
+                        ingest::countries::is_alpha2,
+                        dry_run,
+                        expect_rows,
+                        now,
+                        &stop,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 if r.stopped {
@@ -3466,6 +3494,9 @@ impl Supervisor {
                 let body = serde_json::json!({
                     "dry_run": dry_run,
                     "values": r.values, "rows": r.rows, "collisions": r.collisions,
+                    "vat_scope_skipped": r.vat_scope_skipped.iter().map(|(v, n)| {
+                        serde_json::json!({ "value": v, "rows": n })
+                    }).collect::<Vec<_>>(),
                     "plan": r.plan.iter().map(|(f, t, n)| {
                         serde_json::json!({ "from": f, "to": t, "rows": n })
                     }).collect::<Vec<_>>(),
@@ -3482,7 +3513,8 @@ impl Supervisor {
                     "fold-org-countries (issue 319){}: {} distinct country values, {} to \
                      fold over {} rows; {} identifier-bearing rows land on an identity that \
                      already stands (R2's to merge, not this job's); {} values stay \
-                     unmapped{}",
+                     unmapped{}; {} VAT-scope values SKIPPED on purpose (the resolver \
+                     binds on them)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.values,
                     r.plan.len(),
@@ -3492,7 +3524,8 @@ impl Supervisor {
                     match r.unmapped.first() {
                         Some((v, n)) => format!(" (largest: {v:?}, {n} rows)"),
                         None => String::new(),
-                    }
+                    },
+                    r.vat_scope_skipped.len()
                 ))
             }
             Spec::CaseReviewBacklog => {
@@ -6364,6 +6397,92 @@ mod tests {
         );
         let _ = std::fs::remove_file(&path);
         Arc::new(store::Db::open(&path).await.unwrap())
+    }
+
+    /// Issue 319: the fold job wired to the REAL `canonical_country`,
+    /// `is_vat_scope_label` and `is_alpha2` — the store test injects
+    /// miniatures, so without this nothing proves the production fns are
+    /// the ones the job runs with (panel catch).
+    #[tokio::test]
+    async fn the_country_fold_job_runs_with_the_real_tables() {
+        let path = format!(
+            "/tmp/tender-db-sup-fold-{}-{}.db",
+            std::process::id(),
+            store::now_unix()
+        );
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        for (id, country, kind, ident) in [
+            (1i64, "GRL", "national", "18440202"),   // folds to GL
+            (2, "MCO", "national", "MC1"),           // folds to MC
+            (3, "EL", "vat", "EL094019245"),         // VAT scope label: skipped
+            (4, "DE", "national", "DE811111111"),    // already canonical
+            (5, "1A0", "national", "X1"),            // residue
+        ] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, ?, ?, ?, 'n', 'n', 0, 0)",
+                (
+                    store::turso::Value::Integer(id),
+                    store::turso::Value::Text(country.into()),
+                    store::turso::Value::Text(kind.into()),
+                    store::turso::Value::Text(ident.into()),
+                ),
+            )
+            .await
+            .unwrap();
+        }
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "fold-org-countries".into(),
+            params: String::new(),
+            spec: Spec::FoldOrgCountries { dry_run: dry },
+            resume_after: None,
+        };
+        // A wet run with no reviewed plan refuses — the T4 ladder.
+        let err = sup.run_spec(&job(1, false)).await.expect_err("wet needs the plan");
+        assert!(err.contains("country-fold"), "{err}");
+        // Dry: the real ISO tables fold GRL and MCO, skip EL, and name '1A0'.
+        let msg = sup.run_spec(&job(2, true)).await.expect("dry plans");
+        assert!(msg.contains("DRY RUN"), "{msg}");
+        let (plan, _) = sup.db().latest_report("country-fold").await.unwrap().expect("plan");
+        assert!(plan.contains("\"rows\":2"), "{plan}");
+        // serde_json orders object keys alphabetically, so the pair reads
+        // from/rows/to — assert on that shape, not on the order I wrote.
+        assert!(plan.contains("{\"from\":\"GRL\",\"rows\":1,\"to\":\"GL\"}"), "{plan}");
+        assert!(plan.contains("{\"from\":\"MCO\",\"rows\":1,\"to\":\"MC\"}"), "{plan}");
+        assert!(plan.contains("\"value\":\"1A0\""), "the residue is named: {plan}");
+        assert!(plan.contains("\"value\":\"EL\""), "the VAT skip is reported: {plan}");
+        assert!(!plan.contains("\"to\":\"GR\""), "EL must NOT be planned: {plan}");
+        // Wet: runs under that plan.
+        let msg = sup.run_spec(&job(3, false)).await.expect("wet folds");
+        assert!(!msg.contains("DRY RUN"), "{msg}");
+        let mut rows = conn
+            .query("SELECT id, country FROM organizations ORDER BY id", ())
+            .await
+            .unwrap();
+        let mut got: Vec<(i64, String)> = Vec::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            let (store::turso::Value::Integer(id), store::turso::Value::Text(c)) =
+                (row.get_value(0).unwrap(), row.get_value(1).unwrap())
+            else {
+                panic!("shape")
+            };
+            got.push((id, c));
+        }
+        assert_eq!(
+            got,
+            vec![
+                (1, "GL".to_owned()),
+                (2, "MC".to_owned()),
+                (3, "EL".to_owned()),
+                (4, "DE".to_owned()),
+                (5, "1A0".to_owned()),
+            ]
+        );
     }
 
     /// Issue 316: r3's corroboration consults the generic-name wall, so the
