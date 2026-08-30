@@ -93,6 +93,12 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
         // one DOES fold to GR. Excluding by kind rather than by value is
         // exactly what buys this.
         (14, Some("EL"), "national", Some("123456"), "Greek Municipality"),
+        // A row with NO identifier_kind at all — a provisional minted from a
+        // name alone. In SQL `identifier_kind = 'vat'` is NULL here, not
+        // false, so a bare comparison puts this row in a THIRD group and
+        // plans 'GRL' twice. Prod's dry run showed 253 plan entries for 152
+        // values before this was pinned.
+        (15, Some("GRL"), "", None, "Nameless Greenland Body"),
     ] {
         conn.execute(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
@@ -100,7 +106,7 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
             (
                 Value::Integer(id),
                 match country { Some(c) => Value::Text(c.into()), None => Value::Null },
-                Value::Text(kind.into()),
+                if kind.is_empty() { Value::Null } else { Value::Text(kind.into()) },
                 match ident { Some(v) => Value::Text(v.into()), None => Value::Null },
                 Value::Text(name.into()),
                 Value::Text(name.to_lowercase()),
@@ -121,14 +127,19 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
         dry.plan,
         vec![
             ("SEN".to_owned(), "SN".to_owned(), 3),
+            ("GRL".to_owned(), "GL".to_owned(), 2),
             ("EL".to_owned(), "GR".to_owned(), 1),
-            ("GRL".to_owned(), "GL".to_owned(), 1),
             ("LUXEMBOURG".to_owned(), "LU".to_owned(), 1),
             ("LËTZEBUERG".to_owned(), "LU".to_owned(), 1),
         ],
         "planned values only, biggest first — and 1A0 is absent because it folds to itself"
     );
-    assert_eq!(dry.rows, 7, "SEVEN rows over FIVE values — the two numbers are not the same");
+    assert_eq!(dry.rows, 8, "EIGHT rows over FIVE values — the two numbers are not the same");
+    assert_eq!(
+        dry.plan.iter().filter(|(f, _, _)| f == "GRL").count(),
+        1,
+        "one entry per VALUE: a NULL identifier_kind must not split the group"
+    );
     assert_ne!(dry.rows as usize, dry.plan.len());
     assert_eq!(
         dry.collisions, 2,
@@ -148,7 +159,11 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
         "the VAT-kind rows are skipped ON PURPOSE and reported, not silently folded — \
          while the NATIONAL-kind 'EL' row beside them is planned"
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE country = 'GRL'").await, 1);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organizations WHERE country = 'GRL'").await,
+        2,
+        "both GRL rows still stand — the identifier-bearing one and the kind-less one"
+    );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0, "a dry run is silent");
 
     // WET. The parity gate: a run whose plan disagrees with the reviewed
@@ -157,8 +172,8 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
     assert!(err.is_err(), "plan divergence beyond tolerance must abort");
     assert_eq!(one(&conn, "SELECT country FROM organizations WHERE id = 2").await, "GRL");
 
-    let wet = db.fold_org_countries(fold, known, false, Some(7), 200, &never).await.unwrap();
-    assert_eq!((wet.rows, wet.collisions), (7, 2), "the wet run reports the plan it ran");
+    let wet = db.fold_org_countries(fold, known, false, Some(8), 200, &never).await.unwrap();
+    assert_eq!((wet.rows, wet.collisions), (8, 2), "the wet run reports the plan it ran");
     for (id, want) in [
         (2i64, "GL"),
         (3, "SN"),
@@ -181,7 +196,7 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
 
     // Identity is untouched: same rows, same identifiers, nothing merged or
     // deleted — including the colliding pairs, which are R2's to decide.
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 14);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 15);
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM organizations WHERE identifier = '18440202'").await,
         2,
@@ -199,9 +214,9 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
     // SEN alone moves three rows, so this cannot be read as one per VALUE.
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'changed'").await,
-        7
+        8
     );
-    for id in [2i64, 3, 4, 8, 9, 10, 14] {
+    for id in [2i64, 3, 4, 8, 9, 10, 14, 15] {
         assert_eq!(
             count(&conn, &format!("SELECT COUNT(*) FROM changes WHERE entity_id = {id}")).await,
             1,
@@ -219,7 +234,7 @@ async fn the_fold_rewrites_the_label_and_never_the_identity() {
     // Idempotent: a second run finds nothing to do and publishes nothing.
     let again = db.fold_org_countries(fold, known, false, Some(0), 300, &never).await.unwrap();
     assert_eq!((again.rows, again.plan.len()), (0, 0));
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 7, "no second wave of events");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 8, "no second wave of events");
 
     // Cancel is honest: no partial plan.
     let always = || true;

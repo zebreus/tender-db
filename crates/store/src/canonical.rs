@@ -7042,10 +7042,16 @@ impl Db {
             let reader = self.reader().await?;
             // Split by VAT-ness, because on a VAT row the country column is
             // NOT a country label — see NON_VAT below.
+            // COALESCE, not `identifier_kind = 'vat'`: in SQL a NULL kind
+            // compares to NULL, not to false, so the bare comparison yields
+            // THREE groups per country (vat / non-vat / kind-is-null) and
+            // every value gets planned twice. The dry run caught this — 253
+            // plan entries for 152 values — which is what dry runs are for.
             let mut rows = reader
                 .query(
-                    "SELECT country, identifier_kind = 'vat', COUNT(*) FROM organizations \
-                      WHERE country IS NOT NULL GROUP BY country, identifier_kind = 'vat'",
+                    "SELECT country, COALESCE(identifier_kind, '') = 'vat', COUNT(*) \
+                       FROM organizations WHERE country IS NOT NULL \
+                      GROUP BY country, COALESCE(identifier_kind, '') = 'vat'",
                     (),
                 )
                 .await?;
@@ -7106,10 +7112,17 @@ impl Db {
         // neither folds nor gets listed). A well-formed but WRONG code —
         // prod files Bulgarian bodies under 'VU' — is invisible to any shape
         // test by construction; that class is issue 319's per-case half.
-        report.unmapped = counts
+        // Summed per VALUE first: `counts` carries one entry per
+        // (country, vat-ness) group, so a value with rows on both sides
+        // would otherwise be listed twice with partial counts.
+        let mut per_value: std::collections::BTreeMap<&str, u64> = Default::default();
+        for (v, n) in &counts {
+            *per_value.entry(v.as_str()).or_default() += n;
+        }
+        report.unmapped = per_value
             .iter()
-            .filter(|(v, _)| fold(v) == **v && !known_code(v))
-            .map(|(v, n)| ((*v).clone(), *n))
+            .filter(|(v, _)| fold(v) == ***v && !known_code(v))
+            .map(|(v, n)| ((*v).to_string(), *n))
             .collect();
         report.unmapped.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
