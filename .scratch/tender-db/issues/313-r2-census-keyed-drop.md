@@ -1,7 +1,7 @@
 # 313 — 1,830 org rows left the E1-keyed set between two r2-censuses, unexplained
 
-Status: EXPLAINED 2026-08-30 (normal campaign merges; the real defect is the
-observability gap that hid them) — the two gaps below are the live work
+Status: CLOSED 2026-08-30 — arithmetic reconciled to the row; both
+observability gaps FIXED and deployed (rev 7cecdf5)
 Kind: data quality / identity layer
 Relates to: 300 (Stage 2/3), 311, 312
 
@@ -94,3 +94,51 @@ took an hour and was answerable only by accident. Fix the two gaps above:
 honour `limit` on `GET /admin/jobs` (bounded, e.g. <=200) or state the cap
 in the response, and give the census a real history instead of one
 overwritable row per kind.
+
+## CLOSED: the arithmetic reconciles to the row
+
+The `?limit=` fix deployed for this issue answered the question that
+motivated it, on the first query. `GET /admin/jobs?limit=200` now reaches
+back to 08-20, and the window contains:
+
+| job | when (UTC) | what | org rows removed |
+|-----|-----------|------|------------------|
+| 453 | 08-29 11:21 | match-org-identifiers **r2** | **1,829** |
+| 457 | 08-29 16:21 | r3 cap=100 | 100 |
+| 458 | 08-29 16:27 | r3 | 791 |
+| 463 | 08-29 17:25 | r3 cap=100 | 100 |
+| 464 | 08-29 17:27 | r3 | 296 |
+
+**keyed_e1 and orgs_in_groups each fell 1,830; job 453 removed 1,829.** An
+R2 loser is by construction an E1-keyed member of a same-country group of
+>=2, so each removal decrements both counters by exactly one — which is why
+the two deltas were identical, the detail that made the drop look
+mysterious. The residual 1 is a day of ingest plus the handful of issue-311
+strips that landed on keyable (non-DE/AT) rows.
+
+The four R3 runs removed 1,287 rows — exactly the NULL-country pool move
+4,816 -> 3,529 — and correctly left `keyed_e1` alone, since a NULL-country
+row yields no canonical key (`null_country_keyed: 0` in both censuses).
+
+One more correction for the record: the "08-29 census" I was comparing
+against was never a `r2-census` run at all. Job 453's own counts line reads
+"1123400 orgs scanned, 368596 E1-keyed, 634 same-country groups" — the
+R2 MERGE job's pre-merge census phase, written into the same report kind.
+So the baseline was the state *immediately before* the merge that explains
+the delta, which is the most misleading possible pairing and entirely my
+misreading, not a system fault.
+
+## What was actually fixed (rev 7cecdf5)
+
+- `GET /admin/jobs?limit=` is honoured, clamped to 1..=`JOB_LOG_MAX`(200),
+  default still `RECENT_RUNS`(20). Verified on prod: default 20 rows back
+  to 08-30 00:11; `?limit=200` 200 rows back to 08-20 08:54; `?limit=9999`
+  clamps to 200 rather than erroring.
+- The weekly pre-dawn tick body is extracted as `run_report_tick()` and
+  pinned by a test: it enqueues data-quality, rehash-probe and
+  scan-org-match-keys, the scan rides WET, and a second tick stacks
+  nothing. That branch had never executed in production.
+
+Report history (one row per kind) is left as-is deliberately: the job log's
+`counts` line IS the durable time series, it reaches back 200 rows now, and
+this incident is the evidence that it suffices.
