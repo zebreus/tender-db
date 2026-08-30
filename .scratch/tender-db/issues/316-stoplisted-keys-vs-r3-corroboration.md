@@ -1,6 +1,6 @@
 # 316 — Stoplisted generic names must not corroborate an R3 merge
 
-Status: ready-for-agent (blocks folding rule=r3 into the weekly cadence)
+Status: DONE 2026-08-30 (76d39e6) — the r3-cadence blocker is cleared
 Kind: correctness (organization merge)
 Relates to: 300 (§4.1, Stage 3 R3, Stage 4 stoplist)
 
@@ -37,3 +37,35 @@ key, so R3 can ask "is this corroboration key over the cap?" without a new
 table. Gate: if over cap, require the anchor's checksum to be a HARD-scheme
 pass (idgate::hard_scheme + Checksum::Pass), else deny and count it in the
 report's denial ladder like every other wall.
+
+
+## DONE 2026-08-30 (76d39e6): the wall is consulted
+
+`match_org_null_country_r3` now asks `org_match_keys` whether the
+corroborating N2 key is held by more than the cap — the SAME cap the scan
+stoplists on, passed as one constant to both, so the two walls cannot drift
+apart into disagreeing about what "generic" means.
+
+- Over the cap, soft anchor: **denied**, on its own rung
+  (`denied_generic_name`) in the denial ladder. Folding it into
+  `uncorroborated` would have hidden the class the design named.
+- Over the cap, HARD-checksumming anchor: allowed — the design's one
+  exemption — and COUNTED (`generic_name_hard_anchor`), so the cadence
+  reports how often the exemption carries a merge instead of leaving it
+  assumed-zero.
+- The probe is bounded: the range scan stops at cap+1, so the 62,084-org
+  key costs what a 2-org key costs. It counts DISTINCT orgs, not rows.
+
+**The lenient edge, stated because it is a real limit.** A key the
+satellite has never seen reads NOT generic. That is deliberate — the
+satellite is built wholesale (issue 315), and a stale one must not silently
+deny every rescue merge — but it means the wall is only as complete as the
+last build. The corollary shipped with it: a WET r3 run now REFUSES when
+`org_match_keys` is empty or a build is mid-walk (non-zero watermark, no
+covering index). A dry run still plans, because a person reviews its plan
+before anything merges.
+
+Not yet done: the actual fold of `rule=r3` into the Sunday tick. The
+blocker this issue existed for is gone, but the fold deserves its own
+decision with the wall's first prod numbers in hand — run r3 dry once after
+deploy and read `denied_generic_name` before making a merge arm automatic.

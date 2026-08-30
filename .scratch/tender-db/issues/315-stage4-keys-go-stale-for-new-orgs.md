@@ -1,6 +1,7 @@
 # 315 — New orgs are invisible to the candidate scan until a keys rebuild
 
-Status: ready-for-agent (accepted-for-v1 deferral, now filed properly)
+Status: DONE 2026-08-30 (option 1 landed, 340d907) — awaiting its first
+Sunday firing (2026-09-06)
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 Units 3-5)
 
@@ -42,3 +43,32 @@ from this week's notices).
 Recommendation: option 1 first (it is an enqueue and a doc line), with
 option 2 only if the rebuild's 85s ever stops being noise. Decide before
 Stage 4's cadence has run long enough for anyone to trust edge coverage.
+
+
+## RESOLVED 2026-08-30: option 1, on the Sunday tick (340d907)
+
+The wet build now rides the weekly chain AHEAD of the scan. The queue is
+FIFO, so pushing it first is the whole dependency; the test pins the
+sequence `data-quality, rehash-probe, build-org-match-keys,
+scan-org-match-keys` rather than just their presence, because a membership
+assert would pass with the build running after the scan it feeds.
+
+Option 2 (incremental maintenance on the resolver's mention-capture hook)
+stays unbuilt on its stated cost: it moves key semantics onto the ingest
+path, where a `NAME_KEY_EPOCH` change has to be handled online instead of by
+a wholesale rebuild. 85 s a week does not buy that.
+
+What makes the weekly rewrite affordable is that its failure mode is
+contained and LOUD. A build that dies mid-walk leaves a non-zero watermark
+and no covering index; the scan then refuses into `org-edge-scan-alarm`, and
+a wet r3 refuses through issue 316's new guard. Neither runs against a
+half-built keyspace. Checked before shipping: `reset_org_match_keys` does
+NOT touch `org_edge_total`, so tripwire 6's baseline survives the rebuild —
+the weekly monotone check still means what it meant.
+
+**Audit finding, same session:** this morning's tick (01:10 UTC) enqueued
+only data-quality and the rehash probe. Not a defect — the Unit-5 cadence
+code reached prod at 02:31 UTC, an hour and a half AFTER the tick — but it
+does mean the weekly scan has never yet fired on its own clock. Next Sunday
+is the first firing for both it and the build, and it is the thing to check
+on 2026-09-06.
