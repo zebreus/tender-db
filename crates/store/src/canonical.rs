@@ -1633,14 +1633,17 @@ pub struct CaseBacklogRow {
     pub identifier: Option<String>,
     pub identifier_kind: Option<String>,
     pub gone: bool,
-    /// Unit C's structural corroboration, the CHEAP half: how many OTHER
-    /// standing org rows carry this exact (identifier_kind, identifier).
-    /// A consortium vehicle publishing a member's number is the campaign's
+    /// Unit C's structural corroboration: how many OTHER standing org rows
+    /// carry the same identifier DIGIT BODY (see [`DIGIT_PEER_MIN`]). A
+    /// consortium vehicle publishing a member's number is the campaign's
     /// signature shape, so a peer row IS the missing evidence — "some
-    /// member's number" becomes "this member's number".
+    /// member's number" becomes "this member's number". Matched on digits
+    /// rather than the exact value because the wrong identifiers here differ
+    /// by country prefix, kind and dropped characters; it is advisory
+    /// evidence for a reviewer, never a merge rule.
     pub peer_rows: u64,
-    /// One peer, as "country:name", to make the row readable without a
-    /// second query.
+    /// One peer, as "country:name [kind value]", so a digit coincidence
+    /// across countries reads as the coincidence it is.
     pub peer_example: Option<String>,
 }
 
@@ -1749,6 +1752,12 @@ const NO_COUNTRY: &str = "??";
 /// FIRST ones in root order — stable across re-runs, so a reviewer can work
 /// the list and a later census shows the same head.
 const COHORT_SAMPLE: usize = 25;
+
+/// Shortest digit body the issue-317 peer probe will match on. Eight is the
+/// shortest real European register number (DK CVR, CZ IČO, FI y-tunnus), and
+/// anything shorter in that slot is a house number or a fragment, which would
+/// peer with half the corpus.
+const DIGIT_PEER_MIN: usize = 8;
 
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
@@ -6856,9 +6865,8 @@ impl Db {
         report.by_verdict = counts.into_iter().map(|((v, c), n)| (v, c, n)).collect();
         report.by_verdict.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
 
-        // Attach the org state and the peer count, one case at a time: the
-        // backlog is hundreds of rows, not millions, and each probe is an
-        // indexed identity lookup.
+        // Attach each case org's current state: one indexed lookup per case,
+        // over hundreds of rows.
         for r in &mut rows_out {
             if stop() {
                 return Ok(CaseBacklogReport { stopped: true, ..Default::default() });
@@ -6875,25 +6883,82 @@ impl Db {
                     r.identifier_kind = opt_text_of(&row, 1);
                     r.identifier = opt_text_of(&row, 2);
                 }
-                None => {
-                    r.gone = true;
-                    continue;
-                }
+                None => r.gone = true,
             }
-            let (Some(kind), Some(value)) = (&r.identifier_kind, &r.identifier) else {
-                continue;
-            };
-            let mut peers = reader
-                .query(
-                    "SELECT COUNT(*), MIN(COALESCE(country, '') || ':' || name) \
-                       FROM organizations \
-                      WHERE identifier_kind = ? AND identifier = ? AND id <> ?",
-                    (t(kind), t(value), Value::Integer(r.org)),
-                )
-                .await?;
-            if let Some(row) = peers.next().await? {
-                r.peer_rows = int(&row, 0) as u64;
-                r.peer_example = opt_text_of(&row, 1);
+        }
+
+        // Peers, matched on the DIGIT BODY. The first version of this compared
+        // (identifier_kind, identifier) exactly and found zero peers for every
+        // case on prod — an artifact of the probe, not a fact about the corpus:
+        // the very first two rows it listed were org 12524925 ('national',
+        // 'D1633830016') and org 12524926 ('vat', 'DE1633830016'), the same
+        // mangled German VAT under two kinds, which exact equality cannot see.
+        // Country prefixes, kind drift and a dropped letter are exactly what
+        // this campaign's wrong identifiers look like, and all three survive a
+        // digits-only comparison.
+        //
+        // ONE pass over the identifier-bearing rows (the r2-census shape),
+        // matching against the handful of case digit-keys held in memory —
+        // never a scan per case. Bodies under DIGIT_PEER_MIN digits are
+        // skipped: "SCHNBERGSTRAE28" (a street address in the identifier slot,
+        // a real row here) reduces to "28", which would peer with everything.
+        //
+        // This is ADVISORY evidence for a reviewer, not a merge rule — so it
+        // is deliberately looser than `canonical_key` and reports the peer's
+        // COUNTRY, which is what makes a cross-border digit coincidence
+        // visible as a coincidence.
+        let mut wanted: std::collections::HashMap<String, Vec<usize>> = Default::default();
+        for (i, r) in rows_out.iter().enumerate() {
+            let Some(value) = &r.identifier else { continue };
+            let digits: String = value.chars().filter(char::is_ascii_digit).collect();
+            if digits.len() >= DIGIT_PEER_MIN {
+                wanted.entry(digits).or_default().push(i);
+            }
+        }
+        if !wanted.is_empty() {
+            let mut after = 0i64;
+            loop {
+                if stop() {
+                    return Ok(CaseBacklogReport { stopped: true, ..Default::default() });
+                }
+                let mut page = 0u64;
+                let mut rows = reader
+                    .query(
+                        "SELECT id, country, name, identifier_kind, identifier \
+                           FROM organizations \
+                          WHERE id > ? AND identifier IS NOT NULL ORDER BY id LIMIT 200000",
+                        (Value::Integer(after),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    let id = int(&row, 0);
+                    after = id;
+                    page += 1;
+                    let value = text(&row, 4);
+                    let digits: String = value.chars().filter(char::is_ascii_digit).collect();
+                    if digits.len() < DIGIT_PEER_MIN {
+                        continue;
+                    }
+                    let Some(idxs) = wanted.get(&digits) else { continue };
+                    for &i in idxs {
+                        if rows_out[i].org == id {
+                            continue;
+                        }
+                        rows_out[i].peer_rows += 1;
+                        if rows_out[i].peer_example.is_none() {
+                            rows_out[i].peer_example = Some(format!(
+                                "{}:{} [{} {}]",
+                                opt_text_of(&row, 1).unwrap_or_else(|| NO_COUNTRY.into()),
+                                text(&row, 2),
+                                text(&row, 3),
+                                value
+                            ));
+                        }
+                    }
+                }
+                if page == 0 {
+                    break;
+                }
             }
         }
         let (esc, med): (Vec<_>, Vec<_>) =

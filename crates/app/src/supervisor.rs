@@ -3434,10 +3434,12 @@ impl Supervisor {
                     None,
                     "walking the parked review verdicts".to_owned(),
                 );
-                // 60 per list: the whole standing backlog is 17 escalations
-                // and 102 mediums, so this shows the escalations entire and a
-                // working slice of the band — and says so when it clips.
-                let r = self.db.case_review_backlog(60, &stop).await.map_err(|e| e.to_string())?;
+                // 200 per list. The first prod run measured the real backlog —
+                // 20 escalations and 111 medium-band cases, not the 17/102 the
+                // campaign log remembered — and clipped the mediums at 60. A
+                // cap that truncates the thing the job exists to show is a cap
+                // set to the wrong number.
+                let r = self.db.case_review_backlog(200, &stop).await.map_err(|e| e.to_string())?;
                 if r.stopped {
                     return Ok("case-review-backlog STOPPED by cancel — no report stored".to_owned());
                 }

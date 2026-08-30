@@ -277,7 +277,15 @@ async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
         (71, Some("ATU99999999"), "Biege Beta"),
         (72, Some("FN576377P"), "Biege Gamma"),
         (73, Some("DE111111111"), "Biege Delta"),
-        (90, Some("ATU12345678"), "Member Alpha GmbH"),
+        // 70's peer differs in KIND and by a dropped country letter — the
+        // real prod shape (org 12524925 'national D1633830016' beside org
+        // 12524926 'vat DE1633830016'), which exact-value matching cannot
+        // see and the digit-body probe can.
+        (90, Some("U12345678"), "Member Alpha GmbH"),
+        // A street number in the identifier slot: two digits, so it must
+        // peer with nothing rather than with everything.
+        (91, Some("SCHNBERGSTRAE28"), "Biege Epsilon"),
+        (92, Some("HAUPTSTRASSE28"), "Some Other Firm"),
     ] {
         conn.execute(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
@@ -297,6 +305,7 @@ async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
         &[
             review(70, "consortium-vehicle-wrong-identifier", "medium"),
             review(71, "consortium-vehicle-wrong-identifier", "medium"),
+            review(91, "consortium-vehicle-wrong-identifier", "medium"),
             review(72, "unclear-escalate", "low"),
             review(73, "consortium-vehicle-wrong-identifier", "high"),
             review(74, "unclear-escalate", "medium"),
@@ -308,11 +317,11 @@ async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
 
     let never = || false;
     let r = db.case_review_backlog(60, &never).await.unwrap();
-    assert_eq!((r.total, r.applied, r.unapplied), (5, 0, 5));
+    assert_eq!((r.total, r.applied, r.unapplied), (6, 0, 6));
     assert_eq!(
         r.by_verdict,
         vec![
-            ("consortium-vehicle-wrong-identifier".to_owned(), "medium".to_owned(), 2),
+            ("consortium-vehicle-wrong-identifier".to_owned(), "medium".to_owned(), 3),
             ("consortium-vehicle-wrong-identifier".to_owned(), "high".to_owned(), 1),
             ("unclear-escalate".to_owned(), "low".to_owned(), 1),
             ("unclear-escalate".to_owned(), "medium".to_owned(), 1),
@@ -329,10 +338,14 @@ async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
     assert_eq!(
         med,
         vec![
-            (70, 1, Some("AT:Member Alpha GmbH".to_owned())),
+            (70, 1, Some("AT:Member Alpha GmbH [national U12345678]".to_owned())),
             (71, 0, None),
+            (91, 0, None),
         ],
-        "70's number stands on a member row — that IS the missing evidence; 71's does not"
+        "70's number stands on a member row under a DIFFERENT kind and without the \
+         country letter — that IS the missing evidence, and exact-value matching \
+         misses it; 71's number stands nowhere; 91 is a street address whose two \
+         digits must peer with nothing"
     );
     assert!(!r.truncated, "nothing was clipped at this size");
     // The HIGH verdict is counted but never listed: it belongs to the apply
@@ -345,7 +358,7 @@ async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
     // Applied verdicts leave the backlog entirely.
     db.apply_case_reviews(false, Some(7), 100).await.unwrap();
     let after = db.case_review_backlog(60, &never).await.unwrap();
-    assert_eq!((after.total, after.applied, after.unapplied), (5, 1, 4));
+    assert_eq!((after.total, after.applied, after.unapplied), (6, 1, 5));
     assert!(
         after.by_verdict.iter().all(|(v, c, _)| !(v.contains("wrong-identifier") && c == "high")),
         "the applied verdict is out of the parked counts"
