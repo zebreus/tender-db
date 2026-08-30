@@ -87,3 +87,44 @@ its own adversarial panel round, exactly like every other write path in
 this campaign. Unit C's option 1 (external register lookup) stays unbuilt
 and unneeded until the peer-row measurement says how much of the medium
 band it would actually convert — which the backlog job now measures.
+
+
+## UNIT C MEASURED (2026-08-30, prod jobs 1404/1406)
+
+The first prod run reported **0 of 60** mediums with a peer row — and was
+wrong. It compared `(identifier_kind, identifier)` exactly, and the very
+first two rows it printed refuted it: org 12524925 `national D1633830016`
+beside org 12524926 `vat DE1633830016`. Matching on the DIGIT BODY (8-digit
+floor) is the fix, and the re-run reads:
+
+    873 verdicts, 456 applied, 417 parked;
+    20 escalations and 111 medium-band cases listed (not truncated);
+    7 of the mediums have a peer row carrying the same identifier
+
+Read the 7 rather than the number, because they split two ways:
+
+- **Five name a MEMBER**, which is exactly the evidence a medium verdict was
+  missing — the reading goes from "some member's number" to a named company:
+  `USTIDDE308082288` → `DE:EUROPEAN DYNAMICS Deutschland GmbH [vat
+  DE308082288]`; `USTIDDE814503707` → `DE:regineering GmbH`;
+  `USTIDNRDE225141937` → `DE:Eiffage Infra-Nordwest GmbH`; `358568041` →
+  `DE:Wenzel Architekt + beratender Ingenieur Part mbB`; and the best of
+  them, `vat HRGNUMMER39060355NIEDERLNDISCHESHANDELSREGISTER` — a German
+  SENTENCE ("HR-Nummer 39060355, niederländisches Handelsregister") in the
+  identifier slot — → `NL:HKV Lijn in Water B.V. [national 39060355]`.
+- **One pair is the same vehicle twice** (12524925/12524926, peers of each
+  other): evidence of a DUPLICATE VEHICLE ROW, not of a member. Counting it
+  as corroboration would be a category error.
+
+**So Unit C option 2 converts 5 of 111** — about 5%, not the band. That is
+the honest sizing: the cheap structural probe does not clear the medium
+band, and the remaining ~106 need either the register lookup (option 1) or
+a per-case re-review with the enriched evidence. Neither is started.
+
+A third class fell out for free: identifiers carrying German LABEL TEXT
+(`USTIDDE…`, `USTIDNRDE…`, `HRGNUMMER…`). That is rule-shaped — a prefix
+strip in the crosswalk would canonicalize them — and it is measured here at
+4 rows in this band alone. Worth a corpus census before deciding.
+
+The escalations list (20, none with a missing org row) is now surfaced
+whole; nothing consumes it yet, which stays Unit B's remainder.
