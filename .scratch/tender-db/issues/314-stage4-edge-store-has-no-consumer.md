@@ -162,3 +162,17 @@ consumer. So the campaign's first run produces recorded, auditable, INERT
 verdicts — which is a fine deliverable — and a review-gated merge arm is a
 separate unit that writes entity references and therefore needs its own
 dry-first plan and its own panel round (the same bar as issue 317 Unit A).
+
+
+## COHORT AFTER THE 319 FOLD: 939 (2026-08-30)
+
+The country normalization landed and the census re-ran: 962 → **939**
+components, cross-border 10,415 → 10,319. The alpha-3 split was 2.4% of the
+cohort, not the large fraction the sample suggested — see 319 for why that
+prediction was over-read.
+
+**So the campaign is unblocked and its input is ~939 components**, of which
+a known ~39 are still fake borders from upstream country errors (`BG-VU` 20,
+`CH-EE` 19 — TED publishing a wrong code, unreachable by normalization). A
+reviewer meeting one of those should mark it as a country-data error rather
+than a merge decision, and the verdict schema needs that option.

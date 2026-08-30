@@ -1,7 +1,7 @@
 # 319 — The organization country column holds alpha-3 codes and free text
 
-Status: org-layer fix BUILT and gated (ebbfaff), awaiting panel + deploy;
-mention layer measured and NOT yet fixed; the VU/GY class untouched
+Status: org layer DONE 2026-08-30 (405406a, wet run verified on prod);
+mention layer measured and NOT fixed; the VU/GY class is upstream and open
 Kind: data quality / API correctness (organization layer)
 Relates to: 300 (R2 keys on country), 314 (the edge census surfaced it), 230
 
@@ -138,3 +138,59 @@ OVERRIDING published data on evidence the publisher did not give us — the
 entity's name language, its identifier's shape, its other notices. That is
 the issue-311 per-case direction, not a rule. Nothing here is urgent: 143
 rows, each mislabelled exactly as its source mislabelled it.
+
+
+## DONE on prod 2026-08-30 (jobs 1408 dry / 1409 wet, rev 405406a)
+
+    396 distinct country values, 151 to fold over 1345 rows
+    44 identifier-bearing rows land on an identity that already stands
+    4 values stay unmapped (largest: "1A", 142 rows)
+    2 VAT-scope values SKIPPED on purpose (EL 222, UK 38)
+
+The plan reconciles exactly with the independent measurement taken before
+any code was written: 150 ISO alpha-3 folds (1,344 rows) + `LUXEMBOURG`
+(1 row) = 151 values, 1,345 rows.
+
+**Verified in the DATA, not from the job's own report.** `GRL` is gone and
+`GL` reads 35 (was 23 + 12); `MCO` gone, `MC` 185 (124 + 61); `SEN` gone,
+`SN` 88 (55 + 33); `LUXEMBOURG` gone. `EL` still reads 222 and `UK` 38 —
+the VAT-scope skip holding, which is the whole reason the panel's catch
+mattered. The change feed's cursor advanced by **exactly 1,345**: one event
+per moved row, no more.
+
+The 44 collisions are duplicate identities this fix UNCOVERED — pairs that
+were invisible while one side sat under a different spelling of its country.
+They are R2's to merge, and nothing here touched them.
+
+## What the residue turned out to be
+
+Listing by CODE VALIDITY rather than string length (the panel's catch)
+surfaced a class the length test would have hidden entirely:
+
+    1A   142 rows      not a country code at all
+    AN    15 rows      Netherlands Antilles — RETIRED from ISO 3166-1 in 2010
+    1A0    3 rows
+    XI     2 rows      the VAT scheme's Northern Ireland prefix
+
+`1A` at 142 rows is the largest single junk-country class in the corpus and
+was completely invisible before today. `AN` is a different thing again: a
+real code that ISO withdrew, so a current-table lookup rejects it while the
+data is historically correct. Neither is fixed here; both are now named.
+
+## The cohort effect, measured — and smaller than I predicted
+
+The issue-314 cohort went **962 → 939** and the cross-border count
+10,415 → 10,319. So the alpha-3 split accounted for **23 components, about
+2.4%** of the cohort.
+
+I predicted more, from reading ten sample components in which country-code
+artifacts looked prominent. Ten components is not a sample, and the
+prediction was over-read: the GL/GRL class was only 12 rows to begin with,
+so a 23-component drop is exactly the right order. The campaign's input is
+therefore ~939 mostly-real cross-border components, which is good news for
+the campaign and a caution about eyeballing samples.
+
+Fake borders that REMAIN in the cohort, both upstream rather than ours:
+`BG-VU` 20 components, and `CH-EE` 19 — the Estonian code sitting on Swiss
+and German public bodies, the same shape as VU/GY and not fixable by any
+normalization.
