@@ -24,7 +24,7 @@ pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
-    CountryFoldReport,
+    CountryFoldReport, FusionCandidate, FusionReport,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,

@@ -1642,6 +1642,45 @@ pub struct CountryFoldReport {
     pub stopped: bool,
 }
 
+/// One organization row that appears to hold mentions of somebody ELSE —
+/// the issue-311 campaign's "fusion" shape, made structural (issue 317
+/// Unit A).
+#[derive(Debug, Default, Clone)]
+pub struct FusionCandidate {
+    pub org: i64,
+    pub cohort: String,
+    /// The row's own head name — the consortium vehicle, in the shape this
+    /// looks for.
+    pub name: String,
+    /// Mentions carrying a name this census could judge — one that
+    /// normalizes to something. A NULL, blank or punctuation-only name is
+    /// evidence in neither direction and is counted on neither side.
+    pub mentions: u64,
+    /// Mentions whose published name normalizes to something OTHER than this
+    /// row's name.
+    pub off_name: u64,
+    /// Those other names, with counts, biggest first (capped). This is the
+    /// evidence a reviewer needs: "seven mentions of this vehicle actually
+    /// say `Dobler GmbH`" is the whole finding in one line.
+    pub groups: Vec<(String, u64)>,
+}
+
+/// What the issue-317 Unit A census measured. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct FusionReport {
+    /// Case-review orgs examined (the applied verdicts).
+    pub cases: u64,
+    pub with_mentions: u64,
+    /// Orgs holding at least one off-name mention.
+    pub fused: u64,
+    /// Off-name mentions across all of them — the re-homing workload.
+    pub off_name_mentions: u64,
+    /// The worst offenders, capped; `truncated` says when the list clips.
+    pub candidates: Vec<FusionCandidate>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One parked verdict, with the evidence a reviewer needs to close it
 /// (issue 317 Units B/C).
 #[derive(Debug, Default, Clone)]
@@ -6818,6 +6857,128 @@ impl Db {
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
         }
+        Ok(report)
+    }
+
+    /// The issue-317 Unit A census: which reviewed consortium-vehicle rows
+    /// are holding mentions that name somebody ELSE?
+    ///
+    /// The campaign found this by reading cases — "R&K Ingenieure: 7 of 8
+    /// mentions are the member alone" — and recorded it in free-text handling
+    /// notes, which nothing can query. This makes the same shape STRUCTURAL:
+    /// a mention publishes the name the notice used, so a mention whose name
+    /// normalizes to something other than its org's name is, on its face,
+    /// evidence about a different entity.
+    ///
+    /// `norm` is the shared N2 key (`project::match_norm`), so "Dobler GmbH"
+    /// and "DOBLER  GmbH" are one name and not two.
+    ///
+    /// Deliberately NOT a repair and deliberately not clever: it counts and
+    /// names, one indexed mention read per case org, over the few hundred
+    /// applied verdicts. Deciding which off-name mentions should move — and
+    /// to which row — stays a per-case judgement, because "the notice named
+    /// the member" and "this mention belongs to the member" are different
+    /// claims (a vehicle is frequently published under a member's name).
+    pub async fn fusion_candidates(
+        &self,
+        norm: fn(&str) -> String,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<FusionReport> {
+        let reader = self.reader().await?;
+        let mut report = FusionReport::default();
+        let mut cases: Vec<(i64, String)> = Vec::new();
+        {
+            let mut rows = reader
+                .query(
+                    "SELECT case_org_id, cohort FROM org_case_reviews \
+                      WHERE applied_at IS NOT NULL ORDER BY case_org_id",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                cases.push((int(&row, 0), text(&row, 1)));
+            }
+        }
+        report.cases = cases.len() as u64;
+
+        for (org, cohort) in cases {
+            if stop() {
+                return Ok(FusionReport { stopped: true, ..Default::default() });
+            }
+            let head = {
+                let mut rows = reader
+                    .query("SELECT name FROM organizations WHERE id = ?", (Value::Integer(org),))
+                    .await?;
+                match rows.next().await? {
+                    Some(row) => text(&row, 0),
+                    // Merged away since the review: not a fusion case, and
+                    // the backlog job already reports the class.
+                    None => continue,
+                }
+            };
+            let head_key = norm(&head);
+            let mut counts: std::collections::HashMap<String, (String, u64)> = Default::default();
+            let mut total = 0u64;
+            let mut off = 0u64;
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT name FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(org),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    let Some(name) = opt_text_of(&row, 0) else { continue };
+                    if name.trim().is_empty() {
+                        continue;
+                    }
+                    let key = norm(&name);
+                    // A name that normalizes to nothing — punctuation, or a
+                    // bare number — is not evidence in either direction, so
+                    // it is excluded from BOTH sides of the ratio rather than
+                    // padding the denominator. `mentions` therefore means
+                    // "mentions this census could judge".
+                    if key.is_empty() {
+                        continue;
+                    }
+                    total += 1;
+                    if key == head_key {
+                        continue;
+                    }
+                    off += 1;
+                    let e = counts.entry(key).or_insert_with(|| (name.clone(), 0));
+                    e.1 += 1;
+                }
+            }
+            if total == 0 {
+                continue;
+            }
+            report.with_mentions += 1;
+            if off == 0 {
+                continue;
+            }
+            report.fused += 1;
+            report.off_name_mentions += off;
+            if report.candidates.len() >= cap {
+                report.truncated = true;
+                continue;
+            }
+            let mut groups: Vec<(String, u64)> = counts.into_values().collect();
+            groups.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+            groups.truncate(6);
+            report.candidates.push(FusionCandidate {
+                org,
+                cohort,
+                name: head,
+                mentions: total,
+                off_name: off,
+                groups,
+            });
+        }
+        report
+            .candidates
+            .sort_by(|a, b| b.off_name.cmp(&a.off_name).then_with(|| a.org.cmp(&b.org)));
         Ok(report)
     }
 

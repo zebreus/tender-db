@@ -343,6 +343,9 @@ enum Spec {
     CaseReviewBacklog,
     /// Issue 319: fold non-canonical country codes on organization rows.
     FoldOrgCountries { dry_run: bool },
+    /// Issue 317 Unit A: which reviewed vehicle rows hold mentions naming
+    /// somebody else. Read-only.
+    FusionCensus,
     BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
     /// E3 name-equality edges into `org_candidate_edges`, advisory only
@@ -940,6 +943,10 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 317 Unit A: the fusion census. Read-only.
+            "fusion-census" => Ok(vec![
+                self.push("fusion-census", "fusion-census".into(), Spec::FusionCensus).await,
+            ]),
             // Issue 319: the country fold. Writes a published field on
             // entity rows, so dry_run defaults TRUE like every other writer.
             "fold-org-countries" => {
@@ -1332,6 +1339,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "org-edge-census",
     "case-review-backlog",
     "fold-org-countries",
+    "fusion-census",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3526,6 +3534,47 @@ impl Supervisor {
                         None => String::new(),
                     },
                     r.vat_scope_skipped.len()
+                ))
+            }
+            Spec::FusionCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("censusing", None, None, "reading reviewed rows' mentions".to_owned());
+                let r = self
+                    .db
+                    .fusion_candidates(ingest::project::match_norm, 120, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("fusion-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "cases": r.cases, "with_mentions": r.with_mentions,
+                    "fused": r.fused, "off_name_mentions": r.off_name_mentions,
+                    "truncated": r.truncated,
+                    "candidates": r.candidates.iter().map(|c| serde_json::json!({
+                        "org": c.org, "cohort": c.cohort, "name": c.name,
+                        "mentions": c.mentions, "off_name": c.off_name,
+                        "groups": c.groups.iter().map(|(n, k)| {
+                            serde_json::json!({ "name": n, "mentions": k })
+                        }).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("fusion-candidates", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "fusion-census (issue 317 Unit A): {} applied case rows, {} with \
+                     mentions; {} hold at least one mention naming somebody ELSE, over \
+                     {} such mentions{}",
+                    r.cases,
+                    r.with_mentions,
+                    r.fused,
+                    r.off_name_mentions,
+                    if r.truncated { " (candidate list TRUNCATED at the cap)" } else { "" }
                 ))
             }
             Spec::CaseReviewBacklog => {
@@ -6230,7 +6279,8 @@ mod tests {
                 "scan-org-match-keys",
                 "org-edge-census",
                 "case-review-backlog",
-                "fold-org-countries"
+                "fold-org-countries",
+                "fusion-census"
             ]
         );
     }
