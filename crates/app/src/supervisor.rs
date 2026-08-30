@@ -5404,11 +5404,42 @@ impl Supervisor {
                     // A refusal here (missing index after a bare rebuild, keys-
                     // epoch drift after a deploy, stale plan) writes
                     // org-edge-scan-alarm and shouts to the journal — a silently
-                    // stopped tripwire is the muted-probe failure. The BUILD job
-                    // is deliberately NOT scheduled: keys rebuild only on
-                    // semantics changes or after a bare rebuild, and a scan
-                    // refusing on a missing index is the operator's signal to
-                    // run it.
+                    // stopped tripwire is the muted-probe failure.
+                    //
+                    // Issue 315: the key satellite is built WHOLESALE and never
+                    // maintained incrementally, so every org minted since the
+                    // last build is invisible to the scan — no keys, no groups,
+                    // no edges. A week of drift is order 1e3-1e4 orgs, and they
+                    // are exactly the rows a matcher cares about most (this
+                    // week's freshly minted provisionals). The wet build
+                    // measured 85 s on prod against a 13M-row satellite, which
+                    // is noise inside this chain's 39-minute budget, so it now
+                    // rides AHEAD of the scan (the queue is FIFO, so pushing it
+                    // first is the ordering) rather than waiting for an
+                    // operator to notice staleness nothing reports.
+                    //
+                    // The failure mode is contained and LOUD, which is why this
+                    // is affordable: a build that dies mid-walk leaves a
+                    // non-zero watermark and no covering index, and both the
+                    // scan (org-edge-scan-alarm) and a wet r3 (issue 316's
+                    // guard) then refuse and say so, instead of running against
+                    // a half-built keyspace.
+                    if self.already_pending("build-org-match-keys") {
+                        eprintln!(
+                            "[schedule] build-org-match-keys already queued or running, \
+                             skipping this week"
+                        );
+                    } else {
+                        self.push(
+                            "build-org-match-keys",
+                            format!(
+                                "build-org-match-keys epoch={} (weekly)",
+                                ingest::crosswalk::NAME_KEY_EPOCH
+                            ),
+                            Spec::BuildOrgMatchKeys { dry_run: false },
+                        )
+                        .await;
+                    }
                     if self.already_pending("scan-org-match-keys") {
                         eprintln!(
                             "[schedule] scan-org-match-keys already queued or running, \
@@ -6732,21 +6763,36 @@ mod tests {
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_three_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_four_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
-        assert_eq!(kinds, vec!["data-quality", "rehash-probe", "scan-org-match-keys"]);
+        assert_eq!(
+            kinds,
+            vec!["data-quality", "rehash-probe", "build-org-match-keys", "scan-org-match-keys"],
+            "issue 315: the key rebuild rides AHEAD of the scan — the queue is FIFO, \
+             so this order IS the dependency"
+        );
         // The scan rides as a WET run — it IS the tripwire's clock, and a dry
         // one would refresh nothing.
         let scan = sup.queued().into_iter().find(|j| j.kind == "scan-org-match-keys").unwrap();
         assert!(scan.params.contains("(weekly)"), "{}", scan.params);
         assert!(!scan.params.contains("dry-run"), "the weekly scan must be wet: {}", scan.params);
+        // So does the build: a dry build measures and stores nothing, which
+        // would leave the keyspace exactly as stale as before.
+        let build = sup.queued().into_iter().find(|j| j.kind == "build-org-match-keys").unwrap();
+        assert!(build.params.contains("(weekly)"), "{}", build.params);
+        assert!(!build.params.contains("dry-run"), "the weekly build must be wet: {}", build.params);
+        assert!(
+            build.params.contains(ingest::crosswalk::NAME_KEY_EPOCH),
+            "the build carries its keys epoch as an audit line: {}",
+            build.params
+        );
 
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 3, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 4, "already_pending must stop the double enqueue");
     }
 
     /// Issue 313: the job-log depth is an operator-reachable parameter now,
