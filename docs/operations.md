@@ -320,6 +320,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `org-edge-census` | no | sizes the edge store into review cohorts (issue 314) |
 | `apply-case-reviews` / `unapply-case-reviews` | YES | the issue-311 verdict applier and its undo |
 | `case-review-backlog` | no | the parked verdicts nobody consumes (issue 317) |
+| `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
 
 Two refusals an operator will meet, both deliberate:
 
