@@ -1,6 +1,6 @@
 # 312 — Platform GUIDs in the identifier slot: measured, NOT a deny-floor class
 
-Status: DIAGNOSED — the obvious fix is wrong; the narrow fix is specified below
+Status: step 0 DONE (restore executed); steps 1-2 (platform-guid kind) ready-for-agent
 Kind: data quality / identity semantics
 Relates to: 311 (found by the review campaign), 300 (canonical keys), 234
 
@@ -64,3 +64,28 @@ stop it claiming register status.
   discipline before any floor treatment.
 - Register-format impossibility (FN/HRB/HRA on GbR-shaped names) stays a
   REVIEW calibration, not a rule.
+
+## STEP 0 DONE (2026-08-30 09:5x): the GUID strips are restored
+
+`unapply-case-reviews` built, gated (78 suites), panel-reviewed and deployed
+(9524f64). Adversarial panel: **0 confirmed / 8 rejected** — every candidate
+finding was verified as a non-defect, including the sharpest one (the single
+shared-GUID pair among the 442: restoring both returns the exact status quo
+ante, and the duplicate is inert because `canonical_key` returns None for
+DE/AT, so R2 never groups it).
+
+Prod: job 487 DRY — 456 applied verdicts examined, 280 with a platform-GUID
+pre-image, 280 restorable, 0 no-ops; plan hand-verified (every planned value
+a v4 GUID, every org a campaign case, no non-GUID strip touched). Job 488 WET
+— **280 identifiers restored**, plan-exact, journal clean.
+
+Verified after: org 22149631 carries its GUID + kind again, while org
+21862089 (a lead member's Swiss UID) and 22634951 (two fused German member
+VATs) remain stripped — the split the measurement called for. The 162
+non-GUID strips of the 311 campaign stand untouched.
+
+The machinery is general: `unapply_case_reviews(select, …)` takes the
+predicate over PRE-IMAGE VALUES, so any future misjudged apply class is
+reversible the same way, dry-first, with the same two guards (never clobber
+a newer value; `applied_at` stays set so nothing falls back into the pending
+set and gets re-applied forever).

@@ -122,6 +122,17 @@ Acceptance: strips verified on prod (identifier+kind NULL, names
 standing, raw mention values untouched), journal clean, dry plan ==
 wet result == my verdict ledger exactly (442).
 
+PARTIALLY REVERSED (2026-08-30, issue 312): 280 of the 442 strips held a
+platform's v4-GUID record key. The follow-up measurement showed that class
+LINKS rather than false-merges (75,548 distinct values over 75,555 rows; 93%
+of sampled GUID orgs span several notices), so those strips were restored
+from their pre-images via the new `unapply-case-reviews` path — panel-clean,
+plan-exact, journal clean. The other 162 strips (lead-member VATs, fused
+member VATs, phone numbers, addresses) stand: those values were actively
+wrong. The per-case reviews themselves were not wrong about the SEMANTICS
+("this is not a register entry"); the apply ACTION was too blunt for one
+class, and the fix is a platform-guid identifier kind (issue 312 steps 1-2).
+
 REMAINING: (1) solo-mention re-homing to member rows (the fusion
 repair — dissolve-adjacent machinery, own panel round; the campaign's
 handling notes name every re-homing candidate); (2) the escalations
