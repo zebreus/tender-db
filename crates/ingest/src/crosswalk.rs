@@ -79,12 +79,20 @@ pub fn canonical_key(country: Option<&str>, kind: &str, value: &str) -> Option<C
     // (country, kind, value) triple, which this does not touch — but it must
     // never become a MERGE key.
     //
-    // Measured before adding this, because the class had already fooled one
-    // design pass: 75,555 corpus rows carry a v4 GUID, and 1 FR specimen in
-    // 400 happens to hold exactly 14 digit characters, so roughly 8 rows
-    // corpus-wide were riding the FR:siret arm into an E1 key. Nothing has
-    // collided (the values are 75,548-distinct), so this closes a
-    // conceptual hole, not an incident.
+    // MEASURED EFFECT TODAY: ZERO ROWS. The estimate that motivated this
+    // guard was wrong and the prod census caught it — keyed_e1 was 366,766
+    // before and after the deploy. A GUID cannot reach the national arms
+    // anyway: they gate on `digits_only` below, and hex letters are the one
+    // thing a 32-char UUID always has (1 FR specimen in 400 does carry
+    // exactly 14 DIGITS, the SIRET arm's count, which is what fooled the
+    // estimate — necessary, but nowhere near sufficient).
+    //
+    // Kept because it states the invariant instead of leaving it emergent
+    // from an unrelated implementation detail: today "no platform key ever
+    // merges" is TRUE ONLY BECAUSE every keying arm happens to require
+    // all-digit bodies. Add one alphanumeric register scheme — and they
+    // exist, HRB/FN shapes among them — and the property silently dies.
+    // This line is what would survive that.
     if uuid_v4(value) {
         return None;
     }
@@ -341,8 +349,9 @@ mod tests {
     #[test]
     fn platform_guids_are_never_a_merge_key() {
         // A REAL specimen from the corpus (an FR row, measured 2026-08-30):
-        // exactly 14 digit characters, which is what the SIRET arm keys on,
-        // so before this guard it produced an E1 key.
+        // exactly 14 digit characters, the SIRET arm's count. It did NOT
+        // key before the guard — `digits_only` already excluded it — so
+        // this pins the invariant, not a repaired defect.
         let siret_shaped = "0EC1CA3FA1F94A4FAF1F8EB4DC20CC01";
         assert_eq!(
             siret_shaped.chars().filter(char::is_ascii_digit).count(),

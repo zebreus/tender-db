@@ -98,12 +98,24 @@ any country or kind. The GUID keeps linking (the resolver binds on the raw
 `(country, kind, value)` triple — canonical.rs:5215 — which this does not
 touch) and stops being eligible as a merge key.
 
-Measured first, per this issue's own lesson. Of a 400-row FR sample, **one**
-carries exactly 14 digit characters — the SIRET arm's shape — so roughly 8
-rows corpus-wide were riding a national-register arm into an E1 key.
-Distribution by keyable country: FR 3,092, BE 325, IT 74, CZ 23, PL 21,
-FI 9, SE/PT/NO/HR 5 each, GR 2 (DE 46,240 never keys). Nothing collided,
-because the values are 75,548-distinct — a conceptual hole, closed cheaply.
+**Correction, made by the post-deploy census (this matters more than the
+change).** I justified this guard with "roughly 8 rows corpus-wide were
+riding the FR:siret arm into an E1 key", extrapolated from 1 FR specimen in
+400 carrying exactly 14 digit characters. The census after the deploy reads
+`keyed_e1` = 366,766 — **identical** to before it. The true number was
+ZERO, and the reason is three lines below the guard: every national arm
+gates on `digits_only`, and a 32-char hex UUID always carries letters. The
+digit COUNT was necessary and nowhere near sufficient; I checked the half
+that confirmed my expectation and not the half that would have refuted it.
+
+Distribution by keyable country, for the record: FR 3,092, BE 325, IT 74,
+CZ 23, PL 21, FI 9, SE/PT/NO/HR 5 each, GR 2 (DE 46,240 never keys).
+
+The guard stays, on the honest justification rather than the flattering
+one: today "no platform key ever merges" holds only as an emergent
+consequence of every arm requiring all-digit bodies. One alphanumeric
+register scheme — HRB/FN shapes exist — and that property dies silently.
+The line states the invariant so it survives that change.
 
 **Declined: the `platform-guid` identifier kind and the 75k-row
 reclassification** (this issue's original steps 1-2). The measurement
