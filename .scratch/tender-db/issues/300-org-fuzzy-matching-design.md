@@ -531,10 +531,38 @@ preview-exact, and two orders of magnitude under the plan's <2h
 fear (the ops-panel sizing concerns dissolved on contact with the
 box: disk delta ~2GB, WAL bounded by per-window truncates). 1.42M
 names normalize to empty (the nameless-provisional class, expected).
-N3 coverage 13.7% of orgs. NEXT: Unit 4 — the scan-org-match-keys
-job (B-NAME/B-XLANG E3 edges, stoplist >20 with counter, bounds
-check, org-23294544 exemplar) with the walk-termination and
-bind-arithmetic amendments folded in.
+N3 coverage 13.7% of orgs.
+
+**STAGE 4 UNIT 4 BUILT + PANEL-HARDENED (2026-08-30 ~01:20-02:10):
+the scan-org-match-keys job landed** (4c2a611; first cut 4f9a97b).
+One walk per key kind over org_match_keys_kk; census-first with
+whole-plan T4 parity (max(2%,500)) + EDGE_VOLUME_CEILING 3M;
+e3-name/e3-xlang from PEER-AWARE reach witnesses (both-heads →
+e3-name; any COMMON lang → e3-name on the same-lang pair; else
+e3-xlang, head-vs-foreign-satellite included); >20-org keys
+stoplisted with top-20 sample; the same-key-fills-page
+walk-termination guard (COUNT once, stoplist, step past) test-pinned
+at window=4; per-window bulk probes (no per-group reads); composite-
+PK ON CONFLICT upsert preserves first_seen/state; completed uncapped
+wet re-records org-edge-scan-plan (the weekly-cadence deadlock fix);
+exemplar 23294544 chased via org_merge_log and probed on EVERY run,
+dry included; scan refuses on keys-epoch mismatch, in-flight build,
+missing build report, missing/stale/out-of-bounds plan. §7's two-job
+naming deliberately collapsed into one job with per-pair rule labels
+(recorded deviation). Adversarial panel on 4f9a97b: 8 confirmed / 0
+rejected — incl. a REAL process failure (the panel caught that the
+first gate had FAILED, GATE-EXIT=101 misread as green: the enqueue
+test read a field QueuedJob doesn't carry; CLAUDE.md scar added) and
+the arbitrary-first-satellite mislabel; all fixed, run-path refusal
+ladder + report lifecycle now pinned through run_spec, no-entity-
+writes asserts upgraded to full-content snapshots + cursor
+stillness. Gate 78 suites green (GATE-EXIT read directly). NEXT:
+prod rollout ladder — deploy 4c2a611 (staged, awaiting queue idle
+behind the Sunday weekly DQ), DRY scan + hand-review of the census
+(record reviewed numbers here), capped wet 200k, uncapped wet under
+parity, then Unit 5 (monotone baseline/alarms, Sunday cadence with
+chain-budget arithmetic gated on the DRY run's measured wall-clock,
+rollout acceptance).
 
 **STAGE 4 OPENED (2026-08-29 ~19:4x): implementation plan of record
 landed** — see `300-stage4-implementation-plan.md` (workflow-drafted:
