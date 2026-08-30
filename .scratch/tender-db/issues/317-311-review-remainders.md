@@ -1,7 +1,8 @@
 # 317 — The 311 campaign's unfinished halves: re-homing, escalations, the medium band
 
-Status: Unit B DONE, Unit C's cheap half DONE (93d8704); Unit A MEASURED
-(8cf84f5, prod job 1411) — the repair itself is still open
+Status: Unit B DONE, Unit C's cheap half DONE (93d8704); Unit A's MACHINERY
+DONE and deployed (2ac5c1f, prod job 1412 dry: 0 verdicts, correctly inert)
+— the review campaign that fills it is the open half
 Kind: data quality (organization layer)
 Relates to: 311 (produced them), 312, 300
 
@@ -173,3 +174,40 @@ and the one that repairs records the API is currently serving wrong.
 Still not built: the re-homing writer itself. It re-points mention rows
 between orgs, which is dissolve-adjacent, so it needs a dry-first plan and
 its own panel round — the bar every write path in this campaign has met.
+
+
+## UNIT A MACHINERY LANDED (2026-08-30, 2ac5c1f) — read this before the campaign
+
+`org_mention_rehoming` records one decision per mention, keyed
+`(notice_id, section_id)` exactly as `organization_mentions` is, so a
+mention carries one verdict and double-recording is impossible by
+construction. `apply-rehoming` executes the safe subset: `rehome`, HIGH
+confidence, and a `target_org_id` that EXISTS and is not the org the mention
+already sits on.
+
+**The design's centre, after a 13-finding panel round: ONLY THE MENTION
+MOVES.** Party rows, bid-party rows and winner rows are all products of the
+fold, and hand-moving them was wrong three separate ways — winners
+accumulate across award rounds so a same-version party join collected other
+mentions' awards; party facts are superseded per role so a carried-forward
+winner had no party row to be found through; and a nested org section
+aliases to its outer mention, so a party row's section id need not be its
+mention's. Two of those were reproduced end to end against the real
+projection. So the mention is corrected, the affected tenders are stamped
+stale and their notices re-queued, and the fold rebuilds the rest.
+
+**Consequences for whoever runs the campaign:**
+
+1. **Run a `project` job after the wet run.** Until the fold runs, the
+   derived layer still shows the old attribution. The job's `parties` and
+   `bid_parties` counts are a BLAST RADIUS — what the refold will rebuild —
+   not rows it moved.
+2. **v1 never mints a destination.** A member with no standing org row is
+   `missing_target`, counted and left alone. That count is the measurement
+   that decides whether minting is worth building.
+3. **The verdict schema needs the distinctions the census found**: the
+   fusion proper (re-home) versus the vehicle under a spelling N2 does not
+   collapse (keep), and the member-row-mislabelled shape at 28-of-29, where
+   the repair is renaming the row rather than moving mentions off it.
+4. **Issue 321** is the known residue: the name variant stays on the origin
+   org, which keeps feeding the Stage-4 keys.
