@@ -1269,6 +1269,24 @@ const SCAN_STOPLIST_CAP: usize = 20;
 /// acceptance gate wants it surfacing as an edge and nothing else.
 const SCAN_EXEMPLAR_ORG: i64 = 23294544;
 
+/// Tripwire 6 (issue 300 Stage 4 Unit 5): the monotone-growth check over
+/// the edge store, evaluated at the end of every completed, uncapped wet
+/// scan against the durable baseline. Edges are append-refresh-only in
+/// v1, so a shrink is RED (the one legitimate wholesale reset — the bare
+/// org rebuild — zeroes the baseline instead); growth past the volume
+/// ceiling, or past twice the reviewed plan, is a new generic-name family
+/// or a broken key fn.
+fn edge_alarm(baseline: i64, total: i64, plan_expect: u64) -> Option<&'static str> {
+    if total < baseline {
+        return Some("SHRUNK");
+    }
+    let growth = (total - baseline) as u64;
+    if growth > store::EDGE_VOLUME_CEILING || growth > 2 * plan_expect.max(1) {
+        return Some("SPIKE");
+    }
+    None
+}
+
 /// What [`Supervisor::cancel`] did.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Cancelled {
@@ -1324,6 +1342,24 @@ impl Supervisor {
     /// own checkpoints — between packages, and between members inside one.
     fn cancelled(&self, id: u64) -> bool {
         self.cancel_running.load(Ordering::Relaxed) == id
+    }
+
+    /// A scan-org-match-keys refusal that CANNOT pass silently (issue 300
+    /// Stage 4 Unit 5): the weekly wet scan IS tripwire 6's clock, and its
+    /// three standing refusal paths (missing index after a bare rebuild,
+    /// keys-epoch drift after a deploy, stale/out-of-bounds plan) would
+    /// otherwise land only as a failed 03:xx Sunday job that nobody reads —
+    /// the muted-probe failure. Every refusal writes the
+    /// `org-edge-scan-alarm` report (an operator surface shows report
+    /// stamps) and shouts to the journal; a completed wet run clears it.
+    async fn edge_scan_refuse(&self, msg: String) -> Result<String, String> {
+        eprintln!("[scan-org-match-keys] REFUSED: {msg}");
+        let now = store::now_unix();
+        let body = serde_json::json!({ "refused": msg, "at": now }).to_string();
+        if let Err(e) = self.db.put_report("org-edge-scan-alarm", &body, now).await {
+            eprintln!("[scan-org-match-keys] alarm report write failed: {e}");
+        }
+        Err(msg)
     }
 
     fn pop(&self) -> Option<Job> {
@@ -3348,38 +3384,48 @@ impl Supervisor {
                 // keys epoch matching this binary's key fns — scanning old-
                 // epoch keys with new fns would mislabel rules silently.
                 if !self.db.has_index("org_match_keys_kk").await.map_err(|e| e.to_string())? {
-                    return Err(
-                        "scan-org-match-keys refused: no org_match_keys_kk index — \
-                         run build-org-match-keys (wet) first"
-                            .to_owned(),
-                    );
+                    return self
+                        .edge_scan_refuse(
+                            "scan-org-match-keys refused: no org_match_keys_kk index — \
+                             run build-org-match-keys (wet) first"
+                                .to_owned(),
+                        )
+                        .await;
                 }
                 let (wm, epoch) =
                     self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
                 if wm != 0 {
-                    return Err(format!(
-                        "scan-org-match-keys refused: keys build in flight \
-                         (watermark {wm}) — let it finish or rerun build-org-match-keys"
-                    ));
+                    return self
+                        .edge_scan_refuse(format!(
+                            "scan-org-match-keys refused: keys build in flight \
+                             (watermark {wm}) — let it finish or rerun build-org-match-keys"
+                        ))
+                        .await;
                 }
                 if epoch != ingest::crosswalk::NAME_KEY_EPOCH {
-                    return Err(format!(
-                        "scan-org-match-keys refused: keys built under epoch {epoch:?}, \
-                         this binary keys under {:?} — rerun build-org-match-keys (wet) \
-                         first",
-                        ingest::crosswalk::NAME_KEY_EPOCH
-                    ));
+                    return self
+                        .edge_scan_refuse(format!(
+                            "scan-org-match-keys refused: keys built under epoch {epoch:?}, \
+                             this binary keys under {:?} — rerun build-org-match-keys (wet) \
+                             first",
+                            ingest::crosswalk::NAME_KEY_EPOCH
+                        ))
+                        .await;
                 }
-                let (build_body, _) = self
+                let Some((build_body, _)) = self
                     .db
                     .latest_report("org-match-keys-build")
                     .await
                     .map_err(|e| e.to_string())?
-                    .ok_or_else(|| {
-                        "scan-org-match-keys refused: no org-match-keys-build report — \
-                         run build-org-match-keys (wet) first"
-                            .to_owned()
-                    })?;
+                else {
+                    return self
+                        .edge_scan_refuse(
+                            "scan-org-match-keys refused: no org-match-keys-build report — \
+                             run build-org-match-keys (wet) first"
+                                .to_owned(),
+                        )
+                        .await;
+                };
                 let build: serde_json::Value =
                     serde_json::from_str(&build_body).map_err(|e| e.to_string())?;
                 let built_at = build["built_at"]
@@ -3391,31 +3437,39 @@ impl Supervisor {
                 let expect_edges = if dry_run {
                     None
                 } else {
-                    let (body, _) = self
+                    let Some((body, _)) = self
                         .db
                         .latest_report("org-edge-scan-plan")
                         .await
                         .map_err(|e| e.to_string())?
-                        .ok_or_else(|| {
-                            "no stored org-edge-scan-plan — run the dry scan first"
-                                .to_owned()
-                        })?;
+                    else {
+                        return self
+                            .edge_scan_refuse(
+                                "no stored org-edge-scan-plan — run the dry scan first"
+                                    .to_owned(),
+                            )
+                            .await;
+                    };
                     let v: serde_json::Value =
                         serde_json::from_str(&body).map_err(|e| e.to_string())?;
                     if v["keys_built_at"].as_i64() != Some(built_at) {
-                        return Err(
-                            "org-edge-scan-plan predates the current keys build — \
-                             rerun the dry scan and review it"
-                                .to_owned(),
-                        );
+                        return self
+                            .edge_scan_refuse(
+                                "org-edge-scan-plan predates the current keys build — \
+                                 rerun the dry scan and review it"
+                                    .to_owned(),
+                            )
+                            .await;
                     }
                     if v["bounds_ok"].as_bool() != Some(true) {
-                        return Err(
-                            "org-edge-scan-plan bounds_ok is false — an out-of-bounds \
-                             census means the semantics are wrong; re-plan, there is \
-                             no override"
-                                .to_owned(),
-                        );
+                        return self
+                            .edge_scan_refuse(
+                                "org-edge-scan-plan bounds_ok is false — an out-of-bounds \
+                                 census means the semantics are wrong; re-plan, there is \
+                                 no override"
+                                    .to_owned(),
+                            )
+                            .await;
                     }
                     Some(
                         v["would_emit"]
@@ -3490,6 +3544,7 @@ impl Supervisor {
                         "edges": r.exemplar_edges,
                         "rules": r.exemplar_rules,
                         "peers": r.exemplar_peers,
+                        "states": r.exemplar_states,
                     },
                     // The hand-review material: real edges with their
                     // evidence, from the report alone (the edge table is
@@ -3539,6 +3594,45 @@ impl Supervisor {
                 wet["edges_new"] = r.edges_new.into();
                 wet["edges_refreshed"] = r.edges_refreshed.into();
                 wet["total_edges_after"] = r.total_edges_after.into();
+                // Tripwire 6 (Unit 5): the monotone check against the
+                // durable baseline, evaluated — and the baseline re-anchored
+                // — ONLY at a completed, uncapped wet run; capped and
+                // stopped runs never touch it. The alarm lands in this
+                // report AND overwrites org-edge-scan-alarm, which a clean
+                // run clears — so the operator surface always shows the
+                // latest verdict, not the latest incident.
+                let mut alarm_line = String::new();
+                if !r.capped {
+                    let baseline =
+                        self.db.org_edge_baseline().await.map_err(|e| e.to_string())?;
+                    let total = r.total_edges_after as i64;
+                    let alarm = edge_alarm(baseline, total, expect_edges.unwrap_or(r.would_emit));
+                    wet["baseline_before"] = baseline.into();
+                    wet["alarm"] = match alarm {
+                        Some(a) => a.into(),
+                        None => serde_json::Value::Null,
+                    };
+                    let alarm_body = match alarm {
+                        Some(a) => {
+                            eprintln!(
+                                "[scan-org-match-keys] TRIPWIRE 6 {a}: edge total {total} \
+                                 vs baseline {baseline} (plan {:?})",
+                                expect_edges
+                            );
+                            alarm_line = format!("; TRIPWIRE 6 {a} (baseline {baseline})");
+                            serde_json::json!({
+                                "alarm": a, "baseline_before": baseline,
+                                "total": total, "at": now,
+                            })
+                        }
+                        None => serde_json::json!({ "clear": true, "total": total, "at": now }),
+                    };
+                    self.db
+                        .put_report("org-edge-scan-alarm", &alarm_body.to_string(), now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    self.db.set_org_edge_baseline(total).await.map_err(|e| e.to_string())?;
+                }
                 self.db
                     .put_report("org-edge-scan", &wet.to_string(), now)
                     .await
@@ -3560,7 +3654,7 @@ impl Supervisor {
                      {} groups >=2, {} emitting; {} edges written ({} new, \
                      {} refreshed) of a {} census ({} e3-name + {} e3-xlang); \
                      stoplist skipped {} n2 + {} n3; exemplar org {} has {} edge(s); \
-                     {} edges stand, in {}s",
+                     {} edges stand, in {}s{alarm_line}",
                     if r.capped { " CAPPED" } else { "" },
                     r.keys_walked,
                     r.groups_ge2,
@@ -5036,6 +5130,39 @@ impl Supervisor {
                     // the issue-274 slicing it rides the DAILY chain instead — a
                     // weekly 100k-section slice stretched one cohort walk to ~3
                     // weeks (found mis-cadenced 2026-08-25; see enqueue_daily).
+
+                    // Tripwire 6's clock (issue 300 Stage 4 Unit 5): the weekly
+                    // WET edge scan refreshes last_seen, runs the monotone check,
+                    // and re-anchors the parity plan. Queued BEHIND data-quality
+                    // and the rehash probe (the queue serializes them); measured
+                    // full wet on prod 2026-08-30: 64 s census+writes over a
+                    // 1,498,485-edge census — noise against this chain's 39-min
+                    // budget, so the 09:35 margin argument above is untouched.
+                    // A refusal here (missing index after a bare rebuild, keys-
+                    // epoch drift after a deploy, stale plan) writes
+                    // org-edge-scan-alarm and shouts to the journal — a silently
+                    // stopped tripwire is the muted-probe failure. The BUILD job
+                    // is deliberately NOT scheduled: keys rebuild only on
+                    // semantics changes or after a bare rebuild, and a scan
+                    // refusing on a missing index is the operator's signal to
+                    // run it.
+                    if self.already_pending("scan-org-match-keys") {
+                        eprintln!(
+                            "[schedule] scan-org-match-keys already queued or running, \
+                             skipping this week"
+                        );
+                    } else {
+                        self.push(
+                            "scan-org-match-keys",
+                            format!(
+                                "scan-org-match-keys stoplist={} epoch={} (weekly)",
+                                SCAN_STOPLIST_CAP,
+                                ingest::crosswalk::NAME_KEY_EPOCH
+                            ),
+                            Spec::ScanOrgMatchKeys { dry_run: false, max_edges: None },
+                        )
+                        .await;
+                    }
                 }
 
                 // Step past this tick so the next computation lands on tomorrow.
@@ -6153,11 +6280,42 @@ mod tests {
         let msg = sup.run_spec(&job(7, false)).await.expect("wet");
         assert!(msg.contains("scan-org-match-keys (issue 300 Stage 4)"), "{msg}");
         assert!(sup.db().latest_report("org-edge-scan").await.unwrap().is_some());
+        // 7b. Tripwire 6 wiring: the completed wet anchored the baseline
+        //     and wrote a CLEAR verdict to the alarm surface.
+        let (alarm, _) =
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("alarm surface");
+        assert!(alarm.contains("\"clear\":true"), "{alarm}");
+        assert_eq!(sup.db().org_edge_baseline().await.unwrap(), 0, "anchored at the total");
         // 8. A keys rebuild after the plan was recorded → wet refuses on
-        //    lineage until a fresh dry census is reviewed.
+        //    lineage until a fresh dry census is reviewed — and the refusal
+        //    lands on the alarm surface (the muted-tripwire fix), not just
+        //    as a failed 03:xx job line.
         sup.db().put_report("org-match-keys-build", "{\"built_at\":456}", 456).await.unwrap();
         let err = sup.run_spec(&job(8, false)).await.expect_err("stale plan");
         assert!(err.contains("predates"), "{err}");
+        let (alarm, _) =
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("refusal alarm");
+        assert!(alarm.contains("predates"), "{alarm}");
+    }
+
+    /// Tripwire 6's decision ladder (issue 300 Stage 4 Unit 5): shrink is
+    /// always RED, growth alarms only past the volume ceiling or twice the
+    /// reviewed plan, and both the first anchor and weekly drift are quiet.
+    #[test]
+    fn edge_alarm_ladder() {
+        assert_eq!(edge_alarm(0, 1_498_485, 1_498_485), None, "the first anchor is not a spike");
+        assert_eq!(edge_alarm(1_000_000, 1_010_000, 1_000_000), None, "weekly drift is quiet");
+        assert_eq!(edge_alarm(100, 99, 1_000), Some("SHRUNK"), "edges never legitimately shrink");
+        assert_eq!(
+            edge_alarm(0, store::EDGE_VOLUME_CEILING as i64 + 1, u64::MAX / 4),
+            Some("SPIKE"),
+            "past the order-of-magnitude ceiling"
+        );
+        assert_eq!(
+            edge_alarm(1_000, 3_001, 1_000),
+            Some("SPIKE"),
+            "more than twice the reviewed plan"
+        );
     }
 
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only

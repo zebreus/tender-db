@@ -1694,6 +1694,9 @@ pub struct OrgEdgeScanReport {
     pub exemplar_edges: u64,
     pub exemplar_rules: Vec<String>,
     pub exemplar_peers: Vec<i64>,
+    /// Distinct states of the TABLE edges touching the exemplar — the
+    /// acceptance gate expects only 'open'.
+    pub exemplar_states: Vec<String>,
     /// A deterministic spread sample of the census — up to 20 concrete
     /// (org_a, org_b, rule, evidence) edges, every ⌈n/20⌉th in walk order —
     /// so the rollout's hand review (and every weekly review after it) can
@@ -3379,6 +3382,9 @@ impl Db {
     /// touching the resolved exemplar org, unioned across the in-RAM
     /// would-emit set (`ram`, so a DRY census is non-vacuous) and the
     /// standing edge table (one bounded scan of a ≤10^6-row table).
+    /// `exemplar_states` are the distinct STATES of the table rows — the
+    /// stage-acceptance gate reads "every touching edge state='open'"
+    /// (Unit 5), and a review decision showing up here is a finding.
     async fn probe_exemplar(
         &self,
         reader: &Connection,
@@ -3388,15 +3394,17 @@ impl Db {
         let Some(x) = report.exemplar_org else { return Ok(()) };
         let mut seen: std::collections::HashSet<(i64, i64, String)> =
             ram(x).into_iter().collect();
+        let mut states: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
         let mut rows = reader
             .query(
-                "SELECT org_a, org_b, rule FROM org_candidate_edges \
+                "SELECT org_a, org_b, rule, state FROM org_candidate_edges \
                   WHERE org_a = ? OR org_b = ?",
                 (Value::Integer(x), Value::Integer(x)),
             )
             .await?;
         while let Some(row) = rows.next().await? {
             seen.insert((int(&row, 0), int(&row, 1), text(&row, 2)));
+            states.insert(text(&row, 3));
         }
         let mut rules: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
         let mut peers: std::collections::BTreeSet<i64> = std::collections::BTreeSet::new();
@@ -3407,6 +3415,33 @@ impl Db {
         }
         report.exemplar_rules = rules.into_iter().collect();
         report.exemplar_peers = peers.into_iter().take(16).collect();
+        report.exemplar_states = states.into_iter().collect();
+        Ok(())
+    }
+
+    /// Tripwire 6's durable anchor (issue 300 Stage 4 Unit 5): the edge
+    /// count as of the last completed, uncapped wet scan. A durable row
+    /// rather than report-body diffing — reports get overwritten. Zeroed
+    /// by the bare org rebuild (`strip_organization_indexes`), the ONE
+    /// legitimate wholesale reset the monotone alarm must not fire on.
+    pub async fn org_edge_baseline(&self) -> turso::Result<i64> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query("SELECT org_edge_total FROM projection_state WHERE id = 0", ())
+            .await?;
+        match rows.next().await? {
+            Some(row) => Ok(int(&row, 0)),
+            None => Ok(0),
+        }
+    }
+
+    pub async fn set_org_edge_baseline(&self, total: i64) -> turso::Result<()> {
+        let conn = self.conn().await;
+        conn.execute(
+            "UPDATE projection_state SET org_edge_total = ? WHERE id = 0",
+            (Value::Integer(total),),
+        )
+        .await?;
         Ok(())
     }
 

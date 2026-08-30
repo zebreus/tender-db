@@ -380,6 +380,17 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
         assert_eq!(row.get_value(2).unwrap(), Value::Integer(2000), "last_seen bumps");
     }
 
+    // Unit 5's acceptance surfaces: the exemplar probe reports the TABLE
+    // states of touching edges (a review decision showing up here is a
+    // finding), and the tripwire-6 baseline round-trips durably.
+    let mut a = args(true, &stop, &progress);
+    a.exemplar_org = Some(1);
+    let r = db.scan_org_match_keys(a, 2500).await.unwrap();
+    assert_eq!(r.exemplar_states, vec!["approved".to_owned()], "the seeded review surfaces");
+    assert_eq!(db.org_edge_baseline().await.unwrap(), 0);
+    db.set_org_edge_baseline(7).await.unwrap();
+    assert_eq!(db.org_edge_baseline().await.unwrap(), 7);
+
     // Honest cancel: a stopped census plans nothing and writes nothing
     // more; the caller records no report either way.
     let cancel = || true;
