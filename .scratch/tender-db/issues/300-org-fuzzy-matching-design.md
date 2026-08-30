@@ -1036,3 +1036,28 @@ dry-run-first, exemplar-gated, capped, logged with provenance, parity-checked
 against its own dry-run, reversible through an existing repair shape, and
 watched by tripwires that include a refold canary and the distinct-name
 growth guard.
+
+**SUNDAY ACCEPTANCE READS (2026-08-30 09:5x, post-daily-chain).** The
+standing weekly checks, all on the deployed 9524f64:
+
+- **Prevention (issue 310 / Stage 2)**: fresh r2-census (job 489) reads
+  **633 same-country groups >=2** against the 634 baseline — twins are NOT
+  growing, which is the acceptance criterion. PASS.
+- **R3 pool (Stage 3)**: 3,529 NULL-country identifier-bearing orgs —
+  unchanged from the post-merge figure, so the resolver is not refilling
+  the pool. PASS.
+- **Tripwire 6 (Stage 4 Unit 5)**: org-edge-scan-alarm reads
+  `{"clear":true,"total":1498485}`, baseline anchored. PASS.
+- **Issue 308 reveal gauges**: /metrics due=100, revealed=2, awaiting=76,
+  broken=22; hand-sum 2+76+22 = 100 = due, and every gauge equals the
+  reveal-wrap report body. PASS.
+- **Daily chain**: jobs 482-486 (probe/process/fetch-rates/project/
+  reveal-recheck) all ok at 07:35, journal clean.
+
+One number did NOT close: the same census shows keyed_e1 and
+orgs_in_groups both down exactly 1,830 since the 08-29 census, which
+nothing I changed accounts for (my strips can explain at most ~162, and
+merges, the consortium lexicon and the checksum tranche are all ruled
+out). Filed as **issue 313** with the decisive snapshot experiment rather
+than guessed at; it lowers auto-merge candidates rather than losing data,
+so the acceptances above stand.
