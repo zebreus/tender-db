@@ -317,6 +317,11 @@ enum Spec {
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
+    /// Issue 312: the symmetric UNDO for `ApplyCaseReviews` — restore the
+    /// identifiers whose pre-image value is a platform GUID, which the
+    /// measurement showed were linking keys rather than false merge keys.
+    /// Writes entity rows, so `dry_run` defaults TRUE like its twin.
+    UnapplyCaseReviews { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
     /// E3 name-equality edges into `org_candidate_edges`, advisory only
@@ -887,6 +892,26 @@ impl Supervisor {
                 Ok(vec![
                     self.push("apply-case-reviews", params, Spec::ApplyCaseReviews { dry_run })
                         .await,
+                ])
+            }
+            // Issue 312: undo the strips whose pre-image was a platform
+            // GUID (a linking key, not a merge key — measured). Selection
+            // is by value SHAPE, never by the reviewer's diagnosis prose.
+            "unapply-case-reviews" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "unapply-case-reviews dry-run (select=uuid-v4)"
+                } else {
+                    "unapply-case-reviews (select=uuid-v4)"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push(
+                        "unapply-case-reviews",
+                        params,
+                        Spec::UnapplyCaseReviews { dry_run },
+                    )
+                    .await,
                 ])
             }
             // Issue 300 Stage 4: (re)build the org_match_keys scratch
@@ -3314,6 +3339,52 @@ impl Supervisor {
                     r.pending,
                     r.eligible,
                     r.stripped,
+                    r.noop
+                ))
+            }
+            Spec::UnapplyCaseReviews { dry_run } => {
+                let dry_run = *dry_run;
+                self.set_phase(
+                    if dry_run { "planning" } else { "restoring" },
+                    None,
+                    None,
+                    "walking applied strips for platform-GUID pre-images".to_owned(),
+                );
+                let r = self
+                    .db
+                    .unapply_case_reviews(
+                        ingest::idgate::uuid_v4,
+                        dry_run,
+                        Some(job.id as i64),
+                        store::now_unix(),
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if dry_run {
+                    // The CONCRETE restore list, reviewable before the
+                    // reversal runs — the same bar the strip plan had.
+                    let now = store::now_unix();
+                    let plan = serde_json::json!({
+                        "applied": r.applied, "selected": r.selected,
+                        "would_restore": r.restored, "noop": r.noop,
+                        "restores": r.plan.iter().map(|(id, name, ident)| {
+                            serde_json::json!({ "org_id": id, "name": name, "identifier": ident })
+                        }).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("case-unapply-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                }
+                Ok(format!(
+                    "unapply-case-reviews (issue 312){}: {} applied verdicts examined, \
+                     {} strips with a platform-GUID pre-image; {} identifiers restored, \
+                     {} no-ops (org gone or an identifier written since)",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.applied,
+                    r.selected,
+                    r.restored,
                     r.noop
                 ))
             }

@@ -177,6 +177,28 @@ pub fn condemns(country: Option<&str>, kind: &str, value: &str) -> bool {
         || (c.checksum == Checksum::Fail && hard_scheme(c.scheme))
 }
 
+/// A version-4 UUID sitting in an identifier field: a submission
+/// platform's own record key, leaked into the id slot (dashed, or the
+/// undashed 32-hex form the corpus stores).
+///
+/// DELIBERATELY NOT part of [`condemns`] — issue 312 measured the class
+/// before building the obvious gate and the conclusion reversed: 75,555
+/// org rows carry one across 75,548 DISTINCT values, so the class merges
+/// almost nothing falsely (which is all `condemns` prevents), while 93% of
+/// a reviewed sample's GUID orgs span several notices at a mean of 15.3
+/// mentions — the key is doing the LINKING. Condemning it would fragment
+/// ~75k orgs to prevent ~0 bad merges. It lives here as the selector for
+/// the 312 restore pass, and as the shape a future `platform-guid`
+/// identifier kind will classify on.
+pub fn uuid_v4(value: &str) -> bool {
+    let hex: String = value.chars().filter(|c| *c != '-').collect();
+    if hex.len() != 32 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return false;
+    }
+    let b = hex.as_bytes();
+    b[12] == b'4' && matches!(b[16].to_ascii_lowercase(), b'8' | b'9' | b'a' | b'b')
+}
+
 /// The placeholder lexicon, seeded from the measured top-30 (probe §2) and
 /// the census run-1330 findings: NIMATn (SI e-procurement family — 794
 /// measured strangers on one id), ORGnnn/ORG-0001 (eForms technical ids),
@@ -548,6 +570,33 @@ pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Issue 312: the platform-GUID shape. Specimens are REAL values the
+    /// issue-311 campaign reviewed case by case (orgs 22310065, 22149631,
+    /// 22495412), stored undashed as the corpus holds them. The predicate
+    /// must stay OUT of the gate: the measurement says this class links
+    /// rather than false-merges.
+    #[test]
+    fn v4_uuids_are_recognised_but_never_condemned() {
+        for real in [
+            "DA23095600854B59BC39FE71D8AF0A7C",
+            "2B0E62BAFDC94209A833C559DC25A351",
+            "1271A766403E4FB8AE5E0974483504A6",
+        ] {
+            assert!(uuid_v4(real), "{real} is a v4 platform key");
+            assert!(
+                !condemns(Some("DE"), "national", real),
+                "{real} must KEEP merge-key status (issue 312: it links, it does not merge)"
+            );
+        }
+        assert!(uuid_v4("da230956-0085-4b59-bc39-fe71d8af0a7c"), "the canonical dashed form too");
+        // Narrow by construction: version nibble 1, then a non-RFC variant.
+        assert!(!uuid_v4("DA23095600851B59BC39FE71D8AF0A7C"), "v1 is not the leaked class");
+        assert!(!uuid_v4("DA23095600854B597C39FE71D8AF0A7C"), "variant 7 is not RFC-4122");
+        assert!(!uuid_v4("DA23095600854B59BC39FE71D8AF0A7"), "31 chars");
+        assert!(!uuid_v4("ZA23095600854B59BC39FE71D8AF0A7C"), "non-hex lead");
+        assert!(!uuid_v4("DE144202483"), "a real VAT is not a GUID");
+    }
 
     /// Stage 3's anchoring probe: a Luhn-valid 14-digit anchors uniquely to
     /// its truncated SIREN (the CNFPT NULL class); an 8-digit value anchors

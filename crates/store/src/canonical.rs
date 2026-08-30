@@ -1598,6 +1598,24 @@ pub struct CaseApplyReport {
     pub plan: Vec<(i64, String, String)>,
 }
 
+/// What the issue-312 unapply pass did (or would do, dry).
+#[derive(Debug, Default, Clone)]
+pub struct CaseUnapplyReport {
+    /// Applied review rows examined.
+    pub applied: u64,
+    /// Applied STRIPS whose pre-image value the selector accepts.
+    pub selected: u64,
+    /// Identifiers restored from their pre-image (wet) / that would be (dry).
+    pub restored: u64,
+    /// Selected rows the guard refused: the org is gone, or something has
+    /// written an identifier since the strip — never clobbered.
+    pub noop: u64,
+    /// Dry-run only: the CONCRETE restore list — (org id, name, value) — so
+    /// the reversal is reviewable before it runs, exactly like the strip
+    /// plan it undoes.
+    pub plan: Vec<(i64, String, String)>,
+}
+
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
 #[derive(Debug, Default, Clone)]
@@ -7321,6 +7339,178 @@ impl Db {
         Ok(report)
     }
 
+    /// Issue 312: restore identifiers a case-review apply pass stripped —
+    /// the subset whose PRE-IMAGE VALUE `select` accepts.
+    ///
+    /// The issue-311 campaign's 442 strips each removed a false claim (an
+    /// `identifier_kind='national'` asserting a register entry that does not
+    /// exist), and for the lead-member-VAT, fused-VAT, phone and address
+    /// classes that is the whole story. But 280 of them held a platform's
+    /// v4-GUID record key, and the measurement that followed (issue 312)
+    /// reversed the reading: that class merges almost nothing falsely
+    /// (75,548 distinct values over 75,555 rows) while doing real LINKING
+    /// (93% of a reviewed sample's GUID orgs span several notices, mean 15.3
+    /// mentions) — so those strips cost identity and bought nothing.
+    ///
+    /// `select` is injected because store owns no linguistics, and it sees
+    /// the pre-image VALUE rather than the reviewer's prose deliberately:
+    /// the campaign filed this one class under four different diagnosis
+    /// strings ("other" 209, "platform-guid" 45, "other (uuid-placeholder)"
+    /// 25, one mislabelled), so the value's SHAPE is the only honest
+    /// selector.
+    ///
+    /// Two guards, both load-bearing: a row is restored only while the org's
+    /// identifier is still NULL (anything written since wins — a restore
+    /// must never clobber newer truth), and the review row KEEPS its
+    /// `applied_at` (clearing it would drop the verdict back into the
+    /// pending set and the next apply run would strip it again, forever).
+    /// `applied_action` is rewritten to record the reversal, which also
+    /// makes a second unapply run a no-op.
+    pub async fn unapply_case_reviews(
+        &self,
+        select: fn(&str) -> bool,
+        dry_run: bool,
+        job_id: Option<i64>,
+        now: i64,
+    ) -> turso::Result<CaseUnapplyReport> {
+        let conn = self.conn().await;
+        let mut report = CaseUnapplyReport::default();
+        struct Restore {
+            org: i64,
+            cohort: String,
+            kind: Option<String>,
+            value: String,
+        }
+        let mut todo: Vec<Restore> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT case_org_id, cohort, applied_action FROM org_case_reviews \
+                      WHERE applied_at IS NOT NULL",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                report.applied += 1;
+                let action = text(&row, 2);
+                // Only strips are reversible; no-op stamps and rows this
+                // pass already restored carry a different action.
+                if json_field(&action, "action").as_deref() != Some("identifier-stripped") {
+                    continue;
+                }
+                let Some(value) = json_field(&action, "was_value") else { continue };
+                if !select(&value) {
+                    continue;
+                }
+                report.selected += 1;
+                todo.push(Restore {
+                    org: int(&row, 0),
+                    cohort: text(&row, 1),
+                    kind: json_field(&action, "was_kind").filter(|k| !k.is_empty()),
+                    value,
+                });
+            }
+        }
+
+        if dry_run {
+            for r in &todo {
+                let mut rows = conn
+                    .query(
+                        "SELECT name, identifier FROM organizations WHERE id = ?",
+                        (Value::Integer(r.org),),
+                    )
+                    .await?;
+                match rows.next().await? {
+                    Some(row) if matches!(row.get_value(1), Ok(Value::Null)) => {
+                        report.restored += 1;
+                        report.plan.push((r.org, text(&row, 0), r.value.clone()));
+                    }
+                    _ => report.noop += 1,
+                }
+            }
+            return Ok(report);
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for r in &todo {
+                // The WHERE clause IS the guard: a row that gained an
+                // identifier since the strip changes nothing here.
+                let changed = conn
+                    .execute(
+                        "UPDATE organizations SET identifier = ?, identifier_kind = ? \
+                          WHERE id = ? AND identifier IS NULL",
+                        (
+                            t(&r.value),
+                            match &r.kind {
+                                Some(k) => t(k),
+                                None => Value::Null,
+                            },
+                            Value::Integer(r.org),
+                        ),
+                    )
+                    .await?;
+                if changed == 0 {
+                    report.noop += 1;
+                    continue;
+                }
+                report.restored += 1;
+                append_change(&conn, "organization", r.org, None, "changed", now).await?;
+                let esc = |s: &str| -> String {
+                    s.chars()
+                        .filter(|c| !c.is_control())
+                        .flat_map(|c| match c {
+                            '\\' => vec!['\\', '\\'],
+                            '"' => vec!['\\', '"'],
+                            c => vec![c],
+                        })
+                        .collect()
+                };
+                let action = format!(
+                    "{{\"action\":\"identifier-restored\",\"restored_kind\":\"{}\",\
+                     \"restored_value\":\"{}\",\"reason\":\"issue 312: the strip removed a \
+                     linking platform key, not a false merge key\"}}",
+                    esc(r.kind.as_deref().unwrap_or("")),
+                    esc(&r.value)
+                );
+                // applied_at STAYS SET: a restored verdict must never fall
+                // back into the pending set and be re-stripped next run.
+                conn.execute(
+                    "UPDATE org_case_reviews SET applied_action = ?, job_id = ? \
+                      WHERE case_org_id = ? AND cohort = ?",
+                    (
+                        Value::Text(action),
+                        match job_id {
+                            Some(j) => Value::Integer(j),
+                            None => Value::Null,
+                        },
+                        Value::Integer(r.org),
+                        t(&r.cohort),
+                    ),
+                )
+                .await?;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        if report.restored > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
     /// One batch of the issue-259 landing repair. The 2026-08-20 nested-org fix
     /// changed what `mentions()` EMITS, but `resolve_mentions`' idempotency map
     /// keeps an already-recorded (notice, section) on its Organization by
@@ -10080,6 +10270,25 @@ pub(crate) fn placeholders(n: usize) -> String {
         s.push('?');
     }
     s
+}
+
+/// Read one string field out of a hand-built JSON object (the merge-log /
+/// apply-action shape: flat, `"key":"value"`, with `\\` and `\"` the only
+/// escapes the writers emit). Returns the UNESCAPED value — store carries
+/// no serde, and these bodies are ours, not foreign input.
+fn json_field(body: &str, key: &str) -> Option<String> {
+    let needle = format!("\"{key}\":\"");
+    let start = body.find(&needle)? + needle.len();
+    let mut out = String::new();
+    let mut chars = body[start..].chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => return Some(out),
+            '\\' => out.push(chars.next()?),
+            c => out.push(c),
+        }
+    }
+    None
 }
 
 /// SQLite's default bind-variable ceiling is 999; stay well under it so an
