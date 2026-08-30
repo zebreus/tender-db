@@ -1,7 +1,7 @@
 # 317 — The 311 campaign's unfinished halves: re-homing, escalations, the medium band
 
-Status: Unit B DONE + Unit C's cheap half DONE (93d8704, 2026-08-30);
-Unit A still open
+Status: Unit B DONE, Unit C's cheap half DONE (93d8704); Unit A MEASURED
+(8cf84f5, prod job 1411) — the repair itself is still open
 Kind: data quality (organization layer)
 Relates to: 311 (produced them), 312, 300
 
@@ -128,3 +128,48 @@ strip in the crosswalk would canonicalize them — and it is measured here at
 
 The escalations list (20, none with a missing org row) is now surfaced
 whole; nothing consumes it yet, which stays Unit B's remainder.
+
+
+## UNIT A MEASURED (2026-08-30, prod job 1411)
+
+`fusion-census` derives the fusion shape from the data instead of from the
+campaign's prose:
+
+    456 applied case rows, 456 with mentions;
+    102 hold at least one mention naming somebody ELSE, over 585 such mentions
+
+The signal reproduces the campaign's own cases without being told about
+them. Org 9610149, "Bietergemeinschaft Dobler / Oberall", holds 20 of 21
+judgeable mentions naming `Dobler GmbH & Co. KG Bauunternehmung` — the
+Dobler case the pilot found by reading. Org 13011025 holds **28 of 29**
+naming `Dipl.Ing. Wilhelm Sedlak Gesellschaft m.b.H.`.
+
+**585 is an UPPER BOUND on the re-homing workload, not the workload.**
+Reading the candidates, off-name mentions split two ways:
+
+- **The fusion proper** — the member alone, repeatedly: `MIV GmbH` (14
+  mentions) under a vehicle named for the full "Mecklenburgisches
+  Ingenieurbüro für Verkehrsbau"; `HERMANNS HTI-Bau GmbH u. Co. KG` (15);
+  `a+r Architekten GmbH` (10). These are the ones to re-home.
+- **The vehicle under another spelling** — e.g. org 22559285's second group
+  is `Bietergemeinschaft Hermanns HTI-Bau GmbH u. Co. KG / Birckha…`, which
+  IS the vehicle, just longer than the head name, so N2 does not collapse
+  it. Re-homing those would be a fresh error.
+
+Separating them is exactly the per-case judgement the census refuses to
+make, and it is why this stays a review campaign rather than a rule.
+
+**A class the census surfaced that the campaign did not name.** At 28-of-29
+and 20-of-21, some of these rows are not vehicles holding a member's
+mentions — they are the MEMBER'S row wearing a consortium name. That is the
+existing `member-row-mislabelled` verdict (58 cases), and for those the
+repair is not re-homing at all: it is renaming the row to the member and
+letting the vehicle be minted separately, if it is ever needed.
+
+**Sizing**: 102 cases at the batch-v2 rate (~5.3k tokens/case) is about
+540k tokens — the cheapest campaign on the board by an order of magnitude,
+and the one that repairs records the API is currently serving wrong.
+
+Still not built: the re-homing writer itself. It re-points mention rows
+between orgs, which is dissolve-adjacent, so it needs a dry-first plan and
+its own panel round — the bar every write path in this campaign has met.
