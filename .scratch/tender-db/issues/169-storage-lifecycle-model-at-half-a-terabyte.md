@@ -74,3 +74,9 @@ trigger recommendation (prune superseded-epoch rows at 85% /data or ~175M
 changes rows) — belongs next to the issue-46 epoch decision. Remaining:
 Lennart decisions (C17 trigger, second-volume policy, housekeeping ack) +
 the COW-reclaim experiment.
+
+2026-08-30 05:24: the weekly snapshot service pruned the two superseded
+snapshots itself (tender-db-1787598039 + tender-db-1787374320, kept 4 -> 2)
+while writing the fresh weekly reflink — the classifier-blocked manual rm
+was never needed; the service's own retention did it. /data free 549G ->
+713G. Standing state: 2 snapshots (08-28 + 08-30), serving DB 490G.
