@@ -1,7 +1,7 @@
 # 312 — Platform GUIDs in the identifier slot: measured, NOT a deny-floor class
 
 Status: RESOLVED 2026-08-30 — step 0 restored the strips, step 1a shipped
-(GUIDs excluded from the merge keyspace), steps 1b/2 DECLINED on measurementnt
+(GUIDs excluded from the merge keyspace), steps 1b/2 DECLINED on measurement
 Kind: data quality / identity semantics
 Relates to: 311 (found by the review campaign), 300 (canonical keys), 234
 
@@ -121,8 +121,8 @@ The line states the invariant so it survives that change.
 reclassification** (this issue's original steps 1-2). The measurement
 removes the operational case for it:
 
-- The merge exposure it was meant to fix is ~8 rows, and step 1a closed it
-  outright.
+- The merge exposure it was meant to fix measured ZERO rows (above), and
+  step 1a now states the invariant that keeps it zero.
 - What remains is truthfulness of an API field — real, but not worth the
   risk it carries: the resolver's binding key INCLUDES `kind`, so changing
   stored rows to a new kind splits them from incoming mentions until a
