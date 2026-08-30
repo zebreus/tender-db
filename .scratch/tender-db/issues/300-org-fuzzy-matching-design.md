@@ -519,6 +519,23 @@ health green. Residual Stage-3 material: 987 anchored-uncorroborated
 values — rescue needs a corroboration-decides multi-anchor design),
 441 unanchored, 358 register-prefixed, 14 multi-target.
 
+**STAGE 4 UNITS 1-3 BUILT + KEY SATELLITE LIVE (2026-08-30 ~01:0x,
+rev a92149f, jobs 469/470).** n3_key (legal-form canonicalization over
+the N2 stream, one family table with the veto), the two Stage-4
+tables, and the windowed build job (exactly-once watermark-in-txn,
+NAME_KEY_EPOCH resume guard, self-healing IF-NOT-EXISTS finish) all
+landed gated. Prod: dry measured 12,586,144 orgs / 16,950,165 names
+in 33s projecting 13.0M rows; wet built **13,034,812 rows
+(11,308,820 n2 + 1,725,992 n3) + covering index in 85 SECONDS** —
+preview-exact, and two orders of magnitude under the plan's <2h
+fear (the ops-panel sizing concerns dissolved on contact with the
+box: disk delta ~2GB, WAL bounded by per-window truncates). 1.42M
+names normalize to empty (the nameless-provisional class, expected).
+N3 coverage 13.7% of orgs. NEXT: Unit 4 — the scan-org-match-keys
+job (B-NAME/B-XLANG E3 edges, stoplist >20 with counter, bounds
+check, org-23294544 exemplar) with the walk-termination and
+bind-arithmetic amendments folded in.
+
 **STAGE 4 OPENED (2026-08-29 ~19:4x): implementation plan of record
 landed** — see `300-stage4-implementation-plan.md` (workflow-drafted:
 2 mappers → planner → 2 attackers; 6 units across ~4 sessions, with
