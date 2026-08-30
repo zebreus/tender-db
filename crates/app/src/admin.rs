@@ -10,7 +10,7 @@
 
 use crate::supervisor::{Cancelled, JobRequest, Supervisor};
 use axum::Router;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, post};
@@ -145,11 +145,29 @@ async fn enqueue(
 }
 
 /// `GET /admin/jobs` — the queue, the running job's progress, and recent runs.
-async fn list(State(sup): State<Arc<Supervisor>>, headers: HeaderMap) -> Response {
+/// `GET /admin/jobs?limit=` — how deep into the job log to read. Optional;
+/// the supervisor clamps it and falls back to its own default, so a missing
+/// or absurd value is never an error (issue 313: the depth used to be a
+/// hard-coded 20 that silently ignored this parameter, which hid a day of
+/// history during an incident hunt).
+#[derive(serde::Deserialize, Default)]
+struct ListParams {
+    limit: Option<i64>,
+}
+
+async fn list(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Query(params): Query<ListParams>,
+) -> Response {
     if let Some(response) = deny(&headers) {
         return response;
     }
-    match sup.ingestion().await {
+    let state = match params.limit {
+        Some(n) => sup.ingestion_limited(n).await,
+        None => sup.ingestion().await,
+    };
+    match state {
         Ok(state) => axum::Json(state).into_response(),
         Err(e) => error(StatusCode::INTERNAL_SERVER_ERROR, &e.to_string()),
     }

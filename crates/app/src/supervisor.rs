@@ -30,6 +30,18 @@ use tokio::sync::{Notify, OnceCell};
 /// How many recent runs the dashboard/admin log shows.
 const RECENT_RUNS: i64 = 20;
 
+/// The deepest job-log page `GET /admin/jobs?limit=` will serve.
+///
+/// [`RECENT_RUNS`] is the DEFAULT, not a ceiling — and for a while it was
+/// silently both, which cost an hour on 2026-08-30: a census delta needed
+/// "what touched the org layer yesterday?", every `?limit=` was ignored, 20
+/// rows covered only back to 00:11, and the answer finally came from report
+/// `computed_at` stamps by accident. The neighbouring [`CATCH_UP_SCAN`]
+/// comment had already measured the same trap ("those 20 rows covered 18.9
+/// hours"). Bounded, because this is a reader-pool query an operator can
+/// aim at a 12.6M-row corpus.
+const JOB_LOG_MAX: i64 = 200;
+
 /// How far back the startup catch-up reads the job log for this morning's probe
 /// (issue 245). Much deeper than [`RECENT_RUNS`] on purpose: a maintenance-heavy
 /// morning fills 20 rows in under a day — on 2026-08-19 those 20 rows covered 18.9
@@ -1734,6 +1746,15 @@ impl Supervisor {
     /// The full Supervisor snapshot the admin API and dashboard render: the
     /// running job, the queue, and the persisted recent-run log.
     pub async fn ingestion(&self) -> turso::Result<Ingestion> {
+        self.ingestion_limited(RECENT_RUNS).await
+    }
+
+    /// [`Supervisor::ingestion`] with an operator-chosen job-log depth,
+    /// clamped to `1..=JOB_LOG_MAX`. A caller asking for more than the cap
+    /// gets the cap rather than an error — the point is that the depth is
+    /// REACHABLE, not that the operator guessed the bound.
+    pub async fn ingestion_limited(&self, limit: i64) -> turso::Result<Ingestion> {
+        let limit = limit.clamp(1, JOB_LOG_MAX);
         // Snapshot the in-memory state into owned values FIRST: the std lock
         // guards must not be held across the await below, or the future stops
         // being `Send` and axum rejects the handler.
@@ -1741,7 +1762,7 @@ impl Supervisor {
         let queued = self.queued();
         // `recent_job_runs` reads through the store's reader pool, not the writer
         // an ingestion job holds — so this never queues behind it (issue 20).
-        let recent = self.db.recent_job_runs(RECENT_RUNS).await?;
+        let recent = self.db.recent_job_runs(limit).await?;
         Ok(Ingestion { current, queued, recent, measured_at: store::now_unix() })
     }
 
@@ -5213,6 +5234,25 @@ impl Supervisor {
                 // A pre-dawn Berlin tick falls on the same UTC calendar day at either
                 // DST offset, so the UTC day number names the Berlin weekday.
                 if weekday_of(tick.div_euclid(86_400)) == weekday {
+                    self.run_report_tick().await;
+                }
+
+                // Step past this tick so the next computation lands on tomorrow.
+                tokio::time::sleep(std::time::Duration::from_secs(61)).await;
+            }
+        });
+    }
+
+    /// Everything the weekly pre-dawn tick enqueues, as a callable unit.
+    ///
+    /// Extracted from the scheduler loop so a TEST can prove the branch
+    /// enqueues what it claims (issue 313): the loop itself sleeps until a
+    /// wall-clock Sunday, so for as long as this body lived inside it, the
+    /// only proof that tripwire 6's weekly clock was wired at all would have
+    /// been waiting a week and seeing whether it fired.
+    async fn run_report_tick(&self) {
+        {
+            {
                     // Never stack two: if last week's run is still waiting behind
                     // something long, a second one would double a 36-minute job for
                     // one report that gets overwritten anyway.
@@ -5280,12 +5320,8 @@ impl Supervisor {
                         )
                         .await;
                     }
-                }
-
-                // Step past this tick so the next computation lands on tomorrow.
-                tokio::time::sleep(std::time::Duration::from_secs(61)).await;
             }
-        });
+        }
     }
 
     /// How often the canonical layer's presence is observed (issue 133 / #38).
@@ -6521,6 +6557,41 @@ mod tests {
         let (alarm, _) =
             sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("clear written");
         assert!(alarm.contains("\"clear\":true"), "{alarm}");
+    }
+
+    /// Issue 313: the weekly pre-dawn tick must actually enqueue all three
+    /// of its jobs, and must not stack a second copy of any of them. Until
+    /// this test existed the body lived inside a loop that sleeps until a
+    /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
+    /// exercised by hand — a wiring slip would have surfaced as silence.
+    #[tokio::test]
+    async fn the_weekly_report_tick_enqueues_its_three_jobs_once_each() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup.run_report_tick().await;
+        let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
+        assert_eq!(kinds, vec!["data-quality", "rehash-probe", "scan-org-match-keys"]);
+        // The scan rides as a WET run — it IS the tripwire's clock, and a dry
+        // one would refresh nothing.
+        let scan = sup.queued().into_iter().find(|j| j.kind == "scan-org-match-keys").unwrap();
+        assert!(scan.params.contains("(weekly)"), "{}", scan.params);
+        assert!(!scan.params.contains("dry-run"), "the weekly scan must be wet: {}", scan.params);
+
+        // A second tick with last week's work still queued stacks nothing
+        // (the issue-282 already_pending guard).
+        sup.run_report_tick().await;
+        assert_eq!(sup.queued().len(), 3, "already_pending must stop the double enqueue");
+    }
+
+    /// Issue 313: the job-log depth is an operator-reachable parameter now,
+    /// clamped rather than rejected.
+    #[tokio::test]
+    async fn the_job_log_depth_is_reachable_and_clamped() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        for ask in [1i64, 50, JOB_LOG_MAX, JOB_LOG_MAX * 10, 0, -7] {
+            sup.ingestion_limited(ask).await.expect("any depth answers");
+        }
+        assert_eq!(JOB_LOG_MAX.clamp(1, JOB_LOG_MAX), JOB_LOG_MAX);
+        assert!(JOB_LOG_MAX > RECENT_RUNS, "the cap must exceed the default to be worth asking for");
     }
 
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only
