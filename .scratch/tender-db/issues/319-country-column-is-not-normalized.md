@@ -1,6 +1,7 @@
 # 319 — The organization country column holds alpha-3 codes and free text
 
-Status: ready-for-agent (measured 2026-08-30 on prod)
+Status: org-layer fix BUILT and gated (ebbfaff), awaiting panel + deploy;
+mention layer measured and NOT yet fixed; the VU/GY class untouched
 Kind: data quality / API correctness (organization layer)
 Relates to: 300 (R2 keys on country), 314 (the edge census surfaced it), 230
 
@@ -70,3 +71,54 @@ allow-list. It is one indexed GROUP BY (measured: it completes inside the
 /v1/sql 10 s cap; the LENGTH() form does NOT — it cannot use the index and
 times out), and a non-zero result means a new source started publishing a
 shape nothing folds.
+
+
+## What ebbfaff actually fixed, and what it did not
+
+**Diagnosis corrected first.** The fold was not missing — `canonical_country`
+has existed since issue 48. Its alpha-3 table was HAND-PICKED (51 entries:
+the EU-27, near-Europe, and "common third countries seen in TED supplier
+data"), so the other 151 alpha-3 codes fell through the `None => up` arm
+that preserves unknown values. The bug was a partial allow-list wearing the
+shape of a complete one.
+
+The table is now generated from `/usr/share/iso-codes/json/iso_3166-1.json`
+(249 assignments) plus a 425-entry name table. Checked before replacing:
+the old table disagreed with ISO on NOTHING and carried exactly one entry
+ISO does not have — `XKX → XK`, Kosovo, user-assigned — which stays a hand
+arm beside `UK → GB` and `EL → GR`.
+
+`fold-org-countries` backfills the standing rows: one index-served GROUP BY,
+then an indexed range update per value. It rewrites a LABEL and never
+identity, so rows that land on an identity that already stands are counted
+and left to R2.
+
+## The mention layer carries the same values (measured, NOT fixed)
+
+`organization_mentions.country` holds the unfolded strings too, and for one
+class it is far bigger than the org layer:
+
+    LUXEMBOURG  151 mentions   (vs 1 org row)
+    MCO          67
+    SEN          38
+    GRL          14
+
+That is 270 mention rows for four codes alone. Two reasons it is a separate
+unit rather than a wider `WHERE` clause here:
+
+1. **Reachability.** Mentions of an AFFECTED org are indexed
+   (`organization_mentions_org`), so folding those is cheap. A mention whose
+   own country is stale while its org's is fine is NOT reachable that way,
+   and finding it needs a scan of the whole mention table.
+2. **Blast radius.** Mentions are the immutable evidence layer; the R2/R3
+   walls key their evidence by mention country. Rewriting them deserves its
+   own dry plan and its own panel round, not a rider on a job that was
+   reviewed for the org table.
+
+## Still untouched: the VU/GY class
+
+143 rows whose country code is well-formed but wrong for the entity
+(Bulgarian and British organizations under Vanuatu and Guyana). No shape
+check can catch these — the value has to be wrong against the entity. Trace
+the parse that produced them before deciding whether this is a per-case
+review class or a mapping bug.
