@@ -1759,6 +1759,177 @@ pub struct FusionReport {
     pub stopped: bool,
 }
 
+/// One candidate destination for an off-name group (issue 317 Unit A).
+///
+/// Found through the `org_match_keys` N2 satellite, which is the same
+/// normalization the census groups by — so a group and its destinations are
+/// the same equality, not two spellings of one.
+#[derive(Debug, Default, Clone)]
+pub struct RehomingTarget {
+    pub org: i64,
+    pub name: String,
+    pub country: Option<String>,
+    pub identifier_kind: Option<String>,
+    pub identifier: Option<String>,
+    /// How many mentions the destination already holds, counted to a cap
+    /// (`saturated` says the count stopped there). A standing row with a
+    /// history reads differently from a one-mention stub that some other
+    /// notice's typo minted, and the reviewer needs to tell them apart.
+    pub mentions: u64,
+    pub saturated: bool,
+    /// The key matched a SATELLITE name, not this row's head — so the name
+    /// the reviewer reads here is not the name the match was made on.
+    pub via_alias: bool,
+    /// This row's identifier shares its digit body with one a mention in the
+    /// group publishes: the corroboration that tells two same-named
+    /// companies apart, computed from rows already in hand.
+    pub identifier_match: bool,
+}
+
+/// One off-name group with the destinations a reviewer could send it to
+/// (issue 317 Unit A).
+#[derive(Debug, Default, Clone)]
+pub struct RehomingGroup {
+    /// The N2 key the group is defined by.
+    pub key: String,
+    /// The modal spelling of it — what the reviewer reads.
+    pub name: String,
+    pub mentions: u64,
+    /// Standing org rows carrying this key, ranked and capped. EMPTY when
+    /// `generic_key`: a shared literal has carriers, not destinations.
+    pub targets: Vec<RehomingTarget>,
+    /// Standing rows carrying the key, counted to the genericness wall.
+    pub target_total: u64,
+    /// The key is carried by more rows than the wall allows — it is a shared
+    /// literal (the "Gymnázium" class), and no destination is offered.
+    pub generic_key: bool,
+}
+
+/// One off-name mention awaiting a verdict (issue 317 Unit A). Addressed
+/// exactly as `org_mention_rehoming` keys it, so a packet row can be
+/// returned as a verdict without a second lookup.
+#[derive(Debug, Default, Clone)]
+pub struct RehomingMention {
+    pub notice_id: i64,
+    pub section_id: String,
+    pub name: String,
+    /// The N2 key, so a mention ties to its group without re-normalizing.
+    pub key: String,
+    pub country: Option<String>,
+    /// What the notice published in the identifier slot for this mention —
+    /// the evidence that tells "the member alone" from "the vehicle under a
+    /// longer spelling", which a name and a count cannot.
+    pub raw_identifier: Option<String>,
+    pub scheme: Option<String>,
+    /// Its group survived the per-case cap and is listed above. When false
+    /// the address is still here, but with no destinations beside it — which
+    /// is not the same as having none.
+    pub group_shown: bool,
+    /// How many organizations the SAME NOTICE names, counted to a small cap.
+    /// This is the discriminator the packet exists to hand over: a notice
+    /// that names one organization and calls it by the member's name is the
+    /// fusion proper; one that names seven is a consortium listing, where the
+    /// vehicle under a longer spelling is the likelier reading. Neither a
+    /// name nor a count of mentions can tell those apart.
+    pub notice_orgs: u64,
+}
+
+/// A recorded verdict `apply-rehoming` can never execute as it stands
+/// (issue 317 Unit A). Not decided and not open: without this list it would
+/// simply vanish from the packet, and the campaign would read a mention that
+/// never moved as one it had finished.
+#[derive(Debug, Default, Clone)]
+pub struct RehomingParked {
+    pub case_org: i64,
+    pub notice_id: i64,
+    pub section_id: String,
+    pub action: String,
+    pub confidence: String,
+    pub target_org_id: Option<i64>,
+    pub target_name: Option<String>,
+    /// Why the apply job will not act on it — the confidence bar, a missing
+    /// destination, a destination that no longer stands, or its own recorded
+    /// no-op stamp.
+    pub reason: String,
+}
+
+/// One reviewable case: a case-review org holding mentions that name
+/// somebody else (issue 317 Unit A).
+#[derive(Debug, Default, Clone)]
+pub struct RehomingCase {
+    pub org: i64,
+    /// One of this org's review cohorts. Informational: the packet is keyed
+    /// by org, and a verdict carries its own cohort.
+    pub cohort: String,
+    pub name: String,
+    pub country: Option<String>,
+    pub identifier_kind: Option<String>,
+    pub identifier: Option<String>,
+    /// Judgeable mentions (a name that normalizes to something), and how many
+    /// of them name somebody else. The RATIO is the reviewer's first read:
+    /// 28-of-29 is not a vehicle holding a member's mentions, it is the
+    /// member's own row wearing a consortium name, and that repair is a
+    /// rename, not a move (issue 322). Both count EVERY mention on the row,
+    /// decided ones included, so the ratio does not move as the campaign
+    /// runs; `open` is the part still to review.
+    pub mentions: u64,
+    pub off_name: u64,
+    pub open: u64,
+    pub groups: Vec<RehomingGroup>,
+    /// Distinct groups this case had beyond [`GROUPS_PER_CASE`]. Their
+    /// mentions are still listed, flagged `group_shown: false`.
+    pub groups_elided: u64,
+    /// The open off-name mentions themselves, capped.
+    pub off_mentions: Vec<RehomingMention>,
+    pub mentions_truncated: bool,
+}
+
+/// The issue-317 Unit A review packet: everything a reviewer needs to write
+/// one `org_mention_rehoming` verdict per off-name mention, and nothing that
+/// writes. Mentions already DECIDED are excluded, so the packet is what is
+/// left to review and the campaign can run in batches without re-reading its
+/// own decisions.
+#[derive(Debug, Default, Clone)]
+pub struct RehomingPacket {
+    /// Applied case-review ORGS examined (an org reviewed under two cohorts
+    /// is one).
+    pub cases: u64,
+    /// Of those, orgs still holding an undecided off-name mention. Counted
+    /// over every case, not only the listed ones.
+    pub open: u64,
+    /// Undecided off-name mentions across them — the review workload, whole.
+    pub off_name_mentions: u64,
+    /// Off-name mentions carrying a decision: a `keep`, an executed re-home,
+    /// or a re-home the apply job will execute on its next run.
+    pub already_reviewed: u64,
+    /// Verdicts the apply job can NEVER execute as recorded, with reasons.
+    /// `parked_total` is the count; the list is capped at [`PARKED_CAP`].
+    pub parked: Vec<RehomingParked>,
+    pub parked_total: u64,
+    /// Distinct off-name name groups across the whole open workload — the
+    /// same scope as `open` and `off_name_mentions`, so "N mentions in M
+    /// groups" is true of the same population.
+    pub groups_total: u64,
+    /// Groups carried into the LISTING: listed cases, after the per-case cap.
+    /// This is the denominator of the two counts below, which cost queries
+    /// and are therefore only paid for what is shown.
+    pub probed_groups: u64,
+    /// Groups a listed case had beyond [`GROUPS_PER_CASE`].
+    pub groups_elided: u64,
+    /// Probed groups with at least one standing destination. A group with
+    /// none is a `missing_target` before anyone writes a verdict, and
+    /// counting them sizes the minting question the apply job defers.
+    pub probed_groups_with_target: u64,
+    /// Probed groups whose key is over the genericness wall — a shared
+    /// literal, offered no destinations on purpose.
+    pub groups_generic: u64,
+    pub rows: Vec<RehomingCase>,
+    /// Cases beyond `cases_cap`. The totals above still cover them; only the
+    /// listing stops.
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One parked verdict, with the evidence a reviewer needs to close it
 /// (issue 317 Units B/C).
 #[derive(Debug, Default, Clone)]
@@ -1900,6 +2071,50 @@ const COHORT_SAMPLE: usize = 25;
 /// anything shorter in that slot is a house number or a fragment, which would
 /// peer with half the corpus.
 const DIGIT_PEER_MIN: usize = 8;
+
+/// Off-name groups carried per case in the issue-317 Unit A review packet.
+/// The census caps its display at six; the packet is the reviewer's whole
+/// input, so it carries twice that before it elides — and a case with more
+/// than a dozen distinct alternative names is not a fusion, it is a shared
+/// literal, which reads the same at 12 as at 40. Elided groups are counted,
+/// per case and per packet, and their mentions stay listed.
+const GROUPS_PER_CASE: usize = 12;
+
+/// How many candidate destinations one group has its mention count measured
+/// for. The candidate SET is already bounded by the genericness wall, so this
+/// only bounds the SIZING probe — and the candidates it spends itself on are
+/// pre-ranked by what is free (same country, then a matching identifier digit
+/// body), so the row it is most likely to be looking for is inside it.
+const TARGET_SIZE_PROBE: usize = 8;
+
+/// Mentions counted per candidate destination before the count saturates.
+/// "200+" and "4,113" mean the same thing to a reviewer deciding whether a
+/// row is established, and the difference is a table walk this read has no
+/// reason to pay.
+const TARGET_MENTION_CAP: u64 = 200;
+
+/// How far the per-mention "how many orgs does this notice name" count runs
+/// before it saturates. One versus several is the whole signal; sixteen and
+/// forty read the same to a reviewer.
+const NOTICE_ORG_CAP: u64 = 16;
+
+/// Parked verdicts carried in one packet. The list exists so a verdict the
+/// apply job cannot execute is visible; a backlog longer than this is a
+/// campaign-wide fault, and `parked_total` says how big it really is.
+const PARKED_CAP: usize = 200;
+
+/// How often the per-case mention walk checks the stop flag. The walk is an
+/// index read over one org's mentions, which is small for a case-review org
+/// and unbounded in principle; a page of this size keeps a cancel prompt
+/// without adding a check per row.
+const MENTION_STOP_EVERY: u64 = 4096;
+
+/// The digits of an identifier, with every separator, prefix letter and
+/// space dropped — the issue-317 peer comparison, reused so a destination's
+/// identifier can be matched against the one a mention publishes.
+fn digit_body(s: &str) -> String {
+    s.chars().filter(|c| c.is_ascii_digit()).collect()
+}
 
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
@@ -6967,10 +7182,14 @@ impl Db {
         let mut report = FusionReport::default();
         let mut cases: Vec<(i64, String)> = Vec::new();
         {
+            // One row per case ORG: `org_case_reviews` is keyed
+            // (case_org_id, cohort), so an org reviewed under two cohorts
+            // would otherwise be walked twice and counted twice — and
+            // `cases`, `with_mentions` and `fused` all claim orgs.
             let mut rows = reader
                 .query(
-                    "SELECT case_org_id, cohort FROM org_case_reviews \
-                      WHERE applied_at IS NOT NULL ORDER BY case_org_id",
+                    "SELECT case_org_id, MIN(cohort) FROM org_case_reviews \
+                      WHERE applied_at IS NOT NULL GROUP BY case_org_id ORDER BY case_org_id",
                     (),
                 )
                 .await?;
@@ -7059,6 +7278,573 @@ impl Db {
             .sort_by(|a, b| b.off_name.cmp(&a.off_name).then_with(|| a.org.cmp(&b.org)));
         Ok(report)
     }
+
+    /// The issue-317 Unit A review packet (read-only): for every applied
+    /// case-review org still holding an UNDECIDED off-name mention, the
+    /// mentions themselves — addressed exactly as `org_mention_rehoming`
+    /// keys them — and the standing org rows each off-name group could be
+    /// re-homed to.
+    ///
+    /// This is the campaign's missing half. `fusion_candidates` measures the
+    /// shape; a verdict needs an ADDRESS (`notice_id`, `section_id`) and a
+    /// DESTINATION (`target_org_id`), and neither is derivable from a count.
+    ///
+    /// Destinations come from the `org_match_keys` N2 satellite because that
+    /// is the only INDEXED path from a name to the rows carrying it — the
+    /// alternative is a 1.1M-row scan per group. Three consequences the
+    /// caller must handle: the satellite is a rebuildable snapshot, so an org
+    /// minted after the last `build-org-match-keys` run is invisible here and
+    /// reads as no-destination (the JOB checks the build preconditions and
+    /// stamps the build's provenance into the report — a stale packet and a
+    /// good one are otherwise indistinguishable); the join to `organizations`
+    /// drops satellite rows whose org was merged away, so a listed target
+    /// always still stands; and a key carried by more than `stoplist_cap`
+    /// standing rows is a SHARED LITERAL, not a destination, so the group is
+    /// listed with `generic_key` set and NO targets rather than with an
+    /// arbitrary handful (the panel measured the alternative: an unordered
+    /// probe of a generic key returns the lowest org ids, which is neither
+    /// the established row nor a random sample).
+    ///
+    /// Mentions already DECIDED are excluded and counted separately, so the
+    /// packet is what is left to review and the campaign can run in batches
+    /// without re-reading its own decisions. A verdict `apply-rehoming` can
+    /// never execute is NOT decided — it is `parked`, listed with the reason,
+    /// because a recorded-but-unexecutable verdict that vanished from the
+    /// packet would read to the campaign as work completed while nothing
+    /// moved.
+    ///
+    /// Nothing is written. Every LISTING is capped (`cases_cap`,
+    /// `mentions_cap`, `targets_cap`, [`GROUPS_PER_CASE`],
+    /// [`TARGET_SIZE_PROBE`], [`TARGET_MENTION_CAP`]) and the totals beside
+    /// the listings are deliberately taken BEFORE the caps, so a cap never
+    /// shrinks the workload it is capping. The two preamble scans are bounded
+    /// by the campaign itself — the applied case reviews and the verdicts
+    /// recorded against them, hundreds of rows, not the corpus. Memory is
+    /// O(cases) plus ONE case's open mentions: the first pass over the cases
+    /// keeps three numbers each and nothing else, precisely so the second
+    /// pass — the one that holds mention rows — runs over the capped listing
+    /// rather than over the whole corpus of reviewed orgs.
+    pub async fn rehoming_packet(
+        &self,
+        norm: fn(&str) -> String,
+        cases_cap: usize,
+        mentions_cap: usize,
+        targets_cap: usize,
+        // The genericness wall, threaded from the app so this and
+        // `scan-org-match-keys` cannot drift apart (store carries no policy
+        // constants — the `OrgEdgeScanArgs::stoplist_cap` precedent).
+        stoplist_cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<RehomingPacket> {
+        let reader = self.reader().await?;
+        let mut packet = RehomingPacket::default();
+        let bail = || Ok(RehomingPacket { stopped: true, ..Default::default() });
+
+        // Every verdict already recorded, in one pass, split into the two
+        // populations that behave differently: DECIDED (a `keep`, an executed
+        // re-home, or a re-home the apply job will execute on its next run)
+        // and PARKED (a re-home it can never execute as recorded). Both drop
+        // out of the open workload; only the parked come back with a reason.
+        let mut decided: std::collections::HashSet<(i64, String)> = Default::default();
+        {
+            let mut verdicts: Vec<(i64, String, i64, String, Option<i64>, Option<String>, String, bool, Option<String>)> =
+                Vec::new();
+            let mut rows = reader
+                .query(
+                    "SELECT notice_id, section_id, case_org_id, action, target_org_id, \
+                            target_name, confidence, applied_at, applied_action \
+                       FROM org_mention_rehoming ORDER BY notice_id, section_id",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                verdicts.push((
+                    int(&row, 0),
+                    text(&row, 1),
+                    int(&row, 2),
+                    text(&row, 3),
+                    match row.get_value(4) {
+                        Ok(Value::Integer(id)) => Some(id),
+                        _ => None,
+                    },
+                    opt_text_of(&row, 5),
+                    text(&row, 6),
+                    matches!(row.get_value(7), Ok(Value::Integer(_))),
+                    opt_text_of(&row, 8),
+                ))
+            }
+            for (notice, section, case_org, action, target, target_name, confidence, stamped, stamp) in
+                verdicts
+            {
+                decided.insert((notice, section.clone()));
+                // A `keep` is final: the reviewer looked at an off-name
+                // mention and decided the vehicle really is what the notice
+                // meant. Nothing ever stamps it — `apply_rehoming` only
+                // considers `rehome` — so testing its `applied_at` would park
+                // every keep forever (measured by the panel over three
+                // consecutive wet applies).
+                if action != "rehome" {
+                    packet.already_reviewed += 1;
+                    continue;
+                }
+                let no_op = stamp.as_deref().is_some_and(|s| s.starts_with("no-op:"));
+                if stamped && !no_op {
+                    packet.already_reviewed += 1;
+                    continue;
+                }
+                let reason = if no_op {
+                    stamp.clone().unwrap_or_default()
+                } else if confidence != "high" {
+                    format!("confidence {confidence}: below the apply bar")
+                } else if let Some(id) = target {
+                    let exists = {
+                        let mut rows = reader
+                            .query(
+                                "SELECT 1 FROM organizations WHERE id = ?",
+                                (Value::Integer(id),),
+                            )
+                            .await?;
+                        rows.next().await?.is_some()
+                    };
+                    if exists {
+                        // Appliable and simply not applied yet. Decided.
+                        packet.already_reviewed += 1;
+                        continue;
+                    }
+                    format!("target org {id} no longer stands")
+                } else {
+                    "no target org id — v1 never mints a destination".to_owned()
+                };
+                packet.parked_total += 1;
+                if packet.parked.len() < PARKED_CAP {
+                    packet.parked.push(RehomingParked {
+                        case_org,
+                        notice_id: notice,
+                        section_id: section,
+                        action,
+                        confidence,
+                        target_org_id: target,
+                        target_name,
+                        reason,
+                    });
+                }
+            }
+        }
+
+        // One row per case ORG. `org_case_reviews` is keyed (case_org_id,
+        // cohort), so an org reviewed in two cohorts is two rows — walking it
+        // twice would double its mentions in every total and list the same
+        // address twice for two different verdicts.
+        let mut cases: Vec<(i64, String)> = Vec::new();
+        {
+            let mut rows = reader
+                .query(
+                    "SELECT case_org_id, MIN(cohort) FROM org_case_reviews \
+                      WHERE applied_at IS NOT NULL GROUP BY case_org_id ORDER BY case_org_id",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                cases.push((int(&row, 0), text(&row, 1)));
+            }
+        }
+        packet.cases = cases.len() as u64;
+
+        // PASS 1 — the workload, over every case, holding nothing per case
+        // but three numbers. The totals must cover all cases; only the
+        // LISTING is capped, and it is capped by size, so the cap has to know
+        // the sizes before it chooses (the alternative keeps the first
+        // `cases_cap` cases in org-id order and then sorts them by severity,
+        // which presents an arbitrary subset as if it were the worst).
+        let mut ranked: Vec<(u64, i64, String)> = Vec::new();
+        for (org, cohort) in &cases {
+            if stop() {
+                return bail();
+            }
+            let Some(head) = self.rehoming_head(&reader, *org).await? else { continue };
+            let head_key = norm(&head.0);
+            let mut judgeable = 0u64;
+            let mut open = 0u64;
+            let mut keys: std::collections::HashSet<String> = Default::default();
+            let mut rows = reader
+                .query(
+                    "SELECT notice_id, section_id, name FROM organization_mentions \
+                       WHERE organization_id = ?",
+                    (Value::Integer(*org),),
+                )
+                .await?;
+            let mut seen_rows = 0u64;
+            while let Some(row) = rows.next().await? {
+                seen_rows += 1;
+                if seen_rows % MENTION_STOP_EVERY == 0 && stop() {
+                    return bail();
+                }
+                let Some(name) = opt_text_of(&row, 2) else { continue };
+                let key = norm(&name);
+                if key.is_empty() {
+                    continue;
+                }
+                judgeable += 1;
+                if key == head_key {
+                    continue;
+                }
+                if decided.contains(&(int(&row, 0), text(&row, 1))) {
+                    continue;
+                }
+                open += 1;
+                keys.insert(key);
+            }
+            if judgeable == 0 || open == 0 {
+                continue;
+            }
+            packet.open += 1;
+            packet.off_name_mentions += open;
+            packet.groups_total += keys.len() as u64;
+            ranked.push((open, *org, cohort.clone()));
+        }
+        ranked.sort_by(|a, b| b.0.cmp(&a.0).then_with(|| a.1.cmp(&b.1)));
+        packet.truncated = ranked.len() > cases_cap;
+        ranked.truncate(cases_cap);
+
+        // PASS 2 — the listing, and the only place that pays for
+        // destinations.
+        for (_, org, cohort) in ranked {
+            if stop() {
+                return bail();
+            }
+            let Some(head) = self.rehoming_head(&reader, org).await? else { continue };
+            let head_key = norm(&head.0);
+            let mut judgeable = 0u64;
+            let mut off_all = 0u64;
+            let mut open: Vec<RehomingMention> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT notice_id, section_id, name, country, raw_identifier, scheme \
+                           FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(org),),
+                    )
+                    .await?;
+                let mut seen_rows = 0u64;
+                while let Some(row) = rows.next().await? {
+                    seen_rows += 1;
+                    if seen_rows % MENTION_STOP_EVERY == 0 && stop() {
+                        return bail();
+                    }
+                    let Some(name) = opt_text_of(&row, 2) else { continue };
+                    let key = norm(&name);
+                    // Unjudgeable on either side, exactly as the census
+                    // scores it: a punctuation-only name is not evidence
+                    // that the vehicle is right OR wrong.
+                    if key.is_empty() {
+                        continue;
+                    }
+                    judgeable += 1;
+                    if key == head_key {
+                        continue;
+                    }
+                    off_all += 1;
+                    let notice_id = int(&row, 0);
+                    let section_id = text(&row, 1);
+                    if decided.contains(&(notice_id, section_id)) {
+                        continue;
+                    }
+                    open.push(RehomingMention {
+                        notice_id,
+                        section_id: text(&row, 1),
+                        name,
+                        key,
+                        country: opt_text_of(&row, 3),
+                        raw_identifier: opt_text_of(&row, 4),
+                        scheme: opt_text_of(&row, 5),
+                        group_shown: false,
+                        notice_orgs: 0,
+                    });
+                }
+            }
+            if judgeable == 0 || open.is_empty() {
+                continue;
+            }
+            // How crowded each mention's notice is. `organization_mentions` is
+            // PK'd (notice_id, section_id), so this is a PK-prefix range — but
+            // a range is not a bound, and nested org sections make the count
+            // per notice unpredictable, so it is capped like every other
+            // count here. Paid once per LISTED mention, after the open set is
+            // known and before the listing cap, because the reviewer needs it
+            // for exactly the mentions they will read.
+            for m in &mut open {
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM (SELECT 1 FROM organization_mentions \
+                           WHERE notice_id = ? LIMIT ?)",
+                        (
+                            Value::Integer(m.notice_id),
+                            Value::Integer(NOTICE_ORG_CAP as i64),
+                        ),
+                    )
+                    .await?;
+                m.notice_orgs = match rows.next().await? {
+                    Some(row) => int(&row, 0) as u64,
+                    None => 0,
+                };
+            }
+
+            // Group the OPEN mentions only, so a group whose every mention is
+            // already decided does not reappear as work. The displayed name
+            // is the MODAL spelling, ties broken lexicographically, so row
+            // order never decides what a reviewer reads.
+            let mut counts: std::collections::HashMap<
+                String,
+                (std::collections::HashMap<String, u64>, u64),
+            > = Default::default();
+            for m in &open {
+                let e = counts.entry(m.key.clone()).or_default();
+                *e.0.entry(m.name.clone()).or_insert(0) += 1;
+                e.1 += 1;
+            }
+            let mut grouped: Vec<(String, String, u64)> = counts
+                .into_iter()
+                .map(|(k, (spellings, total))| {
+                    let mut best: Vec<(String, u64)> = spellings.into_iter().collect();
+                    best.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+                    (k, best.into_iter().next().map(|(n, _)| n).unwrap_or_default(), total)
+                })
+                .collect();
+            grouped.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+            let distinct = grouped.len();
+            grouped.truncate(GROUPS_PER_CASE);
+            let case_elided = (distinct - grouped.len()) as u64;
+            packet.groups_elided += case_elided;
+            packet.probed_groups += grouped.len() as u64;
+
+            let mut groups: Vec<RehomingGroup> = Vec::new();
+            for (key, name, mentions) in grouped {
+                if stop() {
+                    return bail();
+                }
+                // The identifiers this group's mentions publish, as digit
+                // bodies — the same comparison the issue-317 peer probe uses,
+                // because the wrong identifiers in this corpus differ by
+                // country prefix, kind and dropped characters. Free: the
+                // rows are already in hand.
+                let bodies: std::collections::HashSet<String> = open
+                    .iter()
+                    .filter(|m| m.key == key)
+                    .filter_map(|m| m.raw_identifier.as_deref())
+                    .map(digit_body)
+                    .filter(|d| d.len() >= DIGIT_PEER_MIN)
+                    .collect();
+                // The country the group's mentions publish, so a destination
+                // in the same country outranks a same-named foreign row.
+                let home = {
+                    let mut tally: std::collections::HashMap<String, u64> = Default::default();
+                    for m in open.iter().filter(|m| m.key == key) {
+                        if let Some(c) = m.country.as_deref().filter(|c| !c.is_empty()) {
+                            *tally.entry(c.to_owned()).or_insert(0) += 1;
+                        }
+                    }
+                    let mut t: Vec<(String, u64)> = tally.into_iter().collect();
+                    t.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+                    t.into_iter().next().map(|(c, _)| c).or_else(|| head.1.clone())
+                };
+
+                // The wall FIRST, on a bounded distinct count. A key over it
+                // is a shared literal — offering five of its rows would be
+                // offering the five lowest org ids, which is worse than
+                // offering none.
+                let carriers = {
+                    let mut rows = reader
+                        .query(
+                            "SELECT COUNT(*) FROM (SELECT DISTINCT k.org_id \
+                               FROM org_match_keys k JOIN organizations o ON o.id = k.org_id \
+                              WHERE k.key_kind = 'n2' AND k.key = ? AND k.org_id <> ? LIMIT ?)",
+                            (
+                                t(&key),
+                                Value::Integer(org),
+                                Value::Integer(stoplist_cap as i64 + 1),
+                            ),
+                        )
+                        .await?;
+                    match rows.next().await? {
+                        Some(row) => int(&row, 0) as u64,
+                        None => 0,
+                    }
+                };
+                let generic_key = carriers as usize > stoplist_cap;
+                if generic_key {
+                    packet.groups_generic += 1;
+                    groups.push(RehomingGroup {
+                        key,
+                        name,
+                        mentions,
+                        targets: Vec::new(),
+                        target_total: carriers,
+                        generic_key,
+                    });
+                    continue;
+                }
+                if carriers > 0 {
+                    packet.probed_groups_with_target += 1;
+                }
+                let mut seen: std::collections::HashSet<i64> = Default::default();
+                let mut targets: Vec<RehomingTarget> = Vec::new();
+                {
+                    let mut rows = reader
+                        .query(
+                            "SELECT o.id, o.name, o.country, o.identifier_kind, o.identifier \
+                               FROM org_match_keys k JOIN organizations o ON o.id = k.org_id \
+                              WHERE k.key_kind = 'n2' AND k.key = ? AND o.id <> ? LIMIT ?",
+                            (
+                                t(&key),
+                                Value::Integer(org),
+                                // Row limit, not org limit: org_match_keys has
+                                // no unique constraint, so headroom over the
+                                // carrier count keeps a duplicate satellite row
+                                // from evicting a distinct destination.
+                                Value::Integer(stoplist_cap as i64 * 2 + 2),
+                            ),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        let id = int(&row, 0);
+                        if !seen.insert(id) {
+                            continue;
+                        }
+                        let tname = text(&row, 1);
+                        let ident = opt_text_of(&row, 4);
+                        targets.push(RehomingTarget {
+                            org: id,
+                            // The key matched through a satellite name rather
+                            // than the head — the row a reviewer reads is not
+                            // the name they matched on, and that is worth
+                            // saying. Free: both sides are already in hand.
+                            via_alias: norm(&tname) != key,
+                            name: tname,
+                            country: opt_text_of(&row, 2),
+                            identifier_kind: opt_text_of(&row, 3),
+                            identifier_match: ident
+                                .as_deref()
+                                .map(digit_body)
+                                .is_some_and(|d| d.len() >= DIGIT_PEER_MIN && bodies.contains(&d)),
+                            identifier: ident,
+                            mentions: 0,
+                            saturated: false,
+                        });
+                    }
+                }
+                // Pre-rank on what is free, so the bounded sizing probe is
+                // spent on the candidates most likely to be the answer.
+                let same = |c: &Option<String>| match (c.as_deref(), home.as_deref()) {
+                    (Some(a), Some(b)) => a == b,
+                    _ => false,
+                };
+                targets.sort_by(|a, b| {
+                    same(&b.country)
+                        .cmp(&same(&a.country))
+                        .then_with(|| b.identifier_match.cmp(&a.identifier_match))
+                        .then_with(|| a.org.cmp(&b.org))
+                });
+                targets.truncate(TARGET_SIZE_PROBE);
+                // Size each survivor: the row a reviewer wants is the one the
+                // corpus already knows, not the stub some other notice's typo
+                // minted under the same name.
+                for tgt in &mut targets {
+                    let mut rows = reader
+                        .query(
+                            "SELECT COUNT(*) FROM (SELECT 1 FROM organization_mentions \
+                               WHERE organization_id = ? LIMIT ?)",
+                            (
+                                Value::Integer(tgt.org),
+                                Value::Integer(TARGET_MENTION_CAP as i64),
+                            ),
+                        )
+                        .await?;
+                    tgt.mentions = match rows.next().await? {
+                        Some(row) => int(&row, 0) as u64,
+                        None => 0,
+                    };
+                    tgt.saturated = tgt.mentions >= TARGET_MENTION_CAP;
+                }
+                targets.sort_by(|a, b| {
+                    same(&b.country)
+                        .cmp(&same(&a.country))
+                        .then_with(|| b.identifier_match.cmp(&a.identifier_match))
+                        .then_with(|| b.mentions.cmp(&a.mentions))
+                        .then_with(|| a.org.cmp(&b.org))
+                });
+                targets.truncate(targets_cap);
+                groups.push(RehomingGroup {
+                    key,
+                    name,
+                    mentions,
+                    targets,
+                    target_total: carriers,
+                    generic_key,
+                });
+            }
+
+            // Every address stays listed even when its group did not survive
+            // the per-case cap — dropping addresses from a packet whose whole
+            // purpose is to supply them would be the silent shrink the totals
+            // above refuse. The flag says which ones have no group beside
+            // them, so "no destination" and "not probed" do not read alike.
+            let shown: std::collections::HashSet<&str> =
+                groups.iter().map(|g| g.key.as_str()).collect();
+            for m in &mut open {
+                m.group_shown = shown.contains(m.key.as_str());
+            }
+            open.sort_by(|a, b| {
+                a.notice_id.cmp(&b.notice_id).then_with(|| a.section_id.cmp(&b.section_id))
+            });
+            let open_total = open.len() as u64;
+            let mentions_truncated = open.len() > mentions_cap;
+            open.truncate(mentions_cap);
+
+            packet.rows.push(RehomingCase {
+                org,
+                cohort,
+                name: head.0,
+                country: head.1,
+                identifier_kind: head.2,
+                identifier: head.3,
+                mentions: judgeable,
+                off_name: off_all,
+                open: open_total,
+                groups,
+                groups_elided: case_elided,
+                off_mentions: open,
+                mentions_truncated,
+            });
+        }
+        packet.rows.sort_by(|a, b| b.open.cmp(&a.open).then_with(|| a.org.cmp(&b.org)));
+        Ok(packet)
+    }
+
+    /// The case org's current head row, or `None` when it was merged away
+    /// since the review — the backlog job reports that class, and there is
+    /// nothing on a row that no longer exists to re-home.
+    async fn rehoming_head(
+        &self,
+        reader: &Connection,
+        org: i64,
+    ) -> turso::Result<Option<(String, Option<String>, Option<String>, Option<String>)>> {
+        let mut rows = reader
+            .query(
+                "SELECT name, country, identifier_kind, identifier FROM organizations WHERE id = ?",
+                (Value::Integer(org),),
+            )
+            .await?;
+        Ok(match rows.next().await? {
+            Some(row) => Some((
+                text(&row, 0),
+                opt_text_of(&row, 1),
+                opt_text_of(&row, 2),
+                opt_text_of(&row, 3),
+            )),
+            None => None,
+        })
+    }
+
 
     /// The parked-verdict backlog (issue 317 Units B and C): every
     /// `org_case_reviews` row the apply job's safe subset

@@ -251,7 +251,8 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #                             org-merge-health, r2-census, r3-census,
 #                             match-org-identifiers, build-org-match-keys,
 #                             scan-org-match-keys, org-edge-census,
-#                             case-review-backlog
+#                             case-review-backlog, fold-org-countries,
+#                             fusion-census, rehoming-packet
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.
@@ -320,6 +321,9 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `org-edge-census` | no | sizes the edge store into review cohorts (issue 314) |
 | `apply-case-reviews` / `unapply-case-reviews` | YES | the issue-311 verdict applier and its undo |
 | `case-review-backlog` | no | the parked verdicts nobody consumes (issue 317) |
+| `fusion-census` | no | which reviewed rows hold mentions naming somebody else (317 Unit A) |
+| `rehoming-packet` | no | the reviewer's input: those mentions, addressed, with destinations |
+| `apply-rehoming` | YES | moves a reviewed mention to the row it names; **refold after** |
 | `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
 
 Two refusals an operator will meet, both deliberate:

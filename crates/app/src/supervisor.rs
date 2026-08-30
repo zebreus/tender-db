@@ -346,6 +346,10 @@ enum Spec {
     /// Issue 317 Unit A: which reviewed vehicle rows hold mentions naming
     /// somebody else. Read-only.
     FusionCensus,
+    /// Issue 317 Unit A: the reviewer's input — the off-name mentions still
+    /// awaiting a verdict, with the standing rows each could move to.
+    /// Read-only.
+    RehomingPacket,
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -977,6 +981,12 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 317 Unit A: the review packet. Read-only; the verdicts
+            // it feeds arrive over POST /admin/rehoming, and `apply-rehoming`
+            // is the only thing that writes.
+            "rehoming-packet" => Ok(vec![
+                self.push("rehoming-packet", "rehoming-packet".into(), Spec::RehomingPacket).await,
+            ]),
             // Issue 317 Units B/C: the parked-verdict backlog. Read-only,
             // so no dry_run — there is nothing for a flag to protect.
             "case-review-backlog" => Ok(vec![
@@ -1356,6 +1366,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "case-review-backlog",
     "fold-org-countries",
     "fusion-census",
+    "rehoming-packet",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3679,6 +3690,179 @@ impl Supervisor {
                     r.fused,
                     r.off_name_mentions,
                     if r.truncated { " (candidate list TRUNCATED at the cap)" } else { "" }
+                ))
+            }
+            Spec::RehomingPacket => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                // Preconditions, the `scan-org-match-keys` set: every
+                // destination in this packet comes from the N2 satellite, so
+                // an index-less, mid-walk or wrong-epoch satellite does not
+                // make the packet WRONG in a way anyone can see — it makes
+                // every group read "no destination anywhere", which is the
+                // one answer a reviewer cannot tell from a real finding.
+                // Refuse instead of publishing it.
+                if !self.db.has_index("org_match_keys_kk").await.map_err(|e| e.to_string())? {
+                    return Err("rehoming-packet refused: no org_match_keys_kk index — \
+                                run build-org-match-keys (wet) first"
+                        .to_owned());
+                }
+                let (wm, epoch) =
+                    self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                if wm != 0 {
+                    return Err(format!(
+                        "rehoming-packet refused: keys build in flight (watermark {wm}) — \
+                         let it finish or rerun build-org-match-keys"
+                    ));
+                }
+                if epoch != ingest::crosswalk::NAME_KEY_EPOCH {
+                    return Err(format!(
+                        "rehoming-packet refused: keys built under epoch {epoch:?}, this \
+                         binary keys under {:?} — rerun build-org-match-keys (wet) first",
+                        ingest::crosswalk::NAME_KEY_EPOCH
+                    ));
+                }
+                // Preconditions cannot catch STALENESS, which is the same
+                // silence arriving later: a satellite built three weeks ago
+                // passes all three and still reports every org minted since
+                // as having no destination. So the packet carries the build's
+                // provenance, and a packet read a month on says so itself.
+                let keys_built_at = match self
+                    .db
+                    .latest_report("org-match-keys-build")
+                    .await
+                    .map_err(|e| e.to_string())?
+                {
+                    Some((body, at)) => {
+                        let rows = serde_json::from_str::<serde_json::Value>(&body)
+                            .ok()
+                            .and_then(|v| v.get("rows").and_then(|r| r.as_u64()));
+                        Some((at, rows))
+                    }
+                    None => None,
+                };
+                self.set_phase(
+                    "packing",
+                    None,
+                    None,
+                    "reading undecided off-name mentions and their destinations".to_owned(),
+                );
+                // The census measured 102 fused rows over 585 off-name
+                // mentions, so 150 cases and 80 mentions each hold the whole
+                // workload with room — and the packet EXCLUDES what is
+                // already decided, so it shrinks as the campaign runs.
+                // SCAN_STOPLIST_CAP is threaded rather than duplicated: this
+                // wall and the E3 scan's must be the same number or a name
+                // the scan calls generic is a destination here.
+                let r = self
+                    .db
+                    .rehoming_packet(
+                        ingest::project::match_norm,
+                        150,
+                        80,
+                        5,
+                        SCAN_STOPLIST_CAP,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("rehoming-packet STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                // Built as named closures rather than one nested literal:
+                // `json!` expands recursively, and four levels of it blows
+                // the macro recursion limit.
+                let target = |t: &store::RehomingTarget| {
+                    serde_json::json!({
+                        "org": t.org, "name": t.name, "country": t.country,
+                        "identifier_kind": t.identifier_kind, "identifier": t.identifier,
+                        "mentions": t.mentions, "saturated": t.saturated,
+                        "via_alias": t.via_alias, "identifier_match": t.identifier_match,
+                    })
+                };
+                let group = |g: &store::RehomingGroup| {
+                    serde_json::json!({
+                        "key": g.key, "name": g.name, "mentions": g.mentions,
+                        "target_total": g.target_total, "generic_key": g.generic_key,
+                        "targets": g.targets.iter().map(&target).collect::<Vec<_>>(),
+                    })
+                };
+                let mention = |m: &store::RehomingMention| {
+                    serde_json::json!({
+                        "notice_id": m.notice_id, "section_id": m.section_id,
+                        "name": m.name, "key": m.key, "country": m.country,
+                        "raw_identifier": m.raw_identifier, "scheme": m.scheme,
+                        "group_shown": m.group_shown,
+                        "notice_orgs": m.notice_orgs,
+                    })
+                };
+                let case = |c: &store::RehomingCase| {
+                    serde_json::json!({
+                        "org": c.org, "cohort": c.cohort, "name": c.name,
+                        "country": c.country,
+                        "identifier_kind": c.identifier_kind, "identifier": c.identifier,
+                        "mentions": c.mentions, "off_name": c.off_name, "open": c.open,
+                        "groups_elided": c.groups_elided,
+                        "mentions_truncated": c.mentions_truncated,
+                        "groups": c.groups.iter().map(&group).collect::<Vec<_>>(),
+                        "off_mentions": c.off_mentions.iter().map(&mention).collect::<Vec<_>>(),
+                    })
+                };
+                let parked = |p: &store::RehomingParked| {
+                    serde_json::json!({
+                        "case_org": p.case_org, "notice_id": p.notice_id,
+                        "section_id": p.section_id, "action": p.action,
+                        "confidence": p.confidence, "target_org_id": p.target_org_id,
+                        "target_name": p.target_name, "reason": p.reason,
+                    })
+                };
+                let body = serde_json::json!({
+                    "cases": r.cases, "open": r.open,
+                    "off_name_mentions": r.off_name_mentions,
+                    "already_reviewed": r.already_reviewed,
+                    "parked_total": r.parked_total,
+                    "parked": r.parked.iter().map(&parked).collect::<Vec<_>>(),
+                    "groups_total": r.groups_total,
+                    "probed_groups": r.probed_groups,
+                    "groups_elided": r.groups_elided,
+                    "probed_groups_with_target": r.probed_groups_with_target,
+                    "groups_generic": r.groups_generic,
+                    "listed_cases": r.rows.len(),
+                    "truncated": r.truncated,
+                    "keys_epoch": epoch,
+                    "keys_built_at": keys_built_at.map(|(at, _)| at),
+                    "keys_rows": keys_built_at.and_then(|(_, rows)| rows),
+                    "rows": r.rows.iter().map(&case).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db.put_report("rehoming-packet", &body, now).await.map_err(|e| e.to_string())?;
+                // Every number in this sentence is scoped: the workload
+                // counts cover every case, the destination counts cover the
+                // groups actually probed, and they are named apart so the
+                // sentence cannot read as one ratio over one population.
+                Ok(format!(
+                    "rehoming-packet (issue 317 Unit A): {} applied case orgs, {} still hold \
+                     an UNDECIDED off-name mention, over {} such mentions in {} name groups; \
+                     listed {} cases probing {} groups ({} have a standing destination, {} are \
+                     a shared literal over the genericness wall); {} mentions already decided, \
+                     {} verdicts PARKED (recorded but unappliable){}{}",
+                    r.cases,
+                    r.open,
+                    r.off_name_mentions,
+                    r.groups_total,
+                    r.rows.len(),
+                    r.probed_groups,
+                    r.probed_groups_with_target,
+                    r.groups_generic,
+                    r.already_reviewed,
+                    r.parked_total,
+                    if r.groups_elided > 0 {
+                        format!("; {} groups elided by the per-case cap", r.groups_elided)
+                    } else {
+                        String::new()
+                    },
+                    if r.truncated { "; CASE LIST TRUNCATED at the cap" } else { "" }
                 ))
             }
             Spec::CaseReviewBacklog => {
@@ -6368,6 +6552,11 @@ mod tests {
         // case-review-backlog reads the flag between verdict rows and again
         // between per-case evidence probes, and returns an EMPTY report
         // rather than a partial backlog (issue 317).
+        // rehoming-packet reads it between cases and again between the
+        // per-group destination probes, and a stopped run stores no packet
+        // — a HALF packet is worse than none, because a reviewer cannot see
+        // that the missing cases were dropped rather than clean (issue 317
+        // Unit A).
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -6384,7 +6573,8 @@ mod tests {
                 "org-edge-census",
                 "case-review-backlog",
                 "fold-org-countries",
-                "fusion-census"
+                "fusion-census",
+                "rehoming-packet"
             ]
         );
     }
@@ -6557,6 +6747,110 @@ mod tests {
     /// `is_vat_scope_label` and `is_alpha2` — the store test injects
     /// miniatures, so without this nothing proves the production fns are
     /// the ones the job runs with (panel catch).
+    /// Issue 317 Unit A: the packet job against the real tables and the real
+    /// `match_norm`. The store test owns the grouping rules; what this pins
+    /// is the wiring — that the job stores a report under the name the
+    /// campaign will fetch it by, and that the report actually carries the
+    /// two things a verdict cannot be written without: the mention's address
+    /// and a destination org id.
+    #[tokio::test]
+    async fn the_rehoming_packet_job_stores_addresses_and_destinations() {
+        let path = format!(
+            "/tmp/tender-db-sup-packet-{}-{}.db",
+            std::process::id(),
+            store::now_unix()
+        );
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        for (id, name) in
+            [(1i64, "Bietergemeinschaft Dobler / Oberall"), (2, "Dobler GmbH & Co. KG")]
+        {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'DE', NULL, NULL, ?, ?, 0, 0)",
+                (
+                    store::turso::Value::Integer(id),
+                    store::turso::Value::Text(name.into()),
+                    store::turso::Value::Text(name.to_lowercase()),
+                ),
+            )
+            .await
+            .unwrap();
+            // The satellite key, written by the REAL normalizer — the same
+            // function the packet groups mentions by. If those two ever drift
+            // apart, every group loses its destinations and this fails.
+            conn.execute(
+                "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', ?)",
+                (
+                    store::turso::Value::Integer(id),
+                    store::turso::Value::Text(ingest::project::match_norm(name)),
+                ),
+            )
+            .await
+            .unwrap();
+        }
+        conn.execute(
+            "INSERT INTO org_case_reviews
+               (case_org_id, cohort, verdict, diagnosis, handling, rationale, confidence,
+                reviewed_at, applied_at, applied_action, job_id)
+             VALUES (1, 'biege-pilot', 'consortium-vehicle-wrong-identifier', 'd', 'h', 'r',
+                     'high', 1, 1, 'a', 1)",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+             VALUES (7001, 'ORG-0002', 1, 'Dobler GmbH & Co. KG', 'DE', NULL)",
+            (),
+        )
+        .await
+        .unwrap();
+
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = Job {
+            id: 1,
+            kind: "rehoming-packet".into(),
+            params: String::new(),
+            spec: Spec::RehomingPacket,
+            resume_after: None,
+        };
+        // Every destination comes from the N2 satellite, so an unusable one
+        // does not make the packet wrong visibly — it makes every group read
+        // "no destination anywhere". The job refuses instead.
+        let err = sup.run_spec(&job).await.expect_err("no covering index yet");
+        assert!(err.contains("org_match_keys_kk"), "{err}");
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS org_match_keys_kk \
+                 ON org_match_keys(key_kind, key, org_id)",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job).await.expect_err("epoch is still empty");
+        assert!(err.contains("epoch"), "{err}");
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 0, \
+                 org_match_keys_epoch = ? WHERE id = 0",
+            (store::turso::Value::Text(ingest::crosswalk::NAME_KEY_EPOCH.into()),),
+        )
+        .await
+        .unwrap();
+
+        let msg = sup.run_spec(&job).await.expect("the packet reads");
+        assert!(msg.contains("1 still hold"), "{msg}");
+        let (body, _) = sup.db().latest_report("rehoming-packet").await.unwrap().expect("packet");
+        // The address, keyed exactly as org_mention_rehoming keys a verdict.
+        assert!(body.contains("\"notice_id\":7001"), "{body}");
+        assert!(body.contains("\"section_id\":\"ORG-0002\""), "{body}");
+        // And the destination, which only the satellite join can supply.
+        assert!(body.contains("\"target_total\":1"), "{body}");
+        assert!(body.contains("\"org\":2"), "{body}");
+        let _ = std::fs::remove_file(&path);
+    }
+
     #[tokio::test]
     async fn the_country_fold_job_runs_with_the_real_tables() {
         let path = format!(

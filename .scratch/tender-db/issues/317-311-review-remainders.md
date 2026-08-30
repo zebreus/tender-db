@@ -1,8 +1,8 @@
 # 317 — The 311 campaign's unfinished halves: re-homing, escalations, the medium band
 
 Status: Unit B DONE, Unit C's cheap half DONE (93d8704); Unit A's MACHINERY
-DONE and deployed (2ac5c1f, prod job 1412 dry: 0 verdicts, correctly inert)
-— the review campaign that fills it is the open half
+DONE and deployed (2ac5c1f), and its REVIEW PACKET built and panelled
+(2026-08-30) — the review campaign that consumes it is the open half
 Kind: data quality (organization layer)
 Relates to: 311 (produced them), 312, 300
 
@@ -211,3 +211,95 @@ stale and their notices re-queued, and the fold rebuilds the rest.
    the repair is renaming the row rather than moving mentions off it.
 4. **Issue 321** is the known residue: the name variant stays on the origin
    org, which keeps feeding the Stage-4 keys.
+
+
+## UNIT A: THE REVIEW PACKET (2026-08-30) — the campaign's missing input
+
+The machinery could RECORD a verdict and EXECUTE one; nothing produced the
+input a verdict needs. `fusion-census` publishes names and counts, and a
+verdict needs an **address** (`notice_id`, `section_id` — how both
+`organization_mentions` and `org_mention_rehoming` are keyed) and a
+**destination** (`target_org_id`, a standing row). Neither is derivable from
+a count, so the campaign could not start.
+
+`rehoming-packet` (read-only, stoppable, report kind `rehoming-packet`) is
+that input. Per open case: the vehicle's own row, its judgeable/off-name
+ratio, the off-name mentions ADDRESSED, and per name group the standing rows
+it could move to — found through the `org_match_keys` N2 satellite, which is
+the only indexed path from a name to the rows carrying it.
+
+**It is resumable by construction.** A mention carrying a decision is
+excluded, so the packet is what is LEFT and the campaign runs in batches
+without re-reading itself.
+
+### What the adversarial panel changed (19 of 25 findings confirmed)
+
+Five reviewers, one verifier per finding, each writing and running scratch
+tests against the real code. The first cut of this job was wrong in ways
+that would have wrecked the campaign rather than merely annoyed it:
+
+- **The destination probe was an unordered `LIMIT 12`.** For any name carried
+  by more than twelve rows it returned the twelve LOWEST ORG IDS — not the
+  established row, not a sample. A verifier measured a key with **62,084**
+  carriers. Replaced with the genericness wall FIRST (a bounded distinct
+  count at `SCAN_STOPLIST_CAP`, threaded from the app so this wall and the E3
+  scan's cannot drift): over the wall the group is published as a **shared
+  literal with NO destinations**, because five arbitrary rows that look like
+  a shortlist are worse than none.
+- **A verdict the apply job can never execute vanished from the packet** —
+  below the confidence bar, no target, or a target that no longer stands. The
+  campaign would have read "no open work" while nothing moved. Those now come
+  back as `parked`, with the reason. The panel also proved the naive fix
+  wrong: a `keep` is never stamped by `apply_rehoming` (three consecutive wet
+  applies, `applied_at` still NULL), so testing `applied_at` alone parks every
+  keep forever.
+- **Country was carried and never used.** A same-named foreign row outranked
+  the domestic one and was then truncated away.
+- **The case cap kept the SMALLEST cases** — the first `cases_cap` in org-id
+  order — and then presented them sorted by size, so an arbitrary subset read
+  as the worst. Now two passes: pass 1 sizes every case holding three numbers
+  each, pass 2 probes only the ranked head.
+- **An org reviewed under two cohorts was walked twice**, doubling its
+  mentions in every total and listing the same address twice.
+  `org_case_reviews` is keyed `(case_org_id, cohort)`. Fixed here **and in
+  `fusion_candidates`**, which had it too — the census and the packet must
+  agree on the same data.
+- **No `org_match_keys` preconditions.** An index-less, mid-walk or
+  wrong-epoch satellite does not make the packet visibly wrong; it makes
+  every group read "no destination anywhere", which is the one answer a
+  reviewer cannot tell from a real finding. The job now refuses like
+  `scan-org-match-keys` does, and stamps the build's provenance
+  (`keys_built_at`, `keys_rows`, `keys_epoch`) into the report — because
+  preconditions cannot catch STALENESS, which is the same silence arriving
+  later.
+- **`groups_total` was a post-cap listed count published as a total.** Counts
+  are now scoped by name: `groups_total` over the whole workload,
+  `probed_groups` / `probed_groups_with_target` / `groups_generic` over what
+  was probed, `groups_elided` per packet and per case.
+- Smaller, all confirmed: the group's displayed name was the first spelling
+  seen rather than the modal one; alias-matched destinations did not say so;
+  the mention's own published identifier was dropped although the row was
+  already being read; the mid-case stop checkpoint and every truncation path
+  were untested.
+
+### What the packet now hands a reviewer, and why each piece is there
+
+The census left the hard judgement unsupported: the fusion proper (re-home)
+versus the vehicle under a spelling N2 does not collapse (keep). Three pieces
+of free evidence separate them, all from rows already being read:
+
+1. **`notice_orgs`** — how many organizations the mention's own notice names.
+   A notice naming ONE organization, under the member's name, is the fusion.
+   A notice naming seven is a consortium listing.
+2. **`identifier_match`** — the destination's identifier shares its digit
+   body with one the mention publishes (the Unit C peer comparison, reused).
+   It outranks a bigger namesake.
+3. **the `mentions`/`off_name` ratio**, counted over EVERY mention on the row
+   so it does not move as the campaign runs — 28-of-29 is issue 322's
+   mislabelled-row shape, where the repair is a rename, not a move.
+
+### Still open
+
+The campaign itself. Run `rehoming-packet`, review, POST `/admin/rehoming`,
+`apply-rehoming` dry, review the plan, wet, **then run a `project` job** —
+until the fold runs the derived layer still shows the old attribution.
