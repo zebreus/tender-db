@@ -87,12 +87,49 @@ numbers incl. the fused R&K/Dobler rows, 2 concatenated member-VAT
 pairs, 1 address) with pre-images in applied_action and raw values
 untouched in mentions. Journal clean.
 
+## BATCH CAMPAIGN COMPLETE (2026-08-30 ~04:0x-06:3x, batch shape v2)
+
+**All 823 remaining identifier-bearing Bietergemeinschaft cases reviewed
+individually; 442 wrong identifiers stripped (job 481, plan-exact).**
+Full verdicts: `311-batch-verdicts.json`; cohort
+`biege-batch-2026-08-30` in org_case_reviews with pre-images.
+
+Execution: one bulk enrichment pass (823 cases, 6,683 mentions,
+collision counts), stratified by identifier shape (overlong 335 /
+national-other 281 / vat-shaped 176 / gln9110 26 / concat-vat 5), 32
+shared-preamble batches over two sonnet waves + two 4-agent Fable
+skeptic audits (10%/stratum) + one 49-case correction round + one
+owner-reviewed straggler. ~4.4M tokens total ≈ 5.3k/case — a 10×
+improvement on the pilot's 55k/case, per-case bar intact.
+
+Audit gates: wave 1 32/38, all 6 disagreements ONE class (v4 platform
+GUIDs inconsistently spared) → the whole 48-case lenient slice
+re-reviewed under the audit-confirmed calibration; wave 2 40/45, all 5
+disagreements medium-band (no apply effect), adjudicated per the
+register-impossibility / evidence-absence calibrations. **Across both
+audits: ZERO downgrades of auto-applied highs — no false strip found
+in 83 audited cases.**
+
+Final verdict census (823): 442 wrong-identifier/high (APPLIED),
+102 wrong-identifier/medium + 16 low (parked), 170 sound (mostly
+medium), 58 member-row-mislabelled, 17 unclear-escalate.
+Headline classes: 306 v4-GUID platform keys (→ issue 312: graduate to
+the deny floor), lead-member VATs/FNs, concatenated member VATs,
+phone numbers and postal codes in the id slot, e.V./eGbR standing
+bodies correctly left sound.
+
+Acceptance: strips verified on prod (identifier+kind NULL, names
+standing, raw mention values untouched), journal clean, dry plan ==
+wet result == my verdict ledger exactly (442).
+
 REMAINING: (1) solo-mention re-homing to member rows (the fusion
-repair — dissolve-adjacent machinery, own panel round); (2) batch the
-remaining ~772 identifier-bearing Bietergemeinschaft cases through
-review (cost calibrated: ~55k tokens/case incl. audit share); (3) the
-escalations queue + medium-confidence re-review policy; (4) widening
-the case sources beyond the org layer if Lennart wants (offered).
+repair — dissolve-adjacent machinery, own panel round; the campaign's
+handling notes name every re-homing candidate); (2) the escalations
+queue (17 unclear-escalate) + medium-confidence policy (102 parked
+wrong-id/medium — candidates for evidence enrichment, e.g. register
+lookups); (3) widening the case sources beyond the org layer if
+Lennart wants (offered); (4) issue 312 (GUID deny-floor) and the
+wrong-data docs consolidation.
 
 ## Notes
 
