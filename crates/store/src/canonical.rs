@@ -1697,6 +1697,10 @@ pub struct OrgEdgeScanReport {
     /// Distinct states of the TABLE edges touching the exemplar — the
     /// acceptance gate expects only 'open'.
     pub exemplar_states: Vec<String>,
+    /// The standing edge count BEFORE this wet run wrote anything (0 on a
+    /// dry run) — tripwire 6's SHRUNK input: after the upserts, the census
+    /// has re-covered any out-of-band deletion.
+    pub total_edges_before: u64,
     /// A deterministic spread sample of the census — up to 20 concrete
     /// (org_a, org_b, rule, evidence) edges, every ⌈n/20⌉th in walk order —
     /// so the rollout's hand review (and every weekly review after it) can
@@ -3289,6 +3293,11 @@ impl Db {
                 None => 0,
             }
         };
+        // The PRE-write standing count: the SHRUNK check must read the
+        // table as it stood BETWEEN runs — measuring only after this run's
+        // upserts re-wrote the census would mask an out-of-band deletion
+        // (panel catch).
+        report.total_edges_before = before as u64;
         let cap = args.max_edges.unwrap_or(u64::MAX);
         let to_write: &[Edge] =
             &edges[..edges.len().min(usize::try_from(cap).unwrap_or(usize::MAX))];

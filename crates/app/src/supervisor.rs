@@ -1272,15 +1272,27 @@ const SCAN_EXEMPLAR_ORG: i64 = 23294544;
 /// Tripwire 6 (issue 300 Stage 4 Unit 5): the monotone-growth check over
 /// the edge store, evaluated at the end of every completed, uncapped wet
 /// scan against the durable baseline. Edges are append-refresh-only in
-/// v1, so a shrink is RED (the one legitimate wholesale reset — the bare
-/// org rebuild — zeroes the baseline instead); growth past the volume
-/// ceiling, or past twice the reviewed plan, is a new generic-name family
-/// or a broken key fn.
-fn edge_alarm(baseline: i64, total: i64, plan_expect: u64) -> Option<&'static str> {
-    if total < baseline {
+/// v1, so a shrink is RED — and it is measured on `before_writes`, the
+/// standing count BEFORE this run's upserts, because the run itself
+/// re-covers any out-of-band deletion (the one legitimate wholesale reset
+/// — the bare org rebuild — zeroes the baseline instead). Growth is
+/// measured on the post-run total. NOTE the division of labor (panel
+/// round 2): a census SPIKE from a new generic-name family or a broken
+/// key fn is intercepted FIRST by the in-store T4 parity/bounds abort,
+/// which lands on the alarm surface via [`Supervisor::edge_scan_refuse`];
+/// the SPIKE arm here is the residual belt for growth that passes parity
+/// (baseline corruption, anomalous capped interludes) — not the primary
+/// spike detector.
+fn edge_alarm(
+    baseline: i64,
+    before_writes: i64,
+    total: i64,
+    plan_expect: u64,
+) -> Option<&'static str> {
+    if before_writes < baseline {
         return Some("SHRUNK");
     }
-    let growth = (total - baseline) as u64;
+    let growth = (total - baseline).max(0) as u64;
     if growth > store::EDGE_VOLUME_CEILING || growth > 2 * plan_expect.max(1) {
         return Some("SPIKE");
     }
@@ -1360,6 +1372,62 @@ impl Supervisor {
             eprintln!("[scan-org-match-keys] alarm report write failed: {e}");
         }
         Err(msg)
+    }
+
+    /// Tripwire 6's evaluate-and-anchor step (issue 300 Stage 4 Unit 5):
+    /// the monotone check against the durable baseline, run ONLY for a
+    /// completed, uncapped wet scan — capped and stopped runs return
+    /// without touching the baseline or the alarm surface (extracted as a
+    /// method precisely so a test can pin that guard). The verdict lands
+    /// in the wet report's fields AND overwrites `org-edge-scan-alarm` —
+    /// which a clean run clears, so the surface always shows the latest
+    /// verdict, not the latest incident. Returns the job-message suffix.
+    async fn apply_edge_tripwire(
+        &self,
+        r: &store::OrgEdgeScanReport,
+        expect_edges: Option<u64>,
+        wet: &mut serde_json::Value,
+        now: i64,
+    ) -> Result<String, String> {
+        if r.capped || r.stopped {
+            return Ok(String::new());
+        }
+        let baseline = self.db.org_edge_baseline().await.map_err(|e| e.to_string())?;
+        let total = r.total_edges_after as i64;
+        let alarm = edge_alarm(
+            baseline,
+            r.total_edges_before as i64,
+            total,
+            expect_edges.unwrap_or(r.would_emit),
+        );
+        wet["baseline_before"] = baseline.into();
+        wet["alarm"] = match alarm {
+            Some(a) => a.into(),
+            None => serde_json::Value::Null,
+        };
+        let mut line = String::new();
+        let alarm_body = match alarm {
+            Some(a) => {
+                eprintln!(
+                    "[scan-org-match-keys] TRIPWIRE 6 {a}: edges {} before / {total} after \
+                     vs baseline {baseline} (plan {expect_edges:?})",
+                    r.total_edges_before
+                );
+                line = format!("; TRIPWIRE 6 {a} (baseline {baseline})");
+                serde_json::json!({
+                    "alarm": a, "baseline_before": baseline,
+                    "edges_before_run": r.total_edges_before,
+                    "total": total, "at": now,
+                })
+            }
+            None => serde_json::json!({ "clear": true, "total": total, "at": now }),
+        };
+        self.db
+            .put_report("org-edge-scan-alarm", &alarm_body.to_string(), now)
+            .await
+            .map_err(|e| e.to_string())?;
+        self.db.set_org_edge_baseline(total).await.map_err(|e| e.to_string())?;
+        Ok(line)
     }
 
     fn pop(&self) -> Option<Job> {
@@ -3428,9 +3496,11 @@ impl Supervisor {
                 };
                 let build: serde_json::Value =
                     serde_json::from_str(&build_body).map_err(|e| e.to_string())?;
-                let built_at = build["built_at"]
-                    .as_i64()
-                    .ok_or_else(|| "org-match-keys-build lacks built_at".to_owned())?;
+                let Some(built_at) = build["built_at"].as_i64() else {
+                    return self
+                        .edge_scan_refuse("org-match-keys-build lacks built_at".to_owned())
+                        .await;
+                };
                 // T4 ladder: a wet run REQUIRES the census recorded against
                 // the SAME keys build, in bounds; parity itself is checked
                 // whole-plan in-store, before any write.
@@ -3471,11 +3541,16 @@ impl Supervisor {
                             )
                             .await;
                     }
-                    Some(
-                        v["would_emit"]
-                            .as_u64()
-                            .ok_or_else(|| "org-edge-scan-plan lacks would_emit".to_owned())?,
-                    )
+                    match v["would_emit"].as_u64() {
+                        Some(n) => Some(n),
+                        None => {
+                            return self
+                                .edge_scan_refuse(
+                                    "org-edge-scan-plan lacks would_emit".to_owned(),
+                                )
+                                .await;
+                        }
+                    }
                 };
                 let exemplar = self
                     .db
@@ -3489,7 +3564,7 @@ impl Supervisor {
                 let progress = |done: u64, detail: &str| {
                     self.set_phase(phase, Some(done), None, detail.to_owned());
                 };
-                let r = self
+                let r = match self
                     .db
                     .scan_org_match_keys(
                         store::OrgEdgeScanArgs {
@@ -3508,7 +3583,16 @@ impl Supervisor {
                         store::now_unix(),
                     )
                     .await
-                    .map_err(|e| e.to_string())?;
+                {
+                    Ok(r) => r,
+                    // The in-store aborts — T4 parity, the bounds ceiling —
+                    // and any plain store error land on the alarm surface
+                    // too (panel round 2): a parity abort on the Sunday
+                    // tick was the ops amendment's LEAD scenario for the
+                    // silently-stopped clock, and it must never show a
+                    // stale "clear" while the weekly run stands refused.
+                    Err(e) => return self.edge_scan_refuse(e.to_string()).await,
+                };
                 if r.stopped {
                     // Honest cancel: NO report (the issue-230 zero-lie bar).
                     // Wet keeps any committed edge batches — an idempotent
@@ -3594,45 +3678,7 @@ impl Supervisor {
                 wet["edges_new"] = r.edges_new.into();
                 wet["edges_refreshed"] = r.edges_refreshed.into();
                 wet["total_edges_after"] = r.total_edges_after.into();
-                // Tripwire 6 (Unit 5): the monotone check against the
-                // durable baseline, evaluated — and the baseline re-anchored
-                // — ONLY at a completed, uncapped wet run; capped and
-                // stopped runs never touch it. The alarm lands in this
-                // report AND overwrites org-edge-scan-alarm, which a clean
-                // run clears — so the operator surface always shows the
-                // latest verdict, not the latest incident.
-                let mut alarm_line = String::new();
-                if !r.capped {
-                    let baseline =
-                        self.db.org_edge_baseline().await.map_err(|e| e.to_string())?;
-                    let total = r.total_edges_after as i64;
-                    let alarm = edge_alarm(baseline, total, expect_edges.unwrap_or(r.would_emit));
-                    wet["baseline_before"] = baseline.into();
-                    wet["alarm"] = match alarm {
-                        Some(a) => a.into(),
-                        None => serde_json::Value::Null,
-                    };
-                    let alarm_body = match alarm {
-                        Some(a) => {
-                            eprintln!(
-                                "[scan-org-match-keys] TRIPWIRE 6 {a}: edge total {total} \
-                                 vs baseline {baseline} (plan {:?})",
-                                expect_edges
-                            );
-                            alarm_line = format!("; TRIPWIRE 6 {a} (baseline {baseline})");
-                            serde_json::json!({
-                                "alarm": a, "baseline_before": baseline,
-                                "total": total, "at": now,
-                            })
-                        }
-                        None => serde_json::json!({ "clear": true, "total": total, "at": now }),
-                    };
-                    self.db
-                        .put_report("org-edge-scan-alarm", &alarm_body.to_string(), now)
-                        .await
-                        .map_err(|e| e.to_string())?;
-                    self.db.set_org_edge_baseline(total).await.map_err(|e| e.to_string())?;
-                }
+                let alarm_line = self.apply_edge_tripwire(&r, expect_edges, &mut wet, now).await?;
                 self.db
                     .put_report("org-edge-scan", &wet.to_string(), now)
                     .await
@@ -6286,6 +6332,22 @@ mod tests {
             sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("alarm surface");
         assert!(alarm.contains("\"clear\":true"), "{alarm}");
         assert_eq!(sup.db().org_edge_baseline().await.unwrap(), 0, "anchored at the total");
+        // 7c. Tripwire 6 through the REAL handler (panel round 2: the
+        //     alarm block's wiring must fire in a wet run, not only in the
+        //     pure-fn ladder): seed the baseline above the standing table —
+        //     the pre-write count reads as an out-of-band shrink; the
+        //     verdict reaches the job message, the wet report, the alarm
+        //     surface, and the baseline re-anchors.
+        sup.db().set_org_edge_baseline(10).await.unwrap();
+        let msg = sup.run_spec(&job(9, false)).await.expect("alarmed, not failed");
+        assert!(msg.contains("TRIPWIRE 6 SHRUNK"), "{msg}");
+        let (scan, _) =
+            sup.db().latest_report("org-edge-scan").await.unwrap().expect("wet report");
+        assert!(scan.contains("\"alarm\":\"SHRUNK\""), "{scan}");
+        let (alarm, _) =
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("surface");
+        assert!(alarm.contains("\"alarm\":\"SHRUNK\""), "{alarm}");
+        assert_eq!(sup.db().org_edge_baseline().await.unwrap(), 0, "re-anchored 10 -> 0");
         // 8. A keys rebuild after the plan was recorded → wet refuses on
         //    lineage until a fresh dry census is reviewed — and the refusal
         //    lands on the alarm surface (the muted-tripwire fix), not just
@@ -6296,6 +6358,25 @@ mod tests {
         let (alarm, _) =
             sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("refusal alarm");
         assert!(alarm.contains("predates"), "{alarm}");
+        // 9. The IN-STORE T4 parity abort reaches the alarm surface too
+        //    (panel round 2's lead finding: a census spike parity-aborts
+        //    BEFORE edge_alarm runs, and that path stopping silently was
+        //    the ops amendment's exact scenario). Plant a plan whose
+        //    would_emit is far from the live census → the wet aborts, and
+        //    the abort — not a stale clear — is what the surface shows.
+        sup.db()
+            .put_report(
+                "org-edge-scan-plan",
+                "{\"keys_built_at\":456,\"bounds_ok\":true,\"would_emit\":5000}",
+                457,
+            )
+            .await
+            .unwrap();
+        let err = sup.run_spec(&job(10, false)).await.expect_err("parity abort");
+        assert!(err.contains("parity abort"), "{err}");
+        let (alarm, _) =
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("abort alarm");
+        assert!(alarm.contains("parity abort"), "{alarm}");
     }
 
     /// Tripwire 6's decision ladder (issue 300 Stage 4 Unit 5): shrink is
@@ -6303,19 +6384,72 @@ mod tests {
     /// reviewed plan, and both the first anchor and weekly drift are quiet.
     #[test]
     fn edge_alarm_ladder() {
-        assert_eq!(edge_alarm(0, 1_498_485, 1_498_485), None, "the first anchor is not a spike");
-        assert_eq!(edge_alarm(1_000_000, 1_010_000, 1_000_000), None, "weekly drift is quiet");
-        assert_eq!(edge_alarm(100, 99, 1_000), Some("SHRUNK"), "edges never legitimately shrink");
         assert_eq!(
-            edge_alarm(0, store::EDGE_VOLUME_CEILING as i64 + 1, u64::MAX / 4),
+            edge_alarm(0, 0, 1_498_485, 1_498_485),
+            None,
+            "the first anchor is not a spike"
+        );
+        assert_eq!(
+            edge_alarm(1_000_000, 1_000_000, 1_010_000, 1_000_000),
+            None,
+            "weekly drift is quiet"
+        );
+        // SHRUNK reads the PRE-write count: the wet run's own upserts
+        // re-cover an out-of-band deletion, so the post-run total alone
+        // would mask it (panel round 2).
+        assert_eq!(
+            edge_alarm(100, 99, 200, 1_000),
+            Some("SHRUNK"),
+            "a deletion between runs shows in the before-count even though \
+             the run re-covered it"
+        );
+        assert_eq!(
+            edge_alarm(0, 0, store::EDGE_VOLUME_CEILING as i64 + 1, u64::MAX / 4),
             Some("SPIKE"),
             "past the order-of-magnitude ceiling"
         );
         assert_eq!(
-            edge_alarm(1_000, 3_001, 1_000),
+            edge_alarm(1_000, 1_000, 3_001, 1_000),
             Some("SPIKE"),
             "more than twice the reviewed plan"
         );
+    }
+
+    /// Tripwire 6's guard rails (panel round 2): capped and stopped runs
+    /// never touch the baseline or the alarm surface; a healthy completed
+    /// run anchors the baseline and writes the CLEAR verdict.
+    #[tokio::test]
+    async fn capped_and_stopped_runs_never_touch_tripwire_6() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        sup.db().set_org_edge_baseline(42).await.unwrap();
+        let mut wet = serde_json::json!({});
+        for (capped, stopped) in [(true, false), (false, true)] {
+            let r = store::OrgEdgeScanReport {
+                capped,
+                stopped,
+                total_edges_after: 7,
+                ..Default::default()
+            };
+            let line = sup.apply_edge_tripwire(&r, Some(7), &mut wet, 123).await.unwrap();
+            assert!(line.is_empty());
+        }
+        assert_eq!(sup.db().org_edge_baseline().await.unwrap(), 42, "baseline untouched");
+        assert!(
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().is_none(),
+            "alarm surface untouched"
+        );
+        let r = store::OrgEdgeScanReport {
+            total_edges_before: 42,
+            total_edges_after: 45,
+            would_emit: 45,
+            ..Default::default()
+        };
+        let line = sup.apply_edge_tripwire(&r, Some(45), &mut wet, 124).await.unwrap();
+        assert!(line.is_empty(), "healthy run: no message suffix");
+        assert_eq!(sup.db().org_edge_baseline().await.unwrap(), 45, "anchored");
+        let (alarm, _) =
+            sup.db().latest_report("org-edge-scan-alarm").await.unwrap().expect("clear written");
+        assert!(alarm.contains("\"clear\":true"), "{alarm}");
     }
 
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only
