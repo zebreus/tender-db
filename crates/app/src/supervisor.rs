@@ -3226,24 +3226,56 @@ impl Supervisor {
                 // invisible — every key would read non-generic. A DRY run may
                 // still plan (its plan is reviewed by a person), but a WET one
                 // refuses rather than merging under a wall that is not there.
-                if !dry_run {
-                    let (watermark, _) =
-                        self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
-                    let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
-                    if keys == 0 {
-                        return Err("match-org-identifiers r3 REFUSED: org_match_keys is \
-                             empty, so the issue-316 generic-name wall cannot see anything \
-                             — run build-org-match-keys first"
-                            .to_owned());
-                    }
-                    if watermark != 0 {
-                        return Err(format!(
-                            "match-org-identifiers r3 REFUSED: a key build is in flight \
-                             (watermark {watermark}); its covering index does not exist \
-                             yet, so the generic-name probe would full-scan {keys} rows \
-                             per candidate and read a half-built keyspace"
-                        ));
-                    }
+                // Issue 316: r3 corroboration consults the generic-name wall,
+                // so the satellite has to be in a state the wall can be read
+                // from. Which refusals apply to a DRY run and which only to a
+                // WET one is the whole subtlety here (panel catch: the first
+                // version guarded wet only, and the dry run — the DEFAULT for
+                // this job — kept the probe that has no index to stand on).
+                let (watermark, epoch) =
+                    self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
+                let rebuild = "run a WET build first: \
+                               {\"kind\":\"build-org-match-keys\",\"dry_run\":false} \
+                               — the default is DRY and stores nothing";
+                // Mid-build: the covering index does not exist yet, so every
+                // candidate's probe becomes a full scan of a multi-million-row
+                // table, and the half-written keyspace answers wrongly anyway.
+                // Both halves apply to a dry run as much as a wet one — a dry
+                // run costs the same and records a plan a wet run trusts.
+                if watermark != 0 {
+                    return Err(format!(
+                        "match-org-identifiers r3 REFUSED: a key build is in flight \
+                         (watermark {watermark}); its covering index does not exist yet, \
+                         so the generic-name probe would full-scan {keys} rows per \
+                         candidate and read a half-built keyspace"
+                    ));
+                }
+                // Epoch drift, same reasoning as the scan's own rung: keys
+                // built under superseded semantics are a keyspace whose
+                // membership no longer matches what `norm` produces today, so
+                // the wall answers a DIFFERENT question and reads "not
+                // generic" for every key that moved. Skipped when the
+                // satellite is empty, so a fresh box reports emptiness rather
+                // than an empty-string epoch.
+                if keys > 0 && epoch != ingest::crosswalk::NAME_KEY_EPOCH {
+                    return Err(format!(
+                        "match-org-identifiers r3 REFUSED: org_match_keys carries keys epoch \
+                         {epoch:?}, this binary's is {:?} — the generic-name wall would \
+                         answer about a superseded keyspace; {rebuild}",
+                        ingest::crosswalk::NAME_KEY_EPOCH
+                    ));
+                }
+                // An EMPTY satellite is the one state only a wet run refuses:
+                // the probe is cheap there (nothing to scan) and every key
+                // reads non-generic, which is a fine state to PLAN in — a
+                // person reads the plan — but not one to merge under, because
+                // the wall would silently not be there.
+                if !dry_run && keys == 0 {
+                    return Err(format!(
+                        "match-org-identifiers r3 REFUSED: org_match_keys is empty, so the \
+                         issue-316 generic-name wall cannot see anything — {rebuild}"
+                    ));
                 }
                 let expect_groups = if dry_run {
                     None
@@ -3317,6 +3349,16 @@ impl Supervisor {
                         "denied_legal_form": r.denied_legal_form,
                         "denied_group_vat": r.denied_group_vat,
                         "denied_cap": r.denied_cap,
+                        "denied_generic_name": r.denied_generic_name,
+                        "generic_name_hard_anchor": r.generic_name_hard_anchor,
+                        // Panel catch: a plan computed with a BLIND wall (an
+                        // empty satellite, which only a wet run refuses) is
+                        // otherwise indistinguishable from one computed with a
+                        // readable one — both report denied_generic_name 0. The
+                        // plan says which it was, so a reviewer reading it later
+                        // cannot mistake "nothing was generic" for "nothing
+                        // could be seen".
+                        "generic_wall_readable": keys > 0,
                         "merged_this_run": r.merged_groups,
                         "residual_of_wet_run": !dry_run,
                         "mentions": r.mentions, "parties": r.parties,
@@ -3351,7 +3393,7 @@ impl Supervisor {
                      {} legal-form, {} vat-group-wall, {} co-anchor-cap; plan {} \
                      candidates; merged {} \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
-                     {} winners repointed, {} winner dups deleted, {} tenders touched)",
+                     {} winners repointed, {} winner dups deleted, {} tenders touched){}",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.pool,
                     r.register_prefixed,
@@ -3374,7 +3416,13 @@ impl Supervisor {
                     r.bid_parties,
                     r.winners,
                     r.winner_dups,
-                    r.tender_changes
+                    r.tender_changes,
+                    if keys == 0 {
+                        " — NOTE: org_match_keys is EMPTY, so the generic-name wall saw \
+                         nothing and denied nothing"
+                    } else {
+                        ""
+                    }
                 ))
             }
             Spec::CaseReviewBacklog => {
@@ -6245,13 +6293,14 @@ mod tests {
         Arc::new(store::Db::open(&path).await.unwrap())
     }
 
-    /// Issue 316: r3's corroboration now consults the generic-name wall, so
-    /// a WET run must refuse when that wall cannot be read — an empty key
-    /// satellite (every key would look unique) or a build in flight (no
-    /// covering index yet, and a half-built keyspace). A DRY run still
-    /// plans: its plan is reviewed by a person before anything merges.
+    /// Issue 316: r3's corroboration consults the generic-name wall, so the
+    /// run refuses when that wall cannot be read. The split is the point: a
+    /// build in flight and an epoch-stale keyspace refuse BOTH ways (the
+    /// probe has no index to stand on, and a dry plan is what a wet run
+    /// trusts), while an EMPTY satellite refuses only a WET run — planning
+    /// against it is cheap and harmless, merging under it is not.
     #[tokio::test]
-    async fn the_r3_wet_run_refuses_without_a_usable_key_satellite() {
+    async fn the_r3_run_refuses_without_a_usable_key_satellite() {
         let path = format!(
             "/tmp/tender-db-sup-r3guard-{}-{}.db",
             std::process::id(),
@@ -6269,9 +6318,13 @@ mod tests {
             spec: Spec::MatchOrgIdentifiersR3 { dry_run: dry, max_groups: None },
             resume_after: None,
         };
-        // 1. Empty satellite: the wall is not there, so a wet run refuses.
+        // 1. Empty satellite: the wall is not there, so a wet run refuses —
+        //    and the refusal names the WET remedy, because the remedy job's
+        //    own default is dry and a dry build stores nothing (panel catch:
+        //    "run build-org-match-keys first" sends the operator in a loop).
         let err = sup.run_spec(&job(1, false)).await.expect_err("empty satellite");
         assert!(err.contains("org_match_keys is empty"), "{err}");
+        assert!(err.contains("\"dry_run\":false"), "the remedy must be the WET one: {err}");
         // 2. Keys present but a build is mid-walk (non-zero watermark): the
         //    covering index does not exist yet.
         conn.execute(
@@ -6288,21 +6341,72 @@ mod tests {
         .unwrap();
         let err = sup.run_spec(&job(2, false)).await.expect_err("build in flight");
         assert!(err.contains("build is in flight") && err.contains("77"), "{err}");
-        // 3. Build complete: the guard passes, and the run goes on to fail on
-        //    the NEXT precondition — which is how we know it passed this one.
+        // 3. Watermark clear but the keys were built under SUPERSEDED
+        //    semantics: the wall would answer about a keyspace `norm` no
+        //    longer produces, so it refuses too (panel catch — the first
+        //    version of this guard read the epoch and threw it away, and
+        //    this very test asserted the stale state was fine).
         conn.execute(
             "UPDATE projection_state SET org_match_keys_watermark = 0 WHERE id = 0",
             (),
         )
         .await
         .unwrap();
-        let err = sup.run_spec(&job(3, false)).await.expect_err("no reviewed plan");
+        let err = sup.run_spec(&job(3, false)).await.expect_err("stale keys epoch");
+        assert!(err.contains("keys epoch"), "{err}");
+        // 4. Epoch stamped to this binary's: the guard passes, and the run
+        //    goes on to fail on the NEXT precondition — which is how we know
+        //    it passed this one.
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_epoch = ? WHERE id = 0",
+            (store::turso::Value::Text(ingest::crosswalk::NAME_KEY_EPOCH.to_owned()),),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(4, false)).await.expect_err("no reviewed plan");
         assert!(err.contains("r3-merge-plan"), "{err}");
-        // 4. A DRY run never meets the guard at all — it plans on an empty
-        //    satellite, which is the state every first run is in.
+        // 5. A DRY run plans on an EMPTY satellite — the state every first
+        //    run is in, where the probe is cheap and a person reads the plan
+        //    before anything merges.
         conn.execute("DELETE FROM org_match_keys", ()).await.unwrap();
-        let msg = sup.run_spec(&job(4, true)).await.expect("dry plans");
+        let msg = sup.run_spec(&job(5, true)).await.expect("dry plans");
         assert!(msg.contains("DRY RUN"), "{msg}");
+        //    …and it SAYS the wall was blind, so "denied 0 generic names"
+        //    cannot be read as "nothing was generic" when it means "nothing
+        //    could be seen" (panel catch).
+        assert!(msg.contains("org_match_keys is EMPTY"), "{msg}");
+        let (plan, _) = sup.db().latest_report("r3-merge-plan").await.unwrap().expect("plan");
+        assert!(plan.contains("\"generic_wall_readable\":false"), "{plan}");
+        // 6. But a DRY run does NOT get to skip the COST guard: mid-build,
+        //    the probe has no covering index and would full-scan the whole
+        //    satellite once per candidate. This is the panel's catch — the
+        //    first guard was wet-only, and dry is this job's default.
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (1, 'n2', 'acme')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 5 WHERE id = 0",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(6, true)).await.expect_err("dry refuses mid-build too");
+        assert!(err.contains("build is in flight"), "{err}");
+        // …and the same for a keyspace built under superseded semantics: a
+        // dry plan computed against the wrong keyspace is a plan a later wet
+        // run trusts.
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 0, \
+                 org_match_keys_epoch = 'n0v0' WHERE id = 0",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(7, true)).await.expect_err("dry refuses stale semantics");
+        assert!(err.contains("keys epoch"), "{err}");
     }
 
     /// Issue 173 (D4): the rehash probe enqueues with its sample cap, defaulting

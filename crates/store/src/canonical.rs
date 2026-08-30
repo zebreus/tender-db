@@ -1554,9 +1554,11 @@ pub struct R3MergeReport {
     /// generic name is agreement between two names nobody chose to make
     /// unique, so it cannot carry a rescue merge on its own.
     pub denied_generic_name: u64,
-    /// Corroborated on a GENERIC name but allowed through, because the
-    /// anchor hard-checksums: the design's one exemption, counted so the
-    /// cadence can see how often it is used rather than assuming zero.
+    /// Planned merges whose corroborating name is GENERIC and which stand
+    /// only because the anchor hard-checksums — the design's one exemption,
+    /// counted so the cadence sees how often it actually carries a merge
+    /// rather than assuming zero. Counted over the SETTLED plan, so a
+    /// candidate the later rungs deny is never credited to the exemption.
     pub generic_name_hard_anchor: u64,
     /// Skipped: the candidate's identifier fails the v2 gate.
     pub denied_gate: u64,
@@ -7091,6 +7093,10 @@ impl Db {
             /// Mention-evidence keys, retained for the co-anchored pairwise
             /// wall pass below.
             keys: std::collections::HashMap<&'static str, BTreeSet<String>>,
+            /// Corroborated on a GENERIC name and let through only because
+            /// the anchor hard-checksums (issue 316). Carried this far so
+            /// the exemption is counted over the FINAL plan.
+            generic_exempt: bool,
         }
         let pool = self.null_country_ident_orgs().await?;
         report.pool = pool.len() as u64;
@@ -7137,14 +7143,16 @@ impl Db {
             // 62,084 orgs), and generic agreement is not corroboration. The
             // design's single exemption is a HARD-checksummed anchor, which
             // stands on its own arithmetic rather than on the name.
-            if self.name_key_is_generic("n2", &n2, args.stoplist_cap).await? {
-                if (args.hard_scheme)(scheme) {
-                    report.generic_name_hard_anchor += 1;
+            let generic_exempt =
+                if self.name_key_is_generic("n2", &n2, args.stoplist_cap).await? {
+                    if !(args.hard_scheme)(scheme) {
+                        report.denied_generic_name += 1;
+                        continue;
+                    }
+                    true
                 } else {
-                    report.denied_generic_name += 1;
-                    continue;
-                }
-            }
+                    false
+                };
             // Gate-poison, both sides: the candidate country-less (the
             // dissolve's own view of it), the target under its country. A
             // standing gate-failing target shouldn't exist post-Stage-1 —
@@ -7227,6 +7235,7 @@ impl Db {
                 keep: target.id,
                 keep_literal: target.literal.clone(),
                 keys: a,
+                generic_exempt,
             });
         }
         // Keep-group passes (verification-round hardening). Candidates
@@ -7310,6 +7319,12 @@ impl Db {
         // stable prefix.
         plan.sort_by(|a, b| (a.scheme, &a.key, a.id).cmp(&(b.scheme, &b.key, b.id)));
         report.plan_groups = plan.len() as u64;
+        // Counted HERE, over the settled plan: the exemption's honest number
+        // is how many merges it actually carries, not how many candidates
+        // reached the wall on a hard anchor and were then denied by the gate,
+        // the consortium veto, the family check, the VAT-group wall, the
+        // co-anchor cap or the pairwise pass (panel catch).
+        report.generic_name_hard_anchor = plan.iter().filter(|c| c.generic_exempt).count() as u64;
 
         // T4 parity, the R2 rule verbatim.
         if let Some(expect) = args.expect_groups {

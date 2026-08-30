@@ -408,6 +408,29 @@ async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() 
         (0, 1, 1)
     );
 
+    // The exemption counts MERGES, not candidates that reached the wall.
+    // "Groupement Alpha" (candidate 107) corroborates and hard-anchors, so
+    // it passes the wall — and the consortium veto below then drops it. It
+    // must land on THAT rung and nowhere else, or the number the cadence
+    // decision reads is inflated by merges that never happened.
+    for org in [17i64, 107, 4243] {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'groupementalpha')",
+            (Value::Integer(org),),
+        )
+        .await
+        .unwrap();
+    }
+    let both = db
+        .match_org_null_country_r3(args_with(siren_is_hard, 2, true, None))
+        .await
+        .expect("dry");
+    assert_eq!(
+        (both.generic_name_hard_anchor, both.denied_consortium, both.plan_groups),
+        (1, 1, 1),
+        "only the candidate that actually PLANS is credited to the exemption"
+    );
+
     // The wall counts ORGS, not rows: a second row for an org already
     // counted must not push a 3-holder key over a cap of 3.
     conn.execute(
