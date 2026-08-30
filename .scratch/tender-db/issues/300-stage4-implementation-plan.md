@@ -307,3 +307,16 @@ The scan shipped as `Db::scan_org_match_keys` (canonical.rs, beside the merge cl
 10. **Stop latency**: the stop flag is read between index pages, between classification groups, AND between edge-write batches; a stopped run records NO report (dry and wet alike — wet keeps committed batches, an idempotent refresh).
 
 Unit-5 remainder unchanged: monotone baseline (org_edge_total) + SHRUNK/SPIKE alarms, Sunday cadence + chain-budget arithmetic (gated on the DRY run's measured wall-clock), scheduled-path refusal alarms, rollout steps 1-6.
+
+## UNIT 4 — ADVERSARIAL PANEL ROUND (2026-08-30, on commit 4f9a97b)
+
+Three lenses (fidelity/ops/tests) + per-finding adversarial verification: 8 CONFIRMED, 0 rejected. All fixed in the follow-up commit:
+
+- **HIGH (ops): `cargo test-app` did not compile on 4f9a97b** — the enqueue test read `queued[].spec`, which `QueuedJob` (the model row) does not carry. Worse process finding: the gate HAD failed (GATE-EXIT=101) and the failure was misread as green — the until-loop's `tail -1` grabbed the harness wrapper's "[exited with code 0]" line, and grepping for `test result: FAILED` sees nothing when the failure is a COMPILE error. Scar recorded in CLAUDE.md: read the echoed GATE-EXIT value itself. Fix: params-only asserts (the params line fully encodes the knobs).
+- **MEDIUM (fidelity): rule label from an arbitrary first-reaching satellite row** — multilingual notices store one literal under several langs, so a find-first pick could label same-language equality e3-xlang (and the label depended on turso result order). Fix: full reach sets per member (`head` + BTreeMap lang→name) and a peer-aware, deterministic witness pick: both-heads → e3-name; else any COMMON lang (smallest) → e3-name on that same-lang pair; else e3-xlang witnessed by head-else-smallest-lang. Pinned by the 50/51 fixture (DEU+ENG vs ENG → e3-name on lang:ENG, never lang:DEU).
+- **HIGH (tests): handler run-path unpinned** — new `scan_org_match_keys_run_path_refusals_and_report_lifecycle` drives `run_spec` through the whole ladder: index refusal, epoch refusal, build-report refusal, wet-without-plan refusal, dry-records-plan (lineage keys_built_at), cancel-records-NO-report, wet-records-report + re-anchor, stale-plan (predates) refusal.
+- **HIGH (tests): n3 novel pair unpinned** — the mini n3 now collapses TWO form variants into one family marker (like FAMILY_SEQUENCES), and the Delta GmbH/GesmbH fixture pins a pair only the n3 walk can find (evidence kind:"n3").
+- **MEDIUM (tests): satellite-satellite label combos unpinned** — same-lang pair (30/31 → e3-name lang:ENG×2) and cross-lang pair (40/41 → e3-xlang DEU/FRA) fixtures added.
+- **MEDIUM (tests): plan-report lifecycle unpinned** — covered by the run-path test above.
+- **LOW (fidelity): no-entity-writes asserts weaker than the plan's verbatim shape** — now full-content snapshots of organizations/organization_names (COUNT parity cannot catch an in-place UPDATE) + latest_cursor stillness.
+- **LOW (fidelity): supervisor precondition tests missing** — same run-path test.
