@@ -3632,12 +3632,22 @@ impl Supervisor {
                         .await
                         .map_err(|e| e.to_string())?;
                 }
+                // `refold_notices` is the row count of the re-queue UPDATE, so
+                // it exists only on the wet path. Printing it as "0 notices
+                // are re-queued" beside 258 touched tenders is a dry-path zero
+                // reading as a finding — the sentence said the fold had
+                // nothing to do when the wet run then re-queued 1,710.
+                let requeue = if dry_run {
+                    ", whose causing notices the wet run will re-queue".to_owned()
+                } else {
+                    format!(", whose {} notices are re-queued", r.refold_notices)
+                };
                 Ok(format!(
                     "apply-rehoming (issue 317 Unit A){}: {} pending verdicts, {} eligible; \
                      {} mentions {} ({} party and {} bid-party rows follow them across \
-                     {} tenders, whose {} notices are re-queued so the fold re-derives \
-                     the winners); {} no-ops, {} name a target org that does not exist \
-                     or no target at all (v1 never mints one)",
+                     {} tenders{} so the fold re-derives the winners); {} no-ops, {} name \
+                     a target org that does not exist or no target at all (v1 never mints \
+                     one)",
                     if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
                     r.pending,
                     r.eligible,
@@ -3646,7 +3656,7 @@ impl Supervisor {
                     r.parties,
                     r.bid_parties,
                     r.tenders,
-                    r.refold_notices,
+                    requeue,
                     r.noop,
                     r.missing_target
                 ))

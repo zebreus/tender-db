@@ -1,8 +1,10 @@
 # 317 — The 311 campaign's unfinished halves: re-homing, escalations, the medium band
 
-Status: Unit B DONE, Unit C's cheap half DONE (93d8704); Unit A's MACHINERY
-DONE and deployed (2ac5c1f), and its REVIEW PACKET built and panelled
-(2026-08-30) — the review campaign that consumes it is the open half
+Status: Unit B DONE. Unit C's cheap half DONE (93d8704); its medium band is
+still parked. Unit A's machinery, packet and REVIEW CAMPAIGN all DONE
+(2026-08-30): 416 mentions re-homed, folded, and the packet reads EMPTY.
+What remains of Unit A is 93 parked verdicts, issue 322's rename repair, and
+issue 323's slow write
 Kind: data quality (organization layer)
 Relates to: 311 (produced them), 312, 300
 
@@ -303,3 +305,109 @@ of free evidence separate them, all from rows already being read:
 The campaign itself. Run `rehoming-packet`, review, POST `/admin/rehoming`,
 `apply-rehoming` dry, review the plan, wet, **then run a `project` job** —
 until the fold runs the derived layer still shows the old attribution.
+
+
+## UNIT A CAMPAIGN RUN (2026-08-30) — 416 mentions moved
+
+Prod `rehoming-packet` (job 1413, under a keys satellite built 21 hours
+earlier: 13,034,812 rows, epoch `n2v1+n3v1`):
+
+    456 applied case orgs, 102 still hold an UNDECIDED off-name mention,
+    over 585 such mentions in 181 name groups;
+    115 groups have a standing destination, 3 are a shared literal over the wall
+
+Thirteen reviewers took eight cases each; thirteen AUDITORS then re-checked
+every verdict, with instructions biased at the appliable ones. **585 verdicts,
+585 audited, 4 overturned — 0.7%.**
+
+### The verdicts
+
+| shape | n |
+|---|---|
+| `rehome` high, with a target — **the appliable set** | 416 |
+| `rehome` medium, with a target (parked: reading right, row uncertain) | 29 |
+| `rehome` medium, name only (`missing_target`) | 60 |
+| `rehome` high, name only (`missing_target`) | 4 |
+| `keep` high — the vehicle under a spelling N2 does not collapse | 56 |
+| `keep` medium | 20 |
+
+**39 of the 76 keeps are `member-row-mislabelled`** (issue 322) — the row IS
+the member's, wearing a consortium name, and the repair is a rename. That is
+the class the packet was designed to surface rather than bury, and it is a
+third of everything kept.
+
+**64 mentions name a company with no standing row at all.** That is the
+measurement `apply-rehoming` v1 defers minting in order to take: about 11% of
+the workload would need a row minted, which is not nothing and not most.
+
+### The audit's best catch
+
+A reviewer sent `]init[ AG` to org 3525816 `init AG` (34 mentions) at HIGH
+confidence, applying the "same company duplicated → take the largest" rule.
+The auditor stopped it: `match_norm` drops the brackets, so `]init[ AG` (the
+Berlin digital agency, whose HRB 73218 B the mention publishes) and `init AG`
+(init innovation in traffic systems SE, Karlsruhe — a separate listed company)
+land in ONE key. Positive evidence they are different: the two candidate rows
+that carry identifiers carry DIFFERENT ones. Corrected to the largest
+bracketed row and downgraded to medium, so it parks instead of writing an
+award onto the wrong listed company.
+
+That is the exact failure mode the duplicate-consolidation rule creates, and
+one pass of adversarial re-reading caught it. The other three overturns were
+two consortium names wrongly kept and one target dropped in favour of
+`missing_target`.
+
+### The run
+
+`apply-rehoming` dry (job 1414) → plan reviewed → wet (job 1415):
+
+    416 mentions moved (1326 party and 2955 bid-party rows follow them
+    across 258 tenders, whose 1710 notices are re-queued so the fold
+    re-derives the winners); 0 no-ops, 4 missing_target
+
+Plan review before the wet run checked three things the counts cannot show:
+every target id was one the packet actually offered for that case (585/585,
+no invention, no self-targets); no self-moves; and the seven moves whose
+DESTINATION is itself a `Bietergemeinschaft` row — all seven correct, and a
+shape worth naming: **a different consortium fused onto this row through the
+shared lead partner's identifier**, moved to its own exact-named standing row
+(Pfeiffer/Lange/Braumann/Echterhoff off the Pfeiffer/KASSECKER row;
+Tecton/Mohr off Tecton/IBBS; MN Glasfaser/MUENET off Muenet/epcan).
+
+Then a `project` job to re-derive the winners. Until it finishes the derived
+layer still shows the old attribution.
+
+**The wet run took 1,185 seconds for 416 row moves** — the dry pass computes
+the identical plan in under one second, so the whole of it is the re-queue
+write. Filed as issue 323; it holds the single writer for twenty minutes.
+
+### The repair, measured after the fold
+
+`project` closed the window in 32 seconds: **1,710 notices → 258 tenders
+(2 islands), 1,710 versions; 258 tenders written, 0 verified unchanged** —
+every touched tender's winner set re-derived from the corrected mentions.
+
+Re-running both jobs against the repaired layer (jobs 507/508):
+
+    fusion-census:    102 → 45 rows hold an off-name mention, 585 → 169 mentions
+    rehoming-packet:  0 open, 492 decided, 93 PARKED
+
+And the four numbers reconcile exactly, which is the acceptance test:
+416 moved + 76 keeps = 492 decided; 76 keeps + 93 parked = the 169 off-name
+mentions the census still sees; 492 + 93 = 585. **The packet is empty.**
+
+The 45 rows the census still reports are not a residue of this repair — they
+are the decisions: rows a reviewer read and left alone (the vehicle under
+another spelling; the mislabelled member rows of issue 322) plus the 93
+verdicts nobody can apply yet, which is what `parked` exists to keep visible.
+
+### What is left on Unit A
+
+- **93 parked verdicts.** 64 name a company with no standing row
+  (`missing_target` — the minting question, now sized); 29 name a row but at
+  medium confidence, where the reviewer was sure of the reading and not of
+  the row. Both need a second pass with better evidence, not a lower bar.
+- **39 mislabelled rows** → issue 322 (the rename repair, unbuilt).
+- **Issue 321** — the name variant left on the origin org — is now live for
+  416 moves, and it feeds the Stage-4 keys.
+- **Issue 323** — the re-queue write is 20 minutes for 416 row moves.
