@@ -329,3 +329,14 @@ disqualified as R3 corroboration unless the identifier hard-checksum-passes,
 and that wiring has not landed — so r3 does NOT join the weekly tick yet.
 The 55,312-key n2 stoplist the scan now measures weekly is the input that
 follow-up will consume. Until then r3 runs operator-fired only.
+
+## UNIT 5 — ADVERSARIAL PANEL ROUND (2026-08-30, on commit e9e5f27)
+
+Two lenses + verification: 7 CONFIRMED, 1 rejected. All fixed in fbc741e:
+
+- **HIGH (ops + tests, the lead finding)**: the in-store T4 parity/bounds aborts bypassed the alarm surface — a census spike would parity-abort every Sunday while org-edge-scan-alarm kept showing last week's clear, the exact silently-stopped-clock scenario the ops amendment mandated against. Fix: the scan call's Err (parity, bounds, any store error) and the built_at/would_emit-lacks rungs all route through edge_scan_refuse now; pinned by a planted-stale-plan run-path step asserting the abort lands on the surface.
+- **MEDIUM: SPIKE unreachable through the job path** — real census spikes are intercepted by the (now-alarming) parity abort first. Resolution: the abort IS the primary spike detector and now reaches the surface; edge_alarm's doc records the division of labor (SPIKE = residual belt for baseline corruption / capped interludes), so the code no longer overclaims.
+- **MEDIUM: SHRUNK measured post-rewrite** — the wet run's own upserts re-cover an out-of-band deletion before total_edges_after is read. Fix: the report carries `total_edges_before` (the standing pre-write count) and SHRUNK reads it; ladder test pins the re-covered-deletion case.
+- **HIGH/MEDIUM (tests)**: SHRUNK now fires end-to-end through run_spec (seeded baseline 10 → verdict in message + wet report + surface + re-anchor 10→0, making the old vacuous 7b assert real); capped/stopped runs pinned to touch neither baseline nor surface via the extracted apply_edge_tripwire method.
+
+Prod acceptance (fbc741e deployed, job 479): census byte-identical fourth run (1,498,485), 0 new / all refreshed in 60s, baseline anchored 0 → 1,498,485, alarm surface {"clear":true}, exemplar 7 edges all state 'open', journal clean.

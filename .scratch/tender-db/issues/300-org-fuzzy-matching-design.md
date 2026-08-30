@@ -592,6 +592,33 @@ trivially inside the pre-dawn budget), scheduled-path refusal
 alarms, refold canary, stage acceptance; then Unit 6 (n3s/E4,
 separable) and the issue-311 edge-consumption loop.
 
+**STAGE 4 ACCEPTED (2026-08-30 ~03:2x-04:1x, Units 1-5 complete; Unit
+6 n3s/E4 stays the separable follow-up).** Unit 5 landed panel-hardened
+(e9e5f27 + fbc741e; 7 confirmed findings fixed — the lead one: the T4
+parity/bounds aborts now land on the org-edge-scan-alarm surface, so
+the weekly clock can NEVER stop silently; SHRUNK reads the pre-write
+count; SPIKE documented as the residual belt behind the parity abort).
+Acceptance evidence, mirroring §8: (1) no-entity-writes green in CI
+(full-content snapshots + cursor stillness) AND on prod — org/name
+counts byte-stable across the 1.5M-edge campaign (12,586,144 /
+4,364,021), journal clean throughout; (2) edge volumes exactly the
+reviewed census, byte-stable across FOUR full walks (1,498,485 =
+1,440,677 e3-name + 57,808 e3-xlang, 29-64s each); (3) stoplist
+visibly working (55,312 n2 + 6,622 n3 skipped, top-20 hand-reviewed);
+(4) exemplar 23294544 surfaces 7 edges, both rules, ALL state 'open',
+probed on every run; (5) tripwire 6 armed — baseline anchored at
+1,498,485 with {"clear":true} on the alarm surface, SHRUNK fired
+end-to-end in tests, every refusal path writes the surface; (6) the
+Sunday 03:10-Berlin tick now carries the weekly wet scan (behind DQ +
+rehash; measured 60-64s against the 39-min chain budget) — first
+scheduled run next Sunday; (7) refold canary (tripwire 7) reproduced
+the pre-campaign shape exactly (jobs 477/478). r3 cadence stays gated
+on the stoplist-corroboration follow-up (ordering note in the plan
+file). NEXT for the campaign: the issue-311 review loop consuming
+candidate edges (Lennart's per-case direction), Unit 6 when wanted,
+and the incremental-keys follow-up (new orgs invisible to scans until
+a rebuild — accepted for v1, rebuild is 85s).
+
 **STAGE 4 OPENED (2026-08-29 ~19:4x): implementation plan of record
 landed** — see `300-stage4-implementation-plan.md` (workflow-drafted:
 2 mappers → planner → 2 attackers; 6 units across ~4 sessions, with
