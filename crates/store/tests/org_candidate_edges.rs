@@ -512,6 +512,15 @@ async fn the_edge_census_counts_components_not_edges() {
     let three_five = r.size_buckets.iter().find(|(k, _)| *k == "3-5").unwrap().1;
     assert_eq!((two, three_five), (2, 1));
     assert_eq!(r.sample.len(), 3, "sample_every=1 shows every component");
+    // The cohort is the INTERSECTION, not the smaller half: this fixture has
+    // one canonical-only component AND one cross-border component, and they
+    // are DIFFERENT components, so the cohort is empty.
+    assert_eq!(
+        r.canonical_cross_border_components, 0,
+        "the canonical-only chain is single-country; the cross-border pair is mixed"
+    );
+    assert!(r.canonical_cross_border_pairs.is_empty());
+    assert!(r.canonical_cross_border_sample.is_empty());
 
     // A country-less member must NOT read as cross-border — the defect the
     // first prod census shipped with, where every "??-XX" pair was just a
@@ -532,10 +541,41 @@ async fn the_edge_census_counts_components_not_edges() {
     assert_eq!(r2.multi_country_components, 1, "…and NOT as a second cross-border component");
     assert_eq!(r2.country_pairs, vec![("DE-FR".to_owned(), 1)], "still only the real pair");
 
-    // Read-only: the census writes nothing at all. (Six edges now — the
-    // five seeded above plus the country-less pair.)
+    // Now one component that IS in the cohort: both members keyed, two known
+    // countries. It is the slice the first review campaign draws from.
+    org(&conn, 12, "Zeta", Some("Z1")).await;
+    org(&conn, 13, "Zeta", Some("Z2")).await;
+    conn.execute("UPDATE organizations SET country = 'AT' WHERE id = 13", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+         VALUES (12, 13, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+    let r3 = db.census_org_candidate_edges(1, &never).await.unwrap();
+    assert_eq!(
+        r3.canonical_only_components, 3,
+        "the DE chain, the country-less epsilon pair (keyed, one KNOWN country), \
+         and the new AT-DE pair"
+    );
+    assert_eq!(r3.multi_country_components, 2, "beta (DE-FR) and zeta (AT-DE)");
+    assert_eq!(
+        r3.canonical_cross_border_components, 1,
+        "only zeta is in both halves — epsilon is keyed but its '??' member is \
+         not a second country, and beta is cross-border but half provisional"
+    );
+    assert_eq!(r3.canonical_cross_border_pairs, vec![("AT-DE".to_owned(), 1)]);
+    assert_eq!(
+        r3.canonical_cross_border_sample,
+        vec![(12, 2, vec!["AT:Zeta".to_owned(), "DE:Zeta".to_owned()])],
+        "the cohort sample carries the members a reviewer needs to see"
+    );
+
+    // Read-only: the census writes nothing at all. (Seven edges now — the
+    // five seeded above, the country-less pair, and the cohort pair.)
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 6);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 7);
 
     // Cancel is honest: no partial numbers.
     let always = || true;

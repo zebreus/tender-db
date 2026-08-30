@@ -1651,6 +1651,19 @@ pub struct EdgeCensusReport {
     /// Components holding at least one country-less member (the R3 pool's
     /// shape), counted separately for exactly that reason.
     pub null_country_components: u64,
+    /// The INTERSECTION of the two slices above: every member
+    /// identifier-bearing AND more than one KNOWN country. This is the
+    /// first review cohort (issue 314) — actionable, because a merge
+    /// verdict has identifiers on both sides to act on, and high-stakes,
+    /// because a wrong cross-border merge fuses two register entries. It
+    /// is NOT derivable from the two halves; only the census can count it.
+    pub canonical_cross_border_components: u64,
+    /// Top country pairs within the cohort above (not the whole
+    /// cross-border slice) — which borders the actionable cases sit on.
+    pub canonical_cross_border_pairs: Vec<(String, u64)>,
+    /// The first components of that cohort, in root order, for hand review
+    /// before the campaign commits: (root, size, "country:name" per member).
+    pub canonical_cross_border_sample: Vec<(i64, u64, Vec<String>)>,
     /// Top country pairs among genuinely cross-border components.
     pub country_pairs: Vec<(String, u64)>,
     /// A deterministic spread sample for hand review: (component root,
@@ -1663,6 +1676,12 @@ pub struct EdgeCensusReport {
 /// cross-border test below can never accidentally treat it as a country —
 /// which is exactly the bug the first prod census shipped with.
 const NO_COUNTRY: &str = "??";
+
+/// How many cohort components the census carries back for hand review. The
+/// cohort is the campaign's input, not a spread sample, so these are the
+/// FIRST ones in root order — stable across re-runs, so a reviewer can work
+/// the list and a later census shows the same head.
+const COHORT_SAMPLE: usize = 25;
 
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
@@ -7658,6 +7677,8 @@ impl Db {
 
         let mut buckets = [("2", 0u64), ("3-5", 0), ("6-10", 0), ("11-50", 0), ("51+", 0)];
         let mut pairs: std::collections::HashMap<String, u64> = std::collections::HashMap::new();
+        let mut cohort_pairs: std::collections::HashMap<String, u64> =
+            std::collections::HashMap::new();
         let mut roots: Vec<&i64> = members.keys().collect();
         roots.sort();
         for (n, root) in roots.iter().enumerate() {
@@ -7690,6 +7711,22 @@ impl Db {
             if known.len() > 1 {
                 report.multi_country_components += 1;
                 *pairs.entry(known.join("-")).or_default() += 1;
+                // The cohort: cross-border AND every member keyed.
+                if canon == ms.len() {
+                    report.canonical_cross_border_components += 1;
+                    *cohort_pairs.entry(known.join("-")).or_default() += 1;
+                    if report.canonical_cross_border_sample.len() < COHORT_SAMPLE {
+                        let mut show: Vec<String> = ms
+                            .iter()
+                            .take(6)
+                            .map(|id| format!("{}:{}", live[id].1, live[id].2))
+                            .collect();
+                        show.sort();
+                        report
+                            .canonical_cross_border_sample
+                            .push((**root, size, show));
+                    }
+                }
             }
             if sample_every > 0 && n % sample_every == 0 && report.sample.len() < 40 {
                 let mut show: Vec<String> = ms
@@ -7706,6 +7743,10 @@ impl Db {
         top.sort_by(|x, y| y.1.cmp(&x.1).then_with(|| x.0.cmp(&y.0)));
         top.truncate(20);
         report.country_pairs = top;
+        let mut cohort: Vec<(String, u64)> = cohort_pairs.into_iter().collect();
+        cohort.sort_by(|x, y| y.1.cmp(&x.1).then_with(|| x.0.cmp(&y.0)));
+        cohort.truncate(20);
+        report.canonical_cross_border_pairs = cohort;
         Ok(report)
     }
 

@@ -3359,6 +3359,14 @@ impl Supervisor {
                     "provisional_only_components": r.provisional_only_components,
                     "multi_country_components": r.multi_country_components,
                     "null_country_components": r.null_country_components,
+                    "canonical_cross_border_components": r.canonical_cross_border_components,
+                    "canonical_cross_border_pairs": r.canonical_cross_border_pairs.iter().map(|(k, v)| {
+                        serde_json::json!({ "pair": k, "components": v })
+                    }).collect::<Vec<_>>(),
+                    "canonical_cross_border_sample": r.canonical_cross_border_sample.iter()
+                        .map(|(root, size, members)| {
+                            serde_json::json!({ "root": root, "size": size, "members": members })
+                        }).collect::<Vec<_>>(),
                     "country_pairs": r.country_pairs.iter().map(|(k, v)| {
                         serde_json::json!({ "pair": k, "components": v })
                     }).collect::<Vec<_>>(),
@@ -3372,7 +3380,8 @@ impl Supervisor {
                     "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang) over \
                      {} orgs ({} dangling); {} components, max {}; {} canonical-only, \
                      {} mixed, {} provisional-only; {} span >1 KNOWN country, \
-                     {} hold a country-less member",
+                     {} hold a country-less member; COHORT (canonical-only AND \
+                     cross-border): {}",
                     r.edges,
                     r.e3_name,
                     r.e3_xlang,
@@ -3384,7 +3393,8 @@ impl Supervisor {
                     r.mixed_components,
                     r.provisional_only_components,
                     r.multi_country_components,
-                    r.null_country_components
+                    r.null_country_components,
+                    r.canonical_cross_border_components
                 ))
             }
             Spec::ApplyCaseReviews { dry_run } => {
