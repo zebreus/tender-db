@@ -338,6 +338,9 @@ enum Spec {
     /// measurement showed were linking keys rather than false merge keys.
     /// Writes entity rows, so `dry_run` defaults TRUE like its twin.
     UnapplyCaseReviews { dry_run: bool },
+    /// Issue 317 Units B/C: list the parked review verdicts nothing
+    /// consumes, with the evidence needed to close them. Read-only.
+    CaseReviewBacklog,
     BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
     /// E3 name-equality edges into `org_candidate_edges`, advisory only
@@ -935,6 +938,16 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 317 Units B/C: the parked-verdict backlog. Read-only,
+            // so no dry_run — there is nothing for a flag to protect.
+            "case-review-backlog" => Ok(vec![
+                self.push(
+                    "case-review-backlog",
+                    "case-review-backlog".into(),
+                    Spec::CaseReviewBacklog,
+                )
+                .await,
+            ]),
             // Issue 300 Stage 4: (re)build the org_match_keys scratch
             // satellite. Rebuildable, no entity writes; dry_run defaults
             // TRUE and measures the walk without writing.
@@ -1301,6 +1314,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "build-org-match-keys",
     "scan-org-match-keys",
     "org-edge-census",
+    "case-review-backlog",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3361,6 +3375,65 @@ impl Supervisor {
                     r.winners,
                     r.winner_dups,
                     r.tender_changes
+                ))
+            }
+            Spec::CaseReviewBacklog => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "listing",
+                    None,
+                    None,
+                    "walking the parked review verdicts".to_owned(),
+                );
+                // 60 per list: the whole standing backlog is 17 escalations
+                // and 102 mediums, so this shows the escalations entire and a
+                // working slice of the band — and says so when it clips.
+                let r = self.db.case_review_backlog(60, &stop).await.map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("case-review-backlog STOPPED by cancel — no report stored".to_owned());
+                }
+                let row = |c: &store::CaseBacklogRow| {
+                    serde_json::json!({
+                        "org": c.org, "cohort": c.cohort, "verdict": c.verdict,
+                        "confidence": c.confidence, "diagnosis": c.diagnosis,
+                        "handling": c.handling, "name": c.name,
+                        "identifier_kind": c.identifier_kind, "identifier": c.identifier,
+                        "gone": c.gone,
+                        "peer_rows": c.peer_rows, "peer_example": c.peer_example,
+                    })
+                };
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "total": r.total, "applied": r.applied, "unapplied": r.unapplied,
+                    "by_verdict": r.by_verdict.iter().map(|(v, c, n)| {
+                        serde_json::json!({ "verdict": v, "confidence": c, "cases": n })
+                    }).collect::<Vec<_>>(),
+                    "escalations": r.escalations.iter().map(row).collect::<Vec<_>>(),
+                    "medium_band": r.medium_band.iter().map(row).collect::<Vec<_>>(),
+                    "truncated": r.truncated,
+                })
+                .to_string();
+                self.db
+                    .put_report("case-escalations", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                // The corroborated count is the actionable half: a medium
+                // verdict whose identifier ALSO stands on another org row has
+                // the structural evidence it was missing (issue 317 Unit C).
+                let corroborated =
+                    r.medium_band.iter().filter(|c| c.peer_rows > 0).count();
+                Ok(format!(
+                    "case-review-backlog (issue 317): {} verdicts, {} applied, {} parked; \
+                     {} escalations and {} medium-band cases listed ({} of the mediums \
+                     have a peer row carrying the same identifier){}",
+                    r.total,
+                    r.applied,
+                    r.unapplied,
+                    r.escalations.len(),
+                    r.medium_band.len(),
+                    corroborated,
+                    if r.truncated { "; LIST TRUNCATED at the cap" } else { "" }
                 ))
             }
             Spec::OrgEdgeCensus => {
@@ -5986,6 +6059,9 @@ mod tests {
         // run resumes (issue 300 Stage 4). scan-org-match-keys reads it
         // between index pages, between classification groups, and between
         // edge-write batches; a stopped run records no report.
+        // case-review-backlog reads the flag between verdict rows and again
+        // between per-case evidence probes, and returns an EMPTY report
+        // rather than a partial backlog (issue 317).
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -5999,7 +6075,8 @@ mod tests {
                 "match-org-identifiers",
                 "build-org-match-keys",
                 "scan-org-match-keys",
-                "org-edge-census"
+                "org-edge-census",
+                "case-review-backlog"
             ]
         );
     }

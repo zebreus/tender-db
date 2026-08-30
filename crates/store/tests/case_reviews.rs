@@ -253,3 +253,111 @@ async fn platform_guid_strips_unapply_from_their_pre_images() {
         "still not clobbered on the re-run"
     );
 }
+
+/// Issue 317 Units B and C: the parked-verdict backlog. Everything the apply
+/// job's safe subset will never touch, with the evidence needed to close it
+/// — including whether the case's identifier ALSO stands on another org row,
+/// which is the corroboration a medium verdict was missing.
+#[tokio::test]
+async fn the_backlog_lists_the_parked_verdicts_with_their_corroboration() {
+    let path = "test-case-backlog.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    // 70: medium wrong-identifier whose number ALSO stands on member row 90.
+    // 71: medium wrong-identifier with no peer anywhere.
+    // 72: unclear-escalate. 73: a HIGH verdict — the apply job's job, not
+    // this one's. 74: escalate whose org row is gone (merged away since).
+    for (id, ident, name) in [
+        (70i64, Some("ATU12345678"), "Biege Alpha"),
+        (71, Some("ATU99999999"), "Biege Beta"),
+        (72, Some("FN576377P"), "Biege Gamma"),
+        (73, Some("DE111111111"), "Biege Delta"),
+        (90, Some("ATU12345678"), "Member Alpha GmbH"),
+    ] {
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, 'AT', 'national', ?, ?, ?, 0, 0)",
+            (
+                Value::Integer(id),
+                match ident { Some(v) => Value::Text(v.into()), None => Value::Null },
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    db.record_case_reviews(
+        "biege-batch",
+        &[
+            review(70, "consortium-vehicle-wrong-identifier", "medium"),
+            review(71, "consortium-vehicle-wrong-identifier", "medium"),
+            review(72, "unclear-escalate", "low"),
+            review(73, "consortium-vehicle-wrong-identifier", "high"),
+            review(74, "unclear-escalate", "medium"),
+        ],
+        1,
+    )
+    .await
+    .unwrap();
+
+    let never = || false;
+    let r = db.case_review_backlog(60, &never).await.unwrap();
+    assert_eq!((r.total, r.applied, r.unapplied), (5, 0, 5));
+    assert_eq!(
+        r.by_verdict,
+        vec![
+            ("consortium-vehicle-wrong-identifier".to_owned(), "medium".to_owned(), 2),
+            ("consortium-vehicle-wrong-identifier".to_owned(), "high".to_owned(), 1),
+            ("unclear-escalate".to_owned(), "low".to_owned(), 1),
+            ("unclear-escalate".to_owned(), "medium".to_owned(), 1),
+        ],
+        "every unapplied verdict is counted, including the ones the lists do not \
+         carry — ordered by case count, then by verdict, and (through the stable \
+         sort over a BTreeMap) by confidence, so the census is reproducible"
+    );
+    let orgs: Vec<i64> = r.escalations.iter().map(|c| c.org).collect();
+    assert_eq!(orgs, vec![72, 74], "both escalations, in case order");
+    assert!(r.escalations[1].gone, "74's org row does not exist — the verdict is moot");
+    let med: Vec<(i64, u64, Option<String>)> =
+        r.medium_band.iter().map(|c| (c.org, c.peer_rows, c.peer_example.clone())).collect();
+    assert_eq!(
+        med,
+        vec![
+            (70, 1, Some("AT:Member Alpha GmbH".to_owned())),
+            (71, 0, None),
+        ],
+        "70's number stands on a member row — that IS the missing evidence; 71's does not"
+    );
+    assert!(!r.truncated, "nothing was clipped at this size");
+    // The HIGH verdict is counted but never listed: it belongs to the apply
+    // job, and a backlog that included it would double-count the work.
+    assert!(
+        r.escalations.iter().chain(r.medium_band.iter()).all(|c| c.org != 73),
+        "the appliable verdict must not appear in the backlog lists"
+    );
+
+    // Applied verdicts leave the backlog entirely.
+    db.apply_case_reviews(false, Some(7), 100).await.unwrap();
+    let after = db.case_review_backlog(60, &never).await.unwrap();
+    assert_eq!((after.total, after.applied, after.unapplied), (5, 1, 4));
+    assert!(
+        after.by_verdict.iter().all(|(v, c, _)| !(v.contains("wrong-identifier") && c == "high")),
+        "the applied verdict is out of the parked counts"
+    );
+
+    // Cancel is honest: an empty report, not a partial backlog.
+    let always = || true;
+    let stopped = db.case_review_backlog(60, &always).await.unwrap();
+    assert!(stopped.stopped);
+    assert_eq!((stopped.total, stopped.escalations.len()), (0, 0));
+
+    // Read-only: no change events, no writes to the review rows.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization'").await, 1,
+        "the one change is the apply job's strip, not the backlog read");
+}

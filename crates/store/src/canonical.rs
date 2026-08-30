@@ -1615,6 +1615,54 @@ pub struct CaseApplyReport {
     pub plan: Vec<(i64, String, String)>,
 }
 
+/// One parked verdict, with the evidence a reviewer needs to close it
+/// (issue 317 Units B/C).
+#[derive(Debug, Default, Clone)]
+pub struct CaseBacklogRow {
+    pub org: i64,
+    pub cohort: String,
+    pub verdict: String,
+    pub confidence: String,
+    pub diagnosis: String,
+    pub handling: String,
+    /// Current org state. `gone` means the row was merged away since the
+    /// review — the verdict is moot and can be closed on that ground alone.
+    pub name: String,
+    pub identifier: Option<String>,
+    pub identifier_kind: Option<String>,
+    pub gone: bool,
+    /// Unit C's structural corroboration, the CHEAP half: how many OTHER
+    /// standing org rows carry this exact (identifier_kind, identifier).
+    /// A consortium vehicle publishing a member's number is the campaign's
+    /// signature shape, so a peer row IS the missing evidence — "some
+    /// member's number" becomes "this member's number".
+    pub peer_rows: u64,
+    /// One peer, as "country:name", to make the row readable without a
+    /// second query.
+    pub peer_example: Option<String>,
+}
+
+/// The parked-verdict backlog (issue 317): everything in `org_case_reviews`
+/// the apply job's safe subset will never touch, with enough evidence
+/// attached to be actionable. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct CaseBacklogReport {
+    pub total: u64,
+    pub applied: u64,
+    pub unapplied: u64,
+    /// (verdict, confidence, count) over UNAPPLIED rows, sorted by count.
+    pub by_verdict: Vec<(String, String, u64)>,
+    /// Every `unclear-escalate` verdict — the queue nothing consumed.
+    pub escalations: Vec<CaseBacklogRow>,
+    /// The medium-confidence wrong-identifier band, correctly not
+    /// auto-applied but not "parked forever" either.
+    pub medium_band: Vec<CaseBacklogRow>,
+    /// True when a list hit its cap, so a reader never mistakes a truncated
+    /// list for the whole backlog.
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// What the issue-312 unapply pass did (or would do, dry).
 #[derive(Debug, Default, Clone)]
 pub struct CaseUnapplyReport {
@@ -6733,6 +6781,130 @@ impl Db {
         report.tender_changes = touched.len() as u64;
         if report.removed > 0 {
             self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// The parked-verdict backlog (issue 317 Units B and C): every
+    /// `org_case_reviews` row the apply job's safe subset
+    /// (`consortium-vehicle-wrong-identifier` at HIGH confidence) will never
+    /// act on, with the evidence needed to close it — the case org's current
+    /// state, and how many other standing rows carry the same identifier.
+    ///
+    /// That last count is the campaign's cheapest unfinished measurement: a
+    /// consortium vehicle publishing a member's register number is THE shape
+    /// the reviews kept finding, so a peer row holding the same number is the
+    /// corroboration a medium verdict was missing. It is deliberately a
+    /// COUNT plus one example, not a merge suggestion — this job reads.
+    ///
+    /// Bounded: each list stops at `cap`, and `truncated` says so rather
+    /// than letting a clipped list read as the whole backlog.
+    pub async fn case_review_backlog(
+        &self,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CaseBacklogReport> {
+        let reader = self.reader().await?;
+        let mut report = CaseBacklogReport::default();
+        let mut counts: std::collections::BTreeMap<(String, String), u64> = Default::default();
+        let mut rows_out: Vec<CaseBacklogRow> = Vec::new();
+        {
+            let mut rows = reader
+                .query(
+                    "SELECT case_org_id, cohort, verdict, confidence, diagnosis, handling, \
+                            applied_at \
+                       FROM org_case_reviews ORDER BY case_org_id, cohort",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                if stop() {
+                    report.stopped = true;
+                    return Ok(CaseBacklogReport { stopped: true, ..Default::default() });
+                }
+                report.total += 1;
+                if !matches!(row.get_value(6), Ok(Value::Null)) {
+                    report.applied += 1;
+                    continue;
+                }
+                report.unapplied += 1;
+                let (verdict, confidence) = (text(&row, 2), text(&row, 3));
+                *counts.entry((verdict.clone(), confidence.clone())).or_default() += 1;
+                let wanted = verdict == "unclear-escalate"
+                    || (verdict == "consortium-vehicle-wrong-identifier"
+                        && confidence == "medium");
+                if !wanted {
+                    continue;
+                }
+                if rows_out.len() >= cap * 2 {
+                    report.truncated = true;
+                    continue;
+                }
+                rows_out.push(CaseBacklogRow {
+                    org: int(&row, 0),
+                    cohort: text(&row, 1),
+                    verdict,
+                    confidence,
+                    diagnosis: text(&row, 4),
+                    handling: text(&row, 5),
+                    ..Default::default()
+                });
+            }
+        }
+        report.by_verdict = counts.into_iter().map(|((v, c), n)| (v, c, n)).collect();
+        report.by_verdict.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+
+        // Attach the org state and the peer count, one case at a time: the
+        // backlog is hundreds of rows, not millions, and each probe is an
+        // indexed identity lookup.
+        for r in &mut rows_out {
+            if stop() {
+                return Ok(CaseBacklogReport { stopped: true, ..Default::default() });
+            }
+            let mut rows = reader
+                .query(
+                    "SELECT name, identifier_kind, identifier FROM organizations WHERE id = ?",
+                    (Value::Integer(r.org),),
+                )
+                .await?;
+            match rows.next().await? {
+                Some(row) => {
+                    r.name = text(&row, 0);
+                    r.identifier_kind = opt_text_of(&row, 1);
+                    r.identifier = opt_text_of(&row, 2);
+                }
+                None => {
+                    r.gone = true;
+                    continue;
+                }
+            }
+            let (Some(kind), Some(value)) = (&r.identifier_kind, &r.identifier) else {
+                continue;
+            };
+            let mut peers = reader
+                .query(
+                    "SELECT COUNT(*), MIN(COALESCE(country, '') || ':' || name) \
+                       FROM organizations \
+                      WHERE identifier_kind = ? AND identifier = ? AND id <> ?",
+                    (t(kind), t(value), Value::Integer(r.org)),
+                )
+                .await?;
+            if let Some(row) = peers.next().await? {
+                r.peer_rows = int(&row, 0) as u64;
+                r.peer_example = opt_text_of(&row, 1);
+            }
+        }
+        let (esc, med): (Vec<_>, Vec<_>) =
+            rows_out.into_iter().partition(|r| r.verdict == "unclear-escalate");
+        report.escalations = esc;
+        report.medium_band = med;
+        if report.escalations.len() > cap {
+            report.escalations.truncate(cap);
+            report.truncated = true;
+        }
+        if report.medium_band.len() > cap {
+            report.medium_band.truncate(cap);
+            report.truncated = true;
         }
         Ok(report)
     }
