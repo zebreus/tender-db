@@ -320,3 +320,12 @@ Three lenses (fidelity/ops/tests) + per-finding adversarial verification: 8 CONF
 - **MEDIUM (tests): plan-report lifecycle unpinned** — covered by the run-path test above.
 - **LOW (fidelity): no-entity-writes asserts weaker than the plan's verbatim shape** — now full-content snapshots of organizations/organization_names (COUNT parity cannot catch an in-place UPDATE) + latest_cursor stillness.
 - **LOW (fidelity): supervisor precondition tests missing** — same run-path test.
+
+## UNIT 5 ORDERING NOTE (amendment obligation, recorded 2026-08-30)
+
+The PENDING Stage-3 decision to fold rule=r3 into the Sunday cadence stays
+gated on the stoplist-corroboration follow-up: §4.1 says stoplisted keys are
+disqualified as R3 corroboration unless the identifier hard-checksum-passes,
+and that wiring has not landed — so r3 does NOT join the weekly tick yet.
+The 55,312-key n2 stoplist the scan now measures weekly is the input that
+follow-up will consume. Until then r3 runs operator-fired only.
