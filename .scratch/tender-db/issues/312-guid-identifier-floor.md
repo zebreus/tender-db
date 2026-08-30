@@ -1,42 +1,66 @@
-# 312 — Graduate the v4-GUID identifier class to the deterministic deny-floor
+# 312 — Platform GUIDs in the identifier slot: measured, NOT a deny-floor class
 
-Status: ready-for-agent
-Kind: data quality / ingest gate (idgate)
-Relates to: 311 (found by the review campaign), 300 (canonical keys)
+Status: DIAGNOSED — the obvious fix is wrong; the narrow fix is specified below
+Kind: data quality / identity semantics
+Relates to: 311 (found by the review campaign), 300 (canonical keys), 234
 
-## What the review found
+## What the review found, and what the measurement said back
 
-The issue-311 batch campaign measured that **306 of 823** identifier-bearing
-Bietergemeinschaft rows carried a 32-hex **v4 UUID** (version nibble '4' at
-hex position 13, variant 8/9/a/b at 17, stored undashed) in the national-
-identifier field — platform-generated record keys leaked into the id slot by
-one submission platform, structurally impossible as any EU registration or
-VAT. Every one was individually reviewed and stripped (per-case verdicts in
-`311-batch-verdicts.json`); the class is perfectly rule-shaped in hindsight.
+The issue-311 campaign read 306 of 823 identifier-bearing consortium rows
+carrying a 32-hex **v4 UUID** (undashed, RFC-4122 nibbles) in the national-
+identifier field — a submission platform's own record keys. The obvious
+conclusion was "rule-shaped class, graduate it to `idgate::condemns`".
 
-This is Lennart's feedback loop working as designed: individual AI review
-finds the class, and once a class is proven rule-detectable it GRADUATES to
-the deterministic floor so the gate catches future instances at ingest.
+**Measured before building it (2026-08-30), and the conclusion reversed:**
 
-## The change
+- Corpus: **75,555** org rows carry a v4-GUID identifier (DE 45,974 /
+  CH 25,301 / FR 3,091 / BE 325 / EE 316) across **75,548 DISTINCT** values.
+  Seven rows share a GUID, in pairs. So the class produces **≈0 false
+  merges** — and preventing false merges is the ONLY thing `condemns` does.
+- Campaign sample (306 GUID orgs, local evidence, no prod scan): **93% span
+  more than one notice**, mean 15.3 mentions, max 348; 4,678 mentions in the
+  sample alone are held together BY that key.
 
-- `idgate`: condemn a candidate identifier whose normalized form is 32 hex
-  chars with the v4/variant nibbles (dashed or undashed) — same handling as
-  the existing placeholder condemns (no org identity minted from it; raw
-  value stays on the mention).
-- Scope check first: one bounded corpus query for how many NON-consortium
-  org rows also carry v4-GUID identifiers (the platform surely leaks them
-  on plain company rows too) — that number sizes a follow-up strip cohort
-  which still goes through per-case review (the floor only PREVENTS new
-  ones; standing rows keep the review bar).
-- Tests: nibble arithmetic pinned both dashed and undashed; a real GUID
-  specimen from the campaign; a 32-hex NON-v4 value must pass through.
+So the platform GUID is not a placeholder — it is a **stable per-bidder
+platform key doing real linking work**. Condemning it at the gate would
+fragment ~75k orgs (every future mention minting its own provisional row) to
+prevent essentially no bad merges. A prototype condemn was written and
+REVERTED unbuilt on this measurement.
 
-## Also noted by the campaign (smaller follow-ups)
+This is the deny-floor's own rule applied honestly (issue 234 lesson): a
+class earns the floor by its measured false-merge rate, not by looking
+untidy. "Not a real registration" and "not a useful identity key" are
+different claims, and only the first one is true here.
 
-- Register-format impossibility as a REVIEW CALIBRATION (not auto-strip):
-  FN/HRB/HRA numbers on unregistered GbR/GesbR-shaped consortium names were
-  the recurring medium-band class in both audit rounds. Keep as reviewer
-  calibration; too much legal-form nuance for the floor.
-- Phone numbers and postal codes in the identifier slot (t:-prefixed, area
-  codes) — candidates for the same floor treatment as GUIDs; measure first.
+## The tension this exposes in the 442 applied strips (issue 311)
+
+The campaign's strips were individually reviewed and each removed a FALSE
+CLAIM (`identifier_kind='national'` asserting a register entry that does not
+exist). But for the GUID subset they also removed a WORKING LINK: those rows
+keep their recorded mentions, yet future mentions carrying the same GUID
+will no longer find the org and will mint provisional rows instead.
+
+The right shape was never "strip or keep" but **reclassify**: keep the value,
+stop it claiming register status.
+
+## The narrow fix (specified, not built)
+
+1. An `identifier_kind` value for platform keys (e.g. `platform-guid`):
+   the value keeps linking mentions to their org, `canonical_key`/R2/R3 treat
+   it as NON-register evidence (never a cross-country merge key, never
+   checksum-anchored), and no consumer reads it as a national id.
+2. Resolver + backfill: classify v4-GUID values into that kind at ingest
+   (the `uuid_v4` predicate is trivial and was already test-drafted).
+3. Then, and only then, revisit the 311 GUID strips: `org_case_reviews`
+   holds every pre-image in `applied_action`, so a restore-as-platform-kind
+   pass is mechanical — but it needs an unapply path that does not exist yet.
+4. Re-measure the false-merge rate per platform after step 1; if a platform
+   ever reuses one key across genuinely different bidders, THAT is the
+   floor-worthy finding.
+
+## Still open from the campaign (unchanged)
+
+- Phone numbers / postal codes in the identifier slot: same measure-first
+  discipline before any floor treatment.
+- Register-format impossibility (FN/HRB/HRA on GbR-shaped names) stays a
+  REVIEW calibration, not a rule.
