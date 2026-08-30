@@ -1653,13 +1653,15 @@ pub struct RehomingReport {
     pub eligible: u64,
     /// Mentions actually moved (wet) / that would move (dry).
     pub moved: u64,
-    /// Party, bid-party and winner rows that followed the mention.
+    /// Party and bid-party rows the refold will REBUILD — the blast radius,
+    /// not rows this job moved. Nothing derived is hand-moved.
     pub parties: u64,
     pub bid_parties: u64,
-    pub winners: u64,
-    pub winner_dups: u64,
-    /// Tenders whose composition changed — the refold/change surface.
+    /// Tenders whose composition changed — the change surface.
     pub tenders: u64,
+    /// Notices re-queued for projection, because winner rows are DERIVED and
+    /// are re-derived rather than hand-moved.
+    pub refold_notices: u64,
     /// Eligible verdicts that changed nothing: the mention already moved, or
     /// it is no longer on the org the verdict was recorded against.
     pub noop: u64,
@@ -8150,7 +8152,18 @@ impl Db {
                         action = excluded.action, target_org_id = excluded.target_org_id, \
                         target_name = excluded.target_name, \
                         rationale = excluded.rationale, \
-                        confidence = excluded.confidence, reviewed_at = excluded.reviewed_at",
+                        confidence = excluded.confidence, reviewed_at = excluded.reviewed_at, \
+                        -- A NO-OP stamp is not a decision, it is a report that the
+                        -- verdict's premise was stale. A corrected verdict must be
+                        -- appliable, so the stamp clears; a REAL move's stamp and
+                        -- pre-image never do, because that row is the only way back
+                        -- (panel catch: the first version tombstoned both alike).
+                        applied_at = CASE \
+                            WHEN org_mention_rehoming.applied_action LIKE 'no-op:%' \
+                            THEN NULL ELSE org_mention_rehoming.applied_at END, \
+                        applied_action = CASE \
+                            WHEN org_mention_rehoming.applied_action LIKE 'no-op:%' \
+                            THEN NULL ELSE org_mention_rehoming.applied_action END",
                     (
                         Value::Integer(v.case_org_id),
                         Value::Integer(v.notice_id),
@@ -8186,30 +8199,59 @@ impl Db {
     }
 
     /// Issue 317 Unit A: move a reviewed mention from the row holding it to
-    /// the row it actually describes, and take its derived rows with it.
+    /// the row it actually describes.
     ///
     /// The appliable subset is deliberately narrow: `action = 'rehome'`, HIGH
-    /// confidence, and a `target_org_id` that EXISTS. Everything else is
-    /// counted and left alone — a medium verdict, a `keep`, or a target row
-    /// nobody created. v1 does not mint a destination: inventing an
+    /// confidence, and a `target_org_id` that EXISTS and is not the org the
+    /// mention already sits on. Everything else is counted and left alone —
+    /// a medium verdict, a `keep`, a target row nobody created, or a verdict
+    /// naming only a NAME. v1 does not mint a destination: inventing an
     /// organization from a name is how a resolver key gets made up, and
     /// `missing_target` measures how often that would be needed before
     /// anyone builds it.
     ///
-    /// The move itself is the merge machinery's, not a new one: the mention
-    /// repoints, then `tender_version_parties` and `tender_version_bid_parties`
-    /// follow it by (notice, section), and winner rows — whose PK ends in the
-    /// org id, so the destination row may already stand — are inserted then
-    /// deleted, counting the duplicates.
+    /// **ONLY THE MENTION MOVES. Everything else is RE-DERIVED** — this is
+    /// the design's centre, and it is where the panel round changed the
+    /// shape. Party rows, bid-party rows and winner rows are all products of
+    /// the fold, and the fold is the only code that knows how to build them:
+    /// winners carry a lot_result and accumulate across award rounds, a
+    /// version's party facts are superseded per role, and a NESTED org
+    /// section aliases to its outer mention, so a party row's section id
+    /// need not be the section its mention is keyed by. Every hand-rolled
+    /// version of those rules got one of them wrong — reaching winners
+    /// through a same-version party row collected awards belonging to other
+    /// mentions of the same org, and addressing parties by the mention's own
+    /// section left the inner-section ones behind, both reproduced from real
+    /// notices. So the mention is corrected, the affected tenders are
+    /// stamped stale and their notices re-queued (the issue-259 nested-org
+    /// repair's move), and the next fold rebuilds the derived layer from the
+    /// evidence. The counts this returns for parties and bid-parties are
+    /// therefore a BLAST RADIUS — what the refold will rebuild — not rows it
+    /// moved. Run a `project` job after a wet run to close the window.
+    ///
+    /// **A known residue, named rather than guessed at (issue 321).** The
+    /// `organization_names` satellite keeps the language variants a mention
+    /// contributed, and this job does not move them: after a re-homing the
+    /// vehicle still carries the member's name as a satellite. That is not
+    /// merely cosmetic — satellite names feed the Stage-4 name keys, so the
+    /// pair keeps producing candidate edges. It is left alone deliberately,
+    /// because the vehicle WAS published under that name and deciding whether
+    /// it should keep it is a judgement this mechanical move must not make.
     ///
     /// Guards, all of them the same shape as the issue-311/312 apply paths:
     /// a mention that is no longer on the org its verdict names is a NO-OP
     /// (somebody merged or moved it since the review), stamped so it leaves
     /// the pending set rather than being retried forever; `applied_action`
-    /// keeps the origin org id, so the move is reversible from the row alone.
+    /// keeps the origin org id, so the move is reversible from the row alone;
+    /// and a wet run executes the plan a person reviewed or refuses.
     pub async fn apply_rehoming(
         &self,
         dry_run: bool,
+        // Wet only: the move list the reviewed dry plan recorded, as
+        // (notice, section, from, to). Compared as TUPLES, not as a count —
+        // a count cannot notice that a destination changed, which is the one
+        // thing a reviewer of this plan is checking.
+        expect: Option<&[(i64, String, i64, i64)]>,
         job_id: Option<i64>,
         now: i64,
     ) -> turso::Result<RehomingReport> {
@@ -8241,13 +8283,20 @@ impl Db {
                     _ => None,
                 };
                 let confidence = text(&row, 6);
+                let high_rehome = action == "rehome" && confidence == "high";
+                // A high-confidence rehome that names only a NAME is not
+                // eligible — and must still be VISIBLE, or it sits in the
+                // table forever appearing in no counter at all (panel catch).
+                if high_rehome && target.is_none() {
+                    report.missing_target += 1;
+                }
                 pending.push(Pending {
                     case_org: int(&row, 0),
                     notice: int(&row, 1),
                     section: text(&row, 2),
                     target,
                     target_name: opt_text_of(&row, 5).unwrap_or_default(),
-                    eligible: action == "rehome" && confidence == "high" && target.is_some(),
+                    eligible: high_rehome && target.is_some(),
                 });
             }
         }
@@ -8255,17 +8304,13 @@ impl Db {
         report.eligible = pending.iter().filter(|p| p.eligible).count() as u64;
 
         let mut touched_orgs: std::collections::BTreeSet<i64> = Default::default();
-        let mut touched_tenders: std::collections::BTreeSet<i64> = Default::default();
         let mut moves: Vec<(i64, String, i64, i64, String)> = Vec::new();
+        let mut noops: Vec<(i64, String, String)> = Vec::new();
         for p in pending.iter().filter(|p| p.eligible) {
             let target = p.target.expect("eligible implies a target");
-            // The destination must EXIST. v1 never mints one.
             let exists = {
                 let mut rows = conn
-                    .query(
-                        "SELECT 1 FROM organizations WHERE id = ?",
-                        (Value::Integer(target),),
-                    )
+                    .query("SELECT 1 FROM organizations WHERE id = ?", (Value::Integer(target),))
                     .await?;
                 rows.next().await?.is_some()
             };
@@ -8273,7 +8318,19 @@ impl Db {
                 report.missing_target += 1;
                 continue;
             }
-            // The mention must still be where the verdict says it is.
+            // A verdict pointing the mention at the row it is already on.
+            // Without this the move degenerates to from == to, and the
+            // winner dance — insert-or-ignore then delete the origin's row —
+            // DELETED the award outright (panel catch, reproduced).
+            if target == p.case_org {
+                report.noop += 1;
+                noops.push((
+                    p.notice,
+                    p.section.clone(),
+                    format!("no-op: target {target} is the org the mention already sits on"),
+                ));
+                continue;
+            }
             let here = {
                 let mut rows = conn
                     .query(
@@ -8289,21 +8346,11 @@ impl Db {
             };
             if here != Some(p.case_org) {
                 report.noop += 1;
-                if !dry_run {
-                    conn.execute(
-                        "UPDATE org_mention_rehoming SET applied_at = ?, \
-                                applied_action = ?, job_id = ? \
-                          WHERE notice_id = ? AND section_id = ?",
-                        (
-                            Value::Integer(now),
-                            t(&format!("no-op: mention sits on {here:?}, verdict named {}", p.case_org)),
-                            opt_int(job_id),
-                            Value::Integer(p.notice),
-                            t(&p.section),
-                        ),
-                    )
-                    .await?;
-                }
+                noops.push((
+                    p.notice,
+                    p.section.clone(),
+                    format!("no-op: mention sits on {here:?}, verdict named {}", p.case_org),
+                ));
                 continue;
             }
             report.moved += 1;
@@ -8311,116 +8358,81 @@ impl Db {
             touched_orgs.insert(p.case_org);
             touched_orgs.insert(target);
         }
+
+        // The blast radius, counted READ-ONLY so the dry preview reports what
+        // the wet run affects instead of zeroes (panel catch).
+        //
+        // Matched by (notice, ORIGIN ORG) and NOT by section — deliberately.
+        // A nested org section aliases to its outer mention, so one mention
+        // can carry party rows anchored to INNER section ids that the
+        // mention's own key never names (panel catch, reproduced from a real
+        // r209 notice: mention on ORG-2, party rows on ORG-2 and ORG-3).
+        // Addressing by section leaves those behind; addressing by org
+        // catches them, and the fold re-derives all of it anyway.
+        let mut touched_tenders: std::collections::BTreeSet<i64> = Default::default();
+        for (notice, _section, from, _, _) in &moves {
+            let mut rows = conn
+                .query(
+                    "SELECT tender_id, 'p' FROM tender_version_parties \
+                      WHERE mention_notice_id = ? AND organization_id = ? \
+                     UNION ALL \
+                     SELECT tender_id, 'b' FROM tender_version_bid_parties \
+                      WHERE mention_notice_id = ? AND organization_id = ?",
+                    (
+                        Value::Integer(*notice),
+                        Value::Integer(*from),
+                        Value::Integer(*notice),
+                        Value::Integer(*from),
+                    ),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                touched_tenders.insert(int(&row, 0));
+                if text(&row, 1) == "p" {
+                    report.parties += 1;
+                } else {
+                    report.bid_parties += 1;
+                }
+            }
+        }
+        report.tenders = touched_tenders.len() as u64;
         if dry_run {
             report.plan = moves;
             return Ok(report);
+        }
+        // The T4 ladder: a wet run executes the plan a person read, or it
+        // refuses. Compared tuple-wise, because the destination org is the
+        // thing being reviewed and a count cannot show it changed.
+        if let Some(expect) = expect {
+            let got: Vec<(i64, String, i64, i64)> =
+                moves.iter().map(|(n, s, f, t2, _)| (*n, s.clone(), *f, *t2)).collect();
+            if got != expect {
+                return Err(turso::Error::Error(format!(
+                    "rehoming ABORTED: the reviewed plan holds {} moves, this run computes \
+                     {} and they are not the same moves. Re-run the dry pass and review \
+                     the new plan.",
+                    expect.len(),
+                    got.len()
+                )));
+            }
         }
 
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let result: turso::Result<()> = async {
             for (notice, section, from, to, _) in &moves {
-                // Winner rows FIRST, while the party row still points at the
-                // origin: they are reached through that join, and updating
-                // the party before reading them makes the join match nothing.
-                // (The test caught exactly that — winners moved 0 of 1.)
-                let mut winners: Vec<(i64, i64, i64)> = Vec::new();
-                {
-                    let mut rows = conn
-                        .query(
-                            "SELECT w.tender_id, w.seq, w.lot_result_id \
-                               FROM tender_version_result_winners w \
-                               JOIN tender_version_parties p \
-                                 ON p.tender_id = w.tender_id AND p.seq = w.seq \
-                                AND p.organization_id = w.organization_id \
-                              WHERE p.mention_notice_id = ? AND p.mention_section_id = ? \
-                                AND w.organization_id = ?",
-                            (Value::Integer(*notice), t(section), Value::Integer(*from)),
-                        )
-                        .await?;
-                    while let Some(row) = rows.next().await? {
-                        winners.push((int(&row, 0), int(&row, 1), int(&row, 2)));
-                    }
-                }
                 conn.execute(
                     "UPDATE organization_mentions SET organization_id = ? \
                       WHERE notice_id = ? AND section_id = ?",
                     (Value::Integer(*to), Value::Integer(*notice), t(section)),
                 )
                 .await?;
-                report.parties += conn
-                    .execute(
-                        "UPDATE tender_version_parties SET organization_id = ? \
-                          WHERE mention_notice_id = ? AND mention_section_id = ? \
-                            AND organization_id = ?",
-                        (
-                            Value::Integer(*to),
-                            Value::Integer(*notice),
-                            t(section),
-                            Value::Integer(*from),
-                        ),
-                    )
-                    .await?;
-                report.bid_parties += conn
-                    .execute(
-                        "UPDATE tender_version_bid_parties SET organization_id = ? \
-                          WHERE mention_notice_id = ? AND mention_section_id = ? \
-                            AND organization_id = ?",
-                        (
-                            Value::Integer(*to),
-                            Value::Integer(*notice),
-                            t(section),
-                            Value::Integer(*from),
-                        ),
-                    )
-                    .await?;
-                // The winner rows collected above: the PK ends in the org id,
-                // so the destination row may already stand — insert-or-ignore,
-                // then delete the origin's, counting the duplicates.
-                for (tender, seq, lot_result) in winners {
-                    let inserted = conn
-                        .execute(
-                            "INSERT OR IGNORE INTO tender_version_result_winners \
-                               (tender_id, seq, lot_result_id, organization_id) \
-                             VALUES (?, ?, ?, ?)",
-                            (
-                                Value::Integer(tender),
-                                Value::Integer(seq),
-                                Value::Integer(lot_result),
-                                Value::Integer(*to),
-                            ),
-                        )
-                        .await?;
-                    if inserted == 0 {
-                        report.winner_dups += 1;
-                    } else {
-                        report.winners += 1;
-                    }
-                    conn.execute(
-                        "DELETE FROM tender_version_result_winners \
-                          WHERE tender_id = ? AND seq = ? AND lot_result_id = ? \
-                            AND organization_id = ?",
-                        (
-                            Value::Integer(tender),
-                            Value::Integer(seq),
-                            Value::Integer(lot_result),
-                            Value::Integer(*from),
-                        ),
-                    )
-                    .await?;
-                    touched_tenders.insert(tender);
-                }
-                {
-                    let mut rows = conn
-                        .query(
-                            "SELECT DISTINCT tender_id FROM tender_version_parties \
-                              WHERE mention_notice_id = ? AND mention_section_id = ?",
-                            (Value::Integer(*notice), t(section)),
-                        )
-                        .await?;
-                    while let Some(row) = rows.next().await? {
-                        touched_tenders.insert(int(&row, 0));
-                    }
-                }
+                // NOTHING derived is hand-moved. Parties, bid-parties and
+                // winners are all re-derived from the corrected mention layer
+                // by the fold, which is the only code that knows how (lot
+                // linkage, accumulated award rounds, per-role supersedence,
+                // and the nested-section aliasing that makes a party row's
+                // section id differ from its mention's). The mention is the
+                // evidence; everything else follows from it.
                 conn.execute(
                     "UPDATE org_mention_rehoming SET applied_at = ?, applied_action = ?, \
                             job_id = ? WHERE notice_id = ? AND section_id = ?",
@@ -8433,6 +8445,36 @@ impl Db {
                     ),
                 )
                 .await?;
+            }
+            for (notice, section, why) in &noops {
+                conn.execute(
+                    "UPDATE org_mention_rehoming SET applied_at = ?, applied_action = ?, \
+                            job_id = ? WHERE notice_id = ? AND section_id = ?",
+                    (
+                        Value::Integer(now),
+                        t(why),
+                        opt_int(job_id),
+                        Value::Integer(*notice),
+                        t(section),
+                    ),
+                )
+                .await?;
+            }
+            // Winners are derived, so they are RE-DERIVED: stamp the touched
+            // tenders stale and re-queue the notices that built them, and the
+            // next fold rebuilds the award set from the corrected mentions.
+            let ids: Vec<i64> = touched_tenders.iter().copied().collect();
+            if !ids.is_empty() {
+                let list = placeholders(ids.len());
+                let params: Vec<Value> = ids.iter().map(|i| Value::Integer(*i)).collect();
+                let sql = format!(
+                    "UPDATE notices SET projected = 0 \
+                      WHERE parse_state = 'parsed' AND projected <> 0 AND id IN (\
+                        SELECT caused_by_notice_id FROM tender_versions \
+                         WHERE tender_id IN ({list}))"
+                );
+                report.refold_notices = conn.execute(&sql, params).await?;
+                Self::stamp_tenders_stale(&conn, ids).await?;
             }
             for org in &touched_orgs {
                 append_change(&conn, "organization", *org, None, "changed", now).await?;
@@ -8455,7 +8497,6 @@ impl Db {
                 return Err(e);
             }
         }
-        report.tenders = touched_tenders.len() as u64;
         self.publish_cursor(&conn).await?;
         Ok(report)
     }
