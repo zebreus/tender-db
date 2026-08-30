@@ -3063,30 +3063,49 @@ impl Db {
                         report.provisional_only_groups += 1;
                         continue;
                     }
-                    // Reach provenance per member, once: WHICH name row
-                    // reaches the shared key — the head (no lang) or a
-                    // satellite (its stored ISO 639-2/T lang). Corroboration
-                    // provenance (§4.2 T7): a contaminated satellite row
-                    // must be findable from its edges.
-                    let mut reach: std::collections::HashMap<
-                        i64,
-                        (String, Option<String>, String),
-                    > = std::collections::HashMap::new();
+                    // Reach provenance per member, once — ALL rows that
+                    // reach the shared key, not an arbitrary first pick
+                    // (panel catch: multilingual notices store the same
+                    // literal under several langs, so a find-first pick
+                    // labeled same-language equality e3-xlang and made the
+                    // label depend on result order). head_reach is the head
+                    // name when it reaches; sat_reach maps every reaching
+                    // satellite lang (ISO 639-2/T, one row per lang by PK)
+                    // to its name — a BTreeMap, so witness choice below is
+                    // deterministic. Corroboration provenance (§4.2 T7): a
+                    // contaminated satellite row must be findable from its
+                    // edges.
+                    struct Reach {
+                        head: Option<String>,
+                        by_lang: std::collections::BTreeMap<String, String>,
+                    }
+                    // A side's e3-xlang witness: its head when the head
+                    // reaches, else its smallest reaching lang.
+                    fn witness(r: &Reach) -> (String, String) {
+                        match &r.head {
+                            Some(h) => ("head".to_owned(), h.clone()),
+                            None => {
+                                let (l, n) =
+                                    r.by_lang.iter().next().expect("reach entries are non-empty");
+                                (format!("lang:{l}"), n.clone())
+                            }
+                        }
+                    }
+                    let mut reach: std::collections::HashMap<i64, Reach> =
+                        std::collections::HashMap::new();
                     for &id in &live {
                         let head = &org_row[&id].0;
-                        if keyfn(head) == key {
-                            reach.insert(id, ("head".to_owned(), None, head.clone()));
-                            continue;
-                        }
-                        if let Some(vs) = sats.get(&id) {
-                            if let Some((lang, name)) =
-                                vs.iter().find(|(_, n)| keyfn(n) == key)
-                            {
-                                reach.insert(
-                                    id,
-                                    (format!("lang:{lang}"), Some(lang.clone()), name.clone()),
-                                );
+                        let mut r = Reach {
+                            head: (keyfn(head) == key).then(|| head.clone()),
+                            by_lang: std::collections::BTreeMap::new(),
+                        };
+                        for (lang, name) in sats.get(&id).into_iter().flatten() {
+                            if keyfn(name) == key {
+                                r.by_lang.entry(lang.clone()).or_insert_with(|| name.clone());
                             }
+                        }
+                        if r.head.is_some() || !r.by_lang.is_empty() {
+                            reach.insert(id, r);
                         }
                     }
                     let mut group_emitted = false;
@@ -3104,13 +3123,39 @@ impl Db {
                                 report.stale_pairs += 1;
                                 continue;
                             };
-                            // Both sides via head → e3-name. Any satellite
-                            // involvement with DIFFERING provenance langs —
-                            // head-vs-foreign-satellite included (the
-                            // PostAuto/CarPostal shape; amendment) —
-                            // → e3-xlang; satellite-same-lang → e3-name.
-                            let rule: &'static str =
-                                if ra.1 == rb.1 { "e3-name" } else { "e3-xlang" };
+                            // Witness pair, peer-aware and deterministic:
+                            // (1) both heads reach → e3-name on the heads;
+                            // (2) else any COMMON reaching lang → e3-name
+                            //     on that same-lang pair (smallest lang) —
+                            //     same-language equality must never read as
+                            //     cross-language just because one side also
+                            //     reaches under other langs (panel catch);
+                            // (3) else e3-xlang, each side witnessed by its
+                            //     head when it reaches, else its smallest
+                            //     reaching lang — head-vs-foreign-satellite
+                            //     included (the PostAuto/CarPostal shape).
+                            let (rule, wa, wb): (&'static str, (String, String), (String, String)) =
+                                if let (Some(ha), Some(hb)) = (&ra.head, &rb.head) {
+                                    (
+                                        "e3-name",
+                                        ("head".to_owned(), ha.clone()),
+                                        ("head".to_owned(), hb.clone()),
+                                    )
+                                } else if let Some((lang, na, nb)) =
+                                    ra.by_lang.iter().find_map(|(l, na)| {
+                                        rb.by_lang
+                                            .get(l)
+                                            .map(|nb| (l.clone(), na.clone(), nb.clone()))
+                                    })
+                                {
+                                    (
+                                        "e3-name",
+                                        (format!("lang:{lang}"), na),
+                                        (format!("lang:{lang}"), nb),
+                                    )
+                                } else {
+                                    ("e3-xlang", witness(ra), witness(rb))
+                                };
                             if !emitted.insert((a, b, rule)) {
                                 continue; // n2+n3 double-discovery: one row
                             }
@@ -3126,10 +3171,10 @@ impl Db {
                                  \"b\":{{\"src\":\"{}\",\"name\":\"{}\"}}}}",
                                 esc(&key),
                                 live.len(),
-                                esc(&ra.0),
-                                esc(&ra.2),
-                                esc(&rb.0),
-                                esc(&rb.2)
+                                esc(&wa.0),
+                                esc(&wa.1),
+                                esc(&wb.0),
+                                esc(&wb.1)
                             );
                             edges.push(Edge {
                                 a,

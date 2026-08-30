@@ -20,7 +20,12 @@ Never pipe `ops/check.sh` or a gating `cargo` command through `tail`/`head`/`gre
 in a background or chained command: the pipeline reports the FILTER's exit code and
 a red suite reads as green (issue 254's trap; it re-bit on 2026-08-24 and a
 non-compiling commit reached main — only the deploy's own nix gate stopped it).
-Redirect to a file and echo `$?` instead.
+Redirect to a file and echo `$?` instead — and then READ the echoed `GATE-EXIT=`
+VALUE, not the harness/wrapper's own exit line, and not a `test result: FAILED`
+grep (a COMPILE error prints no test-result line at all). This re-bit on
+2026-08-30: GATE-EXIT=101 sat in the output file while `tail -1` showed the
+wrapper's "[exited with code 0]" and a non-compiling test reached main (caught
+by the Unit-4 adversarial panel before deploy).
 
 ### Committing
 

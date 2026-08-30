@@ -6062,6 +6062,9 @@ mod tests {
         sup.enqueue_request(&req("scan-org-match-keys")).await.expect("enqueues");
         let queued = sup.queued();
         assert_eq!(queued[0].kind, "scan-org-match-keys");
+        // The params line fully encodes the knobs (the arm builds Spec and
+        // params from the same locals), so the enqueue contract is pinned
+        // here without reaching into the private queue.
         assert_eq!(
             queued[0].params,
             format!(
@@ -6069,10 +6072,6 @@ mod tests {
                 ingest::crosswalk::NAME_KEY_EPOCH
             )
         );
-        assert!(matches!(
-            queued[0].spec,
-            Spec::ScanOrgMatchKeys { dry_run: true, max_edges: None }
-        ));
         sup.enqueue_request(&JobRequest {
             kind: "scan-org-match-keys".into(),
             dry_run: Some(false),
@@ -6087,10 +6086,68 @@ mod tests {
             "a wet run's params name the cap: {}",
             queued[1].params
         );
-        assert!(matches!(
-            queued[1].spec,
-            Spec::ScanOrgMatchKeys { dry_run: false, max_edges: Some(200_000) }
-        ));
+    }
+
+    /// Issue 300 Stage 4 (panel round): the scan handler's precondition
+    /// ladder and T4 gates through `run_spec` itself — each refusal names
+    /// its remedy, a cancelled run records NO report, a dry run records the
+    /// plan with the build's lineage, and a completed uncapped wet run
+    /// records the scan report and re-anchors the plan.
+    #[tokio::test]
+    async fn scan_org_match_keys_run_path_refusals_and_report_lifecycle() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "scan-org-match-keys".into(),
+            params: String::new(),
+            spec: Spec::ScanOrgMatchKeys { dry_run: dry, max_edges: None },
+            resume_after: None,
+        };
+        // 1. No covering index → the remedy is the wet build.
+        let err = sup.run_spec(&job(1, true)).await.expect_err("no index");
+        assert!(err.contains("org_match_keys_kk"), "{err}");
+        // 2. Index present (finish is IF NOT EXISTS) but the stored keys
+        //    epoch is not this binary's → refuse, or rules mislabel.
+        sup.db().finish_org_match_keys().await.unwrap();
+        let err = sup.run_spec(&job(2, true)).await.expect_err("epoch mismatch");
+        assert!(err.contains("epoch"), "{err}");
+        // 3. Epoch stamped (reset) + index rebuilt (finish), but no
+        //    completed build report → no lineage to echo.
+        sup.db().reset_org_match_keys(ingest::crosswalk::NAME_KEY_EPOCH).await.unwrap();
+        sup.db().finish_org_match_keys().await.unwrap();
+        let err = sup.run_spec(&job(3, true)).await.expect_err("no build report");
+        assert!(err.contains("org-match-keys-build"), "{err}");
+        // 4. Build report present: a WET run still refuses without the
+        //    reviewed dry plan (the T4 ladder).
+        sup.db().put_report("org-match-keys-build", "{\"built_at\":123}", 123).await.unwrap();
+        let err = sup.run_spec(&job(4, false)).await.expect_err("wet needs the plan");
+        assert!(err.contains("org-edge-scan-plan"), "{err}");
+        // 5. Dry run: the census records the plan with the build's lineage.
+        let msg = sup.run_spec(&job(5, true)).await.expect("dry census");
+        assert!(msg.contains("DRY RUN — STORED NOTHING"), "{msg}");
+        let (plan, _) =
+            sup.db().latest_report("org-edge-scan-plan").await.unwrap().expect("plan recorded");
+        assert!(plan.contains("\"keys_built_at\":123"), "{plan}");
+        assert!(plan.contains("\"bounds_ok\":true"), "{plan}");
+        // 6. A cancelled wet run records NO report (the zero-lie bar).
+        sup.cancel_running.store(6, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(6, false)).await.expect("stopped, not failed");
+        assert!(msg.contains("STOPPED by cancel"), "{msg}");
+        assert!(
+            sup.db().latest_report("org-edge-scan").await.unwrap().is_none(),
+            "a stopped run must not record a scan report"
+        );
+        sup.cancel_running.store(0, Ordering::Relaxed);
+        // 7. A completed uncapped wet run records the scan report and
+        //    re-anchors the plan (the weekly-cadence deadlock fix).
+        let msg = sup.run_spec(&job(7, false)).await.expect("wet");
+        assert!(msg.contains("scan-org-match-keys (issue 300 Stage 4)"), "{msg}");
+        assert!(sup.db().latest_report("org-edge-scan").await.unwrap().is_some());
+        // 8. A keys rebuild after the plan was recorded → wet refuses on
+        //    lineage until a fresh dry census is reviewed.
+        sup.db().put_report("org-match-keys-build", "{\"built_at\":456}", 456).await.unwrap();
+        let err = sup.run_spec(&job(8, false)).await.expect_err("stale plan");
+        assert!(err.contains("predates"), "{err}");
     }
 
     /// Issue 53: the coverage refresher gates its WAL-pinning scan on this. Only

@@ -13,12 +13,34 @@ fn n2(s: &str) -> String {
 }
 
 fn n3(s: &str) -> String {
-    // The mini canonicalizer: the token "gmbh" becomes the family marker.
+    // The mini canonicalizer: TWO form variants collapse into one family
+    // marker, like the real FAMILY_SEQUENCES table — so two names can
+    // share an n3 key while their n2 keys differ (the novel-pair case the
+    // n3 walk exists for).
     n2(s)
         .split(' ')
-        .map(|t| if t == "gmbh" { "§gmbh" } else { t })
+        .map(|t| if t == "gmbh" || t == "gesmbh" { "§gmbh" } else { t })
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+/// Full-content snapshot of an entity table — COUNT parity alone cannot
+/// catch an in-place UPDATE, which is exactly the regression class the
+/// no-entity-writes contract guards against.
+async fn snapshot(conn: &store::turso::Connection, sql: &str) -> Vec<String> {
+    let mut rows = conn.query(sql, ()).await.unwrap();
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        let mut line = String::new();
+        for i in 0..8 {
+            match row.get_value(i) {
+                Ok(v) => line.push_str(&format!("{v:?}|")),
+                Err(_) => break,
+            }
+        }
+        out.push(line);
+    }
+    out
 }
 
 async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
@@ -141,9 +163,73 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     for id in 100..121 {
         key_row(&conn, id, "n2", "gymnazium").await;
     }
+    // The NOVEL n3 pair: two form VARIANTS of one family — n2 keys differ,
+    // n3 keys agree, so ONLY the n3 walk can find the pair.
+    org(&conn, 20, "Delta GmbH", Some("D1")).await;
+    org(&conn, 21, "Delta GesmbH", Some("D2")).await;
+    key_row(&conn, 20, "n2", "delta gmbh").await;
+    key_row(&conn, 21, "n2", "delta gesmbh").await;
+    key_row(&conn, 20, "n3", "delta §gmbh").await;
+    key_row(&conn, 21, "n3", "delta §gmbh").await;
+    // Satellite-satellite, SAME lang → e3-name with lang provenance.
+    org(&conn, 30, "Thirty Head", Some("T1")).await;
+    org(&conn, 31, "ThirtyOne Head", Some("T2")).await;
+    for id in [30i64, 31] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+             VALUES (?, 'ENG', 'Shared Alias', 'shared alias')",
+            (Value::Integer(id),),
+        )
+        .await
+        .unwrap();
+        key_row(&conn, id, "n2", "shared alias").await;
+    }
+    // Satellite-satellite, DIFFERENT langs → e3-xlang.
+    org(&conn, 40, "Forty Head", Some("F1")).await;
+    org(&conn, 41, "FortyOne Head", Some("F2")).await;
+    for (id, lang) in [(40i64, "DEU"), (41, "FRA")] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+             VALUES (?, ?, 'Autre Nom', 'autre nom')",
+            (Value::Integer(id), Value::Text(lang.into())),
+        )
+        .await
+        .unwrap();
+        key_row(&conn, id, "n2", "autre nom").await;
+    }
+    // The peer-aware pick (panel catch): org 50 reaches under DEU **and**
+    // ENG, org 51 under ENG only — a same-language witness pair exists, so
+    // the edge MUST be e3-name on lang:ENG, never e3-xlang on an arbitrary
+    // first-reaching row.
+    org(&conn, 50, "Grosse Bank Aktiengesellschaft", Some("G5")).await;
+    org(&conn, 51, "Fifty One Head", Some("G6")).await;
+    for lang in ["DEU", "ENG"] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+             VALUES (50, ?, 'Grosse Bank AG', 'grosse bank ag')",
+            (Value::Text(lang.into()),),
+        )
+        .await
+        .unwrap();
+    }
+    conn.execute(
+        "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+         VALUES (51, 'ENG', 'Grosse Bank AG', 'grosse bank ag')",
+        (),
+    )
+    .await
+    .unwrap();
+    key_row(&conn, 50, "n2", "grosse bank ag").await;
+    key_row(&conn, 51, "n2", "grosse bank ag").await;
+
     let changes_before = count(&conn, "SELECT COUNT(*) FROM changes").await;
-    let orgs_before = count(&conn, "SELECT COUNT(*) FROM organizations").await;
-    let names_before = count(&conn, "SELECT COUNT(*) FROM organization_names").await;
+    let cursor_before = db.latest_cursor().await.unwrap();
+    const ORG_SNAP: &str = "SELECT id, country, identifier_kind, identifier, name, name_norm, \
+                            provisional, created_at FROM organizations ORDER BY id";
+    const NAME_SNAP: &str =
+        "SELECT org_id, lang, name, name_norm FROM organization_names ORDER BY org_id, lang";
+    let orgs_snap = snapshot(&conn, ORG_SNAP).await;
+    let names_snap = snapshot(&conn, NAME_SNAP).await;
     let stop = || false;
     let progress = |_: u64, _: &str| {};
 
@@ -153,13 +239,16 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     let mut a = args(true, &stop, &progress);
     a.exemplar_org = Some(10);
     let r = db.scan_org_match_keys(a, 1000).await.unwrap();
-    assert_eq!(r.keys_walked, 9, "8 n2 keys + 1 n3 key");
-    assert_eq!(r.groups_ge2, 8);
-    assert_eq!(r.would_emit, 3, "alfa, beta, carpostal — n3 re-finds alfa, dedupes");
-    assert_eq!((r.e3_name, r.e3_xlang), (2, 1));
-    assert_eq!(r.groups_emitting, 3);
+    assert_eq!(r.keys_walked, 15, "13 n2 keys + 2 n3 keys");
+    assert_eq!(r.groups_ge2, 12);
+    assert_eq!(
+        r.would_emit, 7,
+        "alfa, beta, carpostal, autre, shared, grosse via n2 + the NOVEL delta pair via n3"
+    );
+    assert_eq!((r.e3_name, r.e3_xlang), (5, 2));
+    assert_eq!(r.groups_emitting, 7);
     assert_eq!(r.provisional_only_groups, 1, "gamma verein never pairs");
-    assert_eq!(r.pairs_considered, 5, "alfa n2 + beta + carpostal + stale + alfa n3");
+    assert_eq!(r.pairs_considered, 9, "7 n2 pairs (stale incl.) + alfa n3 re-find + delta n3");
     assert_eq!(r.stale_pairs, 1);
     assert_eq!(r.dangling_members, 1);
     assert_eq!((r.stoplist_skipped_n2, r.stoplist_skipped_n3), (1, 0));
@@ -178,23 +267,23 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     assert!(db.scan_org_match_keys(a, 1001).await.is_err());
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 0);
 
-    // Capped wet: the census stays whole (parity passes against 3), the
+    // Capped wet: the census stays whole (parity passes against 7), the
     // WRITE stops at the cap — a stable walk-order prefix.
     let mut a = args(false, &stop, &progress);
-    a.expect_edges = Some(3);
+    a.expect_edges = Some(7);
     a.max_edges = Some(1);
     let r = db.scan_org_match_keys(a, 1002).await.unwrap();
     assert!(r.capped);
-    assert_eq!((r.would_emit, r.edges_written, r.edges_new), (3, 1, 1));
+    assert_eq!((r.would_emit, r.edges_written, r.edges_new), (7, 1, 1));
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 1);
 
     // Full wet: refreshes the capped prefix, writes the rest.
     let mut a = args(false, &stop, &progress);
-    a.expect_edges = Some(3);
+    a.expect_edges = Some(7);
     let r = db.scan_org_match_keys(a, 1003).await.unwrap();
     assert!(!r.capped);
-    assert_eq!((r.edges_written, r.edges_new, r.edges_refreshed), (3, 2, 1));
-    assert_eq!(r.total_edges_after, 3);
+    assert_eq!((r.edges_written, r.edges_new, r.edges_refreshed), (7, 6, 1));
+    assert_eq!(r.total_edges_after, 7);
     {
         let mut rows = conn
             .query(
@@ -223,6 +312,41 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
         assert_eq!(row.get_value(6).unwrap(), Value::Text("open".into()));
         assert_eq!(row.get_value(8).unwrap(), Value::Integer(1003));
     }
+    // The other labeled edges, each hand-verifiable from evidence alone.
+    let edge = |a: i64, b: i64| {
+        let conn = &conn;
+        async move {
+        let mut rows = conn
+            .query(
+                "SELECT rule, evidence FROM org_candidate_edges WHERE org_a = ? AND org_b = ?",
+                (Value::Integer(a), Value::Integer(b)),
+            )
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().unwrap_or_else(|| panic!("edge {a}-{b}"));
+        let Value::Text(rule) = row.get_value(0).unwrap() else { panic!("rule") };
+        let Value::Text(ev) = row.get_value(1).unwrap() else { panic!("evidence") };
+        (rule, ev)
+        }
+    };
+    let (rule, ev) = edge(20, 21).await;
+    assert_eq!(rule, "e3-name", "form variants share the family key head-to-head");
+    assert!(ev.contains("\"kind\":\"n3\""), "the delta pair is the n3 walk's novel find: {ev}");
+    let (rule, ev) = edge(30, 31).await;
+    assert_eq!(rule, "e3-name", "same-language satellite equality is e3-name");
+    assert!(ev.matches("lang:ENG").count() == 2, "both witnesses name the shared lang: {ev}");
+    let (rule, ev) = edge(40, 41).await;
+    assert_eq!(rule, "e3-xlang");
+    assert!(ev.contains("lang:DEU") && ev.contains("lang:FRA"), "{ev}");
+    let (rule, ev) = edge(50, 51).await;
+    assert_eq!(
+        rule, "e3-name",
+        "a same-language witness pair exists — the peer-aware pick must find it"
+    );
+    assert!(
+        ev.matches("lang:ENG").count() == 2 && !ev.contains("lang:DEU"),
+        "witnesses are the common lang, never an arbitrary first row: {ev}"
+    );
 
     // Refresh semantics: a later scan bumps last_seen and evidence but
     // preserves first_seen AND a review decision someone recorded.
@@ -233,9 +357,9 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     .await
     .unwrap();
     let mut a = args(false, &stop, &progress);
-    a.expect_edges = Some(3);
+    a.expect_edges = Some(7);
     let r = db.scan_org_match_keys(a, 2000).await.unwrap();
-    assert_eq!((r.edges_written, r.edges_new, r.edges_refreshed), (3, 0, 3));
+    assert_eq!((r.edges_written, r.edges_new, r.edges_refreshed), (7, 0, 7));
     {
         let mut rows = conn
             .query(
@@ -257,17 +381,19 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     let r = db.scan_org_match_keys(args(false, &cancel, &progress), 3000).await.unwrap();
     assert!(r.stopped);
     assert_eq!((r.would_emit, r.edges_written), (0, 0));
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 3);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 7);
 
     // The no-entity-writes contract (decision 6): no change rows at all,
-    // no cursor movement, entity tables untouched, no merges.
+    // no cursor movement, entity tables BYTE-identical (COUNT parity alone
+    // would miss an in-place UPDATE), no merges.
     assert_eq!(
         count(&conn, "SELECT COUNT(*) FROM changes").await,
         changes_before,
         "no change rows at all"
     );
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, orgs_before);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, names_before);
+    assert_eq!(db.latest_cursor().await.unwrap(), cursor_before, "the cursor never moved");
+    assert_eq!(snapshot(&conn, ORG_SNAP).await, orgs_snap, "organizations untouched");
+    assert_eq!(snapshot(&conn, NAME_SNAP).await, names_snap, "organization_names untouched");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions").await, 0);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_merge_log").await, 0);
 }
