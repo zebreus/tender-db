@@ -556,13 +556,41 @@ test read a field QueuedJob doesn't carry; CLAUDE.md scar added) and
 the arbitrary-first-satellite mislabel; all fixed, run-path refusal
 ladder + report lifecycle now pinned through run_spec, no-entity-
 writes asserts upgraded to full-content snapshots + cursor
-stillness. Gate 78 suites green (GATE-EXIT read directly). NEXT:
-prod rollout ladder — deploy 4c2a611 (staged, awaiting queue idle
-behind the Sunday weekly DQ), DRY scan + hand-review of the census
-(record reviewed numbers here), capped wet 200k, uncapped wet under
-parity, then Unit 5 (monotone baseline/alarms, Sunday cadence with
-chain-budget arithmetic gated on the DRY run's measured wall-clock,
-rollout acceptance).
+stillness. Gate 78 suites green (GATE-EXIT read directly).
+
+**STAGE 4 UNIT 4 ROLLOUT COMPLETE (2026-08-30 02:3x-03:2x): the
+candidate-edge store is LIVE — 1,498,485 edges stand.** Ladder
+executed on 82f867e (4c2a611 + a 20-edge spread sample in every scan
+report, added because org_candidate_edges deliberately sits outside
+the public SQL surface): deploy behind the completed weekly DQ
+(4807s) + rehash-probe (8/8 unchanged); DRY census job 473/474 —
+**would_emit 1,498,485 (1,440,677 e3-name + 57,808 e3-xlang) in
+29-40s**, bounds_ok, stable across two dries; hand review PASSED:
+stoplist top-20 is exactly the predicted walls (tribunal
+administratif de X, european commission, platform vendors avenue
+web systèmes 62,084 / tendsign, plus mega-duplicated real companies
+pgf urtica/farmacol whose consolidation channel is the identifier
+path — the n3 twin "pgf urtica §spzoo" at 14,360 shows the family
+marker working at scale); the 20 sampled edges all hand-verified
+from evidence alone (case/punct/dash variance head-head pairs,
+same-lang satellite witnesses labeled e3-name per the peer-aware
+rule, e3-xlang only on genuine cross-provenance incl. Rechtbank
+Noord-Holland via a DEU satellite — the exemplar's own shape).
+CAPPED WET job 475: 200,000 written (all new) in 30s, parity-exact,
+plan left standing. UNCAPPED WET job 476: 1,498,485 written —
+1,298,485 new + EXACTLY the 200,000 capped prefix refreshed (the
+stable-prefix property confirmed live) — in 64s, plan re-anchored.
+Exemplar org 23294544: 7 edges, both rules, 7 peers, on every run
+incl. the pre-wet dry (the amendment's non-vacuous probe). Journal
+clean, health green, /data 549G (edge table cost ≈ nothing yet
+visible). 1.42M-row provisional-only wall excluded 699,316 groups;
+0 dangling, 0 stale (keys 2.5h old). NEXT: Unit 5 — monotone
+baseline anchor (org_edge_total := 1,498,485 at the next completed
+wet), SHRUNK/SPIKE alarms, the Sunday cadence with chain-budget
+arithmetic (measured scan wall-clock: census 29-40s, full wet 64s —
+trivially inside the pre-dawn budget), scheduled-path refusal
+alarms, refold canary, stage acceptance; then Unit 6 (n3s/E4,
+separable) and the issue-311 edge-consumption loop.
 
 **STAGE 4 OPENED (2026-08-29 ~19:4x): implementation plan of record
 landed** — see `300-stage4-implementation-plan.md` (workflow-drafted:
