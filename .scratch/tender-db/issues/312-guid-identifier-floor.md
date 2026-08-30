@@ -1,6 +1,7 @@
 # 312 — Platform GUIDs in the identifier slot: measured, NOT a deny-floor class
 
-Status: step 0 DONE (restore executed); steps 1-2 (platform-guid kind) ready-for-agent
+Status: RESOLVED 2026-08-30 — step 0 restored the strips, step 1a shipped
+(GUIDs excluded from the merge keyspace), steps 1b/2 DECLINED on measurementnt
 Kind: data quality / identity semantics
 Relates to: 311 (found by the review campaign), 300 (canonical keys), 234
 
@@ -89,3 +90,40 @@ predicate over PRE-IMAGE VALUES, so any future misjudged apply class is
 reversible the same way, dry-first, with the same two guards (never clobber
 a newer value; `applied_at` stays set so nothing falls back into the pending
 set and gets re-applied forever).
+
+## STEP 1a SHIPPED, STEPS 1b/2 DECLINED (2026-08-30, rev 65c1854)
+
+**Shipped.** `crosswalk::canonical_key` returns `None` for a v4 UUID under
+any country or kind. The GUID keeps linking (the resolver binds on the raw
+`(country, kind, value)` triple — canonical.rs:5215 — which this does not
+touch) and stops being eligible as a merge key.
+
+Measured first, per this issue's own lesson. Of a 400-row FR sample, **one**
+carries exactly 14 digit characters — the SIRET arm's shape — so roughly 8
+rows corpus-wide were riding a national-register arm into an E1 key.
+Distribution by keyable country: FR 3,092, BE 325, IT 74, CZ 23, PL 21,
+FI 9, SE/PT/NO/HR 5 each, GR 2 (DE 46,240 never keys). Nothing collided,
+because the values are 75,548-distinct — a conceptual hole, closed cheaply.
+
+**Declined: the `platform-guid` identifier kind and the 75k-row
+reclassification** (this issue's original steps 1-2). The measurement
+removes the operational case for it:
+
+- The merge exposure it was meant to fix is ~8 rows, and step 1a closed it
+  outright.
+- What remains is truthfulness of an API field — real, but not worth the
+  risk it carries: the resolver's binding key INCLUDES `kind`, so changing
+  stored rows to a new kind splits them from incoming mentions until a
+  backfill completes, and the reverse order fragments just as badly. That is
+  a self-inflicted fragmentation window across 75,555 orgs to correct a
+  label.
+- Deciding this way is the same discipline that saved the first pass: a
+  class earns a change by its measured effect, not by looking untidy.
+
+**What would reopen it**: a consumer that must distinguish register
+identifiers from platform keys (none today — the field is advisory in the
+API and no internal path reads `kind` except the binding triple and
+`canonical_key`, which now ignores GUIDs anyway); or a platform that starts
+REUSING one key across genuinely different bidders, which would make the
+class a false-merge source and thus floor-worthy after all. The weekly
+r2-census is where that would first show.
