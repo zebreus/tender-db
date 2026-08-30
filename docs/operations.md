@@ -245,7 +245,13 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #   200 {"state":"dropped"}   it was queued and is gone
 #   200 {"state":"stopping"}  it is running and its kind checks the stop flag
 #   409                       it is running as a kind with NO stop checkpoint — the
-#                             honest refusal; only `reparse` and `data-quality` stop
+#                             honest refusal. The stoppable set is STOPPABLE_KINDS in
+#                             supervisor.rs (a contract test pins it): reparse,
+#                             data-quality, project, merge-provisional-orgs,
+#                             org-merge-health, r2-census, r3-census,
+#                             match-org-identifiers, build-org-match-keys,
+#                             scan-org-match-keys, org-edge-census,
+#                             case-review-backlog
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.
@@ -296,6 +302,37 @@ into one `fetch` per month, then one whole-source `process`, then one `project`,
 so progress and cancellation stay per-package. Jobs run **one at a time** in
 enqueue order — the writer is single anyway — so a fetch → process → project
 sequence lands in order.
+
+### The organization-layer jobs (issues 300, 311-317)
+
+These are their own family: censuses that measure, merge arms that write, and
+review machinery that records verdicts. **Every writing one defaults to
+`dry_run: true`** — a forgotten flag must mean the harmless thing — and the
+merge arms run the T4 ladder (dry census → recorded plan → capped wet →
+uncapped wet), so a wet run refuses unless its dry plan is on file.
+
+| kind | writes? | notes |
+|---|---|---|
+| `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements |
+| `match-org-identifiers` (`rule: r2` / `r3`) | YES | the merge arms; `max_groups` caps a run |
+| `build-org-match-keys` | satellite only | wholesale rebuild, ~85 s; **weekly since issue 315** |
+| `scan-org-match-keys` | edges only | the E3 candidate scan and tripwire 6's clock; weekly |
+| `org-edge-census` | no | sizes the edge store into review cohorts (issue 314) |
+| `apply-case-reviews` / `unapply-case-reviews` | YES | the issue-311 verdict applier and its undo |
+| `case-review-backlog` | no | the parked verdicts nobody consumes (issue 317) |
+
+Two refusals an operator will meet, both deliberate:
+
+- **`match-org-identifiers` r3, wet, refuses** when `org_match_keys` is empty
+  or a build is mid-walk. R3's corroboration consults the generic-name wall
+  (issue 316), and an unbuilt satellite makes every key look unique — the
+  wall would silently not be there. The remedy is a **wet** build:
+  `{"kind":"build-org-match-keys","dry_run":false}`. The default is dry, and
+  a dry build stores nothing, so the flag is the whole remedy.
+- **`scan-org-match-keys` refuses** on a missing covering index, a keys-epoch
+  mismatch after a deploy, or a missing build report. Each refusal writes
+  `org-edge-scan-alarm`; read it with
+  `GET /admin/reports/org-edge-scan-alarm`.
 
 ### Restarts and recovery (no manual re-enqueue)
 
