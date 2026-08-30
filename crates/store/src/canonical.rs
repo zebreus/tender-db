@@ -652,7 +652,12 @@ pub(crate) const SCHEMA: &str = "
         -- window (0 = no build in flight; the build resumes here) and the
         -- edge store's monotone-growth baseline (tripwire 6).
         org_match_keys_watermark INTEGER NOT NULL DEFAULT 0,
-        org_edge_total INTEGER NOT NULL DEFAULT 0
+        org_edge_total INTEGER NOT NULL DEFAULT 0,
+        -- The key-SEMANTICS epoch the in-flight (or last) build wrote under
+        -- (ops-panel catch: a resume across a deploy that changed n2/n3
+        -- would silently mix semantics in one table — a mismatch restarts
+        -- the build from zero instead).
+        org_match_keys_epoch TEXT NOT NULL DEFAULT ''
     ) STRICT;
     INSERT OR IGNORE INTO projection_state(id, rebuild_in_progress) VALUES (0, 0);
 
@@ -1593,6 +1598,24 @@ pub struct CaseApplyReport {
     pub plan: Vec<(i64, String, String)>,
 }
 
+/// One window of the Stage-4 name-key build. Totals are summed across
+/// windows by the job.
+#[derive(Debug, Default, Clone)]
+pub struct MatchKeyBuildWindow {
+    /// Org rows the window visited.
+    pub orgs: u64,
+    /// Names read (head + satellite variants).
+    pub names_read: u64,
+    /// Distinct n2 key rows the window produced.
+    pub n2_rows: u64,
+    /// Distinct n3 key rows (stored only when n3 differs from n2).
+    pub n3_rows: u64,
+    /// Names whose n2 normalized to nothing.
+    pub empty_skipped: u64,
+    /// Rows actually inserted (0 on a dry window).
+    pub rows_written: u64,
+}
+
 /// One batch of the issue-259 nested-org mention repair. Totals are summed
 /// across batches by the job.
 #[derive(Debug, Default, Clone)]
@@ -2531,16 +2554,177 @@ impl Db {
     /// Issue 300 Stage 4: empty the rebuildable key satellite at O(1) WAL —
     /// index dropped FIRST so the sqlite_master replay recreates only the
     /// bare table (the build job re-creates the index post-load; carrying it
-    /// through the bulk insert is the issue-60/62 thrash). Called by the
-    /// build job at a from-zero wet start, and by the org-layer rebuild path
-    /// below.
-    pub async fn reset_org_match_keys(&self) -> turso::Result<()> {
+    /// through the bulk insert is the issue-60/62 thrash). Stamps the
+    /// key-semantics `epoch` the coming build writes under, so a resume
+    /// after a deploy that changed the key fns restarts instead of mixing
+    /// semantics. Called by the build job at a from-zero wet start, and by
+    /// the org-layer rebuild path below (with an empty epoch).
+    pub async fn reset_org_match_keys(&self, epoch: &str) -> turso::Result<()> {
         let conn = self.conn().await;
         conn.execute("DROP INDEX IF EXISTS org_match_keys_kk", ()).await?;
         Self::drop_and_recreate(&conn, "org_match_keys").await?;
+        conn.execute(
+            "UPDATE projection_state \
+                SET org_match_keys_watermark = 0, org_match_keys_epoch = ? WHERE id = 0",
+            (t(epoch),),
+        )
+        .await?;
+        Ok(())
+    }
+
+    /// The key build's persisted state: (resume watermark, semantics epoch).
+    pub async fn org_match_keys_state(&self) -> turso::Result<(i64, String)> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT org_match_keys_watermark, org_match_keys_epoch \
+                   FROM projection_state WHERE id = 0",
+                (),
+            )
+            .await?;
+        match rows.next().await? {
+            Some(row) => Ok((int(&row, 0), text(&row, 1))),
+            None => Ok((0, String::new())),
+        }
+    }
+
+    /// One window of the Stage-4 key build: read `batch` orgs past `after`,
+    /// probe their satellite names, compute N2/N3 keys via the injected fns
+    /// (ingest owns linguistics), dedupe per org, and — wet — bulk-insert
+    /// the rows AND advance the watermark IN THE SAME TRANSACTION, so every
+    /// window is exactly-once with no PK on the load table (a crash redoes
+    /// nothing, a resume continues past the last committed window).
+    /// `window.orgs == 0` ends the walk. NO change events, NO cursor: the
+    /// satellite is not an entity table.
+    pub async fn build_org_match_keys_batch(
+        &self,
+        n2: fn(&str) -> String,
+        n3: fn(&str) -> String,
+        batch: i64,
+        after: i64,
+        dry_run: bool,
+    ) -> turso::Result<(MatchKeyBuildWindow, i64)> {
+        let conn = self.conn().await;
+        let mut window = MatchKeyBuildWindow::default();
+        let mut orgs: Vec<(i64, String)> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT id, name FROM organizations WHERE id > ? ORDER BY id LIMIT ?",
+                    (Value::Integer(after), Value::Integer(batch)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                orgs.push((int(&row, 0), text(&row, 1)));
+            }
+        }
+        window.orgs = orgs.len() as u64;
+        let Some(&(last, _)) = orgs.last() else { return Ok((window, after)) };
+        let watermark = after.max(last);
+
+        let ids: Vec<i64> = orgs.iter().map(|(id, _)| *id).collect();
+        let mut satellites: std::collections::HashMap<i64, Vec<String>> =
+            std::collections::HashMap::new();
+        for chunk in ids.chunks(IN_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT org_id, name FROM organization_names WHERE org_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                satellites.entry(int(&row, 0)).or_default().push(text(&row, 1));
+            }
+        }
+
+        // (org_id, kind, key) rows, deduped per org — the same key arriving
+        // via the head AND a satellite is one row. N3 is stored only when it
+        // DIFFERS from N2: lossless, because a form token can never appear
+        // in a formless key, so no cross-kind group is lost by the elision.
+        let mut rows: Vec<Value> = Vec::new();
+        for (id, head) in &orgs {
+            let mut seen: std::collections::HashSet<(&'static str, String)> =
+                std::collections::HashSet::new();
+            let names = std::iter::once(head.as_str())
+                .chain(satellites.get(id).into_iter().flatten().map(String::as_str));
+            for name in names {
+                window.names_read += 1;
+                let k2 = n2(name);
+                if k2.is_empty() {
+                    window.empty_skipped += 1;
+                    continue;
+                }
+                let k3 = n3(name);
+                if seen.insert(("n2", k2.clone())) {
+                    window.n2_rows += 1;
+                    rows.extend([Value::Integer(*id), t("n2"), Value::Text(k2.clone())]);
+                }
+                if k3 != k2 && seen.insert(("n3", k3.clone())) {
+                    window.n3_rows += 1;
+                    rows.extend([Value::Integer(*id), t("n3"), Value::Text(k3)]);
+                }
+            }
+        }
+        if dry_run {
+            return Ok((window, watermark));
+        }
+
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            window.rows_written = (rows.len() / 3) as u64;
+            flush_rows(&conn, "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES", 3, &mut rows)
+                .await?;
+            conn.execute(
+                "UPDATE projection_state SET org_match_keys_watermark = ? WHERE id = 0",
+                (Value::Integer(watermark),),
+            )
+            .await?;
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        // Reclaim the window's WAL tail; failure is logged upstream, never
+        // fatal (issue 42).
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        Ok((window, watermark))
+    }
+
+    /// Close the key build: the covering index (IF NOT EXISTS — a crash
+    /// between index build and watermark reset self-heals on the re-run:
+    /// the walk finds nothing past the watermark, lands here, and the
+    /// re-create is a no-op), a TRUNCATE checkpoint to fold the index build
+    /// out of the WAL, a non-fatal ANALYZE, and the watermark reset that
+    /// marks the build COMPLETE. Returns the final row count.
+    pub async fn finish_org_match_keys(&self) -> turso::Result<i64> {
+        let conn = self.conn().await;
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS org_match_keys_kk \
+                 ON org_match_keys(key_kind, key, org_id)",
+            (),
+        )
+        .await?;
+        let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
+        if let Err(e) = conn.execute("ANALYZE org_match_keys", ()).await {
+            eprintln!("[store] ANALYZE org_match_keys failed (non-fatal): {e}");
+        }
         conn.execute("UPDATE projection_state SET org_match_keys_watermark = 0 WHERE id = 0", ())
             .await?;
-        Ok(())
+        let mut rows = conn.query("SELECT COUNT(*) FROM org_match_keys", ()).await?;
+        match rows.next().await? {
+            Some(row) => Ok(int(&row, 0)),
+            None => Ok(0),
+        }
     }
 
     pub async fn strip_organization_indexes(&self) -> turso::Result<()> {
@@ -2555,8 +2739,8 @@ impl Db {
         Self::drop_and_recreate(&conn, "org_match_keys").await?;
         Self::drop_and_recreate(&conn, "org_candidate_edges").await?;
         conn.execute(
-            "UPDATE projection_state SET org_match_keys_watermark = 0, org_edge_total = 0 \
-              WHERE id = 0",
+            "UPDATE projection_state SET org_match_keys_watermark = 0, org_edge_total = 0, \
+                 org_match_keys_epoch = '' WHERE id = 0",
             (),
         )
         .await?;

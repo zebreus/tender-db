@@ -79,8 +79,8 @@ async fn stage4_tables_enforce_their_contracts_and_reset_cleanly() {
     conn.execute("UPDATE projection_state SET org_match_keys_watermark = 42 WHERE id = 0", ())
         .await
         .unwrap();
-    db.reset_org_match_keys().await.unwrap();
-    db.reset_org_match_keys().await.unwrap();
+    db.reset_org_match_keys("test-epoch").await.unwrap();
+    db.reset_org_match_keys("test-epoch").await.unwrap();
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_match_keys").await, 0);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 1);
     assert_eq!(

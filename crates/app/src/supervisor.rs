@@ -317,6 +317,7 @@ enum Spec {
     MatchOrgIdentifiersR2 { dry_run: bool, max_groups: Option<u64> },
     MatchOrgIdentifiersR3 { dry_run: bool, max_groups: Option<u64> },
     ApplyCaseReviews { dry_run: bool },
+    BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 1, the repair half: dissolve organizations whose
     /// identifier the (now live) v2 gate condemns — placeholder-keyed
     /// stranger-mergers like DE123456789/NIMAT500 — re-resolving every
@@ -878,6 +879,22 @@ impl Supervisor {
                         .await,
                 ])
             }
+            // Issue 300 Stage 4: (re)build the org_match_keys scratch
+            // satellite. Rebuildable, no entity writes; dry_run defaults
+            // TRUE and measures the walk without writing.
+            "build-org-match-keys" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "build-org-match-keys dry-run"
+                } else {
+                    "build-org-match-keys"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push("build-org-match-keys", params, Spec::BuildOrgMatchKeys { dry_run })
+                        .await,
+                ])
+            }
             // Issue 300 Stage 1 repair: dissolve v2-gate-condemned orgs.
             // Deletes org rows and emits change events: dry_run defaults TRUE.
             "repair-placeholder-orgs" => {
@@ -1199,6 +1216,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "r2-census",
     "r3-census",
     "match-org-identifiers",
+    "build-org-match-keys",
 ];
 
 /// What [`Supervisor::cancel`] did.
@@ -3145,6 +3163,133 @@ impl Supervisor {
                     r.noop
                 ))
             }
+            Spec::BuildOrgMatchKeys { dry_run } => {
+                let dry_run = *dry_run;
+                // ~1,260 windows over 12.6M orgs; ~1.7 keys/org keeps a
+                // window's rows inside the sorted bulk-load band, and the
+                // stop flag reads every few seconds of work.
+                const BATCH: i64 = 10_000;
+                let started = std::time::Instant::now();
+                let mut after = 0i64;
+                if !dry_run {
+                    let (wm, epoch) =
+                        self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                    if wm > 0 && epoch == ingest::crosswalk::NAME_KEY_EPOCH {
+                        // Crash-resume: the committed windows stand; the walk
+                        // continues past them. (A crashed FINISH self-heals
+                        // too: the first batch finds nothing and the index
+                        // re-create is IF NOT EXISTS.)
+                        eprintln!("[build-org-match-keys] resuming past id {wm}");
+                        after = wm;
+                    } else {
+                        if wm > 0 {
+                            eprintln!(
+                                "[build-org-match-keys] semantics epoch changed \
+                                 ({epoch:?} -> {:?}): restarting from zero",
+                                ingest::crosswalk::NAME_KEY_EPOCH
+                            );
+                        }
+                        self.db
+                            .reset_org_match_keys(ingest::crosswalk::NAME_KEY_EPOCH)
+                            .await
+                            .map_err(|e| e.to_string())?;
+                    }
+                }
+                let mut totals = store::MatchKeyBuildWindow::default();
+                let mut windows = 0u64;
+                loop {
+                    if self.cancelled(job.id) {
+                        // A stopped WET build leaves the watermark standing —
+                        // the next run resumes; no report is recorded (the
+                        // honest state for an unfinished build).
+                        return Ok(format!(
+                            "build-org-match-keys stopped by cancel after {windows} windows \
+                             (watermark stands at {after}; a re-run resumes)"
+                        ));
+                    }
+                    let (w, next) = self
+                        .db
+                        .build_org_match_keys_batch(
+                            ingest::project::match_norm,
+                            ingest::crosswalk::n3_key,
+                            BATCH,
+                            after,
+                            dry_run,
+                        )
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    if w.orgs == 0 {
+                        break;
+                    }
+                    windows += 1;
+                    totals.orgs += w.orgs;
+                    totals.names_read += w.names_read;
+                    totals.n2_rows += w.n2_rows;
+                    totals.n3_rows += w.n3_rows;
+                    totals.empty_skipped += w.empty_skipped;
+                    totals.rows_written += w.rows_written;
+                    after = next;
+                    self.set_phase(
+                        if dry_run { "measuring" } else { "walking" },
+                        Some(totals.orgs),
+                        None,
+                        format!("id ..= {after}, {} rows so far", totals.rows_written),
+                    );
+                }
+                let now = store::now_unix();
+                if dry_run {
+                    let plan = serde_json::json!({
+                        "orgs": totals.orgs, "names": totals.names_read,
+                        "n2": totals.n2_rows, "n3": totals.n3_rows,
+                        "empty_skipped": totals.empty_skipped,
+                        "projected_rows": totals.n2_rows + totals.n3_rows,
+                        "windows": windows,
+                        "elapsed_seconds": started.elapsed().as_secs(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("org-match-keys-plan", &plan, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    return Ok(format!(
+                        "build-org-match-keys DRY RUN — STORED NOTHING: {} orgs, {} names, \
+                         {} n2 + {} n3 keys projected ({} empty skipped) over {windows} \
+                         windows in {}s",
+                        totals.orgs,
+                        totals.names_read,
+                        totals.n2_rows,
+                        totals.n3_rows,
+                        totals.empty_skipped,
+                        started.elapsed().as_secs()
+                    ));
+                }
+                self.set_phase("indexing", None, None, "covering index + analyze".to_owned());
+                let rows = self.db.finish_org_match_keys().await.map_err(|e| e.to_string())?;
+                let report = serde_json::json!({
+                    "rows": rows, "n2": totals.n2_rows, "n3": totals.n3_rows,
+                    "orgs": totals.orgs, "names": totals.names_read,
+                    "empty_skipped": totals.empty_skipped, "windows": windows,
+                    "index_built": true, "built_at": now,
+                    "epoch": ingest::crosswalk::NAME_KEY_EPOCH,
+                    "elapsed_seconds": started.elapsed().as_secs(),
+                })
+                .to_string();
+                self.db
+                    .put_report("org-match-keys-build", &report, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "build-org-match-keys (issue 300 Stage 4): {rows} rows stand indexed \
+                     ({} n2 + {} n3 from {} orgs / {} names, {} empty skipped) \
+                     over {windows} windows in {}s",
+                    totals.n2_rows,
+                    totals.n3_rows,
+                    totals.orgs,
+                    totals.names_read,
+                    totals.empty_skipped,
+                    started.elapsed().as_secs()
+                ))
+            }
             Spec::Refold { profiles, expect } => {
                 let refs: Vec<&str> = profiles.iter().map(String::as_str).collect();
                 // Count BEFORE writing: a mistyped profile string matching a far larger
@@ -4775,6 +4920,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "repair-nested-orgs"
             | "repair-placeholder-orgs"
             | "match-org-identifiers"
+            | "build-org-match-keys"
             | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"
@@ -5128,6 +5274,9 @@ mod tests {
         // and store nothing when stopped (issue 300 Stages 0 and 2);
         // match-org-identifiers polls it between preload windows and merge
         // transactions, and a stopped run reports its committed prefix.
+        // build-org-match-keys reads it at the top of every 10k-org window,
+        // and a stopped wet build leaves its watermark standing so the next
+        // run resumes (issue 300 Stage 4).
         assert_eq!(
             STOPPABLE_KINDS,
             &[
@@ -5138,7 +5287,8 @@ mod tests {
                 "org-merge-health",
                 "r2-census",
                 "r3-census",
-                "match-org-identifiers"
+                "match-org-identifiers",
+                "build-org-match-keys"
             ]
         );
     }

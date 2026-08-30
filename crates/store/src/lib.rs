@@ -23,8 +23,8 @@ pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
     Applied, BidParty, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     LotResultState, LotState, Mention, MentionResolver, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill,
-    CaseApplyReport, CaseReview, PlanGroup, PlanRow, R2MergeArgs, R2MergeReport, R3MergeArgs,
-    R3MergeReport, Round, TenderProjection, TenderVersion,
+    CaseApplyReport, CaseReview, MatchKeyBuildWindow, PlanGroup, PlanRow, R2MergeArgs,
+    R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
 };
 pub use jobs::QueuedJobRow;
 pub use read::{Filter, Reader, Readers, Status};
@@ -636,6 +636,11 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     add_column(
         conn,
         "ALTER TABLE projection_state ADD COLUMN org_edge_total INTEGER NOT NULL DEFAULT 0",
+    )
+    .await?;
+    add_column(
+        conn,
+        "ALTER TABLE projection_state ADD COLUMN org_match_keys_epoch TEXT NOT NULL DEFAULT ''",
     )
     .await?;
     // The Unicode-lowercased org name (issue 217-B): fold-written for new orgs,

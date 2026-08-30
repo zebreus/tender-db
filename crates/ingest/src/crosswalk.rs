@@ -611,6 +611,12 @@ pub fn legal_form_family(name: &str) -> Option<&'static str> {
 /// N3 feeds candidate EDGES, never merges — while the family table itself
 /// is shared with the R2/R3 legal-form veto via [`family_token`], so keys
 /// and vetoes cannot drift apart.
+/// The name-key SEMANTICS epoch, stamped beside the org_match_keys build
+/// watermark: bump it whenever `match_norm` (N2) or [`n3_key`] (N3)
+/// changes meaning, so a build resumed across the deploy restarts from
+/// zero instead of mixing semantics in one table.
+pub const NAME_KEY_EPOCH: &str = "n2v1+n3v1";
+
 pub fn n3_key(name: &str) -> String {
     let n2 = crate::project::match_norm(name);
     let tokens: Vec<&str> = n2.split(' ').filter(|t| !t.is_empty()).collect();
