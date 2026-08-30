@@ -115,10 +115,26 @@ unit rather than a wider `WHERE` clause here:
    own dry plan and its own panel round, not a rider on a job that was
    reviewed for the org table.
 
-## Still untouched: the VU/GY class
+## Still untouched: the VU/GY class — and it is UPSTREAM, not ours
 
 143 rows whose country code is well-formed but wrong for the entity
-(Bulgarian and British organizations under Vanuatu and Guyana). No shape
-check can catch these — the value has to be wrong against the entity. Trace
-the parse that produced them before deciding whether this is a per-case
-review class or a mapping bug.
+(Bulgarian and British organizations under Vanuatu and Guyana).
+
+**Traced 2026-08-30, and the trace exonerates the parser.** Joining the
+mentions to the notices they came from, `notice_codes.TED-COUNTRY` for those
+exact sections reads `VU` (232 mentions) and `GY` (74) — the SOURCE
+publishes the wrong country, and the pipeline stores it faithfully. On one
+notice (18856147) sections ORG-1..ORG-3 carry `BG` and ORG-4 carries `VU`,
+for `Комисия за защита на конкуренцията`, the Bulgarian competition
+authority. The same body appears under VU across several notices, which
+looks like a form default somebody set once and never corrected.
+
+(Recorded because I got this wrong first: reading a section id off by one, I
+briefly had the mention disagreeing with its own notice, which would have
+meant a stale mention layer. The join says otherwise.)
+
+So this class cannot be fixed by normalization, and correcting it means
+OVERRIDING published data on evidence the publisher did not give us — the
+entity's name language, its identifier's shape, its other notices. That is
+the issue-311 per-case direction, not a rule. Nothing here is urgent: 143
+rows, each mislabelled exactly as its source mislabelled it.
