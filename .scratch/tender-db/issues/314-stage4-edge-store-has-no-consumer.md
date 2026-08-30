@@ -107,3 +107,58 @@ the census. Expect it to be small (low thousands at most), it is the slice
 the contamination exemplar belongs to, and cross-border pairs are where a
 wrong merge would be most damaging — which is exactly why they deserve
 individual review rather than a rule.
+
+
+## STEP 1 COMPLETE (2026-08-30): the cohort is 962 components
+
+`org-edge-census` now reports the intersection the sizing was missing:
+
+    1,498,485 edges over 1,121,728 orgs (0 dangling)
+    272,311 components, max 158
+    24,929 canonical-only | 247,356 mixed | 26 provisional-only
+    10,415 span >1 KNOWN country | 85,329 hold a country-less member
+    COHORT (canonical-only AND cross-border): 962
+
+962 is a campaign that fits: at the batch-v2 rate (~5.3k tokens/case) it is
+about 5M tokens, an evening's work, not the 130M a full 24,929-component
+sweep would cost.
+
+The cohort's borders are language borders and shared registers, which is
+what a real cross-border duplicate class should look like: CZ-SK 68,
+FI-SE 64, LT-LV 27, BE-CH 25, NO-SE 24, CH-DE 23, GB-IE 22, AT-DE 20,
+BE-FR 20, DK-NO 20.
+
+## …but read the SAMPLE before spending the budget (issue 319)
+
+The census now carries the first 25 cohort components, and reading them
+changed what this campaign is. Real duplicates are in there —
+`CZ:SARSTEDT spol. s r.o. || SK:Sarstedt spol. s r.o.`,
+`ES:Howden Iberia S.A.U || NL:HOWDEN IBERIA S.A.U.`,
+`DK/LT/NO:Mercell Holding ASA` — but so is a whole contaminating class:
+
+- `GL:Nukissiorfiit || GRL:Nukissiorfiit` — one Greenlandic utility under
+  an alpha-2 and an alpha-3 code. Not a border at all.
+- `CH:Gemeinde Glattfelden || EE:Gemeinde Glattfelden` and
+  `DE:Vergabekammer Rheinland-Pfalz (×5) || EE:…` — a Swiss municipality
+  and a German public body with an Estonian country code.
+- `BG-VU 19` in the pair table — Vanuatu, holding Bulgarian entities.
+
+That is **issue 319**: the country column carries alpha-3 codes (151 values,
+1,347 rows) and a separate class of well-formed but wrong codes (VU 110,
+GY 33). Some fraction of the 962 is that bug wearing a cross-border
+costume.
+
+**So the order is fixed: 319's normalization and backfill run FIRST, then
+the census re-runs.** The drop in the cohort number IS the measurement of
+how much of the signal was the bug — and the campaign then spends its
+budget on judgement calls rather than on rediscovering a normalization gap.
+
+## The apply-path constraint, stated before the campaign starts
+
+Verdicts on this cohort will be MERGE decisions, and nothing can execute
+them today: `apply-case-reviews` only strips identifiers, and
+`org_candidate_edges.state = 'approved'` is a reserved column with no
+consumer. So the campaign's first run produces recorded, auditable, INERT
+verdicts — which is a fine deliverable — and a review-gated merge arm is a
+separate unit that writes entity references and therefore needs its own
+dry-first plan and its own panel round (the same bar as issue 317 Unit A).

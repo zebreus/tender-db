@@ -69,3 +69,25 @@ Not yet done: the actual fold of `rule=r3` into the Sunday tick. The
 blocker this issue existed for is gone, but the fold deserves its own
 decision with the wall's first prod numbers in hand — run r3 dry once after
 deploy and read `denied_generic_name` before making a merge arm automatic.
+
+
+## PROD, FIRST NUMBERS (2026-08-30, rev 75cdbc2, job 1405 DRY)
+
+    pool 3529; 358 register-prefixed, 1876 unanchored, 296 no-target,
+    14 multi-target, 979 uncorroborated;
+    denied: 5 generic-name (0 generic but hard-anchored), 0 gate,
+    1 consortium, 0 legal-form, 0 vat-group-wall, 0 co-anchor-cap;
+    plan 0 candidates
+
+The wall denies **5** candidates that reached corroboration, and the
+hard-checksum exemption carries **none** — so on today's corpus it is a pure
+deny, not a bypass. The stored plan also records `generic_wall_readable:
+true`, the panel-driven field that keeps "denied 0" distinguishable from
+"could not see".
+
+**The cadence decision this was blocking now has an answer, and it is not
+the one I expected: r3's plan is EMPTY.** Folding `rule=r3` into the Sunday
+tick today would schedule a job that merges nothing — every survivor of the
+ladder is denied by the wall or the consortium veto. That is not an argument
+for folding it in; it is an argument for leaving it manual until the pool
+produces candidates again, and re-reading these numbers then.
