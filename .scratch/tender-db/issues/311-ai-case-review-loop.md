@@ -103,3 +103,35 @@ the case sources beyond the org layer if Lennart wants (offered).
 - The wrong-data policy consolidation (one docs/ page: floor rules +
   corrigenda flow + review loop + tripwires) folds into this issue's
   completion.
+
+## Batch shape v2 (designed 2026-08-30, for the ~772-case remainder)
+
+The pilot's ~55k tokens/case was dominated by per-case context setup and
+per-case enrichment round trips, not by the judgment itself. Four levers,
+none of which weakens the per-case bar (every case still gets an
+INDIVIDUAL agent verdict — Lennart's direction; deterministic features
+group cases, they never decide them):
+
+1. **Stratified shared-context batches**: one reviewer agent takes a
+   STRATUM of 20-30 cases sharing a shape (the pilot's classes:
+   lead-member number, concatenated member VATs, address-as-identifier,
+   9110-GLN, other). The preamble — task, verdict schema, veto rules, the
+   pilot's gold exemplars — amortizes over the batch. Est. 55k → 12-18k
+   tokens/case.
+2. **Bulk enrichment staging**: one bounded SQL pass stages all cases'
+   evidence (identifier, head+satellite names, mention raws, co-party
+   rows, tender refs) into a single JSON before any agent runs — the
+   r3-sample-enriched.json pattern — instead of per-case fetches.
+3. **Cheap-model first pass, big-model audit**: reviews run on the small
+   model with the calibrated prompt; the big model audits a 10% sample
+   per stratum against the pilot's 10/10 agreement bar. A stratum whose
+   sample disagrees re-runs whole on the big model. Verdict confidence
+   maps unchanged (only 'high' is apply-eligible).
+4. **Apply cadence unchanged**: verdicts land per stratum via
+   POST /admin/case-reviews; dry apply-case-reviews → plan review → wet.
+   The safe subset stays verdict='consortium-vehicle-wrong-identifier' +
+   confidence='high'.
+
+Projected cost: ~25-30 stratum batches ≈ 3-5M tokens + audit, vs ~42M at
+the pilot rate. Execute after Stage 4 Unit 5 lands (the review loop then
+also consumes candidate edges, so one enrichment pass serves both).
