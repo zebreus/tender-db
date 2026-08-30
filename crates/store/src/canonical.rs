@@ -1617,6 +1617,27 @@ pub struct CaseApplyReport {
     pub plan: Vec<(i64, String, String)>,
 }
 
+/// What the issue-319 country fold did (or would do, dry).
+#[derive(Debug, Default, Clone)]
+pub struct CountryFoldReport {
+    /// Distinct non-NULL country values in `organizations`.
+    pub values: u64,
+    /// Values the fold rewrites — the plan, as (from, to, rows), sorted.
+    pub plan: Vec<(String, String, u64)>,
+    /// Rows the plan moves.
+    pub rows: u64,
+    /// Values the fold leaves alone because nothing recognises them. These
+    /// are the honest residue — '1A0' and friends — and they are LISTED, not
+    /// just counted, because an unmappable country code is a finding.
+    pub unmapped: Vec<(String, u64)>,
+    /// Rows that, after folding, share `(country, identifier_kind,
+    /// identifier)` with a row that already stood under the target code —
+    /// the duplicate pairs this fix hands to R2. Not merged here: this job
+    /// normalizes a label and never touches identity.
+    pub collisions: u64,
+    pub stopped: bool,
+}
+
 /// One parked verdict, with the evidence a reviewer needs to close it
 /// (issue 317 Units B/C).
 #[derive(Debug, Default, Clone)]
@@ -6973,6 +6994,151 @@ impl Db {
             report.medium_band.truncate(cap);
             report.truncated = true;
         }
+        Ok(report)
+    }
+
+    /// The issue-319 country fold: rewrite `organizations.country` values
+    /// that are not the canonical alpha-2 the write path produces today.
+    ///
+    /// The fold itself is injected (`project::canonical_country`) — the ISO
+    /// tables are ingest's, and store does not learn geography.
+    ///
+    /// Shape: the distinct country values come from ONE index-served
+    /// `GROUP BY` (the `organizations_identity` index leads with country),
+    /// and each rewrite is then an indexed range update per value, not a scan
+    /// per row. 151 values over ~1,300 rows on prod, so the whole job is
+    /// small — but it is written this way because the alternative, a walk of
+    /// 12.6M org rows, is the shape that would have made it unrunnable.
+    ///
+    /// It rewrites a LABEL and never touches identity: no merges, no
+    /// deletions. Rows that collide with an existing row under the target
+    /// code are COUNTED and left for R2, which is the arm that owns merging
+    /// and re-checks its own denial stack.
+    pub async fn fold_org_countries(
+        &self,
+        fold: fn(&str) -> String,
+        dry_run: bool,
+        now: i64,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CountryFoldReport> {
+        let mut report = CountryFoldReport::default();
+        let mut plan: Vec<(String, String, u64)> = Vec::new();
+        {
+            let reader = self.reader().await?;
+            let mut rows = reader
+                .query(
+                    "SELECT country, COUNT(*) FROM organizations \
+                      WHERE country IS NOT NULL GROUP BY country",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                if stop() {
+                    return Ok(CountryFoldReport { stopped: true, ..Default::default() });
+                }
+                let (from, n) = (text(&row, 0), int(&row, 1) as u64);
+                report.values += 1;
+                let to = fold(&from);
+                if to == from {
+                    continue;
+                }
+                plan.push((from, to, n));
+            }
+        }
+        plan.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+        report.rows = plan.iter().map(|(_, _, n)| n).sum();
+
+        // The residue, listed rather than counted: a value that survives the
+        // fold and is not a live alpha-2 is either junk or a code nothing
+        // models yet, and both are worth a name.
+        {
+            let reader = self.reader().await?;
+            let mut rows = reader
+                .query(
+                    "SELECT country, COUNT(*) FROM organizations \
+                      WHERE country IS NOT NULL AND LENGTH(country) <> 2 GROUP BY country",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let (v, n) = (text(&row, 0), int(&row, 1) as u64);
+                if fold(&v) == v {
+                    report.unmapped.push((v, n));
+                }
+            }
+            report.unmapped.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        }
+
+        // Collisions: identifier-bearing rows whose folded identity already
+        // exists. Counted per plan entry with an indexed probe on each side.
+        {
+            let reader = self.reader().await?;
+            for (from, to, _) in &plan {
+                if stop() {
+                    return Ok(CountryFoldReport { stopped: true, ..Default::default() });
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM organizations a \
+                          WHERE a.country = ? AND a.identifier IS NOT NULL \
+                            AND EXISTS (SELECT 1 FROM organizations b \
+                                         WHERE b.country = ? \
+                                           AND b.identifier_kind = a.identifier_kind \
+                                           AND b.identifier = a.identifier)",
+                        (t(from), t(to)),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    report.collisions += int(&row, 0) as u64;
+                }
+            }
+        }
+        report.plan = plan;
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        // Wet: one indexed range update per value, plus a change event per
+        // moved row — `country` is a published field, so a consumer that
+        // filters on it has to be able to see the correction go by.
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for (from, to, _) in &report.plan {
+                let mut ids: Vec<i64> = Vec::new();
+                {
+                    let mut rows = conn
+                        .query("SELECT id FROM organizations WHERE country = ?", (t(from),))
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        ids.push(int(&row, 0));
+                    }
+                }
+                conn.execute(
+                    "UPDATE organizations SET country = ? WHERE country = ?",
+                    (t(to), t(from)),
+                )
+                .await?;
+                for id in ids {
+                    append_change(&conn, "organization", id, None, "changed", now).await?;
+                }
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        self.publish_cursor(&conn).await?;
         Ok(report)
     }
 

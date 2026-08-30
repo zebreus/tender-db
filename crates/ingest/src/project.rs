@@ -4492,44 +4492,35 @@ const VAT_COUNTRIES: &[&str] = &[
     "SI", "SK", "GB", "UK", "XI", "CH", "IS", "LI", "NO",
 ];
 
-/// ISO-3166 alpha-3 → alpha-2 for the countries that appear in the corpus
-/// (issue 48, data-profile §3 rule 2). The organizations table stores country in
-/// three vocabularies — alpha-2, alpha-3 (`DEU` ≥150k, `FRA` ≥150k, `ESP` 69k,
-/// `ROU` 10k, `GBR` 3k), and TED's non-ISO `UK`/`EL` — so a country filter or
-/// aggregation splits the same country across codings. Canonicalising to alpha-2
-/// on write converges them.
-const ALPHA3_TO_ALPHA2: &[(&str, &str)] = &[
-    // EU-27
-    ("AUT", "AT"), ("BEL", "BE"), ("BGR", "BG"), ("HRV", "HR"), ("CYP", "CY"),
-    ("CZE", "CZ"), ("DNK", "DK"), ("EST", "EE"), ("FIN", "FI"), ("FRA", "FR"),
-    ("DEU", "DE"), ("GRC", "GR"), ("HUN", "HU"), ("IRL", "IE"), ("ITA", "IT"),
-    ("LVA", "LV"), ("LTU", "LT"), ("LUX", "LU"), ("MLT", "MT"), ("NLD", "NL"),
-    ("POL", "PL"), ("PRT", "PT"), ("ROU", "RO"), ("SVK", "SK"), ("SVN", "SI"),
-    ("ESP", "ES"), ("SWE", "SE"),
-    // EEA / near-Europe
-    ("GBR", "GB"), ("NOR", "NO"), ("ISL", "IS"), ("LIE", "LI"), ("CHE", "CH"),
-    ("ALB", "AL"), ("SRB", "RS"), ("MKD", "MK"), ("MNE", "ME"), ("BIH", "BA"),
-    ("TUR", "TR"), ("UKR", "UA"), ("MDA", "MD"), ("XKX", "XK"),
-    // common third countries seen in TED supplier data
-    ("USA", "US"), ("CHN", "CN"), ("JPN", "JP"), ("CAN", "CA"), ("AUS", "AU"),
-    ("IND", "IN"), ("BRA", "BR"), ("RUS", "RU"), ("KOR", "KR"), ("ISR", "IL"),
-];
-
-/// Canonicalise a country code to ISO-3166 alpha-2 (issue 48). Alpha-3 maps to
-/// its alpha-2; TED's non-ISO `UK` becomes `GB` and eurostat's `EL` (Greece)
-/// becomes `GR`; a value already alpha-2 (or one we do not recognise) passes
-/// through unchanged, so an unmapped code is preserved rather than dropped.
+/// Canonicalise a country code to ISO-3166 alpha-2 (issue 48, completed by
+/// issue 319). Alpha-3 folds to its alpha-2 from the GENERATED ISO 3166-1
+/// table in [`crate::countries`]; a country NAME folds too; TED's non-ISO
+/// `UK` becomes `GB`, eurostat's `EL` (Greece) becomes `GR`, and the
+/// user-assigned `XKX` (Kosovo, which ISO does not assign) becomes `XK`. A
+/// value already alpha-2, or one nothing recognises, passes through
+/// unchanged — an unmapped code is preserved rather than dropped.
+///
+/// Issue 319 is why the table is generated. The hand-picked version covered
+/// the EU-27 plus "common third countries" and left 151 alpha-3 codes
+/// (1,344 org rows) to pass through, so `GRL` sat beside `GL` and the merge
+/// arm — which keys on country — could never close the pair.
 pub fn canonical_country(raw: &str) -> String {
     let up = raw.trim().to_ascii_uppercase();
     match up.as_str() {
-        "UK" => return "GB".into(), // TED writes UK, ISO is GB
-        "EL" => return "GR".into(), // eurostat/NUTS Greece is EL, ISO is GR
+        "UK" => return "GB".into(),   // TED writes UK, ISO is GB
+        "EL" => return "GR".into(),   // eurostat/NUTS Greece is EL, ISO is GR
+        "XKX" => return "XK".into(),  // Kosovo: user-assigned, not in ISO 3166-1
         _ => {}
     }
-    if let Some((_, a2)) = ALPHA3_TO_ALPHA2.iter().find(|(a3, _)| *a3 == up) {
-        return (*a2).to_owned();
+    let table: &[(&str, &str)] = match up.len() {
+        3 => crate::countries::ALPHA3_TO_ALPHA2,
+        n if n > 3 => crate::countries::NAME_TO_ALPHA2,
+        _ => return up,
+    };
+    match table.iter().find(|(from, _)| *from == up) {
+        Some((_, to)) => (*to).to_owned(),
+        None => up,
     }
-    up
 }
 
 /// A VAT id carries its country in its own prefix and is scoped by it; a
@@ -5431,6 +5422,65 @@ mod tests {
         assert_eq!(canonical_country(" fr "), "FR");
         // An unrecognised code is preserved, not dropped.
         assert_eq!(canonical_country("ZZ"), "ZZ");
+
+        // Issue 319: the fold is the WHOLE ISO 3166-1 table now, not a
+        // hand-picked EU-plus-favourites list. These are the codes that were
+        // actually sitting unfolded in the corpus.
+        for (raw, want) in [
+            ("GRL", "GL"), // beside 23 live GL rows — the split that found this
+            ("MCO", "MC"),
+            ("ARE", "AE"),
+            ("ZAF", "ZA"),
+            ("SGP", "SG"),
+            ("GEO", "GE"),
+            ("HKG", "HK"),
+            ("NZL", "NZ"),
+        ] {
+            assert_eq!(canonical_country(raw), want, "{raw} → {want}");
+        }
+        // THE TRAP, pinned so nobody ever "simplifies" this to a prefix cut:
+        // an alpha-3's first two letters are a DIFFERENT country's alpha-2.
+        assert_eq!(canonical_country("SEN"), "SN", "Senegal, not Sweden");
+        assert_eq!(canonical_country("BEN"), "BJ", "Benin, not Belgium");
+        assert_eq!(canonical_country("CHN"), "CN", "China, not Switzerland");
+        assert_ne!(canonical_country("SEN"), "SE");
+        assert_ne!(canonical_country("BEN"), "BE");
+        // Kosovo is user-assigned — ISO 3166-1 does not list it, so the fold
+        // keeps its own arm and the generated table cannot silently drop it.
+        assert_eq!(canonical_country("XKX"), "XK");
+        // A country NAME folds too: the corpus holds one row spelled this way.
+        assert_eq!(canonical_country("LUXEMBOURG"), "LU");
+        assert_eq!(canonical_country("luxembourg"), "LU");
+        assert_eq!(canonical_country("Netherlands"), "NL");
+        // Junk that is neither: preserved, so it stays visible to the census
+        // rather than being laundered into a plausible-looking code. '1A0'
+        // is a real value on 3 prod rows.
+        assert_eq!(canonical_country("1A0"), "1A0");
+        assert_eq!(canonical_country("NOTACOUNTRY"), "NOTACOUNTRY");
+    }
+
+    /// Issue 319: the generated table must stay a bijection-ish mapping —
+    /// every alpha-3 distinct, every target a plausible alpha-2 — because it
+    /// is generated and nobody reads 249 lines in review.
+    #[test]
+    fn the_generated_country_table_is_well_formed() {
+        use crate::countries::{ALPHA3_TO_ALPHA2, NAME_TO_ALPHA2};
+        assert_eq!(ALPHA3_TO_ALPHA2.len(), 249, "ISO 3166-1 has 249 assignments");
+        let mut codes: Vec<&str> = ALPHA3_TO_ALPHA2.iter().map(|(a, _)| *a).collect();
+        codes.sort_unstable();
+        let before = codes.len();
+        codes.dedup();
+        assert_eq!(codes.len(), before, "no alpha-3 appears twice");
+        for (a3, a2) in ALPHA3_TO_ALPHA2 {
+            assert_eq!(a3.len(), 3, "{a3}");
+            assert_eq!(a2.len(), 2, "{a3} → {a2}");
+            assert!(a3.chars().all(|c| c.is_ascii_uppercase()), "{a3}");
+            assert!(a2.chars().all(|c| c.is_ascii_uppercase()), "{a2}");
+        }
+        for (name, a2) in NAME_TO_ALPHA2 {
+            assert!(name.len() > 3, "a name shorter than 4 would shadow a code: {name}");
+            assert_eq!(a2.len(), 2, "{name} → {a2}");
+        }
     }
 
     #[test]

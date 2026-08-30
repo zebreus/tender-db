@@ -15,6 +15,7 @@ pub mod orgid;
 pub mod package;
 pub mod process;
 pub mod profile;
+pub mod countries;
 pub mod project;
 pub mod r209;
 pub mod ted;

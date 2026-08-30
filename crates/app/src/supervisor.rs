@@ -341,6 +341,8 @@ enum Spec {
     /// Issue 317 Units B/C: list the parked review verdicts nothing
     /// consumes, with the evidence needed to close them. Read-only.
     CaseReviewBacklog,
+    /// Issue 319: fold non-canonical country codes on organization rows.
+    FoldOrgCountries { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
     /// Issue 300 Stage 4: the candidate-edge scan over the key satellite —
     /// E3 name-equality edges into `org_candidate_edges`, advisory only
@@ -938,6 +940,20 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 319: the country fold. Writes a published field on
+            // entity rows, so dry_run defaults TRUE like every other writer.
+            "fold-org-countries" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "fold-org-countries",
+                        if dry_run { "fold-org-countries dry-run" } else { "fold-org-countries" }
+                            .to_owned(),
+                        Spec::FoldOrgCountries { dry_run },
+                    )
+                    .await,
+                ])
+            }
             // Issue 317 Units B/C: the parked-verdict backlog. Read-only,
             // so no dry_run — there is nothing for a flag to protect.
             "case-review-backlog" => Ok(vec![
@@ -1315,6 +1331,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "scan-org-match-keys",
     "org-edge-census",
     "case-review-backlog",
+    "fold-org-countries",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3422,6 +3439,59 @@ impl Supervisor {
                          nothing and denied nothing"
                     } else {
                         ""
+                    }
+                ))
+            }
+            Spec::FoldOrgCountries { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "folding" },
+                    None,
+                    None,
+                    "reading the distinct country values".to_owned(),
+                );
+                let now = store::now_unix();
+                let r = self
+                    .db
+                    .fold_org_countries(ingest::project::canonical_country, dry_run, now, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("fold-org-countries STOPPED by cancel — nothing planned or \
+                               written"
+                        .to_owned());
+                }
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "values": r.values, "rows": r.rows, "collisions": r.collisions,
+                    "plan": r.plan.iter().map(|(f, t, n)| {
+                        serde_json::json!({ "from": f, "to": t, "rows": n })
+                    }).collect::<Vec<_>>(),
+                    "unmapped": r.unmapped.iter().map(|(v, n)| {
+                        serde_json::json!({ "value": v, "rows": n })
+                    }).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("country-fold", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "fold-org-countries (issue 319){}: {} distinct country values, {} to \
+                     fold over {} rows; {} identifier-bearing rows land on an identity that \
+                     already stands (R2's to merge, not this job's); {} values stay \
+                     unmapped{}",
+                    if dry_run { " DRY RUN — plan recorded, nothing written" } else { "" },
+                    r.values,
+                    r.plan.len(),
+                    r.rows,
+                    r.collisions,
+                    r.unmapped.len(),
+                    match r.unmapped.first() {
+                        Some((v, n)) => format!(" (largest: {v:?}, {n} rows)"),
+                        None => String::new(),
                     }
                 ))
             }
@@ -6126,7 +6196,8 @@ mod tests {
                 "build-org-match-keys",
                 "scan-org-match-keys",
                 "org-edge-census",
-                "case-review-backlog"
+                "case-review-backlog",
+                "fold-org-countries"
             ]
         );
     }
