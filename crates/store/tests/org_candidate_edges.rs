@@ -507,14 +507,35 @@ async fn the_edge_census_counts_components_not_edges() {
     );
     assert_eq!(r.multi_country_components, 1, "beta spans DE and FR");
     assert_eq!(r.country_pairs, vec![("DE-FR".to_owned(), 1)]);
+    assert_eq!(r.null_country_components, 0, "no country-less members in this fixture");
     let two = r.size_buckets.iter().find(|(k, _)| *k == "2").unwrap().1;
     let three_five = r.size_buckets.iter().find(|(k, _)| *k == "3-5").unwrap().1;
     assert_eq!((two, three_five), (2, 1));
     assert_eq!(r.sample.len(), 3, "sample_every=1 shows every component");
 
-    // Read-only: the census writes nothing at all.
+    // A country-less member must NOT read as cross-border — the defect the
+    // first prod census shipped with, where every "??-XX" pair was just a
+    // country-less row beside a known one.
+    org(&conn, 10, "Epsilon", Some("E1")).await;
+    org(&conn, 11, "Epsilon", Some("E2")).await;
+    conn.execute("UPDATE organizations SET country = NULL WHERE id = 11", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+         VALUES (10, 11, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+    let r2 = db.census_org_candidate_edges(1, &never).await.unwrap();
+    assert_eq!(r2.components, 4);
+    assert_eq!(r2.null_country_components, 1, "the country-less pair is counted here…");
+    assert_eq!(r2.multi_country_components, 1, "…and NOT as a second cross-border component");
+    assert_eq!(r2.country_pairs, vec![("DE-FR".to_owned(), 1)], "still only the real pair");
+
+    // Read-only: the census writes nothing at all. (Six edges now — the
+    // five seeded above plus the country-less pair.)
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0);
-    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 5);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 6);
 
     // Cancel is honest: no partial numbers.
     let always = || true;

@@ -1641,16 +1641,28 @@ pub struct EdgeCensusReport {
     pub canonical_only_components: u64,
     pub mixed_components: u64,
     pub provisional_only_components: u64,
-    /// Components whose live members span more than one country — the
-    /// cross-border slice the contamination exemplar belongs to.
+    /// Components spanning more than one KNOWN country — the genuine
+    /// cross-border slice the contamination exemplar belongs to. A
+    /// NULL-country member does NOT make a component cross-border: the
+    /// first census conflated the two and reported 90,618 where the real
+    /// number is far smaller, because every "??-XX" pair it counted was
+    /// just a country-less row beside a known one.
     pub multi_country_components: u64,
-    /// Top country pairs among multi-country components, heaviest first.
+    /// Components holding at least one country-less member (the R3 pool's
+    /// shape), counted separately for exactly that reason.
+    pub null_country_components: u64,
+    /// Top country pairs among genuinely cross-border components.
     pub country_pairs: Vec<(String, u64)>,
     /// A deterministic spread sample for hand review: (component root,
     /// size, "country:name" per member, capped).
     pub sample: Vec<(i64, u64, Vec<String>)>,
     pub stopped: bool,
 }
+
+/// The census's label for a country-less org row. Its own constant so the
+/// cross-border test below can never accidentally treat it as a country —
+/// which is exactly the bug the first prod census shipped with.
+const NO_COUNTRY: &str = "??";
 
 /// One window of the Stage-4 name-key build. Totals are summed across
 /// windows by the job.
@@ -7620,7 +7632,7 @@ impl Db {
                     int(&row, 0),
                     (
                         !matches!(row.get_value(1), Ok(Value::Null)),
-                        opt_text_of(&row, 2).unwrap_or_else(|| "??".into()),
+                        opt_text_of(&row, 2).unwrap_or_else(|| NO_COUNTRY.into()),
                         text(&row, 3),
                     ),
                 );
@@ -7669,14 +7681,16 @@ impl Db {
             } else {
                 report.mixed_components += 1;
             }
-            let mut countries: std::collections::BTreeSet<&str> =
+            let all: std::collections::BTreeSet<&str> =
                 ms.iter().map(|id| live[id].1.as_str()).collect();
-            if countries.len() > 1 {
-                report.multi_country_components += 1;
-                let label = countries.iter().copied().collect::<Vec<_>>().join("-");
-                *pairs.entry(label).or_default() += 1;
+            if all.contains(NO_COUNTRY) {
+                report.null_country_components += 1;
             }
-            countries.clear();
+            let known: Vec<&str> = all.iter().copied().filter(|c| *c != NO_COUNTRY).collect();
+            if known.len() > 1 {
+                report.multi_country_components += 1;
+                *pairs.entry(known.join("-")).or_default() += 1;
+            }
             if sample_every > 0 && n % sample_every == 0 && report.sample.len() < 40 {
                 let mut show: Vec<String> = ms
                     .iter()

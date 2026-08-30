@@ -3358,6 +3358,7 @@ impl Supervisor {
                     "mixed_components": r.mixed_components,
                     "provisional_only_components": r.provisional_only_components,
                     "multi_country_components": r.multi_country_components,
+                    "null_country_components": r.null_country_components,
                     "country_pairs": r.country_pairs.iter().map(|(k, v)| {
                         serde_json::json!({ "pair": k, "components": v })
                     }).collect::<Vec<_>>(),
@@ -3370,7 +3371,8 @@ impl Supervisor {
                 Ok(format!(
                     "org-edge-census (issue 314): {} edges ({} e3-name + {} e3-xlang) over \
                      {} orgs ({} dangling); {} components, max {}; {} canonical-only, \
-                     {} mixed, {} provisional-only; {} span >1 country",
+                     {} mixed, {} provisional-only; {} span >1 KNOWN country, \
+                     {} hold a country-less member",
                     r.edges,
                     r.e3_name,
                     r.e3_xlang,
@@ -3381,7 +3383,8 @@ impl Supervisor {
                     r.canonical_only_components,
                     r.mixed_components,
                     r.provisional_only_components,
-                    r.multi_country_components
+                    r.multi_country_components,
+                    r.null_country_components
                 ))
             }
             Spec::ApplyCaseReviews { dry_run } => {
