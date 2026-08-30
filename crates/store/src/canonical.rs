@@ -1519,6 +1519,14 @@ pub struct R3MergeArgs<'a> {
     pub legal_form: fn(&str) -> Option<&'static str>,
     /// `project::match_norm` — the N2 corroboration key.
     pub norm: fn(&str) -> String,
+    /// `idgate::hard_scheme` — issue 316 / design §4.1: a GENERIC
+    /// corroboration name (one shared by more than `stoplist_cap` orgs)
+    /// only counts when the anchor's scheme checksums HARD.
+    pub hard_scheme: fn(&str) -> bool,
+    /// The generic-name cap, same value the Stage-4 scan stoplists on — the
+    /// two walls must agree about what "generic" means, so the caller
+    /// passes ONE constant to both.
+    pub stoplist_cap: usize,
     pub dry_run: bool,
     pub max_groups: Option<u64>,
     pub expect_groups: Option<u64>,
@@ -1541,6 +1549,15 @@ pub struct R3MergeReport {
     pub multi_target: u64,
     /// Skipped: no exact cross-language N2 name match with the target.
     pub uncorroborated: u64,
+    /// Skipped: the corroborating name is GENERIC (over the stoplist cap)
+    /// and the anchor's scheme is not hard-checksummed — issue 316. A
+    /// generic name is agreement between two names nobody chose to make
+    /// unique, so it cannot carry a rescue merge on its own.
+    pub denied_generic_name: u64,
+    /// Corroborated on a GENERIC name but allowed through, because the
+    /// anchor hard-checksums: the design's one exemption, counted so the
+    /// cadence can see how often it is used rather than assuming zero.
+    pub generic_name_hard_anchor: u64,
     /// Skipped: the candidate's identifier fails the v2 gate.
     pub denied_gate: u64,
     /// Skipped: a consortium-named side (either head or satellite).
@@ -6720,6 +6737,57 @@ impl Db {
         Ok(report)
     }
 
+    /// Rows in the key satellite. The r3 wet guard reads it (issue 316): a
+    /// merge arm that consults the generic-name wall must not run for real
+    /// against an EMPTY satellite, where every key reads non-generic and
+    /// the wall silently is not there.
+    pub async fn org_match_keys_count(&self) -> turso::Result<i64> {
+        let reader = self.reader().await?;
+        let mut rows = reader.query("SELECT COUNT(*) FROM org_match_keys", ()).await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        })
+    }
+
+    /// Is this name key GENERIC — held by MORE than `cap` distinct orgs in
+    /// `org_match_keys`? The Stage-4 scan stoplists such keys instead of
+    /// emitting edges from them (design §4.1, decision 5); issue 316 makes
+    /// the R3 merge arm consult the same wall, under the same cap, so the
+    /// two agree about what "generic" means.
+    ///
+    /// Bounded by construction: the range scan stops at `cap + 1` rows, so
+    /// a 62,084-org key costs the same as a 2-org one. `DISTINCT` because
+    /// the count is over ORGS — the build dedupes (org, kind, key) today,
+    /// but the wall must not become wrong if that ever changes.
+    ///
+    /// **A key the satellite has never seen reads NOT generic** (count 0).
+    /// That is deliberate and the lenient direction: `org_match_keys` is
+    /// built wholesale (issue 315), so an unbuilt or stale satellite must
+    /// not silently deny every rescue merge. It does mean the wall is only
+    /// as complete as the last build — which is why a WET r3 run refuses
+    /// outright when the satellite is empty (the job's own guard).
+    pub async fn name_key_is_generic(
+        &self,
+        kind: &str,
+        key: &str,
+        cap: usize,
+    ) -> turso::Result<bool> {
+        let reader = self.reader().await?;
+        let mut rows = reader
+            .query(
+                "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
+                  WHERE key_kind = ? AND key = ? LIMIT ?)",
+                (t(kind), t(key), Value::Integer(cap as i64 + 1)),
+            )
+            .await?;
+        let n = match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        };
+        Ok(n as usize > cap)
+    }
+
     /// The issue-300 Stage-3 R3 merge: rescue NULL-country identifier orgs by
     /// UNIQUE checksum anchor + standing-target lookup + exact cross-language
     /// N2 name corroboration — the r3-census's classification recomputed
@@ -6890,6 +6958,20 @@ impl Db {
             if !corroborated {
                 report.uncorroborated += 1;
                 continue;
+            }
+            // Issue 316 / design §4.1: a name shared by more orgs than the
+            // stoplist cap is GENERIC ("tribunal administratif de …",
+            // "european commission", a platform vendor's boilerplate at
+            // 62,084 orgs), and generic agreement is not corroboration. The
+            // design's single exemption is a HARD-checksummed anchor, which
+            // stands on its own arithmetic rather than on the name.
+            if self.name_key_is_generic("n2", &n2, args.stoplist_cap).await? {
+                if (args.hard_scheme)(scheme) {
+                    report.generic_name_hard_anchor += 1;
+                } else {
+                    report.denied_generic_name += 1;
+                    continue;
+                }
             }
             // Gate-poison, both sides: the candidate country-less (the
             // dissolve's own view of it), the target under its country. A

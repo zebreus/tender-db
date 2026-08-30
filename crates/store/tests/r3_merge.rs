@@ -230,7 +230,30 @@ async fn count(conn: &store::turso::Connection, sql: &str) -> i64 {
     n
 }
 
+/// Test-local `idgate::hard_scheme`. FR:siren is SOFT in production (its
+/// measured pass rate is below the enablement bar), so a fixture that
+/// anchors on it is the honest default: nothing is hard.
+fn no_hard(_scheme: &str) -> bool {
+    false
+}
+
+/// The counterfactual: the same anchor, in a scheme that hard-checksums.
+fn siren_is_hard(scheme: &str) -> bool {
+    scheme == "FR:siren"
+}
+
 fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R3MergeArgs<'static> {
+    // Cap 20 = the production `SCAN_STOPLIST_CAP`, and the base fixture
+    // seeds NO key rows, so nothing reads generic in the other tests.
+    args_with(no_hard, 20, dry_run, expect_groups)
+}
+
+fn args_with(
+    hard_scheme: fn(&str) -> bool,
+    stoplist_cap: usize,
+    dry_run: bool,
+    expect_groups: Option<u64>,
+) -> store::R3MergeArgs<'static> {
     store::R3MergeArgs {
         key,
         anchors,
@@ -238,6 +261,8 @@ fn args(dry_run: bool, expect_groups: Option<u64>) -> store::R3MergeArgs<'static
         consortium,
         legal_form,
         norm,
+        hard_scheme,
+        stoplist_cap,
         dry_run,
         max_groups: None,
         expect_groups,
@@ -330,4 +355,76 @@ async fn the_r3_merge_classifies_the_pool_and_merges_the_anchored_survivors() {
     let again = db.match_org_null_country_r3(args(false, None)).await.expect("rerun");
     assert_eq!((again.plan_groups, again.merged_groups, again.removed), (0, 0, 0));
     assert_eq!(again.pool, 21);
+}
+
+/// Issue 316 / design §4.1: a GENERIC corroborating name — one shared by
+/// more orgs than the Stage-4 stoplist cap — cannot carry an R3 rescue
+/// merge. Name agreement nobody chose to make unique is not evidence. The
+/// design's single exemption is an anchor whose scheme hard-checksums,
+/// which stands on its own arithmetic instead.
+#[tokio::test]
+async fn a_generic_corroborating_name_denies_unless_the_anchor_hard_checksums() {
+    let (db, conn) = seed("test-r3-generic-name.db").await;
+    // The clean rescue of the test above is candidate 109 → target 15,
+    // corroborated on norm("RENAULT SA") = "renaultsa". Give that key three
+    // holders in the satellite.
+    for org in [15i64, 109, 4242] {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'renaultsa')",
+            (Value::Integer(org),),
+        )
+        .await
+        .unwrap();
+    }
+
+    // Cap 3, three holders: generic means MORE than the cap, so this key is
+    // not generic yet and the rescue plans exactly as before.
+    let at_cap = db.match_org_null_country_r3(args_with(no_hard, 3, true, None)).await.expect("dry");
+    assert_eq!(
+        (at_cap.denied_generic_name, at_cap.plan_groups),
+        (0, 1),
+        "the cap is a > test, not a >= one"
+    );
+
+    // Cap 2: now the key is generic, and FR:siren is soft — denied, and
+    // counted on its own rung rather than vanishing into `uncorroborated`.
+    let denied = db.match_org_null_country_r3(args_with(no_hard, 2, true, None)).await.expect("dry");
+    assert_eq!(
+        (denied.denied_generic_name, denied.generic_name_hard_anchor, denied.plan_groups),
+        (1, 0, 0)
+    );
+    assert_eq!(
+        denied.uncorroborated, 1,
+        "the name-mismatch candidate still lands on ITS rung — the new wall \
+         does not absorb the old one"
+    );
+
+    // Same generic key, hard-checksummed anchor: the design's exemption, and
+    // it is COUNTED, so the cadence can see how often it is used.
+    let allowed =
+        db.match_org_null_country_r3(args_with(siren_is_hard, 2, true, None)).await.expect("dry");
+    assert_eq!(
+        (allowed.denied_generic_name, allowed.generic_name_hard_anchor, allowed.plan_groups),
+        (0, 1, 1)
+    );
+
+    // The wall counts ORGS, not rows: a second row for an org already
+    // counted must not push a 3-holder key over a cap of 3.
+    conn.execute(
+        "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (15, 'n2', 'renaultsa')",
+        (),
+    )
+    .await
+    .unwrap();
+    let dup = db.match_org_null_country_r3(args_with(no_hard, 3, true, None)).await.expect("dry");
+    assert_eq!((dup.denied_generic_name, dup.plan_groups), (0, 1));
+
+    // A key the satellite has never seen reads NOT generic (the lenient
+    // direction — issue 315's wholesale build must not deny every merge).
+    conn.execute("DELETE FROM org_match_keys", ()).await.unwrap();
+    let empty = db.match_org_null_country_r3(args_with(no_hard, 1, true, None)).await.expect("dry");
+    assert_eq!((empty.denied_generic_name, empty.plan_groups), (0, 1));
+
+    // Dry throughout: the wall never wrote anything.
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 32);
 }

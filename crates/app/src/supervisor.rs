@@ -3207,6 +3207,30 @@ impl Supervisor {
                 // denial stack. Same T4 ladder as R2: a wet run REQUIRES the
                 // recorded r3-merge-plan, and re-records the residual.
                 let dry_run = *dry_run;
+                // Issue 316: r3 corroboration consults the generic-name wall,
+                // and an unbuilt or mid-build key satellite makes that wall
+                // invisible — every key would read non-generic. A DRY run may
+                // still plan (its plan is reviewed by a person), but a WET one
+                // refuses rather than merging under a wall that is not there.
+                if !dry_run {
+                    let (watermark, _) =
+                        self.db.org_match_keys_state().await.map_err(|e| e.to_string())?;
+                    let keys = self.db.org_match_keys_count().await.map_err(|e| e.to_string())?;
+                    if keys == 0 {
+                        return Err("match-org-identifiers r3 REFUSED: org_match_keys is \
+                             empty, so the issue-316 generic-name wall cannot see anything \
+                             — run build-org-match-keys first"
+                            .to_owned());
+                    }
+                    if watermark != 0 {
+                        return Err(format!(
+                            "match-org-identifiers r3 REFUSED: a key build is in flight \
+                             (watermark {watermark}); its covering index does not exist \
+                             yet, so the generic-name probe would full-scan {keys} rows \
+                             per candidate and read a half-built keyspace"
+                        ));
+                    }
+                }
                 let expect_groups = if dry_run {
                     None
                 } else {
@@ -3243,6 +3267,8 @@ impl Supervisor {
                         consortium: ingest::crosswalk::consortium_name,
                         legal_form: ingest::crosswalk::legal_form_family,
                         norm: ingest::project::match_norm,
+                        hard_scheme: ingest::idgate::hard_scheme,
+                        stoplist_cap: SCAN_STOPLIST_CAP,
                         dry_run,
                         max_groups: *max_groups,
                         expect_groups,
@@ -3270,6 +3296,8 @@ impl Supervisor {
                         "no_target": r.no_target,
                         "multi_target": r.multi_target,
                         "uncorroborated": r.uncorroborated,
+                        "denied_generic_name": r.denied_generic_name,
+                        "generic_name_hard_anchor": r.generic_name_hard_anchor,
                         "denied_gate": r.denied_gate,
                         "denied_consortium": r.denied_consortium,
                         "denied_legal_form": r.denied_legal_form,
@@ -3304,7 +3332,8 @@ impl Supervisor {
                 Ok(format!(
                     "match-org-identifiers r3 (issue 300 Stage 3){}: pool {}; skipped: \
                      {} register-prefixed, {} unanchored/ambiguous, {} no-target, \
-                     {} multi-target, {} uncorroborated; denied: {} gate, {} consortium, \
+                     {} multi-target, {} uncorroborated; denied: {} generic-name \
+                     ({} generic but hard-anchored), {} gate, {} consortium, \
                      {} legal-form, {} vat-group-wall, {} co-anchor-cap; plan {} \
                      candidates; merged {} \
                      ({} org rows removed, {} mentions, {} parties, {} bid-parties, \
@@ -3316,6 +3345,8 @@ impl Supervisor {
                     r.no_target,
                     r.multi_target,
                     r.uncorroborated,
+                    r.denied_generic_name,
+                    r.generic_name_hard_anchor,
                     r.denied_gate,
                     r.denied_consortium,
                     r.denied_legal_form,
@@ -6104,6 +6135,66 @@ mod tests {
         );
         let _ = std::fs::remove_file(&path);
         Arc::new(store::Db::open(&path).await.unwrap())
+    }
+
+    /// Issue 316: r3's corroboration now consults the generic-name wall, so
+    /// a WET run must refuse when that wall cannot be read — an empty key
+    /// satellite (every key would look unique) or a build in flight (no
+    /// covering index yet, and a half-built keyspace). A DRY run still
+    /// plans: its plan is reviewed by a person before anything merges.
+    #[tokio::test]
+    async fn the_r3_wet_run_refuses_without_a_usable_key_satellite() {
+        let path = format!(
+            "/tmp/tender-db-sup-r3guard-{}-{}.db",
+            std::process::id(),
+            store::now_unix()
+        );
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry: bool| Job {
+            id,
+            kind: "match-org-identifiers".into(),
+            params: String::new(),
+            spec: Spec::MatchOrgIdentifiersR3 { dry_run: dry, max_groups: None },
+            resume_after: None,
+        };
+        // 1. Empty satellite: the wall is not there, so a wet run refuses.
+        let err = sup.run_spec(&job(1, false)).await.expect_err("empty satellite");
+        assert!(err.contains("org_match_keys is empty"), "{err}");
+        // 2. Keys present but a build is mid-walk (non-zero watermark): the
+        //    covering index does not exist yet.
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (1, 'n2', 'acme')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 77 WHERE id = 0",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(2, false)).await.expect_err("build in flight");
+        assert!(err.contains("build is in flight") && err.contains("77"), "{err}");
+        // 3. Build complete: the guard passes, and the run goes on to fail on
+        //    the NEXT precondition — which is how we know it passed this one.
+        conn.execute(
+            "UPDATE projection_state SET org_match_keys_watermark = 0 WHERE id = 0",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&job(3, false)).await.expect_err("no reviewed plan");
+        assert!(err.contains("r3-merge-plan"), "{err}");
+        // 4. A DRY run never meets the guard at all — it plans on an empty
+        //    satellite, which is the state every first run is in.
+        conn.execute("DELETE FROM org_match_keys", ()).await.unwrap();
+        let msg = sup.run_spec(&job(4, true)).await.expect("dry plans");
+        assert!(msg.contains("DRY RUN"), "{msg}");
     }
 
     /// Issue 173 (D4): the rehash probe enqueues with its sample cap, defaulting
