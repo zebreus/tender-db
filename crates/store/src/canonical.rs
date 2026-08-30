@@ -1694,6 +1694,13 @@ pub struct OrgEdgeScanReport {
     pub exemplar_edges: u64,
     pub exemplar_rules: Vec<String>,
     pub exemplar_peers: Vec<i64>,
+    /// A deterministic spread sample of the census — up to 20 concrete
+    /// (org_a, org_b, rule, evidence) edges, every ⌈n/20⌉th in walk order —
+    /// so the rollout's hand review (and every weekly review after it) can
+    /// check real edges against their evidence from the report alone: the
+    /// edge table is deliberately outside the public SQL surface (the
+    /// org_merge_log class).
+    pub sample: Vec<(i64, i64, String, String)>,
     pub total_edges_after: u64,
     /// False when `would_emit` crossed [`EDGE_VOLUME_CEILING`] — a wet run
     /// refuses on it (no override: out-of-bounds means the semantics are
@@ -3212,6 +3219,15 @@ impl Db {
             }
         }
         report.would_emit = edges.len() as u64;
+        if !edges.is_empty() {
+            let step = (edges.len() / 20).max(1);
+            report.sample = edges
+                .iter()
+                .step_by(step)
+                .take(20)
+                .map(|e| (e.a, e.b, e.rule.to_owned(), e.evidence.clone()))
+                .collect();
+        }
         let mut top: Vec<(String, i64)> = stop_top
             .into_iter()
             .map(|std::cmp::Reverse((n, key))| (key, n))

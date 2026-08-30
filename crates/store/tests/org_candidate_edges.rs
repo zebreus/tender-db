@@ -259,6 +259,11 @@ async fn the_scan_emits_labels_stoplists_refreshes_and_writes_no_entities() {
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM org_candidate_edges").await, 0);
     assert_eq!((r.exemplar_edges, r.exemplar_peers), (1, vec![11]));
     assert_eq!(r.exemplar_rules, vec!["e3-xlang".to_owned()]);
+    assert_eq!(r.sample.len(), 7, "a census this small samples every edge");
+    assert!(
+        r.sample.iter().all(|(a, b, _, ev)| a < b && ev.starts_with('{')),
+        "sample rows carry ordered ids and evidence JSON"
+    );
 
     // T4 parity: a census that moved beyond max(2%, 500) from the recorded
     // plan aborts before any write.

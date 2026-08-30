@@ -3491,6 +3491,16 @@ impl Supervisor {
                         "rules": r.exemplar_rules,
                         "peers": r.exemplar_peers,
                     },
+                    // The hand-review material: real edges with their
+                    // evidence, from the report alone (the edge table is
+                    // outside the public SQL surface).
+                    "sample": r.sample.iter().map(|(a, b, rule, ev)| {
+                        serde_json::json!({
+                            "org_a": a, "org_b": b, "rule": rule,
+                            "evidence": serde_json::from_str::<serde_json::Value>(ev)
+                                .unwrap_or_else(|_| serde_json::Value::String(ev.clone())),
+                        })
+                    }).collect::<Vec<_>>(),
                     "capped": r.capped,
                     "elapsed_seconds": started.elapsed().as_secs(),
                 });
