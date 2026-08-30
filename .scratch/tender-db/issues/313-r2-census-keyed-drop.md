@@ -1,6 +1,7 @@
 # 313 — 1,830 org rows left the E1-keyed set between two r2-censuses, unexplained
 
-Status: needs-triage (measurement anomaly; no known harm, no known cause)
+Status: EXPLAINED 2026-08-30 (normal campaign merges; the real defect is the
+observability gap that hid them) — the two gaps below are the live work
 Kind: data quality / identity layer
 Relates to: 300 (Stage 2/3), 311, 312
 
@@ -21,7 +22,34 @@ Two r2-census runs, 2026-08-29 09:56 UTC (job <470, report body) and
 The two -1,830s being identical says 1,830 rows stopped being E1-keyed and
 every one of them had been a group member. 68 over-cap groups collapsed.
 
-## What is ruled OUT (checked, 2026-08-30)
+## RESOLUTION (2026-08-30, same day)
+
+**The drop is ordinary campaign activity, seen through a blind window.** The
+merge-plan reports carry their own `computed_at`, and both sit INSIDE the
+unobservable window:
+
+- `r2-merge-plan` computed **08-29 11:21 UTC**, `merged_this_run: 243`,
+  `residual_of_wet_run: true` (so at least one wet R2 continuation ran after
+  the 09:56 baseline census);
+- `r3-merge-plan` computed **08-29 17:27 UTC**, `merged_this_run: 296`,
+  pool 3,825 (en route to today's 3,529).
+
+That also explains the signature that looked so odd. An R2 merge deletes
+loser rows which are, BY CONSTRUCTION, E1-keyed members of a same-country
+group of >=2 — so every one decrements `keyed_e1` and `orgs_in_groups` by
+exactly 1, which is why the two deltas are identical (-1,830 each) rather
+than merely similar. The 311 strips then account for the rest and for the
+over-cap collapse (71 -> 3): the fusion class the campaign targeted is
+precisely many consortium vehicles sharing one lead member's identifier,
+which is what a >8-member group IS.
+
+**My earlier "no merge job ran" was wrong**, and the way it was wrong is the
+point: `journalctl` does not log job kinds, and `GET /admin/jobs` silently
+caps at 20 rows, so a whole day of job history was invisible from every
+surface I reached for. The stored report `computed_at` stamps were the only
+witness, and they are incidental.
+
+## What was ruled out along the way (all still true, and now merely context)
 
 - **My own strips.** The 311 campaign stripped 456 (14 pilot + 442 batch)
   and issue 312 restored 280 → 176 net. Worse for the hypothesis: 280 of
@@ -37,19 +65,15 @@ every one of them had been a group member. 68 over-cap groups collapsed.
   CZ:dic-ico, FI:ytunnus, FI:vat ARE hard schemes, so a scoring change there
   WOULD have done this — it just did not happen.)
 
-## The decisive experiment (cheap, not yet run)
+## The snapshot experiment is NOT needed
 
-Run today's binary's r2-census against the **08-28 reflink snapshot**
-(`/data/db/snapshots/tender-db-1787903537.db`, held, per issue 169):
-
-- reproduces ~366,766 on old data ⇒ a CODE change moved the keyspace, and
-  the diff to hunt is in `crosswalk::canonical_key`/`canonical_key_flat`
-  between the deployed revs of 08-29 09:56 and today;
-- reproduces ~368,596 ⇒ a DATA change, and the hunt is which job or ingest
-  path removed 1,830 keyed rows.
-
-Snapshot reads are the sanctioned path for anything touching data pages
-(prod-box-reads doc), so this costs the serving DB nothing.
+It was specified to separate a code change from a data change. Both halves
+were then settled locally and for free: `canonical_key`/`canonical_key_flat`
+and the whole `Spec::R2Census` handler are BYTE-IDENTICAL between the rev
+deployed at the baseline census and today, and the only two statements in
+the entire tree that write `organizations.identifier` are the issue-311
+strip and the issue-312 restore. No snapshot read, and no team-lead ask,
+is required.
 
 ## Observability gaps this exposed (fix regardless of the outcome)
 
@@ -62,11 +86,11 @@ Snapshot reads are the sanctioned path for anything touching data pages
    comparison — worth making deliberate (a `r2-census-history` append, or
    at minimum a doc note that the counts line IS the history).
 
-## Why this is filed rather than fixed now
+## What remains (the actual work)
 
-No harm is visible: fewer E1-keyed rows means fewer auto-merge candidates,
-not lost data; `groups_ge2` 634 → 633 satisfies the standing prevention
-acceptance (twins not growing), the R3 pool is unchanged at 3,529, and
-tripwire 6 reads clear. But a 1,830-row shift in the identity layer that no
-change of mine accounts for is exactly the kind of thing that must not sit
-unexplained on the board.
+The data is fine — fewer E1-keyed rows means the merge campaign did its job.
+What is broken is that answering "what touched the org layer yesterday?"
+took an hour and was answerable only by accident. Fix the two gaps above:
+honour `limit` on `GET /admin/jobs` (bounded, e.g. <=200) or state the cap
+in the response, and give the census a real history instead of one
+overwritable row per kind.
