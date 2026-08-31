@@ -103,7 +103,7 @@ async fn only_soft_anchored_orgs_on_an_over_cap_key_count_as_the_gap() {
     let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &never).await.unwrap();
     assert_eq!(r.keys_walked, 2);
     assert_eq!(r.generic_keys, 1, "only the 4-carrier key is over the cap");
-    assert_eq!(r.generic_orgs, 4);
+    assert_eq!(r.generic_orgs, 4, "carrier slots on the one generic key");
     assert_eq!(r.probed, 4, "the non-generic key's orgs are never probed");
     assert_eq!(r.anchored, 2, "org 3 is poisoned by a second scheme, org 4 has no identifier");
     assert_eq!(r.anchored_hard, 1);
@@ -173,4 +173,33 @@ async fn a_cancelled_census_reports_nothing_rather_than_less() {
     assert!(r.stopped);
     assert_eq!((r.generic_keys, r.anchored_soft, r.keys_walked), (0, 0, 0));
     assert!(r.rows.is_empty());
+}
+
+/// An org standing on SEVERAL generic keys is one row to fix, not several.
+/// The quoted number must be distinct orgs; the slot count is reported beside
+/// it so the difference is visible rather than silently folded away.
+#[tokio::test]
+async fn an_org_on_two_generic_keys_counts_once() {
+    let fx = fixture("distinct").await;
+    // Two generic keys (3 carriers each at cap 2), sharing org 1.
+    for o in 1..=3 {
+        fx.org(o, "Shared Name", Some("552100554")).await;
+        fx.key(o, "key one").await;
+    }
+    for o in 4..=5 {
+        fx.org(o, "Other Name", Some("552100554")).await;
+    }
+    for o in [1i64, 4, 5] {
+        fx.key(o, "key two").await;
+    }
+
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &never).await.unwrap();
+    assert_eq!(r.generic_keys, 2);
+    assert_eq!(r.generic_orgs, 6, "6 carrier SLOTS across the two keys");
+    assert_eq!(r.probed, 6);
+    assert_eq!(r.anchored_soft, 5, "5 DISTINCT orgs — org 1 is on both keys");
+    assert_eq!(r.soft_slots, 6, "…reachable by 6 (org, generic-name) pairs");
+    assert_eq!(r.anchored, 5);
+    assert_eq!(r.by_scheme, vec![("FR:siren".to_owned(), 5)]);
+    assert_eq!(r.rows.len(), 5, "and org 1 is listed once, not twice");
 }

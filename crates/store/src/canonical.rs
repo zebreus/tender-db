@@ -2074,18 +2074,25 @@ pub struct AnchorWallReport {
     /// N2 key groups walked, and those over the cap — the generic names.
     pub keys_walked: u64,
     pub generic_keys: u64,
-    /// Distinct orgs standing on a generic key, and those probed (the walk
-    /// samples very large groups rather than reading all 62,084 carriers of
-    /// a vendor's boilerplate).
+    /// CARRIER SLOTS on generic keys, and slots probed — an org standing on
+    /// several generic keys counts once PER KEY in both. They size the walk,
+    /// not the population; the distinct counts below are the quotable ones.
+    /// (Very large groups are sampled, so `probed` < `generic_orgs`.)
     pub generic_orgs: u64,
     pub probed: u64,
-    /// Of those probed: orgs whose identifier anchors to exactly one scheme.
+    /// DISTINCT orgs whose identifier anchors to exactly one scheme.
     pub anchored: u64,
     /// …under a HARD scheme — the design's exemption, where the two paths
     /// already agree.
     pub anchored_hard: u64,
     /// …under a SOFT scheme. THIS is the gap: ingest binds, batch refuses.
+    /// Distinct, because it is the number that will be quoted and an org on
+    /// four generic keys is one row to fix, not four.
     pub anchored_soft: u64,
+    /// The same gap counted as (org, key) SLOTS — how many distinct generic
+    /// names could reach those rows. Larger than `anchored_soft` exactly
+    /// when a row is reachable by more than one generic name.
+    pub soft_slots: u64,
     pub by_scheme: Vec<(String, u64)>,
     pub rows: Vec<WallGapOwner>,
     pub stopped: bool,
@@ -8724,6 +8731,11 @@ impl Db {
         let reader = self.reader().await?;
         let mut report = AnchorWallReport::default();
         let mut by_scheme: std::collections::BTreeMap<String, u64> = Default::default();
+        // Distinct-org sets for the classified counts. Bounded by the orgs
+        // that BOTH stand on a generic key and carry a sole checksum anchor —
+        // tens of thousands, not the millions of carrier slots walked.
+        let mut seen_hard: std::collections::HashSet<i64> = Default::default();
+        let mut seen_soft: std::collections::HashSet<i64> = Default::default();
         let mut after = String::new();
         // Page by KEY, the Stage-4 scan's cursor idiom: read a window, trim
         // the trailing possibly-partial group, resume from the last complete
@@ -8794,14 +8806,19 @@ impl Db {
                         continue;
                     }
                     let scheme = real[0].0;
-                    report.anchored += 1;
                     if hard(scheme) {
-                        report.anchored_hard += 1;
+                        if seen_hard.insert(org) {
+                            report.anchored_hard += 1;
+                        }
                         continue;
                     }
-                    report.anchored_soft += 1;
-                    *by_scheme.entry(scheme.to_owned()).or_default() += 1;
-                    if report.rows.len() < 100 {
+                    report.soft_slots += 1;
+                    let first_time = seen_soft.insert(org);
+                    if first_time {
+                        report.anchored_soft += 1;
+                        *by_scheme.entry(scheme.to_owned()).or_default() += 1;
+                    }
+                    if first_time && report.rows.len() < 100 {
                         report.rows.push(WallGapOwner {
                             org,
                             name,
@@ -8813,6 +8830,7 @@ impl Db {
                 }
             }
         }
+        report.anchored = report.anchored_hard + report.anchored_soft;
         report.by_scheme = by_scheme.into_iter().collect();
         report.by_scheme.sort_by(|a, b| b.1.cmp(&a.1));
         Ok(report)

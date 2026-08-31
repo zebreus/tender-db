@@ -4125,6 +4125,7 @@ impl Supervisor {
                     "anchored": r.anchored,
                     "anchored_hard": r.anchored_hard,
                     "anchored_soft": r.anchored_soft,
+                    "soft_slots": r.soft_slots,
                     "by_scheme": r.by_scheme.iter()
                         .map(|(s, n)| serde_json::json!({"scheme": s, "orgs": n}))
                         .collect::<Vec<_>>(),
@@ -4140,10 +4141,12 @@ impl Supervisor {
                     .map_err(|e| e.to_string())?;
                 Ok(format!(
                     "anchor-wall-census (issue 318): {} n2 key group(s) walked, {} over the \
-                     stoplist cap holding {} org(s); probed {}, of which {} anchor to exactly \
-                     one scheme — {} HARD (both paths agree, the design's exemption) and {} \
-                     SOFT. That {} is the STANDING SURFACE where the resolver would bind and \
-                     the batch arm would refuse: rows reachable, not binds observed.{}",
+                     stoplist cap, holding {} carrier slot(s) of which {} were probed. \
+                     DISTINCT orgs anchoring to exactly one scheme: {} — {} HARD (both paths \
+                     agree, the design's exemption) and {} SOFT. That {} is the STANDING \
+                     SURFACE where the resolver would bind and the batch arm would refuse: \
+                     distinct rows reachable ({} (org, generic-name) slots), not binds \
+                     observed.{}",
                     r.keys_walked,
                     r.generic_keys,
                     r.generic_orgs,
@@ -4152,6 +4155,7 @@ impl Supervisor {
                     r.anchored_hard,
                     r.anchored_soft,
                     r.anchored_soft,
+                    r.soft_slots,
                     match r.by_scheme.first() {
                         Some((s, n)) => format!(" Widest scheme: {s} at {n}."),
                         None => String::new(),
