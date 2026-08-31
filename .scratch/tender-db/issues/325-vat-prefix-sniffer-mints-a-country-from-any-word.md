@@ -332,3 +332,64 @@ The repair must therefore set BOTH fields. A country-only repair would leave the
 `kind` mismatch and keep the split open indefinitely — worth writing down,
 because "fix the wrong country" is the obvious reading of this issue's title and
 it is half a fix.
+
+## The tightening shipped a regression, and how it was found
+
+`81e4b1d` deployed a predicate that rejected **211 real VAT ids**. Several
+countries publish the local word for VAT inside the identifier — Norway's `MVA`
+(*merverdiavgift*, 113 rows), Switzerland's `MWST` (*Mehrwertsteuer*, 46),
+Germany's `USTID` (27), plus `TVA` 11, `VAT` 8, `IVA` 4, `VATID` 1, `AVAT` 1 —
+so a three-letter run at the back is the normal shape, not prose. Fixed in
+`6605fb5`.
+
+**I ran the corpus check after deploying rather than before.** The check was one
+query, I had already decided to run it, and it found a live regression in
+minutes. The order was the error, not the check: "verify on the corpus" belongs
+before a predicate change ships, because a predicate is exactly the kind of
+change whose blast radius is a `GROUP BY` away and whose test fixtures are, by
+construction, the cases the author already thought of.
+
+### The ratchet, and why a vocabulary was the only way out
+
+The first repair allowed "a trailing letter run of up to N", and N ratcheted on
+every read: **3** covered `MVA`, then `MWST` appeared and it became **4**, then
+`USTID` and it became **5**. Pulling the distribution instead of guessing a
+fourth time ended it:
+
+```
+MVA 113   MWST 46   USTID 27   TVA 11   VAT 8   IVA 4   VATID 1   AVAT 1
+BBERLIN 1  AGJENA 2  AGULM 1  ESSEN 1  BONN 1  BURG 1  KAMP 1  AGSL 1
+```
+
+`ESSEN` and `USTID` are both five letters. `BONN` and `MWST` are both four. The
+top row is scheme labels; the bottom is German towns and court tags glued onto a
+register number (`HR302325AGJENA` is Kompaktreinigung Neuhöfer GmbH — a German
+company under Croatia). **No length bound separates them**, so the ratchet was
+never going to converge; it was going to find a longer counterexample forever.
+
+`VAT_SUFFIXES` is therefore a measured set, and the note in the code says to
+re-run the query rather than reason about which languages exist. Third time this
+codebase has landed on "enumerate it from the corpus" over "pick a threshold" —
+after `VAT_COUNTRIES` and `REGISTER_PREFIXES`.
+
+### Verified before committing the second time
+
+76,002 rows keep `kind = 'vat'` (up from 75,791), and the 211 recovered are
+exactly the labelled ones.
+
+## A separate finding: IBANs in the identifier field
+
+Of what the tightening still rejects outside the measured class, 648 have a body
+longer than 14. The sample says they are **not VAT numbers of any scheme**:
+
+* `DE50300600100000300011` — a German IBAN (Raiffeisen Waren-Zentrale)
+* `DE42603501300000997814`, `DE09500400000591712500`, `DE88650930200420444009` — more IBANs
+* `DE43ZZZ00000034309`, `DE63STD00000077890` — SEPA creditor identifiers
+* `NL823964607B01CAA3A5640A1B` — a real NL VAT with a platform GUID glued on
+* `DE146128114STNR7138500805` — a VAT *and* a Steuernummer concatenated
+
+Reclassifying them as `national` is the more accurate outcome, so nothing here
+blocks this issue. But **a bank account number standing in an organization's
+identifier field is its own data-quality question** and is not what this issue is
+about. Not filed as a separate issue yet — the count above is a sample-based
+read of 648 rows and the class needs its own measurement first.
