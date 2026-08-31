@@ -1,7 +1,8 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: SIZED, and the proposed first cohort INSPECTED 2026-08-31 — it is
-heterogeneous and not review-ready as specified. See the read below
+Status: SPLIT 2026-08-31 (rev 4c16655). The pilot cohort is the 589 same-name
+components; the 129 diff-name ones are the class a rubric must not be written
+for by accident
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -238,10 +239,56 @@ ograniczoną odpowiedzialnością` (Polish), `Veidekke Industri` (Norwegian),
 `„OLI-NAT" Robert Zajkowski` (Polish). A handful, not a systematic fault.
 Recorded here so the next reader does not re-raise the same alarm.
 
-## Next unit, if this line is picked up
+## THE SPLIT, measured on prod (2026-08-31, job 533, rev 4c16655)
 
-Split the 939 before building anything: separate same-country-pair components
-(classes 3 and 4) from genuinely cross-border ones, and within those,
-separate identical-name from near-name. Class 2 (corporate siblings) is
-distinguishable only by judgement, which is what makes it the pilot's real
-subject — and what makes a rubric written for class 1 dangerous.
+    cohort              939
+      same-name         589   62.7%
+      diff-name         129   13.7%
+      with-intra        221   23.5%
+    partition check     939 = 939   (every component in exactly one class)
+
+Classification: `same-name` = every member's country distinct AND all names
+normalize alike; `diff-name` = countries distinct, names differ;
+`with-intra` = two members share a country. Case and punctuation alone do not
+split a component — the corpus pairs `SARSTEDT spol. s r.o.` with `Sarstedt
+spol. s r.o.`, and counting that as diff-name would drop a plain duplicate into
+the dangerous class.
+
+### What each class actually holds, from the live sample
+
+**same-name (589)** — the pilot cohort. Two sub-shapes, both pointing the same
+way (unify):
+
+    DK/LT/NO: Mercell Holding ASA          one entity, three country codes
+    CZ/SK:    SARSTEDT / Sarstedt          one entity, case variance
+    ES/NL:    Howden Iberia S.A.U          one entity, punctuation variance
+    CH/EE:    Gemeinde Glattfelden…        one entity, one WRONG code
+
+**diff-name (129)** — do not write the pilot's rubric here first:
+
+    AT/DE:    Steelco Belimed GmbH | Belimed GmbH        siblings, must NOT merge
+    EE/LV:    Lanmer Group OÜ | Lanmer OÜ                unclear
+    FI/RO:    SERVICIUL JURIDIC… | RETELE ELECTRICE…     a DEPARTMENT of the other
+    BG/GY:    СТОЛИЧНО ПРЕДПРИЯТИЕ… | Столична община…   same entity, different granularity
+
+Note this class is not purely siblings — it also holds same-entity pairs
+recorded at different granularity (a department beside its parent). So
+"distinct entities" is not its default answer either; it is the class that
+genuinely needs judgement, which is the argument for piloting it SECOND, on a
+rubric informed by the first.
+
+**with-intra (221)** — settle the intra-country duplicate first:
+
+    CZ x3 + SK:  Merck Life Science spol. s r.o.
+    DE x3:       Vergabekammer Rheinland-Pfalz…
+    BG x2 + VE:  the Cyrillic/Latin transliteration pair
+    AT x2 + DE:  PROSE GmbH
+
+## Next unit
+
+Pilot on a sample of the **589 same-name** components with a merge / not-merge
+/ unsure rubric. Verdicts land as records only — the 311 apply job's safe
+subset is an identifier strip, and a merge verdict has no execution path yet
+(this issue's item 4 still stands). The 129 diff-name components want their own
+rubric afterwards, and the 221 with-intra ones belong to whatever settles
+same-country duplicates.
