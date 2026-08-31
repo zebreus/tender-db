@@ -116,6 +116,16 @@ now takes the reader and the `+`.
   pins all three poisoned spellings, so the day turso stops preferring that
   index the test says the `+` can go.
 
+## ACCEPTED ON PROD (2026-08-31, deploy bfb5833, jobs 509/510)
+
+    refold-notices: 5 notice(s) named: re-queued 5, stamped 5 tender(s)
+    project:        5 notices → 5 tenders (0 islands), 21 versions; 5 written
+
+`started_at == finished_at` — under a second. That job is
+`unmark_projected_by_ids`, the site that paid the corpus walk PER CHUNK, so a
+five-id list previously bought a full walk of 3.4M parsed notices for five
+rows. It is now five rowid seeks.
+
 ## Still open
 
 The panel flagged one neighbouring RECORD as wrong: the doc block above
