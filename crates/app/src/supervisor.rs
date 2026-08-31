@@ -3020,22 +3020,30 @@ impl Supervisor {
                         "lexicon": lexicon, "sequence": sequence,
                         "letter_run": letter_run, "short_vat": short_vat,
                         "hex_hash": hex_hash, "compound": compound,
+                        "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
+                            "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
+                        })).collect::<Vec<_>>(),
                     },
                     // Issue 325 step 5: rows the identifier parser no longer
                     // agrees with. Each is a DELIBERATE residue at the floor
                     // below, so a jump means either the parser moved or new
                     // contaminated stock arrived — and which counter jumps says
                     // which direction the arm went wrong in.
+                    //
+                    // The floors are MEASURED (prod, job 540, right after the
+                    // step-4 repair) and much lower than the estimate written
+                    // when this shipped. That estimate assumed the repair's 408
+                    // "ambiguous" rows would each show up here; they do not,
+                    // because the repair skips an ambiguous row BEFORE it
+                    // reclassifies, so most were never rows the parser
+                    // disagreed with at all. The true residue is eight rows.
                     "parser_vs_stock": {
                         // Stands as `vat`; the parser now calls it something
-                        // else. Floor ~422 after the step-4 repair: the rows
-                        // whose own mentions contradict each other (408) plus
-                        // those stating no alpha-2 country (14), which the
-                        // repair refuses to guess at.
+                        // else. Floor 7.
                         "no_longer_vat": no_longer_vat,
                         // Stands as `vat` and still is, under a DIFFERENT
                         // country code — the `EL`/`UK`/`XI` re-contamination
-                        // channel issue 319's fold could not see. Floor ~5.
+                        // channel issue 319's fold could not see. Floor 1.
                         "vat_country_differs": vat_country_differs,
                         // The v2 gate now refuses the value outright. Counted,
                         // never acted on: stripping a published identifier is
@@ -3046,9 +3054,6 @@ impl Supervisor {
                             .map(|v| v["parser_vs_stock"].clone())
                             .unwrap_or(serde_json::Value::Null),
                         "alarms": alarms.clone(),
-                        "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
-                            "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
-                        })).collect::<Vec<_>>(),
                     },
                     "top": ranked.iter().map(|&(n, id)| {
                         let m = by_id.get(&id);
@@ -8443,33 +8448,43 @@ mod tests {
     /// whose only evidence of being wired was that its job ran.
     #[test]
     fn parser_vs_stock_alarms_need_a_baseline_and_a_real_jump() {
+        // The floors as MEASURED on prod (job 540) right after the step-4
+        // repair, not as estimated: eight rows, not the ~427 first guessed.
         let base = serde_json::json!({
-            "no_longer_vat": 422, "vat_country_differs": 5, "vat_refused": 0,
+            "no_longer_vat": 7, "vat_country_differs": 1, "vat_refused": 0,
         });
 
         // Steady state: the residue the step-4 repair deliberately left.
-        assert!(parser_vs_stock_alarms(Some(&base), 422, 5, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&base), 7, 1, 0).is_empty());
+
+        // A SMALL floor makes the flat tolerance the operative one, and that is
+        // the point: at a floor of 7 the alarm trips at 33, so the class cannot
+        // quietly regrow by an order of magnitude the way a 10%-of-422 band
+        // would have allowed.
+        assert!(parser_vs_stock_alarms(Some(&base), 32, 1, 0).is_empty());
+        assert_eq!(parser_vs_stock_alarms(Some(&base), 33, 1, 0).len(), 1);
 
         // Daily growth inside the tolerance is not an alarm. The org layer
         // gains rows every ingest and a few new ambiguous ones are traffic.
-        assert!(parser_vs_stock_alarms(Some(&base), 460, 28, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&base), 20, 12, 0).is_empty());
 
         // THE REGRESSION I ACTUALLY SHIPPED, in the direction I shipped it: a
         // tightening that rejected 211 real VAT ids carrying a scheme label
-        // (MVA, MWST, USTID) would have pushed `no_longer_vat` from 422 to 633.
-        let a = parser_vs_stock_alarms(Some(&base), 633, 5, 0);
+        // (MVA, MWST, USTID) would have pushed `no_longer_vat` from 7 to 218.
+        let a = parser_vs_stock_alarms(Some(&base), 218, 1, 0);
         assert_eq!(a.len(), 1, "{a:?}");
-        assert!(a[0].contains("no_longer_vat 422 -> 633"), "{a:?}");
+        assert!(a[0].contains("no_longer_vat 7 -> 218"), "{a:?}");
 
         // And the ORIGINAL defect's direction: fresh stock arriving with a
-        // country minted out of a word.
-        let b = parser_vs_stock_alarms(Some(&base), 422, 300, 0);
+        // country minted out of a word. The 4,206 that stood before the repair
+        // would be unmissable.
+        let b = parser_vs_stock_alarms(Some(&base), 7, 4206, 0);
         assert_eq!(b.len(), 1, "{b:?}");
-        assert!(b[0].contains("vat_country_differs 5 -> 300"), "{b:?}");
+        assert!(b[0].contains("vat_country_differs 1 -> 4206"), "{b:?}");
 
         // `vat_refused` has a floor of ZERO by construction and no tolerance:
         // the gate moving under standing rows is worth one row's notice.
-        let c = parser_vs_stock_alarms(Some(&base), 422, 5, 1);
+        let c = parser_vs_stock_alarms(Some(&base), 7, 1, 1);
         assert_eq!(c.len(), 1, "{c:?}");
         assert!(c[0].contains("floor is 0"), "{c:?}");
 
@@ -8483,7 +8498,7 @@ mod tests {
         // baseline for those keys rather than reading them as zero — otherwise
         // the first run after this ships would alarm on all 422.
         let old = serde_json::json!({"something_else": 1});
-        assert!(parser_vs_stock_alarms(Some(&old), 422, 5, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&old), 7, 1, 0).is_empty());
 
         // A count that FALLS is never an alarm — that is the residue being
         // worked down, which is the outcome this tripwire wants.
