@@ -496,6 +496,48 @@ enum Spec {
     ClearRebuildFlag,
 }
 
+/// Issue 325 step 5: which parser-vs-stock counters have moved far enough to
+/// alarm, given the previous `org-merge-health` report's block as the baseline.
+///
+/// A free function because the comparison is the whole tripwire, and a
+/// comparison buried inside a job body cannot be tested — which is how the
+/// muted-probe bug (issue 300 Stage 4 Unit 5) got in: a tripwire whose only
+/// proof of being wired was that the job ran.
+///
+/// **The baseline is the previous run of the same report**, so the floor tracks
+/// the corpus instead of being a constant that goes stale as the residue is
+/// worked down. Two counters get a tolerance — the org layer grows daily and a
+/// few new ambiguous rows are normal traffic. `vat_refused` gets none: the
+/// parser refusing a value it used to accept means the v2 gate moved under the
+/// standing rows, and one such row is worth a look.
+fn parser_vs_stock_alarms(
+    before: Option<&serde_json::Value>,
+    no_longer_vat: u64,
+    vat_country_differs: u64,
+    vat_refused: u64,
+) -> Vec<String> {
+    let mut alarms = Vec::new();
+    let mut watch = |label: &str, current: u64, floor: Option<u64>| {
+        // No baseline (the first run) is not an alarm. A census that shouted on
+        // its own arrival would be muted by the second week.
+        let Some(was) = floor else { return };
+        let tolerance = std::cmp::max(was / 10, 25);
+        if current > was + tolerance {
+            alarms.push(format!("{label} {was} -> {current}"));
+        }
+    };
+    watch("no_longer_vat", no_longer_vat, before.and_then(|b| b["no_longer_vat"].as_u64()));
+    watch(
+        "vat_country_differs",
+        vat_country_differs,
+        before.and_then(|b| b["vat_country_differs"].as_u64()),
+    );
+    if vat_refused > 0 {
+        alarms.push(format!("vat_refused {vat_refused} (floor is 0)"));
+    }
+    alarms
+}
+
 /// The `POST /admin/jobs` body. `kind` selects the operation; the rest are its
 /// parameters. Curl-friendly and forgiving (`serde(default)` everywhere).
 #[derive(Debug, Default, Deserialize)]
@@ -2846,6 +2888,21 @@ impl Supervisor {
                 let (mut lexicon, mut sequence, mut letter_run, mut short_vat) =
                     (0u64, 0u64, 0u64, 0u64);
                 let (mut hex_hash, mut compound) = (0u64, 0u64);
+                // Issue 325 step 5: the parser-vs-stock tripwire.
+                //
+                // Not a SQL predicate. The class this watches is defined by
+                // `normalise_identifier`, so the gauge CALLS it and compares
+                // against what the row stores — the same reason the repair job
+                // injects the classifier instead of restating the rule. A
+                // predicate here would be a second spelling, and the quieter
+                // spelling is the one that goes wrong (issues 318, 323, 326).
+                //
+                // THREE counters, because this arm has now been wrong in both
+                // directions in one day: it minted countries out of words
+                // (`CHARITYNO298028` filed as Swiss), and then the tightening
+                // rejected 211 real VAT ids that carry a scheme label (`MVA`,
+                // `MWST`, `USTID`). One number could not tell those apart.
+                let (mut no_longer_vat, mut vat_country_differs, mut vat_refused) = (0u64, 0u64, 0u64);
                 loop {
                     if self.cancelled(job.id) {
                         return Ok(
@@ -2897,6 +2954,24 @@ impl Supervisor {
                         if c.short_vat { short_vat += 1; }
                         if c.hex_hash { hex_hash += 1; }
                         if c.compound { compound += 1; }
+                        // Issue 325 step 5. Free: the walk already holds
+                        // everything the parser needs. Passing the row's OWN
+                        // country is deliberate — the VAT arm ignores it when
+                        // it mints from the prefix, so what comes back is the
+                        // arm's verdict rather than an echo of the stock.
+                        if r.kind.as_deref() == Some("vat") {
+                            match ingest::project::normalise_identifier(
+                                &r.identifier,
+                                r.country.as_deref(),
+                            ) {
+                                None => vat_refused += 1,
+                                Some(id) if id.kind != "vat" => no_longer_vat += 1,
+                                Some(id) if id.country.as_deref() != r.country.as_deref() => {
+                                    vat_country_differs += 1
+                                }
+                                Some(_) => {}
+                            }
+                        }
                     }
                     watermark = next;
                     self.set_phase(
@@ -2916,6 +2991,24 @@ impl Supervisor {
                 let by_id: std::collections::HashMap<i64, _> =
                     meta.into_iter().map(|m| (m.0, m)).collect();
                 let now = store::now_unix();
+                // Issue 325 step 5: the tripwire's baseline is the PREVIOUS run
+                // of this same report, read before this one overwrites it. No
+                // new schema and no hardcoded floor to go stale — the floor is
+                // whatever the corpus last measured, which is the only number
+                // that stays true as the residue is worked down.
+                let previous = match self.db.latest_report("org-merge-health").await {
+                    Ok(Some((body, _))) => serde_json::from_str::<serde_json::Value>(&body).ok(),
+                    // A missing or unreadable baseline is not a reason to fail
+                    // the census. The first run has nothing to compare against
+                    // and says so rather than alarming on its own arrival.
+                    _ => None,
+                };
+                let alarms = parser_vs_stock_alarms(
+                    previous.as_ref().map(|v| &v["parser_vs_stock"]),
+                    no_longer_vat,
+                    vat_country_differs,
+                    vat_refused,
+                );
                 let mut scheme_rows: Vec<(&str, SchemeTally)> = schemes.into_iter().collect();
                 scheme_rows.sort_by(|a, b| b.1.pop.cmp(&a.1.pop));
                 let placeholder_total = lexicon.max(sequence);
@@ -2927,6 +3020,32 @@ impl Supervisor {
                         "lexicon": lexicon, "sequence": sequence,
                         "letter_run": letter_run, "short_vat": short_vat,
                         "hex_hash": hex_hash, "compound": compound,
+                    },
+                    // Issue 325 step 5: rows the identifier parser no longer
+                    // agrees with. Each is a DELIBERATE residue at the floor
+                    // below, so a jump means either the parser moved or new
+                    // contaminated stock arrived — and which counter jumps says
+                    // which direction the arm went wrong in.
+                    "parser_vs_stock": {
+                        // Stands as `vat`; the parser now calls it something
+                        // else. Floor ~422 after the step-4 repair: the rows
+                        // whose own mentions contradict each other (408) plus
+                        // those stating no alpha-2 country (14), which the
+                        // repair refuses to guess at.
+                        "no_longer_vat": no_longer_vat,
+                        // Stands as `vat` and still is, under a DIFFERENT
+                        // country code — the `EL`/`UK`/`XI` re-contamination
+                        // channel issue 319's fold could not see. Floor ~5.
+                        "vat_country_differs": vat_country_differs,
+                        // The v2 gate now refuses the value outright. Counted,
+                        // never acted on: stripping a published identifier is
+                        // what issue 312 had to undo. Floor 0.
+                        "vat_refused": vat_refused,
+                        "baseline": previous
+                            .as_ref()
+                            .map(|v| v["parser_vs_stock"].clone())
+                            .unwrap_or(serde_json::Value::Null),
+                        "alarms": alarms.clone(),
                         "schemes": scheme_rows.iter().map(|(k, t)| serde_json::json!({
                             "scheme": k, "pop": t.pop, "pass": t.pass, "fail": t.fail,
                         })).collect::<Vec<_>>(),
@@ -2953,8 +3072,21 @@ impl Supervisor {
                      max {} (org {}); gate census: {lexicon} lexicon, {sequence} sequence, \
                      {letter_run} letter-run, {short_vat} short-vat, {hex_hash} hex-hash, \
                      {compound} compound hits (~{placeholder_total}+ placeholder-keyed; \
-                     checksum rates now exclude condemned ids)",
-                    max.0, max.1
+                     checksum rates now exclude condemned ids). Parser-vs-stock \
+                     (issue 325 step 5): {no_longer_vat} no longer vat, \
+                     {vat_country_differs} vat under another country, \
+                     {vat_refused} now refused{}",
+                    max.0,
+                    max.1,
+                    if alarms.is_empty() {
+                        if previous.is_some() {
+                            String::new()
+                        } else {
+                            " — first run, no baseline to compare against".to_owned()
+                        }
+                    } else {
+                        format!("; PARSER-VS-STOCK ALARM(S): {}", alarms.join(", "))
+                    }
                 ))
             }
             Spec::R2Census => {
@@ -8303,6 +8435,59 @@ mod tests {
             Some("SPIKE"),
             "more than twice the reviewed plan"
         );
+    }
+
+    /// Issue 325 step 5: the parser-vs-stock tripwire's comparison, which is the
+    /// whole tripwire. Extracted from the job body precisely so it can be
+    /// driven directly — the muted-probe bug (Stage 4 Unit 5) was a tripwire
+    /// whose only evidence of being wired was that its job ran.
+    #[test]
+    fn parser_vs_stock_alarms_need_a_baseline_and_a_real_jump() {
+        let base = serde_json::json!({
+            "no_longer_vat": 422, "vat_country_differs": 5, "vat_refused": 0,
+        });
+
+        // Steady state: the residue the step-4 repair deliberately left.
+        assert!(parser_vs_stock_alarms(Some(&base), 422, 5, 0).is_empty());
+
+        // Daily growth inside the tolerance is not an alarm. The org layer
+        // gains rows every ingest and a few new ambiguous ones are traffic.
+        assert!(parser_vs_stock_alarms(Some(&base), 460, 28, 0).is_empty());
+
+        // THE REGRESSION I ACTUALLY SHIPPED, in the direction I shipped it: a
+        // tightening that rejected 211 real VAT ids carrying a scheme label
+        // (MVA, MWST, USTID) would have pushed `no_longer_vat` from 422 to 633.
+        let a = parser_vs_stock_alarms(Some(&base), 633, 5, 0);
+        assert_eq!(a.len(), 1, "{a:?}");
+        assert!(a[0].contains("no_longer_vat 422 -> 633"), "{a:?}");
+
+        // And the ORIGINAL defect's direction: fresh stock arriving with a
+        // country minted out of a word.
+        let b = parser_vs_stock_alarms(Some(&base), 422, 300, 0);
+        assert_eq!(b.len(), 1, "{b:?}");
+        assert!(b[0].contains("vat_country_differs 5 -> 300"), "{b:?}");
+
+        // `vat_refused` has a floor of ZERO by construction and no tolerance:
+        // the gate moving under standing rows is worth one row's notice.
+        let c = parser_vs_stock_alarms(Some(&base), 422, 5, 1);
+        assert_eq!(c.len(), 1, "{c:?}");
+        assert!(c[0].contains("floor is 0"), "{c:?}");
+
+        // No baseline is NOT an alarm. A census that shouted on its own first
+        // run would be muted by the second week — except `vat_refused`, which
+        // needs no baseline to be meaningful.
+        assert!(parser_vs_stock_alarms(None, 999_999, 999_999, 0).is_empty());
+        assert_eq!(parser_vs_stock_alarms(None, 0, 0, 3).len(), 1);
+
+        // A baseline missing the keys (an older report shape) behaves like no
+        // baseline for those keys rather than reading them as zero — otherwise
+        // the first run after this ships would alarm on all 422.
+        let old = serde_json::json!({"something_else": 1});
+        assert!(parser_vs_stock_alarms(Some(&old), 422, 5, 0).is_empty());
+
+        // A count that FALLS is never an alarm — that is the residue being
+        // worked down, which is the outcome this tripwire wants.
+        assert!(parser_vs_stock_alarms(Some(&base), 0, 0, 0).is_empty());
     }
 
     /// Tripwire 6's guard rails (panel round 2): capped and stopped runs

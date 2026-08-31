@@ -16,6 +16,16 @@ For a single focused test mid-iteration, plain `cargo test -p <crate> <name>` is
 just run `ops/check.sh` before committing so the pruning happens and the truncation
 traps its header documents don't eat a failure.
 
+**`cargo check -p tender-db` DOES NOT COMPILE `crates/app/src/supervisor.rs`.**
+`lib.rs` gates that module (and `admin`, `coverage`, `ledger`, `v1`, `webhooks`)
+behind `#[cfg(feature = "server")]`, which is not a default feature. So a bare
+`cargo check -p tender-db` returns **exit 0 on a file full of syntax garbage** —
+verified on 2026-08-31 by appending literal nonsense and watching it pass. An
+hour of "compiles clean" for supervisor edits was worth nothing that firing.
+Use `--features server` for any ad-hoc check of those modules, or just run
+`ops/check.sh`, which enables it. The same footgun applies to `cargo test`:
+`--lib` tests in those modules are silently filtered out, not run.
+
 Never pipe `ops/check.sh` or a gating `cargo` command through `tail`/`head`/`grep`
 in a background or chained command: the pipeline reports the FILTER's exit code and
 a red suite reads as green (issue 254's trap; it re-bit on 2026-08-24 and a
