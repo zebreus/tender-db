@@ -368,3 +368,54 @@ Lennart's steer in issue 311 is that rules are the deny-direction floor, not
 the detector. That holds — but it does not mean every cohort a rule cannot
 FULLY settle should go to review whole. Here a rule settles 61% of it, and the
 remaining 39% is a better campaign for being smaller.
+
+
+## THE CHECKSUM READ (2026-08-31, rev b4a18a2) — and a correction
+
+Last entry I wrote that the 336 identical-identifier cases are "rule-shaped"
+and need "no review campaign". **That was too broad.** Adding the checksum
+evidence to the packet splits those 336 three ways:
+
+    one country agrees, others CONTRADICTED   129   38%
+    no arithmetic evidence                    140   42%
+    anchors, but NO country agrees             67   20%
+
+**129 — the country-contamination class, and the only rule-shaped one.**
+
+    NO:980921565 (NO:orgnr, agrees) | DK:980921565 (NO:orgnr, X) | LT:… (X)
+    NO:5569584120 (SE:orgnr, X)     | SE:5569584120 (SE:orgnr, ok)
+
+One member's country matches the value's arithmetic and the others do not. The
+repair is a COUNTRY CORRECTION on the contradicted rows, after which the
+existing same-country same-identifier logic merges them through a tested path.
+No new merge arm, and the correction preserves the fact that a country code was
+wrong instead of burying it in a merge.
+
+**140 — no arithmetic evidence.** `ES:A82473349 | NL:A82473349` is a Spanish
+CIF; the probe declines letter-bearing values by design (they are the
+register-prefixed form, out of its scope). Nothing to conclude either way.
+
+**67 — the cautionary bucket, and the reason the rule needs its guard.**
+
+    LT:300112408 | LV:300112408   both "anchor" PT:nif
+    IT:0072080930 | SK:0072080930 both "anchor" SE:orgnr
+    SK:37006771  | SI:37006771    both "anchor" CZ:ico
+
+Neither row's country appears in the anchors at all. These are COINCIDENTAL
+checksum passes — a Lithuanian number that happens to satisfy the Portuguese
+NIF arithmetic proves nothing about Portugal or about either row. So "the
+country disagrees with the anchor" is only evidence when EXACTLY ONE member
+agrees; when none does, the anchor is noise and must not be read as
+contamination on both sides.
+
+### Revised, again
+
+    129  country correction, rule-shaped, reuses tested merge machinery
+    207  (140 + 67) identical identifier, no usable arithmetic evidence —
+         these need the mention spread, the notices, or review
+    200  different identifiers — the genuine AI review cohort
+     31  platform GUIDs — issue 312's class
+     22  same digits behind a register/VAT prefix — Stage 2 canonicalization
+
+The honest shape of this line of work keeps being that each measurement shrinks
+the part a rule can settle and sharpens the part that cannot. 589 → 336 → 129.
