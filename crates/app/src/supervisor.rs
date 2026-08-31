@@ -367,6 +367,9 @@ enum Spec {
     /// Issue 326: same identifier, two country codes one letter apart —
     /// SK/SG, CZ/CR, BG/BF. Read-only measurement.
     CountryTypoCensus,
+    /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
+    /// what the identifier parser now says. Wet writes `organizations`.
+    RepairMintedCountries { dry_run: bool },
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -1045,6 +1048,25 @@ impl Supervisor {
             "xb-packet" => Ok(vec![
                 self.push("xb-packet", "xb-packet".into(), Spec::XbPacket).await,
             ]),
+            // Issue 325 step 4: the repair for the countries minted out of a
+            // word. Dry by default; the wet arm reads the row count out of the
+            // stored dry plan and aborts if the corpus has moved (T4 parity).
+            "repair-minted-countries" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-minted-countries",
+                        if dry_run {
+                            "repair-minted-countries dry-run"
+                        } else {
+                            "repair-minted-countries"
+                        }
+                        .to_owned(),
+                        Spec::RepairMintedCountries { dry_run },
+                    )
+                    .await,
+                ])
+            }
             // Issue 326: size the country-typo class before building a repair
             // for it. 18 of 18 such cases the issue-314 campaign reviewed came
             // back wrong-country, so the census is the cheap half of a repair
@@ -1464,6 +1486,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "anchor-wall-census",
     "xb-packet",
     "country-typo-census",
+    "repair-minted-countries",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -4252,6 +4275,117 @@ impl Supervisor {
                     p.cohort,
                     p.cases.len(),
                     if p.truncated { " (CAPPED)" } else { "" }
+                ))
+            }
+            Spec::RepairMintedCountries { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 325: re-parsing the standing vat rows".to_owned(),
+                );
+                // The T4 ladder: a wet run executes the plan a person read.
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("minted-country-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored minted-country-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored minted-country-repair report is from a WET \
+                                    run, not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(
+                        v["rows"]
+                            .as_u64()
+                            .ok_or_else(|| "minted-country-repair plan lacks rows")?,
+                    )
+                };
+                let r = self
+                    .db
+                    .repair_minted_countries(
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-minted-countries STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                // The plan is the review artifact AND the record of what a wet
+                // run did, so it is stored either way — capped for the report,
+                // counted in full above it.
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "walked": r.walked,
+                    "rows": r.rows,
+                    "ambiguous": r.ambiguous,
+                    "no_mention_country": r.no_mention_country,
+                    "now_refused": r.now_refused,
+                    "collisions": r.collisions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "identifier": f.identifier,
+                        "from": {"kind": f.from_kind, "country": f.from_country},
+                        "to": {"kind": f.to_kind, "country": f.to_country},
+                        "mention_country": f.mention_country,
+                        "mentions": f.mentions,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("minted-country-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-minted-countries (issue 325 step 4, {}): {} kind='vat' row(s) \
+                     re-parsed. {} disagree with what the parser now says and are planned; \
+                     {} left alone because their own mentions name more than one country, \
+                     {} because no mention names an alpha-2 country at all, and {} because \
+                     the value is now refused outright (counted, never stripped — issue \
+                     312). {} planned target(s) would leave one (country, kind, identifier) \
+                     held by more than one row: that is the R2 merge arm's work and reaching \
+                     it is the point, not a blocker.{}",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.walked,
+                    r.rows,
+                    r.ambiguous,
+                    r.no_mention_country,
+                    r.now_refused,
+                    r.collisions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
                 ))
             }
             Spec::CountryTypoCensus => {
@@ -7203,7 +7337,8 @@ mod tests {
                 "drop-orphan-satellites",
                 "anchor-wall-census",
                 "xb-packet",
-                "country-typo-census"
+                "country-typo-census",
+                "repair-minted-countries"
             ]
         );
     }

@@ -2225,6 +2225,54 @@ pub struct CountryTypoPair {
     pub b_probed: bool,
 }
 
+/// One organization row whose stored `(identifier_kind, country)` disagrees with
+/// what the identifier parser now produces for the same value (issue 325).
+#[derive(Debug, Default, Clone)]
+pub struct MintedCountryFix {
+    pub org: i64,
+    pub identifier: String,
+    pub from_kind: String,
+    pub from_country: Option<String>,
+    pub to_kind: String,
+    pub to_country: Option<String>,
+    /// The publisher's own country, unanimous across this row's mentions. The
+    /// authority for the repair, and measured to be: 34,111 mentions on the
+    /// affected rows state a country contradicting the stored code, against
+    /// 946 that agree.
+    pub mention_country: Option<String>,
+    pub mentions: u64,
+}
+
+/// Issue 325 step 4: what re-parsing the standing rows would change. Dry by
+/// default; the wet pass runs a reviewed plan or aborts.
+#[derive(Debug, Default, Clone)]
+pub struct MintedCountryReport {
+    /// `kind = 'vat'` rows with an identifier — the population re-parsed.
+    pub walked: u64,
+    /// Rows whose mentions do NOT agree on one alpha-2 country. No action: a
+    /// coin-flip on a published field is worse than a visibly wrong value.
+    pub ambiguous: u64,
+    /// Rows with no alpha-2 country stated on any mention.
+    pub no_mention_country: u64,
+    /// Rows the parser now REFUSES outright (the v2 gate). Counted, never
+    /// acted on — stripping a published identifier is issue 312's territory.
+    pub now_refused: u64,
+    /// Planned changes. `plan` carries them all; a caller that serialises the
+    /// report is the one that truncates.
+    pub rows: u64,
+    /// Planned targets where one `(country, kind, identifier)` ends up held by
+    /// more than one row. Not a refusal — that is what the R2 merge arm folds,
+    /// and reaching it is the point. Reported so the downstream merge work is
+    /// visible in advance.
+    pub collisions: u64,
+    pub plan: Vec<MintedCountryFix>,
+    pub applied: u64,
+    /// Rows the wet pass declined because the row no longer matched the plan's
+    /// pre-image — merged away or already corrected since the dry pass.
+    pub skipped_moved: u64,
+    pub stopped: bool,
+}
+
 /// Issue 326: how many same-identifier one-letter country pairs stand, and how
 /// many of them the checksum evidence can actually adjudicate. Read-only.
 #[derive(Debug, Default, Clone)]
@@ -11617,6 +11665,295 @@ impl Db {
                     }
                 }
                 report.rows.push(hit);
+            }
+        }
+        Ok(report)
+    }
+
+    /// Issue 325 step 4: re-run the identifier parser over the standing rows and
+    /// write what it now says.
+    ///
+    /// The repair is deliberately NOT "find rows whose country came from a word".
+    /// That predicate lives in `normalise_identifier` and duplicating it here
+    /// would be the drift hazard this session keeps finding (issues 318, 323,
+    /// 326): two spellings of one rule, and the quieter one wrong. Instead the
+    /// classifier is INJECTED, the row is re-parsed from `(identifier, the
+    /// publisher's own country)`, and any disagreement with the stored
+    /// `(identifier_kind, country)` becomes a plan entry. So this job repairs
+    /// whatever the parser has learned since a row was written, not one issue's
+    /// class.
+    ///
+    /// **The publisher's country is the authority, and it is measured to be.**
+    /// Across the affected rows, 34,111 mentions state a country that
+    /// contradicts the stored code against 946 that agree, and 3,789 of 4,059
+    /// organizations have mentions that agree UNANIMOUSLY on one country. Where
+    /// they do not agree, this job does nothing — two rows on prod, and a
+    /// coin-flip on a published field is worse than leaving it visibly wrong.
+    ///
+    /// **BOTH fields move together.** A country-only repair would leave
+    /// `identifier_kind = 'vat'` on a value the parser now calls `national`, so
+    /// a fresh mention would still key differently from the standing row and the
+    /// prevention-vs-stock split would never close. That is the whole reason the
+    /// plan carries `to_kind` as well as `to_country`.
+    ///
+    /// Dry by default, and the wet pass runs the plan a person reviewed or
+    /// aborts (`expect_rows`, the T4 parity ladder every other writer here
+    /// follows).
+    ///
+    /// **Scoped to `kind = 'vat'`, and two things follow from that.** The job is
+    /// IDEMPOTENT — a row it repairs becomes `national` and leaves the
+    /// population, so a second run is a no-op and a correction is never
+    /// re-litigated. And it is NOT a place to park a manual override: a hand
+    /// correction that also sets `national` survives (out of scope), while one
+    /// that changes only the country does not (still in scope, and the
+    /// publisher's stated country wins next run). That asymmetry is pinned in
+    /// `what_survives_a_hand_correction_depends_on_the_kind` rather than left to
+    /// be rediscovered; an override that must survive needs a marker of its own,
+    /// the way `org_case_reviews` stamps an applied verdict.
+    pub async fn repair_minted_countries(
+        &self,
+        reclassify: fn(&str, Option<&str>) -> Option<(String, Option<String>)>,
+        dry_run: bool,
+        expect_rows: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<MintedCountryReport> {
+        let mut report = MintedCountryReport::default();
+        let reader = self.reader().await?;
+
+        // Phase 1: the rows this repair can touch. Scoped to `kind = 'vat'`
+        // because the arm change only ever downgrades a VAT classification or
+        // canonicalises the code it minted — a value the parser called
+        // `national` before still does. `(identifier_kind, id)` is an index, so
+        // the walk seeks rather than scanning the org layer.
+        let mut stock: Vec<(i64, Option<String>, String, String)> = Vec::new();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(MintedCountryReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
+                      WHERE identifier_kind = 'vat' AND id > ? AND identifier IS NOT NULL \
+                      ORDER BY id LIMIT 50000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let id = int(&row, 0);
+                stock.push((id, opt_text_of(&row, 1), text(&row, 2), text(&row, 3)));
+                after = id;
+                page += 1;
+            }
+            if page == 0 {
+                break;
+            }
+        }
+        report.walked = stock.len() as u64;
+
+        // Phase 2: the publisher's country per row, in chunks. One aggregate per
+        // chunk rather than one per row: 80k round trips is the shape that made
+        // issue 274's slice walk slow, and the answer is the same either way.
+        let mut stated: std::collections::HashMap<i64, Vec<(String, u64)>> = Default::default();
+        let ids: Vec<i64> = stock.iter().map(|(id, ..)| *id).collect();
+        for chunk in ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(MintedCountryReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT organization_id, country, COUNT(*) FROM organization_mentions \
+                  WHERE organization_id IN ({}) AND country IS NOT NULL \
+                  GROUP BY organization_id, country",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut rows = reader.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let cc = text(&row, 1);
+                // Alpha-2 only. A longer or shorter spelling is issue 319's
+                // business, and a repair that folded `DEU` to a country column
+                // would be doing that job badly on the side.
+                if cc.chars().count() == 2 {
+                    stated.entry(int(&row, 0)).or_default().push((cc, int(&row, 2) as u64));
+                }
+            }
+        }
+
+        // Phase 3: re-parse and compare.
+        for (org, from_country, from_kind, identifier) in stock {
+            let variants = stated.get(&org);
+            let (mention_country, mentions) = match variants {
+                Some(v) if v.len() == 1 => (Some(v[0].0.clone()), v[0].1),
+                Some(_) => {
+                    report.ambiguous += 1;
+                    continue;
+                }
+                None => {
+                    report.no_mention_country += 1;
+                    continue;
+                }
+            };
+            let Some((to_kind, to_country)) = reclassify(&identifier, mention_country.as_deref())
+            else {
+                // The parser now refuses the value outright (the v2 gate). That
+                // is a merge-key decision, not a country correction, and
+                // stripping a published identifier is issue 312's territory —
+                // counted, never acted on here.
+                report.now_refused += 1;
+                continue;
+            };
+            if to_kind == from_kind && to_country == from_country {
+                continue;
+            }
+            report.plan.push(MintedCountryFix {
+                org,
+                identifier,
+                from_kind,
+                from_country,
+                to_kind,
+                to_country,
+                mention_country,
+                mentions,
+            });
+        }
+        report.rows = report.plan.len() as u64;
+
+        // Collisions: a repaired row landing on an identity another row already
+        // holds. The fold (issue 319) learned to ask this per TARGET and not per
+        // plan entry, because a row can collide with one already standing there
+        // AND with another row this same run moves. Same shape here.
+        //
+        // A collision is not a reason to refuse: two rows sharing
+        // `(country, kind, identifier)` is what the R2 merge arm exists to fold,
+        // and reaching it is the POINT — the repair's whole argument is that
+        // these are the same entity. It is reported so a reviewer sees how much
+        // merge work the repair hands downstream, rather than discovering it.
+        {
+            let mut targets: std::collections::BTreeSet<(String, String, String)> =
+                Default::default();
+            for fix in &report.plan {
+                if let Some(cc) = &fix.to_country {
+                    targets.insert((cc.clone(), fix.to_kind.clone(), fix.identifier.clone()));
+                }
+            }
+            for (cc, kind, identifier) in targets {
+                if stop() {
+                    return Ok(MintedCountryReport { stopped: true, ..Default::default() });
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM organizations \
+                          WHERE country = ? AND identifier_kind = ? AND identifier = ?",
+                        (t(&cc), t(&kind), t(&identifier)),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    // Rows already at the target, plus the ones this run sends
+                    // there. Two or more means one identity held twice.
+                    let already = int(&row, 0) as u64;
+                    let moving = report
+                        .plan
+                        .iter()
+                        .filter(|f| {
+                            f.to_country.as_deref() == Some(cc.as_str())
+                                && f.to_kind == kind
+                                && f.identifier == identifier
+                        })
+                        .count() as u64;
+                    if already + moving > 1 {
+                        report.collisions += 1;
+                    }
+                }
+            }
+        }
+
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        // T4 parity: the wet pass runs the plan a person reviewed, or aborts.
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "minted-country repair ABORTED: the reviewed plan moved {expect} rows, \
+                     this run computes {} — beyond the max(2%, 5) tolerance. Re-run the dry \
+                     pass and review the new plan.",
+                    report.rows
+                )));
+            }
+        }
+
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for fix in &report.plan {
+                // Cancel between rows, honestly: the committed prefix stands
+                // and `stopped` says so (issue 252's dishonest-cancel bug).
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
+                // Re-read under the writer and only move a row that still
+                // says what the plan says.
+                //
+                // This guards a NARROWER window than it looks like: the plan is
+                // computed inside this same call, so it cannot be stale in the
+                // review sense — `expect_rows` is what guards that. What is
+                // left is the gap between reading the plan on the reader and
+                // writing it here, in which a concurrent job on this shared box
+                // can retire or move a row. Small, real, and cheap to close.
+                let mut current: Option<(Option<String>, String)> = None;
+                {
+                    let mut rows = conn
+                        .query(
+                            "SELECT country, identifier_kind FROM organizations WHERE id = ?",
+                            (Value::Integer(fix.org),),
+                        )
+                        .await?;
+                    if let Some(row) = rows.next().await? {
+                        current = Some((opt_text_of(&row, 0), text(&row, 1)));
+                    }
+                }
+                match current {
+                    Some((cc, kind)) if cc == fix.from_country && kind == fix.from_kind => {}
+                    _ => {
+                        report.skipped_moved += 1;
+                        continue;
+                    }
+                }
+                conn.execute(
+                    "UPDATE organizations SET country = ?, identifier_kind = ? WHERE id = ?",
+                    (
+                        match &fix.to_country {
+                            Some(cc) => t(cc),
+                            None => Value::Null,
+                        },
+                        t(&fix.to_kind),
+                        Value::Integer(fix.org),
+                    ),
+                )
+                .await?;
+                // `country` and `identifier_kind` are published fields, so a
+                // consumer filtering on either has to see the correction go by.
+                append_change(&conn, "organization", fix.org, None, "changed", now).await?;
+                report.applied += 1;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
             }
         }
         Ok(report)
