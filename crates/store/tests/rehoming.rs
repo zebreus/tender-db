@@ -161,7 +161,17 @@ async fn a_reviewed_mention_moves_with_its_derived_rows_and_nothing_else_does() 
     let wet = db.apply_rehoming(false, None, Some(2), 30).await.unwrap();
     assert_eq!((wet.moved, wet.parties, wet.bid_parties), (1, 1, 1));
     assert_eq!(wet.tenders, 1);
+    // The count is not decoration — `refold-notices` prints it beside the ids
+    // it was asked for, and issue 323 rewrote the statement that produces it.
+    // Pin it EXACTLY, and pin that what it counted is what actually moved:
+    // every notice in this fixture starts projected, so the rows now at 0 are
+    // precisely the ones this run re-queued.
     assert!(wet.refold_notices >= 1, "the tender's notices are re-queued for the fold");
+    assert_eq!(
+        wet.refold_notices as i64,
+        count(&conn, "SELECT COUNT(*) FROM notices WHERE projected = 0").await,
+        "refold_notices counts the rows it re-queued, and no others"
+    );
     assert_eq!(
         count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await,
         2,

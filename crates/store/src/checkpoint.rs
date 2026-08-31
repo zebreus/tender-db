@@ -66,6 +66,16 @@ pub(crate) async fn checkpoint_on(
     conn: &turso::Connection,
     mode: CheckpointMode,
 ) -> turso::Result<Checkpointed> {
+    // A checkpoint on a connection holding a write transaction cannot do
+    // anything: turso answers `wal_checkpoint` there with "database table is
+    // locked", and the callers that reach this from inside `BEGIN IMMEDIATE`
+    // (`stamp_tenders_stale`, `requeue_notice_ids`) all swallow it with
+    // `let _ =`. Swallowing a guaranteed failure is how a real one stops being
+    // noticed, so the impossible case is answered here rather than attempted:
+    // busy, nothing reclaimed, no pragma issued.
+    if !conn.is_autocommit().unwrap_or(true) {
+        return Ok(Checkpointed { busy: true, wal_frames: 0, checkpointed: 0 });
+    }
     let mut rows = conn.query(mode.pragma(), ()).await?;
     let out = match rows.next().await? {
         Some(row) => Checkpointed {

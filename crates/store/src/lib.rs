@@ -5032,6 +5032,102 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// has failed to select before (239: no pushdown into views; 248: DELETE ignoring a
     /// composite-PK index), so the assumption is worth a gate rather than a comment.
     ///
+    /// Issue 323: the re-queue statement's PLAN, asserted against the SQL the
+    /// code actually runs — the `PREV_EDGE_JOIN_SQL` discipline, because the
+    /// first version of this probe pinned hand-copied literals and a panel
+    /// showed a reordered spelling of the poison that such a copy would miss.
+    ///
+    /// `notices` carries `notices_parse_state`, and turso prefers it to the
+    /// rowid, so the obvious spelling of this statement plans as a walk of
+    /// every parsed notice in the corpus — 3.4M rows on prod — per statement.
+    /// Issue 317's re-homing measured 1,185 seconds to move 416 rows, holding
+    /// the single writer. The unary `+` is what demotes the term.
+    ///
+    /// Plans, not stopwatches, on purpose: at fixture scale a clock cannot
+    /// tell a seek from a scan (the issue-80 lesson). The POISONED spellings
+    /// are pinned too, so the day turso stops preferring that index this test
+    /// fails and says the `+` can go.
+    #[tokio::test]
+    async fn the_requeue_statements_seek_notices_by_rowid() {
+        let path = format!("/tmp/tender-db-requeue-eqp-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        // The partial index prod carries is built lazily at the end of a
+        // projection, never by `Db::open`, so a fixture that skips it is not
+        // the schema the planner sees on the box.
+        db.ensure_unprojected_index().await.unwrap();
+        let conn = db.reader().await.unwrap();
+
+        let plan_of = async |sql: &str| -> String {
+            let mut rows =
+                conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        };
+
+        // The three statements the re-queue path runs, from their own builders.
+        for sql in [
+            crate::canonical::requeue_update_sql(500),
+            crate::canonical::requeue_count_sql(500),
+        ] {
+            let plan = plan_of(&sql).await;
+            assert!(
+                plan.contains("SEARCH notices USING INTEGER PRIMARY KEY"),
+                "the re-queue must seek by rowid; the `+` on parse_state is what \
+                 makes it — plan was:\n{plan}"
+            );
+            assert!(
+                !plan.contains("notices_parse_state"),
+                "the re-queue reached for the parse_state index — that is the \
+                 3.4M-row corpus walk issue 323 measured:\n{plan}"
+            );
+        }
+        let plan = plan_of(&crate::canonical::notice_ids_of_tenders_sql(500)).await;
+        assert!(
+            plan.contains("SEARCH tender_versions") && plan.contains("(tender_id=?)"),
+            "the tender-side resolve must seek on tender_versions' \
+             (tender_id, caused_by_notice_id) unique index. A renumbered \
+             sqlite_autoindex name is fine; a SCAN is not:\n{plan}"
+        );
+
+        // The poison, in both spellings the repair paths used and in the
+        // reordered one a source-grep guard would have missed.
+        let list = crate::canonical::placeholders(500);
+        for sql in [
+            format!(
+                "UPDATE notices SET projected = 0 \
+                   WHERE parse_state = 'parsed' AND projected <> 0 AND id IN ({list})"
+            ),
+            format!(
+                "UPDATE notices SET projected = 0 \
+                   WHERE id IN ({list}) AND parse_state = 'parsed' AND projected <> 0"
+            ),
+            format!(
+                "UPDATE notices SET projected = 0 \
+                   WHERE parse_state = 'parsed' AND projected <> 0 AND id IN (\
+                     SELECT caused_by_notice_id FROM tender_versions \
+                      WHERE tender_id IN ({list}))"
+            ),
+        ] {
+            let plan = plan_of(&sql).await;
+            assert!(
+                plan.contains("notices_parse_state"),
+                "turso no longer prefers the parse_state index — re-measure issue \
+                 323 and the unary `+` in requeue_update_sql may go:\n{plan}"
+            );
+        }
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
     /// Asserted against `PREV_EDGE_JOIN_SQL` itself, so the plan can never be checked
     /// against a copy that has drifted from the statement the fold runs.
     #[tokio::test]

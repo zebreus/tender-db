@@ -2072,6 +2072,54 @@ const COHORT_SAMPLE: usize = 25;
 /// peer with half the corpus.
 const DIGIT_PEER_MIN: usize = 8;
 
+/// The re-queue statement, built rather than written out at the call site so
+/// [`Db::requeue_notice_ids`] and the plan probe can never check a plan against
+/// a COPY that has drifted (the `PREV_EDGE_JOIN_SQL` precedent).
+///
+/// The unary `+` on `parse_state` is load-bearing and is not a typo. `notices`
+/// carries `notices_parse_state`, and turso 0.7.2 prefers it to the rowid: the
+/// same statement without the `+` plans as `SEARCH notices USING INDEX
+/// notices_parse_state (parse_state=?)`, a walk of every parsed notice in the
+/// corpus — 3.4M rows on prod — per statement, which a chunked caller then pays
+/// per chunk. The `+` makes the term non-indexable and the plan becomes
+/// `SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)`. Same idiom, same
+/// reason, as `SIBLING_HEAD` in lib.rs; measured for issue 323.
+pub(crate) fn requeue_update_sql(n: usize) -> String {
+    format!(
+        "UPDATE notices SET projected = 0 \
+          WHERE id IN ({}) AND +parse_state = 'parsed' AND projected <> 0",
+        placeholders(n)
+    )
+}
+
+/// The dry twin of [`requeue_update_sql`] — same predicates, same plan, no
+/// write. A dry run must count what the wet run would change, so the two
+/// statements have to agree by construction.
+pub(crate) fn requeue_count_sql(n: usize) -> String {
+    format!(
+        "SELECT COUNT(*) FROM notices \
+          WHERE id IN ({}) AND +parse_state = 'parsed' AND projected <> 0",
+        placeholders(n)
+    )
+}
+
+/// The tender-side resolve: the notices that built these tenders, through
+/// `tender_versions`' `UNIQUE (tender_id, caused_by_notice_id)`. This half was
+/// never the problem — it is a seek — but it is built here so the probe pins
+/// the real string beside the other two.
+pub(crate) fn notice_ids_of_tenders_sql(n: usize) -> String {
+    format!(
+        "SELECT DISTINCT caused_by_notice_id FROM tender_versions WHERE tender_id IN ({})",
+        placeholders(n)
+    )
+}
+
+/// Notice/tender ids bound into one re-queue statement. 500 keeps the bound
+/// parameter list well inside any limit while making the per-statement
+/// overhead negligible; see [`Db::requeue_notice_ids`] for why the SHAPE of
+/// those statements matters far more than their size.
+const REQUEUE_CHUNK: usize = 500;
+
 /// Off-name groups carried per case in the issue-317 Unit A review packet.
 /// The census caps its display at six; the packet is the reviewer's whole
 /// input, so it carries twice that before it elides — and a case with more
@@ -2971,6 +3019,67 @@ impl Db {
         Self::stamp_tenders_stale(&conn, ids).await
     }
 
+    /// The notice ids that built these tenders — the re-fold cohort. Read
+    /// through `tender_versions`' `UNIQUE (tender_id, caused_by_notice_id)`,
+    /// which is a seek and never was the problem here. Deduped, because a
+    /// notice that caused two of these tenders is one notice to re-queue.
+    async fn notice_ids_of_tenders(
+        conn: &Connection,
+        tender_ids: &[i64],
+    ) -> turso::Result<Vec<i64>> {
+        let mut out: std::collections::BTreeSet<i64> = Default::default();
+        for chunk in tender_ids.chunks(REQUEUE_CHUNK) {
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            let mut rows = conn.query(&notice_ids_of_tenders_sql(chunk.len()), params).await?;
+            while let Some(row) = rows.next().await? {
+                out.insert(int(&row, 0));
+            }
+        }
+        Ok(out.into_iter().collect())
+    }
+
+    /// Re-queue an explicit notice-id cohort for the incremental fold
+    /// (`projected = 0`), returning how many rows actually changed — parsed,
+    /// and not already re-queued. `dry_run` counts the same rows and writes
+    /// nothing.
+    ///
+    /// **Issue 323.** The predicates are unchanged from what three repair paths
+    /// used; what changed is the ONE character that decides the plan. See
+    /// [`requeue_update_sql`] for why the `+` is there and what it costs when
+    /// it is not: issue 317's re-homing measured 1,185 seconds to move 416
+    /// rows, holding the single writer, against a dry pass that computed the
+    /// identical plan in under a second.
+    ///
+    /// The ids are deduped before chunking. `projected <> 0` already makes a
+    /// repeat within one chunk a no-op, but a repeat that straddles two chunks
+    /// would otherwise cost a second pointless statement.
+    async fn requeue_notice_ids(
+        conn: &Connection,
+        ids: &[i64],
+        dry_run: bool,
+    ) -> turso::Result<u64> {
+        let mut ids = ids.to_vec();
+        ids.sort_unstable();
+        ids.dedup();
+        let mut requeued = 0u64;
+        for (i, chunk) in ids.chunks(REQUEUE_CHUNK).enumerate() {
+            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
+            requeued += if dry_run {
+                let mut rows = conn.query(&requeue_count_sql(chunk.len()), params).await?;
+                match rows.next().await? {
+                    Some(row) => int(&row, 0).max(0) as u64,
+                    None => 0,
+                }
+            } else {
+                conn.execute(&requeue_update_sql(chunk.len()), params).await?
+            };
+            if i % 100 == 99 {
+                let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
+            }
+        }
+        Ok(requeued)
+    }
+
     /// The shared batched stamp: `projection_epoch = 0` over a deduped tender-id
     /// list, checkpointed per the issue-63 WAL discipline. Callers differ only in
     /// how they derive the cohort (profile join, notice-id join).
@@ -3082,19 +3191,10 @@ impl Db {
     /// projected rows are touched; returns how many actually re-queued.
     pub async fn unmark_projected_by_ids(&self, ids: &[i64]) -> turso::Result<u64> {
         let conn = self.conn().await;
-        let mut requeued = 0u64;
-        for (i, chunk) in ids.chunks(500).enumerate() {
-            let sql = format!(
-                "UPDATE notices SET projected = 0
-                  WHERE parse_state = 'parsed' AND projected <> 0 AND id IN ({})",
-                placeholders(chunk.len())
-            );
-            let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
-            requeued += conn.execute(&sql, params).await?;
-            if i % 100 == 99 {
-                let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
-            }
-        }
+        // Issue 323: the predicates live in Rust, not in the statement — see
+        // [`Db::requeue_notice_ids`]. Before that, every 500-id chunk here
+        // planned as a walk of all 3.4M parsed notices.
+        let requeued = Self::requeue_notice_ids(&conn, ids, false).await?;
         let _ = checkpoint_on(&conn, CheckpointMode::Truncate).await;
         Ok(requeued)
     }
@@ -4950,11 +5050,18 @@ impl Db {
     /// re-establishes coverage. Cheap: the id range above the watermark is
     /// normally just the current (unprojected) delta.
     pub async fn projected_parsed_above(&self, watermark: i64) -> turso::Result<Option<i64>> {
-        let conn = self.conn().await;
+        // Issue 323, twice over. The `+` keeps this off `notices_parse_state`
+        // — without it the planner walks every parsed notice in the corpus
+        // instead of seeking the id range above the watermark, which is what
+        // the doc above means by "cheap". And it is a READ, so it belongs on
+        // the reader: on the writer a 3.4M-entry walk would block the
+        // fetch/parse/fold chain for its duration, which is issue 323's
+        // availability class in the fold's own gate.
+        let conn = self.reader().await?;
         let mut rows = conn
             .query(
                 "SELECT MAX(id) FROM notices
-                  WHERE id > ? AND parse_state = 'parsed' AND projected = 1",
+                  WHERE id > ? AND +parse_state = 'parsed' AND projected = 1",
                 (Value::Integer(watermark),),
             )
             .await?;
@@ -9251,15 +9358,12 @@ impl Db {
             // next fold rebuilds the award set from the corrected mentions.
             let ids: Vec<i64> = touched_tenders.iter().copied().collect();
             if !ids.is_empty() {
-                let list = placeholders(ids.len());
-                let params: Vec<Value> = ids.iter().map(|i| Value::Integer(*i)).collect();
-                let sql = format!(
-                    "UPDATE notices SET projected = 0 \
-                      WHERE parse_state = 'parsed' AND projected <> 0 AND id IN (\
-                        SELECT caused_by_notice_id FROM tender_versions \
-                         WHERE tender_id IN ({list}))"
-                );
-                report.refold_notices = conn.execute(&sql, params).await?;
+                // Two seeks, not a corpus walk (issue 323): resolve the
+                // causing notices through tender_versions' unique index, then
+                // re-queue them by rowid.
+                let notices = Self::notice_ids_of_tenders(&conn, &ids).await?;
+                report.refold_notices =
+                    Self::requeue_notice_ids(&conn, &notices, false).await?;
                 Self::stamp_tenders_stale(&conn, ids).await?;
             }
             for org in &touched_orgs {
@@ -10316,37 +10420,27 @@ impl Db {
             report.refold_tenders = refold.len() as u64;
             if !refold.is_empty() {
                 let ids: Vec<i64> = refold.iter().copied().collect();
-                for chunk in ids.chunks(500) {
-                    let placeholders_list = placeholders(chunk.len());
-                    let params: Vec<Value> = chunk.iter().map(|id| Value::Integer(*id)).collect();
-                    let requeued = if dry_run {
-                        let sql = format!(
-                            "SELECT COUNT(*) FROM notices \
-                              WHERE parse_state = 'parsed' AND projected <> 0 AND id IN \
-                                    (SELECT caused_by_notice_id FROM tender_versions \
-                                      WHERE tender_id IN ({placeholders_list}))"
-                        );
-                        let mut rows = conn.query(&sql, params).await?;
-                        match rows.next().await? {
-                            Some(row) => int(&row, 0).max(0) as u64,
-                            None => 0,
+                // Issue 323: resolve the causing notices through
+                // tender_versions' index, then re-queue by rowid. The
+                // statement this replaced planned as a walk of every parsed
+                // notice in the corpus, once per 500-tender chunk.
+                let notices = match Self::notice_ids_of_tenders(&conn, &ids).await {
+                    Ok(n) => n,
+                    Err(e) => {
+                        if !dry_run {
+                            let _ = conn.execute("ROLLBACK", ()).await;
                         }
-                    } else {
-                        let sql = format!(
-                            "UPDATE notices SET projected = 0 \
-                              WHERE parse_state = 'parsed' AND projected <> 0 AND id IN \
-                                    (SELECT caused_by_notice_id FROM tender_versions \
-                                      WHERE tender_id IN ({placeholders_list}))"
-                        );
-                        match conn.execute(&sql, params).await {
-                            Ok(n) => n,
-                            Err(e) => {
-                                let _ = conn.execute("ROLLBACK", ()).await;
-                                return Err(e);
-                            }
+                        return Err(e);
+                    }
+                };
+                match Self::requeue_notice_ids(&conn, &notices, dry_run).await {
+                    Ok(n) => report.refold_notices += n,
+                    Err(e) => {
+                        if !dry_run {
+                            let _ = conn.execute("ROLLBACK", ()).await;
                         }
-                    };
-                    report.refold_notices += requeued;
+                        return Err(e);
+                    }
                 }
                 if !dry_run
                     && let Err(e) = Self::stamp_tenders_stale(&conn, ids).await
