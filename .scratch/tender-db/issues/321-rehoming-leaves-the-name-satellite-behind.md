@@ -1,7 +1,7 @@
 # 321 — A re-homed mention leaves its name variant on the origin org
 
-Status: MEASURED 2026-08-31 (prod job 511) — the measurement says MACHINERY,
-and names the safe subset. The repair itself is the open half
+Status: DONE 2026-08-31 — measured, built, panelled (9 confirmed), deployed,
+and applied on prod. 66 dropped, orphans-at-target 72 → 0, undo verified live
 Kind: correctness (organization layer)
 Relates to: 317 (Unit A built the move), 300 Stage 4 (name keys), ADR-0013 D4
 
@@ -100,7 +100,7 @@ Tiefbau GmbH`. Dropping those WOULD lose a spelling the corpus has nowhere
 else, which is the invention this line of work keeps refusing. They are the
 `missing_target` residue by another name, and they belong with issue 317's 64.
 
-## What the repair still needs
+## What the repair needed (all done)
 
 - A **pre-image**, like every other apply job in this campaign: dropping a row
   from `organization_names` must be undoable (issue 312 is what happens when
@@ -112,3 +112,65 @@ else, which is the invention this line of work keeps refusing. They are the
   the next weekly build anyway. The measurement is of the SATELLITE; the harm
   is in the derived key table.
 - Its own adversarial panel round. It writes an entity table.
+
+
+## APPLIED ON PROD (2026-08-31, deploy fa574c8, jobs 513–516)
+
+    DRY  (513): 66 variant(s) would be dropped
+    WET  (514): 66 candidate(s) matched the recorded plan exactly;
+                dropped 66, skipped 0 on the in-transaction re-check
+    RE-MEASURE (515): 80 origins, 80 standing, holding 19 name variants;
+                6 supported by NO remaining mention
+                (0 of those already stand on a row this origin re-homed to)
+    RESTORE DRY (516): 66 outstanding pre-image(s), 66 would be restored;
+                0 occupied, 0 superseded, 0 whose org no longer exists
+
+The second and third lines are the acceptance. `orphans_at_target` went 66 → 0
+and the orphan count 72 → 6: exactly the class this was built for went, exactly
+the 6 the measurement said must stay remain, and not one of them has a
+destination carrying it. Variants across the origins fell 85 → 19.
+
+The fourth line is the one that matters most, because it is the claim that
+made the drop permissible in the first place: the undo holds all 66, every one
+restorable, nothing occupied or stranded. It was run live rather than argued.
+
+**Residual, and deliberately not chased:** 66 `org_match_keys` rows still
+carry a dropped key. The key store is rebuilt from zero by
+`build-org-match-keys` on the Sunday cadence, and the E3 edges those keys
+would feed are only re-derived by `scan-org-match-keys` in the same run — so
+nothing regenerates before the rebuild corrects it, and the honest move is to
+let the scheduled job do its own work rather than hand-deleting rows another
+job owns.
+
+## The panel (9 confirmed, 3 high) — all in the UNDO
+
+The adversarial round the plan called for found nothing wrong with the drop's
+selection and three high findings in the half whose whole job is reversibility:
+scan order deciding which of two pre-images came back; a merged-away org
+aborting the entire pass on a foreign key, permanently, since a re-run met the
+same row again; and the restore running with no transaction at all, so a crash
+between the INSERT and its `restored_at` stamp left a row that every later pass
+read as `occupied`. Plus six more, including a `stale_keys` count taken over a
+prefix of the candidate list while the skips are interleaved through it. See
+`fa574c8`.
+
+## Near-miss worth keeping (2026-08-31)
+
+`39a327a` was committed WITHOUT the `org_name_drops` INSERT — a concurrent
+agent was mutation-testing this very function in the shared worktree to check
+the tests fail when each guard is removed, and `git add crates/store/src/canonical.rs`
+took the mutation. That build reached prod and stood for ~40 minutes: a
+`drop-orphan-satellites --wet` run against it would have deleted 66 satellites
+with no pre-image and no undo — the issue-312 shape exactly, and worse.
+
+Nothing was lost. The wet arm was being held for the panel, so only the
+read-only dry pass ever ran on that build, and the co-worker caught and
+restored the 22 lines (`4ac4271`) before any of this reached a write.
+
+The lesson is not "check the diff" — CLAUDE.md already says that, and I did
+run `git diff` on the small files. It is that I ran it on the SMALL files and
+grepped the big one, which is the file another agent was in. The rule earns its
+keep exactly where it is least convenient: **read the whole diff of the
+contended file, or take a separate worktree.** Two gate runs in the same hour
+also died on a co-worker's transient `zz_probe_*.rs`, so the contention was
+visible before it cost anything.
