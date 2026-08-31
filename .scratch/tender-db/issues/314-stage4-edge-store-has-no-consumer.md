@@ -685,3 +685,62 @@ predicate decides them.
 Credit where it belongs: three of slice 1's 100 rationales independently named
 that mechanism from a single case each. The aggregate measurements had not seen
 it in four passes over this cohort.
+
+### The corrected packet, measured on prod — the field was carrying 0.8% of what it claimed
+
+Deployed `b1797a2`, rebuilt the packet (job 536), and read the evidence split
+across all 589 cases / 1,189 members:
+
+| state | members | share |
+| ----- | ------- | ----- |
+| never asked, anchors nowhere | 590 | 49.6% |
+| never asked, but anchors elsewhere | 348 | 29.3% |
+| agrees | 243 | 20.4% |
+| **PROBED and refused** — the contamination signal | **8** | **0.7%** |
+
+**946 members read as a single `country_agrees = false` under the old packet.
+Eight of them — 0.8% — were the thing the field was documented to mean.** The
+other 938 were a vocabulary gap wearing the same face. My estimate before
+measuring was that the conflation had cost 6 disputed verdicts; the real ratio is
+an order of magnitude worse than that, and the disputes were only where the
+challengers happened to look.
+
+### But the verdicts did not rest on it — and that is the more interesting finding
+
+Auditing slice 1's 62 `wrong-country` verdicts against the corrected evidence:
+
+| what the verdict rested on | n |
+| -------------------------- | - |
+| only never-asked silence + an anchor elsewhere | 31 |
+| no anchor evidence at all | 28 |
+| **arithmetic that was actually asked** | **3** |
+
+Three of sixty-two. The reviewers were not using the checksum evidence; they were
+reading things the packet reports but does not reason about:
+
+* **an identical identifier across a one-letter country pair** — SK/SG, CZ/CR,
+  BG/BF. Now filed as issue 326: 76 of 589 cases (12.9%), and **18 of 18** of
+  those that reached slice 1 came back `wrong-country`.
+* **a recognizable national format** — `A82473349` is a Spanish CIF, so the NL
+  row is the wrong one. No checksum needed.
+* **a positive anchor on the sibling row** — `5569584120` validates as a Swedish
+  orgnr, so the NO row is wrong. The evidence is the *other* member's `agrees`,
+  not this member's `false`.
+* **an issue-325 parse artefact** — 40 of 589 cases (6.8%).
+
+So the honest verdict on the campaign is mixed and both halves matter: the
+packet's flagship evidence field was nearly useless, the reviewers routed around
+it without being told to, and their conclusions stand on other grounds. That is
+the second time this campaign that the agents' *rationales* — not their verdicts
+— were the valuable output.
+
+### Re-scoping slices 2–6
+
+Issue 325's 40 cases and issue 326's 76 do not overlap at all. Together
+**116 of 589 — 19.7% of the cohort — is decidable by predicate**, and should be
+excluded from the remaining slices rather than reviewed at two agents apiece. The
+campaign's job is the residue that genuinely needs judgement; spending it on
+pattern-matching a census can do is the thing to stop.
+
+Slices 2–6 stay held until 325 and 326 have censuses, so the exclusion list can
+be computed instead of estimated.
