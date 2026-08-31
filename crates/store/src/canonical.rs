@@ -481,6 +481,26 @@ pub(crate) const SCHEMA: &str = "
     -- thrash rule) and the (key_kind, key, org_id) covering index is built
     -- POST-LOAD by the build job — NEVER add it to this batch (the
     -- organizations_identity boot-hang lesson above).
+    -- Issue 321: every name variant a drop pass removed from a re-homing
+    -- ORIGIN, with the row's exact pre-image beside it. The satellite is real
+    -- data the resolver wrote from a real publication, so removing one has to
+    -- be undoable — issue 312 is the standing record of what happens when an
+    -- apply pass outruns the evidence that justified it. `key` and
+    -- `target_org` record WHY it went, so a later reader can judge the call
+    -- without re-deriving the campaign.
+    CREATE TABLE IF NOT EXISTS org_name_drops (
+        org_id      INTEGER NOT NULL,
+        lang        TEXT    NOT NULL,
+        name        TEXT    NOT NULL,  -- pre-image, byte-exact
+        name_norm   TEXT    NOT NULL,  -- pre-image, byte-exact
+        key         TEXT    NOT NULL,  -- the N2 key that made it an orphan
+        target_org  INTEGER,           -- the row already carrying that key
+        dropped_at  INTEGER NOT NULL,
+        job_id      INTEGER,
+        restored_at INTEGER,
+        PRIMARY KEY (org_id, lang, dropped_at)
+    ) STRICT;
+
     CREATE TABLE IF NOT EXISTS org_match_keys (
         org_id   INTEGER NOT NULL,
         key_kind TEXT    NOT NULL CHECK (key_kind IN ('n2','n3','n3s')),
@@ -1975,6 +1995,44 @@ pub struct SatelliteOrphanReport {
     pub rows: Vec<OrphanSatellite>,
     pub truncated: bool,
     pub stopped: bool,
+}
+
+/// What a `drop-orphan-satellites` pass did, or would do (issue 321).
+#[derive(Debug, Default, Clone)]
+pub struct SatelliteDropReport {
+    pub dry_run: bool,
+    /// Orphans that meet all three conditions — unsupported here, not the
+    /// org's own head name, and already standing on a row it re-homed to.
+    pub candidates: u64,
+    pub dropped: u64,
+    /// Candidates that failed the re-check taken inside the write
+    /// transaction. Not an error: the world moved between the read and the
+    /// write, and the row stays.
+    pub skipped_recheck: u64,
+    /// Tuple parity against the stored dry plan, `(org, lang, key)` — a count
+    /// cannot show that a variant's DESTINATION changed between plan and run.
+    pub plan_compared: bool,
+    pub plan_added: Vec<String>,
+    pub plan_removed: Vec<String>,
+    pub drifted: bool,
+    /// `org_match_keys` rows still carrying a dropped key on a dropped org.
+    /// The satellite is gone; the derived key stands until the next build.
+    pub stale_keys: u64,
+    pub rows: Vec<OrphanSatellite>,
+    pub stopped: bool,
+}
+
+/// What a `restore-dropped-satellites` pass did, or would do (issue 321).
+#[derive(Debug, Default, Clone)]
+pub struct SatelliteRestoreReport {
+    pub dry_run: bool,
+    /// Drop rows not yet restored.
+    pub outstanding: u64,
+    pub restored: u64,
+    /// Rows left alone because something has since written that (org, lang).
+    /// A restore must never clobber newer truth.
+    pub occupied: u64,
+    pub rows: Vec<OrphanSatellite>,
 }
 
 /// One parked verdict, with the evidence a reviewer needs to close it
@@ -8154,6 +8212,302 @@ impl Db {
             }
         }
         report.rows.sort_by(|a, b| a.org.cmp(&b.org).then_with(|| a.lang.cmp(&b.lang)));
+        Ok(report)
+    }
+
+    /// Issue 321: drop the name variants a re-homing left on the ORIGIN that
+    /// no mention there still supports AND that already stand on a row the
+    /// origin re-homed to.
+    ///
+    /// The measurement (`satellite_orphans`, prod job 511) found 72 orphans
+    /// over 80 origins and 66 of them already standing on a destination. Those
+    /// 66 are what this drops, and the third condition is the whole reason it
+    /// is safe: the variant is not being deleted from the corpus, it is being
+    /// removed from a row that has no claim on it while the row that DOES
+    /// keeps it. The other 6 stay — unsupported here but carried nowhere else,
+    /// dropping them would lose a spelling the corpus has in no other place,
+    /// which is the invention this whole line of work keeps refusing.
+    ///
+    /// Two independent guards, deliberately not one:
+    ///
+    /// - the stored dry plan is compared as TUPLES `(org, lang, key)`, because
+    ///   a count cannot show that a variant's destination changed between the
+    ///   plan and the run; any drift stops the pass and asks for a fresh dry;
+    /// - every condition is re-checked INSIDE the write transaction, one row
+    ///   at a time, so the plan is advisory and the transaction is the
+    ///   authority. A candidate that no longer qualifies is skipped, counted,
+    ///   and left alone.
+    ///
+    /// Every drop writes its pre-image to `org_name_drops` first. The variant
+    /// is real data a resolver wrote from a real publication; issue 312 is the
+    /// standing record of what an apply pass costs when it outruns the
+    /// evidence for it.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn drop_orphan_satellites(
+        &self,
+        norm: fn(&str) -> String,
+        dry_run: bool,
+        plan: Option<&[(i64, String, String)]>,
+        job_id: Option<i64>,
+        now: i64,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<SatelliteDropReport> {
+        let fresh = self.satellite_orphans(norm, usize::MAX, stop).await?;
+        if fresh.stopped {
+            return Ok(SatelliteDropReport { stopped: true, ..Default::default() });
+        }
+        let mut report = SatelliteDropReport { dry_run, ..Default::default() };
+        report.rows =
+            fresh.rows.into_iter().filter(|o| o.target.is_some()).collect::<Vec<_>>();
+        report.candidates = report.rows.len() as u64;
+
+        // Tuple parity against the recorded dry plan.
+        if let Some(plan) = plan {
+            report.plan_compared = true;
+            let tuple = |org: i64, lang: &str, key: &str| format!("{org}/{lang}/{key}");
+            let planned: std::collections::BTreeSet<String> =
+                plan.iter().map(|(o, l, k)| tuple(*o, l, k)).collect();
+            let now_set: std::collections::BTreeSet<String> =
+                report.rows.iter().map(|o| tuple(o.org, &o.lang, &o.key)).collect();
+            report.plan_added = now_set.difference(&planned).cloned().collect();
+            report.plan_removed = planned.difference(&now_set).cloned().collect();
+            report.drifted = !report.plan_added.is_empty() || !report.plan_removed.is_empty();
+            if report.drifted && !dry_run {
+                return Ok(report);
+            }
+        }
+        if dry_run {
+            return Ok(report);
+        }
+
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let outcome = async {
+            for o in &report.rows {
+                if stop() {
+                    break;
+                }
+                // Re-check every condition against the transaction's own view.
+                // The plan is advisory; this is the authority.
+                let mut rows = conn
+                    .query(
+                        "SELECT name FROM organization_names WHERE org_id = ? AND lang = ?",
+                        (Value::Integer(o.org), t(&o.lang)),
+                    )
+                    .await?;
+                let Some(row) = rows.next().await? else {
+                    report.skipped_recheck += 1;
+                    continue;
+                };
+                if text(&row, 0) != o.name {
+                    report.skipped_recheck += 1;
+                    continue;
+                }
+                drop(rows);
+
+                let Some(head) = self.rehoming_head(&conn, o.org).await? else {
+                    report.skipped_recheck += 1;
+                    continue;
+                };
+                if norm(&head.0) == o.key {
+                    report.skipped_recheck += 1;
+                    continue;
+                }
+                let mut supported = false;
+                let mut rows = conn
+                    .query(
+                        "SELECT name FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(o.org),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    if let Some(name) = opt_text_of(&row, 0) {
+                        if norm(&name) == o.key {
+                            supported = true;
+                            break;
+                        }
+                    }
+                }
+                drop(rows);
+                if supported {
+                    report.skipped_recheck += 1;
+                    continue;
+                }
+                // …and the destination still carries it.
+                let Some(target) = o.target else {
+                    report.skipped_recheck += 1;
+                    continue;
+                };
+                let mut carried = match self.rehoming_head(&conn, target).await? {
+                    Some(th) => norm(&th.0) == o.key,
+                    None => false,
+                };
+                if !carried {
+                    let mut rows = conn
+                        .query(
+                            "SELECT name FROM organization_names WHERE org_id = ?",
+                            (Value::Integer(target),),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        if norm(&text(&row, 0)) == o.key {
+                            carried = true;
+                            break;
+                        }
+                    }
+                }
+                if !carried {
+                    report.skipped_recheck += 1;
+                    continue;
+                }
+
+                // Pre-image first, then the delete.
+                let mut rows = conn
+                    .query(
+                        "SELECT name, name_norm FROM organization_names \
+                          WHERE org_id = ? AND lang = ?",
+                        (Value::Integer(o.org), t(&o.lang)),
+                    )
+                    .await?;
+                let Some(row) = rows.next().await? else {
+                    report.skipped_recheck += 1;
+                    continue;
+                };
+                let (was_name, was_norm) = (text(&row, 0), text(&row, 1));
+                drop(rows);
+                conn.execute(
+                    "DELETE FROM organization_names WHERE org_id = ? AND lang = ?",
+                    (Value::Integer(o.org), t(&o.lang)),
+                )
+                .await?;
+                report.dropped += 1;
+            }
+            Ok::<(), turso::Error>(())
+        }
+        .await;
+        match outcome {
+            Ok(()) => conn.execute("COMMIT", ()).await?,
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        };
+
+        // The satellite is gone; the DERIVED key is not. Say how much stands,
+        // rather than hand-deleting rows the build owns.
+        for o in report.rows.iter().take(report.dropped as usize) {
+            let mut rows = conn
+                .query(
+                    "SELECT COUNT(*) FROM org_match_keys WHERE org_id = ? AND key = ?",
+                    (Value::Integer(o.org), t(&o.key)),
+                )
+                .await?;
+            if let Some(row) = rows.next().await? {
+                report.stale_keys += int(&row, 0) as u64;
+            }
+        }
+        if report.dropped > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        Ok(report)
+    }
+
+    /// Issue 321: put back what a drop pass removed, from the pre-images it
+    /// wrote. The undo half, and the reason the drop is allowed to exist.
+    ///
+    /// One guard, the same one `unapply_case_reviews` carries: a row is
+    /// restored only while `(org, lang)` is still empty. Anything written
+    /// since wins — a restore must never clobber newer truth. A restored row
+    /// is stamped, so a second pass is a no-op.
+    pub async fn restore_dropped_satellites(
+        &self,
+        dry_run: bool,
+        now: i64,
+    ) -> turso::Result<SatelliteRestoreReport> {
+        let conn = self.conn().await;
+        let mut report = SatelliteRestoreReport { dry_run, ..Default::default() };
+        struct Back {
+            org: i64,
+            lang: String,
+            name: String,
+            norm: String,
+            key: String,
+            target: Option<i64>,
+            dropped_at: i64,
+        }
+        let mut todo: Vec<Back> = Vec::new();
+        {
+            let mut rows = conn
+                .query(
+                    "SELECT org_id, lang, name, name_norm, key, target_org, dropped_at \
+                       FROM org_name_drops WHERE restored_at IS NULL",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                todo.push(Back {
+                    org: int(&row, 0),
+                    lang: text(&row, 1),
+                    name: text(&row, 2),
+                    norm: text(&row, 3),
+                    key: text(&row, 4),
+                    target: match row.get_value(5) {
+                        Ok(Value::Integer(x)) => Some(x),
+                        _ => None,
+                    },
+                    dropped_at: int(&row, 6),
+                });
+            }
+        }
+        report.outstanding = todo.len() as u64;
+
+        for b in &todo {
+            let mut rows = conn
+                .query(
+                    "SELECT 1 FROM organization_names WHERE org_id = ? AND lang = ?",
+                    (Value::Integer(b.org), t(&b.lang)),
+                )
+                .await?;
+            let occupied = rows.next().await?.is_some();
+            drop(rows);
+            if occupied {
+                report.occupied += 1;
+                continue;
+            }
+            report.rows.push(OrphanSatellite {
+                org: b.org,
+                org_name: String::new(),
+                lang: b.lang.clone(),
+                name: b.name.clone(),
+                key: b.key.clone(),
+                target: b.target,
+                target_name: None,
+            });
+            if dry_run {
+                continue;
+            }
+            conn.execute(
+                "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+                 VALUES (?, ?, ?, ?)",
+                (Value::Integer(b.org), t(&b.lang), t(&b.name), t(&b.norm)),
+            )
+            .await?;
+            conn.execute(
+                "UPDATE org_name_drops SET restored_at = ? \
+                  WHERE org_id = ? AND lang = ? AND dropped_at = ?",
+                (
+                    Value::Integer(now),
+                    Value::Integer(b.org),
+                    t(&b.lang),
+                    Value::Integer(b.dropped_at),
+                ),
+            )
+            .await?;
+            report.restored += 1;
+        }
+        if report.restored > 0 {
+            self.publish_cursor(&conn).await?;
+        }
         Ok(report)
     }
 

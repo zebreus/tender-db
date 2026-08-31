@@ -353,6 +353,11 @@ enum Spec {
     /// Issue 321: name variants a re-homing left on the ORIGIN that no
     /// remaining mention supports. Read-only measurement.
     SatelliteOrphans,
+    /// Issue 321: drop the orphaned variants that already stand on a row the
+    /// origin re-homed to. Wet writes `organization_names`.
+    DropOrphanSatellites { dry_run: bool },
+    /// Issue 321: put back what a drop pass removed, from its pre-images.
+    RestoreDroppedSatellites { dry_run: bool },
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -986,6 +991,46 @@ impl Supervisor {
             }
             // Issue 321: the measurement that decides whether the leftover
             // name variants need machinery or a line in the review schema.
+            // Issue 321: the repair, dry by default. The wet arm compares
+            // itself against the stored dry plan as tuples before it writes.
+            // Issue 321: the repair, dry by default. The wet arm compares
+            // itself against the stored dry plan as tuples before it writes.
+            "drop-orphan-satellites" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "drop-orphan-satellites dry-run"
+                } else {
+                    "drop-orphan-satellites"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push(
+                        "drop-orphan-satellites",
+                        params,
+                        Spec::DropOrphanSatellites { dry_run },
+                    )
+                    .await,
+                ])
+            }
+            "restore-dropped-satellites" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run {
+                    "restore-dropped-satellites dry-run"
+                } else {
+                    "restore-dropped-satellites"
+                }
+                .to_owned();
+                Ok(vec![
+                    self.push(
+                        "restore-dropped-satellites",
+                        params,
+                        Spec::RestoreDroppedSatellites { dry_run },
+                    )
+                    .await,
+                ])
+            }
+            // Issue 321: the measurement that decides whether the leftover
+            // name variants need machinery or a line in the review schema.
             "satellite-orphans" => Ok(vec![
                 self.push("satellite-orphans", "satellite-orphans".into(), Spec::SatelliteOrphans)
                     .await,
@@ -1377,6 +1422,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "fusion-census",
     "rehoming-packet",
     "satellite-orphans",
+    "drop-orphan-satellites",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3883,6 +3929,133 @@ impl Supervisor {
                         String::new()
                     },
                     if r.truncated { "; CASE LIST TRUNCATED at the cap" } else { "" }
+                ))
+            }
+            Spec::DropOrphanSatellites { dry_run } => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                let dry_run = *dry_run;
+                self.set_phase(
+                    if dry_run { "planning" } else { "dropping" },
+                    None,
+                    None,
+                    "issue 321: orphaned name variants on re-homing origins".to_owned(),
+                );
+                // The wet arm reads the plan the dry arm recorded and compares
+                // it as tuples. No plan on record is not a reason to guess:
+                // a wet run without one is refused, because the parity check
+                // is half of what makes this safe.
+                let plan: Option<Vec<(i64, String, String)>> = if dry_run {
+                    None
+                } else {
+                    let stored = self
+                        .db
+                        .latest_report("drop-orphan-satellites")
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    let Some((body, _)) = stored else {
+                        return Ok("drop-orphan-satellites --wet REFUSED: no dry plan on \
+                                   record. Run the dry pass first — the tuple parity between \
+                                   plan and run is half of what makes this safe."
+                            .to_owned());
+                    };
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    Some(
+                        v["rows"]
+                            .as_array()
+                            .map(|a| a.as_slice())
+                            .unwrap_or_default()
+                            .iter()
+                            .filter_map(|r| {
+                                Some((
+                                    r["org"].as_i64()?,
+                                    r["lang"].as_str()?.to_owned(),
+                                    r["key"].as_str()?.to_owned(),
+                                ))
+                            })
+                            .collect(),
+                    )
+                };
+                let now = store::now_unix();
+                let r = self
+                    .db
+                    .drop_orphan_satellites(
+                        ingest::project::match_norm,
+                        dry_run,
+                        plan.as_deref(),
+                        Some(job_id as i64),
+                        now,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(
+                        "drop-orphan-satellites STOPPED by cancel — nothing written".to_owned()
+                    );
+                }
+                if r.drifted {
+                    return Ok(format!(
+                        "drop-orphan-satellites --wet REFUSED: the plan drifted. {} tuple(s) \
+                         appeared since the dry run and {} went away — first added {:?}, first \
+                         gone {:?}. Re-run the dry pass and read it before the wet one; a \
+                         count would not have shown this.",
+                        r.plan_added.len(),
+                        r.plan_removed.len(),
+                        r.plan_added.first(),
+                        r.plan_removed.first(),
+                    ));
+                }
+                if dry_run {
+                    let body = serde_json::json!({
+                        "candidates": r.candidates,
+                        "rows": r.rows.iter().map(|o| serde_json::json!({
+                            "org": o.org, "org_name": o.org_name, "lang": o.lang,
+                            "name": o.name, "key": o.key,
+                            "target": o.target, "target_name": o.target_name,
+                        })).collect::<Vec<_>>(),
+                    })
+                    .to_string();
+                    self.db
+                        .put_report("drop-orphan-satellites", &body, now)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    return Ok(format!(
+                        "drop-orphan-satellites DRY (issue 321): {} variant(s) would be \
+                         dropped — each unsupported by any mention on its org, not that \
+                         org's own head name, and already standing on a row the org \
+                         re-homed to. Plan recorded; the wet arm compares against it as \
+                         (org, lang, key) tuples.",
+                        r.candidates
+                    ));
+                }
+                Ok(format!(
+                    "drop-orphan-satellites WET (issue 321): {} candidate(s) matched the \
+                     recorded plan exactly; dropped {}, skipped {} on the in-transaction \
+                     re-check. Pre-images in org_name_drops — restore-dropped-satellites \
+                     puts every one back. {} org_match_keys row(s) still carry a dropped \
+                     key; the next build-org-match-keys clears them.",
+                    r.candidates, r.dropped, r.skipped_recheck, r.stale_keys
+                ))
+            }
+            Spec::RestoreDroppedSatellites { dry_run } => {
+                let dry_run = *dry_run;
+                let now = store::now_unix();
+                let r = self
+                    .db
+                    .restore_dropped_satellites(dry_run, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "restore-dropped-satellites {} (issue 321): {} outstanding drop(s), {} \
+                     {}, {} left alone because something has since written that (org, lang) \
+                     — a restore never clobbers newer truth.",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.outstanding,
+                    if dry_run { r.rows.len() as u64 } else { r.restored },
+                    if dry_run { "would be restored" } else { "restored" },
+                    r.occupied
                 ))
             }
             Spec::SatelliteOrphans => {
@@ -6650,7 +6823,8 @@ mod tests {
                 "fold-org-countries",
                 "fusion-census",
                 "rehoming-packet",
-                "satellite-orphans"
+                "satellite-orphans",
+                "drop-orphan-satellites"
             ]
         );
     }
