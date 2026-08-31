@@ -254,7 +254,7 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #                             case-review-backlog, fold-org-countries,
 #                             fusion-census, rehoming-packet,
 #                             satellite-orphans, drop-orphan-satellites,
-#                             anchor-wall-census
+#                             anchor-wall-census, xb-packet
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.
@@ -330,6 +330,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `drop-orphan-satellites` | **dry default** | drops the orphans a destination already carries by N2 KEY (321) |
 | `restore-dropped-satellites` | **dry default** | puts them back from `org_name_drops` pre-images |
 | `anchor-wall-census` | no | issue 318: where ingest binds and batch refuses |
+| `xb-packet` | no | issues 311+314: the same-name cross-border review packet |
 
 Report kinds do NOT always match the job kind that writes them. `fusion-census`
 stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an

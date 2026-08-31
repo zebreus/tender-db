@@ -361,6 +361,9 @@ enum Spec {
     /// Issue 318: how far apart the resolver's anchor bind and the batch
     /// merge arm stand on the genericness wall. Read-only measurement.
     AnchorWallCensus,
+    /// Issues 311 + 314: the reviewer's input for the same-name cross-border
+    /// cohort — the first thing to consume org_candidate_edges. Read-only.
+    XbPacket,
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -1035,6 +1038,10 @@ impl Supervisor {
             }
             // Issue 321: the measurement that decides whether the leftover
             // name variants need machinery or a line in the review schema.
+            // Issues 311 + 314: the same-name cohort's review packet.
+            "xb-packet" => Ok(vec![
+                self.push("xb-packet", "xb-packet".into(), Spec::XbPacket).await,
+            ]),
             // Issue 318: size the disagreement before deciding how hard to
             // close it — the issue's own step 3.
             "anchor-wall-census" => Ok(vec![
@@ -1440,6 +1447,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "satellite-orphans",
     "drop-orphan-satellites",
     "anchor-wall-census",
+    "xb-packet",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -4156,6 +4164,63 @@ impl Supervisor {
                     r.occupied,
                     r.superseded,
                     r.orphaned
+                ))
+            }
+            Spec::XbPacket => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "assembling",
+                    None,
+                    None,
+                    "issues 311+314: same-name cross-border review packet".to_owned(),
+                );
+                let p = self
+                    .db
+                    .xb_same_name_packet(ingest::project::match_norm, 600, 3, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if p.stopped {
+                    return Ok("xb-packet STOPPED by cancel — no packet stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "cohort": p.cohort,
+                    "truncated": p.truncated,
+                    "cases": p.cases.iter().map(|c| serde_json::json!({
+                        "root": c.root,
+                        "size": c.size,
+                        "key": c.key,
+                        "countries": c.countries,
+                        "members": c.members.iter().map(|m| serde_json::json!({
+                            "org": m.org,
+                            "country": m.country,
+                            "identifier_kind": m.identifier_kind,
+                            "identifier": m.identifier,
+                            "name": m.name,
+                            "variants": m.variants.iter()
+                                .map(|(l, n)| serde_json::json!({"lang": l, "name": n}))
+                                .collect::<Vec<_>>(),
+                            "mentions": m.mentions,
+                            "notices": m.notices,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("xb-packet", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "xb-packet (issues 311+314): {} same-name cross-border component(s) in \
+                     the cohort, {} carried in this packet{}. Each case lists every \
+                     member's row, its language-labelled variants, its mention count and \
+                     a few publication ids — the mention SPREAD is the first read: one \
+                     heavy row beside a light one is a stray duplicate, two heavy rows are \
+                     more likely two real registrations.",
+                    p.cohort,
+                    p.cases.len(),
+                    if p.truncated { " (CAPPED)" } else { "" }
                 ))
             }
             Spec::AnchorWallCensus => {
@@ -7029,7 +7094,8 @@ mod tests {
                 "rehoming-packet",
                 "satellite-orphans",
                 "drop-orphan-satellites",
-                "anchor-wall-census"
+                "anchor-wall-census",
+                "xb-packet"
             ]
         );
     }

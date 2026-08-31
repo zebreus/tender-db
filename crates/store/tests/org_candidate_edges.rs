@@ -701,3 +701,127 @@ async fn the_cross_border_cohort_splits_into_its_three_shapes() {
     assert_eq!(r2.xb_same_name, 1, "case alone is not a different name");
     assert_eq!(r2.xb_diff_name, 0);
 }
+
+/// Issues 311 + 314: the same-name packet is the first thing to CONSUME
+/// `org_candidate_edges`. It must select exactly the census's same-name class
+/// — the two definitions cannot be allowed to drift, or the packet reviews a
+/// cohort whose size nobody measured.
+#[tokio::test]
+async fn the_packet_carries_only_the_same_name_class_with_its_evidence() {
+    let (db, conn) = open("test-xb-packet.db").await;
+
+    // IN: same name, distinct countries, both canonical.
+    for (id, cc) in [(1i64, "DK"), (2, "NO")] {
+        org(&conn, id, "Mercell Holding ASA", Some(&format!("M{id}"))).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+    // OUT: names differ (the sibling-risk class).
+    org(&conn, 3, "Steelco Belimed GmbH", Some("B-AT")).await;
+    org(&conn, 4, "Belimed GmbH", Some("B-DE")).await;
+    conn.execute("UPDATE organizations SET country = 'AT' WHERE id = 3", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET country = 'DE' WHERE id = 4", ()).await.unwrap();
+    // OUT: two members share a country (with-intra).
+    for (id, cc) in [(5i64, "CZ"), (6, "CZ"), (7, "SK")] {
+        org(&conn, id, "Merck Life Science spol. s r.o.", Some(&format!("K{id}"))).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+    // OUT: one side provisional — no identifier for a merge verdict to act on.
+    org(&conn, 8, "Provisional Pair", Some("P1")).await;
+    org(&conn, 9, "Provisional Pair", None).await;
+    conn.execute("UPDATE organizations SET country = 'FI' WHERE id = 8", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET country = 'SE' WHERE id = 9", ()).await.unwrap();
+
+    for (a, b) in [(1i64, 2i64), (3, 4), (5, 6), (6, 7), (8, 9)] {
+        conn.execute(
+            "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+             VALUES (?, ?, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+            (Value::Integer(a), Value::Integer(b)),
+        )
+        .await
+        .unwrap();
+    }
+    // Evidence for the one case that qualifies: a variant on one side and
+    // an uneven mention spread, which is the reviewer's first read.
+    conn.execute(
+        "INSERT INTO organization_names (org_id, lang, name, name_norm)
+         VALUES (1, 'NOR', 'Mercell Holding AS', 'mercell holding as')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO fetches (id, source, kind, period, url, sha256, bytes, fetched_at, path)
+         VALUES (1, 'ted', 'daily', 'p', 'u', 'aa', 1, 0, 'p')",
+        (),
+    )
+    .await
+    .unwrap();
+    for n in 1..=4i64 {
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                  member_path, ingested_at, parse_state, projected)
+             VALUES (?, 'ted', 'pub-' || ?, 'h' || ?, 'eforms', 1, 'm', 0, 'parsed', 1)",
+            (Value::Integer(n), Value::Integer(n), Value::Integer(n)),
+        )
+        .await
+        .unwrap();
+    }
+    // Org 1 heavy (3 mentions), org 2 light (1) — a stray duplicate's shape.
+    for (n, o) in [(1i64, 1i64), (2, 1), (3, 1), (4, 2)] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+             VALUES (?, 'ORG-' || ?, ?, 'Mercell Holding ASA', 'DK', NULL)",
+            (Value::Integer(n), Value::Integer(n), Value::Integer(o)),
+        )
+        .await
+        .unwrap();
+    }
+
+    let never = || false;
+    let p = db.xb_same_name_packet(census_norm, 600, 3, &never).await.unwrap();
+    assert_eq!(p.cohort, 1, "only the Mercell component qualifies");
+    assert_eq!(p.cases.len(), 1);
+    assert!(!p.truncated);
+
+    let c = &p.cases[0];
+    assert_eq!(c.size, 2);
+    assert_eq!(c.key, "mercell holding asa");
+    assert_eq!(c.countries, vec!["DK".to_owned(), "NO".to_owned()]);
+    assert_eq!(c.members.len(), 2);
+
+    let m1 = &c.members[0];
+    assert_eq!(m1.org, 1);
+    assert_eq!(m1.country.as_deref(), Some("DK"));
+    assert_eq!(m1.identifier.as_deref(), Some("M1"));
+    assert_eq!(m1.mentions, 3, "the heavy side");
+    assert_eq!(m1.variants, vec![("NOR".to_owned(), "Mercell Holding AS".to_owned())]);
+    assert_eq!(m1.notices.len(), 3, "capped at the notices_cap");
+
+    let m2 = &c.members[1];
+    assert_eq!((m2.org, m2.mentions), (2, 1), "the light side — a stray duplicate's shape");
+    assert!(m2.variants.is_empty());
+
+    // The cap is honoured and reported, not silently applied.
+    let capped = db.xb_same_name_packet(census_norm, 0, 3, &never).await.unwrap();
+    assert_eq!(capped.cohort, 1, "the cohort size is the WHOLE class, not the page");
+    assert!(capped.truncated);
+    assert!(capped.cases.is_empty());
+
+    // A cancel carries nothing: a partial packet reviewed as a whole one would
+    // under-run the campaign silently.
+    let always = || true;
+    let stopped = db.xb_same_name_packet(census_norm, 600, 3, &always).await.unwrap();
+    assert!(stopped.stopped);
+    assert_eq!(stopped.cohort, 0);
+    assert!(stopped.cases.is_empty());
+}

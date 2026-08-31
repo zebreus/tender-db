@@ -2094,6 +2094,52 @@ pub struct WallCounts {
     pub errored: u64,
 }
 
+/// One member of a cross-border same-name component, with the evidence a
+/// reviewer needs to judge it (issues 311 + 314).
+#[derive(Debug, Default, Clone)]
+pub struct XbMember {
+    pub org: i64,
+    pub country: Option<String>,
+    pub identifier_kind: Option<String>,
+    pub identifier: Option<String>,
+    pub name: String,
+    /// Language-labelled name variants on this row. A member whose satellite
+    /// carries the OTHER member's spelling is different evidence from one that
+    /// merely shares a normalized key.
+    pub variants: Vec<(String, String)>,
+    /// How many mentions stand on this row. A 400-mention row beside a
+    /// 1-mention row is a different case from two 200-mention rows: the first
+    /// is probably one entity with a stray duplicate, the second two real
+    /// registrations.
+    pub mentions: u64,
+    /// A few notice publication ids, so a reviewer can look at the source.
+    pub notices: Vec<String>,
+}
+
+/// One reviewable case: a connected component of E3 edges whose members are
+/// all canonical, sit in distinct countries, and share a normalized name
+/// (issue 314's `same-name` class, 589 of 939 on prod).
+#[derive(Debug, Default, Clone)]
+pub struct XbCase {
+    /// The component's root org id — its stable case key.
+    pub root: i64,
+    pub size: u64,
+    /// The shared normalized name. What made these an edge in the first place.
+    pub key: String,
+    pub countries: Vec<String>,
+    pub members: Vec<XbMember>,
+}
+
+/// The reviewer's input for the issue-314 same-name cohort. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct XbPacket {
+    /// Components in the same-name class, and how many this packet carries.
+    pub cohort: u64,
+    pub cases: Vec<XbCase>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One standing org a generic-named, country-less mention could anchor-bind
 /// to at ingest but could not be merged with in batch (issue 318).
 #[derive(Debug, Default, Clone)]
@@ -11075,6 +11121,198 @@ impl Db {
             self.publish_cursor(&conn).await?;
         }
         Ok(report)
+    }
+
+    /// Issues 311 + 314: the reviewer's input for the SAME-NAME cross-border
+    /// cohort — the 589 components (of 939) whose members are all canonical,
+    /// sit in distinct countries, and share a normalized name.
+    ///
+    /// This is the first thing to actually CONSUME `org_candidate_edges`.
+    /// Stage 4 built 1.5M advisory edges to feed the issue-311 review loop and
+    /// nothing read them for a month; the census sized them, the split showed
+    /// the proposed cohort was four classes wearing one name, and this carries
+    /// the one class a single rubric fits.
+    ///
+    /// Read-only. Emits, per case: every member's row, its language-labelled
+    /// name variants, its mention count and a few publication ids. The
+    /// mention counts are the reviewer's first read — a 400-mention row beside
+    /// a 1-mention row is one entity with a stray duplicate, while two
+    /// 200-mention rows are more likely two real registrations that happen to
+    /// share a name.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn xb_same_name_packet(
+        &self,
+        norm: fn(&str) -> String,
+        cases_cap: usize,
+        notices_cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<XbPacket> {
+        let reader = self.reader().await?;
+        let mut packet = XbPacket::default();
+        let mut uf = MinUnionFind::default();
+        let mut edges: Vec<(i64, i64)> = Vec::new();
+        let (mut last_a, mut last_b, mut last_rule) = (0i64, 0i64, String::new());
+        loop {
+            if stop() {
+                return Ok(XbPacket { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT org_a, org_b, rule FROM org_candidate_edges \
+                      WHERE (org_a, org_b, rule) > (?, ?, ?) \
+                      ORDER BY org_a, org_b, rule LIMIT 200000",
+                    (Value::Integer(last_a), Value::Integer(last_b), t(&last_rule)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let (a, b, rule) = (int(&row, 0), int(&row, 1), text(&row, 2));
+                page += 1;
+                edges.push((a, b));
+                (last_a, last_b, last_rule) = (a, b, rule);
+            }
+            if page == 0 {
+                break;
+            }
+        }
+
+        let mut ids: Vec<i64> = edges.iter().flat_map(|&(a, b)| [a, b]).collect();
+        ids.sort_unstable();
+        ids.dedup();
+        // (canonical, country, name) — the same probe the census runs, for the
+        // same reason: a per-component read over 10^5 components is a storm.
+        let mut live: std::collections::HashMap<i64, (bool, String, String)> =
+            std::collections::HashMap::new();
+        for chunk in ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(XbPacket { stopped: true, ..Default::default() });
+            }
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let sql = format!(
+                "SELECT id, identifier, country, name FROM organizations WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let mut rows = reader.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                live.insert(
+                    int(&row, 0),
+                    (
+                        !matches!(row.get_value(1), Ok(Value::Null)),
+                        opt_text_of(&row, 2).unwrap_or_else(|| NO_COUNTRY.into()),
+                        text(&row, 3),
+                    ),
+                );
+            }
+        }
+        for &(a, b) in &edges {
+            if live.contains_key(&a) && live.contains_key(&b) {
+                uf.union(a, b);
+            }
+        }
+        let mut members: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+        for id in live.keys() {
+            members.entry(uf.find(*id)).or_default().push(*id);
+        }
+
+        // Select the SAME-NAME class, by the census's own definition so the
+        // two cannot drift: every member canonical, every country distinct and
+        // known, all names normalizing alike.
+        let mut roots: Vec<i64> = Vec::new();
+        for (root, ms) in &members {
+            if ms.len() < 2 {
+                continue;
+            }
+            if !ms.iter().all(|id| live[id].0) {
+                continue;
+            }
+            let countries: std::collections::BTreeSet<&str> =
+                ms.iter().map(|id| live[id].1.as_str()).collect();
+            if countries.contains(NO_COUNTRY) || countries.len() != ms.len() {
+                continue;
+            }
+            let names: std::collections::BTreeSet<String> =
+                ms.iter().map(|id| norm(&live[id].2)).collect();
+            if names.len() != 1 {
+                continue;
+            }
+            roots.push(*root);
+        }
+        packet.cohort = roots.len() as u64;
+        // Deterministic order, so a re-run addresses the same cases and a
+        // campaign can be resumed by root id.
+        roots.sort_unstable();
+        if roots.len() > cases_cap {
+            packet.truncated = true;
+            roots.truncate(cases_cap);
+        }
+
+        for root in roots {
+            if stop() {
+                return Ok(XbPacket { stopped: true, ..Default::default() });
+            }
+            let mut ms = members[&root].clone();
+            ms.sort_unstable();
+            let key = norm(&live[&ms[0]].2);
+            let mut case = XbCase {
+                root,
+                size: ms.len() as u64,
+                key,
+                countries: ms.iter().map(|id| live[id].1.clone()).collect(),
+                members: Vec::new(),
+            };
+            for id in ms {
+                let mut m = XbMember { org: id, name: live[&id].2.clone(), ..Default::default() };
+                let mut rows = reader
+                    .query(
+                        "SELECT country, identifier_kind, identifier FROM organizations \
+                          WHERE id = ?",
+                        (Value::Integer(id),),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    m.country = opt_text_of(&row, 0);
+                    m.identifier_kind = opt_text_of(&row, 1);
+                    m.identifier = opt_text_of(&row, 2);
+                }
+                drop(rows);
+                let mut rows = reader
+                    .query(
+                        "SELECT lang, name FROM organization_names WHERE org_id = ? \
+                          ORDER BY lang",
+                        (Value::Integer(id),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    m.variants.push((text(&row, 0), text(&row, 1)));
+                }
+                drop(rows);
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(id),),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    m.mentions = int(&row, 0) as u64;
+                }
+                drop(rows);
+                let mut rows = reader
+                    .query(
+                        "SELECT n.publication_id FROM organization_mentions om \
+                           JOIN notices n ON n.id = om.notice_id \
+                          WHERE om.organization_id = ? LIMIT ?",
+                        (Value::Integer(id), Value::Integer(notices_cap as i64)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    m.notices.push(text(&row, 0));
+                }
+                case.members.push(m);
+            }
+            packet.cases.push(case);
+        }
+        Ok(packet)
     }
 
     /// Issue 314: size the candidate-edge store before anything reviews it.

@@ -30,6 +30,7 @@ pub use canonical::{
     SatelliteDropReport, SatelliteRestoreReport,
     AnchorWallReport, WallGapOwner,
     WallCounts,
+    XbCase, XbMember, XbPacket,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,
