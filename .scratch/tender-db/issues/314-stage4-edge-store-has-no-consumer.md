@@ -239,6 +239,54 @@ ograniczoną odpowiedzialnością` (Polish), `Veidekke Industri` (Norwegian),
 `„OLI-NAT" Robert Zajkowski` (Polish). A handful, not a systematic fault.
 Recorded here so the next reader does not re-raise the same alarm.
 
+### CORRECTION, 2026-08-31 — the falsification was itself half wrong
+
+I told the next reader not to re-raise this. That instruction was wrong, and the
+evidence that overturns it is the issue-326 census (job 537), which groups by
+IDENTIFIER instead of by country pair:
+
+    831496285   BG BW VA VE VG VU     „Петрол“ АД
+    123531939   BG BO GW GY VA VU     „ТЕЦ Марица изток 2“ ЕАД
+    103267194   BG BI BT GA VA VU     „Софарма Трейдинг“ АД
+
+One Bulgarian company, one Bulgarian EIK, a Cyrillic name — under six country
+codes, of which BG is one and the rest are spray. Петрол АД is not an EU
+external-action entity; it is a Bulgarian oil company standing under Vanuatu,
+the Vatican, Venezuela and the British Virgin Islands at once. So the V-family
+IS largely a systematic country-code fault, exactly as I first suspected.
+
+**Why I got it wrong: I looked at country pairs and read the populations under
+each code.** Those populations are real, and they do contain genuine
+external-action entities — `Service européen pour l'action extérieure au
+Burkina Faso` is a real row and BF is right for it. What the pair view could
+not show is that the SAME code also holds Bulgarian companies whose identifier
+appears under five other codes. Both things are true of BF and VA; I found the
+first, concluded, and stopped.
+
+**And the instinct behind the falsification turns out to name a real class,
+just not that one.** The census's four widest clusters are legitimately
+multi-country:
+
+    2021003831        1A DE KE MD MZ SE UA UG   "Embassy of Sweden" / Regeringskansliet
+    43271911          BD BF DE KE UA UG US      "Ambassade Royale du Danemark"
+    026481435420100   BE BF BI ML MR NE         "Enabel — Agence belge de développement"
+    408712            BA BF CH CO JO RO TD TJ   Swiss "Direction du développement et de la coopération"
+
+One legal entity, one register number, procurement filed from wherever it
+operates. That class must be excluded from any country repair, and it is the
+thing "EU procurement covers development aid in third countries" was actually
+pointing at.
+
+Two lessons, both about method rather than about Bulgaria:
+
+* **A falsification is a claim and needs the same scrutiny as the hypothesis.**
+  I checked "are these codes populated by plausible entities?" and got yes.
+  The question that mattered was "does one identifier appear under several of
+  them?", and I never asked it.
+* **"Recorded so nobody re-raises this" is a load-bearing sentence and I should
+  earn it.** Writing it down closes a line of enquiry for every later reader,
+  which is worth doing — and worth doing only when the check was the right one.
+
 ## THE SPLIT, measured on prod (2026-08-31, job 533, rev 4c16655)
 
     cohort              939

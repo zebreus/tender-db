@@ -102,3 +102,134 @@ countries plausibly hold the same registrant, and `SK / SI` likewise. The 18/18
 review agreement is a strong prior, not a proof, and it is drawn from the 18 that
 happened to fall in slice 1 rather than from a random draw of the 76. Step 1 is
 the census; the survivor rule is only as good as what the census shows.
+
+---
+
+## Built and measured corpus-wide (2026-08-31, `57d5224`)
+
+`country-typo-census` job, deployed and run on prod with the queue idle:
+
+| | |
+| --- | --- |
+| country codes holding identifier-bearing rows | 222 |
+| pairings exactly one letter apart, both sides present | 2,275 |
+| rows ranged over on the rarer sides | 541,225 |
+| **hits — same identifier across a one-letter pair** | **726** |
+| the checksum names a survivor for | 87 (12.0%) |
+| neither side's country was even asked | 630 (86.8%) |
+
+The sizing prediction held exactly (222 / 2,275 / 541,225 were the estimates),
+and the 12% decidable rate independently reproduces the cohort measurement's 9
+of 76. So the shape of the problem is confirmed and the class is **ten times
+larger than the review cohort's slice of it** — 726 corpus-wide against 76 in
+the 589 same-name cases.
+
+Report caps at 400 rows; everything below is read off those.
+
+## The pair view was the wrong unit. It is a CLUSTER.
+
+Grouping the 400 carried pairs by identifier: 311 distinct identifiers, of
+which 273 sit under 2 country codes — but 38 sit under 3 to **8**:
+
+```
+831496285         6 codes: BG BW VA VE VG VU     „Петрол“ АД
+123531939         6 codes: BG BO GW GY VA VU     „ТЕЦ Марица изток 2“ ЕАД
+103267194         6 codes: BG BI BT GA VA VU     „Софарма Трейдинг“ АД
+```
+
+One Bulgarian company, one Bulgarian EIK, a Cyrillic name — and six country
+codes, of which **BG is one and the rest are spray**. The census reports that as
+pairwise edges (BG/BI, VA/VU, BG/BT…) because pairs were the unit I chose, and
+the pair view hides the thing that actually decides it: *the true code is
+already in the cluster.* A repair driven off clusters can pick the survivor by
+majority-plus-format; a repair driven off pairs cannot, because a VA/VU pair
+does not contain the answer at all.
+
+**So the census's own unit should change**: group by identifier first, then
+report the country set. The one-letter test stays as the *filter* that says a
+cluster is corruption rather than geography, but it is no longer the key.
+
+## And there is a legitimate multi-country class that looks identical
+
+The four WIDEST clusters are not typos at all:
+
+```
+2021003831        8 codes: 1A DE KE MD MZ SE UA UG   "Embassy of Sweden" / "Regeringskansliet"
+43271911          7 codes: BD BF DE KE UA UG US      "Ambassade Royale du Danemark"
+026481435420100   6 codes: BE BF BI ML MR NE         "Enabel — Agence belge de développement"
+408712            8 codes: BA BF CH CO JO RO TD TJ   "Direction du développement et de la coopération"
+```
+
+Embassies and development agencies: **one legal entity, one register number,
+procurement filed from wherever it operates.** Sweden's Regeringskansliet under
+Kenya, Moldova, Mozambique, Ukraine and Uganda is not a corrupted `SE` — it is
+the Swedish embassy in each of those countries, and the country field is
+recording the place of the procurement rather than the registrant's domicile.
+
+This family would have been swept up by any rule built on the pairwise
+same-identifier test, and it is exactly the class where a wrong "correction"
+destroys real information. It has to be excluded, and the discriminator is
+neither the checksum nor the mention spread — both fail on it (Enabel is 2
+mentions under NE against 249 under BE, the same asymmetry the true typos
+show). What separates it is the NAME: "Embassy of", "Ambassade", "Agence …
+de développement", "Direction du développement et de la coopération".
+
+## Both countries can be wrong
+
+A further premise of the pair framing fails outright. In several clusters
+NEITHER code is right:
+
+* `GW` / `GY` both hold „ТЕЦ Марица изток 2“ — a Bulgarian power plant.
+* `AO` / `AD` both hold the Polish Krajowa Izba Odwoławcza.
+* `TJ` / `TD` both hold the Swiss development directorate.
+
+"Pick the survivor from the two" is therefore not a sound rule shape. The
+cluster view fixes this too: the true code is recoverable when it is present
+somewhere in the cluster, and when it is not, the census must say so and stop.
+
+## What the 400 rows look like
+
+| | |
+| --- | --- |
+| names normalize identically | 253 |
+| names share a 12-character prefix | 34 |
+| names genuinely differ | 113 |
+| identifier shorter than 6 characters | 12 |
+
+The 113 "names differ" rows are mostly NOT false positives — they are the same
+entity in another language, transliteration or era, which is *stronger*
+same-entity evidence than a string match:
+
+* `FK:Inmac WStore SAS` / `FR:inmac wstore` — one SIRET, `38805549300059`.
+* `SS:Philips AB` / `SE:Philips AB Healthcare` — one Swedish orgnr.
+* `SV:ÅF-Infrastructure AB` / `SE:Afry Infrastructure AB` — one orgnr, and ÅF
+  was renamed AFRY.
+* `BM:„Мобилтел“ ЕАД` / `BG:А1 България ЕАД` — one EIK; Mobiltel became A1.
+* `GW:„ТЕЦ Марица изток 2“ ЕАД` / `GY:„TETs Maritsa iztok 2“ EAD` — Cyrillic
+  against its own transliteration.
+
+The real false positives are the short and letter-heavy identifiers: `9948`
+shared by `US:Techno-Sciences, LLC` and `ES:VICENTE TARREGA PEREZ`, and
+`RCCMRCDLA2017B…` shared by two unrelated Central African companies. Twelve of
+400 carry an identifier under 6 characters. A shape floor removes them.
+
+An aside, filed here rather than as its own issue because the placeholder
+lexicon (issue 300 Stage 1) is where it belongs: identifier `408712` also
+carries an organization row named **"BITTE NICHT ÖFFNEN - OFFERTE"** — "DO NOT
+OPEN - OFFER". A tender document's cover instruction became an organization.
+
+## Revised plan
+
+1. **Re-cut the census by identifier**, not by pair: report the country SET per
+   identifier, the name variants, the per-code mention counts, and the anchor
+   evidence once. The one-letter test becomes the corruption filter, not the
+   grouping key.
+2. **Exclude the operational-footprint class** — embassies, development
+   agencies, anything whose off-home codes are a place of business. Name-based,
+   and it needs its own measured list rather than a guessed one.
+3. **Floor the identifier shape**: at least 6 characters, and no letter-heavy
+   register string (issue 325's `letter_run_after_prefix` is the same
+   predicate).
+4. **Survivor rule** only where the cluster contains a code the identifier's
+   format and the name's language both support. Otherwise abstain and report.
+   Abstention is a correct answer here; a coin-flip is not.
