@@ -2262,6 +2262,29 @@ pub struct EdgeCensusReport {
     /// The first components of that cohort, in root order, for hand review
     /// before the campaign commits: (root, size, "country:name" per member).
     pub canonical_cross_border_sample: Vec<(i64, u64, Vec<String>)>,
+    /// Issue 314 step 2: the cohort above SPLIT, because reading its sample
+    /// showed it is not one cohort. Four classes with four different right
+    /// answers cannot share a rubric, and one of them is dangerous.
+    ///
+    /// Every member's country distinct AND every name normalizing to the
+    /// same string: one entity filed under several country codes
+    /// (`Mercell Holding ASA` as DK, LT and NO). The merge-candidate class,
+    /// and the only one a "merge / distinct / unsure" rubric fits cleanly.
+    pub xb_same_name: u64,
+    /// Countries distinct but the names DIFFER — `Steelco Belimed GmbH` (AT)
+    /// beside `Belimed GmbH` (DE). Corporate siblings in different
+    /// jurisdictions, which are separate legal entities and must NOT merge.
+    /// This is the class that costs something to get wrong, so it is the
+    /// pilot's real subject rather than a footnote in it.
+    pub xb_diff_name: u64,
+    /// The component ALSO contains two members sharing a country — `Merck
+    /// Life Science` three times under CZ plus one SK sibling, or a Bulgarian
+    /// hospital in both Cyrillic and Latin script riding in on a third
+    /// member's country. The intra-country duplicate is a different (and
+    /// easier) question and should be settled before the border one.
+    pub xb_with_intra: u64,
+    /// One sample per class, for hand review: (class, root, size, members).
+    pub xb_class_sample: Vec<(String, i64, u64, Vec<String>)>,
     /// Top country pairs among genuinely cross-border components.
     pub country_pairs: Vec<(String, u64)>,
     /// A deterministic spread sample for hand review: (component root,
@@ -11071,6 +11094,7 @@ impl Db {
     pub async fn census_org_candidate_edges(
         &self,
         sample_every: usize,
+        norm: fn(&str) -> String,
         stop: &(dyn Fn() -> bool + Sync),
     ) -> turso::Result<EdgeCensusReport> {
         let reader = self.reader().await?;
@@ -11191,6 +11215,31 @@ impl Db {
                 if canon == ms.len() {
                     report.canonical_cross_border_components += 1;
                     *cohort_pairs.entry(known.join("-")).or_default() += 1;
+                    // Issue 314 step 2: which of the four classes is this?
+                    // `known.len() < ms.len()` means two members share a
+                    // country (or one is NULL-country), so an intra-country
+                    // duplicate rides inside a "cross-border" component.
+                    let names: std::collections::BTreeSet<String> =
+                        ms.iter().map(|id| norm(&live[id].2)).collect();
+                    let class = if known.len() < ms.len() {
+                        report.xb_with_intra += 1;
+                        "with-intra"
+                    } else if names.len() == 1 {
+                        report.xb_same_name += 1;
+                        "same-name"
+                    } else {
+                        report.xb_diff_name += 1;
+                        "diff-name"
+                    };
+                    if report.xb_class_sample.iter().filter(|(c, ..)| c == class).count() < 8 {
+                        let mut show: Vec<String> = ms
+                            .iter()
+                            .take(6)
+                            .map(|id| format!("{}:{}", live[id].1, live[id].2))
+                            .collect();
+                        show.sort();
+                        report.xb_class_sample.push((class.to_owned(), **root, size, show));
+                    }
                     if report.canonical_cross_border_sample.len() < COHORT_SAMPLE {
                         let mut show: Vec<String> = ms
                             .iter()

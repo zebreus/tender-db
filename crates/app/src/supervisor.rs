@@ -4347,7 +4347,7 @@ impl Supervisor {
                 // Sample every 500th component, capped at 40 in-store.
                 let r = self
                     .db
-                    .census_org_candidate_edges(500, &stop)
+                    .census_org_candidate_edges(500, ingest::project::match_norm, &stop)
                     .await
                     .map_err(|e| e.to_string())?;
                 if r.stopped {
@@ -4368,6 +4368,14 @@ impl Supervisor {
                     "multi_country_components": r.multi_country_components,
                     "null_country_components": r.null_country_components,
                     "canonical_cross_border_components": r.canonical_cross_border_components,
+                    "xb_same_name": r.xb_same_name,
+                    "xb_diff_name": r.xb_diff_name,
+                    "xb_with_intra": r.xb_with_intra,
+                    "xb_class_sample": r.xb_class_sample.iter()
+                        .map(|(c, root, size, ms)| serde_json::json!({
+                            "class": c, "root": root, "size": size, "members": ms,
+                        }))
+                        .collect::<Vec<_>>(),
                     "canonical_cross_border_pairs": r.canonical_cross_border_pairs.iter().map(|(k, v)| {
                         serde_json::json!({ "pair": k, "components": v })
                     }).collect::<Vec<_>>(),

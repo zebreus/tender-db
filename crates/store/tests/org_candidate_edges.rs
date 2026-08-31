@@ -8,6 +8,26 @@
 
 use store::turso::Value;
 
+/// Issue 314 step 2: the census classifies cross-border components by whether
+/// their member names normalize alike, so it takes a norm. Case- and
+/// punctuation-insensitive, like the real one.
+fn census_norm(name: &str) -> String {
+    let mut out = String::new();
+    let mut gap = false;
+    for c in name.chars() {
+        if c.is_alphanumeric() {
+            if gap && !out.is_empty() {
+                out.push(' ');
+            }
+            gap = false;
+            out.extend(c.to_lowercase());
+        } else {
+            gap = true;
+        }
+    }
+    out
+}
+
 fn n2(s: &str) -> String {
     s.to_lowercase().split_whitespace().collect::<Vec<_>>().join(" ")
 }
@@ -495,7 +515,7 @@ async fn the_edge_census_counts_components_not_edges() {
         .unwrap();
     }
     let never = || false;
-    let r = db.census_org_candidate_edges(1, &never).await.unwrap();
+    let r = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
     assert_eq!((r.edges, r.e3_name, r.e3_xlang), (5, 4, 1));
     assert_eq!(r.orgs_touched, 9, "8 live rows + the merged-away 9999 endpoint");
     assert_eq!(r.dangling_orgs, 1, "…and as dangling, since its row is gone");
@@ -535,7 +555,7 @@ async fn the_edge_census_counts_components_not_edges() {
     )
     .await
     .unwrap();
-    let r2 = db.census_org_candidate_edges(1, &never).await.unwrap();
+    let r2 = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
     assert_eq!(r2.components, 4);
     assert_eq!(r2.null_country_components, 1, "the country-less pair is counted here…");
     assert_eq!(r2.multi_country_components, 1, "…and NOT as a second cross-border component");
@@ -553,7 +573,7 @@ async fn the_edge_census_counts_components_not_edges() {
     )
     .await
     .unwrap();
-    let r3 = db.census_org_candidate_edges(1, &never).await.unwrap();
+    let r3 = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
     assert_eq!(
         r3.canonical_only_components, 3,
         "the DE chain, the country-less epsilon pair (keyed, one KNOWN country), \
@@ -579,7 +599,105 @@ async fn the_edge_census_counts_components_not_edges() {
 
     // Cancel is honest: no partial numbers.
     let always = || true;
-    let stopped = db.census_org_candidate_edges(1, &always).await.unwrap();
+    let stopped = db.census_org_candidate_edges(1, census_norm, &always).await.unwrap();
     assert!(stopped.stopped);
     assert_eq!((stopped.edges, stopped.components), (0, 0));
+}
+
+/// Issue 314 step 2: the "canonical cross-border" cohort is not one cohort.
+///
+/// Reading its live sample showed four classes with four different right
+/// answers, and a single merge/distinct rubric written for the first would be
+/// actively wrong on the second. The census splits them now, so a pilot gets a
+/// cohort one rubric can serve.
+#[tokio::test]
+async fn the_cross_border_cohort_splits_into_its_three_shapes() {
+    let (db, conn) = open("test-org-edge-xb-split.db").await;
+
+    // SAME-NAME: one entity under three country codes. The merge-candidate
+    // class — the live specimen is `Mercell Holding ASA` as DK, LT and NO.
+    for (id, cc) in [(1i64, "DK"), (2, "LT"), (3, "NO")] {
+        org(&conn, id, "Mercell Holding ASA", Some(&format!("M{id}"))).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+
+    // DIFF-NAME: corporate siblings in different jurisdictions. Separate legal
+    // entities that must NOT merge — the live specimen is `Steelco Belimed
+    // GmbH` (AT) beside `Belimed GmbH` (DE). This is the class that costs
+    // something to get wrong, which is why it must not share a rubric with the
+    // one above.
+    org(&conn, 4, "Steelco Belimed GmbH", Some("B-AT")).await;
+    org(&conn, 5, "Belimed GmbH", Some("B-DE")).await;
+    conn.execute("UPDATE organizations SET country = 'AT' WHERE id = 4", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET country = 'DE' WHERE id = 5", ()).await.unwrap();
+
+    // WITH-INTRA: a same-country duplicate riding inside a "cross-border"
+    // component — the live specimen is `Merck Life Science` three times under
+    // CZ plus one SK sibling. The intra-country question is different, and
+    // easier, and should be settled first.
+    for (id, cc) in [(6i64, "CZ"), (7, "CZ"), (8, "SK")] {
+        org(&conn, id, "Merck Life Science spol. s r.o.", Some(&format!("K{id}"))).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+
+    for (a, b) in [(1i64, 2i64), (2, 3), (4, 5), (6, 7), (7, 8)] {
+        conn.execute(
+            "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+             VALUES (?, ?, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+            (Value::Integer(a), Value::Integer(b)),
+        )
+        .await
+        .unwrap();
+    }
+
+    let never = || false;
+    let r = db.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
+    assert_eq!(r.canonical_cross_border_components, 3, "all three are the cohort");
+    assert_eq!(r.xb_same_name, 1, "Mercell: countries distinct, one name");
+    assert_eq!(r.xb_diff_name, 1, "Belimed: countries distinct, names differ — do NOT merge");
+    assert_eq!(r.xb_with_intra, 1, "Merck: two members share CZ");
+    assert_eq!(
+        r.xb_same_name + r.xb_diff_name + r.xb_with_intra,
+        r.canonical_cross_border_components,
+        "the split is a partition — every cohort component lands in exactly one class"
+    );
+
+    // The sample carries the class, so a reviewer can read one of each without
+    // re-deriving the classification by hand.
+    let classes: std::collections::BTreeSet<&str> =
+        r.xb_class_sample.iter().map(|(c, ..)| c.as_str()).collect();
+    assert_eq!(
+        classes.into_iter().collect::<Vec<_>>(),
+        vec!["diff-name", "same-name", "with-intra"]
+    );
+
+    // Case differences must not split a same-name component: the real corpus
+    // pairs `SARSTEDT spol. s r.o.` with `Sarstedt spol. s r.o.`, and counting
+    // that as diff-name would put a plain duplicate in the dangerous class.
+    let (db2, conn2) = open("test-org-edge-xb-case.db").await;
+    org(&conn2, 1, "SARSTEDT spol. s r.o.", Some("S1")).await;
+    org(&conn2, 2, "Sarstedt spol. s r.o.", Some("S2")).await;
+    conn2.execute("UPDATE organizations SET country = 'CZ' WHERE id = 1", ()).await.unwrap();
+    conn2.execute("UPDATE organizations SET country = 'SK' WHERE id = 2", ()).await.unwrap();
+    conn2
+        .execute(
+            "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+             VALUES (1, 2, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+            (),
+        )
+        .await
+        .unwrap();
+    let r2 = db2.census_org_candidate_edges(1, census_norm, &never).await.unwrap();
+    assert_eq!(r2.xb_same_name, 1, "case alone is not a different name");
+    assert_eq!(r2.xb_diff_name, 0);
 }
