@@ -506,74 +506,77 @@ pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
     }
     let key: String = digits.iter().map(|d| (d + b'0') as char).collect();
     let mut out: Vec<(&'static str, String)> = Vec::new();
-    match digits.len() {
-        8 => {
-            // All four 8-digit register schemes are checksummed (dk_cvr and
-            // si_davcna landed in the Stage-3 8-digit slice, validated on
-            // live rows), so 8-digit anchors are real probes now, unique
-            // only when exactly one scheme's arithmetic accepts. The old
-            // blanket DK|SI ambiguity marker is gone — SI/CZ still co-anchor
-            // most of the time by construction (near-identical mod-11), and
-            // that shows up honestly as a multi-anchor skip.
-            if cz_ico(&digits) == Checksum::Pass {
-                out.push(("CZ:ico", key.clone()));
-            }
-            if fi_ytunnus(&digits) == Checksum::Pass {
-                out.push(("FI:ytunnus", key.clone()));
-            }
-            if dk_cvr(&digits) == Checksum::Pass {
-                out.push(("DK:cvr", key.clone()));
-            }
-            if si_davcna(&digits) == Checksum::Pass {
-                out.push(("SI:davcna", key));
-            }
+    for (scheme, check) in uniform_arm(digits.len()) {
+        if check(&digits) == Checksum::Pass {
+            out.push((scheme, key.clone()));
         }
-        9 => {
-            if luhn(&digits) == Checksum::Pass {
-                out.push(("FR:siren", key.clone()));
-            }
-            if no_orgnr(&digits) == Checksum::Pass {
-                out.push(("NO:orgnr", key.clone()));
-            }
-            if pt_nif(&digits) == Checksum::Pass {
-                out.push(("PT:nif", key.clone()));
-            }
-            if gr_afm(&digits) == Checksum::Pass {
-                out.push(("GR:afm", key));
-            }
+    }
+    if digits.len() == 14 && !ambiguous_pad(&key) && luhn(&digits) == Checksum::Pass {
+        out.push(("FR:siren", key[..9].to_owned()));
+    }
+    out
+}
+
+/// The uniform arms of the anchor probe: for each value SHAPE (digit count),
+/// the schemes whose arithmetic is even ATTEMPTED.
+///
+/// ONE table, because two readers need the same answer and any drift between
+/// them is a lie in a reviewer's evidence. `checksum_anchors` runs the
+/// arithmetic and reports what PASSED; `anchor_vocabulary` reports what was
+/// ASKED. A reviewer who sees "the row says SK and the value anchors CZ" has
+/// to be able to tell "tested as SK, failed" from "no SK scheme has this
+/// shape, so the silence means nothing" — and only the asked set answers that
+/// (issue 314). The 14-digit FR:siren arm is not in the table: it carries a
+/// leading-zero judgment and a TRUNCATED key, so both readers special-case
+/// it — through the shared `ambiguous_pad` predicate, for the same reason.
+fn uniform_arm(len: usize) -> &'static [(&'static str, fn(&[u8]) -> Checksum)] {
+    match len {
+        8 => &[
+            ("CZ:ico", cz_ico),
+            ("FI:ytunnus", fi_ytunnus),
+            ("DK:cvr", dk_cvr),
+            ("SI:davcna", si_davcna),
+        ],
+        9 => &[("FR:siren", luhn), ("NO:orgnr", no_orgnr), ("PT:nif", pt_nif), ("GR:afm", gr_afm)],
+        10 => &[("SE:orgnr", luhn), ("PL:nip", pl_nip), ("BE:kbo", be_kbo)],
+        11 => &[("IT:piva", it_piva), ("HR:oib", mod_11_10)],
+        _ => &[],
+    }
+}
+
+/// Mirror the crosswalk's leading-zero judgment (verification round): a
+/// 14-digit value whose zero-strip is EXACTLY 9 digits is ambiguous — a
+/// zero-padded 9-digit national as plausibly as a low-SIREN SIRET — and the
+/// crosswalk demotes it to E2. An anchor must not be more confident than the
+/// key it anchors to. The probe therefore DECLINES to decide such a value,
+/// which is why the vocabulary must not claim FR was asked about it.
+fn ambiguous_pad(key: &str) -> bool {
+    key.starts_with('0') && key.trim_start_matches('0').len() == 9
+}
+
+/// The schemes the anchor probe ASKS about this value — pass or fail.
+///
+/// `checksum_anchors` reports what passed; this reports what was asked, and
+/// the difference is what makes a NEGATIVE readable. A value that anchors
+/// CZ:ico on a row claiming SK was never tested as SK — no SK scheme has an
+/// 8-digit arm — so that row's country is UNPROBED, not contradicted (and CZ
+/// and SK IČO share the same mod-11 arithmetic, so the CZ pass is not even
+/// weak evidence against SK). The same value on a row claiming FI *was*
+/// tested, FI:ytunnus being in the 8-digit arm, and its silence is a real
+/// contradiction. Empty for letter-bearing values, which the probe declines
+/// wholesale — there the silence is about the VALUE's shape, not the row's
+/// country.
+pub fn anchor_vocabulary(value: &str) -> Vec<&'static str> {
+    let digits: Vec<u8> = value.bytes().filter(u8::is_ascii_digit).map(|b| b - b'0').collect();
+    if value.bytes().any(|b| b.is_ascii_alphabetic()) || digits.is_empty() {
+        return Vec::new();
+    }
+    let mut out: Vec<&'static str> = uniform_arm(digits.len()).iter().map(|(sc, _)| *sc).collect();
+    if digits.len() == 14 {
+        let key: String = digits.iter().map(|d| (d + b'0') as char).collect();
+        if !ambiguous_pad(&key) {
+            out.push("FR:siren");
         }
-        10 => {
-            if luhn(&digits) == Checksum::Pass {
-                out.push(("SE:orgnr", key.clone()));
-            }
-            if pl_nip(&digits) == Checksum::Pass {
-                out.push(("PL:nip", key.clone()));
-            }
-            if be_kbo(&digits) == Checksum::Pass {
-                out.push(("BE:kbo", key));
-            }
-        }
-        11 => {
-            if it_piva(&digits) == Checksum::Pass {
-                out.push(("IT:piva", key.clone()));
-            }
-            if mod_11_10(&digits) == Checksum::Pass {
-                out.push(("HR:oib", key));
-            }
-        }
-        14 => {
-            // Mirror the crosswalk's leading-zero judgment (verification
-            // round): a 14-digit value whose zero-strip is EXACTLY 9 digits
-            // is ambiguous — a zero-padded 9-digit national as plausibly as a
-            // low-SIREN SIRET — and the crosswalk demotes it to E2. An
-            // anchor must not be more confident than the key it anchors to.
-            let ambiguous_pad =
-                key.starts_with('0') && key.trim_start_matches('0').len() == 9;
-            if luhn(&digits) == Checksum::Pass && !ambiguous_pad {
-                out.push(("FR:siren", key[..9].to_owned()));
-            }
-        }
-        _ => {}
     }
     out
 }
@@ -581,6 +584,61 @@ pub fn checksum_anchors(value: &str) -> Vec<(&'static str, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The drift guard for the two readers of `uniform_arm` (issue 314).
+    ///
+    /// The packet tells a reviewer "the probe asked about your row's country
+    /// and it refused" only when the country is in `anchor_vocabulary`. If a
+    /// scheme could PASS without being in the vocabulary, that sentence would
+    /// be built from a set that does not contain the scheme that produced the
+    /// evidence — the packet would report a contradiction as an unasked
+    /// question, or worse, the reverse. So: everything that can pass must be
+    /// something the vocabulary admits was asked.
+    #[test]
+    fn every_anchor_that_passes_was_one_the_vocabulary_admits_asking() {
+        // Shapes across every arm, including the 14-digit special case in both
+        // of its states (ambiguous zero-pad, and a clean SIRET).
+        for v in [
+            "12345670",
+            "27074358",
+            "980921565",
+            "123456789",
+            "5560269986",
+            "1234567890",
+            "12345678903",
+            "00012345678901",
+            "73282932000074",
+            "",
+            "HRB 12345",
+            "DE123456789",
+        ] {
+            let vocab = anchor_vocabulary(v);
+            for (scheme, _) in checksum_anchors(v) {
+                assert!(
+                    vocab.contains(&scheme),
+                    "{v}: {scheme} passed but the vocabulary does not admit asking it"
+                );
+            }
+        }
+    }
+
+    /// The other half of parity: a value the probe DECLINES to decide must not
+    /// appear in the vocabulary either. The 14-digit zero-pad is the only such
+    /// case — the probe refuses it for ambiguity, and a reviewer told "FR was
+    /// asked and refused" would read a refusal-to-decide as a verdict.
+    #[test]
+    fn a_declined_shape_is_not_reported_as_a_question_that_was_asked() {
+        // 14 digits whose zero-strip is exactly 9: the crosswalk's E2 demotion.
+        let padded = "00000123456789";
+        assert_eq!(padded.len(), 14);
+        assert!(checksum_anchors(padded).is_empty(), "the probe declines to decide it");
+        assert!(
+            !anchor_vocabulary(padded).contains(&"FR:siren"),
+            "so it must not be reported as an FR question that was asked"
+        );
+        // …while a clean 14-digit IS asked, whatever the arithmetic says.
+        assert!(anchor_vocabulary("73282932000074").contains(&"FR:siren"));
+    }
 
     /// Issue 312: the platform-GUID shape. Specimens are REAL values the
     /// issue-311 campaign reviewed case by case (orgs 22310065, 22149631,

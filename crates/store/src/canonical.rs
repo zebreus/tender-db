@@ -2126,9 +2126,26 @@ pub struct XbMember {
     /// merges the pair through a tested path. Merging directly would bury the
     /// fact that a country code was wrong.
     pub anchors: Vec<String>,
-    /// Whether the row's own country is among those schemes. `false` on a
-    /// value that anchors somewhere at all is the contaminated-country signal.
+    /// Whether the row's own country is among those schemes.
+    ///
+    /// Read this ONLY together with `country_probed`. On its own, `false`
+    /// means three different things — the arithmetic contradicts the row's
+    /// country, or no scheme of the row's country has this value's shape, or
+    /// the value anchors nowhere at all — and a reviewer who cannot separate
+    /// them will read a vocabulary gap as contamination. That conflation is
+    /// what put 6 of the pilot's first 100 verdicts into dispute (issue 314),
+    /// and it is the same "a zero that means two things" defect as issue 318.
     pub country_agrees: bool,
+    /// Whether the probe ASKED about the row's own country for this value —
+    /// i.e. some scheme of that country has this value's shape.
+    ///
+    /// `country_probed && !country_agrees` on a value that anchors somewhere
+    /// is the contaminated-country signal: tested under the row's own
+    /// register and refused, accepted under another's. `!country_probed` is
+    /// silence with no content: e.g. an 8-digit SK IČO, where the probe has
+    /// no SK arm at all (and CZ, which it does have, shares SK's mod-11
+    /// arithmetic — so a CZ anchor is not even weak evidence against SK).
+    pub country_probed: bool,
 }
 
 /// One reviewable case: a connected component of E3 edges whose members are
@@ -11159,6 +11176,7 @@ impl Db {
         &self,
         norm: fn(&str) -> String,
         anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
         cases_cap: usize,
         notices_cap: usize,
         stop: &(dyn Fn() -> bool + Sync),
@@ -11296,10 +11314,14 @@ impl Db {
                     let all = anchors(v);
                     m.anchors =
                         all.iter().filter(|(sc, _)| !sc.contains('|')).map(|(sc, _)| (*sc).to_owned()).collect();
-                    m.country_agrees = match m.country.as_deref() {
-                        Some(cc) => m.anchors.iter().any(|sc| sc.starts_with(cc)),
-                        None => false,
-                    };
+                    // A scheme names its country before the colon. Compare on
+                    // that field, not on a prefix test: `starts_with` would
+                    // let a one-letter country string match everything.
+                    let of = |sc: &str| sc.split(':').next().unwrap_or(sc).to_owned();
+                    if let Some(cc) = m.country.as_deref() {
+                        m.country_agrees = m.anchors.iter().any(|sc| of(sc) == cc);
+                        m.country_probed = vocabulary(v).iter().any(|sc| of(sc) == cc);
+                    }
                 }
                 let mut rows = reader
                     .query(

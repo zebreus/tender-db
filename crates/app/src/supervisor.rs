@@ -4180,6 +4180,7 @@ impl Supervisor {
                     .xb_same_name_packet(
                         ingest::project::match_norm,
                         ingest::idgate::checksum_anchors,
+                        ingest::idgate::anchor_vocabulary,
                         600,
                         3,
                         &stop,
@@ -4211,6 +4212,7 @@ impl Supervisor {
                             "notices": m.notices,
                             "anchors": m.anchors,
                             "country_agrees": m.country_agrees,
+                            "country_probed": m.country_probed,
                         })).collect::<Vec<_>>(),
                     })).collect::<Vec<_>>(),
                 })
@@ -4225,7 +4227,12 @@ impl Supervisor {
                      member's row, its language-labelled variants, its mention count and \
                      a few publication ids — the mention SPREAD is the first read: one \
                      heavy row beside a light one is a stray duplicate, two heavy rows are \
-                     more likely two real registrations.",
+                     more likely two real registrations. ANCHOR KEY (issue 314): read \
+                     country_agrees only WITH country_probed. probed+agrees = the \
+                     arithmetic works where the row says it is; probed+disagrees = tested \
+                     under the row's own register and refused, which is the contaminated \
+                     country signal; NOT probed = no scheme of that country has this \
+                     value's shape, so the silence carries no information.",
                     p.cohort,
                     p.cases.len(),
                     if p.truncated { " (CAPPED)" } else { "" }
