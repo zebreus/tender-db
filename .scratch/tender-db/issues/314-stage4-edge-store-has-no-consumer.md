@@ -594,6 +594,7 @@ component root. Keep the challenger on every case — at 0 disputes it is now
 cheap insurance rather than a filter, and the run where it stops being cheap is
 the run that needs it. Neither `merge` nor `wrong-country` has an execution
 path, so nothing applies from this campaign yet.
+
 ## Slice 1 of 6: 100 cases reviewed, and the packet's own evidence was defective
 
 2026-08-31. 100 cases, 200 agents (reviewer + challenger), 0 errors. Verdicts:
