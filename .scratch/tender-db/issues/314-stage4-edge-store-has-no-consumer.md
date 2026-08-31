@@ -1,8 +1,8 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: PILOT RUN 2026-08-31 — 24 cases, 48 agents. The dominant finding is
-COUNTRY CONTAMINATION (19/24), far wider than the checksum estimate. And the
-pilot caught a bias I introduced in its own rubric
+Status: RUBRIC VALIDATED 2026-08-31 by a controlled A/B — the de-biased rubric
+drops disputes to ZERO and the contamination finding survives it. Ready to
+batch the 589
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -550,3 +550,47 @@ Re-run the pilot on a fresh stratified sample with the corrected rubric, confirm
 the `wrong-country` share drops to something the evidence supports, then batch
 the 589. Verdicts still record-only: a merge has no execution path, and now
 neither does a country correction.
+
+## THE CONTROLLED A/B (2026-08-31) — same 24 cases, one variable changed
+
+I re-ran the identical 24 cases with the nudge removed and the foreign-VAT note
+added. Nothing else changed: same inputs, same challenger, same schema.
+
+    v1 (with "prefer wrong-country")   19 wrong-country · 3 distinct · 1 merge · 1 unsure   2 DISPUTED
+    v2 (nudge removed)                 16 wrong-country · 3 distinct · 4 merge · 1 unsure   0 DISPUTED
+
+**Three of 24 flipped (12.5%), and they are exactly the right three:**
+
+    22702360  Platform 24 Healthcare AB   SE orgnr + DE VAT       wrong-country → merge
+    22241904  BIEGE Dresden-Prag          identical platform GUID  wrong-country → merge
+    19840642  GIST Research Ltd           UK vat + GB vat          wrong-country → merge
+
+The first two are the cases v1's challenger disputed. The third is one the v1
+challenger did NOT catch, and the de-biased reviewer got right on its own — so
+removing the nudge did more than undo the two known errors.
+
+**Disputes went 2 → 0.** With the nudge gone, the adversarial pass finds nothing
+to dispute across all 24. Reviewer and challenger now agree completely, which is
+what a calibrated rubric looks like.
+
+**And the headline finding survives the change.** All 21 unchanged cases stayed
+put, including every same-identifier case as `wrong-country`. So the country
+contamination is a property of the data, not an artefact of how I asked — which
+is the thing that most needed checking before batching.
+
+### The lesson, stated for whoever runs the next campaign
+
+"Prefer the more specific verdict" reads like a quality instruction and behaves
+like a pressure to over-claim. It cost 3 of 24 verdicts, and every one of them
+pushed a defensible `merge` into an unsupported `wrong-country`. The fix was one
+sentence removed. The reason it was findable at all is the adversarial second
+pass plus an accidental 2-case control run — neither of which was in the plan.
+
+## Next
+
+Batch the 589 with the v2 rubric. Verdicts record-only via
+`POST /admin/case-reviews` under cohort `xb-same-name-2026-08-31`, keyed by
+component root. Keep the challenger on every case — at 0 disputes it is now
+cheap insurance rather than a filter, and the run where it stops being cheap is
+the run that needs it. Neither `merge` nor `wrong-country` has an execution
+path, so nothing applies from this campaign yet.
