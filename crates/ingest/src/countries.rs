@@ -337,3 +337,145 @@ pub fn is_alpha2(code: &str) -> bool {
     let up = code.trim().to_ascii_uppercase();
     up == "XK" || ALPHA2.binary_search(&up.as_str()).is_ok()
 }
+
+/// Two country codes exactly one letter apart — issue 326's corruption filter.
+///
+/// `SK`/`SG` (Slovakia → Singapore), `CZ`/`CR` (Czechia → Costa Rica),
+/// `BG`/`BF` (Bulgaria → Burkina Faso). A single-character slip in a two-letter
+/// field, which is what makes a shared identifier across the pair read as
+/// transcription rather than as geography.
+///
+/// It is a FILTER and not a verdict. `LT`/`LV` and `SK`/`SI` are real neighbour
+/// pairs where both countries plausibly hold the same registrant, so a cluster
+/// passing this test is a candidate, not a finding.
+pub fn one_letter_apart(a: &str, b: &str) -> bool {
+    if a.chars().count() != 2 || b.chars().count() != 2 || a == b {
+        return false;
+    }
+    a.chars().zip(b.chars()).filter(|(x, y)| x != y).count() == 1
+}
+
+/// Names that mark an organization as an operational footprint rather than a
+/// transcription error (issue 326).
+///
+/// **This is the class a same-identifier rule would destroy.** An embassy or a
+/// development agency is ONE legal entity with ONE register number, filing
+/// procurement from every country it operates in. Sweden's Regeringskansliet
+/// (`2021003831`) stands under `1A DE KE MD MZ SE UA UG`; Denmark's royal
+/// embassy under `BD BF DE KE UA UG US`; Belgium's Enabel under
+/// `BE BF BI ML MR NE`; the Swiss development directorate under
+/// `BA BF CH CO JO RO TD TJ`. None is a corrupted home code — the country field
+/// is recording where the procurement happened.
+///
+/// Neither of the obvious discriminators separates them: the checksum is silent,
+/// and the mention spread shows the SAME asymmetry the real typos do (Enabel is
+/// 2 mentions under `NE` against 249 under `BE`). Only the name does, which is
+/// why this list exists.
+///
+/// Matched case-insensitively against the substring, because these appear inside
+/// longer strings ("Ambassade Royale du Danemark à Nairobi").
+pub fn is_operational_footprint(name: &str) -> bool {
+    let n = name.to_lowercase();
+    FOOTPRINT_MARKERS.iter().any(|m| n.contains(m))
+}
+
+/// The markers, read off the four widest clusters the pair census carried plus
+/// their language variants. Deliberately narrow: a marker that also matches an
+/// ordinary company would suppress a real typo, and a missed embassy stays in
+/// the abstain bucket where it is harmless.
+const FOOTPRINT_MARKERS: &[&str] = &[
+    // Diplomatic missions.
+    "embassy",
+    "ambassade",
+    "ambasada",
+    "ambasciata",
+    "botschaft",
+    "embajada",
+    "consulate",
+    "consulat",
+    "konsulat",
+    "permanent mission",
+    "delegation of the european union",
+    // Development agencies, which file from the countries they work in.
+    "développement et de la coopération",
+    "agence belge de développement",
+    "development cooperation",
+    "entwicklungszusammenarbeit",
+    "regeringskansliet",
+];
+
+#[cfg(test)]
+mod cluster_filters {
+    use super::*;
+
+    #[test]
+    fn one_letter_apart_is_exactly_one_substitution() {
+        // The pairs issue 326 opened with.
+        for (a, b) in [
+            ("SK", "SG"),
+            ("SK", "SO"),
+            ("SK", "SR"),
+            ("SK", "SI"),
+            ("CZ", "CR"),
+            ("BG", "BF"),
+            ("BG", "BT"),
+            ("LT", "LV"),
+            ("NL", "NO"),
+        ] {
+            assert!(one_letter_apart(a, b), "{a}/{b}");
+            assert!(one_letter_apart(b, a), "symmetric: {b}/{a}");
+        }
+        // Two substitutions is not one, and identity is not a slip.
+        for (a, b) in [("SK", "GB"), ("BG", "VU"), ("SK", "SK"), ("PL", "IT")] {
+            assert!(!one_letter_apart(a, b), "{a}/{b}");
+        }
+        // `VA`/`VE` IS one letter apart, and the first draft of this test
+        // asserted otherwise. Worth keeping as a fixture because of what it
+        // exposed: in the Bulgarian cluster `BG BW VA VE VG VU`, the SPRAY codes
+        // are one letter from EACH OTHER, so a cluster-wide "some two codes are
+        // one letter apart" test can fire on the spray alone and say nothing
+        // about the heavy code. That is why the census reports
+        // `heavy_one_letter` separately.
+        assert!(one_letter_apart("VA", "VE"));
+        assert!(one_letter_apart("VA", "VU"));
+        assert!(one_letter_apart("BG", "BW"));
+        // A transposition is two substitutions. Recorded because "one letter
+        // apart" could plausibly have meant edit distance 1, which admits
+        // transpositions and insertions; this is substitution only, and the
+        // fixed two-character width is why that is the right reading.
+        assert!(!one_letter_apart("SK", "KS"));
+        // Not two letters at all.
+        assert!(!one_letter_apart("DEU", "DE"));
+        assert!(!one_letter_apart("D", "DE"));
+        assert!(!one_letter_apart("", "DE"));
+    }
+
+    #[test]
+    fn the_footprint_markers_catch_the_clusters_they_were_read_from() {
+        for name in [
+            "Embassy of Sweden",
+            "Regeringskansliet",
+            "Ambassade Royale du Danemark",
+            "Enabel — Agence belge de développement",
+            "Direction du développement et de la coopération",
+            "AMBASSADE DE FRANCE",           // caps
+            "Botschaft der Bundesrepublik Deutschland",
+        ] {
+            assert!(is_operational_footprint(name), "{name}");
+        }
+        // And do NOT catch ordinary registrants. A marker that fires here would
+        // suppress a real typo, which is the costlier mistake: a missed embassy
+        // merely stays in the abstain bucket.
+        for name in [
+            "„Петрол“ АД",
+            "Philips AB Healthcare",
+            "Inmac WStore SAS",
+            "Krajowa Izba Odwoławcza",
+            "ÅF-Infrastructure AB",
+            "Development Bank of Austria",   // 'development' alone must not fire
+            "Consultancy Services Ltd",      // must not trip on 'consulat'
+        ] {
+            assert!(!is_operational_footprint(name), "{name}");
+        }
+    }
+}

@@ -2225,6 +2225,73 @@ pub struct CountryTypoPair {
     pub b_probed: bool,
 }
 
+/// The shortest identifier a cluster may carry and still be read as evidence.
+///
+/// SIX, and it is a floor against the only real false positives the pair census
+/// found: `9948` shared by a US and a Spanish company, `408712` shared by a Swiss
+/// directorate and an organization named "BITTE NICHT ÖFFNEN - OFFERTE". Twelve
+/// of 400 carried rows were under six characters. A short number collides by
+/// arithmetic, not by identity.
+pub const MIN_CLUSTER_IDENTIFIER: usize = 6;
+
+/// One identifier and every country code holding it (issue 326).
+#[derive(Debug, Default, Clone)]
+pub struct CountryCluster {
+    pub identifier: String,
+    /// Every two-letter code holding this identifier.
+    pub codes: Vec<String>,
+    /// Codes IN this cluster that the checksum vocabulary actually names.
+    pub named: Vec<String>,
+    /// Codes in this cluster the vocabulary was even asked about. `asked`
+    /// empty with `codes` non-empty is issue 314's `country_probed` gap: not a
+    /// hard case, a missing scheme.
+    pub asked: Vec<String>,
+    /// Some two of the codes are exactly one letter apart — the corruption
+    /// filter. No longer the grouping key.
+    pub one_letter_pair: bool,
+    /// The heaviest code by mentions is one letter from another code here.
+    /// Stronger than `one_letter_pair`, which spray codes can satisfy alone.
+    pub heavy_one_letter: bool,
+    /// An embassy or development agency: one entity, one register number, filed
+    /// from everywhere it operates. Excluded, never corrected.
+    pub footprint: bool,
+    /// Mentions per code, heaviest first.
+    pub mentions: Vec<(String, u64)>,
+    /// Distinct names across the cluster, capped at six.
+    pub names: Vec<String>,
+    pub verdict: &'static str,
+}
+
+/// Issue 326 step 1 re-cut, grouped by identifier instead of by pair.
+#[derive(Debug, Default, Clone)]
+pub struct CountryClusterReport {
+    pub rows_walked: u64,
+    pub identifiers: u64,
+    pub countries: u64,
+    /// Identifiers held under more than one country code.
+    pub clusters: u64,
+    /// …of which some two codes are one letter apart.
+    pub with_one_letter_pair: u64,
+    /// …of which the HEAVIEST code is one letter from another code in the
+    /// cluster. The sharper filter: a cluster-wide "some two codes" test fires
+    /// on `VA`/`VE` in `BG BW VA VE VG VU` — spray one letter from spray — and
+    /// says nothing about whether the heavy code was the one mistyped.
+    pub with_heavy_one_letter: u64,
+    /// …of which the identifier is under [`MIN_CLUSTER_IDENTIFIER`].
+    pub too_short: u64,
+    /// …of which a name says embassy or development agency (carried rows only).
+    pub footprint: u64,
+    pub verdicts: std::collections::BTreeMap<String, u64>,
+    /// The heaviest code's share of the cluster's mentions, as a percentage,
+    /// sorted. REPORTED, never acted on: the pair census found this signal
+    /// inverting (`BT` heavy over `BG` light, three times), so the next unit
+    /// picks a threshold from this distribution rather than guessing one.
+    pub majority_share: Vec<u8>,
+    pub rows: Vec<CountryCluster>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One organization row whose stored `(identifier_kind, country)` disagrees with
 /// what the identifier parser now produces for the same value (issue 325).
 #[derive(Debug, Default, Clone)]
@@ -11520,6 +11587,252 @@ impl Db {
     /// Bhutan outweighs Bulgaria.
     ///
     /// Read-only. Nothing here writes, merges or folds.
+    /// Issue 326 step 1 re-cut: the same-identifier country class grouped by
+    /// IDENTIFIER rather than by pair.
+    ///
+    /// The pair census (`country_typo_census`) measured the class and then
+    /// showed its own unit to be wrong. Three of its framings fail:
+    ///
+    /// * **The true code is in the CLUSTER, not in the pair.** One Bulgarian EIK
+    ///   sits under `BG BI BT GA VA VU` — `BG` plus spray. Reported pairwise
+    ///   that becomes edges like `VA/VU`, which do not contain the answer at
+    ///   all.
+    /// * **Both sides of a pair can be wrong.** `GW`/`GY` both hold a Bulgarian
+    ///   power plant; `AO`/`AD` both hold a Polish appeals chamber. "Pick the
+    ///   survivor from the two" is not a sound rule shape.
+    /// * **A legitimate multi-country class looks identical.** Embassies and
+    ///   development agencies are ONE legal entity with ONE register number
+    ///   filing from everywhere they operate — Sweden's Regeringskansliet under
+    ///   KE, MD, MZ, UA, UG is not a corrupted `SE`. The checksum and the
+    ///   mention spread both fail to separate them (Enabel is 2 mentions under
+    ///   `NE` against 249 under `BE`, the same asymmetry the real typos show).
+    ///   Only the NAME does.
+    ///
+    /// So the one-letter test survives as the *corruption filter* — evidence a
+    /// cluster is transcription rather than geography — and stops being the key.
+    ///
+    /// **Grouped in Rust over a primary-key walk, deliberately.** No index leads
+    /// with `identifier` (`organizations_identity` is
+    /// `(country, identifier_kind, identifier)`), so `GROUP BY identifier` is a
+    /// full scan plus a sorter over 1.1M rows either way. Doing the grouping
+    /// here makes it one sequential pass with no sorter, which is the same shape
+    /// `org-merge-health` already runs at this size.
+    pub async fn country_cluster_census(
+        &self,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
+        one_letter: fn(&str, &str) -> bool,
+        footprint: fn(&str) -> bool,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CountryClusterReport> {
+        let mut report = CountryClusterReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: identifier -> the country codes holding it. Countries are
+        // interned to a u16 so the per-entry cost is the key string plus a few
+        // bytes; at 1.1M identifiers that is tens of megabytes, not gigabytes.
+        let mut vocab: Vec<String> = Vec::new();
+        let mut vocab_ix: std::collections::HashMap<String, u16> = Default::default();
+        let mut seen: std::collections::HashMap<String, Vec<u16>> = Default::default();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(CountryClusterReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, identifier FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL AND country IS NOT NULL \
+                        AND identifier_kind IS NOT NULL \
+                      ORDER BY id LIMIT 100000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                let cc = text(&row, 1);
+                // Two-letter codes only, as the pair census had it: a longer or
+                // shorter spelling is issue 319's business, not this one's.
+                if cc.chars().count() != 2 {
+                    continue;
+                }
+                report.rows_walked += 1;
+                let ix = *vocab_ix.entry(cc.clone()).or_insert_with(|| {
+                    vocab.push(cc.clone());
+                    (vocab.len() - 1) as u16
+                });
+                let slot = seen.entry(text(&row, 2)).or_default();
+                if !slot.contains(&ix) {
+                    slot.push(ix);
+                }
+            }
+            if page == 0 {
+                break;
+            }
+        }
+        report.identifiers = seen.len() as u64;
+        report.countries = vocab.len() as u64;
+
+        // The hit set: an identifier under more than one country.
+        let mut hits: Vec<(String, Vec<u16>)> =
+            seen.into_iter().filter(|(_, v)| v.len() > 1).collect();
+        report.clusters = hits.len() as u64;
+        // Widest first: the interesting clusters — and the whole footprint
+        // family — are the wide ones, so a cap keeps those rather than an
+        // alphabetical slice of two-code pairs.
+        hits.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
+
+        // Pass 2: the details, for the hit set only.
+        for (identifier, codes) in hits.iter() {
+            if stop() {
+                return Ok(CountryClusterReport { stopped: true, ..Default::default() });
+            }
+            let names: Vec<&str> = codes.iter().map(|&i| vocab[i as usize].as_str()).collect();
+            let pair_one_letter = names
+                .iter()
+                .enumerate()
+                .any(|(i, a)| names[i + 1..].iter().any(|b| one_letter(a, b)));
+            if pair_one_letter {
+                report.with_one_letter_pair += 1;
+            }
+            if identifier.chars().count() < MIN_CLUSTER_IDENTIFIER {
+                report.too_short += 1;
+            }
+
+            // The anchor evidence, computed ONCE per identifier rather than once
+            // per pair — the redundancy that made the pair report hard to read.
+            let anchored: Vec<String> = anchors(identifier)
+                .iter()
+                .filter(|(sc, _)| !sc.contains('|'))
+                .map(|(sc, _)| sc.split(':').next().unwrap_or(sc).to_owned())
+                .collect();
+            let probed: Vec<String> = vocabulary(identifier)
+                .iter()
+                .map(|sc| sc.split(':').next().unwrap_or(sc).to_owned())
+                .collect();
+            // Only codes actually IN this cluster count as evidence about it. A
+            // Slovak IČO anchoring `["CZ","SI"]` when the cluster holds neither
+            // is not evidence for anybody — it is issue 314's `country_probed`
+            // gap, and the pair census's 86.8% "neither probed" is this.
+            let named: Vec<String> =
+                names.iter().filter(|cc| anchored.iter().any(|a| a == *cc)).map(|c| c.to_string()).collect();
+            let asked: Vec<String> =
+                names.iter().filter(|cc| probed.iter().any(|p| p == *cc)).map(|c| c.to_string()).collect();
+
+            if report.rows.len() < cap {
+                report.rows.push(CountryCluster {
+                    identifier: identifier.clone(),
+                    codes: names.iter().map(|s| s.to_string()).collect(),
+                    named: named.clone(),
+                    asked: asked.clone(),
+                    one_letter_pair: pair_one_letter,
+                    heavy_one_letter: false,
+                    footprint: false,
+                    mentions: Vec::new(),
+                    names: Vec::new(),
+                    verdict: "",
+                });
+            } else {
+                report.truncated = true;
+            }
+        }
+
+        // Pass 3: names and mention counts for the CARRIED clusters only, so the
+        // footprint test and the majority reading have something to work with.
+        // Batched by identifier — the reported set is bounded by `cap`, so this
+        // is a few hundred indexed probes and not a walk.
+        for row in report.rows.iter_mut() {
+            if stop() {
+                return Ok(CountryClusterReport { stopped: true, ..Default::default() });
+            }
+            let mut q = reader
+                .query(
+                    "SELECT o.country, o.name, \
+                            (SELECT COUNT(*) FROM organization_mentions m \
+                              WHERE m.organization_id = o.id) \
+                       FROM organizations o \
+                      WHERE o.identifier = ? AND o.country IS NOT NULL",
+                    (t(&row.identifier),),
+                )
+                .await?;
+            let mut per_code: std::collections::BTreeMap<String, u64> = Default::default();
+            let mut names: Vec<String> = Vec::new();
+            while let Some(r) = q.next().await? {
+                let cc = text(&r, 0);
+                let name = text(&r, 1);
+                *per_code.entry(cc).or_default() += int(&r, 2).max(0) as u64;
+                if !names.contains(&name) {
+                    names.push(name);
+                }
+            }
+            row.footprint = names.iter().any(|n| footprint(n));
+            if row.footprint {
+                report.footprint += 1;
+            }
+            row.mentions = per_code.into_iter().collect();
+            row.mentions.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+            names.truncate(6);
+            row.names = names;
+            // Now that the mention order is known: is the HEAVY code itself one
+            // letter from another code here? `one_letter_pair` can be satisfied
+            // by two spray codes (`VA`/`VE`), which is no evidence about the
+            // code that actually carries the entity.
+            if let Some((heavy, _)) = row.mentions.first() {
+                row.heavy_one_letter = row
+                    .codes
+                    .iter()
+                    .any(|other| other != heavy && one_letter(heavy, other));
+                if row.heavy_one_letter {
+                    report.with_heavy_one_letter += 1;
+                }
+            }
+
+            // The verdict, and it ABSTAINS by default. An abstention is a
+            // correct answer for this class; a coin-flip on a published country
+            // is not.
+            let total: u64 = row.mentions.iter().map(|(_, n)| *n).sum();
+            let share = row.mentions.first().map(|(_, n)| *n).unwrap_or(0);
+            row.verdict = if row.footprint {
+                // One entity, one register number, filed from everywhere it
+                // operates. A "correction" here destroys real information.
+                "footprint-excluded"
+            } else if row.identifier.chars().count() < MIN_CLUSTER_IDENTIFIER {
+                "too-short"
+            } else if !row.one_letter_pair {
+                // Same identifier, unrelated codes: real enough to record, but
+                // without the corruption filter there is no reason to call it a
+                // typo.
+                "no-one-letter-pair"
+            } else if row.named.len() == 1 {
+                // The decisive arm the issue asked for: the format vocabulary
+                // admits exactly ONE of the cluster's own codes.
+                "anchor-names-one"
+            } else if row.named.len() > 1 {
+                "anchor-names-several"
+            } else if row.asked.is_empty() {
+                // Nobody was asked. The pair census put 86.8% here, and this is
+                // the vocabulary gap rather than a hard case.
+                "nobody-asked"
+            } else {
+                "asked-and-refused"
+            };
+            *report.verdicts.entry(row.verdict.to_owned()).or_default() += 1;
+            // Reported, never acted on: the majority share is what a repair
+            // would have to lean on where the anchor is silent, and the pair
+            // census already found it inverting (`BT` heavy over `BG` light,
+            // three times). Recording the distribution so the next unit picks a
+            // threshold from data instead of guessing one.
+            if total > 0 {
+                report.majority_share.push((share * 100 / total) as u8);
+            }
+        }
+        report.majority_share.sort_unstable();
+        Ok(report)
+    }
+
     pub async fn country_typo_census(
         &self,
         anchors: fn(&str) -> Vec<(&'static str, String)>,

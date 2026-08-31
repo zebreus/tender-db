@@ -367,6 +367,9 @@ enum Spec {
     /// Issue 326: same identifier, two country codes one letter apart —
     /// SK/SG, CZ/CR, BG/BF. Read-only measurement.
     CountryTypoCensus,
+    /// Issue 326 step 1 re-cut: the same class grouped by IDENTIFIER, with the
+    /// one-letter test demoted to a corruption filter. Read-only.
+    CountryClusterCensus,
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1113,6 +1116,17 @@ impl Supervisor {
             // for it. 18 of 18 such cases the issue-314 campaign reviewed came
             // back wrong-country, so the census is the cheap half of a repair
             // that already has its evidence.
+            // Issue 326 step 1 re-cut. The pair census stays: it is a valid
+            // measurement of a different unit, and the two disagree in ways
+            // worth keeping visible.
+            "country-cluster-census" => Ok(vec![
+                self.push(
+                    "country-cluster-census",
+                    "country-cluster-census".into(),
+                    Spec::CountryClusterCensus,
+                )
+                .await,
+            ]),
             "country-typo-census" => Ok(vec![
                 self.push(
                     "country-typo-census",
@@ -1528,6 +1542,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "anchor-wall-census",
     "xb-packet",
     "country-typo-census",
+    "country-cluster-census",
     "repair-minted-countries",
 ];
 
@@ -4525,6 +4540,103 @@ impl Supervisor {
                     }
                 ))
             }
+            Spec::CountryClusterCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 326: grouping identifiers by country set".to_owned(),
+                );
+                const CAP: usize = 400;
+                let r = self
+                    .db
+                    .country_cluster_census(
+                        ingest::idgate::checksum_anchors,
+                        ingest::idgate::anchor_vocabulary,
+                        ingest::countries::one_letter_apart,
+                        ingest::countries::is_operational_footprint,
+                        CAP,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("country-cluster-census STOPPED by cancel — no report stored"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                // The share distribution is reported as quartiles rather than
+                // 400 raw bytes: the point is to pick a threshold from it, and
+                // a median plus tails is what that needs.
+                let q = |p: usize| -> u8 {
+                    if r.majority_share.is_empty() {
+                        return 0;
+                    }
+                    let i = (r.majority_share.len() - 1) * p / 100;
+                    r.majority_share[i]
+                };
+                let body = serde_json::json!({
+                    "rows_walked": r.rows_walked,
+                    "identifiers": r.identifiers,
+                    "countries": r.countries,
+                    "clusters": r.clusters,
+                    "with_one_letter_pair": r.with_one_letter_pair,
+                    "with_heavy_one_letter": r.with_heavy_one_letter,
+                    "too_short": r.too_short,
+                    "footprint": r.footprint,
+                    "verdicts": r.verdicts,
+                    "majority_share": {
+                        "p25": q(25), "p50": q(50), "p75": q(75), "p90": q(90),
+                        "n": r.majority_share.len(),
+                    },
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|c| serde_json::json!({
+                        "identifier": c.identifier,
+                        "codes": c.codes,
+                        "named": c.named,
+                        "asked": c.asked,
+                        "one_letter_pair": c.one_letter_pair,
+                        "heavy_one_letter": c.heavy_one_letter,
+                        "footprint": c.footprint,
+                        "mentions": c.mentions,
+                        "names": c.names,
+                        "verdict": c.verdict,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("country-cluster-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "country-cluster-census (issue 326 re-cut): {} rows walked, {} distinct \
+                     identifiers under {} country codes. {} identifiers stand under MORE THAN \
+                     ONE code; {} have some two codes one letter apart, and {} have the \
+                     HEAVIEST code one letter from another (the sharper filter — spray one \
+                     letter from spray says nothing). {} carried cluster(s) are an \
+                     operational footprint (embassy or development agency: one entity, one \
+                     register number, filed from everywhere it operates) and are excluded, \
+                     never corrected. {} identifier(s) are under {} characters. Verdicts: {}. \
+                     Heaviest code's mention share p25/p50/p75/p90 = {}/{}/{}/{}%.",
+                    r.rows_walked,
+                    r.identifiers,
+                    r.countries,
+                    r.clusters,
+                    r.with_one_letter_pair,
+                    r.with_heavy_one_letter,
+                    r.footprint,
+                    r.too_short,
+                    store::MIN_CLUSTER_IDENTIFIER,
+                    r.verdicts
+                        .iter()
+                        .map(|(k, v)| format!("{k}={v}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    q(25), q(50), q(75), q(90),
+                ))
+            }
             Spec::CountryTypoCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -7475,6 +7587,7 @@ mod tests {
                 "anchor-wall-census",
                 "xb-packet",
                 "country-typo-census",
+                "country-cluster-census",
                 "repair-minted-countries"
             ]
         );
