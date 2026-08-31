@@ -364,6 +364,9 @@ enum Spec {
     /// Issues 311 + 314: the reviewer's input for the same-name cross-border
     /// cohort — the first thing to consume org_candidate_edges. Read-only.
     XbPacket,
+    /// Issue 326: same identifier, two country codes one letter apart —
+    /// SK/SG, CZ/CR, BG/BF. Read-only measurement.
+    CountryTypoCensus,
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -1042,6 +1045,18 @@ impl Supervisor {
             "xb-packet" => Ok(vec![
                 self.push("xb-packet", "xb-packet".into(), Spec::XbPacket).await,
             ]),
+            // Issue 326: size the country-typo class before building a repair
+            // for it. 18 of 18 such cases the issue-314 campaign reviewed came
+            // back wrong-country, so the census is the cheap half of a repair
+            // that already has its evidence.
+            "country-typo-census" => Ok(vec![
+                self.push(
+                    "country-typo-census",
+                    "country-typo-census".into(),
+                    Spec::CountryTypoCensus,
+                )
+                .await,
+            ]),
             // Issue 318: size the disagreement before deciding how hard to
             // close it — the issue's own step 3.
             "anchor-wall-census" => Ok(vec![
@@ -1448,6 +1463,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "drop-orphan-satellites",
     "anchor-wall-census",
     "xb-packet",
+    "country-typo-census",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -4236,6 +4252,82 @@ impl Supervisor {
                     p.cohort,
                     p.cases.len(),
                     if p.truncated { " (CAPPED)" } else { "" }
+                ))
+            }
+            Spec::CountryTypoCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "measuring",
+                    None,
+                    None,
+                    "issue 326: same identifier, country codes one letter apart".to_owned(),
+                );
+                let r = self
+                    .db
+                    .country_typo_census(
+                        ingest::idgate::checksum_anchors,
+                        ingest::idgate::anchor_vocabulary,
+                        400,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(
+                        "country-typo-census STOPPED by cancel — no report stored".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "countries": r.countries,
+                    "pairs_considered": r.pairs_considered,
+                    "rows_walked": r.rows_walked,
+                    "hits": r.hits,
+                    "decided": r.decided,
+                    "neither_probed": r.neither_probed,
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|p| serde_json::json!({
+                        "identifier_kind": p.identifier_kind,
+                        "identifier": p.identifier,
+                        "anchors": p.anchors,
+                        "a": {
+                            "org": p.org_a, "country": p.country_a, "name": p.name_a,
+                            "mentions": p.mentions_a,
+                            "agrees": p.a_agrees, "probed": p.a_probed,
+                        },
+                        "b": {
+                            "org": p.org_b, "country": p.country_b, "name": p.name_b,
+                            "mentions": p.mentions_b,
+                            "agrees": p.b_agrees, "probed": p.b_probed,
+                        },
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("country-typo-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "country-typo-census (issue 326): {} country code(s) hold \
+                     identifier-bearing rows, {} pairing(s) are exactly one letter apart \
+                     with both sides present, {} row(s) walked on the rarer sides. \
+                     HITS: {} pair(s) carry the SAME identifier across a one-letter \
+                     country pair. Of those the checksum names a survivor for {}, and \
+                     for {} it never asked about EITHER country — so {} of {} need a \
+                     discriminator the arithmetic cannot give, and a repair must abstain \
+                     there rather than guess. {} row(s) carried in the report{}. \
+                     Read-only: nothing was merged, folded or written.",
+                    r.countries,
+                    r.pairs_considered,
+                    r.rows_walked,
+                    r.hits,
+                    r.decided,
+                    r.neither_probed,
+                    r.hits.saturating_sub(r.decided),
+                    r.hits,
+                    r.rows.len(),
+                    if r.truncated { " (CAPPED)" } else { "" }
                 ))
             }
             Spec::AnchorWallCensus => {
@@ -7110,7 +7202,8 @@ mod tests {
                 "satellite-orphans",
                 "drop-orphan-satellites",
                 "anchor-wall-census",
-                "xb-packet"
+                "xb-packet",
+                "country-typo-census"
             ]
         );
     }

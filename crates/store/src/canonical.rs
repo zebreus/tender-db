@@ -2062,6 +2062,25 @@ pub struct SatelliteRestoreReport {
 /// `org_match_keys` is indexed `(key_kind, key, org_id)` and nothing else, so
 /// LEADING WITH `key_kind` is what makes this a seek. This one runs on the
 /// INGEST HOT PATH, once per anchor bind that would otherwise succeed.
+/// Issue 326's probe, named so its PLAN can be asserted against the statement
+/// the census actually runs rather than a copy of it (issue 323's lesson: a
+/// panel found a reordered spelling that a copy-based guard would have missed).
+///
+/// Both sides ride `organizations_identity(country, identifier_kind,
+/// identifier)`: the outer as a country-prefix range, the inner as a full
+/// three-column seek. There is no index leading with `identifier`, so a shape
+/// that grouped the table by identifier instead would sort the corpus.
+pub(crate) const COUNTRY_TYPO_JOIN_SQL: &str =
+    "SELECT a.id, a.name, a.identifier_kind, a.identifier, b.id, b.name \
+       FROM organizations a \
+       JOIN organizations b \
+         ON b.country = ? \
+        AND b.identifier_kind = a.identifier_kind \
+        AND b.identifier = a.identifier \
+      WHERE a.country = ? \
+        AND a.identifier IS NOT NULL \
+        AND a.identifier_kind IS NOT NULL";
+
 pub(crate) const GENERIC_KEY_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
        WHERE key_kind = ? AND key = ? LIMIT ?)";
@@ -2171,6 +2190,70 @@ pub struct XbPacket {
     pub truncated: bool,
     pub stopped: bool,
 }
+
+/// One organization pair carrying the SAME identifier under two country codes
+/// that differ by a single letter (issue 326).
+///
+/// `SK`/`SG`, `CZ`/`CR`, `BG`/`BF` — Slovakia into Singapore, Czechia into
+/// Costa Rica, Bulgaria into Burkina Faso. The identical identifier is what
+/// makes it one entity rather than two registrants; the one-letter distance is
+/// what makes the difference a slip rather than a fact.
+#[derive(Debug, Default, Clone)]
+pub struct CountryTypoPair {
+    /// The DRIVING side — the country with fewer identifier-bearing rows, and
+    /// so the side the walk enumerated. Not a claim about which is wrong.
+    pub org_a: i64,
+    pub country_a: String,
+    pub name_a: String,
+    pub mentions_a: u64,
+    pub org_b: i64,
+    pub country_b: String,
+    pub name_b: String,
+    pub mentions_b: u64,
+    pub identifier_kind: String,
+    pub identifier: String,
+    /// The schemes this identifier's arithmetic VALIDATES under.
+    pub anchors: Vec<String>,
+    /// Per side, the issue-314 pair: does the row's country agree, and was it
+    /// even asked? Read them together — `!agrees` alone means nothing when the
+    /// probe has no arm for that country, and for this class it usually does
+    /// not (SK, LT and BG have no scheme at all, so their identifiers anchor
+    /// on CZ/SI by shared arithmetic and say nothing about either side).
+    pub a_agrees: bool,
+    pub a_probed: bool,
+    pub b_agrees: bool,
+    pub b_probed: bool,
+}
+
+/// Issue 326: how many same-identifier one-letter country pairs stand, and how
+/// many of them the checksum evidence can actually adjudicate. Read-only.
+#[derive(Debug, Default, Clone)]
+pub struct CountryTypoReport {
+    /// Country codes holding at least one identifier-bearing row.
+    pub countries: u64,
+    /// Of their pairings, those exactly one letter apart with BOTH sides
+    /// present — the pairs the walk probed.
+    pub pairs_considered: u64,
+    /// The driving sides' total identifier-bearing population — the rows this
+    /// run's probes ranged over. From the histogram, NOT from counting the
+    /// join's output: the join reports only rows that matched, so counting it
+    /// would make this a second name for `hits`. Sizes the walk's cost, and a
+    /// pair counts its driving side once even when several pairs share it.
+    pub rows_walked: u64,
+    /// Pairs found. Counted in full even when `rows` is capped.
+    pub hits: u64,
+    /// Of the hits, those where EXACTLY ONE side was probed and agreed — the
+    /// only ones where the arithmetic names a survivor. Everything else needs
+    /// another discriminator, and a repair must abstain rather than guess.
+    pub decided: u64,
+    /// Hits where NEITHER side's country was probed at all. The honest name
+    /// for "the checksum has nothing to say here".
+    pub neither_probed: u64,
+    pub rows: Vec<CountryTypoPair>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 
 /// One standing org a generic-named, country-less mention could anchor-bind
 /// to at ingest but could not be merged with in batch (issue 318).
@@ -11360,6 +11443,183 @@ impl Db {
             packet.cases.push(case);
         }
         Ok(packet)
+    }
+
+    /// Issue 326: same identifier, two country codes one letter apart.
+    ///
+    /// A Slovak IČO under both `SK` and `SG`; a Czech one under `CZ` and `CR`.
+    /// The identical identifier says one entity, the one-letter distance says
+    /// transcription slip, and 18 of the 18 such cases that reached the
+    /// issue-314 review campaign came back `wrong-country` — unanimously.
+    ///
+    /// **Driven from the RARE side, and that is the whole reason it is cheap.**
+    /// A country code produced by a one-letter slip is rare in the corpus by
+    /// construction, so for each candidate pair the walk enumerates whichever
+    /// side holds fewer identifier-bearing rows and SEEKS the other. Seeking is
+    /// what `organizations_identity(country, identifier_kind, identifier)` is
+    /// shaped for; enumerating both sides, or grouping the whole table by
+    /// identifier, is not — there is no index leading with `identifier`, so
+    /// that shape sorts the corpus (issue 117's 15 s lesson). Measured on
+    /// prod's histogram: 222 countries, 2,275 pairs both-present, 541,225 rows
+    /// on the driving sides — 48% of the identifier-bearing population, and
+    /// 2,102 of the 2,275 pairs have a driving side under 50 rows.
+    ///
+    /// Reports what it CANNOT decide as prominently as what it can: `decided`
+    /// counts only the hits where exactly one side was probed and agreed.
+    /// Everything else is an abstention, because the alternatives were measured
+    /// and both fail — the checksum picks a survivor for 9 of 76 cohort cases,
+    /// and "the heavier side is the real one" inverts on the three cases where
+    /// Bhutan outweighs Bulgaria.
+    ///
+    /// Read-only. Nothing here writes, merges or folds.
+    pub async fn country_typo_census(
+        &self,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CountryTypoReport> {
+        let reader = self.reader().await?;
+        let mut report = CountryTypoReport::default();
+
+        // The histogram, once. Two columns of a single-table aggregate — the
+        // one full pass this census makes, and what lets every probe after it
+        // be an indexed seek.
+        let mut hist: std::collections::BTreeMap<String, i64> = Default::default();
+        let mut rows = reader
+            .query(
+                "SELECT country, COUNT(*) FROM organizations \
+                  WHERE identifier IS NOT NULL AND country IS NOT NULL \
+                    AND identifier_kind IS NOT NULL \
+                  GROUP BY country",
+                (),
+            )
+            .await?;
+        while let Some(row) = rows.next().await? {
+            let cc = text(&row, 0);
+            // Two-letter codes only. A longer or shorter value cannot be one
+            // letter from another country code in the sense this census means,
+            // and issue 319's fold is the place that normalizes them.
+            if cc.chars().count() == 2 {
+                hist.insert(cc, int(&row, 1));
+            }
+        }
+        drop(rows);
+        report.countries = hist.len() as u64;
+
+        // Candidate pairs: exactly one differing character, both present. Each
+        // unordered pair once, ordered so the DRIVING side comes first.
+        let codes: Vec<&str> = hist.keys().map(String::as_str).collect();
+        let mut pairs: Vec<(&str, &str)> = Vec::new();
+        for (i, a) in codes.iter().enumerate() {
+            for b in &codes[i + 1..] {
+                let differing = a.chars().zip(b.chars()).filter(|(x, y)| x != y).count();
+                if differing != 1 {
+                    continue;
+                }
+                if hist[*a] <= hist[*b] {
+                    pairs.push((a, b));
+                } else {
+                    pairs.push((b, a));
+                }
+            }
+        }
+        report.pairs_considered = pairs.len() as u64;
+        // Cheapest first: a cancel or a cap then lands having covered the most
+        // pairs, not the most rows of one pair.
+        pairs.sort_by_key(|(drive, seek)| (hist[*drive], *drive, *seek));
+
+        for (drive, seek) in pairs {
+            if stop() {
+                return Ok(CountryTypoReport { stopped: true, ..Default::default() });
+            }
+            // The inner side is reached by (country, identifier_kind,
+            // identifier) — the index's own column order, so it seeks. The
+            // outer side is a country-prefix range on the same index.
+            // Classified STREAMING, and only the reported rows are kept. A
+            // value shared widely enough (a placeholder that survived the
+            // gate) makes this pair |A|x|B| rows, so collecting them all to
+            // count them would put the corpus's worst identifier in memory.
+            // The counters see every row; `report.rows` never exceeds `cap`.
+            // The driving side's population, from the histogram — the join can
+            // only ever report rows that MATCHED, so counting its output would
+            // make `rows_walked` a second name for `hits`.
+            report.rows_walked += hist[drive].max(0) as u64;
+            let mut rows = reader.query(COUNTRY_TYPO_JOIN_SQL, (t(seek), t(drive))).await?;
+            let mut kept: Vec<CountryTypoPair> = Vec::new();
+            while let Some(row) = rows.next().await? {
+                report.hits += 1;
+                let value = text(&row, 3);
+                let anchor_schemes: Vec<String> = anchors(&value)
+                    .iter()
+                    .filter(|(sc, _)| !sc.contains('|'))
+                    .map(|(sc, _)| (*sc).to_owned())
+                    .collect();
+                let vocab = vocabulary(&value);
+                let of = |sc: &str| sc.split(':').next().unwrap_or(sc).to_owned();
+                let agrees = |cc: &str| anchor_schemes.iter().any(|sc| of(sc) == cc);
+                let probed = |cc: &str| vocab.iter().any(|sc| of(sc) == cc);
+                let (a_agrees, a_probed) = (agrees(drive), probed(drive));
+                let (b_agrees, b_probed) = (agrees(seek), probed(seek));
+                let a_names = a_probed && a_agrees;
+                let b_names = b_probed && b_agrees;
+                if a_names != b_names {
+                    report.decided += 1;
+                }
+                if !a_probed && !b_probed {
+                    report.neither_probed += 1;
+                }
+                if report.rows.len() + kept.len() >= cap {
+                    report.truncated = true;
+                    continue;
+                }
+                kept.push(CountryTypoPair {
+                    org_a: int(&row, 0),
+                    country_a: drive.to_owned(),
+                    name_a: text(&row, 1),
+                    mentions_a: 0,
+                    org_b: int(&row, 4),
+                    country_b: seek.to_owned(),
+                    name_b: text(&row, 5),
+                    mentions_b: 0,
+                    identifier_kind: text(&row, 2),
+                    a_agrees,
+                    a_probed,
+                    b_agrees,
+                    b_probed,
+                    anchors: anchor_schemes,
+                    identifier: value,
+                });
+            }
+            // The far side's statement has to be closed before another query
+            // runs on this connection.
+            drop(rows);
+            for mut hit in kept {
+                // The mention spread, for the reported rows only. It is
+                // evidence a reviewer weighs, NOT a tie-breaker the census
+                // applies: measured over the issue-314 cohort it inverts on
+                // the pairs where Bhutan outweighs Bulgaria.
+                for (id, slot) in [(hit.org_a, 0u8), (hit.org_b, 1)] {
+                    let mut r = reader
+                        .query(
+                            "SELECT COUNT(*) FROM organization_mentions \
+                              WHERE organization_id = ?",
+                            (Value::Integer(id),),
+                        )
+                        .await?;
+                    if let Some(row) = r.next().await? {
+                        let n = int(&row, 0) as u64;
+                        if slot == 0 {
+                            hit.mentions_a = n;
+                        } else {
+                            hit.mentions_b = n;
+                        }
+                    }
+                }
+                report.rows.push(hit);
+            }
+        }
+        Ok(report)
     }
 
     /// Issue 314: size the candidate-edge store before anything reviews it.

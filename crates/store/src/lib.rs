@@ -5119,6 +5119,64 @@ tmpfs /data/ramcache tmpfs rw 0 0
         );
     }
 
+    /// Issue 326: the typo census must SEEK the far side, not scan it.
+    ///
+    /// The whole design rests on it. There is no index leading with
+    /// `identifier`, so the alternative shape — group the corpus by identifier
+    /// and look for country disagreement — sorts 1.1M rows (issue 117 measured
+    /// that class at 15.16 s). Driving from the rarer country and seeking the
+    /// other is only cheap if the seek is real, and "is it real" is a question
+    /// about the planner, not about the SQL's appearance. Asserted against
+    /// [`crate::canonical::COUNTRY_TYPO_JOIN_SQL`] itself, so a rewrite that
+    /// loses the seek fails here rather than on prod.
+    #[tokio::test]
+    async fn the_country_typo_probe_seeks_the_far_country() {
+        let path = format!("/tmp/tender-db-typo-eqp-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        // `organizations_identity` is built by the reindex path, not by open —
+        // a fixture without it is not the schema the box plans against.
+        db.build_organization_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let mut rows = conn
+            .query(
+                &format!("EXPLAIN QUERY PLAN {}", crate::canonical::COUNTRY_TYPO_JOIN_SQL),
+                (),
+            )
+            .await
+            .unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            plan.push_str(&text(&row, 3));
+            plan.push('\n');
+        }
+        assert!(!plan.is_empty(), "no plan came back");
+        // The far side, seeking on ALL THREE columns. Two would be a country
+        // slice per row of the driving side — DE's is 148,355 rows — so the
+        // assertion names the whole key, not just the index.
+        assert!(
+            plan.contains(
+                "SEARCH b USING INDEX organizations_identity \
+                 (country=? AND identifier_kind=? AND identifier=?)"
+            ),
+            "the far side must be a three-column seek on organizations_identity. \
+             Anything less turns 2,275 pair probes into 2,275 corpus walks, which \
+             is the whole cost argument inverted:\n{plan}"
+        );
+        // The driving side is a country range, not a table scan.
+        assert!(
+            plan.contains("SEARCH a USING INDEX") && plan.contains("(country=?)"),
+            "the driving side must be an indexed country range:\n{plan}"
+        );
+        assert!(!plan.contains("SCAN"), "something scans:\n{plan}");
+        assert!(
+            !plan.contains("USE TEMP B-TREE"),
+            "a sorter appeared — the seek was not used:\n{plan}"
+        );
+    }
+
     #[tokio::test]
     async fn the_requeue_statements_seek_notices_by_rowid() {
         let path = format!("/tmp/tender-db-requeue-eqp-{}.db", std::process::id());
