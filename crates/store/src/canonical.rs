@@ -2025,6 +2025,12 @@ pub struct SatelliteDropReport {
     /// pre-images, and the rest was never attempted. A partial run reported
     /// as a whole one is how a campaign silently under-runs.
     pub cancelled: bool,
+    /// A WET call arrived with no dry plan to compare against, and nothing was
+    /// written (issue 324). The tuple parity is half of what makes this pass
+    /// safe, so its absence is a refusal rather than a fast path — and the
+    /// refusal belongs here rather than only in the caller that happens to
+    /// make it today.
+    pub no_plan: bool,
 }
 
 /// What a `restore-dropped-satellites` pass did, or would do (issue 321).
@@ -8479,6 +8485,16 @@ impl Db {
     /// Bounded by the campaign: the origins are the orgs carrying an applied
     /// verdict, and each is one mention read, one satellite read, and one
     /// probe per orphan.
+    ///
+    /// **`org_mention_rehoming`'s ids are AS-OF-REVIEW, not a live pointer**
+    /// (issue 324). `target_org_id` records where a reviewer said a mention
+    /// should go at the moment they said it; nothing rewrites it when a later
+    /// merge retires that row, and there is no foreign key. So the premise
+    /// "the row this origin re-homed a mention to" is a historical claim, and
+    /// this function treats it as one: the target is re-probed here, and again
+    /// inside the drop's write transaction, so a target that has since been
+    /// retired or renamed simply stops qualifying. The self-target filter is
+    /// the one case sharp enough to exclude in SQL — see the query above.
     pub async fn satellite_orphans(
         &self,
         norm: fn(&str) -> String,
@@ -8716,6 +8732,12 @@ impl Db {
             }
         }
         if dry_run {
+            return Ok(report);
+        }
+        // Issue 324: a guard in one caller is a guard the second caller does
+        // not inherit.
+        if plan.is_none() {
+            report.no_plan = true;
             return Ok(report);
         }
         let candidates = std::mem::take(&mut report.rows);

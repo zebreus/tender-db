@@ -4063,6 +4063,13 @@ impl Supervisor {
                         "drop-orphan-satellites STOPPED by cancel — nothing written".to_owned()
                     );
                 }
+                if r.no_plan {
+                    eprintln!("[drop-orphan-satellites] REFUSED: no plan reached the store");
+                    return Err("drop-orphan-satellites --wet REFUSED by the store: no dry \
+                                plan was supplied. The tuple parity between plan and run is \
+                                half of what makes this safe."
+                        .to_owned());
+                }
                 if r.drifted {
                     eprintln!(
                         "[drop-orphan-satellites] REFUSED: plan drift, {} added / {} gone",
@@ -8060,6 +8067,74 @@ mod tests {
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
         assert_eq!(sup.queued().len(), 5, "already_pending must stop the double enqueue");
+    }
+
+    /// Issue 324: the dry arm of `drop-orphan-satellites` writes its plan as
+    /// JSON into `reports`, and the wet arm parses it back into
+    /// `(org, lang, key, target)` tuples. Nothing tested that round trip, so a
+    /// field rename on either side would have produced a wet run seeing an
+    /// EMPTY plan.
+    ///
+    /// That direction happens to be safe — an empty plan differs from the
+    /// fresh candidate set, so the pass refuses rather than over-drops — but
+    /// "safe by luck" is not "checked", and the next rename may not be so
+    /// lucky. This pins the two halves against each other without a database.
+    #[test]
+    fn the_drop_plan_json_round_trips_into_the_wet_arms_tuples() {
+        // Exactly what the dry arm stores (supervisor.rs, Spec::DropOrphanSatellites).
+        let body = serde_json::json!({
+            "candidates": 2,
+            "rows": [
+                {
+                    "org": 9610149, "org_name": "Bietergemeinschaft Dobler / Oberall",
+                    "lang": "DEU", "name": "Dobler GmbH & Co.KG Bauunternehmung",
+                    "key": "dobler gmbh co kg bauunternehmung",
+                    "target": 1711879, "target_name": "Dobler GmbH & Co. KG Bauunternehmung",
+                },
+                // A row whose destination is absent: `target` must survive as
+                // None rather than dropping the tuple entirely, or the parity
+                // set silently shrinks.
+                {
+                    "org": 22197923, "org_name": "Bietergemeinschaft IG WEPAE",
+                    "lang": "FRA", "name": "AMBERG ENGINEERING",
+                    "key": "amberg engineering",
+                    "target": null, "target_name": null,
+                },
+            ],
+        })
+        .to_string();
+
+        // Exactly what the wet arm parses.
+        let v: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let plan: Vec<(i64, String, String, Option<i64>)> = v["rows"]
+            .as_array()
+            .map(|a| a.as_slice())
+            .unwrap_or_default()
+            .iter()
+            .filter_map(|r| {
+                Some((
+                    r["org"].as_i64()?,
+                    r["lang"].as_str()?.to_owned(),
+                    r["key"].as_str()?.to_owned(),
+                    r["target"].as_i64(),
+                ))
+            })
+            .collect();
+
+        assert_eq!(plan.len(), 2, "a null target must not drop its whole tuple");
+        assert_eq!(
+            plan[0],
+            (
+                9610149,
+                "DEU".to_owned(),
+                "dobler gmbh co kg bauunternehmung".to_owned(),
+                Some(1711879)
+            )
+        );
+        assert_eq!(
+            plan[1],
+            (22197923, "FRA".to_owned(), "amberg engineering".to_owned(), None)
+        );
     }
 
     /// Issue 313: the job-log depth is an operator-reachable parameter now,

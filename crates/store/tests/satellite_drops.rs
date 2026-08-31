@@ -148,8 +148,15 @@ async fn the_wet_pass_drops_only_the_variant_the_destination_already_carries() {
         dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     let wet =
         fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
-    assert!(!wet.drifted);
-    assert_eq!((wet.candidates, wet.dropped, wet.skipped_recheck), (1, 1, 0));
+    // Issue 324: the old form asserted `!drifted` and `skipped_recheck == 0`
+    // on a fixture built to satisfy both — true, but unable to fail. What is
+    // worth pinning is the DATA: one variant dropped, and it is the DEU one.
+    assert_eq!((wet.candidates, wet.dropped), (1, 1));
+    assert_eq!(
+        wet.rows.iter().map(|o| o.lang.as_str()).collect::<Vec<_>>(),
+        vec!["DEU"],
+        "the plan and the run agree about WHICH row, not merely how many"
+    );
     assert_eq!(
         fx.variants_of(1).await,
         vec![
@@ -525,6 +532,33 @@ async fn the_in_transaction_recheck_refuses_a_candidate_the_database_no_longer_s
 
     // Nothing was written on any of the four paths.
     assert_eq!(fx.variants_of(1).await.len(), 3);
+    assert_eq!(
+        fx.conn
+            .query("SELECT COUNT(*) FROM org_name_drops", ())
+            .await
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+            .map(|r| r.get_value(0).unwrap()),
+        Some(Value::Integer(0))
+    );
+}
+
+/// Issue 324: a WET call with no plan is refused by the STORE, not only by the
+/// supervisor arm that happens to call it today. A guard in one caller is a
+/// guard the second caller does not inherit, and the tuple parity is half of
+/// what makes this pass safe to run at all.
+#[tokio::test]
+async fn a_wet_call_with_no_plan_is_refused_by_the_store() {
+    let fx = fixture("noplan").await;
+    fx.standard().await;
+    let stop = never;
+
+    let r = fx.db.drop_orphan_satellites(norm, false, None, Some(7), 20, &stop).await.unwrap();
+    assert!(r.no_plan, "the store refuses, and says why");
+    assert_eq!(r.dropped, 0);
+    assert_eq!(fx.variants_of(1).await.len(), 3, "nothing was written");
     assert_eq!(
         fx.conn
             .query("SELECT COUNT(*) FROM org_name_drops", ())
