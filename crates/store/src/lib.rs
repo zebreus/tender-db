@@ -29,6 +29,7 @@ pub use canonical::{
     OrphanSatellite, SatelliteOrphanReport,
     SatelliteDropReport, SatelliteRestoreReport,
     AnchorWallReport, WallGapOwner,
+    WallCounts,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,

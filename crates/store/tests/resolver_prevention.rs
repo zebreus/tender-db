@@ -407,9 +407,12 @@ async fn bind_with_wall_indexed(
     db.resolve_mentions(&mut resolver, &[mention_nc(900, "Yhteinen Nimi", value)], 1)
         .await
         .unwrap();
-    let (asked, denied, errored) = store::Db::wall_counts(&resolver);
-    assert_eq!(errored, 0, "no probe should error in a fixture");
-    let _ = asked;
+    let w = store::Db::wall_counts(&resolver);
+    assert_eq!(w.errored, 0, "no probe should error in a fixture");
+    // `enabled` is what makes a zero legible: a disabled wall and an unfired
+    // anchor path both report `asked 0`, and only this tells them apart.
+    assert_eq!(w.enabled, hard_scheme.is_some() && indexed);
+    let denied = w.denied;
     db.finish_mention_resolver(resolver).await.unwrap();
     let bound = count(&db, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await;
     (bound, denied)
@@ -574,7 +577,10 @@ async fn a_wall_denial_does_not_capture_the_next_clean_mention() {
         )
         .await
         .unwrap();
-    let (_, denied, errored) = store::Db::wall_counts(&resolver);
+    let w = store::Db::wall_counts(&resolver);
+    let (denied, errored) = (w.denied, w.errored);
+    assert!(w.enabled, "the wall must be live for this test to mean anything");
+    assert_eq!(w.anchor_reached, 2, "both mentions reached the anchor gate");
     db.finish_mention_resolver(resolver).await.unwrap();
 
     assert_eq!(denied, 1, "the generic-named mention is refused");

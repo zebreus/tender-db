@@ -67,7 +67,7 @@ pub struct Report {
     /// because the batch arm's twin count is already durable in the
     /// r3-merge-plan report. `errored` non-zero means the wall was
     /// unavailable and binds went through at the pre-318 bar.
-    pub wall: (u64, u64, u64),
+    pub wall: store::WallCounts,
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are

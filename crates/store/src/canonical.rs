@@ -2068,6 +2068,26 @@ pub(crate) const STALE_KEY_COUNT_SQL: &str =
     "SELECT COUNT(*) FROM org_match_keys \
        WHERE key_kind = 'n2' AND key = ? AND org_id = ?";
 
+/// What the issue-318 genericness wall did over one resolver run.
+///
+/// Five numbers rather than one, because every smaller version of this has had
+/// a zero that meant two things. `denied` alone cannot separate "nothing was
+/// generic" from "nothing was asked"; `asked` alone cannot separate "the
+/// anchor path never fired" from "the wall was switched off". `enabled` and
+/// `anchor_reached` are what make a zero legible.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct WallCounts {
+    /// The wall was available this run (index present, no build in flight).
+    pub enabled: bool,
+    /// Anchor-path binds that reached the wall's gate, enabled or not.
+    pub anchor_reached: u64,
+    /// …of those, the ones the wall was actually asked about (soft scheme).
+    pub asked: u64,
+    pub denied: u64,
+    /// Probes that failed and bound leniently. Never "fine".
+    pub errored: u64,
+}
+
 /// One standing org a generic-named, country-less mention could anchor-bind
 /// to at ingest but could not be merged with in batch (issue 318).
 #[derive(Debug, Default, Clone)]
@@ -2651,6 +2671,21 @@ pub struct MentionResolver {
     /// questions — which is the frequency issue 318 asked for and the first
     /// version answered by assertion.
     asked_generic: u64,
+    /// Anchor-path binds that got as far as the wall's gate, whether or not
+    /// the wall was enabled to answer.
+    ///
+    /// `asked_generic` only counts when `hard_scheme` is `Some`, so on its own
+    /// a zero means EITHER "the anchor path never fired" OR "the wall was
+    /// disabled for this run" — the same two-meanings-one-zero the denial
+    /// count had, reintroduced one level up. The first full day's fold read
+    /// `asked 0` over 3,889 notices and could not say which. This is the
+    /// number that says which.
+    anchor_reached: u64,
+    /// Whether the wall was available at all this run (see the gate in
+    /// `mention_resolver`). Reported beside the counts, because "prevented
+    /// nothing because nothing needed preventing" and "prevented nothing
+    /// because it was switched off" are opposite facts.
+    wall_enabled: bool,
     /// Probes that ERRORED. The bind is allowed (lenient, the same answer an
     /// unseen key gets) rather than failing the fold, because an unavailable
     /// wall must not be able to stop ingestion — but a silent lenient run is
@@ -5982,6 +6017,8 @@ impl Db {
             stoplist_cap,
             denied_generic: 0,
             asked_generic: 0,
+            anchor_reached: 0,
+            wall_enabled: hard_scheme.is_some(),
             errored_generic: 0,
             generic_memo: std::collections::HashMap::new(),
         })
@@ -6081,16 +6118,25 @@ impl Db {
     /// frequency issue 318 asked for and the first version of this answered by
     /// assertion. `errored` is the one that must never be read as fine — it
     /// means the wall was unavailable and binds went through leniently.
-    pub fn wall_counts(resolver: &MentionResolver) -> (u64, u64, u64) {
-        (resolver.asked_generic, resolver.denied_generic, resolver.errored_generic)
+    pub fn wall_counts(resolver: &MentionResolver) -> WallCounts {
+        WallCounts {
+            enabled: resolver.wall_enabled,
+            anchor_reached: resolver.anchor_reached,
+            asked: resolver.asked_generic,
+            denied: resolver.denied_generic,
+            errored: resolver.errored_generic,
+        }
     }
 
     pub async fn finish_mention_resolver(&self, resolver: MentionResolver) -> turso::Result<()> {
-        if resolver.asked_generic > 0 || resolver.errored_generic > 0 {
+        if resolver.anchor_reached > 0 || resolver.errored_generic > 0 {
             self.log_diag(&format!(
-                "[issue 318] genericness wall: asked {} anchor bind(s), refused {} (each \
-                 would have corroborated on a name shared by more than {} orgs, which the \
-                 batch merge arm already refuses); {} probe(s) ERRORED and bound leniently",
+                "[issue 318] genericness wall enabled={}: {} anchor bind(s) reached the \
+                 gate, {} asked (soft scheme), {} refused (each would have corroborated on \
+                 a name shared by more than {} orgs, which the batch merge arm already \
+                 refuses), {} probe(s) ERRORED and bound leniently",
+                resolver.wall_enabled,
+                resolver.anchor_reached,
                 resolver.asked_generic,
                 resolver.denied_generic,
                 resolver.stoplist_cap,
@@ -6120,6 +6166,7 @@ impl Db {
         // READS `resolver.hard_scheme`; flushed once at the end.
         let mut denied_generic = 0u64;
         let mut asked_generic = 0u64;
+        let mut anchor_reached = 0u64;
         let mut errored_generic = 0u64;
         let mut memo_put: Option<(String, bool)> = None;
         // Snapshot for the cache decision below: the wall runs deep inside the
@@ -6287,6 +6334,9 @@ impl Db {
                                         // wall's own default besides.
                                         let bind =
                                             corroborated && !owner_vetoed && !family_conflict;
+                                        if bind {
+                                            anchor_reached += 1;
+                                        }
                                         let denied = match resolver.hard_scheme {
                                             Some(hard) if bind && !hard(scheme) => {
                                                 asked_generic += 1;
@@ -6510,6 +6560,7 @@ impl Db {
         };
         resolver.denied_generic += denied_generic;
         resolver.asked_generic += asked_generic;
+        resolver.anchor_reached += anchor_reached;
         resolver.errored_generic += errored_generic;
         if let Some((k, g)) = memo_put {
             resolver.generic_memo.insert(k, g);

@@ -2348,14 +2348,25 @@ impl Supervisor {
                 // durable in the r3-merge-plan report. Silent when the wall
                 // was never asked, loud when a probe errored: an errored probe
                 // means binds went through at the pre-318 bar.
-                let (asked, denied, errored) = report.wall;
-                let wall = if errored > 0 {
+                // The suffix reports `enabled` and `anchor_reached` alongside
+                // the asks, because otherwise a zero means two things: the
+                // first full day's fold read "asked 0" over 3,889 notices and
+                // could not say whether the anchor path never fired or the
+                // wall was switched off. It stays silent only when the anchor
+                // path itself never fired AND nothing errored — the one case
+                // where there is genuinely nothing to say.
+                let w = report.wall;
+                let wall = if w.errored > 0 {
                     format!(
-                        "; issue-318 wall asked {asked}, refused {denied}, \
-                         {errored} PROBE(S) ERRORED — those binds took the pre-318 bar"
+                        "; issue-318 wall enabled={} reached {} asked {} refused {} \
+                         — {} PROBE(S) ERRORED, those binds took the pre-318 bar",
+                        w.enabled, w.anchor_reached, w.asked, w.denied, w.errored
                     )
-                } else if asked > 0 {
-                    format!("; issue-318 wall asked {asked}, refused {denied}")
+                } else if w.anchor_reached > 0 {
+                    format!(
+                        "; issue-318 wall enabled={} reached {} asked {} refused {}",
+                        w.enabled, w.anchor_reached, w.asked, w.denied
+                    )
                 } else {
                     String::new()
                 };
