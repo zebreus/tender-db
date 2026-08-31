@@ -8,6 +8,22 @@
 
 use store::turso::Value;
 
+/// A miniature checksum probe for the packet's anchor evidence: 9-digit values
+/// are Norwegian org numbers, 8-digit ones Czech ICO. Enough to tell "the value
+/// only works as a NO number while the row claims DK" from "the value works
+/// where the row says it is".
+fn packet_anchors(value: &str) -> Vec<(&'static str, String)> {
+    let digits: String = value.chars().filter(char::is_ascii_digit).collect();
+    if value.bytes().any(|b| b.is_ascii_alphabetic()) {
+        return Vec::new();
+    }
+    match digits.len() {
+        9 => vec![("NO:orgnr", digits)],
+        8 => vec![("CZ:ico", digits)],
+        _ => Vec::new(),
+    }
+}
+
 /// Issue 314 step 2: the census classifies cross-border components by whether
 /// their member names normalize alike, so it takes a norm. Case- and
 /// punctuation-insensitive, like the real one.
@@ -788,7 +804,7 @@ async fn the_packet_carries_only_the_same_name_class_with_its_evidence() {
     }
 
     let never = || false;
-    let p = db.xb_same_name_packet(census_norm, 600, 3, &never).await.unwrap();
+    let p = db.xb_same_name_packet(census_norm, packet_anchors, 600, 3, &never).await.unwrap();
     assert_eq!(p.cohort, 1, "only the Mercell component qualifies");
     assert_eq!(p.cases.len(), 1);
     assert!(!p.truncated);
@@ -811,8 +827,16 @@ async fn the_packet_carries_only_the_same_name_class_with_its_evidence() {
     assert_eq!((m2.org, m2.mentions), (2, 1), "the light side — a stray duplicate's shape");
     assert!(m2.variants.is_empty());
 
+    // The anchor evidence, which is what decides whether the repair is a merge
+    // or a COUNTRY correction. Both rows carry "M1"/"M2" — letter-bearing, so
+    // the probe declines them and `country_agrees` stays false without
+    // implying contamination. The distinction the packet has to preserve is
+    // "anchors nowhere" versus "anchors somewhere ELSE".
+    assert!(m1.anchors.is_empty(), "a letter-bearing value anchors nowhere");
+    assert!(!m1.country_agrees);
+
     // The cap is honoured and reported, not silently applied.
-    let capped = db.xb_same_name_packet(census_norm, 0, 3, &never).await.unwrap();
+    let capped = db.xb_same_name_packet(census_norm, packet_anchors, 0, 3, &never).await.unwrap();
     assert_eq!(capped.cohort, 1, "the cohort size is the WHOLE class, not the page");
     assert!(capped.truncated);
     assert!(capped.cases.is_empty());
@@ -820,8 +844,53 @@ async fn the_packet_carries_only_the_same_name_class_with_its_evidence() {
     // A cancel carries nothing: a partial packet reviewed as a whole one would
     // under-run the campaign silently.
     let always = || true;
-    let stopped = db.xb_same_name_packet(census_norm, 600, 3, &always).await.unwrap();
+    let stopped = db.xb_same_name_packet(census_norm, packet_anchors, 600, 3, &always).await.unwrap();
     assert!(stopped.stopped);
     assert_eq!(stopped.cohort, 0);
     assert!(stopped.cases.is_empty());
+}
+
+/// The packet's anchor evidence has to separate "this value's arithmetic works
+/// nowhere" from "it works, but somewhere ELSE than the row claims". Only the
+/// second is a contaminated country code, and only it turns a merge question
+/// into a country correction — which is a repair through an already-tested
+/// path rather than a new merge arm.
+#[tokio::test]
+async fn the_packet_flags_a_country_its_identifier_contradicts() {
+    let (db, conn) = open("test-xb-anchor.db").await;
+    // A 9-digit value: Norwegian by arithmetic. One row says NO (agrees), the
+    // other says DK (contradicted — DK is the contaminated side).
+    for (id, cc) in [(1i64, "NO"), (2, "DK")] {
+        org(&conn, id, "Mercell Holding ASA", Some("980921565")).await;
+        conn.execute(
+            "UPDATE organizations SET country = ? WHERE id = ?",
+            (Value::Text(cc.into()), Value::Integer(id)),
+        )
+        .await
+        .unwrap();
+    }
+    conn.execute(
+        "INSERT INTO org_candidate_edges (org_a, org_b, rule, tier, score, evidence, first_seen, last_seen, job_id)
+         VALUES (1, 2, 'e3-name', 'E3', 1.0, '{}', 1, 1, NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+
+    let never = || false;
+    let p = db.xb_same_name_packet(census_norm, packet_anchors, 600, 3, &never).await.unwrap();
+    assert_eq!(p.cases.len(), 1);
+    let ms = &p.cases[0].members;
+
+    let no = ms.iter().find(|m| m.country.as_deref() == Some("NO")).unwrap();
+    assert_eq!(no.anchors, vec!["NO:orgnr".to_owned()]);
+    assert!(no.country_agrees, "the value's arithmetic works where this row says it is");
+
+    let dk = ms.iter().find(|m| m.country.as_deref() == Some("DK")).unwrap();
+    assert_eq!(dk.anchors, vec!["NO:orgnr".to_owned()], "same value, same arithmetic");
+    assert!(
+        !dk.country_agrees,
+        "…but it is not a DK number, so DK is the contaminated side and the \
+         repair is a country correction rather than a merge"
+    );
 }

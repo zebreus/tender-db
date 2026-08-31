@@ -4177,7 +4177,13 @@ impl Supervisor {
                 );
                 let p = self
                     .db
-                    .xb_same_name_packet(ingest::project::match_norm, 600, 3, &stop)
+                    .xb_same_name_packet(
+                        ingest::project::match_norm,
+                        ingest::idgate::checksum_anchors,
+                        600,
+                        3,
+                        &stop,
+                    )
                     .await
                     .map_err(|e| e.to_string())?;
                 if p.stopped {
@@ -4203,6 +4209,8 @@ impl Supervisor {
                                 .collect::<Vec<_>>(),
                             "mentions": m.mentions,
                             "notices": m.notices,
+                            "anchors": m.anchors,
+                            "country_agrees": m.country_agrees,
                         })).collect::<Vec<_>>(),
                     })).collect::<Vec<_>>(),
                 })

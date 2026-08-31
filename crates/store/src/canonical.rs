@@ -2114,6 +2114,21 @@ pub struct XbMember {
     pub mentions: u64,
     /// A few notice publication ids, so a reviewer can look at the source.
     pub notices: Vec<String>,
+    /// The register schemes this member's identifier VALIDATES under, from the
+    /// injected checksum probe (issues 311 + 314, round 2).
+    ///
+    /// This is the evidence that decides what the repair even is. Two national
+    /// registers can independently issue the same number, so "same digits,
+    /// different country" does NOT by itself mean one entity. But when a
+    /// value's arithmetic only works as a NO org number and the row claims DK,
+    /// the row's COUNTRY is what is wrong — and the repair is a country
+    /// correction, after which the existing same-country same-identifier logic
+    /// merges the pair through a tested path. Merging directly would bury the
+    /// fact that a country code was wrong.
+    pub anchors: Vec<String>,
+    /// Whether the row's own country is among those schemes. `false` on a
+    /// value that anchors somewhere at all is the contaminated-country signal.
+    pub country_agrees: bool,
 }
 
 /// One reviewable case: a connected component of E3 edges whose members are
@@ -11143,6 +11158,7 @@ impl Db {
     pub async fn xb_same_name_packet(
         &self,
         norm: fn(&str) -> String,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
         cases_cap: usize,
         notices_cap: usize,
         stop: &(dyn Fn() -> bool + Sync),
@@ -11276,6 +11292,15 @@ impl Db {
                     m.identifier = opt_text_of(&row, 2);
                 }
                 drop(rows);
+                if let Some(v) = m.identifier.as_deref() {
+                    let all = anchors(v);
+                    m.anchors =
+                        all.iter().filter(|(sc, _)| !sc.contains('|')).map(|(sc, _)| (*sc).to_owned()).collect();
+                    m.country_agrees = match m.country.as_deref() {
+                        Some(cc) => m.anchors.iter().any(|sc| sc.starts_with(cc)),
+                        None => false,
+                    };
+                }
                 let mut rows = reader
                     .query(
                         "SELECT lang, name FROM organization_names WHERE org_id = ? \
