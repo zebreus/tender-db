@@ -2646,6 +2646,20 @@ pub struct MentionResolver {
     /// silently does nothing and a prevention that silently does everything
     /// look identical without a count.
     denied_generic: u64,
+    /// Anchor binds the wall was ASKED about, denied or not. Without this the
+    /// only number is the denials, and 0 denials cannot be told apart from 0
+    /// questions — which is the frequency issue 318 asked for and the first
+    /// version answered by assertion.
+    asked_generic: u64,
+    /// Probes that ERRORED. The bind is allowed (lenient, the same answer an
+    /// unseen key gets) rather than failing the fold, because an unavailable
+    /// wall must not be able to stop ingestion — but a silent lenient run is
+    /// how a prevention stops preventing, so it is counted and shouted.
+    errored_generic: u64,
+    /// Per-run memo, `n2 key -> generic`. Generic names are BY DEFINITION the
+    /// most repeated strings in the corpus, so without this the most common
+    /// keys pay the most probes.
+    generic_memo: std::collections::HashMap<String, bool>,
 }
 
 /// The same-country E1 canonical key for an identifier, under the merge job's
@@ -5909,6 +5923,50 @@ impl Db {
             }
             org_of.insert((country, kind, value), id);
         }
+        // Issue 318, panel round 1: the wall's cost claim was "one indexed
+        // seek", and that is true only in the STEADY state.
+        // `org_match_keys_kk` is created by `finish_org_match_keys` at the END
+        // of a build and dropped at its start, so through every window of a
+        // ~2-hour wet build — and durably after an interrupted one, since
+        // nothing re-enqueues a cancelled build — the table has NO index and
+        // the probe becomes a full scan of a ~21M-row satellite, per bind, on
+        // the ingest hot path. Measured 3.6 µs/row, and the LENIENT verdict is
+        // the expensive case: concluding "0 carriers" requires reading
+        // everything.
+        //
+        // Every other consumer of this table already refuses in that state —
+        // the R3 merge arm, `scan-org-match-keys`, `rehoming-packet` — but
+        // this path has no "refuse" to return, so it does the equivalent:
+        // resolves the wall's AVAILABILITY once per run and disables it for
+        // the run if the keyspace cannot answer cheaply. Disabled means
+        // lenient, which is the behaviour the issue mandates for exactly this
+        // state, and it now costs nothing instead of costing a scan.
+        let hard_scheme = match hard_scheme {
+            None => None,
+            Some(f) => {
+                let indexed = self.has_index("org_match_keys_kk").await?;
+                let (watermark, _) = self.org_match_keys_state().await?;
+                if indexed && watermark == 0 {
+                    Some(f)
+                } else {
+                    // `log_diag`, not `eprintln!`. The projection runs on the
+                    // isolated worker runtime whose stderr does NOT reach
+                    // journald — measured in issues 61/63, and the reason
+                    // `log_diag` exists at all. A prevention whose only
+                    // surface is a blind channel is a prevention nobody can
+                    // check.
+                    self.log_diag(&format!(
+                        "[issue 318] genericness wall DISABLED for this run \
+                         (org_match_keys_kk present: {indexed}, build watermark: \
+                         {watermark}). A key build is in flight or was interrupted, so \
+                         the probe would full-scan the satellite per bind. Binds proceed \
+                         at the pre-318 bar until the next completed build."
+                    ));
+                    None
+                }
+            }
+        };
+
         Ok(MentionResolver {
             org_of,
             name_of: std::collections::HashMap::new(),
@@ -5923,6 +5981,9 @@ impl Db {
             hard_scheme,
             stoplist_cap,
             denied_generic: 0,
+            asked_generic: 0,
+            errored_generic: 0,
+            generic_memo: std::collections::HashMap::new(),
         })
     }
 
@@ -6013,21 +6074,28 @@ impl Db {
     /// Ring the change-cursor doorbell once if the resolver created any
     /// Organization over its lifetime, so a change-feed consumer sees every new
     /// Organization exactly once.
-    /// Anchor binds the issue-318 genericness wall refused this run. A
-    /// prevention that silently does nothing and one that silently does
-    /// everything look identical without a count, so the fold reports it.
-    pub fn denied_generic(resolver: &MentionResolver) -> u64 {
-        resolver.denied_generic
+    /// What the issue-318 wall did this run: (asked, denied, errored).
+    ///
+    /// All three, not just the denials: 0 denials cannot be told apart from 0
+    /// QUESTIONS, and "how often does the anchor path actually fire" is the
+    /// frequency issue 318 asked for and the first version of this answered by
+    /// assertion. `errored` is the one that must never be read as fine — it
+    /// means the wall was unavailable and binds went through leniently.
+    pub fn wall_counts(resolver: &MentionResolver) -> (u64, u64, u64) {
+        (resolver.asked_generic, resolver.denied_generic, resolver.errored_generic)
     }
 
     pub async fn finish_mention_resolver(&self, resolver: MentionResolver) -> turso::Result<()> {
-        if resolver.denied_generic > 0 {
-            eprintln!(
-                "[store] issue 318: the genericness wall refused {} anchor bind(s) this run \
-                 — each would have corroborated on a name shared by more than {} orgs, which \
-                 the batch merge arm already refuses",
-                resolver.denied_generic, resolver.stoplist_cap
-            );
+        if resolver.asked_generic > 0 || resolver.errored_generic > 0 {
+            self.log_diag(&format!(
+                "[issue 318] genericness wall: asked {} anchor bind(s), refused {} (each \
+                 would have corroborated on a name shared by more than {} orgs, which the \
+                 batch merge arm already refuses); {} probe(s) ERRORED and bound leniently",
+                resolver.asked_generic,
+                resolver.denied_generic,
+                resolver.stoplist_cap,
+                resolver.errored_generic
+            ));
         }
         if resolver.created_any {
             let conn = self.conn().await;
@@ -6051,6 +6119,14 @@ impl Db {
         // the whole body and the wall sits inside an expression that also
         // READS `resolver.hard_scheme`; flushed once at the end.
         let mut denied_generic = 0u64;
+        let mut asked_generic = 0u64;
+        let mut errored_generic = 0u64;
+        let mut memo_put: Option<(String, bool)> = None;
+        // Snapshot for the cache decision below: the wall runs deep inside the
+        // identifier arm, and "did the wall deny THIS mention" is not otherwise
+        // recoverable at the mint site.
+        let wall_denials_before = 0u64;
+
         if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
             return Ok((org_id, false));
         }
@@ -6127,6 +6203,13 @@ impl Db {
                                         // veto is head-vs-head, the merge
                                         // arm's rule.
                                         let n2 = norm_fn(&m.name);
+                                        // Memo read taken up front: the
+                                        // expression below borrows several
+                                        // `resolver` fields, and a lookup in
+                                        // the middle of it fights the borrow
+                                        // checker for no gain.
+                                        let memo_hit =
+                                            resolver.generic_memo.get(&n2).copied();
                                         let mut corroborated = false;
                                         let mut owner_vetoed = false;
                                         let mut head_family: Option<&'static str> = None;
@@ -6206,12 +6289,68 @@ impl Db {
                                             corroborated && !owner_vetoed && !family_conflict;
                                         let denied = match resolver.hard_scheme {
                                             Some(hard) if bind && !hard(scheme) => {
-                                                self.name_key_is_generic(
-                                                    "n2",
-                                                    &n2,
-                                                    resolver.stoplist_cap,
-                                                )
-                                                .await?
+                                                asked_generic += 1;
+                                                // Memoized: generic names are
+                                                // by definition the most
+                                                // repeated strings in the
+                                                // corpus, so an unmemoized
+                                                // probe charges the most for
+                                                // the commonest keys.
+                                                match memo_hit {
+                                                    Some(known) => known,
+                                                    None => {
+                                                        // On the FOLD's OWN
+                                                        // connection, not a
+                                                        // pooled reader: this
+                                                        // runs inside the
+                                                        // fold's open write
+                                                        // transaction, and
+                                                        // taking a read lease
+                                                        // while holding the
+                                                        // writer is the lock
+                                                        // inversion the two
+                                                        // pools exist to
+                                                        // prevent. Gated on
+                                                        // the index above, so
+                                                        // it is a seek.
+                                                        match self
+                                                            .name_key_is_generic_on(
+                                                                conn,
+                                                                "n2",
+                                                                &n2,
+                                                                resolver.stoplist_cap,
+                                                            )
+                                                            .await
+                                                        {
+                                                            Ok(g) => {
+                                                                memo_put = Some((n2.clone(), g));
+                                                                g
+                                                            }
+                                                            // An unavailable
+                                                            // wall must not be
+                                                            // able to stop
+                                                            // ingestion. Same
+                                                            // answer an unseen
+                                                            // key gets —
+                                                            // lenient — but
+                                                            // counted, because
+                                                            // a silent lenient
+                                                            // run is how a
+                                                            // prevention stops
+                                                            // preventing.
+                                                            Err(e) => {
+                                                                errored_generic += 1;
+                                                                self.log_diag(&format!(
+                                                                    "[issue 318] \
+                                                                     genericness probe \
+                                                                     failed, binding \
+                                                                     leniently: {e}"
+                                                                ));
+                                                                false
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                             _ => false,
                                         };
@@ -6228,6 +6367,24 @@ impl Db {
                         }
                         _ => None,
                     };
+                    // Issue 318, panel round 1 (REPRODUCED): a wall denial
+                    // must not leave a CACHE entry behind. The mint below
+                    // claims the raw `(country, kind, value)` triple in
+                    // `org_of`, so the next mention carrying that identifier
+                    // rides E0 straight onto the freshly minted provisional —
+                    // even when its OWN name is perfectly specific and would
+                    // have anchored to the standing owner. The captured
+                    // mention pays for a name it does not have, and which row
+                    // it lands on depends on the ORDER the batch happens to
+                    // see them in.
+                    //
+                    // This is the same hazard the anchor path already refuses
+                    // to cache in the other direction ("a byte-identical
+                    // repeat with a DIFFERENT name" above), and the answer is
+                    // the same: skip the cache and let every country-less
+                    // repeat re-earn the full bar. The merge job arbitrates
+                    // what is left, which is what it is for.
+                    let wall_denied = denied_generic > wall_denials_before;
                     if let Some(org_id) = canon_hit.or(anchor_hit) {
                         // Register the raw triple on CANON binds only, so
                         // repeats of that representation stay one map probe.
@@ -6255,7 +6412,9 @@ impl Db {
                         )
                         .await?;
                         let org_id = last_insert_rowid(conn).await?;
-                        org_of.insert(key, org_id);
+                        if !wall_denied {
+                            org_of.insert(key, org_id);
+                        }
                         if let Some(ck) = canon {
                             // Claim the canonical key — or poison one that now
                             // has two owners (the veto path minted beside the
@@ -6350,6 +6509,11 @@ impl Db {
             }
         };
         resolver.denied_generic += denied_generic;
+        resolver.asked_generic += asked_generic;
+        resolver.errored_generic += errored_generic;
+        if let Some((k, g)) = memo_put {
+            resolver.generic_memo.insert(k, g);
+        }
 
         conn.execute(
             "INSERT INTO organization_mentions(notice_id, section_id, organization_id, name,
@@ -9508,6 +9672,28 @@ impl Db {
     /// not silently deny every rescue merge. It does mean the wall is only
     /// as complete as the last build — which is why a WET r3 run refuses
     /// outright when the satellite is empty (the job's own guard).
+    /// The same wall, on a caller-supplied connection.
+    ///
+    /// The ingest path needs this: its probe runs INSIDE the fold's open write
+    /// transaction, and taking a pooled read lease while holding the writer is
+    /// the lock inversion the two pools exist to prevent. Batch callers keep
+    /// using the reader-pool wrapper below.
+    pub async fn name_key_is_generic_on(
+        &self,
+        conn: &Connection,
+        kind: &str,
+        key: &str,
+        cap: usize,
+    ) -> turso::Result<bool> {
+        let mut rows =
+            conn.query(GENERIC_KEY_SQL, (t(kind), t(key), Value::Integer(cap as i64 + 1))).await?;
+        let n = match rows.next().await? {
+            Some(row) => int(&row, 0),
+            None => 0,
+        };
+        Ok(n as usize > cap)
+    }
+
     pub async fn name_key_is_generic(
         &self,
         kind: &str,

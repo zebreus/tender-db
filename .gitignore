@@ -2,3 +2,7 @@
 /result
 *.db
 *.db-wal
+# `log_diag` writes beside the database it is logging for (checkpoint.rs), so a
+# test that exercises a diag-logging path drops one of these next to its
+# fixture DB. The DBs themselves are ignored above; these are the same debris.
+*.db.diag.log

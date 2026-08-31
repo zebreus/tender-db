@@ -326,14 +326,20 @@ async fn country_less_anchored_corroborated_mentions_bind_and_everything_else_mi
 /// Issue 318: the resolver's anchor bind applied the R3 bar WITHOUT the
 /// genericness wall the batch merge arm enforces, so the same evidence the
 /// batch arm denies still bound at ingest — on every notice, and without the
-/// audit row the batch arm leaves. Three tests, one per answer the wall can
-/// give.
-async fn bind_with_wall(
+/// audit row the batch arm leaves.
+///
+/// `indexed` controls whether `org_match_keys_kk` exists when the resolver is
+/// opened. That is not a detail: the index is created at the END of a key build
+/// and dropped at its start, so its absence is a designed, durable state, and
+/// the wall must disable itself there rather than full-scan the satellite once
+/// per bind.
+async fn bind_with_wall_indexed(
     tag: &str,
     carriers: usize,
     value: &str,
     hard_scheme: Option<fn(&str) -> bool>,
     cap: usize,
+    indexed: bool,
 ) -> (i64, u64) {
     let path = format!("test-318-wall-{tag}.db");
     for s in ["", "-wal", "-shm"] {
@@ -377,6 +383,15 @@ async fn bind_with_wall(
         .unwrap();
     }
 
+    if indexed {
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS org_match_keys_kk \
+                 ON org_match_keys(key_kind, key, org_id)",
+            (),
+        )
+        .await
+        .unwrap();
+    }
     let mut resolver = db
         .mention_resolver(
             Some(key),
@@ -392,7 +407,9 @@ async fn bind_with_wall(
     db.resolve_mentions(&mut resolver, &[mention_nc(900, "Yhteinen Nimi", value)], 1)
         .await
         .unwrap();
-    let denied = store::Db::denied_generic(&resolver);
+    let (asked, denied, errored) = store::Db::wall_counts(&resolver);
+    assert_eq!(errored, 0, "no probe should error in a fixture");
+    let _ = asked;
     db.finish_mention_resolver(resolver).await.unwrap();
     let bound = count(&db, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await;
     (bound, denied)
@@ -402,7 +419,7 @@ async fn bind_with_wall(
 /// the batch arm refuses. Now the resolver refuses it too, and mints instead.
 #[tokio::test]
 async fn a_generic_name_under_a_soft_scheme_no_longer_binds() {
-    let (bound, denied) = bind_with_wall("soft", 25, "01234567", Some(|s| s == "CZ:ico"), 20).await;
+    let (bound, denied) = bind_with_wall_indexed("soft", 25, "01234567", Some(|s| s == "CZ:ico"), 20, true).await;
     assert_ne!(bound, 1, "the mention minted its own row rather than binding the standing owner");
     assert_eq!(denied, 1, "and the wall says so, rather than refusing silently");
 }
@@ -412,7 +429,7 @@ async fn a_generic_name_under_a_soft_scheme_no_longer_binds() {
 #[tokio::test]
 async fn a_generic_name_under_a_hard_scheme_still_binds() {
     let (bound, denied) =
-        bind_with_wall("hard", 25, "01234567", Some(|s| s == "FI:ytunnus"), 20).await;
+        bind_with_wall_indexed("hard", 25, "01234567", Some(|s| s == "FI:ytunnus"), 20, true).await;
     assert_eq!(bound, 1, "the exemption holds — this is design §4.1, not an oversight");
     assert_eq!(denied, 0);
 }
@@ -425,7 +442,7 @@ async fn a_generic_name_under_a_hard_scheme_still_binds() {
 /// Stage 3 exists to prevent, every time the key store was rebuilt.
 #[tokio::test]
 async fn an_empty_key_store_binds_exactly_as_before() {
-    let (bound, denied) = bind_with_wall("lenient", 0, "01234567", Some(|s| s == "CZ:ico"), 20).await;
+    let (bound, denied) = bind_with_wall_indexed("lenient", 0, "01234567", Some(|s| s == "CZ:ico"), 20, true).await;
     assert_eq!(bound, 1, "no keys known ⇒ nothing is generic ⇒ pre-318 behaviour");
     assert_eq!(denied, 0);
 }
@@ -434,7 +451,138 @@ async fn an_empty_key_store_binds_exactly_as_before() {
 /// byte-identical pre-318 path every store-level caller keeps.
 #[tokio::test]
 async fn no_injected_wall_is_the_pre_318_path() {
-    let (bound, denied) = bind_with_wall("off", 25, "01234567", None, 0).await;
+    let (bound, denied) = bind_with_wall_indexed("off", 25, "01234567", None, 0, true).await;
     assert_eq!(bound, 1);
     assert_eq!(denied, 0);
+}
+
+/// The index is created at the END of a key build and dropped at its start, so
+/// through every window of a ~2-hour build — and DURABLY after an interrupted
+/// one, since nothing re-enqueues a cancelled build — `org_match_keys` has no
+/// index at all. The probe would then full-scan a ~21M-row satellite once per
+/// bind, on the ingest hot path, and the LENIENT verdict is the expensive case:
+/// concluding "0 carriers" means reading everything.
+///
+/// Every other consumer of this table refuses in that state. This path has no
+/// refuse, so it disables the wall for the run — which is the same lenient
+/// answer, at no cost. Without this the first version's "one indexed seek"
+/// cost claim was false in exactly the state the design calls load-bearing.
+#[tokio::test]
+async fn an_unindexed_key_store_disables_the_wall_for_the_run() {
+    let (bound, denied) =
+        bind_with_wall_indexed("noindex", 25, "01234567", Some(|s| s == "CZ:ico"), 20, false).await;
+    assert_eq!(bound, 1, "the wall is off, so the bind proceeds at the pre-318 bar");
+    assert_eq!(denied, 0, "and nothing is reported as refused, because nothing was asked");
+}
+
+/// A wall denial must not leave a CACHE entry behind (panel round 1,
+/// reproduced). The mint that follows a denial claims the raw
+/// `(country, kind, value)` triple, so the NEXT mention carrying that
+/// identifier rides E0 onto the freshly minted provisional — even when its own
+/// name is perfectly specific and would have anchored to the standing owner.
+///
+/// The captured mention pays for a name it does not have, and which row it
+/// lands on depends on the ORDER the batch happens to see the two mentions in.
+/// That order-dependence is what makes it a defect rather than a policy.
+#[tokio::test]
+async fn a_wall_denial_does_not_capture_the_next_clean_mention() {
+    let path = "test-318-nocache.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    for n in [900i64, 901] {
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                  member_path, ingested_at, parse_state, projected)
+             VALUES (?, 'ted', 'pub-' || ?, 'h' || ?, 'eforms:test', 1, 'p', 0, 'parsed', 0)",
+            (
+                store::turso::Value::Integer(n),
+                store::turso::Value::Integer(n),
+                store::turso::Value::Integer(n),
+            ),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+             VALUES (?, 'S-1', 'Organization', NULL)",
+            (store::turso::Value::Integer(n),),
+        )
+        .await
+        .unwrap();
+    }
+    // The standing owner carries BOTH names: a generic head and a specific
+    // satellite. So the clean mention corroborates on the satellite and would
+    // anchor-bind; the generic one is refused by the wall.
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (1, 'FI', 'national', '01234567', 'Yhteinen Nimi', 'yhteinen nimi', 0, 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO organization_names (org_id, lang, name, name_norm)
+         VALUES (1, 'FIN', 'Uniikki Nimi', 'uniikki nimi')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS org_match_keys_kk ON org_match_keys(key_kind, key, org_id)",
+        (),
+    )
+    .await
+    .unwrap();
+    // 25 carriers of the GENERIC key; the specific one has none.
+    for o in 1..=25i64 {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'yhteinennimi')",
+            (store::turso::Value::Integer(o),),
+        )
+        .await
+        .unwrap();
+    }
+
+    let mut resolver = db
+        .mention_resolver(
+            Some(key),
+            Some(consortium),
+            Some(anchors),
+            Some(norm),
+            Some(legal_form),
+            Some(|s| s == "CZ:ico"), // FI:ytunnus is SOFT here
+            20,
+        )
+        .await
+        .unwrap();
+    let ids = db
+        .resolve_mentions(
+            &mut resolver,
+            &[
+                // Denied by the wall — mints, and must NOT cache.
+                mention_nc(900, "Yhteinen Nimi", "01234567"),
+                // Its own name is specific: this one has earned the anchor
+                // bind to the standing owner and must get it.
+                mention_nc(901, "Uniikki Nimi", "01234567"),
+            ],
+            1,
+        )
+        .await
+        .unwrap();
+    let (_, denied, errored) = store::Db::wall_counts(&resolver);
+    db.finish_mention_resolver(resolver).await.unwrap();
+
+    assert_eq!(denied, 1, "the generic-named mention is refused");
+    assert_eq!(errored, 0);
+    assert_ne!(ids[0], 1, "…and mints rather than binding the standing owner");
+    assert_eq!(
+        ids[1], 1,
+        "but the CLEAN mention still reaches the standing owner — it was not \
+         captured by the denied mention's fresh row"
+    );
 }

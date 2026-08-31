@@ -2342,8 +2342,25 @@ impl Supervisor {
                 // how a stopped fold gets mistaken for a finished one (the same
                 // rule the capped reparse follows, issue 244).
                 let cancelled = if report.stopped { "CANCELLED at a checkpoint — " } else { "" };
+                // Issue 318: the wall's counts ride the DURABLE job row, not a
+                // log line — this runtime's stderr does not reach journald
+                // (issues 61/63), and the batch arm's twin count is already
+                // durable in the r3-merge-plan report. Silent when the wall
+                // was never asked, loud when a probe errored: an errored probe
+                // means binds went through at the pre-318 bar.
+                let (asked, denied, errored) = report.wall;
+                let wall = if errored > 0 {
+                    format!(
+                        "; issue-318 wall asked {asked}, refused {denied}, \
+                         {errored} PROBE(S) ERRORED — those binds took the pre-318 bar"
+                    )
+                } else if asked > 0 {
+                    format!("; issue-318 wall asked {asked}, refused {denied}")
+                } else {
+                    String::new()
+                };
                 Ok(format!(
-                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged",
+                    "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{wall}",
                     report.notices,
                     report.tenders,
                     report.islands,

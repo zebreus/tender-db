@@ -61,6 +61,13 @@ pub struct Report {
     /// it; a stopped incremental/full-fallback run leaves the layer intact and the
     /// unfolded notices still `projected = 0`, so the next run picks them up.
     pub stopped: bool,
+    /// Issue 318: what the resolver's genericness wall did — (asked, denied,
+    /// errored). It rides the durable Report rather than a log line because
+    /// this runtime's stderr does not reach journald (issues 61/63), and
+    /// because the batch arm's twin count is already durable in the
+    /// r3-merge-plan report. `errored` non-zero means the wall was
+    /// unavailable and binds went through at the pre-318 bar.
+    pub wall: (u64, u64, u64),
 }
 
 /// The canonical fields this layer carries, as data. Source field ids are
@@ -1977,6 +1984,7 @@ pub async fn project_incremental_chunked_observed(
         db.insert_plan(&rows).await?;
         report.mentions += db.resolve_mentions(&mut resolver, &mentions, now).await?.len() as u64;
     }
+    report.wall = store::Db::wall_counts(&resolver);
     db.finish_mention_resolver(resolver).await?;
     if report.stopped {
         // A stopped pass 2 wrote a PARTIAL plan: clear it, and do NOT advance
