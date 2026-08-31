@@ -4622,7 +4622,7 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
     let is_vat = VAT_COUNTRIES.contains(&vat_prefix.as_str())
         && body.chars().any(|c| c.is_ascii_digit())
         && body.len() <= VAT_BODY_MAX
-        && longest_letter_run(body) < 3;
+        && longest_letter_run(scheme_suffix_stripped(body)) < 3;
     if is_vat {
         // Canonicalise the minted code. The arm used to store the prefix RAW,
         // which is a live re-contamination path for issue 319's completed
@@ -4637,6 +4637,48 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         gated(national())
     }
 }
+
+/// `body` without a trailing scheme label, if it carries one.
+///
+/// **Several countries publish the local word for "VAT" inside the id.** Norway
+/// writes `NO 999 665 624 MVA` (*merverdiavgift*), Switzerland
+/// `CHE-106.094.419 MWST` (*Mehrwertsteuer*), Germany appends `USt-IdNr`, and
+/// French, Italian and English forms appear too. Measuring the letter run over
+/// the whole body rejects all of them.
+///
+/// **This is a VOCABULARY and not a length bound, and that was the lesson.**
+/// The first attempt allowed "a trailing run of up to N letters" and the N
+/// ratcheted on every corpus read — 3 for `MVA`, then 4 for `MWST`, then 5 for
+/// `USTID` — until the actual distribution was pulled:
+///
+/// ```text
+///   MVA 113   MWST 46   USTID 27   TVA 11   VAT 8   IVA 4   VATID 1   AVAT 1
+///   BBERLIN 1  AGJENA 2  AGULM 1  ESSEN 1  BONN 1  BURG 1  KAMP 1  AGSL 1
+/// ```
+///
+/// `ESSEN` and `USTID` are both five letters; `BONN` and `MWST` are both four.
+/// The first list is scheme labels and the second is German towns and court
+/// tags appended to a register number — so **no length bound can separate
+/// them**, and ratcheting one was going to keep finding a longer counterexample
+/// forever. The set below is read off the corpus rather than guessed; changing
+/// it means re-running that query, not reasoning about which languages exist.
+///
+/// `AVAT` needs no entry: it is an Irish check letter followed by `VAT`, and
+/// stripping `VAT` leaves `…A`, a one-letter run. `WWST` (a misspelling of
+/// `MWST`, one row) is deliberately absent — a typo is not a scheme.
+fn scheme_suffix_stripped(body: &str) -> &str {
+    for suffix in VAT_SUFFIXES {
+        if body.len() > suffix.len() && body.ends_with(suffix) {
+            return &body[..body.len() - suffix.len()];
+        }
+    }
+    body
+}
+
+/// The scheme labels published inside a VAT id, measured from prod's whole
+/// `kind = 'vat'` population (issue 325). Longest first, so a greedy match
+/// takes `VATID` before it could take `VAT`.
+const VAT_SUFFIXES: &[&str] = &["USTID", "VATID", "MWST", "MVA", "TVA", "VAT", "IVA"];
 
 /// The longest run of consecutive ASCII letters in `s`.
 ///
@@ -5494,6 +5536,26 @@ mod tests {
         assert_eq!(zz.country.as_deref(), Some("DEU"), "ZZ is not a VAT country");
     }
 
+    /// The suffix allowance is a VOCABULARY, and this is what it buys: a German
+    /// town appended to a register number is the same LENGTH as a scheme label
+    /// and must still be rejected. `ESSEN` and `USTID` are both five letters;
+    /// `BONN` and `MWST` are both four. Every value here is a real prod row,
+    /// and every one names a German entity filed under someone else's country.
+    #[test]
+    fn a_place_name_is_not_a_scheme_suffix_however_long_it_is() {
+        for raw in [
+            "HR100586AGTOSTEDT", // Elbe Kliniken Stade
+            "HR224817STUTTGART",
+            "HR302325AGJENA",    // Kompaktreinigung Neuhöfer GmbH
+            "GB007WIGN001",      // Wigan Council — the run is not even at the back
+            "SI2002NUMBER2073",  // East Lancashire Hospitals NHS Trust
+        ] {
+            let id = normalise_identifier(raw, Some("DE")).expect("still an identifier");
+            assert_eq!(id.kind, "national", "{raw} is a register string, not a VAT id");
+            assert_eq!(id.country.as_deref(), Some("DE"), "{raw} takes the mention's country");
+        }
+    }
+
     /// Issue 325: a word whose first two letters spell a VAT country must not
     /// mint that country.
     ///
@@ -5576,6 +5638,15 @@ mod tests {
             ("GB553298332", "GB"),
             ("CY10259033P", "CY"),      // the Cypriot trailing letter
             ("SE556105261301", "SE"),   // the longest real body: twelve
+            // Norway publishes the scheme name IN the id. Three letters, at
+            // the back — the shape the first draft of the tightening rejected
+            // on 331 real prod rows.
+            ("NO999665624MVA", "NO"),
+            ("NO966041056VAT", "NO"),
+            ("CHE106094419MWST", "CH"), // Switzerland writes the word too
+            ("CHE113202476MWST", "CH"),
+            ("DE122624631USTID", "DE"), // and Germany appends `USt-IdNr`
+            ("IE9Z17184AVAT", "IE"),    // an Irish check letter, then `VAT`
             ("XI553298332", "XI"),      // Northern Ireland
             ("DE136695976", "DE"),
         ] {
