@@ -144,8 +144,8 @@ async fn the_wet_pass_drops_only_the_variant_the_destination_already_carries() {
     assert_eq!(dry.dropped, 0, "a dry run writes nothing");
     assert_eq!(fx.variants_of(1).await.len(), 3);
 
-    let plan: Vec<(i64, String, String)> =
-        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    let plan: Vec<(i64, String, String, Option<i64>)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     let wet =
         fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
     assert!(!wet.drifted);
@@ -192,8 +192,8 @@ async fn a_drop_is_undone_exactly_and_only_once() {
     fx.standard().await;
     let stop = never;
     let dry = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
-    let plan: Vec<(i64, String, String)> =
-        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    let plan: Vec<(i64, String, String, Option<i64>)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
 
     let dry = fx.db.restore_dropped_satellites(true, None, 30).await.unwrap();
@@ -223,8 +223,8 @@ async fn a_restore_never_clobbers_what_was_written_since() {
     fx.standard().await;
     let stop = never;
     let dry = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
-    let plan: Vec<(i64, String, String)> =
-        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    let plan: Vec<(i64, String, String, Option<i64>)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
     // Something wrote that slot after the drop — a resolver seeing a new
     // publication, say. Newer truth wins.
@@ -246,12 +246,12 @@ async fn a_plan_that_drifted_stops_the_wet_pass() {
     let stop = never;
     // A plan naming a tuple that is not in the fresh set, and missing the one
     // that is — the shape a count could never show.
-    let stale: Vec<(i64, String, String)> =
-        vec![(1, "ITA".to_owned(), "qualcosa".to_owned())];
+    let stale: Vec<(i64, String, String, Option<i64>)> =
+        vec![(1, "ITA".to_owned(), "qualcosa".to_owned(), Some(2))];
     let r = fx.db.drop_orphan_satellites(norm, false, Some(&stale), Some(7), 20, &stop).await.unwrap();
     assert!(r.drifted);
-    assert_eq!(r.plan_added, vec!["1/DEU/dobler gmbh".to_owned()]);
-    assert_eq!(r.plan_removed, vec!["1/ITA/qualcosa".to_owned()]);
+    assert_eq!(r.plan_added, vec!["1/DEU/dobler gmbh->2".to_owned()]);
+    assert_eq!(r.plan_removed, vec!["1/ITA/qualcosa->2".to_owned()]);
     assert_eq!(r.dropped, 0, "nothing is written when the plan and the world disagree");
     assert_eq!(fx.variants_of(1).await.len(), 3);
 }
@@ -274,8 +274,8 @@ async fn a_destination_renamed_after_the_plan_stops_the_pass() {
     fx.standard().await;
     let stop = never;
     let dry = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
-    let plan: Vec<(i64, String, String)> =
-        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    let plan: Vec<(i64, String, String, Option<i64>)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     assert_eq!(plan.len(), 1);
 
     fx.conn
@@ -286,7 +286,7 @@ async fn a_destination_renamed_after_the_plan_stops_the_pass() {
     let wet =
         fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
     assert!(wet.drifted, "the candidate lost its destination, so the plan no longer matches");
-    assert_eq!(wet.plan_removed, vec!["1/DEU/dobler gmbh".to_owned()]);
+    assert_eq!(wet.plan_removed, vec!["1/DEU/dobler gmbh->2".to_owned()]);
     assert!(wet.plan_added.is_empty());
     assert_eq!(wet.dropped, 0);
     assert_eq!(fx.variants_of(1).await.len(), 3, "the corpus keeps its only copy");
@@ -357,8 +357,8 @@ async fn a_pre_image_whose_org_is_gone_is_skipped_not_fatal() {
         .unwrap();
     let stop = never;
     let dry = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
-    let plan: Vec<(i64, String, String)> =
-        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    let plan: Vec<(i64, String, String, Option<i64>)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone(), o.target)).collect();
     fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
     // A second pre-image naming an org that does not exist — the shape a
     // merge leaves behind.
@@ -412,4 +412,128 @@ async fn the_undo_can_be_bounded_to_one_drop_pass() {
     // Job 7's pre-image is untouched and still available.
     let r = fx.db.restore_dropped_satellites(true, Some(7), 40).await.unwrap();
     assert_eq!(r.outstanding, 1);
+}
+
+/// A verdict naming the row the mention is ALREADY on is not a destination.
+/// Probing it finds THIS satellite, making condition 3 — the whole stated
+/// basis for safety — true from the very row being emptied, and destroying the
+/// corpus's only copy of the name.
+///
+/// `apply_rehoming` refuses such a verdict at apply time, but
+/// `record_rehoming`'s upsert preserves a real move's applied stamp, so a
+/// re-review can leave an APPLIED row whose ids the apply path never saw.
+#[tokio::test]
+async fn a_row_is_never_its_own_destination() {
+    let fx = fixture("selftarget").await;
+    fx.org(1, "Bietergemeinschaft Dobler / Oberall").await;
+    fx.variant(1, "DEU", "Dobler GmbH").await;
+    // The poisoned verdict: case 1 → target 1.
+    fx.applied(1, 901, 1).await;
+
+    let stop = never;
+    let r = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
+    assert_eq!(
+        r.candidates, 0,
+        "a self-target is not a destination, so the variant is not a candidate at all"
+    );
+    assert_eq!(fx.variants_of(1).await.len(), 1, "and the corpus keeps its only copy");
+}
+
+/// Worse than losing one row: a self-target SHADOWS an honest destination.
+/// The target set iterates ascending, so a lower-numbered self-target is
+/// probed first and turns every orphan on the origin into "at target" —
+/// including the carried-nowhere-else class this job exists to leave alone.
+#[tokio::test]
+async fn a_self_target_does_not_shadow_the_honest_destination() {
+    let fx = fixture("shadow").await;
+    fx.standard().await; // origin 1 → target 2, DEU drops, FRA must stay
+    fx.applied(1, 902, 1).await; // …plus a self-target verdict on another address
+
+    let stop = never;
+    let r = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
+    assert_eq!(r.candidates, 1, "still just the DEU variant");
+    assert_eq!(r.rows[0].lang, "DEU");
+    assert_eq!(r.rows[0].target, Some(2), "and it still names the HONEST destination");
+}
+
+/// The in-transaction re-check, tested directly — which is only possible
+/// because `apply_orphan_drops` takes the candidate list.
+///
+/// While the re-check lived inside the scan that produced its input, a panel
+/// deleted all 73 of its lines and every test stayed green: the candidate
+/// could only ever be one the scan had just validated. Here the candidate is
+/// hand-built and the database disagrees with it, which is the only way to
+/// watch the guard refuse.
+#[tokio::test]
+async fn the_in_transaction_recheck_refuses_a_candidate_the_database_no_longer_supports() {
+    let fx = fixture("recheck-direct").await;
+    fx.standard().await;
+    let stop = never;
+
+    // 1. A candidate whose destination does not carry the key.
+    let bogus_target = store::OrphanSatellite {
+        org: 1,
+        org_name: "Bietergemeinschaft Dobler / Oberall".into(),
+        lang: "DEU".into(),
+        name: "Dobler GmbH".into(),
+        key: "dobler gmbh".into(),
+        target: Some(999),
+        target_name: None,
+    };
+    let r = fx.db.apply_orphan_drops(&[bogus_target], norm, Some(7), 20, &stop).await.unwrap();
+    assert_eq!((r.dropped, r.skipped_recheck), (0, 1));
+
+    // 2. A candidate whose name no longer matches the stored variant.
+    let stale_name = store::OrphanSatellite {
+        org: 1,
+        org_name: "Bietergemeinschaft Dobler / Oberall".into(),
+        lang: "DEU".into(),
+        name: "Dobler GmbH (as it was)".into(),
+        key: "dobler gmbh".into(),
+        target: Some(2),
+        target_name: None,
+    };
+    let r = fx.db.apply_orphan_drops(&[stale_name], norm, Some(7), 20, &stop).await.unwrap();
+    assert_eq!((r.dropped, r.skipped_recheck), (0, 1));
+
+    // 3. A candidate on a slot a mention now supports.
+    fx.mention(903, 1, "Dobler GmbH").await;
+    let supported = store::OrphanSatellite {
+        org: 1,
+        org_name: "Bietergemeinschaft Dobler / Oberall".into(),
+        lang: "DEU".into(),
+        name: "Dobler GmbH".into(),
+        key: "dobler gmbh".into(),
+        target: Some(2),
+        target_name: None,
+    };
+    let r = fx.db.apply_orphan_drops(&[supported], norm, Some(7), 20, &stop).await.unwrap();
+    assert_eq!((r.dropped, r.skipped_recheck), (0, 1), "a mention supports the key again");
+
+    // 4. A self-target, refused by the transaction as well as by the scan.
+    let selfie = store::OrphanSatellite {
+        org: 1,
+        org_name: "Bietergemeinschaft Dobler / Oberall".into(),
+        lang: "DEU".into(),
+        name: "Dobler GmbH".into(),
+        key: "dobler gmbh".into(),
+        target: Some(1),
+        target_name: None,
+    };
+    let r = fx.db.apply_orphan_drops(&[selfie], norm, Some(7), 20, &stop).await.unwrap();
+    assert_eq!((r.dropped, r.skipped_recheck), (0, 1));
+
+    // Nothing was written on any of the four paths.
+    assert_eq!(fx.variants_of(1).await.len(), 3);
+    assert_eq!(
+        fx.conn
+            .query("SELECT COUNT(*) FROM org_name_drops", ())
+            .await
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+            .map(|r| r.get_value(0).unwrap()),
+        Some(Value::Integer(0))
+    );
 }

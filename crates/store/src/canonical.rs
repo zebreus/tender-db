@@ -8251,9 +8251,19 @@ impl Db {
         {
             let mut rows = reader
                 .query(
+                    // `target_org_id <> case_org_id` is not defensive noise.
+                    // A verdict naming the row the mention is ALREADY on is
+                    // not a destination, and probing it would find THIS
+                    // satellite — making condition 3 true from the very row
+                    // being emptied, and destroying the corpus's only copy.
+                    // `apply_rehoming` refuses such a verdict at apply time,
+                    // but `record_rehoming`'s upsert preserves a real move's
+                    // applied stamp, so a re-review can leave an APPLIED row
+                    // whose ids the apply path never saw.
                     "SELECT case_org_id, target_org_id FROM org_mention_rehoming \
                       WHERE applied_at IS NOT NULL AND action = 'rehome' \
-                        AND applied_action LIKE 'rehomed from%'",
+                        AND applied_action LIKE 'rehomed from%' \
+                        AND (target_org_id IS NULL OR target_org_id <> case_org_id)",
                     (),
                 )
                 .await?;
@@ -8323,6 +8333,15 @@ impl Db {
                     if stop() {
                         return Ok(SatelliteOrphanReport { stopped: true, ..Default::default() });
                     }
+                    // Belt AND braces: the query above filters these out, but
+                    // the set iterates ASCENDING, so a self-target that got
+                    // through would be probed FIRST and shadow the honest
+                    // destination — converting every orphan on the origin into
+                    // "at target", including the carried-nowhere-else class
+                    // this job exists to leave alone.
+                    if *t == org {
+                        continue;
+                    }
                     let Some(th) = self.rehoming_head(&reader, *t).await? else { continue };
                     if norm(&th.0) == key {
                         at = Some((*t, th.0));
@@ -8376,11 +8395,21 @@ impl Db {
     /// The measurement (`satellite_orphans`, prod job 511) found 72 orphans
     /// over 80 origins and 66 of them already standing on a destination. Those
     /// 66 are what this drops, and the third condition is the whole reason it
-    /// is safe: the variant is not being deleted from the corpus, it is being
+    /// is safe: the NAME is not being deleted from the corpus, it is being
     /// removed from a row that has no claim on it while the row that DOES
     /// keeps it. The other 6 stay — unsupported here but carried nowhere else,
-    /// dropping them would lose a spelling the corpus has in no other place,
+    /// dropping them would lose a name the corpus has in no other place,
     /// which is the invention this whole line of work keeps refusing.
+    ///
+    /// Said precisely, because the guarantee is narrower than it first reads:
+    /// what the destination is checked to carry is the N2 KEY, not the byte
+    /// sequence. A destination spelling "Dobler GmbH & Co. KG" keeps a
+    /// dropped "Dobler GmbH & Co.KG" from being reachable in that exact form.
+    /// That is deliberate — the harm being repaired is a duplicate KEY
+    /// generating E3 edges, and keys are what the matcher reads — but it
+    /// means the drop can cost a punctuation variant. The pre-image is what
+    /// makes that acceptable rather than merely regrettable: every dropped
+    /// spelling is recoverable byte-exact from `org_name_drops`.
     ///
     /// Two independent guards, deliberately not one:
     ///
@@ -8401,7 +8430,7 @@ impl Db {
         &self,
         norm: fn(&str) -> String,
         dry_run: bool,
-        plan: Option<&[(i64, String, String)]>,
+        plan: Option<&[(i64, String, String, Option<i64>)]>,
         job_id: Option<i64>,
         now: i64,
         stop: &(dyn Fn() -> bool + Sync),
@@ -8418,11 +8447,22 @@ impl Db {
         // Tuple parity against the recorded dry plan.
         if let Some(plan) = plan {
             report.plan_compared = true;
-            let tuple = |org: i64, lang: &str, key: &str| format!("{org}/{lang}/{key}");
+            // The DESTINATION is part of the tuple. Without it, a plan
+            // reviewed against destination A can run against destination B —
+            // the origin's verdicts can name several, and the set iterates
+            // ascending, so adding one lower-numbered target silently
+            // re-points every row while the (org, lang, key) triples stay
+            // byte-identical and parity reports no drift at all.
+            let tuple = |org: i64, lang: &str, key: &str, target: Option<i64>| {
+                format!(
+                    "{org}/{lang}/{key}->{}",
+                    target.map(|t| t.to_string()).unwrap_or_else(|| "-".to_owned())
+                )
+            };
             let planned: std::collections::BTreeSet<String> =
-                plan.iter().map(|(o, l, k)| tuple(*o, l, k)).collect();
+                plan.iter().map(|(o, l, k, t)| tuple(*o, l, k, *t)).collect();
             let now_set: std::collections::BTreeSet<String> =
-                report.rows.iter().map(|o| tuple(o.org, &o.lang, &o.key)).collect();
+                report.rows.iter().map(|o| tuple(o.org, &o.lang, &o.key, o.target)).collect();
             report.plan_added = now_set.difference(&planned).cloned().collect();
             report.plan_removed = planned.difference(&now_set).cloned().collect();
             report.drifted = !report.plan_added.is_empty() || !report.plan_removed.is_empty();
@@ -8433,7 +8473,42 @@ impl Db {
         if dry_run {
             return Ok(report);
         }
+        let candidates = std::mem::take(&mut report.rows);
+        let applied = self.apply_orphan_drops(&candidates, norm, job_id, now, stop).await?;
+        report.rows = candidates;
+        report.dropped = applied.dropped;
+        report.skipped_recheck = applied.skipped_recheck;
+        report.stale_keys = applied.stale_keys;
+        report.cancelled = applied.cancelled;
+        Ok(report)
+    }
 
+    /// The WRITE half of the issue-321 drop, split out so the in-transaction
+    /// re-check can be tested at all.
+    ///
+    /// The re-check is the guard that stands between a stale plan and a
+    /// destroyed name, and while it lived inside `drop_orphan_satellites` it
+    /// had ZERO coverage — a panel deleted all 73 of its lines and every test
+    /// stayed green, because the candidate list could only ever be produced
+    /// by the scan that had just validated it. Here a caller can hand it a
+    /// candidate the database no longer supports, which is the only way to
+    /// watch it refuse.
+    ///
+    /// Every condition is re-checked against the transaction's own view, one
+    /// row at a time. The plan is advisory; this is the authority.
+    pub async fn apply_orphan_drops(
+        &self,
+        candidates: &[OrphanSatellite],
+        norm: fn(&str) -> String,
+        job_id: Option<i64>,
+        now: i64,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<SatelliteDropReport> {
+        let mut report = SatelliteDropReport {
+            candidates: candidates.len() as u64,
+            ..Default::default()
+        };
+        report.rows = candidates.to_vec();
         let conn = self.conn().await;
         // What was ACTUALLY dropped, in order. `report.rows` is the candidate
         // list and the skips are interleaved through it, so a prefix of it is
@@ -8502,6 +8577,12 @@ impl Db {
                     report.skipped_recheck += 1;
                     continue;
                 };
+                // The transaction is the authority, so it is the authority
+                // for this too: a row is never its own destination.
+                if target == o.org {
+                    report.skipped_recheck += 1;
+                    continue;
+                }
                 let mut carried = match self.rehoming_head(&conn, target).await? {
                     Some(th) => norm(&th.0) == o.key,
                     None => false,
@@ -8590,21 +8671,32 @@ impl Db {
         };
         report.cancelled = cancelled;
 
+        if report.dropped > 0 {
+            self.publish_cursor(&conn).await?;
+        }
+        drop(conn);
+
         // The satellite is gone; the DERIVED key is not. Say how much stands,
         // rather than hand-deleting rows the build owns.
+        //
+        // On the READER, and led by `key_kind` — `org_match_keys` is indexed
+        // (key_kind, key, org_id) and nothing else, so an `org_id = ? AND
+        // key = ?` predicate scans the whole table, once PER DROPPED ROW, on
+        // the single writer. That is issue 323's shape exactly, and this
+        // count is advisory: the operator is already told the next build
+        // clears these.
+        let reader = self.reader().await?;
         for (org, key) in &dropped_rows {
-            let mut rows = conn
+            let mut rows = reader
                 .query(
-                    "SELECT COUNT(*) FROM org_match_keys WHERE org_id = ? AND key = ?",
-                    (Value::Integer(*org), t(key)),
+                    "SELECT COUNT(*) FROM org_match_keys \
+                      WHERE key_kind = 'n2' AND key = ? AND org_id = ?",
+                    (t(key), Value::Integer(*org)),
                 )
                 .await?;
             if let Some(row) = rows.next().await? {
                 report.stale_keys += int(&row, 0) as u64;
             }
-        }
-        if report.dropped > 0 {
-            self.publish_cursor(&conn).await?;
         }
         Ok(report)
     }

@@ -3962,7 +3962,7 @@ impl Supervisor {
                 // it as tuples. No plan on record is not a reason to guess:
                 // a wet run without one is refused, because the parity check
                 // is half of what makes this safe.
-                let plan: Option<Vec<(i64, String, String)>> = if dry_run {
+                let plan: Option<Vec<(i64, String, String, Option<i64>)>> = if dry_run {
                     None
                 } else {
                     let stored = self
@@ -3970,10 +3970,18 @@ impl Supervisor {
                         .latest_report("drop-orphan-satellites")
                         .await
                         .map_err(|e| e.to_string())?;
+                    // A refusal is a FAILED job, not a green one. Both of
+                    // these mean "I would not do the thing you asked", and a
+                    // run that renders green in /admin/jobs while having
+                    // written nothing is how an operator concludes the
+                    // campaign is done.
                     let Some((body, _)) = stored else {
-                        return Ok("drop-orphan-satellites --wet REFUSED: no dry plan on \
-                                   record. Run the dry pass first — the tuple parity between \
-                                   plan and run is half of what makes this safe."
+                        eprintln!(
+                            "[drop-orphan-satellites] REFUSED: no dry plan on record"
+                        );
+                        return Err("drop-orphan-satellites --wet REFUSED: no dry plan on \
+                                    record. Run the dry pass first — the tuple parity between \
+                                    plan and run is half of what makes this safe."
                             .to_owned());
                     };
                     let v: serde_json::Value =
@@ -3989,6 +3997,12 @@ impl Supervisor {
                                     r["org"].as_i64()?,
                                     r["lang"].as_str()?.to_owned(),
                                     r["key"].as_str()?.to_owned(),
+                                    // The destination the plan was reviewed
+                                    // against. The dry report already carries
+                                    // it; leaving it out of the tuple let a
+                                    // plan pass parity while pointing
+                                    // somewhere else entirely.
+                                    r["target"].as_i64(),
                                 ))
                             })
                             .collect(),
@@ -4013,7 +4027,12 @@ impl Supervisor {
                     );
                 }
                 if r.drifted {
-                    return Ok(format!(
+                    eprintln!(
+                        "[drop-orphan-satellites] REFUSED: plan drift, {} added / {} gone",
+                        r.plan_added.len(),
+                        r.plan_removed.len()
+                    );
+                    return Err(format!(
                         "drop-orphan-satellites --wet REFUSED: the plan drifted. {} tuple(s) \
                          appeared since the dry run and {} went away — first added {:?}, first \
                          gone {:?}. Re-run the dry pass and read it before the wet one; a \
@@ -4043,7 +4062,9 @@ impl Supervisor {
                          dropped — each unsupported by any mention on its org, not that \
                          org's own head name, and already standing on a row the org \
                          re-homed to. Plan recorded; the wet arm compares against it as \
-                         (org, lang, key) tuples.",
+                         (org, lang, key, destination) tuples — the destination is in the \
+                         tuple because an origin's verdicts can name several, and a plan \
+                         reviewed against one must not run against another.",
                         r.candidates
                     ));
                 }

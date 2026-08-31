@@ -254,7 +254,7 @@ curl -s -XDELETE -H "X-Admin-Secret: $SECRET" $BASE/admin/jobs/41
 #                             case-review-backlog, fold-org-countries,
 #                             fusion-census, rehoming-packet,
 #                             satellite-orphans, drop-orphan-satellites,
-#                             restore-dropped-satellites, anchor-wall-census
+#                             anchor-wall-census
 #   404                       no such job
 # A cancelled data-quality run stores NOTHING: a half-measured report would read like a
 # whole-corpus one, so the previous report stands.
@@ -327,7 +327,7 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `rehoming-packet` | no | the reviewer's input: those mentions, addressed, with destinations |
 | `apply-rehoming` | YES | moves a reviewed mention to the row it names; **refold after** |
 | `satellite-orphans` | no | name variants a re-homing left behind (issue 321) |
-| `drop-orphan-satellites` | **dry default** | drops the orphans a destination already carries (321) |
+| `drop-orphan-satellites` | **dry default** | drops the orphans a destination already carries by N2 KEY (321) |
 | `restore-dropped-satellites` | **dry default** | puts them back from `org_name_drops` pre-images |
 | `anchor-wall-census` | no | issue 318: where ingest binds and batch refuses |
 | `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
