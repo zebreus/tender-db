@@ -1,7 +1,7 @@
 # 318 — The resolver's anchor bind applies the R3 bar without the R3 wall
 
-Status: DEPLOYED 2026-08-31 (rev 1334aba), canary clean. The frequency
-reading is still outstanding — see "The canary, and what it does not say"
+Status: DONE 2026-08-31 (rev 7ae5f6a). Wall live and ARMED on prod, verified
+positively. The frequency answer is ZERO anchor binds per day — see the reading
 Kind: correctness (organization layer, ingest path)
 Relates to: 316 (built the wall), 300 (§4.1, Stage 3 prevention), 234
 
@@ -191,3 +191,50 @@ one soft-scheme checksum anchor, after E0 exact equality AND the Stage-2
 canonical hit have both missed. The reading that answers issue 318's step 3 is
 the next full daily fold's job row, which now carries
 `asked`/`denied`/`errored`. Read it before calling this closed.
+
+
+## THE READING (2026-08-31, rev 7ae5f6a)
+
+**The wall is armed on prod**, confirmed from the running system rather than
+inferred, in the diag log:
+
+    [issue 318] genericness wall ARMED for this run
+                (org_match_keys_kk present, build watermark 0)
+
+That line also retroactively validates the earlier silence: `log_diag` from
+this code path demonstrably works, so an absent DISABLED line is evidence
+rather than an untested channel.
+
+**The frequency answer issue 318 asked for in step 3, at last:**
+
+    daily fold  3,889 notices → anchor_reached 0
+    canaries    6 + 8 + 3 notices → anchor_reached 0
+    errored     0 throughout
+
+**The soft-scheme anchor path does not fire in a normal day of ingest.** It
+needs a country-less identifier whose digits pass exactly one register
+checksum, surviving E0 exact equality AND the Stage-2 canonical hit, corroborated
+on an exact cross-language N2 name, past the consortium and legal-form vetoes —
+and then a soft scheme. A full day's TED package produced not one.
+
+So the 9,582 standing rows the census found are **historical accumulation, not
+daily inflow.** That reframes the fix honestly: it is a correctness repair —
+two implementations of one rule no longer disagree, and the design says the
+stricter is right — but it prevents approximately nothing per day going
+forward. The value was always in closing the disagreement, and the cost is now
+measured at zero rather than asserted to be small.
+
+## What it took to get an honest zero
+
+Three rounds, because a zero kept meaning two things:
+
+1. `denied` alone: "nothing was generic" vs "nothing was asked". Panel caught it.
+2. `asked` alone: "the path never fired" vs "the wall was switched off". The
+   first real fold read `asked 0` over 3,889 notices and could not say which.
+3. Silence itself: an armed wall with nothing to do vs a disabled wall on a
+   quiet day both reported nothing at all.
+
+`WallCounts { enabled, anchor_reached, asked, denied, errored }` plus an
+availability line logged in BOTH directions is what finally makes each zero
+say only one thing. Worth remembering the next time a prevention gets a
+counter: the first number you reach for is usually the ambiguous one.
