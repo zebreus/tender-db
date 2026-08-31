@@ -1,8 +1,7 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: SPLIT 2026-08-31 (rev 4c16655). The pilot cohort is the 589 same-name
-components; the 129 diff-name ones are the class a rubric must not be written
-for by accident
+Status: CONSUMED 2026-08-31 (rev 291a318) — `xb-packet` reads the edges at
+last. And the packet found the discriminator: the IDENTIFIER, not the name
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -292,3 +291,80 @@ subset is an identifier strip, and a merge verdict has no execution path yet
 (this issue's item 4 still stands). The 129 diff-name components want their own
 rubric afterwards, and the 221 with-intra ones belong to whatever settles
 same-country duplicates.
+
+
+## THE PACKET, and what it changed (2026-08-31, job 534, rev 291a318)
+
+`xb-packet` carries all 589 same-name components in **5 seconds**. The count
+matching the census's 589 exactly is the check that mattered: the packet
+restates the same-name definition independently, so equal counts mean the two
+did not drift.
+
+    component sizes:  2 → 578,  3 → 11
+    mention spread:   lopsided (>=80% on one row) 196 | even 393
+    members carrying name variants: 589 of 589
+
+**That last number is a correction to my own commit message.** I wrote that a
+satellite carrying the other member's spelling is "different evidence from a
+bare normalized-key match". It is not distinguishing at all — EVERY case has
+variants on some member, because the resolver writes a variant on every mention
+capture. Variants are context for a reviewer, not a signal.
+
+### The discriminator is the identifier, and it was not foregrounded
+
+Splitting the 589 by how the members' identifiers relate:
+
+    identical-identifier       336   57.0%
+    different-identifiers      200   34.0%
+    platform-guid               31    5.3%
+    same-digits-diff-format     22    3.7%
+
+    identical    NO:980921565(29524) | DK:980921565(2) | LT:980921565(2)   Mercell
+                 ES:A82473349(27)    | NL:A82473349(1)                     Howden Iberia
+    different    CZ:43000916(87)     | SK:31359825(2)                      Sarstedt CZ vs SK
+                 CZ:27599876(65)     | SK:35975075(6)                      Explorea CZ vs SK
+    guid         CH:49A0CF…(1)       | EE:EEE9F4…(1)                       platform keys
+    same-digits  AX:FONR02295252(1)  | FI:02295252(2)                      register prefix
+                 FI:FI07545185(19)   | SE:07545185(1)                      VAT prefix
+
+**336 cases carry the SAME identifier value across countries.** One entity, one
+registration, several country codes — Mercell's Norwegian id filed under DK and
+LT on two notices each while the NO row holds 29,524. Those need no per-case AI
+judgement; they need the R2/R3 arms' existing same-identifier logic, which
+currently declines them only because the COUNTRIES differ.
+
+**200 carry different identifiers** — `SARSTEDT spol. s r.o.` on CZ 43000916
+beside `Sarstedt spol. s r.o.` on SK 31359825. Two national registrations, two
+legal entities, same name. These must not merge, and they are where judgement
+is actually needed.
+
+**22 are the same digits in different formats** — `FI:FI07545185` vs
+`SE:07545185`, `AX:FONR02295252` vs `FI:02295252`. A register or VAT prefix,
+which is Stage 2's canonicalization problem reappearing across a border.
+
+## What this means for the campaign
+
+The AI review campaign this issue proposed is **the wrong first instrument for
+57% of its own cohort**. The identical-identifier 336 are a rule-shaped class:
+same normalized name AND byte-identical identifier, differing only in country.
+Reviewing them one case at a time would spend ~1.8M tokens re-deriving what one
+predicate already says.
+
+Revised order:
+
+1. **336 identical-identifier**: extend the R2/R3 merge arms with a
+   cross-border same-identifier arm, gated and dry-first like every arm before
+   it. No review campaign.
+2. **22 same-digits**: Stage 2's canonicalization, applied across countries.
+   Also rule-shaped.
+3. **200 different-identifiers**: THIS is the AI review cohort — 200 cases, not
+   589, and every one genuinely needs judgement about whether two national
+   registrations are one entity.
+4. **31 platform-guid**: a different question (both sides are platform record
+   keys, one country is contaminated), and it belongs with issue 312's
+   GUID-class thinking rather than here.
+
+Lennart's steer in issue 311 is that rules are the deny-direction floor, not
+the detector. That holds — but it does not mean every cohort a rule cannot
+FULLY settle should go to review whole. Here a rule settles 61% of it, and the
+remaining 39% is a better campaign for being smaller.
