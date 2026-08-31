@@ -1,7 +1,8 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: CONSUMED 2026-08-31 (rev 291a318) — `xb-packet` reads the edges at
-last. And the packet found the discriminator: the IDENTIFIER, not the name
+Status: RULE-HUNT CLOSED 2026-08-31. Three rounds of narrowing took the
+"rule-shaped" subset from 589 to ~28. The cohort is a REVIEW cohort, which is
+what issue 311 said at the start
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -419,3 +420,61 @@ contamination on both sides.
 
 The honest shape of this line of work keeps being that each measurement shrinks
 the part a rule can settle and sharpens the part that cannot. 589 → 336 → 129.
+
+
+## THE RULE-HUNT, AND WHY I AM STOPPING IT (2026-08-31)
+
+I proposed a country-correction rule for the 129 and then tested whether the
+mention weight backs the checksum-agreeing row. It does not:
+
+    agreeing row holds >=90% of mentions                      28   22%
+    agreeing row holds 50-90%                                 81   63%
+    agreeing row holds <50% — the CONTRADICTED side is heavier 20   16%
+
+The 63% middle is mostly 2-vs-1 and 3-vs-1: noise, not evidence. And the
+counter-examples are instructive rather than freak:
+
+    'emmaus åland rf'    agrees FI=1  vs contradicted SE=2
+    'kristers åkeri'     agrees FI=1  vs contradicted SE=2
+    'in via'             agrees FI=1  vs contradicted SE=2
+
+Åland — an autonomous, Swedish-speaking region **of Finland**. The arithmetic
+says FI, the notices say SE, and both are defensible readings of a real
+organisation. No predicate over identifier-vs-country settles that; knowing
+what Åland *is* settles it.
+
+### The deeper problem the numbers only illustrate
+
+"Identifier and country disagree" never says WHICH field is wrong. A Norwegian
+subsidiary of a Swedish parent, correctly filed under NO but carrying its
+parent's Swedish org number, looks identical to a Swedish company mis-filed
+under NO. The first wants its identifier stripped; the second wants its country
+corrected. The evidence in the packet cannot tell them apart, and a rule that
+picks one will be confidently wrong on the other.
+
+### The narrowing, in one line
+
+    589 same-name  →  336 identical-identifier  →  129 one-country-agrees  →  28 with decisive mention weight
+
+Each measurement shrank the part a rule could settle by roughly half, and the
+28 survivors are a hand-review, not machinery. **I am stopping the rule-hunt
+here.** Three firings of narrowing produced a candidate class 4.8% the size of
+where it started, and the residue at every step was "this needs someone to know
+what the organisation actually is".
+
+## This is Lennart's steer, arrived at the long way
+
+Issue 311 opens with it: *"nearly all errors can not be detected by simple
+rules... they need manual ai agent review for each individual case and how to
+handle it."* I spent three rounds looking for the rule-shaped subset anyway,
+which was worth doing — the measurements are real, the packet is built, and the
+cohort is now well-characterised rather than assumed. But the answer the
+measurements keep returning is the one the issue stated at the start.
+
+**Next unit: run the review campaign on the 589**, with the packet's evidence
+(rows, identifiers, checksum anchors, mention spread, variants, notices) and a
+rubric whose verdicts are merge / distinct-entities / wrong-country /
+wrong-identifier / needs-more-evidence. Verdicts as records only — a merge
+still has no execution path (this issue's item 4, still open). The 28
+decisive-weight cases are worth reading first as gold exemplars, since their
+answer is already legible from the evidence.
