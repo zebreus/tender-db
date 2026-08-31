@@ -1,7 +1,8 @@
 # 321 — A re-homed mention leaves its name variant on the origin org
 
-Status: DONE 2026-08-31 — measured, built, panelled (9 confirmed), deployed,
-and applied on prod. 66 dropped, orphans-at-target 72 → 0, undo verified live
+Status: DONE 2026-08-31 — applied on prod (66 dropped, orphans-at-target
+72 → 0, undo verified live). Panel round 2 closed five more highs; a small
+test-quality residue is filed as issue 324
 Kind: correctness (organization layer)
 Relates to: 317 (Unit A built the move), 300 Stage 4 (name keys), ADR-0013 D4
 
@@ -174,3 +175,55 @@ keep exactly where it is least convenient: **read the whole diff of the
 contended file, or take a separate worktree.** Two gate runs in the same hour
 also died on a co-worker's transient `zz_probe_*.rs`, so the contention was
 visible before it cost anything.
+
+
+## PANEL ROUND 2 (2026-08-31, `5548698`)
+
+The first round acted on 9 findings read from a partial journal while the
+panel was still running. The completed panel returned **53 findings, 23
+confirmed** — 9 highs, not 3. Five were still standing.
+
+**The serious one: a row could be its own destination.** If a verdict names
+the row the mention is already on, condition 3 probes that row's OWN
+satellites, finds the variant under test, and concludes the destination
+carries it — making the entire stated basis for safety true from the row being
+emptied. And because the target set iterates ascending, ONE low-numbered
+self-target shadows the honest destination and converts every orphan on that
+origin into "at target", including the carried-nowhere-else class this job
+exists to protect. `apply_rehoming` refuses such a verdict at apply time, but
+`record_rehoming`'s upsert preserves a real move's applied stamp, so a
+re-review can leave an APPLIED row whose ids the apply path never saw.
+
+**Checked against prod before anything else: all 66 dropped rows had a genuine
+distinct destination.** Nothing was lost. The defect was latent.
+
+The other four:
+
+- **Plan parity omitted the destination** — the exact guard the doc claims. A
+  plan reviewed against destination A could run against B with the
+  (org, lang, key) triples byte-identical and parity reporting no drift.
+- **`stale_keys` was issue 323 again**: `WHERE org_id = ? AND key = ?` on a
+  table indexed (key_kind, key, org_id) is a full scan, once per dropped row,
+  on the held writer.
+- **Both wet refusals returned `Ok`**, so a refused drop rendered green in
+  `/admin/jobs` — how an operator concludes a campaign finished when it never
+  started.
+- **The in-transaction re-check had ZERO coverage.** The panel deleted all 73
+  of its lines and every test stayed green: the candidate list could only come
+  from the scan that had just validated it. `apply_orphan_drops` is now a
+  separate entry point so a test can hand it a candidate the database no
+  longer supports; four do, one per condition.
+
+**A narrower guarantee, now stated.** Condition 3 checks the N2 KEY, not the
+byte sequence, so a destination spelling "Dobler GmbH & Co. KG" does keep a
+dropped "Dobler GmbH & Co.KG" from being reachable in that exact form. That is
+deliberate — duplicate keys are the harm being repaired — but the doc said
+"name" where the code means "key", and the pre-image is what makes the
+difference acceptable rather than merely regrettable.
+
+## The process lesson
+
+Two rounds happened because the first read a RUNNING panel's journal and
+treated 9 of 53 as the answer. A panel's partial output is not a short version
+of its result; it is a different, quieter claim. Wait for the run, or say
+plainly that the reading is partial.
