@@ -5982,6 +5982,15 @@ impl Db {
                 let indexed = self.has_index("org_match_keys_kk").await?;
                 let (watermark, _) = self.org_match_keys_state().await?;
                 if indexed && watermark == 0 {
+                    // Logged in BOTH directions, on every resolver open. A
+                    // line only on the disable path means a quiet fold cannot
+                    // tell "armed and nothing fired" from "switched off and
+                    // nothing could fire" — the same two-meanings-one-silence
+                    // this instrument keeps growing back.
+                    self.log_diag(
+                        "[issue 318] genericness wall ARMED for this run \
+                         (org_match_keys_kk present, build watermark 0)",
+                    );
                     Some(f)
                 } else {
                     // `log_diag`, not `eprintln!`. The projection runs on the

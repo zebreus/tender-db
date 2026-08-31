@@ -2367,6 +2367,15 @@ impl Supervisor {
                         "; issue-318 wall enabled={} reached {} asked {} refused {}",
                         w.enabled, w.anchor_reached, w.asked, w.denied
                     )
+                } else if !w.enabled {
+                    // A DISABLED wall on a quiet day would otherwise be
+                    // invisible: nothing reached the gate, so nothing is
+                    // reported, so a prevention that is switched off reads
+                    // exactly like one with nothing to do. That is the failure
+                    // this whole instrument exists to avoid.
+                    "; issue-318 wall DISABLED this run (key build in flight or \
+                     interrupted) — anchor binds took the pre-318 bar"
+                        .to_owned()
                 } else {
                     String::new()
                 };
