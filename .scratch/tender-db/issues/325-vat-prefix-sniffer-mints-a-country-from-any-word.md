@@ -3,7 +3,8 @@
 Status: DONE 2026-08-31 — prevention tightened (`6605fb5`) and 5,055 standing
 rows repaired on prod (`008902f`, job 539). The publisher's disagreement fell
 from 34,111 mentions to 149, and those 149 are exactly the rows whose own
-mentions contradict each other. Step 5 (the tripwire) is the only residue.
+mentions contradict each other. Step 5's tripwire is live and proven against a
+real baseline (`74c819d`, jobs 540/541). ALL STEPS CLOSED.
 Kind: data-quality / correctness (organization layer, ingest)
 Relates to: 86 (fixed the OTHER half of this same site and left this arm loose),
 314 (the review campaign that surfaced it — 40 of its 589 cases carry one), 319
@@ -490,10 +491,55 @@ Both are pinned rather than left to be rediscovered:
    in which a concurrent job on this shared box can move a row. Real, but small,
    and the doc says so now instead of implying more.
 
-## Residue: step 5, the tripwire
+## Step 5 DONE: the tripwire, and the floor is eight rows
 
-Still unbuilt. The two class predicates are the whole test, and they should be a
-scheduled count that alarms above a floor — the class is now 5 rows, so a floor
-of anything above single digits would catch a regression immediately. Worth
-doing because this arm has now been wrong twice in one day, in opposite
-directions.
+Folded into `org-merge-health` rather than a new job: that census already walks
+every identifier-bearing org with `(country, kind, identifier)` in hand, so the
+gauge costs nothing. It **calls `normalise_identifier` and compares** against
+what the row stores — not a SQL predicate, for the same reason the repair injects
+the classifier. A predicate here would be a second spelling of the rule, and the
+quieter spelling is the one that goes wrong.
+
+**Three counters, because this arm has now been wrong in both directions in one
+day.** One number could not tell "a country minted out of a word" from "a
+tightening that rejects real VAT ids":
+
+| counter | what it catches | measured floor |
+| --- | --- | --- |
+| `no_longer_vat` | stands as `vat`, the parser disagrees | **7** |
+| `vat_country_differs` | still `vat`, different country — the `EL`/`UK`/`XI` channel issue 319 could not see | **1** |
+| `vat_refused` | the v2 gate now refuses it outright | **0**, no tolerance |
+
+The baseline is the **previous run of the same report**, read before this one
+overwrites it: no new schema, and no constant to go stale as the residue is
+worked down. A missing baseline is not an alarm — a census that shouted on its
+own arrival would be muted by the second week.
+
+### The floor was over-estimated by fifty times, in the good direction
+
+I predicted ~422 and ~5, assuming the repair's 408 `ambiguous` rows would each
+show up as a parser disagreement. **They do not.** The repair skips an ambiguous
+row BEFORE it reclassifies, so most were never rows the parser disagreed with —
+they were rows whose *mentions* disagreed with each other. The real residue is
+**eight rows**, which makes the tripwire much sharper than designed: at a floor
+of 7 the flat `max(10%, 25)` tolerance is the operative one, so the alarm trips
+at 33. The class cannot quietly regrow by an order of magnitude the way a
+10%-of-422 band would have allowed.
+
+### Proven wired, not just present
+
+Stage 4 Unit 5's muted-probe bug was a tripwire whose only evidence of being
+wired was that its job ran. So: job 540 established the baseline (`alarms: []`,
+`baseline: null` — correct first-run behaviour), and **job 541 ran the compare
+against it** and reported `baseline: {no_longer_vat: 7, vat_country_differs: 1,
+vat_refused: 0}` with `alarms: []`. The comparison is also extracted into
+`parser_vs_stock_alarms()` so it can be tested directly, with both regression
+directions at their real numbers: my own tightening would have read `7 -> 218`,
+and the original defect's 4,206 would have been unmissable.
+
+### One bug the read-back caught
+
+The first deploy nested `gate.schemes` (26 scheme tallies) inside the new
+`parser_vs_stock` block — my JSON splice opened the key one line too early.
+Anything reading `gate.schemes` would have found it missing. Found by reading the
+report back off prod rather than trusting the diff, and fixed in `74c819d`.
