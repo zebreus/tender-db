@@ -1,6 +1,9 @@
 # 326 — Same identifier, country codes one letter apart: a typo class the review campaign is deciding by hand
 
-Status: OPEN — measured 2026-08-31 on the stored issue-314 cohort, not yet built
+Status: OPEN — census re-cut by cluster and run corpus-wide (`72fb9d4`, job 543).
+The bottleneck turns out NOT to be the survivor rule: 430 of 536 candidate
+clusters are undecidable only because the checksum vocabulary has no arm for
+their country. Next step is the vocabulary, not the rule.
 Kind: data-quality / correctness (organization layer)
 Relates to: 314 (the campaign that surfaced it), 325 (the other rule-shaped
 class in the same cohort — zero overlap), 319 (country normalization)
@@ -233,3 +236,86 @@ OPEN - OFFER". A tender document's cover instruction became an organization.
 4. **Survivor rule** only where the cluster contains a code the identifier's
    format and the name's language both support. Otherwise abstain and report.
    Abstention is a correct answer here; a coin-flip is not.
+
+---
+
+## The re-cut, corpus-wide (2026-08-31, `72fb9d4`, job 543)
+
+`country-cluster-census`: grouped by identifier, one-letter demoted to a filter,
+footprint class excluded by name, shape floor at 6 characters.
+
+| | |
+| --- | --- |
+| org rows walked | 1,117,485 |
+| distinct identifiers | 1,112,650 |
+| country codes | 222 |
+| **identifiers under MORE THAN ONE country** | **4,303** |
+| …with some two codes one letter apart | 615 |
+| …with the **heaviest** code one letter from another | 562 |
+| …identifier under 6 characters | 1,067 |
+| …an operational footprint (embassy / development agency) | 19 |
+
+Heaviest code's mention share, corpus-wide: p25 66%, p50 **80%**, p75 95%, p90 99%.
+
+### Verdicts over all 4,303 — the abstention is the answer for 97.8%
+
+| verdict | clusters | |
+| --- | --- | --- |
+| `no-one-letter-pair` | 2,681 | 62.3% |
+| `too-short` | 1,067 | 24.8% |
+| `nobody-asked` | **430** | 10.0% |
+| `anchor-names-one` | **95** | 2.2% |
+| `footprint-excluded` | 19 | 0.4% |
+| `asked-and-refused` | 11 | 0.3% |
+
+Of the 615 one-letter clusters, 79 are excluded as footprint or too-short,
+leaving **536 candidates**. Of those, **95 (17.7%) are decidable** and **430
+(80.2%) are blocked by nothing but a missing scheme**.
+
+## THE BOTTLENECK IS THE VOCABULARY, NOT THE SURVIVOR RULE
+
+This is the finding that redirects the work. The plan above assumed the hard part
+was choosing a survivor once a pair was flagged. It is not. 430 of 536
+candidates fail for one reason: `checksum_anchors` has no arm for the country in
+question — SK, LT and BG among them, which are exactly the countries the typo
+pairs are drawn from. A Slovak IČO cannot be confirmed Slovak because nobody
+ever taught the probe about Slovakia.
+
+So the next unit is **not** a survivor rule that can only ever fire on 95
+clusters. It is adding register-format arms for the countries this class actually
+involves, which converts most of the 430 into `anchor-names-one` and only then
+makes a repair worth building. Issue 314's `country_probed` field already
+surfaces the gap; this measurement sizes it.
+
+## Two readings the capped run got backwards
+
+The first prod run (job 542) capped the tally as well as the carried rows, and
+carried rows are sorted widest-first. Two conclusions drawn from it were wrong,
+both in the same direction — the wide spray clusters are unrepresentative:
+
+* **`with_heavy_one_letter` read 104 against 615**, suggesting the sharpened
+  filter cut the candidate class by 83%. Corpus-wide it is **562 against 615 —
+  a cut of 8.6%.** Most one-letter clusters are plain two-code pairs where the
+  heavy code IS one of the two; the wide `BG BW VA VE VG VU` shape, where the
+  heavy code is one letter from nothing, is the rare case that dominated the
+  carried sample.
+* **The heaviest code's mention share read p50 = 90%**; corpus-wide it is 80%,
+  with p25 at 66%. Less lopsided than the tail implied, which matters because a
+  majority-based rule would have been tuned against the wrong distribution.
+
+The fix was the split the issue-325 repair already had: `cap` bounds what is
+REPORTED, never what is counted. It also required reaching cluster details by
+PRIMARY KEY — pass 1 now carries the org id, because a lookup by `identifier` is
+a full scan (no index leads with that column) and 4,303 of those is not a census.
+
+## Still true, and now sized
+
+* The footprint class is real but **small: 19 clusters.** Worth excluding
+  because a wrong "correction" there destroys real information, not because it
+  is common.
+* The shape floor earns its place: **1,067 of 4,303 (24.8%)** carry an
+  identifier under six characters, against 12 of 400 in the pair census's
+  sample. A short number collides by arithmetic.
+* `no-one-letter-pair` at 62.3% is not a failure of the filter — it is the
+  measurement that most same-identifier-across-countries pairs are NOT
+  transcription slips, which is exactly what the filter is for.
