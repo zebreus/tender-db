@@ -28,6 +28,7 @@ pub use canonical::{
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
     OrphanSatellite, SatelliteOrphanReport,
     SatelliteDropReport, SatelliteRestoreReport,
+    AnchorWallReport, WallGapOwner,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,

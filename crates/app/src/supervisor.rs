@@ -358,6 +358,9 @@ enum Spec {
     DropOrphanSatellites { dry_run: bool },
     /// Issue 321: put back what a drop pass removed, from its pre-images.
     RestoreDroppedSatellites { dry_run: bool, only_job: Option<i64> },
+    /// Issue 318: how far apart the resolver's anchor bind and the batch
+    /// merge arm stand on the genericness wall. Read-only measurement.
+    AnchorWallCensus,
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -1032,6 +1035,16 @@ impl Supervisor {
             }
             // Issue 321: the measurement that decides whether the leftover
             // name variants need machinery or a line in the review schema.
+            // Issue 318: size the disagreement before deciding how hard to
+            // close it — the issue's own step 3.
+            "anchor-wall-census" => Ok(vec![
+                self.push(
+                    "anchor-wall-census",
+                    "anchor-wall-census".into(),
+                    Spec::AnchorWallCensus,
+                )
+                .await,
+            ]),
             // Issue 321: the measurement that decides whether the leftover
             // name variants need machinery or a line in the review schema.
             "satellite-orphans" => Ok(vec![
@@ -1426,6 +1439,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "rehoming-packet",
     "satellite-orphans",
     "drop-orphan-satellites",
+    "anchor-wall-census",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -4077,6 +4091,71 @@ impl Supervisor {
                     r.occupied,
                     r.superseded,
                     r.orphaned
+                ))
+            }
+            Spec::AnchorWallCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "measuring",
+                    None,
+                    None,
+                    "issue 318: standing surface where ingest binds and batch refuses".to_owned(),
+                );
+                let r = self
+                    .db
+                    .anchor_wall_census(
+                        ingest::idgate::checksum_anchors,
+                        ingest::idgate::hard_scheme,
+                        SCAN_STOPLIST_CAP,
+                        200,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("anchor-wall-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "keys_walked": r.keys_walked,
+                    "generic_keys": r.generic_keys,
+                    "generic_orgs": r.generic_orgs,
+                    "probed": r.probed,
+                    "anchored": r.anchored,
+                    "anchored_hard": r.anchored_hard,
+                    "anchored_soft": r.anchored_soft,
+                    "by_scheme": r.by_scheme.iter()
+                        .map(|(s, n)| serde_json::json!({"scheme": s, "orgs": n}))
+                        .collect::<Vec<_>>(),
+                    "rows": r.rows.iter().map(|o| serde_json::json!({
+                        "org": o.org, "name": o.name, "key": o.key,
+                        "carriers": o.carriers, "scheme": o.scheme,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("anchor-wall-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "anchor-wall-census (issue 318): {} n2 key group(s) walked, {} over the \
+                     stoplist cap holding {} org(s); probed {}, of which {} anchor to exactly \
+                     one scheme — {} HARD (both paths agree, the design's exemption) and {} \
+                     SOFT. That {} is the STANDING SURFACE where the resolver would bind and \
+                     the batch arm would refuse: rows reachable, not binds observed.{}",
+                    r.keys_walked,
+                    r.generic_keys,
+                    r.generic_orgs,
+                    r.probed,
+                    r.anchored,
+                    r.anchored_hard,
+                    r.anchored_soft,
+                    r.anchored_soft,
+                    match r.by_scheme.first() {
+                        Some((s, n)) => format!(" Widest scheme: {s} at {n}."),
+                        None => String::new(),
+                    }
                 ))
             }
             Spec::SatelliteOrphans => {
@@ -6845,7 +6924,8 @@ mod tests {
                 "fusion-census",
                 "rehoming-packet",
                 "satellite-orphans",
-                "drop-orphan-satellites"
+                "drop-orphan-satellites",
+                "anchor-wall-census"
             ]
         );
     }

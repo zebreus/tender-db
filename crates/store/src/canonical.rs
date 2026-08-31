@@ -2047,6 +2047,50 @@ pub struct SatelliteRestoreReport {
     pub rows: Vec<OrphanSatellite>,
 }
 
+/// One standing org a generic-named, country-less mention could anchor-bind
+/// to at ingest but could not be merged with in batch (issue 318).
+#[derive(Debug, Default, Clone)]
+pub struct WallGapOwner {
+    pub org: i64,
+    pub name: String,
+    /// The N2 key it corroborates on, and how many orgs share it. Sharing is
+    /// what makes the name generic and the agreement worthless.
+    pub key: String,
+    pub carriers: u64,
+    /// The single soft scheme its identifier anchors under.
+    pub scheme: String,
+}
+
+/// Issue 318: how far apart the two implementations of "the R3 bar" actually
+/// stand. Read-only.
+///
+/// The batch merge arm refuses to corroborate on a name shared by more orgs
+/// than the stoplist cap unless the anchor's scheme hard-checksums. The
+/// resolver's ingest-time anchor bind applies the same bar MINUS that wall —
+/// and the resolver is the path that runs on every notice, without leaving an
+/// audit row. This counts the standing surface where the two disagree.
+#[derive(Debug, Default, Clone)]
+pub struct AnchorWallReport {
+    /// N2 key groups walked, and those over the cap — the generic names.
+    pub keys_walked: u64,
+    pub generic_keys: u64,
+    /// Distinct orgs standing on a generic key, and those probed (the walk
+    /// samples very large groups rather than reading all 62,084 carriers of
+    /// a vendor's boilerplate).
+    pub generic_orgs: u64,
+    pub probed: u64,
+    /// Of those probed: orgs whose identifier anchors to exactly one scheme.
+    pub anchored: u64,
+    /// …under a HARD scheme — the design's exemption, where the two paths
+    /// already agree.
+    pub anchored_hard: u64,
+    /// …under a SOFT scheme. THIS is the gap: ingest binds, batch refuses.
+    pub anchored_soft: u64,
+    pub by_scheme: Vec<(String, u64)>,
+    pub rows: Vec<WallGapOwner>,
+    pub stopped: bool,
+}
+
 /// One parked verdict, with the evidence a reviewer needs to close it
 /// (issue 317 Units B/C).
 #[derive(Debug, Default, Clone)]
@@ -8642,6 +8686,135 @@ impl Db {
         if report.restored > 0 {
             self.publish_cursor(&conn).await?;
         }
+        Ok(report)
+    }
+
+    /// Issue 318 step 1: measure the gap between the two implementations of
+    /// "the R3 bar" before deciding how hard to close it — the issue's own
+    /// instruction, and the issue-312 discipline.
+    ///
+    /// Walks the N2 key groups the Stage-4 scan already stoplists (the ones
+    /// OVER `cap`, which that scan discards) and asks, of the orgs standing on
+    /// them, which could be reached by the resolver's anchor bind: identifier
+    /// anchoring to exactly one checksum scheme, un-poisoned by a second. A
+    /// HARD scheme is the design's exemption and both paths agree there; a
+    /// SOFT one is the disagreement, and its count is the answer.
+    ///
+    /// What this measures, said plainly, because the number will be quoted:
+    /// the standing SURFACE, not observed binds. It is the set of rows a
+    /// country-less mention with a generic name and a matching soft anchor
+    /// would bind to at ingest and could not be merged with in batch. It does
+    /// not claim any such mention has arrived, and it is not a false-merge
+    /// report — the issue is explicit that nobody has shown a wrong bind from
+    /// this class yet.
+    ///
+    /// Very large groups are sampled, not read whole: a vendor's boilerplate
+    /// carried by 62,084 orgs would otherwise dominate both the cost and the
+    /// count, and every carrier past the first few hundred tells the same
+    /// story about the same key.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn anchor_wall_census(
+        &self,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        hard: fn(&str) -> bool,
+        cap: usize,
+        per_group: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<AnchorWallReport> {
+        let reader = self.reader().await?;
+        let mut report = AnchorWallReport::default();
+        let mut by_scheme: std::collections::BTreeMap<String, u64> = Default::default();
+        let mut after = String::new();
+        // Page by KEY, the Stage-4 scan's cursor idiom: read a window, trim
+        // the trailing possibly-partial group, resume from the last complete
+        // key. A group split across pages would otherwise read as two small
+        // ones and never reach the cap.
+        const WINDOW: usize = 20_000;
+        loop {
+            if stop() {
+                return Ok(AnchorWallReport { stopped: true, ..Default::default() });
+            }
+            let mut groups: Vec<(String, Vec<i64>)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT key, org_id FROM org_match_keys \
+                          WHERE key_kind = 'n2' AND key > ? ORDER BY key, org_id LIMIT ?",
+                        (t(&after), Value::Integer(WINDOW as i64)),
+                    )
+                    .await?;
+                let mut n = 0usize;
+                while let Some(row) = rows.next().await? {
+                    n += 1;
+                    let (key, org) = (text(&row, 0), int(&row, 1));
+                    match groups.last_mut() {
+                        Some((k, ids)) if *k == key => ids.push(org),
+                        _ => groups.push((key, vec![org])),
+                    }
+                }
+                if n == 0 {
+                    break;
+                }
+                if n == WINDOW && groups.len() > 1 {
+                    groups.pop();
+                }
+                after = groups.last().expect("a non-empty page has a last group").0.clone();
+            }
+
+            for (key, mut ids) in groups {
+                report.keys_walked += 1;
+                ids.dedup();
+                if ids.len() <= cap {
+                    continue;
+                }
+                report.generic_keys += 1;
+                report.generic_orgs += ids.len() as u64;
+                let carriers = ids.len() as u64;
+                ids.truncate(per_group);
+                for org in ids {
+                    if stop() {
+                        return Ok(AnchorWallReport { stopped: true, ..Default::default() });
+                    }
+                    report.probed += 1;
+                    let mut rows = reader
+                        .query(
+                            "SELECT name, identifier FROM organizations WHERE id = ?",
+                            (Value::Integer(org),),
+                        )
+                        .await?;
+                    let Some(row) = rows.next().await? else { continue };
+                    let name = text(&row, 0);
+                    let Some(value) = opt_text_of(&row, 1) else { continue };
+                    drop(rows);
+                    // The resolver's own test: exactly one REAL scheme, and
+                    // no second anchor poisoning it.
+                    let all = anchors(&value);
+                    let real: Vec<_> = all.iter().filter(|(s, _)| !s.contains('|')).collect();
+                    if real.len() != 1 || all.len() != real.len() {
+                        continue;
+                    }
+                    let scheme = real[0].0;
+                    report.anchored += 1;
+                    if hard(scheme) {
+                        report.anchored_hard += 1;
+                        continue;
+                    }
+                    report.anchored_soft += 1;
+                    *by_scheme.entry(scheme.to_owned()).or_default() += 1;
+                    if report.rows.len() < 100 {
+                        report.rows.push(WallGapOwner {
+                            org,
+                            name,
+                            key: key.clone(),
+                            carriers,
+                            scheme: scheme.to_owned(),
+                        });
+                    }
+                }
+            }
+        }
+        report.by_scheme = by_scheme.into_iter().collect();
+        report.by_scheme.sort_by(|a, b| b.1.cmp(&a.1));
         Ok(report)
     }
 
