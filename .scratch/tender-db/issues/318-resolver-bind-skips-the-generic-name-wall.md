@@ -1,7 +1,7 @@
 # 318 — The resolver's anchor bind applies the R3 bar without the R3 wall
 
-Status: MEASURED 2026-08-31 (prod job 518) — 9,582 standing rows, and the
-specimens settle it. Step 2 (thread the wall into the resolver) is open
+Status: BUILT + PANELLED 2026-08-31 (46 findings, 23 confirmed, 7 high).
+Committed at b1f4395, NOT YET DEPLOYED — it wants a fold canary first
 Kind: correctness (organization layer, ingest path)
 Relates to: 316 (built the wall), 300 (§4.1, Stage 3 prevention), 234
 
@@ -119,3 +119,57 @@ Thread `hard_scheme` + `stoplist_cap` into `ResolverArgs` the way
 store), and gate the anchor bind's corroboration on the wall. It lands on the
 INGEST HOT PATH, so it wants its own panel round and a fold canary — the
 issue-316 discipline — not a fast edit on top of this measurement.
+
+
+## STEP 2 BUILT AND PANELLED (2026-08-31, `6c7f950` then `b1f4395`)
+
+The wall is threaded into `MentionResolver` and gates the anchor bind. The
+panel over it returned **46 findings, 23 confirmed, 7 high**, and the first one
+refuted a sentence in the implementing commit:
+
+> "one seek on org_match_keys_kk — the index that covers it, checked against
+> issue 323's lesson rather than assumed."
+
+**False in exactly the state the design calls load-bearing.**
+`org_match_keys_kk` is created by `finish_org_match_keys` at the END of a build
+and dropped at its start, so through every window of a ~2-hour wet build — and
+DURABLY after an interrupted one, since nothing re-enqueues a cancelled
+build — the table has no index and the probe full-scans a ~21M-row satellite
+per bind, on the ingest hot path. Measured 3.6 µs/row. The LENIENT verdict is
+the expensive case: concluding "0 carriers" means reading everything.
+
+The R3 arm already refuses in that state with a comment saying so. **The commit
+message contradicted a comment already committed in this repo**, which is a
+sharper way of saying the claim was never checked.
+
+Fixed by resolving the wall's AVAILABILITY once per run and disabling it for
+the run when the keyspace cannot answer cheaply — lenient, which is what the
+issue mandates there, now at no cost.
+
+### The other highs
+
+- **A denial poisoned the E0 cache** (reproduced). The mint that follows a
+  denial claimed the raw identifier triple, so the next mention carrying it
+  rode E0 onto the fresh provisional even when its OWN name was specific
+  enough to anchor to the standing owner. Which row a mention landed on
+  depended on batch ORDER.
+- **A probe error aborted the fold.** "Unknown" had two contradictory answers:
+  an absent key bound leniently; an unreachable keyspace failed ingestion.
+- **The probe took a pooled reader from inside the fold's write transaction** —
+  the lock inversion the two pools exist to prevent.
+
+### The counting was worth less than it looked
+
+- Only denials were counted, so 0 denials could not be told apart from 0
+  QUESTIONS — **the frequency this issue asked for in step 3, which the
+  implementation answered by assertion.** Now (asked, denied, errored).
+- Their only surface was `eprintln!` from the projection's isolated worker
+  runtime, whose stderr does not reach journald (issues 61/63 — the reason
+  `log_diag` exists). Now `log_diag` plus the durable job row.
+
+## Still open: the fold canary
+
+Not deployed. The remaining acceptance is the one the issue named from the
+start: run it against a real fold and read `asked`/`denied`/`errored` off the
+job row. Until that number exists, the frequency question has an instrument but
+no reading.
