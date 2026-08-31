@@ -307,3 +307,28 @@ lesson and this repo's dry-first ladder:
 A tripwire also remains unbuilt (step 5): the two predicates in the class table
 are the whole test, and they should be a scheduled count so the next loose
 prefix arm announces itself.
+
+## Why the prevention deployed before the repair
+
+Deployed `81e4b1d`. That opens a prevention-vs-stock split for as long as the
+stock rows stand: a fresh mention of `BERICHTSEINHEITID00002636` now parses as
+`(national, DE)` while the standing org row is `(vat, BE)`, so it mints a new
+org instead of joining the existing one. Stated plainly because it is a real
+cost, not a footnote.
+
+Deployed anyway, for two reasons:
+
+1. **The window is self-healing.** The repair sets both fields — `country` to
+   the unanimous mention country AND `identifier_kind` to `national` — which is
+   exactly what the new parse produces. After it runs, the stock row and any
+   fragment minted in the meantime share one `(kind, country, value)` key, and
+   the existing same-country same-identifier merge path folds them through a
+   tested route. Nothing is lost, only deferred.
+2. **The alternative accumulates.** Every day the old arm runs is another day of
+   fresh rows filed under a country taken out of a word, and of fresh `EL`/`UK`/
+   `XI` codes re-contaminating a column issue 319 already folded.
+
+The repair must therefore set BOTH fields. A country-only repair would leave the
+`kind` mismatch and keep the split open indefinitely — worth writing down,
+because "fix the wrong country" is the obvious reading of this issue's title and
+it is half a fix.
