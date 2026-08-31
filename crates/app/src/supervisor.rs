@@ -6373,6 +6373,33 @@ impl Supervisor {
                         )
                         .await;
                     }
+                    // Issue 300 Stage 0 built org-merge-health as the BASELINE
+                    // and nothing has run it since; its stored report on prod
+                    // was from before the 317 re-homing campaign moved 416
+                    // mentions and before 321 dropped 66 satellites. An
+                    // operator surface shows report stamps, so it read as a
+                    // gauge of the current org layer while describing a
+                    // superseded one — the issue-161/191 shape, a confident
+                    // plausible permanently-stale number.
+                    //
+                    // 43 s measured on prod (job history, 2026-08-29), which
+                    // is noise inside this chain's 39-minute budget, and it is
+                    // read-only. It rides LAST: the merge health of a layer is
+                    // worth measuring after the week's build and scan have
+                    // run, not before.
+                    if self.already_pending("org-merge-health") {
+                        eprintln!(
+                            "[schedule] org-merge-health already queued or running, \
+                             skipping this week"
+                        );
+                    } else {
+                        self.push(
+                            "org-merge-health",
+                            "org-merge-health (weekly)".into(),
+                            Spec::OrgMergeHealth,
+                        )
+                        .await;
+                    }
                     if self.already_pending("scan-org-match-keys") {
                         eprintln!(
                             "[schedule] scan-org-match-keys already queued or running, \
@@ -7960,13 +7987,19 @@ mod tests {
     /// wall-clock Sunday, so tripwire 6's weekly clock had only ever been
     /// exercised by hand — a wiring slip would have surfaced as silence.
     #[tokio::test]
-    async fn the_weekly_report_tick_enqueues_its_four_jobs_once_each() {
+    async fn the_weekly_report_tick_enqueues_its_five_jobs_once_each() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         sup.run_report_tick().await;
         let kinds: Vec<String> = sup.queued().into_iter().map(|j| j.kind).collect();
         assert_eq!(
             kinds,
-            vec!["data-quality", "rehash-probe", "build-org-match-keys", "scan-org-match-keys"],
+            vec![
+                "data-quality",
+                "rehash-probe",
+                "build-org-match-keys",
+                "org-merge-health",
+                "scan-org-match-keys",
+            ],
             "issue 315: the key rebuild rides AHEAD of the scan — the queue is FIFO, \
              so this order IS the dependency"
         );
@@ -7989,7 +8022,7 @@ mod tests {
         // A second tick with last week's work still queued stacks nothing
         // (the issue-282 already_pending guard).
         sup.run_report_tick().await;
-        assert_eq!(sup.queued().len(), 4, "already_pending must stop the double enqueue");
+        assert_eq!(sup.queued().len(), 5, "already_pending must stop the double enqueue");
     }
 
     /// Issue 313: the job-log depth is an operator-reachable parameter now,

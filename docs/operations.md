@@ -330,6 +330,19 @@ uncapped wet), so a wet run refuses unless its dry plan is on file.
 | `drop-orphan-satellites` | **dry default** | drops the orphans a destination already carries by N2 KEY (321) |
 | `restore-dropped-satellites` | **dry default** | puts them back from `org_name_drops` pre-images |
 | `anchor-wall-census` | no | issue 318: where ingest binds and batch refuses |
+
+Report kinds do NOT always match the job kind that writes them. `fusion-census`
+stores under `fusion-candidates`, and `GET /admin/reports/<kind>` answers an
+unknown kind with "no report of that kind has been computed" — which reads as
+"the job never ran". The kinds are, exhaustively: `anchor-wall-census`,
+`case-apply-plan`, `case-escalations`, `case-unapply-plan`, `country-fold`,
+`data-quality`, `data-quality-headlines`, `data-quality-presence`,
+`drop-orphan-satellites`, `fusion-candidates`, `org-edge-census`,
+`org-edge-scan`, `org-edge-scan-alarm`, `org-edge-scan-plan`,
+`org-match-keys-build`, `org-match-keys-plan`, `org-merge-health`, `r2-census`,
+`r2-merge-plan`, `r3-census`, `r3-merge-plan`, `rehash-cursor`, `rehash-probe`,
+`rehoming-packet`, `rehoming-plan`, `reveal-cursor`, `reveal-recheck`,
+`reveal-wrap`, `satellite-orphans`.
 | `fold-org-countries` | YES | backfills non-canonical country codes (issue 319) |
 
 Two refusals an operator will meet, both deliberate:
