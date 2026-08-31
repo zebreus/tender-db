@@ -594,3 +594,93 @@ component root. Keep the challenger on every case — at 0 disputes it is now
 cheap insurance rather than a filter, and the run where it stops being cheap is
 the run that needs it. Neither `merge` nor `wrong-country` has an execution
 path, so nothing applies from this campaign yet.
+## Slice 1 of 6: 100 cases reviewed, and the packet's own evidence was defective
+
+2026-08-31. 100 cases, 200 agents (reviewer + challenger), 0 errors. Verdicts:
+
+| verdict | n |
+| ------- | - |
+| `wrong-country` | 62 |
+| `distinct-entities` | 24 |
+| `merge` | 13 |
+| `needs-more-evidence` | 1 |
+
+All 100 recorded on prod: `{"cohort":"xb-same-name-2026-08-31","recorded":100}`,
+after the 24 pilot verdicts under the same cohort. The headline holds: country
+contamination dominates the same-name cross-border cohort.
+
+**But 6 cases came back disputed, and all 6 share one shape** — the challenger
+agreeing the members are one entity while refusing `wrong-country` because
+nothing in the packet said WHICH country code was wrong. That is not a reviewer
+problem. It is a defect in the evidence I built.
+
+`country_agrees = false` meant three different things at once:
+
+1. the arithmetic was run under the row's own country's scheme and refused it,
+2. the row's country has **no scheme of this value's shape**, so nothing was
+   ever asked,
+3. the value anchors nowhere at all.
+
+Only (1) is the contaminated-country signal. A challenger caught it precisely:
+
+> no SK:ico scheme appears in the anchor vocabulary at all, so
+> country_agrees=False on the SK row is likely a vocabulary gap
+
+— and noted that CZ and SK IČO share the same mod-11 checksum, so a CZ anchor is
+not even weak evidence against SK. Same for DK: `DK:cvr` is an 8-digit scheme, so
+a 9-digit value on a DK row was never tested as DK.
+
+**This is issue 318's failure again**: a zero that means two things, read as
+though it meant one. 318 cost three rounds of the same mistake at three levels;
+here it cost 6 of 100 verdicts. The pattern is now twice-confirmed and worth
+stating as a rule: *any boolean whose false branch has more than one cause has to
+carry the cause beside it, or a reader will pick the interesting one.*
+
+### The fix
+
+`XbMember` gains `country_probed`, and `xb_same_name_packet` takes a second
+injected probe, `ingest::idgate::anchor_vocabulary`, reporting what the checksum
+probe **asks** rather than what **passes**. A reviewer now separates:
+
+* `agrees` — the arithmetic works where the row says it is;
+* `probed && !agrees` — tested under the row's own register and refused,
+  accepted under another's → the contaminated-country signal, and the repair is
+  a country correction through an already-tested path;
+* `!probed` — no scheme of the row's country has this shape. Silence with no
+  content.
+
+`checksum_anchors` and `anchor_vocabulary` now read **one table**
+(`uniform_arm`) and share the 14-digit `ambiguous_pad` judgment, because a drift
+between them would put a lie in a reviewer's evidence — a refusal-to-decide
+reported as a question that was asked. Two parity tests guard it: everything that
+can pass must be admitted as asked, and a declined shape must not be reported as
+asked.
+
+The store test that asserted this behaviour has been rewritten, because **it
+encoded the same over-claim**: it set up a 9-digit NO-passing value on a DK row
+and asserted "DK is the contaminated side". DK's scheme is 8-digit; DK was never
+tested. The test now asserts all three states on one value — NO agrees, PT is
+probed and refused, DK is unprobed — and its fake vocabulary keeps production's
+decisive property, that the arms are disjoint by length.
+
+### Slices 2–6 are held
+
+465 cases remain. They are NOT running until the corrected packet is deployed
+and rebuilt: running them now would bake the same over-claiming into 465 more
+verdicts, at 2 agents each. The 100 recorded verdicts stand — 94 of them were
+never in question, and the 6 disputed ones are recorded as disputed, which is the
+record behaving correctly.
+
+### Two exclusions for the remaining slices
+
+40 of the 589 cases (6.8%) contain a member whose country is a **parse artefact**,
+now filed as issue 325: the VAT-prefix sniffer mints a country from any word
+whose first two letters spell one (`CHARITYNO…` → CH on a UK charity,
+`BERICHTSEINHEITID…` → BE on German public bodies, `FIRMENBUCHNUMMER…` → FI on
+an Austrian GmbH, 32-char hex GUIDs → EE/BE/DE). 4,206 rows corpus-wide. Those
+40 cases should be excluded from slices 2–6 rather than hand-reviewed — a
+predicate decides them.
+
+Credit where it belongs: three of slice 1's 100 rationales independently named
+that mechanism from a single case each. The aggregate measurements had not seen
+it in four passes over this cohort.
