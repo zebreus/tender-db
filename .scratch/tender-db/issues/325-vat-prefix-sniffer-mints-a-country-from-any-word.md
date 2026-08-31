@@ -1,7 +1,9 @@
 # 325 — The VAT-prefix sniffer mints a country from any word that starts with two country letters
 
-Status: PREVENTION FIXED 2026-08-31 — the arm is tightened and the minted
-code canonicalised. REPAIR of the 3,789 standing rows is still open (step 4).
+Status: DONE 2026-08-31 — prevention tightened (`6605fb5`) and 5,055 standing
+rows repaired on prod (`008902f`, job 539). The publisher's disagreement fell
+from 34,111 mentions to 149, and those 149 are exactly the rows whose own
+mentions contradict each other. Step 5 (the tripwire) is the only residue.
 Kind: data-quality / correctness (organization layer, ingest)
 Relates to: 86 (fixed the OTHER half of this same site and left this arm loose),
 314 (the review campaign that surfaced it — 40 of its 589 cases carry one), 319
@@ -393,3 +395,105 @@ blocks this issue. But **a bank account number standing in an organization's
 identifier field is its own data-quality question** and is not what this issue is
 about. Not filed as a separate issue yet — the count above is a sample-based
 read of 648 rows and the class needs its own measurement first.
+
+---
+
+## Step 4 DONE: 5,055 rows repaired, and the residue is exactly what was predicted
+
+Built `repair-minted-countries` (`008902f`), deployed, dry pass reviewed (job
+538), wet pass applied (job 539).
+
+**The job does not reimplement the defect's predicate.** It injects
+`normalise_identifier`, re-parses each standing row from `(identifier, the
+publisher's own country)`, and plans any disagreement with the stored
+`(identifier_kind, country)`. So it repairs whatever the parser has learned since
+a row was written, not this issue's class — and there is no second spelling of
+the rule to drift (the failure mode of issues 318, 323 and 326).
+
+| | dry | wet |
+| --- | --- | --- |
+| `kind='vat'` rows re-parsed | 80,832 | 80,832 |
+| planned | 5,055 | 5,055 |
+| **applied** | 0 | **5,055** |
+| skipped (row moved mid-run) | — | 0 |
+| mentions disagree among themselves — no action | 408 | 408 |
+| no alpha-2 country stated anywhere — no action | 14 | 14 |
+| value now refused outright — counted, never stripped | 0 | 0 |
+| collisions | 0 | 0 |
+
+5,055 is more than the 4,051 predicted because the walk covers **all** vat rows
+rather than the two class predicates: it also catches the 648 long-body and 120
+letter-run rows those predicates missed, and rows where only the country
+canonicalisation moves.
+
+`collisions = 0` is true *now* and would not have stayed true: a fresh mention
+under the new parser mints `(national, DE)` rows that the standing `(vat, BE)`
+rows would then collide with. The window between the prevention deploy and this
+repair is exactly the one that was worth closing quickly.
+
+### What the plan actually moved
+
+* `vat → national`, country changed (the headline): `BERICHTSEINHEITID…` BE→DE on
+  German public bodies carrying 62–253 mentions each; `CHARITYNO…` CH→GB;
+  `FIRMENBUCHNUMMER…` FI→AT; `NO2016DRAOFORM…` NO→FR; `PLTVNT90H15A717T` PL→IT.
+* `vat → national`, country unchanged (104 in the carried plan): values that were
+  never VAT numbers but whose country was already right —
+  `RO1883902J13601991` (a CUI and a court reference concatenated, 136 mentions),
+  `DE2457420636C014BAC6A7C4D38AD5` (a VAT plus a GUID), `DE6200000000052979`
+  (214 mentions).
+* `vat → vat` (60 in the carried plan): **only** `EL → GR` (46) and `UK → GB`
+  (14), with the publisher stating `GR`/`GB` in every case. That half is issue
+  319's vocabulary, not a reclassification — a real Greek VAT id stays a Greek
+  VAT id.
+
+### Acceptance, measured on prod after the wet pass
+
+| | before | after |
+| --- | --- | --- |
+| org rows under `EL`/`UK`/`XI` | 262 | **5** |
+| class W ∪ G still under `kind='vat'` | 4,206 | **5** |
+| mentions whose stated country contradicts the row | **34,111** | **149** |
+| …that agree | 946 | — (those rows are no longer `kind='vat'`) |
+
+The 149 is not a leftover — it is **exactly** the "mentions disagree among
+themselves" bucket the original measurement found (2 orgs, 149 mentions), which
+is the one class the repair deliberately refuses to touch. Independent
+confirmation that it did what was planned and nothing else.
+
+And the issue's opening line, checked directly:
+
+```
+GB  national  CHARITYNO298028       Victim Support
+GB  national  CHARITYNUMBER1040303  Citizens Advice Wandsworth
+GB  national  CHARITYNUMBERSC010159 St Andrew's Hospice
+```
+
+No refold is needed: `buyer_country` is a VIEW over `organizations.country`, so
+consumers read the corrected row live, and each moved row emitted a change event
+because both fields are published. Same acceptance shape as issue 319's fold.
+
+### Two things the tests taught me that I had assumed wrong
+
+Both are pinned rather than left to be rediscovered:
+
+1. **The `kind='vat'` scope makes the job idempotent** — a repaired row becomes
+   `national` and leaves the population — and it means a hand correction survives
+   only if it changes the KIND. `(AT, national)` is out of scope and stands;
+   `(AT, vat)` stays in scope and the publisher wins next run. Not a design
+   anyone would choose, so
+   `what_survives_a_hand_correction_depends_on_the_kind` asserts it. **This job
+   is not a place to park a manual override**; one that must survive needs its
+   own marker, the way `org_case_reviews` stamps an applied verdict.
+2. **The per-row pre-image check guards a narrower window than it looks like.**
+   The plan is computed inside the same call, so it cannot be stale in the review
+   sense — `expect_rows` guards that. What is left is the reader-to-writer gap,
+   in which a concurrent job on this shared box can move a row. Real, but small,
+   and the doc says so now instead of implying more.
+
+## Residue: step 5, the tripwire
+
+Still unbuilt. The two class predicates are the whole test, and they should be a
+scheduled count that alarms above a floor — the class is now 5 rows, so a floor
+of anything above single digits would catch a regression immediately. Worth
+doing because this arm has now been wrong twice in one day, in opposite
+directions.
