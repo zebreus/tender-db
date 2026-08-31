@@ -1,6 +1,7 @@
 # 325 — The VAT-prefix sniffer mints a country from any word that starts with two country letters
 
-Status: OPEN — measured on prod 2026-08-31, not yet fixed
+Status: PREVENTION FIXED 2026-08-31 — the arm is tightened and the minted
+code canonicalised. REPAIR of the 3,789 standing rows is still open (step 4).
 Kind: data-quality / correctness (organization layer, ingest)
 Relates to: 86 (fixed the OTHER half of this same site and left this arm loose),
 314 (the review campaign that surfaced it — 40 of its 589 cases carry one), 319
@@ -178,3 +179,131 @@ the queue idle (`/health/deep` `last_job` finished, all checks ok), each a
 single-table aggregate inside the endpoint's own 10 s cap — the bounded
 data-page path of `docs/agents/prod-box-reads.md`. The 589-case overlap was
 computed locally from the stored packet, touching prod not at all.
+
+---
+
+## Step 1 answered mechanically — no sampling needed
+
+The issue's step 1 asked for "a random sample" to get the wrong-country rate.
+That turned out to be unnecessary: **the publisher already tells us the country**,
+on every mention, and `normalise_identifier` receives it as its `country`
+argument before overriding it with the prefix guess. So the rate is a join, not
+an estimate.
+
+Measured on prod, queue idle, via `/v1/sql`:
+
+| the mention's own country field, against the minted code | mentions |
+| --- | --- |
+| **DISAGREES** | **34,111** |
+| AGREES | 946 |
+| not alpha-2 | 8 |
+| absent | 3 |
+
+**97.3% of the mentions on these rows carry a stated country that contradicts
+the code taken out of the identifier's first two letters.**
+
+Per organization, and this is the number that governs the repair:
+
+| | orgs | mentions |
+| --- | --- | --- |
+| all mentions name ONE country, and it **contradicts** the minted code | **3,789** | 33,962 |
+| all mentions name one country, and it matches | 268 | 946 |
+| the mentions disagree among themselves | **2** | 149 |
+
+So **3,789 of 4,059 (93.4%) have an unambiguous repair already recorded in
+their own mentions**, 268 were accidentally right, and exactly **two** rows are
+genuinely ambiguous. The repair mapping is the mechanism, read back:
+
+    BE -> DE  832     BERICHTSEINHEITID… German public bodies
+    EE -> FR  781     32-char hex GUIDs on French entities
+    DE -> FR  698     ditto
+    BE -> FR  547     ditto
+    EE -> DE  197
+    DE -> CH  113     Swiss cantons and municipalities
+    EE -> CH  104
+    BE -> CH  104
+    FR -> IT   36     Italian codici fiscali (FRRSFN75A45F839O…)
+    NO -> FR   26
+    LI -> PL   21     LIDERKONSORCJUM… Polish consortia
+    DE -> IT   20
+    PL -> IT   19
+    SE -> PL   16
+    GR -> IT   15
+
+## A third defect in the same three lines: it re-contaminates issue 319
+
+The arm stored `Some(vat_prefix)` **raw**. `VAT_COUNTRIES` holds both `EL` and
+`GR`, both `UK` and `GB`, and `XI` — so the arm mints non-ISO codes, while every
+other writer canonicalises to alpha-2 first (`m.country = canonical_country(&c)`,
+three lines above the call site).
+
+Issue 319 is RESOLVED and folded the country column to alpha-2. Prod today:
+
+    EL  vat  222
+    UK  vat   38
+    XI  vat    2
+
+**262 rows, every one `kind = 'vat'`** — i.e. minted by this arm *after* the
+fold ran. A resolved issue with a live re-contamination channel is worse than an
+open one, because nobody is watching it.
+
+## The prevention fix (done)
+
+`normalise_identifier`'s VAT arm now requires the two-letter prefix to be
+followed by *the registration number itself*, not by the middle of a word:
+
+* a digit somewhere in the body (unchanged),
+* body length ≤ 14 — Sweden's twelve is the longest real one, and a 32-char hex
+  GUID has a 30-character body,
+* **no run of three consecutive letters in the body** — the sharp test, and the
+  one that separates `ESX1234567X` from `ESTRADADOBAIRROSN…`. No European
+  scheme puts three letters straight after the country code: Austria has one
+  `U`, a Spanish CIF one letter, France two check characters, GB's `GD`/`HA`
+  two.
+
+…and canonicalises the minted code, so `EL…` lands under `GR` and `UK…` under
+`GB`. The published VALUE keeps its own spelling — rewriting it would be the
+value reshaping issue 300 Stage 1 deliberately keeps out of this function.
+
+A rejected value now takes the `national()` path, which scopes it by **the
+mention's own country** — exactly the field the measurement above shows to be
+right 97.3% of the time.
+
+### Tests
+
+* `a_word_that_starts_with_a_country_code_does_not_mint_that_country` — fifteen
+  REAL prod values with the country each one actually minted, asserting they are
+  now `national`, scoped by the mention, value untouched.
+* `the_tightened_vat_arm_still_admits_every_real_scheme_shape` — every European
+  scheme that puts a non-digit right after the country code, which is precisely
+  what a careless "must be followed by a digit" rule would have broken.
+* `real_vat_ids_keep_their_country_prefix` — one expectation CHANGED: it asserted
+  `EL094019245` → country `EL`. That was correct when written and is wrong after
+  issue 319. Recorded in the test, not silently flipped.
+
+**A note for whoever writes the next fixture here.** Five values in this test's
+first draft were swallowed whole by the v2 gate and returned `None`:
+`ESX1234567X` and `BERLINCHARLOTTENBURG12345` (ascending digit runs),
+`FRXX999999999` and `GBGD001` (filler and short-VAT stub), `SE556602998601` (a
+Luhn that does not close — SE:vat is a HARD scheme). Every one would have made
+the test pass or fail on `idgate::condemns`'s behaviour instead of on this arm's.
+**A synthetic VAT id is nearly always a gate-refused one.** Use a real
+registrant.
+
+## What is still open (step 4: the repair)
+
+The 3,789 standing rows and their 33,962 mentions. Shape, following issue 312's
+lesson and this repo's dry-first ladder:
+
+1. A dry plan: per org, the minted code, the unanimous mention country, the
+   mention count. Stored as a report and reviewed before any write.
+2. A wet pass with pre-images (`country` is a published field, so each moved row
+   needs a change event — issue 319's fold is the precedent, including its
+   `expect_rows` tolerance gate).
+3. The two ambiguous orgs get no automatic action.
+4. Re-read the `EL`/`UK`/`XI` counts afterwards: they must go to zero and stay
+   there, which is now true by construction at ingest but not yet for the stock.
+
+A tripwire also remains unbuilt (step 5): the two predicates in the class table
+are the whole test, and they should be a scheduled count so the next loose
+prefix arm announces itself.

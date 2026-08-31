@@ -4595,18 +4595,78 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         return gated(national());
     }
 
-    // Otherwise a leading two-letter VAT country (Austrian `ATU…` keeps its `U`)
-    // followed by any digit is a VAT id scoped by that country; a two-letter
-    // prefix outside the VAT set never mints a country.
+    // Otherwise a leading two-letter VAT country (Austrian `ATU…` keeps its
+    // `U`) followed by the registration number ITSELF is a VAT id scoped by
+    // that country; a two-letter prefix outside the VAT set never mints a
+    // country.
+    //
+    // ISSUE 325: the old test was "some digit ANYWHERE in the rest", which let
+    // any word whose first two letters spell a VAT country mint one.
+    // `CHARITYNO298028` became Swiss on a British charity, `BERICHTSEINHEITID…`
+    // Belgian on 595 German public bodies, `FINANZAMT…` Finnish, and every
+    // 32-char hex GUID starting `EE`/`DE`/`BE` became a VAT id of that country.
+    // Measured: 4,206 rows, and 3,789 of the 4,059 with mentions (93.4%) carry
+    // mentions that UNANIMOUSLY name a different country — the publisher's own
+    // field, contradicting the prefix guess 34,111 times against 946.
+    //
+    // The discipline is the one the register-prefix arm above already applies,
+    // one arm up: a two-letter tag must be followed by the thing it tags, not
+    // by the middle of a word. A real VAT body is short and mostly digits — no
+    // scheme puts three letters straight after the country code (Austria has
+    // one `U`, a Spanish CIF one letter, France two check characters, GB's
+    // `GD`/`HA` two) and none is longer than Sweden's twelve characters. So
+    // both bounds apply, and the letter run is the sharper of the two: it is
+    // what separates `ESX1234567X` from `ESTRADADOBAIRRO…`.
     let vat_prefix: String = value.chars().take(2).collect();
+    let body = &value[2..];
     let is_vat = VAT_COUNTRIES.contains(&vat_prefix.as_str())
-        && value[2..].chars().any(|c| c.is_ascii_digit());
+        && body.chars().any(|c| c.is_ascii_digit())
+        && body.len() <= VAT_BODY_MAX
+        && longest_letter_run(body) < 3;
     if is_vat {
-        gated(Identifier { country: Some(vat_prefix), kind: "vat".into(), value })
+        // Canonicalise the minted code. The arm used to store the prefix RAW,
+        // which is a live re-contamination path for issue 319's completed
+        // fold: it re-mints `EL`, `UK` and `XI` — 262 org rows on prod carry
+        // them today and every one is `kind = 'vat'`, i.e. minted here after
+        // the fold ran. The published VALUE keeps its own prefix (`EL094…`
+        // really is spelled that way); only the country column joins the
+        // alpha-2 vocabulary every other writer uses.
+        let country = canonical_country(&vat_prefix);
+        gated(Identifier { country: Some(country), kind: "vat".into(), value })
     } else {
         gated(national())
     }
 }
+
+/// The longest run of consecutive ASCII letters in `s`.
+///
+/// Distinct from [`crate::idgate::letter_run_after_prefix`], which first skips
+/// a leading letter run of up to six so a register TAG (`HRB`, `REGON`) does
+/// not count against its own value. Here the two-letter country prefix is
+/// already removed by the caller and everything left is the body, so a plain
+/// run is what the question wants.
+fn longest_letter_run(s: &str) -> usize {
+    let mut best = 0usize;
+    let mut run = 0usize;
+    for b in s.bytes() {
+        if b.is_ascii_alphabetic() {
+            run += 1;
+            best = best.max(run);
+        } else {
+            run = 0;
+        }
+    }
+    best
+}
+
+/// The longest real VAT body, plus headroom: Sweden's is twelve characters
+/// after the country code and nothing published is longer. Fourteen rather
+/// than twelve because the length is the coarse bound — `longest_letter_run`
+/// is what actually separates an identifier from prose, and a 16-character
+/// mostly-digit value that is NOT a VAT number simply becomes national, which
+/// is where it belonged. A 32-character hex GUID has a 30-character body and
+/// fails here whatever its letter runs look like.
+const VAT_BODY_MAX: usize = 14;
 
 fn first_id(parsed: &Parsed, field_id: &str) -> Option<String> {
     parsed.values.iter().find(|v| v.field_id == field_id).and_then(|v| match &v.value {
@@ -5395,26 +5455,139 @@ mod tests {
     }
 
     /// Issue 86: real VAT ids still parse — including Austrian `ATU…`, whose
-    /// third character is a letter, and Greek `EL…`. A two-letter prefix outside
-    /// the VAT-country set never mints a country.
+    /// third character is a letter. A two-letter prefix outside the VAT-country
+    /// set never mints a country.
+    ///
+    /// ISSUE 325 CHANGED ONE EXPECTATION HERE. This test used to assert that
+    /// `EL094019245` lands under country `EL`, "scoped by its prefix" — and
+    /// that was right when it was written, before issue 319 established alpha-2
+    /// as the country vocabulary and folded the column to it. Storing the raw
+    /// prefix is now a re-contamination path for that completed fold: 262 org
+    /// rows on prod carry `EL`/`UK`/`XI` and every one is `kind = 'vat'`, i.e.
+    /// minted here AFTER the fold. The value keeps its own spelling; the
+    /// country column joins the vocabulary.
     #[test]
     fn real_vat_ids_keep_their_country_prefix() {
         // Checksum-clean specimens: the v2 gate (issue 300) condemns
         // ascending-run and HARD-checksum-failing samples, so the fixtures
         // are real-shaped ids (DE is the canonical valid USt-IdNr, EL is
         // OTE's real AFM).
-        for (raw, country) in
-            [("ATU37675002", "AT"), ("DE136695976", "DE"), ("EL094019245", "EL"), ("FR12345678901", "FR")]
-        {
+        for (raw, country) in [
+            ("ATU37675002", "AT"),
+            ("DE136695976", "DE"),
+            ("EL094019245", "GR"),
+            ("FR12345678901", "FR"),
+        ] {
             let id = normalise_identifier(raw, Some("ignored")).expect("a VAT id");
             assert_eq!(id.kind, "vat", "{raw} is a VAT id");
             assert_eq!(id.country.as_deref(), Some(country), "{raw} scoped by its prefix");
         }
+        // The VALUE is untouched by the canonicalisation — a published `EL…`
+        // id really is spelled that way, and rewriting it would be the value
+        // reshaping issue 300 Stage 1 deliberately keeps out of this function.
+        let el = normalise_identifier("EL094019245", None).expect("a VAT id");
+        assert_eq!(el.value, "EL094019245");
         // A two-letter prefix that is not a VAT country does not mint one — it is
         // a national id scoped by the mention.
         let zz = normalise_identifier("ZZ998877", Some("DEU")).expect("an id");
         assert_eq!(zz.kind, "national");
         assert_eq!(zz.country.as_deref(), Some("DEU"), "ZZ is not a VAT country");
+    }
+
+    /// Issue 325: a word whose first two letters spell a VAT country must not
+    /// mint that country.
+    ///
+    /// Every specimen below is a REAL prod value, and the country beside it is
+    /// the one the row actually carried because of it. The mechanism is the old
+    /// guard's "a digit ANYWHERE in the rest", which the register-prefix arm
+    /// eleven lines above had already learned not to do: a two-letter tag must
+    /// be followed by the thing it tags. 4,206 rows, and the mentions on 93.4%
+    /// of them unanimously name a different country.
+    #[test]
+    fn a_word_that_starts_with_a_country_code_does_not_mint_that_country() {
+        for (raw, minted) in [
+            // Digits are non-sequential throughout: the v2 gate (issue 300
+            // Stage 1) condemns ascending runs, and a fixture it refuses
+            // wholesale tests the gate rather than this arm. Two synthetic
+            // values in the first draft of this test did exactly that.
+            ("CHARITYNO298028", "CH"),          // a British charity
+            ("CHARITYNUMBER1040303", "CH"),     // Citizens Advice Wandsworth
+            ("BERICHTSEINHEITID00002636", "BE"), // traffiQ, Frankfurt
+            ("BERLINCHARLOTTENBURG93627", "BE"), // the Amtsgericht
+            ("FINANZAMTBIELEFELD34959", "FI"),  // a German tax office
+            ("FIRMENBUCHNUMMER441612F", "FI"),  // an Austrian Firmenbuch number
+            ("FRANKFURTHRB105754", "FR"),       // a German company
+            ("DECRETODIRIGENZIALE1486762017", "DE"), // an Italian decree
+            ("LIDERKONSORCJUM9661386113", "LI"), // a Polish consortium
+            ("ESTRADADOBAIRROSN2600614", "ES"), // a Portuguese street address
+            ("ATTOGE13295DEL28102022", "AT"),   // an Italian administrative act
+            ("BGLFRZ76T09F712E", "BG"),         // an Italian codice fiscale
+            ("FRRSFN75A45F839O", "FR"),         // another codice fiscale
+            ("EEE9F40A5D2242C8825F273DE191CF69", "EE"), // a 32-char platform GUID
+            ("BE2A168C8910492EB06E6644D5F75B0B", "BE"), // ditto, a Swiss canton's
+        ] {
+            let id = normalise_identifier(raw, Some("PL"))
+                .unwrap_or_else(|| panic!("{raw} ({minted}) was gated away entirely"));
+            assert_eq!(
+                id.kind, "national",
+                "{raw} is not a VAT number — it merely begins with {minted}"
+            );
+            assert_eq!(
+                id.country.as_deref(),
+                Some("PL"),
+                "{raw} must take the MENTION's country, not {minted} out of its own letters"
+            );
+            assert_eq!(id.value, raw, "and the published value is never reshaped");
+        }
+    }
+
+    /// The other half of issue 325's fix: the tightening must not cost a single
+    /// real VAT id. Every European scheme that puts something other than a
+    /// digit right after the country code is here, because those are the ones a
+    /// careless "must be followed by a digit" rule would have broken.
+    ///
+    /// EVERY VALUE IS A REAL-SHAPED ONE, and that is not decoration. Five
+    /// fixtures in this test's first draft were swallowed whole by the v2 gate
+    /// (issue 300 Stage 1) — `ESX1234567X` and `BERLINCHARLOTTENBURG12345` for
+    /// ascending digit runs, `FRXX999999999` and `GBGD001` as filler and
+    /// short-VAT stubs, `SE556602998601` for a Luhn that does not close
+    /// (SE:vat is a HARD scheme). Each returned `None`, which would have made
+    /// this test pass or fail on the GATE's behaviour rather than on this arm's.
+    /// A synthetic VAT id is nearly always a gate-refused one, so use a real
+    /// registrant: the Swedish body here is Philips AB's orgnr, read off prod.
+    #[test]
+    fn the_tightened_vat_arm_still_admits_every_real_scheme_shape() {
+        // Not here, deliberately: `GBGD001` and `GBHA599`, the UK departmental
+        // and health-authority forms. Their two-letter tag is exactly what the
+        // letter-run bound has to admit (2 < 3, and `FRAB404833048` exercises
+        // that), but they carry three digits and the v2 gate's short-VAT-stub
+        // rule refuses them as merge keys — a decision that predates issue 325
+        // and belongs to `idgate::condemns`. A fixture the gate swallows would
+        // test the gate, not this arm.
+        for (raw, country) in [
+            ("ATU37675002", "AT"),      // Austria's fixed `U`
+            ("ESX3873152T", "ES"),      // a Spanish CIF's leading letter
+            ("ESA58818501", "ES"),
+            ("FRAB404833048", "FR"),    // two alphabetic check characters
+            ("FRK7399859412", "FR"),
+            ("NL804595859B01", "NL"),   // the `B` sub-number
+            ("IE9825613N", "IE"),       // the Irish trailing letter
+            ("IE8Z49289F", "IE"),       // and the older mid-string form
+            ("GB553298332", "GB"),
+            ("CY10259033P", "CY"),      // the Cypriot trailing letter
+            ("SE556105261301", "SE"),   // the longest real body: twelve
+            ("XI553298332", "XI"),      // Northern Ireland
+            ("DE136695976", "DE"),
+        ] {
+            let id = normalise_identifier(raw, Some("ZZ"))
+                .unwrap_or_else(|| panic!("{raw} ({country}) was gated away entirely"));
+            assert_eq!(id.kind, "vat", "{raw} is a real VAT shape and must stay one");
+            assert_eq!(
+                id.country.as_deref(),
+                Some(canonical_country(country).as_str()),
+                "{raw} is scoped by its own prefix, canonicalised"
+            );
+        }
     }
 
     /// Issue 48: country codes converge to one canonical alpha-2 vocabulary, so a
