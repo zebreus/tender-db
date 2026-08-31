@@ -1,6 +1,7 @@
 # 318 — The resolver's anchor bind applies the R3 bar without the R3 wall
 
-Status: ready-for-agent (found by the issue-316 adversarial panel, 2026-08-30)
+Status: MEASURED 2026-08-31 (prod job 518) — 9,582 standing rows, and the
+specimens settle it. Step 2 (thread the wall into the resolver) is open
 Kind: correctness (organization layer, ingest path)
 Relates to: 316 (built the wall), 300 (§4.1, Stage 3 prevention), 234
 
@@ -56,3 +57,65 @@ Not a false-merge report. Nobody has shown a wrong bind from this class yet;
 what is shown is that two implementations of one rule disagree, and the
 design says the stricter one is correct. Measure the class before deciding
 how hard to close it — the issue-312 discipline.
+
+
+## MEASURED (2026-08-31, prod job 518, deploy b4942f7)
+
+`anchor-wall-census` walks the N2 key groups the Stage-4 scan already
+stoplists — the ones OVER the cap, which that scan discards — and asks of the
+orgs standing on them which the resolver could actually reach.
+
+    3,481,572 n2 key groups walked
+       55,312 over the stoplist cap, holding 5,204,927 carrier slots
+    3,553,602 slots probed (very large groups are sampled)
+       15,809 DISTINCT orgs anchor to exactly one scheme
+        6,227 HARD — the design's exemption, both paths already agree
+        9,582 SOFT — the gap (10,109 (org, generic-name) slots)
+
+    FR:siren 5,962 · PL:nip 2,871 · DK:cvr 416 · BE:kbo 333 · SI:davcna 0
+
+29 seconds. **9,582 is distinct rows reachable, not binds observed** — the
+issue is explicit that nobody has shown a wrong bind from this class, and this
+does not change that. The first run said 10,109 because it counted an org once
+per generic key it stood on; that is fixed and both numbers are now reported,
+because "how many rows" and "how many names can reach them" are different
+facts.
+
+## The specimens settle it
+
+    org 23095417  DK:cvr    carriers=37   name '0'
+    org 22917668  DK:cvr    carriers=55   '1. Vergabekammer des Freistaates Sachsen…'
+    org  1844 / 5127  PL:nip  carriers=34  '2. Regionalna Baza Logistyczna'  (both)
+    org 9218962 / 10868620  FR:siren  carriers=64  '2c Courtage'  (both)
+
+A row whose entire corroborating name is `"0"`, shared with 36 others, is
+reachable at ingest by any country-less mention carrying a CVR-shaped number.
+That is precisely the worthless agreement the wall was built to refuse —
+"agreement between two names nobody chose to make", in the wall's own comment
+— and the batch arm does refuse it today.
+
+## Recommendation: close it
+
+The three reasons the issue asked to weigh, answered:
+
+1. **Frequency/cost.** The genericness probe is one indexed COUNT with
+   `LIMIT cap+1` (`name_key_is_generic`), and it fires only on the anchor
+   path — which is itself the rare fall-through after E0 exact equality AND
+   the Stage-2 canonical hit have both missed. The cost question the issue
+   raised resolves as: cheap probe, rare path.
+2. **The lenient default stays lenient**, exactly as the issue specifies. An
+   unseen key ⇒ not generic ⇒ today's behaviour. `org_match_keys` may be
+   empty or mid-build during ingest and the resolver has no "refuse" to
+   return; lenient-on-unknown is the only safe failure mode on this path, and
+   it is also what the wall's own default already does.
+3. **The design says the stricter path is correct.** Two implementations of
+   one rule disagreeing is the defect regardless of the count; the count only
+   decides urgency, and 9,582 rows with `"0"` among them is not "later".
+
+## Step 2 (open)
+
+Thread `hard_scheme` + `stoplist_cap` into `ResolverArgs` the way
+`match_org_null_country_r3` takes them (injected fns; linguistics stay out of
+store), and gate the anchor bind's corroboration on the wall. It lands on the
+INGEST HOT PATH, so it wants its own panel round and a fold canary — the
+issue-316 discipline — not a fast edit on top of this measurement.
