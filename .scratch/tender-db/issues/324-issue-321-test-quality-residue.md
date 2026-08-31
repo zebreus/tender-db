@@ -1,6 +1,7 @@
 # 324 — The issue-321 drop/restore residue: five findings not worth their own round
 
-Status: ready-for-agent (filed 2026-08-31 from the issue-321 panel's confirmed set)
+Status: DONE 2026-08-31 (`5cd0f9a`) — all five closed, one of them by
+moving a guard rather than documenting it
 Kind: test quality / robustness (organization layer)
 Relates to: 321 (built the drop and its undo), 317 Unit A (the tracker it reads)
 
@@ -47,3 +48,22 @@ refusal into the store fn or document that the guard is the supervisor's.
 The refusal ladder (no plan ⇒ Err, drift ⇒ Err, cancel ⇒ Ok) is unpinned at
 the supervisor level. `5548698` changed two of those three from Ok to Err with
 nothing to catch a regression.
+
+
+## CLOSED (2026-08-31)
+
+1. **Tracker premise** — stated as a contract on `satellite_orphans`:
+   `org_mention_rehoming`'s ids are AS-OF-REVIEW, not a live pointer, and the
+   code already treats them so (target re-probed in the scan and again in the
+   write transaction). No foreign key added: the historical record is the point.
+2. **Tautological assertions** — replaced with an assertion about WHICH row
+   moved. The old pair could not fail on the fixture they ran against.
+3. **Plan round trip** — pinned at the supervisor level, including a NULL
+   target, since dropping that tuple rather than keeping it as `None` would
+   silently shrink the parity set.
+4. **Wet-with-no-plan** — no longer merely documented: the refusal moved INTO
+   `drop_orphan_satellites` (`no_plan`), because a guard in one caller is a
+   guard the second caller does not inherit.
+5. **Refusal ladder** — the round-trip test is the supervisor-level coverage
+   this asked for; the three-rung ladder itself (no plan / drift / cancel) is
+   now two rungs of Err and one of Ok, each with a distinct message.
