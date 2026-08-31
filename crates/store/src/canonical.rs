@@ -8376,6 +8376,28 @@ impl Db {
                 let (was_name, was_norm) = (text(&row, 0), text(&row, 1));
                 drop(rows);
                 conn.execute(
+                    "INSERT INTO org_name_drops \
+                       (org_id, lang, name, name_norm, key, target_org, dropped_at, job_id) \
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        Value::Integer(o.org),
+                        t(&o.lang),
+                        t(&was_name),
+                        t(&was_norm),
+                        t(&o.key),
+                        match o.target {
+                            Some(x) => Value::Integer(x),
+                            None => Value::Null,
+                        },
+                        Value::Integer(now),
+                        match job_id {
+                            Some(x) => Value::Integer(x),
+                            None => Value::Null,
+                        },
+                    ),
+                )
+                .await?;
+                conn.execute(
                     "DELETE FROM organization_names WHERE org_id = ? AND lang = ?",
                     (Value::Integer(o.org), t(&o.lang)),
                 )
