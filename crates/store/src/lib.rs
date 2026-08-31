@@ -5050,6 +5050,73 @@ tmpfs /data/ramcache tmpfs rw 0 0
     /// tell a seek from a scan (the issue-80 lesson). The POISONED spellings
     /// are pinned too, so the day turso stops preferring that index this test
     /// fails and says the `+` can go.
+    /// Issues 316/318/321: the two statements that ask `org_match_keys` about
+    /// a key must SEEK, and the one on the ingest hot path especially.
+    ///
+    /// `org_match_keys` carries exactly one index, `(key_kind, key, org_id)`.
+    /// Leading with `key_kind` is what makes these seeks, and the negative
+    /// case is not hypothetical — issue 321's stale-key count shipped as
+    /// `org_id = ? AND key = ?`, which turso answers with a full SCAN, run
+    /// once per dropped row on the held writer connection. This pins the two
+    /// live statements against their own builders and pins that the poisoned
+    /// ordering still scans, so the day that stops being true the test says so
+    /// rather than the wall quietly getting slower.
+    #[tokio::test]
+    async fn the_key_store_probes_seek_and_the_poisoned_ordering_still_does_not() {
+        let path = format!("/tmp/tender-db-keyplan-eqp-{}.db", std::process::id());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        // The index is created by the key BUILD, not by `Db::open`, so a
+        // fixture without it is not the schema the planner sees on the box.
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS org_match_keys_kk \
+                 ON org_match_keys(key_kind, key, org_id)",
+            (),
+        )
+        .await
+        .unwrap();
+
+        let plan_of = async |sql: &str| -> String {
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), ()).await.unwrap();
+            let mut plan = String::new();
+            while let Some(row) = rows.next().await.unwrap() {
+                plan.push_str(&text(&row, 3));
+                plan.push('\n');
+            }
+            assert!(!plan.is_empty(), "no plan came back for: {sql}");
+            plan
+        };
+
+        for sql in [crate::canonical::GENERIC_KEY_SQL, crate::canonical::STALE_KEY_COUNT_SQL] {
+            let plan = plan_of(sql).await;
+            assert!(
+                plan.contains("SEARCH org_match_keys USING INDEX org_match_keys_kk"),
+                "must seek on (key_kind, key, …) — plan was:\n{plan}"
+            );
+            assert!(
+                !plan.contains("SCAN org_match_keys"),
+                "a scan here is the issue-321 shape: the whole key store, per \
+                 call, and the generic probe runs on the INGEST hot path:\n{plan}"
+            );
+        }
+
+        // The shape that shipped, kept as the negative control. If turso ever
+        // learns to seek this, the guard above is no longer load-bearing and
+        // whoever reads this should know it.
+        let poisoned = plan_of(
+            "SELECT COUNT(*) FROM org_match_keys WHERE org_id = 1 AND key = 'x'",
+        )
+        .await;
+        assert!(
+            poisoned.contains("SCAN org_match_keys"),
+            "the org_id-led ordering is expected to SCAN — if it now seeks, \
+             turso changed and this whole probe wants re-reading:\n{poisoned}"
+        );
+    }
+
     #[tokio::test]
     async fn the_requeue_statements_seek_notices_by_rowid() {
         let path = format!("/tmp/tender-db-requeue-eqp-{}.db", std::process::id());

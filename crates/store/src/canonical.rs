@@ -2047,6 +2047,27 @@ pub struct SatelliteRestoreReport {
     pub rows: Vec<OrphanSatellite>,
 }
 
+/// The genericness probe (issue 316's wall, issue 318's hot-path arm). Named
+/// so a plan test can assert against the SQL that RUNS rather than a copy of
+/// it — the `PREV_EDGE_JOIN_SQL` discipline, and the one issue 323 showed is
+/// worth the indirection: a verifier there produced a reordered spelling of a
+/// poisoned predicate that a copy-based guard would have missed.
+///
+/// `org_match_keys` is indexed `(key_kind, key, org_id)` and nothing else, so
+/// LEADING WITH `key_kind` is what makes this a seek. This one runs on the
+/// INGEST HOT PATH, once per anchor bind that would otherwise succeed.
+pub(crate) const GENERIC_KEY_SQL: &str =
+    "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
+       WHERE key_kind = ? AND key = ? LIMIT ?)";
+
+/// The issue-321 stale-key count. Same index, same reason, and this one is
+/// the standing record of getting it wrong: it was written `org_id = ? AND
+/// key = ?`, which turso answers with a full SCAN, and it ran once per
+/// dropped row on the held writer connection.
+pub(crate) const STALE_KEY_COUNT_SQL: &str =
+    "SELECT COUNT(*) FROM org_match_keys \
+       WHERE key_kind = 'n2' AND key = ? AND org_id = ?";
+
 /// One standing org a generic-named, country-less mention could anchor-bind
 /// to at ingest but could not be merged with in batch (issue 318).
 #[derive(Debug, Default, Clone)]
@@ -8687,13 +8708,8 @@ impl Db {
         // clears these.
         let reader = self.reader().await?;
         for (org, key) in &dropped_rows {
-            let mut rows = reader
-                .query(
-                    "SELECT COUNT(*) FROM org_match_keys \
-                      WHERE key_kind = 'n2' AND key = ? AND org_id = ?",
-                    (t(key), Value::Integer(*org)),
-                )
-                .await?;
+            let mut rows =
+                reader.query(STALE_KEY_COUNT_SQL, (t(key), Value::Integer(*org))).await?;
             if let Some(row) = rows.next().await? {
                 report.stale_keys += int(&row, 0) as u64;
             }
@@ -9500,11 +9516,7 @@ impl Db {
     ) -> turso::Result<bool> {
         let reader = self.reader().await?;
         let mut rows = reader
-            .query(
-                "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
-                  WHERE key_kind = ? AND key = ? LIMIT ?)",
-                (t(kind), t(key), Value::Integer(cap as i64 + 1)),
-            )
+            .query(GENERIC_KEY_SQL, (t(kind), t(key), Value::Integer(cap as i64 + 1)))
             .await?;
         let n = match rows.next().await? {
             Some(row) => int(&row, 0),
