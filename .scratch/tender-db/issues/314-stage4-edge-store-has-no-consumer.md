@@ -1,8 +1,8 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: RULE-HUNT CLOSED 2026-08-31. Three rounds of narrowing took the
-"rule-shaped" subset from 589 to ~28. The cohort is a REVIEW cohort, which is
-what issue 311 said at the start
+Status: PILOT RUN 2026-08-31 — 24 cases, 48 agents. The dominant finding is
+COUNTRY CONTAMINATION (19/24), far wider than the checksum estimate. And the
+pilot caught a bias I introduced in its own rubric
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -478,3 +478,75 @@ wrong-identifier / needs-more-evidence. Verdicts as records only — a merge
 still has no execution path (this issue's item 4, still open). The 28
 decisive-weight cases are worth reading first as gold exemplars, since their
 answer is already legible from the evidence.
+
+## THE PILOT (2026-08-31, 24 cases, 48 agents: one reviewer + one adversarial challenger each)
+
+    wrong-country       19
+    distinct-entities    3
+    merge                1
+    needs-more-evidence  1
+    disputed by the challenger: 2
+    confidence: 19 high, 5 medium
+
+    by stratum
+      same-id-decisive   7 wrong-country
+      same-id-ambiguous  7 wrong-country
+      diff-id            3 wrong-country, 3 distinct-entities, 1 merge
+      guid               2 wrong-country, 1 needs-more-evidence
+
+**Country contamination is the dominant class, and it is far wider than the
+checksum evidence suggested.** All 7 `same-id-ambiguous` cases — the ones where
+the checksum said nothing usable — came back as contamination once a reviewer
+could read the NAME. `Gared s.r.o.` under **AD** (Andorra), `Festing, s.r.o.`
+under **HK**, a Czech school canteen under **AD**, Bulgarian EOOD companies
+under **VN**, **VG**, **BW**, **BR**, a Lithuanian UAB under **MT**. The legal
+form in the name settles what no checksum could: `s.r.o.` is not an Andorran
+company form, `EOOD` is Bulgarian, `UAB` is Lithuanian.
+
+The 3 `distinct-entities` are exactly the shape predicted: different national
+register numbers on each side (Ceemed SK 45730661 vs CZ 24671819; Mara SI vs
+HR; Ergonomik EE vs FI). The rubric separated them cleanly.
+
+## The pilot caught a bias I put in its own rubric
+
+Between a 2-case smoke test and the full run I edited the rubric, adding:
+*"Use this rather than 'merge' when the rows are one entity AND you can say
+which country codes are the mistake — it is the more specific finding."*
+
+That nudge skewed the distribution, and the challenger caught it twice:
+
+- **Platform 24 Healthcare AB** (SE orgnr + DE VAT). Under the PRE-patch rubric
+  the smoke test returned `merge`. Under the patched rubric the same case
+  returned `wrong-country` — and the challenger disputed it: `DE349977421` is a
+  German-issued VAT number, so tagging that row DE names a real jurisdiction.
+  `merge` was right and the patch pushed the reviewer past the evidence.
+- **BIEGE Neubaustrecke Dresden-Prag** (identical platform GUID, DE and AT).
+  One record ingested twice; the `c/o ILF Consulting Engineers Austria GmbH`
+  clause reads both ways, so the DE-vs-AT direction is not determinable.
+  `wrong-country` again over-reached.
+
+**Same case, two rubrics, two verdicts, and the pre-patch answer was the right
+one.** The lesson is not "the rubric was bad" — the multi-subject fix in the
+same edit was necessary and correct (case 929 needed to name two contaminated
+rows). It is that "prefer the more specific verdict" is an instruction to
+over-claim, and an adversarial second pass is what makes that visible.
+
+### Rubric changes before any batch
+
+1. **Drop the prefer-wrong-country sentence.** Keep the verdict; remove the
+   nudge. A reviewer should reach for `wrong-country` when it fits, not
+   because it scores higher.
+2. **Keep the multi-subject `subject_orgs`.** It was the other half of the same
+   edit and it was right.
+3. **Add to the evidence key: a foreign VAT number names a real jurisdiction.**
+   A row tagged with the country that ISSUED its VAT id is not contaminated.
+4. **Keep the challenger.** It disputed 2 of 24 (8%) and both disputes were
+   correct. That is the pass that turns a plausible campaign into a checkable
+   one.
+
+## Next
+
+Re-run the pilot on a fresh stratified sample with the corrected rubric, confirm
+the `wrong-country` share drops to something the evidence supports, then batch
+the 589. Verdicts still record-only: a merge has no execution path, and now
+neither does a country correction.
