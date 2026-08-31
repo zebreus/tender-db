@@ -1,7 +1,7 @@
 # 318 — The resolver's anchor bind applies the R3 bar without the R3 wall
 
-Status: BUILT + PANELLED 2026-08-31 (46 findings, 23 confirmed, 7 high).
-Committed at b1f4395, NOT YET DEPLOYED — it wants a fold canary first
+Status: DEPLOYED 2026-08-31 (rev 1334aba), canary clean. The frequency
+reading is still outstanding — see "The canary, and what it does not say"
 Kind: correctness (organization layer, ingest path)
 Relates to: 316 (built the wall), 300 (§4.1, Stage 3 prevention), 234
 
@@ -167,9 +167,27 @@ issue mandates there, now at no cost.
   runtime, whose stderr does not reach journald (issues 61/63 — the reason
   `log_diag` exists). Now `log_diag` plus the durable job row.
 
-## Still open: the fold canary
+## The canary, and what it does not say (2026-08-31, rev 1334aba, jobs 519/520)
 
-Not deployed. The remaining acceptance is the one the issue named from the
-start: run it against a real fold and read `asked`/`denied`/`errored` off the
-job row. Until that number exists, the frequency question has an instrument but
-no reading.
+Deployed, then a controlled six-notice refold before the day's scheduled fold:
+
+    refold-notices: 6 notice(s) named: re-queued 6, stamped 6 tender(s)
+    project:        6 notices → 6 tenders (0 islands), 31 versions;
+                    6 tenders written, 0 verified unchanged
+
+**No wall suffix**, which by the report's own construction means
+`asked = denied = errored = 0`. No fold failure, no behaviour change.
+
+**The wall was live for it**, verified positively rather than by the absence of
+a log line: the gate needs `org_match_keys_kk` present and the build watermark
+at 0, and `finish_org_match_keys` creates the index and zeroes the watermark in
+the same function (canonical.rs:3654 and :3663). Sunday's build reported
+"13034812 rows stand indexed" with outcome ok, which is that function's own
+message. So both inputs held.
+
+**What the canary does NOT say:** anything about frequency. Six notices were
+never going to fire a path that needs a country-less identifier with exactly
+one soft-scheme checksum anchor, after E0 exact equality AND the Stage-2
+canonical hit have both missed. The reading that answers issue 318's step 3 is
+the next full daily fold's job row, which now carries
+`asked`/`denied`/`errored`. Read it before calling this closed.
