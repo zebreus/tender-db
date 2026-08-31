@@ -11634,7 +11634,11 @@ impl Db {
         // bytes; at 1.1M identifiers that is tens of megabytes, not gigabytes.
         let mut vocab: Vec<String> = Vec::new();
         let mut vocab_ix: std::collections::HashMap<String, u16> = Default::default();
-        let mut seen: std::collections::HashMap<String, Vec<u16>> = Default::default();
+        // `(country, org id)` per identifier. Carrying the id costs ten bytes a
+        // row and is what lets pass 3 reach the details by PRIMARY KEY — no
+        // index leads with `identifier`, so a lookup by value is a full scan
+        // and 4,303 of those is not a census, it is an outage.
+        let mut seen: std::collections::HashMap<String, Vec<(u16, i64)>> = Default::default();
         let mut after = 0i64;
         loop {
             if stop() {
@@ -11643,7 +11647,7 @@ impl Db {
             let mut page = 0u64;
             let mut rows = reader
                 .query(
-                    "SELECT id, country, identifier FROM organizations \
+                    "SELECT id, country, identifier, name FROM organizations \
                       WHERE id > ? AND identifier IS NOT NULL AND country IS NOT NULL \
                         AND identifier_kind IS NOT NULL \
                       ORDER BY id LIMIT 100000",
@@ -11664,10 +11668,7 @@ impl Db {
                     vocab.push(cc.clone());
                     (vocab.len() - 1) as u16
                 });
-                let slot = seen.entry(text(&row, 2)).or_default();
-                if !slot.contains(&ix) {
-                    slot.push(ix);
-                }
+                seen.entry(text(&row, 2)).or_default().push((ix, after));
             }
             if page == 0 {
                 break;
@@ -11677,16 +11678,40 @@ impl Db {
         report.countries = vocab.len() as u64;
 
         // The hit set: an identifier under more than one country.
-        let mut hits: Vec<(String, Vec<u16>)> =
-            seen.into_iter().filter(|(_, v)| v.len() > 1).collect();
+        let mut hits: Vec<(String, Vec<(u16, i64)>)> = seen
+            .into_iter()
+            .filter(|(_, v)| {
+                // MORE THAN ONE DISTINCT COUNTRY, not more than one row. Two
+                // rows under the same code is an ordinary duplicate and the R2
+                // merge arm's business, not this census's.
+                let first = v[0].0;
+                v.iter().any(|(cc, _)| *cc != first)
+            })
+            .collect();
         report.clusters = hits.len() as u64;
         // Widest first: the interesting clusters — and the whole footprint
         // family — are the wide ones, so a cap keeps those rather than an
         // alphabetical slice of two-code pairs.
-        hits.sort_by(|a, b| b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0)));
+        hits.sort_by(|a, b| {
+            let codes = |v: &Vec<(u16, i64)>| {
+                let mut c: Vec<u16> = v.iter().map(|(cc, _)| *cc).collect();
+                c.sort_unstable();
+                c.dedup();
+                c.len()
+            };
+            codes(&b.1).cmp(&codes(&a.1)).then_with(|| a.0.cmp(&b.0))
+        });
 
-        // Pass 2: the details, for the hit set only.
-        for (identifier, codes) in hits.iter() {
+        // Pass 2: the per-identifier evidence, for every cluster.
+        let mut shells: Vec<(CountryCluster, Vec<i64>, bool)> = Vec::new();
+        for (identifier, members) in hits.iter() {
+            let codes: Vec<u16> = {
+                let mut c: Vec<u16> = members.iter().map(|(cc, _)| *cc).collect();
+                c.sort_unstable();
+                c.dedup();
+                c
+            };
+            let codes = &codes;
             if stop() {
                 return Ok(CountryClusterReport { stopped: true, ..Default::default() });
             }
@@ -11722,8 +11747,18 @@ impl Db {
             let asked: Vec<String> =
                 names.iter().filter(|cc| probed.iter().any(|p| p == *cc)).map(|c| c.to_string()).collect();
 
-            if report.rows.len() < cap {
-                report.rows.push(CountryCluster {
+            // EVERY cluster gets a shell, because the verdict tally has to be
+            // corpus-wide. The first draft computed verdicts only for the
+            // carried `cap` rows, sorted widest-first — so the one number the
+            // census exists to produce ("how many are decidable?") was read off
+            // a biased tail. `cap` now bounds what is REPORTED, not what is
+            // counted, which is the split the issue-325 repair got right.
+            let carried = report.rows.len() < cap;
+            if !carried {
+                report.truncated = true;
+            }
+            shells.push((
+                CountryCluster {
                     identifier: identifier.clone(),
                     codes: names.iter().map(|s| s.to_string()).collect(),
                     named: named.clone(),
@@ -11734,38 +11769,52 @@ impl Db {
                     mentions: Vec::new(),
                     names: Vec::new(),
                     verdict: "",
-                });
-            } else {
-                report.truncated = true;
+                },
+                members.iter().map(|(_, id)| *id).collect::<Vec<i64>>(),
+                carried,
+            ));
+            if carried {
+                report.rows.push(CountryCluster::default());
             }
         }
+        report.rows.clear();
 
-        // Pass 3: names and mention counts for the CARRIED clusters only, so the
-        // footprint test and the majority reading have something to work with.
-        // Batched by identifier — the reported set is bounded by `cap`, so this
-        // is a few hundred indexed probes and not a walk.
-        for row in report.rows.iter_mut() {
+        // Pass 3: names and mention counts for EVERY cluster, reached by
+        // PRIMARY KEY.
+        //
+        // The org ids came out of pass 1 precisely so this could be a batched
+        // `id IN (...)` seek. Looking the rows up by `identifier` instead would
+        // be a full scan each time — no index leads with that column — and the
+        // first draft only got away with it by capping the work at 400, which
+        // is what made the verdict tally a biased sample.
+        let all_ids: Vec<i64> = shells.iter().flat_map(|(_, ids, _)| ids.iter().copied()).collect();
+        let mut detail: std::collections::HashMap<i64, (String, String, u64)> = Default::default();
+        for chunk in all_ids.chunks(IN_CHUNK) {
             if stop() {
                 return Ok(CountryClusterReport { stopped: true, ..Default::default() });
             }
-            let mut q = reader
-                .query(
-                    "SELECT o.country, o.name, \
-                            (SELECT COUNT(*) FROM organization_mentions m \
-                              WHERE m.organization_id = o.id) \
-                       FROM organizations o \
-                      WHERE o.identifier = ? AND o.country IS NOT NULL",
-                    (t(&row.identifier),),
-                )
-                .await?;
+            let sql = format!(
+                "SELECT o.id, o.country, o.name, \
+                        (SELECT COUNT(*) FROM organization_mentions m \
+                          WHERE m.organization_id = o.id) \
+                   FROM organizations o WHERE o.id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                detail.insert(int(&r, 0), (text(&r, 1), text(&r, 2), int(&r, 3).max(0) as u64));
+            }
+        }
+
+        for (mut row, ids, carried) in shells {
             let mut per_code: std::collections::BTreeMap<String, u64> = Default::default();
             let mut names: Vec<String> = Vec::new();
-            while let Some(r) = q.next().await? {
-                let cc = text(&r, 0);
-                let name = text(&r, 1);
-                *per_code.entry(cc).or_default() += int(&r, 2).max(0) as u64;
-                if !names.contains(&name) {
-                    names.push(name);
+            for id in &ids {
+                let Some((cc, name, mentions)) = detail.get(id) else { continue };
+                *per_code.entry(cc.clone()).or_default() += mentions;
+                if !names.contains(name) {
+                    names.push(name.clone());
                 }
             }
             row.footprint = names.iter().any(|n| footprint(n));
@@ -11776,15 +11825,14 @@ impl Db {
             row.mentions.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
             names.truncate(6);
             row.names = names;
+
             // Now that the mention order is known: is the HEAVY code itself one
             // letter from another code here? `one_letter_pair` can be satisfied
             // by two spray codes (`VA`/`VE`), which is no evidence about the
             // code that actually carries the entity.
             if let Some((heavy, _)) = row.mentions.first() {
-                row.heavy_one_letter = row
-                    .codes
-                    .iter()
-                    .any(|other| other != heavy && one_letter(heavy, other));
+                row.heavy_one_letter =
+                    row.codes.iter().any(|other| other != heavy && one_letter(heavy, other));
                 if row.heavy_one_letter {
                     report.with_heavy_one_letter += 1;
                 }
@@ -11827,6 +11875,9 @@ impl Db {
             // threshold from data instead of guessing one.
             if total > 0 {
                 report.majority_share.push((share * 100 / total) as u8);
+            }
+            if carried {
+                report.rows.push(row);
             }
         }
         report.majority_share.sort_unstable();

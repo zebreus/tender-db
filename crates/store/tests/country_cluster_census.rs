@@ -324,3 +324,79 @@ async fn a_cancelled_census_reports_nothing() {
     assert_eq!(r.clusters, 0);
     assert!(r.rows.is_empty());
 }
+
+/// THE CAP BOUNDS WHAT IS REPORTED, NOT WHAT IS COUNTED — and the first draft
+/// got this wrong in the way that mattered most.
+///
+/// It computed verdicts only for the carried rows, which are sorted
+/// widest-first. So the single number this census exists to produce — how much
+/// of the class is decidable — was being read off the most code-spread tail
+/// instead of the corpus. Same split the issue-325 repair got right: `rows`
+/// counts everything, the carried list is capped.
+#[tokio::test]
+async fn the_cap_limits_the_carried_rows_but_never_the_tally() {
+    let (db, conn) = open("test-cluster-cap").await;
+    let mut id = 1i64;
+    // Twelve clusters, all identical in shape, so nothing about WHICH ones are
+    // carried can change the tally.
+    for n in 0..12 {
+        let ident = format!("4173460{n:03}"); // ten chars, over the floor
+        org(&conn, id, "SK", &ident, "Nejaka Firma", 30).await;
+        org(&conn, id + 1, "SG", &ident, "Nejaka Firma", 2).await;
+        id += 2;
+    }
+    db.build_organization_indexes().await.unwrap();
+
+    let capped = db
+        .country_cluster_census(anchors, vocabulary, one_letter, footprint, 3, &never)
+        .await
+        .unwrap();
+    assert_eq!(capped.clusters, 12);
+    assert_eq!(capped.rows.len(), 3, "three carried");
+    assert!(capped.truncated);
+    assert_eq!(
+        capped.verdicts.values().sum::<u64>(),
+        12,
+        "but all twelve counted — the tally is corpus-wide or it is worthless"
+    );
+    assert_eq!(capped.majority_share.len(), 12, "and so is the share distribution");
+    assert_eq!(capped.with_heavy_one_letter, 12, "and the heavy-code filter");
+
+    // An uncapped run agrees with it on every count, differing only in what it
+    // carries.
+    let full = db
+        .country_cluster_census(anchors, vocabulary, one_letter, footprint, 400, &never)
+        .await
+        .unwrap();
+    assert!(!full.truncated);
+    assert_eq!(full.rows.len(), 12);
+    assert_eq!(full.verdicts, capped.verdicts);
+    assert_eq!(full.with_heavy_one_letter, capped.with_heavy_one_letter);
+    assert_eq!(full.majority_share, capped.majority_share);
+}
+
+/// Two rows under the SAME country code is an ordinary duplicate — the R2 merge
+/// arm's business — and must not be read as a cluster. Pass 1 collects one entry
+/// per ROW now (it carries the org id), so the distinct-country test has to
+/// dedupe rather than count entries.
+#[tokio::test]
+async fn two_rows_under_one_code_is_a_duplicate_not_a_cluster() {
+    let (db, conn) = open("test-cluster-dupe").await;
+    org(&conn, 1, "SK", "41734602", "Nejaka Firma", 10).await;
+    org(&conn, 2, "SK", "41734602", "Nejaka Firma s.r.o.", 4).await;
+    org(&conn, 3, "SK", "41734602", "NEJAKA FIRMA", 1).await;
+    db.build_organization_indexes().await.unwrap();
+
+    let r = run(&db).await;
+    assert_eq!(r.identifiers, 1);
+    assert_eq!(r.clusters, 0, "three rows, one country — not this census's problem");
+
+    // And when a second country does appear, all three rows' mentions count
+    // toward the Slovak side rather than only the first row's.
+    org(&conn, 4, "SG", "41734602", "Nejaka Firma", 2).await;
+    let r = run(&db).await;
+    assert_eq!(r.clusters, 1);
+    let c = &r.rows[0];
+    assert_eq!(c.mentions[0], ("SK".to_owned(), 15), "10 + 4 + 1, not 10");
+    assert_eq!(c.names.len(), 3, "all three spellings are carried");
+}
