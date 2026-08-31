@@ -350,6 +350,9 @@ enum Spec {
     /// awaiting a verdict, with the standing rows each could move to.
     /// Read-only.
     RehomingPacket,
+    /// Issue 321: name variants a re-homing left on the ORIGIN that no
+    /// remaining mention supports. Read-only measurement.
+    SatelliteOrphans,
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -981,6 +984,12 @@ impl Supervisor {
                     .await,
                 ])
             }
+            // Issue 321: the measurement that decides whether the leftover
+            // name variants need machinery or a line in the review schema.
+            "satellite-orphans" => Ok(vec![
+                self.push("satellite-orphans", "satellite-orphans".into(), Spec::SatelliteOrphans)
+                    .await,
+            ]),
             // Issue 317 Unit A: the review packet. Read-only; the verdicts
             // it feeds arrive over POST /admin/rehoming, and `apply-rehoming`
             // is the only thing that writes.
@@ -1367,6 +1376,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "fold-org-countries",
     "fusion-census",
     "rehoming-packet",
+    "satellite-orphans",
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -3873,6 +3883,58 @@ impl Supervisor {
                         String::new()
                     },
                     if r.truncated { "; CASE LIST TRUNCATED at the cap" } else { "" }
+                ))
+            }
+            Spec::SatelliteOrphans => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "measuring",
+                    None,
+                    None,
+                    "reading name variants left on re-homing origins".to_owned(),
+                );
+                let r = self
+                    .db
+                    .satellite_orphans(ingest::project::match_norm, 200, &stop)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("satellite-orphans STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let row = |o: &store::OrphanSatellite| {
+                    serde_json::json!({
+                        "org": o.org, "org_name": o.org_name, "lang": o.lang,
+                        "name": o.name, "key": o.key,
+                        "target": o.target, "target_name": o.target_name,
+                    })
+                };
+                let body = serde_json::json!({
+                    "origins": r.origins, "standing": r.standing,
+                    "variants": r.variants, "orphans": r.orphans,
+                    "orphans_at_target": r.orphans_at_target,
+                    "origins_with_orphans": r.origins_with_orphans,
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(&row).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("satellite-orphans", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "satellite-orphans (issue 321): {} re-homing origins, {} still standing, \
+                     holding {} name variants; {} are supported by NO remaining mention \
+                     ({} of those already stand on a row this origin re-homed to), over {} \
+                     origins{}",
+                    r.origins,
+                    r.standing,
+                    r.variants,
+                    r.orphans,
+                    r.orphans_at_target,
+                    r.origins_with_orphans,
+                    if r.truncated { "; LIST TRUNCATED at the cap" } else { "" }
                 ))
             }
             Spec::CaseReviewBacklog => {
@@ -6562,6 +6624,9 @@ mod tests {
         // case-review-backlog reads the flag between verdict rows and again
         // between per-case evidence probes, and returns an EMPTY report
         // rather than a partial backlog (issue 317).
+        // satellite-orphans reads it between origins and again between the
+        // per-orphan destination probes, and a stopped run stores nothing —
+        // an undercount of leftover keys would read as a clean campaign.
         // rehoming-packet reads it between cases and again between the
         // per-group destination probes, and a stopped run stores no packet
         // — a HALF packet is worse than none, because a reviewer cannot see
@@ -6584,7 +6649,8 @@ mod tests {
                 "case-review-backlog",
                 "fold-org-countries",
                 "fusion-census",
-                "rehoming-packet"
+                "rehoming-packet",
+                "satellite-orphans"
             ]
         );
     }

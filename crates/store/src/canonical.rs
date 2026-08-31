@@ -1930,6 +1930,53 @@ pub struct RehomingPacket {
     pub stopped: bool,
 }
 
+/// One name variant left on a re-homing ORIGIN that no mention there still
+/// publishes (issue 321).
+#[derive(Debug, Default, Clone)]
+pub struct OrphanSatellite {
+    /// The origin org — the consortium vehicle the mentions moved off.
+    pub org: i64,
+    pub org_name: String,
+    pub lang: String,
+    /// The variant, and the N2 key the Stage-4 build would make from it.
+    pub name: String,
+    pub key: String,
+    /// A destination this origin's applied verdicts named that ALREADY carries
+    /// this key, on its head name or its own satellites. When set, the variant
+    /// is not merely unsupported here — it is the other company's name, and
+    /// the pair is exactly the E3 edge a reviewer just spent a verdict to
+    /// resolve.
+    pub target: Option<i64>,
+    pub target_name: Option<String>,
+}
+
+/// What the issue-321 measurement found. Read-only.
+///
+/// The question the issue asks before anyone builds machinery: after a
+/// re-homing run, how many origins keep a name variant that no remaining
+/// mention supports? The variant feeds `org_match_keys`, so every one of them
+/// is a key the next build re-creates on a row that no longer has any evidence
+/// for it.
+#[derive(Debug, Default, Clone)]
+pub struct SatelliteOrphanReport {
+    /// Origin orgs examined — those carrying an APPLIED re-homing verdict.
+    pub origins: u64,
+    /// Of those, origins still standing (not merged away since).
+    pub standing: u64,
+    /// Satellite variants read across them.
+    pub variants: u64,
+    /// Variants no remaining mention on the origin supports.
+    pub orphans: u64,
+    /// Orphans whose key is carried by a destination this origin re-homed to
+    /// — the ones that are demonstrably the other company's name.
+    pub orphans_at_target: u64,
+    /// Origins holding at least one orphan.
+    pub origins_with_orphans: u64,
+    pub rows: Vec<OrphanSatellite>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One parked verdict, with the evidence a reviewer needs to close it
 /// (issue 317 Units B/C).
 #[derive(Debug, Default, Clone)]
@@ -7952,6 +7999,163 @@ impl Db {
         })
     }
 
+
+    /// The issue-321 measurement (read-only): after a re-homing run, which
+    /// name variants are left on the ORIGIN that no mention there still
+    /// publishes?
+    ///
+    /// `apply_rehoming` corrects `organization_mentions` and lets the fold
+    /// re-derive what follows. `organization_names` is not part of that
+    /// derivation, so a consortium vehicle keeps its member's name as a
+    /// satellite — and satellites feed the Stage-4 key build, so the vehicle
+    /// keeps a key matching the member's name and the pair goes on generating
+    /// the very E3 candidate edges the verdict resolved.
+    ///
+    /// This counts them rather than fixing them, because the fix is a
+    /// judgement about identity: the vehicle WAS published under that name.
+    /// The number decides whether issue 321 needs machinery or one line in the
+    /// review schema, and `target` is the half that makes a case: a variant
+    /// whose key already stands on the row the mentions moved TO is not an
+    /// ambiguous history, it is a duplicate key on a row with no evidence for
+    /// it.
+    ///
+    /// Bounded by the campaign: the origins are the orgs carrying an applied
+    /// verdict, and each is one mention read, one satellite read, and one
+    /// probe per orphan.
+    pub async fn satellite_orphans(
+        &self,
+        norm: fn(&str) -> String,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<SatelliteOrphanReport> {
+        let reader = self.reader().await?;
+        let mut report = SatelliteOrphanReport::default();
+
+        // Origin → the destinations its applied verdicts named. `case_org_id`
+        // IS the origin: the verdict records where the mention sat when it was
+        // reviewed, and `applied_action` carries the same id as its pre-image.
+        let mut origins: std::collections::BTreeMap<i64, std::collections::BTreeSet<i64>> =
+            Default::default();
+        {
+            let mut rows = reader
+                .query(
+                    "SELECT case_org_id, target_org_id FROM org_mention_rehoming \
+                      WHERE applied_at IS NOT NULL AND action = 'rehome' \
+                        AND applied_action LIKE 'rehomed from%'",
+                    (),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                let e = origins.entry(int(&row, 0)).or_default();
+                if let Ok(Value::Integer(t)) = row.get_value(1) {
+                    e.insert(t);
+                }
+            }
+        }
+        report.origins = origins.len() as u64;
+
+        for (org, targets) in origins {
+            if stop() {
+                return Ok(SatelliteOrphanReport { stopped: true, ..Default::default() });
+            }
+            let Some(head) = self.rehoming_head(&reader, org).await? else { continue };
+            report.standing += 1;
+
+            // Every key the origin still has evidence for: its own head name,
+            // and every mention still sitting on it.
+            let mut supported: std::collections::HashSet<String> = Default::default();
+            supported.insert(norm(&head.0));
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT name FROM organization_mentions WHERE organization_id = ?",
+                        (Value::Integer(org),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    if let Some(name) = opt_text_of(&row, 0) {
+                        let key = norm(&name);
+                        if !key.is_empty() {
+                            supported.insert(key);
+                        }
+                    }
+                }
+            }
+
+            let mut variants: Vec<(String, String)> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT lang, name FROM organization_names WHERE org_id = ?",
+                        (Value::Integer(org),),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    variants.push((text(&row, 0), text(&row, 1)));
+                }
+            }
+            report.variants += variants.len() as u64;
+
+            let mut had_orphan = false;
+            for (lang, name) in variants {
+                let key = norm(&name);
+                if key.is_empty() || supported.contains(&key) {
+                    continue;
+                }
+                report.orphans += 1;
+                had_orphan = true;
+                // Does one of the rows this origin re-homed TO already carry
+                // the key — on its head, or on a satellite of its own?
+                let mut at: Option<(i64, String)> = None;
+                for t in &targets {
+                    if stop() {
+                        return Ok(SatelliteOrphanReport { stopped: true, ..Default::default() });
+                    }
+                    let Some(th) = self.rehoming_head(&reader, *t).await? else { continue };
+                    if norm(&th.0) == key {
+                        at = Some((*t, th.0));
+                        break;
+                    }
+                    let mut rows = reader
+                        .query(
+                            "SELECT name FROM organization_names WHERE org_id = ?",
+                            (Value::Integer(*t),),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        if norm(&text(&row, 0)) == key {
+                            at = Some((*t, th.0.clone()));
+                            break;
+                        }
+                    }
+                    if at.is_some() {
+                        break;
+                    }
+                }
+                if at.is_some() {
+                    report.orphans_at_target += 1;
+                }
+                if report.rows.len() >= cap {
+                    report.truncated = true;
+                    continue;
+                }
+                report.rows.push(OrphanSatellite {
+                    org,
+                    org_name: head.0.clone(),
+                    lang,
+                    name,
+                    key,
+                    target: at.as_ref().map(|(t, _)| *t),
+                    target_name: at.map(|(_, n)| n),
+                });
+            }
+            if had_orphan {
+                report.origins_with_orphans += 1;
+            }
+        }
+        report.rows.sort_by(|a, b| a.org.cmp(&b.org).then_with(|| a.lang.cmp(&b.lang)));
+        Ok(report)
+    }
 
     /// The parked-verdict backlog (issue 317 Units B and C): every
     /// `org_case_reviews` row the apply job's safe subset

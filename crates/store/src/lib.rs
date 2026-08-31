@@ -26,6 +26,7 @@ pub use canonical::{
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
     CountryFoldReport, FusionCandidate, FusionReport, RehomingReport, RehomingVerdict,
     RehomingCase, RehomingGroup, RehomingMention, RehomingPacket, RehomingParked, RehomingTarget,
+    OrphanSatellite, SatelliteOrphanReport,
     EdgeCensusReport, MatchKeyBuildWindow, OrgEdgeScanArgs,
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,
