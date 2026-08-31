@@ -130,6 +130,17 @@ pub fn census(country: Option<&str>, kind: Option<&str>, value: &str) -> GateCen
     out
 }
 
+/// The generic-name cap: a corroboration name carried by MORE than this many
+/// orgs is generic, and agreement on it is agreement nobody chose to make.
+///
+/// ONE constant, and it has to stay one. Three walls now measure against it —
+/// the Stage-4 E3 scan's stoplist, the R3 batch merge arm (issue 316), and
+/// the resolver's ingest-time anchor bind (issue 318) — and a name the scan
+/// calls generic must not be a corroboration the resolver accepts. It lives
+/// here, beside `hard_scheme`, because the two are read together everywhere
+/// the wall appears.
+pub const STOPLIST_CAP: usize = 20;
+
 /// Whether a scheme's checksum is HARD — allowed to reject an identifier to
 /// the provisional path. THE STANDING ENABLEMENT DECISION (issue 300, census
 /// runs 1331/1332, stable across both): only schemes with a measured ≥97%

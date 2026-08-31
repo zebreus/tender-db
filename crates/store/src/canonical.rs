@@ -2608,6 +2608,23 @@ pub struct MentionResolver {
     /// SATELLITE across a family conflict, and without this veto prevention
     /// would BIND what the merge arm counts denied_legal_form).
     legal_form: Option<fn(&str) -> Option<&'static str>>,
+    /// Issue 318: `idgate::hard_scheme`. The batch merge arm refuses to
+    /// corroborate on a GENERIC name — one carried by more orgs than
+    /// `stoplist_cap` — unless the anchor's scheme checksums HARD, and this
+    /// path applied the same bar WITHOUT that wall. Two implementations of
+    /// one rule, and the design says the stricter is correct.
+    ///
+    /// `None` disables the wall, which is pre-318 behaviour: a store-level
+    /// caller that injects no `hard_scheme` binds exactly as before.
+    hard_scheme: Option<fn(&str) -> bool>,
+    /// The cap the wall measures against — ONE constant from the caller, the
+    /// same value the Stage-4 scan stoplists on and the merge arm takes.
+    /// Three walls that disagree about "generic" would be worse than one.
+    stoplist_cap: usize,
+    /// Anchor binds this wall refused. Reported at close: a prevention that
+    /// silently does nothing and a prevention that silently does everything
+    /// look identical without a count.
+    denied_generic: u64,
 }
 
 /// The same-country E1 canonical key for an identifier, under the merge job's
@@ -5838,6 +5855,8 @@ impl Db {
         anchors: Option<fn(&str) -> Vec<(&'static str, String)>>,
         norm: Option<fn(&str) -> String>,
         legal_form: Option<fn(&str) -> Option<&'static str>>,
+        hard_scheme: Option<fn(&str) -> bool>,
+        stoplist_cap: usize,
     ) -> turso::Result<MentionResolver> {
         use std::collections::HashMap;
         let conn = self.conn().await;
@@ -5880,6 +5899,9 @@ impl Db {
             anchors,
             norm,
             legal_form,
+            hard_scheme,
+            stoplist_cap,
+            denied_generic: 0,
         })
     }
 
@@ -5970,7 +5992,22 @@ impl Db {
     /// Ring the change-cursor doorbell once if the resolver created any
     /// Organization over its lifetime, so a change-feed consumer sees every new
     /// Organization exactly once.
+    /// Anchor binds the issue-318 genericness wall refused this run. A
+    /// prevention that silently does nothing and one that silently does
+    /// everything look identical without a count, so the fold reports it.
+    pub fn denied_generic(resolver: &MentionResolver) -> u64 {
+        resolver.denied_generic
+    }
+
     pub async fn finish_mention_resolver(&self, resolver: MentionResolver) -> turso::Result<()> {
+        if resolver.denied_generic > 0 {
+            eprintln!(
+                "[store] issue 318: the genericness wall refused {} anchor bind(s) this run \
+                 — each would have corroborated on a name shared by more than {} orgs, which \
+                 the batch merge arm already refuses",
+                resolver.denied_generic, resolver.stoplist_cap
+            );
+        }
         if resolver.created_any {
             let conn = self.conn().await;
             self.publish_cursor(&conn).await?;
@@ -5988,6 +6025,11 @@ impl Db {
     ) -> turso::Result<(i64, bool)> {
         let org_of = &mut resolver.org_of;
         let name_of = &mut resolver.name_of;
+        // Issue 318's wall tally. A local rather than a field bump, because
+        // `org_of`/`name_of` hold disjoint mutable borrows of `resolver` for
+        // the whole body and the wall sits inside an expression that also
+        // READS `resolver.hard_scheme`; flushed once at the end.
+        let mut denied_generic = 0u64;
         if let Some(&org_id) = mention_of.get(&(m.notice_id, m.section_id.clone())) {
             return Ok((org_id, false));
         }
@@ -6113,8 +6155,49 @@ impl Db {
                                             (Some(mf), Some(hf)) => mf != hf,
                                             _ => false,
                                         };
-                                        (corroborated && !owner_vetoed && !family_conflict)
-                                            .then_some(org_id)
+                                        // Issue 318: the last gate, and the
+                                        // one this path was missing. The
+                                        // batch merge arm refuses a GENERIC
+                                        // corroboration name unless the
+                                        // anchor's scheme checksums HARD
+                                        // (design §4.1) — agreement on a
+                                        // name 37 rows share, or on the
+                                        // literal name "0", is agreement
+                                        // nobody chose to make. The probe
+                                        // fires ONLY where the bind would
+                                        // otherwise happen, so it costs one
+                                        // indexed COUNT on a path that has
+                                        // already fallen through E0 exact
+                                        // equality AND the Stage-2
+                                        // canonical hit.
+                                        //
+                                        // LENIENT on unknown, deliberately:
+                                        // an unseen key counts 0 carriers,
+                                        // which is under any cap, so it is
+                                        // not generic and today's behaviour
+                                        // stands. `org_match_keys` may be
+                                        // empty or mid-build during ingest
+                                        // and this path has no "refuse" to
+                                        // return — leniency is the only safe
+                                        // failure mode here, and it is the
+                                        // wall's own default besides.
+                                        let bind =
+                                            corroborated && !owner_vetoed && !family_conflict;
+                                        let denied = match resolver.hard_scheme {
+                                            Some(hard) if bind && !hard(scheme) => {
+                                                self.name_key_is_generic(
+                                                    "n2",
+                                                    &n2,
+                                                    resolver.stoplist_cap,
+                                                )
+                                                .await?
+                                            }
+                                            _ => false,
+                                        };
+                                        if denied {
+                                            denied_generic += 1;
+                                        }
+                                        (bind && !denied).then_some(org_id)
                                     }
                                     _ => None,
                                 }
@@ -6245,6 +6328,7 @@ impl Db {
                 }
             }
         };
+        resolver.denied_generic += denied_generic;
 
         conn.execute(
             "INSERT INTO organization_mentions(notice_id, section_id, organization_id, name,

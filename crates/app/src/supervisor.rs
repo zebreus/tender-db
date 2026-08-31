@@ -1447,7 +1447,7 @@ const STOPPABLE_KINDS: &[&str] = &[
 /// pairs would be noise, so the scan counts and samples it instead of
 /// emitting. Must stay far under [`store::SCAN_KEY_WINDOW`]: the walk's
 /// fills-page guard stoplists on that ordering.
-const SCAN_STOPLIST_CAP: usize = 20;
+const SCAN_STOPLIST_CAP: usize = ingest::idgate::STOPLIST_CAP;
 
 /// The Stage-0 exemplar sheet's contamination case: an org that carried a
 /// foreign satellite name (the Dutch-MoD shape). Chased through

@@ -1243,7 +1243,7 @@ async fn build_plan(
     const READ_CHUNK: i64 = 10_000;
     let t0 = std::time::Instant::now();
     db.reset_plan().await?;
-    let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family)).await?;
+    let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family), Some(crate::idgate::hard_scheme), crate::idgate::STOPLIST_CAP).await?;
     // The SWEEP half — the sequential parsed-layer read plus the pure-CPU
     // identity/mention extraction — runs on a prepare thread one chunk ahead of
     // the WRITER half (issue 175: phase 1 was measured pinned on one core while
@@ -1949,7 +1949,7 @@ pub async fn project_incremental_chunked_observed(
     // (existing notices' mentions are already recorded, bound in Phase 2 by
     // `mentions_by_ids`), in global id order so org ids match a whole-delta pass.
     db.reset_plan().await?;
-    let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family)).await?;
+    let mut resolver = db.mention_resolver(Some(crate::crosswalk::canonical_key_flat), Some(crate::crosswalk::consortium_name), Some(crate::idgate::checksum_anchors), Some(crate::project::match_norm), Some(crate::crosswalk::legal_form_family), Some(crate::idgate::hard_scheme), crate::idgate::STOPLIST_CAP).await?;
     let mut report = Report::default();
     let mut planned = 0u64;
     for chunk in all_ids.chunks(chunk_size) {

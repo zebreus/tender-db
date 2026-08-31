@@ -85,7 +85,7 @@ async fn equivalent_representations_reuse_and_hazards_fall_through() {
         }
     }
 
-    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None).await.unwrap();
+    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None, None, 0).await.unwrap();
     let ids = db
         .resolve_mentions(
             &mut resolver,
@@ -119,7 +119,7 @@ async fn equivalent_representations_reuse_and_hazards_fall_through() {
     // The PRELOAD half: a fresh resolver over the standing table must rebuild
     // the same maps — the unique FI key binds, the FR key (three standing
     // owners) is poisoned on preload.
-    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None).await.unwrap();
+    let mut resolver = db.mention_resolver(Some(key), Some(consortium), None, None, None, None, 0).await.unwrap();
     let ids2 = db
         .resolve_mentions(
             &mut resolver,
@@ -141,7 +141,7 @@ async fn equivalent_representations_reuse_and_hazards_fall_through() {
 
     // Prevention disabled (None): the same equivalent form mints a twin —
     // the pre-Stage-2 behavior, byte-identical.
-    let mut resolver = db.mention_resolver(None, None, None, None, None).await.unwrap();
+    let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
     let ids3 = db
         .resolve_mentions(
             &mut resolver,
@@ -240,7 +240,7 @@ async fn country_less_anchored_corroborated_mentions_bind_and_everything_else_mi
     }
 
     let mut resolver = db
-        .mention_resolver(Some(key), Some(consortium), Some(anchors), Some(norm), Some(legal_form))
+        .mention_resolver(Some(key), Some(consortium), Some(anchors), Some(norm), Some(legal_form), None, 0)
         .await
         .unwrap();
     let ids = db
@@ -312,4 +312,129 @@ async fn country_less_anchored_corroborated_mentions_bind_and_everything_else_mi
         11,
         "three standing orgs + eight deliberate mints; the one bind minted nothing"
     );
+}
+
+/// Issue 318: the resolver's anchor bind applied the R3 bar WITHOUT the
+/// genericness wall the batch merge arm enforces, so the same evidence the
+/// batch arm denies still bound at ingest — on every notice, without an audit
+/// row.
+///
+/// The wall is injected, like every other piece of linguistics here, and the
+/// three tests below pin the three answers it can give: refuse a soft-scheme
+/// anchor on a generic name, exempt a hard one, and stay LENIENT when the key
+/// store says nothing.
+/// Issue 318: the resolver's anchor bind applied the R3 bar WITHOUT the
+/// genericness wall the batch merge arm enforces, so the same evidence the
+/// batch arm denies still bound at ingest — on every notice, and without the
+/// audit row the batch arm leaves. Three tests, one per answer the wall can
+/// give.
+async fn bind_with_wall(
+    tag: &str,
+    carriers: usize,
+    value: &str,
+    hard_scheme: Option<fn(&str) -> bool>,
+    cap: usize,
+) -> (i64, u64) {
+    let path = format!("test-318-wall-{tag}.db");
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(&path).await.unwrap();
+    let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    conn.execute(
+        "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                              member_path, ingested_at, parse_state, projected)
+         VALUES (900, 'ted', 'pub-900', 'h900', 'eforms:test', 1, 'p', 0, 'parsed', 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO notice_sections (notice_id, section_id, kind, parent_section_id)
+         VALUES (900, 'S-1', 'Organization', NULL)",
+        (),
+    )
+    .await
+    .unwrap();
+    // The standing owner: same name the mention will carry, so corroboration
+    // succeeds and the WALL is the only thing left that can refuse.
+    conn.execute(
+        "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+         VALUES (1, 'FI', 'national', ?, 'Yhteinen Nimi', 'yhteinen nimi', 0, 0)",
+        (store::turso::Value::Text(value.into()),),
+    )
+    .await
+    .unwrap();
+    // `carriers` orgs share the N2 key, which is what makes it generic.
+    for o in 1..=carriers as i64 {
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'yhteinennimi')",
+            (store::turso::Value::Integer(o),),
+        )
+        .await
+        .unwrap();
+    }
+
+    let mut resolver = db
+        .mention_resolver(
+            Some(key),
+            Some(consortium),
+            Some(anchors),
+            Some(norm),
+            Some(legal_form),
+            hard_scheme,
+            cap,
+        )
+        .await
+        .unwrap();
+    db.resolve_mentions(&mut resolver, &[mention_nc(900, "Yhteinen Nimi", value)], 1)
+        .await
+        .unwrap();
+    let denied = store::Db::denied_generic(&resolver);
+    db.finish_mention_resolver(resolver).await.unwrap();
+    let bound = count(&db, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900").await;
+    (bound, denied)
+}
+
+/// A SOFT-scheme anchor corroborating on a name 25 orgs share is exactly what
+/// the batch arm refuses. Now the resolver refuses it too, and mints instead.
+#[tokio::test]
+async fn a_generic_name_under_a_soft_scheme_no_longer_binds() {
+    let (bound, denied) = bind_with_wall("soft", 25, "01234567", Some(|s| s == "CZ:ico"), 20).await;
+    assert_ne!(bound, 1, "the mention minted its own row rather than binding the standing owner");
+    assert_eq!(denied, 1, "and the wall says so, rather than refusing silently");
+}
+
+/// A HARD-checksummed anchor is the design's single exemption: it stands on
+/// its own arithmetic, not on the name, so a generic name does not sink it.
+#[tokio::test]
+async fn a_generic_name_under_a_hard_scheme_still_binds() {
+    let (bound, denied) =
+        bind_with_wall("hard", 25, "01234567", Some(|s| s == "FI:ytunnus"), 20).await;
+    assert_eq!(bound, 1, "the exemption holds — this is design §4.1, not an oversight");
+    assert_eq!(denied, 0);
+}
+
+/// LENIENT on unknown, and this is the load-bearing one. `org_match_keys` is
+/// built by a separate batch job and may be EMPTY or mid-build while the fold
+/// runs; this path has no "refuse" to return. An unseen key counts 0 carriers,
+/// which is under any cap, so it is not generic and today's behaviour stands.
+/// A wall that failed closed here would silently stop preventing the twins
+/// Stage 3 exists to prevent, every time the key store was rebuilt.
+#[tokio::test]
+async fn an_empty_key_store_binds_exactly_as_before() {
+    let (bound, denied) = bind_with_wall("lenient", 0, "01234567", Some(|s| s == "CZ:ico"), 20).await;
+    assert_eq!(bound, 1, "no keys known ⇒ nothing is generic ⇒ pre-318 behaviour");
+    assert_eq!(denied, 0);
+}
+
+/// And with no `hard_scheme` injected at all the wall does not exist — the
+/// byte-identical pre-318 path every store-level caller keeps.
+#[tokio::test]
+async fn no_injected_wall_is_the_pre_318_path() {
+    let (bound, denied) = bind_with_wall("off", 25, "01234567", None, 0).await;
+    assert_eq!(bound, 1);
+    assert_eq!(denied, 0);
 }
