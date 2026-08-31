@@ -1,6 +1,7 @@
 # 314 — Stage 4's 1.5M candidate edges have no consumer
 
-Status: ready-for-agent (the stage's stated purpose, unconnected)
+Status: SIZED, and the proposed first cohort INSPECTED 2026-08-31 — it is
+heterogeneous and not review-ready as specified. See the read below
 Kind: capability (organization layer)
 Relates to: 300 (Stage 4 built it), 311 (was meant to consume it), 312
 
@@ -176,3 +177,71 @@ a known ~39 are still fake borders from upstream country errors (`BG-VU` 20,
 `CH-EE` 19 — TED publishing a wrong code, unreachable by normalization). A
 reviewer meeting one of those should mark it as a country-data error rather
 than a merge decision, and the verdict schema needs that option.
+
+
+## THE SIZING EXISTS (org-edge-census, read 2026-08-31)
+
+    edges 1,498,485   components 272,311   orgs_touched 1,121,728
+    e3_name 1,440,677 · e3_xlang 57,808 · max_component 158 · dangling 0
+
+    canonical_only     24,929      <- the only ones a merge verdict could act on
+    mixed             247,356      <- canonical x provisional, most of the mass
+    provisional_only       26
+    null_country       85,329
+    multi_country      10,319
+    canonical_cross_border  939    <- this issue's proposed first cohort
+
+    size 2: 128,241 | 3-5: 93,004 | 6-10: 32,337 | 11-50: 18,717 | 51+: 12
+
+## The proposed first cohort is NOT review-ready
+
+This issue proposes "xlang pairs where both sides are canonical and the
+countries differ" as tractable and high-value. It is 939 components, which is
+tractable. Reading the census's own 25-component sample, it is **at least four
+classes with four different correct answers**:
+
+1. **Genuine multinational duplicates** — `DK/LT/NO: Mercell Holding ASA`,
+   one company under three country codes. A merge candidate.
+2. **Corporate siblings that must NOT merge** — `AT: Steelco Belimed GmbH` vs
+   `DE: Belimed GmbH`. Different legal entities in different countries. A
+   merge verdict here is a false merge, and the cohort's framing invites it.
+3. **Transliteration pairs, same country** — the Bulgarian hospital appearing
+   as both `Universitetska mnogoprofilna bolnitsa…` and
+   `УНИВЕРСИТЕТСКА МНОГОПРОФИЛНА…`. Cross-SCRIPT, not cross-border, and it
+   rides in because a third member of the component carries another country.
+4. **Same-country duplicates inside a "cross-border" component** —
+   `CZ: Merck Life Science spol. s r.o.` x3 plus one SK sibling; two identical
+   `DE: Vergabekammer Rheinland-Pfalz…` rows.
+
+A single rubric cannot serve all four, and class 2 is the one that costs
+something to get wrong. **The cohort needs splitting before a pilot**, not a
+verdict vocabulary.
+
+## A hypothesis I raised and then falsified
+
+The cross-border country pairs include `BG-VU` (Vanuatu) 20, `BG-VA` (Vatican)
+15, `BG-VE` (Venezuela) 13, `BG-VN` (Vietnam) 10, and the sample holds
+`BF: БИС ООД` — a Cyrillic-named company under Burkina Faso. I took that for a
+systematic country-code parsing bug (Cyrillic city prefixes read as ISO codes)
+and checked it.
+
+**It does not hold.** Those country codes carry real populations
+(BF 120, VN 117, VU 112, VA 91, VE 61, GY 33) and the names under them are
+genuine EU external-action entities: `Service européen pour l'action
+extérieure au Burkina Faso`, `Bureau de la coopération suisse au Burkina
+Faso`, `Helvetas Swiss Intercooperation`, local NGOs and consortia. EU
+procurement covers development-aid contracts in third countries, so these
+codes are legitimate.
+
+What IS visible is a small misfiled residue under BF — `SKAMEX Spółka z
+ograniczoną odpowiedzialnością` (Polish), `Veidekke Industri` (Norwegian),
+`„OLI-NAT" Robert Zajkowski` (Polish). A handful, not a systematic fault.
+Recorded here so the next reader does not re-raise the same alarm.
+
+## Next unit, if this line is picked up
+
+Split the 939 before building anything: separate same-country-pair components
+(classes 3 and 4) from genuinely cross-border ones, and within those,
+separate identical-name from near-name. Class 2 (corporate siblings) is
+distinguishable only by judgement, which is what makes it the pilot's real
+subject — and what makes a rubric written for class 1 dangerous.
