@@ -67,3 +67,25 @@ nothing to catch a regression.
 5. **Refusal ladder** — the round-trip test is the supervisor-level coverage
    this asked for; the three-rung ladder itself (no plan / drift / cancel) is
    now two rungs of Err and one of Ok, each with a distinct message.
+
+
+## The ladder, verified live (2026-08-31, rev 2211919)
+
+Fired `drop-orphan-satellites --wet` at prod after the deploy, and the real
+state of the data produced a better acceptance than any fixture:
+
+    outcome: error
+    drop-orphan-satellites --wet REFUSED: the plan drifted. 0 tuple(s)
+    appeared since the dry run and 66 went away — first gone
+    Some("14534470/DEU/simacek facility gmbh->1939912"). Re-run the dry pass…
+
+Three fixes confirmed at once, on the live system:
+
+- **outcome is `error`, not `ok`** — the round-1 finding that a refused drop
+  rendered green in `/admin/jobs` is closed;
+- **tuple parity caught the drift and named a specific tuple**, destination
+  included, rather than reporting a count;
+- **an already-applied campaign refuses** rather than re-running. The 66 were
+  dropped this morning, so the fresh candidate set is empty while the stored
+  plan still lists them. That is exactly the state the parity check exists for,
+  and it arrived on its own.
