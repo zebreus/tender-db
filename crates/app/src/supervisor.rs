@@ -357,7 +357,7 @@ enum Spec {
     /// origin re-homed to. Wet writes `organization_names`.
     DropOrphanSatellites { dry_run: bool },
     /// Issue 321: put back what a drop pass removed, from its pre-images.
-    RestoreDroppedSatellites { dry_run: bool },
+    RestoreDroppedSatellites { dry_run: bool, only_job: Option<i64> },
     /// Issue 317 Unit A: move reviewed mentions to the row they describe.
     ApplyRehoming { dry_run: bool },
     BuildOrgMatchKeys { dry_run: bool },
@@ -513,6 +513,11 @@ pub struct JobRequest {
     /// when omitted** — for a job that writes ~593k rows, a forgotten flag must
     /// mean the harmless thing, not the destructive one.
     pub dry_run: Option<bool>,
+    /// `restore-dropped-satellites` only: undo just this drop job's pass
+    /// (issue 321). Omitted means every outstanding pre-image — which is the
+    /// right default for one pass and the wrong one for two, so an operator
+    /// unwinding a bad run names it.
+    pub job: Option<i64>,
     pub profile: Option<String>,
     /// `reprocess` only: skip the trailing incremental fold, leaving reclaimed
     /// notices `projected=0` for one later `rebuild:true` to fold in bulk.
@@ -989,10 +994,6 @@ impl Supervisor {
                     .await,
                 ])
             }
-            // Issue 321: the measurement that decides whether the leftover
-            // name variants need machinery or a line in the review schema.
-            // Issue 321: the repair, dry by default. The wet arm compares
-            // itself against the stored dry plan as tuples before it writes.
             // Issue 321: the repair, dry by default. The wet arm compares
             // itself against the stored dry plan as tuples before it writes.
             "drop-orphan-satellites" => {
@@ -1024,11 +1025,13 @@ impl Supervisor {
                     self.push(
                         "restore-dropped-satellites",
                         params,
-                        Spec::RestoreDroppedSatellites { dry_run },
+                        Spec::RestoreDroppedSatellites { dry_run, only_job: req.job },
                     )
                     .await,
                 ])
             }
+            // Issue 321: the measurement that decides whether the leftover
+            // name variants need machinery or a line in the review schema.
             // Issue 321: the measurement that decides whether the leftover
             // name variants need machinery or a line in the review schema.
             "satellite-orphans" => Ok(vec![
@@ -4030,6 +4033,16 @@ impl Supervisor {
                         r.candidates
                     ));
                 }
+                if r.cancelled {
+                    return Ok(format!(
+                        "drop-orphan-satellites WET CANCELLED PART-WAY (issue 321): {} of {} \
+                         candidate(s) were dropped and are COMMITTED, each with its pre-image \
+                         in org_name_drops; {} skipped on the re-check; the rest were never \
+                         attempted. This is a PARTIAL run — re-run the dry pass to see what \
+                         is left, or restore-dropped-satellites with job {} to undo it.",
+                        r.dropped, r.candidates, r.skipped_recheck, job_id
+                    ));
+                }
                 Ok(format!(
                     "drop-orphan-satellites WET (issue 321): {} candidate(s) matched the \
                      recorded plan exactly; dropped {}, skipped {} on the in-transaction \
@@ -4039,23 +4052,31 @@ impl Supervisor {
                     r.candidates, r.dropped, r.skipped_recheck, r.stale_keys
                 ))
             }
-            Spec::RestoreDroppedSatellites { dry_run } => {
-                let dry_run = *dry_run;
+            Spec::RestoreDroppedSatellites { dry_run, only_job } => {
+                let (dry_run, only_job) = (*dry_run, *only_job);
                 let now = store::now_unix();
                 let r = self
                     .db
-                    .restore_dropped_satellites(dry_run, now)
+                    .restore_dropped_satellites(dry_run, only_job, now)
                     .await
                     .map_err(|e| e.to_string())?;
                 Ok(format!(
-                    "restore-dropped-satellites {} (issue 321): {} outstanding drop(s), {} \
-                     {}, {} left alone because something has since written that (org, lang) \
-                     — a restore never clobbers newer truth.",
+                    "restore-dropped-satellites {} (issue 321{}): {} outstanding pre-image(s), \
+                     {} {}; {} left alone because something has since written that (org, lang), \
+                     {} superseded by a newer drop on the same slot, {} whose org no longer \
+                     exists. A restore never clobbers newer truth and never lets one \
+                     unrestorable row take the rest of the pass with it.",
                     if dry_run { "DRY" } else { "WET" },
+                    match only_job {
+                        Some(j) => format!(", bounded to drop job {j}"),
+                        None => String::new(),
+                    },
                     r.outstanding,
                     if dry_run { r.rows.len() as u64 } else { r.restored },
                     if dry_run { "would be restored" } else { "restored" },
-                    r.occupied
+                    r.occupied,
+                    r.superseded,
+                    r.orphaned
                 ))
             }
             Spec::SatelliteOrphans => {

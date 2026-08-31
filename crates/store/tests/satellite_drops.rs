@@ -196,12 +196,12 @@ async fn a_drop_is_undone_exactly_and_only_once() {
         dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
     fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
 
-    let dry = fx.db.restore_dropped_satellites(true, 30).await.unwrap();
+    let dry = fx.db.restore_dropped_satellites(true, None, 30).await.unwrap();
     assert_eq!((dry.outstanding, dry.restored, dry.occupied), (1, 0, 0));
     assert_eq!(dry.rows.len(), 1, "a dry restore names the row without writing it");
     assert_eq!(fx.variants_of(1).await.len(), 2);
 
-    let wet = fx.db.restore_dropped_satellites(false, 30).await.unwrap();
+    let wet = fx.db.restore_dropped_satellites(false, None, 30).await.unwrap();
     assert_eq!((wet.outstanding, wet.restored, wet.occupied), (1, 1, 0));
     assert_eq!(
         fx.variants_of(1).await,
@@ -213,7 +213,7 @@ async fn a_drop_is_undone_exactly_and_only_once() {
         "byte-exact, back where it was"
     );
     // Stamped, so a second pass has nothing to do rather than doing it twice.
-    let again = fx.db.restore_dropped_satellites(false, 40).await.unwrap();
+    let again = fx.db.restore_dropped_satellites(false, None, 40).await.unwrap();
     assert_eq!((again.outstanding, again.restored), (0, 0));
 }
 
@@ -230,7 +230,7 @@ async fn a_restore_never_clobbers_what_was_written_since() {
     // publication, say. Newer truth wins.
     fx.variant(1, "DEU", "Bietergemeinschaft Dobler / Oberall").await;
 
-    let r = fx.db.restore_dropped_satellites(false, 30).await.unwrap();
+    let r = fx.db.restore_dropped_satellites(false, None, 30).await.unwrap();
     assert_eq!((r.outstanding, r.restored, r.occupied), (1, 0, 1));
     assert_eq!(
         fx.variants_of(1).await[0].1,
@@ -302,4 +302,114 @@ async fn a_destination_renamed_after_the_plan_stops_the_pass() {
         Some(Value::Integer(0)),
         "and no pre-image is written for a row it did not touch"
     );
+}
+
+/// A slot dropped, restored and dropped again has two outstanding pre-images.
+/// Scan order must not pick which one comes back — the newest is the truth,
+/// and the older one is left outstanding rather than overwriting it.
+#[tokio::test]
+async fn the_newest_pre_image_wins_a_slot_with_two_outstanding_drops() {
+    let fx = fixture("newest").await;
+    fx.standard().await;
+    let stop = never;
+    // Two drop rows for (1, DEU) with different pre-images, oldest first —
+    // insert order deliberately opposite to the answer.
+    for (at, name) in [(10i64, "Dobler GmbH (old spelling)"), (20, "Dobler GmbH")] {
+        fx.conn
+            .execute(
+                "INSERT INTO org_name_drops (org_id, lang, name, name_norm, key, target_org, dropped_at, job_id)
+                 VALUES (1, 'DEU', ?, ?, 'dobler gmbh', 2, ?, 7)",
+                (
+                    Value::Text(name.into()),
+                    Value::Text(name.to_lowercase()),
+                    Value::Integer(at),
+                ),
+            )
+            .await
+            .unwrap();
+    }
+    fx.conn
+        .execute("DELETE FROM organization_names WHERE org_id = 1 AND lang = 'DEU'", ())
+        .await
+        .unwrap();
+    let _ = stop;
+
+    let r = fx.db.restore_dropped_satellites(false, None, 30).await.unwrap();
+    assert_eq!((r.outstanding, r.restored, r.superseded), (2, 1, 1));
+    assert_eq!(
+        fx.variants_of(1).await[0],
+        ("DEU".to_owned(), "Dobler GmbH".to_owned()),
+        "the NEWEST pre-image is the one that comes back"
+    );
+}
+
+/// A pre-image whose org was merged away since the drop must not take the
+/// rest of the pass with it. organization_names has a foreign key onto
+/// organizations and the pragma is on, so an unguarded INSERT would abort the
+/// loop — and a re-run would hit the same row again, forever.
+#[tokio::test]
+async fn a_pre_image_whose_org_is_gone_is_skipped_not_fatal() {
+    let fx = fixture("orphaned").await;
+    fx.standard().await;
+    fx.conn
+        .execute("PRAGMA foreign_keys = ON", ())
+        .await
+        .unwrap();
+    let stop = never;
+    let dry = fx.db.drop_orphan_satellites(norm, true, None, None, 10, &stop).await.unwrap();
+    let plan: Vec<(i64, String, String)> =
+        dry.rows.iter().map(|o| (o.org, o.lang.clone(), o.key.clone())).collect();
+    fx.db.drop_orphan_satellites(norm, false, Some(&plan), Some(7), 20, &stop).await.unwrap();
+    // A second pre-image naming an org that does not exist — the shape a
+    // merge leaves behind.
+    fx.conn
+        .execute(
+            "INSERT INTO org_name_drops (org_id, lang, name, name_norm, key, target_org, dropped_at, job_id)
+             VALUES (4242, 'DEU', 'Ghost GmbH', 'ghost gmbh', 'ghost gmbh', 2, 25, 7)",
+            (),
+        )
+        .await
+        .unwrap();
+
+    let r = fx.db.restore_dropped_satellites(false, None, 30).await.unwrap();
+    assert_eq!((r.outstanding, r.restored, r.orphaned), (2, 1, 1));
+    assert_eq!(
+        fx.variants_of(1).await.len(),
+        3,
+        "the restorable row came back despite the unrestorable one beside it"
+    );
+}
+
+/// The undo is bounded to one pass. Without that it is no undo at all once
+/// there are two: unwinding a bad run would drag back every good one with it.
+#[tokio::test]
+async fn the_undo_can_be_bounded_to_one_drop_pass() {
+    let fx = fixture("bounded").await;
+    fx.standard().await;
+    fx.conn
+        .execute("DELETE FROM organization_names WHERE org_id = 1", ())
+        .await
+        .unwrap();
+    for (job, lang, name) in [(7i64, "DEU", "Dobler GmbH"), (8, "FRA", "Dobler SARL")] {
+        fx.conn
+            .execute(
+                "INSERT INTO org_name_drops (org_id, lang, name, name_norm, key, target_org, dropped_at, job_id)
+                 VALUES (1, ?, ?, ?, 'k', 2, 10, ?)",
+                (
+                    Value::Text(lang.into()),
+                    Value::Text(name.into()),
+                    Value::Text(name.to_lowercase()),
+                    Value::Integer(job),
+                ),
+            )
+            .await
+            .unwrap();
+    }
+
+    let r = fx.db.restore_dropped_satellites(false, Some(8), 30).await.unwrap();
+    assert_eq!((r.outstanding, r.restored), (1, 1), "job 8's pass only");
+    assert_eq!(fx.variants_of(1).await, vec![("FRA".to_owned(), "Dobler SARL".to_owned())]);
+    // Job 7's pre-image is untouched and still available.
+    let r = fx.db.restore_dropped_satellites(true, Some(7), 40).await.unwrap();
+    assert_eq!(r.outstanding, 1);
 }

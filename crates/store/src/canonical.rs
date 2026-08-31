@@ -2019,7 +2019,12 @@ pub struct SatelliteDropReport {
     /// The satellite is gone; the derived key stands until the next build.
     pub stale_keys: u64,
     pub rows: Vec<OrphanSatellite>,
+    /// Cancelled BEFORE any write — nothing happened at all.
     pub stopped: bool,
+    /// Cancelled PART-WAY: what was dropped is committed, with its
+    /// pre-images, and the rest was never attempted. A partial run reported
+    /// as a whole one is how a campaign silently under-runs.
+    pub cancelled: bool,
 }
 
 /// What a `restore-dropped-satellites` pass did, or would do (issue 321).
@@ -2032,6 +2037,13 @@ pub struct SatelliteRestoreReport {
     /// Rows left alone because something has since written that (org, lang).
     /// A restore must never clobber newer truth.
     pub occupied: u64,
+    /// Pre-images whose org no longer exists — merged away, or re-minted by
+    /// an org-layer rebuild. Skipped and counted rather than allowed to
+    /// abort the pass on a foreign key.
+    pub orphaned: u64,
+    /// Older pre-images for a slot a newer drop already owns. The newest is
+    /// restored; these are left outstanding rather than overwriting it.
+    pub superseded: u64,
     pub rows: Vec<OrphanSatellite>,
 }
 
@@ -4194,6 +4206,13 @@ impl Db {
             (),
         )
         .await?;
+        // Issue 321: the drop pre-images name organization ids, and this
+        // rebuild re-mints them from 1 — so an outstanding pre-image would
+        // not merely be stale, it would write one company's name onto an
+        // unrelated row the next time anyone ran a restore. The ledger goes
+        // with the layer it describes; the campaign's own record survives in
+        // `reports`, which is not id-addressed.
+        conn.execute("DELETE FROM org_name_drops", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;
@@ -8281,10 +8300,20 @@ impl Db {
         }
 
         let conn = self.conn().await;
+        // What was ACTUALLY dropped, in order. `report.rows` is the candidate
+        // list and the skips are interleaved through it, so a prefix of it is
+        // the wrong set to ask anything about afterwards.
+        let mut dropped_rows: Vec<(i64, String)> = Vec::new();
+        let mut cancelled = false;
         conn.execute("BEGIN IMMEDIATE", ()).await?;
         let outcome = async {
             for o in &report.rows {
                 if stop() {
+                    // Every drop is paired with its pre-image inside this
+                    // transaction, so committing what is done is safe and
+                    // losing it is not. What must NOT happen is reporting a
+                    // half-run as a whole one — hence the flag.
+                    cancelled = true;
                     break;
                 }
                 // Re-check every condition against the transaction's own view.
@@ -8402,26 +8431,37 @@ impl Db {
                     (Value::Integer(o.org), t(&o.lang)),
                 )
                 .await?;
+                dropped_rows.push((o.org, o.key.clone()));
                 report.dropped += 1;
             }
             Ok::<(), turso::Error>(())
         }
         .await;
         match outcome {
-            Ok(()) => conn.execute("COMMIT", ()).await?,
+            Ok(()) => {
+                // A failed COMMIT leaves the PROCESS-WIDE writer inside an
+                // open transaction, and every later write on it fails with
+                // something that names neither this job nor this cause. Undo
+                // it here, the shape `apply_rehoming` uses.
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
             Err(e) => {
                 let _ = conn.execute("ROLLBACK", ()).await;
                 return Err(e);
             }
         };
+        report.cancelled = cancelled;
 
         // The satellite is gone; the DERIVED key is not. Say how much stands,
         // rather than hand-deleting rows the build owns.
-        for o in report.rows.iter().take(report.dropped as usize) {
+        for (org, key) in &dropped_rows {
             let mut rows = conn
                 .query(
                     "SELECT COUNT(*) FROM org_match_keys WHERE org_id = ? AND key = ?",
-                    (Value::Integer(o.org), t(&o.key)),
+                    (Value::Integer(*org), t(key)),
                 )
                 .await?;
             if let Some(row) = rows.next().await? {
@@ -8437,13 +8477,34 @@ impl Db {
     /// Issue 321: put back what a drop pass removed, from the pre-images it
     /// wrote. The undo half, and the reason the drop is allowed to exist.
     ///
-    /// One guard, the same one `unapply_case_reviews` carries: a row is
-    /// restored only while `(org, lang)` is still empty. Anything written
-    /// since wins — a restore must never clobber newer truth. A restored row
-    /// is stamped, so a second pass is a no-op.
+    /// `only_job` bounds it to one drop pass. Without that the undo is
+    /// all-or-nothing across every pass ever run, which is no undo at all
+    /// once there are two: unwinding a bad run would drag back every good
+    /// one with it.
+    ///
+    /// Three guards, each one a way this could quietly do the wrong thing:
+    ///
+    /// - **Never clobber newer truth.** A row is restored only while its
+    ///   `(org, lang)` is empty; anything written since wins. Same guard
+    ///   `unapply_case_reviews` carries.
+    /// - **Newest pre-image wins.** A slot dropped, restored and dropped
+    ///   again has two outstanding pre-images, and scan order must not decide
+    ///   which one comes back — `ORDER BY dropped_at DESC` does, and the
+    ///   older ones then meet the occupied guard and stay put.
+    /// - **A missing org is skipped, not fatal.** `organization_names` has a
+    ///   foreign key onto `organizations` and the pragma is on, so a
+    ///   pre-image whose org was merged away would abort the whole pass on a
+    ///   constraint error — one unrestorable row taking every restorable one
+    ///   with it, permanently, since a re-run hits the same row again.
+    ///
+    /// The whole wet pass is one transaction. The INSERT and its
+    /// `restored_at` stamp are not independently meaningful: a crash between
+    /// them leaves a row restored but unstamped, which every later pass then
+    /// reads as `occupied` — a restore that silently became a no-op.
     pub async fn restore_dropped_satellites(
         &self,
         dry_run: bool,
+        only_job: Option<i64>,
         now: i64,
     ) -> turso::Result<SatelliteRestoreReport> {
         let conn = self.conn().await;
@@ -8459,13 +8520,16 @@ impl Db {
         }
         let mut todo: Vec<Back> = Vec::new();
         {
-            let mut rows = conn
-                .query(
-                    "SELECT org_id, lang, name, name_norm, key, target_org, dropped_at \
-                       FROM org_name_drops WHERE restored_at IS NULL",
-                    (),
-                )
-                .await?;
+            // Newest first per slot: correctness must not depend on scan order.
+            let sql = "SELECT org_id, lang, name, name_norm, key, target_org, dropped_at \
+                         FROM org_name_drops WHERE restored_at IS NULL AND \
+                         (? IS NULL OR job_id = ?) \
+                        ORDER BY org_id, lang, dropped_at DESC";
+            let arg = match only_job {
+                Some(j) => Value::Integer(j),
+                None => Value::Null,
+            };
+            let mut rows = conn.query(sql, (arg.clone(), arg)).await?;
             while let Some(row) = rows.next().await? {
                 todo.push(Back {
                     org: int(&row, 0),
@@ -8483,49 +8547,97 @@ impl Db {
         }
         report.outstanding = todo.len() as u64;
 
-        for b in &todo {
-            let mut rows = conn
-                .query(
-                    "SELECT 1 FROM organization_names WHERE org_id = ? AND lang = ?",
-                    (Value::Integer(b.org), t(&b.lang)),
+        if !dry_run {
+            conn.execute("BEGIN IMMEDIATE", ()).await?;
+        }
+        let outcome = async {
+            // A slot this pass has already put something back into. The
+            // occupied probe below would catch it anyway once committed, but
+            // saying it plainly is what distinguishes "superseded" from
+            // "someone else wrote here" in the report — and in a dry run,
+            // where nothing is written, the probe cannot catch it at all.
+            let mut claimed: std::collections::HashSet<(i64, String)> = Default::default();
+            for b in &todo {
+                if claimed.contains(&(b.org, b.lang.clone())) {
+                    report.superseded += 1;
+                    continue;
+                }
+                let mut rows = conn
+                    .query(
+                        "SELECT 1 FROM organization_names WHERE org_id = ? AND lang = ?",
+                        (Value::Integer(b.org), t(&b.lang)),
+                    )
+                    .await?;
+                let occupied = rows.next().await?.is_some();
+                drop(rows);
+                if occupied {
+                    report.occupied += 1;
+                    continue;
+                }
+                // The org itself must still be there, or the foreign key
+                // takes the whole pass down with this one row.
+                let mut rows = conn
+                    .query(
+                        "SELECT 1 FROM organizations WHERE id = ?",
+                        (Value::Integer(b.org),),
+                    )
+                    .await?;
+                let org_exists = rows.next().await?.is_some();
+                drop(rows);
+                if !org_exists {
+                    report.orphaned += 1;
+                    continue;
+                }
+                claimed.insert((b.org, b.lang.clone()));
+                report.rows.push(OrphanSatellite {
+                    org: b.org,
+                    org_name: String::new(),
+                    lang: b.lang.clone(),
+                    name: b.name.clone(),
+                    key: b.key.clone(),
+                    target: b.target,
+                    target_name: None,
+                });
+                if dry_run {
+                    continue;
+                }
+                conn.execute(
+                    "INSERT INTO organization_names (org_id, lang, name, name_norm) \
+                     VALUES (?, ?, ?, ?)",
+                    (Value::Integer(b.org), t(&b.lang), t(&b.name), t(&b.norm)),
                 )
                 .await?;
-            let occupied = rows.next().await?.is_some();
-            drop(rows);
-            if occupied {
-                report.occupied += 1;
-                continue;
+                conn.execute(
+                    "UPDATE org_name_drops SET restored_at = ? \
+                      WHERE org_id = ? AND lang = ? AND dropped_at = ?",
+                    (
+                        Value::Integer(now),
+                        Value::Integer(b.org),
+                        t(&b.lang),
+                        Value::Integer(b.dropped_at),
+                    ),
+                )
+                .await?;
+                report.restored += 1;
             }
-            report.rows.push(OrphanSatellite {
-                org: b.org,
-                org_name: String::new(),
-                lang: b.lang.clone(),
-                name: b.name.clone(),
-                key: b.key.clone(),
-                target: b.target,
-                target_name: None,
-            });
-            if dry_run {
-                continue;
+            Ok::<(), turso::Error>(())
+        }
+        .await;
+        if !dry_run {
+            match outcome {
+                Ok(()) => {
+                    if let Err(e) = conn.execute("COMMIT", ()).await {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+                Err(e) => {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
             }
-            conn.execute(
-                "INSERT INTO organization_names (org_id, lang, name, name_norm) \
-                 VALUES (?, ?, ?, ?)",
-                (Value::Integer(b.org), t(&b.lang), t(&b.name), t(&b.norm)),
-            )
-            .await?;
-            conn.execute(
-                "UPDATE org_name_drops SET restored_at = ? \
-                  WHERE org_id = ? AND lang = ? AND dropped_at = ?",
-                (
-                    Value::Integer(now),
-                    Value::Integer(b.org),
-                    t(&b.lang),
-                    Value::Integer(b.dropped_at),
-                ),
-            )
-            .await?;
-            report.restored += 1;
+        } else {
+            outcome?;
         }
         if report.restored > 0 {
             self.publish_cursor(&conn).await?;
