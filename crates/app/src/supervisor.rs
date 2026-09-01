@@ -5524,6 +5524,7 @@ impl Supervisor {
                         ingest::idgate::hard_scheme,
                         SCAN_STOPLIST_CAP,
                         200,
+                        GENERIC_KEY_WINDOW,
                         &stop,
                     )
                     .await

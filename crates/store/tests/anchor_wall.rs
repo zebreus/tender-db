@@ -74,6 +74,10 @@ impl Fx {
     }
 }
 
+/// A page far larger than any fixture here, so paging never bites unless a test
+/// asks it to (issue 333).
+const WIDE: usize = 10_000;
+
 fn never() -> bool {
     false
 }
@@ -100,7 +104,7 @@ async fn only_soft_anchored_orgs_on_an_over_cap_key_count_as_the_gap() {
         fx.key(o, "acme sarl").await;
     }
 
-    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &never).await.unwrap();
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, WIDE, &never).await.unwrap();
     assert_eq!(r.keys_walked, 2);
     assert_eq!(r.generic_keys, 1, "only the 4-carrier key is over the cap");
     assert_eq!(r.generic_orgs, 4, "carrier slots on the one generic key");
@@ -131,7 +135,7 @@ async fn a_pipe_scheme_beside_a_real_one_disqualifies_the_bind() {
         fx.org(o, "European Commission", Some("999")).await;
         fx.key(o, "european commission").await;
     }
-    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &never).await.unwrap();
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, WIDE, &never).await.unwrap();
     assert_eq!(r.generic_keys, 1, "the key is generic either way");
     assert_eq!(r.probed, 3);
     assert_eq!(
@@ -152,7 +156,7 @@ async fn a_huge_group_is_sampled_but_its_carrier_count_is_not() {
         fx.org(o, "Vendor Boilerplate", Some("552100554")).await;
         fx.key(o, "vendor boilerplate").await;
     }
-    let r = fx.db.anchor_wall_census(anchors, hard, 2, 10, &never).await.unwrap();
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 10, WIDE, &never).await.unwrap();
     assert_eq!(r.generic_orgs, 50, "every carrier counts toward genericness");
     assert_eq!(r.probed, 10, "but only the sample is probed");
     assert_eq!(r.anchored_soft, 10);
@@ -169,7 +173,7 @@ async fn a_cancelled_census_reports_nothing_rather_than_less() {
         fx.key(o, "tribunal administratif").await;
     }
     let always = || true;
-    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &always).await.unwrap();
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, WIDE, &always).await.unwrap();
     assert!(r.stopped);
     assert_eq!((r.generic_keys, r.anchored_soft, r.keys_walked), (0, 0, 0));
     assert!(r.rows.is_empty());
@@ -193,7 +197,7 @@ async fn an_org_on_two_generic_keys_counts_once() {
         fx.key(o, "key two").await;
     }
 
-    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, &never).await.unwrap();
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, WIDE, &never).await.unwrap();
     assert_eq!(r.generic_keys, 2);
     assert_eq!(r.generic_orgs, 6, "6 carrier SLOTS across the two keys");
     assert_eq!(r.probed, 6);
@@ -202,4 +206,27 @@ async fn an_org_on_two_generic_keys_counts_once() {
     assert_eq!(r.anchored, 5);
     assert_eq!(r.by_scheme, vec![("FR:siren".to_owned(), 5)]);
     assert_eq!(r.rows.len(), 5, "and org 1 is listed once, not twice");
+}
+
+/// Issue 333: a key run longer than one page must still be counted whole.
+///
+/// The previous walk read a page of ROWS, trimmed the trailing possibly-split
+/// run and resumed from its key — but the trim was guarded on `groups.len() > 1`,
+/// so a page filled by ONE key kept the truncated run and resumed past it,
+/// losing every carrier beyond the page. That hides the WIDEST keys, which are
+/// the whole point of a genericness census.
+///
+/// Latent rather than live when found: the widest key measured on prod is 1,238
+/// carriers against a page of 20,000. Pinned here so it stays that way.
+#[tokio::test]
+async fn a_key_run_longer_than_a_page_is_counted_whole() {
+    let fx = fixture("issue-333").await;
+    // Eight carriers of one key, driven with a page of three.
+    for n in 1..=8i64 {
+        fx.org(n, "Gemeinsamer Name", Some("552100554")).await;
+        fx.key(n, "gemeinsamer name").await;
+    }
+    let r = fx.db.anchor_wall_census(anchors, hard, 2, 200, 3, &never).await.unwrap();
+    assert_eq!(r.generic_keys, 1, "one key, not several short ones");
+    assert_eq!(r.generic_orgs, 8, "all eight carriers, not just the first page");
 }

@@ -10000,6 +10000,9 @@ impl Db {
         hard: fn(&str) -> bool,
         cap: usize,
         per_group: usize,
+        // Page size, threaded rather than a private const so the run-longer-
+        // than-a-page case is testable without fixturing 20,000 rows (issue 333).
+        window: usize,
         stop: &(dyn Fn() -> bool + Sync),
     ) -> turso::Result<AnchorWallReport> {
         let reader = self.reader().await?;
@@ -10011,52 +10014,70 @@ impl Db {
         let mut seen_hard: std::collections::HashSet<i64> = Default::default();
         let mut seen_soft: std::collections::HashSet<i64> = Default::default();
         let mut after = String::new();
-        // Page by KEY, the Stage-4 scan's cursor idiom: read a window, trim
-        // the trailing possibly-partial group, resume from the last complete
-        // key. A group split across pages would otherwise read as two small
-        // ones and never reach the cap.
-        const WINDOW: usize = 20_000;
+        // Page by KEY, GROUPED (issue 333). The previous version read a window
+        // of rows, trimmed the trailing possibly-partial group and resumed from
+        // the last complete key — but the trim was guarded on `groups.len() > 1`,
+        // so a page filled by ONE key kept its truncated run and resumed past
+        // it, silently losing every carrier beyond the window. That error hides
+        // the WIDEST keys, which are exactly the ones a genericness census is
+        // about. It was latent rather than live (the widest key measured is 1,238
+        // carriers against a window of 20,000), so no past reading is retracted.
+        //
+        // `GROUP BY key` with `LIMIT` counts complete groups instead, because the
+        // limit applies to groups rather than rows — correct for a run of any
+        // length, with no stitching to get wrong. Equality on `key_kind` and a
+        // range on `key` keep it an index-ordered scan.
+        let window = window.max(2);
         loop {
             if stop() {
                 return Ok(AnchorWallReport { stopped: true, ..Default::default() });
             }
-            let mut groups: Vec<(String, Vec<i64>)> = Vec::new();
+            // The keys on this page, with their COMPLETE carrier counts.
+            let mut wide: Vec<(String, u64)> = Vec::new();
             {
                 let mut rows = reader
                     .query(
-                        "SELECT key, org_id FROM org_match_keys \
-                          WHERE key_kind = 'n2' AND key > ? ORDER BY key, org_id LIMIT ?",
-                        (t(&after), Value::Integer(WINDOW as i64)),
+                        "SELECT key, COUNT(DISTINCT org_id) FROM org_match_keys \
+                          WHERE key_kind = 'n2' AND key > ? \
+                          GROUP BY key ORDER BY key LIMIT ?",
+                        (t(&after), Value::Integer(window as i64)),
                     )
                     .await?;
                 let mut n = 0usize;
                 while let Some(row) = rows.next().await? {
                     n += 1;
-                    let (key, org) = (text(&row, 0), int(&row, 1));
-                    match groups.last_mut() {
-                        Some((k, ids)) if *k == key => ids.push(org),
-                        _ => groups.push((key, vec![org])),
+                    let key = text(&row, 0);
+                    report.keys_walked += 1;
+                    let carriers = int(&row, 1).max(0) as u64;
+                    if carriers as usize > cap {
+                        wide.push((key.clone(), carriers));
                     }
+                    after = key;
                 }
                 if n == 0 {
                     break;
                 }
-                if n == WINDOW && groups.len() > 1 {
-                    groups.pop();
-                }
-                after = groups.last().expect("a non-empty page has a last group").0.clone();
             }
 
-            for (key, mut ids) in groups {
-                report.keys_walked += 1;
-                ids.dedup();
-                if ids.len() <= cap {
-                    continue;
-                }
+            for (key, carriers) in wide {
                 report.generic_keys += 1;
-                report.generic_orgs += ids.len() as u64;
-                let carriers = ids.len() as u64;
-                ids.truncate(per_group);
+                report.generic_orgs += carriers;
+                // The carriers themselves, for the over-cap keys only: pure
+                // equality on both indexed columns, and only as many as the
+                // per-group probe budget will actually look at.
+                let mut ids: Vec<i64> = Vec::new();
+                {
+                    let mut rows = reader
+                        .query(
+                            "SELECT DISTINCT org_id FROM org_match_keys \
+                              WHERE key_kind = 'n2' AND key = ? ORDER BY org_id LIMIT ?",
+                            (t(key.as_str()), Value::Integer(per_group as i64)),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        ids.push(int(&row, 0));
+                    }
+                }
                 for org in ids {
                     if stop() {
                         return Ok(AnchorWallReport { stopped: true, ..Default::default() });
