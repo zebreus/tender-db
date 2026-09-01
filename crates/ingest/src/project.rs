@@ -4558,6 +4558,29 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
         return None;
     }
 
+    // ISSUE 328: a publisher label written in FRONT of the identifier.
+    // `USTIDDE329214156` is `USt-IdNr. DE329214156` — the number is fine, the
+    // field name came along with it. 5,766 rows carry one, and 3,253 of them
+    // have a partner row already standing under the bare value, so the label
+    // splits an organization from its own correctly-formed twin.
+    //
+    // STRIP THEN RE-VALIDATE, and the recursion is the re-validation: the
+    // stripped remainder goes through this whole function, and it is accepted
+    // only if it classifies. That is what stops the class from inventing
+    // identifiers — three prod rows carry `UMSATZSTEUERIDENTIFIKATIONSNUMMER`
+    // and nothing else, `USTIDNRDEDE…` strips to a doubled country code, and
+    // neither survives a second pass. A prefix strip that trusted its own
+    // output would keep both.
+    //
+    // Issue 325's suffix work needed no such guard because a scheme label at
+    // the BACK sits behind a value that already parsed; a label at the front
+    // hides the value entirely until it is gone.
+    if let Some(rest) = crate::countries::label_prefix_stripped(&value) {
+        if let Some(id) = normalise_identifier(rest, country) {
+            return Some(id);
+        }
+    }
+
     let national = || Identifier {
         country: country.map(str::to_owned),
         kind: "national".into(),
@@ -5554,6 +5577,74 @@ mod tests {
             assert_eq!(id.kind, "national", "{raw} is a register string, not a VAT id");
             assert_eq!(id.country.as_deref(), Some("DE"), "{raw} takes the mention's country");
         }
+    }
+
+    /// Issue 328: a publisher label in front of the identifier comes off, and
+    /// what is left has to stand on its own.
+    ///
+    /// Every value here is a real prod row. The point of the test is the pairing:
+    /// the labelled form and the bare form must produce the SAME identifier, or
+    /// the 3,253 rows fragmented from their twin stay fragmented.
+    #[test]
+    fn a_label_prefix_resolves_to_the_same_identifier_as_the_bare_value() {
+        for (labelled, bare) in [
+            ("USTIDDE329214156", "DE329214156"),   // Die Autobahn GmbH des Bundes
+            ("USTIDNRDE811335517", "DE811335517"), // Regierung von Oberbayern
+            ("UMSATZSTEUERIDDE188369991", "DE188369991"), // TU Dresden
+            ("UMSATZSTEUERIDENTIFIKATIONSNUMMERDE198235088", "DE198235088"),
+            ("USTIDNRATU37675002", "ATU37675002"), // Austrian, label and all
+        ] {
+            let l = normalise_identifier(labelled, Some("DE")).expect(labelled);
+            let b = normalise_identifier(bare, Some("DE")).expect(bare);
+            assert_eq!(
+                (l.kind.as_str(), l.country.as_deref(), l.value.as_str()),
+                (b.kind.as_str(), b.country.as_deref(), b.value.as_str()),
+                "{labelled} must key exactly as {bare}"
+            );
+        }
+    }
+
+    /// THE GUARD: the strip is only allowed to win when its remainder
+    /// classifies, and these are the prod shapes where it must not.
+    ///
+    /// **Every value here has realistic digits, and that is not decoration.**
+    /// The first draft of this test used `…123456789` and `…12345678`, which the
+    /// v2 gate condemns as ascending runs — so the assertions were reading the
+    /// GATE's verdict rather than the strip's. Issue 325's own test carries a
+    /// note about exactly this trap and I walked into it again one file over.
+    #[test]
+    fn a_label_whose_remainder_is_not_an_identifier_is_left_alone() {
+        // Three prod rows carry the field name and nothing else. No number
+        // anywhere, so there is nothing to recover and nothing to invent.
+        assert_eq!(normalise_identifier("UMSATZSTEUERIDENTIFIKATIONSNUMMER", Some("DE")), None);
+        // A label followed by letters is not a labelled identifier either.
+        assert_eq!(normalise_identifier("USTIDXYZ", Some("DE")), None);
+        // And a value with no label is untouched by any of this.
+        let plain = normalise_identifier("DE811335517", Some("DE")).expect("a VAT id");
+        assert_eq!((plain.kind.as_str(), plain.value.as_str()), ("vat", "DE811335517"));
+    }
+
+    /// The `HANDELSREGISTER` entry is currently INERT, and that is worth pinning
+    /// so nobody "fixes" it into working.
+    ///
+    /// `HANDELSREGISTERHRB12345` strips to `HRB12345` — correct, `HRB` is the
+    /// register division and must survive — but the v2 gate condemns `HRB…`
+    /// values on their own account, so both forms return `None` and the 96
+    /// affected rows are unchanged either way. The strip is right and the class
+    /// is simply out of reach until the gate's view of `HRB` changes.
+    #[test]
+    fn the_handelsregister_strip_is_correct_and_currently_inert() {
+        assert_eq!(
+            crate::countries::label_prefix_stripped("HANDELSREGISTERHRB12345"),
+            Some("HRB12345"),
+            "the field name comes off and the register division stays"
+        );
+        assert_eq!(normalise_identifier("HANDELSREGISTERHRB12345", Some("DE")), None);
+        assert_eq!(
+            normalise_identifier("HRB12345", Some("DE")),
+            None,
+            "…because the bare form is refused too — the strip changes nothing here"
+        );
     }
 
     /// Issue 325: a word whose first two letters spell a VAT country must not

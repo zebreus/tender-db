@@ -479,3 +479,141 @@ mod cluster_filters {
         }
     }
 }
+
+/// Label text some publishers write in FRONT of the identifier (issue 328).
+///
+/// `USTIDDE329214156` is `USt-IdNr. DE329214156` — a perfectly good German VAT
+/// number with its own field name glued on. 5,766 rows carry one of these, and
+/// **3,253 of them have a partner row already standing under the bare value**,
+/// so the class is not cosmetic: it splits an organization from its own
+/// correctly-formed twin.
+///
+/// **Read off the corpus, longest first, and the order is load-bearing** —
+/// `USTIDNR` must be tried before `USTID`, and
+/// `UMSATZSTEUERIDENTIFIKATIONSNUMMER` before `UMSATZSTEUERID`, or the longer
+/// label leaves a fragment behind. [`label_prefixes_are_longest_first`] asserts
+/// the ordering rather than trusting it.
+///
+/// **`HRB` and `HRA` are deliberately absent.** `HANDELSREGISTERHRB…` strips to
+/// `HRB…` and stops there: `HANDELSREGISTER` is a field name, `HRB` is the
+/// register division and carries meaning. The census separates them; a guess
+/// would have taken both.
+const LABEL_PREFIXES: &[&str] = &[
+    "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUMSATZSTEUERGESETZ",
+    "UMSATZSTEUERIDENTIFIKATIONSNUMMERGEM27AUSTG",
+    "UMSATZSTEUERIDENTIFIKATIONSNUMMER",
+    "USTIDENTIFIKATIONSNUMMER",
+    "UMSATZSTEUERIDENTNUMMER",
+    "HANDELSREGISTERNUMMER",
+    "UMSATZSTEUERIDENTNR",
+    "UMSATZSTEUERGESETZ",
+    "UMSATZSTEUERIDNR",
+    "HANDELSREGISTER",
+    "USTIDENTNUMMER",
+    "UMSATZSTEUERNR",
+    "UMSATZSTEUERID",
+    "STEUERNUMMER",
+    "USTIDNUMMER",
+    "USTIDNRUID",
+    "USTIDENTNR",
+    "USTIDNR",
+    "USTID",
+    "IDNR",
+    "STNR",
+];
+
+/// `value` with one leading publisher label removed, or `None` when it carries
+/// none.
+///
+/// **Removing the label is only half the job — the caller MUST re-validate.**
+/// Three rows carry `UMSATZSTEUERIDENTIFIKATIONSNUMMER` and nothing else: the
+/// field name alone, no number anywhere. Stripping that leaves the empty string,
+/// and a strip that does not check its own remainder would go on to invent an
+/// identifier out of whatever fragment survived. `USTIDNRUIDDE…` is the same
+/// hazard one level up — strip the wrong entry and `UIDDE…` looks plausible
+/// without being anything.
+///
+/// So this returns the REMAINDER and makes no claim about it. Issue 325's
+/// suffix work needed no such guard because a scheme label at the back sits
+/// behind a value that already parsed; a label at the front hides the value
+/// entirely until it is gone.
+pub fn label_prefix_stripped(value: &str) -> Option<&str> {
+    // The LONGEST matching label is the right reading of the string, and it is
+    // chosen BEFORE the remainder is judged. Doing it the other way — taking the
+    // first entry that leaves something non-empty — falls through from a longer
+    // label to a shorter one and manufactures a fragment: the first draft of
+    // this function turned the bare field name
+    // `UMSATZSTEUERIDENTIFIKATIONSNUMMER` into the identifier
+    // `ENTIFIKATIONSNUMMER`, by matching `UMSATZSTEUERID` after the exact entry
+    // left nothing. Its own test caught it.
+    let label = LABEL_PREFIXES.iter().find(|p| value.starts_with(**p))?;
+    let rest = &value[label.len()..];
+    // A label with nothing after it is a field name, not an identifier.
+    (!rest.is_empty()).then_some(rest)
+}
+
+#[cfg(test)]
+mod label_prefixes {
+    use super::*;
+
+    /// The ordering is the whole correctness argument for a longest-match table,
+    /// so it is asserted rather than maintained by care.
+    #[test]
+    fn label_prefixes_are_longest_first() {
+        for pair in LABEL_PREFIXES.windows(2) {
+            assert!(
+                pair[0].len() >= pair[1].len(),
+                "{} must not precede the longer {}",
+                pair[0],
+                pair[1]
+            );
+        }
+    }
+
+    /// Real prod values, and what each must leave behind.
+    #[test]
+    fn the_label_comes_off_and_the_identifier_survives() {
+        for (raw, want) in [
+            ("USTIDDE329214156", "DE329214156"),     // Die Autobahn GmbH des Bundes
+            ("USTIDNRDE811335517", "DE811335517"),   // Regierung von Oberbayern
+            ("UMSATZSTEUERIDDE188369991", "DE188369991"), // TU Dresden
+            ("UMSATZSTEUERIDENTIFIKATIONSNUMMERDE198235088", "DE198235088"),
+            ("UMSATZSTEUERIDENTNRDE111111111", "DE111111111"),
+            // NOT German: the label is country-agnostic and `ATU` is Austria's
+            // own VAT prefix, which must survive intact.
+            ("USTIDNRATU37675002", "ATU37675002"),
+            ("USTIDATU37675002", "ATU37675002"),
+            // The field name is the label; the register division is not.
+            ("HANDELSREGISTERHRB12345", "HRB12345"),
+            ("HANDELSREGISTERNUMMERHRB12345", "HRB12345"),
+            ("STEUERNUMMER12345678", "12345678"),
+            ("STNRDE123456789", "DE123456789"),
+        ] {
+            assert_eq!(label_prefix_stripped(raw), Some(want), "{raw}");
+        }
+    }
+
+    /// A LABEL WITH NO NUMBER IS NOT AN IDENTIFIER. Three prod rows carry the
+    /// field name alone.
+    #[test]
+    fn a_bare_label_strips_to_nothing_and_is_refused() {
+        assert_eq!(label_prefix_stripped("UMSATZSTEUERIDENTIFIKATIONSNUMMER"), None);
+        assert_eq!(label_prefix_stripped("USTID"), None);
+        assert_eq!(label_prefix_stripped("STNR"), None);
+    }
+
+    /// And the remainder is returned WITHOUT a claim, which is the contract the
+    /// caller's re-validation rests on. `USTIDNRDEDE…` (three prod rows, a
+    /// doubled country code) and `USTIDNRUIDDE…` both strip to something
+    /// malformed, and it is the classifier downstream — not this function —
+    /// that must refuse them.
+    #[test]
+    fn a_malformed_remainder_is_returned_not_judged() {
+        assert_eq!(label_prefix_stripped("USTIDNRDEDE123456789"), Some("DEDE123456789"));
+        // The longest match wins, so the nested-label row resolves cleanly…
+        assert_eq!(label_prefix_stripped("USTIDNRUIDDE123456789"), Some("DE123456789"));
+        // …and something carrying no label at all is left entirely alone.
+        assert_eq!(label_prefix_stripped("DE329214156"), None);
+        assert_eq!(label_prefix_stripped("HRB12345"), None);
+    }
+}
