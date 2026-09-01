@@ -458,8 +458,22 @@ mod tests {
         assert_eq!(key(Some("CZ"), "vat", "CZ699000797"), None);
         // ES UTE NIFs are ephemeral per-procedure constructs.
         assert_eq!(key(Some("ES"), "national", "U12345678"), None);
-        // DE has no cross-walk at all — court-scoped registers.
+        // DE has no cross-walk at all, and the two halves are refused for
+        // DIFFERENT reasons — stated separately because "court-scoped
+        // registers" is an argument about HRB that says nothing about VAT, and
+        // reading it as covering both is what re-opened this once (issue 329).
+        //
+        // VAT: German public bodies share a Land-level VAT registration.
+        // MEASURED, issue 329 job 568: of the 3,215 standing duplicate
+        // (DE, vat, DEnnnnnnnnn) triples, 559 (17.4%) hold names that disagree
+        // outright, and reading them shows the class is governmental —
+        // DE811335517 is held by the Regierung von Oberbayern, the Regierung
+        // von Mittelfranken and two Vergabekammern, over 25,018 mentions. An
+        // identifier-only arm would merge distinct public authorities, and
+        // would do it hardest where it moved the most corpus.
         assert_eq!(key(Some("DE"), "vat", "DE136695976"), None);
+        // NATIONAL: HRB numbers are scoped to the issuing court, so the same
+        // string names different companies in different registers.
         assert_eq!(key(Some("DE"), "national", "HRB 12345"), None);
         // EE VAT and registrikood are separate series.
         assert_eq!(key(Some("EE"), "vat", "EE100931558"), None);

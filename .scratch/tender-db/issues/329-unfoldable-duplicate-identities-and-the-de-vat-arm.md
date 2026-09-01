@@ -1,6 +1,8 @@
 # 329 — Unfoldable duplicate identities, and whether `canonical_key` should get a DE:vat arm
 
-Status: NEEDS-TRIAGE 2026-09-01 — census BUILT, not yet run on prod.
+Status: MEASURED AND DECIDED 2026-09-01 (job 568, `b7f1a8f`, 2 s).
+**The answer is NO: `canonical_key` must NOT get a blanket DE:vat arm.** The
+residual opportunity is a corroborated arm, filed as its own proposal below.
 Kind: measurement / identity semantics (organization layer)
 Relates to: 328 (which created the visible duplicates and whose wrong claim
 opened this), 300 Stage 2 (R2, the arm that would consume any new key), 316 (the
@@ -154,3 +156,107 @@ Two process notes worth keeping:
 * **The first feed still lied**, because it ticked every 5,000 groups and the
   class is a few thousand — so the phase line sat on the previous pass's message
   for the whole classification loop. Now every 500, and per chunk in pass 2.
+
+## The measurement (job 568, `b7f1a8f`, 2 seconds)
+
+| | |
+| --- | --- |
+| organizations walked | 1,118,068 |
+| distinct `(country, kind, identifier)` triples | 1,114,221 |
+| triples held by >1 org row | **3,458** (covering 7,305 rows) |
+| …keyed by `canonical_key` (R2 already sees them) | 8 |
+| …**unkeyed — no arm can reach them** | **3,450** |
+| name keys absent from `org_match_keys` | **0** ⇒ the agree/generic split is trustworthy |
+
+`DE:vat` is 3,215 of the 3,450 — **93% of the whole unreachable class**. The
+next-largest scopes are `LT:national` 101 and `DE:national` 77; the remaining
+thirty-odd scopes are 1–9 groups each and not worth an arm.
+
+### DE:vat name verdicts (3,215 groups)
+
+| verdict | groups | share |
+| --- | --- | --- |
+| `agree-distinctive` | 1,780 | 55.4% |
+| `agree-generic` | 329 | 10.2% |
+| `contained` | 547 | 17.0% |
+| **`disagree`** | **559** | **17.4%** |
+| `unnamed` | 0 | — |
+
+## THE DECISION: no blanket DE:vat arm — and the reason is not the one expected
+
+17.4% disagreement would be disqualifying on its own. But reading the actual
+values (rather than the counts) changes the *reason*, and the reason matters for
+what to do next. **The `disagree` bucket is not mostly Organschaft. It is German
+public bodies sharing a Land-level VAT registration.**
+
+```
+DE811335517  8 rows, 25,018 mentions
+  Regierung von Oberbayern
+  Regierung von Oberbayern, Vergabekammer Südbayern
+  Vergabekammer Nordbayern bei der Regierung von Mittelfranken
+  Regierung von Mittelfranken - Vergabekammer Nordbayern
+
+DE812056745  5 rows, 19,276 mentions
+  Vergabekammer des Landes Hessen beim Regierungspräsidium Darmstadt
+  Regierungspräsidium Darmstadt
+
+DE143845578  4 rows, 60 mentions
+  Verkehrsverbund Rhein-Neckar GmbH (VRN)
+  Friedrich Müller Omnibusunternehmen GmbH        ← unrelated companies
+```
+
+Two things make this decisive:
+
+1. **These are distinct authorities**, not one entity fragmented. Oberbayern and
+   Mittelfranken are different Bavarian governments; a Vergabekammer is a
+   different body from the Regierung that hosts it. Folding them destroys real
+   distinctions in exactly the layer the org matcher exists to sharpen.
+2. **The blast radius is concentrated in the wrong bucket.** The disagreeing
+   groups carry the largest mention counts in the class — 25,018 / 19,276 /
+   18,295 — while the clean `agree-distinctive` specimens carry 25–428. A
+   blanket arm would be most wrong exactly where it moved the most corpus.
+
+So the pinned negative in `crosswalk::canonical_key` is **right for VAT too**,
+but for a different reason than the one it states. Its comment says *court-scoped
+registers*, which is an argument about `HRB`. The argument for VAT is **shared
+public-sector VAT registration**. Worth adding to that comment so the next reader
+does not re-open this on the grounds that the stated reason does not apply.
+
+## `contained` stays undecided, and there is now a specimen proving it
+
+```
+DE129274202   Siemens AG / Siemens AG Smart Infrastructure          ← a division; foldable
+DE266749428   Karlsruher Institut für Technologie (KIT) / …ohne (KIT) ← foldable
+DE158840613   Prospitalia GmbH / Vertragseinrichtungen der Prospitalia GmbH, Ulm
+```
+
+The last one is the live counter-example: *Vertragseinrichtungen der Prospitalia*
+is the set of **client institutions contracted to** Prospitalia, not Prospitalia.
+Containment cannot separate that from a branch office, which is what the bucket's
+existence asserts. Confirmed by data rather than by argument.
+
+## A caveat on `agree-generic`, recorded so nobody over-reads it
+
+`STOPLIST_CAP` is 20, and the carrier count is taken over `org_match_keys` —
+which contains a row per **org row**, duplicates included. So the very
+fragmentation this census measures inflates carrier counts and pushes some real,
+distinctive names into `agree-generic` (`DE115302781 — H. Hüther GmbH` is one:
+not a generic name by any reading). **`agree-generic` is therefore an
+over-count**, and `agree-distinctive` a slight under-count. It does not change
+the decision — the decision rests on `disagree` — but a later corroborated arm
+must not treat `agree-generic` as a refusal without re-deriving it.
+
+## Next: a corroborated arm, not a `canonical_key` arm
+
+The 1,780 `agree-distinctive` DE:vat groups are a real opportunity and the
+specimens read clean (`Badegärten Eibenstock GmbH`, `Perfekt Bodenbau GmbH`,
+`HEUSSEN Rechtsanwaltsgesellschaft mbH`, `grbv Ingenieure im Bauwesen GmbH & Co.
+KG` under two capitalisations). But they cannot be reached through
+`canonical_key`, which is identifier-only by design — and that design is what
+keeps R2 honest.
+
+The shape that fits is **R3's**: unique anchor + standing target + exact name
+corroboration + generic-name denial. That is a separate proposal with its own
+dry-plan/review/parity ladder, and it must carry a public-body veto, because the
+`disagree` reading shows the failure mode is governmental rather than corporate.
+Not started; filed here rather than begun, so the board stays the record.
