@@ -1,8 +1,9 @@
 # 333 — `anchor_wall_census` truncates a key run that fills a whole page
 
 Status: FIXED 2026-09-01 — grouped walk landed, regression test in place.
-Pre-change prod baseline recorded below and compared after, so the fix is shown
-not to have moved a live number.
+**CORRECTION: the defect was LIVE, not latent as this issue first claimed.** The
+before/after comparison caught it: `generic_orgs` was undercounting by 61,064
+(1.2%). See "The baseline comparison" below.
 Kind: correctness (read-path measurement)
 Relates to: 318 (which added the census), 300 Stage 4 (the E3 scan, which gets
 this right and is the model), 332 (whose own test found the pattern)
@@ -95,3 +96,49 @@ generic_orgs  = 5,204,927     anchored_hard =  6,227
 
 `anchored_soft = 9,582` is the figure issue 318 acted on, so it is the one that
 matters most. Compared against a fresh run after the fix.
+
+## The baseline comparison — and it corrects this issue's own claim
+
+| field | before | after | delta |
+| --- | --- | --- | --- |
+| `keys_walked` | 3,481,572 | 3,481,572 | 0 |
+| `generic_keys` | 55,312 | 55,312 | 0 |
+| **`generic_orgs`** | **5,204,927** | **5,265,991** | **+61,064** |
+| `probed` | 3,553,602 | 3,553,602 | 0 |
+| `anchored` | 15,809 | 15,809 | 0 |
+| `anchored_hard` | 6,227 | 6,225 | −2 |
+| `anchored_soft` | 9,582 | 9,584 | +2 |
+| `soft_slots` | 10,109 | 10,111 | +2 |
+
+### I was wrong that this was latent
+
+This issue said "it cannot bite today — the widest n2 key measured on prod is
+`siemens §ag` at 1,238 carriers, far under 20,000". **That figure was from the
+wrong population.** 1,238 was the widest key among those issue 331's census
+looked at — keys that gain savings from duplicate collapse. Issue 332's census, run
+an hour earlier, had already listed the widest key in the corpus outright:
+
+```
+carriers=62084   avenue web systèmes
+```
+
+62,084 is three times the page size. So the old walk counted that key as roughly
+one page and dropped the rest, and `generic_orgs` — a published number — was
+**undercounting by 61,064**. I had the disproof in the report I had just read, and
+conflated two populations to reach the comfortable answer.
+
+The lesson is the one this session keeps re-learning in different clothes: the
+number that refutes a claim is often already on screen, and "measured" has to mean
+*measured on the population the claim is about*.
+
+### What did NOT move, which is the reassuring half
+
+`anchored`, `probed`, `keys_walked` and `generic_keys` are identical. `probed` is
+bounded by `per_group` (200 per key), so a key going from 20,000 to 62,084
+carriers changes no probe — which is exactly why the undercount was invisible in
+every other field and why it never corrupted a *conclusion*, only a count.
+
+`anchored_hard` −2 / `anchored_soft` +2 with `anchored` unchanged is two orgs whose
+identifier changed scheme classification, not an effect of this fix: issues 325 and
+328 moved thousands of rows from `national` to `vat` since the last anchor-wall
+run. **`anchored_soft` 9,582 → 9,584 means issue 318's decision stands unchanged.**
