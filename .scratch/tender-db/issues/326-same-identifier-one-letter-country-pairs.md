@@ -1,9 +1,13 @@
 # 326 — Same identifier, country codes one letter apart: a typo class the review campaign is deciding by hand
 
-Status: OPEN — census re-cut by cluster and run corpus-wide (`72fb9d4`, job 543).
-The bottleneck turns out NOT to be the survivor rule: 430 of 536 candidate
-clusters are undecidable only because the checksum vocabulary has no arm for
-their country. Next step is the vocabulary, not the rule.
+Status: DONE 2026-09-01 — census re-cut by cluster, BG/LT/SK evidence arms added,
+survivor rule built and tightened, 312 rows moved (`105c519`, job 550) and the
+200 resulting merge groups folded (`8c8175f`, job 553). The residue is deliberate
+and named below: 153 clusters still `nobody-asked` (DE 32 and ES 23 of those
+permanently — German register numbers carry no checksum and a Spanish CIF has a
+letter), 36 clusters still multi-country because their stranger codes carry no
+evidence of a slip, and 102 duplicate identities inside the 629 groups R2's
+consortium and legal-form guards deliberately refuse.
 Kind: data-quality / correctness (organization layer)
 Relates to: 314 (the campaign that surfaced it), 325 (the other rule-shaped
 class in the same cohort — zero overlap), 319 (country normalization)
