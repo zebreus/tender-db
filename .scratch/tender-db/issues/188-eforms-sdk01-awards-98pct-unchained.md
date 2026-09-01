@@ -124,3 +124,62 @@ Inspect the parse layer of a handful of sdk-1.0 notices for `BT-04-notice`
 presence — a bounded read. If the field is there and unextracted, it is ours; if
 it is absent from the XML, sdk-1.0 joins sdk-0.1 as honest and the panel should
 say so for both.
+
+### Investigated further (2026-09-01, bounded `/v1/sql` reads) — two obvious hypotheses killed
+
+**Hypothesis 1: sdk-1.0 notices lack BT-04, like sdk-0.1. FALSE.**
+
+```
+sdk-1.0 notices                      3,518
+…carrying BT-04-notice in the parse layer   3,507   (99.7%)
+```
+
+The key is published, parsed and stored for essentially every sdk-1.0 notice. The
+inventory evidence above already suggested this; the corpus confirms it.
+
+**Hypothesis 2: then "unchained" must mean the key fails to link. ALSO FALSE — I
+had the wrong definition.** `Db::award_linkage` is:
+
+```sql
+SUM(CASE WHEN NOT EXISTS(
+      SELECT 1 FROM tender_versions tv WHERE tv.tender_id = v1.tender_id AND tv.seq > 1
+    ) THEN 1 ELSE 0 END) AS unchained
+```
+
+So **unchained = the tender has exactly ONE version**. It is not a statement about
+keys at all: it says no later notice ever amended the tender this award created.
+Everything above about BT-04 was answering a question the metric does not ask.
+
+**And chaining demonstrably works in this era:**
+
+```
+BT-04 rows on sdk-1.0 notices        3,507
+distinct procedures among them       2,979
+```
+
+~528 sdk-1.0 notices share a procedure with another sdk-1.0 notice. The mechanism
+is alive here.
+
+### What is actually established, and what is left
+
+**Established:** sdk-1.0 publishes BT-04, we parse it, and sdk-1.0 notices do
+group into shared procedures. The 99.72% is therefore **not** sdk-0.1's
+"no folder key" story, and **not** a parse failure.
+
+**Left open:** why the *award-bearing* tenders specifically are single-version.
+713 award tenders sit inside 2,979 procedures, so the procedure-sharing that
+happens in this era is evidently concentrated among the non-award notices. The
+reading that fits — and is NOT yet tested — is that an sdk-1.0 award notice's
+procedure key does not appear on any *earlier* notice, so the award creates the
+tender at `seq = 1` rather than amending one.
+
+**Next step, sharply:** take the BT-04 values of sdk-1.0 notices that produced an
+award-bearing tender, and ask whether those same values appear on any other
+notice, of any profile. If they do not, sdk-1.0's awards are structurally
+first-contact and the number is honest — a third distinct reason, alongside
+sdk-0.1's missing key and the modern eras' partial chaining. If they do, the merge
+is failing and that is ours.
+
+**Method note, recorded because it cost two wrong turns:** read what a metric
+computes before explaining why it is high. Both hypotheses above were about keys;
+the metric counts tender versions.
