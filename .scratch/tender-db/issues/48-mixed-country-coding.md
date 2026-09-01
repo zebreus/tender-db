@@ -1,11 +1,10 @@
 # 48 — Country codes stored mixed alpha-2 / alpha-3; documented filter hangs
 
-Status: MOSTLY-RESOLVED, RESIDUAL OPEN (2026-08-15 — materialised by the full rebuild: 22,518,877 org
-countries now alpha-2 (length 2), i.e. the EU/EEA corpus converged (DEU→DE, UK→GB, EL→GR all gone).
-RESIDUAL: 2,168 length-3 + 151 length-10 org countries survive — non-EU alpha-3 codes (EGY, TUN, GEO,
-JOR, ARE, MCO, ARM, MAR, SGP, ZAF, KEN, AGO, ZMB…) and full names (LUXEMBOURG). `canonical_country`'s
-ALPHA3_TO_ALPHA2 map only covers EU/EEA, so non-EU alpha-3 passes through, and full names are not
-handled at all. 0.01% of orgs, all foreign entities — low value but real. See "Residual" below.)
+Status: RESOLVED 2026-09-01 — re-measured, and the residual this line used to
+claim is gone. Both halves of the original complaint verified fixed; a 162-row
+deliberate residual is documented below with a per-value reason. The previous
+Status ("RESIDUAL: 2,168 length-3 + 151 length-10") was a 2026-08-15 reading that
+the issue-319 fold has since superseded — it sat stale on the board for two weeks.
 Was: FIXED-IN-CODE, PENDING-REFOLD.
 Severity: MEDIUM (data quality + a hanging documented filter)
 
@@ -79,3 +78,63 @@ generation (webhooks handle it via issue 178's reset; poll/SSE re-snapshot). ~6-
 Health stays green through clear_canonical (issue-133 presence detector skips heavy
 writes). Verify on completion: internal-ojs award-unchained ratio drops from 1.000;
 German HRB orgs read country DE not HR; DEU/DE/UK country codes converged to alpha-2.
+
+## Re-measured 2026-09-01 (job 578, dry) — the storage half is complete
+
+```
+fold-org-countries DRY: 247 distinct country values, 0 to fold over 0 rows,
+                        0 collisions
+```
+
+**Nothing left to fold.** The issue-319 wet fold (1,345 rows over 396 values)
+finished the job, and this issue's Status had simply not been updated since the
+pre-fold reading.
+
+### The residual is 162 rows, and every one is deliberate
+
+| value | rows | why it stays |
+| --- | --- | --- |
+| `1A` | 142 | Not ISO 3166 at all. A placeholder in the source. Mapping it needs evidence of what the publisher meant, which we do not have. |
+| `AN` | 15 | **Retired** ISO alpha-2 — Netherlands Antilles, dissolved 2010 into BQ / CW / SX. Picking a successor would invent information the notice never carried. |
+| `1A0` | 3 | Not ISO. Same as `1A`. |
+| `XI` | 2 | The EU **VAT** country code for Northern Ireland. The ISO country is `GB`, but folding `XI` → `GB` erases a distinction the publisher deliberately encoded. |
+
+Plus two values the fold **skips on purpose** and always will:
+`EL` (2 rows) and `UK` (1 row) — VAT-scope prefixes the resolver binds on, so
+folding them would break binds. That was issue 319's decision, not a gap.
+
+162 rows out of 12,588,066 is 0.0013%. More to the point, **there is no correct
+mapping to apply** — each is non-ISO, retired, or a different kind of code
+entirely. A repair here would be a guess wearing a normalisation's clothes.
+
+## The user-visible half, verified against the live API
+
+The original complaint had two parts, and the storage fold only addresses one.
+Checked directly rather than assumed:
+
+```
+GET /v1/tenders?country=DEU&limit=1  ->  200 in 1.76s, 0 items
+GET /v1/tenders?country=DE&limit=1   ->  200 in 1.05s, 1 item
+/docs                                ->  "country level NUTS is ISO-3166"
+```
+
+* **The 30s+ hang is gone.** `?country=DEU` answers in under two seconds.
+* **The docs no longer document alpha-3.** They say ISO-3166.
+
+Both halves of the filed complaint are fixed. Closing.
+
+## One thing noticed while verifying, filed separately as 336
+
+`?country=DEU` and `?country=ZZ` both return `200`, zero items, and an **empty
+`ignored_filters`** — so a caller cannot tell "no tenders in that country" from
+"that code can never match anything we store". Anyone still following the old
+alpha-3 habit this issue was about gets a plausible-looking empty answer.
+
+**`ignored_filters` is NOT the fix**, and that is worth saying here so nobody
+reaches for it: its contract (`Collection::honoured_params`) is that it names
+request *parameters the collection does not honour at all* — and `country` is
+honoured by Tenders, so the filter genuinely applied. `honoured_params_match_the_emitted_sql`
+enforces that invariant by byte-comparing emitted SQL. Putting an unmatchable
+*value* in that list would make it lie about what applied.
+
+Filed as **336** as a distinct UX question, not folded in here.
