@@ -260,3 +260,12 @@ arguments on both sides:
 
 That is a measurement, not a judgement call to make from the armchair: count how
 many of the 3,215 have DISAGREEING names, which is the Organschaft signature.
+
+### The open question is now issue 329
+
+Filed 2026-09-01 as **329 — Unfoldable duplicate identities, and whether
+`canonical_key` should get a DE:vat arm**, with the `duplicate-identity-census`
+job built to answer it. Read that issue rather than re-deriving the question
+here: the measurement it runs is corpus-wide over every `(country, kind)` scope
+with no cross-walk arm, not DE-only, and it records why `contained` is an
+undecided bucket rather than a licence to fold.

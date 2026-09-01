@@ -370,6 +370,10 @@ enum Spec {
     /// Issue 326 step 1 re-cut: the same class grouped by IDENTIFIER, with the
     /// one-letter test demoted to a corruption filter. Read-only.
     CountryClusterCensus,
+    /// Issue 328 follow-on: standing duplicate `(country, kind, identifier)`
+    /// triples, split by whether `canonical_key` can see them and — where it
+    /// cannot — by whether the member names agree. Read-only measurement.
+    DuplicateIdentityCensus,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1174,6 +1178,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "duplicate-identity-census" => Ok(vec![
+                self.push(
+                    "duplicate-identity-census",
+                    "duplicate-identity-census".into(),
+                    Spec::DuplicateIdentityCensus,
+                )
+                .await,
+            ]),
             "country-typo-census" => Ok(vec![
                 self.push(
                     "country-typo-census",
@@ -1590,6 +1602,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "xb-packet",
     "country-typo-census",
     "country-cluster-census",
+    "duplicate-identity-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -4994,6 +5007,128 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
+            Spec::DuplicateIdentityCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 328 follow-on: grouping standing identities".to_owned(),
+                );
+                const CAP: usize = 400;
+                let r = self
+                    .db
+                    .duplicate_identity_census(
+                        // The DECISION probe, deliberately: the question is what
+                        // the merge arms can actually see, so it has to be the
+                        // same function they key on — not the census-only
+                        // evidence table, which would report groups as reachable
+                        // that R2 will never plan.
+                        ingest::crosswalk::canonical_key_flat,
+                        ingest::crosswalk::n3_key,
+                        SCAN_STOPLIST_CAP,
+                        CAP,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("duplicate-identity-census STOPPED by cancel — no report stored"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                let pct = |n: u64| -> u64 {
+                    if r.unkeyed_groups == 0 {
+                        0
+                    } else {
+                        n * 100 / r.unkeyed_groups
+                    }
+                };
+                let disagree = *r.verdicts.get("disagree").unwrap_or(&0);
+                let de_vat = |v: &str| -> u64 {
+                    *r.verdicts_by_scope.get(&format!("DE:vat/{v}")).unwrap_or(&0)
+                };
+                let body = serde_json::json!({
+                    "rows_walked": r.rows_walked,
+                    "triples": r.triples,
+                    "duplicate_groups": r.duplicate_groups,
+                    "duplicate_rows": r.duplicate_rows,
+                    "keyed_groups": r.keyed_groups,
+                    "unkeyed_groups": r.unkeyed_groups,
+                    // The output that chooses the next cross-walk arm.
+                    "unkeyed_by_scope": r.unkeyed_by_scope,
+                    "verdicts": r.verdicts,
+                    "verdicts_by_scope": r.verdicts_by_scope,
+                    // Read `agree-distinctive` with suspicion if this is not 0:
+                    // the genericness probe reads org_match_keys, so a stale or
+                    // unrun key-build makes every agreeing group look
+                    // distinctive.
+                    "name_keys_absent": r.name_keys_absent,
+                    "group_sizes": {
+                        "n": r.group_sizes.len(),
+                        "max": r.group_sizes.last().copied().unwrap_or(0),
+                        "p50": r.group_sizes
+                            .get(r.group_sizes.len().saturating_sub(1) / 2)
+                            .copied()
+                            .unwrap_or(0),
+                    },
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|c| serde_json::json!({
+                        "scope": c.scope,
+                        "identifier": c.identifier,
+                        "members": c.members,
+                        "mentions": c.mentions,
+                        "names": c.names,
+                        "name_keys": c.name_keys,
+                        "verdict": c.verdict,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("duplicate-identity-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "duplicate-identity-census (issue 328 follow-on): {} rows walked, {} \
+                     distinct (country, kind, identifier) triples. {} triple(s) are held by \
+                     MORE THAN ONE org row, covering {} rows. Of those, {} are keyed by \
+                     canonical_key and are already inside the merge arms' field of view; {} \
+                     are NOT keyed and no arm can reach them. Unkeyed by scope: {}. Name \
+                     verdicts over the unkeyed groups: {} ({}% disagree). DE:vat specifically \
+                     — {} agree-distinctive, {} agree-generic, {} contained, {} disagree, {} \
+                     unnamed. `contained` is UNDECIDED and NOT a safe bucket: an Organschaft \
+                     subsidiary and a branch office are named the same way (parent name plus a \
+                     qualifier), so nothing in a name separates them. {} name key(s) were \
+                     absent from org_match_keys entirely, which is the number that says \
+                     whether the agree/generic split can be trusted at all. NOTHING IS \
+                     WRITTEN: this is the measurement the DE cross-walk decision was waiting \
+                     on, not the decision.",
+                    r.rows_walked,
+                    r.triples,
+                    r.duplicate_groups,
+                    r.duplicate_rows,
+                    r.keyed_groups,
+                    r.unkeyed_groups,
+                    r.unkeyed_by_scope
+                        .iter()
+                        .map(|(k, v)| format!("{k}={v}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    r.verdicts
+                        .iter()
+                        .map(|(k, v)| format!("{k}={v}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    pct(disagree),
+                    de_vat("agree-distinctive"),
+                    de_vat("agree-generic"),
+                    de_vat("contained"),
+                    de_vat("disagree"),
+                    de_vat("unnamed"),
+                    r.name_keys_absent,
+                ))
+            }
             Spec::CountryTypoCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -7945,6 +8080,7 @@ mod tests {
                 "xb-packet",
                 "country-typo-census",
                 "country-cluster-census",
+                "duplicate-identity-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"

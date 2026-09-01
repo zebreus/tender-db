@@ -2103,6 +2103,23 @@ pub(crate) const GENERIC_KEY_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
        WHERE key_kind = ? AND key = ? LIMIT ?)";
 
+/// Carriers of a NAME KEY, counted across both key kinds (issue 328 follow-on).
+///
+/// `key_kind IN ('n2','n3')` is not sloppiness — it is what the build's own
+/// dedup makes necessary. `build-org-match-keys` writes an `n3` row only
+/// `if k3 != k2`, so a name with no legal-form token (`Kreisverwaltung
+/// Ahrweiler`) has its N3 key stored under kind `n2` and nothing under `n3`.
+/// Probing `key_kind = 'n3'` alone reports those as ABSENT, which the
+/// duplicate-identity census would then read as an unusable genericness signal
+/// across most of the corpus.
+///
+/// The two kinds cannot be conflated: `n3_key` writes a `§family` marker for
+/// every legal-form token, so a key string containing `§` can only be an N3 key,
+/// and a string without one is an N2 key that equals its own N3 key.
+pub(crate) const NAME_KEY_CARRIERS_SQL: &str =
+    "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
+       WHERE key_kind IN ('n2','n3') AND key = ? LIMIT ?)";
+
 /// The issue-321 stale-key count. Same index, same reason, and this one is
 /// the standing record of getting it wrong: it was written `org_id = ? AND
 /// key = ?`, which turso answers with a full SCAN, and it ran once per
@@ -2376,6 +2393,90 @@ pub struct CountryClusterReport {
     /// picks a threshold from this distribution rather than guessing one.
     pub majority_share: Vec<u8>,
     pub rows: Vec<CountryCluster>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
+/// One standing duplicate identity: a `(country, kind, identifier)` triple held
+/// by more than one organization row (issue 328 follow-on).
+#[derive(Debug, Default, Clone)]
+pub struct DuplicateIdentity {
+    /// `"DE:vat"` — the scope this triple belongs to, so a reader can tell the
+    /// German cohort from the rest without re-deriving it.
+    pub scope: String,
+    pub identifier: String,
+    /// Organization rows holding it.
+    pub members: u64,
+    /// Mentions across all members, which is how much of the corpus a fold here
+    /// would actually move.
+    pub mentions: u64,
+    /// Distinct member names, capped for reading. THE evidence: this is what a
+    /// human reads to judge whether a fold is right.
+    pub names: Vec<String>,
+    /// Distinct N3 keys over those names — names with the legal-form family
+    /// abstracted away, so `Siemens AG` and `Siemens Aktiengesellschaft` are
+    /// one key rather than two.
+    pub name_keys: Vec<String>,
+    /// `agree-distinctive` | `agree-generic` | `contained` | `disagree` | `unnamed`.
+    pub verdict: &'static str,
+}
+
+/// What the duplicate-identity census found (issue 328 follow-on).
+///
+/// The question it exists to answer: the label-prefix repair left 3,215 exact
+/// duplicate `(DE, vat, DEnnnnnnnnn)` triples standing, and `canonical_key` has
+/// no German arm, so `match-org-identifiers --r2` will never see them. Adding
+/// one is only safe if those duplicates are the SAME organization fragmented —
+/// and a German VAT number can legitimately be shared across an *Organschaft*,
+/// a fiscal unity of legally distinct companies. Disagreeing names are that
+/// shape's signature, so this counts them rather than guessing.
+///
+/// It is deliberately not DE-specific. Every `(country, kind)` scope with no
+/// cross-walk arm has the same unfoldable-duplicate class, and naming them all
+/// picks the NEXT arm from the corpus instead of from whichever country came up
+/// in conversation — the same discipline `VAT_SUFFIXES` was chosen under.
+#[derive(Debug, Default, Clone)]
+pub struct DuplicateIdentityReport {
+    pub rows_walked: u64,
+    /// Distinct `(country, kind, identifier)` triples seen.
+    pub triples: u64,
+    /// …held by more than one organization row.
+    pub duplicate_groups: u64,
+    /// Organization rows inside those groups.
+    pub duplicate_rows: u64,
+    /// Duplicate groups `canonical_key` DOES key — R2 can already see these,
+    /// and any that stand are its denial stack's business, not this census's.
+    pub keyed_groups: u64,
+    /// Duplicate groups `canonical_key` returns `None` for. These are
+    /// structurally invisible to the merge arms: no key, no candidate, no plan.
+    pub unkeyed_groups: u64,
+    /// Unkeyed duplicate groups per `"<country>:<kind>"` scope, widest first
+    /// when read. The output that chooses the next cross-walk arm.
+    pub unkeyed_by_scope: std::collections::BTreeMap<String, u64>,
+    /// Name verdicts over the unkeyed groups, corpus-wide.
+    ///
+    /// `cap` bounds `rows`, never this tally — the split the issue-326 census
+    /// got wrong once (verdicts computed only over the carried widest-first
+    /// slice inverted two conclusions) and has got right since.
+    pub verdicts: std::collections::BTreeMap<String, u64>,
+    /// The same tally cut by scope: `"DE:vat/disagree"`. The headline number
+    /// this census was built to produce.
+    pub verdicts_by_scope: std::collections::BTreeMap<String, u64>,
+    /// Name keys probed for genericness that `org_match_keys` does not hold
+    /// under EITHER kind. NOT a curiosity: the probe reads that table, so if
+    /// the key-build is stale or unrun every `agree` group reads `distinctive`
+    /// and the census quietly overstates the fold signal. A non-zero value here
+    /// means read `agree-distinctive` with suspicion.
+    ///
+    /// The probe deliberately spans `n2` and `n3` — see
+    /// [`NAME_KEY_CARRIERS_SQL`]. Probing `n3` alone counted every name without
+    /// a legal-form token as absent, because the build writes an `n3` row only
+    /// when it differs from the `n2` one.
+    pub name_keys_absent: u64,
+    /// Sizes of ALL duplicate groups, keyed and unkeyed alike, sorted — for
+    /// reading a distribution rather than a mean.
+    pub group_sizes: Vec<u32>,
+    pub rows: Vec<DuplicateIdentity>,
     pub truncated: bool,
     pub stopped: bool,
 }
@@ -12540,6 +12641,231 @@ impl Db {
         Ok(report)
     }
 
+    /// The issue-328 follow-on measurement: standing duplicate identities, split
+    /// by whether `canonical_key` can see them, and — where it cannot — by
+    /// whether the member names agree.
+    ///
+    /// Reads [`DuplicateIdentityReport`] for why this is a measurement and not a
+    /// merge. The classifier, the key function and the stoplist cap are all
+    /// INJECTED rather than restated: `store` cannot depend on `ingest`, and a
+    /// second copy of `canonical_key`'s answer here would be a second thing to
+    /// keep true.
+    pub async fn duplicate_identity_census(
+        &self,
+        key: fn(Option<&str>, &str, &str) -> Option<(&'static str, String, bool)>,
+        n3: fn(&str) -> String,
+        stoplist_cap: usize,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<DuplicateIdentityReport> {
+        let mut report = DuplicateIdentityReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: `(country, kind, identifier)` -> the org ids holding it. The
+        // ids are carried for the same reason the issue-326 census carries
+        // them: no index leads with `identifier`, so pass 2 has to reach the
+        // details by PRIMARY KEY or it is a full scan per group.
+        //
+        // PROVISIONAL ROWS ARE INCLUDED, deliberately: the R2 arm walks
+        // `identifier IS NOT NULL` with no provisional filter (it reads the
+        // column only to pick which side keeps), so excluding them here would
+        // report a smaller unreachable class than the one that actually exists.
+        let mut seen: std::collections::HashMap<(String, String, String), Vec<i64>> =
+            Default::default();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL AND country IS NOT NULL \
+                        AND identifier_kind IS NOT NULL \
+                      ORDER BY id LIMIT 100000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                report.rows_walked += 1;
+                seen.entry((text(&row, 1), text(&row, 2), text(&row, 3))).or_default().push(after);
+            }
+            if page == 0 {
+                break;
+            }
+        }
+        report.triples = seen.len() as u64;
+
+        // The duplicate set, and the split that matters: keyed groups are
+        // already inside R2's field of view, so whatever stands there is its
+        // denial stack talking. Unkeyed groups are the ones no arm can reach.
+        let mut unkeyed: Vec<((String, String, String), Vec<i64>)> = Vec::new();
+        for (triple, ids) in seen.into_iter() {
+            if ids.len() < 2 {
+                continue;
+            }
+            report.duplicate_groups += 1;
+            report.duplicate_rows += ids.len() as u64;
+            report.group_sizes.push(ids.len() as u32);
+            let (country, kind, identifier) = &triple;
+            if key(Some(country.as_str()), kind.as_str(), identifier.as_str()).is_some() {
+                report.keyed_groups += 1;
+                continue;
+            }
+            report.unkeyed_groups += 1;
+            *report.unkeyed_by_scope.entry(format!("{country}:{kind}")).or_default() += 1;
+            unkeyed.push((triple, ids));
+        }
+        report.group_sizes.sort_unstable();
+        // Widest first, so a cap keeps the groups a reader learns most from.
+        // It bounds `rows` ONLY — every verdict below is tallied corpus-wide.
+        unkeyed.sort_by(|a, b| {
+            b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0))
+        });
+
+        // Pass 2: names and mention counts for EVERY unkeyed group, by PK.
+        let all_ids: Vec<i64> = unkeyed.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
+        let mut detail: std::collections::HashMap<i64, (String, u64)> = Default::default();
+        for chunk in all_ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT o.id, o.name, \
+                        (SELECT COUNT(*) FROM organization_mentions m \
+                          WHERE m.organization_id = o.id) \
+                   FROM organizations o WHERE o.id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                detail.insert(int(&r, 0), (text(&r, 1), int(&r, 2).max(0) as u64));
+            }
+        }
+
+        // The genericness probe is memoized by key: `org_match_keys` is indexed
+        // on `(key_kind, key)` so each miss is a seek, but the DE cohort alone
+        // is thousands of groups and the same municipal key recurs across them.
+        let mut generic_memo: std::collections::HashMap<String, (bool, bool)> = Default::default();
+
+        for (triple, ids) in unkeyed.into_iter() {
+            if stop() {
+                return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
+            }
+            let (country, kind, identifier) = triple;
+            let scope = format!("{country}:{kind}");
+            let mut names: Vec<String> = Vec::new();
+            let mut mentions = 0u64;
+            for id in &ids {
+                let Some((name, m)) = detail.get(id) else { continue };
+                mentions += m;
+                let trimmed = name.trim();
+                if !trimmed.is_empty() && !names.iter().any(|n| n == trimmed) {
+                    names.push(trimmed.to_owned());
+                }
+            }
+            let mut name_keys: Vec<String> = Vec::new();
+            for name in &names {
+                let k = n3(name);
+                if !k.is_empty() && !name_keys.contains(&k) {
+                    name_keys.push(k);
+                }
+            }
+
+            let verdict = if name_keys.len() < 2 {
+                match name_keys.first() {
+                    // One name, or several spellings of one name. The clean
+                    // fold signal — unless the name is one nobody chose to make
+                    // unique, which is issue 316's whole point.
+                    Some(k) => {
+                        let (generic, absent) = match generic_memo.get(k) {
+                            Some(hit) => *hit,
+                            None => {
+                                // THE READER THIS CENSUS ALREADY HOLDS. Calling
+                                // the pooled `name_key_is_generic` wrapper here
+                                // would lease a SECOND connection out of the
+                                // read pool while the first is still borrowed —
+                                // a stall on a one-connection pool, for no gain.
+                                let mut q = reader
+                                    .query(
+                                        NAME_KEY_CARRIERS_SQL,
+                                        (
+                                            t(k.as_str()),
+                                            Value::Integer(stoplist_cap as i64 + 1),
+                                        ),
+                                    )
+                                    .await?;
+                                // The COUNT, not the boolean: `is_generic`
+                                // throws away the difference between one carrier
+                                // and NONE AT ALL, and a key `org_match_keys`
+                                // does not hold is a stale-build reading rather
+                                // than a distinctive name.
+                                let carriers = match q.next().await? {
+                                    Some(row) => int(&row, 0).max(0) as u64,
+                                    None => 0,
+                                };
+                                let hit = (carriers as usize > stoplist_cap, carriers == 0);
+                                generic_memo.insert(k.clone(), hit);
+                                hit
+                            }
+                        };
+                        if absent {
+                            report.name_keys_absent += 1;
+                        }
+                        if generic {
+                            "agree-generic"
+                        } else {
+                            "agree-distinctive"
+                        }
+                    }
+                    // Every member is nameless. Neither agreement nor conflict —
+                    // an abstention, and the honest verdict for the class issue
+                    // 257 named "name nobody".
+                    None => "unnamed",
+                }
+            } else if contained_name_keys(&name_keys) {
+                // `X GmbH` and `X GmbH Niederlassung Nord`: one name's tokens
+                // inside the other's. UNDECIDED, not safe — a branch office and
+                // an Organschaft subsidiary are named identically, since a
+                // fiscal unity is a parent plus companies named after it with a
+                // qualifier. Its own bucket so that neither answer is asserted.
+                "contained"
+            } else {
+                // Distinct cores under one identifier. For DE:vat this is the
+                // Organschaft shape, and it is the number that decides whether
+                // a German cross-walk arm is safe.
+                "disagree"
+            };
+
+            *report.verdicts.entry(verdict.to_owned()).or_default() += 1;
+            *report.verdicts_by_scope.entry(format!("{scope}/{verdict}")).or_default() += 1;
+
+            if report.rows.len() < cap {
+                let mut shown = names.clone();
+                shown.truncate(6);
+                let mut keys_shown = name_keys.clone();
+                keys_shown.truncate(6);
+                report.rows.push(DuplicateIdentity {
+                    scope,
+                    identifier,
+                    members: ids.len() as u64,
+                    mentions,
+                    names: shown,
+                    name_keys: keys_shown,
+                    verdict,
+                });
+            } else {
+                report.truncated = true;
+            }
+        }
+
+        Ok(report)
+    }
+
     pub async fn country_typo_census(
         &self,
         anchors: fn(&str) -> Vec<(&'static str, String)>,
@@ -15917,6 +16243,37 @@ fn value_sources() -> Vec<(&'static str, &'static str, ValueBuilder)> {
 }
 
 /// A `?,?,…` placeholder list of `n` bind slots for an `IN (…)` clause.
+/// Do all these N3 name keys sit INSIDE the widest one, token-wise? (issue 328
+/// follow-on)
+///
+/// Token SUBSET, not a contiguous window. The first version tested a window and
+/// its own test caught the hole: German publishers put the qualifier on either
+/// end (`x §gmbh niederlassung nord` and `niederlassung nord x §gmbh` both
+/// occur), and one rotation is never a contiguous run of the other, so half the
+/// class read as outright conflict.
+///
+/// **This bucket is AMBIGUOUS, and the census must not present it as safe.** A
+/// branch office is named this way — and so is an *Organschaft* subsidiary,
+/// because a fiscal unity is a parent plus companies named after the parent
+/// with a qualifier (`x §gmbh` / `x immobilien §gmbh`). Nothing here separates
+/// the two. It exists as a third bucket so that neither answer is asserted:
+/// counting these as agreement would overstate the fold signal, and counting
+/// them as conflict would overstate the risk and talk the next unit out of an
+/// arm it could safely have.
+///
+/// Deliberately NOT a similarity score. A threshold on edit distance would be a
+/// number picked rather than measured, and the census exists to hand the next
+/// unit a distribution instead of a guess.
+pub(crate) fn contained_name_keys(keys: &[String]) -> bool {
+    let sets: Vec<std::collections::BTreeSet<&str>> =
+        keys.iter().map(|k| k.split(' ').filter(|t| !t.is_empty()).collect()).collect();
+    if sets.iter().any(|s| s.is_empty()) {
+        return false;
+    }
+    let Some(widest) = sets.iter().max_by_key(|s| s.len()) else { return false };
+    sets.iter().all(|s| s.is_subset(widest))
+}
+
 pub(crate) fn placeholders(n: usize) -> String {
     let mut s = String::with_capacity(n * 2);
     for i in 0..n {
