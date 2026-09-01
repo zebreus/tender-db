@@ -2288,6 +2288,17 @@ pub struct CountryClusterReport {
     /// arm for their country, so this names which arms to write — chosen from
     /// the data rather than guessed, the way `VAT_SUFFIXES` had to be.
     pub nobody_asked_by_country: std::collections::BTreeMap<String, u64>,
+    /// The same bucket cut by the HEAVIEST code only, and this is the cut that
+    /// chooses the arms.
+    ///
+    /// `nobody_asked_by_country` counts every code in the cluster, which mixes
+    /// two different things: countries whose registrants are real and need a
+    /// format arm, and countries that are only ever the TYPO TARGET. Burundi
+    /// appears 34 times and Vanuatu 26, but there are no Burundian registrants
+    /// here — they are what `BG` and `VU` get mistyped into. An arm for Burundi
+    /// would validate nothing. The heavy side is where the entity actually
+    /// lives, so that is where a checksum arm pays.
+    pub nobody_asked_heavy_country: std::collections::BTreeMap<String, u64>,
     /// The heaviest code's share of the cluster's mentions, as a percentage,
     /// sorted. REPORTED, never acted on: the pair census found this signal
     /// inverting (`BT` heavy over `BG` light, three times), so the next unit
@@ -11879,6 +11890,9 @@ impl Db {
                 // either side of a `SK`/`SG` cluster makes it decidable.
                 for cc in &row.codes {
                     *report.nobody_asked_by_country.entry(cc.clone()).or_default() += 1;
+                }
+                if let Some((heavy, _)) = row.mentions.first() {
+                    *report.nobody_asked_heavy_country.entry(heavy.clone()).or_default() += 1;
                 }
             }
             // Reported, never acted on: the majority share is what a repair

@@ -429,4 +429,12 @@ async fn the_nobody_asked_bucket_is_cut_by_country() {
     assert_eq!(by.get("SG"), Some(&1), "once — the decided cluster does not count");
     assert_eq!(by.get("SO"), Some(&1));
     assert_eq!(by.len(), 3, "and nothing else: {by:?}");
+
+    // And the cut that chooses the arms: the HEAVY side only. SK carries both
+    // undecidable clusters; SG and SO are the typo targets and get an arm for
+    // nobody. A census that ranked SO alongside SK would send the next unit off
+    // to write a Somali register checksum.
+    let heavy = &r.nobody_asked_heavy_country;
+    assert_eq!(heavy.get("SK"), Some(&2));
+    assert_eq!(heavy.len(), 1, "the light sides do not appear at all: {heavy:?}");
 }

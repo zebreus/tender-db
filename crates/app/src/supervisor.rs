@@ -4594,6 +4594,10 @@ impl Supervisor {
                     // Which checksum arms would actually pay: the countries
                     // appearing in clusters that fail ONLY for want of a scheme.
                     "nobody_asked_by_country": r.nobody_asked_by_country,
+                    // The cut that actually chooses the arms: the heavy side,
+                    // where the entity lives. The all-codes cut above mixes in
+                    // countries that are only ever the typo TARGET.
+                    "nobody_asked_heavy_country": r.nobody_asked_heavy_country,
                     "truncated": r.truncated,
                     "rows": r.rows.iter().map(|c| serde_json::json!({
                         "identifier": c.identifier,
