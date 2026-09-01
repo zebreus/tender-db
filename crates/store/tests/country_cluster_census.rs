@@ -400,3 +400,33 @@ async fn two_rows_under_one_code_is_a_duplicate_not_a_cluster() {
     assert_eq!(c.mentions[0], ("SK".to_owned(), 15), "10 + 4 + 1, not 10");
     assert_eq!(c.names.len(), 3, "all three spellings are carried");
 }
+
+/// The per-country cut of the `nobody-asked` bucket, which after the
+/// corpus-wide run is the census's most load-bearing output: 80% of candidates
+/// fail only for want of a checksum arm, and this names which arms to write.
+///
+/// EVERY code in the cluster is counted, not just the heavy one — an arm for
+/// either side of an `SK`/`SG` cluster makes it decidable — and only clusters
+/// whose verdict is actually `nobody-asked` contribute, so a country that is
+/// merely present alongside a decided cluster does not inflate its case.
+#[tokio::test]
+async fn the_nobody_asked_bucket_is_cut_by_country() {
+    let (db, conn) = open("test-cluster-bycountry").await;
+    // Two clusters nobody was asked about (letters: the stand-in has no arm).
+    org(&conn, 1, "SK", "ABCDEFGHIJ", "Nejaka Firma", 30).await;
+    org(&conn, 2, "SG", "ABCDEFGHIJ", "Nejaka Firma", 2).await;
+    org(&conn, 3, "SK", "KLMNOPQRST", "Ina Firma", 20).await;
+    org(&conn, 4, "SO", "KLMNOPQRST", "Ina Firma", 1).await;
+    // And one the anchor DECIDES, whose countries must not be counted here.
+    org(&conn, 5, "SK", "41734602", "Tretia Firma", 40).await;
+    org(&conn, 6, "SG", "41734602", "Tretia Firma", 3).await;
+    db.build_organization_indexes().await.unwrap();
+
+    let r = run(&db).await;
+    assert_eq!(r.verdicts.get("nobody-asked"), Some(&2));
+    let by = &r.nobody_asked_by_country;
+    assert_eq!(by.get("SK"), Some(&2), "in both undecidable clusters");
+    assert_eq!(by.get("SG"), Some(&1), "once — the decided cluster does not count");
+    assert_eq!(by.get("SO"), Some(&1));
+    assert_eq!(by.len(), 3, "and nothing else: {by:?}");
+}

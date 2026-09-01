@@ -4591,6 +4591,9 @@ impl Supervisor {
                         "p25": q(25), "p50": q(50), "p75": q(75), "p90": q(90),
                         "n": r.majority_share.len(),
                     },
+                    // Which checksum arms would actually pay: the countries
+                    // appearing in clusters that fail ONLY for want of a scheme.
+                    "nobody_asked_by_country": r.nobody_asked_by_country,
                     "truncated": r.truncated,
                     "rows": r.rows.iter().map(|c| serde_json::json!({
                         "identifier": c.identifier,
@@ -4615,7 +4618,7 @@ impl Supervisor {
                      identifiers under {} country codes. {} identifiers stand under MORE THAN \
                      ONE code; {} have some two codes one letter apart, and {} have the \
                      HEAVIEST code one letter from another (the sharper filter — spray one \
-                     letter from spray says nothing). {} carried cluster(s) are an \
+                     letter from spray says nothing). {} cluster(s) are an \
                      operational footprint (embassy or development agency: one entity, one \
                      register number, filed from everywhere it operates) and are excluded, \
                      never corrected. {} identifier(s) are under {} characters. Verdicts: {}. \

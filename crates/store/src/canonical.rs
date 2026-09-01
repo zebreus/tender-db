@@ -2282,6 +2282,12 @@ pub struct CountryClusterReport {
     /// …of which a name says embassy or development agency (carried rows only).
     pub footprint: u64,
     pub verdicts: std::collections::BTreeMap<String, u64>,
+    /// For clusters whose verdict is `nobody-asked`, how often each country
+    /// code appears. THE POINT OF THE WHOLE CENSUS after the corpus-wide run:
+    /// 80% of candidates are undecidable only because `checksum_anchors` has no
+    /// arm for their country, so this names which arms to write — chosen from
+    /// the data rather than guessed, the way `VAT_SUFFIXES` had to be.
+    pub nobody_asked_by_country: std::collections::BTreeMap<String, u64>,
     /// The heaviest code's share of the cluster's mentions, as a percentage,
     /// sorted. REPORTED, never acted on: the pair census found this signal
     /// inverting (`BT` heavy over `BG` light, three times), so the next unit
@@ -11868,6 +11874,13 @@ impl Db {
                 "asked-and-refused"
             };
             *report.verdicts.entry(row.verdict.to_owned()).or_default() += 1;
+            if row.verdict == "nobody-asked" {
+                // Every code in the cluster, not just the heavy one: an arm for
+                // either side of a `SK`/`SG` cluster makes it decidable.
+                for cc in &row.codes {
+                    *report.nobody_asked_by_country.entry(cc.clone()).or_default() += 1;
+                }
+            }
             // Reported, never acted on: the majority share is what a repair
             // would have to lean on where the anchor is silent, and the pair
             // census already found it inverting (`BT` heavy over `BG` light,
