@@ -2505,9 +2505,19 @@ pub struct PollutedName {
 /// The question: `organizations.name` was seen carrying an embedded postal
 /// address, newlines and all (`Vergabekammer Rheinland-Pfalz\nStiftsstraße
 /// 9\n55116 Mainz`, 12,249 mentions). The name is not cosmetic — `n2_key` and
-/// `n3_key` are computed from it, so a polluted name produces a key that matches
-/// nothing and the org drops out of every name-corroborated arm. The failure is
-/// a SILENT under-merge, which is the shape that leaves no trace to notice.
+/// `n3_key` are computed from it.
+///
+/// **What the pollution does, stated correctly.** It does NOT break the key:
+/// `project::match_norm` maps every non-alphanumeric character to a gap, so a
+/// newline is already a space. What survives is the extra ADDRESS TOKENS, so the
+/// polluted name yields a key that is a strict token SUPERSET of the clean one.
+/// The harm is a DEMOTION rather than a blackout — issue 329's census bucketed
+/// org DE355604198 as `contained` (undecided) when its two spellings should have
+/// read `agree-distinctive` (the clean fold signal).
+///
+/// A superset key is MORE specific, so it matches fewer things: the failure mode
+/// is uniformly under-merge and never false-merge. Real, bounded, and failing in
+/// the benign direction.
 ///
 /// It answers two things the issue could not answer from one specimen: how many,
 /// and — decisively rather than from a sample — whether the break was PUBLISHED
