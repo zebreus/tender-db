@@ -4553,8 +4553,12 @@ impl Supervisor {
                 let r = self
                     .db
                     .country_cluster_census(
-                        ingest::idgate::checksum_anchors,
-                        ingest::idgate::anchor_vocabulary,
+                        // The EVIDENCE probe, not the decision probe: it carries
+                        // the census-only BG/LT/SK arms that would have halved
+                        // the 8-digit merge path's reach if added to the shared
+                        // table (issue 326).
+                        ingest::idgate::census_anchors,
+                        ingest::idgate::census_vocabulary,
                         ingest::countries::one_letter_apart,
                         ingest::countries::is_operational_footprint,
                         CAP,

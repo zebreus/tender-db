@@ -477,6 +477,67 @@ fn it_piva(digits: &[u8]) -> Checksum {
 
 /// GR AFM (9): Σ digit_i × 2^(8−i) over the first 8; (sum mod 11) mod 10
 /// must equal the 9th digit.
+/// BG EIK / BULSTAT (9): weights 1..8 over the first eight, mod 11. A remainder
+/// of 10 is not a valid check digit, so the scheme re-weights with 3..10 and
+/// takes that mod 11; a second 10 becomes 0.
+///
+/// Issue 326: this is the LARGEST single arm in the undecidable class — 147 of
+/// the 430 clusters have `BG` as their heaviest code, and a Bulgarian EIK
+/// currently cannot be confirmed Bulgarian because no arm asks.
+fn bg_eik(digits: &[u8]) -> Checksum {
+    let weighted = |w: [u32; 8]| -> u32 {
+        let sum: u32 = w.iter().zip(digits).map(|(w, &d)| w * u32::from(d)).sum();
+        sum % 11
+    };
+    let first = weighted([1, 2, 3, 4, 5, 6, 7, 8]);
+    let check = if first == 10 {
+        let second = weighted([3, 4, 5, 6, 7, 8, 9, 10]);
+        if second == 10 { 0 } else { second }
+    } else {
+        first
+    };
+    to_checksum(check == u32::from(digits[8]))
+}
+
+/// LT juridinio asmens kodas (9): weights 1..9 over the first eight in the
+/// first pass — 1,2,3,4,5,6,7,8 — mod 11; a remainder of 10 re-weights with
+/// 3,4,5,6,7,8,9,1 and takes that mod 11, a second 10 becoming 0.
+///
+/// Issue 326: 110 of the 430 undecidable clusters have `LT` as their heaviest
+/// code, second only to Bulgaria. Note that `LT` and `LV` are one letter apart
+/// and Latvia is overwhelmingly the TARGET rather than the source — 91
+/// appearances but only 15 as the heavy side — so arming Lithuania is what
+/// decides most of that pair.
+///
+/// **THIS ARM AND [`bg_eik`] ARE VERY NEARLY THE SAME FUNCTION**, and a reader
+/// comparing their outputs has to know it. Both take weights 1..8 mod 11 as
+/// their first pass and differ only in the second, which runs when that
+/// remainder is 10 — about one value in eleven. Measured against prod:
+/// `bg_eik` passes **93.8%** of Lithuanian rows and `lt_kodas` **84.2%** of
+/// Bulgarian ones. So a joint pass is NOT evidence for either country, exactly
+/// as `CZ:ico` and `SK:ico` sharing arithmetic is not evidence between those
+/// two.
+///
+/// This is harmless for the census that motivated the arms, because `named`
+/// intersects the anchors with the CLUSTER's own codes: a `BG`/`BI` cluster
+/// never contains `LT`, so the Lithuanian pass cannot muddy it. It would only
+/// bite on a cluster holding both, and `BG`/`LT` are not one letter apart, so
+/// such a cluster is `no-one-letter-pair` before any of this is consulted.
+fn lt_kodas(digits: &[u8]) -> Checksum {
+    let weighted = |w: [u32; 8]| -> u32 {
+        let sum: u32 = w.iter().zip(digits).map(|(w, &d)| w * u32::from(d)).sum();
+        sum % 11
+    };
+    let first = weighted([1, 2, 3, 4, 5, 6, 7, 8]);
+    let check = if first == 10 {
+        let second = weighted([3, 4, 5, 6, 7, 8, 9, 1]);
+        if second == 10 { 0 } else { second }
+    } else {
+        first
+    };
+    to_checksum(check == u32::from(digits[8]))
+}
+
 fn gr_afm(digits: &[u8]) -> Checksum {
     let sum: u32 =
         digits[..8].iter().enumerate().map(|(i, &d)| u32::from(d) << (8 - i)).sum();
@@ -542,6 +603,78 @@ fn uniform_arm(len: usize) -> &'static [(&'static str, fn(&[u8]) -> Checksum)] {
         11 => &[("IT:piva", it_piva), ("HR:oib", mod_11_10)],
         _ => &[],
     }
+}
+
+/// The arms that exist for EVIDENCE rather than for MERGE DECISIONS, and why
+/// that distinction had to be drawn (issue 326).
+///
+/// **These are NOT in `uniform_arm`, and the reason is measured.** The
+/// resolver's anchor path and the R3 merge both require EXACTLY ONE anchor —
+/// `real.len() == 1` — so every scheme added to the shared table makes some
+/// previously-decidable value ambiguous and silently narrows a merge path.
+/// Adding these three to `uniform_arm` and sampling 1,500 random corpus values
+/// per shape:
+///
+/// ```text
+///   8-digit: single-anchor 800 -> 385   — 51.9% of anchored values LOSE the path
+///   9-digit: single-anchor 662 -> 521   — 21.3% LOSE it
+/// ```
+///
+/// Slovakia is the extreme case: `SK:ico` is the SAME mod-11 arithmetic as
+/// `CZ:ico`, so adding it under its own name turns every single Czech anchor
+/// into a double one. That is a halving of the 8-digit merge path's reach in
+/// exchange for 18 census clusters, and it is not a trade worth making
+/// silently.
+///
+/// The census asks a different question. It intersects anchors with a
+/// CLUSTER's own country codes, so ambiguity is not fatal there — it surfaces
+/// as the honest `anchor-names-several` verdict — and a scheme that names a
+/// country the cluster does not hold is simply ignored. So the evidence probe
+/// gets these arms and the decision probe does not.
+///
+/// One table each, and `census_anchors` is built ON TOP of `checksum_anchors`
+/// rather than beside it, so the shared arms cannot drift apart.
+fn census_only_arm(len: usize) -> &'static [(&'static str, fn(&[u8]) -> Checksum)] {
+    match len {
+        // Slovakia rides Czechia's arithmetic; this file already said so, in
+        // `anchor_vocabulary`'s doc. Issue 326 makes the observation usable
+        // without making it costly.
+        8 => &[("SK:ico", cz_ico)],
+        // The two biggest arms in the undecidable class: BG is the heaviest
+        // code in 147 of the 430 clusters, LT in 110.
+        9 => &[("BG:eik", bg_eik), ("LT:kodas", lt_kodas)],
+        _ => &[],
+    }
+}
+
+/// The anchor probe for EVIDENCE: every scheme `checksum_anchors` reports plus
+/// the census-only arms above. Issue 326's census uses this; nothing that
+/// merges does.
+pub fn census_anchors(value: &str) -> Vec<(&'static str, String)> {
+    let mut out = checksum_anchors(value);
+    let digits: Vec<u8> = value.bytes().filter(u8::is_ascii_digit).map(|b| b - b'0').collect();
+    if value.bytes().any(|b| b.is_ascii_alphabetic()) || digits.is_empty() {
+        return out;
+    }
+    let key: String = digits.iter().map(|d| (d + b'0') as char).collect();
+    for (scheme, check) in census_only_arm(digits.len()) {
+        if check(&digits) == Checksum::Pass {
+            out.push((scheme, key.clone()));
+        }
+    }
+    out
+}
+
+/// The vocabulary counterpart of [`census_anchors`] — what the evidence probe
+/// ASKED about, so a negative stays readable (issue 314's `country_probed`).
+pub fn census_vocabulary(value: &str) -> Vec<&'static str> {
+    let mut out = anchor_vocabulary(value);
+    let digits: Vec<u8> = value.bytes().filter(u8::is_ascii_digit).map(|b| b - b'0').collect();
+    if value.bytes().any(|b| b.is_ascii_alphabetic()) || digits.is_empty() {
+        return out;
+    }
+    out.extend(census_only_arm(digits.len()).iter().map(|(s, _)| *s));
+    out
 }
 
 /// Mirror the crosswalk's leading-zero judgment (verification round): a
@@ -845,5 +978,173 @@ mod tests {
         let padded = census(Some("FR"), Some("national"), "00000219740248");
         assert_eq!(padded.scheme, "FR:siren-padded");
         assert_eq!(padded.checksum, Checksum::Pass);
+    }
+}
+
+#[cfg(test)]
+mod issue_326_arms {
+    use super::*;
+
+    /// Real registrants, pulled from prod's own `BG`/`LT`/`SK` rows. The
+    /// algorithms were written from specification and then MEASURED against the
+    /// corpus before being deployed: 94.0%, 94.0% and 98.5% pass against a
+    /// chance rate of about 9.1% for a mod-11 scheme. A wrong arm reads near
+    /// chance, so the measurement is the proof and these fixtures are the
+    /// regression guard on it.
+    #[test]
+    fn the_new_arms_validate_real_registrants() {
+        for v in ["000003338", "000003361", "000003577", "000010756", "000010838"] {
+            let d: Vec<u8> = v.bytes().map(|b| b - b'0').collect();
+            assert_eq!(bg_eik(&d), Checksum::Pass, "BG {v}");
+        }
+        for v in ["105149515", "105708716", "108784411", "110005648", "110011925"] {
+            let d: Vec<u8> = v.bytes().map(|b| b - b'0').collect();
+            assert_eq!(lt_kodas(&d), Checksum::Pass, "LT {v}");
+        }
+        // Slovakia rides Czechia's arithmetic — the same function, now also
+        // ASKED under its own name.
+        for v in ["00002313", "00002801", "00002895", "00003328", "00003964"] {
+            let d: Vec<u8> = v.bytes().map(|b| b - b'0').collect();
+            assert_eq!(cz_ico(&d), Checksum::Pass, "SK {v}");
+        }
+    }
+
+    /// How well the arm catches a single mistyped digit — which is exactly the
+    /// error issue 326 is about, so the number matters and it is NOT 100%.
+    ///
+    /// **98.35% caught, 1.65% missed**, measured over every position and every
+    /// substitution on 200 passing prod values. A first draft of this test
+    /// asserted that every slip fails; it does not, and the reason is the
+    /// scheme's own shape. The two-pass fallback means a changed digit can move
+    /// a value INTO the second weighting, where a different coefficient set
+    /// applies and the result can coincidentally validate. A plain single-pass
+    /// mod-11 would catch all of them; this one cannot, by construction.
+    ///
+    /// The misses are spread evenly across positions (41/35/26/31/36/29/38/31),
+    /// so there is no position a typo can hide in — it is a uniform 1-in-60,
+    /// not a blind spot.
+    #[test]
+    fn a_one_digit_slip_is_caught_but_not_always() {
+        let (mut caught, mut missed) = (0u32, 0u32);
+        for v in ["000003338", "000003361", "000003577", "000010756", "000010838"] {
+            let orig: Vec<u8> = v.bytes().map(|b| b - b'0').collect();
+            assert_eq!(bg_eik(&orig), Checksum::Pass, "fixture {v} must pass to begin with");
+            for pos in 0..9 {
+                for delta in 1..10u8 {
+                    let mut d = orig.clone();
+                    d[pos] = (d[pos] + delta) % 10;
+                    match bg_eik(&d) {
+                        Checksum::Fail => caught += 1,
+                        _ => missed += 1,
+                    }
+                }
+            }
+        }
+        let total = caught + missed;
+        assert!(
+            caught * 100 / total >= 95,
+            "the arm must catch the great majority of single-digit slips: \
+             {caught}/{total}"
+        );
+        assert!(
+            missed > 0,
+            "and it does NOT catch all of them — if this ever passes, the \
+             two-pass fallback has been dropped and the doc above is stale"
+        );
+    }
+
+    /// THE MERGE PATH MUST NOT MOVE. This is the guard on the split between the
+    /// evidence probe and the decision probe, and it exists because adding
+    /// these arms to the shared table was measured to halve the 8-digit merge
+    /// path: single-anchor values fell 800 -> 385 in a 1,500-value sample,
+    /// because `SK:ico` is the same arithmetic as `CZ:ico` and doubles every
+    /// Czech anchor.
+    ///
+    /// The resolver and R3 both require `real.len() == 1`, so a second scheme
+    /// name on the same arithmetic is not a richer answer — it is a silently
+    /// disabled path.
+    #[test]
+    fn the_census_arms_never_reach_the_decision_probe() {
+        for v in ["00002313", "00002801", "00003328", "000003338", "105149515", "110005648"] {
+            let decision = checksum_anchors(v);
+            let evidence = census_anchors(v);
+            assert!(
+                evidence.len() >= decision.len(),
+                "{v}: the evidence probe is a superset"
+            );
+            for scheme in ["SK:ico", "BG:eik", "LT:kodas"] {
+                assert!(
+                    !decision.iter().any(|(s, _)| *s == scheme),
+                    "{v}: {scheme} must NOT be in the decision probe"
+                );
+            }
+        }
+        // The Slovak case in full, stated as a DELTA rather than an absolute:
+        // the census probe adds exactly the SK arm on top of whatever the
+        // decision probe already found, and the decision probe's own answer is
+        // byte-for-byte unchanged. (An absolute count was the first draft's
+        // mistake — `00002313` anchors four 8-digit schemes, not one, so it was
+        // never the single-anchor example I assumed.)
+        let ico = "00002313";
+        let decision = checksum_anchors(ico);
+        let evidence = census_anchors(ico);
+        assert!(decision.iter().any(|(s, _)| *s == "CZ:ico"));
+        assert_eq!(
+            evidence.len(),
+            decision.len() + 1,
+            "exactly one arm added: {evidence:?}"
+        );
+        assert_eq!(
+            evidence[..decision.len()],
+            decision[..],
+            "and the decision probe's own answer is untouched, in order"
+        );
+        assert!(evidence.iter().any(|(s, _)| *s == "SK:ico"));
+        // …and the vocabulary tracks it, so a negative stays readable.
+        assert!(census_vocabulary(ico).contains(&"SK:ico"));
+        assert!(!anchor_vocabulary(ico).contains(&"SK:ico"));
+    }
+
+    /// THE ARMS ARE NEARLY THE SAME FUNCTION, and the test says so out loud
+    /// rather than leaving it to be discovered. `bg_eik` and `lt_kodas` share
+    /// their first pass and diverge only when the first remainder is 10.
+    ///
+    /// It does not harm the census that motivated them, because `named`
+    /// intersects anchors with the CLUSTER's own codes and a `BG`/`BI` cluster
+    /// holds no `LT`. It WOULD matter to anything treating a lone anchor as
+    /// country evidence, so it is pinned here as a property of the pair.
+    #[test]
+    fn bg_and_lt_are_not_evidence_against_each_other() {
+        let mut agree = 0;
+        let mut total = 0;
+        for n in 100_000_000u32..100_002_000 {
+            let d: Vec<u8> = n.to_string().bytes().map(|b| b - b'0').collect();
+            total += 1;
+            if bg_eik(&d) == lt_kodas(&d) {
+                agree += 1;
+            }
+        }
+        assert!(
+            agree * 100 / total >= 95,
+            "the two arms agree on {agree}/{total} — they are near-identical by \
+             construction, and a joint pass is evidence for NEITHER country"
+        );
+    }
+
+    /// And the arms still discriminate against the other schemes sharing their
+    /// digit length, or adding them would only manufacture ambiguity.
+    #[test]
+    fn the_nine_digit_arm_still_separates_its_older_members() {
+        // A Greek AFM that is not a Bulgarian EIK.
+        let mut hits = 0;
+        for n in 100_000_000u32..100_001_000 {
+            let d: Vec<u8> = n.to_string().bytes().map(|b| b - b'0').collect();
+            let g = gr_afm(&d) == Checksum::Pass;
+            let b = bg_eik(&d) == Checksum::Pass;
+            if g != b {
+                hits += 1;
+            }
+        }
+        assert!(hits > 100, "GR and BG must disagree often; they agreed on all but {hits}");
     }
 }
