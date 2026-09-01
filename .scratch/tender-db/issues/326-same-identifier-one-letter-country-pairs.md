@@ -319,3 +319,53 @@ a full scan (no index leads with that column) and 4,303 of those is not a census
 * `no-one-letter-pair` at 62.3% is not a failure of the filter — it is the
   measurement that most same-identifier-across-countries pairs are NOT
   transcription slips, which is exactly what the filter is for.
+
+## Which checksum arms to write — read off the corpus (job 545, `c75c8b0`)
+
+The 430 undecidable clusters, cut by the **heaviest** code — the side the entity
+actually lives on:
+
+| | heavy | all codes | cumulative (heavy) |
+| --- | --- | --- | --- |
+| **BG** | **147** | 150 | 34.2% |
+| **LT** | **110** | 128 | 59.8% |
+| **DE** | **32** | 47 | 67.2% |
+| **ES** | **23** | 31 | 72.6% |
+| **SK** | **18** | 21 | 76.7% |
+| **LV** | **15** | 91 | **80.2%** |
+| EE | 14 | 33 | 83.5% |
+| IE | 11 | 21 | 86.0% |
+
+**Six arms — BG, LT, DE, ES, SK, LV — cover 80.2% of the class.**
+
+### The all-codes cut names the wrong countries, and by a lot
+
+The first reading counted every code in a cluster and ranked
+`BG 150, LT 128, LV 91, DE 47, BI 34, BT 32, VU 26, VA 20, BF 16, VG 15`.
+Burundi, Bhutan, Vanuatu, the Vatican, Burkina Faso — **there are no Burundian
+registrants in this class.** `BI` is what `BG` gets mistyped into; `VU` is what
+`VA` gets mistyped into. An arm for Burundi would validate nothing, and ranking
+off that list would have sent the next unit to write a Somali register checksum.
+
+Cut by the heavy side, **35 countries remain of 86** — 51 appear only ever as the
+typo target (BI, BT, VU, VA, BF, VG, VE, VN, SO, BW, GA, BZ, GH, GN…).
+
+**Latvia is the sharpest case and it inverts.** `LV` is third on all codes (91)
+and sixth on the heavy side (15): Latvia is overwhelmingly what **Lithuania gets
+mistyped into**, not a country whose registrants need validating. Sweden is
+starker still — 33 appearances, **never once the heavy side.** So are CZ, NO and
+GB.
+
+## Next unit, now specified
+
+1. Write checksum/format arms for **BG, LT, DE, ES, SK, LV** in
+   `idgate::checksum_anchors` and their entries in `anchor_vocabulary`.
+2. **Validate against the corpus, not against a spec I half-remember.** The
+   `org-merge-health` scheme tally already measures pass/fail per scheme over
+   every identifier-bearing row; a correct arm reads ≥97% pass on its own
+   country's rows (the bar Stage 0 set), and a wrong one reads near chance.
+   That loop is the reason to write these here rather than trust a formula.
+3. Re-run `country-cluster-census` and measure how many of the 430 move to
+   `anchor-names-one`.
+4. Only then is the survivor rule worth building. Today it could fire on 95
+   clusters; after the arms it should reach several hundred.
