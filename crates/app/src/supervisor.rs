@@ -521,6 +521,7 @@ fn parser_vs_stock_alarms(
     no_longer_vat: u64,
     vat_country_differs: u64,
     vat_refused: u64,
+    gln_shared_one_country: u64,
 ) -> Vec<String> {
     let mut alarms = Vec::new();
     let mut watch = |label: &str, current: u64, floor: Option<u64>| {
@@ -540,6 +541,18 @@ fn parser_vs_stock_alarms(
     );
     if vat_refused > 0 {
         alarms.push(format!("vat_refused {vat_refused} (floor is 0)"));
+    }
+    // Issue 327, and it needs no baseline either. A 9110 GLN held by more than
+    // one row is a class that is wrong about two thirds of the time; what keeps
+    // those rows apart today is only that they stand under DIFFERENT countries,
+    // since R2 keys on `(country, kind, identifier)`. One of them collapsing
+    // onto a single country means that guard is gone — so the floor is zero and
+    // there is no tolerance to spend.
+    if gln_shared_one_country > 0 {
+        alarms.push(format!(
+            "gln_shared_one_country {gln_shared_one_country} (floor is 0 — a shared \
+             Austrian GLN under ONE country is a merge path that has opened)"
+        ));
     }
     alarms
 }
@@ -2936,6 +2949,22 @@ impl Supervisor {
                 // rejected 211 real VAT ids that carry a scheme label (`MVA`,
                 // `MWST`, `USTID`). One number could not tell those apart.
                 let (mut no_longer_vat, mut vat_country_differs, mut vat_refused) = (0u64, 0u64, 0u64);
+                // Issue 327: the Austrian 9110 GLN class, watched rather than
+                // trusted.
+                //
+                // 6,965 rows over 6,915 distinct values, so it is not a
+                // false-merge source in aggregate — but of the ~50 values held
+                // by MORE THAN ONE row, 31 of 46 sampled pair an Austrian public
+                // body with an unrelated foreign supplier, because the publisher
+                // puts the buyer's GLN in the supplier's organization block.
+                //
+                // No merge has occurred: those rows sit under different
+                // countries, and that country difference is the only thing
+                // keeping them apart. The damage is LATENT, so what this watches
+                // is whether it stops being latent.
+                let mut gln_rows = 0u64;
+                let mut gln_by_value: std::collections::HashMap<String, Vec<String>> =
+                    Default::default();
                 loop {
                     if self.cancelled(job.id) {
                         return Ok(
@@ -3005,6 +3034,14 @@ impl Supervisor {
                                 Some(_) => {}
                             }
                         }
+                        if r.identifier.len() == 13
+                            && r.identifier.starts_with("9110")
+                            && r.identifier.bytes().all(|b| b.is_ascii_digit())
+                        {
+                            gln_rows += 1;
+                            let cc = r.country.clone().unwrap_or_default();
+                            gln_by_value.entry(r.identifier.clone()).or_default().push(cc);
+                        }
                     }
                     watermark = next;
                     self.set_phase(
@@ -3036,11 +3073,31 @@ impl Supervisor {
                     // and says so rather than alarming on its own arrival.
                     _ => None,
                 };
+                // Issue 327's two numbers. `shared` is the size of the class
+                // that is wrong two thirds of the time; `shared_one_country` is
+                // the one that must stay ZERO, because a shared GLN whose rows
+                // have collapsed onto a single country is a merge path that has
+                // OPENED — R2 keys on (country, kind, identifier), so at that
+                // point nothing stands between the Austrian ministry and the
+                // Norwegian aviation firm.
+                let mut gln_shared = 0u64;
+                let mut gln_shared_one_country = 0u64;
+                for codes in gln_by_value.values() {
+                    if codes.len() < 2 {
+                        continue;
+                    }
+                    gln_shared += 1;
+                    let first = &codes[0];
+                    if codes.iter().all(|c| c == first) {
+                        gln_shared_one_country += 1;
+                    }
+                }
                 let alarms = parser_vs_stock_alarms(
                     previous.as_ref().map(|v| &v["parser_vs_stock"]),
                     no_longer_vat,
                     vat_country_differs,
                     vat_refused,
+                    gln_shared_one_country,
                 );
                 let mut scheme_rows: Vec<(&str, SchemeTally)> = schemes.into_iter().collect();
                 scheme_rows.sort_by(|a, b| b.1.pop.cmp(&a.1.pop));
@@ -3088,6 +3145,18 @@ impl Supervisor {
                             .unwrap_or(serde_json::Value::Null),
                         "alarms": alarms.clone(),
                     },
+                    // Issue 327: the shared-GLN class, watched not trusted.
+                    "gln_9110": {
+                        "rows": gln_rows,
+                        "distinct": gln_by_value.len(),
+                        // ~50 today, of which about two thirds pair unrelated
+                        // entities. Growth means the publisher-side error is
+                        // spreading.
+                        "shared": gln_shared,
+                        // MUST STAY ZERO. A shared GLN under one country is a
+                        // merge path that has opened.
+                        "shared_one_country": gln_shared_one_country,
+                    },
                     "top": ranked.iter().map(|&(n, id)| {
                         let m = by_id.get(&id);
                         serde_json::json!({
@@ -3113,9 +3182,15 @@ impl Supervisor {
                      checksum rates now exclude condemned ids). Parser-vs-stock \
                      (issue 325 step 5): {no_longer_vat} no longer vat, \
                      {vat_country_differs} vat under another country, \
-                     {vat_refused} now refused{}",
+                     {vat_refused} now refused. Issue 327: {} Austrian 9110 \
+                     GLN row(s), {} value(s) held by more than one row (that \
+                     class is wrong about two thirds of the time), {} of them \
+                     under a SINGLE country{}",
                     max.0,
                     max.1,
+                    gln_rows,
+                    gln_shared,
+                    gln_shared_one_country,
                     if alarms.is_empty() {
                         if previous.is_some() {
                             String::new()
@@ -8730,54 +8805,67 @@ mod tests {
         });
 
         // Steady state: the residue the step-4 repair deliberately left.
-        assert!(parser_vs_stock_alarms(Some(&base), 7, 1, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&base), 7, 1, 0, 0).is_empty());
 
         // A SMALL floor makes the flat tolerance the operative one, and that is
         // the point: at a floor of 7 the alarm trips at 33, so the class cannot
         // quietly regrow by an order of magnitude the way a 10%-of-422 band
         // would have allowed.
-        assert!(parser_vs_stock_alarms(Some(&base), 32, 1, 0).is_empty());
-        assert_eq!(parser_vs_stock_alarms(Some(&base), 33, 1, 0).len(), 1);
+        assert!(parser_vs_stock_alarms(Some(&base), 32, 1, 0, 0).is_empty());
+        assert_eq!(parser_vs_stock_alarms(Some(&base), 33, 1, 0, 0).len(), 1);
 
         // Daily growth inside the tolerance is not an alarm. The org layer
         // gains rows every ingest and a few new ambiguous ones are traffic.
-        assert!(parser_vs_stock_alarms(Some(&base), 20, 12, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&base), 20, 12, 0, 0).is_empty());
 
         // THE REGRESSION I ACTUALLY SHIPPED, in the direction I shipped it: a
         // tightening that rejected 211 real VAT ids carrying a scheme label
         // (MVA, MWST, USTID) would have pushed `no_longer_vat` from 7 to 218.
-        let a = parser_vs_stock_alarms(Some(&base), 218, 1, 0);
+        let a = parser_vs_stock_alarms(Some(&base), 218, 1, 0, 0);
         assert_eq!(a.len(), 1, "{a:?}");
         assert!(a[0].contains("no_longer_vat 7 -> 218"), "{a:?}");
 
         // And the ORIGINAL defect's direction: fresh stock arriving with a
         // country minted out of a word. The 4,206 that stood before the repair
         // would be unmissable.
-        let b = parser_vs_stock_alarms(Some(&base), 7, 4206, 0);
+        let b = parser_vs_stock_alarms(Some(&base), 7, 4206, 0, 0);
         assert_eq!(b.len(), 1, "{b:?}");
         assert!(b[0].contains("vat_country_differs 1 -> 4206"), "{b:?}");
 
         // `vat_refused` has a floor of ZERO by construction and no tolerance:
         // the gate moving under standing rows is worth one row's notice.
-        let c = parser_vs_stock_alarms(Some(&base), 7, 1, 1);
+        let c = parser_vs_stock_alarms(Some(&base), 7, 1, 1, 0);
         assert_eq!(c.len(), 1, "{c:?}");
         assert!(c[0].contains("floor is 0"), "{c:?}");
 
         // No baseline is NOT an alarm. A census that shouted on its own first
         // run would be muted by the second week — except `vat_refused`, which
         // needs no baseline to be meaningful.
-        assert!(parser_vs_stock_alarms(None, 999_999, 999_999, 0).is_empty());
-        assert_eq!(parser_vs_stock_alarms(None, 0, 0, 3).len(), 1);
+        assert!(parser_vs_stock_alarms(None, 999_999, 999_999, 0, 0).is_empty());
+        assert_eq!(parser_vs_stock_alarms(None, 0, 0, 3, 0).len(), 1);
 
         // A baseline missing the keys (an older report shape) behaves like no
         // baseline for those keys rather than reading them as zero — otherwise
         // the first run after this ships would alarm on all 422.
         let old = serde_json::json!({"something_else": 1});
-        assert!(parser_vs_stock_alarms(Some(&old), 7, 1, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&old), 7, 1, 0, 0).is_empty());
+
+        // Issue 327 rides the same function and needs no baseline either: a
+        // shared Austrian GLN under ONE country means the country difference
+        // that was keeping an Austrian ministry apart from a Norwegian aviation
+        // firm is gone, and R2 keys on `(country, kind, identifier)`.
+        let g = parser_vs_stock_alarms(Some(&base), 7, 1, 0, 1);
+        assert_eq!(g.len(), 1, "{g:?}");
+        assert!(g[0].contains("gln_shared_one_country"), "{g:?}");
+        assert!(g[0].contains("merge path that has opened"), "{g:?}");
+        // Shared-but-multi-country is the STEADY state, not an alarm — about
+        // fifty values sit there and always have.
+        assert!(parser_vs_stock_alarms(Some(&base), 7, 1, 0, 0).is_empty());
+        assert!(parser_vs_stock_alarms(None, 0, 0, 0, 2).len() == 1, "no baseline needed");
 
         // A count that FALLS is never an alarm — that is the residue being
         // worked down, which is the outcome this tripwire wants.
-        assert!(parser_vs_stock_alarms(Some(&base), 0, 0, 0).is_empty());
+        assert!(parser_vs_stock_alarms(Some(&base), 0, 0, 0, 0).is_empty());
     }
 
     /// Tripwire 6's guard rails (panel round 2): capped and stopped runs
