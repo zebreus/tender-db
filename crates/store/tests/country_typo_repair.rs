@@ -279,3 +279,41 @@ async fn a_second_run_finds_nothing_to_do() {
     assert_eq!(again.clusters_considered, 0, "one code left — not a cluster");
     assert_eq!(again.rows, 0);
 }
+
+/// THE PRECISION SPLIT, which the first prod dry run is what surfaced.
+///
+/// A move that abandons a country the vocabulary actually TESTED carries real
+/// evidence against it. A move that abandons a country no scheme covers at this
+/// shape rests on the survivor's anchor alone — issue 314's `country_probed`
+/// gap. Both halves contain true positives, so this is a split for a reviewer
+/// and NOT a filter: `LV -> LT` on a `UAB` company is never-asked and plainly
+/// right, while the two false positives the first plan turned up
+/// (`SI -> SE` on a Slovenian sole proprietor passing the Swedish Luhn, and
+/// `IE -> IT` on an insurer registered in three countries) are also never-asked.
+#[tokio::test]
+async fn the_plan_separates_a_refusal_from_a_missing_scheme() {
+    let (db, conn) = open("test-typo-asked").await;
+    // Eight digits: the stand-in vocabulary covers SK and SG, so moving away
+    // from SG means SG was tested and refused.
+    org(&conn, 1, "SK", "41734602", "Nejaka Firma", 30).await;
+    org(&conn, 2, "SG", "41734602", "Nejaka Firma", 2).await;
+    // Nine digits: the vocabulary covers BG only, so moving away from BI rests
+    // on Bulgaria's anchor alone — nobody asked about Burundi.
+    org(&conn, 3, "BG", "831496285", "Petrol AD", 40).await;
+    org(&conn, 4, "BI", "831496285", "Petrol AD", 1).await;
+    db.build_organization_indexes().await.unwrap();
+
+    let p = plan(&db).await;
+    assert_eq!(p.rows, 2);
+    assert_eq!(p.from_asked_and_refused, 1);
+    assert_eq!(p.from_never_asked, 1);
+    let by = |from: &str| -> bool {
+        p.moves.iter().find(|m| m.from == from).expect(from).from_asked_and_refused
+    };
+    assert!(by("SG"), "SG is in the 8-digit vocabulary — tested and refused");
+    assert!(!by("BI"), "no Burundian scheme exists at 9 digits — silence, not refusal");
+
+    // And BOTH still apply: the split informs review, it does not gate the write.
+    let w = apply(&db, 2).await;
+    assert_eq!(w.applied, 2);
+}

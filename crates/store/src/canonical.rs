@@ -2320,6 +2320,25 @@ pub struct CountryTypoMove {
     /// Every code in the cluster, for the reviewer's context.
     pub codes: Vec<String>,
     pub names: Vec<String>,
+    /// Was the code being moved AWAY FROM actually asked about — is there a
+    /// scheme of its country at this value's shape at all?
+    ///
+    /// **This is the precision axis, and the dry run is what surfaced it.**
+    /// `asked_and_refused` means the vocabulary tested that country and the
+    /// arithmetic said no: real evidence against it. `false` means no scheme of
+    /// that country exists at this length, so its silence means nothing — issue
+    /// 314's `country_probed` gap — and the move rests on the survivor's anchor
+    /// alone.
+    ///
+    /// Both classes contain true positives (`LV -> LT` on `UAB "AE Medical"` is
+    /// never-asked and plainly right: `UAB` is the Lithuanian company form), so
+    /// this is NOT a filter. It is the split a reviewer needs, because the false
+    /// positives the first dry plan turned up live in the never-asked half:
+    /// `SI -> SE` on "Gorup – Audio Stojan Gorup S.P." — a Slovenian sole
+    /// proprietor whose number happens to pass the Swedish Luhn — and `IE -> IT`
+    /// on "XL Insurance Company SE", which is one insurer registered in three
+    /// countries rather than a slip.
+    pub from_asked_and_refused: bool,
 }
 
 /// Issue 326 step 2: what the survivor rule would move. Dry by default.
@@ -2334,6 +2353,14 @@ pub struct CountryTypoRepairReport {
     /// reason to rewrite a published country.
     pub left_unmoved: u64,
     pub rows: u64,
+    /// Moves where the abandoned country WAS tested and its arithmetic refused
+    /// the value — real evidence against it.
+    pub from_asked_and_refused: u64,
+    /// Moves where no scheme of the abandoned country exists at this value's
+    /// shape, so its silence is a vocabulary gap rather than a refusal. Not
+    /// wrong — most of the clean `LV -> LT` cases are here — but weaker, and the
+    /// false positives the first dry plan surfaced are all in this half.
+    pub from_never_asked: u64,
     pub moves: Vec<CountryTypoMove>,
     pub applied: u64,
     /// Rows the wet pass could not find under the planned `(country,
@@ -11702,6 +11729,12 @@ impl Db {
                     report.left_unmoved += 1;
                     continue;
                 }
+                let asked = cluster.asked.iter().any(|a| a == code);
+                if asked {
+                    report.from_asked_and_refused += 1;
+                } else {
+                    report.from_never_asked += 1;
+                }
                 report.moves.push(CountryTypoMove {
                     identifier: cluster.identifier.clone(),
                     from: code.clone(),
@@ -11709,6 +11742,7 @@ impl Db {
                     mentions: *mentions,
                     codes: cluster.codes.clone(),
                     names: cluster.names.clone(),
+                    from_asked_and_refused: asked,
                 });
             }
         }

@@ -4613,6 +4613,8 @@ impl Supervisor {
                     "decisive": r.decisive,
                     "left_unmoved": r.left_unmoved,
                     "rows": r.rows,
+                    "from_asked_and_refused": r.from_asked_and_refused,
+                    "from_never_asked": r.from_never_asked,
                     "applied": r.applied,
                     "skipped_moved": r.skipped_moved,
                     "stopped": r.stopped,
@@ -4623,6 +4625,7 @@ impl Supervisor {
                         "mentions": m.mentions,
                         "codes": m.codes,
                         "names": m.names,
+                        "from_asked_and_refused": m.from_asked_and_refused,
                     })).collect::<Vec<_>>(),
                 })
                 .to_string();
@@ -4635,7 +4638,11 @@ impl Supervisor {
                      decisive (the evidence names exactly one of the cluster's own codes). \
                      {} row(s) planned to move; {} left alone because their code is NOT one \
                      letter from the survivor — they share the identifier and nothing more, \
-                     and a checksum elsewhere is no reason to rewrite a published country.{} \
+                     and a checksum elsewhere is no reason to rewrite a published country. \
+                     Of the planned moves {} abandon a country that WAS tested and refused \
+                     the value, and {} abandon one no scheme covers at this shape — the \
+                     second half rests on the survivor's anchor alone and is where the dry \
+                     run's false positives were found.{} \
                      EVERY move lands on an identity the survivor already holds, ON PURPOSE: \
                      run match-org-identifiers --r2 afterwards to fold them.",
                     if dry_run { "DRY" } else { "WET" },
@@ -4643,6 +4650,8 @@ impl Supervisor {
                     r.decisive,
                     r.rows,
                     r.left_unmoved,
+                    r.from_asked_and_refused,
+                    r.from_never_asked,
                     if dry_run {
                         String::new()
                     } else {
