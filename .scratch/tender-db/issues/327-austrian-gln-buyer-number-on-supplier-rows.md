@@ -1,7 +1,8 @@
 # 327 — The Austrian 9110 GLN: a buyer's number published in the supplier's block
 
-Status: MEASURED 2026-09-01 — source-side error, NOT a parse defect. The
-actionable conclusion is a NEGATIVE one: do not give this class a checksum arm.
+Status: MEASURED AND WATCHED 2026-09-01 — source-side error, NOT a parse defect.
+The actionable conclusion is a NEGATIVE one (no checksum arm for this class), and
+the latent risk now has a tripwire live on prod (`f315e2e`, job 554).
 Kind: data quality / identity semantics (organization layer)
 Relates to: 311 (whose pilot flagged the class), 312 (the same "looks untidy vs
 measured false-merge rate" question, same answer shape), 326 (the country
@@ -97,10 +98,47 @@ here it is to bless a key that is right 6,915 times and actively poisonous ~50.
 
 ## What could still be done, and what it is worth
 
-* **A false-merge tripwire on the shared set** (~50 values, 31 known wrong) so
-  the class is watched rather than trusted. Cheap; the census query above is the
-  whole test.
+* ~~A false-merge tripwire on the shared set~~ — **DONE**, see below.
 * **Splitting the 31 false pairs is NOT indicated**: they are already separate
   org rows under different countries, so no merge has occurred. The damage is
   latent, not realised.
 * **A corrigendum upstream** is the only real fix, and it is the publisher's.
+
+## The tripwire is live (`f315e2e`, job 554)
+
+Folded into `org-merge-health` beside issue 325's parser-vs-stock gauge, for the
+same reason: that census already walks every identifier-bearing org, so the
+counters cost nothing.
+
+Two numbers, and only one of them can alarm:
+
+| | |
+| --- | --- |
+| `shared` | values held by more than one row — the class this issue measured as wrong about two thirds of the time. Reported, never alarms; growth means the publisher-side error is spreading. |
+| `shared_one_country` | **must stay ZERO**, alarms on one row, no baseline and no tolerance. |
+
+The asymmetry is the whole design. What keeps the Austrian Interior Ministry
+apart from `AS Aircontact` today is **only** that they stand under different
+countries, because R2 keys on `(country, kind, identifier)`. A shared GLN whose
+rows have collapsed onto a single country is that guard gone — a merge path that
+has opened — and one such row is worth a look. The size of the shared set is not.
+
+The alarm rides `parser_vs_stock_alarms` rather than a second mechanism, so it
+inherits the test that already exists for the muted-probe lesson (Stage 4
+Unit 5), extended with the zero-floor case and with the steady state:
+shared-but-multi-country is normal and must **not** alarm.
+
+### First reading, and it cross-checks the hand census exactly
+
+```
+rows 6965   distinct 6915   shared 46   shared_one_country 0
+```
+
+`shared = 46` is the same 46 values classified by hand above (15 true, 31 false),
+computed a second time by a different route — the in-process walk against the
+ad-hoc SQL. Two independent computations agreeing is the check worth having on a
+number a tripwire will be judged against.
+
+Also confirmed in the same reading: issue 326's 312 country moves did **not**
+disturb this class (`shared` unchanged at 46), which is expected — those moves
+were 8/9/10/11/14-digit values and this class is 13.
