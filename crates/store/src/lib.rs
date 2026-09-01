@@ -38,6 +38,7 @@ pub use canonical::{
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, DuplicateIdentityReport,
     LabelFix, LabelRepairReport,
+    GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,
     NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,

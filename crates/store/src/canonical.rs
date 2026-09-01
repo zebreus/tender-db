@@ -2623,6 +2623,75 @@ pub struct GenericWallReport {
     pub stopped: bool,
 }
 
+/// One over-cap name key, cut by the DIVERSITY of its carriers' identifiers
+/// rather than their number (issue 332).
+#[derive(Debug, Default, Clone)]
+pub struct GenericKeyShape {
+    pub key_kind: String,
+    pub key: String,
+    /// Distinct orgs carrying it.
+    pub carriers: u64,
+    /// …of which hold a complete `(country, kind, identifier)` triple.
+    pub with_identifier: u64,
+    /// Distinct triples among those. THE statistic under test.
+    pub distinct_identities: u64,
+    /// `single-identity` | `mostly-fragmented` | `mostly-distinct` |
+    /// `no-identifiers`.
+    pub verdict: &'static str,
+}
+
+/// What the genericness-statistic census found (issue 332).
+///
+/// The wall refuses a name key carried by more than `STOPLIST_CAP` distinct
+/// orgs, on the premise that such a name is one MANY DIFFERENT BODIES CHOSE. The
+/// issue-331 run printed the carrier counts and the top of that list did not look
+/// like that premise — `siemens §ag` at 1,238 carriers, `stadt roth` at 30 — but
+/// a carrier count cannot tell a widely-shared name from a single heavily
+/// fragmented identity, and neither could issue 331's collapse (it saved 3 of the
+/// 1,238).
+///
+/// So this cuts each over-cap key by how many DISTINCT
+/// `(country, kind, identifier)` triples its carriers hold:
+///
+/// * 1,238 carriers holding 3 triples is one identity, fragmented.
+/// * 40 carriers holding 40 triples is a genuinely shared name.
+///
+/// The census exists to say whether those two populations actually separate. If
+/// they do not, the observation that prompted issue 332 was four convenient rows
+/// and the wall's statistic is fine as it stands — a complete answer, and the one
+/// issue 327 and issue 331 both landed on.
+#[derive(Debug, Default, Clone)]
+pub struct GenericStatisticReport {
+    /// Name keys visited across both kinds.
+    pub keys_walked: u64,
+    /// …of which over `stoplist_cap` carriers, so the wall refuses on them.
+    pub keys_over_cap: u64,
+    /// Carrier rows belonging to those keys.
+    pub over_cap_carriers: u64,
+    /// Over-cap keys whose identifier-bearing carriers hold exactly ONE triple:
+    /// the whole key is a single identity fragmented, and the wall is refusing a
+    /// name that nobody else uses at all. The strongest form of the inversion.
+    pub single_identity: u64,
+    /// Over-cap keys where distinct identities are at most half the
+    /// identifier-bearing carriers.
+    pub mostly_fragmented: u64,
+    /// …where they are more than half: a genuinely shared name, and the wall is
+    /// doing exactly what it was built for.
+    pub mostly_distinct: u64,
+    /// …where no carrier holds a triple at all, so the cut cannot decide. NOT a
+    /// footnote: if this dominates, the statistic cannot be improved this way and
+    /// the census's answer is "unanswerable by this route".
+    pub no_identifiers: u64,
+    /// `distinct_identities * 100 / with_identifier` per decidable over-cap key,
+    /// sorted. Percentiles are read off it: the question is whether this is
+    /// BIMODAL (two populations that separate) or a smear (one population, and
+    /// no threshold worth having).
+    pub identity_ratio: Vec<u8>,
+    pub rows: Vec<GenericKeyShape>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One row whose identifier carries a publisher label (issue 328).
 #[derive(Debug, Default, Clone)]
 pub struct LabelFix {
@@ -13343,6 +13412,184 @@ impl Db {
             };
             rank(a.verdict).cmp(&rank(b.verdict)).then_with(|| b.savings.cmp(&a.savings))
         });
+        report.truncated = listed.len() > cap;
+        listed.truncate(cap);
+        report.rows = listed;
+
+        Ok(report)
+    }
+
+    /// The issue-332 measurement: are over-cap name keys widely-shared names, or
+    /// single identities fragmented? Reads [`GenericStatisticReport`] for why the
+    /// carrier count cannot tell. This writes nothing.
+    pub async fn genericness_statistic_census(
+        &self,
+        stoplist_cap: usize,
+        cap: usize,
+        // Threaded rather than a private const, following the
+        // `OrgEdgeScanArgs::key_window` precedent — and because the split-run
+        // handling below is the one bug that would silently hide the WIDEST keys,
+        // which is the entire population this census exists to look at. A
+        // hardcoded 20,000 is untestable without fixturing 20,000 rows.
+        window: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<GenericStatisticReport> {
+        let mut report = GenericStatisticReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: the over-cap keys and their carriers, per kind.
+        //
+        // GROUPED, not paged-and-stitched. The obvious walk — read `window` rows
+        // ordered by key, then drop the last (possibly split) run and re-read
+        // from its key — is WRONG for a run longer than the window: the pop is
+        // guarded on `groups.len() > 1`, so a page filled by ONE key keeps that
+        // truncated run and then resumes past it, losing the rest. A test with a
+        // window of 3 over a run of 8 counted 3 carriers and dropped the key
+        // below the cap. That failure hides precisely the WIDEST keys, which are
+        // the entire population this census exists to look at.
+        //
+        // `GROUP BY key` with `LIMIT` counts complete groups instead, because the
+        // limit applies to groups rather than rows — correct for a run of any
+        // length, with no stitching to get wrong. Equality on `key_kind` and a
+        // range on `key` keep it an index-ordered scan (issue 329).
+        let window = window.max(2);
+        let mut over_cap: Vec<(&'static str, String, Vec<i64>)> = Vec::new();
+        for kind in ["n2", "n3"] {
+            let mut after = String::new();
+            loop {
+                if stop() {
+                    return Ok(GenericStatisticReport { stopped: true, ..Default::default() });
+                }
+                let mut wide: Vec<String> = Vec::new();
+                let mut n = 0usize;
+                {
+                    let mut rows = reader
+                        .query(
+                            "SELECT key, COUNT(DISTINCT org_id) FROM org_match_keys \
+                              WHERE key_kind = ? AND key > ? \
+                              GROUP BY key ORDER BY key LIMIT ?",
+                            (t(kind), t(after.as_str()), Value::Integer(window as i64)),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        n += 1;
+                        let key = text(&row, 0);
+                        report.keys_walked += 1;
+                        if int(&row, 1).max(0) as usize > stoplist_cap {
+                            wide.push(key.clone());
+                        }
+                        after = key;
+                    }
+                }
+                if n == 0 {
+                    break;
+                }
+                // The carriers, for the over-cap keys only. Pure equality on
+                // both indexed columns.
+                for key in wide {
+                    if stop() {
+                        return Ok(GenericStatisticReport {
+                            stopped: true,
+                            ..Default::default()
+                        });
+                    }
+                    let mut ids: Vec<i64> = Vec::new();
+                    let mut rows = reader
+                        .query(
+                            "SELECT DISTINCT org_id FROM org_match_keys \
+                              WHERE key_kind = ? AND key = ? ORDER BY org_id",
+                            (t(kind), t(key.as_str())),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        ids.push(int(&row, 0));
+                    }
+                    report.keys_over_cap += 1;
+                    report.over_cap_carriers += ids.len() as u64;
+                    over_cap.push((kind, key, ids));
+                }
+                progress(report.keys_walked, &format!("walking {kind} keys"));
+            }
+        }
+
+        // Pass 2: identities for every carrier, by PK, once. Triples are interned
+        // to a u32 so the per-carrier cost is four bytes rather than a string —
+        // the over-cap population is the widest keys in the corpus, so this is
+        // where the memory would have gone.
+        let mut ids: Vec<i64> = over_cap.iter().flat_map(|(_, _, v)| v.iter().copied()).collect();
+        ids.sort_unstable();
+        ids.dedup();
+        let mut intern: std::collections::HashMap<String, u32> = Default::default();
+        let mut identity: std::collections::HashMap<i64, u32> = Default::default();
+        progress(0, &format!("reading identities for {} carriers", ids.len()));
+        for chunk in ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(GenericStatisticReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT id, country, identifier_kind, identifier FROM organizations \
+                  WHERE id IN ({}) AND country IS NOT NULL AND identifier_kind IS NOT NULL \
+                    AND identifier IS NOT NULL",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                let triple = format!("{}\u{1}{}\u{1}{}", text(&r, 1), text(&r, 2), text(&r, 3));
+                let next = intern.len() as u32;
+                let ix = *intern.entry(triple).or_insert(next);
+                identity.insert(int(&r, 0), ix);
+            }
+        }
+
+        // Pass 3: the verdict per over-cap key. EVERY key is tallied; `cap`
+        // bounds only `rows`.
+        let mut listed: Vec<GenericKeyShape> = Vec::new();
+        for (kind, key, carriers) in over_cap {
+            if stop() {
+                return Ok(GenericStatisticReport { stopped: true, ..Default::default() });
+            }
+            let mut triples: Vec<u32> =
+                carriers.iter().filter_map(|id| identity.get(id).copied()).collect();
+            let with_identifier = triples.len() as u64;
+            triples.sort_unstable();
+            triples.dedup();
+            let distinct = triples.len() as u64;
+            let verdict = if with_identifier == 0 {
+                report.no_identifiers += 1;
+                "no-identifiers"
+            } else if distinct == 1 {
+                // One identity, fragmented. The wall is refusing a name nobody
+                // else uses at all.
+                report.single_identity += 1;
+                report.identity_ratio.push((distinct * 100 / with_identifier).min(100) as u8);
+                "single-identity"
+            } else {
+                let ratio = (distinct * 100 / with_identifier).min(100) as u8;
+                report.identity_ratio.push(ratio);
+                if distinct * 2 <= with_identifier {
+                    report.mostly_fragmented += 1;
+                    "mostly-fragmented"
+                } else {
+                    report.mostly_distinct += 1;
+                    "mostly-distinct"
+                }
+            };
+            listed.push(GenericKeyShape {
+                key_kind: kind.to_owned(),
+                key,
+                carriers: carriers.len() as u64,
+                with_identifier,
+                distinct_identities: distinct,
+                verdict,
+            });
+        }
+        report.identity_ratio.sort_unstable();
+
+        // Widest first: the keys that prompted the question are the huge ones,
+        // so a cap should keep those rather than an alphabetical slice.
+        listed.sort_by(|a, b| b.carriers.cmp(&a.carriers).then_with(|| a.key.cmp(&b.key)));
         report.truncated = listed.len() > cap;
         listed.truncate(cap);
         report.rows = listed;

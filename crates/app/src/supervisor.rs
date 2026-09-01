@@ -380,6 +380,9 @@ enum Spec {
     /// Issue 331: does duplication actually push a name key over the
     /// genericness wall? Read-only measurement.
     GenericWallCensus,
+    /// Issue 332: are over-cap name keys widely-shared names, or single
+    /// identities fragmented? Read-only measurement.
+    GenericStatisticCensus,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1184,6 +1187,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "generic-statistic-census" => Ok(vec![
+                self.push(
+                    "generic-statistic-census",
+                    "generic-statistic-census".into(),
+                    Spec::GenericStatisticCensus,
+                )
+                .await,
+            ]),
             "generic-wall-census" => Ok(vec![
                 self.push(
                     "generic-wall-census",
@@ -1627,6 +1638,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "duplicate-identity-census",
     "name-pollution-census",
     "generic-wall-census",
+    "generic-statistic-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -1638,6 +1650,11 @@ const STOPPABLE_KINDS: &[&str] = &[
 /// emitting. Must stay far under [`store::SCAN_KEY_WINDOW`]: the walk's
 /// fills-page guard stoplists on that ordering.
 const SCAN_STOPLIST_CAP: usize = ingest::idgate::STOPLIST_CAP;
+
+/// One page of the issue-332 key walk. Same shape and reasoning as the
+/// anchor-wall census's window: big enough that a key run rarely spans two
+/// pages, small enough that a page is tens of thousands of rows in RAM.
+const GENERIC_KEY_WINDOW: usize = 20_000;
 
 /// The Stage-0 exemplar sheet's contamination case: an org that carried a
 /// foreign satellite name (the Dutch-MoD shape). Chased through
@@ -5031,6 +5048,98 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
+            Spec::GenericStatisticCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 332: cutting over-cap keys by identity diversity".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                const CAP: usize = 200;
+                let r = self
+                    .db
+                    .genericness_statistic_census(
+                        SCAN_STOPLIST_CAP,
+                        CAP,
+                        GENERIC_KEY_WINDOW,
+                        &stop,
+                        &progress,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(
+                        "generic-statistic-census STOPPED by cancel — no report stored".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                // Percentiles, because the question is whether the ratio is
+                // BIMODAL — two populations that separate — or one smear with no
+                // threshold worth having. A mean would hide exactly that.
+                let q = |p: usize| -> u8 {
+                    if r.identity_ratio.is_empty() {
+                        return 0;
+                    }
+                    r.identity_ratio[(r.identity_ratio.len() - 1) * p / 100]
+                };
+                let body = serde_json::json!({
+                    "keys_walked": r.keys_walked,
+                    "stoplist_cap": SCAN_STOPLIST_CAP,
+                    "keys_over_cap": r.keys_over_cap,
+                    "over_cap_carriers": r.over_cap_carriers,
+                    "single_identity": r.single_identity,
+                    "mostly_fragmented": r.mostly_fragmented,
+                    "mostly_distinct": r.mostly_distinct,
+                    "no_identifiers": r.no_identifiers,
+                    "identity_ratio": {
+                        "n": r.identity_ratio.len(),
+                        "p10": q(10), "p25": q(25), "p50": q(50),
+                        "p75": q(75), "p90": q(90),
+                    },
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|k| serde_json::json!({
+                        "key_kind": k.key_kind,
+                        "key": k.key,
+                        "carriers": k.carriers,
+                        "with_identifier": k.with_identifier,
+                        "distinct_identities": k.distinct_identities,
+                        "verdict": k.verdict,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("generic-statistic-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "generic-statistic-census (issue 332): {} name key(s) walked across n2 and \
+                     n3; {} are over the stoplist cap of {}, covering {} carrier rows. Cut by \
+                     how many DISTINCT (country, kind, identifier) triples those carriers hold: \
+                     {} hold exactly ONE (a single identity fragmented — the wall refusing a \
+                     name nobody else uses), {} are mostly-fragmented (distinct identities at \
+                     most half the identifier-bearing carriers), {} are mostly-distinct (a \
+                     genuinely shared name, the wall working as designed), and {} have no \
+                     identifier-bearing carrier at all and cannot be decided this way. \
+                     Identity ratio p10/p25/p50/p75/p90 = {}/{}/{}/{}/{}%. THE QUESTION IS \
+                     WHETHER THAT IS BIMODAL: two populations that separate would justify a \
+                     better statistic, one smear means the carrier count is fine and issue \
+                     332 closes on a negative. NOTHING IS WRITTEN.",
+                    r.keys_walked,
+                    r.keys_over_cap,
+                    SCAN_STOPLIST_CAP,
+                    r.over_cap_carriers,
+                    r.single_identity,
+                    r.mostly_fragmented,
+                    r.mostly_distinct,
+                    r.no_identifiers,
+                    q(10), q(25), q(50), q(75), q(90),
+                ))
+            }
             Spec::GenericWallCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -8273,6 +8382,7 @@ mod tests {
                 "duplicate-identity-census",
                 "name-pollution-census",
                 "generic-wall-census",
+                "generic-statistic-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"
