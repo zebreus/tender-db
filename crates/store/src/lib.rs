@@ -40,6 +40,7 @@ pub use canonical::{
     LabelFix, LabelRepairReport,
     GenericKeyShape, GenericStatisticReport,
     GenericWallReport, InflatedKey,
+    NameAttribution, NameAttributionReport,
     NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,

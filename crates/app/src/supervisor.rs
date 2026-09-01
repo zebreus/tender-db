@@ -383,6 +383,9 @@ enum Spec {
     /// Issue 332: are over-cap name keys widely-shared names, or single
     /// identities fragmented? Read-only measurement.
     GenericStatisticCensus,
+    /// Issue 334: for the widest name keys, does the stored org name match what
+    /// the notices said? Read-only probe.
+    NameAttributionProbe,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1187,6 +1190,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "name-attribution-probe" => Ok(vec![
+                self.push(
+                    "name-attribution-probe",
+                    "name-attribution-probe".into(),
+                    Spec::NameAttributionProbe,
+                )
+                .await,
+            ]),
             "generic-statistic-census" => Ok(vec![
                 self.push(
                     "generic-statistic-census",
@@ -1639,6 +1650,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "name-pollution-census",
     "generic-wall-census",
     "generic-statistic-census",
+    "name-attribution-probe",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -5048,7 +5060,115 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
-            Spec::GenericStatisticCensus => {
+            Spec::NameAttributionProbe => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's
+                // locals live in ONE future — and adding this census's arm
+                // overflowed the stack of a pre-existing supervisor test
+                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // without touching that test at all. Boxing puts this arm's
+                // frame on the heap so the parent future stops growing with it.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 334: asking the notices what they called them".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                // The widest 60 keys, 120 carriers apiece. A PROBE: every number
+                // below is about that set, and the job line says so rather than
+                // leaving a reader to infer a corpus tally.
+                const KEYS: usize = 60;
+                const PER_KEY: usize = 120;
+                let r = self
+                    .db
+                    .name_attribution_probe(
+                        ingest::project::match_norm,
+                        SCAN_STOPLIST_CAP,
+                        KEYS,
+                        PER_KEY,
+                        GENERIC_KEY_WINDOW,
+                        &stop,
+                        &progress,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok(
+                        "name-attribution-probe STOPPED by cancel — no report stored".to_owned()
+                    );
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "population": "the widest over-cap n2 keys, sampled — NOT a corpus tally",
+                    "keys_walked": r.keys_walked,
+                    "keys_examined": r.keys_examined,
+                    "per_key_sample": PER_KEY,
+                    "sampled": r.sampled,
+                    "agrees": r.agrees,
+                    "differs": r.differs,
+                    "silent": r.silent,
+                    "published_keys": r.published_keys,
+                    "replaced_keys": r.replaced_keys,
+                    "mixed_keys": r.mixed_keys,
+                    "no_evidence_keys": r.no_evidence_keys,
+                    "rows": r.rows.iter().map(|k| serde_json::json!({
+                        "key": k.key,
+                        "carriers": k.carriers,
+                        "sampled": k.sampled,
+                        "agrees": k.agrees,
+                        "differs": k.differs,
+                        "silent": k.silent,
+                        "verdict": k.verdict,
+                        "examples": k.examples.iter()
+                            .map(|(stored, said)| serde_json::json!({
+                                "stored": stored, "a_notice_said": said,
+                            }))
+                            .collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("name-attribution-probe", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "name-attribution-probe (issue 334): walked {} name key(s) to find the {} \
+                     WIDEST over the cap of {}, then sampled up to {} carriers of each and \
+                     asked their own notices. THIS IS A PROBE OVER THOSE KEYS, NOT A CORPUS \
+                     TALLY — every number here is about that set. {} carrier(s) sampled: {} \
+                     agree with at least one of their own mentions, {} have every mention \
+                     naming something ELSE, {} have no mentions at all. Per key: {} published \
+                     (stored name is what the notices said — no parser change would have \
+                     prevented it), {} replaced (no sampled carrier's notices agree, so the \
+                     name was put there downstream, which would be ours), {} mixed, {} with no \
+                     evidence. Read the `examples` in the report before concluding anything: \
+                     the counts say how big, only the values say what happened. NOTHING IS \
+                     WRITTEN.",
+                    r.keys_walked,
+                    r.keys_examined,
+                    SCAN_STOPLIST_CAP,
+                    PER_KEY,
+                    r.sampled,
+                    r.agrees,
+                    r.differs,
+                    r.silent,
+                    r.published_keys,
+                    r.replaced_keys,
+                    r.mixed_keys,
+                    r.no_evidence_keys,
+                ))
+            }).await,
+            Spec::GenericStatisticCensus => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's
+                // locals live in ONE future — and adding this census's arm
+                // overflowed the stack of a pre-existing supervisor test
+                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // without touching that test at all. Boxing puts this arm's
+                // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
                 self.set_phase(
@@ -5143,8 +5263,14 @@ impl Supervisor {
                     r.too_little_evidence,
                     q(10), q(25), q(50), q(75), q(90),
                 ))
-            }
-            Spec::GenericWallCensus => {
+            }).await,
+            Spec::GenericWallCensus => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's
+                // locals live in ONE future — and adding this census's arm
+                // overflowed the stack of a pre-existing supervisor test
+                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // without touching that test at all. Boxing puts this arm's
+                // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
                 self.set_phase(
@@ -5218,8 +5344,14 @@ impl Supervisor {
                     r.nearest_miss,
                     SCAN_STOPLIST_CAP,
                 ))
-            }
-            Spec::NamePollutionCensus => {
+            }).await,
+            Spec::NamePollutionCensus => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's
+                // locals live in ONE future — and adding this census's arm
+                // overflowed the stack of a pre-existing supervisor test
+                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // without touching that test at all. Boxing puts this arm's
+                // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
                 self.set_phase(
@@ -5302,8 +5434,14 @@ impl Supervisor {
                     q(50), q(90), q(99),
                     r.name_lengths.last().copied().unwrap_or(0),
                 ))
-            }
-            Spec::DuplicateIdentityCensus => {
+            }).await,
+            Spec::DuplicateIdentityCensus => Box::pin(async move {
+                // BOXED. `run_spec` is a 62-arm async match, so every arm's
+                // locals live in ONE future — and adding this census's arm
+                // overflowed the stack of a pre-existing supervisor test
+                // (`an_execute_without_an_expected_count_is_refused`, SIGABRT)
+                // without touching that test at all. Boxing puts this arm's
+                // frame on the heap so the parent future stops growing with it.
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
                 self.set_phase(
@@ -5431,7 +5569,7 @@ impl Supervisor {
                     de_vat("unnamed"),
                     r.name_keys_absent,
                 ))
-            }
+            }).await,
             Spec::CountryTypoCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -8388,6 +8526,7 @@ mod tests {
                 "name-pollution-census",
                 "generic-wall-census",
                 "generic-statistic-census",
+                "name-attribution-probe",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"

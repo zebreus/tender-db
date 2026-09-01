@@ -26,6 +26,14 @@ Use `--features server` for any ad-hoc check of those modules, or just run
 `ops/check.sh`, which enables it. The same footgun applies to `cargo test`:
 `--lib` tests in those modules are silently filtered out, not run.
 
+**Adding a `Spec` arm to `supervisor::run_spec` can blow the stack of a test you
+never touched.** It is a 62-arm async match, so every arm's locals live in ONE
+future. On 2026-09-01 adding a census arm made
+`an_execute_without_an_expected_count_is_refused` abort with `stack overflow`
+(SIGABRT) — a test with no relation to the change, which reads as a mystery
+regression. Wrap a big arm's body in `Box::pin(async move { ... }).await` so its
+frame goes on the heap; the five census arms already do.
+
 Never pipe `ops/check.sh` or a gating `cargo` command through `tail`/`head`/`grep`
 in a background or chained command: the pipeline reports the FILTER's exit code and
 a red suite reads as green (issue 254's trap; it re-bit on 2026-08-24 and a

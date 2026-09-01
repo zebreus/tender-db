@@ -2698,6 +2698,67 @@ pub struct GenericStatisticReport {
     pub stopped: bool,
 }
 
+/// One wide name key, with what its carriers' own notices called them (issue 334).
+#[derive(Debug, Default, Clone)]
+pub struct NameAttribution {
+    pub key: String,
+    pub carriers: u64,
+    /// Carriers sampled — `per_key` or fewer.
+    pub sampled: u64,
+    /// …whose stored name matches at least one of their own mentions.
+    pub agrees: u64,
+    /// …whose every mention names something else.
+    pub differs: u64,
+    /// …with no mentions to compare.
+    pub silent: u64,
+    /// Up to three `stored name -> what a notice actually said` pairs, for
+    /// reading. The counts say how big; only these say what happened.
+    pub examples: Vec<(String, String)>,
+    /// `published` | `replaced` | `mixed` | `no-evidence`.
+    pub verdict: &'static str,
+}
+
+/// What the name-attribution probe found (issue 334).
+///
+/// Issue 332's census listed the widest name key in the corpus as
+/// `avenue web systèmes` — 62,084 organization rows, holding 62,080 DISTINCT
+/// identifiers. Avenue Web Systèmes is a French e-procurement platform vendor, so
+/// the name field looks to have received the PLATFORM's name while the identifier
+/// received the actual buyer's. But a carrier count cannot say whether the name is
+/// wrong or the identifier is, and it cannot say whether the notice published it
+/// that way.
+///
+/// `organization_mentions.name` holds what each notice actually said, so
+/// comparing the two settles it — the issue-330 method, pointed at the widest
+/// keys instead of at broken names.
+///
+/// **This is a PROBE, not a corpus census, and the distinction is in the
+/// population rather than in a cap.** It examines the `limit` widest over-cap
+/// keys and samples `per_key` carriers of each; every number below is about that
+/// set and nothing else. Said plainly because the same shape reported as a corpus
+/// tally would be the issue-326 mistake.
+#[derive(Debug, Default, Clone)]
+pub struct NameAttributionReport {
+    /// Name keys visited to find the widest.
+    pub keys_walked: u64,
+    /// Widest over-cap keys examined — the population of every count here.
+    pub keys_examined: u64,
+    pub sampled: u64,
+    pub agrees: u64,
+    pub differs: u64,
+    pub silent: u64,
+    /// Keys whose sampled carriers all agree with their notices: published that
+    /// way, and no parser change would have prevented it.
+    pub published_keys: u64,
+    /// Keys where every sampled carrier's notices name something else — the
+    /// stored name was put there downstream, which would be ours.
+    pub replaced_keys: u64,
+    pub mixed_keys: u64,
+    pub no_evidence_keys: u64,
+    pub rows: Vec<NameAttribution>,
+    pub stopped: bool,
+}
+
 /// One row whose identifier carries a publisher label (issue 328).
 #[derive(Debug, Default, Clone)]
 pub struct LabelFix {
@@ -13633,6 +13694,171 @@ impl Db {
         report.truncated = listed.len() > cap;
         listed.truncate(cap);
         report.rows = listed;
+
+        Ok(report)
+    }
+
+    /// The issue-334 probe: for the widest name keys, does the stored org name
+    /// match what the notices actually said? Reads [`NameAttributionReport`] —
+    /// in particular that this is a probe over the widest keys, not a corpus
+    /// census. This writes nothing.
+    pub async fn name_attribution_probe(
+        &self,
+        norm: fn(&str) -> String,
+        stoplist_cap: usize,
+        limit: usize,
+        per_key: usize,
+        window: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<NameAttributionReport> {
+        let mut report = NameAttributionReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: the widest over-cap keys. Grouped rather than paged-and-
+        // stitched, for the reason issue 333 spells out — a run longer than a
+        // page would otherwise be truncated, and here that would silently drop
+        // the very keys the probe exists to look at.
+        let window = window.max(2);
+        let mut widest: Vec<(String, u64)> = Vec::new();
+        let mut after = String::new();
+        loop {
+            if stop() {
+                return Ok(NameAttributionReport { stopped: true, ..Default::default() });
+            }
+            let mut n = 0usize;
+            let mut rows = reader
+                .query(
+                    "SELECT key, COUNT(DISTINCT org_id) FROM org_match_keys \
+                      WHERE key_kind = 'n2' AND key > ? \
+                      GROUP BY key ORDER BY key LIMIT ?",
+                    (t(after.as_str()), Value::Integer(window as i64)),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                n += 1;
+                let key = text(&row, 0);
+                report.keys_walked += 1;
+                let carriers = int(&row, 1).max(0) as u64;
+                if carriers as usize > stoplist_cap {
+                    widest.push((key.clone(), carriers));
+                }
+                after = key;
+            }
+            if n == 0 {
+                break;
+            }
+            // Keep the walk's memory bounded by `limit` rather than by the
+            // number of over-cap keys, which is tens of thousands.
+            if widest.len() > limit * 4 {
+                widest.sort_by(|a, b| b.1.cmp(&a.1));
+                widest.truncate(limit);
+            }
+            progress(report.keys_walked, "finding the widest name keys");
+        }
+        widest.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+        widest.truncate(limit);
+        report.keys_examined = widest.len() as u64;
+
+        // Pass 2: for each key, sample carriers and ask their own notices.
+        for (key, carriers) in widest {
+            if stop() {
+                return Ok(NameAttributionReport { stopped: true, ..Default::default() });
+            }
+            let mut ids: Vec<i64> = Vec::new();
+            {
+                let mut rows = reader
+                    .query(
+                        "SELECT DISTINCT org_id FROM org_match_keys \
+                          WHERE key_kind = 'n2' AND key = ? ORDER BY org_id LIMIT ?",
+                        (t(key.as_str()), Value::Integer(per_key as i64)),
+                    )
+                    .await?;
+                while let Some(row) = rows.next().await? {
+                    ids.push(int(&row, 0));
+                }
+            }
+
+            let mut stored: std::collections::HashMap<i64, String> = Default::default();
+            for chunk in ids.chunks(IN_CHUNK) {
+                let sql = format!(
+                    "SELECT id, name FROM organizations WHERE id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let mut q = reader.query(&sql, params).await?;
+                while let Some(r) = q.next().await? {
+                    stored.insert(int(&r, 0), text(&r, 1));
+                }
+            }
+            // What the notices said. `organization_id IN (...)` is a seek per
+            // value on the leading column of its index.
+            let mut said: std::collections::HashMap<i64, Vec<String>> = Default::default();
+            for chunk in ids.chunks(IN_CHUNK) {
+                if stop() {
+                    return Ok(NameAttributionReport { stopped: true, ..Default::default() });
+                }
+                let sql = format!(
+                    "SELECT organization_id, name FROM organization_mentions \
+                      WHERE organization_id IN ({})",
+                    placeholders(chunk.len())
+                );
+                let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+                let mut q = reader.query(&sql, params).await?;
+                while let Some(r) = q.next().await? {
+                    let e = said.entry(int(&r, 0)).or_default();
+                    // Three is enough to show a reader what happened, and stops
+                    // one 12,000-mention organization from dominating memory.
+                    if e.len() < 3 {
+                        e.push(text(&r, 1));
+                    }
+                }
+            }
+
+            let mut row = NameAttribution {
+                key: key.clone(),
+                carriers,
+                sampled: ids.len() as u64,
+                ..Default::default()
+            };
+            for id in &ids {
+                let Some(name) = stored.get(id) else { continue };
+                let target = norm(name);
+                match said.get(id) {
+                    None => row.silent += 1,
+                    Some(names) => {
+                        if names.iter().any(|m| norm(m) == target) {
+                            row.agrees += 1;
+                        } else {
+                            row.differs += 1;
+                            if row.examples.len() < 3 {
+                                row.examples
+                                    .push((name.clone(), names.first().cloned().unwrap_or_default()));
+                            }
+                        }
+                    }
+                }
+            }
+            row.verdict = if row.agrees + row.differs == 0 {
+                report.no_evidence_keys += 1;
+                "no-evidence"
+            } else if row.differs == 0 {
+                report.published_keys += 1;
+                "published"
+            } else if row.agrees == 0 {
+                report.replaced_keys += 1;
+                "replaced"
+            } else {
+                report.mixed_keys += 1;
+                "mixed"
+            };
+            report.sampled += row.sampled;
+            report.agrees += row.agrees;
+            report.differs += row.differs;
+            report.silent += row.silent;
+            report.rows.push(row);
+            progress(report.keys_examined, "asking the notices");
+        }
 
         Ok(report)
     }
