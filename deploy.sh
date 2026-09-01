@@ -68,6 +68,24 @@ MSG
 fi
 [ -n "$BUSY" ] && say "FORCE_BUSY=1: deploying over the running job ($BUSY)"
 
+# The `vps` remote is derived, not assumed. It lives only in the local git
+# config, so a fresh clone or a reset working copy simply does not have it, and
+# `git push vps` then fails with "'vps' does not appear to be a git repository"
+# — AFTER the full test suite has run (2026-09-01: a deploy died there, 281
+# seconds in, on a green tree). The address is already known from $VPS and
+# $REMOTE_REPO, so there is no reason to require it to have been set up by hand.
+want_remote="$VPS:$REMOTE_REPO"
+have_remote="$(git remote get-url vps 2>/dev/null || true)"
+if [ -z "$have_remote" ]; then
+    say "Adding the 'vps' git remote ($want_remote)"
+    git remote add vps "$want_remote"
+elif [ "$have_remote" != "$want_remote" ]; then
+    # Someone pointed it elsewhere, or VPS= was overridden for this run. Say so
+    # rather than pushing a deploy at whatever address happens to be configured.
+    say "'vps' points at $have_remote, not $want_remote — repointing it"
+    git remote set-url vps "$want_remote"
+fi
+
 say "Pushing $REF to $VPS:$REMOTE_REPO"
 git push vps "$REF:main"
 REV="$(git rev-parse "$REF")"
