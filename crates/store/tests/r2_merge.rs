@@ -269,3 +269,56 @@ async fn the_r2_merge_applies_the_denial_stack_and_merges_the_plan() {
     let again = db.match_org_identifiers_r2(args(false, None)).await.expect("rerun");
     assert_eq!((again.plan_groups, again.merged_groups, again.removed), (0, 0, 0));
 }
+
+/// Issue 326: the plan must be READABLE, not merely sampled.
+///
+/// `plan_sample` is a fixed 1-in-199 content-stable acceptance. That is the
+/// right shape for estimating precision over a huge plan and the wrong shape for
+/// reading a small one: on prod's 200-group plan it yielded exactly ONE row, so
+/// a 200-group merge could not be reviewed at all — which is why the 297
+/// duplicate identities the issue-326 repair created on purpose sat unfolded.
+///
+/// So a capped LISTING rides alongside the sample. Complete whenever the plan
+/// fits the cap, with a flag when it does not, and the sample keeps its own
+/// unbiased-over-large-plans guarantee untouched.
+#[tokio::test]
+async fn the_dry_plan_is_listed_in_full_not_just_sampled() {
+    let (db, conn) = seed("/tmp/tender-db-r2-listing").await;
+    let r = db.match_org_identifiers_r2(args(true, None)).await.unwrap();
+
+    assert!(r.plan_groups > 0, "the fixture plans something");
+    assert_eq!(
+        r.plan_listing.len() as u64,
+        r.plan_groups,
+        "every planned group is listed: {} groups, {} listed",
+        r.plan_groups,
+        r.plan_listing.len()
+    );
+    assert!(!r.plan_listing_truncated, "and the listing is complete");
+
+    // The listing carries what a reviewer needs to judge a merge: the identity
+    // being merged onto, and every member with its own literal and name.
+    let (country, scheme, key, members) = &r.plan_listing[0];
+    assert!(!country.is_empty() && !scheme.is_empty() && !key.is_empty());
+    assert!(members.len() >= 2, "a group is two or more rows");
+    for (org_id, kind, literal, _name) in members {
+        assert!(*org_id > 0);
+        assert!(!kind.is_empty());
+        assert!(!literal.is_empty());
+    }
+
+    // The 1-in-199 sample is a DIFFERENT thing and stays as it was: on a plan
+    // this small it is expected to be empty, and that is precisely the gap the
+    // listing closes rather than a defect in the sample.
+    assert!(
+        r.plan_sample.len() <= r.plan_listing.len(),
+        "the sample never exceeds the listing"
+    );
+
+    // A WET run records no listing — it is a review artifact for a plan that has
+    // not been applied yet, and a wet re-record must not masquerade as one.
+    let w = db.match_org_identifiers_r2(args(false, None)).await.unwrap();
+    assert!(w.plan_listing.is_empty(), "a wet run lists nothing");
+    assert!(!w.plan_listing_truncated);
+    let _ = count(&conn, "SELECT COUNT(*) FROM organizations").await;
+}

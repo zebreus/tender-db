@@ -37,7 +37,8 @@ pub use canonical::{
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     MintedCountryFix, MintedCountryReport,
-    EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, SCAN_KEY_WINDOW,
+    EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
+    SCAN_KEY_WINDOW,
     TYPO_MOVE_MENTION_VETO,
 };
 pub use jobs::QueuedJobRow;

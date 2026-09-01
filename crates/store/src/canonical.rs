@@ -1552,6 +1552,24 @@ pub struct R2MergeReport {
     /// 100-sample precision review — (country, scheme, key, members as
     /// (org_id, kind, literal identifier, name)).
     pub plan_sample: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    /// The plan as a LISTING rather than a sample, capped at
+    /// [`R2_PLAN_LISTING_CAP`] groups (issue 326).
+    ///
+    /// `plan_sample` is a fixed 1-in-199 content-stable acceptance, which is the
+    /// right shape for estimating precision over a huge plan and the wrong shape
+    /// for reading a small one: at 200 plan groups it yields **one** row, and a
+    /// 200-group merge could not be reviewed at all. That is what held back the
+    /// fold of the 297 duplicate identities the issue-326 repair created on
+    /// purpose.
+    ///
+    /// Both are kept. The sample keeps its unbiased-over-large-plans guarantee;
+    /// this is complete whenever the plan fits the cap, and
+    /// [`Self::plan_listing_truncated`] says when it does not.
+    pub plan_listing: Vec<(String, &'static str, String, Vec<(i64, String, String, String)>)>,
+    /// The plan had more groups than [`R2_PLAN_LISTING_CAP`], so
+    /// [`Self::plan_listing`] is a scan-order prefix and NOT reviewable as a
+    /// whole. Read `plan_sample` for the unbiased view in that case.
+    pub plan_listing_truncated: bool,
 }
 
 /// Inputs to the issue-300 Stage-3 R3 merge (NULL-country rescue).
@@ -2224,6 +2242,16 @@ pub struct CountryTypoPair {
     pub b_agrees: bool,
     pub b_probed: bool,
 }
+
+/// How many R2 plan groups the report lists in full before falling back to the
+/// 1-in-199 sample alone (issue 326).
+///
+/// FIVE HUNDRED, chosen so prod's current 200-group plan is listed whole with
+/// room to grow. A merge plan that cannot be read is a merge plan that gets run
+/// unreviewed or not at all, and the second is what happened: the issue-326
+/// repair's 297 deliberate duplicates sat unfolded because the only window onto
+/// the plan was a single sampled row.
+pub const R2_PLAN_LISTING_CAP: usize = 500;
 
 /// How many mentions a row may carry and still be treated as a transcription
 /// slip rather than a real registration (issue 326 step 2b).
@@ -8010,6 +8038,32 @@ impl Db {
             // largest-first, so the review sees the plan's typical shape —
             // capped at 100 groups. Names ride along from the veto stage's
             // meta fetch.
+            // The full listing, capped. Cheap: the same `meta` fetch the
+            // sample uses, and bounded by the cap rather than by the plan.
+            if args.dry_run {
+                if report.plan_listing.len() < R2_PLAN_LISTING_CAP {
+                    let name_of: std::collections::HashMap<i64, String> =
+                        meta.iter().map(|m| (m.0, m.4.clone())).collect();
+                    report.plan_listing.push((
+                        gk.0.clone(),
+                        gk.1,
+                        gk.2.clone(),
+                        members
+                            .iter()
+                            .map(|m| {
+                                (
+                                    m.id,
+                                    m.kind.clone(),
+                                    m.literal.clone(),
+                                    name_of.get(&m.id).cloned().unwrap_or_default(),
+                                )
+                            })
+                            .collect(),
+                    ));
+                } else {
+                    report.plan_listing_truncated = true;
+                }
+            }
             if args.dry_run && report.plan_sample.len() < 100 {
                 let h = gk
                     .2
