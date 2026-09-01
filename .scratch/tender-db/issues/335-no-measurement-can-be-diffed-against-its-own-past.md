@@ -1,7 +1,9 @@
 # 335 — No measurement can be diffed against its own past
 
-Status: NEEDS-TRIAGE 2026-09-01 — gap identified from a concrete loss (see
-"How it bit"), fix shape sketched, not sized.
+Status: TRIAGED 2026-09-01 — gap real, loss concrete, and the risk I first wrote
+into this issue is now VERIFIED SMALLER than stated. The remaining work is a
+schema migration on a live table, deliberately not squeezed into the firing that
+found it.
 Kind: capability (observability / measurement discipline)
 Relates to: 311 (where it bit), 230 (data-quality windows), 326/332/333 (censuses
 whose before/after comparisons are the whole point)
@@ -61,12 +63,35 @@ gap:
 3. Add nothing else. No diffing UI, no API surface. Being able to fetch the
    previous body is the whole requirement; a reader or a later job can diff.
 
-## What must be checked before doing it
+## Checked, and the cursor risk is smaller than this issue first claimed
 
-* **Who reads `reports`?** The dashboard, the admin report endpoint, and several
-  jobs that read their own last output (`rehash-cursor`, `reveal-cursor` are
-  stored as reports and are *cursors*, not measurements — those must keep
-  latest-wins semantics or a resumed job could read a stale cursor). This is the
-  real risk in the change and needs enumerating first.
-* Report bodies can be large (the issue-332 census listing is 200 rows). Ten
-  versions of the biggest kinds needs sizing against the storage the box has.
+I wrote that the cursors were "the real risk in the change". **They are not.**
+Enumerated every reader: there are 40 call sites and **all of them go through
+`Db::latest_report(kind)`**, including `rehash-cursor` and `reveal-cursor`, plus
+one dynamic reader (`admin.rs:320`, the report endpoint) and `report_stamps` for
+`/metrics`. Nothing reads the table directly.
+
+So changing the key and rewriting `latest_report` as
+`ORDER BY computed_at DESC LIMIT 1` preserves latest-wins **for every caller by
+construction** — cursors included. There is no per-caller audit to do.
+
+## What the work actually is
+
+A **schema migration on a live table**, which is the part that needs care:
+
+* `reports` is `kind TEXT PRIMARY KEY`, created via `CREATE TABLE IF NOT EXISTS`,
+  so the prod table will not change shape on its own.
+* The additive-migration list in `crates/store/src/lib.rs` is `ALTER TABLE ... ADD
+  COLUMN` only — it cannot change a primary key, so this needs either a
+  `drop_and_recreate`-style rebuild (the helper exists, used by the reset paths)
+  or a new-table-and-copy step.
+* `report_stamps` does `SELECT kind, computed_at FROM reports` with no grouping.
+  With history it would return one row per version, so it needs a
+  `GROUP BY kind` / `MAX(computed_at)`. **This is the one caller that genuinely
+  changes**, and it feeds `/metrics` report-freshness.
+* Retention still needs sizing: the issue-332 census body carries a 200-row
+  listing, so ten versions of the widest kinds is the number to check against the
+  box before picking a bound.
+
+None of that is large, but a primary-key migration on a table the dashboard and
+`/metrics` both read is not a step-3 drive-by. Left ready rather than rushed.
