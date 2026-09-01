@@ -508,3 +508,94 @@ useless because 261 of the moves are nine digits where the namer is `BG:eik` or
 3. Then the capped wet run, followed by `match-org-identifiers --r2` — **every
    move lands on an identity the survivor already holds, on purpose**, so the
    merge arm is a required second step and not an afterthought.
+
+## Step 2b DONE: tightened, reviewed, and APPLIED — 312 rows moved (`105c519`, jobs 549/550)
+
+Two tightenings were specified. **One survived contact with the data and one did
+not**, which is the useful part.
+
+### (b) survived: a bare Luhn is not country evidence
+
+`SE:orgnr` and `FR:siren` share one arithmetic, and `idgate` already notes a
+10-digit Luhn pass "could be a SE orgnr or match PL:nip's shape". A survivor
+named only by one of those carries no country information — it is what moved
+"Gorup – Audio Stojan Gorup S.P." into Sweden. Refuses **16** clusters.
+
+Expressing it required carrying the naming SCHEME on each move: a length proxy
+fails, because 261 of the 343 moves are nine digits where the namer is `BG:eik`
+or `LT:kodas`, not `FR:siren`.
+
+### (a) did NOT survive: cluster shape cannot tell spray from a real registration
+
+Refusing any cluster holding a code neither the survivor nor one letter from it
+caught XL Insurance — and also refused **`Софарма Трейдинг АД`**, one Bulgarian
+EIK under `BG` plus five junk codes with a single mention each. That is precisely
+the corruption this repair exists for. My own earlier test caught the
+over-reach.
+
+### What replaced it: a measured weight veto
+
+The moved row's own mention count separates them, and the distribution is
+unambiguous over the 343 candidate moves:
+
+```
+p50 1   p75 2   p90 3   p95 4      256 of 343 carry exactly ONE mention
+```
+
+Both known false positives sit far out in that tail — **XL Insurance at 65,
+Gorup at 17**. `TYPO_MOVE_MENTION_VETO = 5` is the first value above the typo
+bulk. Refuses **14** rows.
+
+So weight does not vote *for* a survivor — the anchor does that — but it does
+veto a move *away from* a country the row has real standing in. Opposite
+questions, and the rule holds both.
+
+**The limitation is deliberate:** a heavily-published mis-countried row is no
+longer auto-repaired. For a published field that is the right trade — the same
+weight that would make it worth fixing is what makes it indistinguishable from a
+real registration. Those land in `refused_row_has_standing` for review.
+
+### Acceptance, then a 20-case name review, then the write
+
+| | before tightening | after |
+| --- | --- | --- |
+| planned moves | 343 | **312** |
+| heaviest row moved | 65 mentions | **4 mentions** |
+| XL Insurance `IE→IT` | present | **gone** |
+| Gorup `SI→SE` | present | **gone** |
+
+Every namer is now a national scheme — `BG:eik` 136, `LT:kodas` 104, `SK:ico` 24,
+`CZ:ico` 16, `IT:piva` 9 — and **no `FR:siren` or `SE:orgnr` survives**.
+
+A random 20 of the 312 were then read by name, and all 20 are right:
+`UAB "Impromedica"`, `Uždaroji akcinė bendrovė "Medita"`,
+`Lietuvos Ir Latvijos Uždaroji Akcinė Bendrovė` → LT (UAB *is* the Lithuanian
+form); `Институт по астрономия`, `„Контракс“ АД`, `Кооперация ПАНДА` → BG;
+`Výskumný ústav detskej psychológie`, `Studio Jelínek s.r.o.` → SK/CZ;
+`Direção-Geral da Segurança Social` → PT; `Steinkjer kommune` → NO.
+
+**Applied: 312 of 312, 0 skipped, no partial.** Verified on prod afterwards:
+
+* **297 duplicate identities created** — exactly one per moved identifier, so
+  every move landed on the survivor's identity as designed.
+* **36 clusters remain multi-country**, which is correct: those are the
+  `left_unmoved` stranger codes (`GA`, `VA`, `VU` and the like) that are not one
+  letter from the survivor.
+
+## Residue: the R2 fold, and why it was not run
+
+The 297 duplicates are deliberate — a moved row lands on the identity it should
+always have had — and `match-org-identifiers --r2` is the arm that folds them.
+Its dry run plans **200 groups** against **829** candidates (565 denied
+consortium, 64 legal-form, 0 cap, 0 gate).
+
+**It was not run wet, because its plan cannot be reviewed.** The
+`r2-merge-plan` report carries only counters and a single sample row — no
+per-group listing — so there is no way to tell how many of the 200 are this
+repair's 297 and how many are pre-existing, nor to read the groups before
+merging. Running a 200-group merge unreviewed on the tail of a 312-row repair is
+not a trade worth making.
+
+That is itself worth fixing: **the R2 plan should carry a capped per-group
+listing** the way `country-typo-repair` and `minted-country-repair` do. Then the
+fold is a normal reviewed step instead of a leap.
