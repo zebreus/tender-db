@@ -2099,6 +2099,15 @@ pub(crate) const COUNTRY_TYPO_JOIN_SQL: &str =
         AND a.identifier IS NOT NULL \
         AND a.identifier_kind IS NOT NULL";
 
+/// How many versions of each report kind [`Db::put_report`] keeps (issue 335).
+///
+/// Ten, and the number is a judgement rather than a measurement: enough that a
+/// comparison survives a few intervening runs (this session re-ran one census
+/// four times in an afternoon while fixing it), few enough that the widest bodies
+/// — the issue-332 listing carries 200 rows — cannot become a storage problem.
+/// Pruned inside the same write, so it holds without a sweeper.
+pub const REPORT_HISTORY_DEPTH: usize = 10;
+
 pub(crate) const GENERIC_KEY_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
        WHERE key_kind = ? AND key = ? LIMIT ?)";
@@ -16727,7 +16736,74 @@ impl Db {
             (t(kind), Value::Integer(computed_at), t(body)),
         )
         .await?;
+        // …and keep the version, so the next run can be compared against this one
+        // (issue 335). OR REPLACE because two runs inside one second are one
+        // version: the stamp is the key, and a second run at the same second is a
+        // correction rather than a second data point.
+        conn.execute(
+            "INSERT OR REPLACE INTO report_history(kind, computed_at, body) VALUES(?, ?, ?)",
+            (t(kind), Value::Integer(computed_at), t(body)),
+        )
+        .await?;
+        // Pruned in the same write, so the table cannot grow without bound —
+        // report bodies run to hundreds of listing rows, and an unbounded history
+        // of the widest kinds is a storage problem nobody would notice until it
+        // was one.
+        conn.execute(
+            "DELETE FROM report_history WHERE kind = ? AND computed_at NOT IN \
+               (SELECT computed_at FROM report_history WHERE kind = ? \
+                 ORDER BY computed_at DESC LIMIT ?)",
+            (t(kind), t(kind), Value::Integer(REPORT_HISTORY_DEPTH as i64)),
+        )
+        .await?;
         Ok(())
+    }
+
+    /// The newest stored report of `kind` STRICTLY OLDER than the current one, and
+    /// when it was computed (issue 335).
+    ///
+    /// The point of keeping history: this is the "what did it say last time?"
+    /// accessor, and it is what makes a before/after comparison a property of the
+    /// system rather than of whoever remembered to copy a number out by hand
+    /// first. Issue 333's fix was verifiable only because someone did.
+    ///
+    /// `None` when no earlier version is held — a first run, or a kind whose
+    /// history has been pruned back to just the current version.
+    pub async fn previous_report(&self, kind: &str) -> turso::Result<Option<(String, i64)>> {
+        let conn = self.reader().await?;
+        // The current stamp comes from `reports` rather than from the history's
+        // own max, so "previous" means previous-to-what-a-reader-sees even if a
+        // history row were somehow newer.
+        let current = match self.latest_report(kind).await? {
+            Some((_, at)) => at,
+            None => return Ok(None),
+        };
+        let mut rows = conn
+            .query(
+                "SELECT body, computed_at FROM report_history \
+                  WHERE kind = ? AND computed_at < ? ORDER BY computed_at DESC LIMIT 1",
+                (t(kind), Value::Integer(current)),
+            )
+            .await?;
+        Ok(rows.next().await?.map(|row| (text(&row, 0), int(&row, 1))))
+    }
+
+    /// Every version stamp held for `kind`, newest first — what a reader can ask
+    /// for, without dragging the bodies across to find out (issue 335).
+    pub async fn report_versions(&self, kind: &str) -> turso::Result<Vec<i64>> {
+        let conn = self.reader().await?;
+        let mut rows = conn
+            .query(
+                "SELECT computed_at FROM report_history WHERE kind = ? \
+                  ORDER BY computed_at DESC",
+                (t(kind),),
+            )
+            .await?;
+        let mut out = Vec::new();
+        while let Some(row) = rows.next().await? {
+            out.push(int(&row, 0));
+        }
+        Ok(out)
     }
 
     /// The latest stored report of `kind` and when it was computed, or `None` if

@@ -37,6 +37,9 @@ pub fn router(supervisor: Arc<Supervisor>) -> Router {
         // rewrites 2.6M rows can already do far more than cancel one.
         .route("/admin/jobs/{id}/cancel", post(cancel))
         .route("/admin/reports/{kind}", axum::routing::get(report))
+        // Issue 335: the version before the current one, so a comparison is a
+        // request rather than a thing someone had to think to save.
+        .route("/admin/reports/{kind}/previous", axum::routing::get(report_previous))
         .route("/admin/case-reviews", post(record_case_reviews))
         .route("/admin/rehoming", post(record_rehoming))
         .with_state(supervisor)
@@ -307,6 +310,57 @@ pub fn enabled() -> bool {
 /// same secret as the job that produced it keeps one surface for both halves.
 ///
 /// `age_seconds` is served alongside `computed_at` because the bug this whole issue
+/// `GET /admin/reports/{kind}/previous` — the version before the current one, with
+/// the stamps of everything held (issue 335).
+///
+/// Exists so that "what changed since the last run?" is a request. Every
+/// before/after comparison in this project has so far depended on an operator
+/// copying a number out by hand BEFORE re-running the job — which failed once
+/// (issue 311's cohort dropped 589 to 487 and the 102 that left are
+/// unenumerable) and worked once by diligence (issue 333's fix).
+async fn report_previous(
+    State(sup): State<Arc<Supervisor>>,
+    headers: HeaderMap,
+    Path(kind): Path<String>,
+) -> Response {
+    if let Some(denial) = deny(&headers) {
+        return denial;
+    }
+    let versions = match sup.db().report_versions(&kind).await {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("[admin] report versions {kind} read failed: {e}");
+            return error(StatusCode::INTERNAL_SERVER_ERROR, "report read failed");
+        }
+    };
+    match sup.db().previous_report(&kind).await {
+        Ok(Some((body, computed_at))) => axum::Json(json!({
+            "kind": kind,
+            "computed_at": computed_at,
+            "age_seconds": store::now_unix().saturating_sub(computed_at),
+            "versions_held": versions,
+            "depth": store::REPORT_HISTORY_DEPTH,
+            "body": body,
+        }))
+        .into_response(),
+        // No earlier version is not an error: a first run, or a history pruned
+        // back to the current version alone. `versions_held` says which it is,
+        // so the caller is not left guessing.
+        Ok(None) => axum::Json(json!({
+            "kind": kind,
+            "computed_at": Option::<i64>::None,
+            "versions_held": versions,
+            "depth": store::REPORT_HISTORY_DEPTH,
+            "body": Option::<String>::None,
+        }))
+        .into_response(),
+        Err(e) => {
+            eprintln!("[admin] previous report {kind} read failed: {e}");
+            error(StatusCode::INTERNAL_SERVER_ERROR, "report read failed")
+        }
+    }
+}
+
 /// came from was a stale signal read as a current one. A reader that has to compute
 /// the age itself is a reader that will forget to.
 async fn report(

@@ -1,9 +1,8 @@
 # 335 — No measurement can be diffed against its own past
 
-Status: TRIAGED 2026-09-01 — gap real, loss concrete, and the risk I first wrote
-into this issue is now VERIFIED SMALLER than stated. The remaining work is a
-schema migration on a live table, deliberately not squeezed into the firing that
-found it.
+Status: DONE 2026-09-01 — `report_history` landed, ADDITIVELY, with no migration
+at all. Both plans this issue proposed were superseded: see "What was actually
+built".
 Kind: capability (observability / measurement discipline)
 Relates to: 311 (where it bit), 230 (data-quality windows), 326/332/333 (censuses
 whose before/after comparisons are the whole point)
@@ -95,3 +94,56 @@ A **schema migration on a live table**, which is the part that needs care:
 
 None of that is large, but a primary-key migration on a table the dashboard and
 `/metrics` both read is not a step-3 drive-by. Left ready rather than rushed.
+
+## What was actually built — and neither plan above survived
+
+The cheap plan was to key `reports` on `(kind, computed_at)`. **The codebase said
+no, and it was right.** From `MIGRATIONS` in `crates/store/src/lib.rs`:
+
+> Anything beyond ADD COLUMN stays out of scope by policy — the canonical layer is
+> rebuildable, and destructive changes recreate from the archive instead.
+
+A primary-key change is exactly what that excludes. Rather than argue the policy
+did not apply (`reports` is not the canonical layer, so the stated *rationale*
+does not fit — but the *rule* is a rule), the design changed to be fully additive:
+
+```sql
+CREATE TABLE IF NOT EXISTS report_history (
+    kind TEXT NOT NULL, computed_at INTEGER NOT NULL, body TEXT NOT NULL,
+    PRIMARY KEY (kind, computed_at)
+) STRICT;
+```
+
+`put_report` writes the existing upsert into `reports` **unchanged**, then records
+the version and prunes to `REPORT_HISTORY_DEPTH` (10) in the same write. So:
+
+* **no migration**, because the table is new;
+* `reports`, `latest_report` and `report_stamps` are untouched, so the forty
+  readers — cursors included — cannot change behaviour, which the earlier plan
+  could only promise by argument and this one gets by construction;
+* `report_stamps` needs no `GROUP BY` after all. That was the one caller the
+  earlier plan genuinely broke, and the additive design deletes the problem
+  instead of solving it.
+
+The cost is the current body stored twice. At a few dozen kinds that is not worth
+a schema change to avoid, and saying so is cheaper than the migration would have
+been.
+
+### Reachable, not just stored
+
+`GET /admin/reports/{kind}/previous` serves the prior version with
+`versions_held` and `depth`, so "what changed since the last run?" is a request.
+That was the actual gap: the data was never the problem, the *absence of a way to
+ask* was.
+
+### Pinned
+
+`crates/store/tests/report_history.rs` — nine cases, including two that exist to
+protect other people's assumptions rather than this feature: that latest-wins is
+unchanged for cursor kinds, and that `report_stamps` still returns one row per
+kind rather than one per version.
+
+### What this does not recover
+
+The 102 cases that left issue 311's cohort are still unenumerable. History starts
+now. That is the ordinary cost of noticing a gap by falling into it.

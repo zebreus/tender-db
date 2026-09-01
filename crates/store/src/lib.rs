@@ -44,6 +44,7 @@ pub use canonical::{
     NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
+    REPORT_HISTORY_DEPTH,
     SCAN_KEY_WINDOW,
     TYPO_MOVE_MENTION_VETO,
 };
@@ -417,6 +418,28 @@ const SCHEMA: &str = "
         computed_at INTEGER NOT NULL,
         -- The rendered body, exactly as the tool would have printed it.
         body        TEXT NOT NULL
+    ) STRICT;
+
+    -- Previous versions of the rows above (issue 335). `reports` keeps exactly one
+    -- row per kind, so every re-run destroyed the measurement it replaced — and
+    -- there is no way to ask what changed since the last run, which is the
+    -- question most of those reports exist to support. It cost the enumeration of
+    -- the 102 cases that left issue 311's review cohort: the count had been read,
+    -- the membership had not, and the re-run overwrote it.
+    --
+    -- ADDITIVE ON PURPOSE. The first plan was to key `reports` on
+    -- (kind, computed_at), but the MIGRATIONS list above says anything beyond ADD
+    -- COLUMN is out of scope by policy. A separate table needs no migration at
+    -- all, leaves `reports`, `latest_report` and `report_stamps` untouched, and so
+    -- carries no risk to the forty existing readers. The latest body is stored
+    -- twice, which at a few dozen kinds is not worth a schema change to avoid.
+    CREATE TABLE IF NOT EXISTS report_history (
+        kind        TEXT    NOT NULL,
+        computed_at INTEGER NOT NULL,
+        body        TEXT    NOT NULL,
+        -- Two runs finishing in the same second are one version, not two: the
+        -- second overwrites, which is what INSERT OR REPLACE relies on.
+        PRIMARY KEY (kind, computed_at)
     ) STRICT;
 
     CREATE TABLE IF NOT EXISTS layer_presence (
