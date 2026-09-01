@@ -35,7 +35,8 @@ pub use canonical::{
     OrgEdgeScanReport,
     PlanGroup, PlanRow, R2MergeArgs,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
-    CountryCluster, CountryClusterReport, MintedCountryFix, MintedCountryReport,
+    CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
+    MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, MIN_CLUSTER_IDENTIFIER, SCAN_KEY_WINDOW,
 };
 pub use jobs::QueuedJobRow;

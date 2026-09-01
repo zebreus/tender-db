@@ -2309,6 +2309,39 @@ pub struct CountryClusterReport {
     pub stopped: bool,
 }
 
+/// One row the issue-326 repair would move: an identifier standing under a code
+/// one letter from the one its checksum names.
+#[derive(Debug, Default, Clone)]
+pub struct CountryTypoMove {
+    pub identifier: String,
+    pub from: String,
+    pub to: String,
+    pub mentions: u64,
+    /// Every code in the cluster, for the reviewer's context.
+    pub codes: Vec<String>,
+    pub names: Vec<String>,
+}
+
+/// Issue 326 step 2: what the survivor rule would move. Dry by default.
+#[derive(Debug, Default, Clone)]
+pub struct CountryTypoRepairReport {
+    pub clusters_considered: u64,
+    /// Clusters where the evidence names exactly one of their own codes.
+    pub decisive: u64,
+    /// Rows in a decisive cluster whose code is NOT one letter from the
+    /// survivor. They share the identifier and nothing more, so they are
+    /// counted and left alone — "the number checksums somewhere else" is not a
+    /// reason to rewrite a published country.
+    pub left_unmoved: u64,
+    pub rows: u64,
+    pub moves: Vec<CountryTypoMove>,
+    pub applied: u64,
+    /// Rows the wet pass could not find under the planned `(country,
+    /// identifier)` — merged or moved between the plan and the write.
+    pub skipped_moved: u64,
+    pub stopped: bool,
+}
+
 /// One organization row whose stored `(identifier_kind, country)` disagrees with
 /// what the identifier parser now produces for the same value (issue 325).
 #[derive(Debug, Default, Clone)]
@@ -11604,6 +11637,159 @@ impl Db {
     /// Bhutan outweighs Bulgaria.
     ///
     /// Read-only. Nothing here writes, merges or folds.
+    /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
+    ///
+    /// Built on [`Db::country_cluster_census`]'s own verdict, not on a second
+    /// spelling of it — the census computes which clusters are decidable and
+    /// this walks that answer. A cluster qualifies when the evidence probe names
+    /// **exactly one** of the cluster's own country codes; that code is the
+    /// survivor.
+    ///
+    /// **A row is moved only when its own code is one letter from the
+    /// survivor.** That is a real tightening and it is the point of the
+    /// corruption filter. In `BG BI BT GA VA VU` with `BG` surviving, `BI` and
+    /// `BT` are one letter out and carry positive evidence of a transcription
+    /// slip; `GA`, `VA` and `VU` share only the identifier, and "the number
+    /// checksums somewhere else" is not on its own a reason to rewrite a
+    /// published country. Those are counted as `left_unmoved` so the next unit
+    /// can decide them with a number rather than by assumption.
+    ///
+    /// **The weight does not vote.** The motivating case is a Slovak IČO
+    /// standing under `SG` with 90 mentions against `SK`'s 10 — the anchor is
+    /// right and the majority is wrong, and the census's own test pins that the
+    /// verdict follows the anchor. Moving a heavy row onto a light survivor is
+    /// therefore expected, not a symptom.
+    ///
+    /// **Every move creates a duplicate identity ON PURPOSE**, and this is the
+    /// one place this repair differs from issue 325's, where collisions were
+    /// zero. A moved row lands on `(survivor, kind, identifier)` — which is
+    /// exactly the row it should have been all along — so the R2 merge arm has
+    /// to run afterwards to fold them. The report counts them so that is a
+    /// planned step and not a discovery.
+    pub async fn repair_country_typos(
+        &self,
+        anchors: fn(&str) -> Vec<(&'static str, String)>,
+        vocabulary: fn(&str) -> Vec<&'static str>,
+        one_letter: fn(&str, &str) -> bool,
+        footprint: fn(&str) -> bool,
+        dry_run: bool,
+        expect_rows: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CountryTypoRepairReport> {
+        let mut report = CountryTypoRepairReport::default();
+        // One census, whose verdicts this repair executes. Sharing the code
+        // rather than the conclusion is what keeps the two from drifting.
+        let census = self
+            .country_cluster_census(anchors, vocabulary, one_letter, footprint, usize::MAX, stop)
+            .await?;
+        if census.stopped {
+            return Ok(CountryTypoRepairReport { stopped: true, ..Default::default() });
+        }
+        report.clusters_considered = census.clusters;
+
+        for cluster in &census.rows {
+            if cluster.verdict != "anchor-names-one" {
+                continue;
+            }
+            report.decisive += 1;
+            let survivor = cluster.named[0].clone();
+            for (code, mentions) in &cluster.mentions {
+                if *code == survivor {
+                    continue;
+                }
+                if !one_letter(&survivor, code) {
+                    // Shares the identifier, but nothing says it was mistyped.
+                    report.left_unmoved += 1;
+                    continue;
+                }
+                report.moves.push(CountryTypoMove {
+                    identifier: cluster.identifier.clone(),
+                    from: code.clone(),
+                    to: survivor.clone(),
+                    mentions: *mentions,
+                    codes: cluster.codes.clone(),
+                    names: cluster.names.clone(),
+                });
+            }
+        }
+        report.rows = report.moves.len() as u64;
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        // T4 parity: a wet run executes the plan a person reviewed, or aborts.
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "country-typo repair ABORTED: the reviewed plan moved {expect} rows, this \
+                     run computes {} — beyond the max(2%, 5) tolerance. Re-run the dry pass \
+                     and review the new plan.",
+                    report.rows
+                )));
+            }
+        }
+
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for m in &report.moves {
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
+                // Addressed by (country, identifier) rather than by a row id
+                // captured in the plan: the plan is computed inside this call,
+                // and a country+identifier pair is what the index serves.
+                let mut ids: Vec<i64> = Vec::new();
+                {
+                    let mut rows = conn
+                        .query(
+                            "SELECT id FROM organizations \
+                              WHERE country = ? AND identifier = ? AND identifier IS NOT NULL",
+                            (t(&m.from), t(&m.identifier)),
+                        )
+                        .await?;
+                    while let Some(row) = rows.next().await? {
+                        ids.push(int(&row, 0));
+                    }
+                }
+                if ids.is_empty() {
+                    report.skipped_moved += 1;
+                    continue;
+                }
+                conn.execute(
+                    "UPDATE organizations SET country = ? \
+                      WHERE country = ? AND identifier = ? AND identifier IS NOT NULL",
+                    (t(&m.to), t(&m.from), t(&m.identifier)),
+                )
+                .await?;
+                for id in ids {
+                    // `country` is published, so a consumer filtering on it has
+                    // to see the correction go by.
+                    append_change(&conn, "organization", id, None, "changed", now).await?;
+                    report.applied += 1;
+                }
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        Ok(report)
+    }
+
     /// Issue 326 step 1 re-cut: the same-identifier country class grouped by
     /// IDENTIFIER rather than by pair.
     ///

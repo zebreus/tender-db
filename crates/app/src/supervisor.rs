@@ -370,6 +370,9 @@ enum Spec {
     /// Issue 326 step 1 re-cut: the same class grouped by IDENTIFIER, with the
     /// one-letter test demoted to a corruption filter. Read-only.
     CountryClusterCensus,
+    /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
+    /// Wet writes `organizations`.
+    RepairCountryTypos { dry_run: bool },
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1119,6 +1122,20 @@ impl Supervisor {
             // Issue 326 step 1 re-cut. The pair census stays: it is a valid
             // measurement of a different unit, and the two disagree in ways
             // worth keeping visible.
+            // Issue 326 step 2, dry by default. The wet arm reads its row count
+            // out of the stored dry plan and aborts if the corpus has moved.
+            "repair-country-typos" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-country-typos",
+                        if dry_run { "repair-country-typos dry-run" } else { "repair-country-typos" }
+                            .to_owned(),
+                        Spec::RepairCountryTypos { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "country-cluster-census" => Ok(vec![
                 self.push(
                     "country-cluster-census",
@@ -1543,6 +1560,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "xb-packet",
     "country-typo-census",
     "country-cluster-census",
+    "repair-country-typos",
     "repair-minted-countries",
 ];
 
@@ -4528,6 +4546,103 @@ impl Supervisor {
                     r.no_mention_country,
                     r.now_refused,
                     r.collisions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
+                ))
+            }
+            Spec::RepairCountryTypos { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 326: moving rows a decisive anchor names".to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("country-typo-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored country-typo-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored country-typo-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_country_typos(
+                        ingest::idgate::census_anchors,
+                        ingest::idgate::census_vocabulary,
+                        ingest::countries::one_letter_apart,
+                        ingest::countries::is_operational_footprint,
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-country-typos STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "clusters_considered": r.clusters_considered,
+                    "decisive": r.decisive,
+                    "left_unmoved": r.left_unmoved,
+                    "rows": r.rows,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.moves.len() > PLAN_CAP,
+                    "plan": r.moves.iter().take(PLAN_CAP).map(|m| serde_json::json!({
+                        "identifier": m.identifier,
+                        "from": m.from, "to": m.to,
+                        "mentions": m.mentions,
+                        "codes": m.codes,
+                        "names": m.names,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("country-typo-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-country-typos (issue 326 step 2, {}): {} cluster(s) walked, {} \
+                     decisive (the evidence names exactly one of the cluster's own codes). \
+                     {} row(s) planned to move; {} left alone because their code is NOT one \
+                     letter from the survivor — they share the identifier and nothing more, \
+                     and a checksum elsewhere is no reason to rewrite a published country.{} \
+                     EVERY move lands on an identity the survivor already holds, ON PURPOSE: \
+                     run match-org-identifiers --r2 afterwards to fold them.",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.clusters_considered,
+                    r.decisive,
+                    r.rows,
+                    r.left_unmoved,
                     if dry_run {
                         String::new()
                     } else {
@@ -7599,6 +7714,7 @@ mod tests {
                 "xb-packet",
                 "country-typo-census",
                 "country-cluster-census",
+                "repair-country-typos",
                 "repair-minted-countries"
             ]
         );
