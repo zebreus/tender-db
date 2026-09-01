@@ -369,3 +369,81 @@ GB.
    `anchor-names-one`.
 4. Only then is the survivor rule worth building. Today it could fire on 95
    clusters; after the arms it should reach several hundred.
+
+## The arms are in, and the decidable set went 95 → 357 (`62bfbe1`, job 546)
+
+| verdict | before | after | delta |
+| --- | --- | --- | --- |
+| `no-one-letter-pair` | 2,681 | 2,681 | — |
+| `too-short` | 1,067 | 1,067 | — |
+| **`anchor-names-one`** | **95** | **357** | **+262** |
+| `nobody-asked` | 430 | **153** | −277 |
+| `anchor-names-several` | 0 | 19 | +19 |
+| `asked-and-refused` | 11 | 7 | −4 |
+| `footprint-excluded` | 19 | 19 | — |
+
+**Of 536 candidates, 357 are now decidable — 66.6%, up from 17.7%.** That is
+what makes the survivor rule worth building; before the arms it could have fired
+on 95 clusters.
+
+Written from specification and then **validated against prod's own rows before
+deploying**: `bg_eik` 94.0%, `lt_kodas` 94.0%, `SK:ico` (riding `cz_ico`) 98.5%,
+against a chance rate of about 9.1% for mod-11. A wrong arm reads near chance,
+so the corpus is the proof.
+
+### The arms nearly shipped a 50% capability loss
+
+The resolver's anchor path and the R3 merge both require **exactly one** anchor.
+Every scheme added to the shared `uniform_arm` table therefore makes some
+previously-decidable value ambiguous and silently narrows a merge path. Measured
+on 1,500 random corpus values per shape, with the arms in the shared table:
+
+```
+8-digit: single-anchor 800 -> 385    51.9% of anchored values LOSE the path
+9-digit: single-anchor 662 -> 521    21.3% LOSE it
+```
+
+Slovakia is the extreme: `SK:ico` is the *same arithmetic* as `CZ:ico`, so adding
+it under its own name doubles every Czech anchor. Halving the 8-digit merge
+path's reach in exchange for 18 census clusters is not a trade to make silently,
+and it only surfaced by asking who else calls `checksum_anchors`.
+
+So the probes are **split by question**. `census_anchors` / `census_vocabulary`
+answer *what is the evidence* and carry the new arms; `checksum_anchors` /
+`anchor_vocabulary` answer *what may I merge on* and are untouched. The census
+can afford ambiguity — it intersects anchors with a cluster's own codes and
+reports the honest `anchor-names-several` — where a merge cannot. The evidence
+probe is built ON TOP of the decision probe, so the shared arms cannot drift.
+
+### Two properties of these arms, stated because they are not obvious
+
+* **`bg_eik` and `lt_kodas` are nearly the same function.** Same first pass
+  (weights 1..8 mod 11), differing only in a ~1-in-11 fallback branch: `bg_eik`
+  passes **93.8%** of Lithuanian rows and `lt_kodas` **84.2%** of Bulgarian ones.
+  A joint pass is evidence for **neither**. Harmless here, because `BG`/`LT` are
+  not one letter apart and a cluster holding both is `no-one-letter-pair` before
+  anchors are consulted — but it would matter to anything reading a lone anchor
+  as country evidence.
+* **A single mistyped digit is not always caught: 98.35% caught, 1.65% missed**,
+  over every position and substitution on 200 passing values. The two-pass
+  fallback lets a slip move into the second weighting and validate by
+  coincidence. A first draft of the test asserted 100% and was wrong. The misses
+  spread evenly across positions, so it is a uniform 1-in-60 rather than a blind
+  spot a typo could hide in.
+
+### What stays undecidable, and why
+
+Remaining `nobody-asked` by heavy country: **DE 32, ES 23**, EE 14, IE 11, LV 11,
+NL 8, AT 5, GR 5, BE 4, HU 4.
+
+DE and ES were always going to stay: **German register numbers carry no checksum
+at all**, and a Spanish CIF has a letter, which this digits-only probe declines
+wholesale. Together they are 55 of the remaining 153 and no arm can reach them.
+The rest are a long tail where an arm buys ten clusters or fewer.
+
+## Next unit
+
+The survivor rule, now that 357 clusters carry a decisive anchor. Shape as
+before: fire only where the evidence is decisive, abstain otherwise, and exclude
+the footprint class. `majority_share` is carried for the abstain cases but must
+not decide — the pair census caught it inverting.
