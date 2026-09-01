@@ -1,6 +1,9 @@
 # 169 — storage lifecycle model at 0.5 TB and beyond
 
-Status: open — research gap #3; urgency DOWNGRADED 2026-08-15 (measured: /data at 39%, 1.1T free — the "~87% full" premise no longer holds; lifecycle model still worth writing before the corpus doubles)
+Status: open — URGENCY RESTORED 2026-09-01. The 2026-08-15 downgrade rested on
+"/data at 39%, 1.1T free"; it is now 58% / 709G. That basis is void. Warning
+threshold lowered 90% -> 80% as an interim measure (applied to prod today). See
+"Re-measured 2026-09-01".
 
 2026-08-28 07:5x (owner) — fresh post-repair snapshot TAKEN:
 /data/db/snapshots/tender-db-1787903537.db (reflink, 523.7GB logical) is the
@@ -80,3 +83,62 @@ snapshots itself (tender-db-1787598039 + tender-db-1787374320, kept 4 -> 2)
 while writing the fresh weekly reflink — the classifier-blocked manual rm
 was never needed; the service's own retention did it. /data free 549G ->
 713G. Standing state: 2 snapshots (08-28 + 08-30), serving DB 490G.
+
+## Re-measured 2026-09-01 — the downgrade basis is gone
+
+| | 2026-08-15 (the downgrade) | 2026-09-01 | change |
+| --- | --- | --- | --- |
+| `/data` used | 39% | **58%** | +19 points |
+| `/data` free | 1.1T | **709G** | −~390G |
+
+On a 1.7T volume that is roughly **330–390 GB in 17 days**, and the database file
+alone is now **526,163,959,808 bytes = 490 GiB** — this issue's title ("at half a
+terabyte") has become literally true rather than prospective.
+
+### Arithmetic, with its caveat stated first
+
+**Two points 17 days apart are not a trend**, and that window contained unusually
+heavy activity: the text-era campaign, the issue-325/326/328 repairs, and a dozen
+censuses. Steady-state growth may be far lower. With that said, at the observed
+~19 GB/day:
+
+* 90% used (the old warning threshold) ≈ 32 days away;
+* 100% ≈ 41 days away;
+* so the **first warning would have arrived with about nine days of runway** —
+  not enough to provision storage or plan an archive prune.
+
+That is the part worth acting on regardless of whether the rate holds: the
+*margin between warning and full*, not the date.
+
+### Done today
+
+`TENDER_DISK_WARN_PCT=80` via a systemd drop-in
+(`/etc/systemd/system/tender-db-diskwatch.service.d/threshold.conf`), applied and
+verified — the hourly watch now reports `ok disk: /data at 58% used, 709G free`
+against an 80% line. At the observed rate that is ~24 days of notice instead of
+nine; at steady state it is months away and silent. Reverting is deleting the file.
+
+The script already read this valve, so nothing was changed in code and no deploy
+was involved.
+
+### Also noticed, and NOT a problem
+
+`/data/tmp` holds ~145 leaked `.tmp*` directories going back to 2026-08-09 —
+`TMPDIR=/data/tmp` is set in the unit and something is not cleaning up after
+itself. **Total size: 128 MB.** Measured before assuming: it is untidy, it is not
+a storage factor, and it should not be confused with the growth above. Worth a
+sweep whenever something else touches that area.
+
+### What this issue still needs — and it is exactly its title
+
+A **lifecycle model**, because the honest answer above is "I cannot tell you the
+trend from two points." What is missing is a recorded series: /data used, DB file
+size, archive size, sampled on a cadence, so growth is read rather than inferred.
+That is now cheap to build — issue 335 gave reports a bounded history this
+afternoon, so a small periodic disk report would accumulate its own trend with no
+new storage design.
+
+Concretely, the next unit: a `disk-census` job writing `df` figures plus the DB
+file size to a report on the weekly tick. Ten versions of that is ten weeks of
+trend, which turns every future question here from arithmetic-on-two-points into a
+reading.
