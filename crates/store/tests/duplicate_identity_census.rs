@@ -146,8 +146,10 @@ fn never() -> bool {
 
 const STOPLIST_CAP: usize = 8;
 
+fn nowhere(_done: u64, _detail: &str) {}
+
 async fn run(db: &store::Db, cap: usize) -> store::DuplicateIdentityReport {
-    db.duplicate_identity_census(key, n3, STOPLIST_CAP, cap, &never).await.unwrap()
+    db.duplicate_identity_census(key, n3, STOPLIST_CAP, cap, &never, &nowhere).await.unwrap()
 }
 
 #[tokio::test]
@@ -360,7 +362,8 @@ async fn a_stop_request_returns_stopped_and_no_half_report() {
     fn always() -> bool {
         true
     }
-    let r = db.duplicate_identity_census(key, n3, STOPLIST_CAP, 100, &always).await.unwrap();
+    let r =
+        db.duplicate_identity_census(key, n3, STOPLIST_CAP, 100, &always, &nowhere).await.unwrap();
     assert!(r.stopped);
     // Issue 252's honest cancel: a stopped run reports nothing rather than a
     // partial tally a reader would take for a corpus-wide one.

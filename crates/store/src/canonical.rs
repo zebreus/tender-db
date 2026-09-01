@@ -12657,6 +12657,7 @@ impl Db {
         stoplist_cap: usize,
         cap: usize,
         stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
     ) -> turso::Result<DuplicateIdentityReport> {
         let mut report = DuplicateIdentityReport::default();
         let reader = self.reader().await?;
@@ -12696,6 +12697,7 @@ impl Db {
             if page == 0 {
                 break;
             }
+            progress(report.rows_walked, "walking organizations");
         }
         report.triples = seen.len() as u64;
 
@@ -12726,43 +12728,56 @@ impl Db {
             b.1.len().cmp(&a.1.len()).then_with(|| a.0.cmp(&b.0))
         });
 
-        // Pass 2: names and mention counts for EVERY unkeyed group, by PK.
+        // Pass 2: NAMES for every unkeyed group, by PK. Names only — every
+        // group needs one to get a verdict.
+        //
+        // Mention counts are NOT fetched here, and the difference is the run
+        // time: they feed nothing but the capped listing, so the first version's
+        // correlated `COUNT(*) FROM organization_mentions` per member row bought
+        // a number that was then discarded for all but `cap` groups. They are
+        // fetched in pass 4, for the listed rows alone.
         let all_ids: Vec<i64> = unkeyed.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
-        let mut detail: std::collections::HashMap<i64, (String, u64)> = Default::default();
+        let mut names_of: std::collections::HashMap<i64, String> = Default::default();
+        progress(0, &format!("reading names for {} unkeyed member rows", all_ids.len()));
         for chunk in all_ids.chunks(IN_CHUNK) {
             if stop() {
                 return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
             }
             let sql = format!(
-                "SELECT o.id, o.name, \
-                        (SELECT COUNT(*) FROM organization_mentions m \
-                          WHERE m.organization_id = o.id) \
-                   FROM organizations o WHERE o.id IN ({})",
+                "SELECT id, name FROM organizations WHERE id IN ({})",
                 placeholders(chunk.len())
             );
             let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
             let mut q = reader.query(&sql, params).await?;
             while let Some(r) = q.next().await? {
-                detail.insert(int(&r, 0), (text(&r, 1), int(&r, 2).max(0) as u64));
+                names_of.insert(int(&r, 0), text(&r, 1));
             }
         }
+
+        // Which listed row each carried group's member ids belong to, so pass 4
+        // can fill in mentions without re-deriving the grouping.
+        let mut listed: Vec<(usize, Vec<i64>)> = Vec::new();
 
         // The genericness probe is memoized by key: `org_match_keys` is indexed
         // on `(key_kind, key)` so each miss is a seek, but the DE cohort alone
         // is thousands of groups and the same municipal key recurs across them.
         let mut generic_memo: std::collections::HashMap<String, (bool, bool)> = Default::default();
 
+        let total_groups = unkeyed.len();
+        let mut judged = 0u64;
         for (triple, ids) in unkeyed.into_iter() {
             if stop() {
                 return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
             }
+            judged += 1;
+            if judged % 5_000 == 0 {
+                progress(judged, &format!("judging names, {judged} of {total_groups} groups"));
+            }
             let (country, kind, identifier) = triple;
             let scope = format!("{country}:{kind}");
             let mut names: Vec<String> = Vec::new();
-            let mut mentions = 0u64;
             for id in &ids {
-                let Some((name, m)) = detail.get(id) else { continue };
-                mentions += m;
+                let Some(name) = names_of.get(id) else { continue };
                 let trimmed = name.trim();
                 if !trimmed.is_empty() && !names.iter().any(|n| n == trimmed) {
                     names.push(trimmed.to_owned());
@@ -12849,11 +12864,13 @@ impl Db {
                 shown.truncate(6);
                 let mut keys_shown = name_keys.clone();
                 keys_shown.truncate(6);
+                listed.push((report.rows.len(), ids.clone()));
                 report.rows.push(DuplicateIdentity {
                     scope,
                     identifier,
                     members: ids.len() as u64,
-                    mentions,
+                    // Filled in by pass 4.
+                    mentions: 0,
                     names: shown,
                     name_keys: keys_shown,
                     verdict,
@@ -12861,6 +12878,33 @@ impl Db {
             } else {
                 report.truncated = true;
             }
+        }
+
+        // Pass 4: mentions for the LISTED rows only — at most `cap` groups, so
+        // a handful of batched index ranges rather than one correlated subquery
+        // per member row of the whole class. Reported so a reader can see how
+        // much of the corpus a fold on that group would actually move.
+        let listed_ids: Vec<i64> = listed.iter().flat_map(|(_, ids)| ids.iter().copied()).collect();
+        let mut mentions_of: std::collections::HashMap<i64, u64> = Default::default();
+        progress(judged, "counting mentions for the listed rows");
+        for chunk in listed_ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT organization_id, COUNT(*) FROM organization_mentions \
+                  WHERE organization_id IN ({}) GROUP BY organization_id",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                mentions_of.insert(int(&r, 0), int(&r, 1).max(0) as u64);
+            }
+        }
+        for (ix, ids) in listed {
+            report.rows[ix].mentions =
+                ids.iter().filter_map(|id| mentions_of.get(id)).sum();
         }
 
         Ok(report)

@@ -5016,6 +5016,12 @@ impl Supervisor {
                     None,
                     "issue 328 follow-on: grouping standing identities".to_owned(),
                 );
+                // The first run sat on a single unchanging phase line for over
+                // half an hour, which is indistinguishable from a hang to
+                // whoever is watching. The scan-org-match-keys feed, borrowed.
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
                 const CAP: usize = 400;
                 let r = self
                     .db
@@ -5030,6 +5036,7 @@ impl Supervisor {
                         SCAN_STOPLIST_CAP,
                         CAP,
                         &stop,
+                        &progress,
                     )
                     .await
                     .map_err(|e| e.to_string())?;
