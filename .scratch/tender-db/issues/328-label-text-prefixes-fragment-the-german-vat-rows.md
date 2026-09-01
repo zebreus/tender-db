@@ -1,7 +1,8 @@
 # 328 — "USt-IdNr." glued to the number: label text in the identifier slot fragments 5,766 rows
 
-Status: MEASURED 2026-09-01 — census done, class sized, trap case found. Build
-not started.
+Status: REPAIRED 2026-09-01 — prevention (`5f64ec7`) and repair (job 565, 5,309
+of 5,309 applied) both live. **One claim in the original write-up was WRONG and
+is corrected below: the 3,270 "reunions" are not merges R2 will perform.**
 Kind: data quality / identity (organization layer)
 Relates to: 317 (whose Unit C measurement noticed the class and asked for exactly
 this census), 325 (the SUFFIX twin of the same phenomenon), 300 (canonical keys)
@@ -176,3 +177,86 @@ So the repair is a sibling job with the same ladder and a different walk:
 3. **Then `match-org-identifiers --r2`**, because 3,253 rows will land on an
    identity a partner already holds and the reunion IS the value. That plan is
    reviewable now (issue 326 / `R2_PLAN_LISTING_CAP`), so it is a normal step.
+
+## REPAIR APPLIED — and a claim I got wrong
+
+`repair-label-prefixes`, dry-reviewed twice and applied: **5,309 of 5,309, 0
+skipped.** 5,602 rows carried a label; 293 already agreed with the re-parse.
+Only 161 `USTID*` values remain, and those are the ones the guard correctly
+refuses.
+
+### The dry review caught my own prevention mangling identifiers
+
+The FIRST dry plan contained these:
+
+```
+UMSATZSTEUERIDENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149
+    -> ENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149
+HANDELSREGISTERNRHRB64128       -> NRHRB64128
+HANDELSREGISTERARNHEM09155985   -> ARNHEM09155985
+```
+
+The vocabulary carries `UMSATZSTEUERIDENTIFIKATIONSNUMMER` and
+`UMSATZSTEUERID` but not `…SNR`, so a SHORTER entry matched and left a fragment.
+The longest-match fix only covers the case where the exact entry leaves NOTHING;
+it cannot help when a shorter one leaves something plausible.
+
+**The real defect was the guard, and it was mine.** "Strip then re-validate"
+validated nothing: `normalise_identifier` almost never returns `None` for a
+string containing a digit, because `national()` is a catch-all. I wrote that
+guard, documented it as the thing making the strip safe, and it was doing no work.
+
+The remainder must now be RECOGNISABLE — a real scheme, or pure digits (a
+registration number that lost its label, the `STNR`/`STEUERNUMMER` class). That
+makes the vocabulary's GAPS SAFE, which is the property that matters for a list
+read off a growing corpus. Second dry plan: **0 unrecognisable remainders**, all
+four known fragments gone, `rows` 5,548 → 5,309 with the 239 difference moving
+into `already_clean`.
+
+### THE WRONG CLAIM: those 3,270 are not merges
+
+This issue said the reunions were "where the value is" and that
+`match-org-identifiers --r2` would perform them. **It will not.** Measured after
+the wet run: 3,215 exact duplicate `(DE, vat, DEnnnnnnnnn)` triples now stand —
+`DE329214156` is held by three "Die Autobahn GmbH des Bundes" rows — and R2's
+dry plan contains **none of them**. Its 18 planned groups are ordinary FR/FI/IT
+accumulation, unrelated to this repair.
+
+The reason is deliberate and pinned: `crosswalk::canonical_key` has **no German
+arm at all**. From its own must-NOT panel:
+
+```rust
+// DE has no cross-walk at all — court-scoped registers.
+assert_eq!(key(Some("DE"), "vat", "DE136695976"), None);
+```
+
+So German rows were never E1-keyed, before this repair or after. The `reunions`
+counter measures **duplicates created**, not merges that will happen, and I
+attached the wrong conclusion to a correct number. The job's summary line and the
+store docs now say so explicitly rather than misleading the next reader.
+
+### What the repair DID buy, stated honestly
+
+* 5,309 rows carry the identifier the publisher actually meant, with `vat` where
+  it belongs instead of `national` on a label-prefixed string.
+* The fragmentation is now **visible**: 3,215 exact-duplicate triples, where
+  before the same organization sat under two *different* values and nothing could
+  see the pair.
+* The published string is untouched — `organization_mentions.raw_identifier`
+  still holds what each notice said.
+
+### The open question, and it is a real one
+
+Folding those 3,215 needs a DE arm in `canonical_key`, and there are honest
+arguments on both sides:
+
+* **For**: `DE:vat` is a HARD scheme, the checksum is strong, and 3,215 exact
+  triples with matching names are as clean a merge signal as this corpus offers.
+* **Against**: a German VAT number can be shared across an **Organschaft** (a
+  fiscal unity of legally distinct companies), which is exactly the false-merge
+  shape the CZ699 group-VAT negative already guards against. And the pinned
+  negative's stated reason — court-scoped registers — is about `HRB`, not VAT, so
+  the two halves of that assertion may deserve different answers.
+
+That is a measurement, not a judgement call to make from the armchair: count how
+many of the 3,215 have DISAGREEING names, which is the Organschaft signature.

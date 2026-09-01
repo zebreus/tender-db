@@ -2404,9 +2404,11 @@ pub struct LabelRepairReport {
     pub already_clean: u64,
     pub rows: u64,
     /// Planned targets where a row ALREADY stands under the cleaned identity.
-    /// These are the reunions the repair exists to make possible — the value of
-    /// the whole class — and `match-org-identifiers --r2` is what performs
-    /// them.
+    ///
+    /// **This is a count of duplicates CREATED, not of merges that will
+    /// happen.** For the German class R2 folds none of them: `canonical_key`
+    /// has no DE arm ("court-scoped registers"). The repair makes them visible
+    /// and correct; folding them is a separate decision.
     pub reunions: u64,
     pub plan: Vec<LabelFix>,
     pub applied: u64,
@@ -11823,10 +11825,19 @@ impl Db {
     /// does mean the plan's pre-image is the only record of the canonical row's
     /// prior state, so the dry report carries it.
     ///
-    /// Expect collisions, and they are the POINT: 3,253 of these rows have a
-    /// partner already standing under the bare value, so the repair is what
-    /// makes the reunion possible and `match-org-identifiers --r2` is what
-    /// performs it.
+    /// **Collisions are expected, but do NOT assume R2 folds them.** Measured
+    /// after the first wet run: 3,215 exact duplicate `(DE, vat, DEnnnnnnnnn)`
+    /// triples now stand, and R2's dry plan grew by none of them, because
+    /// `crosswalk::canonical_key` has **no German arm at all** — "DE has no
+    /// cross-walk at all — court-scoped registers", a pinned negative in its
+    /// must-NOT panel. So [`Self::repair_label_prefixes`] makes the duplicates
+    /// VISIBLE and CORRECT; whether they may be merged is a separate question
+    /// with a real answer on both sides (a German VAT number can be shared
+    /// across an Organschaft, and HRB numbers collide between courts).
+    ///
+    /// The `reunions` counter therefore means "rows landing on an identity that
+    /// already stands", not "merges that will happen". That distinction cost me
+    /// a wrong claim in this issue's first write-up.
     pub async fn repair_label_prefixes(
         &self,
         strip: fn(&str) -> Option<&str>,

@@ -4747,9 +4747,11 @@ impl Supervisor {
                      {} planned; {} left standing as published because the remainder \
                      classified as nothing (a bare field name, or a value the gate refuses), \
                      and {} already agree with the re-parse. {} planned row(s) land on an \
-                     identity that ALREADY stands — those are the reunions this repair exists \
-                     to make possible, and match-org-identifiers --r2 is what performs \
-                     them.{} The published string is untouched either way: it stays in \
+                     identity that ALREADY stands. NOTE: for the German class that is NOT a \
+                     merge R2 will perform — `crosswalk::canonical_key` has no DE arm at all \
+                     (\"court-scoped registers\", a pinned negative), so those rows become \
+                     visible exact duplicates rather than folded ones.{} The published string \
+                     is untouched either way: it stays in \
                      organization_mentions.raw_identifier.",
                     if dry_run { "DRY" } else { "WET" },
                     r.labelled,
