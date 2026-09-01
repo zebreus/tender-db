@@ -373,6 +373,9 @@ enum Spec {
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
+    /// Issue 328: re-parse the rows whose identifier carries a publisher label.
+    /// Wet writes `organizations`.
+    RepairLabelPrefixes { dry_run: bool },
     /// Issue 325 step 4: re-parse the standing `kind = 'vat'` rows and write
     /// what the identifier parser now says. Wet writes `organizations`.
     RepairMintedCountries { dry_run: bool },
@@ -1137,6 +1140,20 @@ impl Supervisor {
             // worth keeping visible.
             // Issue 326 step 2, dry by default. The wet arm reads its row count
             // out of the stored dry plan and aborts if the corpus has moved.
+            // Issue 328, dry by default. The wet arm reads its row count out of
+            // the stored dry plan and aborts if the corpus has moved.
+            "repair-label-prefixes" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                Ok(vec![
+                    self.push(
+                        "repair-label-prefixes",
+                        if dry_run { "repair-label-prefixes dry-run" } else { "repair-label-prefixes" }
+                            .to_owned(),
+                        Spec::RepairLabelPrefixes { dry_run },
+                    )
+                    .await,
+                ])
+            }
             "repair-country-typos" => {
                 let dry_run = req.dry_run.unwrap_or(true);
                 Ok(vec![
@@ -1574,6 +1591,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "country-typo-census",
     "country-cluster-census",
     "repair-country-typos",
+    "repair-label-prefixes",
     "repair-minted-countries",
 ];
 
@@ -4638,6 +4656,107 @@ impl Supervisor {
                     r.no_mention_country,
                     r.now_refused,
                     r.collisions,
+                    if dry_run {
+                        String::new()
+                    } else {
+                        format!(
+                            " APPLIED {}, skipped {} whose row moved under the plan.{}",
+                            r.applied,
+                            r.skipped_moved,
+                            if r.stopped { " STOPPED by cancel — the committed prefix stands." } else { "" }
+                        )
+                    }
+                ))
+            }
+            Spec::RepairLabelPrefixes { dry_run } => {
+                let dry_run = *dry_run;
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    if dry_run { "planning" } else { "repairing" },
+                    None,
+                    None,
+                    "issue 328: stripping publisher labels off identifiers".to_owned(),
+                );
+                let expect_rows = if dry_run {
+                    None
+                } else {
+                    let (body, _) = self
+                        .db
+                        .latest_report("label-prefix-repair")
+                        .await
+                        .map_err(|e| e.to_string())?
+                        .ok_or_else(|| {
+                            "no stored label-prefix-repair plan — run the dry pass first"
+                        })?;
+                    let v: serde_json::Value =
+                        serde_json::from_str(&body).map_err(|e| e.to_string())?;
+                    if v["dry_run"] != serde_json::Value::Bool(true) {
+                        return Err("the stored label-prefix-repair report is from a WET run, \
+                                    not a reviewed plan — run the dry pass again"
+                            .to_owned());
+                    }
+                    Some(v["rows"].as_u64().ok_or_else(|| "plan lacks rows")?)
+                };
+                let r = self
+                    .db
+                    .repair_label_prefixes(
+                        ingest::countries::label_prefix_stripped,
+                        |value, country| {
+                            ingest::project::normalise_identifier(value, country)
+                                .map(|id| (id.kind, id.country, id.value))
+                        },
+                        dry_run,
+                        expect_rows,
+                        &stop,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped && dry_run {
+                    return Ok("repair-label-prefixes STOPPED by cancel — nothing planned"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                const PLAN_CAP: usize = 400;
+                let body = serde_json::json!({
+                    "dry_run": dry_run,
+                    "labelled": r.labelled,
+                    "now_refused": r.now_refused,
+                    "already_clean": r.already_clean,
+                    "rows": r.rows,
+                    "reunions": r.reunions,
+                    "applied": r.applied,
+                    "skipped_moved": r.skipped_moved,
+                    "stopped": r.stopped,
+                    "plan_truncated": r.plan.len() > PLAN_CAP,
+                    "plan": r.plan.iter().take(PLAN_CAP).map(|f| serde_json::json!({
+                        "org": f.org,
+                        "from": {"identifier": f.from_identifier, "kind": f.from_kind,
+                                 "country": f.from_country},
+                        "to": {"identifier": f.to_identifier, "kind": f.to_kind,
+                               "country": f.to_country},
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("label-prefix-repair", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "repair-label-prefixes (issue 328, {}): {} row(s) carry a publisher label. \
+                     {} planned; {} left standing as published because the remainder \
+                     classified as nothing (a bare field name, or a value the gate refuses), \
+                     and {} already agree with the re-parse. {} planned row(s) land on an \
+                     identity that ALREADY stands — those are the reunions this repair exists \
+                     to make possible, and match-org-identifiers --r2 is what performs \
+                     them.{} The published string is untouched either way: it stays in \
+                     organization_mentions.raw_identifier.",
+                    if dry_run { "DRY" } else { "WET" },
+                    r.labelled,
+                    r.rows,
+                    r.now_refused,
+                    r.already_clean,
+                    r.reunions,
                     if dry_run {
                         String::new()
                     } else {
@@ -7825,6 +7944,7 @@ mod tests {
                 "country-typo-census",
                 "country-cluster-census",
                 "repair-country-typos",
+                "repair-label-prefixes",
                 "repair-minted-countries"
             ]
         );

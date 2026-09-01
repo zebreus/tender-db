@@ -2380,6 +2380,40 @@ pub struct CountryClusterReport {
     pub stopped: bool,
 }
 
+/// One row whose identifier carries a publisher label (issue 328).
+#[derive(Debug, Default, Clone)]
+pub struct LabelFix {
+    pub org: i64,
+    pub from_identifier: String,
+    pub from_kind: String,
+    pub from_country: Option<String>,
+    pub to_identifier: String,
+    pub to_kind: String,
+    pub to_country: Option<String>,
+}
+
+/// Issue 328: what stripping the publisher labels would change. Dry by default.
+#[derive(Debug, Default, Clone)]
+pub struct LabelRepairReport {
+    /// Rows whose identifier carries a label at all.
+    pub labelled: u64,
+    /// …of which the remainder classified as nothing, so the row stands as
+    /// published: a bare field name, or a value the v2 gate refuses.
+    pub now_refused: u64,
+    /// …of which the re-parse agrees with what is already stored.
+    pub already_clean: u64,
+    pub rows: u64,
+    /// Planned targets where a row ALREADY stands under the cleaned identity.
+    /// These are the reunions the repair exists to make possible — the value of
+    /// the whole class — and `match-org-identifiers --r2` is what performs
+    /// them.
+    pub reunions: u64,
+    pub plan: Vec<LabelFix>,
+    pub applied: u64,
+    pub skipped_moved: u64,
+    pub stopped: bool,
+}
+
 /// One row the issue-326 repair would move: an identifier standing under a code
 /// one letter from the one its checksum names.
 #[derive(Debug, Default, Clone)]
@@ -11770,6 +11804,217 @@ impl Db {
     /// Bhutan outweighs Bulgaria.
     ///
     /// Read-only. Nothing here writes, merges or folds.
+    /// Issue 328: re-parse the rows whose identifier carries a publisher label.
+    ///
+    /// A SIBLING of [`Db::repair_minted_countries`] rather than a widening of
+    /// it, and the reason is load-bearing: that job walks
+    /// `identifier_kind = 'vat'`, which is what makes it idempotent (a row it
+    /// repairs becomes `national` and leaves the population). **Every row in
+    /// this class is already `national`**, so reusing it would mean dropping
+    /// that scope and trading a proven property for convenience.
+    ///
+    /// This one is idempotent by a different route: a repaired row no longer
+    /// carries a label, so `label_prefix_stripped` stops selecting it.
+    ///
+    /// **This moves the identifier VALUE, which the 325 repair never did.**
+    /// `USTIDDE329214156` becomes `DE329214156`. The published string is not
+    /// lost — `organization_mentions.raw_identifier` keeps what the notice
+    /// actually said, the same division issue 311's strips relied on — but it
+    /// does mean the plan's pre-image is the only record of the canonical row's
+    /// prior state, so the dry report carries it.
+    ///
+    /// Expect collisions, and they are the POINT: 3,253 of these rows have a
+    /// partner already standing under the bare value, so the repair is what
+    /// makes the reunion possible and `match-org-identifiers --r2` is what
+    /// performs it.
+    pub async fn repair_label_prefixes(
+        &self,
+        strip: fn(&str) -> Option<&str>,
+        reclassify: fn(&str, Option<&str>) -> Option<(String, Option<String>, String)>,
+        dry_run: bool,
+        expect_rows: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<LabelRepairReport> {
+        let mut report = LabelRepairReport::default();
+        let reader = self.reader().await?;
+
+        // A primary-key pass, filtered in Rust. No index leads with
+        // `identifier`, so any predicate on its PREFIX is a full scan anyway —
+        // doing the selection here makes it one sequential walk with no sorter,
+        // the same shape `country_cluster_census` runs at this size.
+        let mut after = 0i64;
+        let mut plan: Vec<LabelFix> = Vec::new();
+        loop {
+            if stop() {
+                return Ok(LabelRepairReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL AND identifier_kind IS NOT NULL \
+                      ORDER BY id LIMIT 50000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                let identifier = text(&row, 3);
+                if strip(&identifier).is_none() {
+                    continue;
+                }
+                report.labelled += 1;
+                let country = opt_text_of(&row, 1);
+                let kind = text(&row, 2);
+                let Some((to_kind, to_country, to_value)) =
+                    reclassify(&identifier, country.as_deref())
+                else {
+                    // The label came off and what was left classified as
+                    // nothing — a bare field name, or a remainder the v2 gate
+                    // refuses. The row stands exactly as published.
+                    report.now_refused += 1;
+                    continue;
+                };
+                if to_value == identifier && to_kind == kind && to_country == country {
+                    report.already_clean += 1;
+                    continue;
+                }
+                plan.push(LabelFix {
+                    org: after,
+                    from_identifier: identifier,
+                    from_kind: kind,
+                    from_country: country,
+                    to_identifier: to_value,
+                    to_kind,
+                    to_country,
+                });
+            }
+            if page == 0 {
+                break;
+            }
+        }
+        report.rows = plan.len() as u64;
+
+        // How many land on an identity that already stands — the reunions this
+        // repair exists to make possible. Counted per target, in one batched
+        // pass rather than a probe per row.
+        {
+            let mut targets: std::collections::BTreeSet<(String, String, String)> =
+                Default::default();
+            for f in &plan {
+                targets.insert((
+                    f.to_country.clone().unwrap_or_default(),
+                    f.to_kind.clone(),
+                    f.to_identifier.clone(),
+                ));
+            }
+            for (cc, kind, ident) in targets {
+                if stop() {
+                    return Ok(LabelRepairReport { stopped: true, ..Default::default() });
+                }
+                let mut rows = reader
+                    .query(
+                        "SELECT COUNT(*) FROM organizations \
+                          WHERE country = ? AND identifier_kind = ? AND identifier = ?",
+                        (t(&cc), t(&kind), t(&ident)),
+                    )
+                    .await?;
+                if let Some(row) = rows.next().await? {
+                    if int(&row, 0) > 0 {
+                        report.reunions += 1;
+                    }
+                }
+            }
+        }
+        report.plan = plan;
+        if dry_run || report.rows == 0 {
+            return Ok(report);
+        }
+
+        if let Some(expect) = expect_rows {
+            let tolerance = std::cmp::max(expect / 50, 5);
+            if report.rows.abs_diff(expect) > tolerance {
+                return Err(turso::Error::Error(format!(
+                    "label-prefix repair ABORTED: the reviewed plan moved {expect} rows, this \
+                     run computes {} — beyond the max(2%, 5) tolerance. Re-run the dry pass \
+                     and review the new plan.",
+                    report.rows
+                )));
+            }
+        }
+
+        let now = crate::now_unix();
+        let conn = self.conn().await;
+        conn.execute("BEGIN IMMEDIATE", ()).await?;
+        let result: turso::Result<()> = async {
+            for f in &report.plan {
+                if stop() {
+                    report.stopped = true;
+                    break;
+                }
+                // Only move a row that still says what the plan says. The plan
+                // is computed inside this call, so this guards the
+                // reader-to-writer window rather than a stale review.
+                let mut current: Option<(Option<String>, String, String)> = None;
+                {
+                    let mut rows = conn
+                        .query(
+                            "SELECT country, identifier_kind, identifier FROM organizations \
+                              WHERE id = ?",
+                            (Value::Integer(f.org),),
+                        )
+                        .await?;
+                    if let Some(row) = rows.next().await? {
+                        current = Some((opt_text_of(&row, 0), text(&row, 1), text(&row, 2)));
+                    }
+                }
+                match current {
+                    Some((cc, k, i))
+                        if cc == f.from_country
+                            && k == f.from_kind
+                            && i == f.from_identifier => {}
+                    _ => {
+                        report.skipped_moved += 1;
+                        continue;
+                    }
+                }
+                conn.execute(
+                    "UPDATE organizations SET country = ?, identifier_kind = ?, identifier = ? \
+                      WHERE id = ?",
+                    (
+                        match &f.to_country {
+                            Some(cc) => t(cc),
+                            None => Value::Null,
+                        },
+                        t(&f.to_kind),
+                        t(&f.to_identifier),
+                        Value::Integer(f.org),
+                    ),
+                )
+                .await?;
+                // All three are published fields.
+                append_change(&conn, "organization", f.org, None, "changed", now).await?;
+                report.applied += 1;
+            }
+            Ok(())
+        }
+        .await;
+        match result {
+            Ok(()) => {
+                if let Err(e) = conn.execute("COMMIT", ()).await {
+                    let _ = conn.execute("ROLLBACK", ()).await;
+                    return Err(e);
+                }
+            }
+            Err(e) => {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
+            }
+        }
+        Ok(report)
+    }
+
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     ///
     /// Built on [`Db::country_cluster_census`]'s own verdict, not on a second

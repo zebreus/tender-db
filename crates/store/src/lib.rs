@@ -36,6 +36,7 @@ pub use canonical::{
     PlanGroup, PlanRow, R2MergeArgs,
     R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
+    LabelFix, LabelRepairReport,
     MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
     SCAN_KEY_WINDOW,
