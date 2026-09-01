@@ -109,3 +109,70 @@ Do not extend the vocabulary by imagination. `HRB`/`HRA` look like the same
 shape and are **not** — those are genuine German register references where the
 letters carry meaning, unlike `USTID` which is pure label. The census
 distinguishes them; a guess would not.
+
+## PREVENTION LIVE (2026-09-01, `f74da37`)
+
+`normalise_identifier` now strips a leading publisher label and re-parses.
+`USTIDDE329214156` and `DE329214156` produce the identical identifier
+(`vat DE329214156`), which is the property the whole class turns on — without
+it the 3,253 rows stay fragmented from their twin.
+
+The vocabulary is read off the corpus and is richer than the first guess:
+
+```
+USTIDDE 2,560   USTIDNRDE 1,840   UMSATZSTEUERIDDE 227   USTID 178
+UMSATZSTEUERIDENTNRDE 111   UMSATZSTEUERIDENTIFIKATIONSNUMMERDE 93
+STNR 77   STEUERNUMMER 48   USTIDNR 45   USTIDNUMMERDE 19
+USTIDNRATU 9   USTIDATU 5   HANDELSREGISTERHRB 9   USTIDNRDEDE 3
+```
+
+`USTIDNRATU`/`USTIDATU` are the reason the strip is country-agnostic — Austria's
+`ATU` prefix has to survive intact — and `USTIDNRDEDE` is a doubled country code
+that must NOT be rescued into something plausible.
+
+**Strip then re-validate, and the recursion is the re-validation**: the remainder
+goes back through `normalise_identifier` and is accepted only if it classifies.
+Issue 325's suffix work needed no such guard because a label at the BACK sits
+behind a value that already parsed; a label at the FRONT hides the value entirely
+until it is gone.
+
+### Two things my own tests caught
+
+* **The first implementation invented an identifier.** `find_map` skips a longer
+  entry whose remainder is empty and falls through to a shorter one, so the bare
+  field name `UMSATZSTEUERIDENTIFIKATIONSNUMMER` became
+  `ENTIFIKATIONSNUMMER` — exactly the fragment-invention the doc comment warns
+  about, in the function the comment is attached to. Fixed to pick the longest
+  match FIRST and judge the remainder second.
+* **The guard test's fixtures were reading the gate, not the strip.** They used
+  `…123456789` and `…12345678`, which the v2 gate condemns as ascending runs.
+  Issue 325's own test carries a written warning about this trap and I walked
+  into it again one file over.
+
+### `HANDELSREGISTER` is correct and currently inert
+
+It strips to `HRB12345` — right, because `HANDELSREGISTER` is a field name and
+`HRB` is the register division — but the gate condemns bare `HRB…` values
+anyway, so both forms return `None` and those 96 rows are unchanged either way.
+Pinned as a documented no-op so nobody "fixes" it into working.
+
+## The repair needs its own job, and here is why
+
+`repair_minted_countries` (issue 325) is the right PATTERN — inject the
+classifier, re-parse each standing row, plan the disagreements, dry review, wet
+with `expect_rows` parity — but it cannot be reused directly: it walks
+`identifier_kind = 'vat'`, and **every row in this class is `national`.** That
+scope is load-bearing there (it is what makes that job idempotent), so widening
+it would trade a proven property for convenience.
+
+So the repair is a sibling job with the same ladder and a different walk:
+
+1. A primary-key pass over identifier-bearing rows, filtered in Rust by
+   `label_prefix_stripped` — no index leads with `identifier`, so this is one
+   sequential scan, the same shape `country-cluster-census` already runs at this
+   size.
+2. Re-parse, plan the disagreements, dry review, wet with parity and change
+   events (`identifier` and `identifier_kind` are both published).
+3. **Then `match-org-identifiers --r2`**, because 3,253 rows will land on an
+   identity a partner already holds and the reunion IS the value. That plan is
+   reviewable now (issue 326 / `R2_PLAN_LISTING_CAP`), so it is a normal step.
