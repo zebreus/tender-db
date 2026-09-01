@@ -447,3 +447,64 @@ The survivor rule, now that 357 clusters carry a decisive anchor. Shape as
 before: fire only where the evidence is decisive, abstain otherwise, and exclude
 the footprint class. `majority_share` is carried for the abstain cases but must
 not decide — the pair census caught it inverting.
+
+## Step 2 built, dry plan reviewed, NOT applied (`de7f3fc`, jobs 547/548)
+
+`repair-country-typos`: 4,303 clusters walked, **357 decisive**, **343 rows
+planned**, 147 left unmoved because their code is not one letter from the
+survivor.
+
+Most of it is convincing. `LV → LT` ×75 on companies named `UAB "AE Medical"`,
+`UAB „Barameda“`, `Uždaroji akcinė bendrovė „Kuršasta…"` — **UAB *is* the
+Lithuanian company form**, so these are Lithuanian firms filed under Latvia,
+exactly as the heavy-side cut predicted. Then the Bulgarian spray
+(`BI/BT/BF/VG/BR/BO/BW/BZ → BG` ×119), `CR → CZ` ×14, `SR → SK` ×8.
+
+### The dry review earned its place: two of the heaviest moves are not typos
+
+| move | mentions | what it actually is |
+| --- | --- | --- |
+| `IE → IT` XL Insurance Company SE | 65 | one insurer registered in **three** countries (IT, GB, IE) |
+| `SI → SE` Gorup – Audio Stojan Gorup S.P. | 17 | a **Slovenian** sole proprietor (`S.P.`) whose number passes the Swedish Luhn |
+
+Both abandon a country that was **never asked** — no Slovenian scheme covers ten
+digits, no Irish one eleven — so the move rests on the survivor's anchor alone.
+
+### That axis is not a usable gate, and the measurement says so
+
+Splitting all 343 moves on it: **5 asked-and-refused, 338 never-asked.** The
+"safe" subset is essentially empty, and the cleanest moves in the plan — the
+`LV → LT` UAB companies — are never-asked too, because no Latvian scheme covers
+nine digits either. So the split ships as **information for a reviewer, not a
+filter**; gating on it would discard the best evidence with the worst.
+
+I also checked `hard_scheme` as a bar and it does not separate these: `SE:orgnr`
+and `IT:piva` are both already hard. Hardness is checksum strength; what failed
+here is country specificity.
+
+### Two candidate tightenings, measured
+
+**(a) Require every code in the cluster to be one letter from the survivor.**
+A cluster holding a code that is neither the survivor nor a neighbour is a
+multi-country registration rather than a slip — that is exactly XL Insurance's
+`GB`. Removes **47 of 343**, leaving 296. Catches XL Insurance; misses Gorup,
+whose cluster is a clean `SI`/`SE` pair.
+
+**(b) Refuse a survivor named only by a Luhn-family scheme** (`FR:siren`,
+`SE:orgnr`). Luhn is a pure checksum with no country semantics — this file
+already says a 10-digit Luhn pass "could be a SE orgnr or match PL:nip's shape" —
+and it is what put Gorup in Sweden. **Not implementable from the current plan**:
+the move does not carry WHICH scheme named the survivor, and a length proxy is
+useless because 261 of the moves are nine digits where the namer is `BG:eik` or
+`LT:kodas` (mod-11), not Luhn.
+
+## Next unit, specified
+
+1. Carry the naming scheme on each `CountryTypoMove` — a few lines, and it is
+   what (b) needs.
+2. Apply (a) and (b), re-run the dry pass, and re-read the heaviest moves the way
+   this review did. The two known false positives are the acceptance test: both
+   must be gone.
+3. Then the capped wet run, followed by `match-org-identifiers --r2` — **every
+   move lands on an identity the survivor already holds, on purpose**, so the
+   merge arm is a required second step and not an afterthought.
