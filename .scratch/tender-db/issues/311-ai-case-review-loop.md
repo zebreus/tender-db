@@ -183,3 +183,46 @@ group cases, they never decide them):
 Projected cost: ~25-30 stratum batches ≈ 3-5M tokens + audit, vs ~42M at
 the pilot rate. Execute after Stage 4 Unit 5 lands (the review loop then
 also consumes candidate edges, so one enrichment pass serves both).
+
+## Cohort re-cut 2026-09-01 (job 575): 589 → 487
+
+The cross-border cohort figure this issue and its board task carried (565, then
+589) was **stale**, and it is now re-measured against the current org layer:
+
+```
+xb-packet, job 575: 487 same-name cross-border components (was 589)
+```
+
+**102 cases have left the queue** without anyone reviewing them. The plausible
+cause is this session's predicate-level repairs — issue 325 (5,055 rows whose
+country was minted from a word), issue 326 (312 mis-typed country codes), issue
+328 (5,309 label-prefixed identifiers) — each of which can collapse a same-name
+*cross-border* component to a single country, or fold it away entirely. The
+direction is exactly what those repairs should produce.
+
+That is worth stating plainly as a result: **fixing two rule-shaped classes by
+predicate removed 102 cases from a manual review queue.** Deterministic repair
+where it is available is cheaper than review, per case, by a wide margin — which
+is the argument for doing the measurable classes first and leaving review for what
+genuinely has no rule-shaped signature, exactly as this issue's principle says.
+
+### Attribution is plausible, not proven — and that is my fault
+
+I captured only `cohort = 589` from the stored packet before re-running, not the
+case membership. `put_report` is `ON CONFLICT(kind) DO UPDATE`, one row per kind,
+so the previous cut was overwritten and **the 102 that left cannot be enumerated.**
+For a review cohort that is exactly the audit question ("which cases stopped
+needing review, and why?"), so this should not have been thrown away.
+
+Lesson, for any future re-cut: **capture the membership, not just the count,
+before re-running a cohort job.** The underlying gap — no report keeps a previous
+version, so no measurement in this system can be diffed against its own past — is
+filed as issue 335.
+
+### What remains, and why this firing did not do it
+
+The remaining work on this issue is the review campaign itself, and its
+architecture is explicitly "agent fan-outs (Workflow), ONE agent per case". I do
+not start multi-agent campaigns on my own initiative in this session, so the
+cohort is left accurate and ready rather than reviewed. The 487 are enumerable
+from the stored packet whenever a campaign is authorised.
