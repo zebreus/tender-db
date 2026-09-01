@@ -2225,6 +2225,40 @@ pub struct CountryTypoPair {
     pub b_probed: bool,
 }
 
+/// How many mentions a row may carry and still be treated as a transcription
+/// slip rather than a real registration (issue 326 step 2b).
+///
+/// **FIVE, measured rather than chosen.** Over the first prod plan's 343 moves
+/// the distribution of the moved row's own mention count is sharply bimodal —
+/// p50 1, p75 2, p90 3, p95 4, and 256 of 343 rows carry exactly one — while
+/// both false positives the dry review turned up sit far out in the tail:
+/// "XL Insurance Company SE" at 65 and "Gorup – Audio Stojan Gorup S.P." at 17.
+/// Five is the first value above the typo bulk, and it costs 17 of 343 moves.
+///
+/// A first attempt refused any cluster holding a code that was neither the
+/// survivor nor one letter from it. That caught XL Insurance but also refused
+/// `Софарма Трейдинг АД` — one Bulgarian EIK under `BG` plus five junk codes
+/// with a single mention each, which is exactly the corruption this repair is
+/// for. The cluster's SHAPE could not tell a multi-country registration from
+/// one real code plus wide spray; the moved row's own WEIGHT can.
+pub const TYPO_MOVE_MENTION_VETO: u64 = 5;
+
+/// Schemes whose "pass" is a bare Luhn check and therefore says nothing about
+/// which country the value belongs to (issue 326 step 2b).
+///
+/// Luhn is a transcription checksum, not a national one: the same arithmetic
+/// serves `SE:orgnr` and `FR:siren`, and `idgate` already notes that a 10-digit
+/// Luhn pass "could be a SE orgnr or match PL:nip's shape". So a survivor named
+/// ONLY by one of these is not evidence about a country, and the issue-326 dry
+/// review found exactly what that costs: `SI -> SE` on "Gorup – Audio Stojan
+/// Gorup S.P.", a Slovenian sole proprietor whose number happens to close a
+/// Luhn.
+///
+/// A cluster with a Luhn namer AND a national one is still decidable — the
+/// national scheme is doing the work — so the test is "every namer is
+/// Luhn-family", not "any".
+pub const LUHN_FAMILY: &[&str] = &["SE:orgnr", "FR:siren"];
+
 /// The shortest identifier a cluster may carry and still be read as evidence.
 ///
 /// SIX, and it is a floor against the only real false positives the pair census
@@ -2242,6 +2276,15 @@ pub struct CountryCluster {
     pub codes: Vec<String>,
     /// Codes IN this cluster that the checksum vocabulary actually names.
     pub named: Vec<String>,
+    /// The full scheme names behind [`Self::named`] — `LT:kodas`, `SE:orgnr`.
+    /// Carried because the SCHEME matters and the country alone does not: a
+    /// survivor named by `SE:orgnr` rests on a Luhn pass, which has no country
+    /// semantics at all, while one named by `LT:kodas` rests on a Lithuanian
+    /// mod-11. The issue-326 dry review found a Slovenian sole proprietor moved
+    /// to Sweden on exactly that difference, and a length proxy could not tell
+    /// them apart (261 of 343 moves were nine digits, where the namer is
+    /// `BG:eik` or `LT:kodas` rather than `FR:siren`).
+    pub named_schemes: Vec<String>,
     /// Codes in this cluster the vocabulary was even asked about. `asked`
     /// empty with `codes` non-empty is issue 314's `country_probed` gap: not a
     /// hard case, a missing scheme.
@@ -2339,6 +2382,8 @@ pub struct CountryTypoMove {
     /// on "XL Insurance Company SE", which is one insurer registered in three
     /// countries rather than a slip.
     pub from_asked_and_refused: bool,
+    /// The scheme that named the survivor — `LT:kodas`, `SE:orgnr`.
+    pub by_scheme: String,
 }
 
 /// Issue 326 step 2: what the survivor rule would move. Dry by default.
@@ -2361,6 +2406,13 @@ pub struct CountryTypoRepairReport {
     /// wrong — most of the clean `LV -> LT` cases are here — but weaker, and the
     /// false positives the first dry plan surfaced are all in this half.
     pub from_never_asked: u64,
+    /// Rows refused because the row itself carries [`TYPO_MOVE_MENTION_VETO`]
+    /// mentions or more under its own country — real standing, so probably a
+    /// real registration rather than a slip.
+    pub refused_row_has_standing: u64,
+    /// Clusters refused because every scheme naming the survivor is
+    /// [`LUHN_FAMILY`] — a checksum with no country semantics (tightening (b)).
+    pub refused_luhn_only: u64,
     pub moves: Vec<CountryTypoMove>,
     pub applied: u64,
     /// Rows the wet pass could not find under the planned `(country,
@@ -11720,6 +11772,21 @@ impl Db {
             }
             report.decisive += 1;
             let survivor = cluster.named[0].clone();
+
+            // If every scheme naming the survivor is a bare
+            // Luhn, the "anchor" carries no country information at all.
+            if !cluster.named_schemes.is_empty()
+                && cluster.named_schemes.iter().all(|sc| LUHN_FAMILY.contains(&sc.as_str()))
+            {
+                report.refused_luhn_only += 1;
+                continue;
+            }
+            let by_scheme = cluster
+                .named_schemes
+                .iter()
+                .find(|sc| sc.split(':').next() == Some(survivor.as_str()))
+                .cloned()
+                .unwrap_or_default();
             for (code, mentions) in &cluster.mentions {
                 if *code == survivor {
                     continue;
@@ -11727,6 +11794,23 @@ impl Db {
                 if !one_letter(&survivor, code) {
                     // Shares the identifier, but nothing says it was mistyped.
                     report.left_unmoved += 1;
+                    continue;
+                }
+                // THE WEIGHT VETO. A transcription slip appears once or twice; a
+                // real registration accumulates publications. Measured over the
+                // first prod plan's 343 moves, the distribution is sharply
+                // bimodal — p50 1, p75 2, p90 3, p95 4 — and BOTH false
+                // positives the dry review found sit far out in the tail: "XL
+                // Insurance Company SE" at 65 mentions and the Slovenian
+                // "Gorup … S.P." at 17.
+                //
+                // So weight does not vote for the survivor (the anchor does
+                // that, and a Slovak IČO under `SG` with 90 mentions still
+                // moves) but it DOES veto a move away from a country the row has
+                // real standing in. Those two are opposite questions and the
+                // rule holds both.
+                if *mentions >= TYPO_MOVE_MENTION_VETO {
+                    report.refused_row_has_standing += 1;
                     continue;
                 }
                 let asked = cluster.asked.iter().any(|a| a == code);
@@ -11743,6 +11827,7 @@ impl Db {
                     codes: cluster.codes.clone(),
                     names: cluster.names.clone(),
                     from_asked_and_refused: asked,
+                    by_scheme: by_scheme.clone(),
                 });
             }
         }
@@ -11966,10 +12051,14 @@ impl Db {
 
             // The anchor evidence, computed ONCE per identifier rather than once
             // per pair — the redundancy that made the pair report hard to read.
-            let anchored: Vec<String> = anchors(identifier)
+            let anchor_schemes: Vec<String> = anchors(identifier)
                 .iter()
                 .filter(|(sc, _)| !sc.contains('|'))
-                .map(|(sc, _)| sc.split(':').next().unwrap_or(sc).to_owned())
+                .map(|(sc, _)| (*sc).to_owned())
+                .collect();
+            let anchored: Vec<String> = anchor_schemes
+                .iter()
+                .map(|sc| sc.split(':').next().unwrap_or(sc).to_owned())
                 .collect();
             let probed: Vec<String> = vocabulary(identifier)
                 .iter()
@@ -11981,6 +12070,15 @@ impl Db {
             // gap, and the pair census's 86.8% "neither probed" is this.
             let named: Vec<String> =
                 names.iter().filter(|cc| anchored.iter().any(|a| a == *cc)).map(|c| c.to_string()).collect();
+            // The schemes behind those names, in the same order.
+            let named_schemes: Vec<String> = anchor_schemes
+                .iter()
+                .filter(|sc| {
+                    let cc = sc.split(':').next().unwrap_or(sc);
+                    names.iter().any(|n| *n == cc)
+                })
+                .cloned()
+                .collect();
             let asked: Vec<String> =
                 names.iter().filter(|cc| probed.iter().any(|p| p == *cc)).map(|c| c.to_string()).collect();
 
@@ -11999,6 +12097,7 @@ impl Db {
                     identifier: identifier.clone(),
                     codes: names.iter().map(|s| s.to_string()).collect(),
                     named: named.clone(),
+                    named_schemes: named_schemes.clone(),
                     asked: asked.clone(),
                     one_letter_pair: pair_one_letter,
                     heavy_one_letter: false,

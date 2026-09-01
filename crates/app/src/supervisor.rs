@@ -4615,6 +4615,8 @@ impl Supervisor {
                     "rows": r.rows,
                     "from_asked_and_refused": r.from_asked_and_refused,
                     "from_never_asked": r.from_never_asked,
+                    "refused_row_has_standing": r.refused_row_has_standing,
+                    "refused_luhn_only": r.refused_luhn_only,
                     "applied": r.applied,
                     "skipped_moved": r.skipped_moved,
                     "stopped": r.stopped,
@@ -4626,6 +4628,7 @@ impl Supervisor {
                         "codes": m.codes,
                         "names": m.names,
                         "from_asked_and_refused": m.from_asked_and_refused,
+                        "by_scheme": m.by_scheme,
                     })).collect::<Vec<_>>(),
                 })
                 .to_string();
@@ -4642,7 +4645,10 @@ impl Supervisor {
                      Of the planned moves {} abandon a country that WAS tested and refused \
                      the value, and {} abandon one no scheme covers at this shape — the \
                      second half rests on the survivor's anchor alone and is where the dry \
-                     run's false positives were found.{} \
+                     run's false positives were found. REFUSED: {} row(s) carry {} mentions \
+                     or more under their own country — real standing, so probably a real \
+                     registration and not a slip — and {} cluster(s) are named only by a bare \
+                     Luhn, which carries no country information at all.{} \
                      EVERY move lands on an identity the survivor already holds, ON PURPOSE: \
                      run match-org-identifiers --r2 afterwards to fold them.",
                     if dry_run { "DRY" } else { "WET" },
@@ -4652,6 +4658,9 @@ impl Supervisor {
                     r.left_unmoved,
                     r.from_asked_and_refused,
                     r.from_never_asked,
+                    r.refused_row_has_standing,
+                    store::TYPO_MOVE_MENTION_VETO,
+                    r.refused_luhn_only,
                     if dry_run {
                         String::new()
                     } else {

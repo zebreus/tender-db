@@ -124,21 +124,35 @@ async fn country_of(conn: &turso::Connection, id: i64) -> String {
     }
 }
 
-/// THE WEIGHT DOES NOT VOTE. The motivating case: a Slovak IČO standing under
-/// `SG` with 90 mentions against `SK`'s 10. The anchor is right and the majority
-/// is wrong, so the heavy row moves onto the light survivor.
+/// THE ANCHOR DECIDES THE SURVIVOR, NOT THE WEIGHT — with realistic weights,
+/// because the first draft of this test used invented ones.
+///
+/// It gave the wrong side 90 mentions to make the point vividly, and the weight
+/// veto then correctly refused the move, failing the test. The fabrication was
+/// the problem: measured over the first prod plan, 256 of 343 moved rows carry
+/// exactly ONE mention and p95 is 4. A mis-countried row is light, because a
+/// transcription slip happens once.
+///
+/// **The limitation this leaves is real and deliberate.** A heavily-published
+/// mis-countried row — one that really does appear under the wrong country
+/// dozens of times — is NOT auto-repaired; it is refused as
+/// `refused_row_has_standing` and belongs in the review queue. That is the
+/// correct trade for a published field: the same weight that would make such a
+/// row worth fixing is what makes it indistinguishable from a real registration.
 #[tokio::test]
-async fn the_anchor_decides_and_the_majority_does_not() {
+async fn the_anchor_decides_the_survivor_not_the_weight() {
     let (db, conn) = open("test-typo-weight").await;
-    org(&conn, 1, "SG", "41734602", "Nejaka Firma", 90).await;
-    org(&conn, 2, "SK", "41734602", "Nejaka Firma", 10).await;
+    // SG is the heavier side, and under the veto threshold — so the anchor,
+    // which names SK, still wins.
+    org(&conn, 1, "SG", "41734602", "Nejaka Firma", 4).await;
+    org(&conn, 2, "SK", "41734602", "Nejaka Firma", 1).await;
     db.build_organization_indexes().await.unwrap();
 
     let p = plan(&db).await;
     assert_eq!(p.decisive, 1);
     assert_eq!(p.rows, 1);
     assert_eq!((p.moves[0].from.as_str(), p.moves[0].to.as_str()), ("SG", "SK"));
-    assert_eq!(p.moves[0].mentions, 90, "the heavy side is the one that moves");
+    assert_eq!(p.moves[0].mentions, 4, "the heavier side is the one that moves");
     assert_eq!(p.applied, 0, "a dry run writes nothing");
 
     let w = apply(&db, 1).await;
@@ -316,4 +330,99 @@ async fn the_plan_separates_a_refusal_from_a_missing_scheme() {
     // And BOTH still apply: the split informs review, it does not gate the write.
     let w = apply(&db, 2).await;
     assert_eq!(w.applied, 2);
+}
+
+/// THE WEIGHT VETO, and it replaced a blunter rule that this test's own
+/// counterpart exposed.
+///
+/// A transcription slip appears once or twice; a real registration accumulates
+/// publications. Both false positives the first dry plan turned up sit far out
+/// in the tail — "XL Insurance Company SE" at 65 mentions, the Slovenian
+/// "Gorup … S.P." at 17 — against a distribution whose p95 is 4.
+///
+/// The first attempt refused any cluster holding a code neither the survivor nor
+/// one letter from it. It caught XL Insurance and also refused
+/// `Софарма Трейдинг АД`: one Bulgarian EIK under `BG` plus five junk codes with
+/// a single mention each, which is precisely the corruption this repair exists
+/// for. Cluster shape cannot separate a multi-country registration from one real
+/// code plus wide spray. The moved row's own weight can.
+#[tokio::test]
+async fn a_row_with_real_standing_is_not_moved() {
+    let (db, conn) = open("test-typo-standing").await;
+    // The XL Insurance shape: the row being moved has real activity of its own.
+    org(&conn, 1, "SK", "41734602", "XL Insurance Company SE", 40).await;
+    org(&conn, 2, "SG", "41734602", "XL Insurance Company SE", 65).await;
+    // …and a genuine slip alongside it: one mention under a neighbour code.
+    org(&conn, 3, "SK", "41734603", "Nejaka Firma", 30).await;
+    org(&conn, 4, "SG", "41734603", "Nejaka Firma", 1).await;
+    db.build_organization_indexes().await.unwrap();
+
+    let p = plan(&db).await;
+    assert_eq!(p.decisive, 2, "both clusters are decidable");
+    assert_eq!(p.refused_row_has_standing, 1);
+    assert_eq!(p.rows, 1, "only the one-mention slip moves: {:?}", p.moves);
+    assert_eq!(p.moves[0].identifier, "41734603");
+
+    let w = apply(&db, 1).await;
+    assert_eq!(w.applied, 1);
+    assert_eq!(country_of(&conn, 2).await, "SG", "the 65-mention row keeps its country");
+    assert_eq!(country_of(&conn, 4).await, "SK");
+}
+
+/// TIGHTENING (b): a survivor named only by a bare Luhn/// TIGHTENING (b): a survivor named only by a bare Luhn is not evidence about a
+/// country. Luhn is a transcription checksum shared by `SE:orgnr` and
+/// `FR:siren`, and it is what moved "Gorup – Audio Stojan Gorup S.P." — a
+/// Slovenian sole proprietor — into Sweden.
+///
+/// The scheme has to be carried on the move for this to be expressible at all:
+/// a length proxy fails because 261 of the first plan's 343 moves were nine
+/// digits, where the namer is `BG:eik` or `LT:kodas` rather than `FR:siren`.
+#[tokio::test]
+async fn a_survivor_named_only_by_luhn_is_refused() {
+    // A stand-in whose 10-digit arm is SE:orgnr — the Luhn-family case — and
+    // whose 9-digit arm is LT:kodas, a national mod-11.
+    fn luhnish(value: &str) -> Vec<(&'static str, String)> {
+        match value.len() {
+            10 => vec![("SE:orgnr", value.to_owned())],
+            9 => vec![("LT:kodas", value.to_owned())],
+            _ => Vec::new(),
+        }
+    }
+    fn vocab(value: &str) -> Vec<&'static str> {
+        match value.len() {
+            10 => vec!["SE:orgnr"],
+            9 => vec!["LT:kodas"],
+            _ => Vec::new(),
+        }
+    }
+    let (db, conn) = open("test-typo-luhn").await;
+    // The Gorup shape: a Slovenian S.P. whose number closes the Swedish Luhn.
+    org(&conn, 1, "SE", "5565140000", "Gorup - Audio Stojan Gorup S.P.", 3).await;
+    org(&conn, 2, "SI", "5565140000", "Gorup - Audio Stojan Gorup S.P.", 17).await;
+    // And a genuine Lithuanian company under Latvia, named by a NATIONAL scheme.
+    org(&conn, 3, "LT", "302591590", "UAB \"AE Medical\"", 22).await;
+    org(&conn, 4, "LV", "302591590", "UAB \"AE Medical\"", 4).await;
+    db.build_organization_indexes().await.unwrap();
+
+    let p = db
+        .repair_country_typos(luhnish, vocab, one_letter, footprint, true, None, &never)
+        .await
+        .unwrap();
+    assert_eq!(p.decisive, 2, "both clusters look decidable to the census");
+    assert_eq!(p.refused_luhn_only, 1, "the Swedish Luhn one is refused");
+    assert_eq!(p.rows, 1, "only the Lithuanian move survives: {:?}", p.moves);
+    assert_eq!((p.moves[0].from.as_str(), p.moves[0].to.as_str()), ("LV", "LT"));
+    assert_eq!(
+        p.moves[0].by_scheme, "LT:kodas",
+        "and the move records WHICH scheme decided it"
+    );
+
+    // The Slovenian row stands exactly as it was.
+    let w = db
+        .repair_country_typos(luhnish, vocab, one_letter, footprint, false, Some(1), &never)
+        .await
+        .unwrap();
+    assert_eq!(w.applied, 1);
+    assert_eq!(country_of(&conn, 2).await, "SI", "the Slovenian S.P. is untouched");
+    assert_eq!(country_of(&conn, 4).await, "LT");
 }
