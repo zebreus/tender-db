@@ -2682,6 +2682,12 @@ pub struct GenericStatisticReport {
     /// footnote: if this dominates, the statistic cannot be improved this way and
     /// the census's answer is "unanswerable by this route".
     pub no_identifiers: u64,
+    /// …where exactly ONE carrier holds a triple. Its own bucket because
+    /// `distinct == 1` is then arithmetically true and evidentially empty, and
+    /// the first version of this census filed 8,565 such keys under
+    /// `single_identity` — reporting fragmentation it had not seen. `enel spa`
+    /// has 3,004 carriers and one identifier between them.
+    pub too_little_evidence: u64,
     /// `distinct_identities * 100 / with_identifier` per decidable over-cap key,
     /// sorted. Percentiles are read off it: the question is whether this is
     /// BIMODAL (two populations that separate) or a smear (one population, and
@@ -13559,9 +13565,22 @@ impl Db {
             let verdict = if with_identifier == 0 {
                 report.no_identifiers += 1;
                 "no-identifiers"
+            } else if with_identifier < 2 {
+                // ONE identified carrier among however many. `distinct == 1` is
+                // arithmetically true and means nothing: this is absence of
+                // evidence, not fragmentation.
+                //
+                // The first version filed these under `single-identity` and so
+                // reported 8,565 "fragmented identities" that were nothing of
+                // the kind — `enel spa`, 3,004 carriers, ONE with an identifier.
+                // The tell was the ratio distribution reading 100% at every
+                // percentile while thousands of keys supposedly sat at 1-over-many.
+                report.too_little_evidence += 1;
+                "too-little-evidence"
             } else if distinct == 1 {
-                // One identity, fragmented. The wall is refusing a name nobody
-                // else uses at all.
+                // Two or more identified carriers, all the SAME identity: one
+                // organization fragmented, and the wall refusing a name nobody
+                // else uses at all. This is the shape issue 332 was filed about.
                 report.single_identity += 1;
                 report.identity_ratio.push((distinct * 100 / with_identifier).min(100) as u8);
                 "single-identity"

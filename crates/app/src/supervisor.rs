@@ -5096,6 +5096,7 @@ impl Supervisor {
                     "mostly_fragmented": r.mostly_fragmented,
                     "mostly_distinct": r.mostly_distinct,
                     "no_identifiers": r.no_identifiers,
+                    "too_little_evidence": r.too_little_evidence,
                     "identity_ratio": {
                         "n": r.identity_ratio.len(),
                         "p10": q(10), "p25": q(25), "p50": q(50),
@@ -5124,7 +5125,9 @@ impl Supervisor {
                      name nobody else uses), {} are mostly-fragmented (distinct identities at \
                      most half the identifier-bearing carriers), {} are mostly-distinct (a \
                      genuinely shared name, the wall working as designed), and {} have no \
-                     identifier-bearing carrier at all and cannot be decided this way. \
+                     identifier-bearing carrier at all, and {} have exactly ONE (which makes \
+                     `distinct == 1` arithmetically true and evidentially empty) — neither can \
+                     be decided this way. \
                      Identity ratio p10/p25/p50/p75/p90 = {}/{}/{}/{}/{}%. THE QUESTION IS \
                      WHETHER THAT IS BIMODAL: two populations that separate would justify a \
                      better statistic, one smear means the carrier count is fine and issue \
@@ -5137,6 +5140,7 @@ impl Supervisor {
                     r.mostly_fragmented,
                     r.mostly_distinct,
                     r.no_identifiers,
+                    r.too_little_evidence,
                     q(10), q(25), q(50), q(75), q(90),
                 ))
             }

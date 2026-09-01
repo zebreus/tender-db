@@ -221,3 +221,43 @@ async fn two_keys_split_across_windows_are_not_merged_into_one() {
     assert_eq!(r.single_identity, 1, "bbb run: eight rows, one identity");
     assert_eq!(r.over_cap_carriers, 15);
 }
+
+#[tokio::test]
+async fn one_identified_carrier_among_many_is_not_evidence_of_fragmentation() {
+    let (db, conn) = open("gs-thin").await;
+    // THE BUG THE FIRST PROD RUN SHIPPED WITH. Eight carriers, exactly ONE
+    // holding an identifier. `distinct == 1` is arithmetically true and says
+    // nothing at all — yet it filed 8,565 keys as fragmented identities,
+    // `enel spa` among them: 3,004 carriers, one identifier between them.
+    //
+    // The tell was that the ratio distribution read 100% at every percentile
+    // while thousands of keys supposedly sat at one-identity-over-many. Reading
+    // the values, not the counts, is what caught it.
+    carrier(&conn, 1, "enel spa", Some("IT00811720580")).await;
+    for n in 2..=8i64 {
+        carrier(&conn, n, "enel spa", None).await;
+    }
+    let r = run(&db).await;
+    assert_eq!(r.keys_over_cap, 1);
+    assert_eq!(r.too_little_evidence, 1);
+    assert_eq!(r.single_identity, 0, "one identified carrier is not a fragmented identity");
+    assert!(r.identity_ratio.is_empty(), "and it contributes no ratio");
+    assert_eq!(r.rows[0].verdict, "too-little-evidence");
+}
+
+#[tokio::test]
+async fn two_identified_carriers_on_one_identity_still_reads_as_fragmented() {
+    let (db, conn) = open("gs-two").await;
+    // The floor of the real signal: two is enough to say the same identity
+    // appears twice, which is what `single-identity` claims. The fix must not
+    // have raised the bar past the shape the issue is about.
+    carrier(&conn, 1, "siemens ag", Some("DE129274202")).await;
+    carrier(&conn, 2, "siemens ag", Some("DE129274202")).await;
+    for n in 3..=8i64 {
+        carrier(&conn, n, "siemens ag", None).await;
+    }
+    let r = run(&db).await;
+    assert_eq!(r.single_identity, 1);
+    assert_eq!(r.too_little_evidence, 0);
+    assert_eq!(r.identity_ratio, vec![50], "one identity over two identified carriers");
+}
