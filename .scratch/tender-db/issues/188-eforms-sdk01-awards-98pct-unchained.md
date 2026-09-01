@@ -183,3 +183,34 @@ is failing and that is ours.
 **Method note, recorded because it cost two wrong turns:** read what a metric
 computes before explaining why it is high. Both hypotheses above were about keys;
 the metric counts tender versions.
+
+#### Correction to that next step: it is NOT a bounded SQL read
+
+Checked before recommending it further. Every BT-04 row on an sdk-1.0 notice has
+`is_ref = 0`:
+
+```
+is_ref | rows
+     0 | 3,507
+```
+
+and the only index on the value column is
+
+```sql
+CREATE INDEX notices_ids_target ON notice_ids(value) WHERE is_ref = 1;
+```
+
+So "does this BT-04 value appear on any other notice?" is **unindexed** for these
+rows — one full scan of `notice_ids` per probe, ~713 probes. That is precisely the
+heavy/unbounded data-page read `docs/agents/prod-box-reads.md` says has no
+compliant on-box path, and it would be a poor thing to discover by running it.
+
+**Do it as a job instead**, the shape every census in this campaign used: one pass
+over `notice_ids` filtered to `field_id = 'BT-04-notice'`, matching against an
+in-memory set of the ~713 award-tender values. One scan, bounded memory, no
+per-probe cost.
+
+**And queue it behind anything else.** 713 awards is 0.017% of the corpus; a
+bespoke job for it is disproportionate today. Parked deliberately, with the method
+written down so the next person neither re-derives it nor runs the expensive
+version.
