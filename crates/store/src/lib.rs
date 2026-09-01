@@ -38,6 +38,7 @@ pub use canonical::{
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, DuplicateIdentityReport,
     LabelFix, LabelRepairReport,
+    NamePollutionReport, PollutedName,
     MintedCountryFix, MintedCountryReport,
     EDGE_VOLUME_CEILING, LUHN_FAMILY, MIN_CLUSTER_IDENTIFIER, R2_PLAN_LISTING_CAP,
     SCAN_KEY_WINDOW,

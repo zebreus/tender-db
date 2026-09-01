@@ -374,6 +374,9 @@ enum Spec {
     /// triples, split by whether `canonical_key` can see them and — where it
     /// cannot — by whether the member names agree. Read-only measurement.
     DuplicateIdentityCensus,
+    /// Issue 330: organization names carrying a line break, and whether the
+    /// notice published it that way. Read-only measurement.
+    NamePollutionCensus,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1178,6 +1181,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "name-pollution-census" => Ok(vec![
+                self.push(
+                    "name-pollution-census",
+                    "name-pollution-census".into(),
+                    Spec::NamePollutionCensus,
+                )
+                .await,
+            ]),
             "duplicate-identity-census" => Ok(vec![
                 self.push(
                     "duplicate-identity-census",
@@ -1603,6 +1614,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "country-typo-census",
     "country-cluster-census",
     "duplicate-identity-census",
+    "name-pollution-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -5007,6 +5019,90 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
+            Spec::NamePollutionCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 330: reading organization names".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                const CAP: usize = 300;
+                let r = self
+                    .db
+                    .name_pollution_census(CAP, &stop, &progress)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("name-pollution-census STOPPED by cancel — no report stored"
+                        .to_owned());
+                }
+                let now = store::now_unix();
+                // Percentiles, not 1.1M raw lengths: the point is to pick a
+                // "suspiciously long" threshold from the distribution, and a
+                // median plus tails is what that needs.
+                let q = |p: usize| -> u32 {
+                    if r.name_lengths.is_empty() {
+                        return 0;
+                    }
+                    r.name_lengths[(r.name_lengths.len() - 1) * p / 100]
+                };
+                let body = serde_json::json!({
+                    "rows_walked": r.rows_walked,
+                    "polluted": r.polluted,
+                    "published": r.published,
+                    "derived_only": r.derived_only,
+                    "no_mentions": r.no_mentions,
+                    "polluted_mentions": r.polluted_mentions,
+                    "by_country": r.by_country,
+                    "name_length": {
+                        "p50": q(50), "p90": q(90), "p99": q(99),
+                        "max": r.name_lengths.last().copied().unwrap_or(0),
+                        "n": r.name_lengths.len(),
+                    },
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|c| serde_json::json!({
+                        "org_id": c.org_id,
+                        "country": c.country,
+                        "name": c.name,
+                        "mentions": c.mentions,
+                        "verdict": c.verdict,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("name-pollution-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "name-pollution-census (issue 330): {} organization name(s) walked, {} \
+                     carry a LINE BREAK, attached to {} mention(s). Of those, {} were \
+                     PUBLISHED that way (at least one mention carries the break too — no \
+                     parser change would have prevented it), {} are derived-only (every \
+                     mention clean, so the break was introduced downstream of the notice, \
+                     which would be ours), and {} have no mentions to compare. By country: \
+                     {}. Name length p50/p90/p99/max = {}/{}/{}/{} characters. NOTHING IS \
+                     WRITTEN: the split between published and derived-only is what decides \
+                     whether this is a parser fix or a normalisation policy.",
+                    r.rows_walked,
+                    r.polluted,
+                    r.polluted_mentions,
+                    r.published,
+                    r.derived_only,
+                    r.no_mentions,
+                    r.by_country
+                        .iter()
+                        .map(|(k, v)| format!("{k}={v}"))
+                        .collect::<Vec<_>>()
+                        .join(", "),
+                    q(50), q(90), q(99),
+                    r.name_lengths.last().copied().unwrap_or(0),
+                ))
+            }
             Spec::DuplicateIdentityCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -8088,6 +8184,7 @@ mod tests {
                 "country-typo-census",
                 "country-cluster-census",
                 "duplicate-identity-census",
+                "name-pollution-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"

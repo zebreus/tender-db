@@ -2487,6 +2487,60 @@ pub struct DuplicateIdentityReport {
     pub stopped: bool,
 }
 
+/// One organization whose name carries a line break (issue 330).
+#[derive(Debug, Default, Clone)]
+pub struct PollutedName {
+    pub org_id: i64,
+    pub country: String,
+    /// The name with line breaks shown as `\n`, so a JSON report stays readable
+    /// and a reviewer can see exactly where the break falls.
+    pub name: String,
+    pub mentions: u64,
+    /// `published` | `derived-only` | `no-mentions`.
+    pub verdict: &'static str,
+}
+
+/// What the name-pollution census found (issue 330).
+///
+/// The question: `organizations.name` was seen carrying an embedded postal
+/// address, newlines and all (`Vergabekammer Rheinland-Pfalz\nStiftsstraße
+/// 9\n55116 Mainz`, 12,249 mentions). The name is not cosmetic — `n2_key` and
+/// `n3_key` are computed from it, so a polluted name produces a key that matches
+/// nothing and the org drops out of every name-corroborated arm. The failure is
+/// a SILENT under-merge, which is the shape that leaves no trace to notice.
+///
+/// It answers two things the issue could not answer from one specimen: how many,
+/// and — decisively rather than from a sample — whether the break was PUBLISHED
+/// or introduced downstream. `organization_mentions.name` holds what each notice
+/// said, so comparing the two settles it for every row rather than for twenty.
+#[derive(Debug, Default, Clone)]
+pub struct NamePollutionReport {
+    pub rows_walked: u64,
+    /// Names carrying a line break (`\n` or `\r`).
+    pub polluted: u64,
+    /// …of which at least one MENTION carries a break too: the notice published
+    /// it that way, and no parser change would have prevented it.
+    pub published: u64,
+    /// …of which every mention is clean: the break was introduced downstream of
+    /// the notice, which would be a defect on our side.
+    pub derived_only: u64,
+    /// …of which the org has no mentions at all — neither answer available.
+    pub no_mentions: u64,
+    /// Polluted names per country, so a fix can be scoped to where the class is.
+    pub by_country: std::collections::BTreeMap<String, u64>,
+    /// Mentions carried by polluted orgs, in total. The stake: this is how much
+    /// of the corpus is attached to a name no key can match.
+    pub polluted_mentions: u64,
+    /// Name lengths across the WHOLE walk, sorted, as percentiles are read off
+    /// it. Reported so that "suspiciously long name" — the issue's other
+    /// candidate signal — can be given a threshold measured from the corpus
+    /// rather than guessed, the way `VAT_SUFFIXES` had to be.
+    pub name_lengths: Vec<u32>,
+    pub rows: Vec<PollutedName>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One row whose identifier carries a publisher label (issue 328).
 #[derive(Debug, Default, Clone)]
 pub struct LabelFix {
@@ -12924,6 +12978,124 @@ impl Db {
         for (ix, ids) in listed {
             report.rows[ix].mentions =
                 ids.iter().filter_map(|id| mentions_of.get(id)).sum();
+        }
+
+        Ok(report)
+    }
+
+    /// The issue-330 measurement: organization names carrying a line break, and
+    /// whether the notice published it that way.
+    ///
+    /// Reads [`NamePollutionReport`] for why a broken name is a silent
+    /// under-merge rather than a cosmetic complaint. This writes nothing.
+    pub async fn name_pollution_census(
+        &self,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<NamePollutionReport> {
+        let mut report = NamePollutionReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: the whole org layer, by PK. Every row contributes a length to
+        // the distribution; only the broken ones are carried further.
+        let mut hits: Vec<(i64, String, String)> = Vec::new();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(NamePollutionReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, name FROM organizations \
+                      WHERE id > ? ORDER BY id LIMIT 100000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                report.rows_walked += 1;
+                let country = text(&row, 1);
+                let name = text(&row, 2);
+                report.name_lengths.push(name.chars().count() as u32);
+                if name.contains('\n') || name.contains('\r') {
+                    report.polluted += 1;
+                    *report.by_country.entry(country.clone()).or_default() += 1;
+                    hits.push((after, country, name));
+                }
+            }
+            if page == 0 {
+                break;
+            }
+            progress(report.rows_walked, "walking organization names");
+        }
+        report.name_lengths.sort_unstable();
+
+        // Pass 2: was it PUBLISHED? `organization_mentions.name` is what the
+        // notice said, so this settles publisher-side vs downstream for EVERY
+        // polluted row rather than for a hand-picked twenty.
+        //
+        // `organization_id IN (...)` is a seek per value on the leading column
+        // of its index — the shape issue 329's pass 2 ran instantly over 7,289
+        // ids. (What stalled there was an IN on the leading column combined with
+        // equality on a LATER one, which is a different plan entirely. Worth
+        // keeping straight: the lesson is not "avoid IN".)
+        let ids: Vec<i64> = hits.iter().map(|(id, _, _)| *id).collect();
+        let mut evidence: std::collections::HashMap<i64, (bool, u64)> = Default::default();
+        progress(0, &format!("checking {} polluted names against their mentions", ids.len()));
+        for chunk in ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(NamePollutionReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT organization_id, name FROM organization_mentions \
+                  WHERE organization_id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                let name = text(&r, 1);
+                let e = evidence.entry(int(&r, 0)).or_insert((false, 0));
+                e.1 += 1;
+                if name.contains('\n') || name.contains('\r') {
+                    e.0 = true;
+                }
+            }
+            progress(evidence.len() as u64, "reading mention names");
+        }
+
+        for (id, country, name) in hits {
+            let (published, mentions) = evidence.get(&id).copied().unwrap_or((false, 0));
+            report.polluted_mentions += mentions;
+            let verdict = if mentions == 0 {
+                "no-mentions"
+            } else if published {
+                "published"
+            } else {
+                "derived-only"
+            };
+            match verdict {
+                "no-mentions" => report.no_mentions += 1,
+                "published" => report.published += 1,
+                _ => report.derived_only += 1,
+            }
+            if report.rows.len() < cap {
+                report.rows.push(PollutedName {
+                    org_id: id,
+                    country,
+                    // Escaped rather than raw: a literal break inside a JSON
+                    // report is legal but unreadable, and the whole point of the
+                    // listing is that a person reads the values.
+                    name: name.replace('\r', "\\r").replace('\n', "\\n"),
+                    mentions,
+                    verdict,
+                });
+            } else {
+                report.truncated = true;
+            }
         }
 
         Ok(report)
