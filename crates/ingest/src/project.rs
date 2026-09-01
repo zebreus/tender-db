@@ -4576,8 +4576,34 @@ pub fn normalise_identifier(raw: &str, country: Option<&str>) -> Option<Identifi
     // the BACK sits behind a value that already parsed; a label at the front
     // hides the value entirely until it is gone.
     if let Some(rest) = crate::countries::label_prefix_stripped(&value) {
+        // THE GUARD HAS TO BE SHARPER THAN "IT PARSES", and the first version
+        // was not. `normalise_identifier` almost never returns `None` for a
+        // string containing a digit, because `national()` is a catch-all — so
+        // "strip then re-validate" validated nothing, and the issue-328 dry plan
+        // showed it: `UMSATZSTEUERIDENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149`
+        // became the identifier `ENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149`.
+        // The vocabulary has `UMSATZSTEUERIDENTIFIKATIONSNUMMER` and
+        // `UMSATZSTEUERID` but not `…SNR`, so a SHORTER entry matched and left a
+        // plausible-looking fragment. `HANDELSREGISTERNRHRB64128` → `NRHRB64128`
+        // and `HANDELSREGISTERARNHEM09155985` → `ARNHEM09155985` are the same
+        // shape.
+        //
+        // So the remainder must be RECOGNISABLE, not merely parseable: either it
+        // classifies as a real scheme (a VAT id, a register form) or it is pure
+        // digits — a bare registration number that lost its label, which is the
+        // `STNR…`/`STEUERNUMMER…` class and a correct strip. Anything else is
+        // leftover label text and the row keeps what the publisher wrote.
+        //
+        // This makes the vocabulary's gaps SAFE rather than harmful: an
+        // unlisted label variant now leaves the row alone instead of mangling
+        // it, which is the property that matters when the list is read off a
+        // corpus that keeps growing.
         if let Some(id) = normalise_identifier(rest, country) {
-            return Some(id);
+            let recognisable =
+                id.kind != "national" || rest.bytes().all(|b| b.is_ascii_digit());
+            if recognisable {
+                return Some(id);
+            }
         }
     }
 
@@ -5622,6 +5648,63 @@ mod tests {
         // And a value with no label is untouched by any of this.
         let plain = normalise_identifier("DE811335517", Some("DE")).expect("a VAT id");
         assert_eq!((plain.kind.as_str(), plain.value.as_str()), ("vat", "DE811335517"));
+    }
+
+    /// THE GUARD MUST BE SHARPER THAN "IT PARSES", and this test exists because
+    /// the first version was not.
+    ///
+    /// `normalise_identifier` almost never returns `None` for a string with a
+    /// digit in it, because `national()` is a catch-all — so "strip then
+    /// re-validate" validated nothing. The issue-328 DRY PLAN is what exposed
+    /// it, on prod values, before any write: every value below was in that plan
+    /// as a proposed change.
+    ///
+    /// The rule now is that the remainder must be RECOGNISABLE — it classifies
+    /// as a real scheme, or it is pure digits (a registration number that lost
+    /// its label). That makes the vocabulary's gaps SAFE: an unlisted variant
+    /// leaves the row alone instead of mangling it, which is what matters for a
+    /// list read off a corpus that keeps growing.
+    #[test]
+    fn a_leftover_label_fragment_never_becomes_an_identifier() {
+        // The one that made the point. The vocabulary carries
+        // `UMSATZSTEUERIDENTIFIKATIONSNUMMER` and `UMSATZSTEUERID`; this value
+        // has `…SNR`, so a SHORTER entry matched and left a fragment that
+        // classified happily as `national`.
+        for raw in [
+            "UMSATZSTEUERIDENTIFIKATIONSNRENTEGAPLUSGMBHDE813810149",
+            "HANDELSREGISTERNRHRB64128",
+            "HANDELSREGISTERARNHEM09155985",
+            "HANDELSREGISTERAMTSGERICHTESSENHRB11082",
+            "STNRDE811183963REGNRAMTSGERICHTKLNHRB2130",
+            "STNR16227103384FINANZAMTGERA",
+        ] {
+            let id = normalise_identifier(raw, Some("DE")).expect("still an identifier");
+            assert_eq!(
+                id.value, raw,
+                "{raw} must keep the value the publisher wrote — a leftover \
+                 label fragment is not an identifier"
+            );
+        }
+    }
+
+    /// …and the strips that ARE right still happen. Two shapes qualify: a real
+    /// scheme, and pure digits.
+    #[test]
+    fn a_recognisable_remainder_is_still_accepted() {
+        // A real scheme.
+        let v = normalise_identifier("USTIDDE329214156", Some("DE")).expect("a VAT id");
+        assert_eq!((v.kind.as_str(), v.value.as_str()), ("vat", "DE329214156"));
+        // Pure digits: a Steuernummer that lost its label. Prod values.
+        for (raw, want) in [
+            ("STNR1529086043", "1529086043"),
+            ("STEUERNUMMER809033537", "809033537"),
+            ("USTID308958755", "308958755"),
+            ("USTIDNR194657063", "194657063"),
+        ] {
+            let id = normalise_identifier(raw, Some("DE")).expect(raw);
+            assert_eq!(id.value, want, "{raw}");
+            assert_eq!(id.kind, "national", "a bare number stays national");
+        }
     }
 
     /// The `HANDELSREGISTER` entry is currently INERT, and that is worth pinning
