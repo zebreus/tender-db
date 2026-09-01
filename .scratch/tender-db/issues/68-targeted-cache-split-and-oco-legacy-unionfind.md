@@ -1,6 +1,11 @@
 # 68 — targeted per-pool cache_size split + fresh-rebuild Phase-1 measurement + union-find O(legacy) RAM
 
-Status: open
+Status: open — but its PREMISE IS STALE (2026-09-01): this issue is written
+around bounding memory "on the 8 GB box". The box now has 64 GB (measured
+2026-09-01: `free -m` reports 64,071 MB total, 57,556 MB available with the
+service resident at ~1.0 GB). A cache_size reduction 512 MiB -> 128 MiB to
+protect an 8 GB budget is a different trade at 64 GB, so the fix this issue
+proposes should be re-derived rather than executed as written.
 Kind: performance / bounded-memory
 Blocked by: —
 Relates to: 61 (the incident this fell out of), 57/bounded-memory-principle, 63/66 (rebuild pipeline)

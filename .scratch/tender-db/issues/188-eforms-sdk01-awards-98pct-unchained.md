@@ -61,3 +61,66 @@ threshold; likely the same "early eForms award without a populated BT-04" shape 
 warrants its own one-notice check before asserting. The mid-range eras (sdk-1.7 33%,
 1.10 26%, 1.14 56%, r208 32%) are below the >90% trigger and a separate characterization
 pass. Left as a smaller follow-up.
+
+## The sdk-1.0 check this issue left open (2026-09-01)
+
+Status line said "sdk-1.0 left for its own check". Done, and **it does not have
+sdk-0.1's explanation.**
+
+### Measured, from the live dashboard
+
+```
+eforms:eforms-sdk-0.1     141,583 awards   138,832 unchained   98.06%
+eforms:eforms-sdk-1.0         713 awards       711 unchained   99.72%   <-
+eforms:eforms-sdk-1.3       2,190 awards       615 unchained   28.08%
+eforms:eforms-sdk-1.6      18,144 awards     4,246 unchained   23.40%
+eforms:eforms-sdk-1.7      90,647 awards    29,395 unchained   32.43%
+eforms:eforms-sdk-1.13    173,321 awards    57,628 unchained   33.25%
+eforms:eforms-sdk-1.14     15,830 awards     7,962 unchained   50.30%
+```
+
+**sdk-1.0 sits with sdk-0.1, not with its own family.** Every other sdk-1.x runs
+23–50%; sdk-1.0 runs 99.72%.
+
+### Why sdk-0.1's explanation does not transfer
+
+sdk-0.1's 98% is honest because the source publishes no BT-04 at all — and the
+vendored inventory says so:
+
+```
+crates/ingest/sdk/fields-sdk-0.1.json   BT-04-notice: ABSENT
+crates/ingest/sdk/fields-1.0.0.json     BT-04-notice: PRESENT
+crates/ingest/sdk/fields-1.3.0.json     BT-04-notice: PRESENT
+```
+
+sdk-1.0 **has a vendored inventory and that inventory defines BT-04**, exactly
+like sdk-1.3 which chains 72% of its awards. And the code path confirms there is
+no dialect fallback in play: `procedure_key` tries `BT-04-notice` first, then the
+national folder ids gated behind `is_sdk01_profile` (exact match on
+`eforms:eforms-sdk-0.1`) and `is_de1_profile` (`eforms-de-1.`). **sdk-1.0 matches
+neither**, so BT-04 is its only key — and 711 of 713 notices are not producing one.
+
+Two of the 713 DO chain, so the mechanism works when the value is present.
+
+### What is NOT known
+
+Whether the sdk-1.0 notices in the corpus genuinely omit BT-04 in their XML (a
+real early-adopter gap, source-side, but for a different reason than sdk-0.1), or
+whether something in the sdk-1.0 path — profile detection, inventory selection —
+fails to reach a field that is there. **The count cannot tell; only the notices
+can.**
+
+### Proportion, stated so nobody over-reacts
+
+713 awards out of roughly 4.2M is **0.017%** of the corpus. This is a correctness
+curiosity and a possible parse gap, not a data emergency, and it should be
+prioritised as such. The value in resolving it is mostly that sdk-1.0 is the
+*earliest real SDK release* — whatever is wrong here may be the same shape as a
+gap in a later version that matters more.
+
+### Next step
+
+Inspect the parse layer of a handful of sdk-1.0 notices for `BT-04-notice`
+presence — a bounded read. If the field is there and unextracted, it is ours; if
+it is absent from the XML, sdk-1.0 joins sdk-0.1 as honest and the panel should
+say so for both.
