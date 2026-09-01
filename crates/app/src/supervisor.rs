@@ -377,6 +377,9 @@ enum Spec {
     /// Issue 330: organization names carrying a line break, and whether the
     /// notice published it that way. Read-only measurement.
     NamePollutionCensus,
+    /// Issue 331: does duplication actually push a name key over the
+    /// genericness wall? Read-only measurement.
+    GenericWallCensus,
     /// Issue 326 step 2: move the rows a decisive anchor says are mistyped.
     /// Wet writes `organizations`.
     RepairCountryTypos { dry_run: bool },
@@ -1181,6 +1184,14 @@ impl Supervisor {
                 )
                 .await,
             ]),
+            "generic-wall-census" => Ok(vec![
+                self.push(
+                    "generic-wall-census",
+                    "generic-wall-census".into(),
+                    Spec::GenericWallCensus,
+                )
+                .await,
+            ]),
             "name-pollution-census" => Ok(vec![
                 self.push(
                     "name-pollution-census",
@@ -1615,6 +1626,7 @@ const STOPPABLE_KINDS: &[&str] = &[
     "country-cluster-census",
     "duplicate-identity-census",
     "name-pollution-census",
+    "generic-wall-census",
     "repair-country-typos",
     "repair-label-prefixes",
     "repair-minted-countries",
@@ -5019,6 +5031,81 @@ impl Supervisor {
                     q(25), q(50), q(75), q(90),
                 ))
             }
+            Spec::GenericWallCensus => {
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase(
+                    "walking",
+                    None,
+                    None,
+                    "issue 331: collapsing duplicate carriers".to_owned(),
+                );
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                const CAP: usize = 200;
+                let r = self
+                    .db
+                    .generic_wall_inflation_census(
+                        ingest::project::match_norm,
+                        ingest::crosswalk::n3_key,
+                        SCAN_STOPLIST_CAP,
+                        CAP,
+                        &stop,
+                        &progress,
+                    )
+                    .await
+                    .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("generic-wall-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let now = store::now_unix();
+                let body = serde_json::json!({
+                    "duplicate_groups": r.duplicate_groups,
+                    "duplicate_rows": r.duplicate_rows,
+                    "stoplist_cap": SCAN_STOPLIST_CAP,
+                    "keys_with_savings": r.keys_with_savings,
+                    "keys_over_cap": r.keys_over_cap,
+                    "keys_falsely_generic": r.keys_falsely_generic,
+                    "orgs_affected_upper_bound": r.orgs_affected,
+                    "nearest_miss": r.nearest_miss,
+                    "truncated": r.truncated,
+                    "rows": r.rows.iter().map(|k| serde_json::json!({
+                        "key": k.key,
+                        "carriers": k.carriers,
+                        "savings": k.savings,
+                        "collapsed": k.collapsed,
+                        "verdict": k.verdict,
+                    })).collect::<Vec<_>>(),
+                })
+                .to_string();
+                self.db
+                    .put_report("generic-wall-census", &body, now)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                Ok(format!(
+                    "generic-wall-census (issue 331): {} duplicate identity group(s) covering \
+                     {} org rows. {} name key(s) are carried more than once inside some group, \
+                     so their carrier count is inflated at all; {} of those are over the \
+                     stoplist cap of {} today. FALSELY GENERIC — over the cap now, at or under \
+                     it once duplicates collapse: {}. Upper bound on orgs behind them: {}. \
+                     Nearest miss among keys that stay generic: {} collapsed carriers against \
+                     a cap of {}. A zero here means the mechanism is real and INERT, which is \
+                     a complete answer and the same shape issue 327 settled on. NOTHING IS \
+                     WRITTEN. Conservative by construction: duplication is proved by a shared \
+                     (country, kind, identifier) triple, so fragmentation among rows with no \
+                     identifier is counted as genuine commonality and never inflates this.",
+                    r.duplicate_groups,
+                    r.duplicate_rows,
+                    r.keys_with_savings,
+                    r.keys_over_cap,
+                    SCAN_STOPLIST_CAP,
+                    r.keys_falsely_generic,
+                    r.orgs_affected,
+                    r.nearest_miss,
+                    SCAN_STOPLIST_CAP,
+                ))
+            }
             Spec::NamePollutionCensus => {
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -8185,6 +8272,7 @@ mod tests {
                 "country-cluster-census",
                 "duplicate-identity-census",
                 "name-pollution-census",
+                "generic-wall-census",
                 "repair-country-typos",
                 "repair-label-prefixes",
                 "repair-minted-countries"

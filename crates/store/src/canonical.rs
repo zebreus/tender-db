@@ -2551,6 +2551,78 @@ pub struct NamePollutionReport {
     pub stopped: bool,
 }
 
+/// One name key whose carrier count is inflated by duplicate org rows (issue 331).
+#[derive(Debug, Default, Clone)]
+pub struct InflatedKey {
+    pub key: String,
+    /// Distinct orgs carrying it today.
+    pub carriers: u64,
+    /// Carriers that collapse away once rows sharing a
+    /// `(country, kind, identifier)` triple are counted once.
+    pub savings: u64,
+    /// `carriers - savings`.
+    pub collapsed: u64,
+    /// `falsely-generic` — over the cap now, under it collapsed — or
+    /// `still-generic` / `never-generic`.
+    pub verdict: &'static str,
+}
+
+/// What the genericness-wall inflation census found (issue 331).
+///
+/// `STOPLIST_CAP` is 20: a name key carried by more than that many distinct orgs
+/// is "generic", and agreement on it cannot corroborate a merge. The count comes
+/// from `org_match_keys`, which holds a row per ORG ROW — so a fragmented
+/// organization is several carriers of its own name, and the duplicates the
+/// merge arms exist to fold can push a perfectly distinctive name over the wall.
+/// That would be self-reinforcing: fragmentation makes a name look generic,
+/// looking generic blocks the merge, the fragmentation persists.
+///
+/// The wall gates R3's corroboration, the resolver's ingest-time anchor bind and
+/// the Stage-4 E3 scan, so a false "generic" is a SILENT refusal to merge in all
+/// three. But issue 312's precedent stands: a mechanism is not a frequency, and
+/// nothing here should move on one specimen. This counts.
+///
+/// **The measurement is exact rather than sampled, and cheap, because only rows
+/// in a duplicate triple can inflate anything** — measured at 7,305 rows
+/// corpus-wide (issue 329 job 568). So the savings are computed from that set
+/// alone, and only keys that actually gain savings are looked up.
+///
+/// **Stated limitation, and it runs conservative.** Duplication is proved here by
+/// a shared `(country, kind, identifier)` triple. Fragmentation among rows with
+/// NO identifier is real but unprovable this way, so those are counted as
+/// separate carriers — the census can undercount inflation, never overcount it.
+#[derive(Debug, Default, Clone)]
+pub struct GenericWallReport {
+    /// Duplicate identity groups feeding the collapse, and their rows.
+    pub duplicate_groups: u64,
+    pub duplicate_rows: u64,
+    /// Distinct name keys that any duplicate group carries more than once —
+    /// i.e. every key whose count is inflated at all, however slightly.
+    pub keys_with_savings: u64,
+    /// …of which the key is over `stoplist_cap` today, so the wall is actually
+    /// refusing on it.
+    pub keys_over_cap: u64,
+    /// **THE NUMBER.** Keys over the cap today that fall to `<= stoplist_cap`
+    /// once duplicates are collapsed: the wall is refusing them *because of* the
+    /// fragmentation it is meant to help fix. Zero here means the mechanism is
+    /// real and inert, which is a complete answer.
+    pub keys_falsely_generic: u64,
+    /// Carrier counts of the falsely-generic keys, SUMMED. An UPPER BOUND on
+    /// the reach of any fix, not a distinct-org count: an org carrying two such
+    /// keys is counted twice. Named as a bound because the exact figure would
+    /// need the carrier ids, and this census deliberately never fetches them —
+    /// `org_match_keys` has no index leading on `org_id`, so that lookup is a
+    /// full scan (the issue-321 mistake).
+    pub orgs_affected: u64,
+    /// The largest `collapsed` value seen among keys that stay over the cap.
+    /// Reported so a reader can see HOW FAR from mattering the class is rather
+    /// than only that it does not.
+    pub nearest_miss: u64,
+    pub rows: Vec<InflatedKey>,
+    pub truncated: bool,
+    pub stopped: bool,
+}
+
 /// One row whose identifier carries a publisher label (issue 328).
 #[derive(Debug, Default, Clone)]
 pub struct LabelFix {
@@ -13107,6 +13179,173 @@ impl Db {
                 report.truncated = true;
             }
         }
+
+        Ok(report)
+    }
+
+    /// The issue-331 measurement: does duplication actually push any name key
+    /// over the genericness wall? Reads [`GenericWallReport`] for the design and
+    /// its one stated limitation. This writes nothing.
+    pub async fn generic_wall_inflation_census(
+        &self,
+        n2: fn(&str) -> String,
+        n3: fn(&str) -> String,
+        stoplist_cap: usize,
+        cap: usize,
+        stop: &(dyn Fn() -> bool + Sync),
+        progress: &(dyn Fn(u64, &str) + Sync),
+    ) -> turso::Result<GenericWallReport> {
+        let mut report = GenericWallReport::default();
+        let reader = self.reader().await?;
+
+        // Pass 1: the duplicate triples. THE WHOLE REASON THIS IS CHEAP — only a
+        // row sharing a triple with another row can inflate a carrier count, and
+        // that set is thousands rather than millions.
+        let mut seen: std::collections::HashMap<(String, String, String), Vec<i64>> =
+            Default::default();
+        let mut after = 0i64;
+        loop {
+            if stop() {
+                return Ok(GenericWallReport { stopped: true, ..Default::default() });
+            }
+            let mut page = 0u64;
+            let mut rows = reader
+                .query(
+                    "SELECT id, country, identifier_kind, identifier FROM organizations \
+                      WHERE id > ? AND identifier IS NOT NULL AND country IS NOT NULL \
+                        AND identifier_kind IS NOT NULL \
+                      ORDER BY id LIMIT 100000",
+                    (Value::Integer(after),),
+                )
+                .await?;
+            while let Some(row) = rows.next().await? {
+                after = int(&row, 0);
+                page += 1;
+                seen.entry((text(&row, 1), text(&row, 2), text(&row, 3))).or_default().push(after);
+            }
+            if page == 0 {
+                break;
+            }
+            progress(seen.len() as u64, "walking identities");
+        }
+        let groups: Vec<Vec<i64>> = seen.into_values().filter(|ids| ids.len() >= 2).collect();
+        report.duplicate_groups = groups.len() as u64;
+        report.duplicate_rows = groups.iter().map(|g| g.len() as u64).sum();
+
+        // Pass 2: names for those rows, by PK.
+        let all_ids: Vec<i64> = groups.iter().flatten().copied().collect();
+        let mut names_of: std::collections::HashMap<i64, String> = Default::default();
+        progress(0, &format!("reading names for {} duplicate rows", all_ids.len()));
+        for chunk in all_ids.chunks(IN_CHUNK) {
+            if stop() {
+                return Ok(GenericWallReport { stopped: true, ..Default::default() });
+            }
+            let sql = format!(
+                "SELECT id, name FROM organizations WHERE id IN ({})",
+                placeholders(chunk.len())
+            );
+            let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+            let mut q = reader.query(&sql, params).await?;
+            while let Some(r) = q.next().await? {
+                names_of.insert(int(&r, 0), text(&r, 1));
+            }
+        }
+
+        // Pass 3: savings per key. Within one duplicate group, a key carried by
+        // `m` of its members collapses to one carrier, so it saves `m - 1`.
+        //
+        // Both kinds are derived, because the build stores whichever it wrote:
+        // an `n3` row only exists `if k3 != k2`, so a name with no legal-form
+        // token lives under `n2` alone (issue 329).
+        let mut savings: std::collections::HashMap<String, u64> = Default::default();
+        for g in &groups {
+            if stop() {
+                return Ok(GenericWallReport { stopped: true, ..Default::default() });
+            }
+            let mut per_key: std::collections::HashMap<String, u64> = Default::default();
+            for id in g {
+                let Some(name) = names_of.get(id) else { continue };
+                let k2 = n2(name);
+                let k3 = n3(name);
+                let mut keys = vec![k2.clone()];
+                if k3 != k2 {
+                    keys.push(k3);
+                }
+                for k in keys {
+                    if !k.is_empty() {
+                        *per_key.entry(k).or_default() += 1;
+                    }
+                }
+            }
+            for (k, m) in per_key {
+                if m >= 2 {
+                    *savings.entry(k).or_default() += m - 1;
+                }
+            }
+        }
+        report.keys_with_savings = savings.len() as u64;
+
+        // Pass 4: the TRUE carrier count for those keys only. Uncapped, because
+        // `carriers - savings` needs the real number and `GENERIC_KEY_SQL` stops
+        // counting at `cap + 1`. Only keys that gained savings are looked up, so
+        // this is a few thousand indexed seeks rather than a table walk.
+        let mut listed: Vec<InflatedKey> = Vec::new();
+        progress(0, &format!("counting carriers for {} inflated keys", savings.len()));
+        for (key, save) in savings {
+            if stop() {
+                return Ok(GenericWallReport { stopped: true, ..Default::default() });
+            }
+            let mut carriers = 0u64;
+            for kind in ["n2", "n3"] {
+                let mut q = reader
+                    .query(
+                        "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
+                           WHERE key_kind = ? AND key = ?)",
+                        (t(kind), t(key.as_str())),
+                    )
+                    .await?;
+                carriers = match q.next().await? {
+                    Some(row) => int(&row, 0).max(0) as u64,
+                    None => 0,
+                };
+                if carriers > 0 {
+                    break;
+                }
+            }
+            let collapsed = carriers.saturating_sub(save);
+            let over_now = carriers > stoplist_cap as u64;
+            let over_collapsed = collapsed > stoplist_cap as u64;
+            if over_now {
+                report.keys_over_cap += 1;
+            }
+            let verdict = if over_now && !over_collapsed {
+                report.keys_falsely_generic += 1;
+                report.orgs_affected += carriers;
+                "falsely-generic"
+            } else if over_now {
+                report.nearest_miss = report.nearest_miss.max(collapsed);
+                "still-generic"
+            } else {
+                "never-generic"
+            };
+            // Widest-first ordering happens after the loop; everything is
+            // tallied here so the cap can never bound a count.
+            listed.push(InflatedKey { key, carriers, savings: save, collapsed, verdict });
+        }
+
+        // The listing keeps the cases a reader learns from: the falsely-generic
+        // ones first, then whatever sits closest to the wall.
+        listed.sort_by(|a, b| {
+            let rank = |v: &str| match v {
+                "falsely-generic" => 0,
+                "still-generic" => 1,
+                _ => 2,
+            };
+            rank(a.verdict).cmp(&rank(b.verdict)).then_with(|| b.savings.cmp(&a.savings))
+        });
+        report.truncated = listed.len() > cap;
+        listed.truncate(cap);
+        report.rows = listed;
 
         Ok(report)
     }
