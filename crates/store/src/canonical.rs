@@ -2103,22 +2103,28 @@ pub(crate) const GENERIC_KEY_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
        WHERE key_kind = ? AND key = ? LIMIT ?)";
 
-/// Carriers of a NAME KEY, counted across both key kinds (issue 328 follow-on).
+/// Carriers of a NAME KEY under ONE kind, counted up to `cap + 1` (issue 328
+/// follow-on). Identical to [`GENERIC_KEY_SQL`] but returns the COUNT rather
+/// than a boolean: `name_key_is_generic` throws away the difference between one
+/// carrier and NONE AT ALL, and a key `org_match_keys` does not hold is a
+/// stale-build reading rather than a distinctive name.
 ///
-/// `key_kind IN ('n2','n3')` is not sloppiness — it is what the build's own
-/// dedup makes necessary. `build-org-match-keys` writes an `n3` row only
+/// **Two probes, not one `key_kind IN ('n2','n3')`.** A name key has to be
+/// looked for under both kinds — `build-org-match-keys` writes an `n3` row only
 /// `if k3 != k2`, so a name with no legal-form token (`Kreisverwaltung
-/// Ahrweiler`) has its N3 key stored under kind `n2` and nothing under `n3`.
-/// Probing `key_kind = 'n3'` alone reports those as ABSENT, which the
-/// duplicate-identity census would then read as an unusable genericness signal
-/// across most of the corpus.
+/// Ahrweiler`) has its N3 key stored under kind `n2` and nothing under `n3`, and
+/// probing `n3` alone reports most of the corpus ABSENT. The first version did
+/// that in one statement with an `IN` on the leading column of
+/// `org_match_keys_kk(key_kind, key, org_id)`, and the prod run STALLED: turso
+/// did not turn that into two index seeks. Equality on the leading column is
+/// index-safe under any planner, so the caller asks twice.
 ///
 /// The two kinds cannot be conflated: `n3_key` writes a `§family` marker for
 /// every legal-form token, so a key string containing `§` can only be an N3 key,
 /// and a string without one is an N2 key that equals its own N3 key.
 pub(crate) const NAME_KEY_CARRIERS_SQL: &str =
     "SELECT COUNT(*) FROM (SELECT DISTINCT org_id FROM org_match_keys \
-       WHERE key_kind IN ('n2','n3') AND key = ? LIMIT ?)";
+       WHERE key_kind = ? AND key = ? LIMIT ?)";
 
 /// The issue-321 stale-key count. Same index, same reason, and this one is
 /// the standing record of getting it wrong: it was written `org_id = ? AND
@@ -12752,6 +12758,10 @@ impl Db {
             while let Some(r) = q.next().await? {
                 names_of.insert(int(&r, 0), text(&r, 1));
             }
+            progress(
+                names_of.len() as u64,
+                &format!("reading names, {} of {} rows", names_of.len(), all_ids.len()),
+            );
         }
 
         // Which listed row each carried group's member ids belong to, so pass 4
@@ -12770,7 +12780,10 @@ impl Db {
                 return Ok(DuplicateIdentityReport { stopped: true, ..Default::default() });
             }
             judged += 1;
-            if judged % 5_000 == 0 {
+            // Every 500, not every 5,000: the first feed never ticked at all,
+            // because the class turned out to be a few thousand groups and the
+            // phase line sat on the PREVIOUS pass's message throughout.
+            if judged % 500 == 0 {
                 progress(judged, &format!("judging names, {judged} of {total_groups} groups"));
             }
             let (country, kind, identifier) = triple;
@@ -12805,24 +12818,30 @@ impl Db {
                                 // would lease a SECOND connection out of the
                                 // read pool while the first is still borrowed —
                                 // a stall on a one-connection pool, for no gain.
-                                let mut q = reader
-                                    .query(
-                                        NAME_KEY_CARRIERS_SQL,
-                                        (
-                                            t(k.as_str()),
-                                            Value::Integer(stoplist_cap as i64 + 1),
-                                        ),
-                                    )
-                                    .await?;
-                                // The COUNT, not the boolean: `is_generic`
-                                // throws away the difference between one carrier
-                                // and NONE AT ALL, and a key `org_match_keys`
-                                // does not hold is a stale-build reading rather
-                                // than a distinctive name.
-                                let carriers = match q.next().await? {
-                                    Some(row) => int(&row, 0).max(0) as u64,
-                                    None => 0,
-                                };
+                                //
+                                // 'n3' then 'n2', two equality probes: see
+                                // NAME_KEY_CARRIERS_SQL for why this is not one
+                                // statement with an IN.
+                                let mut carriers = 0u64;
+                                for kind in ["n3", "n2"] {
+                                    let mut q = reader
+                                        .query(
+                                            NAME_KEY_CARRIERS_SQL,
+                                            (
+                                                t(kind),
+                                                t(k.as_str()),
+                                                Value::Integer(stoplist_cap as i64 + 1),
+                                            ),
+                                        )
+                                        .await?;
+                                    carriers = match q.next().await? {
+                                        Some(row) => int(&row, 0).max(0) as u64,
+                                        None => 0,
+                                    };
+                                    if carriers > 0 {
+                                        break;
+                                    }
+                                }
                                 let hit = (carriers as usize > stoplist_cap, carriers == 0);
                                 generic_memo.insert(k.clone(), hit);
                                 hit

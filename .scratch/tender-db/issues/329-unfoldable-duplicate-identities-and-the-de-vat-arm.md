@@ -114,3 +114,43 @@ rather than from whichever country came up in conversation — the discipline
    of actual values, wet run gated on `expect_rows` parity.
 4. `unkeyed_by_scope` will name other scopes. File them separately; do not widen
    this issue into all of them.
+
+## First two prod runs: both cancelled, and the second one taught the lesson
+
+**Run 566** (`0da3b2c`) was still going after 25 minutes and was cancelled
+(honest cancel, no report stored). I diagnosed the per-member correlated
+`COUNT(*) FROM organization_mentions` in pass 2 and moved mention counts to a
+fourth pass over the listed rows only (`916e8bd`). That change is a real
+improvement — the count feeds nothing but the capped listing — **but it was not
+the cause, and I should not have inferred a cause from a runtime.**
+
+**Run 567** (`916e8bd`) carried the progress feed added in the same commit, and
+it answered the sizing question in seconds:
+
+> `reading names for 7289 unkeyed member rows`
+
+**7,289 rows.** Fifteen batched primary-key lookups. Nothing in pass 2 could
+take 25 minutes, so the mention subquery was never the bottleneck. The stall is
+in the classification loop, whose ONLY database call is the genericness probe —
+and that probe was the thing I had just changed:
+
+```sql
+-- the stalling form: an IN on the LEADING column of
+-- org_match_keys_kk(key_kind, key, org_id)
+WHERE key_kind IN ('n2','n3') AND key = ?
+```
+
+SQLite turns that into two index seeks. turso, a reimplementation, evidently
+does not — so each new key scanned a multi-million-row table. Replaced with two
+equality probes ('n3', then 'n2' if absent), which is index-safe under any
+planner and is the shape `name_key_is_generic` was already proven on.
+
+Two process notes worth keeping:
+
+* **The feed found the bug the runtime could not.** Run 566 gave a number
+  (1,500 s) and I attached a cause to it. Run 567 gave a *measurement* (7,289)
+  and the cause fell out immediately. The observability fix paid for itself on
+  its first firing.
+* **The first feed still lied**, because it ticked every 5,000 groups and the
+  class is a few thousand — so the phase line sat on the previous pass's message
+  for the whole classification loop. Now every 500, and per chunk in pass 2.
