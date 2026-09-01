@@ -599,3 +599,61 @@ not a trade worth making.
 That is itself worth fixing: **the R2 plan should carry a capped per-group
 listing** the way `country-typo-repair` and `minted-country-repair` do. Then the
 fold is a normal reviewed step instead of a leap.
+
+## The R2 fold, now that the plan can be read (`8c8175f`, jobs 552/553)
+
+**Why it was stuck.** `plan_sample` is a fixed 1-in-199 content-stable
+acceptance — the right shape for estimating precision over a huge plan, and the
+wrong shape for reading a small one. Against prod's 200-group plan it yields
+exactly **one** row, so the only choices were running a 200-group merge
+unreviewed or not running it.
+
+Fixed by adding a capped LISTING beside the sample (`R2_PLAN_LISTING_CAP` = 500;
+`plan_listing_truncated` flags a plan that overflows it). The sample keeps its
+unbiased-over-large-plans guarantee; the listing is complete whenever the plan
+fits. A wet run records no listing — it is a review artifact for a plan not yet
+applied — and the test pins that alongside the completeness.
+
+### What the listing showed, which nothing else could
+
+| | |
+| --- | --- |
+| plan groups | 200, **all 200 listed**, not truncated |
+| **created by this repair** | **195** |
+| pre-existing | 5 |
+| group sizes | 189 pairs, 10 triples, 1 quad |
+
+The members are plainly one entity per group — full name against abbreviation
+(`„Застрахователна компания Надежда"` / `ЗК Надежда АД`), with and without the
+legal form (`NKT A/S` / `NKT`, `Solari di Udine` / `Solari di Udine SpA.`), and
+punctuation variants (`РОЕЛ-98 ООД` / `„Роел 98“ ООД` / `„Роел-98“ ООД`). The
+widest group is the Bulgarian Ministry of Environment and Water four times over.
+
+**The 5 pre-existing groups are all French**, and worth naming because they are a
+different kind of merge: two SIRET *establishments* sharing one SIREN — `INRA` /
+`INRAE Centre Occitanie Montpellier`, `Colas Baie d'Armor` / `COLAS France
+ETABLISSEMENT COTE BASQUE`, `SPIE Sud-Est` / `SPIE BUILDING SOLUTIONS`. R2 keys
+on the legal entity, so it folds establishments into one organization. That is
+its documented E1 behaviour and predates this work; noted rather than changed.
+
+### Applied, and the residue is R2 refusing on purpose
+
+**200 groups merged, 212 org rows retired.** The duplicate identities this
+repair created fell **297 → 102**.
+
+The 102 are not a gap. R2's denial arithmetic accounts for every group exactly:
+
+```
+829 groups >= 2  -  565 consortium  -  64 legal-form  =  200 planned
+                    (0 cap, 0 gate)
+```
+
+So every group R2 did not deny was planned and merged, and the 102 sit inside the
+629 it deliberately refused — the consortium and legal-form guards that exist
+because merging across them is a measured false-merge shape (the FI/SE-twin
+case). Leaving them is R2 working, not R2 failing.
+
+The 36 clusters still holding more than one country are likewise correct: those
+are the `left_unmoved` stranger codes, which never had evidence of a slip.
+
+Health green after the merge; the reclaim-without-ledger counter is zero.
