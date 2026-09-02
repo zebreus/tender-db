@@ -1,10 +1,12 @@
-# 337 — turso leaks a temp-database directory under `TMPDIR`, ~5/day, unbounded
+# 337 — a restart orphans turso's per-connection temp database under `TMPDIR`
 
-Status: DIAGNOSED 2026-09-02 — **trigger found: the daily tick, one directory per
-tick.** Accumulated 143 swept safely; the leak itself is NOT fixed (it is in the
-turso library) but it is now characterised, timestamped, and much smaller than the
-first estimate. See "The trigger, caught on the first clean tick".
-Kind: resource leak (third-party) / operational hygiene
+Status: **RESOLVED 2026-09-02** — trigger identified in turso's source and
+reproduced in a test (`BEGIN IMMEDIATE`, once per connection), the framing corrected
+(turso does clean up; our process never unwinds), the cheap-looking fix measured and
+rejected, and the sweep shipped as its own daily unit. `/data/tmp` is at 0.
+Was: DIAGNOSED 2026-09-02 (trigger correlated to the daily tick); before that, filed
+2026-09-02 with the rate over-estimated at ~5/day.
+Kind: resource leak (our exit path, not turso's) / operational hygiene
 Relates to: 169 (where it surfaced, and where it was correctly ruled OUT as the
 storage cause), 166 (the turso 0.7.2 bump)
 Blocked by: nothing
@@ -125,3 +127,120 @@ nothing). Had I read only the count, this issue would now say "nothing appeared 
 the tick" and the trigger would still be unknown. **Two numbers that cannot both
 be true are a signal to re-measure, not to pick one** — the same lesson issue 332
 recorded when a ratio of 100% sat beside thousands of one-over-many keys.
+
+## The trigger, read from turso's source and then reproduced
+
+The previous section left one thing open — *which* part of the tick creates the
+directory — and proposed waiting a day for another tick with per-job timing. That
+was the wrong instrument. The job stamps are second-granularity and the birth
+(09:35:03.731) falls exactly on the probe→process boundary, so another tick would
+have produced the same ambiguity. Reading turso 0.7.2's own source settled it in
+minutes, and a test then confirmed every step:
+
+| where | what it does |
+| --- | --- |
+| `translate/transaction.rs` | `BEGIN IMMEDIATE`/`EXCLUSIVE` emit an `Insn::Transaction` for `TEMP_DB_ID` — deliberately, "to keep the opcode sequence identical to SQLite". A **deferred** `BEGIN` emits no `Transaction` opcode at all. |
+| `vdbe/execute.rs` | `op_transaction` sees `db == TEMP_DB_ID` and calls `Connection::ensure_temp_database()`. |
+| `connection.rs` | that lazily calls `create_temp_database()` → `tempfile::tempdir()` under `TMPDIR`, holding `tursodb-temp.db`. Memoised per connection. |
+| `connection.rs` | the `TempDir` is owned by the connection's `TempDatabase`, **so dropping the connection removes the directory**. |
+
+Measured by `crates/store/tests/turso_temp_db_leak.rs`, which asserts each line:
+
+```
+after open + WAL + CREATE TABLE                → 0 dir(s)
+after deferred BEGIN + INSERT + COMMIT         → 0 dir(s)
+after BEGIN IMMEDIATE, before any write        → 1 dir(s)  .tmp2tFqVt/tursodb-temp.db
+after its INSERT + COMMIT                      → 1 dir(s)
+after a SECOND BEGIN IMMEDIATE, same conn      → 1 dir(s)
+after a second connection, opened              → 1 dir(s)
+after BEGIN IMMEDIATE on the SECOND connection → 2 dir(s)
+after dropping the second connection           → 1 dir(s)
+after dropping the first connection            → 0 dir(s)
+```
+
+### The framing in this issue's title was wrong
+
+turso does not leak. It creates the directory at the first immediate transaction
+on a connection and removes it when that connection closes. What leaks is **our
+exit path**: the unit takes a default SIGTERM on every restart and the process
+does not unwind, so `TempDir::drop` never runs and whatever the writer connection
+held is orphaned. `crates/app` contains no signal handling of any kind — grepped,
+nothing for SIGTERM, graceful or shutdown.
+
+That finally explains every count that did not add up:
+
+* **~1/day steady state** — one restart-with-a-write per day. The writer connection
+  takes its first `BEGIN IMMEDIATE` during the daily tick's first write job, and
+  the next deploy orphans it.
+* **20 deploys → 4 directories** (2026-09-01) — a restart only orphans something if
+  that process ever wrote. Most of a deploy day's restarts land minutes apart with
+  no write in between.
+* **0 in the 1h50m after a restart, with ~23 connections open** — the read pool
+  never issues `BEGIN IMMEDIATE`, and no write job ran in that window.
+* **Not per-job** — one per connection *ever*, not per transaction.
+
+## The cheap fix that isn't: `PRAGMA temp_store = MEMORY`
+
+One pragma in the store's `PRAGMAS` would skip the directory entirely
+(`create_temp_database` returns a `MemoryIO` database when `temp_store` is
+`Memory`), and our temp database is always empty — no `CREATE TEMP TABLE` exists
+anywhere in `crates/*/src`. It is still the wrong move: `temp_store` is the same
+switch the **sorter and hash table** read (`TempFile::with_temp_store` in
+`vdbe/sorter.rs` and `vdbe/hash_table.rs`), so setting it to `Memory` would route
+every external sort and hash spill into RAM. That is precisely the failure the
+`TMPDIR=/data/tmp` drop-in exists to prevent (issue 83: the spill landed in the
+`PrivateTmp` tmpfs and failed an index build with "no storage space"), on a
+490 GiB database. Trading an OOM for 4 KB of directory entries is not a fix.
+
+Worth knowing for the future: `Connection::create_tempdir` honours `TURSO_TMPDIR`
+and `SQLITE_TMPDIR` ahead of `TMPDIR`, so the temp *database* could be pointed
+somewhere separate from the spill if that ever becomes useful.
+
+## Shipped: `tender-db-tmpsweep`, its own daily unit
+
+Option 1, built as its own unit rather than smuggled into `diskwatch` (which is
+documented detection-only, and the issue flagged that as the one caution):
+
+* `ops/watchdogs/tender-db-tmpsweep.{sh,service,timer}`, daily at 23:41, installed
+  by `ops/watchdogs/install.sh` like the other four.
+* Deletes only `.tmp*` directories **older than the service's
+  `ActiveEnterTimestamp`** — now exact rather than merely safe, because a live
+  connection's directory is provably removed the moment the connection closes.
+* And only when their contents are turso's own (`tursodb-temp.db*` or
+  `tursodb_temp_file*`); anything else is reported and left in place.
+* If the start time cannot be read it **abstains** — a missing bound is a reason
+  not to act, not a reason to fall back to an age guess.
+* `TENDER_TMPSWEEP_DRY=1` reports without deleting; `install.sh` dry-fires it.
+
+Proven on the box against fabricated cases before being pointed at `/data/tmp`:
+
+```
+before        : .tmpFOREIGN .tmpNEWlive .tmpOLDorphan .tmpSPILL
+after dry run : .tmpFOREIGN .tmpNEWlive .tmpOLDorphan .tmpSPILL
+after wet run : .tmpFOREIGN .tmpNEWlive
+```
+
+then live: `1 orphaned dir(s) removed, 4 KiB freed; 0 newer than the service start
+left held` — `/data/tmp` back to 0.
+
+### A second measurement error, same shape as the first
+
+The first run of that fixture check printed a correct summary ("1 newer than the
+service start left held") beside an `ls` that showed an empty directory. Both
+could not be true. The cause: every fixture name begins with `.tmp`, and plain
+`ls` hides dotfiles. `ls -1A` showed the truth. The first error in this issue was
+broken quoting, this one was a hidden-file default — different mechanisms, same
+lesson, and the same rule caught both: **two numbers that cannot both be true are
+a signal to re-measure, not to pick one.**
+
+## What is left
+
+Nothing on the leak itself. Two optional follow-ons, neither urgent:
+
+* **Graceful shutdown.** A SIGTERM handler that drops the `Db` would make the
+  sweep unnecessary and would be the honest fix, but it is a real change to the
+  server's exit path (in-flight jobs, the writer's transaction) for a 4 KB/day
+  problem. Not worth it on this evidence; file it if a second reason appears.
+* **Upstream.** There is nothing to report as a bug — turso's cleanup is correct.
+  The only arguable improvement is creating the temp database lazily on first
+  *use* rather than on `BEGIN IMMEDIATE`, which would help nobody here.

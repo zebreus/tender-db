@@ -21,7 +21,7 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 for s in tender-db-diskwatch.sh tender-db-jobwatch.sh tender-db-driftwatch.sh \
-    tender-db-snapshot.sh; do
+    tender-db-snapshot.sh tender-db-tmpsweep.sh; do
     install -m 0755 -o root -g root "$here/$s" "$bin/$s"
     echo "installed $bin/$s"
 done
@@ -30,7 +30,8 @@ for u in \
     tender-db-diskwatch.service tender-db-diskwatch.timer \
     tender-db-jobwatch.service  tender-db-jobwatch.timer \
     tender-db-driftwatch.service tender-db-driftwatch.timer \
-    tender-db-snapshot.service tender-db-snapshot.timer; do
+    tender-db-snapshot.service tender-db-snapshot.timer \
+    tender-db-tmpsweep.service tender-db-tmpsweep.timer; do
     install -m 0644 -o root -g root "$here/$u" "$unitdir/$u"
     echo "installed $unitdir/$u"
 done
@@ -39,10 +40,12 @@ systemctl daemon-reload
 systemctl reset-failed tender-db-diskwatch.service tender-db-jobwatch.service \
     tender-db-driftwatch.service 2>/dev/null || true
 systemctl enable --now tender-db-diskwatch.timer tender-db-jobwatch.timer \
-    tender-db-driftwatch.timer tender-db-snapshot.timer
+    tender-db-driftwatch.timer tender-db-snapshot.timer tender-db-tmpsweep.timer
 echo "timers enabled:"
-systemctl list-timers 'tender-db-*watch.timer' --no-pager || true
+systemctl list-timers 'tender-db-*.timer' --no-pager || true
 
 # Prove the scripts run clean right now (does not wait for the next tick).
 echo "--- diskwatch dry fire ---"; systemctl start tender-db-diskwatch.service && journalctl -u tender-db-diskwatch.service -n 5 --no-pager
 echo "--- jobwatch dry fire ---";  systemctl start tender-db-jobwatch.service  && journalctl -u tender-db-jobwatch.service  -n 5 --no-pager
+# The sweep deletes, so its dry fire is a DRY fire — it reports and removes nothing.
+echo "--- tmpsweep dry fire (reports only) ---"; TENDER_TMPSWEEP_DRY=1 /usr/local/bin/tender-db-tmpsweep.sh

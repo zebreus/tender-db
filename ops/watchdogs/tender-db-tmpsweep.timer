@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily tender-db temp-directory sweep (/data/tmp)
+
+[Timer]
+# After the daily tick (07:35 UTC) and the restarts a deploy day brings, so the
+# steady-state single orphan is collected the same day it is made.
+OnCalendar=*-*-* 23:41:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

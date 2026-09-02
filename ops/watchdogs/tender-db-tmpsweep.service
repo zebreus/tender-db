@@ -1,0 +1,6 @@
+[Unit]
+Description=tender-db temp-directory sweep: turso temp databases orphaned by a restart (issue 337)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/tender-db-tmpsweep.sh

@@ -1,10 +1,12 @@
 # tender-db watchdogs
 
-Two hourly, detection-only systemd timers on the production box. They write to the
-journal and nothing else — no paging, no state — so their whole value is a periodic
-breadcrumb that a human (or the hourly ownership check-in) reads when scanning
-health. A breach also exits the oneshot non-zero, so it surfaces in
-`systemctl --failed`.
+Detection-only systemd timers on the production box, plus two units that write.
+The watchers log to the journal and nothing else — no paging, no state — so their
+whole value is a periodic breadcrumb that a human (or the hourly ownership
+check-in) reads when scanning health. A breach also exits the oneshot non-zero, so
+it surfaces in `systemctl --failed`. The two that write (`snapshot`, `tmpsweep`)
+say so in their rows below; both refuse to act when they cannot prove the action
+is safe rather than falling back to a guess.
 
 | unit | fires | checks |
 |---|---|---|
@@ -12,6 +14,8 @@ health. A breach also exits the oneshot non-zero, so it surfaces in
 | `tender-db-jobwatch` | hourly, `:29` | `GET /admin/jobs`: any `.recent[]` run with `outcome != "ok"` finished inside the lookback (default 26 h), and any `.current` job running past the wedged threshold (default 8 h, above the ~5 h a full `project rebuild=true` legitimately takes). |
 | `tender-db-driftwatch` | daily, `06:41` | the public SDK-eforms-de release feed (gitlab.opencode.de): warns and exits non-zero the day a release lands beyond the vendored `1.14.x` line — the eForms-DE 2.1 successor whose acceptance deadline is 2026-12-02 (issue 165). Network failure warns but exits 0, so a flaky mirror never masks a real drift alarm in `systemctl --failed`. |
 | `tender-db-snapshot` | weekly, `Sun 05:23` | NOT a watchdog — the one unit here that WRITES: an instant XFS-reflink snapshot of the DB into /data/db/snapshots (issue 269), WAL folded and truncated to the 0-byte sibling the verify suite expects. Skips loudly while a job runs; keeps the newest 2 and can never delete the last. Same-volume: a verification/forensics artifact, not disaster recovery. |
+
+| `tender-db-tmpsweep` | daily, `23:41` | WRITES (deletes): removes the turso per-connection temp databases under `/data/tmp` that a restart orphaned (issue 337). `BEGIN IMMEDIATE` makes turso create one `.tmpXXXX/tursodb-temp.db` per connection; the connection's `TempDir` removes it on a graceful drop, but the unit takes a default SIGTERM and never unwinds, so ~1/day escapes and nothing ever reclaims it. Deletes only directories older than the service's `ActiveEnterTimestamp` — provably not held by the running process — and only when their contents are turso's own `tursodb-temp.db*` / `tursodb_temp_file*`. No start time readable ⇒ it abstains. `TENDER_TMPSWEEP_DRY=1` reports without deleting. |
 
 Thresholds are env-overridable in the unit if needed: `TENDER_DISK_WARN_PCT`,
 `TENDER_JOB_FAIL_LOOKBACK_SECS`, `TENDER_JOB_WEDGED_SECS`, `TENDER_ADMIN_URL`,
