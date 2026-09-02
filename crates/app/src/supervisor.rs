@@ -1486,17 +1486,15 @@ impl Supervisor {
                         .await,
                 ])
             }
-            // Issue 278 track-2: retire the ~45k ghost Tenders the pre-fix full path
-            // left behind. Self-scoping (computes the dup-notice set), paired with an
-            // ordinary incremental project so the scoped retirement runs. No id list.
-            // `sweep-regrouped-ghosts` stays accepted as an alias: durable job rows
-            // carry the kind string, so a queued or recovered row from before the
-            // rename must still resolve — and it now resolves to something safe.
+            // Issue 278: count the ghost signature. NOT paired with a project — the
+            // sweep it replaced marked notices unprojected and needed a fold behind
+            // it to do the retiring, but a census writes nothing, so the pairing was
+            // pure noise (verified on prod: the paired run reported "0 notices → 0
+            // tenders"). `sweep-regrouped-ghosts` stays accepted as an alias, because
+            // durable job rows carry the kind string and a recovered row from before
+            // the rename must still resolve — and it now resolves to something safe.
             "ghost-census" | "sweep-regrouped-ghosts" => Ok(vec![
-                self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus)
-                    .await,
-                self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
-                    .await,
+                self.push("ghost-census", "ghost-census".into(), Spec::GhostCensus).await,
             ]),
             // Issue 84: mark the 2008 language siblings skipped-by-policy. NOT
             // paired with a projection — this touches only quarantine bookkeeping,
