@@ -539,6 +539,29 @@ enum Spec {
 /// few new ambiguous rows are normal traffic. `vat_refused` gets none: the
 /// parser refusing a value it used to accept means the v2 gate moved under the
 /// standing rows, and one such row is worth a look.
+/// The four counters the next run's comparison actually reads, and nothing else
+/// (issue 325's tripwire; the nesting fixed 2026-09-02).
+///
+/// A report that quotes its predecessor whole quotes its predecessor's
+/// predecessor with it. This keeps the human-readable "what it was compared
+/// against" line without the recursion: flat, four numbers, same shape every
+/// week however long the series runs.
+fn trimmed_baseline(previous: Option<&serde_json::Value>) -> serde_json::Value {
+    let Some(before) = previous.map(|v| &v["parser_vs_stock"]) else {
+        return serde_json::Value::Null;
+    };
+    if !before.is_object() {
+        return serde_json::Value::Null;
+    }
+    let pick = |k: &str| before.get(k).cloned().unwrap_or(serde_json::Value::Null);
+    serde_json::json!({
+        "no_longer_vat": pick("no_longer_vat"),
+        "vat_country_differs": pick("vat_country_differs"),
+        "vat_refused": pick("vat_refused"),
+        "gln_shared_one_country": pick("gln_shared_one_country"),
+    })
+}
+
 fn parser_vs_stock_alarms(
     before: Option<&serde_json::Value>,
     no_longer_vat: u64,
@@ -3230,10 +3253,16 @@ impl Supervisor {
                         // never acted on: stripping a published identifier is
                         // what issue 312 had to undo. Floor 0.
                         "vat_refused": vat_refused,
-                        "baseline": previous
-                            .as_ref()
-                            .map(|v| v["parser_vs_stock"].clone())
-                            .unwrap_or(serde_json::Value::Null),
+                        // TRIMMED, not the previous block whole. Storing
+                        // `previous["parser_vs_stock"]` verbatim embedded that
+                        // block's OWN baseline, so every run nested one level
+                        // deeper — the live report had reached three levels,
+                        // each carrying a full per-scheme table, growing without
+                        // bound and multiplied by the ten versions report history
+                        // now keeps. Nothing read it either:
+                        // `parser_vs_stock_alarms` compares against the previous
+                        // block's TOP-LEVEL counters, never its baseline.
+                        "baseline": trimmed_baseline(previous.as_ref()),
                         "alarms": alarms.clone(),
                     },
                     // Issue 327: the shared-GLN class, watched not trusted.
@@ -8644,6 +8673,53 @@ mod tests {
                 "repair-minted-countries"
             ]
         );
+    }
+
+    /// Issue 325's tripwire quoted its predecessor WHOLE, so every weekly run
+    /// nested one level deeper — the live report had reached three levels, each
+    /// carrying a full per-scheme table, and report history now keeps ten
+    /// versions of it. Found 2026-09-02 by reading the stored report while
+    /// checking that the tripwire was still being computed at all.
+    #[test]
+    fn the_stored_baseline_is_four_numbers_and_never_quotes_its_own_predecessor() {
+        // A previous report in the shape the bug produced: a block that already
+        // carries a baseline of its own, plus the bulky scheme table.
+        let previous = serde_json::json!({
+            "parser_vs_stock": {
+                "no_longer_vat": 7,
+                "vat_country_differs": 1,
+                "vat_refused": 0,
+                "gln_shared_one_country": 0,
+                "schemes": [{"scheme": "FR:siret", "pop": 71036, "pass": 64059, "fail": 2840}],
+                "alarms": [],
+                "baseline": {"no_longer_vat": 9, "baseline": {"no_longer_vat": 11}},
+            }
+        });
+        let trimmed = trimmed_baseline(Some(&previous));
+
+        // The counters survive, because the point of keeping a baseline at all
+        // is that a reader can see what the alarms compared against.
+        assert_eq!(trimmed["no_longer_vat"], 7);
+        assert_eq!(trimmed["vat_country_differs"], 1);
+        assert_eq!(trimmed["vat_refused"], 0);
+        assert_eq!(trimmed["gln_shared_one_country"], 0);
+
+        // THE REGRESSION: no recursion, and no bulk.
+        assert!(trimmed.get("baseline").is_none(), "a baseline must not carry a baseline");
+        assert!(trimmed.get("schemes").is_none(), "nor the per-scheme table");
+        assert_eq!(
+            trimmed.as_object().map(|o| o.len()),
+            Some(4),
+            "four counters, so the body is the same size on week one and week fifty"
+        );
+
+        // A first run and a malformed predecessor both give null rather than a
+        // half-built object — the alarms function already reads a missing key as
+        // "no baseline for that key" (see the test above), so null is the shape
+        // it expects.
+        assert!(trimmed_baseline(None).is_null());
+        assert!(trimmed_baseline(Some(&serde_json::json!({"parser_vs_stock": 3}))).is_null());
+        assert!(trimmed_baseline(Some(&serde_json::json!({"something_else": 1}))).is_null());
     }
 
     /// Issue 247: the deferred-index bootstrap must jump the queue, because the queue is
