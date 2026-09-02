@@ -1,6 +1,6 @@
 # 337 — a restart orphans turso's per-connection temp database under `TMPDIR`
 
-Status: **RESOLVED 2026-09-02** — trigger identified in turso's source and
+Status: **CLOSED 2026-09-02** — first scheduled sweep verified on the night it shipped (bottom). Was: RESOLVED — trigger identified in turso's source and
 reproduced in a test (`BEGIN IMMEDIATE`, once per connection), the framing corrected
 (turso does clean up; our process never unwinds), the cheap-looking fix measured and
 rejected, and the sweep shipped as its own daily unit. `/data/tmp` is at 0.
@@ -288,3 +288,18 @@ Nothing on the leak itself. Two optional follow-ons, neither urgent:
 * **Upstream.** There is nothing to report as a bug — turso's cleanup is correct.
   The only arguable improvement is creating the temp database lazily on first
   *use* rather than on `BEGIN IMMEDIATE`, which would help nobody here.
+
+## First scheduled run, verified (2026-09-02 23:41:17 CEST)
+
+```
+ok tmpsweep: 1 orphaned dir(s) removed, 21067 KiB freed; 1 newer than the
+service start (Wed 2026-09-02 15:26:47 CEST) left held; 0 with unexpected
+content left alone
+```
+
+Exactly the two cases the rule distinguishes, on the same night: the 21.5 MB
+sorter spill orphaned by the afternoon's last restart went; the directory the
+live process created during the issue-304 campaign (newer than its
+`ActiveEnterTimestamp`) stayed. Nothing else was touched. The timer re-armed for
+23:41 tomorrow. This issue is closed; the sweep is the standing answer and the
+test in `turso_temp_db_leak.rs` is what would say if turso's contract changed.
