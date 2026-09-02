@@ -233,6 +233,16 @@ broken quoting, this one was a hidden-file default — different mechanisms, sam
 lesson, and the same rule caught both: **two numbers that cannot both be true are
 a signal to re-measure, not to pick one.**
 
+### A live prediction, checked the same firing
+
+The model above says a restart orphans a directory only if that process ever
+took an immediate transaction. The deploy of `d552033` gave a free test of it:
+the service ran 10:02:53 → 11:21:35 with no job in that window, was restarted,
+and `/data/tmp` stayed at **0**. The naive "one per restart" reading, which the
+first diagnosis nearly settled on, predicts 1. The sweep unit is installed and
+enabled (`tender-db-tmpsweep.timer`, next fire 23:41 CEST), and its dry fire at
+install reported the same 0.
+
 ## What is left
 
 Nothing on the leak itself. Two optional follow-ons, neither urgent:
