@@ -150,3 +150,73 @@ figure stands as a month-level average, but growth is type-dependent and the
 prod run on fetch 94 is the number that counts. The test now pins both
 directions: the default keeps the whole set labelled, and `EnOnly` still yields
 exactly `["EN", "PT"]`.
+
+### The run — interim read (2026-09-02 ~13:5x UTC, rev `d416104`)
+
+Job 607: **48,210 notices re-parsed in 333 s** (~145/s), 0 unmatched, 0
+failing. Paired project 608 folding (160,334 notices planned — the month plus
+its touched-tender expansion).
+
+| fetch 94 | before | after | |
+| --- | --- | --- | --- |
+| `notice_texts` rows | 3,218,322 | **7,278,523** | **2.26×** (+4,060,201) |
+| DB file | 526,546,280,448 | 527,031,521,280 | +485 MB (fold in flight) |
+
+That is well past the +1.5-1.8M rows the byte census implied, and consistent
+with the correction above: the census averaged over form copies, and the
+notice types that carry all 24 copies (corrigenda at least) dominate the row
+growth. Bytes and the per-language split need the id-sliced read (the single
+join now exceeds the 10 s cap at this row count) — below.
+
+One thing to understand before the corpus run: `run_reparse` stamps
+**every** tender of the named profiles epoch-stale (`stamp_stale_for_profiles`,
+3,529,040 tenders here), not only the package it re-parsed. What the paired
+fold does with a stamp it does not visit decides whether that is harmless
+bookkeeping or a 3.5M-tender rewrite waiting for the next fold.
+
+### The month, measured (id-sliced read, 8 × 6,027 ids, ~3 s each)
+
+| fetch 94 | before | after | |
+| --- | --- | --- | --- |
+| `notice_texts` rows | 3,218,322 | 7,278,523 | 2.26× |
+| text bytes | 214,776,240 | **327,515,262** | **+52.5%** |
+
+**The sizing was right where it counts.** The regex census predicted +57% legacy
+form bytes; the parsed layer grew +52.5%. The row multiplier is larger because
+what the copies add is mostly short strings — 24 title renderings, corrigendum
+prose in every language — so the average text shrinks from 66.7 to 45.0 bytes.
+Per month: ~+4.1M rows, ~+113 MB of text, +485 MB of DB file (the parsed layer's
+share; the canonical layer's share lands with the fold). Over the ~93 packages
+r208+r209 hold, expect on the order of **+45 GB parsed + a comparable canonical
+share** — against 702 GB free. Fits with room, and `disk-census`/`diskwatch`
+(80%) are watching.
+
+### What the epoch-stale stamp means for the corpus run — READ BEFORE STAGING
+
+`run_reparse` stamps by PROFILE, deliberately (a superset: "a stale stamp only
+forces a rewrite that recomputes identical content, while a missed one silently
+loses the re-parse"). So the 1-package run stamped **all 3,529,040 r208/r209
+tenders**, and its paired fold — 160k planned notices, over the ≥100k
+incremental→full fallback — is now a full-path pass rewriting every one of them
+(job 608, pre-pass over 4.3M notices at the time of writing; hours).
+
+That is correct and safe, and it means a STAGED corpus run would be a disaster:
+92 capped enqueues = 92 profile-wide stamps = 92 multi-hour full folds. The
+corpus run is therefore **one uncapped enqueue**, queued behind 608 so FIFO
+orders it — `reparse {profiles, after: 94}` continuing exactly where 607's
+counts line said to — with its own paired fold at the end. One stamp, one fold.
+
+**Job 609 (reparse, 92 packages) + 610 (project) ENQUEUED 2026-09-02 ~14:0x UTC.**
+Expected: 92 × ~333 s ≈ 8.5 h of re-parse after 608 lands, then one full fold
+(the epoch-refold precedent: ~10.5 h). Tomorrow's 07:35 daily chain queues
+behind it and lands late — the same cost the ADR-0014 refold paid.
+
+**NO DEPLOY until 610 lands.** A deploy restarts the service and recovery re-runs
+the running job from the top (deploy.sh's own busy guard says so). The deployed
+rev will drift behind origin/main for docs-only commits meanwhile; that is
+expected, not a finding. `reparse` and `project` are both in STOPPABLE_KINDS if
+something has to give.
+
+Spot-check of the parsed layer (notice 19946383, the month's first): title copies
+now present per language — see the firing log; the end-to-end `?lang=` check on a
+2018-08 tender is the next firing's job once 608 has folded them.
