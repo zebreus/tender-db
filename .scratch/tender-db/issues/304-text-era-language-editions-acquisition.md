@@ -344,3 +344,21 @@ the flip is applying everywhere the re-parse reaches — while bytes per package
 stay on the estimate (older titles are shorter). Projection unchanged: ~+70 GB
 for the remaining 9 + 70 packages, then the fold's canonical share; landing
 well above the 150 GB stop bound.
+
+### 609 landed (2026-09-02 20:4x UTC) — the older legacy half, clean
+
+```
+re-parsed 3511248 notices across 92 packages (3512214 members walked,
+0 unmatched, 0 now failing and left untouched); stamped 3529040 tender(s)
+epoch-stale — 21,900 s (6.1 h, ~160 notices/s)
+```
+
+`0 now failing` is the line that matters: the current parser parses everything
+the stored layer held. Audit on a late package (fetch 178): every notice
+`parsed`. Quarantine outstanding 310 (+2 since the ADR-0014 landing — the
+dailies' own, not this run). DB +86 GB for the month plus 92 packages
+(≈0.93 GB/package held to the end); 567 GiB free at 66%.
+
+611 (ids 24–93, the newer legacy half) started at once: 10/70 after 31 min —
+faster per package, as those eForms-era monthlies carry fewer r208/r209
+notices. Then 612, the one fold.
