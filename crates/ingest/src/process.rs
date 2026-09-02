@@ -19,9 +19,17 @@ pub fn parse_payload(profile: &str, bytes: &[u8]) -> store::Parse {
     if profile.starts_with("eforms:") {
         eforms::parse_payload(profile, bytes)
     } else if profile.starts_with("ted-export-") {
-        // Issue 304 stage 1: EnOnly is the shipped policy; the language
-        // campaign flips this behind a measured one-month re-parse.
-        r209::parse_payload(profile, bytes, r209::TranslationPolicy::EnOnly)
+        // Issue 304 stage 1, FLIPPED 2026-09-02: every translation copy the
+        // stored XML carries lands labelled per language (ADR-0013's fallback
+        // chain serves them). `EnOnly` was v1's policy and remains available
+        // to callers that want it; the dispatch default is `All` because the
+        // corpus is being re-parsed under it and a later re-parse of any
+        // ted-export notice must not silently drop its translations again.
+        // Sized before flipping (issue 304, 2018-08 sample): +~50% form copies,
+        // +57% legacy form bytes — a few GB era-wide. No ted-export notice
+        // arrives on the daily chain any more (today's TED daily: 100% eForms),
+        // so the flip changes re-parses and nothing else.
+        r209::parse_payload(profile, bytes, r209::TranslationPolicy::All)
     } else if profile == internal_ojs::PROFILE {
         internal_ojs::parse_payload(profile, bytes)
     } else {

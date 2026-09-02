@@ -345,21 +345,43 @@ fn modification_notice_extracts_before_and_after_values() {
         NoticeValue::Id { value, .. } if value == "30369"));
 }
 
-/// Multilingual policy: the 24-language ML_TITLES keep exactly EN + the
-/// original language; a NATIONALID is stored raw for the projection's gate.
+/// Multilingual policy at the second gate 304 widened: the 24-language
+/// ML_TITLES block. Under the dispatch default (`All`, flipped 2026-09-02)
+/// every title lands labelled; under the explicit `EnOnly` opt-out exactly EN
+/// + the original language survive, as v1 shipped. A NATIONALID is stored raw
+/// for the projection's gate either way.
 #[test]
 fn language_policy_and_national_ids() {
+    let langs_of = |parsed: &Parsed| -> Vec<String> {
+        values(parsed, "PROCEDURE", "TED-TI_TEXT")
+            .iter()
+            .map(|v| match v {
+                NoticeValue::Text { lang, .. } => {
+                    lang.clone().expect("every ML_TITLES copy carries its language")
+                }
+                other => panic!("not text: {other:?}"),
+            })
+            .collect()
+    };
+
+    // Original language is NL. The default keeps all 24 titles, each labelled.
     let f05 = parse_fixture("r209/f05-001315-2019.xml");
-    // Original language is NL: EN + NL titles kept, 22 others skipped.
-    let titles = values(&f05, "PROCEDURE", "TED-TI_TEXT");
-    let langs: Vec<_> = titles
-        .iter()
-        .map(|v| match v {
-            NoticeValue::Text { lang, .. } => lang.as_deref().unwrap_or_default(),
-            other => panic!("not text: {other:?}"),
-        })
-        .collect();
-    assert_eq!(langs, ["EN", "NL"]);
+    let langs = langs_of(&f05);
+    assert!(langs.iter().any(|l| l == "NL"), "the NL original is missing: {langs:?}");
+    assert!(langs.iter().any(|l| l == "EN"), "the EN translation is missing: {langs:?}");
+    assert_eq!(
+        langs.len(),
+        24,
+        "the default policy keeps the whole ML_TITLES block — got {langs:?}"
+    );
+
+    // The explicit opt-out: EN + NL kept, 22 others skipped, as v1 shipped.
+    let bytes = std::fs::read("tests/fixtures/r209/f05-001315-2019.xml").unwrap();
+    let en_only = match r209::parse_payload("ted-export-r209", &bytes, r209::TranslationPolicy::EnOnly) {
+        Parse::Parsed(p) => p,
+        other => panic!("EnOnly parse: {other:?}"),
+    };
+    assert_eq!(langs_of(&en_only), ["EN", "NL"], "EnOnly stays available and keeps EN + the original");
 
     // The Belgian buyer's NATIONALID: raw here; normalized by orgid.
     let NoticeValue::Id { value: buyer, .. } = value(&f05, "PROCEDURE", "TED-ADDRESS_CONTRACTING_BODY")
@@ -506,11 +528,14 @@ fn co_original_extra_sections_are_adopted() {
 }
 
 /// Issue 304 stage 1: `TranslationPolicy::All` keeps every translation copy's
-/// texts, labelled per language, through the same positional machinery — and
-/// the shipped `EnOnly` default stays inert (non-EN translations skipped),
-/// pinned here so the policy flip is a deliberate campaign act, not a drift.
+/// texts, labelled per language, through the same positional machinery.
+/// Since 2026-09-02 `All` IS the dispatch default (the flip was the campaign
+/// act, sized on a month first), so this pins BOTH directions: the default
+/// keeps the FR texts, and `EnOnly` — still available to a caller that asks —
+/// still drops them. A future edit that silently narrows the default trips
+/// the first assertion; one that breaks the opt-out trips the second.
 #[test]
-fn translation_policy_all_keeps_non_english_texts_and_enonly_stays_inert() {
+fn the_dispatch_default_keeps_every_translation_and_enonly_stays_available() {
     let bytes = std::fs::read("tests/fixtures/r209/f02-co-original-160877-2015.xml").unwrap();
     let xml = String::from_utf8(bytes).unwrap();
     // The FR co-original becomes a genuine FR TRANSLATION copy.
@@ -530,12 +555,27 @@ fn translation_policy_all_keeps_non_english_texts_and_enonly_stays_inert() {
             .count()
     };
 
-    // Shipped default: the FR translation is a translation-copy skip.
-    let en_only = match parse_payload("ted-export-r208", mutated.as_bytes()) {
+    // The dispatch default (issue 304 stage 1, flipped): FR texts land.
+    let by_default = match parse_payload("ted-export-r208", mutated.as_bytes()) {
+        Parse::Parsed(p) => p,
+        other => panic!("default parse: {other:?}"),
+    };
+    assert!(
+        fr_texts(&by_default) > 0,
+        "the dispatch default must keep the FR translation's texts — a narrowing here \
+         would silently re-drop every translation on the next re-parse"
+    );
+
+    // The explicit opt-out still parses v1's way: the FR copy is a skip.
+    let en_only = match r209::parse_payload(
+        "ted-export-r208",
+        mutated.as_bytes(),
+        r209::TranslationPolicy::EnOnly,
+    ) {
         Parse::Parsed(p) => p,
         other => panic!("EnOnly parse: {other:?}"),
     };
-    assert_eq!(fr_texts(&en_only), 0, "EnOnly stays inert — no FR-labelled texts");
+    assert_eq!(fr_texts(&en_only), 0, "EnOnly stays available and inert — no FR-labelled texts");
 
     // The stage-1 policy: FR texts land, labelled, on the same structure.
     let all = match r209::parse_payload(

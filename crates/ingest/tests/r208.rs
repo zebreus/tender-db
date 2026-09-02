@@ -209,23 +209,56 @@ fn oth_not_yields_chain_edge_and_prose_body() {
     assert!(matches!(value(&f, "PROCEDURE", "TED-TD_DOCUMENT_TYPE"),
         NoticeValue::Code { code, .. } if code == "2"));
 
-    // The body is declared text in the original language (PT) plus the
-    // English translation copy — nothing structured, nothing dropped.
+    // The body is declared text in the original language (PT) plus every
+    // translation copy the notice carries — this 2014 corrigendum ships all
+    // 24, and under the flipped dispatch default (issue 304 stage 1,
+    // 2026-09-02) they all land, each labelled. Nothing structured, nothing
+    // dropped, nothing unlabelled. Before the flip this pinned `["EN", "PT"]`;
+    // that shape is now the explicit opt-out, asserted below.
+    let langs_of = |contents: &[&NoticeValue]| -> Vec<String> {
+        contents
+            .iter()
+            .map(|v| match v {
+                NoticeValue::Text { lang, .. } => {
+                    lang.clone().expect("every prose copy carries its language")
+                }
+                other => panic!("CONTENTS is not text: {other:?}"),
+            })
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect()
+    };
     let contents = values(&f, "PROCEDURE", "TED-CONTENTS");
     assert!(!contents.is_empty(), "prose body missing");
-    let langs: std::collections::BTreeSet<&str> = contents
-        .iter()
-        .map(|v| match v {
-            NoticeValue::Text { lang, .. } => lang.as_deref().unwrap_or_default(),
-            other => panic!("CONTENTS is not text: {other:?}"),
-        })
-        .collect();
-    assert_eq!(langs.into_iter().collect::<Vec<_>>(), ["EN", "PT"]);
+    let langs = langs_of(&contents);
+    assert!(langs.iter().any(|l| l == "PT"), "the PT original is missing: {langs:?}");
+    assert!(langs.iter().any(|l| l == "EN"), "the EN translation is missing: {langs:?}");
+    assert!(
+        langs.len() > 2,
+        "the default policy must keep the corrigendum's other translation copies too — \
+         only {langs:?} landed, which is v1's EnOnly shape"
+    );
     assert!(
         contents.iter().any(|v| matches!(v,
             NoticeValue::Text { lang, value } if lang.as_deref() == Some("EN")
                 && value.contains("Instead of"))),
         "for/read prose not captured: {contents:?}"
+    );
+
+    // The explicit opt-out still parses v1's way: original + English only.
+    let bytes = std::fs::read("tests/fixtures/r208/oth-not-000030-2014.xml").unwrap();
+    let en_only = match ingest::r209::parse_payload(
+        "ted-export-r208",
+        &bytes,
+        ingest::r209::TranslationPolicy::EnOnly,
+    ) {
+        Parse::Parsed(p) => p,
+        other => panic!("EnOnly parse: {other:?}"),
+    };
+    assert_eq!(
+        langs_of(&values(&en_only, "PROCEDURE", "TED-CONTENTS")),
+        ["EN", "PT"],
+        "EnOnly stays available and keeps exactly the original plus the English copy"
     );
 
     // The structured island the prose body allows: the header CPV.

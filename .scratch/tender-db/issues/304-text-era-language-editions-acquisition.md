@@ -98,3 +98,55 @@ stages (which fetch per-language editions that DO exist as separate zips).
 Numbers ready for the breadth decision; the flip itself needs no decision
 gate at this cost and can ride any future re-parse campaign (e.g. 251-style)
 rather than warranting its own.
+
+## Stage 1 — THE FLIP (2026-09-02, owner, on Lennart's "how about full multilanguage")
+
+Decision-free per the sizing above, so it starts now. Design settled by one
+measurement: today's TED daily (fetch 531) is **100% eForms** (sdk-1.12/1.13/1.14,
+3,299 notices), so no ted-export notice arrives on the daily chain any more and
+the dispatch default can flip globally — it changes re-parses and nothing else.
+A per-job policy parameter would have been machinery for a case that does not
+exist. `EnOnly` stays available to callers; the test that pinned it as the
+default now pins BOTH directions (default keeps FR, opt-out still drops it).
+
+### Pre-flip baseline, fetch 94 (2018-08 monthly), measured on prod
+
+| | |
+| --- | --- |
+| notices | **48,210** — 44,209 `ted-export-r209` + 4,001 `ted-export-r208`, all `parsed` |
+| `notice_texts` rows | **3,218,322** |
+| text bytes (`SUM(LENGTH(value))`) | **214,776,240** |
+| by language | PL 634,676 · FR 508,670 · DE 507,268 · EN 403,617 · ES 132,440 · RO 123,778 · CS 121,287 · BG 104,350 · HU 96,713 · NULL 83,638 · IT 79,165 · NL 72,432 |
+| DB file | 526,546,280,448 B |
+
+Two things the baseline says before the run: the ORIGINAL languages are already
+the bulk of what is stored (PL/FR/DE ahead of EN), so what the flip adds is the
+translation copies beside them; and the +57% form-byte prediction from the
+regex census should show up as roughly +1.5-1.8M `notice_texts` rows for this
+month — that is the number the post-run read is judged against.
+
+Measurement notes for whoever re-runs this: `WHERE fetch_id = ? GROUP BY profile`
+is a 7.5M-entry walk of `notices_profile` on turso (10 s cap, hit once); `GROUP
+BY +profile` seeks `notices_fetch_id` in 0.1 s. The joins are driven from
+`notices` by fetch and probe `notice_texts` through its PK. Recorded in
+docs/agents/prod-box-reads.md with the other two planner traps.
+
+### The run
+
+Enqueue shape: `reparse {profiles:["ted-export-r209","ted-export-r208"],
+after: 93, packages: 1}` — `reparse_packages` orders by fetch id strictly above
+`after`, so this selects exactly fetch 94, with the paired incremental project
+folding the re-parsed notices. Then the post-run read of the same four numbers.
+
+### Correction to the sizing premise, from the gate
+
+The flip's first casualty was `oth_not_yields_chain_edge_and_prose_body`: the
+2014 OTH_NOT corrigendum fixture pinned `["EN", "PT"]`, and under `All` it
+yields **all 24 languages** — BG, CS, DA, DE, EL, EN, ES, ET, FI, FR, GA, HR,
+HU, IT, LT, LV, MT, NL, PL, PT, RO, SK, SL, SV. So "original + EN + occasionally
+one more" is the *average* the regex census saw, not the shape: corrigenda (and
+presumably other OP-translated types) carry the full set. The +57% form-byte
+figure stands as a month-level average, but growth is type-dependent and the
+prod run on fetch 94 is the number that counts. The test now pins both
+directions: the default keeps the whole set labelled, and `EnOnly` still yields
+exactly `["EN", "PT"]`.

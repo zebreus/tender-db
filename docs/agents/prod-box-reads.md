@@ -92,6 +92,26 @@ safety one, and the two must not be conflated in either direction:
   low-traffic window (no snapshots exist to name any more). Someone with box access runs it; the
   requester does not need to be that person.
 
+## turso's planner, three traps that each cost a 10 s cap this week
+
+A bounded read is only bounded if the plan seeks. turso 0.7.2 does not always pick the seek
+you wrote the `WHERE` for, and `/v1/sql` refuses `EXPLAIN`, so check the plan LOCALLY first —
+`Db::open` on a scratch file gives the real schema, and `EXPLAIN QUERY PLAN` through turso is a
+few milliseconds (`the_requeue_statements_seek_notices_by_rowid` in `store/src/lib.rs` is the
+pattern). Measured on prod, all three:
+
+| you wrote | turso did | fix |
+| --- | --- | --- |
+| `WHERE entity_kind = ? AND entity_id IN (a, b, c, d)` | walked the index — an `IN` on an indexed column is not split into seeks (issue 329; 10 s cap) | one equality probe per value (50 ms each) |
+| `WHERE parse_state = 'parsed' AND id > ? AND id <= ?` | preferred `notices_parse_state` and walked every parsed row, id range ignored (issue 323, 354× on a scoped call) | unary `+` on the column you do NOT want driving: `+parse_state` |
+| `WHERE fetch_id = ? GROUP BY profile` | chose `notices_profile` to serve the GROUP BY and scanned 7.5M entries filtering on `fetch_id` (10 s cap) | `GROUP BY +profile` — seeks `notices_fetch_id`, sorts the few thousand rows |
+
+The common shape: the planner steers by whichever index matches the *last* clause it looks at
+(an `IN`, a `GROUP BY`, an equality on a low-cardinality column) and the `+` is how you take a
+column out of that consideration. Note also the width caveat under issue 323: the `IN` trap is
+list-size dependent — two ids seek, a hundred walk — so a probe with a short list can appear to
+acquit a shape that fails at the real size.
+
 ## A loop of bounded reads has its own failure mode
 
 The hourly audit step naturally produces the shape "run one bounded probe per row and count the
