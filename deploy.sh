@@ -5,18 +5,50 @@
 # (the box has the 1 Gb/s uplink and the warm nix store), atomically switches the
 # /opt/tender-db/app symlink, restarts the service, and health-checks it.
 #
-# Usage: ./deploy.sh [git-ref]     (default: main)
+# Usage: ./deploy.sh [git-ref]     (default: HEAD)
 set -euo pipefail
 
 VPS="${VPS:-root@zebreus.click}"
 # Keepalives: without them a dropped TCP connection leaves ssh hanging on a
 # dead socket forever and the deploy looks stuck (2026-07-21 incident).
 SSH="ssh -o BatchMode=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o ConnectTimeout=10"
-REF="${1:-main}"
+# HEAD, not `main`: work happens on a branch here, and the local `main` is not
+# what keeps it current — nothing updates it, so it silently rots behind
+# origin/main. On 2026-09-02 that cost a deploy at the last step, 278 seconds of
+# green suite in, with "! [rejected] main -> main (non-fast-forward)" — the local
+# `main` was 29 commits behind the commit that had just been pushed and tested.
+# Deploying what is checked out is what the operator means every time; the guard
+# below catches the other direction (a ref that is genuinely older than main).
+REF="${1:-HEAD}"
 REMOTE_REPO=/opt/tender-db/repo.git
 SRC=/opt/tender-db/src
 APP=/opt/tender-db/app
 PUBLIC_URL="${PUBLIC_URL:-https://tenders.zebreus.click}"
+
+# Refuse to deploy something the shared main has already moved past. This is the
+# stale-ref case the default above fixes, caught for any explicit ref too: a
+# commit that is a strict ANCESTOR of origin/main is older than what everyone
+# else considers deployed, and pushing it would roll the box backwards. Anything
+# else — main itself, a branch ahead of it, an unmerged topic branch — passes.
+REV="$(git rev-parse "$REF")"
+if git rev-parse --verify --quiet origin/main >/dev/null \
+    && [ "$REV" != "$(git rev-parse origin/main)" ] \
+    && git merge-base --is-ancestor "$REV" origin/main 2>/dev/null \
+    && [ "${FORCE_BEHIND:-0}" != "1" ]; then
+    cat >&2 <<MSG
+
+$REF ($(git rev-parse --short "$REV")) is BEHIND origin/main
+($(git rev-parse --short origin/main)) by $(git rev-list --count "$REV"..origin/main) commit(s).
+
+Deploying it would roll production back to older code. If you meant the tip:
+
+    git fetch origin main && ./deploy.sh origin/main
+
+or fast-forward your local branch first. To deploy the older commit anyway
+(a deliberate rollback): FORCE_BEHIND=1 ./deploy.sh $REF
+MSG
+    exit 1
+fi
 
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 
@@ -88,7 +120,6 @@ fi
 
 say "Pushing $REF to $VPS:$REMOTE_REPO"
 git push vps "$REF:main"
-REV="$(git rev-parse "$REF")"
 
 say "Building $REV on the VPS (this can take a while on a cold store)"
 $SSH "$VPS" bash -euo pipefail -s <<EOF
