@@ -276,3 +276,56 @@ daily chain queues behind it. **Deploy stays frozen until 612 lands.**
 Side finding filed as issue 343: the head version's three tender-level ENG
 titles are tie-broken differently by the fold's `current_title` and the
 read-time pick.
+
+### Landing runbook (written 2026-09-02 17:5x UTC; executes whichever firing catches 612)
+
+In order. Nothing here before 612 shows `ok` in `/admin/jobs`.
+
+1. **Read 612's counts line** against expectation: tenders written should be
+   on the order of the 3.5M profile-stamped plus the re-parsed cohort's chains;
+   "0 verified unchanged" for the stamped ones (epoch-forced). Health green,
+   journal clean, WAL truncated, disk free noted.
+2. **Queue idle → deploy main tip** (`./deploy.sh`, HEAD; the guard refuses a
+   stale ref). The bundle: 339 (fold barrier tick), 340 (`original_lang`
+   column — boot runs the O(1) `ALTER`), 343 (title tie rule), plus the day's
+   docs. Health green on the new rev; all refs equal again.
+3. **Enqueue `backfill-original-lang`**; read its counts line (tenders walked).
+   Then the close-out read for 340: `original_lang` NULL share per era on a
+   bounded window (`GROUP BY +profile` shapes) — the NULL share IS the 1990s
+   text-era share and the note should say so.
+4. **Probes**, all bounded:
+   * a legacy r209 tender whose HEAD is now a re-parsed notice: default title
+     and `?lang=de` / `?lang=fr` flip as the copies exist; `original_lang`
+     visible in the detail JSON;
+   * the 6287622 head: `v_tenders.title == /v1/tenders/6287622 title` (343);
+   * `/v1/lots?lang=…` on the same tender.
+5. **Corpus-level language read** for the stage-1 close-out: title languages
+   in one r209-dominant window (the 6.5M–6.505M shape from the 291 answer)
+   before/after — the "after" should show the translation copies beside the
+   originals; and `tender_version_texts` growth against the +52.5% month.
+6. **Board**: close 340 with the backfill numbers; close 304 stage 1 with the
+   corpus numbers and the per-package disk cost measured during the run
+   (below); 343 CLOSED on the probe; 339 CLOSED on 612's own phase record
+   having named "folding" from its first minute — or not, which is the test.
+7. **Tomorrow's daily chain** will have queued behind the campaign; confirm
+   it ran (`probe`/`process`/`project` ok) and `fetch-rates` too.
+
+Stop conditions during the wait: free disk < 150 GB, WAL > 300 GB, or a
+`reclaim stamped NO ledger rows` line — cancel the running kind (both are
+STOPPABLE) and read before acting.
+
+### Disk cost, measured mid-run (2026-09-02 17:5x UTC, 609 at 51/92)
+
+| | |
+| --- | --- |
+| DB file, pre-campaign | 526,546,280,448 B |
+| DB file now | 573,451,116,544 B (**+46.9 GB**) |
+| covered | fetch 94 (re-parse + its fold) + 51 packages of 609 = 2,092,646 notices |
+| per package / per notice | **≈0.9 GB / ≈22 KB** (parsed layer; the fold's share for the month is inside the total) |
+| free now | 667 GB (earlier lower readings held the 26 GB WAL peak and pre-pass spill, since released) |
+
+Projection: 609's remaining 41 packages ≈ +37 GB, 611's 70 ≈ +63 GB → ~567 GB
+free before the fold; 612's canonical share (versions × up to 24 languages of
+text) bounded by the parsed share again → **~420–470 GB free at landing.** The
+150 GB stop bound is not in play. `disk-census` will record the step on Sunday;
+`diskwatch` (80%) stays far below threshold.
