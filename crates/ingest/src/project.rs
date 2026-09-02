@@ -2251,6 +2251,17 @@ async fn bucketed_fold(
         })
     };
 
+    // The fold announces itself at the pre-pass barrier (issue 339). The grouping
+    // step set the phase to `folding 0/N`, but the pre-pass ticks overwrote it
+    // with `pre-pass <count>`, and the first per-bucket tick below only lands
+    // once a WHOLE bucket has been applied — the biggest chains first, so on
+    // the 2026-09-02 campaign fold that was 17 minutes of a job row saying
+    // "pre-pass" over a stalled count while the WAL grew by 26 GB: the exact
+    // shape of the issue-42/53 runaway, on a healthy run. One zero-tick here
+    // and the record names the stage the moment it begins. (A bucket is one
+    // `apply_tenders` transaction by design, so this does not try to tick
+    // inside it.)
+    on_progress(Progress::Applying { tenders: 0, total: report.tenders, versions: report.applied.versions_written });
     let mut tenders_done = 0u64;
     let mut fold_err: Option<turso::Error> = None;
     for b in 0..n_buckets {

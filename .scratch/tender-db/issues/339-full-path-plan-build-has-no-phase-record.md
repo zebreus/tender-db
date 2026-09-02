@@ -1,39 +1,64 @@
-# 339 — the full projection path's plan build shows the last pre-pass count for its whole duration
+# 339 — a bucketed fold shows the last pre-pass count until its first whole bucket lands
 
-Status: needs-triage (filed 2026-09-02 from a live observation; code not yet read)
+Status: DIAGNOSED 2026-09-02 (corrected the same day — the first filing blamed the
+plan build; the journal's stage timings named the real stage). Fix in progress.
 Kind: operability / instrument honesty
-Relates to: 262 (the same gap on the INCREMENTAL path, fixed there), 304 (the
-campaign whose fold surfaced it), 42/53 (why a growing WAL during a silent
-stage needs to be tellable from a runaway)
+Relates to: 65 (Progress → phase record), 90 (the fold heartbeat), 262 (the same
+gap on the plan build, fixed), 304 (the campaign whose fold surfaced it), 42/53
+(why a growing WAL during a silent stage must be tellable from a runaway)
 
-## Observed
+## Observed (job 608, 2026-09-02, CEST)
 
-Job 608 (the full-path fold behind the issue-304 stage-1 re-parse), 2026-09-02:
+| time | journal | `/admin/jobs` phase |
+| --- | --- | --- |
+| 15:52:09 | `pre-pass shard 30 DONE` — the last shard | `pre-pass 8520548 / None` |
+| 15:52 → 16:09 | nothing from `[project]` | still `pre-pass 8520548` (checked 16:04) |
+| 16:09:24 | `incremental fold: 2779/43538 Tenders folded, 50001 versions written` | folding |
+| 16:14:29 | fold done; `phase 2 fold + apply: 2213.8s` | |
 
-- 15:52:09 CEST the journal prints `pre-pass shard 30 DONE` — the last of the
-  30 shards. Nothing further from `[project]` for the next ten-plus minutes.
-- `/admin/jobs` keeps reporting `phase: pre-pass 8520548 / None, "notices swept
-  into buckets"` — a number that stopped moving when the shards finished.
-- Meanwhile the WAL went 66 KB → 9.6 GB and free disk 702 → 683 GB.
+Meanwhile the WAL went 66 KB → 26 GB and free disk 702 → 683 GB during the
+silent 17 minutes. That was the fold writing its FIRST BUCKET — 2,779 tenders
+whose 50,001 versions now carry up to 24 languages of text each — and the phase
+record said "pre-pass" the whole time.
 
-That WAL is the plan build's single write transaction (14.3M plan rows; the
-2026-08-27 epoch refold's runbook noted the free-disk dip "was the plan build"),
-so it is expected — but nothing on the job row says so. An operator reading the
-job sees a stalled pre-pass count and a WAL growing by gigabytes, which is
-exactly the shape of the issue-42/53 reader-pinned runaway. Telling the two
-apart today takes the journal and prior knowledge; the job row should do it.
+## Why
 
-## What issue 262 did for the incremental path
+Two things compound:
 
-Gave the plan-build stage its own phase record and stop checks. The full path
-(the `project rebuild=false` fallback over ≥100k notices, and `rebuild=true`)
-evidently goes from the pre-pass straight into its plan build without a
-`set_phase`. Same fix, other path: a `planning` phase with a moving count, and
-the stop flag read between plan batches so a cancel does not wait for the whole
-14.3M-row transaction.
+1. `bucketed_fold` emits `Progress::Applying` **once per bucket**, after the
+   bucket is applied. The first bucket is the biggest chains, so its first tick
+   is the slowest to arrive — 17 minutes here; on the campaign's corpus fold
+   (612: 4.4M re-parsed notices × 24 languages) it could be hours.
+2. The grouping step's `Progress::Grouped` had set the phase to `folding 0/N`,
+   but the pre-pass's `PrePass` ticks then overwrote it with `pre-pass <count>`,
+   and nothing resets it when the pre-pass barrier is passed. So the record
+   does not merely lag — it names the wrong stage.
 
-## Not
+The first filing of this issue blamed the plan build. It was wrong: 608's plan
+build ran at the START (`planning 50000/160334`, visible), and `build_plan`
+already ticks per chunk and reads the stop flag. The silent stage was the fold.
 
-Not a correctness problem and not urgent — the stage completes. It is the
-difference between "hours of a number that does not move" and a phase an
-operator can read, on the one job kind that legitimately runs for a day.
+## Why it matters
+
+An operator reading the job during that window sees a stalled pre-pass count and
+a WAL growing by gigabytes — exactly the shape of the issue-42/53 reader-pinned
+runaway. Telling the two apart took the journal and prior knowledge. And the
+campaign's fold 612 will spend far longer in exactly this state.
+
+## Fix
+
+At the pre-pass barrier (after the shard join, before the first bucket),
+`bucketed_fold` emits `Applying { tenders: 0, total, versions }` — the phase flips
+to `folding 0/N` the moment the fold starts, and the record names the stage.
+Nothing about what is folded changes.
+
+Considered and rejected: ticking per apply batch INSIDE a bucket. A bucket is
+one `apply_tenders` transaction by design (committed whole, then its notices
+marked projected), so intra-bucket ticks would mean splitting that transaction —
+a fold-shape change for an operability gain. The count still moves per bucket;
+what the barrier tick fixes is the stage being NAMED wrongly for the whole first
+bucket, which was the dangerous part.
+
+Pinned in `the_prepass_reports_its_sweep_as_progress`: the first `Applying` tick
+carries `tenders: 0`, and the pre-pass barrier guarantee (no `PrePass` tick after
+the first `Applying`) still holds with the new tick placed after the join.

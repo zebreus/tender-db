@@ -321,13 +321,21 @@ async fn the_prepass_reports_its_sweep_as_progress() {
 
     let mut prepass = Vec::new();
     let mut applying_seen = false;
+    // Issue 339: the FIRST fold tick must arrive at the barrier, before any bucket
+    // has been applied — `tenders: 0` — so the phase record names the stage the
+    // moment it starts instead of showing the last pre-pass count until the first
+    // (biggest) bucket lands.
+    let mut first_applying: Option<u64> = None;
     project::project_with_progress_phase2(&db, true, BATCH, Phase2::Buckets { shards: None }, |p| {
         match p {
             project::Progress::PrePass { notices } => {
                 assert!(!applying_seen, "the pre-pass is a barrier: no tick after the fold starts");
                 prepass.push(notices);
             }
-            project::Progress::Applying { .. } => applying_seen = true,
+            project::Progress::Applying { tenders, .. } => {
+                applying_seen = true;
+                first_applying.get_or_insert(tenders);
+            }
             _ => {}
         }
     })
@@ -335,6 +343,11 @@ async fn the_prepass_reports_its_sweep_as_progress() {
     .expect("bucketed projection");
 
     assert!(applying_seen, "the corpus folds, so the fold reported too");
+    assert_eq!(
+        first_applying,
+        Some(0),
+        "the fold announces itself at the barrier with tenders: 0, before its first bucket lands"
+    );
     assert!(!prepass.is_empty(), "the pre-pass reported at least its closing tick");
     assert!(prepass.windows(2).all(|w| w[0] <= w[1]), "the sweep count never goes backwards: {prepass:?}");
     let parsed = count(&db, "SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed'").await;
